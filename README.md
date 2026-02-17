@@ -1,0 +1,2 @@
+# TradeAI
+Prototype Platform
