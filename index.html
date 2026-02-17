@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeAI — AI for Trade Businesses</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0d0d0d;
+    --ink2: #2a2a2a;
+    --ink3: #555;
+    --paper: #f5f3ee;
+    --paper2: #ede9e1;
+    --paper3: #e4dfd5;
+    --accent: #e8500a;
+    --accent2: #f5a623;
+    --green: #1a7a4a;
+    --green-light: #e6f5ed;
+    --blue: #0a4d8c;
+    --blue-light: #e6eef8;
+    --card: #ffffff;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --radius: 12px;
+    --radius-lg: 20px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1, h2, h3, h4 { font-family: 'Syne', sans-serif; }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; }
+  .screen.active { display: block; animation: fadeIn 0.35s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(245,243,238,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--paper3);
+    padding: 0 32px;
+    height: 60px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 20px;
+    color: var(--ink);
+    display: flex; align-items: center; gap: 8px;
+    cursor: pointer;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-steps {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 13px; font-weight: 500;
+  }
+  .nav-step {
+    padding: 4px 12px; border-radius: 20px;
+    color: var(--ink3); transition: all 0.2s;
+  }
+  .nav-step.active { background: var(--ink); color: white; }
+  .nav-step.done { color: var(--green); }
+  .nav-step-divider { color: var(--paper3); font-size: 18px; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-weight: 600; font-size: 15px;
+    cursor: pointer; border: none; transition: all 0.18s;
+    text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent); color: white;
+    box-shadow: 0 4px 16px rgba(232,80,10,0.3);
+  }
+  .btn-primary:hover { background: #d44008; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,80,10,0.4); }
+  .btn-secondary {
+    background: var(--card); color: var(--ink);
+    border: 1.5px solid var(--paper3);
+  }
+  .btn-secondary:hover { border-color: var(--ink); background: var(--paper2); }
+  .btn-ghost { background: transparent; color: var(--ink3); }
+  .btn-ghost:hover { color: var(--ink); }
+  .btn-sm { padding: 8px 16px; font-size: 13px; }
+  .btn-lg { padding: 16px 32px; font-size: 17px; }
+
+  /* ── CONTAINERS ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+  .container-sm { max-width: 700px; margin: 0 auto; padding: 0 32px; }
+
+  /* ══════════════════════════════════════════
+     SCREEN 1 — LANDING / INDUSTRY SELECTION
+  ══════════════════════════════════════════ */
+  #screen-landing {
+    background: var(--paper);
+  }
+  .landing-hero {
+    padding: 80px 32px 60px;
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--paper2); border: 1px solid var(--paper3);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 13px; font-weight: 500; color: var(--ink3);
+    margin-bottom: 24px;
+  }
+  .pill-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .landing-hero h1 {
+    font-size: clamp(38px, 6vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+  .landing-hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+    position: relative;
+  }
+  .landing-hero p {
+    font-size: 18px; line-height: 1.6;
+    color: var(--ink3); margin-bottom: 40px;
+    font-weight: 300;
+  }
+  .industries-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 32px 80px;
+  }
+  .industry-card {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .industry-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent);
+    transform: scaleX(0); transition: transform 0.2s;
+  }
+  .industry-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+  }
+  .industry-card:hover::before { transform: scaleX(1); }
+  .industry-card.selected {
+    border-color: var(--accent);
+    background: #fff8f5;
+  }
+  .industry-card.selected::before { transform: scaleX(1); }
+  .industry-icon {
+    font-size: 32px; margin-bottom: 12px; display: block;
+  }
+  .industry-card h3 {
+    font-size: 17px; font-weight: 700; margin-bottom: 6px;
+  }
+  .industry-card p {
+    font-size: 13px; color: var(--ink3); line-height: 1.5;
+  }
+  .industry-count {
+    position: absolute; top: 16px; right: 16px;
+    background: var(--paper2); border-radius: 20px;
+    padding: 2px 8px; font-size: 11px; font-weight: 600;
+    color: var(--ink3);
+  }
+  .landing-cta {
+    text-align: center;
+    padding: 0 32px 60px;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 2 — OPPORTUNITY DASHBOARD
+  ══════════════════════════════════════════ */
+  #screen-dashboard {
+    background: var(--paper);
+  }
+  .dashboard-header {
+    padding: 40px 32px 32px;
+    max-width: 1100px; margin: 0 auto;
+    display: flex; align-items: flex-start; justify-content: space-between;
+    flex-wrap: wrap; gap: 20px;
+  }
+  .dashboard-header h2 {
+    font-size: 30px; letter-spacing: -0.5px;
+  }
+  .dashboard-header p { color: var(--ink3); margin-top: 6px; font-size: 15px; }
+  .impact-bar {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    padding: 0 32px 32px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .impact-stat {
+    background: var(--card);
+    border: 1px solid var(--paper3);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    flex: 1; min-width: 140px;
+  }
+  .impact-stat .num {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px; font-weight: 800;
+    color: var(--accent);
+  }
+  .impact-stat .label { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+
+  .categories-nav {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 0 32px 24px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .cat-btn {
+    padding: 8px 16px; border-radius: 8px;
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 1.5px solid var(--paper3);
+    background: var(--card); color: var(--ink3);
+    transition: all 0.15s;
+  }
+  .cat-btn:hover { border-color: var(--ink3); color: var(--ink); }
+  .cat-btn.active { background: var(--ink); color: white; border-color: var(--ink); }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+    padding: 0 32px 80px;
+    max-width: 1100px; margin: 0 auto;
+  }
+  .tool-card {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    transition: all 0.2s;
+    position: relative;
+  }
+  .tool-card:hover { box-shadow: var(--shadow-lg); border-color: #ccc; transform: translateY(-2px); }
+  .tool-card.activated {
+    border-color: var(--green);
+    background: #f7fdf9;
+  }
+  .tool-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .tool-icon {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; background: var(--paper2);
+  }
+  .tool-badge {
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .badge-quick { background: #fff3e0; color: #e65100; }
+  .badge-popular { background: #e8f5e9; color: #1b5e20; }
+  .badge-advanced { background: #e3f2fd; color: #0d47a1; }
+  .tool-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+  .tool-card p { font-size: 13px; color: var(--ink3); line-height: 1.5; margin-bottom: 16px; }
+  .tool-metrics {
+    display: flex; gap: 12px; margin-bottom: 16px;
+  }
+  .metric {
+    flex: 1; background: var(--paper2); border-radius: 8px;
+    padding: 10px 12px; text-align: center;
+  }
+  .metric .mval {
+    font-family: 'Syne', sans-serif;
+    font-size: 16px; font-weight: 700; color: var(--ink);
+  }
+  .metric .mlabel { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+  .tool-actions { display: flex; gap: 8px; align-items: center; }
+  .activated-label {
+    display: flex; align-items: center; gap: 6px;
+    color: var(--green); font-size: 13px; font-weight: 600;
+  }
+  .tool-price {
+    font-size: 12px; color: var(--ink3);
+    margin-left: auto;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 3 — ROI CALCULATOR / TOOL DETAIL
+  ══════════════════════════════════════════ */
+  #screen-detail {
+    background: var(--paper);
+  }
+  .detail-wrap {
+    max-width: 900px; margin: 0 auto;
+    padding: 40px 32px 80px;
+  }
+  .detail-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    color: var(--ink3); font-size: 14px; cursor: pointer;
+    margin-bottom: 32px; transition: color 0.15s;
+    background: none; border: none;
+  }
+  .detail-back:hover { color: var(--ink); }
+  .detail-hero {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+    margin-bottom: 48px;
+    align-items: start;
+  }
+  .detail-left h2 { font-size: 32px; letter-spacing: -0.5px; margin-bottom: 12px; }
+  .detail-left p { font-size: 16px; color: var(--ink3); line-height: 1.6; margin-bottom: 24px; }
+  .detail-benefits { list-style: none; }
+  .detail-benefits li {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 12px; font-size: 14px;
+  }
+  .check-icon {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--green-light); color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; flex-shrink: 0; margin-top: 1px;
+  }
+
+  .roi-calc {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    padding: 28px;
+  }
+  .roi-calc h3 {
+    font-size: 18px; margin-bottom: 20px;
+  }
+  .calc-field { margin-bottom: 20px; }
+  .calc-field label {
+    display: block; font-size: 13px; font-weight: 500;
+    color: var(--ink2); margin-bottom: 8px;
+  }
+  .calc-field input[type="range"] {
+    width: 100%; accent-color: var(--accent);
+  }
+  .calc-field .range-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--accent); margin-bottom: 4px;
+  }
+  .roi-result {
+    background: var(--ink);
+    border-radius: var(--radius);
+    padding: 20px; margin-top: 24px;
+    color: white;
+  }
+  .roi-result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .roi-item .rv {
+    font-family: 'Syne', sans-serif;
+    font-size: 24px; font-weight: 800;
+    color: var(--accent2);
+  }
+  .roi-item .rl { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+  .example-output {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-top: 40px;
+  }
+  .example-output-header {
+    padding: 16px 24px;
+    background: var(--paper2);
+    border-bottom: 1px solid var(--paper3);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .example-output-header h4 { font-size: 14px; font-weight: 600; }
+  .dot-row { display: flex; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--paper3); }
+  .dot.r { background: #ff6b6b; }
+  .dot.y { background: #ffd166; }
+  .dot.g { background: #06d6a0; }
+  .example-output-body {
+    padding: 24px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink2);
+    font-family: 'DM Sans', sans-serif;
+    white-space: pre-wrap;
+    max-height: 320px;
+    overflow-y: auto;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 4 — SETUP WIZARD
+  ══════════════════════════════════════════ */
+  #screen-setup {
+    background: var(--paper);
+  }
+  .setup-wrap {
+    max-width: 600px; margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+  .setup-progress {
+    display: flex; gap: 4px; margin-bottom: 48px;
+  }
+  .progress-bar {
+    height: 4px; border-radius: 2px; flex: 1;
+    background: var(--paper3); transition: background 0.3s;
+  }
+  .progress-bar.done { background: var(--accent); }
+  .setup-step { display: none; }
+  .setup-step.active { display: block; animation: fadeIn 0.3s ease; }
+  .setup-step-num {
+    font-size: 12px; font-weight: 600; color: var(--accent);
+    letter-spacing: 1px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .setup-step h2 { font-size: 28px; letter-spacing: -0.5px; margin-bottom: 8px; }
+  .setup-step .sub { font-size: 15px; color: var(--ink3); margin-bottom: 32px; line-height: 1.5; }
+  .form-field { margin-bottom: 20px; }
+  .form-field label {
+    display: block; font-size: 14px; font-weight: 500;
+    margin-bottom: 8px; color: var(--ink2);
+  }
+  .form-field input, .form-field select, .form-field textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid var(--paper3);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    background: var(--card);
+    color: var(--ink);
+    transition: border-color 0.15s;
+    outline: none;
+  }
+  .form-field input:focus, .form-field select:focus {
+    border-color: var(--accent);
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .option-cards { display: flex; flex-direction: column; gap: 10px; }
+  .option-card {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: 10px;
+    padding: 16px 20px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 14px;
+    transition: all 0.15s;
+  }
+  .option-card:hover { border-color: var(--accent); }
+  .option-card.selected { border-color: var(--accent); background: #fff8f5; }
+  .option-radio {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid var(--paper3); flex-shrink: 0;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .option-card.selected .option-radio {
+    border-color: var(--accent); background: var(--accent);
+  }
+  .option-card.selected .option-radio::after {
+    content: ''; width: 6px; height: 6px;
+    border-radius: 50%; background: white;
+  }
+  .option-label { font-size: 15px; font-weight: 500; }
+  .option-sub { font-size: 12px; color: var(--ink3); margin-top: 2px; }
+  .setup-actions {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 40px;
+  }
+
+  /* ══════════════════════════════════════════
+     SCREEN 5 — SUCCESS / MY TOOLS DASHBOARD
+  ══════════════════════════════════════════ */
+  #screen-success {
+    background: var(--paper);
+  }
+  .success-wrap {
+    max-width: 900px; margin: 0 auto;
+    padding: 60px 32px 80px;
+  }
+  .success-header { text-align: center; margin-bottom: 48px; }
+  .success-badge {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--green-light); color: var(--green);
+    font-size: 28px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+  }
+  .success-header h2 { font-size: 36px; letter-spacing: -0.5px; margin-bottom: 10px; }
+  .success-header p { font-size: 16px; color: var(--ink3); }
+  .my-tools-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    margin-bottom: 40px;
+  }
+  .my-tool-card {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+  }
+  .my-tool-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .my-tool-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: var(--paper2); font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .my-tool-header h4 { font-size: 15px; font-weight: 700; }
+  .my-tool-header .active-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); margin-left: auto;
+  }
+  .stat-row { display: flex; gap: 16px; margin-bottom: 16px; }
+  .stat-box {
+    flex: 1; background: var(--paper2); border-radius: 8px;
+    padding: 10px 12px; text-align: center;
+  }
+  .stat-box .sv {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: var(--ink);
+  }
+  .stat-box .sl { font-size: 10px; color: var(--ink3); }
+  .use-btn {
+    width: 100%; padding: 10px;
+    background: var(--ink); color: white;
+    border: none; border-radius: 8px;
+    font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .use-btn:hover { background: var(--accent); }
+  .impact-summary {
+    background: var(--ink);
+    border-radius: var(--radius-lg);
+    padding: 32px;
+    color: white;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px;
+  }
+  .is-item { text-align: center; }
+  .is-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 30px; font-weight: 800;
+    color: var(--accent2);
+  }
+  .is-label { font-size: 12px; color: rgba(255,255,255,0.6); margin-top: 4px; }
+  .next-tools {
+    background: var(--card);
+    border: 1.5px solid var(--paper3);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-top: 20px;
+  }
+  .next-tools h3 { font-size: 17px; margin-bottom: 16px; }
+  .next-tool-row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 12px 0; border-bottom: 1px solid var(--paper2);
+  }
+  .next-tool-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .nticon { font-size: 20px; }
+  .ntinfo { flex: 1; }
+  .ntinfo strong { font-size: 14px; font-weight: 600; }
+  .ntinfo span { display: block; font-size: 12px; color: var(--ink3); }
+
+  /* ══════════════════════════════════════════
+     TOOL MODAL
+  ══════════════════════════════════════════ */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  .modal {
+    background: var(--card);
+    border-radius: var(--radius-lg);
+    max-width: 600px; width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 32px;
+    position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 16px; right: 16px;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--paper2); border: none; cursor: pointer;
+    font-size: 16px; display: flex; align-items: center; justify-content: center;
+    transition: background 0.15s;
+  }
+  .modal-close:hover { background: var(--paper3); }
+  .modal h3 { font-size: 22px; margin-bottom: 8px; }
+  .modal .msub { font-size: 14px; color: var(--ink3); margin-bottom: 24px; }
+  .modal-demo {
+    background: var(--paper);
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 13px; line-height: 1.7;
+    color: var(--ink2);
+    margin-bottom: 24px;
+    white-space: pre-wrap;
+    max-height: 240px; overflow-y: auto;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .detail-hero { grid-template-columns: 1fr; }
+    .my-tools-grid { grid-template-columns: 1fr; }
+    .impact-summary { grid-template-columns: 1fr 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    .roi-result-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ──────────── NAV ──────────── -->
+<nav>
+  <div class="nav-logo" onclick="goScreen('landing')">Trade<span>AI</span></div>
+  <div class="nav-steps" id="nav-steps">
+    <span class="nav-step active" id="step-1">1. Industry</span>
+    <span class="nav-step-divider">›</span>
+    <span class="nav-step" id="step-2">2. Explore</span>
+    <span class="nav-step-divider">›</span>
+    <span class="nav-step" id="step-3">3. Set Up</span>
+    <span class="nav-step-divider">›</span>
+    <span class="nav-step" id="step-4">4. Go Live</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1 — LANDING
+══════════════════════════════════════════ -->
+<div id="screen-landing" class="screen active">
+  <div class="landing-hero">
+    <div class="pill"><span class="pill-dot"></span>Built for Australian trade businesses</div>
+    <h1>AI tools for your <em>exact</em> type of business</h1>
+    <p>Stop losing hours to quoting, admin and chasing customers.<br>Pick your industry and see exactly how AI can work for you.</p>
+  </div>
+
+  <div class="industries-grid">
+    <div class="industry-card" onclick="selectIndustry('pool')">
+      <span class="industry-icon">🏊</span>
+      <span class="industry-count">15 tools</span>
+      <h3>Pool Building</h3>
+      <p>Quotes, scheduling, customer updates & design visualisation</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('hvac')">
+      <span class="industry-icon">❄️</span>
+      <span class="industry-count">14 tools</span>
+      <h3>HVAC & Refrigeration</h3>
+      <p>Service scheduling, maintenance reminders & compliance docs</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('electrical')">
+      <span class="industry-icon">⚡</span>
+      <span class="industry-count">13 tools</span>
+      <h3>Electrical Contracting</h3>
+      <p>Compliance certificates, job costing & customer communication</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('fabrication')">
+      <span class="industry-icon">🔩</span>
+      <span class="industry-count">16 tools</span>
+      <h3>Metal Fabrication</h3>
+      <p>Shop floor ops, quality control, SOPs & supplier management</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('plumbing')">
+      <span class="industry-icon">🔧</span>
+      <span class="industry-count">12 tools</span>
+      <h3>Plumbing</h3>
+      <p>Emergency dispatch, job scheduling & invoice automation</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('construction')">
+      <span class="industry-icon">🏗️</span>
+      <span class="industry-count">18 tools</span>
+      <h3>Construction</h3>
+      <p>Project management, SWMS, subcontractor coordination & reports</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('landscaping')">
+      <span class="industry-icon">🌿</span>
+      <span class="industry-count">11 tools</span>
+      <h3>Landscaping</h3>
+      <p>Design proposals, maintenance schedules & seasonal marketing</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('cleaning')">
+      <span class="industry-icon">✨</span>
+      <span class="industry-count">10 tools</span>
+      <h3>Commercial Cleaning</h3>
+      <p>Rostering, client reports, quality audits & tender writing</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2 — DASHBOARD
+══════════════════════════════════════════ -->
+<div id="screen-dashboard" class="screen">
+  <div class="dashboard-header">
+    <div>
+      <h2 id="dash-title">AI Opportunities for Pool Builders</h2>
+      <p id="dash-sub">15 tools ready to activate — most businesses start with 3</p>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn btn-secondary btn-sm" onclick="goScreen('landing')">← Change Industry</button>
+      <button class="btn btn-primary btn-sm" onclick="goScreen('setup')" id="view-my-tools-btn" style="display:none">View My Tools →</button>
+    </div>
+  </div>
+
+  <div class="impact-bar" id="impact-bar">
+    <div class="impact-stat">
+      <div class="num" id="stat-hours">0 hrs</div>
+      <div class="label">Potential monthly time saving</div>
+    </div>
+    <div class="impact-stat">
+      <div class="num" id="stat-value">$0</div>
+      <div class="label">Estimated monthly value</div>
+    </div>
+    <div class="impact-stat">
+      <div class="num" id="stat-activated">0</div>
+      <div class="label">Tools activated</div>
+    </div>
+    <div class="impact-stat">
+      <div class="num" id="stat-cost">$0</div>
+      <div class="label">Monthly subscription</div>
+    </div>
+  </div>
+
+  <div class="categories-nav" id="categories-nav"></div>
+  <div class="tools-grid" id="tools-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3 — TOOL DETAIL / ROI CALC
+══════════════════════════════════════════ -->
+<div id="screen-detail" class="screen">
+  <div class="detail-wrap">
+    <button class="detail-back" onclick="goScreen('dashboard')">← Back to all tools</button>
+    <div class="detail-hero">
+      <div class="detail-left">
+        <h2 id="detail-title">Quote Generator</h2>
+        <p id="detail-desc">Turn hours of quoting into minutes. Generate professional, detailed quotes tailored to your business.</p>
+        <ul class="detail-benefits" id="detail-benefits"></ul>
+        <div style="margin-top:24px;">
+          <button class="btn btn-primary" id="detail-activate-btn" onclick="activateFromDetail()">Activate This Tool</button>
+          <span id="detail-activated-label" style="display:none;margin-left:16px;" class="activated-label">✓ Activated</span>
+        </div>
+      </div>
+      <div class="roi-calc">
+        <h3>📊 Calculate Your ROI</h3>
+        <div class="calc-field" id="roi-field-1">
+          <label id="roi-label-1">How many quotes per month?</label>
+          <div class="range-val" id="roi-val-1">12</div>
+          <input type="range" min="1" max="40" value="12" oninput="updateROI()" id="roi-range-1">
+        </div>
+        <div class="calc-field" id="roi-field-2">
+          <label id="roi-label-2">Hours per quote currently?</label>
+          <div class="range-val" id="roi-val-2">3.5 hrs</div>
+          <input type="range" min="0.5" max="8" step="0.5" value="3.5" oninput="updateROI()" id="roi-range-2">
+        </div>
+        <div class="calc-field">
+          <label>Your hourly rate</label>
+          <div class="range-val" id="roi-val-3">$85/hr</div>
+          <input type="range" min="50" max="200" step="5" value="85" oninput="updateROI()" id="roi-range-3">
+        </div>
+        <div class="roi-result">
+          <div class="roi-result-grid">
+            <div class="roi-item">
+              <div class="rv" id="roi-time-saved">40 hrs</div>
+              <div class="rl">Time saved / month</div>
+            </div>
+            <div class="roi-item">
+              <div class="rv" id="roi-value">$3,400</div>
+              <div class="rl">Value / month</div>
+            </div>
+            <div class="roi-item">
+              <div class="rv" id="roi-cost">$49/mo</div>
+              <div class="rl">Tool cost</div>
+            </div>
+            <div class="roi-item">
+              <div class="rv" id="roi-return">6,839%</div>
+              <div class="rl">ROI</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="example-output">
+      <div class="example-output-header">
+        <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+        <h4>Example Output</h4>
+        <span style="font-size:12px;color:var(--ink3);" id="detail-tag">Generated in 18 seconds</span>
+      </div>
+      <div class="example-output-body" id="detail-example"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 4 — SETUP WIZARD
+══════════════════════════════════════════ -->
+<div id="screen-setup" class="screen">
+  <div class="setup-wrap">
+    <div class="setup-progress" id="setup-progress">
+      <div class="progress-bar" id="pb-1"></div>
+      <div class="progress-bar" id="pb-2"></div>
+      <div class="progress-bar" id="pb-3"></div>
+      <div class="progress-bar" id="pb-4"></div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="setup-step active" id="setup-step-1">
+      <div class="setup-step-num">Step 1 of 4</div>
+      <h2>About your business</h2>
+      <p class="sub">This helps us personalise your tools with your branding and details.</p>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Business Name</label>
+          <input type="text" placeholder="e.g. Blue Haven Pools">
+        </div>
+        <div class="form-field">
+          <label>ABN</label>
+          <input type="text" placeholder="12 345 678 901">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>City / Suburb</label>
+          <input type="text" placeholder="e.g. Brisbane, QLD">
+        </div>
+        <div class="form-field">
+          <label>Phone</label>
+          <input type="text" placeholder="04XX XXX XXX">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Business Email</label>
+        <input type="email" placeholder="you@yourbusiness.com.au">
+      </div>
+      <div class="setup-actions">
+        <button class="btn btn-ghost" onclick="goScreen('dashboard')">← Back</button>
+        <button class="btn btn-primary" onclick="setupNext(1)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="setup-step" id="setup-step-2">
+      <div class="setup-step-num">Step 2 of 4</div>
+      <h2>How do you currently quote?</h2>
+      <p class="sub">We'll configure the quote generator to match how you work.</p>
+      <div class="form-field">
+        <label>Average number of quotes per month</label>
+        <div class="option-cards">
+          <div class="option-card" onclick="selectOption(this, 'quotes')">
+            <div class="option-radio"></div>
+            <div>
+              <div class="option-label">1–5 quotes</div>
+              <div class="option-sub">Mostly large, complex projects</div>
+            </div>
+          </div>
+          <div class="option-card selected" onclick="selectOption(this, 'quotes')">
+            <div class="option-radio"></div>
+            <div>
+              <div class="option-label">6–15 quotes</div>
+              <div class="option-sub">Mix of residential and commercial</div>
+            </div>
+          </div>
+          <div class="option-card" onclick="selectOption(this, 'quotes')">
+            <div class="option-radio"></div>
+            <div>
+              <div class="option-label">15+ quotes</div>
+              <div class="option-sub">High volume, mostly residential</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-field" style="margin-top:24px;">
+        <label>How long does an average quote take you?</label>
+        <select>
+          <option>Less than 1 hour</option>
+          <option selected>1–3 hours</option>
+          <option>3–5 hours</option>
+          <option>Half a day or more</option>
+        </select>
+      </div>
+      <div class="setup-actions">
+        <button class="btn btn-ghost" onclick="setupBack(2)">← Back</button>
+        <button class="btn btn-primary" onclick="setupNext(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="setup-step" id="setup-step-3">
+      <div class="setup-step-num">Step 3 of 4</div>
+      <h2>Pricing & payment terms</h2>
+      <p class="sub">Your quotes will automatically include these defaults. You can always override them.</p>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Standard deposit %</label>
+          <input type="text" value="30" placeholder="e.g. 30">
+        </div>
+        <div class="form-field">
+          <label>Progress payment %</label>
+          <input type="text" value="40" placeholder="e.g. 40">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Quote validity (days)</label>
+          <input type="text" value="30" placeholder="e.g. 30">
+        </div>
+        <div class="form-field">
+          <label>Standard warranty (months)</label>
+          <input type="text" value="12" placeholder="e.g. 12">
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Labour rate (per hour, ex GST)</label>
+        <input type="text" value="95" placeholder="e.g. 95">
+      </div>
+      <div class="form-field">
+        <label>Standard margin %</label>
+        <select>
+          <option>15%</option>
+          <option selected>20%</option>
+          <option>25%</option>
+          <option>30%</option>
+          <option>Custom</option>
+        </select>
+      </div>
+      <div class="setup-actions">
+        <button class="btn btn-ghost" onclick="setupBack(3)">← Back</button>
+        <button class="btn btn-primary" onclick="setupNext(3)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="setup-step" id="setup-step-4">
+      <div class="setup-step-num">Step 4 of 4</div>
+      <h2>Choose your plan</h2>
+      <p class="sub">Start with what you need. Upgrade or add tools anytime.</p>
+      <div class="option-cards">
+        <div class="option-card" onclick="selectOption(this, 'plan')">
+          <div class="option-radio"></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="option-label">Starter</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;">$99<span style="font-size:12px;font-weight:400;color:var(--ink3)">/mo</span></div>
+            </div>
+            <div class="option-sub">Up to 3 tools · Email support · 100 AI uses/month</div>
+          </div>
+        </div>
+        <div class="option-card selected" onclick="selectOption(this, 'plan')">
+          <div class="option-radio"></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="option-label">Growth <span style="background:var(--accent);color:white;font-size:10px;padding:2px 6px;border-radius:4px;margin-left:6px;">Popular</span></div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;">$249<span style="font-size:12px;font-weight:400;color:var(--ink3)">/mo</span></div>
+            </div>
+            <div class="option-sub">Up to 8 tools · Priority support · 500 AI uses/month · Monthly check-in call</div>
+          </div>
+        </div>
+        <div class="option-card" onclick="selectOption(this, 'plan')">
+          <div class="option-radio"></div>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div class="option-label">Complete</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;">$449<span style="font-size:12px;font-weight:400;color:var(--ink3)">/mo</span></div>
+            </div>
+            <div class="option-sub">All tools · Dedicated support · Unlimited uses · Custom integrations</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--green-light);border-radius:8px;padding:12px 16px;margin-top:16px;font-size:13px;color:var(--green);font-weight:500;">
+        ✓ 14-day free trial · No credit card required · Cancel anytime
+      </div>
+      <div class="setup-actions">
+        <button class="btn btn-ghost" onclick="setupBack(4)">← Back</button>
+        <button class="btn btn-primary btn-lg" onclick="goScreen('success')">Start Free Trial →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 5 — SUCCESS / MY TOOLS
+══════════════════════════════════════════ -->
+<div id="screen-success" class="screen">
+  <div class="success-wrap">
+    <div class="success-header">
+      <div class="success-badge">✓</div>
+      <h2>You're all set, let's go! 🎉</h2>
+      <p>Your AI tools are configured and ready. Here's your dashboard.</p>
+    </div>
+
+    <div class="my-tools-grid" id="my-tools-grid"></div>
+
+    <div class="impact-summary">
+      <div class="is-item">
+        <div class="is-val" id="success-hours">0</div>
+        <div class="is-label">Hrs saved / month</div>
+      </div>
+      <div class="is-item">
+        <div class="is-val" id="success-value">$0</div>
+        <div class="is-label">Monthly value</div>
+      </div>
+      <div class="is-item">
+        <div class="is-val" id="success-tools">0</div>
+        <div class="is-label">Active tools</div>
+      </div>
+      <div class="is-item">
+        <div class="is-val">14</div>
+        <div class="is-label">Days free trial</div>
+      </div>
+    </div>
+
+    <div class="next-tools" id="next-tools-panel">
+      <h3>💡 Recommended next tools</h3>
+      <div id="next-tools-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     TOOL DETAIL MODAL (demo view)
+══════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    <h3 id="modal-title">Quote Generator</h3>
+    <p class="msub" id="modal-sub">See a real example for your industry</p>
+    <div class="modal-demo" id="modal-demo"></div>
+    <button class="btn btn-primary" style="width:100%" onclick="activateFromModal()">Activate This Tool</button>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+
+const INDUSTRIES = {
+  pool: {
+    name: "Pool Building",
+    tools: "15 tools",
+    totalHours: 68,
+    totalValue: 5780,
+  },
+  hvac: {
+    name: "HVAC & Refrigeration",
+    tools: "14 tools",
+    totalHours: 55,
+    totalValue: 4675,
+  },
+  electrical: {
+    name: "Electrical Contracting",
+    tools: "13 tools",
+    totalHours: 48,
+    totalValue: 4080,
+  },
+  fabrication: {
+    name: "Metal Fabrication",
+    tools: "16 tools",
+    totalHours: 72,
+    totalValue: 6120,
+  },
+  plumbing: { name: "Plumbing", tools: "12 tools", totalHours: 44, totalValue: 3740 },
+  construction: { name: "Construction", tools: "18 tools", totalHours: 90, totalValue: 7650 },
+  landscaping: { name: "Landscaping", tools: "11 tools", totalHours: 36, totalValue: 3060 },
+  cleaning: { name: "Commercial Cleaning", tools: "10 tools", totalHours: 28, totalValue: 2380 },
+};
+
+const TOOLS_BY_INDUSTRY = {
+  pool: [
+    {
+      id: "quote-gen",
+      cat: "Sales & Quotes",
+      icon: "📋",
+      badge: "quick",
+      badgeLabel: "⚡ Quick Win",
+      title: "Quote Generator",
+      desc: "Turn 3-hour quoting sessions into 10-minute tasks. Generate detailed, professional quotes with GST, payment schedules and warranty terms.",
+      hours: 14,
+      value: 1190,
+      price: 49,
+      roiLabel1: "Quotes per month",
+      roiLabel2: "Hours per quote",
+      roiDefault1: 12,
+      roiDefault2: 3.5,
+      benefits: [
+        "Generates itemised quote with materials, labour & GST",
+        "Includes payment schedule and warranty terms",
+        "Branded with your logo and contact details",
+        "Saves as PDF — ready to email in seconds",
+      ],
+      example: `PROJECT QUOTE — Blue Haven Pools
+────────────────────────────────────
+To: Sarah & David Thompson
+Project: In-ground concrete pool — 8m × 4m
+Date: 16 Feb 2026  |  Quote #BHP-2026-0142
+Valid Until: 18 March 2026
+
+SCOPE OF WORKS
+• Excavation and site preparation
+• Concrete shell construction (200mm reinforced)
+• Waterproofing and tiling (250×250 Porcelain)
+• Coping — Travertine natural stone
+• Pool equipment: Zodiac pump, sand filter, 
+  salt chlorinator, LED lighting
+• Fencing compliant to AS 1926.1
+
+COST BREAKDOWN
+Excavation & earthworks          $6,800
+Concrete shell                   $14,200
+Waterproofing                     $3,100
+Tiling & coping                   $8,400
+Equipment package                 $5,900
+Fencing                           $4,200
+Landscaping reinstatement         $2,800
+──────────────────────────────────
+Subtotal (ex GST)                $45,400
+GST (10%)                         $4,540
+TOTAL                            $49,940
+
+PAYMENT SCHEDULE
+Deposit (30%)      $14,982  — on acceptance
+Progress (40%)     $19,976  — on shell completion
+Final (30%)        $14,982  — on handover
+
+TIMELINE: 8–10 weeks from permit approval
+WARRANTY: 7 years structural, 2 years equipment`,
+    },
+    {
+      id: "lead-bot",
+      cat: "Sales & Quotes",
+      icon: "💬",
+      badge: "quick",
+      badgeLabel: "⚡ Quick Win",
+      title: "Lead Response Bot",
+      desc: "Respond to every website inquiry in under 2 minutes, 24/7. Qualify leads, book consultations, and stop losing jobs to faster competitors.",
+      hours: 10,
+      value: 850,
+      price: 79,
+      roiLabel1: "Inquiries per month",
+      roiLabel2: "Hours spent responding",
+      roiDefault1: 25,
+      roiDefault2: 0.5,
+      benefits: [
+        "Responds within 2 minutes, day or night",
+        "Asks qualifying questions (budget, timeline, type)",
+        "Books consultation calls automatically",
+        "Notifies you of hot leads immediately",
+      ],
+      example: `LEAD BOT RESPONSE — Sent 11:47 PM
+
+Hi James,
+
+Thanks for reaching out to Blue Haven Pools! 
+We'd love to help bring your backyard vision to life. 🏊
+
+To give you the most accurate quote, I have a couple of quick questions:
+
+1. What type of pool are you considering?
+   → Concrete in-ground (our most popular)
+   → Fibreglass
+   → Plunge/lap pool
+   → Not sure yet
+
+2. What's your rough budget range?
+   → Under $40k
+   → $40k–$70k  
+   → $70k–$100k
+   → $100k+
+
+3. Are you based in the greater Brisbane area?
+
+In the meantime, check out some of our recent builds:
+📸 bluehavenpools.com.au/gallery
+
+We typically book free consultations within 3 days.
+Want me to check availability for you?
+
+— Blue Haven Pools AI Assistant
+  (Our team will follow up tomorrow morning)`,
+    },
+    {
+      id: "customer-updates",
+      cat: "Customer Communication",
+      icon: "📲",
+      badge: "quick",
+      badgeLabel: "⚡ Quick Win",
+      title: "Customer Progress Updates",
+      desc: "Automatically send weekly progress updates with photos to every active customer. Eliminate 'where are you up to?' calls forever.",
+      hours: 8,
+      value: 680,
+      price: 49,
+      roiLabel1: "Active projects",
+      roiLabel2: "Mins per update currently",
+      roiDefault1: 10,
+      roiDefault2: 20,
+      benefits: [
+        "Weekly emails with progress photos automatically sent",
+        "Pre-emptive weather delay notifications",
+        "Milestone celebrations build excitement",
+        "Reduces customer calls by up to 80%",
+      ],
+      example: `WEEKLY UPDATE — Blue Haven Pools
+
+Subject: 🏊 Week 4 Update — Your Pool is Taking Shape!
+
+Hi Sarah & David,
+
+What a week! Here's everything that happened at 
+42 Wattle Street this week:
+
+✅ COMPLETED THIS WEEK
+• Concrete shell fully formed and cured (looking amazing!)
+• Waterproofing membrane applied and inspected  
+• Steel reinforcement for coping area installed
+
+📸 [Photo: Shell from rear yard]
+📸 [Photo: Waterproofing close-up]
+📸 [Photo: Site overview]
+
+🔜 NEXT WEEK
+• Tiling begins Monday (you chose the Driftwood Grey — 
+  great choice, it'll look stunning)
+• Coping stone delivery expected Wednesday
+• Equipment pad construction starts Thursday
+
+📅 UPDATED TIMELINE
+You're on track for a late March handover — just 4 weeks away!
+
+🌧️ WEATHER NOTE
+Some rain forecast Wednesday. If it delays tiling, 
+we'll update you Thursday morning.
+
+Any questions? Reply to this email or call 
+Mark directly on 0412 XXX XXX.
+
+Can't wait to show you the finished product!
+— The Blue Haven Team`,
+    },
+    {
+      id: "smart-scheduling",
+      cat: "Project Management",
+      icon: "📅",
+      badge: "popular",
+      badgeLabel: "🔥 Popular",
+      title: "Smart Job Scheduling",
+      desc: "AI optimises your crew schedule around weather, equipment availability, and dependencies. Stop the chaos of last-minute changes.",
+      hours: 12,
+      value: 1020,
+      price: 129,
+      roiLabel1: "Active jobs at once",
+      roiLabel2: "Hours/week on scheduling",
+      roiDefault1: 8,
+      roiDefault2: 6,
+      benefits: [
+        "Optimises schedule around weather forecasts automatically",
+        "Coordinates subcontractor timing (tiler, sparky, plumber)",
+        "Sends automated crew notifications",
+        "Predicts completion date based on pace",
+      ],
+      example: `SMART SCHEDULE — Week of 17 Feb 2026
+Blue Haven Pools — 6 Active Jobs
+
+MONDAY 17 FEB
+🌤 Fine, 24°C
+  07:00 — CREW A: Thompson job (42 Wattle St)
+          → Tiling Day 1 [Tile delivery confirmed ✓]
+  07:00 — CREW B: Rodriguez job (8 Palm Ave)  
+          → Excavation [Ground conditions: Good]
+  Note: Avoid Anderson job — awaiting council permit
+
+TUESDAY 18 FEB
+🌤 Fine, 26°C  
+  07:00 — CREW A: Thompson job → Tiling Day 2
+  07:00 — CREW B: Rodriguez job → Excavation Day 2
+  14:00 — Subcontractor: Jim's Electrical at 
+           Williams job (shell wiring)
+
+WEDNESDAY 19 FEB
+🌧 Rain forecast — 12mm
+  ⚠️  SCHEDULING CHANGE: Moved Chen excavation 
+      to Friday (wet ground risk)
+  07:00 — CREW A: Thompson job → Coping install
+          (indoor/protected work — proceeds)
+  07:00 — CREW B: Williams job → Equipment room
+          (sheltered — proceeds)
+  → Notified Chen family at 7:15am ✓
+
+UPCOMING RISKS
+⚠️  Steel delivery for Rodriguez delayed to Fri
+    → Pushed shell pour to Monday 24 Feb
+    → Customer notified ✓
+    → No impact on overall timeline`,
+    },
+    {
+      id: "design-viz",
+      cat: "Sales & Quotes",
+      icon: "🎨",
+      badge: "advanced",
+      badgeLabel: "✨ Advanced",
+      title: "Design Visualiser",
+      desc: "Upload a photo of the customer's backyard and show them exactly what their pool will look like. Close more sales with less selling.",
+      hours: 6,
+      value: 510,
+      price: 99,
+      roiLabel1: "Quotes sent per month",
+      roiLabel2: "Current close rate %",
+      roiDefault1: 12,
+      roiDefault2: 35,
+      benefits: [
+        "Upload backyard photo → AI renders pool in place",
+        "Try different shapes, tiles, and features in seconds",
+        "Show 3 options side-by-side for customer choice",
+        "Dramatically increases quote-to-sale conversion",
+      ],
+      example: `DESIGN VISUALISATION REPORT
+Generated for: Thompson Residence, 42 Wattle St
+
+OPTION A — Classic Rectangle
+Pool: 8m × 4m concrete in-ground
+Tile: Driftwood Grey 250×250
+Coping: Travertine natural stone
+Features: LED lighting, water feature
+Estimated cost: $49,940
+
+OPTION B — L-Shape Design  
+Pool: 9m × 5m with sun shelf
+Tile: Ocean Blue glass mosaic
+Coping: Brushed concrete
+Features: Swim-up bar, LED + heating
+Estimated cost: $68,500
+
+OPTION C — Plunge + Spa
+Pool: 5m × 3m lap + 2m spa
+Tile: White marble effect
+Coping: Sandstone
+Features: Spa jets, heating, automation
+Estimated cost: $54,200
+
+[3 photorealistic renders attached]
+
+RECOMMENDED: Option A
+Based on yard dimensions (10m × 14m),
+existing landscaping, and stated budget,
+Option A provides the best fit and value.
+
+Next step: Book site visit to confirm 
+soil conditions and setback requirements.`,
+    },
+    {
+      id: "swms",
+      cat: "Documents & Admin",
+      icon: "📄",
+      badge: "popular",
+      badgeLabel: "🔥 Popular",
+      title: "SWMS & Safety Docs",
+      desc: "Generate compliant Safe Work Method Statements and safety documentation for every job in minutes, not hours.",
+      hours: 5,
+      value: 425,
+      price: 49,
+      roiLabel1: "Jobs per month",
+      roiLabel2: "Hours on safety docs",
+      roiDefault1: 8,
+      roiDefault2: 1.5,
+      benefits: [
+        "SWMS for excavation, height work, electrical — auto-generated",
+        "Compliant with SafeWork Australia requirements",
+        "Customised to each specific job address and scope",
+        "Digital sign-off by crew members",
+      ],
+      example: `SAFE WORK METHOD STATEMENT
+Blue Haven Pools | Job #BHP-2026-0142
+
+Work Activity: Pool Excavation
+Location: 42 Wattle Street, Kenmore QLD 4069
+Date: 17 February 2026
+Supervisor: Mark Chen
+
+HIGH RISK ACTIVITIES IDENTIFIED
+☑ Excavation deeper than 1.5 metres
+☑ Operation of plant and equipment
+☑ Proximity to underground services
+
+STEP 1: DIAL BEFORE YOU DIG
+Hazard: Underground services (gas, water, electrical)
+Risk Level: HIGH
+Controls:
+• Obtain Dial Before You Dig report (ref: 2026-BHQ-4421)
+• Hand dig first 500mm in all areas
+• Locate and mark all services with spray paint
+• Keep 500mm clearance from any marked service
+PPE: Safety boots, hi-vis, hard hat, gloves
+
+STEP 2: EXCAVATION
+Hazard: Excavation collapse, plant collision
+Risk Level: HIGH  
+Controls:
+• Excavator operator holds current VOC
+• Spotter required at all times during dig
+• No personnel within swing radius
+• Install trench shields if depth exceeds 1.5m
+• Daily inspection by supervisor
+PPE: Safety boots, hi-vis, hard hat
+
+[Continues for 8 work steps...]
+
+SIGNATURES REQUIRED BEFORE WORK COMMENCES:
+Supervisor: _____________ Date: _______
+Worker 1: ______________ Date: _______
+Worker 2: ______________ Date: _______`,
+    },
+    {
+      id: "invoice-auto",
+      cat: "Financial Management",
+      icon: "💰",
+      badge: "popular",
+      badgeLabel: "🔥 Popular",
+      title: "Invoice Automation",
+      desc: "Automatically generate and send progress invoices based on job milestones. Get paid faster with less admin chasing.",
+      hours: 5,
+      value: 425,
+      price: 49,
+      roiLabel1: "Invoices per month",
+      roiLabel2: "Hours on invoicing",
+      roiDefault1: 20,
+      roiDefault2: 0.75,
+      benefits: [
+        "Auto-generates invoices when milestones are marked complete",
+        "Sends invoice + payment link to customer automatically",
+        "Follows up overdue invoices without you lifting a finger",
+        "Syncs with Xero and MYOB",
+      ],
+      example: `TAX INVOICE — Blue Haven Pools
+ABN: 45 123 456 789
+
+Invoice #: INV-2026-0891
+Date: 14 February 2026
+Due Date: 28 February 2026
+
+To: Sarah & David Thompson
+    42 Wattle Street, Kenmore QLD 4069
+
+PROGRESS CLAIM #2 — Shell Completion
+
+Description                         Amount
+─────────────────────────────────────────
+Pool project BHP-2026-0142
+Progress payment — Shell complete
+(40% of contract value)
+
+Contract value (ex GST)           $45,400
+This claim (40%)                  $18,160
+GST (10%)                          $1,816
+────────────────────────────────────────
+AMOUNT DUE                        $19,976
+
+Bank Transfer:
+BSB: 064-000  Account: 1234 5678
+Reference: INV-2026-0891
+
+Or pay by card:
+[Pay Now — bluehavenpools.com.au/pay]
+
+Questions? Call 07 3XXX XXXX
+
+Thank you for your business!
+
+──────────────────────────────────
+AUTOMATED REMINDER SCHEDULE:
+• Due date reminder: 25 Feb (3 days prior)
+• Overdue reminder: 1 Mar (+1 day)  
+• Second reminder: 7 Mar (+7 days)`,
+    },
+    {
+      id: "review-booster",
+      cat: "Marketing",
+      icon: "⭐",
+      badge: "quick",
+      badgeLabel: "⚡ Quick Win",
+      title: "Review & Referral Booster",
+      desc: "Automatically ask happy customers for Google reviews at the perfect moment. Double your reviews without any manual effort.",
+      hours: 3,
+      value: 255,
+      price: 29,
+      roiLabel1: "Jobs completed / month",
+      roiLabel2: "Current reviews / month",
+      roiDefault1: 6,
+      roiDefault2: 1,
+      benefits: [
+        "Sends review request at handover — highest response rate",
+        "Personalised message using customer's name and project",
+        "One-click link direct to your Google listing",
+        "Follows up once if no response in 5 days",
+      ],
+      example: `REVIEW REQUEST — Sent Day of Handover
+
+Hi Sarah & David,
+
+Your pool looks absolutely stunning! 🏊‍♀️
+
+After 9 weeks of work, seeing you both jump in 
+for the first time today made it all worthwhile.
+
+We'd love to hear about your experience with 
+Blue Haven Pools.
+
+If you have 2 minutes, a Google review would 
+mean the world to our small family business 
+and helps other homeowners find us:
+
+⭐ [Leave a Review on Google]
+→ g.page/bluehavenpools/review
+
+Even just a sentence or two makes a huge 
+difference.
+
+Thanks again for trusting us with your 
+backyard — enjoy every single swim!
+
+Mark & the Blue Haven Team 🌊
+
+P.S. Know anyone thinking about a pool? 
+We're offering a $500 referral bonus this summer.`,
+    },
+    {
+      id: "handover-docs",
+      cat: "Documents & Admin",
+      icon: "📦",
+      badge: "popular",
+      badgeLabel: "🔥 Popular",
+      title: "Handover Documentation",
+      desc: "Generate a complete handover pack for every customer — maintenance guides, warranty docs, chemical schedules and operation manuals.",
+      hours: 4,
+      value: 340,
+      price: 29,
+      roiLabel1: "Jobs completed / month",
+      roiLabel2: "Hours on handover docs",
+      roiDefault1: 6,
+      roiDefault2: 1.5,
+      benefits: [
+        "Branded handover booklet specific to their pool equipment",
+        "Seasonal maintenance calendar generated automatically",
+        "Chemical dosing schedule based on pool volume",
+        "Warranty registration handled automatically",
+      ],
+      example: `POOL HANDOVER GUIDE
+Blue Haven Pools — Prepared for Sarah & David Thompson
+42 Wattle Street, Kenmore
+
+YOUR POOL DETAILS
+Type: Concrete in-ground
+Dimensions: 8m × 4m (32,000 litres)
+Equipment: Zodiac TX35 pump, Waterco S602 filter,
+           Zodiac LM3-24 chlorinator, Astral LED lights
+Handover Date: 14 February 2026
+
+WEEKLY MAINTENANCE (10 mins)
+□ Check chlorine: Target 2–4 ppm
+  → Low? Run chlorinator longer or add 500g granules
+□ Check pH: Target 7.2–7.6
+  → High? Add pH Minus (150g per 10,000L)
+  → Low? Add pH Plus (150g per 10,000L)
+□ Empty skimmer basket
+□ Brush walls and vacuum floor
+□ Check water level (should cover skimmer box)
+
+MONTHLY (30 mins)
+□ Backwash filter until water runs clear (~3 mins)
+□ Check salt level: Target 3,000–4,500 ppm
+  → Add 20kg salt per 1,000 ppm increase needed
+□ Clean chlorinator cell with diluted acid
+
+SEASONAL
+Summer: Check chemicals every 3–4 days
+Winter: Reduce chlorinator to 20%, check monthly
+
+CHEMICAL STORAGE
+Store all chemicals in cool, dry, ventilated area.
+NEVER mix chemicals. Keep away from children.
+
+WARRANTIES
+Structure: 7 years (ref: BH-2026-0142-STR)
+Equipment: Zodiac 2 years (register at zodiac.com.au)
+Tiling: 2 years workmanship
+
+EMERGENCY CONTACTS
+Blue Haven: 07 3XXX XXXX (24hr)
+Zodiac Service: 1300 XXX XXX`,
+    },
+  ],
+};
+
+// Generate generic tools for other industries
+Object.keys(INDUSTRIES).forEach(ind => {
+  if (!TOOLS_BY_INDUSTRY[ind]) {
+    TOOLS_BY_INDUSTRY[ind] = TOOLS_BY_INDUSTRY.pool.map(t => ({
+      ...t,
+      desc: t.desc.replace(/pool|Pool|swimming/gi, INDUSTRIES[ind].name.split(' ')[0]),
+    }));
+  }
+});
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let currentIndustry = null;
+let activatedTools = new Set();
+let currentTool = null;
+let currentCategory = 'All';
+let currentSetupStep = 1;
+
+// ══════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════
+function goScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  window.scrollTo(0, 0);
+  updateNavSteps(name);
+}
+
+function updateNavSteps(screen) {
+  const stepMap = { landing: 1, dashboard: 2, detail: 2, setup: 3, success: 4 };
+  const current = stepMap[screen] || 1;
+  for (let i = 1; i <= 4; i++) {
+    const el = document.getElementById('step-' + i);
+    el.classList.remove('active', 'done');
+    if (i === current) el.classList.add('active');
+    else if (i < current) el.classList.add('done');
+  }
+}
+
+// ══════════════════════════════════════════
+// INDUSTRY SELECTION
+// ══════════════════════════════════════════
+function selectIndustry(id) {
+  currentIndustry = id;
+  activatedTools = new Set();
+
+  document.querySelectorAll('.industry-card').forEach(c => c.classList.remove('selected'));
+  event.currentTarget.classList.add('selected');
+
+  renderDashboard();
+  goScreen('dashboard');
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDashboard() {
+  const ind = INDUSTRIES[currentIndustry];
+  const tools = TOOLS_BY_INDUSTRY[currentIndustry];
+
+  document.getElementById('dash-title').textContent = `AI Opportunities for ${ind.name}`;
+  document.getElementById('dash-sub').textContent = `${ind.tools} ready to explore — most businesses start with 3`;
+
+  updateImpactBar();
+  renderCategories(tools);
+  renderTools(tools, currentCategory);
+}
+
+function updateImpactBar() {
+  const tools = TOOLS_BY_INDUSTRY[currentIndustry];
+  let totalHours = 0, totalValue = 0, totalCost = 0;
+
+  activatedTools.forEach(id => {
+    const t = tools.find(x => x.id === id);
+    if (t) { totalHours += t.hours; totalValue += t.value; totalCost += t.price; }
+  });
+
+  document.getElementById('stat-hours').textContent = totalHours + ' hrs';
+  document.getElementById('stat-value').textContent = '$' + totalValue.toLocaleString();
+  document.getElementById('stat-activated').textContent = activatedTools.size;
+  document.getElementById('stat-cost').textContent = '$' + totalCost + '/mo';
+
+  const showBtn = activatedTools.size > 0;
+  document.getElementById('view-my-tools-btn').style.display = showBtn ? 'inline-flex' : 'none';
+}
+
+function renderCategories(tools) {
+  const cats = ['All', ...new Set(tools.map(t => t.cat))];
+  const nav = document.getElementById('categories-nav');
+  nav.innerHTML = cats.map(c => `
+    <button class="cat-btn ${c === currentCategory ? 'active' : ''}" onclick="filterCat('${c}')">${c}</button>
+  `).join('');
+}
+
+function filterCat(cat) {
+  currentCategory = cat;
+  const tools = TOOLS_BY_INDUSTRY[currentIndustry];
+  document.querySelectorAll('.cat-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === cat);
+  });
+  renderTools(tools, cat);
+}
+
+function renderTools(tools, cat) {
+  const filtered = cat === 'All' ? tools : tools.filter(t => t.cat === cat);
+  const grid = document.getElementById('tools-grid');
+  grid.innerHTML = filtered.map(tool => {
+    const isActivated = activatedTools.has(tool.id);
+    return `
+    <div class="tool-card ${isActivated ? 'activated' : ''}" id="card-${tool.id}">
+      <div class="tool-top">
+        <div class="tool-icon">${tool.icon}</div>
+        <span class="tool-badge badge-${tool.badge}">${tool.badgeLabel}</span>
+      </div>
+      <h3>${tool.title}</h3>
+      <p>${tool.desc}</p>
+      <div class="tool-metrics">
+        <div class="metric">
+          <div class="mval">${tool.hours} hrs</div>
+          <div class="mlabel">Saved / month</div>
+        </div>
+        <div class="metric">
+          <div class="mval">$${tool.value.toLocaleString()}</div>
+          <div class="mlabel">Monthly value</div>
+        </div>
+        <div class="metric">
+          <div class="mval">$${tool.price}/mo</div>
+          <div class="mlabel">Cost</div>
+        </div>
+      </div>
+      <div class="tool-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openDemo('${tool.id}')">▶ See Demo</button>
+        ${isActivated
+          ? `<span class="activated-label">✓ Activated</span>`
+          : `<button class="btn btn-primary btn-sm" onclick="activateTool('${tool.id}')">Activate</button>`
+        }
+      </div>
+    </div>
+  `}).join('');
+}
+
+function activateTool(id) {
+  activatedTools.add(id);
+  updateImpactBar();
+  renderTools(TOOLS_BY_INDUSTRY[currentIndustry], currentCategory);
+}
+
+// ══════════════════════════════════════════
+// TOOL DETAIL
+// ══════════════════════════════════════════
+function openDetail(id) {
+  currentTool = TOOLS_BY_INDUSTRY[currentIndustry].find(t => t.id === id);
+  if (!currentTool) return;
+
+  document.getElementById('detail-title').textContent = currentTool.title;
+  document.getElementById('detail-desc').textContent = currentTool.desc;
+  document.getElementById('detail-tag').textContent = `Generated in ${Math.floor(Math.random()*20+10)} seconds`;
+
+  const benefits = document.getElementById('detail-benefits');
+  benefits.innerHTML = currentTool.benefits.map(b => `
+    <li><span class="check-icon">✓</span><span>${b}</span></li>
+  `).join('');
+
+  document.getElementById('detail-activate-btn').style.display = activatedTools.has(id) ? 'none' : 'inline-flex';
+  document.getElementById('detail-activated-label').style.display = activatedTools.has(id) ? 'inline-flex' : 'none';
+
+  document.getElementById('detail-example').textContent = currentTool.example;
+
+  // Set ROI defaults
+  document.getElementById('roi-label-1').textContent = currentTool.roiLabel1;
+  document.getElementById('roi-label-2').textContent = currentTool.roiLabel2;
+  document.getElementById('roi-range-1').value = currentTool.roiDefault1;
+  document.getElementById('roi-range-2').value = currentTool.roiDefault2;
+  document.getElementById('roi-cost').textContent = '$' + currentTool.price + '/mo';
+  updateROI();
+
+  goScreen('detail');
+}
+
+function activateFromDetail() {
+  if (!currentTool) return;
+  activatedTools.add(currentTool.id);
+  document.getElementById('detail-activate-btn').style.display = 'none';
+  document.getElementById('detail-activated-label').style.display = 'inline-flex';
+  updateImpactBar();
+}
+
+function updateROI() {
+  if (!currentTool) return;
+  const qty = parseFloat(document.getElementById('roi-range-1').value);
+  const hrs = parseFloat(document.getElementById('roi-range-2').value);
+  const rate = parseFloat(document.getElementById('roi-range-3').value);
+  const newHrs = qty * hrs * 0.85; // assumes 85% reduction
+  const value = Math.round(newHrs * rate);
+  const roi = Math.round(((value - currentTool.price) / currentTool.price) * 100);
+
+  document.getElementById('roi-val-1').textContent = qty;
+  document.getElementById('roi-val-2').textContent = hrs + ' hrs';
+  document.getElementById('roi-val-3').textContent = '$' + rate + '/hr';
+  document.getElementById('roi-time-saved').textContent = Math.round(newHrs) + ' hrs';
+  document.getElementById('roi-value').textContent = '$' + value.toLocaleString();
+  document.getElementById('roi-return').textContent = roi.toLocaleString() + '%';
+}
+
+// ══════════════════════════════════════════
+// DEMO MODAL
+// ══════════════════════════════════════════
+function openDemo(id) {
+  const tool = TOOLS_BY_INDUSTRY[currentIndustry].find(t => t.id === id);
+  if (!tool) return;
+  currentTool = tool;
+
+  document.getElementById('modal-title').textContent = tool.title;
+  document.getElementById('modal-sub').textContent = 'Real example for ' + INDUSTRIES[currentIndustry].name;
+  document.getElementById('modal-demo').textContent = tool.example;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModalDirect();
+}
+
+function closeModalDirect() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function activateFromModal() {
+  if (currentTool) activateTool(currentTool.id);
+  closeModalDirect();
+}
+
+// ══════════════════════════════════════════
+// SETUP WIZARD
+// ══════════════════════════════════════════
+function setupNext(step) {
+  document.getElementById('setup-step-' + step).classList.remove('active');
+  document.getElementById('setup-step-' + (step + 1)).classList.add('active');
+  document.getElementById('pb-' + step).classList.add('done');
+  currentSetupStep = step + 1;
+}
+
+function setupBack(step) {
+  document.getElementById('setup-step-' + step).classList.remove('active');
+  document.getElementById('setup-step-' + (step - 1)).classList.add('active');
+  document.getElementById('pb-' + (step - 1)).classList.remove('done');
+  currentSetupStep = step - 1;
+}
+
+function selectOption(el, group) {
+  el.closest('.option-cards').querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+// ══════════════════════════════════════════
+// SUCCESS SCREEN
+// ══════════════════════════════════════════
+function renderSuccess() {
+  const tools = TOOLS_BY_INDUSTRY[currentIndustry];
+  const activated = tools.filter(t => activatedTools.has(t.id));
+
+  let totalHours = 0, totalValue = 0;
+  activated.forEach(t => { totalHours += t.hours; totalValue += t.value; });
+
+  document.getElementById('success-hours').textContent = totalHours;
+  document.getElementById('success-value').textContent = '$' + totalValue.toLocaleString();
+  document.getElementById('success-tools').textContent = activated.length;
+
+  const grid = document.getElementById('my-tools-grid');
+  grid.innerHTML = activated.map(t => `
+    <div class="my-tool-card">
+      <div class="my-tool-header">
+        <div class="my-tool-icon">${t.icon}</div>
+        <div>
+          <h4>${t.title}</h4>
+          <div style="font-size:12px;color:var(--ink3);">Active · $${t.price}/mo</div>
+        </div>
+        <div class="active-dot"></div>
+      </div>
+      <div class="stat-row">
+        <div class="stat-box">
+          <div class="sv">${t.hours} hrs</div>
+          <div class="sl">Saved / month</div>
+        </div>
+        <div class="stat-box">
+          <div class="sv">$${t.value.toLocaleString()}</div>
+          <div class="sl">Monthly value</div>
+        </div>
+      </div>
+      <button class="use-btn" onclick="openDemo('${t.id}')">Open Tool →</button>
+    </div>
+  `).join('') || '<div style="grid-column:1/-1;text-align:center;color:var(--ink3);padding:40px;">Go back and activate some tools first!</div>';
+
+  // Recommend next tools
+  const notActivated = tools.filter(t => !activatedTools.has(t.id)).slice(0, 3);
+  const nextList = document.getElementById('next-tools-list');
+  nextList.innerHTML = notActivated.map(t => `
+    <div class="next-tool-row">
+      <div class="nticon">${t.icon}</div>
+      <div class="ntinfo">
+        <strong>${t.title}</strong>
+        <span>Saves ${t.hours} hrs/month · $${t.price}/mo</span>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="activateTool('${t.id}');renderSuccess()">Add</button>
+    </div>
+  `).join('');
+
+  document.getElementById('next-tools-panel').style.display = notActivated.length > 0 ? 'block' : 'none';
+}
+
+// Override goScreen to trigger success render
+const _goScreen = goScreen;
+window.goScreen = function(name) {
+  _goScreen(name);
+  if (name === 'success') renderSuccess();
+  if (name === 'setup' && activatedTools.size === 0) {
+    const tools = TOOLS_BY_INDUSTRY[currentIndustry];
+    if (tools) activatedTools.add(tools[0].id);
+  }
+};
+</script>
+</body>
+</html>
