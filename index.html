@@ -706,6 +706,24 @@
       <h3>Commercial Cleaning</h3>
       <p>Smart rostering, quality audits, consumables tracking & reporting</p>
     </div>
+    <div class="industry-card" onclick="selectIndustry('manufacturing')">
+      <span class="industry-icon">🏭</span>
+      <span class="industry-count">16 tools</span>
+      <h3>Manufacturing</h3>
+      <p>Production scheduling, quality control, inventory & compliance</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('concreting')">
+      <span class="industry-icon">🚧</span>
+      <span class="industry-count">15 tools</span>
+      <h3>Concreting</h3>
+      <p>Pour scheduling, mix design, weather planning & compliance certs</p>
+    </div>
+    <div class="industry-card" onclick="selectIndustry('handyman')">
+      <span class="industry-icon">🔨</span>
+      <span class="industry-count">15 tools</span>
+      <h3>Handyman Services</h3>
+      <p>Multi-trade scheduling, quote builder, parts finder & job tracking</p>
+    </div>
   </div>
 </div>
 
@@ -1106,6 +1124,24 @@ const INDUSTRIES = {
     tools: "15 tools", 
     totalHours: 89, 
     totalValue: 7565 
+  },
+  manufacturing: {
+    name: "Manufacturing",
+    tools: "16 tools",
+    totalHours: 98,
+    totalValue: 8330,
+  },
+  concreting: {
+    name: "Concreting",
+    tools: "15 tools",
+    totalHours: 87,
+    totalValue: 7395,
+  },
+  handyman: {
+    name: "Handyman Services",
+    tools: "15 tools",
+    totalHours: 85,
+    totalValue: 7225,
   },
 };
 
@@ -4167,6 +4203,931 @@ Possible causes:
 • Check with site cleaner
 
 Action: Supervisor to investigate`,
+  },
+];
+
+// ══════════════════════════════════════════
+// MANUFACTURING-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.manufacturing = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'manufacturing'),
+  })),
+  {
+    id: "production-scheduler",
+    cat: "Operations",
+    icon: "📊",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Production Scheduler",
+    desc: "AI optimizes production runs, minimizes changeovers, and balances machine capacity. Reduce downtime by 30%.",
+    hours: 15,
+    value: 1275,
+    price: 99,
+    roiLabel1: "Production runs per month",
+    roiLabel2: "Hours on manual scheduling",
+    roiDefault1: 80,
+    roiDefault2: 12,
+    benefits: [
+      "Optimizes job sequence to minimize setup changes",
+      "Balances workload across machines",
+      "Accounts for material availability",
+      "Predicts bottlenecks before they happen",
+      "Reduces changeover time by 40%",
+      "Improves on-time delivery to 95%+",
+    ],
+    example: `PRODUCTION SCHEDULE — Week 17-21 Feb
+Advanced Manufacturing Co.
+
+OPTIMIZED RUN SEQUENCE
+
+MONDAY 17 FEB — CNC Mill #1
+07:00-10:30 | Job #2456 (Aluminium brackets ×500)
+             Setup: 30 min | Run: 3 hrs
+10:30-14:00 | Job #2461 (Aluminium plates ×300)
+             Setup: 15 min (same material ✓)
+14:00-16:00 | Job #2458 (Steel shafts ×100)
+             Setup: 45 min (material change)
+
+AI Optimization: Grouped aluminium jobs together
+→ Saved 30 min setup time vs random sequence
+
+TUESDAY 18 FEB — CNC Mill #1
+07:00-12:00 | Job #2458 continued (Steel shafts)
+12:00-16:00 | Job #2463 (Steel brackets ×200)
+             Setup: 20 min (same material ✓)
+
+──────────────────────────────────
+CAPACITY ANALYSIS
+
+CNC Mill #1: 92% utilized (optimal)
+CNC Mill #2: 78% utilized
+Lathe: 65% utilized (capacity available)
+
+⚠️ BOTTLENECK DETECTED
+Powder coating: 105% capacity Thu-Fri
+Recommendation: Outsource 3 jobs or delay
+→ Auto-contacted external coater
+
+──────────────────────────────────
+MATERIAL REQUIREMENTS
+
+Aluminium 6061 sheet: 45kg needed by Mon AM
+Status: ✓ In stock (68kg available)
+
+Steel bar stock: 12m needed by Tue AM  
+Status: ⚠️ Low stock (8m available)
+Action: Purchase order auto-generated
+
+──────────────────────────────────
+ON-TIME DELIVERY FORECAST
+
+This week: 23 jobs scheduled
+On-time: 22 jobs (96%) ✓
+Delayed: 1 job (material shortage - notified)
+
+Customer notifications sent automatically.`,
+  },
+  {
+    id: "quality-spc",
+    cat: "Documents & Admin",
+    icon: "📈",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Statistical Process Control (SPC)",
+    desc: "Track measurements, detect trends before defects occur, generate control charts. Reduce scrap by 50%.",
+    hours: 8,
+    value: 680,
+    price: 79,
+    roiLabel1: "Parts inspected per month",
+    roiLabel2: "Scrap rate percentage",
+    roiDefault1: 5000,
+    roiDefault2: 4,
+    benefits: [
+      "Real-time control charts (X-bar, R-chart)",
+      "Detects process drift before making bad parts",
+      "Mobile measurement entry from shop floor",
+      "Automatic out-of-control alerts",
+      "ISO 9001 compliant documentation",
+      "Reduces scrap/rework by 40-60%",
+    ],
+    example: `SPC CONTROL CHART ALERT
+Job #2456 — Aluminium Bracket (Hole Diameter)
+
+Specification: 12.00mm ±0.05mm
+Target: 12.00mm
+Upper Control Limit: 12.04mm
+Lower Control Limit: 11.96mm
+
+──────────────────────────────────
+RECENT MEASUREMENTS (Last 20 parts)
+
+Part | Measurement | Status
+-----|-------------|--------
+#481 | 12.01mm     | ✓ OK
+#482 | 12.02mm     | ✓ OK
+#483 | 12.02mm     | ✓ OK
+#484 | 12.03mm     | ⚠️ Trending
+#485 | 12.03mm     | ⚠️ Trending
+#486 | 12.04mm     | ⚠️ AT LIMIT
+#487 | 12.04mm     | ⚠️ AT LIMIT
+
+──────────────────────────────────
+🚨 ALERT: Process Trending Out of Control
+
+Pattern detected: 7 consecutive measurements
+trending upward toward upper control limit.
+
+Likely causes:
+• Tool wear (most common)
+• Machine temperature drift
+• Material batch variation
+
+RECOMMENDED ACTION:
+1. STOP production immediately
+2. Check tool condition/replace if worn
+3. Verify machine calibration
+4. Inspect last 10 parts (#478-487)
+5. Resume only after corrective action
+
+Estimated cost if ignored:
+Next 100 parts likely out-of-spec
+Scrap cost: ~$2,400
+
+──────────────────────────────────
+SUPERVISOR NOTIFIED
+SMS sent to: Mike Chen (Shop Supervisor)
+Email sent to: Quality Manager
+Action logged in quality system`,
+  },
+  {
+    id: "inventory-forecaster",
+    cat: "Financial Management",
+    icon: "📦",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Smart Inventory Forecaster",
+    desc: "AI predicts material needs based on production schedule. Auto-reorders before stockouts, reduces excess inventory.",
+    hours: 10,
+    value: 850,
+    price: 89,
+    roiLabel1: "SKUs managed",
+    roiLabel2: "Stockout incidents/month",
+    roiDefault1: 150,
+    roiDefault2: 8,
+    benefits: [
+      "Predicts material needs 2-4 weeks ahead",
+      "Auto-generates purchase orders",
+      "Optimizes order quantities (EOQ)",
+      "Prevents stockouts (95%+ fill rate)",
+      "Reduces excess inventory by 30%",
+      "Integrates with supplier systems",
+    ],
+    example: `INVENTORY FORECAST — Next 30 Days
+Advanced Manufacturing Co.
+
+──────────────────────────────────
+REORDER RECOMMENDATIONS
+
+🚨 URGENT — Stock Out Risk
+
+Aluminium 6061 Sheet (3mm × 1200×2400)
+Current stock: 8 sheets (4 days supply)
+Forecasted usage: 45 sheets (next 30 days)
+Reorder point: 15 sheets
+Lead time: 5 days
+
+ACTION: Order 60 sheets NOW
+Supplier: Metro Metals
+Cost: $4,200 + GST
+Delivery: 5 days
+[Auto-generate PO]
+
+──────────────────────────────────
+⚠️ LOW STOCK — Reorder Soon
+
+Steel Bar Stock 50mm diameter
+Current: 12 metres (8 days supply)
+Forecasted: 38 metres needed
+Reorder point: 20 metres
+Action: Order by Friday 21 Feb
+
+Cutting Tools (10mm carbide inserts)
+Current: 35 inserts (12 days supply)
+Forecasted: 120 inserts needed
+Reorder point: 50 inserts
+Action: Order by Monday 24 Feb
+
+──────────────────────────────────
+✓ ADEQUATE STOCK
+
+Powder coat (Black RAL 9005): ✓
+Fasteners (M6 × 20mm): ✓
+Packaging materials: ✓
+
+──────────────────────────────────
+COST OPTIMIZATION
+
+Aluminium sheets:
+• Order 60 now: $4,200 ($70/sheet)
+• Order 100 bulk: $6,500 ($65/sheet)
+  → Save $300 + qualify for free delivery
+
+Recommendation: Order 100 sheets
+Payback: 2.3 months vs smaller orders
+
+──────────────────────────────────
+SUPPLIER PERFORMANCE
+
+Metro Metals:
+• On-time delivery: 94%
+• Lead time: 5 days (reliable)
+• Price trend: ↑ 3% this quarter
+
+Alternative: Steel & Aluminium Supplies
+• Price: 5% higher
+• Lead time: 3 days (faster)
+• Consider for urgent orders only`,
+  },
+  {
+    id: "oee-tracker",
+    cat: "Operations",
+    icon: "⚡",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "OEE Performance Tracker",
+    desc: "Track Overall Equipment Effectiveness (availability, performance, quality). Identify improvement opportunities.",
+    hours: 6,
+    value: 510,
+    price: 69,
+    roiLabel1: "Machines tracked",
+    roiLabel2: "Current OEE percentage",
+    roiDefault1: 8,
+    roiDefault2: 65,
+    benefits: [
+      "Calculates OEE: Availability × Performance × Quality",
+      "Tracks downtime reasons (breakdown, setup, waiting)",
+      "Benchmarks against industry standards",
+      "Identifies top 3 improvement opportunities",
+      "Mobile downtime logging from shop floor",
+      "Improves OEE from 65% → 85%+ (industry class)",
+    ],
+    example: `OEE PERFORMANCE REPORT
+CNC Mill #1 — February 2026
+
+OVERALL EQUIPMENT EFFECTIVENESS: 68%
+(Industry benchmark: 85%)
+Gap to world-class: -17 percentage points
+
+──────────────────────────────────
+OEE BREAKDOWN
+
+Availability: 82% (vs 90% target)
+• Planned production: 160 hours
+• Actual running: 131 hours
+• Downtime: 29 hours
+
+Performance: 89% (vs 95% target)
+• Ideal cycle time: 2.5 min/part
+• Actual average: 2.8 min/part
+• Speed loss: 11%
+
+Quality: 93% (vs 99% target)
+• Total produced: 2,840 parts
+• Good parts: 2,641 parts
+• Scrap/rework: 199 parts (7%)
+
+OEE = 82% × 89% × 93% = 68%
+
+──────────────────────────────────
+DOWNTIME ANALYSIS (29 hours total)
+
+Breakdown: 8.5 hrs (29%)
+• Spindle bearing failure: 6 hrs
+• Hydraulic leak repair: 2.5 hrs
+
+Setup/Changeover: 12 hrs (41%)
+• Job changes: 18 setups @ 40 min avg
+
+Waiting for Materials: 5 hrs (17%)
+• Steel delivery delay: 3 hrs
+• Waiting for inspection: 2 hrs
+
+Planned Maintenance: 3.5 hrs (12%)
+
+──────────────────────────────────
+TOP 3 IMPROVEMENT OPPORTUNITIES
+
+1. REDUCE SETUP TIME (Biggest impact)
+Current: 40 min average
+Target: 20 min (SMED methodology)
+Annual savings: 156 hours = $13,260
+
+2. PREVENT BREAKDOWNS
+Issue: Spindle bearing failure
+Action: Implement predictive maintenance
+Estimated: 50% reduction in breakdowns
+
+3. IMPROVE FIRST-PASS YIELD
+Current quality: 93%
+Target: 99%
+Action: Better SPC monitoring (see tool #2)
+Savings: $18,000/year in scrap reduction
+
+──────────────────────────────────
+IF WE ACHIEVE 85% OEE:
+
+Additional capacity: 850 parts/month
+Revenue opportunity: $42,500/month
+No additional capital required
+
+[Generate Improvement Plan]`,
+  },
+];
+
+// ══════════════════════════════════════════
+// CONCRETING-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.concreting = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'concrete'),
+  })),
+  {
+    id: "pour-scheduler",
+    cat: "Operations",
+    icon: "🚛",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Smart Pour Scheduler",
+    desc: "Coordinates concrete deliveries, crew, pump trucks, and weather. Reschedules automatically when rain forecast.",
+    hours: 8,
+    value: 680,
+    price: 79,
+    roiLabel1: "Pours per month",
+    roiLabel2: "Hours coordinating logistics",
+    roiDefault1: 25,
+    roiDefault2: 4,
+    benefits: [
+      "Books concrete truck, pump, crew in one click",
+      "Monitors 7-day weather forecast automatically",
+      "Auto-reschedules if rain >40% probability",
+      "Sends reminders to all parties 24hrs before",
+      "Tracks curing time and inspection schedules",
+      "Reduces weather-related losses by 90%",
+    ],
+    example: `POUR SCHEDULE — Week 17-21 Feb
+Solid Concrete Solutions
+
+WEDNESDAY 19 FEB — Slab Pour
+Site: 45 Murray St, Brisbane
+Type: Ground floor slab (8m³)
+
+BOOKINGS CONFIRMED:
+✓ Concrete: 8m³ 32MPa (Hanson)
+  Delivery: 7:00 AM (2 trucks × 4m³)
+✓ Pump truck: Brisbane Concrete Pumping
+  Arrival: 6:45 AM, 4-hour booking
+✓ Crew: 4 workers + supervisor (Mark)
+✓ Vibrator & tools: Checked & ready
+
+WEATHER CHECK:
+⛅ Wed 19 Feb: Partly cloudy, 28°C
+Rain probability: 10% ✓ SAFE TO POUR
+Wind: 12 km/h (acceptable)
+
+──────────────────────────────────
+🚨 WEATHER ALERT — Auto-Rescheduled
+
+FRIDAY 21 FEB — Foundation Pour
+Site: 22 Park Ave, Paddington
+Status: ⚠️ POSTPONED
+
+Original date: Fri 21 Feb
+Rain forecast: 85% (18mm expected)
+Wind: 35 km/h gusts
+
+AI DECISION: Unsafe to pour
+NEW DATE: Monday 24 Feb, 7:00 AM
+
+All parties notified:
+✓ Hanson Concrete (cancelled & rebooked)
+✓ Pump truck (rescheduled)
+✓ Crew (notified via SMS)
+✓ Customer (apology + explanation)
+
+No cancellation fees (48hr notice given)
+
+──────────────────────────────────
+UPCOMING CURING MILESTONES
+
+Williams Slab (poured 14 Feb):
+• 3-day cure: Complete ✓
+• 7-day cure: Due 21 Feb
+• 28-day strength test: Due 14 Mar
+  → Reminder set for lab booking
+
+Murphy Foundation (poured 10 Feb):
+• Strip formwork: Safe after 18 Feb ✓
+• Load bearing: Safe after 3 Mar
+
+All timelines tracked automatically.`,
+  },
+  {
+    id: "mix-designer",
+    cat: "Sales & Quotes",
+    icon: "⚗️",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Concrete Mix Designer",
+    desc: "AI recommends optimal concrete mix for each application. Specifies strength, slump, aggregate, additives.",
+    hours: 5,
+    value: 425,
+    price: 59,
+    roiLabel1: "Different mix specs per month",
+    roiLabel2: "Hours on mix design",
+    roiDefault1: 15,
+    roiDefault2: 2,
+    benefits: [
+      "Recommends mix based on application (slab, footings, etc)",
+      "Specifies strength grade (20MPa, 32MPa, 40MPa, etc)",
+      "Suggests additives (plasticizers, retarders, accelerators)",
+      "Accounts for weather (summer vs winter mixes)",
+      "Complies with AS 1379 and AS 3600",
+      "Prevents costly mix failures",
+    ],
+    example: `CONCRETE MIX SPECIFICATION
+Williams Residence — Driveway
+
+APPLICATION DETAILS
+Type: Exposed aggregate driveway
+Area: 45m² × 100mm thick
+Volume required: 4.5m³
+Traffic: Residential (light vehicles)
+Exposure: Outdoors (Brisbane climate)
+Pour date: 19 February 2026
+Weather: Summer (hot, 28-32°C)
+
+──────────────────────────────────
+RECOMMENDED MIX DESIGN
+
+Strength Grade: 32MPa
+(AS 3600 minimum for driveways: 25MPa)
+
+Slump: 80mm
+(Suitable for: Wheelbarrow, manual placement)
+
+Aggregate:
+• 20mm decorative aggregate (exposed finish)
+• River stone or granite (customer preference)
+
+Cement Content: 350 kg/m³
+Water/Cement Ratio: 0.45
+(Ensures durability in Brisbane climate)
+
+──────────────────────────────────
+ADDITIVES RECOMMENDED
+
+✓ Retarder (Summer mix essential)
+Dosage: 500ml per m³
+Why: Delays set time in 30°C+ heat
+Gives 30 extra minutes working time
+
+✓ Plasticizer  
+Dosage: 1L per m³
+Why: Improves workability without extra water
+Easier to screed and finish
+
+✓ Surface Retarder (for exposed aggregate)
+Application: Spray on surface after pour
+Timing: Within 2 hours of finishing
+
+──────────────────────────────────
+SUPPLIER SPECIFICATION
+
+Order from: Hanson Concrete
+Mix code: 32MPa Exposed Agg (Summer)
+Quantity: 4.5m³ (order 5m³ for waste)
+
+Special instructions to plant:
+• Hot weather mix (retarder included)
+• 20mm decorative river stone
+• Slump 80mm ±20mm
+• Deliver 7:00 AM (avoid heat of day)
+
+──────────────────────────────────
+FINISHING INSTRUCTIONS
+
+1. Pour & screed level (80mm slump = easy)
+2. Bull float when bleed water gone
+3. Spray surface retarder within 2 hours
+4. Cover with plastic overnight
+5. Next day: Wash off surface to expose agg
+6. Cure for 7 days (keep damp)
+
+Estimated cost: $900 (concrete + pump)
+[Generate Quote] [Order Concrete]`,
+  },
+  {
+    id: "test-tracker",
+    cat: "Documents & Admin",
+    icon: "🧪",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Concrete Test Tracker",
+    desc: "Track all test cylinders, lab results, and compliance certificates. Never miss a required test or fail an inspection.",
+    hours: 4,
+    value: 340,
+    price: 49,
+    roiLabel1: "Pours per month",
+    roiLabel2: "Test cylinders tracked",
+    roiDefault1: 25,
+    roiDefault2: 75,
+    benefits: [
+      "Logs every test cylinder with pour date & location",
+      "Tracks 7-day and 28-day test schedules",
+      "Auto-reminds lab to test on correct dates",
+      "Records all test results and compliance",
+      "Generates compliance certificates",
+      "Prevents failed inspections",
+    ],
+    example: `CONCRETE TEST REGISTER
+February 2026
+
+ACTIVE TEST CYLINDERS
+
+Williams Driveway (Poured 14 Feb)
+Cylinders: 3 (required: minimum 2)
+Mix: 32MPa exposed aggregate
+
+7-day test: Due 21 Feb ✓ Scheduled
+Lab: Brisbane Testing Services
+Expected result: >22 MPa (70% of 32MPa)
+
+28-day test: Due 14 Mar ⏰ Pending
+Expected result: >32 MPa (design strength)
+Status: Cylinder curing at lab
+
+──────────────────────────────────
+Murphy Foundation (Poured 10 Feb)
+Cylinders: 4
+Mix: 40MPa (high strength)
+
+7-day test: Completed 17 Feb ✓
+Result: 31 MPa (78% of 40MPa) ✓ PASS
+Lab report: #BTS-2026-0842
+
+28-day test: Due 10 Mar
+Status: Scheduled with lab
+
+──────────────────────────────────
+UPCOMING TESTS THIS WEEK
+
+Fri 21 Feb:
+• Williams driveway (7-day)
+• Chen slab (7-day)
+
+Mon 24 Feb:
+• Anderson footings (7-day)
+
+──────────────────────────────────
+TEST RESULTS SUMMARY (Last 30 days)
+
+Total pours: 18
+Cylinders tested (7-day): 54
+Pass rate: 100% ✓
+
+Average 7-day strength: 74% of design
+(Industry standard: >70%)
+
+All 28-day tests on track ✓
+
+──────────────────────────────────
+COMPLIANCE CERTIFICATES
+
+Williams driveway:
+Certificate available: 15 March 2026
+(After 28-day test results received)
+
+Auto-email to:
+✓ Customer
+✓ Certifier
+✓ Filed in job records
+
+[View All Certificates]`,
+  },
+];
+
+// ══════════════════════════════════════════
+// HANDYMAN-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.handyman = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'handyman'),
+  })),
+  {
+    id: "multi-trade-scheduler",
+    cat: "Operations",
+    icon: "🗓️",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Multi-Trade Job Scheduler",
+    desc: "AI routes you efficiently between plumbing, carpentry, electrical, painting jobs. Minimizes travel, maximizes earnings.",
+    hours: 10,
+    value: 850,
+    price: 79,
+    roiLabel1: "Jobs per week",
+    roiLabel2: "Hours lost to travel/admin",
+    roiDefault1: 18,
+    roiDefault2: 8,
+    benefits: [
+      "Groups jobs by location and trade type",
+      "Optimizes route to minimize driving",
+      "Books similar jobs together (all painting, then plumbing)",
+      "Accounts for materials pickup stops",
+      "Sends customer arrival time notifications",
+      "Fits 20% more jobs per week",
+    ],
+    example: `OPTIMIZED SCHEDULE — Monday 17 Feb
+Jim's Handyman Services
+
+AI ROUTING: Northside cluster today
+Total driving: 42km (vs 78km unoptimized)
+Time saved: 1.2 hours = 2 extra jobs possible
+
+──────────────────────────────────
+MORNING (Carpentry Focus)
+
+07:30-09:00 | Replace deck boards
+Address: 22 Park Ave, Paddington (8km)
+Materials: Merbau decking (pickup from Bunnings)
+Customer: Sarah Williams
+
+09:30-11:00 | Install floating shelves  
+Address: 18 Hill St, Paddington (2km) ✓
+Materials: Have in van ✓
+Customer: David Chen
+
+11:30-12:30 | Repair fence palings
+Address: 45 Smith St, Bardon (3km)
+Materials: Pine palings (pickup morning)
+Customer: Michelle Roberts
+
+──────────────────────────────────
+LUNCH BREAK: 12:30-13:00
+Bunnings Ashgrove (4km from last job)
+• Pickup: Palings for Roberts job ✓
+• Pickup: Tap washers for PM jobs
+
+──────────────────────────────────
+AFTERNOON (Plumbing Focus)
+
+13:30-14:30 | Fix leaking tap + install vanity
+Address: 28 Grove Rd, Bardon (1.5km) ✓
+Materials: Picked up at lunch ✓
+Customer: James Wilson
+
+15:00-16:30 | Replace shower head + fix toilet
+Address: 12 Park St, Paddington (4km)
+Materials: Have in van ✓
+Customer: Emma Thompson
+
+──────────────────────────────────
+ROUTE OPTIMIZATION BENEFITS
+
+Standard routing (by time booked):
+Total distance: 78km
+Drive time: 2.8 hours
+Jobs possible: 5
+
+AI optimized routing (by location):
+Total distance: 42km (-46%)
+Drive time: 1.6 hours (-43%)
+Jobs possible: 5 + buffer for 2 more
+
+EXTRA EARNING POTENTIAL:
+2 additional jobs × $180 avg = $360/day
+Per week: $1,800
+Per year: $93,600 additional revenue
+
+All customers get SMS with arrival time:
+"Jim will arrive at your place around 1:30 PM"`,
+  },
+  {
+    id: "parts-finder",
+    cat: "Operations",
+    icon: "🔍",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Smart Parts Finder",
+    desc: "AI identifies parts from photos, finds local stock, compares prices. No more guessing or multiple hardware store trips.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Jobs per month",
+    roiLabel2: "Hardware trips per job",
+    roiDefault1: 60,
+    roiDefault2: 1.5,
+    benefits: [
+      "Upload photo of broken part → AI identifies it",
+      "Searches Bunnings, Mitre 10, Reece, local suppliers",
+      "Shows which stores have stock today",
+      "Compares prices automatically",
+      "Saves 'frequent parts' for quick reordering",
+      "Eliminates wrong part purchases",
+    ],
+    example: `PARTS IDENTIFICATION
+Customer: Sarah Williams (Tap repair job)
+
+──────────────────────────────────
+PHOTO UPLOADED: Leaking tap cartridge
+
+AI IDENTIFICATION:
+Part: Ceramic disc tap cartridge
+Type: 35mm quarter-turn
+Brand: Caroma (identified from photo)
+Model: Opus/Luna series
+Part #: 237050W
+
+Confidence: 94% match
+
+──────────────────────────────────
+LOCAL STOCK AVAILABILITY
+
+✓ Bunnings Ashgrove (4km away)
+Part #: 237050W
+Price: $28.50
+Stock: 6 in stock (Aisle 32)
+Trade account: 10% off = $25.65
+
+✓ Reece Plumbing Supplies (6km)
+Part #: CAROMA-237050W  
+Price: $32.00
+Stock: 12+ in stock
+Trade account: 15% off = $27.20
+
+✗ Mitre 10 Paddington (2km)
+Stock: Not available
+Alternative: Generic 35mm cartridge $18
+(May not fit - not recommended)
+
+──────────────────────────────────
+RECOMMENDATION
+
+Buy from: Bunnings Ashgrove
+Price: $25.65 (with trade discount)
+Distance: 4km (on way to job site)
+Pickup time: 15 minutes
+
+ALSO GRAB WHILE THERE:
+• Tap washers assorted (you're low)
+• Plumber's putty (running out)
+• Teflon tape (restock)
+
+Total trip: $45.80
+Save vs retail: $12.30
+
+──────────────────────────────────
+ALTERNATIVE OPTIONS
+
+Can't find exact match?
+
+Generic 35mm ceramic disc cartridge:
+• Fits most brands: Caroma, Dorf, Methven
+• Price: $18-22
+• Risk: May not fit perfectly
+• Recommendation: Only if urgent
+
+──────────────────────────────────
+SAVE TO FREQUENT PARTS?
+
+This part used 3 times in last 2 months.
+
+[Add to Quick Reorder List]
+→ Future jobs: Order with 1 click
+
+PARTS LIBRARY (Your frequent items):
+• Caroma tap cartridges (3 sizes)
+• Door hinges (75mm brass)
+• Power points (white)
+• Light switches
+• Silicone (clear & white)
+
+[View Full Library]`,
+  },
+  {
+    id: "job-cost-estimator",
+    cat: "Sales & Quotes",
+    icon: "💵",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Quick Job Cost Estimator",
+    desc: "AI calculates quote based on job description, materials needed, and time required. Quote in 2 minutes, not 20.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Quotes per month",
+    roiLabel2: "Minutes per quote currently",
+    roiDefault1: 40,
+    roiDefault2: 25,
+    benefits: [
+      "Describe job in plain English, AI calculates cost",
+      "Includes materials, labour, margin automatically",
+      "Adjusts for job complexity and access difficulty",
+      "Historical data shows your actual vs estimated",
+      "Prevents underquoting",
+      "Send quote via SMS in 2 minutes",
+    ],
+    example: `QUICK QUOTE CALCULATOR
+Customer: Sarah Williams
+
+JOB DESCRIPTION (Voice or text entry):
+"Replace 8 deck boards on back deck, 
+Merbau timber, boards are 2.4m long, 
+deck is about 15 years old so probably 
+need to replace some bearer screws too"
+
+──────────────────────────────────
+AI COST BREAKDOWN
+
+MATERIALS:
+• Merbau decking (140×19mm × 2.4m): 8 boards
+  Cost: $45/board × 8 = $360
+• Deck screws (stainless): 1 box = $28
+• Spare bearer screws: $15
+• Delivery/pickup fuel: $12
+
+Materials total: $415
+
+LABOUR:
+Job complexity: Medium
+• Remove old boards: 45 min
+• Check/replace bearers if needed: 30 min
+• Install new boards: 1.5 hours
+• Clean up: 15 min
+
+Total time: 3 hours
+Rate: $95/hour
+Labour: $285
+
+──────────────────────────────────
+QUOTE TOTAL
+
+Materials: $415
+Labour: $285
+Subtotal: $700
+GST (10%): $70
+TOTAL: $770
+
+Margin: 29% (healthy ✓)
+
+──────────────────────────────────
+CONFIDENCE LEVEL
+
+Similar jobs in your history: 12
+Average actual time: 3.2 hours
+Quote accuracy: 94%
+
+Risk factors:
+⚠️ Deck age (15 years) - may find rot
+→ Recommended: Add $150 contingency
+
+REVISED QUOTE: $770 + $150 = $920
+(Protects against hidden issues)
+
+──────────────────────────────────
+SEND QUOTE
+
+Hi Sarah,
+
+Here's your quote for replacing the 
+8 deck boards:
+
+Materials: $415 (Merbau boards, screws)
+Labour: 3 hours @ $95/hr = $285
+Contingency: $150 (in case of rot/damage)
+TOTAL: $920 inc GST
+
+I can start Wednesday 19 Feb if that works?
+
+[Accept Quote] [Call to Discuss]
+
+Cheers, Jim
+0412 XXX XXX
+
+──────────────────────────────────
+LEARNING FROM ACTUALS
+
+After job completion, track actual vs quoted:
+
+Actual time: 3.5 hours (30 min over)
+Actual materials: $430 ($15 over)
+Reason: Found rot in 2 bearers (replaced)
+
+AI learns: Increase contingency for 15+ year decks
+Next similar quote: Auto-adjusts based on this`,
   },
 ];
 
