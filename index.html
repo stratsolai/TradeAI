@@ -660,9 +660,9 @@
   <div class="industries-grid">
     <div class="industry-card" onclick="selectIndustry('pool')">
       <span class="industry-icon">🏊</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Pool Building</h3>
-      <p>Quotes, scheduling, customer updates & smart automation</p>
+      <p>Chemistry advisor, warranty tracking, seasonal reminders & compliance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
       <span class="industry-icon">❄️</span>
@@ -1061,9 +1061,9 @@
 const INDUSTRIES = {
   pool: {
     name: "Pool Building",
-    tools: "12 tools",
-    totalHours: 68,
-    totalValue: 5780,
+    tools: "16 tools",
+    totalHours: 86,
+    totalValue: 7310,
   },
   hvac: {
     name: "HVAC & Refrigeration",
@@ -2026,6 +2026,270 @@ Tiling: 2 years workmanship
 EMERGENCY CONTACTS
 Blue Haven: 07 3XXX XXXX (24hr)
 Zodiac Service: 1300 XXX XXX`,
+    },
+    {
+      id: "pool-chemistry-advisor",
+      cat: "Customer Communication",
+      icon: "🧪",
+      badge: "popular",
+      badgeLabel: "🔥 Popular",
+      title: "Pool Chemistry Advisor",
+      desc: "AI analyzes water test results and tells customers exactly what chemicals to add. Reduces support calls by 70%.",
+      hours: 6,
+      value: 510,
+      price: 49,
+      roiLabel1: "Active pools maintained",
+      roiLabel2: "Chemistry support calls/month",
+      roiDefault1: 150,
+      roiDefault2: 40,
+      benefits: [
+        "Customers enter test strip results, AI recommends treatment",
+        "Calculates exact dosage based on pool volume",
+        "Seasonal adjustment recommendations",
+        "Troubleshoots common issues (cloudy water, algae, etc.)",
+        "Reduces 'chemistry help' calls by 70%",
+      ],
+      example: `POOL CHEMISTRY ANALYSIS
+Williams Pool — 32,000L
+
+Test Results: 17 Feb 2026
+
+Current readings:
+• Chlorine: 0.8 ppm (LOW ⚠️)
+• pH: 7.9 (HIGH ⚠️)
+• Total Alkalinity: 95 ppm (OK ✓)
+• Calcium Hardness: 280 ppm (OK ✓)
+
+──────────────────────────────────
+🚨 URGENT - Low Chlorine
+Your pool is not properly sanitized.
+
+Add NOW: 800g chlorine granules
+Run pump: 4 hours
+Retest: This evening
+
+Why: Below 1 ppm allows bacteria growth.
+
+──────────────────────────────────
+⚠️ HIGH pH — Reducing Chlorine Effectiveness
+
+Add: 480g pH Minus (dry acid)
+Wait: 2 hours with pump running
+Retest: Tomorrow morning
+
+──────────────────────────────────
+SHOPPING LIST
+• Chlorine granules: 1kg ($18)
+• pH Minus: 500g ($12)
+Total: ~$30
+
+PREVENTION TIP:
+Summer heat = high chlorine demand.
+Increase chlorinator to 80% during hot weather.
+
+Next test: 3 days (20 Feb)
+
+[Video: How to Add Chemicals]
+[Call if Issues: 07 3XXX XXXX]`,
+    },
+    {
+      id: "warranty-tracker",
+      cat: "Documents & Admin",
+      icon: "🛡️",
+      badge: "advanced",
+      badgeLabel: "✨ Advanced",
+      title: "Warranty Claim Manager",
+      desc: "Track all pool warranties (structure, equipment, tiling). Auto-reminds customers before expiry, handles claims digitally.",
+      hours: 5,
+      value: 425,
+      price: 59,
+      roiLabel1: "Pools under warranty",
+      roiLabel2: "Hours on warranty admin/month",
+      roiDefault1: 200,
+      roiDefault2: 2,
+      benefits: [
+        "Tracks structural (7yr), equipment (2yr), tiling warranties",
+        "Sends reminders 60 days before expiry",
+        "Digital warranty claim lodgment with photos",
+        "Tracks claim status with suppliers",
+        "Prevents warranty disputes",
+      ],
+      example: `WARRANTY STATUS
+Williams Pool — 22 Park Ave
+
+Installed: 18 March 2025
+Handed over: 14 February 2026
+
+──────────────────────────────────
+ACTIVE WARRANTIES
+
+✓ Structural (Blue Haven)
+Coverage: Shell, plumbing, structure
+Term: 7 years
+Expires: 14 Feb 2033
+Status: 7 years remaining ✓
+
+✓ Equipment (Zodiac)
+Coverage: Pump, filter, chlorinator
+Term: 2 years manufacturer
+Expires: 14 Feb 2028
+Status: 2 years remaining ✓
+Registration: Confirmed ✓
+
+✓ Tiling (Blue Haven)
+Coverage: Workmanship, grout, adhesion
+Term: 2 years
+Expires: 14 Feb 2028
+Status: 2 years remaining ✓
+
+──────────────────────────────────
+CLAIM LODGMENT (If Needed)
+
+Issue example: Pump making grinding noise
+Warranty: Equipment (Zodiac)
+
+Process:
+1. Customer uploads photo/video
+2. Auto-notify Zodiac service
+3. Tracking number issued
+4. Follow-ups every 3 days
+
+Typical resolution: 5-7 business days
+
+[Lodge Warranty Claim]`,
+    },
+    {
+      id: "seasonal-reminder",
+      cat: "Marketing",
+      icon: "🍂",
+      badge: "quick",
+      badgeLabel: "⚡ Quick Win",
+      title: "Seasonal Pool Care Reminders",
+      desc: "Auto-sends seasonal maintenance tips and service offers. Upsells covers, heating, and winterizing services.",
+      hours: 4,
+      value: 340,
+      price: 39,
+      roiLabel1: "Pools in database",
+      roiLabel2: "Seasonal campaigns per year",
+      roiDefault1: 300,
+      roiDefault2: 4,
+      benefits: [
+        "Spring opening, summer tips, winter closing reminders",
+        "Includes service booking links",
+        "Upsells covers, heating, automation",
+        "Climate-specific (Brisbane vs Melbourne)",
+        "Generates $15-30k seasonal revenue/year",
+      ],
+      example: `SEASONAL REMINDER — Winter Closing
+
+Hi Sarah,
+
+As Brisbane heads into winter, here's how to 
+prepare your pool 🍂
+
+WINTER CHECKLIST
+☐ Reduce chlorinator to 20-30%
+☐ Clean filter thoroughly  
+☐ Balance pH (7.2-7.6)
+☐ Brush walls & vacuum
+☐ Add algaecide
+
+──────────────────────────────────
+WINTER SERVICE OFFER
+
+Let us handle it! Package includes:
+✓ Chemical balance & winterize
+✓ Equipment optimization  
+✓ Filter clean & inspection
+✓ Pool cover installation
+
+Price: $180 (inc GST)
+[Book Winter Service]
+
+──────────────────────────────────
+CONSIDERING A POOL COVER?
+
+Benefits:
+• Keep debris out
+• Reduce heating costs 70%
+• Cut chemical use 40%
+• Extend swimming season
+
+Solar blankets from $450
+Automatic covers from $4,500
+
+[Get Quote]
+
+Blue Haven Pools | 07 3XXX XXXX`,
+    },
+    {
+      id: "license-tracker",
+      cat: "Documents & Admin",
+      icon: "📋",
+      badge: "advanced",
+      badgeLabel: "✨ Advanced",
+      title: "License & Insurance Tracker",
+      desc: "Track QBCC licenses, insurance certificates, and compliance. Never miss a renewal or fail an audit.",
+      hours: 3,
+      value: 255,
+      price: 49,
+      roiLabel1: "Licenses & policies tracked",
+      roiLabel2: "Hours on compliance/month",
+      roiDefault1: 6,
+      roiDefault2: 4,
+      benefits: [
+        "Tracks QBCC/VBA builder licenses",
+        "Monitors public liability & contract works insurance",
+        "Alerts 60 days before expiry",
+        "Digital certificate storage for tenders",
+        "Prevents $10k+ fines for lapsed licenses",
+      ],
+      example: `COMPLIANCE DASHBOARD
+Blue Haven Pools
+
+──────────────────────────────────
+QBCC License #12345678
+Type: Pool & Spa Building (Class A)
+Status: ✓ CURRENT
+Expiry: 30 June 2027
+Renewal reminder: 1 April 2027
+
+Financial Requirements: ✓ Met
+Min Net Tangible Assets: $200k required
+Current NTA: $385k (Compliant ✓)
+
+──────────────────────────────────
+PUBLIC LIABILITY INSURANCE
+Provider: InsureMyTrade
+Policy: PL-2026-8474  
+Coverage: $20,000,000
+Status: ✓ CURRENT
+Expiry: 15 March 2027
+Premium: $2,840/year
+
+──────────────────────────────────
+CONTRACT WORKS INSURANCE
+Policy: CW-2026-8475
+Coverage: $5M per project
+Expiry: 15 March 2027
+Status: ✓ CURRENT
+
+──────────────────────────────────
+STAFF QUALIFICATIONS
+
+Mark Chen — Site Supervisor
+QBCC Supervisor: #SS-147852
+Expiry: 15 August 2026
+Status: ⚠️ Expiring in 6 months
+
+──────────────────────────────────
+DOCUMENT VAULT
+All certificates available for:
+✓ Tender submissions
+✓ Council applications
+✓ Audit compliance
+
+[Download Certificates]`,
     },
   ],
 };
