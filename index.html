@@ -666,19 +666,19 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
       <span class="industry-icon">❄️</span>
-      <span class="industry-count">14 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>HVAC & Refrigeration</h3>
       <p>Service scheduling, maintenance reminders & compliance docs</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('electrical')">
       <span class="industry-icon">⚡</span>
-      <span class="industry-count">13 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>Electrical Contracting</h3>
       <p>Compliance certificates, job costing & customer communication</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
       <span class="industry-icon">🔩</span>
-      <span class="industry-count">16 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>Metal Fabrication</h3>
       <p>Shop floor ops, quality control, SOPs & supplier management</p>
     </div>
@@ -690,19 +690,19 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
       <span class="industry-icon">🏗️</span>
-      <span class="industry-count">18 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>Construction</h3>
       <p>Project management, SWMS, subcontractor coordination & reports</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('landscaping')">
       <span class="industry-icon">🌿</span>
-      <span class="industry-count">11 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>Landscaping</h3>
       <p>Design proposals, maintenance schedules & seasonal marketing</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('cleaning')">
       <span class="industry-icon">✨</span>
-      <span class="industry-count">10 tools</span>
+      <span class="industry-count">12 tools</span>
       <h3>Commercial Cleaning</h3>
       <p>Rostering, client reports, quality audits & tender writing</p>
     </div>
@@ -1061,32 +1061,52 @@
 const INDUSTRIES = {
   pool: {
     name: "Pool Building",
-    tools: "15 tools",
+    tools: "12 tools",
     totalHours: 68,
     totalValue: 5780,
   },
   hvac: {
     name: "HVAC & Refrigeration",
-    tools: "14 tools",
-    totalHours: 55,
-    totalValue: 4675,
+    tools: "12 tools",
+    totalHours: 68,
+    totalValue: 5780,
   },
   electrical: {
     name: "Electrical Contracting",
-    tools: "13 tools",
-    totalHours: 48,
-    totalValue: 4080,
+    tools: "12 tools",
+    totalHours: 68,
+    totalValue: 5780,
   },
   fabrication: {
     name: "Metal Fabrication",
-    tools: "16 tools",
-    totalHours: 72,
-    totalValue: 6120,
+    tools: "12 tools",
+    totalHours: 68,
+    totalValue: 5780,
   },
-  plumbing: { name: "Plumbing", tools: "12 tools", totalHours: 44, totalValue: 3740 },
-  construction: { name: "Construction", tools: "18 tools", totalHours: 90, totalValue: 7650 },
-  landscaping: { name: "Landscaping", tools: "11 tools", totalHours: 36, totalValue: 3060 },
-  cleaning: { name: "Commercial Cleaning", tools: "10 tools", totalHours: 28, totalValue: 2380 },
+  plumbing: { 
+    name: "Plumbing", 
+    tools: "12 tools", 
+    totalHours: 68, 
+    totalValue: 5780 
+  },
+  construction: { 
+    name: "Construction", 
+    tools: "12 tools", 
+    totalHours: 68, 
+    totalValue: 5780 
+  },
+  landscaping: { 
+    name: "Landscaping", 
+    tools: "12 tools", 
+    totalHours: 68, 
+    totalValue: 5780 
+  },
+  cleaning: { 
+    name: "Commercial Cleaning", 
+    tools: "12 tools", 
+    totalHours: 68, 
+    totalValue: 5780 
+  },
 };
 
 const TOOLS_BY_INDUSTRY = {
@@ -1262,7 +1282,7 @@ Can't wait to show you the finished product!
     },
     {
       id: "smart-scheduling",
-      cat: "Project Management",
+      cat: "Operations",
       icon: "📅",
       badge: "popular",
       badgeLabel: "🔥 Popular",
@@ -1372,7 +1392,7 @@ soil conditions and setback requirements.`,
     },
     {
       id: "email-assistant",
-      cat: "Documents & Admin",
+      cat: "Operations",
       icon: "📧",
       badge: "popular",
       badgeLabel: "🔥 Popular",
