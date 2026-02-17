@@ -678,9 +678,9 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
       <span class="industry-icon">🔩</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Metal Fabrication</h3>
-      <p>Shop floor ops, quality control, SOPs & supplier management</p>
+      <p>Material optimization, weld tracking, job costing & quality control</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('plumbing')">
       <span class="industry-icon">🔧</span>
@@ -690,21 +690,21 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
       <span class="industry-icon">🏗️</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Construction</h3>
-      <p>Project management, SWMS, subcontractor coordination & reports</p>
+      <p>Subbie coordination, site diaries, variations & RFI tracking</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('landscaping')">
       <span class="industry-icon">🌿</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">15 tools</span>
       <h3>Landscaping</h3>
-      <p>Design proposals, maintenance schedules & seasonal marketing</p>
+      <p>Smart plant selection, seasonal scheduling & irrigation design</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('cleaning')">
       <span class="industry-icon">✨</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">15 tools</span>
       <h3>Commercial Cleaning</h3>
-      <p>Rostering, client reports, quality audits & tender writing</p>
+      <p>Smart rostering, quality audits, consumables tracking & reporting</p>
     </div>
   </div>
 </div>
@@ -1079,9 +1079,9 @@ const INDUSTRIES = {
   },
   fabrication: {
     name: "Metal Fabrication",
-    tools: "12 tools",
-    totalHours: 68,
-    totalValue: 5780,
+    tools: "16 tools",
+    totalHours: 97,
+    totalValue: 8245,
   },
   plumbing: { 
     name: "Plumbing", 
@@ -1091,21 +1091,21 @@ const INDUSTRIES = {
   },
   construction: { 
     name: "Construction", 
-    tools: "12 tools", 
-    totalHours: 68, 
-    totalValue: 5780 
+    tools: "16 tools", 
+    totalHours: 101, 
+    totalValue: 8585 
   },
   landscaping: { 
     name: "Landscaping", 
-    tools: "12 tools", 
-    totalHours: 68, 
-    totalValue: 5780 
+    tools: "15 tools", 
+    totalHours: 92, 
+    totalValue: 7820 
   },
   cleaning: { 
     name: "Commercial Cleaning", 
-    tools: "12 tools", 
-    totalHours: 68, 
-    totalValue: 5780 
+    tools: "15 tools", 
+    totalHours: 89, 
+    totalValue: 7565 
   },
 };
 
@@ -2861,6 +2861,1048 @@ Payback: 2.8 years
 WINNER: Heat Pump recommended!
 
 [Accept Quote] [Compare Options]`,
+  },
+];
+
+// ══════════════════════════════════════════
+// METAL FABRICATION-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.fabrication = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'fabrication'),
+  })),
+  {
+    id: "material-optimizer",
+    cat: "Operations",
+    icon: "📐",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Material Cutting Optimizer",
+    desc: "AI calculates the most efficient way to cut steel sheets and sections. Minimize waste, maximize profit on every job.",
+    hours: 10,
+    value: 850,
+    price: 79,
+    roiLabel1: "Cutting jobs per month",
+    roiLabel2: "Waste percentage currently",
+    roiDefault1: 50,
+    roiDefault2: 18,
+    benefits: [
+      "Optimizes cutting patterns to reduce waste by 40-60%",
+      "Works with sheets, tubes, angles, and flat bar",
+      "Accounts for blade width (kerf) automatically",
+      "Generates cutting diagrams for workshop",
+      "Tracks material costs and savings per job",
+      "Saves $5-10k per year in material waste",
+    ],
+    example: `CUTTING OPTIMIZATION REPORT
+Job #2456 — Industrial Shelving Units
+
+MATERIAL REQUIRED
+• 20 × 2400mm lengths (uprights)
+• 40 × 1200mm lengths (shelves)  
+• 16 × 600mm lengths (brackets)
+
+STOCK AVAILABLE
+• 6m steel tube stock (3mm wall)
+• Cost: $85 per 6m length
+
+──────────────────────────────────
+STANDARD APPROACH (Manual cutting)
+• 2400mm × 20 = 10 lengths (2 per 6m)
+• 1200mm × 40 = 10 lengths (4 per 6m)
+• 600mm × 16 = 2 lengths (9 per 6m)
+
+Total lengths needed: 22
+Total cost: $1,870
+Waste: 2,160mm (6% waste)
+
+──────────────────────────────────
+AI OPTIMIZED APPROACH
+
+Pattern A (×8 lengths):
+2400 | 2400 | 1200 = 6000mm ✓
+
+Pattern B (×6 lengths):
+1200 | 1200 | 1200 | 1200 | 600 | 600 = 6000mm ✓
+
+Pattern C (×3 lengths):
+2400 | 2400 | 600 | 600 = 6000mm ✓
+
+Total lengths needed: 17
+Total cost: $1,445
+Waste: 720mm (2% waste)
+
+YOU SAVE: $425 per job (23% cost reduction)
+
+[Generate cutting diagrams] [Send to workshop]`,
+  },
+  {
+    id: "weld-tracker",
+    cat: "Documents & Admin",
+    icon: "🔥",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Welder Qualification Tracker",
+    desc: "Track welder certifications, procedure qualifications (WPS/PQR), and ensure AS 1554 compliance on every job.",
+    hours: 5,
+    value: 425,
+    price: 59,
+    roiLabel1: "Welders on staff",
+    roiLabel2: "Compliance checks per month",
+    roiDefault1: 8,
+    roiDefault2: 20,
+    benefits: [
+      "Tracks all welder qualifications and expiry dates",
+      "Manages WPS (Welding Procedure Specifications)",
+      "Ensures AS 1554.1 compliance automatically",
+      "Alerts 30 days before cert expiry",
+      "Generates compliant weld maps and documentation",
+      "Prevents costly compliance failures",
+    ],
+    example: `WELDER QUALIFICATION STATUS
+Precision Steel Fabrication
+
+WELDER: Mike Chen (Employee #147)
+
+CURRENT QUALIFICATIONS
+✓ Structural Steel (AS 1554.1)
+  - Positions: 1F, 2F, 3F, 4F (all flat/horizontal)
+  - Processes: GMAW (MIG), FCAW (Flux core)
+  - Materials: Carbon steel up to 12mm
+  - Valid until: 15 August 2026 (6 months)
+
+✓ Pressure Vessels (AS 3992)
+  - Valid until: 22 November 2026 (9 months)
+
+⚠️ EXPIRING SOON
+! Aluminium TIG (AS 1554.6)
+  - Expired: 10 January 2026
+  - Action: Requalification test needed
+
+APPROVED FOR JOBS
+✓ Structural steel fabrication
+✓ Architectural metalwork
+✓ General fabrication
+✗ Aluminium work (cert expired)
+✗ Stainless steel (not qualified)
+
+──────────────────────────────────
+JOB COMPATIBILITY CHECK
+
+Job #2456: Warehouse structural beams
+Material: Grade 350 carbon steel, 10mm
+Process: GMAW (MIG)
+Required cert: AS 1554.1 Level 2
+
+Mike Chen: ✓ APPROVED
+
+──────────────────────────────────
+WORKSHOP OVERVIEW
+
+Total welders: 8
+Fully compliant: 6 (75%)
+Expiring in 60 days: 2
+Expired certs: 3
+
+Action required:
+• Book requalification for Mike (aluminium)
+• Renew Sarah's structural cert (expires 15 Mar)
+• Update James's PQR documentation`,
+  },
+  {
+    id: "job-costing",
+    cat: "Financial Management",
+    icon: "💰",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Real-Time Job Costing",
+    desc: "Track actual costs vs quoted costs in real-time. Know if you're making or losing money before the job finishes.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Jobs running concurrently",
+    roiLabel2: "Hours on manual tracking",
+    roiDefault1: 12,
+    roiDefault2: 3,
+    benefits: [
+      "Tracks materials, labour, consumables in real-time",
+      "Alerts when job exceeds budget by 10%",
+      "Shows profit margin on every active job",
+      "Identifies which job types are most profitable",
+      "Helps price future quotes more accurately",
+      "Improves margins by 15-25%",
+    ],
+    example: `JOB COSTING DASHBOARD
+Active Jobs — 17 February 2026
+
+JOB #2456: Warehouse Beams
+Status: 65% complete
+Budget: $12,500
+Actual spend: $9,240
+Projected final: $14,215
+Variance: +$1,715 OVER BUDGET ⚠️
+
+Breakdown:
+Material: $6,200 (budget $5,500) -13% over
+Labour: 68 hrs (budget 60 hrs) -13% over
+Consumables: $840 (budget $800) -5% over
+
+Margin: $3,785 (21%) vs planned $4,500 (26%)
+
+Issue: Extra steel required due to design change
+Action: Variation issued to customer for $2,100
+
+──────────────────────────────────
+MOST PROFITABLE JOBS THIS MONTH
+
+1. Architectural screens: 42% margin
+2. Custom gates: 38% margin
+3. Structural steel: 24% margin
+4. Repairs: 18% margin ⚠️ (review pricing)
+
+Recommendation: Focus sales on architectural 
+work, increase repair callout fees.`,
+  },
+  {
+    id: "quality-checklist",
+    cat: "Documents & Admin",
+    icon: "✅",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Quality Inspection Checklist",
+    desc: "Digital inspection checklists with photos for every job stage. Prove quality to customers and prevent rework.",
+    hours: 6,
+    value: 510,
+    price: 49,
+    roiLabel1: "Jobs per month",
+    roiLabel2: "Minutes per inspection",
+    roiDefault1: 20,
+    roiDefault2: 15,
+    benefits: [
+      "Pre-built checklists for common job types",
+      "Attach photos at each inspection point",
+      "Digital signatures from supervisors",
+      "Automatic reports emailed to customers",
+      "Tracks defects and rework costs",
+      "Reduces rework by 60%",
+    ],
+    example: `QUALITY INSPECTION REPORT
+Job #2456 — Structural Steel Beams
+
+Inspection Stage: Pre-Delivery
+Inspector: Sarah Wong (Supervisor)
+Date: 16 Feb 2026, 3:45 PM
+
+✓ DIMENSIONAL CHECKS
+✓ Beam length: 12.05m (tolerance ±5mm) ✓
+✓ Hole positions: All within ±2mm ✓
+✓ Squareness: <1mm deviation ✓
+
+✓ WELDING INSPECTION  
+✓ Visual: No cracks, undercut, porosity ✓
+✓ All welds ground smooth ✓
+✓ Weld size: 8mm fillet (as per dwg) ✓
+[Photo attached: Weld detail]
+
+✓ SURFACE FINISH
+✓ All sharp edges removed ✓
+✓ Surface rust removed ✓
+✓ Primer coat applied (2 coats) ✓
+[Photo attached: Finished beam]
+
+✓ DOCUMENTATION
+✓ Material test certificates on file ✓
+✓ Welder qualifications verified ✓
+✓ AS 4100 compliance confirmed ✓
+
+RESULT: PASS — Ready for delivery
+
+Signed: Sarah Wong
+Date: 16/02/2026`,
+  },
+];
+
+// ══════════════════════════════════════════
+// CONSTRUCTION-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.construction = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'construction'),
+  })),
+  {
+    id: "subcontractor-coordinator",
+    cat: "Operations",
+    icon: "👷",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Subcontractor Coordinator",
+    desc: "Auto-schedules and tracks all subbies. Sends notifications, tracks invoices, and prevents scheduling conflicts.",
+    hours: 12,
+    value: 1020,
+    price: 99,
+    roiLabel1: "Subcontractors per project",
+    roiLabel2: "Hours coordinating weekly",
+    roiDefault1: 8,
+    roiDefault2: 6,
+    benefits: [
+      "Auto-schedules trades in correct sequence",
+      "Sends SMS reminders 24hrs before start",
+      "Tracks invoices and payment schedules",
+      "Flags scheduling conflicts automatically",
+      "Maintains database of preferred subbies",
+      "Reduces project delays by 40%",
+    ],
+    example: `SUBCONTRACTOR SCHEDULE
+Project: 45 Murray Street Extension
+Week of 17-21 February 2026
+
+MONDAY 17 FEB
+08:00 - Plumber: First fix (rough-in)
+      Mike's Plumbing - 0412 XXX XXX
+      ✓ Notified, ✓ Confirmed
+      Access: Side gate, materials on-site
+
+TUESDAY 18 FEB  
+08:00 - Electrician: First fix wiring
+      Spark Electrical - 0419 XXX XXX
+      ✓ Notified, ✓ Confirmed
+      
+⚠️ CONFLICT DETECTED
+Plumber requested additional day.
+→ Electrician rescheduled to Wed 19 Feb
+→ Both parties notified automatically
+
+THURSDAY 20 FEB
+08:00 - Gyprock: Wall lining
+      ProWall Solutions - 0421 XXX XXX
+      ⚠️ Awaiting confirmation
+      Follow-up sent: 16 Feb
+
+FRIDAY 21 FEB
+08:00 - Plasterer: Ceiling & walls  
+      Smooth Finish - 0434 XXX XXX
+      ✓ Confirmed
+
+──────────────────────────────────
+INVOICE TRACKING
+
+Plumber (Mike's): $2,400
+Status: Work complete, invoice due
+Payment terms: 14 days (due 3 Mar)
+
+Electrician (Spark): $3,800  
+Status: Scheduled, 50% deposit paid
+
+All subbies have current insurance & licenses ✓`,
+  },
+  {
+    id: "site-diary",
+    cat: "Documents & Admin",
+    icon: "📔",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Digital Site Diary",
+    desc: "Voice-to-text site notes with automatic weather logging, photo tagging, and daily reports emailed to all stakeholders.",
+    hours: 7,
+    value: 595,
+    price: 59,
+    roiLabel1: "Site diary entries per week",
+    roiLabel2: "Minutes per entry",
+    roiDefault1: 5,
+    roiDefault2: 15,
+    benefits: [
+      "Voice recording converts to text automatically",
+      "Auto-logs weather conditions and temperature",
+      "Attach photos with automatic date/location stamps",
+      "Daily summary emailed to client and office",
+      "Searchable history for dispute resolution",
+      "Saves 5-7 hours per week",
+    ],
+    example: `SITE DIARY ENTRY
+Project: 45 Murray Street Extension
+Date: 17 February 2026
+
+──────────────────────────────────
+WEATHER CONDITIONS (Auto-logged)
+Temperature: 28°C
+Conditions: Partly cloudy
+Rain: 0mm
+Wind: 15km/h NE
+Suitable for: All outdoor work ✓
+
+──────────────────────────────────
+WORK PERFORMED (Voice recorded)
+
+"Morning crew of 4 arrived 7:00 AM. 
+Continued formwork on eastern wall. 
+Plumber arrived 8:30 AM for first fix 
+rough-in. Completed waste and water lines 
+by 2:00 PM. Inspector visited 11:00 AM, 
+approved formwork, cleared for concrete pour 
+tomorrow. Electrician rescheduled to Wednesday 
+due to plumber running over. No safety incidents. 
+Concrete truck booked for 7:00 AM tomorrow, 
+8 cubic metres."
+
+──────────────────────────────────
+PERSONNEL ON SITE
+• Site supervisor: Mark Chen
+• Carpenters: 3
+• Labourers: 2  
+• Plumber: 1 (Mike's Plumbing)
+• Inspector: Council (11:00 AM)
+
+PLANT & EQUIPMENT
+• Excavator (idle)
+• Concrete vibrator (ready)
+• Scaffolding (erected east side)
+
+──────────────────────────────────
+MATERIALS DELIVERED
+• Plumbing fittings (Mike's Plumbing)
+• Ready for concrete pour tomorrow
+
+──────────────────────────────────
+PHOTOS ATTACHED (Auto-tagged)
+📸 Formwork complete - 09:45 AM
+📸 Plumbing rough-in - 02:15 PM
+📸 Inspector approval - 11:20 AM
+📸 Site overview - 04:30 PM
+
+──────────────────────────────────
+ISSUES / DELAYS
+• Electrician rescheduled (not critical path)
+
+──────────────────────────────────
+TOMORROW'S PLAN
+• Concrete pour: 7:00 AM (8m³)
+• Vibrate and finish: AM
+• Clean up and prepare for next stage: PM
+
+Report automatically emailed to:
+✓ Client: sarah@client.com
+✓ Office: projects@buildcorp.com.au
+✓ Filed in project folder`,
+  },
+  {
+    id: "variation-tracker",
+    cat: "Financial Management",
+    icon: "📝",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Variation Order Manager",
+    desc: "Track all design changes, generate variation quotes instantly, and get client approval digitally. No more scope creep.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Variations per project",
+    roiLabel2: "Hours on variation admin",
+    roiDefault1: 8,
+    roiDefault2: 1.5,
+    benefits: [
+      "Generates variation quotes in 5 minutes",
+      "Digital client approval with e-signature",
+      "Tracks all changes vs original contract",
+      "Prevents scope creep and unpaid work",
+      "Automatic invoice adjustments",
+      "Recovers $10-20k in missed charges per year",
+    ],
+    example: `VARIATION ORDER #004
+Project: 45 Murray Street Extension
+Date: 14 February 2026
+
+REQUESTED CHANGE
+Client requests additional window on east wall
+Location: Master bedroom
+Size: 1800mm × 1200mm sliding window
+
+──────────────────────────────────
+COST IMPACT
+
+Materials:
+• Window unit (Trend 1812): $890
+• Lintel (1900mm): $145
+• Flashing and trim: $120
+
+Labour:
+• Framing modification: 3 hours @ $85
+• Window installation: 2 hours @ $85
+• Interior finishing: 2 hours @ $75
+
+Project Management: $120
+
+Subtotal: $1,850
+GST (10%): $185
+TOTAL: $2,035
+
+──────────────────────────────────
+SCHEDULE IMPACT
+Additional time: 1 day
+Revised completion: 28 March 2026
+(was 27 March 2026)
+
+──────────────────────────────────
+CLIENT APPROVAL
+
+[Approve $2,035] [Request Changes] [Decline]
+
+Status: ✓ APPROVED - 15 Feb 2026, 9:45 AM
+Signed: Sarah Williams (digital signature)
+
+Invoice updated automatically:
+Original contract: $285,000
+Previous variations: $4,800  
+This variation: $2,035
+New contract value: $291,835
+
+Payment due: Progress claim #4 (28 Feb)`,
+  },
+  {
+    id: "rfi-manager",
+    cat: "Documents & Admin",
+    icon: "❓",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "RFI & Query Manager",
+    desc: "Track all Requests for Information, chase responses, and prevent delays caused by unanswered queries.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "RFIs per project",
+    roiLabel2: "Hours chasing responses",
+    roiDefault1: 15,
+    roiDefault2: 2,
+    benefits: [
+      "Generates professional RFIs from templates",
+      "Tracks response times and overdue items",
+      "Auto-follows up on unanswered RFIs",
+      "Links RFIs to specific drawings/specs",
+      "Prevents delays from information gaps",
+      "Reduces project delays by 25%",
+    ],
+    example: `REQUEST FOR INFORMATION #012
+Project: 45 Murray Street Extension
+
+TO: Sarah Williams (Client)
+     Johnson Architects
+FROM: BuildCorp Construction  
+DATE: 14 February 2026
+RE: Window specification clarification
+
+──────────────────────────────────
+QUERY
+Drawing A-104 shows 1800mm window on 
+east wall, but specification calls for 
+2100mm window. 
+
+Which is correct?
+
+Impact if not resolved:
+• Window order delayed
+• Framing cannot proceed  
+• Critical path affected
+
+RESPONSE REQUIRED BY: 18 Feb 2026
+(To maintain schedule)
+
+──────────────────────────────────
+STATUS TRACKING
+
+Sent: 14 Feb, 10:00 AM
+Opened: 14 Feb, 2:30 PM ✓
+Response due: 18 Feb
+Status: ⚠️ AWAITING RESPONSE
+
+Auto follow-up scheduled: 17 Feb (if no response)
+
+──────────────────────────────────
+RESPONSE RECEIVED: 15 Feb, 9:15 AM
+
+"Specification is correct - 2100mm window.
+Drawing will be revised to Rev B by COB today.
+- Johnson Architects"
+
+Status: ✓ RESOLVED
+Resolution time: 23 hours
+
+Action: Update window order, proceed with framing`,
+  },
+];
+
+// ══════════════════════════════════════════
+// LANDSCAPING-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.landscaping = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'landscaping'),
+  })),
+  {
+    id: "plant-selector",
+    cat: "Sales & Quotes",
+    icon: "🌱",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Smart Plant Selector",
+    desc: "AI recommends perfect plants based on location, soil, sun exposure, and client preferences. Reduces plant failures.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Design consultations monthly",
+    roiLabel2: "Minutes researching plants",
+    roiDefault1: 20,
+    roiDefault2: 30,
+    benefits: [
+      "Recommends plants based on Brisbane/Melbourne/Sydney climate",
+      "Considers sun, soil, water needs automatically",
+      "Suggests native, drought-tolerant, or low-maintenance options",
+      "Shows mature size and growth rates",
+      "Generates plant lists with supplier codes",
+      "Reduces plant failure rate by 70%",
+    ],
+    example: `PLANT RECOMMENDATION REPORT
+Williams Residence — 22 Park Ave, Paddington
+
+SITE CONDITIONS
+Location: Brisbane, QLD (subtropical)
+Aspect: North-facing backyard
+Sun exposure: Full sun 8+ hours
+Soil type: Clay (pH 6.5)
+Water: Garden bed irrigation available
+Maintenance: Low (client travels often)
+
+CLIENT PREFERENCES
+Style: Modern Australian native
+Height: Mix of screening & ground cover
+Budget: $2,500 for plants
+
+──────────────────────────────────
+RECOMMENDED PLANT PALETTE
+
+SCREENING PLANTS (2.5-4m height)
+1. Lilly Pilly 'Resilience' (×8)
+   - Height: 3m | Width: 1.5m
+   - Growth: Fast (60cm/year)
+   - Supplier: GRN-LP200 @ $45 ea
+   - Notes: Dense screen, edible berries
+   
+2. Coastal Banksia (×4)
+   - Height: 4m | Width: 2m  
+   - Growth: Medium (40cm/year)
+   - Supplier: GRN-CB300 @ $65 ea
+   - Notes: Attracts birds, drought hardy
+
+FEATURE PLANTS (1-2m)
+3. Kangaroo Paw 'Bush Gems' (×12)
+   - Height: 1m | Spread: 0.8m
+   - Supplier: GRN-KP150 @ $18 ea
+   - Notes: Year-round colour, low water
+
+GROUND COVERS  
+4. Native Violet (×30)
+   - Height: 0.1m | Spread: 0.5m
+   - Supplier: GRN-NV100 @ $8 ea
+   - Notes: Fills gaps, handles foot traffic
+
+──────────────────────────────────
+PLANT LIST SUMMARY
+
+Total plants: 54
+Total cost: $1,526 (within budget)
+Delivery available: 3-5 days
+
+All plants:
+✓ Drought tolerant once established
+✓ Low maintenance (prune annually)
+✓ Brisbane climate suited
+✓ Good for clay soil
+✓ Full sun tolerant
+
+[Generate Quote] [Adjust Selection] [View 3D Preview]`,
+  },
+  {
+    id: "seasonal-scheduler",
+    cat: "Customer Communication",
+    icon: "📅",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Seasonal Maintenance Scheduler",
+    desc: "Auto-books seasonal services (pruning, fertilizing, mulching) with past clients. Guaranteed recurring revenue.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Maintenance clients",
+    roiLabel2: "Hours on manual booking",
+    roiDefault1: 80,
+    roiDefault2: 0.5,
+    benefits: [
+      "Sends seasonal reminders: Spring, Summer, Autumn, Winter",
+      "Recommends services based on garden type",
+      "Clients book online instantly",
+      "Optimizes routes to minimize travel",
+      "Generates $30-50k recurring revenue annually",
+    ],
+    example: `SEASONAL REMINDER — Spring Service
+
+Hi Sarah,
+
+Spring has sprung! 🌸 Time to prepare your 
+garden for the growing season.
+
+RECOMMENDED SPRING SERVICES:
+✓ Spring prune (shape & tidy)
+✓ Fertilize garden beds
+✓ Fresh mulch layer
+✓ Weed treatment
+✓ Irrigation system check
+
+Your garden: Native screening + ground covers
+Service time: 3 hours
+Cost: $420 (inc GST)
+
+[Book Online] — Available dates:
+• Thu 20 Feb, 9:00 AM
+• Fri 21 Feb, 1:00 PM
+• Mon 24 Feb, 10:00 AM
+
+Book this week: FREE lawn fertilizer ($45 value)
+
+Mark, Green Thumb Landscaping`,
+  },
+  {
+    id: "irrigation-designer",
+    cat: "Sales & Quotes",
+    icon: "💧",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Irrigation System Designer",
+    desc: "AI designs efficient drip or spray irrigation systems. Calculates water usage, costs, and generates installation plans.",
+    hours: 10,
+    value: 850,
+    price: 79,
+    roiLabel1: "Irrigation quotes monthly",
+    roiLabel2: "Hours per design",
+    roiDefault1: 10,
+    roiDefault2: 2,
+    benefits: [
+      "Designs system based on garden layout and plant needs",
+      "Calculates pipe sizes, pump requirements, zone layout",
+      "Estimates water usage and running costs",
+      "Generates parts list with supplier codes",
+      "Shows payback vs manual watering",
+      "Close 40% more irrigation quotes",
+    ],
+    example: `IRRIGATION SYSTEM DESIGN
+Williams Residence — 22 Park Ave
+
+GARDEN ANALYSIS
+Total area: 180m²
+Zones: 3 (screening plants, feature beds, lawn)
+Water source: Mains + 3,000L rainwater tank
+Soil: Clay (slow drainage)
+
+──────────────────────────────────
+RECOMMENDED SYSTEM: Drip + Spray
+
+ZONE 1: Screening Plants (45m²)
+System: 13mm drip line @ 30cm spacing
+Flow: 2L/hr per dripper × 150 drippers
+Runtime: 20 min, 3× per week (summer)
+Water usage: 90L per watering
+
+ZONE 2: Feature Beds (85m²)
+System: 13mm drip line @ 20cm spacing  
+Flow: 2L/hr per dripper × 425 drippers
+Runtime: 20 min, 3× per week
+Water usage: 255L per watering
+
+ZONE 3: Lawn (50m²)
+System: Pop-up spray heads × 6
+Flow: 12L/min per head  
+Runtime: 10 min, 2× per week
+Water usage: 120L per watering
+
+──────────────────────────────────
+WATER USAGE & COST
+
+Summer (Oct-Mar): 
+Weekly usage: 1,275L
+Annual cost: $85 (mains water)
+
+Winter (Apr-Sep):
+Weekly usage: 425L (reduced)
+Annual cost: $28
+
+Total annual water cost: $113
+
+VS MANUAL WATERING:
+Time saved: 4 hrs/week × 52 = 208 hrs/year
+Your time value: $85/hr = $17,680 saved!
+
+──────────────────────────────────
+SYSTEM COST
+
+Materials:
+• Controller (6-zone WiFi): $280
+• Drip line & fittings: $450
+• Pop-up spray heads: $180
+• Solenoid valves × 3: $210
+• Pump & pressure tank: $520
+• Pipework & connectors: $280
+
+Installation labour: 12 hours @ $85
+
+Subtotal: $2,940
+GST: $294
+TOTAL: $3,234
+
+Payback: Never (time savings are priceless!)
+
+[Approve Design] [Adjust Zones] [Add Rainwater]`,
+  },
+];
+
+// ══════════════════════════════════════════
+// COMMERCIAL CLEANING-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.cleaning = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'cleaning'),
+  })),
+  {
+    id: "roster-optimizer",
+    cat: "Operations",
+    icon: "👥",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Smart Roster Optimizer",
+    desc: "AI builds optimal cleaning rosters considering staff availability, skills, site requirements, and travel time.",
+    hours: 10,
+    value: 850,
+    price: 79,
+    roiLabel1: "Cleaners on staff",
+    roiLabel2: "Hours per week on rostering",
+    roiDefault1: 15,
+    roiDefault2: 4,
+    benefits: [
+      "Optimizes routes to minimize travel time",
+      "Matches cleaner skills to site requirements",
+      "Handles leave requests and swaps automatically",
+      "Sends roster via SMS to all staff",
+      "Tracks hours and calculates payroll",
+      "Saves 4-6 hours per week on rostering",
+    ],
+    example: `WEEKLY ROSTER — W/C 17 February 2026
+Clean Solutions Commercial Cleaning
+
+MONDAY 17 FEB
+
+Sarah Mitchell (Lead Cleaner)
+06:00-09:00 | Westfield Office (CBD)
+09:30-12:30 | Roberts Law (Spring Hill)  
+Travel optimized: 12 min between sites ✓
+
+James Wong
+06:00-10:00 | Brisbane Square (4 floors)
+11:00-14:00 | Medical Centre (Paddington)
+
+Mike Chen  
+07:00-11:00 | Shopping Centre (food court)
+12:00-15:00 | Gym (Fortitude Valley)
+
+──────────────────────────────────
+SITE REQUIREMENTS MATCHED
+
+Westfield Office:
+✓ Police check required (Sarah ✓)
+✓ After-hours access card (Sarah has)
+✓ Experience: 3+ years (Sarah: 5 years)
+
+Brisbane Square:
+✓ High-rise experience (James ✓)
+✓ Floor buffer certified (James ✓)
+
+──────────────────────────────────
+LEAVE & AVAILABILITY
+
+Emma Thompson: Annual leave Mon-Wed
+→ Sites redistributed to team
+→ All sites covered ✓
+
+David Lee: Sick leave notification received
+→ Backup cleaner auto-contacted
+→ Cover confirmed ✓
+
+──────────────────────────────────
+WEEKLY SUMMARY
+
+Total hours scheduled: 285
+Total sites: 32
+Average travel time: 18 min between sites
+Roster efficiency: 94% (excellent)
+
+All staff notified via SMS: ✓
+Timesheets ready for payroll: ✓`,
+  },
+  {
+    id: "quality-audit",
+    cat: "Documents & Admin",
+    icon: "⭐",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Site Quality Audit System",
+    desc: "Digital checklists for every clean. Supervisors photograph problem areas, track scores, and prove quality to clients.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Sites audited per month",
+    roiLabel2: "Minutes per audit",
+    roiDefault1: 40,
+    roiDefault2: 20,
+    benefits: [
+      "Pre-built checklists for offices, medical, retail, etc.",
+      "Score each area out of 5 stars",
+      "Attach photos of any issues found",
+      "Automatic reports sent to clients monthly",
+      "Tracks cleaner performance over time",
+      "Reduces client complaints by 80%",
+    ],
+    example: `QUALITY AUDIT REPORT
+Westfield Office Complex — Level 8
+
+Audit Date: 17 February 2026, 8:45 AM
+Auditor: Sarah Mitchell (Supervisor)
+Cleaner: Emma Thompson
+
+──────────────────────────────────
+RECEPTION AREA: ⭐⭐⭐⭐⭐ (5/5)
+✓ Floor vacuumed & mopped
+✓ Desk wiped clean
+✓ Bins emptied & relined
+✓ Glass door streak-free
+✓ Plants watered
+[Photo attached: Reception area]
+
+KITCHEN: ⭐⭐⭐⭐☆ (4/5)
+✓ Benches sanitized
+✓ Sink cleaned  
+✓ Bins emptied
+✓ Microwave cleaned
+⚠️ Coffee machine exterior needs wipe
+[Photo attached: Coffee machine]
+
+BATHROOMS (×3): ⭐⭐⭐⭐⭐ (5/5)
+✓ Toilets cleaned & sanitized
+✓ Basins & taps sparkling
+✓ Floors mopped
+✓ Consumables restocked
+✓ Mirrors streak-free
+
+OFFICES (18 rooms): ⭐⭐⭐⭐⭐ (5/5)
+✓ Bins emptied all rooms
+✓ Desks dusted
+✓ Floors vacuumed
+✓ High-touch surfaces sanitized
+
+──────────────────────────────────
+OVERALL SCORE: 4.75/5 ⭐⭐⭐⭐⭐
+
+Minor issue: Coffee machine
+Action: Emma reminded, will correct tomorrow
+
+Report automatically sent to:
+✓ Client contact
+✓ Office manager
+✓ Filed in monthly summary`,
+  },
+  {
+    id: "consumables-tracker",
+    cat: "Financial Management",
+    icon: "🧴",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Consumables Inventory Tracker",
+    desc: "Tracks chemical and consumable usage per site. Auto-reorders before stockouts, reduces waste and theft.",
+    hours: 5,
+    value: 425,
+    price: 49,
+    roiLabel1: "Sites serviced",
+    roiLabel2: "Hours on stock management",
+    roiDefault1: 30,
+    roiDefault2: 3,
+    benefits: [
+      "Tracks usage of chemicals, paper, bags per site",
+      "Auto-generates reorder when stock low",
+      "Detects unusual usage patterns (theft/waste)",
+      "Calculates cost per clean for pricing",
+      "Integrates with supplier ordering",
+      "Reduces consumable costs by 20-30%",
+    ],
+    example: `CONSUMABLES REPORT
+February 2026
+
+──────────────────────────────────
+CURRENT STOCK LEVELS
+
+Cleaning Chemicals:
+• Multi-purpose cleaner: 28L (⚠️ Low - reorder)
+• Glass cleaner: 45L (✓ OK)
+• Toilet cleaner: 32L (✓ OK)
+• Disinfectant: 18L (⚠️ Low - reorder)
+
+Paper Products:
+• Toilet paper (boxes): 8 (⚠️ Low)
+• Paper towel (boxes): 12 (✓ OK)
+• Hand soap (bottles): 25 (✓ OK)
+
+Bin Liners:
+• Small (50L): 2 rolls (⚠️ Low)
+• Large (240L): 5 rolls (✓ OK)
+
+──────────────────────────────────
+AUTO-REORDER TRIGGERED
+
+Purchase order generated:
+• Multi-purpose cleaner: 40L @ $8.50/L = $340
+• Disinfectant: 20L @ $12/L = $240
+• Toilet paper: 10 boxes @ $45 = $450
+• Small bin liners: 4 rolls @ $28 = $112
+
+Total order: $1,142 + GST = $1,256
+Supplier: CleanCo Australia
+Delivery: 2-3 days
+
+[Approve Order] [Adjust Quantities]
+
+──────────────────────────────────
+USAGE ANALYSIS
+
+Brisbane Square (4 floors):
+Average monthly usage:
+• Chemicals: $85
+• Paper: $120
+• Bin liners: $35
+Total: $240/month
+
+Cost per clean: $12
+Frequency: 5× per week
+Monthly revenue: $1,040
+Consumable cost: 23% of revenue ✓
+
+⚠️ UNUSUAL USAGE DETECTED
+
+Gym (Fortitude Valley):
+Chemical usage up 40% this month vs average
+
+Possible causes:
+• Increased cleaning frequency?
+• Waste / overfilling dispensers?
+• Check with site cleaner
+
+Action: Supervisor to investigate`,
   },
 ];
 
