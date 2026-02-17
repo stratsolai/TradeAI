@@ -666,15 +666,15 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
       <span class="industry-icon">❄️</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>HVAC & Refrigeration</h3>
-      <p>Service scheduling, maintenance reminders & compliance docs</p>
+      <p>Emergency dispatch, gas tracking, maintenance automation & energy analysis</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('electrical')">
       <span class="industry-icon">⚡</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">15 tools</span>
       <h3>Electrical Contracting</h3>
-      <p>Compliance certificates, job costing & customer communication</p>
+      <p>Test & tag, compliance certificates, emergency dispatch & job routing</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
       <span class="industry-icon">🔩</span>
@@ -684,9 +684,9 @@
     </div>
     <div class="industry-card" onclick="selectIndustry('plumbing')">
       <span class="industry-icon">🔧</span>
-      <span class="industry-count">12 tools</span>
+      <span class="industry-count">15 tools</span>
       <h3>Plumbing</h3>
-      <p>Emergency dispatch, job scheduling & invoice automation</p>
+      <p>Emergency routing, backflow testing, hot water recommendations & dispatch</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
       <span class="industry-icon">🏗️</span>
@@ -1067,15 +1067,15 @@ const INDUSTRIES = {
   },
   hvac: {
     name: "HVAC & Refrigeration",
-    tools: "12 tools",
-    totalHours: 68,
-    totalValue: 5780,
+    tools: "16 tools",
+    totalHours: 91,
+    totalValue: 7735,
   },
   electrical: {
     name: "Electrical Contracting",
-    tools: "12 tools",
-    totalHours: 68,
-    totalValue: 5780,
+    tools: "15 tools",
+    totalHours: 87,
+    totalValue: 7395,
   },
   fabrication: {
     name: "Metal Fabrication",
@@ -1085,9 +1085,9 @@ const INDUSTRIES = {
   },
   plumbing: { 
     name: "Plumbing", 
-    tools: "12 tools", 
-    totalHours: 68, 
-    totalValue: 5780 
+    tools: "15 tools", 
+    totalHours: 86, 
+    totalValue: 7310 
   },
   construction: { 
     name: "Construction", 
@@ -2029,6 +2029,840 @@ Zodiac Service: 1300 XXX XXX`,
     },
   ],
 };
+
+// ══════════════════════════════════════════
+// HVAC-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.hvac = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'HVAC'),
+  })),
+  {
+    id: "service-prioritizer",
+    cat: "Operations",
+    icon: "🚨",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Service Call Prioritizer",
+    desc: "AI automatically triages incoming service calls by urgency. No more guessing which customer needs you first.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Service calls per month",
+    roiLabel2: "Minutes triaging each call",
+    roiDefault1: 80,
+    roiDefault2: 5,
+    benefits: [
+      "Auto-categorizes: Emergency / Urgent / Routine / Quote",
+      "Flags keywords: 'no cooling', 'gas smell', 'water leak', 'strange noise'",
+      "Schedules urgent calls within 4 hours automatically",
+      "Routes emergencies to on-call technician immediately",
+      "Batches routine calls for efficient scheduling",
+    ],
+    example: `SERVICE CALL TRIAGE — Climate Solutions HVAC
+Monday 17 Feb 2026, 8:45 AM
+
+──────────────────────────────────
+🚨 EMERGENCY — Immediate Response
+
+Call #1847 — Sarah Williams (0412 XXX XXX)
+Business: Westfield Medical Centre, 45 Smith St
+Issue: "Air conditioning completely dead, 
+server room temperature rising rapidly"
+Keywords detected: Dead system, server room, rising temp
+Priority: CRITICAL
+Action: Dispatched Mike (on-call) — ETA 25 mins
+Notes: Medical centre = critical facility
+Customer notified: Technician on way
+
+──────────────────────────────────
+⚡ URGENT — Same Day Required
+
+Call #1848 — David Chen (0419 XXX XXX)
+Residential: 22 Park Ave, Paddington
+Issue: "AC making loud grinding noise, 
+smells like burning"
+Keywords: Grinding, burning smell
+Priority: URGENT
+Action: Scheduled James, 2:00 PM today
+Risk: Potential compressor failure
+Customer notified: Appointment confirmed
+
+Call #1849 — Michelle Roberts (0421 XXX XXX)
+Business: Roberts Law Firm
+Issue: "Heating not working, office is 14°C"
+Keywords: Not working, heating issue
+Priority: URGENT (cold weather)
+Action: Scheduled Tom, 11:30 AM today
+Notes: Important client — priority service
+
+──────────────────────────────────
+📋 ROUTINE — Next Available
+
+Call #1850 — James Wilson
+Residential: 8 Hill St, Toowong
+Issue: "AC working but not cooling as well 
+as it used to"
+Priority: ROUTINE
+Action: Scheduled Wed 19 Feb, 10:00 AM
+Likely: Needs service/gas top-up
+
+Call #1851 — Anita Sharma  
+Residential: Annual service reminder
+Issue: "Due for annual maintenance"
+Priority: ROUTINE
+Action: Scheduled Fri 21 Feb, 2:00 PM
+
+──────────────────────────────────
+💰 QUOTE REQUESTS — Follow Up
+
+Call #1852 — Mark Thompson
+Commercial: New office fitout, 400sqm
+Issue: "Need quote for ducted system"
+Priority: QUOTE
+Action: Site visit booked Tue 18 Feb, 9 AM
+Notes: Budget $35-45k mentioned
+
+──────────────────────────────────
+CALL STATISTICS
+
+Total calls today: 6
+Emergencies: 1 (dispatched)
+Urgent: 2 (scheduled same day)
+Routine: 2 (scheduled this week)
+Quotes: 1 (site visit booked)
+
+Estimated today's revenue: $2,400
+(2 urgent repairs @ ~$600 each, 
+1 emergency callout @ ~$1,200)
+
+All customers notified of ETA/appointment.
+Techs have job details in their app.`,
+  },
+  {
+    id: "refrigerant-tracker",
+    cat: "Documents & Admin",
+    icon: "🧪",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Refrigerant Gas Tracker",
+    desc: "Track all refrigerant usage and generate EPA-compliant reports. Never miss a compliance deadline or refrigerant purchase.",
+    hours: 4,
+    value: 340,
+    price: 49,
+    roiLabel1: "Gas transactions per month",
+    roiLabel2: "Minutes per record",
+    roiDefault1: 30,
+    roiDefault2: 8,
+    benefits: [
+      "Logs every gas cylinder purchase and usage automatically",
+      "Generates quarterly EPA compliance reports",
+      "Tracks technician licenses and expiry dates",
+      "Calculates CO2 equivalent emissions",
+      "Alerts when stock levels are low",
+      "Integrates with supplier ordering systems",
+    ],
+    example: `REFRIGERANT TRACKING REPORT
+Climate Solutions HVAC — Q4 2025
+
+──────────────────────────────────
+GAS USAGE SUMMARY
+
+R32 (HFC-32):
+• Purchased: 45kg across 3 cylinders
+• Used: 38.5kg across 24 jobs
+• Remaining: 6.5kg (1 cylinder)
+• Cost: $1,890 ($42/kg average)
+• Status: ⚠️ Low stock — reorder recommended
+
+R410A:
+• Purchased: 30kg across 2 cylinders  
+• Used: 28kg across 18 jobs
+• Remaining: 2kg
+• Cost: $1,440 ($48/kg average)
+• Status: ⚠️ Low stock — reorder recommended
+
+R134a:
+• Purchased: 15kg across 1 cylinder
+• Used: 9kg across 7 jobs
+• Remaining: 6kg
+• Cost: $525 ($35/kg average)
+• Status: ✓ Adequate stock
+
+──────────────────────────────────
+COMPLIANCE REQUIREMENTS
+
+EPA Reporting Due: 31 January 2026
+Report Status: Ready to submit
+
+Refrigerant Handling Licenses:
+✓ Mike Chen: ARCtick valid until Aug 2026
+✓ Tom Harrison: ARCtick valid until Nov 2026  
+✓ James Wong: ARCtick valid until Feb 2026
+⚠️ James license expires soon — renewal due
+
+──────────────────────────────────
+CO2 EQUIVALENT EMISSIONS
+
+Total GWP impact this quarter:
+• R32: 38.5kg × 675 GWP = 25,988 kg CO2-e
+• R410A: 28kg × 2,088 GWP = 58,464 kg CO2-e
+• R134a: 9kg × 1,430 GWP = 12,870 kg CO2-e
+
+Total: 97,322 kg CO2-e (97.3 tonnes)
+Required to report: Yes (>10 tonnes threshold)
+
+──────────────────────────────────
+TOP JOBS BY GAS USAGE
+
+Job #2453: Westfield Office (R410A)
+• System: 24kW ducted
+• Gas used: 4.2kg (full recharge)
+• Reason: Major leak repair
+• Date: 15 Oct 2025
+
+Job #2489: Roberts Law (R32)
+• System: VRV system
+• Gas used: 3.8kg (top-up)
+• Reason: Minor leak detected
+• Date: 8 Nov 2025
+
+──────────────────────────────────
+COST ANALYSIS
+
+Total gas expenditure: $3,855
+Average per job: $78
+Most expensive gas: R410A ($48/kg)
+Cost trend: ↑ 12% vs Q3
+
+Recommendation: Consider transitioning 
+more customers to R32 systems (lower cost, 
+better environmental profile)
+
+──────────────────────────────────
+SUPPLIER ORDERS NEEDED
+
+Recommended reorders:
+• R32: 2 × 15kg cylinders ($1,260)
+• R410A: 1 × 15kg cylinder ($720)
+Expected delivery: 3-5 business days
+
+[Auto-generate purchase order] [Submit EPA report]`,
+  },
+  {
+    id: "maintenance-scheduler",
+    cat: "Customer Communication",
+    icon: "🔄",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Preventative Maintenance Scheduler",
+    desc: "Automatically reminds past customers when their annual service is due. Books appointments without you lifting a finger.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Customers with systems installed",
+    roiLabel2: "Hours on manual reminders",
+    roiDefault1: 150,
+    roiDefault2: 0.2,
+    benefits: [
+      "Tracks every system install date automatically",
+      "Sends reminder 2 weeks before service due",
+      "Allows customers to book online instantly",
+      "Follows up if no response after 1 week",
+      "Upsells filter replacements or upgrades",
+      "Generates $15-25k additional revenue per year",
+    ],
+    example: `MAINTENANCE REMINDER — Sent to Customer
+
+──────────────────────────────────
+Subject: Time for your annual AC service 🔧
+
+Hi Sarah,
+
+Hope you're enjoying your air conditioning! 
+It's been almost 12 months since we installed 
+your Daikin split system at 22 Park Ave.
+
+Your annual service is due by 15 March 2026.
+
+WHY SERVICE MATTERS:
+✓ Maintains efficiency (saves $200/year on power)
+✓ Prevents breakdowns in summer  
+✓ Keeps warranty valid
+✓ Takes only 45 minutes
+
+WHAT WE DO:
+• Clean filters and coils
+• Check refrigerant levels
+• Test all electrical components
+• Inspect drainage system
+• Performance test
+
+Cost: $180 (inc GST)
+Warranty: All work covered for 12 months
+
+[Book Online — Choose Your Time]
+
+Available times:
+• Wed 20 Feb, 10:00 AM
+• Thu 21 Feb, 2:00 PM  
+• Fri 22 Feb, 9:30 AM
+• Mon 25 Feb, 3:00 PM
+
+Can't make these times? Reply with your 
+preferred day and we'll make it work.
+
+BONUS: Book this week and get a FREE spare 
+filter set ($45 value)!
+
+See you soon,
+Mike Chen
+Climate Solutions HVAC
+07 3XXX XXXX
+
+──────────────────────────────────
+BACKEND AUTOMATION STATS
+
+Customer: Sarah Williams
+System: Daikin 7.1kW split (FTXM71UVMA)
+Installed: 18 March 2025
+Service due: 15 March 2026
+Last service: Never (first service)
+
+Reminder sent: 3 Feb 2026 (2 weeks early)
+Follow-up scheduled: 10 Feb if no response
+
+Upsell opportunities:
+• WiFi controller upgrade ($280)
+• Air purifier add-on ($450)
+• Extended warranty ($120/year)
+
+──────────────────────────────────
+COMPANY-WIDE SERVICE SCHEDULE
+
+This month's service reminders: 28 customers
+Already booked: 12 (43%)
+Awaiting response: 16 (57%)
+
+Expected revenue from services: $5,040
+Additional sales (filters, upgrades): $1,200
+Total opportunity: $6,240
+
+Technician capacity:
+• Mike: 3 services/day × 20 days = 60 slots
+• Tom: 3 services/day × 20 days = 60 slots
+Total: 120 service slots available this month
+
+Current bookings: 32
+Available: 88 slots
+
+Status: Capacity available — send more reminders`,
+  },
+  {
+    id: "energy-calculator",
+    cat: "Sales & Quotes",
+    icon: "⚡",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Energy Efficiency Calculator",
+    desc: "Show customers exactly how much they'll save by upgrading to a new efficient system. Close more sales with data.",
+    hours: 5,
+    value: 425,
+    price: 59,
+    roiLabel1: "Upgrade quotes per month",
+    roiLabel2: "Minutes calculating savings",
+    roiDefault1: 15,
+    roiDefault2: 20,
+    benefits: [
+      "Calculates annual running costs of current vs new system",
+      "Shows payback period for upgrade investment",
+      "Includes government rebates and incentives",
+      "Generates visual comparison charts",
+      "Proves ROI with real electricity prices",
+      "Converts 30-40% more upgrade quotes to sales",
+    ],
+    example: `ENERGY SAVINGS ANALYSIS
+Roberts Law Firm — System Upgrade Proposal
+
+──────────────────────────────────
+CURRENT SYSTEM
+
+Make: Fujitsu (2012 model)
+Type: 18kW ducted split
+Energy Rating: 2.5 stars (COP 2.8)
+Estimated age: 14 years
+Annual running cost: $3,240
+
+Issues identified:
+• Low efficiency (old technology)
+• High power consumption
+• Frequent repairs ($1,200 last year)
+• Inconsistent cooling
+
+──────────────────────────────────
+RECOMMENDED UPGRADE
+
+Make: Daikin VRV IV
+Type: 20kW variable refrigerant volume
+Energy Rating: 5 stars (COP 4.2)
+Inverter: Yes (variable speed)
+Zoning: 6 zones with individual control
+
+──────────────────────────────────
+COST COMPARISON
+
+                    Current    New System
+────────────────────────────────────────
+Power consumption   11,880kWh  7,960kWh
+Cost per kWh        $0.273     $0.273
+Annual power cost   $3,240     $2,173
+────────────────────────────────────────
+Annual savings:     $1,067/year
+
+Additional benefits:
+• Reduced repairs: Save $800/year
+• Total annual saving: $1,867/year
+
+──────────────────────────────────
+INVESTMENT ANALYSIS
+
+New system cost: $22,500 (inc install & GST)
+Less: Government rebate (STC): -$1,400
+Less: Trade-in old system: -$800
+──────────────────────────────────
+Net investment: $20,300
+
+Payback period: 10.9 years
+(based on $1,867 annual saving)
+
+BUT WITH FINANCING:
+$20,300 at 6.5% over 5 years = $397/month
+Current power + repairs = $337/month
+New power + loan = $578/month
+
+Extra cost during loan: $241/month
+After loan paid off: SAVE $337/month
+
+──────────────────────────────────
+10-YEAR TOTAL COST OF OWNERSHIP
+
+Keep old system:
+• Power: $32,400
+• Repairs: $8,000 (estimated)
+• Total: $40,400
+
+Upgrade to new system:
+• New system: $20,300
+• Power (10 yrs): $21,730
+• Repairs: $500 (under warranty)
+• Total: $42,530
+
+Difference: $2,130 more expensive...
+
+BUT WAIT — Your old system likely needs 
+replacement within 2-3 years anyway.
+
+Cost to replace THEN:
+• Emergency replacement: $24,000
+• Power (remaining 8 yrs): $25,920  
+• Repairs: $600
+• Total: $50,520
+
+Upgrade NOW vs Later: SAVE $8,000!
+
+──────────────────────────────────
+GOVERNMENT REBATES AVAILABLE
+
+✓ Small-scale Technology Certificates (STC)
+  Value: $1,400 (already included above)
+
+✓ Energy Savings Scheme (Queensland)
+  Additional rebate: $800 (if eligible)
+  Criteria: Upgrade from <3 star to 5+ star
+
+Total rebates: Up to $2,200
+
+──────────────────────────────────
+ENVIRONMENTAL IMPACT
+
+CO2 emissions reduced: 2.9 tonnes/year
+Equivalent to:
+• 6,440 km of driving avoided
+• 94 tree seedlings grown for 10 years
+
+──────────────────────────────────
+ADDITIONAL BENEFITS
+
+✓ Zoned cooling — heat/cool only occupied areas
+✓ Quiet operation — 24dB vs current 42dB
+✓ WiFi control — manage from your phone
+✓ 5-year parts & labour warranty
+✓ Increased property value (~$15,000)
+
+──────────────────────────────────
+RECOMMENDATION
+
+Replace now rather than wait for failure:
+• Avoid emergency pricing premium
+• Lock in STC rebates (reducing annually)
+• Start saving on power immediately
+• Prevent unexpected breakdown stress
+
+[Accept Quote] [Book Site Inspection]
+[Finance Calculator] [Compare Other Options]`,
+  },
+];
+
+// ══════════════════════════════════════════
+// ELECTRICAL-SPECIFIC TOOLS
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.electrical = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'electrical'),
+  })),
+  {
+    id: "test-tag-manager",
+    cat: "Documents & Admin",
+    icon: "🔌",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Test & Tag Manager",
+    desc: "Track all appliance testing schedules, generate compliant certificates, and never miss a retest deadline.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Appliances tested per month",
+    roiLabel2: "Minutes per certificate",
+    roiDefault1: 120,
+    roiDefault2: 5,
+    benefits: [
+      "Auto-generates AS/NZS 3760 compliant test certificates",
+      "Tracks retest due dates for every appliance",
+      "Sends reminders to commercial clients before expiry",
+      "Mobile app for on-site testing and QR code scanning",
+      "Batch invoice generation for test & tag jobs",
+    ],
+    example: `TEST & TAG CERTIFICATE
+
+Tested in accordance with AS/NZS 3760:2022
+
+Business: Westfield Office Complex
+Address: 45 Smith Street, Brisbane QLD
+Testing Date: 17 February 2026
+Next Test Due: 17 February 2027
+
+Appliance: HP Desktop Computer
+Asset #: WF-0847
+Location: Level 2, Desk 24
+Result: PASS ✓
+
+Tests performed:
+✓ Earth continuity: 0.08Ω (Pass <1Ω)
+✓ Insulation resistance: >100MΩ (Pass >1MΩ)  
+✓ Polarity: Correct
+✓ Visual inspection: No damage
+
+Tag applied: Green (Annual retest)
+Tested by: Mike Chen (Lic: E12345)
+Signature: ________________
+
+[QR Code for asset history]
+
+Next retest reminder will be sent 
+30 days before due date.`,
+  },
+  {
+    id: "compliance-cert-gen",
+    cat: "Documents & Admin",
+    icon: "📜",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Electrical Compliance Certificate Generator",
+    desc: "Auto-fill electrical compliance certificates with job details. Compliant with state regulations in seconds.",
+    hours: 8,
+    value: 680,
+    price: 69,
+    roiLabel1: "Certificates per month",
+    roiLabel2: "Minutes per certificate",
+    roiDefault1: 35,
+    roiDefault2: 15,
+    benefits: [
+      "Compliant with QLD, NSW, VIC, SA, WA regulations",
+      "Pre-fills from job details automatically",
+      "Digitally signed and emailed to customer",
+      "Tracks all certificates for audit purposes",
+      "Integrates with state authority lodgment systems",
+    ],
+    example: `CERTIFICATE OF ELECTRICAL COMPLIANCE
+Queensland Electrical Safety Act 2002
+
+Certificate Number: EC-2026-08471
+Issued: 17 February 2026
+
+ELECTRICAL CONTRACTOR
+Business: Spark Electrical Services
+License: E12345 (QLD)
+Electrician: Mike Chen
+Contact: 07 3XXX XXXX
+
+CUSTOMER DETAILS
+Name: Sarah Williams
+Address: 22 Park Avenue, Paddington QLD 4064
+
+WORK PERFORMED
+Installation of ducted air conditioning including:
+• 32A three-phase supply circuit
+• Isolator switch installation
+• Cable installation (6mm² × 4 core)
+• Circuit breaker (32A Type C)
+• Earth leakage protection (RCD 30mA)
+
+TESTING RESULTS
+✓ Continuity of earthing: Pass
+✓ Insulation resistance: >50MΩ (Pass)
+✓ Polarity: Correct
+✓ RCD trip time: 18ms @ 30mA (Pass)
+
+COMPLIANCE STATEMENT
+I certify this electrical installation work 
+complies with AS/NZS 3000:2018 Wiring Rules 
+and Queensland electrical safety legislation.
+
+Signed: ________________
+Date: 17 February 2026
+
+Lodged with Electrical Safety Office: 
+17/02/2026 10:45 AM
+Reference: ESO-2026-847`,
+  },
+  {
+    id: "emergency-dispatch",
+    cat: "Operations",
+    icon: "🚨",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Emergency Callout Dispatcher",
+    desc: "Routes after-hours emergencies to on-call electricians automatically. GPS routing to nearest sparky.",
+    hours: 5,
+    value: 425,
+    price: 79,
+    roiLabel1: "Emergency calls per month",
+    roiLabel2: "Minutes per dispatch",
+    roiDefault1: 20,
+    roiDefault2: 10,
+    benefits: [
+      "24/7 AI phone answering for emergencies",
+      "Routes to nearest available electrician via GPS",
+      "Calculates callout fee automatically (time/distance)",
+      "Sends job details via SMS before arrival",
+      "Tracks response times and customer satisfaction",
+    ],
+    example: `EMERGENCY DISPATCH ALERT
+
+🚨 EMERGENCY CALLOUT
+Received: 17 Feb 2026, 11:47 PM
+
+CUSTOMER
+Sarah Williams
+22 Park Ave, Paddington
+Phone: 0412 XXX XXX
+
+ISSUE (AI Assessment)
+"Power went out in whole house, sparks from 
+switchboard, burning smell"
+
+Risk Level: HIGH
+Keywords: No power, sparks, burning smell
+Suggested: Immediate response required
+
+DISPATCH
+Nearest electrician: Mike Chen
+Current location: 2.8km away (8 min drive)
+Status: On-call (rostered tonight)
+
+NOTIFIED
+SMS sent to Mike: 11:48 PM
+Customer notified: "Electrician dispatched, 
+ETA 12:00 AM"
+
+CALLOUT DETAILS
+After-hours fee: $180 (base callout)
++ Time: $145/hr (minimum 1 hour)
++ Materials: TBA on-site
+Est. total: $325-450
+
+Mike contacted customer: 11:52 PM
+Arrival: 11:58 PM
+Issue: Main switchboard fault
+Resolution: Isolated fault, temporary supply
+Time on-site: 1.2 hours
+Final invoice: $394 (inc GST)
+
+Customer rating: 5/5 stars
+"Mike arrived in 10 minutes and fixed it 
+quickly. Very professional."`,
+  },
+];
+
+// ══════════════════════════════════════════
+// PLUMBING-SPECIFIC TOOLS  
+// ══════════════════════════════════════════
+TOOLS_BY_INDUSTRY.plumbing = [
+  ...TOOLS_BY_INDUSTRY.pool.map(t => ({
+    ...t,
+    desc: t.desc.replace(/pool|Pool|swimming/gi, 'plumbing'),
+  })),
+  {
+    id: "emergency-router",
+    cat: "Operations",
+    icon: "🚰",
+    badge: "popular",
+    badgeLabel: "🔥 Popular",
+    title: "Emergency Job Router",
+    desc: "AI prioritizes burst pipes and gas leaks over blocked drains. Routes urgent jobs to nearest available plumber.",
+    hours: 7,
+    value: 595,
+    price: 69,
+    roiLabel1: "Service calls per day",
+    roiLabel2: "Minutes triaging",
+    roiDefault1: 25,
+    roiDefault2: 5,
+    benefits: [
+      "Detects keywords: burst pipe, gas leak, no hot water, sewage",
+      "Routes emergencies within 5 minutes",
+      "Schedules routine jobs efficiently",
+      "Sends job details and customer history to plumber's phone",
+      "Tracks response times for quality control",
+    ],
+    example: `JOB TRIAGE — Fast Flow Plumbing
+Monday 17 Feb, 9:15 AM
+
+🚨 EMERGENCY
+Job #2847 — Sarah Williams
+22 Park Ave, Paddington
+"Burst pipe in ceiling, water pouring into bedroom"
+
+Priority: CRITICAL
+Action: Dispatched Tom (2.1km away)
+ETA: 9:28 AM
+Emergency fee: $180 + hourly
+
+⚡ URGENT  
+Job #2848 — David Chen
+"Gas smell in kitchen, can't turn off stove"
+
+Priority: HIGH (gas safety)
+Action: Dispatched Mike (4.5km away)
+ETA: 10:05 AM
+
+📋 ROUTINE
+Job #2849 — Michelle Roberts
+"Blocked kitchen sink, slow draining"
+
+Priority: NORMAL
+Action: Scheduled James, 2:00 PM today
+
+All jobs include customer history, past 
+work, and property notes.`,
+  },
+  {
+    id: "backflow-scheduler",
+    cat: "Customer Communication",
+    icon: "💧",
+    badge: "quick",
+    badgeLabel: "⚡ Quick Win",
+    title: "Backflow Testing Scheduler",
+    desc: "Annual backflow testing reminders, auto-booking, and certificate generation. Guaranteed recurring revenue.",
+    hours: 6,
+    value: 510,
+    price: 59,
+    roiLabel1: "Backflow devices tracked",
+    roiLabel2: "Hours on manual reminders",
+    roiDefault1: 200,
+    roiDefault2: 0.15,
+    benefits: [
+      "Tracks all installed backflow devices",
+      "Sends reminder 6 weeks before test due",
+      "Generates compliance certificates automatically",
+      "Follows up non-compliant properties",
+      "Generates $20-30k recurring revenue per year",
+    ],
+    example: `BACKFLOW TEST REMINDER
+
+Hi David,
+
+Your annual backflow prevention device 
+test is due by 31 March 2026.
+
+Device: RPZ valve (kitchen fire sprinkler)
+Location: 45 Smith St, Brisbane
+Last tested: 28 March 2025
+Test cost: $165 (inc certificate & GST)
+
+[Book Online] or call 07 3XXX XXXX
+
+Why it matters:
+✓ Required by law (Plumbing & Drainage Act)
+✓ Protects drinking water supply
+✓ Avoid $1,100 council fines
+
+Testing takes 20 minutes.
+
+Mark, Fast Flow Plumbing`,
+  },
+  {
+    id: "hot-water-selector",
+    cat: "Sales & Quotes",
+    icon: "♨️",
+    badge: "advanced",
+    badgeLabel: "✨ Advanced",
+    title: "Hot Water System Selector",
+    desc: "AI recommends the perfect hot water system based on household size, usage, and budget. Shows running costs and payback.",
+    hours: 5,
+    value: 425,
+    price: 59,
+    roiLabel1: "Hot water quotes per month",
+    roiLabel2: "Minutes per recommendation",
+    roiDefault1: 20,
+    roiDefault2: 15,
+    benefits: [
+      "Asks 5 questions, recommends best system",
+      "Compares gas, electric, heat pump, solar",
+      "Calculates 10-year total cost of ownership",
+      "Includes government rebates automatically",
+      "Converts 40% more quotes to sales",
+    ],
+    example: `HOT WATER SYSTEM RECOMMENDATION
+Williams Residence — 22 Park Ave
+
+HOUSEHOLD PROFILE
+• Occupants: 4 people (2 adults, 2 teens)
+• Current system: 315L electric (failing)
+• Usage: 2 showers AM, 1 PM, dishwasher
+• Budget: $3,000-4,000
+• Priority: Running cost savings
+
+RECOMMENDED: Heat Pump System
+Stiebel Eltron WWK 300 (302L)
+
+COST COMPARISON (10 years)
+
+                   Current    Heat Pump
+Purchase & install $3,200     $4,800
+Rebate            -           -$1,000
+Annual power      $950        $280
+Total (10 years)  $12,700     $7,600
+
+YOU SAVE: $5,100 over 10 years
+Payback: 2.8 years
+
+WINNER: Heat Pump recommended!
+
+[Accept Quote] [Compare Options]`,
+  },
+];
 
 // Generate generic tools for other industries
 Object.keys(INDUSTRIES).forEach(ind => {
