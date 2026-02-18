@@ -290,7 +290,11 @@
     font-family: 'Syne', sans-serif;
     font-size: 16px; font-weight: 700; color: var(--ink);
   }
-  .metric .mlabel { font-size: 10px; color: var(--ink3); margin-top: 2px; }
+  .metric .mlabel { font-size: 10px; color: var(--ink3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
+  /* Color-coded metrics */
+  .metric.time-saved .mval { color: #1a7a4a; } /* Green for time saved */
+  .metric.value .mval { color: #0a4d8c; } /* Blue for value/savings */
+  .metric.price .mval { color: #e8500a; } /* Orange for price */
   .tool-actions { display: flex; gap: 8px; align-items: center; }
   .activated-label {
     display: flex; align-items: center; gap: 6px;
@@ -5902,15 +5906,15 @@ function renderTools(tools, cat) {
       <h3>${tool.title}</h3>
       <p>${tool.desc}</p>
       <div class="tool-metrics">
-        <div class="metric">
+        <div class="metric time-saved">
           <div class="mval">${tool.hours} hrs</div>
-          <div class="mlabel">Saved / month</div>
+          <div class="mlabel">Saved/mth</div>
         </div>
-        <div class="metric">
+        <div class="metric value">
           <div class="mval">$${tool.value.toLocaleString()}</div>
-          <div class="mlabel">Monthly value</div>
+          <div class="mlabel">Savings/mth</div>
         </div>
-        <div class="metric">
+        <div class="metric price">
           <div class="mval">$${tool.price}/mo</div>
           <div class="mlabel">Cost</div>
         </div>
