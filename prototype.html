@@ -6108,6 +6108,15 @@ window.goScreen = function(name) {
     if (tools) activatedTools.add(tools[0].id);
   }
 };
+
+// Check URL parameters for direct industry selection
+window.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const industry = urlParams.get('industry');
+  if (industry && TOOLS_BY_INDUSTRY[industry]) {
+    selectIndustry(industry);
+  }
+});
 </script>
 </body>
 </html>
