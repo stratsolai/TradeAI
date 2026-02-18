@@ -5836,7 +5836,8 @@ function selectIndustry(id) {
   activatedTools = new Set();
 
   document.querySelectorAll('.industry-card').forEach(c => c.classList.remove('selected'));
-  event.currentTarget.classList.add('selected');
+  const card = document.querySelector(`.industry-card[onclick*="${id}"]`);
+  if (card) card.classList.add('selected');
 
   renderDashboard();
   goScreen('dashboard');
