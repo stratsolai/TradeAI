@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Bot Settings - TradeAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a5490;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-back {
+      padding: 8px 16px;
+      background: #4a9fd8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .btn-save {
+      padding: 8px 24px;
+      background: #e8500a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-save:hover {
+      background: #c74408;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    .settings-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 16px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-desc {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #1a5490;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .example-box {
+      background: #f8f9fa;
+      border-left: 3px solid #1a5490;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 4px;
+    }
+
+    .example-box strong {
+      color: #1a5490;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .example-box p {
+      font-size: 13px;
+      color: #555;
+      margin: 4px 0;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .faq-list {
+      margin-top: 16px;
+    }
+
+    .faq-item {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+    }
+
+    .faq-content {
+      flex: 1;
+    }
+
+    .faq-question {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .faq-answer {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .btn-remove {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 4px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-add {
+      background: #1a5490;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI - Chat Bot Settings</div>
+    <div class="header-actions">
+      <a href="/chatbot.html" class="btn-back">← Back to Chat Bot</a>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Customize Your Chat Bot 🤖</h1>
+    <p class="page-subtitle">Teach the AI about your business so it can respond accurately to customers</p>
+
+    <div class="success-message" id="success-message">
+      ✅ Settings saved successfully!
+    </div>
+
+    <!-- Business Information -->
+    <div class="settings-section">
+      <div class="section-title">📋 Business Information</div>
+      <p class="section-desc">Tell the AI about your business - this information will be used to answer customer questions.</p>
+
+      <div class="form-group">
+        <label>Business Name</label>
+        <input type="text" id="business-name" placeholder="e.g., Blue Haven Pools">
+        <p class="help-text">Your business name as it appears to customers</p>
+      </div>
+
+      <div class="form-group">
+        <label>What do you do?</label>
+        <textarea id="business-description" placeholder="e.g., We design and install custom concrete pools in Brisbane and Gold Coast. We've been building pools for 11 years and complete 45-50 projects per year."></textarea>
+        <p class="help-text">Describe your services in 2-3 sentences</p>
+      </div>
+
+      <div class="form-group">
+        <label>Service Areas</label>
+        <input type="text" id="service-areas" placeholder="e.g., Brisbane, Gold Coast, Sunshine Coast">
+        <p class="help-text">Where do you operate? (comma separated)</p>
+      </div>
+
+      <div class="form-group">
+        <label>Typical Project Timeline</label>
+        <input type="text" id="timeline" placeholder="e.g., 8-10 weeks from deposit to completion">
+        <p class="help-text">How long does a typical project take?</p>
+      </div>
+    </div>
+
+    <!-- Pricing Information -->
+    <div class="settings-section">
+      <div class="section-title">💰 Pricing Information</div>
+      <p class="section-desc">Help the AI provide accurate pricing information to qualified leads.</p>
+
+      <div class="form-group">
+        <label>Price Ranges</label>
+        <textarea id="price-ranges" placeholder="e.g., Small pools (3-4m): $40,000-$50,000
+Medium pools (6-8m): $50,000-$75,000
+Large pools (10m+): $80,000-$120,000"></textarea>
+        <p class="help-text">List your typical price ranges so the AI can guide customers</p>
+      </div>
+
+      <div class="form-group">
+        <label>What's included in your pricing?</label>
+        <input type="text" id="whats-included" placeholder="e.g., Excavation, concrete shell, tiling, equipment, pool fencing">
+        <p class="help-text">What does a customer get for their money?</p>
+      </div>
+    </div>
+
+    <!-- AI Behavior -->
+    <div class="settings-section">
+      <div class="section-title">🎯 Qualifying Questions</div>
+      <p class="section-desc">The AI will ask these questions to qualify leads before booking consultations.</p>
+
+      <div class="form-group">
+        <label>Budget Question</label>
+        <select id="ask-budget">
+          <option value="yes">Yes, ask about budget</option>
+          <option value="no">No, don't ask about budget</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Timeline Question</label>
+        <select id="ask-timeline">
+          <option value="yes">Yes, ask when they want to start</option>
+          <option value="no">No, don't ask about timeline</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Location Question</label>
+        <select id="ask-location">
+          <option value="yes">Yes, ask their location</option>
+          <option value="no">No, don't ask location</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Project Details Question</label>
+        <select id="ask-project">
+          <option value="yes">Yes, ask about project details</option>
+          <option value="no">No, don't ask project details</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Greeting Message -->
+    <div class="settings-section">
+      <div class="section-title">👋 Greeting Message</div>
+      <p class="section-desc">Customize the first message visitors see when they open the chat.</p>
+
+      <div class="form-group">
+        <label>Custom Greeting</label>
+        <textarea id="greeting-message" placeholder="Hi! Looking to build a pool? I'm here to help!"></textarea>
+        <p class="help-text">This is the first thing visitors see</p>
+      </div>
+
+      <div class="example-box">
+        <strong>Examples:</strong>
+        <p>"👋 Hi! Ready to transform your backyard? Let's chat about your dream pool!"</p>
+        <p>"G'day! Looking for a quote? I can help with that. What brings you here today?"</p>
+      </div>
+    </div>
+
+    <!-- FAQs -->
+    <div class="settings-section">
+      <div class="section-title">❓ Frequently Asked Questions</div>
+      <p class="section-desc">Add common questions and answers so the AI can respond instantly.</p>
+
+      <div id="faq-list" class="faq-list">
+        <!-- FAQs will be added here dynamically -->
+      </div>
+
+      <button class="btn-add" onclick="addFAQ()">+ Add FAQ</button>
+    </div>
+
+    <!-- Calendar Integration -->
+    <div class="settings-section">
+      <div class="section-title">📅 Booking Integration</div>
+      <p class="section-desc">Connect your calendar so the AI can book consultations automatically.</p>
+
+      <div class="form-group">
+        <label>Booking Link</label>
+        <input type="text" id="booking-link" placeholder="e.g., https://calendly.com/yourbusiness/consultation">
+        <p class="help-text">Your Calendly, Cal.com, or booking page URL</p>
+      </div>
+
+      <div class="example-box">
+        <strong>Don't have a booking link?</strong>
+        <p>Free options: Calendly.com, Cal.com, or Google Calendar appointment slots</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    // Require authentication
+    requireAuth();
+
+    let faqs = [];
+
+    // Load existing settings on page load
+    async function loadSettings() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+
+      // Load settings from profile (we'll add a chatbot_settings column)
+      const settings = profile.chatbot_settings || {};
+
+      document.getElementById('business-name').value = settings.business_name || profile.business_name || '';
+      document.getElementById('business-description').value = settings.business_description || '';
+      document.getElementById('service-areas').value = settings.service_areas || '';
+      document.getElementById('timeline').value = settings.timeline || '';
+      document.getElementById('price-ranges').value = settings.price_ranges || '';
+      document.getElementById('whats-included').value = settings.whats_included || '';
+      document.getElementById('ask-budget').value = settings.ask_budget || 'yes';
+      document.getElemen
