@@ -75,7 +75,6 @@
       font-weight: 600;
     }
 
-    /* Chat Widget Demo */
     .chat-container {
       max-width: 400px;
       margin: 0 auto;
@@ -169,4 +168,198 @@
     .typing-indicator {
       display: none;
       padding: 12px 16px;
-      backgr
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 12px;
+      max-width: 80px;
+      margin-bottom: 16px;
+    }
+
+    .typing-indicator.active {
+      display: block;
+    }
+
+    .typing-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #999;
+      margin: 0 2px;
+      animation: typing 1.4s infinite;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .typing-dot:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-10px); }
+    }
+
+    .info-box {
+      background: #e8f4fd;
+      border-left: 4px solid #1a5490;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 6px;
+    }
+
+    .info-box p {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    .info-box strong {
+      color: #1a5490;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI - AI Chat Widget</div>
+    <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">AI Chat Widget 💬</h1>
+    <p class="page-subtitle">Live demo of your AI-powered website chat</p>
+
+    <div class="demo-section">
+      <h2 class="section-title">Try the Chat Widget</h2>
+      
+      <div class="info-box">
+        <p><strong>This is a working demo!</strong></p>
+        <p>Type a message below and the AI will respond in real-time using Claude API.</p>
+        <p>Try asking: "How much does a pool cost?" or "I want a quote"</p>
+      </div>
+
+      <div class="chat-container">
+        <div class="chat-header">
+          Chat with Blue Haven Pools
+        </div>
+        
+        <div class="chat-messages" id="chat-messages">
+          <div class="message bot">
+            <div class="message-bubble">
+              👋 Hi! Looking to build a pool? I'm here to help! Ask me anything about pricing, timelines, or book a free consultation.
+            </div>
+          </div>
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+
+        <div class="chat-input-container">
+          <input 
+            type="text" 
+            class="chat-input" 
+            id="chat-input" 
+            placeholder="Type your message..."
+            onkeypress="if(event.key==='Enter') sendMessage()"
+          >
+          <button class="chat-send" id="send-btn" onclick="sendMessage()">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    // Require authentication
+    requireAuth();
+
+    // Store conversation history
+    let conversationHistory = [];
+
+    // Send message function
+    async function sendMessage() {
+      const input = document.getElementById('chat-input');
+      const message = input.value.trim();
+      
+      if (!message) return;
+
+      // Disable input while processing
+      input.disabled = true;
+      document.getElementById('send-btn').disabled = true;
+
+      // Add user message to chat
+      addMessage(message, 'user');
+      input.value = '';
+
+      // Show typing indicator
+      document.getElementById('typing-indicator').classList.add('active');
+
+      try {
+        // Call our serverless function
+        const response = await fetch('/api/chatbot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            conversationHistory: conversationHistory
+          })
+        });
+
+        const data = await response.json();
+
+        // Hide typing indicator
+        document.getElementById('typing-indicator').classList.remove('active');
+
+        if (data.success) {
+          // Add AI response to chat
+          addMessage(data.message, 'bot');
+          
+          // Update conversation history
+          conversationHistory = data.conversationHistory;
+        } else {
+          addMessage('Sorry, I encountered an error. Please try again.', 'bot');
+          console.error('Error:', data.error);
+        }
+
+      } catch (error) {
+        document.getElementById('typing-indicator').classList.remove('active');
+        addMessage('Sorry, I couldn\'t connect to the server. Please try again.', 'bot');
+        console.error('Error:', error);
+      }
+
+      // Re-enable input
+      input.disabled = false;
+      document.getElementById('send-btn').disabled = false;
+      input.focus();
+    }
+
+    // Add message to chat UI
+    function addMessage(text, sender) {
+      const messagesContainer = document.getElementById('chat-messages');
+      
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${sender}`;
+      
+      const bubbleDiv = document.createElement('div');
+      bubbleDiv.className = 'message-bubble';
+      bubbleDiv.textContent = text;
+      
+      messageDiv.appendChild(bubbleDiv);
+      messagesContainer.appendChild(messageDiv);
+      
+      // Scroll to bottom
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  </script>
+</body>
+</html>
