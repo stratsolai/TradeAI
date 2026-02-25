@@ -383,6 +383,26 @@ Large pools (10m+): $80,000-$120,000"></textarea>
       </div>
     </div>
 
+    <!-- Widget Code -->
+    <div class="settings-section">
+      <div class="section-title">🌐 Add to Your Website</div>
+      <p class="section-desc">Copy this code and paste it before the closing &lt;/body&gt; tag on your website.</p>
+
+      <div class="form-group">
+        <label>Your Widget Code</label>
+        <textarea id="widget-code" readonly style="font-family: monospace; background: #f5f5f5; height: 100px;"></textarea>
+        <button class="btn-add" onclick="copyWidgetCode()" style="margin-top: 12px;">📋 Copy Code</button>
+      </div>
+
+      <div class="example-box">
+        <strong>Installation Instructions:</strong>
+        <p>1. Copy the code above</p>
+        <p>2. Open your website's HTML file</p>
+        <p>3. Paste it just before the &lt;/body&gt; tag</p>
+        <p>4. Save and publish - the chat widget will appear!</p>
+      </div>
+    </div>
+    
   </div>
 
   <!-- Supabase JS SDK -->
@@ -419,6 +439,7 @@ Large pools (10m+): $80,000-$120,000"></textarea>
 
       faqs = settings.faqs || [];
       renderFAQs();
+      generateWidgetCode();
     }
 
     // Save settings - GLOBAL FUNCTION
@@ -515,5 +536,23 @@ Large pools (10m+): $80,000-$120,000"></textarea>
     }
 
     // Load settings on page load
+   // Generate widget code
+    async function generateWidgetCode() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const widgetCode = `<!-- TradeAI Chat Widget -->
+<script src="https://trade-ai-seven-blue.vercel.app/widget.js" data-user-id="${user.id}"><\/script>`;
+
+      document.getElementById('widget-code').value = widgetCode;
+    }
+
+    // Copy widget code
+    window.copyWidgetCode = function() {
+      const textarea = document.getElementById('widget-code');
+      textarea.select();
+      document.execCommand('copy');
+      alert('✅ Widget code copied! Paste it into your website.');
+    };
     loadSettings();
   </script>
