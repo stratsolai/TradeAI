@@ -475,30 +475,26 @@
       <div class="card">
         <h2 class="card-title">Add Content to Your Library</h2>
         
-        <div class="upload-section">
-          <!-- PDF Upload -->
-          <div class="upload-card" onclick="document.getElementById('pdf-input').click()">
-            <input type="file" id="pdf-input" accept=".pdf" multiple>
-            <div class="upload-icon">📄</div>
-            <div class="upload-title">Upload PDFs</div>
-            <div class="upload-desc">Company brochures, case studies, tender documents. AI will extract images, text, and projects.</div>
-          </div>
+       <div class="upload-section">
+  <!-- Universal File Upload -->
+  <div class="upload-card" onclick="document.getElementById('file-input').click()">
+    <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple>
+    <div class="upload-icon">📁</div>
+    <div class="upload-title">Upload Any File</div>
+    <div class="upload-desc">
+      <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
+      <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
+      AI extracts everything automatically
+    </div>
+  </div>
 
-          <!-- Image Upload -->
-          <div class="upload-card" onclick="document.getElementById('image-input').click()">
-            <input type="file" id="image-input" accept="image/*" multiple>
-            <div class="upload-icon">📸</div>
-            <div class="upload-title">Upload Images</div>
-            <div class="upload-desc">Project photos, team photos, product images. AI will auto-tag and categorize.</div>
-          </div>
-
-          <!-- Website Scraper -->
-          <div class="upload-card" onclick="showWebsiteScraper()">
-            <div class="upload-icon">🌐</div>
-            <div class="upload-title">Import from Website</div>
-            <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
-          </div>
-        </div>
+  <!-- Website Scraper -->
+  <div class="upload-card" onclick="showWebsiteScraper()">
+    <div class="upload-icon">🌐</div>
+    <div class="upload-title">Import from Website</div>
+    <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
+  </div>
+</div>
       </div>
 
       <!-- Loading State -->
@@ -563,81 +559,78 @@
     let currentFilter = 'all';
     let allContent = [];
 
-    // File upload handlers
-    document.getElementById('pdf-input').addEventListener('change', handlePDFUpload);
-    document.getElementById('image-input').addEventListener('change', handleImageUpload);
+        // Universal file upload handler
+      document.getElementById('file-input').addEventListener('change', handleFileUpload);
 
-    async function handlePDFUpload(e) {
-      const files = e.target.files;
-      if (!files.length) return;
+    async function handleFileUpload(e) {
+  const files = e.target.files;
+  if (!files.length) return;
 
-      document.getElementById('loading').classList.add('show');
-      document.getElementById('loading-text').textContent = 'Extracting content from PDFs...';
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent = 'Processing your files...';
 
-      const { data: { user } } = await supabaseClient.auth.getUser();
+  const { data: { user } } = await supabaseClient.auth.getUser();
 
-      for (const file of files) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const base64 = event.target.result.split(',')[1];
-          
-          try {
-            const response = await fetch('/api/extract-pdf', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                userId: user.id,
-                fileName: file.name,
-                fileData: base64
-              })
-            });
+  for (const file of files) {
+    const fileType = getFileType(file.name);
+    console.log(`Processing ${file.name} as ${fileType}`);
 
-            const data = await response.json();
-            
-            if (data.success) {
-              console.log(`Extracted ${data.itemsCount} items from ${file.name}`);
-            }
-          } catch (error) {
-            console.error('Error:', error);
-          }
-        };
-        reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const base64 = event.target.result.split(',')[1];
+      
+      try {
+        const response = await fetch('/api/process-file', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            fileName: file.name,
+            fileType: fileType,
+            fileData: base64
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          console.log(`Processed ${file.name}: ${data.itemsCount} items extracted`);
+        } else {
+          console.error(`Error processing ${file.name}:`, data.error);
+        }
+      } catch (error) {
+        console.error('Error:', error);
       }
+    };
+    reader.readAsDataURL(file);
+  }
 
-      setTimeout(() => {
-        document.getElementById('loading').classList.remove('show');
-        alert('✅ PDFs processed! Check "My Library" tab to see extracted content.');
-        loadLibrary();
-      }, 3000);
-    }
+  setTimeout(() => {
+    document.getElementById('loading').classList.remove('show');
+    alert('✅ Files processed! Check "My Library" tab to see extracted content.');
+    loadLibrary();
+  }, 3000);
+}
 
-    async function handleImageUpload(e) {
-      const files = e.target.files;
-      if (!files.length) return;
-
-      document.getElementById('loading').classList.add('show');
-      document.getElementById('loading-text').textContent = 'Analyzing and tagging images...';
-
-      const { data: { user } } = await supabaseClient.auth.getUser();
-
-      for (const file of files) {
-        const reader = new FileReader();
-        reader.onload = async (event) => {
-          const base64 = event.target.result.split(',')[1];
-          
-          // Save image to library
-          await supabaseClient.from('content_library').insert({
-            user_id: user.id,
-            content_type: 'image',
-            source_type: 'upload',
-            title: file.name,
-            image_url: event.target.result,
-            tags: ['uploaded'],
-            ai_keywords: []
-          });
-        };
-        reader.readAsDataURL(file);
-      }
+function getFileType(fileName) {
+  const ext = fileName.toLowerCase().split('.').pop();
+  const types = {
+    'pdf': 'pdf',
+    'doc': 'word',
+    'docx': 'word',
+    'ppt': 'powerpoint',
+    'pptx': 'powerpoint',
+    'xls': 'excel',
+    'xlsx': 'excel',
+    'txt': 'text',
+    'jpg': 'image',
+    'jpeg': 'image',
+    'png': 'image',
+    'webp': 'image',
+    'heic': 'image'
+  };
+  return types[ext] || 'unknown';
+}
 
       setTimeout(() => {
         document.getElementById('loading').classList.remove('show');
