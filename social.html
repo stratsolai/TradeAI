@@ -36,7 +36,7 @@
       gap: 12px;
     }
 
-    .btn-back {
+    .btn-back, .btn-settings {
       padding: 8px 16px;
       background: #4a9fd8;
       color: white;
@@ -48,14 +48,7 @@
     }
 
     .btn-settings {
-      padding: 8px 16px;
       background: #6c757d;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      text-decoration: none;
-      font-size: 14px;
     }
 
     .container {
@@ -76,7 +69,6 @@
       margin-bottom: 32px;
     }
 
-    /* Tabs */
     .tabs {
       display: flex;
       gap: 8px;
@@ -141,6 +133,7 @@
     }
 
     input[type="text"],
+    input[type="date"],
     textarea,
     select {
       width: 100%;
@@ -161,6 +154,59 @@
     select:focus {
       outline: none;
       border-color: #1a5490;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .category-selector {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .category-card {
+      background: white;
+      border: 2px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+
+    .category-card:hover {
+      border-color: #1a5490;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .category-card.selected {
+      border-color: #1a5490;
+      background: #e8f4fd;
+    }
+
+    .category-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .category-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .category-desc {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.4;
     }
 
     .file-upload {
@@ -229,6 +275,42 @@
       border-color: #1a5490;
     }
 
+    .tone-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .tone-option {
+      border: 2px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .tone-option:hover {
+      border-color: #1a5490;
+    }
+
+    .tone-option.selected {
+      border-color: #1a5490;
+      background: #e8f4fd;
+    }
+
+    .tone-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .tone-example {
+      font-size: 13px;
+      color: #666;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
     .btn-generate,
     .btn-primary {
       width: 100%;
@@ -252,6 +334,28 @@
     .btn-primary:disabled {
       background: #ccc;
       cursor: not-allowed;
+    }
+
+    .step-indicator {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      justify-content: center;
+    }
+
+    .step {
+      width: 12px;
+      height: 12px;
+      background: #e5e5e5;
+      border-radius: 50%;
+    }
+
+    .step.active {
+      background: #1a5490;
+    }
+
+    .step.completed {
+      background: #28a745;
     }
 
     .captions-container {
@@ -355,14 +459,6 @@
       color: #333;
     }
 
-    .help-text {
-      font-size: 13px;
-      color: #666;
-      margin-top: 6px;
-      font-style: italic;
-    }
-
-    /* Scheduled Posts List */
     .posts-list {
       display: flex;
       flex-direction: column;
@@ -438,21 +534,12 @@
       gap: 8px;
     }
 
-    .btn-edit,
     .btn-delete {
       padding: 6px 12px;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
-    }
-
-    .btn-edit {
-      background: #6c757d;
-      color: white;
-    }
-
-    .btn-delete {
       background: #dc3545;
       color: white;
     }
@@ -468,6 +555,10 @@
       margin-bottom: 16px;
       opacity: 0.5;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -481,7 +572,7 @@
 
   <div class="container">
     <h1 class="page-title">Social Media Manager 📱</h1>
-    <p class="page-subtitle">Create, schedule, and manage your social media content</p>
+    <p class="page-subtitle">Create engaging social media content with AI</p>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -493,91 +584,316 @@
     <!-- Tab: Create Post -->
     <div class="tab-content active" id="create-tab">
       
-      <div class="info-box">
-        <p><strong>How it works:</strong></p>
-        <p>1. Upload a photo → 2. Select platforms & category → 3. AI generates captions → 4. Schedule or copy to post manually</p>
+      <!-- Step Indicator -->
+      <div class="step-indicator">
+        <div class="step active" id="step-1"></div>
+        <div class="step" id="step-2"></div>
+        <div class="step" id="step-3"></div>
+        <div class="step" id="step-4"></div>
       </div>
 
-      <!-- Upload Image -->
-      <div class="card">
-        <h2 class="card-title">📸 Upload Project Photo</h2>
-        
-        <div class="file-upload" id="file-upload">
-          <input type="file" id="image-input" accept="image/*">
-          <div class="upload-icon">📷</div>
-          <p><strong>Click to upload</strong> or drag and drop</p>
-          <p class="help-text">PNG, JPG, WEBP up to 10MB</p>
-        </div>
+      <!-- Step 1: Choose Category -->
+      <div class="create-step" id="category-step">
+        <div class="card">
+          <h2 class="card-title">Step 1: Choose Content Category</h2>
+          <p class="help-text" style="margin-bottom: 20px;">What type of content are you creating?</p>
 
-        <div class="image-preview" id="image-preview">
-          <img id="preview-img" src="" alt="Preview">
+          <div class="category-selector">
+            <div class="category-card" onclick="selectCategory('marketing')">
+              <div class="category-icon">🎯</div>
+              <div class="category-name">Marketing & Promotions</div>
+              <div class="category-desc">Special offers, seasonal promotions, service highlights</div>
+            </div>
+
+            <div class="category-card" onclick="selectCategory('completed-jobs')">
+              <div class="category-icon">✅</div>
+              <div class="category-name">Completed Jobs</div>
+              <div class="category-desc">Showcase your recent projects and results</div>
+            </div>
+
+            <div class="category-card" onclick="selectCategory('tips')">
+              <div class="category-icon">💡</div>
+              <div class="category-name">Tips & Advice</div>
+              <div class="category-desc">Industry tips, maintenance advice, how-to guides</div>
+            </div>
+
+            <div class="category-card" onclick="selectCategory('industry-trends')">
+              <div class="category-icon">📈</div>
+              <div class="category-name">Industry Trends</div>
+              <div class="category-desc">Latest news and trends in your industry</div>
+            </div>
+
+            <div class="category-card" onclick="selectCategory('team-culture')">
+              <div class="category-icon">👥</div>
+              <div class="category-name">Team & Culture</div>
+              <div class="category-desc">Behind the scenes, team spotlights, company culture</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <!-- Platform & Category -->
-      <div class="card">
-        <h2 class="card-title">🎯 Platform & Category</h2>
-        
-        <div class="form-group">
-          <label>Select Platforms</label>
-          <div class="platform-selector">
-            <button class="platform-btn active" data-platform="facebook" onclick="togglePlatform(this)">
-              Facebook
-            </button>
-            <button class="platform-btn" data-platform="instagram" onclick="togglePlatform(this)">
-              Instagram
-            </button>
-            <button class="platform-btn" data-platform="linkedin" onclick="togglePlatform(this)">
-              LinkedIn
-            </button>
+      <!-- Step 2: Category-Specific Inputs -->
+      <div class="create-step hidden" id="inputs-step">
+        <!-- Marketing Inputs -->
+        <div class="category-inputs hidden" id="inputs-marketing">
+          <div class="card">
+            <h2 class="card-title">🎯 Marketing & Promotions Details</h2>
+            
+            <div class="form-group">
+              <label>Upload Image (Optional)</label>
+              <div class="file-upload" id="file-upload-marketing">
+                <input type="file" accept="image/*">
+                <div class="upload-icon">📷</div>
+                <p><strong>Click to upload</strong> or drag and drop</p>
+              </div>
+              <div class="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Promotion Type</label>
+              <select id="promo-type">
+                <option value="special-offer">Special Offer</option>
+                <option value="seasonal">Seasonal Promotion</option>
+                <option value="new-service">New Service Launch</option>
+                <option value="limited-time">Limited Time Deal</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Offer Details</label>
+              <textarea id="offer-details" placeholder="E.g., 20% off all pool installations booked this month"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Valid Until (Optional)</label>
+              <input type="date" id="valid-until">
+            </div>
+
+            <div class="form-group">
+              <label>Call-to-Action</label>
+              <select id="cta">
+                <option value="book-now">Book Now</option>
+                <option value="call-us">Call Us</option>
+                <option value="get-quote">Get a Quote</option>
+                <option value="learn-more">Learn More</option>
+                <option value="visit-website">Visit Our Website</option>
+              </select>
+            </div>
+
+            <button class="btn-primary" onclick="nextStep()">Next: Select Platforms →</button>
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Content Category</label>
-          <select id="category">
-            <option value="marketing">🎯 Marketing & Promotions</option>
-            <option value="completed-jobs">✅ Completed Jobs</option>
-            <option value="tips">💡 Tips & Advice</option>
-            <option value="industry-trends">📈 Industry Trends</option>
-            <option value="team-culture">👥 Team & Culture</option>
-          </select>
+        <!-- Completed Jobs Inputs -->
+        <div class="category-inputs hidden" id="inputs-completed-jobs">
+          <div class="card">
+            <h2 class="card-title">✅ Completed Job Details</h2>
+            
+            <div class="form-group">
+              <label>Upload Image (Required)</label>
+              <div class="file-upload" id="file-upload-jobs">
+                <input type="file" accept="image/*" required>
+                <div class="upload-icon">📷</div>
+                <p><strong>Click to upload</strong> your project photo</p>
+              </div>
+              <div class="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Project Type</label>
+              <select id="project-type">
+                <option value="installation">Installation</option>
+                <option value="repair">Repair</option>
+                <option value="renovation">Renovation</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="custom">Custom Project</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Location (Suburb/Area)</label>
+              <input type="text" id="location" placeholder="E.g., Mosman, Sydney">
+            </div>
+
+            <div class="form-group">
+              <label>Project Duration</label>
+              <input type="text" id="duration" placeholder="E.g., Completed in 3 days">
+            </div>
+
+            <div class="form-group">
+              <label>Special Challenges (Optional)</label>
+              <textarea id="challenges" placeholder="E.g., Tight access, sloped block, complex installation"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Customer Testimonial (Optional)</label>
+              <textarea id="testimonial" placeholder="Direct quote from happy customer"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="nextStep()">Next: Select Platforms →</button>
+          </div>
+        </div>
+
+        <!-- Tips & Advice Inputs -->
+        <div class="category-inputs hidden" id="inputs-tips">
+          <div class="card">
+            <h2 class="card-title">💡 Tips & Advice Details</h2>
+            
+            <div class="form-group">
+              <label>Upload Image (Optional)</label>
+              <div class="file-upload" id="file-upload-tips">
+                <input type="file" accept="image/*">
+                <div class="upload-icon">📷</div>
+                <p><strong>Click to upload</strong> or drag and drop</p>
+              </div>
+              <div class="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Tip Category</label>
+              <select id="tip-category">
+                <option value="maintenance">Maintenance</option>
+                <option value="safety">Safety</option>
+                <option value="cost-saving">Cost-Saving</option>
+                <option value="diy">DIY Tips</option>
+                <option value="seasonal">Seasonal Advice</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Main Tip</label>
+              <textarea id="main-tip" placeholder="E.g., Clean your pool filter every 2 weeks during summer"></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Why It Matters</label>
+              <textarea id="why-matters" placeholder="E.g., Prevents algae buildup and keeps water crystal clear"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="nextStep()">Next: Select Platforms →</button>
+          </div>
+        </div>
+
+        <!-- Industry Trends Inputs -->
+        <div class="category-inputs hidden" id="inputs-industry-trends">
+          <div class="card">
+            <h2 class="card-title">📈 Industry Trends Details</h2>
+            
+            <div class="form-group">
+              <label>Upload Image (Optional)</label>
+              <div class="file-upload" id="file-upload-trends">
+                <input type="file" accept="image/*">
+                <div class="upload-icon">📷</div>
+                <p><strong>Click to upload</strong> or drag and drop</p>
+              </div>
+              <div class="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Trend Topic</label>
+              <input type="text" id="trend-topic" placeholder="E.g., Eco-friendly pool heating systems gaining popularity">
+              <p class="help-text">What's the trend you want to discuss?</p>
+            </div>
+
+            <div class="form-group">
+              <label>Your Expert Take</label>
+              <textarea id="expert-take" placeholder="Your professional perspective on this trend"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="nextStep()">Next: Select Platforms →</button>
+          </div>
+        </div>
+
+        <!-- Team & Culture Inputs -->
+        <div class="category-inputs hidden" id="inputs-team-culture">
+          <div class="card">
+            <h2 class="card-title">👥 Team & Culture Details</h2>
+            
+            <div class="form-group">
+              <label>Upload Image (Optional)</label>
+              <div class="file-upload" id="file-upload-team">
+                <input type="file" accept="image/*">
+                <div class="upload-icon">📷</div>
+                <p><strong>Click to upload</strong> team photo</p>
+              </div>
+              <div class="image-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label>Post Type</label>
+              <select id="team-post-type">
+                <option value="spotlight">Team Member Spotlight</option>
+                <option value="behind-scenes">Behind the Scenes</option>
+                <option value="milestone">Company Milestone</option>
+                <option value="culture">Company Culture</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Team Member Name (If Spotlight)</label>
+              <input type="text" id="team-member-name" placeholder="E.g., John Smith">
+            </div>
+
+            <div class="form-group">
+              <label>What to Highlight</label>
+              <textarea id="team-highlight" placeholder="E.g., John has 15 years experience and specializes in complex installations"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="nextStep()">Next: Select Platforms →</button>
+          </div>
         </div>
       </div>
 
-      <!-- Post Settings -->
-      <div class="card">
-        <h2 class="card-title">✍️ Post Settings</h2>
-        
-        <div class="form-group">
-          <label>Tone</label>
-          <select id="tone">
-            <option value="professional">Professional</option>
-            <option value="casual">Casual & Friendly</option>
-            <option value="promotional">Promotional</option>
-            <option value="educational">Educational</option>
-          </select>
+      <!-- Step 3: Platforms & Tone -->
+      <div class="create-step hidden" id="platforms-step">
+        <div class="card">
+          <h2 class="card-title">Step 3: Select Platforms</h2>
+          
+          <div class="form-group">
+            <div class="platform-selector">
+              <button class="platform-btn active" data-platform="facebook" onclick="togglePlatform(this)">
+                Facebook
+              </button>
+              <button class="platform-btn" data-platform="instagram" onclick="togglePlatform(this)">
+                Instagram
+              </button>
+              <button class="platform-btn" data-platform="linkedin" onclick="togglePlatform(this)">
+                LinkedIn
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div class="form-group">
-          <label>Post Type</label>
-          <select id="post-type">
-            <option value="project-showcase">Project Showcase</option>
-            <option value="before-after">Before & After</option>
-            <option value="customer-testimonial">Customer Testimonial</option>
-            <option value="tip-advice">Tip or Advice</option>
-            <option value="behind-scenes">Behind the Scenes</option>
-          </select>
-        </div>
+        <div class="card">
+          <h2 class="card-title">Step 4: Choose Tone</h2>
+          <p class="help-text" style="margin-bottom: 20px;">Select the writing style for your post</p>
 
-        <div class="form-group">
-          <label>Additional Context (Optional)</label>
-          <textarea id="context" placeholder="E.g., This was a challenging install in Paddington, completed in 3 days..."></textarea>
-        </div>
+          <div class="tone-selector">
+            <div class="tone-option selected" onclick="selectTone(this, 'professional')">
+              <div class="tone-title">Professional</div>
+              <div class="tone-example">"We're pleased to announce the completion of this pool installation in Mosman."</div>
+            </div>
 
-        <button class="btn-generate" id="generate-btn" onclick="generateCaptions()" disabled>
-          Generate Captions
-        </button>
+            <div class="tone-option" onclick="selectTone(this, 'casual')">
+              <div class="tone-title">Casual & Friendly</div>
+              <div class="tone-example">"Check out this beauty we just finished in Mosman! 🏊‍♂️"</div>
+            </div>
+
+            <div class="tone-option" onclick="selectTone(this, 'promotional')">
+              <div class="tone-title">Promotional</div>
+              <div class="tone-example">"AMAZING pool installation completed! Want one like this? Call now for 20% off!"</div>
+            </div>
+
+            <div class="tone-option" onclick="selectTone(this, 'educational')">
+              <div class="tone-title">Educational</div>
+              <div class="tone-example">"Here's what goes into a professional pool installation..."</div>
+            </div>
+          </div>
+
+          <button class="btn-generate" onclick="generateCaptions()" style="margin-top: 24px;">
+            Generate Captions with AI
+          </button>
+        </div>
       </div>
 
       <!-- Loading State -->
@@ -619,113 +935,198 @@
   <script>
     requireAuth();
 
-    let uploadedImage = null;
-    let uploadedImageBase64 = null;
+    let currentStep = 1;
+    let selectedCategory = null;
+    let selectedTone = 'professional';
     let selectedPlatforms = ['facebook'];
-    let currentCaption = null;
+    let uploadedImageBase64 = null;
+    let formData = {};
 
-    const fileUpload = document.getElementById('file-upload');
-    const fileInput = document.getElementById('image-input');
-    const imagePreview = document.getElementById('image-preview');
-    const previewImg = document.getElementById('preview-img');
-    const generateBtn = document.getElementById('generate-btn');
+    // Category selection
+    window.selectCategory = function(category) {
+      selectedCategory = category;
+      
+      // Update UI
+      document.querySelectorAll('.category-card').forEach(card => {
+        card.classList.remove('selected');
+      });
+      event.target.closest('.category-card').classList.add('selected');
+      
+      // Wait briefly then advance
+      setTimeout(() => {
+        currentStep = 2;
+        updateSteps();
+        showInputsForCategory(category);
+      }, 300);
+    };
 
-    fileUpload.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', handleFileSelect);
-    fileUpload.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      fileUpload.classList.add('dragover');
-    });
-    fileUpload.addEventListener('dragleave', () => {
-      fileUpload.classList.remove('dragover');
-    });
-    fileUpload.addEventListener('drop', (e) => {
-      e.preventDefault();
-      fileUpload.classList.remove('dragover');
-      const files = e.dataTransfer.files;
-      if (files.length > 0) handleFile(files[0]);
-    });
-
-    function handleFileSelect(e) {
-      const file = e.target.files[0];
-      if (file) handleFile(file);
+    function showInputsForCategory(category) {
+      // Hide category step
+      document.getElementById('category-step').classList.add('hidden');
+      document.getElementById('inputs-step').classList.remove('hidden');
+      
+      // Hide all category inputs
+      document.querySelectorAll('.category-inputs').forEach(el => {
+        el.classList.add('hidden');
+      });
+      
+      // Show selected category inputs
+      document.getElementById(`inputs-${category}`).classList.remove('hidden');
+      
+      // Set up file upload for this category
+      setupFileUpload(category);
     }
 
-    function handleFile(file) {
+    function setupFileUpload(category) {
+      const uploadDiv = document.querySelector(`#inputs-${category} .file-upload`);
+      const input = uploadDiv.querySelector('input[type="file"]');
+      const preview = uploadDiv.nextElementSibling;
+      
+      uploadDiv.addEventListener('click', () => input.click());
+      
+      input.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFileUpload(file, preview);
+      });
+      
+      uploadDiv.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadDiv.style.borderColor = '#1a5490';
+      });
+      
+      uploadDiv.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadDiv.style.borderColor = '#ddd';
+        const file = e.dataTransfer.files[0];
+        if (file) handleFileUpload(file, preview);
+      });
+    }
+
+    function handleFileUpload(file, previewEl) {
       if (!file.type.startsWith('image/')) {
         alert('Please upload an image file');
         return;
       }
-      if (file.size > 10 * 1024 * 1024) {
-        alert('Image must be less than 10MB');
-        return;
-      }
-      uploadedImage = file;
+      
       const reader = new FileReader();
       reader.onload = (e) => {
-        previewImg.src = e.target.result;
-        imagePreview.classList.add('show');
-        generateBtn.disabled = false;
+        uploadedImageBase64 = e.target.result.split(',')[1];
+        previewEl.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+        previewEl.classList.add('show');
       };
       reader.readAsDataURL(file);
     }
 
+    // Next step
+    window.nextStep = function() {
+      // Collect form data based on category
+      collectFormData();
+      
+      currentStep = 3;
+      updateSteps();
+      
+      // Hide inputs, show platforms
+      document.getElementById('inputs-step').classList.add('hidden');
+      document.getElementById('platforms-step').classList.remove('hidden');
+    };
+
+    function collectFormData() {
+      formData = { category: selectedCategory };
+      
+      if (selectedCategory === 'marketing') {
+        formData.promoType = document.getElementById('promo-type').value;
+        formData.offerDetails = document.getElementById('offer-details').value;
+        formData.validUntil = document.getElementById('valid-until').value;
+        formData.cta = document.getElementById('cta').value;
+      } else if (selectedCategory === 'completed-jobs') {
+        formData.projectType = document.getElementById('project-type').value;
+        formData.location = document.getElementById('location').value;
+        formData.duration = document.getElementById('duration').value;
+        formData.challenges = document.getElementById('challenges').value;
+        formData.testimonial = document.getElementById('testimonial').value;
+      } else if (selectedCategory === 'tips') {
+        formData.tipCategory = document.getElementById('tip-category').value;
+        formData.mainTip = document.getElementById('main-tip').value;
+        formData.whyMatters = document.getElementById('why-matters').value;
+      } else if (selectedCategory === 'industry-trends') {
+        formData.trendTopic = document.getElementById('trend-topic').value;
+        formData.expertTake = document.getElementById('expert-take').value;
+      } else if (selectedCategory === 'team-culture') {
+        formData.teamPostType = document.getElementById('team-post-type').value;
+        formData.teamMemberName = document.getElementById('team-member-name').value;
+        formData.teamHighlight = document.getElementById('team-highlight').value;
+      }
+    }
+
+    // Platform toggle
     function togglePlatform(btn) {
       btn.classList.toggle('active');
       const platform = btn.dataset.platform;
       const index = selectedPlatforms.indexOf(platform);
+      
       if (index > -1) {
         selectedPlatforms.splice(index, 1);
       } else {
         selectedPlatforms.push(platform);
       }
+      
       if (selectedPlatforms.length === 0) {
         btn.classList.add('active');
         selectedPlatforms.push(platform);
       }
     }
 
-    async function generateCaptions() {
-      if (!uploadedImage) {
-        alert('Please upload an image first');
-        return;
+    // Tone selection
+    window.selectTone = function(el, tone) {
+      document.querySelectorAll('.tone-option').forEach(opt => {
+        opt.classList.remove('selected');
+      });
+      el.classList.add('selected');
+      selectedTone = tone;
+    };
+
+    // Update step indicators
+    function updateSteps() {
+      for (let i = 1; i <= 4; i++) {
+        const step = document.getElementById(`step-${i}`);
+        step.classList.remove('active', 'completed');
+        
+        if (i < currentStep) {
+          step.classList.add('completed');
+        } else if (i === currentStep) {
+          step.classList.add('active');
+        }
       }
+    }
 
-      const tone = document.getElementById('tone').value;
-      const postType = document.getElementById('post-type').value;
-      const category = document.getElementById('category').value;
-      const context = document.getElementById('context').value;
-
+    // Generate captions
+    async function generateCaptions() {
       document.getElementById('loading').classList.add('show');
-      document.getElementById('captions-container').classList.remove('show');
-      generateBtn.disabled = true;
+      document.getElementById('platforms-step').classList.add('hidden');
 
       try {
         const profile = await getUserProfile();
-        const businessName = profile?.business_name || 'our business';
-        const industry = profile?.industry || 'trades';
-        uploadedImageBase64 = await fileToBase64(uploadedImage);
         const { data: { user } } = await supabaseClient.auth.getUser();
         
-        const response = await fetch('/api/generate-captions', {
+        const response = await fetch('/api/generate-social-content', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user.id,
+            category: selectedCategory,
+            formData: formData,
             image: uploadedImageBase64,
             platforms: selectedPlatforms,
-            tone: tone,
-            postType: postType,
-            context: context,
-            businessName: businessName,
-            industry: industry
+            tone: selectedTone,
+            businessName: profile?.business_name || 'our business',
+            industry: profile?.industry || 'trades'
           })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          displayCaptions(data.captions, category);
+          displayCaptions(data.captions);
         } else {
           alert('Error: ' + (data.error || 'Unknown error'));
         }
@@ -735,10 +1136,9 @@
       }
 
       document.getElementById('loading').classList.remove('show');
-      generateBtn.disabled = false;
     }
 
-    function displayCaptions(captions, category) {
+    function displayCaptions(captions) {
       const container = document.getElementById('captions-list');
       container.innerHTML = captions.map((caption, index) => `
         <div class="caption-option">
@@ -747,14 +1147,14 @@
             <button class="btn-copy" onclick="copyCaption(\`${escapeForAttr(caption)}\`, ${index})">
               📋 Copy
             </button>
-            <button class="btn-schedule" onclick="schedulePost(\`${escapeForAttr(caption)}\`, '${category}')">
+            <button class="btn-schedule" onclick="schedulePost(\`${escapeForAttr(caption)}\`)">
               📅 Schedule
             </button>
           </div>
         </div>
       `).join('');
       document.getElementById('captions-container').classList.add('show');
-      document.getElementById('captions-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      document.getElementById('captions-container').scrollIntoView({ behavior: 'smooth' });
     }
 
     window.copyCaption = function(caption, index) {
@@ -767,32 +1167,27 @@
       });
     };
 
-    window.schedulePost = async function(caption, category) {
+    window.schedulePost = async function(caption) {
       const scheduledDate = prompt('Enter date to schedule (YYYY-MM-DD) or leave blank for draft:');
-      
       const { data: { user } } = await supabaseClient.auth.getUser();
-
-      // Upload image to storage first (simplified - in production would use actual storage)
-      const imageUrl = previewImg.src; // Using base64 for now
 
       const { error } = await supabaseClient
         .from('social_posts')
         .insert({
           user_id: user.id,
           post_content: caption,
-          post_image_url: imageUrl,
+          post_image_url: uploadedImageBase64 ? `data:image/jpeg;base64,${uploadedImageBase64}` : null,
           platform: selectedPlatforms.join(','),
-          category: category,
-          tone: document.getElementById('tone').value,
-          post_type: document.getElementById('post-type').value,
+          category: selectedCategory,
+          tone: selectedTone,
           scheduled_date: scheduledDate ? new Date(scheduledDate).toISOString() : null,
           posted: false
         });
 
       if (error) {
-        alert('Error saving post: ' + error.message);
+        alert('Error: ' + error.message);
       } else {
-        alert('✅ Post saved! View it in the "Scheduled Posts" tab.');
+        alert('✅ Post saved!');
         loadScheduledPosts();
       }
     };
@@ -819,11 +1214,9 @@
       }
     };
 
-    // Load scheduled posts
     async function loadScheduledPosts() {
       const { data: { user } } = await supabaseClient.auth.getUser();
-      
-      const { data: posts, error } = await supabaseClient
+      const { data: posts } = await supabaseClient
         .from('social_posts')
         .select('*')
         .eq('user_id', user.id)
@@ -837,7 +1230,6 @@
           <div class="empty-state">
             <div class="empty-state-icon">📭</div>
             <p>No scheduled posts yet</p>
-            <p>Create a post and click "Schedule" to add it here</p>
           </div>
         `;
         return;
@@ -845,7 +1237,7 @@
 
       container.innerHTML = `<div class="posts-list">` + posts.map(post => `
         <div class="post-item">
-          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image" alt="Post image">` : ''}
+          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image">` : ''}
           <div class="post-content">
             <div class="post-header">
               <span class="post-category">${getCategoryName(post.category)}</span>
@@ -863,11 +1255,9 @@
       `).join('') + `</div>`;
     }
 
-    // Load history
     async function loadHistory() {
       const { data: { user } } = await supabaseClient.auth.getUser();
-      
-      const { data: posts, error } = await supabaseClient
+      const { data: posts } = await supabaseClient
         .from('social_posts')
         .select('*')
         .eq('user_id', user.id)
@@ -881,7 +1271,6 @@
           <div class="empty-state">
             <div class="empty-state-icon">📜</div>
             <p>No posted content yet</p>
-            <p>Posts you mark as "posted" will appear here</p>
           </div>
         `;
         return;
@@ -889,16 +1278,13 @@
 
       container.innerHTML = `<div class="posts-list">` + posts.map(post => `
         <div class="post-item">
-          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image" alt="Post image">` : ''}
+          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image">` : ''}
           <div class="post-content">
             <div class="post-header">
               <span class="post-category">${getCategoryName(post.category)}</span>
               <span class="post-date">Posted: ${new Date(post.posted_at).toLocaleDateString()}</span>
             </div>
             <div class="post-text">${post.post_content.substring(0, 150)}...</div>
-            <div class="post-platforms">
-              ${post.platform.split(',').map(p => `<span class="platform-badge">${p}</span>`).join('')}
-            </div>
           </div>
         </div>
       `).join('') + `</div>`;
@@ -906,17 +1292,8 @@
 
     window.deletePost = async function(postId) {
       if (!confirm('Delete this post?')) return;
-      
-      const { error } = await supabaseClient
-        .from('social_posts')
-        .delete()
-        .eq('id', postId);
-
-      if (error) {
-        alert('Error deleting post: ' + error.message);
-      } else {
-        loadScheduledPosts();
-      }
+      await supabaseClient.from('social_posts').delete().eq('id', postId);
+      loadScheduledPosts();
     };
 
     function getCategoryName(category) {
@@ -924,19 +1301,10 @@
         'marketing': '🎯 Marketing',
         'completed-jobs': '✅ Completed Job',
         'tips': '💡 Tip',
-        'industry-trends': '📈 Industry Trend',
+        'industry-trends': '📈 Trend',
         'team-culture': '👥 Team'
       };
       return names[category] || category;
-    }
-
-    function fileToBase64(file) {
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
     }
 
     function escapeHtml(text) {
