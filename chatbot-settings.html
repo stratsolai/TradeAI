@@ -829,6 +829,9 @@
       loadLearnedFAQs();
     };
    
-    loadSettings();
-   loadEmailStatus();
+   // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      loadSettings();
+      loadEmailStatus();
+    });
   </script>
