@@ -318,3 +318,35 @@ Return ONLY the JSON array, no other text.`;
       res.on('data', (chunk) => { data += chunk; });
       res.on('end', () => {
         try {
+          const parsed = JSON.parse(data);
+          resolve(parsed);
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(requestBody);
+    req.end();
+  });
+
+  const aiResponse = response.content[0].text;
+  
+  try {
+    // Extract JSON from response
+    const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const faqs = JSON.parse(jsonMatch[0]);
+      return faqs.map((faq, i) => ({
+        ...faq,
+        emailId: emails[0]?.id || `email-${i}`,
+        subject: emails[0]?.subject || 'Customer email'
+      }));
+    }
+  } catch (e) {
+    console.error('Failed to parse Claude response:', e);
+  }
+
+  return [];
+}
