@@ -527,7 +527,7 @@
                 <div class="tool-name">${tool.name}</div>
                 <div class="tool-desc">${tool.desc}</div>
                 <div class="tool-price">$${tool.price}/month</div>
-                <button class="btn-activate" onclick="activateTool('${tool.id}', '${tool.name}', ${tool.price})">
+               <button class="btn-activate" onclick="activateTool('${tool.id}', '${tool.name}', ${tool.price}, event)">
                   Activate Tool
                 </button>
               </div>
@@ -537,8 +537,8 @@
       }
     }
 
-    // Activate a tool - Redirect to Stripe Checkout
-    window.activateTool = async function(toolId, toolName, price) {
+// Activate a tool - Redirect to Stripe Checkout
+    window.activateTool = async function(toolId, toolName, price, event) {
       const tool = allTools.find(t => t.id === toolId);
       if (!tool) return;
 
@@ -557,10 +557,13 @@
           return;
         }
 
-        // Show loading message
-        const btn = event.target;
-        btn.disabled = true;
-        btn.textContent = 'Loading...';
+        // Show loading message (if button is passed)
+        let btn = null;
+        if (event && event.target) {
+          btn = event.target;
+          btn.disabled = true;
+          btn.textContent = 'Loading...';
+        }
 
         // Create Stripe checkout session
         const response = await fetch('/api/create-checkout', {
@@ -583,17 +586,15 @@
           window.location.href = data.url;
         } else {
           alert('Error creating checkout session. Please try again.');
-          btn.disabled = false;
-          btn.textContent = 'Activate Tool';
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Activate Tool';
+          }
         }
 
       } catch (error) {
         console.error('Error:', error);
         alert('Error: ' + error.message);
-        if (event && event.target) {
-          event.target.disabled = false;
-          event.target.textContent = 'Activate Tool';
-        }
       }
     };
 
