@@ -390,7 +390,7 @@ Large pools (10m+): $80,000-$120,000"></textarea>
   <script src="./supabase-client.js"></script>
   <script src="./auth.js"></script>
 
-  <script>
+ <script>
     // Require authentication
     requireAuth();
 
@@ -401,7 +401,7 @@ Large pools (10m+): $80,000-$120,000"></textarea>
       const profile = await getUserProfile();
       if (!profile) return;
 
-      // Load settings from profile (we'll add a chatbot_settings column)
+      // Load settings from profile
       const settings = profile.chatbot_settings || {};
 
       document.getElementById('business-name').value = settings.business_name || profile.business_name || '';
@@ -411,4 +411,109 @@ Large pools (10m+): $80,000-$120,000"></textarea>
       document.getElementById('price-ranges').value = settings.price_ranges || '';
       document.getElementById('whats-included').value = settings.whats_included || '';
       document.getElementById('ask-budget').value = settings.ask_budget || 'yes';
-      document.getElemen
+      document.getElementById('ask-timeline').value = settings.ask_timeline || 'yes';
+      document.getElementById('ask-location').value = settings.ask_location || 'yes';
+      document.getElementById('ask-project').value = settings.ask_project || 'yes';
+      document.getElementById('greeting-message').value = settings.greeting_message || 'Hi! Looking to build a pool? I\'m here to help!';
+      document.getElementById('booking-link').value = settings.booking_link || '';
+
+      faqs = settings.faqs || [];
+      renderFAQs();
+    }
+
+    // Save settings - GLOBAL FUNCTION
+    window.saveSettings = async function() {
+      console.log('Save button clicked');
+      
+      const settings = {
+        business_name: document.getElementById('business-name').value,
+        business_description: document.getElementById('business-description').value,
+        service_areas: document.getElementById('service-areas').value,
+        timeline: document.getElementById('timeline').value,
+        price_ranges: document.getElementById('price-ranges').value,
+        whats_included: document.getElementById('whats-included').value,
+        ask_budget: document.getElementById('ask-budget').value,
+        ask_timeline: document.getElementById('ask-timeline').value,
+        ask_location: document.getElementById('ask-location').value,
+        ask_project: document.getElementById('ask-project').value,
+        greeting_message: document.getElementById('greeting-message').value,
+        booking_link: document.getElementById('booking-link').value,
+        faqs: faqs
+      };
+
+      console.log('Settings to save:', settings);
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        console.log('Current user:', user);
+
+        if (!user) {
+          alert('Not logged in!');
+          return;
+        }
+
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .update({ chatbot_settings: settings })
+          .eq('id', user.id)
+          .select();
+
+        console.log('Update result:', { data, error });
+
+        if (error) {
+          console.error('Supabase error:', error);
+          alert('Error saving settings: ' + error.message);
+        } else {
+          console.log('Settings saved successfully!');
+          document.getElementById('success-message').classList.add('show');
+          setTimeout(() => {
+            document.getElementById('success-message').classList.remove('show');
+          }, 3000);
+        }
+      } catch (err) {
+        console.error('Caught error:', err);
+        alert('Error: ' + err.message);
+      }
+    };
+
+    // Add FAQ - GLOBAL FUNCTION
+    window.addFAQ = function() {
+      const question = prompt('Enter the question:');
+      if (!question) return;
+
+      const answer = prompt('Enter the answer:');
+      if (!answer) return;
+
+      faqs.push({ question, answer });
+      renderFAQs();
+    };
+
+    // Remove FAQ - GLOBAL FUNCTION
+    window.removeFAQ = function(index) {
+      faqs.splice(index, 1);
+      renderFAQs();
+    };
+
+    // Render FAQs
+    function renderFAQs() {
+      const container = document.getElementById('faq-list');
+      
+      if (faqs.length === 0) {
+        container.innerHTML = '<p style="color: #666; font-style: italic;">No FAQs added yet. Click "Add FAQ" to get started.</p>';
+        return;
+      }
+
+      container.innerHTML = faqs.map((faq, index) => `
+        <div class="faq-item">
+          <div class="faq-content">
+            <div class="faq-question">${faq.question}</div>
+            <div class="faq-answer">${faq.answer}</div>
+          </div>
+          <button class="btn-remove" onclick="removeFAQ(${index})">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    // Load settings on page load
+    loadSettings();
+  </script>
