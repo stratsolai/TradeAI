@@ -476,17 +476,17 @@
         <h2 class="card-title">Add Content to Your Library</h2>
         
        <div class="upload-section">
-  <!-- Universal File Upload -->
-  <div class="upload-card" onclick="document.getElementById('file-input').click()">
-    <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple>
-    <div class="upload-icon">📁</div>
-    <div class="upload-title">Upload Any File</div>
-    <div class="upload-desc">
-      <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
-      <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
-      AI extracts everything automatically
-    </div>
+ <!-- Universal File Upload -->
+<div class="upload-card" id="upload-card">
+  <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display: none;">
+  <div class="upload-icon">📁</div>
+  <div class="upload-title">Upload Any File</div>
+  <div class="upload-desc">
+    <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
+    <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
+    AI extracts everything automatically
   </div>
+</div>
 
   <!-- Website Scraper -->
   <div class="upload-card" onclick="showWebsiteScraper()">
@@ -559,9 +559,146 @@
     let currentFilter = 'all';
     let allContent = [];
 
-        // Universal file upload handler
-      document.getElementById('file-input').addEventListener('change', handleFileUpload);
+    // Universal file upload handler
+setTimeout(() => {
+  const uploadCard = document.getElementById('upload-card');
+  const fileInput = document.getElementById('file-input');
 
+  if (uploadCard && fileInput) {
+    // Click to upload
+    uploadCard.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileInput.click();
+    });
+
+    // File selection
+    fileInput.addEventListener('change', handleFileUpload);
+
+    // Drag and drop
+    uploadCard.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadCard.style.borderColor = '#1a5490';
+      uploadCard.style.background = '#e8f4fd';
+    });
+
+    uploadCard.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadCard.style.borderColor = '#ddd';
+      uploadCard.style.background = 'white';
+    });
+
+    uploadCard.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      uploadCard.style.borderColor = '#ddd';
+      uploadCard.style.background = 'white';
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        // Manually trigger the file input with dropped files
+        fileInput.files = files;
+        handleFileUpload({ target: { files: files } });
+      }
+    });
+  }
+}, 500);
+
+async function handleFileUpload(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+
+  console.log(`Processing ${files.length} file(s)`);
+
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent = `Processing ${files.length} file(s)...`;
+
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  let successCount = 0;
+  let totalItems = 0;
+
+  for (const file of files) {
+    const fileType = getFileType(file.name);
+    console.log(`Processing ${file.name} as ${fileType}`);
+
+    try {
+      const reader = new FileReader();
+      
+      await new Promise((resolve, reject) => {
+        reader.onload = async (event) => {
+          const base64 = event.target.result.split(',')[1];
+          
+          try {
+            const response = await fetch('/api/process-file', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                fileName: file.name,
+                fileType: fileType,
+                fileData: base64
+              })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+              console.log(`✅ ${file.name}: ${data.itemsCount} items extracted`);
+              successCount++;
+              totalItems += data.itemsCount;
+            } else {
+              console.error(`❌ ${file.name}:`, data.error);
+            }
+          } catch (error) {
+            console.error(`❌ ${file.name}:`, error);
+          }
+          
+          resolve();
+        };
+        
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+    } catch (error) {
+      console.error(`Error processing ${file.name}:`, error);
+    }
+  }
+
+  document.getElementById('loading').classList.remove('show');
+  
+  if (successCount > 0) {
+    alert(`✅ Processed ${successCount} file(s)!\n\nExtracted ${totalItems} items total.\n\nCheck "My Library" tab to see your content.`);
+    loadLibrary();
+  } else {
+    alert('❌ Failed to process files. Check console for errors.');
+  }
+  
+  // Clear file input
+  fileInput.value = '';
+}
+
+function getFileType(fileName) {
+  const ext = fileName.toLowerCase().split('.').pop();
+  const types = {
+    'pdf': 'pdf',
+    'doc': 'word',
+    'docx': 'word',
+    'ppt': 'powerpoint',
+    'pptx': 'powerpoint',
+    'xls': 'excel',
+    'xlsx': 'excel',
+    'txt': 'text',
+    'jpg': 'image',
+    'jpeg': 'image',
+    'png': 'image',
+    'webp': 'image',
+    'heic': 'image'
+  };
+  return types[ext] || 'unknown';
+}   
     async function handleFileUpload(e) {
   const files = e.target.files;
   if (!files.length) return;
