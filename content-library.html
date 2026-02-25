@@ -466,36 +466,36 @@
     </div>
 
     <!-- Tab: Upload Content -->
-    <div class="tab-content active" id="upload-tab">
-      <div class="info-box">
-        <p><strong>💡 Quick Start:</strong></p>
-        <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+<div class="tab-content active" id="upload-tab">
+  <div class="info-box">
+    <p><strong>💡 Quick Start:</strong></p>
+    <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Add Content to Your Library</h2>
+    
+    <div class="upload-section">
+      <!-- Universal File Upload -->
+      <div class="upload-card" id="file-drop-zone">
+        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display: none;">
+        <div class="upload-icon">📁</div>
+        <div class="upload-title">Click or Drop Files Here</div>
+        <div class="upload-desc">
+          <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
+          <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
+          AI extracts everything automatically
+        </div>
       </div>
 
-      <div class="card">
-        <h2 class="card-title">Add Content to Your Library</h2>
-        
-       <div class="upload-section">
- <!-- Universal File Upload -->
-<div class="upload-card" id="upload-card">
-  <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display: none;">
-  <div class="upload-icon">📁</div>
-  <div class="upload-title">Upload Any File</div>
-  <div class="upload-desc">
-    <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
-    <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
-    AI extracts everything automatically
-  </div>
-</div>
-
-  <!-- Website Scraper -->
-  <div class="upload-card" onclick="showWebsiteScraper()">
-    <div class="upload-icon">🌐</div>
-    <div class="upload-title">Import from Website</div>
-    <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
-  </div>
-</div>
+      <!-- Website Scraper -->
+      <div class="upload-card" id="website-scraper-card">
+        <div class="upload-icon">🌐</div>
+        <div class="upload-title">Import from Website</div>
+        <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
       </div>
+    </div>
+  </div>
 
       <!-- Loading State -->
       <div class="loading" id="loading">
