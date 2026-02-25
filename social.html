@@ -1,159 +1,583 @@
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Manager - TradeAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-  const { userId, image, platforms, tone, postType, context, businessName, industry } = req.body;
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+    }
 
-  if (!image) {
-    return res.status(400).json({ error: 'Image required' });
-  }
+    .header {
+      background: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-  const claudeApiKey = process.env.CLAUDE_API_KEY;
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a5490;
+    }
 
-  if (!claudeApiKey) {
-    return res.status(500).json({ error: 'Claude API not configured' });
-  }
+    .btn-back {
+      padding: 8px 16px;
+      background: #4a9fd8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
 
-  try {
-    const https = require('https');
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
 
-    // Build platform-specific guidance
-    const platformGuide = platforms.map(p => {
-      switch(p) {
-        case 'facebook': return 'Facebook: Conversational, can be longer, use emojis';
-        case 'instagram': return 'Instagram: Visual focus, hashtags important, trendy language';
-        case 'linkedin': return 'LinkedIn: Professional, business-focused, industry insights';
-        default: return '';
-      }
-    }).join('. ');
+    .page-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 8px;
+    }
 
-    const toneGuide = {
-      'professional': 'Professional and polished',
-      'casual': 'Casual, friendly, and approachable',
-      'promotional': 'Promotional and sales-focused',
-      'educational': 'Educational and informative'
-    }[tone] || 'Professional';
+    .page-subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
 
-    const postTypeGuide = {
-      'project-showcase': 'Showcasing completed work',
-      'before-after': 'Before and after transformation',
-      'customer-testimonial': 'Customer success story',
-      'tip-advice': 'Helpful tip or industry advice',
-      'behind-scenes': 'Behind the scenes look at the work'
-    }[postType] || 'Project showcase';
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
 
-    const prompt = `You are a social media expert for ${businessName}, a ${industry} business.
+    .card-title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
 
-Create 3 different social media post captions for this image.
+    .form-group {
+      margin-bottom: 20px;
+    }
 
-Context: ${context || 'A recent project'}
-Platforms: ${platforms.join(', ')}
-Tone: ${toneGuide}
-Post Type: ${postTypeGuide}
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
 
-Platform guidelines: ${platformGuide}
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
 
-Requirements:
-- Each caption should be unique and engaging
-- Include relevant emojis
-- For Instagram: add 5-10 relevant hashtags at the end
-- For LinkedIn: focus on professionalism and industry insights
-- For Facebook: make it conversational and shareable
-- Keep captions concise but impactful (50-150 words each)
-- Include a call-to-action
-- ${context ? 'Incorporate the provided context naturally' : ''}
+    textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
 
-Return ONLY a JSON array of 3 caption strings, nothing else.
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #1a5490;
+    }
 
-Example format:
-["Caption 1 text here...", "Caption 2 text here...", "Caption 3 text here..."]`;
+    .file-upload {
+      border: 2px dashed #ddd;
+      border-radius: 6px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
 
-    const requestBody = JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'image',
-              source: {
-                type: 'base64',
-                media_type: 'image/jpeg',
-                data: image
-              }
-            },
-            {
-              type: 'text',
-              text: prompt
-            }
-          ]
-        }
-      ]
+    .file-upload:hover {
+      border-color: #1a5490;
+      background: #f8f9fa;
+    }
+
+    .file-upload.dragover {
+      border-color: #1a5490;
+      background: #e8f4fd;
+    }
+
+    .file-upload input {
+      display: none;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .image-preview {
+      margin-top: 20px;
+      display: none;
+    }
+
+    .image-preview.show {
+      display: block;
+    }
+
+    .image-preview img {
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .platform-selector {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .platform-btn {
+      padding: 12px 24px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s;
+    }
+
+    .platform-btn:hover {
+      border-color: #1a5490;
+    }
+
+    .platform-btn.active {
+      background: #1a5490;
+      color: white;
+      border-color: #1a5490;
+    }
+
+    .btn-generate {
+      width: 100%;
+      padding: 14px;
+      background: #1a5490;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn-generate:hover {
+      background: #144070;
+    }
+
+    .btn-generate:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .captions-container {
+      display: none;
+      margin-top: 20px;
+    }
+
+    .captions-container.show {
+      display: block;
+    }
+
+    .caption-option {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      border: 2px solid transparent;
+      transition: all 0.3s;
+    }
+
+    .caption-option:hover {
+      border-color: #1a5490;
+    }
+
+    .caption-text {
+      font-size: 14px;
+      line-height: 1.6;
+      color: #333;
+      margin-bottom: 12px;
+      white-space: pre-wrap;
+    }
+
+    .caption-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-copy {
+      padding: 8px 16px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .btn-copy:hover {
+      background: #218838;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      display: none;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a5490;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info-box {
+      background: #e8f4fd;
+      border-left: 4px solid #1a5490;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 6px;
+    }
+
+    .info-box p {
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 6px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI - Social Media Manager</div>
+    <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Social Media Manager 📱</h1>
+    <p class="page-subtitle">Create engaging social media posts with AI-powered captions</p>
+
+    <div class="info-box">
+      <p><strong>How it works:</strong></p>
+      <p>1. Upload a photo from your latest project</p>
+      <p>2. Select which platforms you're posting to</p>
+      <p>3. Choose your tone and style</p>
+      <p>4. AI generates 3 caption options for you</p>
+      <p>5. Copy your favorite and post!</p>
+    </div>
+
+    <!-- Upload Image -->
+    <div class="card">
+      <h2 class="card-title">📸 Upload Project Photo</h2>
+      
+      <div class="file-upload" id="file-upload">
+        <input type="file" id="image-input" accept="image/*">
+        <div class="upload-icon">📷</div>
+        <p><strong>Click to upload</strong> or drag and drop</p>
+        <p class="help-text">PNG, JPG, WEBP up to 10MB</p>
+      </div>
+
+      <div class="image-preview" id="image-preview">
+        <img id="preview-img" src="" alt="Preview">
+      </div>
+    </div>
+
+    <!-- Platform Selection -->
+    <div class="card">
+      <h2 class="card-title">🎯 Select Platforms</h2>
+      
+      <div class="platform-selector">
+        <button class="platform-btn active" data-platform="facebook" onclick="togglePlatform(this)">
+          Facebook
+        </button>
+        <button class="platform-btn" data-platform="instagram" onclick="togglePlatform(this)">
+          Instagram
+        </button>
+        <button class="platform-btn" data-platform="linkedin" onclick="togglePlatform(this)">
+          LinkedIn
+        </button>
+      </div>
+      <p class="help-text">Select one or more platforms (caption will be optimized for your selection)</p>
+    </div>
+
+    <!-- Post Settings -->
+    <div class="card">
+      <h2 class="card-title">✍️ Post Settings</h2>
+      
+      <div class="form-group">
+        <label>Tone</label>
+        <select id="tone">
+          <option value="professional">Professional</option>
+          <option value="casual">Casual & Friendly</option>
+          <option value="promotional">Promotional</option>
+          <option value="educational">Educational</option>
+        </select>
+        <p class="help-text">How formal should the post sound?</p>
+      </div>
+
+      <div class="form-group">
+        <label>Post Type</label>
+        <select id="post-type">
+          <option value="project-showcase">Project Showcase</option>
+          <option value="before-after">Before & After</option>
+          <option value="customer-testimonial">Customer Testimonial</option>
+          <option value="tip-advice">Tip or Advice</option>
+          <option value="behind-scenes">Behind the Scenes</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Additional Context (Optional)</label>
+        <textarea id="context" placeholder="E.g., This was a challenging install in Paddington, completed in 3 days..."></textarea>
+        <p class="help-text">Any details you want to mention in the post</p>
+      </div>
+
+      <button class="btn-generate" id="generate-btn" onclick="generateCaptions()" disabled>
+        Generate Captions
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>AI is creating engaging captions for you...</p>
+    </div>
+
+    <!-- Generated Captions -->
+    <div class="captions-container" id="captions-container">
+      <div class="card">
+        <h2 class="card-title">✨ Generated Captions</h2>
+        <div id="captions-list">
+          <!-- Captions will be inserted here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    requireAuth();
+
+    let uploadedImage = null;
+    let selectedPlatforms = ['facebook'];
+
+    const fileUpload = document.getElementById('file-upload');
+    const fileInput = document.getElementById('image-input');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const generateBtn = document.getElementById('generate-btn');
+
+    fileUpload.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleFileSelect);
+
+    fileUpload.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileUpload.classList.add('dragover');
     });
 
-    const response = await new Promise((resolve, reject) => {
-      const options = {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Length': Buffer.byteLength(requestBody)
-        }
+    fileUpload.addEventListener('dragleave', () => {
+      fileUpload.classList.remove('dragover');
+    });
+
+    fileUpload.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileUpload.classList.remove('dragover');
+      const files = e.dataTransfer.files;
+      if (files.length > 0) handleFile(files[0]);
+    });
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    }
+
+    function handleFile(file) {
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload an image file');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        alert('Image must be less than 10MB');
+        return;
+      }
+      uploadedImage = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        imagePreview.classList.add('show');
+        generateBtn.disabled = false;
       };
-
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
-
-      req.on('error', reject);
-      req.write(requestBody);
-      req.end();
-    });
-
-    if (response.error) {
-      throw new Error(response.error.message || 'Claude API error');
+      reader.readAsDataURL(file);
     }
 
-    const aiResponse = response.content[0].text;
-    
-    // Extract JSON array from response
-    let captions;
-    try {
-      const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        captions = JSON.parse(jsonMatch[0]);
+    function togglePlatform(btn) {
+      btn.classList.toggle('active');
+      const platform = btn.dataset.platform;
+      const index = selectedPlatforms.indexOf(platform);
+      if (index > -1) {
+        selectedPlatforms.splice(index, 1);
       } else {
-        // Fallback: split by lines if JSON parsing fails
-        captions = aiResponse.split('\n').filter(line => line.trim().length > 10).slice(0, 3);
+        selectedPlatforms.push(platform);
       }
-    } catch (e) {
-      console.error('Failed to parse captions:', e);
-      captions = [aiResponse];
+      if (selectedPlatforms.length === 0) {
+        btn.classList.add('active');
+        selectedPlatforms.push(platform);
+      }
     }
 
-    return res.status(200).json({
-      success: true,
-      captions: captions
-    });
+    async function generateCaptions() {
+      if (!uploadedImage) {
+        alert('Please upload an image first');
+        return;
+      }
 
-  } catch (error) {
-    console.error('Caption generation error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
-  }
-};
+      const tone = document.getElementById('tone').value;
+      const postType = document.getElementById('post-type').value;
+      const context = document.getElementById('context').value;
+
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('captions-container').classList.remove('show');
+      generateBtn.disabled = true;
+
+      try {
+        const profile = await getUserProfile();
+        const businessName = profile?.business_name || 'our business';
+        const industry = profile?.industry || 'trades';
+        const base64Image = await fileToBase64(uploadedImage);
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        const response = await fetch('/api/generate-captions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            image: base64Image,
+            platforms: selectedPlatforms,
+            tone: tone,
+            postType: postType,
+            context: context,
+            businessName: businessName,
+            industry: industry
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          displayCaptions(data.captions);
+        } else {
+          alert('Error: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+      }
+
+      document.getElementById('loading').classList.remove('show');
+      generateBtn.disabled = false;
+    }
+
+    function displayCaptions(captions) {
+      const container = document.getElementById('captions-list');
+      container.innerHTML = captions.map((caption, index) => `
+        <div class="caption-option">
+          <div class="caption-text">${escapeHtml(caption)}</div>
+          <div class="caption-actions">
+            <button class="btn-copy" onclick="copyCaption(\`${escapeForAttr(caption)}\`, ${index})">
+              📋 Copy Caption
+            </button>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('captions-container').classList.add('show');
+      document.getElementById('captions-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    window.copyCaption = function(caption, index) {
+      navigator.clipboard.writeText(caption).then(() => {
+        const btns = document.querySelectorAll('.btn-copy');
+        const btn = btns[index];
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        setTimeout(() => { btn.textContent = originalText; }, 2000);
+      });
+    };
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeForAttr(text) {
+      return text.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+    }
+  </script>
+</body>
+</html>
