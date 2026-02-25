@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
     const userData = await new Promise((resolve, reject) => {
       const url = new URL(`${supabaseUrl}/rest/v1/profiles`);
       url.searchParams.append('id', `eq.${userId}`);
-      url.searchParams.append('select', 'chatbot_settings');
+      url.searchParams.append('select', 'chatbot_settings,business_name');
 
       const options = {
         hostname: url.hostname,
@@ -56,10 +56,12 @@ module.exports = async (req, res) => {
 
     const settings = userData.chatbot_settings || {};
     const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
+    const businessName = settings.business_name || userData.business_name || null;
 
     return res.status(200).json({
       success: true,
-      greeting: greeting
+      greeting: greeting,
+      businessName: businessName
     });
 
   } catch (error) {
