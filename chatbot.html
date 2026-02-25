@@ -304,17 +304,22 @@
       document.getElementById('typing-indicator').classList.add('active');
 
       try {
-        // Call our serverless function
-        const response = await fetch('/api/chatbot', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: message,
-            conversationHistory: conversationHistory
-          })
-        });
+        // Get current user ID
+const { data: { user } } = await supabaseClient.auth.getUser();
+const userId = user?.id;
+
+// Call our serverless function
+const response = await fetch('/api/chatbot', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    message: message,
+    conversationHistory: conversationHistory,
+    userId: userId  // Send user ID so API knows whose settings to use
+  })
+});
 
         const data = await response.json();
 
