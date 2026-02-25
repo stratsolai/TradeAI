@@ -648,7 +648,7 @@
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const clientId = 'YOUR_GOOGLE_CLIENT_ID'; // We'll need to add this
+      const clientId = '368140587749-isq0imjs2n70snmceqnb9s5coqjleak8.apps.googleusercontent.com'; // We'll need to add this
       const redirectUri = window.location.origin + '/api/auth/google/callback';
       const scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email';
       
@@ -669,7 +669,7 @@
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const clientId = 'YOUR_MICROSOFT_CLIENT_ID'; // We'll need to add this
+      const clientId = 'da28dfdf-0a07-4fba-b512-7446c605ba4f'; // We'll need to add this
       const redirectUri = window.location.origin + '/api/auth/microsoft/callback';
       const scope = 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read';
       
