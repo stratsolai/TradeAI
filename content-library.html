@@ -581,11 +581,17 @@
       console.log('Upload handlers initialized');
 
       // Click to upload
-      dropZone.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        fileInput.click();
-      });
+dropZone.addEventListener('click', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  console.log('Drop zone clicked, triggering file input');
+  fileInput.click();
+});
+
+// Also prevent the file input from bubbling
+fileInput.addEventListener('click', function(e) {
+  e.stopPropagation();
+});
 
       // Highlight on drag
       ['dragenter', 'dragover'].forEach(eventName => {
