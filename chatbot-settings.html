@@ -400,6 +400,31 @@
         <p>4. Save and publish - the chat widget will appear!</p>
       </div>
     </div>
+
+<!-- Email Learning -->
+    <div class="settings-section">
+      <div class="section-title">📧 Email Learning (AI Auto-Improvement)</div>
+      <p class="section-desc">Connect your email so the AI can learn from your customer conversations and automatically improve your chatbot.</p>
+
+      <div class="info-box">
+        <p><strong>How it works:</strong></p>
+        <p>1. AI scans your customer emails (read-only access)</p>
+        <p>2. Extracts common questions and your answers</p>
+        <p>3. Suggests new FAQs for your chatbot</p>
+        <p>4. You review and approve - chatbot gets smarter!</p>
+      </div>
+
+      <div id="email-status-container">
+        <!-- Will be populated by JavaScript -->
+      </div>
+
+      <div id="learned-faqs-container" style="display: none; margin-top: 24px;">
+        <h3 style="font-size: 18px; color: #333; margin-bottom: 16px;">📚 Suggested FAQs from Your Emails</h3>
+        <div id="learned-faqs-list">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
     
   </div>
 
@@ -552,5 +577,257 @@
       document.execCommand('copy');
       alert('✅ Widget code copied! Paste it into your website.');
     };
+// Load email connection status
+    async function loadEmailStatus() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+
+      const container = document.getElementById('email-status-container');
+      
+      const gmailConnected = profile.gmail_connected_email;
+      const outlookConnected = profile.outlook_connected_email;
+
+      if (gmailConnected || outlookConnected) {
+        // Email connected
+        const provider = gmailConnected ? 'Gmail' : 'Outlook';
+        const email = gmailConnected || outlookConnected;
+        
+        container.innerHTML = `
+          <div style="background: #d4edda; border: 1px solid #c3e6cb; padding: 16px; border-radius: 6px; margin-bottom: 16px;">
+            <strong style="color: #155724;">✓ ${provider} Connected</strong><br>
+            <span style="color: #155724; font-size: 14px;">${email}</span><br>
+            <button class="btn-add" onclick="disconnectEmail()" style="margin-top: 12px; background: #dc3545;">
+              Disconnect Email
+            </button>
+            <button class="btn-add" onclick="scanEmails()" style="margin-top: 12px;">
+              🔍 Scan for New FAQs
+            </button>
+          </div>
+        `;
+
+        // Load learned FAQs
+        loadLearnedFAQs();
+      } else {
+        // No email connected
+        container.innerHTML = `
+          <div style="display: flex; gap: 12px; margin-top: 16px;">
+            <button class="btn-add" onclick="connectGmail()" style="flex: 1;">
+              <svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;">
+                <path fill="currentColor" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.545l8.073-6.052C21.69 2.28 24 3.434 24 5.457z"/>
+              </svg>
+              Connect Gmail
+            </button>
+            <button class="btn-add" onclick="connectOutlook()" style="flex: 1; background: #0078d4;">
+              <svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align: middle; margin-right: 8px;">
+                <path fill="currentColor" d="M7 4v16h14V4H7zm6 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/>
+              </svg>
+              Connect Outlook
+            </button>
+          </div>
+        `;
+      }
+
+      // Check for connection success
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('email_connected')) {
+        const provider = urlParams.get('email_connected');
+        setTimeout(() => {
+          alert(`✅ ${provider === 'gmail' ? 'Gmail' : 'Outlook'} connected successfully!\n\nClick "Scan for New FAQs" to start learning from your emails.`);
+          window.history.replaceState({}, document.title, '/chatbot-settings.html');
+        }, 500);
+      } else if (urlParams.get('error')) {
+        setTimeout(() => {
+          alert('❌ Email connection failed. Please try again.');
+          window.history.replaceState({}, document.title, '/chatbot-settings.html');
+        }, 500);
+      }
+    }
+
+    // Connect Gmail
+    window.connectGmail = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const clientId = 'YOUR_GOOGLE_CLIENT_ID'; // We'll need to add this
+      const redirectUri = window.location.origin + '/api/auth/google/callback';
+      const scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email';
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${user.id}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+
+      window.location.href = authUrl;
+    };
+
+    // Connect Outlook
+    window.connectOutlook = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const clientId = 'YOUR_MICROSOFT_CLIENT_ID'; // We'll need to add this
+      const redirectUri = window.location.origin + '/api/auth/microsoft/callback';
+      const scope = 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read';
+      
+      const authUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${user.id}&` +
+        `prompt=consent`;
+
+      window.location.href = authUrl;
+    };
+
+    // Disconnect email
+    window.disconnectEmail = async function() {
+      if (!confirm('Disconnect email? Learned FAQs will be preserved but no new emails will be scanned.')) {
+        return;
+      }
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      await supabaseClient
+        .from('profiles')
+        .update({
+          email_connected: false,
+          gmail_access_token: null,
+          gmail_refresh_token: null,
+          gmail_connected_email: null,
+          outlook_access_token: null,
+          outlook_refresh_token: null,
+          outlook_connected_email: null
+        })
+        .eq('id', user.id);
+
+      alert('✅ Email disconnected');
+      loadEmailStatus();
+    };
+
+    // Scan emails for FAQs
+    window.scanEmails = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.textContent = '⏳ Scanning emails...';
+
+      try {
+        const response = await fetch('/api/scan-emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Scan complete!\n\nFound ${data.count} potential FAQs.\n\nReview them below and approve the ones you want to add to your chatbot.`);
+          loadLearnedFAQs();
+        } else {
+          alert('❌ Scan failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      }
+
+      btn.disabled = false;
+      btn.textContent = '🔍 Scan for New FAQs';
+    };
+
+    // Load learned FAQs
+    async function loadLearnedFAQs() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      const { data: learnedFAQs, error } = await supabaseClient
+        .from('learned_faqs')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading learned FAQs:', error);
+        return;
+      }
+
+      const container = document.getElementById('learned-faqs-container');
+      const list = document.getElementById('learned-faqs-list');
+
+      if (!learnedFAQs || learnedFAQs.length === 0) {
+        container.style.display = 'none';
+        return;
+      }
+
+      container.style.display = 'block';
+      
+      list.innerHTML = learnedFAQs.map(faq => `
+        <div class="faq-item" style="background: #fff3cd; border: 1px solid #ffc107; margin-bottom: 12px;">
+          <div class="faq-content">
+            <div class="faq-question"><strong>Q:</strong> ${faq.question}</div>
+            <div class="faq-answer"><strong>A:</strong> ${faq.answer}</div>
+            <div style="font-size: 12px; color: #666; margin-top: 8px;">
+              From: ${faq.source_email_subject || 'Email'}
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button class="btn-add" onclick="approveFAQ('${faq.id}')" style="background: #28a745;">
+              ✓ Approve
+            </button>
+            <button class="btn-remove" onclick="rejectFAQ('${faq.id}')">
+              ✗ Reject
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Approve FAQ
+    window.approveFAQ = async function(faqId) {
+      const { data: faq } = await supabaseClient
+        .from('learned_faqs')
+        .select('*')
+        .eq('id', faqId)
+        .single();
+
+      if (!faq) return;
+
+      // Add to FAQs
+      faqs.push({
+        question: faq.question,
+        answer: faq.answer
+      });
+
+      // Mark as approved
+      await supabaseClient
+        .from('learned_faqs')
+        .update({ status: 'approved', approved_at: new Date().toISOString() })
+        .eq('id', faqId);
+
+      // Save settings to update FAQs
+      await saveSettings();
+
+      alert('✅ FAQ added to your chatbot!');
+      loadLearnedFAQs();
+      renderFAQs();
+    };
+
+    // Reject FAQ
+    window.rejectFAQ = async function(faqId) {
+      await supabaseClient
+        .from('learned_faqs')
+        .update({ status: 'rejected' })
+        .eq('id', faqId);
+
+      loadLearnedFAQs();
+    };
+   
     loadSettings();
   </script>
