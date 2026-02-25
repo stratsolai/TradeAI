@@ -273,39 +273,60 @@
   <script src="./supabase-client.js"></script>
   <script src="./auth.js"></script>
 
-<script>
-    // Require authentication
+<!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    // Require authentication first
     requireAuth();
-    
-    // Load user's custom greeting
-    async function loadGreeting() {
-      const profile = await getUserProfile();
-      if (!profile) return;
-      
-      const settings = profile.chatbot_settings || {};
-      const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
-      
-      // Set chat header to business name
-      const businessName = settings.business_name || profile.business_name || 'us';
-      const headerElement = document.getElementById('chat-header-title');
-      
-      // Make sure element exists before setting it
-      if (headerElement) {
-        headerElement.textContent = `Chat with ${businessName}`;
-      }
-      
-      // Add the greeting message
-      addMessage(greeting, 'bot');
-    }
-
-    // Call loadGreeting when page loads
-    loadGreeting(); 
-
-// Load greeting on page load
-loadGreeting();
 
     // Store conversation history
     let conversationHistory = [];
+
+    // Load user's custom greeting and business name
+    async function loadGreeting() {
+      try {
+        const profile = await getUserProfile();
+        if (!profile) {
+          console.log('No profile found');
+          return;
+        }
+        
+        const settings = profile.chatbot_settings || {};
+        const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
+        const businessName = settings.business_name || profile.business_name || 'us';
+        
+        console.log('Business name:', businessName);
+        console.log('Greeting:', greeting);
+        
+        // Set chat header
+        const headerElement = document.getElementById('chat-header-title');
+        if (headerElement) {
+          headerElement.textContent = `Chat with ${businessName}`;
+          console.log('Header updated');
+        } else {
+          console.log('Header element not found!');
+        }
+        
+        // Add greeting message (only once)
+        const messagesContainer = document.getElementById('chat-messages');
+        if (messagesContainer && messagesContainer.children.length === 0) {
+          addMessage(greeting, 'bot');
+          console.log('Greeting added');
+        } else {
+          console.log('Messages already exist, skipping greeting');
+        }
+      } catch (error) {
+        console.error('Error in loadGreeting:', error);
+      }
+    }
+
+    // Wait for page to load, then load greeting
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(loadGreeting, 500); // Small delay to ensure elements exist
+    });
 
     // Send message function
     async function sendMessage() {
@@ -327,21 +348,21 @@ loadGreeting();
 
       try {
         // Get current user ID
-const { data: { user } } = await supabaseClient.auth.getUser();
-const userId = user?.id;
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const userId = user?.id;
 
-// Call our serverless function
-const response = await fetch('/api/chatbot', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  body: JSON.stringify({
-    message: message,
-    conversationHistory: conversationHistory,
-    userId: userId  // Send user ID so API knows whose settings to use
-  })
-});
+        // Call our serverless function
+        const response = await fetch('/api/chatbot', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            message: message,
+            conversationHistory: conversationHistory,
+            userId: userId
+          })
+        });
 
         const data = await response.json();
 
