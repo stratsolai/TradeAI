@@ -31,9 +31,25 @@
       color: #1a5490;
     }
 
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
     .btn-back {
       padding: 8px 16px;
       background: #4a9fd8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .btn-settings {
+      padding: 8px 16px;
+      background: #6c757d;
       color: white;
       border: none;
       border-radius: 6px;
@@ -57,7 +73,44 @@
     .page-subtitle {
       color: #666;
       font-size: 16px;
-      margin-bottom: 40px;
+      margin-bottom: 32px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      border-bottom: 2px solid #e5e5e5;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      color: #1a5490;
+    }
+
+    .tab.active {
+      color: #1a5490;
+      border-bottom-color: #e8500a;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
     }
 
     .card {
@@ -124,11 +177,6 @@
       background: #f8f9fa;
     }
 
-    .file-upload.dragover {
-      border-color: #1a5490;
-      background: #e8f4fd;
-    }
-
     .file-upload input {
       display: none;
     }
@@ -181,7 +229,8 @@
       border-color: #1a5490;
     }
 
-    .btn-generate {
+    .btn-generate,
+    .btn-primary {
       width: 100%;
       padding: 14px;
       background: #1a5490;
@@ -194,11 +243,13 @@
       transition: background 0.3s;
     }
 
-    .btn-generate:hover {
+    .btn-generate:hover,
+    .btn-primary:hover {
       background: #144070;
     }
 
-    .btn-generate:disabled {
+    .btn-generate:disabled,
+    .btn-primary:disabled {
       background: #ccc;
       cursor: not-allowed;
     }
@@ -238,9 +289,9 @@
       gap: 8px;
     }
 
-    .btn-copy {
+    .btn-copy,
+    .btn-schedule {
       padding: 8px 16px;
-      background: #28a745;
       color: white;
       border: none;
       border-radius: 6px;
@@ -249,8 +300,20 @@
       font-weight: 500;
     }
 
+    .btn-copy {
+      background: #28a745;
+    }
+
     .btn-copy:hover {
       background: #218838;
+    }
+
+    .btn-schedule {
+      background: #e8500a;
+    }
+
+    .btn-schedule:hover {
+      background: #c74408;
     }
 
     .loading {
@@ -298,116 +361,257 @@
       margin-top: 6px;
       font-style: italic;
     }
+
+    /* Scheduled Posts List */
+    .posts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .post-item {
+      background: white;
+      border: 1px solid #e5e5e5;
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      gap: 20px;
+    }
+
+    .post-image {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+
+    .post-content {
+      flex: 1;
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .post-category {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #e8f4fd;
+      color: #1a5490;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .post-date {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .post-text {
+      color: #333;
+      line-height: 1.6;
+      margin-bottom: 12px;
+      max-height: 80px;
+      overflow: hidden;
+    }
+
+    .post-platforms {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .platform-badge {
+      padding: 4px 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #666;
+    }
+
+    .post-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-edit,
+    .btn-delete {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .btn-edit {
+      background: #6c757d;
+      color: white;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="logo">TradeAI - Social Media Manager</div>
-    <a href="/dashboard.html" class="btn-back">← Back to Dashboard</a>
+    <div class="header-actions">
+      <a href="/social-settings.html" class="btn-settings">⚙️ Settings</a>
+      <a href="/dashboard.html" class="btn-back">← Dashboard</a>
+    </div>
   </div>
 
   <div class="container">
     <h1 class="page-title">Social Media Manager 📱</h1>
-    <p class="page-subtitle">Create engaging social media posts with AI-powered captions</p>
+    <p class="page-subtitle">Create, schedule, and manage your social media content</p>
 
-    <div class="info-box">
-      <p><strong>How it works:</strong></p>
-      <p>1. Upload a photo from your latest project</p>
-      <p>2. Select which platforms you're posting to</p>
-      <p>3. Choose your tone and style</p>
-      <p>4. AI generates 3 caption options for you</p>
-      <p>5. Copy your favorite and post!</p>
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('create')">Create Post</button>
+      <button class="tab" onclick="switchTab('scheduled')">Scheduled Posts</button>
+      <button class="tab" onclick="switchTab('history')">Post History</button>
     </div>
 
-    <!-- Upload Image -->
-    <div class="card">
-      <h2 class="card-title">📸 Upload Project Photo</h2>
+    <!-- Tab: Create Post -->
+    <div class="tab-content active" id="create-tab">
       
-      <div class="file-upload" id="file-upload">
-        <input type="file" id="image-input" accept="image/*">
-        <div class="upload-icon">📷</div>
-        <p><strong>Click to upload</strong> or drag and drop</p>
-        <p class="help-text">PNG, JPG, WEBP up to 10MB</p>
+      <div class="info-box">
+        <p><strong>How it works:</strong></p>
+        <p>1. Upload a photo → 2. Select platforms & category → 3. AI generates captions → 4. Schedule or copy to post manually</p>
       </div>
 
-      <div class="image-preview" id="image-preview">
-        <img id="preview-img" src="" alt="Preview">
-      </div>
-    </div>
-
-    <!-- Platform Selection -->
-    <div class="card">
-      <h2 class="card-title">🎯 Select Platforms</h2>
-      
-      <div class="platform-selector">
-        <button class="platform-btn active" data-platform="facebook" onclick="togglePlatform(this)">
-          Facebook
-        </button>
-        <button class="platform-btn" data-platform="instagram" onclick="togglePlatform(this)">
-          Instagram
-        </button>
-        <button class="platform-btn" data-platform="linkedin" onclick="togglePlatform(this)">
-          LinkedIn
-        </button>
-      </div>
-      <p class="help-text">Select one or more platforms (caption will be optimized for your selection)</p>
-    </div>
-
-    <!-- Post Settings -->
-    <div class="card">
-      <h2 class="card-title">✍️ Post Settings</h2>
-      
-      <div class="form-group">
-        <label>Tone</label>
-        <select id="tone">
-          <option value="professional">Professional</option>
-          <option value="casual">Casual & Friendly</option>
-          <option value="promotional">Promotional</option>
-          <option value="educational">Educational</option>
-        </select>
-        <p class="help-text">How formal should the post sound?</p>
-      </div>
-
-      <div class="form-group">
-        <label>Post Type</label>
-        <select id="post-type">
-          <option value="project-showcase">Project Showcase</option>
-          <option value="before-after">Before & After</option>
-          <option value="customer-testimonial">Customer Testimonial</option>
-          <option value="tip-advice">Tip or Advice</option>
-          <option value="behind-scenes">Behind the Scenes</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label>Additional Context (Optional)</label>
-        <textarea id="context" placeholder="E.g., This was a challenging install in Paddington, completed in 3 days..."></textarea>
-        <p class="help-text">Any details you want to mention in the post</p>
-      </div>
-
-      <button class="btn-generate" id="generate-btn" onclick="generateCaptions()" disabled>
-        Generate Captions
-      </button>
-    </div>
-
-    <!-- Loading State -->
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>AI is creating engaging captions for you...</p>
-    </div>
-
-    <!-- Generated Captions -->
-    <div class="captions-container" id="captions-container">
+      <!-- Upload Image -->
       <div class="card">
-        <h2 class="card-title">✨ Generated Captions</h2>
-        <div id="captions-list">
-          <!-- Captions will be inserted here -->
+        <h2 class="card-title">📸 Upload Project Photo</h2>
+        
+        <div class="file-upload" id="file-upload">
+          <input type="file" id="image-input" accept="image/*">
+          <div class="upload-icon">📷</div>
+          <p><strong>Click to upload</strong> or drag and drop</p>
+          <p class="help-text">PNG, JPG, WEBP up to 10MB</p>
         </div>
+
+        <div class="image-preview" id="image-preview">
+          <img id="preview-img" src="" alt="Preview">
+        </div>
+      </div>
+
+      <!-- Platform & Category -->
+      <div class="card">
+        <h2 class="card-title">🎯 Platform & Category</h2>
+        
+        <div class="form-group">
+          <label>Select Platforms</label>
+          <div class="platform-selector">
+            <button class="platform-btn active" data-platform="facebook" onclick="togglePlatform(this)">
+              Facebook
+            </button>
+            <button class="platform-btn" data-platform="instagram" onclick="togglePlatform(this)">
+              Instagram
+            </button>
+            <button class="platform-btn" data-platform="linkedin" onclick="togglePlatform(this)">
+              LinkedIn
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Content Category</label>
+          <select id="category">
+            <option value="marketing">🎯 Marketing & Promotions</option>
+            <option value="completed-jobs">✅ Completed Jobs</option>
+            <option value="tips">💡 Tips & Advice</option>
+            <option value="industry-trends">📈 Industry Trends</option>
+            <option value="team-culture">👥 Team & Culture</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Post Settings -->
+      <div class="card">
+        <h2 class="card-title">✍️ Post Settings</h2>
+        
+        <div class="form-group">
+          <label>Tone</label>
+          <select id="tone">
+            <option value="professional">Professional</option>
+            <option value="casual">Casual & Friendly</option>
+            <option value="promotional">Promotional</option>
+            <option value="educational">Educational</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Post Type</label>
+          <select id="post-type">
+            <option value="project-showcase">Project Showcase</option>
+            <option value="before-after">Before & After</option>
+            <option value="customer-testimonial">Customer Testimonial</option>
+            <option value="tip-advice">Tip or Advice</option>
+            <option value="behind-scenes">Behind the Scenes</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Additional Context (Optional)</label>
+          <textarea id="context" placeholder="E.g., This was a challenging install in Paddington, completed in 3 days..."></textarea>
+        </div>
+
+        <button class="btn-generate" id="generate-btn" onclick="generateCaptions()" disabled>
+          Generate Captions
+        </button>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>AI is creating engaging captions for you...</p>
+      </div>
+
+      <!-- Generated Captions -->
+      <div class="captions-container" id="captions-container">
+        <div class="card">
+          <h2 class="card-title">✨ Generated Captions</h2>
+          <div id="captions-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: Scheduled Posts -->
+    <div class="tab-content" id="scheduled-tab">
+      <div class="card">
+        <h2 class="card-title">📅 Upcoming Posts</h2>
+        <div id="scheduled-posts-list"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Post History -->
+    <div class="tab-content" id="history-tab">
+      <div class="card">
+        <h2 class="card-title">📜 Posted Content</h2>
+        <div id="history-posts-list"></div>
       </div>
     </div>
   </div>
 
-  <!-- Supabase JS SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./supabase-client.js"></script>
   <script src="./auth.js"></script>
@@ -416,7 +620,9 @@
     requireAuth();
 
     let uploadedImage = null;
+    let uploadedImageBase64 = null;
     let selectedPlatforms = ['facebook'];
+    let currentCaption = null;
 
     const fileUpload = document.getElementById('file-upload');
     const fileInput = document.getElementById('image-input');
@@ -426,16 +632,13 @@
 
     fileUpload.addEventListener('click', () => fileInput.click());
     fileInput.addEventListener('change', handleFileSelect);
-
     fileUpload.addEventListener('dragover', (e) => {
       e.preventDefault();
       fileUpload.classList.add('dragover');
     });
-
     fileUpload.addEventListener('dragleave', () => {
       fileUpload.classList.remove('dragover');
     });
-
     fileUpload.addEventListener('drop', (e) => {
       e.preventDefault();
       fileUpload.classList.remove('dragover');
@@ -490,6 +693,7 @@
 
       const tone = document.getElementById('tone').value;
       const postType = document.getElementById('post-type').value;
+      const category = document.getElementById('category').value;
       const context = document.getElementById('context').value;
 
       document.getElementById('loading').classList.add('show');
@@ -500,7 +704,7 @@
         const profile = await getUserProfile();
         const businessName = profile?.business_name || 'our business';
         const industry = profile?.industry || 'trades';
-        const base64Image = await fileToBase64(uploadedImage);
+        uploadedImageBase64 = await fileToBase64(uploadedImage);
         const { data: { user } } = await supabaseClient.auth.getUser();
         
         const response = await fetch('/api/generate-captions', {
@@ -508,7 +712,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user.id,
-            image: base64Image,
+            image: uploadedImageBase64,
             platforms: selectedPlatforms,
             tone: tone,
             postType: postType,
@@ -521,7 +725,7 @@
         const data = await response.json();
 
         if (data.success) {
-          displayCaptions(data.captions);
+          displayCaptions(data.captions, category);
         } else {
           alert('Error: ' + (data.error || 'Unknown error'));
         }
@@ -534,14 +738,17 @@
       generateBtn.disabled = false;
     }
 
-    function displayCaptions(captions) {
+    function displayCaptions(captions, category) {
       const container = document.getElementById('captions-list');
       container.innerHTML = captions.map((caption, index) => `
         <div class="caption-option">
           <div class="caption-text">${escapeHtml(caption)}</div>
           <div class="caption-actions">
             <button class="btn-copy" onclick="copyCaption(\`${escapeForAttr(caption)}\`, ${index})">
-              📋 Copy Caption
+              📋 Copy
+            </button>
+            <button class="btn-schedule" onclick="schedulePost(\`${escapeForAttr(caption)}\`, '${category}')">
+              📅 Schedule
             </button>
           </div>
         </div>
@@ -559,6 +766,169 @@
         setTimeout(() => { btn.textContent = originalText; }, 2000);
       });
     };
+
+    window.schedulePost = async function(caption, category) {
+      const scheduledDate = prompt('Enter date to schedule (YYYY-MM-DD) or leave blank for draft:');
+      
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      // Upload image to storage first (simplified - in production would use actual storage)
+      const imageUrl = previewImg.src; // Using base64 for now
+
+      const { error } = await supabaseClient
+        .from('social_posts')
+        .insert({
+          user_id: user.id,
+          post_content: caption,
+          post_image_url: imageUrl,
+          platform: selectedPlatforms.join(','),
+          category: category,
+          tone: document.getElementById('tone').value,
+          post_type: document.getElementById('post-type').value,
+          scheduled_date: scheduledDate ? new Date(scheduledDate).toISOString() : null,
+          posted: false
+        });
+
+      if (error) {
+        alert('Error saving post: ' + error.message);
+      } else {
+        alert('✅ Post saved! View it in the "Scheduled Posts" tab.');
+        loadScheduledPosts();
+      }
+    };
+
+    // Tab switching
+    window.switchTab = function(tab) {
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      
+      if (tab === 'create') {
+        tabs[0].classList.add('active');
+        document.getElementById('create-tab').classList.add('active');
+      } else if (tab === 'scheduled') {
+        tabs[1].classList.add('active');
+        document.getElementById('scheduled-tab').classList.add('active');
+        loadScheduledPosts();
+      } else if (tab === 'history') {
+        tabs[2].classList.add('active');
+        document.getElementById('history-tab').classList.add('active');
+        loadHistory();
+      }
+    };
+
+    // Load scheduled posts
+    async function loadScheduledPosts() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      const { data: posts, error } = await supabaseClient
+        .from('social_posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('posted', false)
+        .order('scheduled_date', { ascending: true });
+
+      const container = document.getElementById('scheduled-posts-list');
+
+      if (!posts || posts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📭</div>
+            <p>No scheduled posts yet</p>
+            <p>Create a post and click "Schedule" to add it here</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `<div class="posts-list">` + posts.map(post => `
+        <div class="post-item">
+          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image" alt="Post image">` : ''}
+          <div class="post-content">
+            <div class="post-header">
+              <span class="post-category">${getCategoryName(post.category)}</span>
+              <span class="post-date">${post.scheduled_date ? new Date(post.scheduled_date).toLocaleDateString() : 'Draft'}</span>
+            </div>
+            <div class="post-text">${post.post_content.substring(0, 150)}...</div>
+            <div class="post-platforms">
+              ${post.platform.split(',').map(p => `<span class="platform-badge">${p}</span>`).join('')}
+            </div>
+            <div class="post-actions">
+              <button class="btn-delete" onclick="deletePost('${post.id}')">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    // Load history
+    async function loadHistory() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      const { data: posts, error } = await supabaseClient
+        .from('social_posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('posted', true)
+        .order('posted_at', { ascending: false });
+
+      const container = document.getElementById('history-posts-list');
+
+      if (!posts || posts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📜</div>
+            <p>No posted content yet</p>
+            <p>Posts you mark as "posted" will appear here</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = `<div class="posts-list">` + posts.map(post => `
+        <div class="post-item">
+          ${post.post_image_url ? `<img src="${post.post_image_url}" class="post-image" alt="Post image">` : ''}
+          <div class="post-content">
+            <div class="post-header">
+              <span class="post-category">${getCategoryName(post.category)}</span>
+              <span class="post-date">Posted: ${new Date(post.posted_at).toLocaleDateString()}</span>
+            </div>
+            <div class="post-text">${post.post_content.substring(0, 150)}...</div>
+            <div class="post-platforms">
+              ${post.platform.split(',').map(p => `<span class="platform-badge">${p}</span>`).join('')}
+            </div>
+          </div>
+        </div>
+      `).join('') + `</div>`;
+    }
+
+    window.deletePost = async function(postId) {
+      if (!confirm('Delete this post?')) return;
+      
+      const { error } = await supabaseClient
+        .from('social_posts')
+        .delete()
+        .eq('id', postId);
+
+      if (error) {
+        alert('Error deleting post: ' + error.message);
+      } else {
+        loadScheduledPosts();
+      }
+    };
+
+    function getCategoryName(category) {
+      const names = {
+        'marketing': '🎯 Marketing',
+        'completed-jobs': '✅ Completed Job',
+        'tips': '💡 Tip',
+        'industry-trends': '📈 Industry Trend',
+        'team-culture': '👥 Team'
+      };
+      return names[category] || category;
+    }
 
     function fileToBase64(file) {
       return new Promise((resolve, reject) => {
