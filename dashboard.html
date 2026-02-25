@@ -357,7 +357,7 @@
   <script src="./auth.js"></script>
 
   <script>
-    // All available tools
+    // All available tools with Stripe Price IDs
     const allTools = [
       {
         id: 'chatbot',
@@ -365,6 +365,7 @@
         name: 'AI Website Chatbot',
         desc: 'Live chat on your website that responds instantly 24/7. AI qualifies leads, answers questions, books consultations.',
         price: 79,
+        priceId: 'price_YOUR_CHATBOT_PRICE_ID',  // ← Replace with your actual Price ID
         link: '/chatbot.html'
       },
       {
@@ -373,6 +374,7 @@
         name: 'Smart Email Assistant',
         desc: 'AI reads your emails, prioritises urgent ones, and drafts replies. Never miss an important customer inquiry.',
         price: 69,
+        priceId: 'price_YOUR_EMAIL_PRICE_ID',  // ← Replace with your actual Price ID
         link: '/email.html'
       },
       {
@@ -381,6 +383,7 @@
         name: 'Social Media Manager',
         desc: 'AI creates posts for Facebook, Instagram, LinkedIn. Upload project photos, AI writes engaging captions.',
         price: 59,
+        priceId: 'price_YOUR_SOCIAL_PRICE_ID',  // ← Replace with your actual Price ID
         link: '/social.html'
       },
       {
@@ -389,6 +392,7 @@
         name: 'Business Intelligence Dashboard',
         desc: 'Real-time metrics: leads, revenue, conversion rates. AI identifies trends and suggests improvements.',
         price: 89,
+        priceId: 'price_YOUR_BI_PRICE_ID',  // ← Replace with your actual Price ID
         link: '/bi.html'
       },
       {
@@ -397,6 +401,7 @@
         name: 'Tender Response Generator',
         desc: 'Upload RFT/RFQ documents. AI extracts requirements, generates comprehensive responses, identifies gaps.',
         price: 99,
+        priceId: 'price_YOUR_TENDER_PRICE_ID',  // ← Replace with your actual Price ID
         link: '/tender.html'
       }
     ];
@@ -516,27 +521,63 @@
       }
     }
 
-    // Activate a tool
+    // Activate a tool - Redirect to Stripe Checkout
     window.activateTool = async function(toolId, toolName, price) {
-      // For now: Simple confirmation (will be replaced with Stripe)
+      const tool = allTools.find(t => t.id === toolId);
+      if (!tool) return;
+
       const confirmed = confirm(
         `Activate ${toolName} for $${price}/month?\n\n` +
-        `(Demo mode - no payment required yet.\n` +
-        `Stripe integration coming next!)`
+        `You'll be redirected to Stripe to complete payment.`
       );
       
       if (!confirmed) return;
 
-      // Add to activated tools
-      if (!activeToolIds.includes(toolId)) {
-        activeToolIds.push(toolId);
-        await updateActivatedTools();
-        renderTools();
-        
-        // Switch to active tools tab
-        switchTab('active');
-        
-        alert(`✅ ${toolName} activated!\n\nYou can now access it in "My Active Tools".`);
+      try {
+        // Get current user
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) {
+          alert('Please log in first');
+          return;
+        }
+
+        // Show loading message
+        const btn = event.target;
+        btn.disabled = true;
+        btn.textContent = 'Loading...';
+
+        // Create Stripe checkout session
+        const response = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            priceId: tool.priceId,
+            userId: user.id,
+            toolId: tool.id,
+            toolName: tool.name
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = data.url;
+        } else {
+          alert('Error creating checkout session. Please try again.');
+          btn.disabled = false;
+          btn.textContent = 'Activate Tool';
+        }
+
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+        if (event && event.target) {
+          event.target.disabled = false;
+          event.target.textContent = 'Activate Tool';
+        }
       }
     };
 
