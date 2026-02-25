@@ -245,13 +245,9 @@
           Chat with Blue Haven Pools
         </div>
         
-        <div class="chat-messages" id="chat-messages">
-          <div class="message bot">
-            <div class="message-bubble">
-              👋 Hi! Looking to build a pool? I'm here to help! Ask me anything about pricing, timelines, or book a free consultation.
-            </div>
-          </div>
-        </div>
+       <div class="chat-messages" id="chat-messages">
+  <!-- Greeting will be loaded here dynamically -->
+</div>
 
         <div class="typing-indicator" id="typing-indicator">
           <span class="typing-dot"></span>
@@ -281,6 +277,21 @@
   <script>
     // Require authentication
     requireAuth();
+    
+    // Load user's custom greeting
+async function loadGreeting() {
+  const profile = await getUserProfile();
+  if (!profile) return;
+  
+  const settings = profile.chatbot_settings || {};
+  const greeting = settings.greeting_message || '👋 Hi! Looking to build a pool? I\'m here to help! Ask me anything about pricing, timelines, or book a free consultation.';
+  
+  // Add the greeting message
+  addMessage(greeting, 'bot');
+}
+
+// Load greeting on page load
+loadGreeting();
 
     // Store conversation history
     let conversationHistory = [];
