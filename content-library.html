@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Library - TradeAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a5490;
+    }
+
+    .btn-back {
+      padding: 8px 16px;
+      background: #4a9fd8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      font-size: 16px;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 32px;
+      border-bottom: 2px solid #e5e5e5;
+    }
+
+    .tab {
+      padding: 12px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.3s;
+    }
+
+    .tab:hover {
+      color: #1a5490;
+    }
+
+    .tab.active {
+      color: #1a5490;
+      border-bottom-color: #e8500a;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: bold;
+      color: #1a5490;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .upload-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .upload-card {
+      border: 2px dashed #ddd;
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .upload-card:hover {
+      border-color: #1a5490;
+      background: #f8f9fa;
+    }
+
+    .upload-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+
+    .upload-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .upload-desc {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .upload-card input {
+      display: none;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      padding: 8px 16px;
+      border: 2px solid #e5e5e5;
+      background: white;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.3s;
+    }
+
+    .filter-btn:hover {
+      border-color: #1a5490;
+    }
+
+    .filter-btn.active {
+      background: #1a5490;
+      color: white;
+      border-color: #1a5490;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 300px;
+      padding: 10px 16px;
+      border: 2px solid #e5e5e5;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: #1a5490;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .content-item {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .content-item:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .content-image {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      background: #f0f0f0;
+    }
+
+    .content-info {
+      padding: 16px;
+    }
+
+    .content-type-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #e8f4fd;
+      color: #1a5490;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .content-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .content-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .tag {
+      padding: 2px 8px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .content-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #666;
+    }
+
+    .empty-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .info-box {
+      background: #e8f4fd;
+      border-left: 4px solid #1a5490;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 6px;
+    }
+
+    .info-box p {
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .url-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .url-input:focus {
+      outline: none;
+      border-color: #1a5490;
+    }
+
+    .btn-primary {
+      padding: 12px 24px;
+      background: #1a5490;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #144070;
+    }
+
+    .btn-primary:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      display: none;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #1a5490;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .btn-close {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI - Content Library 📚</div>
+    <a href="/dashboard.html" class="btn-back">← Dashboard</a>
+  </div>
+
+  <div class="container">
+    <div class="page-header">
+      <h1 class="page-title">Content Library</h1>
+      <p class="page-subtitle">Your centralized hub for all marketing content - use across all tools</p>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total Items</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-images">0</div>
+        <div class="stat-label">Images</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-testimonials">0</div>
+        <div class="stat-label">Testimonials</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-documents">0</div>
+        <div class="stat-label">Documents</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('upload')">📤 Upload Content</button>
+      <button class="tab" onclick="switchTab('library')">📚 My Library</button>
+    </div>
+
+    <!-- Tab: Upload Content -->
+    <div class="tab-content active" id="upload-tab">
+      <div class="info-box">
+        <p><strong>💡 Quick Start:</strong></p>
+        <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Add Content to Your Library</h2>
+        
+        <div class="upload-section">
+          <!-- PDF Upload -->
+          <div class="upload-card" onclick="document.getElementById('pdf-input').click()">
+            <input type="file" id="pdf-input" accept=".pdf" multiple>
+            <div class="upload-icon">📄</div>
+            <div class="upload-title">Upload PDFs</div>
+            <div class="upload-desc">Company brochures, case studies, tender documents. AI will extract images, text, and projects.</div>
+          </div>
+
+          <!-- Image Upload -->
+          <div class="upload-card" onclick="document.getElementById('image-input').click()">
+            <input type="file" id="image-input" accept="image/*" multiple>
+            <div class="upload-icon">📸</div>
+            <div class="upload-title">Upload Images</div>
+            <div class="upload-desc">Project photos, team photos, product images. AI will auto-tag and categorize.</div>
+          </div>
+
+          <!-- Website Scraper -->
+          <div class="upload-card" onclick="showWebsiteScraper()">
+            <div class="upload-icon">🌐</div>
+            <div class="upload-title">Import from Website</div>
+            <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loading-text">Processing your content...</p>
+      </div>
+    </div>
+
+    <!-- Tab: My Library -->
+    <div class="tab-content" id="library-tab">
+      <!-- Filter Bar -->
+      <div class="filter-bar">
+        <button class="filter-btn active" onclick="filterContent('all')">All</button>
+        <button class="filter-btn" onclick="filterContent('image')">📸 Images</button>
+        <button class="filter-btn" onclick="filterContent('testimonial')">💬 Testimonials</button>
+        <button class="filter-btn" onclick="filterContent('document')">📄 Documents</button>
+        <button class="filter-btn" onclick="filterContent('project')">✅ Projects</button>
+        <input type="text" class="search-box" placeholder="Search content..." onkeyup="searchContent(this.value)">
+      </div>
+
+      <!-- Content Grid -->
+      <div class="content-grid" id="content-grid">
+        <!-- Will be populated by JavaScript -->
+      </div>
+
+      <div class="empty-state" id="empty-state" style="display: none;">
+        <div class="empty-icon">📭</div>
+        <h3>No content yet</h3>
+        <p>Start by uploading PDFs, images, or importing from your website</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Website Scraper Modal -->
+  <div class="modal" id="website-modal">
+    <div class="modal-content">
+      <button class="btn-close" onclick="closeWebsiteModal()">×</button>
+      <h2 class="modal-header">Import from Website</h2>
+      
+      <p style="margin-bottom: 20px; color: #666;">Enter your website URL and AI will scan for:</p>
+      <ul style="margin-bottom: 20px; color: #666; padding-left: 20px;">
+        <li>Project galleries and case studies</li>
+        <li>Service descriptions</li>
+        <li>Customer testimonials</li>
+        <li>Team bios and photos</li>
+        <li>Company information</li>
+      </ul>
+
+      <input type="url" class="url-input" id="website-url" placeholder="https://yourwebsite.com.au">
+      <button class="btn-primary" onclick="scrapeWebsite()">Scan Website</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    requireAuth();
+
+    let currentFilter = 'all';
+    let allContent = [];
+
+    // File upload handlers
+    document.getElementById('pdf-input').addEventListener('change', handlePDFUpload);
+    document.getElementById('image-input').addEventListener('change', handleImageUpload);
+
+    async function handlePDFUpload(e) {
+      const files = e.target.files;
+      if (!files.length) return;
+
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Extracting content from PDFs...';
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64 = event.target.result.split(',')[1];
+          
+          try {
+            const response = await fetch('/api/extract-pdf', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                userId: user.id,
+                fileName: file.name,
+                fileData: base64
+              })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+              console.log(`Extracted ${data.itemsCount} items from ${file.name}`);
+            }
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+
+      setTimeout(() => {
+        document.getElementById('loading').classList.remove('show');
+        alert('✅ PDFs processed! Check "My Library" tab to see extracted content.');
+        loadLibrary();
+      }, 3000);
+    }
+
+    async function handleImageUpload(e) {
+      const files = e.target.files;
+      if (!files.length) return;
+
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Analyzing and tagging images...';
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      for (const file of files) {
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+          const base64 = event.target.result.split(',')[1];
+          
+          // Save image to library
+          await supabaseClient.from('content_library').insert({
+            user_id: user.id,
+            content_type: 'image',
+            source_type: 'upload',
+            title: file.name,
+            image_url: event.target.result,
+            tags: ['uploaded'],
+            ai_keywords: []
+          });
+        };
+        reader.readAsDataURL(file);
+      }
+
+      setTimeout(() => {
+        document.getElementById('loading').classList.remove('show');
+        alert(`✅ ${files.length} image(s) added to library!`);
+        loadLibrary();
+      }, 2000);
+    }
+
+    function showWebsiteScraper() {
+      document.getElementById('website-modal').classList.add('show');
+    }
+
+    function closeWebsiteModal() {
+      document.getElementById('website-modal').classList.remove('show');
+    }
+
+    async function scrapeWebsite() {
+      const url = document.getElementById('website-url').value;
+      if (!url) {
+        alert('Please enter a website URL');
+        return;
+      }
+
+      closeWebsiteModal();
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Scanning website for content...';
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      try {
+        const response = await fetch('/api/scrape-website', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            url: url
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Found ${data.itemsCount} items from your website!`);
+          loadLibrary();
+        } else {
+          alert('❌ Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      }
+
+      document.getElementById('loading').classList.remove('show');
+    }
+
+    // Tab switching
+    window.switchTab = function(tab) {
+      const tabs = document.querySelectorAll('.tab');
+      const tabContents = document.querySelectorAll('.tab-content');
+      
+      tabs.forEach(t => t.classList.remove('active'));
+      tabContents.forEach(tc => tc.classList.remove('active'));
+      
+      if (tab === 'upload') {
+        tabs[0].classList.add('active');
+        document.getElementById('upload-tab').classList.add('active');
+      } else if (tab === 'library') {
+        tabs[1].classList.add('active');
+        document.getElementById('library-tab').classList.add('active');
+        loadLibrary();
+      }
+    };
+
+    // Load library content
+    async function loadLibrary() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      const { data: content, error } = await supabaseClient
+        .from('content_library')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      allContent = content || [];
+
+      // Update stats
+      document.getElementById('stat-total').textContent = allContent.length;
+      document.getElementById('stat-images').textContent = allContent.filter(c => c.content_type === 'image').length;
+      document.getElementById('stat-testimonials').textContent = allContent.filter(c => c.content_type === 'testimonial').length;
+      document.getElementById('stat-documents').textContent = allContent.filter(c => c.content_type === 'document').length;
+
+      renderContent(allContent);
+    }
+
+    function renderContent(content) {
+      const grid = document.getElementById('content-grid');
+      const emptyState = document.getElementById('empty-state');
+
+      if (!content || content.length === 0) {
+        grid.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      
+      grid.innerHTML = content.map(item => `
+        <div class="content-item" onclick="viewContent('${item.id}')">
+          ${item.image_url ? `<img src="${item.image_url}" class="content-image">` : `<div class="content-image" style="display: flex; align-items: center; justify-content: center; font-size: 48px;">${getTypeIcon(item.content_type)}</div>`}
+          <div class="content-info">
+            <span class="content-type-badge">${getTypeName(item.content_type)}</span>
+            <div class="content-title">${item.title || 'Untitled'}</div>
+            ${item.tags && item.tags.length > 0 ? `
+              <div class="content-tags">
+                ${item.tags.slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+            <div class="content-meta">
+              <span>${new Date(item.created_at).toLocaleDateString()}</span>
+              <span>Used ${item.use_count || 0}x</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.filterContent = function(type) {
+      currentFilter = type;
+      
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+
+      const filtered = type === 'all' 
+        ? allContent 
+        : allContent.filter(c => c.content_type === type);
+      
+      renderContent(filtered);
+    };
+
+    window.searchContent = function(query) {
+      if (!query) {
+        renderContent(allContent);
+        return;
+      }
+
+      const filtered = allContent.filter(c => 
+        c.title?.toLowerCase().includes(query.toLowerCase()) ||
+        c.description?.toLowerCase().includes(query.toLowerCase()) ||
+        c.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      renderContent(filtered);
+    };
+
+    window.viewContent = function(id) {
+      console.log('View content:', id);
+      // TODO: Show content detail modal
+    };
+
+    function getTypeIcon(type) {
+      const icons = {
+        'image': '📸',
+        'document': '📄',
+        'testimonial': '💬',
+        'project': '✅',
+        'text': '📝'
+      };
+      return icons[type] || '📦';
+    }
+
+    function getTypeName(type) {
+      const names = {
+        'image': 'Image',
+        'document': 'Document',
+        'testimonial': 'Testimonial',
+        'project': 'Project',
+        'text': 'Text'
+      };
+      return names[type] || type;
+    }
+
+    // Load library on page load
+    setTimeout(loadLibrary, 500);
+  </script>
+</body>
+</html>
