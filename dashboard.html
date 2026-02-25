@@ -449,6 +449,22 @@
         }
 
         renderTools();
+      
+      // Check for Stripe success/cancel
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('success')) {
+        const toolId = urlParams.get('tool');
+        setTimeout(() => {
+          alert('🎉 Payment successful!\n\nYour tool is being activated. You should receive a confirmation email from Stripe shortly.');
+          // Remove query params from URL
+          window.history.replaceState({}, document.title, '/dashboard.html');
+        }, 500);
+      } else if (urlParams.get('canceled')) {
+        setTimeout(() => {
+          alert('Payment canceled. You can activate tools anytime from the Available Tools tab.');
+          window.history.replaceState({}, document.title, '/dashboard.html');
+        }, 500);
+      }
       }
     }
 
