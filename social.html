@@ -690,14 +690,20 @@
             <h2 class="card-title">✅ Completed Job Details</h2>
             
             <div class="form-group">
-              <label>Upload Image (Required)</label>
-              <div class="file-upload" id="file-upload-jobs">
-                <input type="file" accept="image/*" required>
-                <div class="upload-icon">📷</div>
-                <p><strong>Click to upload</strong> your project photo</p>
-              </div>
-              <div class="image-preview"></div>
-            </div>
+  <label>Project Image</label>
+  <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <button type="button" class="btn-secondary" onclick="openLibraryModal('jobs')" style="flex: 1; padding: 12px; background: #e8500a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📚 Select from Library
+    </button>
+    <button type="button" class="btn-secondary" onclick="document.getElementById('file-upload-jobs').querySelector('input').click()" style="flex: 1; padding: 12px; background: #4a9fd8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📷 Upload New
+    </button>
+  </div>
+  <div class="file-upload" id="file-upload-jobs" style="display: none;">
+    <input type="file" accept="image/*">
+  </div>
+  <div class="image-preview" id="preview-jobs"></div>
+</div>
 
             <div class="form-group">
               <label>Project Type</label>
@@ -739,15 +745,21 @@
           <div class="card">
             <h2 class="card-title">💡 Tips & Advice Details</h2>
             
-            <div class="form-group">
-              <label>Upload Image (Optional)</label>
-              <div class="file-upload" id="file-upload-tips">
-                <input type="file" accept="image/*">
-                <div class="upload-icon">📷</div>
-                <p><strong>Click to upload</strong> or drag and drop</p>
-              </div>
-              <div class="image-preview"></div>
-            </div>
+           <div class="form-group">
+  <label>Upload Image (Optional)</label>
+  <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <button type="button" class="btn-secondary" onclick="openLibraryModal('tips')" style="flex: 1; padding: 12px; background: #e8500a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📚 Select from Library
+    </button>
+    <button type="button" class="btn-secondary" onclick="document.getElementById('file-upload-tips').querySelector('input').click()" style="flex: 1; padding: 12px; background: #4a9fd8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📷 Upload New
+    </button>
+  </div>
+  <div class="file-upload" id="file-upload-tips" style="display: none;">
+    <input type="file" accept="image/*">
+  </div>
+  <div class="image-preview" id="preview-tips"></div>
+</div>
 
             <div class="form-group">
               <label>Tip Category</label>
@@ -780,14 +792,20 @@
             <h2 class="card-title">📈 Industry Trends Details</h2>
             
             <div class="form-group">
-              <label>Upload Image (Optional)</label>
-              <div class="file-upload" id="file-upload-trends">
-                <input type="file" accept="image/*">
-                <div class="upload-icon">📷</div>
-                <p><strong>Click to upload</strong> or drag and drop</p>
-              </div>
-              <div class="image-preview"></div>
-            </div>
+  <label>Upload Image (Optional)</label>
+  <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <button type="button" class="btn-secondary" onclick="openLibraryModal('trends')" style="flex: 1; padding: 12px; background: #e8500a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📚 Select from Library
+    </button>
+    <button type="button" class="btn-secondary" onclick="document.getElementById('file-upload-trends').querySelector('input').click()" style="flex: 1; padding: 12px; background: #4a9fd8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📷 Upload New
+    </button>
+  </div>
+  <div class="file-upload" id="file-upload-trends" style="display: none;">
+    <input type="file" accept="image/*">
+  </div>
+  <div class="image-preview" id="preview-trends"></div>
+</div>
 
             <div class="form-group">
               <label>Trend Topic</label>
@@ -810,14 +828,20 @@
             <h2 class="card-title">👥 Team & Culture Details</h2>
             
             <div class="form-group">
-              <label>Upload Image (Optional)</label>
-              <div class="file-upload" id="file-upload-team">
-                <input type="file" accept="image/*">
-                <div class="upload-icon">📷</div>
-                <p><strong>Click to upload</strong> team photo</p>
-              </div>
-              <div class="image-preview"></div>
-            </div>
+  <label>Upload Image (Optional)</label>
+  <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+    <button type="button" class="btn-secondary" onclick="openLibraryModal('team')" style="flex: 1; padding: 12px; background: #e8500a; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📚 Select from Library
+    </button>
+    <button type="button" class="btn-secondary" onclick="document.getElementById('file-upload-team').querySelector('input').click()" style="flex: 1; padding: 12px; background: #4a9fd8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+      📷 Upload New
+    </button>
+  </div>
+  <div class="file-upload" id="file-upload-team" style="display: none;">
+    <input type="file" accept="image/*">
+  </div>
+  <div class="image-preview" id="preview-team"></div>
+</div>
 
             <div class="form-group">
               <label>Post Type</label>
@@ -1316,6 +1340,204 @@
     function escapeForAttr(text) {
       return text.replace(/`/g, '\\`').replace(/\$/g, '\\$');
     }
+    // ============================================
+    // CONTENT LIBRARY INTEGRATION
+    // ============================================
+
+    let currentLibraryCategory = null;
+    let allLibraryImages = [];
+
+    window.openLibraryModal = async function(category) {
+      currentLibraryCategory = category;
+      document.getElementById('library-modal').classList.add('show');
+      
+      // Load images from library
+      await loadLibraryImages();
+    };
+
+    window.closeLibraryModal = function() {
+      document.getElementById('library-modal').classList.remove('show');
+    };
+
+    async function loadLibraryImages() {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        const { data: images, error } = await supabaseClient
+          .from('content_library')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('content_type', 'image')
+          .order('created_at', { ascending: false });
+
+        allLibraryImages = images || [];
+
+        if (allLibraryImages.length === 0) {
+          document.getElementById('library-grid').style.display = 'none';
+          document.getElementById('empty-library').style.display = 'block';
+          return;
+        }
+
+        document.getElementById('library-grid').style.display = 'grid';
+        document.getElementById('empty-library').style.display = 'none';
+
+        renderLibraryImages(allLibraryImages);
+      } catch (error) {
+        console.error('Error loading library:', error);
+        alert('Error loading library: ' + error.message);
+      }
+    }
+
+    function renderLibraryImages(images) {
+      const grid = document.getElementById('library-grid');
+      
+      grid.innerHTML = images.map(img => `
+        <div class="library-image-item" onclick="selectLibraryImage('${img.id}')" style="cursor: pointer; border-radius: 8px; overflow: hidden; border: 2px solid transparent; transition: all 0.3s;">
+          <img src="${img.image_url}" style="width: 100%; height: 150px; object-fit: cover; display: block;">
+          <div style="padding: 8px; background: white; font-size: 11px; color: #666;">
+            ${img.title ? img.title.substring(0, 30) : 'Untitled'}
+          </div>
+        </div>
+      `).join('');
+
+      // Add hover effect
+      const style = document.createElement('style');
+      style.textContent = `
+        .library-image-item:hover {
+          border-color: #1a5490 !important;
+          transform: scale(1.05);
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    window.filterLibraryImages = function(query) {
+      if (!query) {
+        renderLibraryImages(allLibraryImages);
+        return;
+      }
+
+      const filtered = allLibraryImages.filter(img => 
+        img.title?.toLowerCase().includes(query.toLowerCase()) ||
+        img.description?.toLowerCase().includes(query.toLowerCase()) ||
+        img.tags?.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+      );
+
+      renderLibraryImages(filtered);
+    };
+
+    window.selectLibraryImage = async function(imageId) {
+      const image = allLibraryImages.find(img => img.id === imageId);
+      if (!image) return;
+
+      console.log('Selected image:', image);
+
+      // Set the image in the appropriate preview
+      const previewId = `preview-${currentLibraryCategory}`;
+      const preview = document.querySelector(`#inputs-${selectedCategory} #${previewId}`);
+      
+      if (preview) {
+        preview.innerHTML = `<img src="${image.image_url}" style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
+        preview.classList.add('show');
+      }
+
+      // Store the base64 data
+      uploadedImageBase64 = image.image_url.split(',')[1];
+
+      // Update usage count
+      try {
+        await supabaseClient
+          .from('content_library')
+          .update({ 
+            use_count: (image.use_count || 0) + 1,
+            last_used: new Date().toISOString()
+          })
+          .eq('id', imageId);
+      } catch (error) {
+        console.error('Error updating use count:', error);
+      }
+
+      // Close modal
+      closeLibraryModal();
+
+      alert('✅ Image selected from library!');
+    };
+
+    // Modal styling
+    const modalStyle = document.createElement('style');
+    modalStyle.textContent = `
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .modal.show {
+        display: flex;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 40px;
+        border-radius: 12px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .modal-header {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 20px;
+      }
+
+      .btn-close {
+        float: right;
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #999;
+      }
+
+      .btn-secondary {
+        transition: all 0.3s;
+      }
+
+      .btn-secondary:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+    `;
+    document.head.appendChild(modalStyle);
   </script>
+  <!-- Content Library Modal -->
+  <div class="modal" id="library-modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <button class="btn-close" onclick="closeLibraryModal()">×</button>
+      <h2 class="modal-header">Select from Content Library</h2>
+      
+      <div class="library-filter" style="margin-bottom: 20px;">
+        <input type="text" id="library-search" placeholder="Search images..." style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" onkeyup="filterLibraryImages(this.value)">
+      </div>
+
+      <div class="library-grid" id="library-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 500px; overflow-y: auto;">
+        <!-- Images will be loaded here -->
+      </div>
+
+      <div class="empty-library" id="empty-library" style="text-align: center; padding: 60px; color: #666; display: none;">
+        <p style="font-size: 48px; margin-bottom: 16px;">📭</p>
+        <p>No images in library yet</p>
+        <p style="font-size: 14px; margin-top: 8px;">Upload images to Content Library first</p>
+      </div>
+    </div>
+  </div>
+</body>
 </body>
 </html>
