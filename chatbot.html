@@ -273,25 +273,33 @@
   <script src="./supabase-client.js"></script>
   <script src="./auth.js"></script>
 
-  <script>
+<script>
     // Require authentication
     requireAuth();
     
-   // Load user's custom greeting
-async function loadGreeting() {
-  const profile = await getUserProfile();
-  if (!profile) return;
-  
-  const settings = profile.chatbot_settings || {};
-  const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
-  
-  // Set chat header to business name
-  const businessName = settings.business_name || profile.business_name || 'us';
-  document.getElementById('chat-header-title').textContent = `Chat with ${businessName}`;
-  
-  // Add the greeting message
-  addMessage(greeting, 'bot');
-}
+    // Load user's custom greeting
+    async function loadGreeting() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+      
+      const settings = profile.chatbot_settings || {};
+      const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
+      
+      // Set chat header to business name
+      const businessName = settings.business_name || profile.business_name || 'us';
+      const headerElement = document.getElementById('chat-header-title');
+      
+      // Make sure element exists before setting it
+      if (headerElement) {
+        headerElement.textContent = `Chat with ${businessName}`;
+      }
+      
+      // Add the greeting message
+      addMessage(greeting, 'bot');
+    }
+
+    // Call loadGreeting when page loads
+    loadGreeting(); 
 
 // Load greeting on page load
 loadGreeting();
