@@ -599,7 +599,7 @@
             <button class="btn-add" onclick="disconnectEmail()" style="margin-top: 12px; background: #dc3545;">
               Disconnect Email
             </button>
-            <button class="btn-add" onclick="scanEmails()" style="margin-top: 12px;">
+           <button class="btn-add" onclick="scanEmails(event)" style="margin-top: 12px;">
               🔍 Scan for New FAQs
             </button>
           </div>
@@ -710,13 +710,17 @@
     };
 
     // Scan emails for FAQs
-    window.scanEmails = async function() {
+    window.scanEmails = async function(event) {  // ← Add event parameter
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const btn = event.target;
-      btn.disabled = true;
-      btn.textContent = '⏳ Scanning emails...';
+      // Get button reference safely
+      const btn = event && event.target ? event.target : document.querySelector('button[onclick*="scanEmails"]');
+      
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Scanning emails...';
+      }
 
       try {
         const response = await fetch('/api/scan-emails', {
@@ -734,11 +738,14 @@
           alert('❌ Scan failed: ' + (data.error || 'Unknown error'));
         }
       } catch (error) {
+        console.error('Scan error:', error);
         alert('❌ Error: ' + error.message);
       }
 
-      btn.disabled = false;
-      btn.textContent = '🔍 Scan for New FAQs';
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '🔍 Scan for New FAQs';
+      }
     };
 
     // Load learned FAQs
