@@ -248,4 +248,319 @@
       width: 100%;
       padding: 12px;
       background: #1a5490;
-      color
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: background 0.3s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+    }
+
+    .btn-configure:hover {
+      background: #144070;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #666;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .btn-browse {
+      display: inline-block;
+      padding: 12px 24px;
+      background: #e8500a;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .btn-browse:hover {
+      background: #c74408;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">TradeAI</div>
+    <div class="user-info">
+      <span class="user-name" id="user-name">Loading...</span>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="welcome">
+      <h1>Welcome back, <span id="business-name">there</span>! 👋</h1>
+      <p>Manage your AI tools and discover new ways to automate your business.</p>
+    </div>
+
+    <!-- Tabs Container -->
+    <div class="tabs-container">
+      <!-- Tab Headers -->
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('active')">
+          My Active Tools
+          <span class="tab-badge" id="active-count">0</span>
+        </button>
+        <button class="tab" onclick="switchTab('available')">
+          Available Tools
+          <span class="tab-badge" id="available-count">0</span>
+        </button>
+      </div>
+
+      <!-- Tab Content: My Active Tools -->
+      <div class="tab-content active" id="active-tab">
+        <div id="active-tools-container">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Tab Content: Available Tools -->
+      <div class="tab-content" id="available-tab">
+        <div id="available-tools-container">
+          <!-- Will be populated by JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    // All available tools
+    const allTools = [
+      {
+        id: 'chatbot',
+        icon: '💬',
+        name: 'AI Chat Widget',
+        desc: 'Live chat on your website that responds instantly 24/7. AI qualifies leads, answers questions, books consultations.',
+        price: 79,
+        link: '/chatbot.html'
+      },
+      {
+        id: 'email',
+        icon: '📧',
+        name: 'Smart Email Assistant',
+        desc: 'AI reads your emails, prioritises urgent ones, and drafts replies. Never miss an important customer inquiry.',
+        price: 69,
+        link: '/email.html'
+      },
+      {
+        id: 'social',
+        icon: '📱',
+        name: 'Social Media Manager',
+        desc: 'AI creates posts for Facebook, Instagram, LinkedIn. Upload project photos, AI writes engaging captions.',
+        price: 59,
+        link: '/social.html'
+      },
+      {
+        id: 'bi',
+        icon: '📊',
+        name: 'Business Intelligence Dashboard',
+        desc: 'Real-time metrics: leads, revenue, conversion rates. AI identifies trends and suggests improvements.',
+        price: 89,
+        link: '/bi.html'
+      },
+      {
+        id: 'tender',
+        icon: '📑',
+        name: 'Tender Response Generator',
+        desc: 'Upload RFT/RFQ documents. AI extracts requirements, generates comprehensive responses, identifies gaps.',
+        price: 99,
+        link: '/tender.html'
+      }
+    ];
+
+    let userProfile = null;
+    let activeToolIds = [];
+
+    // Switch tabs
+    window.switchTab = function(tabName) {
+      // Update tab buttons
+      const tabs = document.querySelectorAll('.tab');
+      tabs.forEach(tab => tab.classList.remove('active'));
+      
+      if (tabName === 'active') {
+        tabs[0].classList.add('active');
+      } else {
+        tabs[1].classList.add('active');
+      }
+
+      // Update tab content
+      const tabContents = document.querySelectorAll('.tab-content');
+      tabContents.forEach(content => content.classList.remove('active'));
+      
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    };
+
+    // Initialize
+    async function init() {
+      const isAuthenticated = await requireAuth();
+      if (!isAuthenticated) return;
+
+      // Load user profile
+      userProfile = await getUserProfile();
+      if (userProfile) {
+        document.getElementById('user-name').textContent = userProfile.email;
+        document.getElementById('business-name').textContent = userProfile.business_name || 'there';
+        
+        // Get active tools
+        activeToolIds = userProfile.activated_tools || [];
+        
+        // For demo: activate chatbot by default if no tools
+        if (activeToolIds.length === 0) {
+          activeToolIds = ['chatbot'];
+          await updateActivatedTools();
+        }
+
+        renderTools();
+      }
+    }
+
+    // Render all tools
+    function renderTools() {
+      const activeTools = allTools.filter(tool => activeToolIds.includes(tool.id));
+      const availableTools = allTools.filter(tool => !activeToolIds.includes(tool.id));
+
+      // Update badges
+      document.getElementById('active-count').textContent = activeTools.length;
+      document.getElementById('available-count').textContent = availableTools.length;
+
+      // Render active tools
+      const activeContainer = document.getElementById('active-tools-container');
+      if (activeTools.length === 0) {
+        activeContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3>No Active Tools Yet</h3>
+            <p>You haven't activated any tools yet.<br>Browse available tools to get started!</p>
+            <a href="#" class="btn-browse" onclick="switchTab('available'); return false;">Browse Tools</a>
+          </div>
+        `;
+      } else {
+        activeContainer.innerHTML = `
+          <div class="tools-grid">
+            ${activeTools.map(tool => `
+              <div class="tool-card" onclick="window.location.href='${tool.link}'">
+                <div class="tool-status">✓ Active</div>
+                <div class="tool-icon">${tool.icon}</div>
+                <div class="tool-name">${tool.name}</div>
+                <div class="tool-desc">${tool.desc}</div>
+                <div class="tool-price">$${tool.price}/month</div>
+                <a href="${tool.link}" class="btn-configure" onclick="event.stopPropagation();">
+                  Open Tool →
+                </a>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // Render available tools
+      const availableContainer = document.getElementById('available-tools-container');
+      if (availableTools.length === 0) {
+        availableContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎉</div>
+            <h3>All Tools Activated!</h3>
+            <p>You've activated all available tools.<br>More tools coming soon!</p>
+          </div>
+        `;
+      } else {
+        availableContainer.innerHTML = `
+          <div class="tools-grid">
+            ${availableTools.map(tool => `
+              <div class="tool-card available">
+                <div class="tool-status inactive">Not Active</div>
+                <div class="tool-icon">${tool.icon}</div>
+                <div class="tool-name">${tool.name}</div>
+                <div class="tool-desc">${tool.desc}</div>
+                <div class="tool-price">$${tool.price}/month</div>
+                <button class="btn-activate" onclick="activateTool('${tool.id}', '${tool.name}', ${tool.price})">
+                  Activate Tool
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      }
+    }
+
+    // Activate a tool
+    window.activateTool = async function(toolId, toolName, price) {
+      // For now: Simple confirmation (will be replaced with Stripe)
+      const confirmed = confirm(
+        `Activate ${toolName} for $${price}/month?\n\n` +
+        `(Demo mode - no payment required yet.\n` +
+        `Stripe integration coming next!)`
+      );
+      
+      if (!confirmed) return;
+
+      // Add to activated tools
+      if (!activeToolIds.includes(toolId)) {
+        activeToolIds.push(toolId);
+        await updateActivatedTools();
+        renderTools();
+        
+        // Switch to active tools tab
+        switchTab('active');
+        
+        alert(`✅ ${toolName} activated!\n\nYou can now access it in "My Active Tools".`);
+      }
+    };
+
+    // Update activated tools in database
+    async function updateActivatedTools() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      await supabaseClient
+        .from('profiles')
+        .update({ activated_tools: activeToolIds })
+        .eq('id', user.id);
+    }
+
+    // Handle logout
+    async function handleLogout() {
+      const result = await signOut();
+      if (result.success) {
+        window.location.href = '/';
+      }
+    }
+
+    // Initialize on page load
+    init();
+  </script>
+</body>
+</html>
