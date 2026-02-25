@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Settings - TradeAI</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f5f7fa;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1a5490;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-back {
+      padding: 8px 16px;
+      background: #4a9fd8;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .btn-save {
+      padding: 8px 24px;
+      background: #e8500a;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .page-title {
+      font-size: 32px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 20px;
+      color: #333;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    select:focus {
+      outline: none;
+      border-color: #1a5490;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 6px;
+      font-style: italic;
+    }
+
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .category-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: #f8f9fa;
+      border-radius: 6px;
+    }
+
+    .category-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .category-info {
+      flex: 1;
+    }
+
+    .category-name {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+
+    .category-desc {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .info-box {
+      background: #e8f4fd;
+      border-left: 4px solid #1a5490;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 6px;
+    }
+
+    .info-box p {
+      margin-bottom: 8px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .success-message {
+      background: #d4edda;
+      color: #155724;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI - Social Media Settings</div>
+    <div class="header-actions">
+      <a href="/social.html" class="btn-back">← Back</a>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Social Media Settings ⚙️</h1>
+    <p class="page-subtitle">Configure your posting schedule and content preferences</p>
+
+    <div class="success-message" id="success-message">
+      ✅ Settings saved successfully!
+    </div>
+
+    <!-- Posting Schedule -->
+    <div class="card">
+      <h2 class="card-title">📅 Posting Frequency</h2>
+      <p class="help-text" style="margin-bottom: 20px;">How often should AI generate content for you?</p>
+
+      <div class="form-group">
+        <label>Posting Schedule</label>
+        <select id="frequency">
+          <option value="daily">Daily (7 posts/week)</option>
+          <option value="5xweek">5x per week (weekdays)</option>
+          <option value="3xweek">3x per week (Mon, Wed, Fri)</option>
+          <option value="2xweek">2x per week (Tue, Thu)</option>
+          <option value="weekly">Weekly (once per week)</option>
+          <option value="custom">Custom schedule</option>
+        </select>
+        <p class="help-text">AI will generate this many posts and distribute them across your selected categories</p>
+      </div>
+
+      <div class="info-box">
+        <p><strong>💡 Tip:</strong> Consistency is key! We recommend at least 3 posts per week for good engagement.</p>
+      </div>
+    </div>
+
+    <!-- Content Categories -->
+    <div class="card">
+      <h2 class="card-title">📂 Content Categories</h2>
+      <p class="help-text" style="margin-bottom: 20px;">Select which types of content to post. AI will distribute posts evenly across selected categories.</p>
+
+      <div class="category-list">
+        <div class="category-item">
+          <input type="checkbox" id="cat-marketing" checked>
+          <div class="category-info">
+            <div class="category-name">🎯 Marketing & Promotions</div>
+            <div class="category-desc">Special offers, seasonal promotions, service highlights</div>
+          </div>
+        </div>
+
+        <div class="category-item">
+          <input type="checkbox" id="cat-jobs" checked>
+          <div class="category-info">
+            <div class="category-name">✅ Completed Jobs</div>
+            <div class="category-desc">Showcase your recent projects and happy customers</div>
+          </div>
+        </div>
+
+        <div class="category-item">
+          <input type="checkbox" id="cat-tips" checked>
+          <div class="category-info">
+            <div class="category-name">💡 Tips & Advice</div>
+            <div class="category-desc">Industry tips, maintenance advice, how-to guides</div>
+          </div>
+        </div>
+
+        <div class="category-item">
+          <input type="checkbox" id="cat-trends">
+          <div class="category-info">
+            <div class="category-name">📈 Industry Trends</div>
+            <div class="category-desc">Latest news and trends in your industry (requires Industry News tool)</div>
+          </div>
+        </div>
+
+        <div class="category-item">
+          <input type="checkbox" id="cat-team">
+          <div class="category-info">
+            <div class="category-name">👥 Team & Culture</div>
+            <div class="category-desc">Behind the scenes, team spotlights, company culture</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top: 20px;">
+        <p><strong>Recommended mix:</strong></p>
+        <p>• 40% Completed Jobs (showcase your work)</p>
+        <p>• 30% Tips & Advice (provide value to followers)</p>
+        <p>• 20% Marketing (promote your services)</p>
+        <p>• 10% Team/Trends (build connection & authority)</p>
+      </div>
+    </div>
+
+    <!-- Preferred Posting Times -->
+    <div class="card">
+      <h2 class="card-title">🕐 Preferred Posting Times</h2>
+      
+      <div class="form-group">
+        <label>Best Time to Post</label>
+        <select id="posting-time">
+          <option value="morning">Morning (8-10am)</option>
+          <option value="midday">Midday (12-2pm)</option>
+          <option value="afternoon">Afternoon (3-5pm)</option>
+          <option value="evening">Evening (6-8pm)</option>
+          <option value="auto">Auto (AI decides based on platform best practices)</option>
+        </select>
+        <p class="help-text">When should scheduled posts go live?</p>
+      </div>
+
+      <div class="info-box">
+        <p><strong>Platform recommendations:</strong></p>
+        <p>• LinkedIn: Morning (8-10am) - weekdays</p>
+        <p>• Facebook: Midday-Afternoon (12-3pm)</p>
+        <p>• Instagram: Evening (6-8pm) or Morning (8-9am)</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase JS SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    requireAuth();
+
+    // Load current settings
+    async function loadSettings() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+
+      const settings = profile.social_schedule || {};
+
+      // Load frequency
+      document.getElementById('frequency').value = settings.frequency || 'weekly';
+
+      // Load categories
+      const categories = settings.categories || ['marketing', 'completed-jobs', 'tips'];
+      document.getElementById('cat-marketing').checked = categories.includes('marketing');
+      document.getElementById('cat-jobs').checked = categories.includes('completed-jobs');
+      document.getElementById('cat-tips').checked = categories.includes('tips');
+      document.getElementById('cat-trends').checked = categories.includes('industry-trends');
+      document.getElementById('cat-team').checked = categories.includes('team-culture');
+
+      // Load posting time
+      document.getElementById('posting-time').value = settings.posting_time || 'auto';
+    }
+
+    // Save settings
+    async function saveSettings() {
+      const settings = {
+        frequency: document.getElementById('frequency').value,
+        categories: [],
+        posting_time: document.getElementById('posting-time').value,
+        enabled: true
+      };
+
+      // Get selected categories
+      if (document.getElementById('cat-marketing').checked) settings.categories.push('marketing');
+      if (document.getElementById('cat-jobs').checked) settings.categories.push('completed-jobs');
+      if (document.getElementById('cat-tips').checked) settings.categories.push('tips');
+      if (document.getElementById('cat-trends').checked) settings.categories.push('industry-trends');
+      if (document.getElementById('cat-team').checked) settings.categories.push('team-culture');
+
+      if (settings.categories.length === 0) {
+        alert('Please select at least one content category');
+        return;
+      }
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ social_schedule: settings })
+        .eq('id', user.id);
+
+      if (error) {
+        alert('Error saving settings: ' + error.message);
+      } else {
+        document.getElementById('success-message').classList.add('show');
+        setTimeout(() => {
+          document.getElementById('success-message').classList.remove('show');
+        }, 3000);
+      }
+    }
+
+    // Load settings on page load
+    setTimeout(loadSettings, 500);
+  </script>
+</body>
+</html>
