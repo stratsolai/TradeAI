@@ -178,10 +178,6 @@
       line-height: 1.5;
     }
 
-    .upload-card input {
-      display: none;
-    }
-
     .filter-bar {
       display: flex;
       gap: 12px;
@@ -466,36 +462,36 @@
     </div>
 
     <!-- Tab: Upload Content -->
-<div class="tab-content active" id="upload-tab">
-  <div class="info-box">
-    <p><strong>💡 Quick Start:</strong></p>
-    <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
-  </div>
+    <div class="tab-content active" id="upload-tab">
+      <div class="info-box">
+        <p><strong>💡 Quick Start:</strong></p>
+        <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+      </div>
 
-  <div class="card">
-    <h2 class="card-title">Add Content to Your Library</h2>
-    
-    <div class="upload-section">
-      <!-- Universal File Upload -->
-      <div class="upload-card" id="file-drop-zone">
-        <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display: none;">
-        <div class="upload-icon">📁</div>
-        <div class="upload-title">Click or Drop Files Here</div>
-        <div class="upload-desc">
-          <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
-          <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
-          AI extracts everything automatically
+      <div class="card">
+        <h2 class="card-title">Add Content to Your Library</h2>
+        
+        <div class="upload-section">
+          <!-- Universal File Upload -->
+          <div class="upload-card" id="file-drop-zone">
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display: none;">
+            <div class="upload-icon">📁</div>
+            <div class="upload-title">Click or Drop Files Here</div>
+            <div class="upload-desc">
+              <strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br>
+              <strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>
+              AI extracts everything automatically
+            </div>
+          </div>
+
+          <!-- Website Scraper -->
+          <div class="upload-card" id="website-scraper-card">
+            <div class="upload-icon">🌐</div>
+            <div class="upload-title">Import from Website</div>
+            <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
+          </div>
         </div>
       </div>
-
-      <!-- Website Scraper -->
-      <div class="upload-card" id="website-scraper-card">
-        <div class="upload-icon">🌐</div>
-        <div class="upload-title">Import from Website</div>
-        <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
-      </div>
-    </div>
-  </div>
 
       <!-- Loading State -->
       <div class="loading" id="loading">
@@ -559,12 +555,20 @@
     let currentFilter = 'all';
     let allContent = [];
 
-// ============================================
+    // ============================================
     // FILE UPLOAD HANDLERS
     // ============================================
     
-    // Initialize upload handlers after page loads
-    function initializeUploadHandlers() {
+    // Prevent default drag behaviors on entire document
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      document.addEventListener(eventName, function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }, false);
+    });
+
+    // Initialize upload handlers
+    setTimeout(() => {
       const dropZone = document.getElementById('file-drop-zone');
       const fileInput = document.getElementById('file-input');
       const websiteCard = document.getElementById('website-scraper-card');
@@ -574,34 +578,23 @@
         return;
       }
 
-      console.log('Initializing upload handlers...');
-
-      // Prevent default drag behaviors on the entire document
-      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        document.body.addEventListener(eventName, preventDefaults, false);
-      });
-
-      function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      console.log('Upload handlers initialized');
 
       // Click to upload
       dropZone.addEventListener('click', function(e) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Drop zone clicked');
         fileInput.click();
       });
 
-      // Highlight drop zone when item is dragged over it
+      // Highlight on drag
       ['dragenter', 'dragover'].forEach(eventName => {
         dropZone.addEventListener(eventName, function(e) {
           e.preventDefault();
           e.stopPropagation();
           dropZone.style.borderColor = '#1a5490';
           dropZone.style.background = '#e8f4fd';
-        }, false);
+        });
       });
 
       ['dragleave', 'drop'].forEach(eventName => {
@@ -610,21 +603,21 @@
           e.stopPropagation();
           dropZone.style.borderColor = '#ddd';
           dropZone.style.background = 'white';
-        }, false);
+        });
       });
 
-      // Handle dropped files
+      // Handle drop
       dropZone.addEventListener('drop', function(e) {
         e.preventDefault();
         e.stopPropagation();
         console.log('Files dropped');
         const files = e.dataTransfer.files;
         handleFiles(files);
-      }, false);
+      });
 
-      // Handle selected files
+      // Handle file selection
       fileInput.addEventListener('change', function(e) {
-        console.log('Files selected via input');
+        console.log('Files selected');
         handleFiles(e.target.files);
       });
 
@@ -634,15 +627,15 @@
         e.stopPropagation();
         showWebsiteScraper();
       });
-    }
+    }, 500);
 
     async function handleFiles(files) {
       if (!files || files.length === 0) {
-        console.log('No files to process');
+        console.log('No files');
         return;
       }
 
-      console.log(`Processing ${files.length} file(s):`, Array.from(files).map(f => f.name));
+      console.log(`Processing ${files.length} file(s)`);
 
       document.getElementById('loading').classList.add('show');
       document.getElementById('loading-text').textContent = `Processing ${files.length} file(s)...`;
@@ -650,7 +643,7 @@
       try {
         const { data: { user } } = await supabaseClient.auth.getUser();
         if (!user) {
-          alert('Please log in first');
+          alert('Please log in');
           document.getElementById('loading').classList.remove('show');
           return;
         }
@@ -662,7 +655,7 @@
           const file = files[i];
           const fileType = getFileType(file.name);
           
-          console.log(`[${i+1}/${files.length}] Processing ${file.name} (${fileType})`);
+          console.log(`[${i+1}/${files.length}] ${file.name} (${fileType})`);
 
           try {
             const base64 = await fileToBase64(file);
@@ -696,11 +689,9 @@
         
         if (successCount > 0) {
           alert(`✅ Success!\n\nProcessed: ${successCount} file(s)\nExtracted: ${totalItems} items\n\nView in "My Library" tab`);
-          setTimeout(() => {
-            switchTab('library');
-          }, 1000);
+          setTimeout(() => switchTab('library'), 500);
         } else {
-          alert('❌ Failed to process files. Check console for details.');
+          alert('❌ Failed to process files');
         }
         
       } catch (error) {
@@ -709,7 +700,6 @@
         document.getElementById('loading').classList.remove('show');
       }
 
-      // Clear the file input
       document.getElementById('file-input').value = '';
     }
 
@@ -742,105 +732,7 @@
       return types[ext] || 'unknown';
     }
 
-    // Initialize handlers when page loads
-    initializeUploadHandlers();
-    
-function getFileType(fileName) {
-  const ext = fileName.toLowerCase().split('.').pop();
-  const types = {
-    'pdf': 'pdf',
-    'doc': 'word',
-    'docx': 'word',
-    'ppt': 'powerpoint',
-    'pptx': 'powerpoint',
-    'xls': 'excel',
-    'xlsx': 'excel',
-    'txt': 'text',
-    'jpg': 'image',
-    'jpeg': 'image',
-    'png': 'image',
-    'webp': 'image',
-    'heic': 'image'
-  };
-  return types[ext] || 'unknown';
-}   
-    async function handleFileUpload(e) {
-  const files = e.target.files;
-  if (!files.length) return;
-
-  document.getElementById('loading').classList.add('show');
-  document.getElementById('loading-text').textContent = 'Processing your files...';
-
-  const { data: { user } } = await supabaseClient.auth.getUser();
-
-  for (const file of files) {
-    const fileType = getFileType(file.name);
-    console.log(`Processing ${file.name} as ${fileType}`);
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const base64 = event.target.result.split(',')[1];
-      
-      try {
-        const response = await fetch('/api/process-file', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            fileName: file.name,
-            fileType: fileType,
-            fileData: base64
-          })
-        });
-
-        const data = await response.json();
-        
-        if (data.success) {
-          console.log(`Processed ${file.name}: ${data.itemsCount} items extracted`);
-        } else {
-          console.error(`Error processing ${file.name}:`, data.error);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    };
-    reader.readAsDataURL(file);
-  }
-
-  setTimeout(() => {
-    document.getElementById('loading').classList.remove('show');
-    alert('✅ Files processed! Check "My Library" tab to see extracted content.');
-    loadLibrary();
-  }, 3000);
-}
-
-function getFileType(fileName) {
-  const ext = fileName.toLowerCase().split('.').pop();
-  const types = {
-    'pdf': 'pdf',
-    'doc': 'word',
-    'docx': 'word',
-    'ppt': 'powerpoint',
-    'pptx': 'powerpoint',
-    'xls': 'excel',
-    'xlsx': 'excel',
-    'txt': 'text',
-    'jpg': 'image',
-    'jpeg': 'image',
-    'png': 'image',
-    'webp': 'image',
-    'heic': 'image'
-  };
-  return types[ext] || 'unknown';
-}
-
-      setTimeout(() => {
-        document.getElementById('loading').classList.remove('show');
-        alert(`✅ ${files.length} image(s) added to library!`);
-        loadLibrary();
-      }, 2000);
-    }
-
+    // Website scraper
     function showWebsiteScraper() {
       document.getElementById('website-modal').classList.add('show');
     }
@@ -852,13 +744,13 @@ function getFileType(fileName) {
     async function scrapeWebsite() {
       const url = document.getElementById('website-url').value;
       if (!url) {
-        alert('Please enter a website URL');
+        alert('Please enter a URL');
         return;
       }
 
       closeWebsiteModal();
       document.getElementById('loading').classList.add('show');
-      document.getElementById('loading-text').textContent = 'Scanning website for content...';
+      document.getElementById('loading-text').textContent = 'Scanning website...';
 
       const { data: { user } } = await supabaseClient.auth.getUser();
 
@@ -866,16 +758,13 @@ function getFileType(fileName) {
         const response = await fetch('/api/scrape-website', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: user.id,
-            url: url
-          })
+          body: JSON.stringify({ userId: user.id, url: url })
         });
 
         const data = await response.json();
 
         if (data.success) {
-          alert(`✅ Found ${data.itemsCount} items from your website!`);
+          alert(`✅ Found ${data.itemsCount} items!`);
           loadLibrary();
         } else {
           alert('❌ Error: ' + data.error);
@@ -905,11 +794,11 @@ function getFileType(fileName) {
       }
     };
 
-    // Load library content
+    // Load library
     async function loadLibrary() {
       const { data: { user } } = await supabaseClient.auth.getUser();
       
-      const { data: content, error } = await supabaseClient
+      const { data: content } = await supabaseClient
         .from('content_library')
         .select('*')
         .eq('user_id', user.id)
@@ -917,7 +806,6 @@ function getFileType(fileName) {
 
       allContent = content || [];
 
-      // Update stats
       document.getElementById('stat-total').textContent = allContent.length;
       document.getElementById('stat-images').textContent = allContent.filter(c => c.content_type === 'image').length;
       document.getElementById('stat-testimonials').textContent = allContent.filter(c => c.content_type === 'testimonial').length;
@@ -939,7 +827,7 @@ function getFileType(fileName) {
       emptyState.style.display = 'none';
       
       grid.innerHTML = content.map(item => `
-        <div class="content-item" onclick="viewContent('${item.id}')">
+        <div class="content-item">
           ${item.image_url ? `<img src="${item.image_url}" class="content-image">` : `<div class="content-image" style="display: flex; align-items: center; justify-content: center; font-size: 48px;">${getTypeIcon(item.content_type)}</div>`}
           <div class="content-info">
             <span class="content-type-badge">${getTypeName(item.content_type)}</span>
@@ -961,15 +849,10 @@ function getFileType(fileName) {
     window.filterContent = function(type) {
       currentFilter = type;
       
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.remove('active');
-      });
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
       event.target.classList.add('active');
 
-      const filtered = type === 'all' 
-        ? allContent 
-        : allContent.filter(c => c.content_type === type);
-      
+      const filtered = type === 'all' ? allContent : allContent.filter(c => c.content_type === type);
       renderContent(filtered);
     };
 
@@ -986,11 +869,6 @@ function getFileType(fileName) {
       );
 
       renderContent(filtered);
-    };
-
-    window.viewContent = function(id) {
-      console.log('View content:', id);
-      // TODO: Show content detail modal
     };
 
     function getTypeIcon(type) {
