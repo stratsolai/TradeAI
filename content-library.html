@@ -559,78 +559,114 @@
     let currentFilter = 'all';
     let allContent = [];
 
-    // Universal file upload handler
-setTimeout(() => {
-  const uploadCard = document.getElementById('upload-card');
-  const fileInput = document.getElementById('file-input');
+// ============================================
+    // FILE UPLOAD HANDLERS
+    // ============================================
+    
+    // Initialize upload handlers after page loads
+    function initializeUploadHandlers() {
+      const dropZone = document.getElementById('file-drop-zone');
+      const fileInput = document.getElementById('file-input');
+      const websiteCard = document.getElementById('website-scraper-card');
 
-  if (uploadCard && fileInput) {
-    // Click to upload
-    uploadCard.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      fileInput.click();
-    });
-
-    // File selection
-    fileInput.addEventListener('change', handleFileUpload);
-
-    // Drag and drop
-    uploadCard.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadCard.style.borderColor = '#1a5490';
-      uploadCard.style.background = '#e8f4fd';
-    });
-
-    uploadCard.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadCard.style.borderColor = '#ddd';
-      uploadCard.style.background = 'white';
-    });
-
-    uploadCard.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      uploadCard.style.borderColor = '#ddd';
-      uploadCard.style.background = 'white';
-      
-      const files = e.dataTransfer.files;
-      if (files.length > 0) {
-        // Manually trigger the file input with dropped files
-        fileInput.files = files;
-        handleFileUpload({ target: { files: files } });
+      if (!dropZone || !fileInput) {
+        console.error('Upload elements not found');
+        return;
       }
-    });
-  }
-}, 500);
 
-async function handleFileUpload(e) {
-  const files = e.target.files;
-  if (!files || files.length === 0) return;
+      console.log('Initializing upload handlers...');
 
-  console.log(`Processing ${files.length} file(s)`);
+      // Prevent default drag behaviors on the entire document
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, preventDefaults, false);
+      });
 
-  document.getElementById('loading').classList.add('show');
-  document.getElementById('loading-text').textContent = `Processing ${files.length} file(s)...`;
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
 
-  const { data: { user } } = await supabaseClient.auth.getUser();
-  let successCount = 0;
-  let totalItems = 0;
+      // Click to upload
+      dropZone.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Drop zone clicked');
+        fileInput.click();
+      });
 
-  for (const file of files) {
-    const fileType = getFileType(file.name);
-    console.log(`Processing ${file.name} as ${fileType}`);
+      // Highlight drop zone when item is dragged over it
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.style.borderColor = '#1a5490';
+          dropZone.style.background = '#e8f4fd';
+        }, false);
+      });
 
-    try {
-      const reader = new FileReader();
-      
-      await new Promise((resolve, reject) => {
-        reader.onload = async (event) => {
-          const base64 = event.target.result.split(',')[1];
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          dropZone.style.borderColor = '#ddd';
+          dropZone.style.background = 'white';
+        }, false);
+      });
+
+      // Handle dropped files
+      dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Files dropped');
+        const files = e.dataTransfer.files;
+        handleFiles(files);
+      }, false);
+
+      // Handle selected files
+      fileInput.addEventListener('change', function(e) {
+        console.log('Files selected via input');
+        handleFiles(e.target.files);
+      });
+
+      // Website scraper
+      websiteCard.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        showWebsiteScraper();
+      });
+    }
+
+    async function handleFiles(files) {
+      if (!files || files.length === 0) {
+        console.log('No files to process');
+        return;
+      }
+
+      console.log(`Processing ${files.length} file(s):`, Array.from(files).map(f => f.name));
+
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = `Processing ${files.length} file(s)...`;
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) {
+          alert('Please log in first');
+          document.getElementById('loading').classList.remove('show');
+          return;
+        }
+
+        let successCount = 0;
+        let totalItems = 0;
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileType = getFileType(file.name);
           
+          console.log(`[${i+1}/${files.length}] Processing ${file.name} (${fileType})`);
+
           try {
+            const base64 = await fileToBase64(file);
+            
             const response = await fetch('/api/process-file', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -645,41 +681,70 @@ async function handleFileUpload(e) {
             const data = await response.json();
             
             if (data.success) {
-              console.log(`✅ ${file.name}: ${data.itemsCount} items extracted`);
+              console.log(`✅ ${file.name}: ${data.itemsCount} items`);
               successCount++;
               totalItems += data.itemsCount;
             } else {
-              console.error(`❌ ${file.name}:`, data.error);
+              console.error(`❌ ${file.name}: ${data.error}`);
             }
           } catch (error) {
             console.error(`❌ ${file.name}:`, error);
           }
-          
-          resolve();
-        };
+        }
+
+        document.getElementById('loading').classList.remove('show');
         
+        if (successCount > 0) {
+          alert(`✅ Success!\n\nProcessed: ${successCount} file(s)\nExtracted: ${totalItems} items\n\nView in "My Library" tab`);
+          setTimeout(() => {
+            switchTab('library');
+          }, 1000);
+        } else {
+          alert('❌ Failed to process files. Check console for details.');
+        }
+        
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error: ' + error.message);
+        document.getElementById('loading').classList.remove('show');
+      }
+
+      // Clear the file input
+      document.getElementById('file-input').value = '';
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
       });
-      
-    } catch (error) {
-      console.error(`Error processing ${file.name}:`, error);
     }
-  }
 
-  document.getElementById('loading').classList.remove('show');
-  
-  if (successCount > 0) {
-    alert(`✅ Processed ${successCount} file(s)!\n\nExtracted ${totalItems} items total.\n\nCheck "My Library" tab to see your content.`);
-    loadLibrary();
-  } else {
-    alert('❌ Failed to process files. Check console for errors.');
-  }
-  
-  // Clear file input
-  fileInput.value = '';
-}
+    function getFileType(fileName) {
+      const ext = fileName.toLowerCase().split('.').pop();
+      const types = {
+        'pdf': 'pdf',
+        'doc': 'word',
+        'docx': 'word',
+        'ppt': 'powerpoint',
+        'pptx': 'powerpoint',
+        'xls': 'excel',
+        'xlsx': 'excel',
+        'txt': 'text',
+        'jpg': 'image',
+        'jpeg': 'image',
+        'png': 'image',
+        'webp': 'image',
+        'heic': 'image'
+      };
+      return types[ext] || 'unknown';
+    }
 
+    // Initialize handlers when page loads
+    initializeUploadHandlers();
+    
 function getFileType(fileName) {
   const ext = fileName.toLowerCase().split('.').pop();
   const types = {
