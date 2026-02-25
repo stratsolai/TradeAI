@@ -1,24 +1,53 @@
 module.exports = async (req, res) => {
-  const { code, state } = req.query;
+  console.log('Microsoft callback hit!');
+  console.log('Query params:', req.query);
+  
+  const { code, state, error, error_description } = req.query;
+
+  // Check if Microsoft returned an error
+  if (error) {
+    console.error('Microsoft returned error:', error, error_description);
+    return res.redirect(`/chatbot-settings.html?error=microsoft_error&details=${error_description}`);
+  }
 
   if (!code) {
+    console.error('No code in callback');
     return res.redirect('/chatbot-settings.html?error=no_code');
   }
+
+  console.log('Code received:', code.substring(0, 20) + '...');
+  console.log('State (userId):', state);
 
   try {
     const https = require('https');
 
-    // Exchange code for tokens
-    const tokenData = await new Promise((resolve, reject) => {
-      const postData = new URLSearchParams({
-        code: code,
-        client_id: process.env.MICROSOFT_CLIENT_ID,
-        client_secret: process.env.MICROSOFT_CLIENT_SECRET,
-        redirect_uri: `${req.headers.origin || 'https://trade-ai-seven-blue.vercel.app'}/api/auth/microsoft/callback`,
-        grant_type: 'authorization_code',
-        scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read'
-      }).toString();
+    const clientId = process.env.MICROSOFT_CLIENT_ID;
+    const clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+    
+    console.log('Client ID exists:', !!clientId);
+    console.log('Client Secret exists:', !!clientSecret);
+    console.log('Client ID (first 10 chars):', clientId?.substring(0, 10));
 
+    if (!clientId || !clientSecret) {
+      throw new Error('Microsoft credentials not configured');
+    }
+
+    const redirectUri = `${req.headers.origin || 'https://trade-ai-seven-blue.vercel.app'}/api/auth/microsoft/callback`;
+    console.log('Redirect URI:', redirectUri);
+
+    // Exchange code for tokens
+    const postData = new URLSearchParams({
+      code: code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: redirectUri,
+      grant_type: 'authorization_code',
+      scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read'
+    }).toString();
+
+    console.log('Requesting token from Microsoft...');
+
+    const tokenData = await new Promise((resolve, reject) => {
       const options = {
         hostname: 'login.microsoftonline.com',
         path: '/common/oauth2/v2.0/token',
@@ -33,6 +62,8 @@ module.exports = async (req, res) => {
         let data = '';
         msRes.on('data', (chunk) => { data += chunk; });
         msRes.on('end', () => {
+          console.log('Microsoft response status:', msRes.statusCode);
+          console.log('Microsoft response:', data);
           try {
             resolve(JSON.parse(data));
           } catch (e) {
@@ -41,14 +72,21 @@ module.exports = async (req, res) => {
         });
       });
 
-      msReq.on('error', reject);
+      msReq.on('error', (err) => {
+        console.error('Request error:', err);
+        reject(err);
+      });
+      
       msReq.write(postData);
       msReq.end();
     });
 
     if (tokenData.error) {
-      throw new Error(tokenData.error);
+      console.error('Microsoft token error:', tokenData.error, tokenData.error_description);
+      throw new Error(tokenData.error_description || tokenData.error);
     }
+
+    console.log('Token received successfully!');
 
     // Get user email
     const userInfo = await new Promise((resolve, reject) => {
@@ -77,11 +115,15 @@ module.exports = async (req, res) => {
       msReq.end();
     });
 
+    console.log('User info retrieved:', userInfo.mail || userInfo.userPrincipalName);
+
     // Store tokens in database
     const userId = state;
     
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+    console.log('Saving to database for user:', userId);
 
     await new Promise((resolve, reject) => {
       const url = new URL(`${supabaseUrl}/rest/v1/profiles`);
@@ -108,7 +150,10 @@ module.exports = async (req, res) => {
 
       const supabaseReq = https.request(options, (supabaseRes) => {
         supabaseRes.on('data', () => {});
-        supabaseRes.on('end', resolve);
+        supabaseRes.on('end', () => {
+          console.log('Database updated successfully');
+          resolve();
+        });
       });
 
       supabaseReq.on('error', reject);
@@ -116,11 +161,11 @@ module.exports = async (req, res) => {
       supabaseReq.end();
     });
 
-    // Redirect back to settings with success
+    console.log('Success! Redirecting...');
     res.redirect('/chatbot-settings.html?email_connected=outlook');
 
   } catch (error) {
     console.error('Microsoft OAuth error:', error);
-    res.redirect('/chatbot-settings.html?error=oauth_failed');
+    res.redirect(`/chatbot-settings.html?error=oauth_failed&details=${encodeURIComponent(error.message)}`);
   }
 };
