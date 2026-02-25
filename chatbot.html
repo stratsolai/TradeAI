@@ -228,21 +228,20 @@
   </div>
 
   <div class="container">
-    <h1 class="page-title">AI Chat Widget 💬</h1>
-    <p class="page-subtitle">Live demo of your AI-powered website chat</p>
+    <h1 class="page-title">AI Website Chatbot 💬</h1>
+    <p class="page-subtitle">Live demo of your AI-powered website chatbot</p>
 
     <div class="demo-section">
-      <h2 class="section-title">Try the Chat Widget</h2>
+      <h2 class="section-title">Try the Chatbot</h2>
       
       <div class="info-box">
         <p><strong>This is a working demo!</strong></p>
-        <p>Type a message below and the AI will respond in real-time using Claude API.</p>
-        <p>Try asking: "How much does a pool cost?" or "I want a quote"</p>
+        <p>Type a message below and the AI will respond in real-time.</p>
       </div>
 
       <div class="chat-container">
         <div class="chat-header">
-          Chat with Blue Haven Pools
+          Chat with us
         </div>
         
        <div class="chat-messages" id="chat-messages">
@@ -278,13 +277,17 @@
     // Require authentication
     requireAuth();
     
-    // Load user's custom greeting
+   // Load user's custom greeting
 async function loadGreeting() {
   const profile = await getUserProfile();
   if (!profile) return;
   
   const settings = profile.chatbot_settings || {};
-  const greeting = settings.greeting_message || '👋 Hi! Looking to build a pool? I\'m here to help! Ask me anything about pricing, timelines, or book a free consultation.';
+  const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
+  
+  // Set chat header to business name
+  const businessName = settings.business_name || profile.business_name || 'us';
+  document.getElementById('chat-header-title').textContent = `Chat with ${businessName}`;
   
   // Add the greeting message
   addMessage(greeting, 'bot');
