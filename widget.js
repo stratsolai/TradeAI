@@ -313,10 +313,17 @@
         const response = await fetch(`https://trade-ai-seven-blue.vercel.app/api/get-greeting?userId=${userId}`);
         const data = await response.json();
         
+        console.log('Greeting API response:', data); // DEBUG
+        
         if (data.success) {
           // Update chat header with business name
           if (data.businessName) {
-            document.querySelector('.tradeai-chat-title').textContent = `Chat with ${data.businessName}`;
+            console.log('Setting business name:', data.businessName); // DEBUG
+            const titleElement = document.querySelector('.tradeai-chat-title');
+            console.log('Title element:', titleElement); // DEBUG
+            if (titleElement) {
+              titleElement.textContent = `Chat with ${data.businessName}`;
+            }
           }
           
           // Add greeting message
