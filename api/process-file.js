@@ -285,27 +285,44 @@ Return JSON:
 }
 
 // ============================================
-// IMAGE PROCESSOR (with Vision)
+// IMAGE PROCESSOR (Enhanced with categorization)
 // ============================================
 async function processImage(userId, fileName, fileData) {
   const claudeApiKey = process.env.CLAUDE_API_KEY;
   
-  const analysisPrompt = `Analyze this image and extract all relevant information.
+  const analysisPrompt = `Analyze this image and categorize it for a business content library.
 
-Describe:
-1. What is shown (project, team, product, etc.)
-2. Any text visible (signs, certificates, labels)
-3. Location clues
-4. Type of content (completed project, team photo, before/after, product)
-5. Suggested tags and keywords
+Determine:
+1. CATEGORY (choose the BEST fit):
+   - "completed-jobs" - Project photos, finished work, before/after
+   - "team-culture" - Team photos, office, behind-the-scenes
+   - "marketing" - Product shots, promotional images
+   - "tips" - Instructional images, diagrams, how-to visuals
 
-Return JSON:
+2. SUB-CATEGORY (be specific):
+   - For completed-jobs: type of project (e.g., "Pool Installation", "Deck", "Landscaping")
+   - For team-culture: type of photo (e.g., "Team Photo", "Office", "Work in Progress")
+   - For marketing: what's being promoted
+   - For tips: what the tip is about
+
+3. DESCRIPTION: What's in the image (2-3 sentences)
+
+4. TEXT IN IMAGE: Any visible text (signs, labels, certificates)
+
+5. TAGS: 5-10 relevant keywords
+
+6. LOCATION CLUES: Any visible location info
+
+Return as JSON:
 {
-  "description": "",
-  "text_found": "",
-  "category": "completed-job|team|marketing|product",
-  "tags": [],
-  "keywords": []
+  "category": "completed-jobs|team-culture|marketing|tips",
+  "sub_category": "specific type",
+  "title": "descriptive title",
+  "description": "what's shown",
+  "text_found": "any text visible",
+  "location": "if identifiable",
+  "tags": ["tag1", "tag2", ...],
+  "suggested_use": "how this could be used in social media"
 }`;
 
   const requestBody = JSON.stringify({
@@ -327,16 +344,18 @@ Return JSON:
   const extractedData = parseClaudeJSON(claudeResponse.content[0].text);
 
   await insertContent(userId, 'image', 'upload', {
-    title: fileName,
+    title: extractedData.title || fileName,
     description: extractedData.description,
     content_text: extractedData.text_found,
     image_url: `data:image/jpeg;base64,${fileData}`,
     category: extractedData.category || 'general',
+    sub_category: extractedData.sub_category,
     tags: extractedData.tags || ['image'],
-    ai_keywords: extractedData.keywords || []
+    ai_keywords: extractedData.tags || [],
+    status: 'pending' // Needs review
   });
 
-  return { itemsCount: 1, message: 'Image analyzed and tagged' };
+  return { itemsCount: 1, message: 'Image categorized - ready for review' };
 }
 
 // ============================================
