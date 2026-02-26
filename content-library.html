@@ -583,7 +583,7 @@
     <div class="tab-content active" id="upload-tab">
       <div class="info-box">
         <p><strong>💡 Quick Start:</strong></p>
-        <p>Upload your existing marketing materials and let AI automatically categorize and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+        <p>Upload your existing marketing materials and let AI automatically categorise and tag everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
       </div>
 
       <div class="card">
@@ -640,7 +640,7 @@
         
         <div class="info-box">
           <p><strong>📋 Review Extracted Content:</strong></p>
-          <p>AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools.</p>
+          <p>AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools. (Note: Extracted content is categorised automatically)</p>
         </div>
 
         <!-- Status Filter -->
@@ -1493,10 +1493,11 @@ setTimeout(() => {
             </div>
           </div>
 
-          ${item.content_text ? `
+         ${item.content_text ? `
             <div>
               <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Content Text</label>
-              <div style="padding: 12px; background: #f8f9fa; border-radius: 6px; max-height: 200px; overflow-y: auto; font-size: 14px; color: #333; white-space: pre-wrap;">${escapeHtml(item.content_text)}</div>
+              <textarea id="detail-content-text-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; min-height: 150px;">${escapeHtml(item.content_text)}</textarea>
+              <p class="help-text" style="font-size: 12px; color: #666; margin-top: 4px;">Full text content extracted from the source (testimonial quotes, project details, etc.)</p>
             </div>
           ` : ''}
         </div>
@@ -1523,6 +1524,8 @@ setTimeout(() => {
       const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
 
       try {
+        const contentText = document.getElementById('detail-content-text-input')?.value;
+
         const { error } = await supabaseClient
           .from('content_library')
           .update({
@@ -1530,7 +1533,8 @@ setTimeout(() => {
             description: description,
             category: category,
             sub_category: subCategory || null,
-            tags: tags
+            tags: tags,
+            content_text: contentText || null
           })
           .eq('id', currentContentItem.id);
 
