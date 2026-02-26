@@ -1,7 +1,16 @@
 {
-  "functions": {
-    "api/stripe-webhook.js": {
-      "maxDuration": 10
+  "rewrites": [
+    {
+      "source": "/api/auth/google/callback",
+      "destination": "/api/auth/oauth-callback.js"
+    },
+    {
+      "source": "/api/auth/microsoft/callback",
+      "destination": "/api/auth/oauth-callback.js"
+    },
+    {
+      "source": "/api/auth/google-drive/callback",
+      "destination": "/api/auth/oauth-callback.js"
     }
-  }
+  ]
 }
