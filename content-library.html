@@ -497,6 +497,14 @@
     <div class="upload-title" id="gdrive-title">Connect Google Drive</div>
     <div class="upload-desc" id="gdrive-desc">Import project photos from your Drive folders automatically</div>
   </div>
+
+        <!-- Email Content Import -->
+  <div class="upload-card" id="email-import-card">
+    <div class="upload-icon">📧</div>
+    <div class="upload-title" id="email-title">Import from Email</div>
+    <div class="upload-desc" id="email-desc">Scan email attachments for images and extract testimonials</div>
+  </div>
+</div>
           
         </div>
       </div>
@@ -662,6 +670,29 @@ gdriveCard.addEventListener('click', async function(e) {
 
 // Load Drive connection status
 loadDriveStatus();
+
+      // Email Import
+const emailCard = document.getElementById('email-import-card');
+emailCard.addEventListener('click', async function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const profile = await getUserProfile();
+  
+  if (!profile?.gmail_access_token && !profile?.outlook_access_token) {
+    alert('⚠️ No email connected!\n\nPlease connect Gmail or Outlook first in Chatbot Settings.');
+    return;
+  }
+  
+  if (!confirm('Scan your emails for images and testimonials?\n\nThis will check your last 20 emails with attachments.')) {
+    return;
+  }
+  
+  await importEmailContent();
+});
+
+// Load email connection status
+loadEmailStatus();
       
     }, 500);
 
@@ -1153,6 +1184,54 @@ function compressImage(file) {
       alert('✅ Google Drive connected successfully!');
       loadDriveStatus();
       window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    // ============================================
+    // EMAIL IMPORT INTEGRATION
+    // ============================================
+
+    async function loadEmailStatus() {
+      try {
+        const profile = await getUserProfile();
+        
+        if (profile?.gmail_access_token || profile?.outlook_access_token) {
+          const provider = profile.gmail_access_token ? 'Gmail' : 'Outlook';
+          document.getElementById('email-title').textContent = `✓ ${provider} Connected`;
+          document.getElementById('email-desc').textContent = 'Click to import images and testimonials from emails';
+          document.getElementById('email-import-card').style.borderColor = '#28a745';
+        }
+      } catch (error) {
+        console.error('Error loading email status:', error);
+      }
+    }
+
+    async function importEmailContent() {
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Scanning emails for content...';
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+
+        const response = await fetch('/api/import-email-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Import Complete!\n\nImages: ${data.images}\nTestimonials: ${data.testimonials}\n\nCheck "My Library" tab to see imported content.`);
+          loadLibrary();
+        } else {
+          alert('❌ Error: ' + data.error);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message);
+      }
+
+      document.getElementById('loading').classList.remove('show');
     }
     
   </script>
