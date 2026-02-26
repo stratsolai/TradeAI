@@ -490,6 +490,14 @@
             <div class="upload-title">Import from Website</div>
             <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
           </div>
+
+          <!-- Google Drive Import -->
+  <div class="upload-card" id="gdrive-card">
+    <div class="upload-icon">📂</div>
+    <div class="upload-title" id="gdrive-title">Connect Google Drive</div>
+    <div class="upload-desc" id="gdrive-desc">Import project photos from your Drive folders automatically</div>
+  </div>
+          
         </div>
       </div>
 
@@ -633,6 +641,28 @@ fileInput.addEventListener('click', function(e) {
         e.stopPropagation();
         showWebsiteScraper();
       });
+
+      // Google Drive
+const gdriveCard = document.getElementById('gdrive-card');
+gdriveCard.addEventListener('click', async function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  // Check if already connected
+  const profile = await getUserProfile();
+  
+  if (profile?.gdrive_connected) {
+    // Already connected - show import options
+    showDriveImportModal();
+  } else {
+    // Not connected - start OAuth
+    connectGoogleDrive();
+  }
+});
+
+// Load Drive connection status
+loadDriveStatus();
+      
     }, 500);
 
     async function handleFiles(files) {
@@ -957,6 +987,194 @@ function compressImage(file) {
 
     // Load library on page load
     setTimeout(loadLibrary, 500);
+
+    // ============================================
+    // GOOGLE DRIVE INTEGRATION
+    // ============================================
+
+    async function loadDriveStatus() {
+      try {
+        const profile = await getUserProfile();
+        
+        if (profile?.gdrive_connected) {
+          document.getElementById('gdrive-title').textContent = '✓ Drive Connected';
+          document.getElementById('gdrive-desc').textContent = 'Click to import photos from Drive';
+          document.getElementById('gdrive-card').style.borderColor = '#28a745';
+        }
+      } catch (error) {
+        console.error('Error loading Drive status:', error);
+      }
+    }
+
+    async function connectGoogleDrive() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      const clientId = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with actual
+      const redirectUri = `${window.location.origin}/api/auth/google-drive/callback`;
+      const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email';
+      
+      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+        `client_id=${clientId}&` +
+        `redirect_uri=${encodeURIComponent(redirectUri)}&` +
+        `response_type=code&` +
+        `scope=${encodeURIComponent(scope)}&` +
+        `state=${user.id}&` +
+        `access_type=offline&` +
+        `prompt=consent`;
+      
+      window.location.href = authUrl;
+    }
+
+    function showDriveImportModal() {
+      document.getElementById('drive-import-modal').classList.add('show');
+      loadDriveFolders();
+    }
+
+    function closeDriveImportModal() {
+      document.getElementById('drive-import-modal').classList.remove('show');
+    }
+
+    async function loadDriveFolders() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      
+      try {
+        const response = await fetch('/api/list-drive-folders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+          renderDriveFolders(data.folders);
+        } else {
+          alert('Error loading folders: ' + data.error);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error loading Drive folders');
+      }
+    }
+
+    function renderDriveFolders(folders) {
+      const list = document.getElementById('drive-folders-list');
+      
+      if (!folders || folders.length === 0) {
+        list.innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">No folders found in your Drive</p>';
+        return;
+      }
+
+      list.innerHTML = folders.map(folder => `
+        <div class="drive-folder-item" style="padding: 16px; border: 1px solid #e5e5e5; border-radius: 8px; margin-bottom: 12px; cursor: pointer; transition: all 0.3s;" onclick="importFromFolder('${folder.id}', '${folder.name}')">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span style="font-size: 32px;">📁</span>
+            <div style="flex: 1;">
+              <div style="font-weight: 600; color: #333;">${folder.name}</div>
+              <div style="font-size: 12px; color: #666;">Click to import images from this folder</div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      
+      // Add hover effect
+      const style = document.createElement('style');
+      style.textContent = `
+        .drive-folder-item:hover {
+          border-color: #1a5490;
+          background: #f8f9fa;
+        }
+      `;
+      if (!document.getElementById('drive-folder-style')) {
+        style.id = 'drive-folder-style';
+        document.head.appendChild(style);
+      }
+    }
+
+    window.importFromFolder = async function(folderId, folderName) {
+      if (!confirm(`Import all images from "${folderName}"?`)) return;
+
+      closeDriveImportModal();
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Importing images from Drive...';
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      try {
+        const response = await fetch('/api/import-drive-images', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            userId: user.id,
+            folderId: folderId 
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert(`✅ Imported ${data.count} images from Drive!`);
+          loadLibrary();
+        } else {
+          alert('❌ Error: ' + data.error);
+        }
+      } catch (error) {
+        alert('❌ Error: ' + error.message);
+      }
+
+      document.getElementById('loading').classList.remove('show');
+    };
+
+    async function disconnectDrive() {
+      if (!confirm('Disconnect Google Drive?')) return;
+
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ 
+          gdrive_connected: false,
+          gdrive_access_token: null,
+          gdrive_refresh_token: null
+        })
+        .eq('id', user.id);
+
+      if (!error) {
+        document.getElementById('gdrive-title').textContent = 'Connect Google Drive';
+        document.getElementById('gdrive-desc').textContent = 'Import project photos from your Drive folders automatically';
+        document.getElementById('gdrive-card').style.borderColor = '#ddd';
+        alert('✅ Drive disconnected');
+      }
+    }
+
+    // Check for OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('gdrive_connected') === 'true') {
+      alert('✅ Google Drive connected successfully!');
+      loadDriveStatus();
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    
   </script>
+
+  <!-- Google Drive Import Modal -->
+  <div class="modal" id="drive-import-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <button class="btn-close" onclick="closeDriveImportModal()">×</button>
+      <h2 class="modal-header">Import from Google Drive</h2>
+      
+      <p style="margin-bottom: 20px; color: #666;">Select a folder to import images from:</p>
+
+      <div id="drive-folders-list" style="max-height: 400px; overflow-y: auto;">
+        <p style="text-align: center; padding: 40px;">Loading folders...</p>
+      </div>
+
+      <button class="btn-primary" onclick="disconnectDrive()" style="margin-top: 20px; background: #dc3545;">
+        Disconnect Drive
+      </button>
+    </div>
+  </div>
+</body>
+  
 </body>
 </html>
