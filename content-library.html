@@ -421,6 +421,123 @@
       cursor: pointer;
       color: #999;
     }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      background: #e8500a;
+      color: white;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+
+    .review-item {
+      background: white;
+      border: 2px solid #e5e5e5;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      transition: all 0.3s;
+    }
+
+    .review-item.selected {
+      border-color: #1a5490;
+      background: #f0f7ff;
+    }
+
+    .review-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 16px;
+    }
+
+    .review-item-content {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 20px;
+    }
+
+    .review-checkbox {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #e8f4fd;
+      color: #1a5490;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+    }
+
+    .sub-category-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #f0f0f0;
+      color: #666;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn-approve {
+      padding: 8px 16px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-approve:hover {
+      background: #218838;
+    }
+
+    .btn-reject {
+      padding: 8px 16px;
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-reject:hover {
+      background: #c82333;
+    }
+
+    .btn-edit-item {
+      padding: 8px 16px;
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .btn-edit-item:hover {
+      background: #5a6268;
+    }
+    
   </style>
 </head>
 <body>
@@ -456,10 +573,11 @@
     </div>
 
     <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('upload')">📤 Upload Content</button>
-      <button class="tab" onclick="switchTab('library')">📚 My Library</button>
-    </div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('upload')">📤 Upload Content</button>
+  <button class="tab" onclick="switchTab('review')">✏️ Review Queue <span id="pending-count" class="badge">0</span></button>
+  <button class="tab" onclick="switchTab('library')">📚 My Library</button>
+</div>
 
     <!-- Tab: Upload Content -->
     <div class="tab-content active" id="upload-tab">
@@ -516,6 +634,54 @@
       </div>
     </div>
 
+    <!-- Tab: Review Queue -->
+    <div class="tab-content" id="review-tab">
+      <div style="max-width: 1400px; margin: 0 auto;">
+        
+        <div class="info-box">
+          <p><strong>📋 Review Extracted Content:</strong></p>
+          <p>AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools.</p>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterReviewStatus('pending')">❓ Pending Review</button>
+          <button class="filter-btn" onclick="filterReviewStatus('approved')">✅ Approved</button>
+          <button class="filter-btn" onclick="filterReviewStatus('rejected')">❌ Rejected</button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="card" id="bulk-actions" style="display: none; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong id="selected-count">0</strong> items selected
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <button class="btn-primary" onclick="bulkApprove()" style="background: #28a745;">
+                ✅ Approve Selected
+              </button>
+              <button class="btn-primary" onclick="bulkReject()" style="background: #dc3545;">
+                ❌ Reject Selected
+              </button>
+              <button class="btn-primary" onclick="clearSelection()" style="background: #6c757d;">
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Review Items List -->
+        <div id="review-items-list"></div>
+
+        <div class="empty-state" id="review-empty-state" style="display: none;">
+          <div class="empty-icon">📭</div>
+          <h3>No items to review</h3>
+          <p>Upload content to see extracted items here</p>
+        </div>
+
+      </div>
+    </div>
+  
     <!-- Tab: My Library -->
       <!-- Tab: My Library -->
 <div class="tab-content" id="library-tab">
