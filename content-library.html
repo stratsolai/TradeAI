@@ -1011,7 +1011,7 @@ function compressImage(file) {
       
       const clientId = '368140587749-isq0imjs2n70snmceqnb9s5coqjleak8.apps.googleusercontent.com'; // Replace with actual
       const redirectUri = `${window.location.origin}/api/auth/google-drive/callback`;
-      const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email';
+      const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile';
       
       const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
