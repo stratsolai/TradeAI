@@ -1192,17 +1192,28 @@ function compressImage(file) {
       tabs.forEach(t => t.classList.remove('active'));
       tabContents.forEach(tc => tc.classList.remove('active'));
       
+      // Clear selection when switching tabs
+      selectedItems.clear();
+      currentCategoryFilter = 'all';
+      
       if (tab === 'upload') {
         tabs[0].classList.add('active');
         document.getElementById('upload-tab').classList.add('active');
-      } else if (tab === 'review') {
+      } else if (tab === 'pending') {
         tabs[1].classList.add('active');
-        document.getElementById('review-tab').classList.add('active');
+        document.getElementById('pending-tab').classList.add('active');
+        currentReviewStatus = 'pending';
         loadReviewQueue();
-      } else if (tab === 'library') {
+      } else if (tab === 'approved') {
         tabs[2].classList.add('active');
-        document.getElementById('library-tab').classList.add('active');
-        loadLibrary();
+        document.getElementById('approved-tab').classList.add('active');
+        currentReviewStatus = 'approved';
+        loadReviewQueue();
+      } else if (tab === 'rejected') {
+        tabs[3].classList.add('active');
+        document.getElementById('rejected-tab').classList.add('active');
+        currentReviewStatus = 'rejected';
+        loadReviewQueue();
       }
     };
 
@@ -1700,11 +1711,12 @@ setTimeout(() => {
     }
 
     // ============================================
-    // REVIEW QUEUE SYSTEM
+    // REVIEW QUEUE SYSTEM (Restructured)
     // ============================================
 
     let allReviewItems = [];
     let currentReviewStatus = 'pending';
+    let currentCategoryFilter = 'all';
     let selectedItems = new Set();
 
     async function loadReviewQueue() {
@@ -1731,34 +1743,44 @@ setTimeout(() => {
           document.getElementById('pending-count').style.display = 'none';
         }
 
-        renderReviewItems(currentReviewStatus);
+        renderReviewItems();
       } catch (error) {
         console.error('Error loading review queue:', error);
       }
     }
 
-    function renderReviewItems(status) {
-      const filtered = allReviewItems.filter(item => item.status === status);
-      const container = document.getElementById('review-items-list');
-      const emptyState = document.getElementById('review-empty-state');
+    function renderReviewItems() {
+      const statusFiltered = allReviewItems.filter(item => item.status === currentReviewStatus);
+      const categoryFiltered = currentCategoryFilter === 'all' 
+        ? statusFiltered 
+        : statusFiltered.filter(item => item.category === currentCategoryFilter);
 
-      if (filtered.length === 0) {
-        container.innerHTML = '';
-        emptyState.style.display = 'block';
+      const listId = `${currentReviewStatus}-items-list`;
+      const emptyId = `${currentReviewStatus}-empty-state`;
+      
+      const container = document.getElementById(listId);
+      const emptyState = document.getElementById(emptyId);
+
+      if (!container) {
+        console.error('Container not found:', listId);
         return;
       }
 
-      emptyState.style.display = 'none';
+      if (categoryFiltered.length === 0) {
+        container.innerHTML = '';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+      }
 
-      container.innerHTML = filtered.map(item => `
+      if (emptyState) emptyState.style.display = 'none';
+
+      container.innerHTML = categoryFiltered.map(item => `
         <div class="review-item ${selectedItems.has(item.id) ? 'selected' : ''}" id="review-item-${item.id}">
           <div class="review-item-header">
             <div style="display: flex; align-items: center; gap: 12px;">
-              ${status === 'pending' ? `
-                <input type="checkbox" class="review-checkbox" 
-                  ${selectedItems.has(item.id) ? 'checked' : ''} 
-                  onchange="toggleItemSelection('${item.id}')">
-              ` : ''}
+              <input type="checkbox" class="review-checkbox" 
+                ${selectedItems.has(item.id) ? 'checked' : ''} 
+                onchange="toggleItemSelection('${item.id}')">
               <div>
                 <div style="margin-bottom: 8px;">
                   <span class="category-badge">${getCategoryIcon(item.category)} ${getCategoryName(item.category)}</span>
@@ -1806,7 +1828,7 @@ setTimeout(() => {
             </div>
           </div>
 
-          ${status === 'pending' ? `
+          ${currentReviewStatus === 'pending' ? `
             <div class="review-actions">
               <button class="btn-approve" onclick="approveItem('${item.id}')">
                 ✅ Approve
@@ -1818,10 +1840,16 @@ setTimeout(() => {
                 ✏️ Edit
               </button>
             </div>
-          ` : status === 'rejected' ? `
+          ` : currentReviewStatus === 'rejected' ? `
             <div class="review-actions">
               <button class="btn-approve" onclick="approveItem('${item.id}')">
                 ✅ Move to Approved
+              </button>
+              <button class="btn-edit-item" onclick="editReviewItem('${item.id}')">
+                ✏️ Edit
+              </button>
+              <button class="btn-reject" onclick="deleteContent('${item.id}')" style="background: #000;">
+                🗑️ Delete Permanently
               </button>
             </div>
           ` : `
@@ -1840,16 +1868,16 @@ setTimeout(() => {
       updateBulkActionsVisibility();
     }
 
-    window.filterReviewStatus = function(status) {
-      currentReviewStatus = status;
-      selectedItems.clear();
+    window.filterByCategory = function(category) {
+      currentCategoryFilter = category;
       
-      document.querySelectorAll('.filter-bar .filter-btn').forEach(btn => {
+      // Update active button
+      event.target.closest('.filter-bar').querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
       });
       event.target.classList.add('active');
       
-      renderReviewItems(status);
+      renderReviewItems();
     };
 
     window.toggleItemSelection = function(itemId) {
@@ -1868,14 +1896,19 @@ setTimeout(() => {
     };
 
     function updateBulkActionsVisibility() {
-      const bulkActions = document.getElementById('bulk-actions');
-      const count = document.getElementById('selected-count');
+      const bulkActionsId = `bulk-actions-${currentReviewStatus}`;
+      const countId = `selected-count-${currentReviewStatus}`;
       
-      if (selectedItems.size > 0) {
-        bulkActions.style.display = 'block';
-        count.textContent = selectedItems.size;
-      } else {
-        bulkActions.style.display = 'none';
+      const bulkActions = document.getElementById(bulkActionsId);
+      const count = document.getElementById(countId);
+      
+      if (bulkActions && count) {
+        if (selectedItems.size > 0) {
+          bulkActions.style.display = 'block';
+          count.textContent = selectedItems.size;
+        } else {
+          bulkActions.style.display = 'none';
+        }
       }
     }
 
@@ -1901,7 +1934,7 @@ setTimeout(() => {
 
         alert('✅ Item approved!');
         loadReviewQueue();
-        loadLibrary(); // Refresh main library
+        loadLibrary();
       } catch (error) {
         alert('Error: ' + error.message);
       }
@@ -1989,10 +2022,9 @@ setTimeout(() => {
     };
 
     window.editReviewItem = function(itemId) {
-      // Use existing detail modal
       showContentDetail(itemId);
     };
-
+    
     function getCategoryIcon(category) {
       const icons = {
         'completed-jobs': '✅',
