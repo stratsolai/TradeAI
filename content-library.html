@@ -1418,8 +1418,17 @@ setTimeout(() => {
     let currentContentItem = null;
 
     window.showContentDetail = async function(contentId) {
-      const item = allContent.find(c => c.id === contentId);
-      if (!item) return;
+      // Check both allContent and allReviewItems
+      let item = allContent.find(c => c.id === contentId);
+      
+      if (!item) {
+        item = allReviewItems.find(c => c.id === contentId);
+      }
+      
+      if (!item) {
+        console.error('Item not found:', contentId);
+        return;
+      }
 
       currentContentItem = item;
 
@@ -1442,6 +1451,25 @@ setTimeout(() => {
           </div>
 
           <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Category</label>
+            <select id="detail-category-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;">
+              <option value="completed-jobs" ${item.category === 'completed-jobs' ? 'selected' : ''}>✅ Completed Jobs</option>
+              <option value="service" ${item.category === 'service' ? 'selected' : ''}>⚙️ Services</option>
+              <option value="testimonial" ${item.category === 'testimonial' ? 'selected' : ''}>💬 Testimonials</option>
+              <option value="marketing" ${item.category === 'marketing' ? 'selected' : ''}>🎯 Marketing</option>
+              <option value="tips" ${item.category === 'tips' ? 'selected' : ''}>💡 Tips & Advice</option>
+              <option value="team-culture" ${item.category === 'team-culture' ? 'selected' : ''}>👥 Team & Culture</option>
+              <option value="company" ${item.category === 'company' ? 'selected' : ''}>🏢 Company Info</option>
+              <option value="general" ${item.category === 'general' ? 'selected' : ''}>📦 General</option>
+            </select>
+          </div>
+
+          <div>
+            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Sub-Category (Optional)</label>
+            <input type="text" id="detail-subcategory-input" value="${escapeHtml(item.sub_category || '')}" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="e.g., Pool Installation, Team Photo">
+          </div>
+
+          <div>
             <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">Tags (comma-separated)</label>
             <input type="text" id="detail-tags-input" value="${item.tags ? item.tags.join(', ') : ''}" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px;" placeholder="e.g., project, pool, mosman">
           </div>
@@ -1456,12 +1484,12 @@ setTimeout(() => {
               <div style="font-weight: 600; color: #333;">${item.source_type || 'upload'}</div>
             </div>
             <div>
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Created</div>
-              <div style="font-weight: 600; color: #333;">${new Date(item.created_at).toLocaleDateString()}</div>
+              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Status</div>
+              <div style="font-weight: 600; color: #333;">${getStatusBadge(item.status)}</div>
             </div>
             <div>
-              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Used</div>
-              <div style="font-weight: 600; color: #333;">${item.use_count || 0} times</div>
+              <div style="font-size: 12px; color: #666; margin-bottom: 4px;">Created</div>
+              <div style="font-weight: 600; color: #333;">${new Date(item.created_at).toLocaleDateString()}</div>
             </div>
           </div>
 
@@ -1489,6 +1517,8 @@ setTimeout(() => {
 
       const title = document.getElementById('detail-title-input').value;
       const description = document.getElementById('detail-description-input').value;
+      const category = document.getElementById('detail-category-input').value;
+      const subCategory = document.getElementById('detail-subcategory-input').value;
       const tagsInput = document.getElementById('detail-tags-input').value;
       const tags = tagsInput ? tagsInput.split(',').map(t => t.trim()).filter(Boolean) : [];
 
@@ -1498,6 +1528,8 @@ setTimeout(() => {
           .update({
             title: title,
             description: description,
+            category: category,
+            sub_category: subCategory || null,
             tags: tags
           })
           .eq('id', currentContentItem.id);
@@ -1508,6 +1540,7 @@ setTimeout(() => {
           alert('✅ Changes saved!');
           closeContentDetail();
           loadLibrary();
+          loadReviewQueue(); // Refresh both!
         }
       } catch (error) {
         alert('Error: ' + error.message);
