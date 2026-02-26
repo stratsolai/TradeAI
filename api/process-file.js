@@ -53,27 +53,81 @@ module.exports = async (req, res) => {
 };
 
 // ============================================
-// PDF PROCESSOR (uses document type)
+// PDF PROCESSOR (Enhanced with categorization)
 // ============================================
 async function processPDF(userId, fileName, fileData) {
   const claudeApiKey = process.env.CLAUDE_API_KEY;
 
-  const analysisPrompt = `Analyze this business PDF document and extract all useful content.
+  const analysisPrompt = `Analyze this business PDF document and extract ALL useful content with detailed categorization.
 
-Extract and categorize:
-1. PROJECTS/CASE STUDIES: Project names, locations, descriptions, statistics
-2. TESTIMONIALS: Customer quotes, names, context
-3. SERVICES: Service descriptions, features, benefits
-4. COMPANY INFO: About us, team bios, achievements
-5. STATISTICS: Years in business, projects completed, metrics
+Extract and categorize each item separately:
 
-Return JSON:
+1. COMPLETED JOBS/PROJECTS:
+   - Project name/title
+   - Location (suburb/city)
+   - Description
+   - Duration/date
+   - Results/outcomes
+   - Sub-category: type of work (e.g., "Pool Installation", "Deck Building", "Landscaping")
+
+2. SERVICES/CAPABILITIES:
+   - Service name
+   - Description
+   - Key features
+   - Benefits
+   - Sub-category: service type
+
+3. TESTIMONIALS:
+   - Customer quote
+   - Customer name (if provided)
+   - Context/what it's about
+   - Sub-category: aspect praised (e.g., "Quality", "Speed", "Price")
+
+4. MARKETING CONTENT:
+   - Promotional text
+   - Offers/deals
+   - Call-to-actions
+   - Sub-category: promotion type
+
+5. TIPS & ADVICE:
+   - Educational content
+   - How-to information
+   - Maintenance tips
+   - Sub-category: topic area
+
+6. TEAM & CULTURE:
+   - Team member bios
+   - Company values
+   - Behind-the-scenes info
+   - Sub-category: type (e.g., "Team Member", "Company Value")
+
+7. COMPANY INFO:
+   - About us
+   - History
+   - Achievements/awards
+   - Statistics
+
+Return as JSON with each item having:
 {
-  "projects": [{"title": "", "location": "", "description": "", "stats": ""}],
-  "testimonials": [{"quote": "", "author": "", "context": ""}],
-  "services": [{"name": "", "description": "", "benefits": ""}],
-  "company": {"about": "", "team": [], "achievements": []}
-}`;
+  "items": [
+    {
+      "type": "project|service|testimonial|marketing|tip|team|company",
+      "category": "completed-jobs|service|testimonial|marketing|tips|team-culture|company",
+      "sub_category": "specific type",
+      "title": "short title",
+      "content": "full content/description",
+      "metadata": {
+        "location": "if project",
+        "author": "if testimonial",
+        "duration": "if project",
+        "date": "if applicable"
+      },
+      "tags": ["auto-generated", "relevant", "tags"]
+    }
+  ]
+}
+
+Extract EVERY piece of useful content as a separate item. A single brochure might have 10-20 items.`;
 
   const requestBody = JSON.stringify({
     model: 'claude-sonnet-4-20250514',
@@ -94,45 +148,66 @@ Return JSON:
     }]
   });
 
+  console.log('Analyzing PDF with enhanced extraction...');
+
   const claudeResponse = await callClaude(requestBody, claudeApiKey);
   const extractedData = parseClaudeJSON(claudeResponse.content[0].text);
 
+  console.log(`Extracted ${extractedData.items?.length || 0} items from PDF`);
+
+  // Create a parent "source document" record
+  const sourceDocId = await insertContent(userId, 'document', 'pdf-source', {
+    title: fileName,
+    description: `Source PDF document`,
+    category: 'document',
+    tags: ['pdf', 'source-document'],
+    status: 'approved' // Source docs are auto-approved
+  });
+
   let itemsCount = 0;
-  
-  for (const project of extractedData.projects || []) {
-    await insertContent(userId, 'project', 'pdf-extract', {
-      title: project.title,
-      description: project.description,
-      content_text: `Location: ${project.location}\n${project.description}\n${project.stats || ''}`,
-      category: 'completed-job',
-      tags: [project.location, 'project', 'pdf'].filter(Boolean)
-    });
-    itemsCount++;
+
+  // Insert each extracted item as pending
+  for (const item of extractedData.items || []) {
+    try {
+      const contentType = mapTypeToContentType(item.type);
+      
+      await insertContent(userId, contentType, 'pdf-extract', {
+        title: item.title,
+        description: item.content,
+        content_text: item.content,
+        category: item.category || 'general',
+        sub_category: item.sub_category,
+        tags: [...(item.tags || []), 'pdf-extract', fileName],
+        ai_keywords: item.tags || [],
+        extracted_from: sourceDocId,
+        status: 'pending' // Needs review!
+      });
+      
+      itemsCount++;
+    } catch (error) {
+      console.error('Error saving item:', error);
+    }
   }
 
-  for (const testimonial of extractedData.testimonials || []) {
-    await insertContent(userId, 'testimonial', 'pdf-extract', {
-      title: `Testimonial from ${testimonial.author || 'Customer'}`,
-      content_text: testimonial.quote,
-      description: testimonial.context,
-      category: 'testimonial',
-      tags: ['testimonial', 'pdf']
-    });
-    itemsCount++;
-  }
+  console.log(`Saved ${itemsCount} items for review`);
 
-  for (const service of extractedData.services || []) {
-    await insertContent(userId, 'text', 'pdf-extract', {
-      title: service.name,
-      description: service.description,
-      content_text: `${service.description}\n\nBenefits: ${service.benefits || ''}`,
-      category: 'service',
-      tags: ['service', 'pdf']
-    });
-    itemsCount++;
-  }
+  return { 
+    itemsCount, 
+    message: `Extracted ${itemsCount} items from PDF - ready for review` 
+  };
+}
 
-  return { itemsCount, message: `Extracted ${itemsCount} items from PDF` };
+function mapTypeToContentType(type) {
+  const mapping = {
+    'project': 'project',
+    'service': 'text',
+    'testimonial': 'testimonial',
+    'marketing': 'text',
+    'tip': 'text',
+    'team': 'text',
+    'company': 'text'
+  };
+  return mapping[type] || 'text';
 }
 
 // ============================================
@@ -338,7 +413,10 @@ function parseClaudeJSON(text) {
     testimonials: [],
     services: [],
     company: {},
-    items: []
+    statistics: [],
+    slides: [],
+    customers: [],
+    items: [] // NEW: for enhanced extraction
   };
 }
 
