@@ -355,7 +355,7 @@ Return as JSON:
     status: 'pending' // Needs review
   });
 
-  return { itemsCount: 1, message: 'Image categorized - ready for review' };
+  return { itemsCount: 1, message: 'Image categorised - ready for review' };
 }
 
 // ============================================
