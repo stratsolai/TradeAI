@@ -663,6 +663,9 @@
               <button class="btn-primary" onclick="bulkReject()" style="background: #dc3545;">
                 ❌ Reject Selected
               </button>
+              <button class="btn-primary" onclick="bulkDelete()" style="background: #000;">
+              🗑️ Delete Selected
+              </button>
               <button class="btn-primary" onclick="clearSelection()" style="background: #6c757d;">
                 Clear Selection
               </button>
@@ -1845,6 +1848,28 @@ setTimeout(() => {
         alert(`❌ ${selectedItems.size} items rejected`);
         selectedItems.clear();
         loadReviewQueue();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    window.bulkDelete = async function() {
+      if (selectedItems.size === 0) return;
+      
+      if (!confirm(`⚠️ PERMANENTLY DELETE ${selectedItems.size} item(s)?\n\nThis cannot be undone!`)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('content_library')
+          .delete()
+          .in('id', Array.from(selectedItems));
+
+        if (error) throw error;
+
+        alert(`🗑️ ${selectedItems.size} items deleted permanently`);
+        selectedItems.clear();
+        loadReviewQueue();
+        loadLibrary();
       } catch (error) {
         alert('Error: ' + error.message);
       }
