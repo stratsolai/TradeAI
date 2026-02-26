@@ -5,9 +5,8 @@ module.exports = async (req, res) => {
 
   const { userId, category, formData, image, platforms, tone, businessName, industry } = req.body;
 
-  if (!category) {
-    return res.status(400).json({ error: 'Category required' });
-  }
+  // Check if this is a legacy simple caption request (from old code)
+  const isLegacyRequest = !category && req.body.postType;
 
   const claudeApiKey = process.env.CLAUDE_API_KEY;
 
@@ -36,10 +35,26 @@ module.exports = async (req, res) => {
       'educational': 'Educational and informative tone - "Here\'s what goes into a professional pool installation..."'
     }[tone] || 'Professional tone';
 
-    // Build category-specific context
     let categoryContext = '';
-    
-    if (category === 'marketing') {
+
+    // Handle legacy simple requests
+    if (isLegacyRequest) {
+      const postTypeGuide = {
+        'project-showcase': 'Showcasing completed work',
+        'before-after': 'Before and after transformation',
+        'customer-testimonial': 'Customer success story',
+        'tip-advice': 'Helpful tip or industry advice',
+        'behind-scenes': 'Behind the scenes look at the work'
+      }[req.body.postType] || 'Project showcase';
+
+      categoryContext = `This is a social media post.
+Post Type: ${postTypeGuide}
+${req.body.context ? `Context: ${req.body.context}` : ''}
+
+Focus on: Creating engaging content for social media.`;
+    } 
+    // Handle category-specific requests
+    else if (category === 'marketing') {
       categoryContext = `This is a MARKETING & PROMOTIONS post.
 Promotion Type: ${formData.promoType}
 Offer Details: ${formData.offerDetails}
@@ -100,7 +115,7 @@ Requirements:
 - Keep captions concise but impactful (50-150 words each)
 - Match the specified tone exactly
 - Include appropriate call-to-action based on category
-${formData.testimonial ? '- Incorporate the customer testimonial naturally' : ''}
+${formData?.testimonial ? '- Incorporate the customer testimonial naturally' : ''}
 
 Return ONLY a JSON array of 3 caption strings, nothing else.
 
