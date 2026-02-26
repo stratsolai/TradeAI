@@ -573,10 +573,12 @@
     </div>
 
     <!-- Tabs -->
+    <!-- Tabs -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('upload')">📤 Upload Content</button>
-  <button class="tab" onclick="switchTab('review')">✏️ Review Queue <span id="pending-count" class="badge">0</span></button>
-  <button class="tab" onclick="switchTab('library')">📚 My Library</button>
+  <button class="tab" onclick="switchTab('pending')">❓ Pending Review <span id="pending-count" class="badge">0</span></button>
+  <button class="tab" onclick="switchTab('approved')">✅ Approved</button>
+  <button class="tab" onclick="switchTab('rejected')">❌ Rejected</button>
 </div>
 
     <!-- Tab: Upload Content -->
@@ -634,27 +636,32 @@
       </div>
     </div>
 
-    <!-- Tab: Review Queue -->
-    <div class="tab-content" id="review-tab">
+    <!-- Tab: Pending Review -->
+    <div class="tab-content" id="pending-tab">
       <div style="max-width: 1400px; margin: 0 auto;">
         
         <div class="info-box">
           <p><strong>📋 Review Extracted Content:</strong></p>
-          <p>AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools. (Note: Extracted content is categorised automatically)</p>
+          <p>AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools.</p>
         </div>
 
-        <!-- Status Filter -->
+        <!-- Category Filter -->
         <div class="filter-bar">
-          <button class="filter-btn active" onclick="filterReviewStatus('pending')">❓ Pending Review</button>
-          <button class="filter-btn" onclick="filterReviewStatus('approved')">✅ Approved</button>
-          <button class="filter-btn" onclick="filterReviewStatus('rejected')">❌ Rejected</button>
+          <button class="filter-btn active" onclick="filterByCategory('all')">All Categories</button>
+          <button class="filter-btn" onclick="filterByCategory('completed-jobs')">✅ Completed Jobs</button>
+          <button class="filter-btn" onclick="filterByCategory('marketing')">🎯 Marketing</button>
+          <button class="filter-btn" onclick="filterByCategory('tips')">💡 Tips & Advice</button>
+          <button class="filter-btn" onclick="filterByCategory('testimonial')">💬 Testimonials</button>
+          <button class="filter-btn" onclick="filterByCategory('team-culture')">👥 Team & Culture</button>
+          <button class="filter-btn" onclick="filterByCategory('company')">🏢 Company Info</button>
+          <button class="filter-btn" onclick="filterByCategory('service')">⚙️ Services</button>
         </div>
 
         <!-- Bulk Actions -->
-        <div class="card" id="bulk-actions" style="display: none; margin-bottom: 20px;">
+        <div class="card" id="bulk-actions-pending" style="display: none; margin-bottom: 20px;">
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <strong id="selected-count">0</strong> items selected
+              <strong id="selected-count-pending">0</strong> items selected
             </div>
             <div style="display: flex; gap: 12px;">
               <button class="btn-primary" onclick="bulkApprove()" style="background: #28a745;">
@@ -664,7 +671,7 @@
                 ❌ Reject Selected
               </button>
               <button class="btn-primary" onclick="bulkDelete()" style="background: #000;">
-              🗑️ Delete Selected
+                🗑️ Delete Selected
               </button>
               <button class="btn-primary" onclick="clearSelection()" style="background: #6c757d;">
                 Clear Selection
@@ -673,13 +680,119 @@
           </div>
         </div>
 
-        <!-- Review Items List -->
-        <div id="review-items-list"></div>
+        <!-- Pending Items List -->
+        <div id="pending-items-list"></div>
 
-        <div class="empty-state" id="review-empty-state" style="display: none;">
+        <div class="empty-state" id="pending-empty-state" style="display: none;">
+          <div class="empty-icon">✅</div>
+          <h3>All caught up!</h3>
+          <p>No pending items to review</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Approved -->
+    <div class="tab-content" id="approved-tab">
+      <div style="max-width: 1400px; margin: 0 auto;">
+        
+        <div class="info-box">
+          <p><strong>✅ Approved Content:</strong></p>
+          <p>These items are approved and available for use in Social Media Manager and other tools.</p>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterByCategory('all')">All Categories</button>
+          <button class="filter-btn" onclick="filterByCategory('completed-jobs')">✅ Completed Jobs</button>
+          <button class="filter-btn" onclick="filterByCategory('marketing')">🎯 Marketing</button>
+          <button class="filter-btn" onclick="filterByCategory('tips')">💡 Tips & Advice</button>
+          <button class="filter-btn" onclick="filterByCategory('testimonial')">💬 Testimonials</button>
+          <button class="filter-btn" onclick="filterByCategory('team-culture')">👥 Team & Culture</button>
+          <button class="filter-btn" onclick="filterByCategory('company')">🏢 Company Info</button>
+          <button class="filter-btn" onclick="filterByCategory('service')">⚙️ Services</button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="card" id="bulk-actions-approved" style="display: none; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong id="selected-count-approved">0</strong> items selected
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <button class="btn-primary" onclick="bulkReject()" style="background: #dc3545;">
+                ❌ Move to Rejected
+              </button>
+              <button class="btn-primary" onclick="bulkDelete()" style="background: #000;">
+                🗑️ Delete Selected
+              </button>
+              <button class="btn-primary" onclick="clearSelection()" style="background: #6c757d;">
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Approved Items List -->
+        <div id="approved-items-list"></div>
+
+        <div class="empty-state" id="approved-empty-state" style="display: none;">
           <div class="empty-icon">📭</div>
-          <h3>No items to review</h3>
-          <p>Upload content to see extracted items here</p>
+          <h3>No approved items yet</h3>
+          <p>Approve items from Pending Review to see them here</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Tab: Rejected -->
+    <div class="tab-content" id="rejected-tab">
+      <div style="max-width: 1400px; margin: 0 auto;">
+        
+        <div class="info-box">
+          <p><strong>❌ Rejected Content:</strong></p>
+          <p>These items have been rejected and are hidden from your tools. You can restore or permanently delete them.</p>
+        </div>
+
+        <!-- Category Filter -->
+        <div class="filter-bar">
+          <button class="filter-btn active" onclick="filterByCategory('all')">All Categories</button>
+          <button class="filter-btn" onclick="filterByCategory('completed-jobs')">✅ Completed Jobs</button>
+          <button class="filter-btn" onclick="filterByCategory('marketing')">🎯 Marketing</button>
+          <button class="filter-btn" onclick="filterByCategory('tips')">💡 Tips & Advice</button>
+          <button class="filter-btn" onclick="filterByCategory('testimonial')">💬 Testimonials</button>
+          <button class="filter-btn" onclick="filterByCategory('team-culture')">👥 Team & Culture</button>
+          <button class="filter-btn" onclick="filterByCategory('company')">🏢 Company Info</button>
+          <button class="filter-btn" onclick="filterByCategory('service')">⚙️ Services</button>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="card" id="bulk-actions-rejected" style="display: none; margin-bottom: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <strong id="selected-count-rejected">0</strong> items selected
+            </div>
+            <div style="display: flex; gap: 12px;">
+              <button class="btn-primary" onclick="bulkApprove()" style="background: #28a745;">
+                ✅ Move to Approved
+              </button>
+              <button class="btn-primary" onclick="bulkDelete()" style="background: #000;">
+                🗑️ Delete Selected
+              </button>
+              <button class="btn-primary" onclick="clearSelection()" style="background: #6c757d;">
+                Clear Selection
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rejected Items List -->
+        <div id="rejected-items-list"></div>
+
+        <div class="empty-state" id="rejected-empty-state" style="display: none;">
+          <div class="empty-icon">📭</div>
+          <h3>No rejected items</h3>
+          <p>Items you reject will appear here</p>
         </div>
 
       </div>
