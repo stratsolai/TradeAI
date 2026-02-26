@@ -1068,7 +1068,7 @@ function compressImage(file) {
       document.getElementById('loading').classList.remove('show');
     }
 
-    // Tab switching
+     // Tab switching
     window.switchTab = function(tab) {
       const tabs = document.querySelectorAll('.tab');
       const tabContents = document.querySelectorAll('.tab-content');
@@ -1079,8 +1079,12 @@ function compressImage(file) {
       if (tab === 'upload') {
         tabs[0].classList.add('active');
         document.getElementById('upload-tab').classList.add('active');
-      } else if (tab === 'library') {
+      } else if (tab === 'review') {
         tabs[1].classList.add('active');
+        document.getElementById('review-tab').classList.add('active');
+        loadReviewQueue();
+      } else if (tab === 'library') {
+        tabs[2].classList.add('active');
         document.getElementById('library-tab').classList.add('active');
         loadLibrary();
       }
@@ -1091,10 +1095,11 @@ function compressImage(file) {
       const { data: { user } } = await supabaseClient.auth.getUser();
       
       const { data: content } = await supabaseClient
-        .from('content_library')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+  .from('content_library')
+  .select('*')
+  .eq('user_id', user.id)
+  .eq('status', 'approved') // Only show approved!
+  .order('created_at', { ascending: false });
 
       allContent = content || [];
 
@@ -1185,8 +1190,11 @@ function compressImage(file) {
       return names[type] || type;
     }
 
-    // Load library on page load
-    setTimeout(loadLibrary, 500);
+    // Load library and review queue on page load
+setTimeout(() => {
+  loadLibrary();
+  loadReviewQueue();
+}, 500);
 
     // ============================================
     // GOOGLE DRIVE INTEGRATION
@@ -1536,6 +1544,317 @@ function compressImage(file) {
       const div = document.createElement('div');
       div.textContent = text;
       return div.innerHTML;
+    }
+
+    // ============================================
+    // REVIEW QUEUE SYSTEM
+    // ============================================
+
+    let allReviewItems = [];
+    let currentReviewStatus = 'pending';
+    let selectedItems = new Set();
+
+    async function loadReviewQueue() {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        
+        const { data: items, error } = await supabaseClient
+          .from('content_library')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allReviewItems = items || [];
+
+        // Update pending count badge
+        const pendingCount = allReviewItems.filter(i => i.status === 'pending').length;
+        document.getElementById('pending-count').textContent = pendingCount;
+        
+        if (pendingCount > 0) {
+          document.getElementById('pending-count').style.display = 'inline-block';
+        } else {
+          document.getElementById('pending-count').style.display = 'none';
+        }
+
+        renderReviewItems(currentReviewStatus);
+      } catch (error) {
+        console.error('Error loading review queue:', error);
+      }
+    }
+
+    function renderReviewItems(status) {
+      const filtered = allReviewItems.filter(item => item.status === status);
+      const container = document.getElementById('review-items-list');
+      const emptyState = document.getElementById('review-empty-state');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+
+      container.innerHTML = filtered.map(item => `
+        <div class="review-item ${selectedItems.has(item.id) ? 'selected' : ''}" id="review-item-${item.id}">
+          <div class="review-item-header">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              ${status === 'pending' ? `
+                <input type="checkbox" class="review-checkbox" 
+                  ${selectedItems.has(item.id) ? 'checked' : ''} 
+                  onchange="toggleItemSelection('${item.id}')">
+              ` : ''}
+              <div>
+                <div style="margin-bottom: 8px;">
+                  <span class="category-badge">${getCategoryIcon(item.category)} ${getCategoryName(item.category)}</span>
+                  ${item.sub_category ? `<span class="sub-category-badge">${item.sub_category}</span>` : ''}
+                </div>
+                <h3 style="font-size: 18px; color: #333; margin-bottom: 4px;">${escapeHtml(item.title || 'Untitled')}</h3>
+                <div style="font-size: 12px; color: #999;">
+                  ${new Date(item.created_at).toLocaleDateString()} • 
+                  Source: ${item.source_type || 'upload'}
+                </div>
+              </div>
+            </div>
+            <div>
+              ${getStatusBadge(item.status)}
+            </div>
+          </div>
+
+          <div class="review-item-content">
+            ${item.image_url ? `
+              <div>
+                <img src="${item.image_url}" style="width: 200px; height: 200px; object-fit: cover; border-radius: 8px;">
+              </div>
+            ` : ''}
+            <div style="flex: 1;">
+              ${item.description ? `
+                <div style="margin-bottom: 12px;">
+                  <strong style="font-size: 14px; color: #666;">Description:</strong>
+                  <p style="color: #333; margin-top: 4px; line-height: 1.6;">${escapeHtml(item.description)}</p>
+                </div>
+              ` : ''}
+              ${item.content_text && item.content_text !== item.description ? `
+                <div style="margin-bottom: 12px;">
+                  <strong style="font-size: 14px; color: #666;">Content:</strong>
+                  <p style="color: #333; margin-top: 4px; line-height: 1.6; max-height: 100px; overflow-y: auto;">${escapeHtml(item.content_text.substring(0, 300))}${item.content_text.length > 300 ? '...' : ''}</p>
+                </div>
+              ` : ''}
+              ${item.tags && item.tags.length > 0 ? `
+                <div style="margin-bottom: 12px;">
+                  <strong style="font-size: 14px; color: #666;">Tags:</strong>
+                  <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
+                    ${item.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                  </div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+
+          ${status === 'pending' ? `
+            <div class="review-actions">
+              <button class="btn-approve" onclick="approveItem('${item.id}')">
+                ✅ Approve
+              </button>
+              <button class="btn-reject" onclick="rejectItem('${item.id}')">
+                ❌ Reject
+              </button>
+              <button class="btn-edit-item" onclick="editReviewItem('${item.id}')">
+                ✏️ Edit
+              </button>
+            </div>
+          ` : status === 'rejected' ? `
+            <div class="review-actions">
+              <button class="btn-approve" onclick="approveItem('${item.id}')">
+                ✅ Move to Approved
+              </button>
+            </div>
+          ` : `
+            <div class="review-actions">
+              <button class="btn-reject" onclick="rejectItem('${item.id}')">
+                ❌ Move to Rejected
+              </button>
+              <button class="btn-edit-item" onclick="editReviewItem('${item.id}')">
+                ✏️ Edit
+              </button>
+            </div>
+          `}
+        </div>
+      `).join('');
+
+      updateBulkActionsVisibility();
+    }
+
+    window.filterReviewStatus = function(status) {
+      currentReviewStatus = status;
+      selectedItems.clear();
+      
+      document.querySelectorAll('.filter-bar .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      renderReviewItems(status);
+    };
+
+    window.toggleItemSelection = function(itemId) {
+      if (selectedItems.has(itemId)) {
+        selectedItems.delete(itemId);
+      } else {
+        selectedItems.add(itemId);
+      }
+      
+      const item = document.getElementById(`review-item-${itemId}`);
+      if (item) {
+        item.classList.toggle('selected');
+      }
+      
+      updateBulkActionsVisibility();
+    };
+
+    function updateBulkActionsVisibility() {
+      const bulkActions = document.getElementById('bulk-actions');
+      const count = document.getElementById('selected-count');
+      
+      if (selectedItems.size > 0) {
+        bulkActions.style.display = 'block';
+        count.textContent = selectedItems.size;
+      } else {
+        bulkActions.style.display = 'none';
+      }
+    }
+
+    window.clearSelection = function() {
+      selectedItems.clear();
+      document.querySelectorAll('.review-item').forEach(item => {
+        item.classList.remove('selected');
+      });
+      document.querySelectorAll('.review-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      updateBulkActionsVisibility();
+    };
+
+    window.approveItem = async function(itemId) {
+      try {
+        const { error } = await supabaseClient
+          .from('content_library')
+          .update({ status: 'approved' })
+          .eq('id', itemId);
+
+        if (error) throw error;
+
+        alert('✅ Item approved!');
+        loadReviewQueue();
+        loadLibrary(); // Refresh main library
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    window.rejectItem = async function(itemId) {
+      try {
+        const { error } = await supabaseClient
+          .from('content_library')
+          .update({ status: 'rejected' })
+          .eq('id', itemId);
+
+        if (error) throw error;
+
+        alert('❌ Item rejected');
+        loadReviewQueue();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    window.bulkApprove = async function() {
+      if (selectedItems.size === 0) return;
+      
+      if (!confirm(`Approve ${selectedItems.size} item(s)?`)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('content_library')
+          .update({ status: 'approved' })
+          .in('id', Array.from(selectedItems));
+
+        if (error) throw error;
+
+        alert(`✅ ${selectedItems.size} items approved!`);
+        selectedItems.clear();
+        loadReviewQueue();
+        loadLibrary();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    window.bulkReject = async function() {
+      if (selectedItems.size === 0) return;
+      
+      if (!confirm(`Reject ${selectedItems.size} item(s)?`)) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('content_library')
+          .update({ status: 'rejected' })
+          .in('id', Array.from(selectedItems));
+
+        if (error) throw error;
+
+        alert(`❌ ${selectedItems.size} items rejected`);
+        selectedItems.clear();
+        loadReviewQueue();
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    window.editReviewItem = function(itemId) {
+      // Use existing detail modal
+      showContentDetail(itemId);
+    };
+
+    function getCategoryIcon(category) {
+      const icons = {
+        'completed-jobs': '✅',
+        'service': '⚙️',
+        'testimonial': '💬',
+        'marketing': '🎯',
+        'tips': '💡',
+        'team-culture': '👥',
+        'company': '🏢',
+        'document': '📄',
+        'general': '📦'
+      };
+      return icons[category] || '📦';
+    }
+
+    function getCategoryName(category) {
+      const names = {
+        'completed-jobs': 'Completed Job',
+        'service': 'Service',
+        'testimonial': 'Testimonial',
+        'marketing': 'Marketing',
+        'tips': 'Tips & Advice',
+        'team-culture': 'Team & Culture',
+        'company': 'Company Info',
+        'document': 'Document',
+        'general': 'General'
+      };
+      return names[category] || category;
+    }
+
+    function getStatusBadge(status) {
+      const badges = {
+        'pending': '<span style="padding: 4px 12px; background: #ffc107; color: #000; border-radius: 12px; font-size: 12px; font-weight: 600;">❓ Pending</span>',
+        'approved': '<span style="padding: 4px 12px; background: #28a745; color: white; border-radius: 12px; font-size: 12px; font-weight: 600;">✅ Approved</span>',
+        'rejected': '<span style="padding: 4px 12px; background: #dc3545; color: white; border-radius: 12px; font-size: 12px; font-weight: 600;">❌ Rejected</span>'
+      };
+      return badges[status] || '';
     }
     
   </script>
