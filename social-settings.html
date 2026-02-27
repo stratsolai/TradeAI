@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Marketing Settings - TradeAI</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; }
+
+    .header {
+      background: white; padding: 20px 40px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .logo { font-size: 24px; font-weight: bold; color: #1a5490; }
+    .header-actions { display: flex; gap: 12px; }
+
+    .btn-back {
+      padding: 8px 16px; background: #4a9fd8; color: white;
+      border: none; border-radius: 6px; cursor: pointer;
+      text-decoration: none; font-size: 14px;
+    }
+
+    .btn-save {
+      padding: 8px 24px; background: #e8500a; color: white;
+      border: none; border-radius: 6px; cursor: pointer;
+      font-size: 14px; font-weight: 600;
+    }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 40px 20px; }
+    .page-title { font-size: 32px; color: #333; margin-bottom: 8px; }
+    .page-subtitle { color: #666; font-size: 16px; margin-bottom: 40px; }
+
+    .card {
+      background: white; padding: 30px; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 24px;
+    }
+
+    .card-title { font-size: 20px; color: #333; margin-bottom: 20px; font-weight: 600; }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; color: #333; font-weight: 500; font-size: 14px; }
+
+    select, input[type="text"], input[type="password"], input[type="url"], textarea {
+      width: 100%; padding: 12px 14px; border: 1.5px solid #ddd;
+      border-radius: 8px; font-size: 14px; font-family: inherit;
+    }
+
+    select:focus, input:focus, textarea:focus { outline: none; border-color: #1a5490; }
+    textarea { resize: vertical; }
+
+    .help-text { font-size: 13px; color: #777; margin-top: 6px; font-style: italic; }
+
+    .category-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .category-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px; background: #f8f9fa; border-radius: 8px;
+    }
+
+    .category-item input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+    .category-info { flex: 1; }
+    .category-name { font-weight: 600; color: #333; margin-bottom: 4px; }
+    .category-desc { font-size: 13px; color: #666; }
+
+    .info-box {
+      background: #e8f4fd; border-left: 4px solid #1a5490;
+      padding: 14px 18px; margin-bottom: 20px; border-radius: 6px;
+      font-size: 14px; color: #333; line-height: 1.6;
+    }
+
+    .info-box.orange { background: #fff3ee; border-left-color: #e8500a; }
+    .info-box.green { background: #edfaf1; border-left-color: #28a745; }
+    .info-box.purple { background: #f5eeff; border-left-color: #7b2d8b; }
+
+    .success-message {
+      background: #d4edda; color: #155724;
+      padding: 12px 16px; border-radius: 6px; margin-bottom: 20px; display: none;
+    }
+
+    .success-message.show { display: block; }
+
+    .canva-connect-area {
+      border: 2px dashed #7b2d8b;
+      border-radius: 10px;
+      padding: 24px;
+      text-align: center;
+      background: #f9f5ff;
+      margin-bottom: 16px;
+    }
+
+    .canva-icon { font-size: 48px; margin-bottom: 12px; }
+
+    .btn-canva {
+      padding: 12px 28px; background: #7b2d8b; color: white;
+      border: none; border-radius: 8px; font-size: 15px;
+      font-weight: 600; cursor: pointer; display: inline-block;
+    }
+
+    .btn-canva:hover { background: #6a2578; }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px; font-size: 13px;
+      font-weight: 600; margin-bottom: 12px;
+    }
+
+    .status-badge.connected { background: #d4edda; color: #155724; }
+    .status-badge.disconnected { background: #f8d7da; color: #721c24; }
+
+    .hashtag-set {
+      background: #f8f9fa; border: 1px solid #e5e5e5;
+      border-radius: 8px; padding: 16px; margin-bottom: 12px;
+    }
+
+    .hashtag-set-name { font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px; }
+    .hashtags-display { display: flex; flex-wrap: wrap; gap: 6px; }
+    .hashtag-pill {
+      padding: 4px 10px; background: #e8f4fd; color: #1a5490;
+      border-radius: 12px; font-size: 12px; font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">TradeAI – Marketing Settings</div>
+    <div class="header-actions">
+      <a href="/social.html" class="btn-back">← Back to Marketing Hub</a>
+      <button class="btn-save" onclick="saveSettings()">Save All Settings</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Marketing Settings ⚙️</h1>
+    <p class="page-subtitle">Configure your posting schedule, brand voice, and integrations</p>
+
+    <div class="success-message" id="success-message">✅ Settings saved successfully!</div>
+
+    <!-- Canva Integration -->
+    <div class="card">
+      <h2 class="card-title">🎨 Canva Integration</h2>
+      <div class="info-box purple">
+        <strong>Connect Canva to generate polished social media graphics directly from TradeAI.</strong><br>
+        When connected, every generated post will have a "Open in Canva" button that sends the caption and your image directly to a Canva template — ready to style and download in seconds.
+        <br><br>
+        <strong>Cost:</strong> The Canva Connect API is free to integrate. Your customers use their own Canva account (free or paid). Paid Canva accounts unlock premium templates.
+      </div>
+
+      <div class="canva-connect-area">
+        <div id="canva-status" class="status-badge disconnected">⚪ Not Connected</div>
+        <div class="canva-icon">🎨</div>
+        <p style="font-size:15px; font-weight:600; color:#333; margin-bottom:8px;">Connect Your Canva Account</p>
+        <p style="font-size:13px; color:#666; margin-bottom:20px; max-width:400px; margin-left:auto; margin-right:auto;">Connect via OAuth so TradeAI can send content directly to your Canva templates. No API key needed — just sign in with Canva.</p>
+        <button class="btn-canva" onclick="connectCanva()">Connect with Canva</button>
+      </div>
+
+      <div class="form-group">
+        <label>Default Canva Template URL (Optional)</label>
+        <input type="url" id="canva-template-url" placeholder="https://www.canva.com/design/your-template-id/...">
+        <p class="help-text">If you have a branded template in Canva, paste its link here. AI-generated content will open in your template by default.</p>
+      </div>
+
+      <div class="form-group">
+        <label>Preferred Social Media Format</label>
+        <select id="canva-format">
+          <option value="square">Square Post (1080×1080) — Best for Facebook & Instagram</option>
+          <option value="portrait">Portrait (1080×1350) — Best for Instagram Feed</option>
+          <option value="story">Story / Reel (1080×1920) — Best for Stories</option>
+          <option value="landscape">Landscape (1200×630) — Best for Facebook & LinkedIn</option>
+          <option value="linkedin">LinkedIn Post (1200×627) — Professional</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Posting Schedule -->
+    <div class="card">
+      <h2 class="card-title">📅 Posting Schedule</h2>
+
+      <div class="form-group">
+        <label>Posting Frequency</label>
+        <select id="frequency">
+          <option value="daily">Daily (7 posts/week)</option>
+          <option value="5xweek">5x per week (weekdays)</option>
+          <option value="3xweek">3x per week (Mon, Wed, Fri)</option>
+          <option value="2xweek">2x per week (Tue, Thu)</option>
+          <option value="weekly">Weekly (once per week)</option>
+        </select>
+        <p class="help-text">How often AI should generate and schedule content for you</p>
+      </div>
+
+      <div class="form-group">
+        <label>Best Time to Post</label>
+        <select id="posting-time">
+          <option value="morning">Morning (8–10am)</option>
+          <option value="midday">Midday (12–2pm)</option>
+          <option value="afternoon">Afternoon (3–5pm)</option>
+          <option value="evening">Evening (6–8pm)</option>
+          <option value="auto">Auto (AI decides based on platform best practices)</option>
+        </select>
+      </div>
+
+      <div class="info-box">
+        <strong>Platform Recommendations:</strong><br>
+        LinkedIn: Morning (8–10am) weekdays &nbsp;|&nbsp; Facebook: Midday–Afternoon (12–3pm) &nbsp;|&nbsp; Instagram: Evening (6–8pm) or Morning (8–9am)
+      </div>
+    </div>
+
+    <!-- Content Categories -->
+    <div class="card">
+      <h2 class="card-title">📂 Content Mix</h2>
+      <p style="color:#666; font-size:14px; margin-bottom:18px;">Select which types of content to include when AI auto-generates your schedule.</p>
+
+      <div class="category-list">
+        <div class="category-item">
+          <input type="checkbox" id="cat-marketing" checked>
+          <div class="category-info">
+            <div class="category-name">🎯 Marketing & Promotions</div>
+            <div class="category-desc">Special offers, seasonal promotions, service highlights</div>
+          </div>
+        </div>
+        <div class="category-item">
+          <input type="checkbox" id="cat-jobs" checked>
+          <div class="category-info">
+            <div class="category-name">✅ Completed Jobs</div>
+            <div class="category-desc">Showcase your recent projects and happy customers</div>
+          </div>
+        </div>
+        <div class="category-item">
+          <input type="checkbox" id="cat-tips" checked>
+          <div class="category-info">
+            <div class="category-name">💡 Tips & Advice</div>
+            <div class="category-desc">Industry tips, maintenance advice, how-to guides</div>
+          </div>
+        </div>
+        <div class="category-item">
+          <input type="checkbox" id="cat-trends">
+          <div class="category-info">
+            <div class="category-name">📈 Industry Trends</div>
+            <div class="category-desc">Latest news and trends (works best with Industry News Digest tool)</div>
+          </div>
+        </div>
+        <div class="category-item">
+          <input type="checkbox" id="cat-team">
+          <div class="category-info">
+            <div class="category-name">👥 Team & Culture</div>
+            <div class="category-desc">Behind the scenes, team spotlights, company culture</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top:20px;">
+        <strong>Recommended content mix for trade businesses:</strong><br>
+        40% Completed Jobs (showcase your work) &nbsp;|&nbsp; 30% Tips & Advice (provide value) &nbsp;|&nbsp; 20% Marketing (promote services) &nbsp;|&nbsp; 10% Team/Trends (build connection)
+      </div>
+    </div>
+
+    <!-- Default Hashtag Sets -->
+    <div class="card">
+      <h2 class="card-title">🏷️ Default Hashtag Sets</h2>
+      <p style="color:#666; font-size:14px; margin-bottom:18px;">These hashtags are added to Instagram posts. AI will also generate post-specific hashtags on top of these.</p>
+
+      <div class="form-group">
+        <label>Brand Hashtags (always include)</label>
+        <input type="text" id="hashtags-brand" placeholder="#YourBusinessName #YourCity #YourTrade">
+        <p class="help-text">Comma or space separated. E.g. #TradeAI #AussieTradie #TradeAutomation</p>
+      </div>
+
+      <div class="form-group">
+        <label>Industry Hashtags</label>
+        <input type="text" id="hashtags-industry" placeholder="#Plumbing #PoolBuilder #Electrician">
+        <p class="help-text">General hashtags for your trade/industry</p>
+      </div>
+
+      <div class="form-group">
+        <label>Location Hashtags</label>
+        <input type="text" id="hashtags-location" placeholder="#Sydney #Melbourne #Brisbane">
+        <p class="help-text">Your city and surrounding areas</p>
+      </div>
+    </div>
+
+    <!-- Default Tone -->
+    <div class="card">
+      <h2 class="card-title">🎙️ Default Brand Voice</h2>
+      <p style="color:#666; font-size:14px; margin-bottom:18px;">This is the default tone used when creating posts. Can be changed per-post.</p>
+
+      <div class="form-group">
+        <label>Default Posting Tone</label>
+        <select id="default-tone">
+          <option value="professional">Professional — polished and authoritative</option>
+          <option value="casual">Casual & Friendly — warm and approachable</option>
+          <option value="promotional">Promotional — energetic and sales-focused</option>
+          <option value="educational">Educational — informative and expert</option>
+        </select>
+      </div>
+
+      <div class="info-box orange">
+        <strong>💡 Tip:</strong> For most trade businesses, "Casual & Friendly" or "Professional" work best. Save "Promotional" for specific offers, not everyday posts.
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    requireAuth();
+
+    async function loadSettings() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+
+      const settings = profile.social_schedule || {};
+      const canvaSettings = profile.canva_settings || {};
+
+      document.getElementById('frequency').value = settings.frequency || 'weekly';
+      document.getElementById('posting-time').value = settings.posting_time || 'auto';
+      document.getElementById('default-tone').value = settings.default_tone || 'professional';
+
+      const categories = settings.categories || ['marketing', 'completed-jobs', 'tips'];
+      document.getElementById('cat-marketing').checked = categories.includes('marketing');
+      document.getElementById('cat-jobs').checked = categories.includes('completed-jobs');
+      document.getElementById('cat-tips').checked = categories.includes('tips');
+      document.getElementById('cat-trends').checked = categories.includes('industry-trends');
+      document.getElementById('cat-team').checked = categories.includes('team-culture');
+
+      // Hashtags
+      const hashtags = settings.hashtags || {};
+      document.getElementById('hashtags-brand').value = hashtags.brand || '';
+      document.getElementById('hashtags-industry').value = hashtags.industry || '';
+      document.getElementById('hashtags-location').value = hashtags.location || '';
+
+      // Canva
+      document.getElementById('canva-template-url').value = canvaSettings.template_url || '';
+      document.getElementById('canva-format').value = canvaSettings.format || 'square';
+
+      if (profile.canva_connected) {
+        document.getElementById('canva-status').textContent = '✅ Connected to Canva';
+        document.getElementById('canva-status').className = 'status-badge connected';
+      }
+    }
+
+    window.saveSettings = async function() {
+      const settings = {
+        frequency: document.getElementById('frequency').value,
+        posting_time: document.getElementById('posting-time').value,
+        default_tone: document.getElementById('default-tone').value,
+        categories: [],
+        hashtags: {
+          brand: document.getElementById('hashtags-brand').value,
+          industry: document.getElementById('hashtags-industry').value,
+          location: document.getElementById('hashtags-location').value
+        },
+        enabled: true
+      };
+
+      if (document.getElementById('cat-marketing').checked) settings.categories.push('marketing');
+      if (document.getElementById('cat-jobs').checked) settings.categories.push('completed-jobs');
+      if (document.getElementById('cat-tips').checked) settings.categories.push('tips');
+      if (document.getElementById('cat-trends').checked) settings.categories.push('industry-trends');
+      if (document.getElementById('cat-team').checked) settings.categories.push('team-culture');
+
+      if (settings.categories.length === 0) {
+        alert('Please select at least one content category');
+        return;
+      }
+
+      const canvaSettings = {
+        template_url: document.getElementById('canva-template-url').value,
+        format: document.getElementById('canva-format').value
+      };
+
+      // Save Canva client ID to localStorage for use in social.html
+      const { data: { user } } = await supabaseClient.auth.getUser();
+
+      const { error } = await supabaseClient
+        .from('profiles')
+        .update({ social_schedule: settings, canva_settings: canvaSettings })
+        .eq('id', user.id);
+
+      if (error) { alert('Error saving: ' + error.message); return; }
+
+      const msg = document.getElementById('success-message');
+      msg.classList.add('show');
+      setTimeout(() => msg.classList.remove('show'), 3000);
+    };
+
+    window.connectCanva = function() {
+      // Canva OAuth flow — requires Canva app registration
+      // For now, redirect to Canva and instruct user
+      const redirectUri = `${window.location.origin}/api/auth/oauth-callback?provider=canva`;
+      alert('Canva Connect integration is coming soon!\n\nFor now, use the "Open in Canva" button on any generated post to open Canva with your caption ready to paste.\n\nTip: Save a social media template in your Canva account for quick styling.');
+    };
+
+    setTimeout(loadSettings, 300);
+  </script>
+</body>
+</html>
