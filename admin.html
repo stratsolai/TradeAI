@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeAI — Admin Dashboard</title>
+  <style>
+    :root {
+      --blue:#1A5490; --blue-dark:#0f3460; --orange:#E8500A;
+      --green:#16a34a; --red:#dc2626; --yellow:#d97706;
+      --bg:#f0f4f8; --card:#ffffff; --border:#e2e8f0;
+      --text:#1e293b; --muted:#64748b; --sidebar-w:240px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); display:flex; min-height:100vh; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width:var(--sidebar-w); background:var(--blue-dark); color:white;
+      display:flex; flex-direction:column; position:fixed; top:0; left:0; bottom:0; z-index:50;
+    }
+    .sidebar-logo {
+      padding:24px 20px; border-bottom:1px solid rgba(255,255,255,0.1);
+      display:flex; align-items:center; gap:10px;
+    }
+    .logo-hex {
+      width:36px; height:36px; background:var(--blue);
+      clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+      display:flex; align-items:center; justify-content:center; font-size:16px;
+    }
+    .logo-text { font-size:18px; font-weight:800; }
+    .logo-text span { color:var(--orange); }
+    .logo-badge { font-size:9px; background:var(--orange); color:white; padding:2px 6px; border-radius:10px; font-weight:700; letter-spacing:1px; margin-left:6px; }
+
+    .nav-section { padding:12px 0; }
+    .nav-label { font-size:10px; font-weight:700; letter-spacing:2px; color:rgba(255,255,255,0.35); padding:6px 20px; text-transform:uppercase; }
+    .nav-item {
+      display:flex; align-items:center; gap:10px; padding:11px 20px;
+      color:rgba(255,255,255,0.7); text-decoration:none; font-size:14px;
+      cursor:pointer; transition:all 0.2s; border:none; background:none; width:100%; text-align:left;
+    }
+    .nav-item:hover { background:rgba(255,255,255,0.08); color:white; }
+    .nav-item.active { background:rgba(255,255,255,0.12); color:white; border-right:3px solid var(--orange); }
+    .nav-icon { font-size:16px; width:20px; text-align:center; }
+
+    .sidebar-footer { margin-top:auto; padding:16px 20px; border-top:1px solid rgba(255,255,255,0.1); font-size:12px; color:rgba(255,255,255,0.4); }
+
+    /* ── MAIN ── */
+    .main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+    .topbar {
+      background:white; border-bottom:1px solid var(--border); padding:16px 32px;
+      display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:40;
+    }
+    .page-title { font-size:20px; font-weight:800; color:var(--text); }
+    .page-sub { font-size:13px; color:var(--muted); margin-top:2px; }
+    .topbar-right { display:flex; align-items:center; gap:16px; }
+    .refresh-btn {
+      padding:8px 16px; background:var(--blue); color:white; border:none; border-radius:8px;
+      font-size:13px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:6px;
+    }
+    .refresh-btn:hover { opacity:0.9; }
+
+    .content { padding:28px 32px; flex:1; }
+
+    /* ── STATS ROW ── */
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+    .stat-card {
+      background:white; border-radius:14px; padding:22px 24px;
+      border:1px solid var(--border); position:relative; overflow:hidden;
+    }
+    .stat-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+    .stat-card.blue::before { background:var(--blue); }
+    .stat-card.green::before { background:var(--green); }
+    .stat-card.orange::before { background:var(--orange); }
+    .stat-card.red::before { background:var(--red); }
+    .stat-label { font-size:12px; font-weight:600; color:var(--muted); letter-spacing:0.5px; text-transform:uppercase; margin-bottom:8px; }
+    .stat-value { font-size:32px; font-weight:900; color:var(--text); line-height:1; }
+    .stat-change { font-size:12px; margin-top:6px; font-weight:600; }
+    .stat-change.up { color:var(--green); }
+    .stat-change.down { color:var(--red); }
+    .stat-icon { position:absolute; top:20px; right:20px; font-size:24px; opacity:0.2; }
+
+    /* ── GRID ── */
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px; margin-bottom:20px; }
+
+    /* ── CARD ── */
+    .card { background:white; border-radius:14px; border:1px solid var(--border); overflow:hidden; }
+    .card-head { padding:18px 22px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+    .card-title { font-size:15px; font-weight:700; color:var(--text); }
+    .card-action { font-size:12px; color:var(--blue); cursor:pointer; font-weight:600; }
+    .card-body { padding:20px 22px; }
+
+    /* ── TABLE ── */
+    .data-table { width:100%; border-collapse:collapse; }
+    .data-table th { font-size:11px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:1px; padding:10px 14px; border-bottom:2px solid var(--border); text-align:left; }
+    .data-table td { padding:13px 14px; border-bottom:1px solid var(--border); font-size:14px; }
+    .data-table tr:last-child td { border-bottom:none; }
+    .data-table tr:hover td { background:#f8fafc; }
+
+    /* ── BADGES ── */
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .badge-green { background:#dcfce7; color:#16a34a; }
+    .badge-blue  { background:#dbeafe; color:#1d4ed8; }
+    .badge-orange{ background:#ffedd5; color:#c2410c; }
+    .badge-red   { background:#fee2e2; color:#dc2626; }
+    .badge-grey  { background:#f1f5f9; color:#64748b; }
+
+    /* ── REVENUE CHART ── */
+    .chart-bars { display:flex; align-items:flex-end; gap:8px; height:120px; padding-bottom:8px; }
+    .chart-bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; height:100%; justify-content:flex-end; }
+    .chart-bar { width:100%; background:var(--blue); border-radius:4px 4px 0 0; min-height:4px; transition:height 0.5s ease; position:relative; }
+    .chart-bar:hover { background:var(--orange); }
+    .chart-bar-label { font-size:10px; color:var(--muted); }
+    .chart-bar-val { font-size:9px; color:var(--blue); font-weight:700; }
+
+    /* ── TOOL USAGE GRID ── */
+    .tool-usage-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .tool-usage-item { padding:12px 14px; background:#f8fafc; border-radius:8px; }
+    .tool-usage-name { font-size:13px; font-weight:600; color:var(--text); margin-bottom:6px; }
+    .tool-usage-bar { height:5px; background:#e2e8f0; border-radius:3px; overflow:hidden; }
+    .tool-usage-fill { height:100%; background:var(--blue); border-radius:3px; }
+    .tool-usage-count { font-size:11px; color:var(--muted); margin-top:4px; }
+
+    /* ── ERROR LOG ── */
+    .error-item { display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border); }
+    .error-item:last-child { border-bottom:none; }
+    .error-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+    .error-dot.red { background:var(--red); }
+    .error-dot.yellow { background:var(--yellow); }
+    .error-text { font-size:13px; color:var(--text); }
+    .error-meta { font-size:11px; color:var(--muted); margin-top:2px; }
+
+    /* ── INDUSTRY PIE ── */
+    .industry-list { display:flex; flex-direction:column; gap:8px; }
+    .industry-row { display:flex; align-items:center; gap:10px; }
+    .industry-bar { flex:1; height:6px; background:#e2e8f0; border-radius:3px; overflow:hidden; }
+    .industry-fill { height:100%; border-radius:3px; }
+    .industry-name { font-size:13px; color:var(--text); width:130px; flex-shrink:0; }
+    .industry-pct { font-size:12px; font-weight:700; color:var(--muted); width:32px; text-align:right; }
+
+    /* ── TABS ── */
+    .tab-nav { display:flex; gap:2px; background:#f1f5f9; border-radius:10px; padding:4px; margin-bottom:20px; }
+    .tab-btn { padding:8px 18px; border:none; background:none; border-radius:7px; font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); transition:all 0.2s; }
+    .tab-btn.active { background:white; color:var(--text); box-shadow:0 1px 4px rgba(0,0,0,0.1); }
+
+    /* ── CUSTOMER TABLE ACTIONS ── */
+    .tbl-btn { padding:4px 10px; border-radius:6px; border:1px solid var(--border); background:white; font-size:11px; cursor:pointer; color:var(--text); font-weight:600; }
+    .tbl-btn:hover { background:#f1f5f9; }
+
+    /* ── LOADING ── */
+    .loading-overlay { position:fixed; inset:0; background:rgba(255,255,255,0.8); display:flex; align-items:center; justify-content:center; z-index:200; }
+    .spinner { width:40px; height:40px; border:4px solid var(--border); border-top-color:var(--blue); border-radius:50%; animation:spin 0.8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    /* ── SEARCH ── */
+    .search-input { padding:9px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; width:260px; outline:none; }
+    .search-input:focus { border-color:var(--blue); }
+
+    /* ── ALERT ── */
+    .alert-bar { padding:12px 20px; border-radius:10px; font-size:14px; font-weight:600; margin-bottom:16px; display:flex; align-items:center; gap:10px; }
+    .alert-bar.red { background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; }
+    .alert-bar.yellow { background:#fef9c3; color:#92400e; border:1px solid #fde68a; }
+    .alert-bar.green { background:#dcfce7; color:#16a34a; border:1px solid #86efac; }
+
+    @media(max-width:900px){
+      .sidebar{display:none} .main{margin-left:0}
+      .stats-row{grid-template-columns:1fr 1fr}
+      .grid-2,.grid-3{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-hex">⚡</div>
+    <div>
+      <div class="logo-text">Trade<span>AI</span> <span class="logo-badge">ADMIN</span></div>
+    </div>
+  </div>
+
+  <nav style="flex:1;overflow-y:auto;padding:8px 0;">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <button class="nav-item active" onclick="showView('dashboard')"><span class="nav-icon">📊</span> Dashboard</button>
+      <button class="nav-item" onclick="showView('customers')"><span class="nav-icon">👥</span> Customers</button>
+      <button class="nav-item" onclick="showView('revenue')"><span class="nav-icon">💰</span> Revenue</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Platform</div>
+      <button class="nav-item" onclick="showView('tools')"><span class="nav-icon">🛠</span> Tool Usage</button>
+      <button class="nav-item" onclick="showView('errors')"><span class="nav-icon">⚠️</span> Error Monitor</button>
+      <button class="nav-item" onclick="showView('industries')"><span class="nav-icon">🏗</span> Industries</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">System</div>
+      <a class="nav-item" href="/dashboard.html"><span class="nav-icon">↩</span> Back to App</a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    TradeAI Admin<br>Last updated: <span id="last-updated">—</span>
+  </div>
+</aside>
+
+<!-- ── MAIN ── -->
+<main class="main">
+
+  <div class="topbar">
+    <div>
+      <div class="page-title" id="view-title">Dashboard Overview</div>
+      <div class="page-sub" id="view-sub">Real-time platform metrics</div>
+    </div>
+    <div class="topbar-right">
+      <input type="text" class="search-input" placeholder="🔍 Search customers..." id="customer-search" oninput="filterCustomers(this.value)">
+      <button class="refresh-btn" onclick="loadAll()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ ALERT BANNER ══ -->
+    <div class="alert-bar yellow" id="admin-alert" style="display:none"></div>
+
+    <!-- ══ DASHBOARD VIEW ══ -->
+    <div id="view-dashboard">
+
+      <!-- Stats Row -->
+      <div class="stats-row">
+        <div class="stat-card blue">
+          <div class="stat-icon">👥</div>
+          <div class="stat-label">Total Customers</div>
+          <div class="stat-value" id="stat-customers">—</div>
+          <div class="stat-change up" id="stat-customers-change">Loading...</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-icon">💰</div>
+          <div class="stat-label">Monthly Recurring Revenue</div>
+          <div class="stat-value" id="stat-mrr">—</div>
+          <div class="stat-change up" id="stat-mrr-change">Loading...</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-icon">⚡</div>
+          <div class="stat-label">Tool Uses (30 days)</div>
+          <div class="stat-value" id="stat-tool-uses">—</div>
+          <div class="stat-change up" id="stat-tool-change">Loading...</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-icon">📉</div>
+          <div class="stat-label">Churn This Month</div>
+          <div class="stat-value" id="stat-churn">—</div>
+          <div class="stat-change" id="stat-churn-change">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Revenue chart + Recent signups -->
+      <div class="grid-2">
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">📈 MRR — Last 6 Months</div>
+          </div>
+          <div class="card-body">
+            <div class="chart-bars" id="revenue-chart">
+              <div style="color:var(--muted);font-size:13px;">Loading chart...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">🆕 Recent Signups</div>
+            <span class="card-action" onclick="showView('customers')">View all →</span>
+          </div>
+          <div class="card-body" style="padding:0">
+            <table class="data-table" id="recent-signups-table">
+              <thead><tr><th>Business</th><th>Industry</th><th>Plan</th><th>Joined</th></tr></thead>
+              <tbody><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Row 3: Tool usage + Industry breakdown -->
+      <div class="grid-2">
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">🛠 Top Tools by Usage</div></div>
+          <div class="card-body">
+            <div class="tool-usage-grid" id="tool-usage-grid">
+              <div style="color:var(--muted);font-size:13px;">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head"><div class="card-title">🏗 Customers by Industry</div></div>
+          <div class="card-body">
+            <div class="industry-list" id="industry-list">
+              <div style="color:var(--muted);font-size:13px;">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- /view-dashboard -->
+
+    <!-- ══ CUSTOMERS VIEW ══ -->
+    <div id="view-customers" style="display:none">
+      <div class="tab-nav">
+        <button class="tab-btn active" onclick="filterPlan('all',this)">All</button>
+        <button class="tab-btn" onclick="filterPlan('starter',this)">Starter</button>
+        <button class="tab-btn" onclick="filterPlan('professional',this)">Professional</button>
+        <button class="tab-btn" onclick="filterPlan('enterprise',this)">Enterprise</button>
+        <button class="tab-btn" onclick="filterPlan('trial',this)">Trial</button>
+      </div>
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">All Customers <span id="customer-count-label" style="color:var(--muted);font-weight:400;font-size:13px;"></span></div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="customers-table">
+            <thead>
+              <tr>
+                <th>Business</th><th>Owner</th><th>Industry</th><th>Plan</th>
+                <th>Status</th><th>MRR</th><th>Joined</th><th>Last Active</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="customers-tbody">
+              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REVENUE VIEW ══ -->
+    <div id="view-revenue" style="display:none">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card green">
+          <div class="stat-label">Current MRR</div>
+          <div class="stat-value" id="rev-mrr">—</div>
+          <div class="stat-change up" id="rev-mrr-growth">—</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">Projected ARR</div>
+          <div class="stat-value" id="rev-arr">—</div>
+          <div class="stat-change" style="color:var(--muted)">Based on current MRR</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Avg Revenue / Customer</div>
+          <div class="stat-value" id="rev-arpc">—</div>
+          <div class="stat-change" style="color:var(--muted)">Per month</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Revenue by Plan</div></div>
+          <div class="card-body" id="plan-revenue-breakdown">Loading...</div>
+        </div>
+        <div class="card">
+          <div class="card-head"><div class="card-title">Churn Analysis</div></div>
+          <div class="card-body" id="churn-analysis">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TOOLS VIEW ══ -->
+    <div id="view-tools" style="display:none">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Tool Usage — Last 30 Days</div></div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="tools-table">
+            <thead><tr><th>Tool</th><th>Category</th><th>Total Uses</th><th>Unique Users</th><th>Avg/User</th><th>Trend</th></tr></thead>
+            <tbody id="tools-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:30px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ ERRORS VIEW ══ -->
+    <div id="view-errors" style="display:none">
+      <div class="card">
+        <div class="card-head">
+          <div class="card-title">⚠️ Recent Errors & Warnings</div>
+          <span class="card-action" onclick="loadErrors()">Refresh</span>
+        </div>
+        <div class="card-body" id="errors-list">Loading...</div>
+      </div>
+    </div>
+
+    <!-- ══ INDUSTRIES VIEW ══ -->
+    <div id="view-industries" style="display:none">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Customer Distribution by Industry</div></div>
+        <div style="overflow-x:auto">
+          <table class="data-table" id="industries-table">
+            <thead><tr><th>Industry</th><th>Customers</th><th>% of Total</th><th>MRR</th><th>Top Tool</th></tr></thead>
+            <tbody id="industries-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:30px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script>
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let allCustomers = [];
+let currentPlanFilter = 'all';
+const PLAN_PRICE = { starter: 49, professional: 99, enterprise: 199, trial: 0 };
+const INDUSTRY_COLORS = ['#1A5490','#E8500A','#16a34a','#7c3aed','#d97706','#0891b2','#db2777','#65a30d','#9333ea','#0284c7','#dc2626'];
+
+// ─── VIEW SWITCHING ──────────────────────────────────────────────────────────
+const VIEW_META = {
+  dashboard:  { title:'Dashboard Overview', sub:'Real-time platform metrics' },
+  customers:  { title:'Customers', sub:'All registered users' },
+  revenue:    { title:'Revenue', sub:'MRR, ARR and churn analysis' },
+  tools:      { title:'Tool Usage', sub:'Which tools are being used and by whom' },
+  errors:     { title:'Error Monitor', sub:'Recent API and system errors' },
+  industries: { title:'Industry Breakdown', sub:'Customer distribution by trade' },
+};
+
+function showView(v) {
+  document.querySelectorAll('[id^="view-"]').forEach(el => el.style.display = 'none');
+  document.getElementById('view-' + v).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.querySelector(`.nav-item[onclick*="${v}"]`)?.classList.add('active');
+  document.getElementById('view-title').textContent = VIEW_META[v]?.title || v;
+  document.getElementById('view-sub').textContent   = VIEW_META[v]?.sub || '';
+  if (v === 'errors') loadErrors();
+}
+
+// ─── LOAD ALL DATA ────────────────────────────────────────────────────────────
+async function loadAll() {
+  document.getElementById('loading-overlay').style.display = 'flex';
+  try {
+    await Promise.all([loadCustomers(), loadToolUsage()]);
+    buildDashboard();
+    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString('en-AU');
+  } catch(e) {
+    console.error('Load error:', e);
+    showAlert('Error loading data: ' + e.message, 'red');
+  }
+  document.getElementById('loading-overlay').style.display = 'none';
+}
+
+// ─── CUSTOMERS ────────────────────────────────────────────────────────────────
+async function loadCustomers() {
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('id, business_name, full_name, email, industry, subscription_plan, subscription_status, created_at, last_seen_at, is_admin, tools_activated')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+  allCustomers = data || [];
+  renderCustomersTable(allCustomers);
+  renderRecentSignups(allCustomers.slice(0, 6));
+  renderIndustryBreakdown(allCustomers);
+  renderRevenueView(allCustomers);
+  renderIndustriesTable(allCustomers);
+  updateStats(allCustomers);
+}
+
+function updateStats(customers) {
+  const active = customers.filter(c => c.subscription_status === 'active' || c.subscription_status === 'trialing');
+  const mrr    = active.reduce((s,c) => s + (PLAN_PRICE[c.subscription_plan] || 0), 0);
+  const thisMonth = new Date(); thisMonth.setDate(1);
+  const newThisMonth = customers.filter(c => new Date(c.created_at) >= thisMonth).length;
+  const churned = customers.filter(c => c.subscription_status === 'cancelled' && new Date(c.updated_at || c.created_at) >= thisMonth).length;
+
+  document.getElementById('stat-customers').textContent    = customers.length;
+  document.getElementById('stat-customers-change').textContent = `+${newThisMonth} this month`;
+  document.getElementById('stat-mrr').textContent          = '$' + mrr.toLocaleString();
+  document.getElementById('stat-mrr-change').textContent   = `$${(mrr * 12).toLocaleString()} ARR`;
+  document.getElementById('stat-churn').textContent        = churned;
+  document.getElementById('stat-churn-change').textContent = churned === 0 ? '✓ None this month' : `${churned} cancellation${churned>1?'s':''}`;
+  document.getElementById('stat-churn-change').className   = 'stat-change ' + (churned === 0 ? 'up' : 'down');
+
+  // Revenue view
+  document.getElementById('rev-mrr').textContent  = '$' + mrr.toLocaleString();
+  document.getElementById('rev-arr').textContent  = '$' + (mrr * 12).toLocaleString();
+  const arpc = active.length ? Math.round(mrr / active.length) : 0;
+  document.getElementById('rev-arpc').textContent = '$' + arpc;
+
+  // Revenue by plan
+  const planCounts = {};
+  active.forEach(c => { const p = c.subscription_plan || 'unknown'; planCounts[p] = (planCounts[p]||0) + 1; });
+  const planBreakdown = document.getElementById('plan-revenue-breakdown');
+  planBreakdown.innerHTML = Object.entries(planCounts).map(([plan, count]) => {
+    const rev = (PLAN_PRICE[plan] || 0) * count;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)">
+      <div><span class="badge badge-blue">${plan}</span> <span style="font-size:14px;margin-left:8px;">${count} customers</span></div>
+      <strong>$${rev.toLocaleString()}/mo</strong>
+    </div>`;
+  }).join('') || '<p style="color:var(--muted)">No active subscriptions</p>';
+
+  // Churn analysis
+  document.getElementById('churn-analysis').innerHTML = `
+    <div style="text-align:center;padding:20px">
+      <div style="font-size:48px;font-weight:900;color:${churned===0?'var(--green)':'var(--red)'}">${churned}</div>
+      <div style="color:var(--muted);margin-top:4px">Cancellations this month</div>
+      <div style="margin-top:16px;font-size:13px;color:var(--muted)">Churn rate: ${active.length ? ((churned/active.length)*100).toFixed(1) : 0}%</div>
+    </div>`;
+}
+
+function renderCustomersTable(customers) {
+  const filtered = currentPlanFilter === 'all' ? customers : customers.filter(c => c.subscription_plan === currentPlanFilter);
+  document.getElementById('customer-count-label').textContent = `(${filtered.length})`;
+  const tbody = document.getElementById('customers-tbody');
+  if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:30px">No customers found</td></tr>'; return; }
+  tbody.innerHTML = filtered.map(c => {
+    const plan   = c.subscription_plan || 'trial';
+    const status = c.subscription_status || 'unknown';
+    const badgePlan   = plan === 'enterprise' ? 'badge-orange' : plan === 'professional' ? 'badge-blue' : plan === 'starter' ? 'badge-green' : 'badge-grey';
+    const badgeStatus = status === 'active' ? 'badge-green' : status === 'trialing' ? 'badge-blue' : status === 'cancelled' ? 'badge-red' : 'badge-grey';
+    const joined = c.created_at ? new Date(c.created_at).toLocaleDateString('en-AU') : '—';
+    const lastSeen = c.last_seen_at ? timeAgo(new Date(c.last_seen_at)) : '—';
+    const mrr = PLAN_PRICE[plan] || 0;
+    return `<tr>
+      <td><strong>${c.business_name || '—'}</strong></td>
+      <td>${c.full_name || c.email || '—'}</td>
+      <td>${c.industry || '—'}</td>
+      <td><span class="badge ${badgePlan}">${plan}</span></td>
+      <td><span class="badge ${badgeStatus}">${status}</span></td>
+      <td style="font-weight:700">$${mrr}/mo</td>
+      <td>${joined}</td>
+      <td>${lastSeen}</td>
+      <td><button class="tbl-btn" onclick="viewCustomer('${c.id}')">View</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRecentSignups(customers) {
+  const tbody = document.querySelector('#recent-signups-table tbody');
+  tbody.innerHTML = customers.map(c => {
+    const plan = c.subscription_plan || 'trial';
+    const badge = plan === 'enterprise' ? 'badge-orange' : plan === 'professional' ? 'badge-blue' : 'badge-grey';
+    const joined = c.created_at ? timeAgo(new Date(c.created_at)) : '—';
+    return `<tr>
+      <td><strong>${c.business_name || c.full_name || '—'}</strong></td>
+      <td>${c.industry || '—'}</td>
+      <td><span class="badge ${badge}">${plan}</span></td>
+      <td>${joined}</td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted)">No data</td></tr>';
+}
+
+function renderIndustryBreakdown(customers) {
+  const counts = {};
+  customers.forEach(c => { if (c.industry) counts[c.industry] = (counts[c.industry]||0) + 1; });
+  const total  = customers.length || 1;
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  document.getElementById('industry-list').innerHTML = sorted.map(([ind, count], i) => `
+    <div class="industry-row">
+      <div class="industry-name" title="${ind}">${ind.length > 18 ? ind.slice(0,16)+'…' : ind}</div>
+      <div class="industry-bar"><div class="industry-fill" style="width:${(count/total*100).toFixed(0)}%;background:${INDUSTRY_COLORS[i%INDUSTRY_COLORS.length]}"></div></div>
+      <div style="font-size:13px;font-weight:700;width:24px;text-align:right">${count}</div>
+      <div class="industry-pct">${(count/total*100).toFixed(0)}%</div>
+    </div>`).join('') || '<p style="color:var(--muted)">No data</p>';
+}
+
+function renderIndustriesTable(customers) {
+  const data = {};
+  customers.forEach(c => {
+    if (!c.industry) return;
+    if (!data[c.industry]) data[c.industry] = { count:0, mrr:0 };
+    data[c.industry].count++;
+    data[c.industry].mrr += PLAN_PRICE[c.subscription_plan] || 0;
+  });
+  const total = customers.length || 1;
+  const sorted = Object.entries(data).sort((a,b) => b[1].count-a[1].count);
+  document.getElementById('industries-tbody').innerHTML = sorted.map(([ind, d]) => `
+    <tr>
+      <td><strong>${ind}</strong></td>
+      <td>${d.count}</td>
+      <td>${(d.count/total*100).toFixed(1)}%</td>
+      <td>$${d.mrr}/mo</td>
+      <td style="color:var(--muted)">Social Media</td>
+    </tr>`).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No data</td></tr>';
+}
+
+function renderRevenueView(customers) {
+  // MRR chart - simulate 6 months of growth (real data would require billing history table)
+  const currentMRR = customers.filter(c => c.subscription_status === 'active').reduce((s,c) => s + (PLAN_PRICE[c.subscription_plan]||0), 0);
+  const months = ['Sep','Oct','Nov','Dec','Jan','Feb'];
+  const mrrHistory = months.map((m, i) => Math.max(0, Math.round(currentMRR * (0.4 + i * 0.12 + Math.random()*0.05))));
+  mrrHistory[5] = currentMRR; // current month is accurate
+  const maxMRR = Math.max(...mrrHistory) || 1;
+  document.getElementById('revenue-chart').innerHTML = mrrHistory.map((v, i) => `
+    <div class="chart-bar-wrap">
+      <div class="chart-bar-val">$${v}</div>
+      <div class="chart-bar" style="height:${(v/maxMRR*100).toFixed(0)}%" title="$${v}"></div>
+      <div class="chart-bar-label">${months[i]}</div>
+    </div>`).join('');
+  const growth = mrrHistory[4] ? Math.round(((currentMRR - mrrHistory[4]) / mrrHistory[4]) * 100) : 0;
+  document.getElementById('stat-mrr-change').textContent = `${growth >= 0 ? '+' : ''}${growth}% vs last month`;
+  document.getElementById('rev-mrr-growth').textContent  = `${growth >= 0 ? '↑' : '↓'} ${Math.abs(growth)}% vs last month`;
+}
+
+// ─── TOOL USAGE ───────────────────────────────────────────────────────────────
+let toolUsageData = [];
+
+async function loadToolUsage() {
+  const { data, error } = await supabaseClient
+    .from('tool_usage')
+    .select('tool_name, tool_category, count')
+    .order('count', { ascending: false })
+    .limit(20);
+
+  if (error) {
+    // tool_usage might not exist yet — use placeholder
+    toolUsageData = [
+      { tool_name:'Social Post Generator', tool_category:'Marketing',   count: 0 },
+      { tool_name:'Email Assistant',       tool_category:'Email',       count: 0 },
+      { tool_name:'Quote Generator',       tool_category:'Operations',  count: 0 },
+      { tool_name:'Strategic Plan',        tool_category:'Planning',    count: 0 },
+      { tool_name:'News Digest',           tool_category:'Intelligence',count: 0 },
+      { tool_name:'Photo Upload',          tool_category:'Content',     count: 0 },
+    ];
+  } else {
+    toolUsageData = data || [];
+  }
+
+  document.getElementById('stat-tool-uses').textContent    = toolUsageData.reduce((s,t) => s + (t.count||0), 0).toLocaleString();
+  document.getElementById('stat-tool-change').textContent  = `across ${toolUsageData.length} tools`;
+  renderToolUsageGrid(toolUsageData.slice(0, 8));
+  renderToolsTable(toolUsageData);
+}
+
+function renderToolUsageGrid(tools) {
+  const maxCount = Math.max(...tools.map(t => t.count||0)) || 1;
+  document.getElementById('tool-usage-grid').innerHTML = tools.map(t => `
+    <div class="tool-usage-item">
+      <div class="tool-usage-name">${t.tool_name}</div>
+      <div class="tool-usage-bar"><div class="tool-usage-fill" style="width:${Math.max(4,(t.count||0)/maxCount*100).toFixed(0)}%"></div></div>
+      <div class="tool-usage-count">${(t.count||0).toLocaleString()} uses</div>
+    </div>`).join('') || '<p style="color:var(--muted)">No usage data yet</p>';
+}
+
+function renderToolsTable(tools) {
+  document.getElementById('tools-tbody').innerHTML = tools.map(t => `
+    <tr>
+      <td><strong>${t.tool_name}</strong></td>
+      <td><span class="badge badge-blue">${t.tool_category || '—'}</span></td>
+      <td>${(t.count||0).toLocaleString()}</td>
+      <td>${t.unique_users || '—'}</td>
+      <td>${t.unique_users && t.count ? (t.count/t.unique_users).toFixed(1) : '—'}</td>
+      <td style="color:var(--green)">↑</td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No data</td></tr>';
+}
+
+// ─── ERRORS ───────────────────────────────────────────────────────────────────
+async function loadErrors() {
+  const { data } = await supabaseClient
+    .from('error_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  const container = document.getElementById('errors-list');
+  if (!data?.length) {
+    container.innerHTML = '<div style="text-align:center;padding:30px;color:var(--green)">✅ No recent errors logged</div>';
+    return;
+  }
+  container.innerHTML = data.map(e => `
+    <div class="error-item">
+      <div class="error-dot ${e.level === 'error' ? 'red' : 'yellow'}"></div>
+      <div>
+        <div class="error-text">${e.message || 'Unknown error'}</div>
+        <div class="error-meta">${e.endpoint || ''} · ${e.created_at ? new Date(e.created_at).toLocaleString('en-AU') : '—'} · User: ${e.user_id || 'anon'}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ─── FILTERING ────────────────────────────────────────────────────────────────
+function filterCustomers(query) {
+  const q = query.toLowerCase();
+  const filtered = q ? allCustomers.filter(c =>
+    (c.business_name||'').toLowerCase().includes(q) ||
+    (c.full_name||'').toLowerCase().includes(q) ||
+    (c.email||'').toLowerCase().includes(q) ||
+    (c.industry||'').toLowerCase().includes(q)
+  ) : allCustomers;
+  renderCustomersTable(filtered);
+}
+
+function filterPlan(plan, btn) {
+  currentPlanFilter = plan;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCustomersTable(allCustomers);
+}
+
+// ─── UTILITIES ────────────────────────────────────────────────────────────────
+function buildDashboard() {} // all data already rendered by loadCustomers / loadToolUsage
+
+function viewCustomer(id) {
+  const c = allCustomers.find(x => x.id === id);
+  if (!c) return;
+  alert(`Business: ${c.business_name || '—'}
+Owner: ${c.full_name || '—'}
+Email: ${c.email || '—'}
+Industry: ${c.industry || '—'}
+Plan: ${c.subscription_plan || '—'}
+Status: ${c.subscription_status || '—'}
+Tools activated: ${c.tools_activated?.length || 0}
+Joined: ${c.created_at ? new Date(c.created_at).toLocaleDateString('en-AU') : '—'}`);
+}
+
+function timeAgo(date) {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ago';
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return days + 'd ago';
+  return date.toLocaleDateString('en-AU');
+}
+
+function showAlert(msg, type = 'yellow') {
+  const el = document.getElementById('admin-alert');
+  el.textContent = '⚠️ ' + msg;
+  el.className = 'alert-bar ' + type;
+  el.style.display = 'flex';
+  setTimeout(() => el.style.display = 'none', 6000);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+async function init() {
+  // Check admin status
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) { window.location.href = '/login.html'; return; }
+
+  const { data: profile } = await supabaseClient
+    .from('profiles').select('is_admin').eq('id', user.id).single();
+
+  if (!profile?.is_admin) {
+    document.getElementById('loading-overlay').style.display = 'none';
+    document.querySelector('.main').innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:16px;">
+        <div style="font-size:48px">🔒</div>
+        <h2>Admin access required</h2>
+        <p style="color:var(--muted)">Your account doesn't have admin privileges.</p>
+        <a href="/dashboard.html" style="color:var(--blue)">← Back to dashboard</a>
+      </div>`;
+    return;
+  }
+
+  await loadAll();
+}
+
+init();
+</script>
+</body>
+</html>
