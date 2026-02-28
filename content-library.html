@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Content Library - TradeAI</title>
+  <title>Content Library - TradeAI Pro</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -876,7 +876,7 @@
 
 <!-- ─── HEADER ─── -->
 <div class="header">
-  <div class="logo">TradeAI — Content Library 📚</div>
+  <div class="logo">TradeAI Pro — Content Library 📚</div>
   <div class="header-actions">
     <a href="/social.html" class="btn-header blue">📣 Marketing Hub</a>
     <a href="/dashboard.html" class="btn-header grey">← Dashboard</a>
@@ -2280,7 +2280,7 @@ async function queuePhotosOffline(files, context) {
 }
 
 function openQueueDB() {
-  return new Promise((resolve, reject) => { const req = indexedDB.open('tradeai-photo-queue', 1); req.onupgradeneeded = e => e.target.result.createObjectStore('photo-queue', { autoIncrement: true }); req.onsuccess = e => resolve(e.target.result); req.onerror = reject; });
+  return new Promise((resolve, reject) => { const req = indexedDB.open('TradeAI Pro-photo-queue', 1); req.onupgradeneeded = e => e.target.result.createObjectStore('photo-queue', { autoIncrement: true }); req.onsuccess = e => resolve(e.target.result); req.onerror = reject; });
 }
 
 async function updateQueueBanner() {
