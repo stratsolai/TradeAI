@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Settings - TradeAI Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:#1A5490; --blue-light:#2471a3; --orange:#E8500A; --orange-light:#ff6b2b;
+      --bg:#0d1628; --bg2:#111d35; --bg3:#162240;
+      --card:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12);
+      --muted:rgba(255,255,255,0.65);
+      --body-font:'DM Sans',sans-serif; --heading-font:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--body-font);background:var(--bg);color:#fff;min-height:100vh;}
+
+    .header{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--heading-font);font-size:22px;font-weight:800;color:white;}
+    .logo span{color:var(--orange);}
+    .header-actions{display:flex;gap:10px;}
+    .btn-back,.btn-save{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);transition:all 0.2s;border:1px solid var(--card-border);text-decoration:none;}
+    .btn-back{background:var(--bg3);color:var(--muted);}
+    .btn-back:hover{color:white;border-color:rgba(255,255,255,0.25);}
+    .btn-save{background:var(--orange);color:white;border-color:transparent;}
+    .btn-save:hover{background:var(--orange-light);}
+
+    .container{max-width:900px;margin:0 auto;padding:40px 20px;}
+    .page-title{font-family:var(--heading-font);font-size:38px;font-weight:800;margin-bottom:6px;letter-spacing:0.5px;}
+    .page-subtitle{color:var(--muted);font-size:16px;margin-bottom:36px;}
+
+    .success-message{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;padding:12px 16px;border-radius:8px;margin-bottom:20px;display:none;}
+    .success-message.show{display:block;}
+
+    .settings-section{background:var(--bg2);border:1px solid var(--card-border);padding:28px;border-radius:16px;margin-bottom:24px;}
+    .section-title{font-family:var(--heading-font);font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:0.3px;}
+    .section-desc{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.55;}
+
+    .form-group{margin-bottom:22px;}
+    label{display:block;margin-bottom:8px;color:rgba(255,255,255,0.85);font-weight:600;font-size:13px;}
+    input[type="text"],input[type="number"],input[type="url"],textarea,select{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--card-border);border-radius:8px;color:white;font-size:14px;font-family:var(--body-font);outline:none;transition:border-color 0.2s;}
+    textarea{resize:vertical;min-height:100px;}
+    input:focus,textarea:focus,select:focus{border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(26,84,144,0.2);}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.3);}
+    select option{background:#1a2a4a;}
+    .help-text{font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;}
+
+    /* Frequency grid */
+    .frequency-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-bottom:8px;}
+    .freq-card{background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;}
+    .freq-card:hover{border-color:rgba(232,80,10,0.4);}
+    .freq-card.selected{border-color:var(--orange);background:rgba(232,80,10,0.1);}
+    .freq-num{font-family:var(--heading-font);font-size:26px;font-weight:800;color:var(--orange);}
+    .freq-label{font-size:12px;color:var(--muted);margin-top:2px;}
+
+    /* Category toggles */
+    .category-toggles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+    .toggle-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:14px 16px;}
+    .toggle-info{display:flex;align-items:center;gap:10px;}
+    .toggle-icon{font-size:20px;}
+    .toggle-label{font-weight:600;font-size:13px;color:white;}
+    .toggle{position:relative;width:44px;height:24px;}
+    .toggle input{opacity:0;width:0;height:0;}
+    .toggle-slider{position:absolute;inset:0;background:rgba(255,255,255,0.15);border-radius:12px;cursor:pointer;transition:0.3s;}
+    .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;left:3px;top:3px;background:rgba(255,255,255,0.6);transition:0.3s;}
+    .toggle input:checked + .toggle-slider{background:var(--orange);}
+    .toggle input:checked + .toggle-slider:before{transform:translateX(20px);background:white;}
+
+    /* Platform connect */
+    .platform-connect-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;}
+    .platform-connect-card{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;padding:20px;display:flex;align-items:center;gap:14px;}
+    .platform-connect-icon{font-size:32px;flex-shrink:0;}
+    .platform-connect-info{flex:1;}
+    .platform-connect-name{font-weight:700;font-size:14px;color:white;margin-bottom:2px;}
+    .platform-connect-status{font-size:12px;color:var(--muted);}
+    .platform-connect-status.connected{color:#6ee7b7;}
+    .btn-connect{padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600;font-family:var(--body-font);cursor:pointer;transition:all 0.2s;border:1px solid var(--card-border);background:var(--bg2);color:var(--muted);}
+    .btn-connect:hover{border-color:rgba(255,255,255,0.25);color:white;}
+    .btn-connect.connected{background:rgba(16,185,129,0.12);border-color:rgba(16,185,129,0.3);color:#6ee7b7;}
+
+    /* Timing grid */
+    .timing-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+    .day-column{text-align:center;}
+    .day-label{font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;}
+    .time-slot{background:var(--bg3);border:1px solid var(--card-border);border-radius:6px;padding:8px 4px;font-size:11px;color:var(--muted);cursor:pointer;text-align:center;transition:all 0.2s;margin-bottom:4px;}
+    .time-slot:hover{border-color:rgba(232,80,10,0.4);}
+    .time-slot.selected{background:rgba(232,80,10,0.15);border-color:var(--orange);color:var(--orange);}
+
+    .example-box{background:rgba(26,84,144,0.12);border:1px solid rgba(26,84,144,0.3);border-left:3px solid var(--blue-light);padding:14px;margin-top:12px;border-radius:0 8px 8px 0;}
+    .example-box strong{color:rgba(255,255,255,0.9);display:block;margin-bottom:6px;font-size:13px;}
+    .example-box p{font-size:13px;color:var(--muted);margin:3px 0;}
+
+    .tone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+    .tone-card{background:var(--bg3);border:1px solid var(--card-border);border-radius:10px;padding:14px;text-align:center;cursor:pointer;transition:all 0.2s;}
+    .tone-card:hover{border-color:rgba(232,80,10,0.4);}
+    .tone-card.selected{border-color:var(--orange);background:rgba(232,80,10,0.1);}
+    .tone-icon{font-size:24px;margin-bottom:6px;display:block;}
+    .tone-name{font-weight:600;font-size:13px;color:white;}
+    .tone-desc{font-size:11px;color:var(--muted);margin-top:3px;}
+
+    @media(max-width:768px){.header{padding:0 20px;}.container{padding:24px 16px;}.timing-grid{grid-template-columns:repeat(4,1fr);}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Trade<span>AI</span> Pro</div>
+    <div class="header-actions">
+      <a href="/social.html" class="btn-back">← Back to Social</a>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Social Media Settings ⚙️</h1>
+    <p class="page-subtitle">Configure your posting schedule, content preferences, and platform connections</p>
+
+    <div class="success-message" id="success-message">✅ Settings saved successfully!</div>
+
+    <!-- Posting Frequency -->
+    <div class="settings-section">
+      <div class="section-title">📅 Posting Frequency</div>
+      <p class="section-desc">How many posts per week do you want to publish?</p>
+      <div class="frequency-grid">
+        <div class="freq-card" onclick="selectFreq(1,this)"><div class="freq-num">1</div><div class="freq-label">per week</div></div>
+        <div class="freq-card selected" onclick="selectFreq(3,this)"><div class="freq-num">3</div><div class="freq-label">per week</div></div>
+        <div class="freq-card" onclick="selectFreq(5,this)"><div class="freq-num">5</div><div class="freq-label">per week</div></div>
+        <div class="freq-card" onclick="selectFreq(7,this)"><div class="freq-num">7</div><div class="freq-label">daily</div></div>
+        <div class="freq-card" onclick="selectFreq(14,this)"><div class="freq-num">14</div><div class="freq-label">twice daily</div></div>
+      </div>
+      <input type="hidden" id="posts-per-week" value="3">
+    </div>
+
+    <!-- Content Categories -->
+    <div class="settings-section">
+      <div class="section-title">🗂️ Content Categories</div>
+      <p class="section-desc">Which types of content should the AI generate for your business?</p>
+      <div class="category-toggles">
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">✅</span><span class="toggle-label">Completed Jobs</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-completed" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">💡</span><span class="toggle-label">Tips & Advice</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-tips" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">💬</span><span class="toggle-label">Customer Reviews</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-testimonials" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">🎯</span><span class="toggle-label">Promotions</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-promotions"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">👥</span><span class="toggle-label">Team & Culture</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-team" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">🔄</span><span class="toggle-label">Before & After</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-before-after" checked><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">❓</span><span class="toggle-label">FAQ Posts</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-faq"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="toggle-row">
+          <div class="toggle-info"><span class="toggle-icon">📣</span><span class="toggle-label">Company News</span></div>
+          <label class="toggle"><input type="checkbox" id="cat-news"><span class="toggle-slider"></span></label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tone & Voice -->
+    <div class="settings-section">
+      <div class="section-title">🎙️ Tone & Voice</div>
+      <p class="section-desc">How should the AI sound when writing your posts?</p>
+      <div class="tone-grid" id="tone-grid">
+        <div class="tone-card selected" onclick="selectTone('friendly',this)"><span class="tone-icon">😊</span><div class="tone-name">Friendly</div><div class="tone-desc">Warm & approachable</div></div>
+        <div class="tone-card" onclick="selectTone('professional',this)"><span class="tone-icon">👔</span><div class="tone-name">Professional</div><div class="tone-desc">Formal & credible</div></div>
+        <div class="tone-card" onclick="selectTone('casual',this)"><span class="tone-icon">🤙</span><div class="tone-name">Casual</div><div class="tone-desc">Relaxed & conversational</div></div>
+        <div class="tone-card" onclick="selectTone('bold',this)"><span class="tone-icon">💪</span><div class="tone-name">Bold</div><div class="tone-desc">Confident & direct</div></div>
+        <div class="tone-card" onclick="selectTone('australian',this)"><span class="tone-icon">🦘</span><div class="tone-name">Australian</div><div class="tone-desc">Aussie slang & humour</div></div>
+      </div>
+      <input type="hidden" id="selected-tone" value="friendly">
+    </div>
+
+    <!-- Business Context -->
+    <div class="settings-section">
+      <div class="section-title">🏢 Business Context</div>
+      <p class="section-desc">Help the AI write more relevant posts for your specific business.</p>
+      <div class="form-group">
+        <label>Business Name</label>
+        <input type="text" id="biz-name" placeholder="e.g., Smith's Pool Building">
+      </div>
+      <div class="form-group">
+        <label>Industry / Trade</label>
+        <select id="biz-industry">
+          <option value="">Select your trade...</option>
+          <option value="pool">Pool Building</option>
+          <option value="hvac">HVAC & Refrigeration</option>
+          <option value="electrical">Electrical Contracting</option>
+          <option value="plumbing">Plumbing</option>
+          <option value="construction">Construction</option>
+          <option value="landscaping">Landscaping</option>
+          <option value="cleaning">Commercial Cleaning</option>
+          <option value="fabrication">Metal Fabrication</option>
+          <option value="concreting">Concreting</option>
+          <option value="handyman">Handyman Services</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Service Areas</label>
+        <input type="text" id="biz-areas" placeholder="e.g., Sydney, Central Coast, Hunter Valley">
+        <p class="help-text">Helps AI include location-specific content</p>
+      </div>
+      <div class="form-group">
+        <label>Brand Hashtags</label>
+        <input type="text" id="brand-hashtags" placeholder="e.g., #SmithsPools #SydneyPools #CustomPools">
+        <p class="help-text">Always included in your posts</p>
+      </div>
+      <div class="form-group">
+        <label>Anything the AI should avoid?</label>
+        <textarea id="avoid-content" placeholder="e.g., Don't mention competitor names, avoid price comparisons..."></textarea>
+      </div>
+    </div>
+
+    <!-- Post Timing -->
+    <div class="settings-section">
+      <div class="section-title">⏰ Best Times to Post</div>
+      <p class="section-desc">Select your preferred posting times for each day. AI will schedule posts at these times.</p>
+      <div class="timing-grid" id="timing-grid">
+        <!-- Populated by JS -->
+      </div>
+      <div class="example-box" style="margin-top:16px;">
+        <strong>💡 Recommended times for trade businesses:</strong>
+        <p>Weekday mornings (7–9am) catch tradespeople before the workday</p>
+        <p>Lunch (12–1pm) reaches homeowners browsing on their break</p>
+        <p>Evenings (6–8pm) are best for Facebook & Instagram engagement</p>
+      </div>
+    </div>
+
+    <!-- Platform Connections -->
+    <div class="settings-section">
+      <div class="section-title">🔗 Connected Platforms</div>
+      <p class="section-desc">Connect your social accounts for direct posting. Without connections, posts are saved as drafts for manual upload.</p>
+      <div class="platform-connect-grid">
+        <div class="platform-connect-card">
+          <span class="platform-connect-icon">📘</span>
+          <div class="platform-connect-info">
+            <div class="platform-connect-name">Facebook Page</div>
+            <div class="platform-connect-status" id="fb-status">Not connected</div>
+          </div>
+          <button class="btn-connect" id="fb-btn" onclick="connectPlatform('facebook')">Connect</button>
+        </div>
+        <div class="platform-connect-card">
+          <span class="platform-connect-icon">📸</span>
+          <div class="platform-connect-info">
+            <div class="platform-connect-name">Instagram Business</div>
+            <div class="platform-connect-status" id="ig-status">Not connected</div>
+          </div>
+          <button class="btn-connect" id="ig-btn" onclick="connectPlatform('instagram')">Connect</button>
+        </div>
+        <div class="platform-connect-card">
+          <span class="platform-connect-icon">💼</span>
+          <div class="platform-connect-info">
+            <div class="platform-connect-name">LinkedIn Page</div>
+            <div class="platform-connect-status" id="li-status">Not connected</div>
+          </div>
+          <button class="btn-connect" id="li-btn" onclick="connectPlatform('linkedin')">Connect</button>
+        </div>
+      </div>
+      <div class="example-box" style="margin-top:16px;">
+        <strong>📲 Note:</strong>
+        <p>Instagram direct posting requires a Facebook Business account and connected Instagram Professional account.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+  <script>
+    requireAuth();
+
+    let selectedFreq = 3;
+    let selectedToneVal = 'friendly';
+    let selectedTimings = {};
+
+    // Build timing grid
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const times = ['7am','9am','12pm','3pm','6pm','8pm'];
+    const timingGrid = document.getElementById('timing-grid');
+    timingGrid.innerHTML = days.map(day => `
+      <div class="day-column">
+        <div class="day-label">${day}</div>
+        ${times.map(t => `<div class="time-slot" data-day="${day}" data-time="${t}" onclick="toggleTime(this)">${t}</div>`).join('')}
+      </div>`).join('');
+
+    function toggleTime(el) {
+      el.classList.toggle('selected');
+    }
+
+    function selectFreq(n, el) {
+      selectedFreq = n;
+      document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('posts-per-week').value = n;
+    }
+
+    function selectTone(tone, el) {
+      selectedToneVal = tone;
+      document.querySelectorAll('.tone-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      document.getElementById('selected-tone').value = tone;
+    }
+
+    async function loadSettings() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+      const settings = profile.social_settings || {};
+
+      if (settings.posts_per_week) {
+        selectedFreq = settings.posts_per_week;
+        document.querySelectorAll('.freq-card').forEach(c => c.classList.remove('selected'));
+        document.querySelectorAll('.freq-card').forEach(c => {
+          if (parseInt(c.querySelector('.freq-num').textContent) === selectedFreq) c.classList.add('selected');
+        });
+      }
+
+      if (settings.tone) selectTone(settings.tone, document.querySelector(`.tone-card[onclick*="${settings.tone}"]`) || document.querySelector('.tone-card'));
+
+      const cats = settings.categories || {};
+      ['completed','tips','testimonials','team','before-after'].forEach(k => {
+        const el = document.getElementById(`cat-${k}`);
+        if (el && cats[k] !== undefined) el.checked = cats[k];
+      });
+
+      if (settings.business_name) document.getElementById('biz-name').value = settings.business_name;
+      if (settings.industry) document.getElementById('biz-industry').value = settings.industry;
+      if (settings.service_areas) document.getElementById('biz-areas').value = settings.service_areas;
+      if (settings.brand_hashtags) document.getElementById('brand-hashtags').value = settings.brand_hashtags;
+      if (settings.avoid_content) document.getElementById('avoid-content').value = settings.avoid_content;
+
+      // Restore timing selections
+      if (settings.timings) {
+        Object.entries(settings.timings).forEach(([key, val]) => {
+          if (val) {
+            const [day, time] = key.split('_');
+            const slot = document.querySelector(`[data-day="${day}"][data-time="${time}"]`);
+            if (slot) slot.classList.add('selected');
+          }
+        });
+      }
+
+      // Platform connections
+      if (profile.facebook_connected) {
+        document.getElementById('fb-status').textContent = `Connected: ${profile.facebook_page_name || 'Page'}`;
+        document.getElementById('fb-status').classList.add('connected');
+        document.getElementById('fb-btn').textContent = 'Disconnect';
+        document.getElementById('fb-btn').classList.add('connected');
+      }
+      if (profile.instagram_connected) {
+        document.getElementById('ig-status').textContent = 'Connected';
+        document.getElementById('ig-status').classList.add('connected');
+        document.getElementById('ig-btn').textContent = 'Disconnect';
+        document.getElementById('ig-btn').classList.add('connected');
+      }
+      if (profile.linkedin_connected) {
+        document.getElementById('li-status').textContent = 'Connected';
+        document.getElementById('li-status').classList.add('connected');
+        document.getElementById('li-btn').textContent = 'Disconnect';
+        document.getElementById('li-btn').classList.add('connected');
+      }
+    }
+
+    window.saveSettings = async function() {
+      const timings = {};
+      document.querySelectorAll('.time-slot.selected').forEach(el => {
+        timings[`${el.dataset.day}_${el.dataset.time}`] = true;
+      });
+
+      const settings = {
+        posts_per_week: selectedFreq,
+        tone: document.getElementById('selected-tone').value,
+        categories: {
+          completed: document.getElementById('cat-completed').checked,
+          tips: document.getElementById('cat-tips').checked,
+          testimonials: document.getElementById('cat-testimonials').checked,
+          promotions: document.getElementById('cat-promotions').checked,
+          team: document.getElementById('cat-team').checked,
+          'before-after': document.getElementById('cat-before-after').checked,
+          faq: document.getElementById('cat-faq').checked,
+          news: document.getElementById('cat-news').checked,
+        },
+        business_name: document.getElementById('biz-name').value,
+        industry: document.getElementById('biz-industry').value,
+        service_areas: document.getElementById('biz-areas').value,
+        brand_hashtags: document.getElementById('brand-hashtags').value,
+        avoid_content: document.getElementById('avoid-content').value,
+        timings
+      };
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { alert('Not logged in!'); return; }
+        const { error } = await supabaseClient.from('profiles').update({ social_settings: settings }).eq('id', user.id);
+        if (error) { alert('Error saving: ' + error.message); return; }
+        document.getElementById('success-message').classList.add('show');
+        setTimeout(() => document.getElementById('success-message').classList.remove('show'), 3000);
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+
+    window.connectPlatform = async function(platform) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+
+      if (platform === 'facebook') {
+        const fbAppId = ''; // Add Facebook App ID
+        if (!fbAppId) { alert('Facebook connection coming soon! Your posts will be saved as drafts for manual upload.'); return; }
+        const redirectUri = window.location.origin + '/api/auth/facebook/callback';
+        window.location.href = `https://www.facebook.com/v18.0/dialog/oauth?client_id=${fbAppId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=pages_manage_posts,pages_read_engagement&state=${user.id}`;
+      } else if (platform === 'instagram') {
+        alert('Instagram connection requires Facebook Business integration. Connect Facebook first.');
+      } else if (platform === 'linkedin') {
+        alert('LinkedIn connection coming soon! Your posts will be saved as drafts for manual upload.');
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', loadSettings);
+  </script>
+</body>
+</html>

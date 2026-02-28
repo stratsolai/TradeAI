@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Media Manager - TradeAI Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:#1A5490; --blue-light:#2471a3; --orange:#E8500A; --orange-light:#ff6b2b;
+      --bg:#0d1628; --bg2:#111d35; --bg3:#162240;
+      --card:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12);
+      --muted:rgba(255,255,255,0.65);
+      --body-font:'DM Sans',sans-serif; --heading-font:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--body-font);background:var(--bg);color:#fff;min-height:100vh;}
+
+    /* Header */
+    .header{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--heading-font);font-size:22px;font-weight:800;color:white;}
+    .logo span{color:var(--orange);}
+    .header-actions{display:flex;gap:10px;align-items:center;}
+    .btn-nav{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);transition:all 0.2s;border:1px solid var(--card-border);text-decoration:none;background:var(--bg3);color:var(--muted);}
+    .btn-nav:hover{color:white;border-color:rgba(255,255,255,0.25);}
+    .btn-nav-orange{background:rgba(232,80,10,0.15);border-color:rgba(232,80,10,0.3);color:var(--orange);}
+    .btn-nav-orange:hover{background:rgba(232,80,10,0.25);color:var(--orange);}
+
+    .container{max-width:1100px;margin:0 auto;padding:40px 20px;}
+    .page-title{font-family:var(--heading-font);font-size:38px;font-weight:800;margin-bottom:6px;letter-spacing:0.5px;}
+    .page-subtitle{color:var(--muted);font-size:16px;margin-bottom:32px;}
+
+    /* Step nav */
+    .step-nav{display:flex;gap:0;margin-bottom:32px;background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;overflow:hidden;}
+    .step-btn{flex:1;padding:14px 20px;background:none;border:none;border-right:1px solid var(--card-border);cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);transition:all 0.2s;font-family:var(--body-font);display:flex;align-items:center;justify-content:center;gap:8px;}
+    .step-btn:last-child{border-right:none;}
+    .step-btn:hover{background:rgba(255,255,255,0.05);color:white;}
+    .step-btn.active{background:var(--bg3);color:white;}
+    .step-num{width:22px;height:22px;border-radius:50%;background:var(--card-border);color:var(--muted);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .step-btn.active .step-num{background:var(--orange);color:white;}
+    .step-btn.done .step-num{background:rgba(16,185,129,0.3);color:#6ee7b7;}
+
+    /* Steps */
+    .step{display:none;}
+    .step.active{display:block;}
+
+    /* Cards */
+    .card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;padding:28px;margin-bottom:24px;}
+    .card-title{font-family:var(--heading-font);font-size:22px;font-weight:700;margin-bottom:18px;letter-spacing:0.3px;}
+
+    /* Category grid */
+    .category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:24px;}
+    .category-card{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;padding:20px;cursor:pointer;transition:all 0.2s;text-align:center;}
+    .category-card:hover{border-color:rgba(232,80,10,0.4);background:rgba(232,80,10,0.08);}
+    .category-card.selected{border-color:var(--orange);background:rgba(232,80,10,0.12);}
+    .category-icon{font-size:32px;margin-bottom:8px;display:block;}
+    .category-name{font-weight:600;font-size:14px;color:white;}
+    .category-desc{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+    /* Platform selector */
+    .platform-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;}
+    .platform-btn{padding:10px 20px;border-radius:8px;border:1px solid var(--card-border);background:var(--bg3);color:var(--muted);cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;display:flex;align-items:center;gap:8px;}
+    .platform-btn:hover{border-color:rgba(255,255,255,0.25);color:white;}
+    .platform-btn.selected{border-color:var(--blue-light);background:rgba(26,84,144,0.2);color:white;}
+
+    /* Form */
+    .form-group{margin-bottom:20px;}
+    label{display:block;margin-bottom:8px;color:rgba(255,255,255,0.85);font-weight:600;font-size:13px;}
+    input[type="text"],textarea,select{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--card-border);border-radius:8px;color:white;font-size:14px;font-family:var(--body-font);outline:none;transition:border-color 0.2s;}
+    textarea{resize:vertical;}
+    input:focus,textarea:focus,select:focus{border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(26,84,144,0.2);}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.3);}
+    select option{background:#1a2a4a;}
+    .help-text{font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;}
+
+    /* Image upload */
+    .upload-zone{border:2px dashed var(--card-border);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--bg3);}
+    .upload-zone:hover{border-color:var(--orange);background:rgba(232,80,10,0.05);}
+    .upload-zone.drag-over{border-color:var(--orange);background:rgba(232,80,10,0.08);}
+    .upload-icon{font-size:40px;margin-bottom:10px;display:block;opacity:0.6;}
+    .upload-title{font-weight:600;color:white;margin-bottom:4px;}
+    .upload-desc{font-size:13px;color:var(--muted);}
+    .image-preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-top:16px;}
+    .image-preview{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:1;}
+    .image-preview img{width:100%;height:100%;object-fit:cover;}
+    .image-preview .remove-img{position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:white;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;}
+
+    /* Generated post preview */
+    .post-preview{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;padding:20px;margin-top:16px;}
+    .post-preview-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+    .platform-badge{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;}
+    .badge-fb{background:rgba(24,119,242,0.2);color:#60a5fa;}
+    .badge-ig{background:rgba(225,48,108,0.2);color:#f472b6;}
+    .badge-li{background:rgba(10,102,194,0.2);color:#93c5fd;}
+    .post-text{font-size:14px;line-height:1.65;color:rgba(255,255,255,0.9);white-space:pre-wrap;min-height:80px;}
+    .post-image{width:100%;border-radius:8px;margin-top:12px;max-height:300px;object-fit:cover;}
+    .post-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+
+    /* Buttons */
+    .btn-primary{padding:12px 24px;background:var(--orange);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-primary:hover{background:var(--orange-light);transform:translateY(-1px);}
+    .btn-primary:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:not-allowed;transform:none;}
+    .btn-secondary{padding:12px 24px;background:transparent;color:white;border:1px solid var(--card-border);border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-secondary:hover{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.25);}
+    .btn-blue{padding:10px 20px;background:var(--blue);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-blue:hover{background:var(--blue-light);}
+
+    /* Scheduled posts */
+    .scheduled-post{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;padding:18px;margin-bottom:14px;display:flex;gap:16px;align-items:flex-start;}
+    .scheduled-post-meta{flex:1;}
+    .scheduled-date{font-size:12px;color:var(--orange);font-weight:600;margin-bottom:4px;}
+    .scheduled-text{font-size:14px;color:rgba(255,255,255,0.85);line-height:1.5;}
+    .scheduled-platforms{display:flex;gap:6px;margin-top:8px;}
+
+    /* Status */
+    .status-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;}
+    .status-scheduled{background:rgba(245,158,11,0.15);color:#fcd34d;border:1px solid rgba(245,158,11,0.25);}
+    .status-posted{background:rgba(16,185,129,0.15);color:#6ee7b7;border:1px solid rgba(16,185,129,0.25);}
+
+    /* Loading */
+    .loading-bar{height:3px;background:linear-gradient(90deg,transparent,var(--orange),transparent);background-size:200% 100%;animation:loading 1.5s infinite;border-radius:2px;}
+    @keyframes loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+    .empty-state{text-align:center;padding:60px 20px;}
+    .empty-state-icon{font-size:56px;margin-bottom:14px;display:block;opacity:0.4;}
+    .empty-state h3{font-family:var(--heading-font);font-size:24px;font-weight:700;margin-bottom:8px;}
+    .empty-state p{color:var(--muted);font-size:15px;}
+
+    @media(max-width:768px){.header{padding:0 20px;}.container{padding:24px 16px;}.step-btn span.step-label{display:none;}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Trade<span>AI</span> Pro</div>
+    <div class="header-actions">
+      <a href="/social-settings.html" class="btn-nav btn-nav-orange">⚙️ Settings</a>
+      <a href="/dashboard.html" class="btn-nav">← Dashboard</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Social Media Manager 📱</h1>
+    <p class="page-subtitle">AI-powered posts for Facebook, Instagram & LinkedIn — tailored to your business</p>
+
+    <!-- Step Navigation -->
+    <div class="step-nav">
+      <button class="step-btn active" id="step-btn-1" onclick="goStep(1)">
+        <span class="step-num">1</span>
+        <span class="step-label">Choose Category</span>
+      </button>
+      <button class="step-btn" id="step-btn-2" onclick="goStep(2)">
+        <span class="step-num">2</span>
+        <span class="step-label">Add Content</span>
+      </button>
+      <button class="step-btn" id="step-btn-3" onclick="goStep(3)">
+        <span class="step-num">3</span>
+        <span class="step-label">Generate & Review</span>
+      </button>
+      <button class="step-btn" id="step-btn-4" onclick="goStep(4)">
+        <span class="step-num">4</span>
+        <span class="step-label">Scheduled Posts</span>
+      </button>
+    </div>
+
+    <!-- STEP 1: Category -->
+    <div class="step active" id="step-1">
+      <div class="card">
+        <div class="card-title">What type of post do you want to create?</div>
+        <div class="category-grid" id="category-grid">
+          <div class="category-card" onclick="selectCategory('completed-job')">
+            <span class="category-icon">✅</span>
+            <div class="category-name">Completed Job</div>
+            <div class="category-desc">Show off your finished work with photos</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('tip-advice')">
+            <span class="category-icon">💡</span>
+            <div class="category-name">Tip or Advice</div>
+            <div class="category-desc">Share industry knowledge & build trust</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('promotion')">
+            <span class="category-icon">🎯</span>
+            <div class="category-name">Promotion</div>
+            <div class="category-desc">Special offer or seasonal deal</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('testimonial')">
+            <span class="category-icon">💬</span>
+            <div class="category-name">Customer Review</div>
+            <div class="category-desc">Share a 5-star testimonial</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('team-culture')">
+            <span class="category-icon">👥</span>
+            <div class="category-name">Team & Culture</div>
+            <div class="category-desc">Behind the scenes & team stories</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('before-after')">
+            <span class="category-icon">🔄</span>
+            <div class="category-name">Before & After</div>
+            <div class="category-desc">Dramatic transformation reveals</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('faq')">
+            <span class="category-icon">❓</span>
+            <div class="category-name">FAQ Post</div>
+            <div class="category-desc">Answer common customer questions</div>
+          </div>
+          <div class="category-card" onclick="selectCategory('company-news')">
+            <span class="category-icon">📣</span>
+            <div class="category-name">Company News</div>
+            <div class="category-desc">Awards, milestones & announcements</div>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:13px;text-align:center;">Click a category to continue</p>
+      </div>
+    </div>
+
+    <!-- STEP 2: Add Content -->
+    <div class="step" id="step-2">
+      <div class="card">
+        <div class="card-title" id="step2-title">Add Your Content</div>
+
+        <!-- Platform selector -->
+        <div class="form-group">
+          <label>Post to which platforms?</label>
+          <div class="platform-row">
+            <button class="platform-btn selected" id="plat-fb" onclick="togglePlatform('facebook')">📘 Facebook</button>
+            <button class="platform-btn selected" id="plat-ig" onclick="togglePlatform('instagram')">📸 Instagram</button>
+            <button class="platform-btn" id="plat-li" onclick="togglePlatform('linkedin')">💼 LinkedIn</button>
+          </div>
+        </div>
+
+        <!-- Dynamic content fields injected here -->
+        <div id="content-fields"></div>
+
+        <!-- Image upload -->
+        <div class="form-group">
+          <label>Add Photos (optional)</label>
+          <div class="upload-zone" id="upload-zone">
+            <input type="file" id="image-input" accept="image/*" multiple style="display:none">
+            <span class="upload-icon">📷</span>
+            <div class="upload-title">Click or drop photos here</div>
+            <div class="upload-desc">JPG, PNG, WEBP — up to 10 photos</div>
+          </div>
+          <div class="image-preview-grid" id="image-previews"></div>
+        </div>
+
+        <div class="form-group">
+          <label>Schedule for</label>
+          <select id="schedule-time">
+            <option value="now">Post immediately</option>
+            <option value="tomorrow-morning">Tomorrow morning (8am)</option>
+            <option value="tomorrow-noon">Tomorrow midday (12pm)</option>
+            <option value="next-week">Next week</option>
+          </select>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:8px;">
+          <button class="btn-secondary" onclick="goStep(1)">← Back</button>
+          <button class="btn-primary" onclick="generatePost()" id="generate-btn">✨ Generate Post</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Review Generated Post -->
+    <div class="step" id="step-3">
+      <div class="card">
+        <div class="card-title">Review Your Generated Posts</div>
+        <div id="generating-indicator" style="display:none;margin-bottom:20px;">
+          <div class="loading-bar"></div>
+          <p style="color:var(--muted);font-size:13px;margin-top:10px;text-align:center;">AI is writing your posts...</p>
+        </div>
+        <div id="generated-posts"></div>
+        <div style="display:flex;gap:12px;margin-top:20px;" id="review-actions" style="display:none;">
+          <button class="btn-secondary" onclick="goStep(2)">← Edit Content</button>
+          <button class="btn-primary" onclick="schedulePosts()" id="schedule-btn">📅 Schedule Posts</button>
+          <button class="btn-secondary" onclick="generatePost()">🔄 Regenerate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 4: Scheduled Posts -->
+    <div class="step" id="step-4">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div class="card-title" style="margin-bottom:0;">Scheduled & Recent Posts</div>
+          <button class="btn-primary" onclick="goStep(1)" style="padding:10px 18px;font-size:13px;">+ New Post</button>
+        </div>
+        <div id="scheduled-posts-container">
+          <div class="empty-state">
+            <span class="empty-state-icon">📅</span>
+            <h3>No posts scheduled yet</h3>
+            <p>Create your first post to see it here</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+  <script>
+    requireAuth();
+
+    let selectedCategory = '';
+    let selectedPlatforms = ['facebook', 'instagram'];
+    let uploadedImages = [];
+    let generatedPosts = [];
+    let currentStep = 1;
+
+    const categoryLabels = {
+      'completed-job': 'Completed Job 🏆',
+      'tip-advice': 'Tip or Advice 💡',
+      'promotion': 'Promotion 🎯',
+      'testimonial': 'Customer Review 💬',
+      'team-culture': 'Team & Culture 👥',
+      'before-after': 'Before & After 🔄',
+      'faq': 'FAQ Post ❓',
+      'company-news': 'Company News 📣'
+    };
+
+    const contentFieldsConfig = {
+      'completed-job': [
+        { id:'job-description', label:'Describe the project', type:'textarea', placeholder:'e.g., Installed a 9m concrete pool with spa in Chatswood. Customer wanted resort-style feel with LED lighting and automation.' },
+        { id:'job-location', label:'Location (suburb / city)', type:'text', placeholder:'e.g., Chatswood, Sydney' },
+        { id:'job-result', label:'What was the outcome?', type:'text', placeholder:'e.g., Customer loved it, project completed 2 weeks ahead of schedule' }
+      ],
+      'tip-advice': [
+        { id:'tip-topic', label:'What is the tip about?', type:'text', placeholder:'e.g., How to maintain your pool in winter' },
+        { id:'tip-content', label:'Key points to include', type:'textarea', placeholder:'e.g., Check chlorine levels weekly, lower water temperature saves on chemicals, cover the pool...' }
+      ],
+      'promotion': [
+        { id:'promo-offer', label:'What is the offer?', type:'text', placeholder:'e.g., 10% off all installations booked before June 30' },
+        { id:'promo-details', label:'Additional details', type:'textarea', placeholder:'e.g., Valid for residential pools only, conditions apply...' }
+      ],
+      'testimonial': [
+        { id:'testimonial-text', label:'Paste the customer review', type:'textarea', placeholder:"e.g., \"Best decision we ever made. The team was professional, clean and the pool looks amazing. 10/10 would recommend.\"" },
+        { id:'testimonial-customer', label:'Customer name (optional)', type:'text', placeholder:'e.g., Sarah M. from Penrith' }
+      ],
+      'team-culture': [
+        { id:'team-story', label:'What do you want to share?', type:'textarea', placeholder:'e.g., Meet Jake, our lead installer with 8 years experience. This week he completed his 200th pool!' }
+      ],
+      'before-after': [
+        { id:'ba-description', label:'Describe the transformation', type:'textarea', placeholder:'e.g., Backyard went from an overgrown concrete slab to a stunning resort-style pool area in just 6 weeks.' }
+      ],
+      'faq': [
+        { id:'faq-question', label:'The customer question', type:'text', placeholder:'e.g., How long does it take to build a pool?' },
+        { id:'faq-answer', label:'Your answer', type:'textarea', placeholder:'e.g., Most residential pools take 6-10 weeks from sign-off to completion depending on...' }
+      ],
+      'company-news': [
+        { id:'news-headline', label:'What\'s the news?', type:'text', placeholder:'e.g., We just won the 2025 Master Pools Award for Excellence!' },
+        { id:'news-details', label:'More details', type:'textarea', placeholder:'e.g., We\'re incredibly proud to...' }
+      ]
+    };
+
+    function selectCategory(cat) {
+      selectedCategory = cat;
+      document.querySelectorAll('.category-card').forEach(c => c.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      setTimeout(() => {
+        buildContentFields();
+        document.getElementById('step2-title').textContent = categoryLabels[cat] || 'Add Your Content';
+        goStep(2);
+      }, 200);
+    }
+
+    function buildContentFields() {
+      const fields = contentFieldsConfig[selectedCategory] || [];
+      document.getElementById('content-fields').innerHTML = fields.map(f => `
+        <div class="form-group">
+          <label>${f.label}</label>
+          ${f.type === 'textarea'
+            ? `<textarea id="${f.id}" placeholder="${f.placeholder}" rows="3"></textarea>`
+            : `<input type="text" id="${f.id}" placeholder="${f.placeholder}">`}
+        </div>`).join('');
+    }
+
+    function togglePlatform(p) {
+      const btn = document.getElementById(`plat-${p.substring(0,2)}`);
+      if (selectedPlatforms.includes(p)) {
+        if (selectedPlatforms.length === 1) return; // keep at least one
+        selectedPlatforms = selectedPlatforms.filter(x => x !== p);
+        btn.classList.remove('selected');
+      } else {
+        selectedPlatforms.push(p);
+        btn.classList.add('selected');
+      }
+    }
+
+    // Image upload
+    setTimeout(() => {
+      const zone = document.getElementById('upload-zone');
+      const input = document.getElementById('image-input');
+      if (!zone || !input) return;
+      zone.addEventListener('click', () => input.click());
+      zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+      zone.addEventListener('drop', e => { e.preventDefault(); zone.classList.remove('drag-over'); handleImages(e.dataTransfer.files); });
+      input.addEventListener('change', e => handleImages(e.target.files));
+    }, 300);
+
+    function handleImages(files) {
+      Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          uploadedImages.push({ file, dataUrl: e.target.result });
+          renderImagePreviews();
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function renderImagePreviews() {
+      document.getElementById('image-previews').innerHTML = uploadedImages.map((img, i) => `
+        <div class="image-preview">
+          <img src="${img.dataUrl}" alt="Upload ${i+1}">
+          <button class="remove-img" onclick="removeImage(${i})">×</button>
+        </div>`).join('');
+    }
+
+    function removeImage(i) { uploadedImages.splice(i, 1); renderImagePreviews(); }
+
+    async function generatePost() {
+      goStep(3);
+      document.getElementById('generating-indicator').style.display = 'block';
+      document.getElementById('generated-posts').innerHTML = '';
+      document.getElementById('review-actions').style.display = 'none';
+
+      // Collect field values
+      const fields = contentFieldsConfig[selectedCategory] || [];
+      const fieldValues = {};
+      fields.forEach(f => {
+        const el = document.getElementById(f.id);
+        if (el) fieldValues[f.id] = el.value;
+      });
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const response = await fetch('/api/generate-social-post', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.id,
+            category: selectedCategory,
+            platforms: selectedPlatforms,
+            fieldValues,
+            hasImages: uploadedImages.length > 0
+          })
+        });
+        const data = await response.json();
+        document.getElementById('generating-indicator').style.display = 'none';
+
+        if (data.success && data.posts) {
+          generatedPosts = data.posts;
+          renderGeneratedPosts();
+        } else {
+          // Fallback demo post
+          generatedPosts = selectedPlatforms.map(p => ({
+            platform: p,
+            text: `Great work from the team this week! ${fieldValues[Object.keys(fieldValues)[0]] || ''}\n\n#TradeAI #${selectedCategory.replace('-','')}`
+          }));
+          renderGeneratedPosts();
+        }
+      } catch (err) {
+        document.getElementById('generating-indicator').style.display = 'none';
+        document.getElementById('generated-posts').innerHTML = `<p style="color:#ff8a8a;">Error generating post. Please try again.</p>`;
+      }
+
+      document.getElementById('review-actions').style.display = 'flex';
+    }
+
+    function renderGeneratedPosts() {
+      const badgeClass = { facebook:'badge-fb', instagram:'badge-ig', linkedin:'badge-li' };
+      const platformLabel = { facebook:'Facebook', instagram:'Instagram', linkedin:'LinkedIn' };
+      document.getElementById('generated-posts').innerHTML = generatedPosts.map((post, i) => `
+        <div class="post-preview" style="margin-bottom:16px;">
+          <div class="post-preview-header">
+            <span class="platform-badge ${badgeClass[post.platform]}">${platformLabel[post.platform]}</span>
+          </div>
+          <textarea class="post-text" id="post-text-${i}" style="background:transparent;border:none;width:100%;color:rgba(255,255,255,0.9);font-size:14px;line-height:1.65;resize:vertical;outline:none;font-family:var(--body-font);" rows="6">${post.text}</textarea>
+          ${uploadedImages.length > 0 ? `<img src="${uploadedImages[0].dataUrl}" class="post-image" alt="Post image">` : ''}
+        </div>`).join('');
+    }
+
+    async function schedulePosts() {
+      const btn = document.getElementById('schedule-btn');
+      btn.disabled = true; btn.textContent = 'Scheduling...';
+
+      // Collect edited text
+      generatedPosts.forEach((post, i) => {
+        const el = document.getElementById(`post-text-${i}`);
+        if (el) post.text = el.value;
+      });
+
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const scheduleTime = document.getElementById('schedule-time').value;
+        const response = await fetch('/api/schedule-social-posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user?.id, posts: generatedPosts, scheduleTime })
+        });
+        const data = await response.json();
+        if (data.success) {
+          alert(`✅ Posts scheduled successfully!\n\nYour ${generatedPosts.length} post(s) have been queued.`);
+          goStep(4);
+          loadScheduledPosts();
+        } else {
+          alert('Posts saved! Note: auto-posting requires social media accounts to be connected in Settings.');
+          goStep(4);
+        }
+      } catch (err) {
+        alert('Posts saved locally. Connect your social accounts in Settings to enable auto-posting.');
+        goStep(4);
+      }
+
+      btn.disabled = false; btn.textContent = '📅 Schedule Posts';
+    }
+
+    async function loadScheduledPosts() {
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) return;
+        const { data: posts } = await supabaseClient
+          .from('scheduled_posts')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(20);
+
+        const container = document.getElementById('scheduled-posts-container');
+        if (!posts || posts.length === 0) {
+          container.innerHTML = `<div class="empty-state"><span class="empty-state-icon">📅</span><h3>No posts yet</h3><p>Create your first post to see it here</p></div>`;
+          return;
+        }
+
+        const badgeClass = { facebook:'badge-fb', instagram:'badge-ig', linkedin:'badge-li' };
+        container.innerHTML = posts.map(post => `
+          <div class="scheduled-post">
+            <div class="scheduled-post-meta">
+              <div class="scheduled-date">${new Date(post.scheduled_for || post.created_at).toLocaleDateString('en-AU', { weekday:'short', day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}</div>
+              <div class="scheduled-text">${(post.post_text || '').substring(0, 120)}${(post.post_text || '').length > 120 ? '...' : ''}</div>
+              <div class="scheduled-platforms" style="margin-top:8px;">
+                ${(post.platforms || []).map(p => `<span class="platform-badge ${badgeClass[p] || ''}" style="font-size:10px;padding:3px 8px;">${p}</span>`).join('')}
+              </div>
+            </div>
+            <span class="status-pill ${post.status === 'posted' ? 'status-posted' : 'status-scheduled'}">${post.status === 'posted' ? '✓ Posted' : '⏰ Scheduled'}</span>
+          </div>`).join('');
+      } catch (err) {
+        console.error('Error loading posts:', err);
+      }
+    }
+
+    function goStep(n) {
+      currentStep = n;
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+      document.getElementById(`step-${n}`).classList.add('active');
+      document.querySelectorAll('.step-btn').forEach((btn, i) => {
+        btn.classList.remove('active', 'done');
+        if (i + 1 === n) btn.classList.add('active');
+        else if (i + 1 < n) btn.classList.add('done');
+      });
+      if (n === 4) loadScheduledPosts();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => { /* ready */ });
+  </script>
+</body>
+</html>

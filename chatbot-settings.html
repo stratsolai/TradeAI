@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chatbot Settings - TradeAI Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:#1A5490; --blue-light:#2471a3; --orange:#E8500A; --orange-light:#ff6b2b;
+      --bg:#0d1628; --bg2:#111d35; --bg3:#162240;
+      --card:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12);
+      --muted:rgba(255,255,255,0.65);
+      --body-font:'DM Sans',sans-serif; --heading-font:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--body-font);background:var(--bg);color:#fff;min-height:100vh;}
+
+    .header{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--heading-font);font-size:22px;font-weight:800;color:white;}
+    .logo span{color:var(--orange);}
+    .header-actions{display:flex;gap:10px;}
+    .btn-back,.btn-save{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);transition:all 0.2s;border:1px solid var(--card-border);text-decoration:none;}
+    .btn-back{background:var(--bg3);color:var(--muted);}
+    .btn-back:hover{color:white;border-color:rgba(255,255,255,0.25);}
+    .btn-save{background:var(--orange);color:white;border-color:transparent;}
+    .btn-save:hover{background:var(--orange-light);}
+
+    .container{max-width:900px;margin:0 auto;padding:40px 20px;}
+    .page-title{font-family:var(--heading-font);font-size:38px;font-weight:800;margin-bottom:6px;letter-spacing:0.5px;}
+    .page-subtitle{color:var(--muted);font-size:16px;margin-bottom:36px;}
+
+    .success-message{background:rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;padding:12px 16px;border-radius:8px;margin-bottom:20px;display:none;}
+    .success-message.show{display:block;}
+
+    .settings-section{background:var(--bg2);border:1px solid var(--card-border);padding:28px;border-radius:16px;margin-bottom:24px;}
+    .section-title{font-family:var(--heading-font);font-size:22px;font-weight:700;margin-bottom:8px;letter-spacing:0.3px;display:flex;align-items:center;gap:8px;}
+    .section-desc{color:var(--muted);font-size:14px;margin-bottom:22px;line-height:1.55;}
+
+    .form-group{margin-bottom:22px;}
+    label{display:block;margin-bottom:8px;color:rgba(255,255,255,0.85);font-weight:600;font-size:13px;}
+    input[type="text"],textarea,select{
+      width:100%;padding:12px 14px;
+      background:var(--bg3);border:1px solid var(--card-border);
+      border-radius:8px;color:white;font-size:14px;font-family:var(--body-font);
+      outline:none;transition:border-color 0.2s;
+    }
+    textarea{min-height:110px;resize:vertical;}
+    input:focus,textarea:focus,select:focus{border-color:var(--blue-light);box-shadow:0 0 0 3px rgba(26,84,144,0.2);}
+    input::placeholder,textarea::placeholder{color:rgba(255,255,255,0.3);}
+    select option{background:#1a2a4a;color:white;}
+    .help-text{font-size:12px;color:rgba(255,255,255,0.4);margin-top:6px;font-style:italic;}
+
+    .example-box{background:rgba(26,84,144,0.12);border-left:3px solid var(--blue-light);padding:14px;margin-top:12px;border-radius:0 8px 8px 0;}
+    .example-box strong{color:rgba(255,255,255,0.9);display:block;margin-bottom:6px;font-size:13px;}
+    .example-box p{font-size:13px;color:var(--muted);margin:4px 0;}
+
+    .faq-list{margin-top:16px;}
+    .faq-item{background:var(--bg3);border:1px solid var(--card-border);padding:14px;border-radius:8px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:start;gap:12px;}
+    .faq-content{flex:1;}
+    .faq-question{font-weight:600;color:white;margin-bottom:4px;font-size:14px;}
+    .faq-answer{font-size:13px;color:var(--muted);}
+    .btn-remove{background:rgba(220,53,69,0.2);border:1px solid rgba(220,53,69,0.3);color:#ff8a8a;padding:4px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-remove:hover{background:rgba(220,53,69,0.35);}
+    .btn-add{background:var(--blue);color:white;border:none;padding:9px 18px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);margin-top:12px;transition:all 0.2s;}
+    .btn-add:hover{background:var(--blue-light);}
+
+    .info-box{background:rgba(26,84,144,0.12);border:1px solid rgba(26,84,144,0.3);border-left:3px solid var(--blue-light);padding:16px;margin-bottom:20px;border-radius:0 8px 8px 0;}
+    .info-box p{margin-bottom:6px;line-height:1.6;font-size:14px;color:rgba(255,255,255,0.85);}
+    .info-box strong{color:white;}
+
+    .email-connected-box{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);padding:16px;border-radius:8px;margin-bottom:16px;}
+    .email-connected-box strong{color:#6ee7b7;}
+    .email-connect-row{display:flex;gap:12px;margin-top:16px;}
+    .btn-gmail{flex:1;padding:12px;background:var(--bg3);border:1px solid var(--card-border);color:white;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--body-font);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-gmail:hover{border-color:rgba(255,255,255,0.3);}
+    .btn-outlook{flex:1;padding:12px;background:rgba(0,120,212,0.15);border:1px solid rgba(0,120,212,0.3);color:white;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;font-family:var(--body-font);transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .btn-outlook:hover{background:rgba(0,120,212,0.25);}
+
+    .pending-faq{background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);padding:14px;border-radius:8px;margin-bottom:10px;}
+    .pending-faq .faq-question{color:#fcd34d;}
+    .pending-faq-actions{display:flex;gap:8px;margin-top:10px;}
+    .btn-approve{padding:7px 14px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-approve:hover{background:rgba(16,185,129,0.25);}
+    .btn-reject-faq{padding:7px 14px;background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.25);color:#ff8a8a;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-reject-faq:hover{background:rgba(220,53,69,0.25);}
+
+    .widget-code{font-family:monospace;background:var(--bg3);height:90px;font-size:12px;color:rgba(255,255,255,0.8);}
+
+    @media(max-width:768px){.header{padding:0 20px;}.container{padding:24px 16px;}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Trade<span>AI</span> Pro</div>
+    <div class="header-actions">
+      <a href="/chatbot.html" class="btn-back">← Back to Chatbot</a>
+      <button class="btn-save" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Customise Your Chatbot 🤖</h1>
+    <p class="page-subtitle">Teach the AI about your business so it can respond accurately to customers</p>
+
+    <div class="success-message" id="success-message">✅ Settings saved successfully!</div>
+
+    <div class="settings-section">
+      <div class="section-title">📋 Business Information</div>
+      <p class="section-desc">Tell the AI about your business — this information will be used to answer customer questions.</p>
+      <div class="form-group">
+        <label>Business Name</label>
+        <input type="text" id="business-name" placeholder="e.g., My Business Name">
+        <p class="help-text">Your business name as it appears to customers</p>
+      </div>
+      <div class="form-group">
+        <label>What do you do?</label>
+        <textarea id="business-description" placeholder="e.g., We design and install custom concrete pools in Brisbane and Gold Coast. We've been building pools for 11 years."></textarea>
+        <p class="help-text">Describe your services in 2-3 sentences</p>
+      </div>
+      <div class="form-group">
+        <label>Service Areas</label>
+        <input type="text" id="service-areas" placeholder="e.g., Mid North Coast, Central Coast, Sydney">
+        <p class="help-text">Where do you operate? (comma separated)</p>
+      </div>
+      <div class="form-group">
+        <label>Typical Project Timeline</label>
+        <input type="text" id="timeline" placeholder="e.g., 8-10 weeks from deposit to completion">
+        <p class="help-text">How long does a typical project take?</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">💰 Pricing Information</div>
+      <p class="section-desc">Help the AI provide accurate pricing information to qualified leads.</p>
+      <div class="form-group">
+        <label>Price Ranges</label>
+        <textarea id="price-ranges" placeholder="e.g., Product Category $1k - $3k"></textarea>
+        <p class="help-text">List your typical price ranges so the AI can guide customers</p>
+      </div>
+      <div class="form-group">
+        <label>What's included in your pricing?</label>
+        <input type="text" id="whats-included" placeholder="e.g., All onsite services excluding..">
+        <p class="help-text">What does a customer get for their money?</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">🎯 Qualifying Questions</div>
+      <p class="section-desc">The AI will ask these questions to qualify leads before booking consultations.</p>
+      <div class="form-group">
+        <label>Budget Question</label>
+        <select id="ask-budget"><option value="yes">Yes, ask about budget</option><option value="no">No, don't ask about budget</option></select>
+      </div>
+      <div class="form-group">
+        <label>Timeline Question</label>
+        <select id="ask-timeline"><option value="yes">Yes, ask when they want to start</option><option value="no">No, don't ask about timeline</option></select>
+      </div>
+      <div class="form-group">
+        <label>Location Question</label>
+        <select id="ask-location"><option value="yes">Yes, ask their location</option><option value="no">No, don't ask location</option></select>
+      </div>
+      <div class="form-group">
+        <label>Project Details Question</label>
+        <select id="ask-project"><option value="yes">Yes, ask about project details</option><option value="no">No, don't ask project details</option></select>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">👋 Greeting Message</div>
+      <p class="section-desc">Customize the first message visitors see when they open the chat.</p>
+      <div class="form-group">
+        <label>Custom Greeting</label>
+        <textarea id="greeting-message" placeholder="Hi! Looking to install or build? I'm here to help!"></textarea>
+        <p class="help-text">This is the first thing visitors see</p>
+      </div>
+      <div class="example-box">
+        <strong>Examples:</strong>
+        <p>"👋 Hi! Ready to transform your backyard? Let's chat about your dream pool!"</p>
+        <p>"G'day! Looking for a quote? I can help with that. What brings you here today?"</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">❓ Frequently Asked Questions</div>
+      <p class="section-desc">Add common questions and answers so the AI can respond instantly.</p>
+      <div id="faq-list" class="faq-list"></div>
+      <button class="btn-add" onclick="addFAQ()">+ Add FAQ</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">📅 Booking Integration</div>
+      <p class="section-desc">Connect your calendar so the AI can book consultations automatically.</p>
+      <div class="form-group">
+        <label>Booking Link</label>
+        <input type="text" id="booking-link" placeholder="e.g., https://calendly.com/yourbusiness/consultation">
+        <p class="help-text">Your Calendly, Cal.com, or booking page URL</p>
+      </div>
+      <div class="example-box">
+        <strong>Don't have a booking link?</strong>
+        <p>Free options: Calendly.com, Cal.com, or Google Calendar appointment slots</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">🌐 Add to Your Website</div>
+      <p class="section-desc">Copy this code and paste it before the closing &lt;/body&gt; tag on your website.</p>
+      <div class="form-group">
+        <label>Your Widget Code</label>
+        <textarea id="widget-code" class="widget-code" readonly></textarea>
+        <button class="btn-add" onclick="copyWidgetCode()" style="margin-top:12px;">📋 Copy Code</button>
+      </div>
+      <div class="example-box">
+        <strong>Installation Instructions:</strong>
+        <p>1. Copy the code above</p>
+        <p>2. Open your website's HTML file</p>
+        <p>3. Paste it just before the &lt;/body&gt; tag</p>
+        <p>4. Save and publish — the chat widget will appear!</p>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="section-title">📧 Email Learning (AI Auto-Improvement)</div>
+      <p class="section-desc">Connect your email so the AI can learn from your customer conversations and automatically improve your chatbot.</p>
+      <div class="info-box">
+        <p><strong>How it works:</strong></p>
+        <p>1. AI scans your customer emails (read-only access)</p>
+        <p>2. Extracts common questions and your answers</p>
+        <p>3. Suggests new FAQs for your chatbot</p>
+        <p>4. You review and approve — chatbot gets smarter!</p>
+      </div>
+      <div id="email-status-container"></div>
+      <div id="learned-faqs-container" style="display:none;margin-top:24px;">
+        <h3 style="font-family:var(--heading-font);font-size:20px;font-weight:700;margin-bottom:16px;">📚 Suggested FAQs from Your Emails</h3>
+        <div id="learned-faqs-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+  <script>
+    requireAuth();
+    let faqs = [];
+
+    async function loadSettings() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+      const settings = profile.chatbot_settings || {};
+      document.getElementById('business-name').value = settings.business_name || profile.business_name || '';
+      document.getElementById('business-description').value = settings.business_description || '';
+      document.getElementById('service-areas').value = settings.service_areas || '';
+      document.getElementById('timeline').value = settings.timeline || '';
+      document.getElementById('price-ranges').value = settings.price_ranges || '';
+      document.getElementById('whats-included').value = settings.whats_included || '';
+      document.getElementById('ask-budget').value = settings.ask_budget || 'yes';
+      document.getElementById('ask-timeline').value = settings.ask_timeline || 'yes';
+      document.getElementById('ask-location').value = settings.ask_location || 'yes';
+      document.getElementById('ask-project').value = settings.ask_project || 'yes';
+      document.getElementById('greeting-message').value = settings.greeting_message || "Hi! Looking to build a pool? I'm here to help!";
+      document.getElementById('booking-link').value = settings.booking_link || '';
+      faqs = settings.faqs || [];
+      renderFAQs();
+      generateWidgetCode();
+    }
+
+    window.saveSettings = async function() {
+      const settings = {
+        business_name: document.getElementById('business-name').value,
+        business_description: document.getElementById('business-description').value,
+        service_areas: document.getElementById('service-areas').value,
+        timeline: document.getElementById('timeline').value,
+        price_ranges: document.getElementById('price-ranges').value,
+        whats_included: document.getElementById('whats-included').value,
+        ask_budget: document.getElementById('ask-budget').value,
+        ask_timeline: document.getElementById('ask-timeline').value,
+        ask_location: document.getElementById('ask-location').value,
+        ask_project: document.getElementById('ask-project').value,
+        greeting_message: document.getElementById('greeting-message').value,
+        booking_link: document.getElementById('booking-link').value,
+        faqs
+      };
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { alert('Not logged in!'); return; }
+        const { error } = await supabaseClient.from('profiles').update({ chatbot_settings: settings }).eq('id', user.id).select();
+        if (error) { alert('Error saving settings: ' + error.message); }
+        else {
+          document.getElementById('success-message').classList.add('show');
+          setTimeout(() => document.getElementById('success-message').classList.remove('show'), 3000);
+        }
+      } catch (err) { alert('Error: ' + err.message); }
+    };
+
+    window.addFAQ = function() {
+      const question = prompt('Enter the question:');
+      if (!question) return;
+      const answer = prompt('Enter the answer:');
+      if (!answer) return;
+      faqs.push({ question, answer });
+      renderFAQs();
+    };
+
+    window.removeFAQ = function(index) { faqs.splice(index, 1); renderFAQs(); };
+
+    function renderFAQs() {
+      const container = document.getElementById('faq-list');
+      if (faqs.length === 0) {
+        container.innerHTML = '<p style="color:var(--muted);font-style:italic;font-size:14px;">No FAQs added yet. Click "Add FAQ" to get started.</p>';
+        return;
+      }
+      container.innerHTML = faqs.map((faq, i) => `
+        <div class="faq-item">
+          <div class="faq-content">
+            <div class="faq-question">${faq.question}</div>
+            <div class="faq-answer">${faq.answer}</div>
+          </div>
+          <button class="btn-remove" onclick="removeFAQ(${i})">Remove</button>
+        </div>`).join('');
+    }
+
+    async function generateWidgetCode() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      document.getElementById('widget-code').value = `<!-- TradeAI Chat Widget -->\n<script src="https://trade-ai-seven-blue.vercel.app/widget.js" data-user-id="${user.id}"><\/script>`;
+    }
+
+    window.copyWidgetCode = function() {
+      const textarea = document.getElementById('widget-code');
+      textarea.select();
+      document.execCommand('copy');
+      alert('✅ Widget code copied! Paste it into your website.');
+    };
+
+    async function loadEmailStatus() {
+      const profile = await getUserProfile();
+      if (!profile) return;
+      const container = document.getElementById('email-status-container');
+      const gmailConnected = profile.gmail_connected_email;
+      const outlookConnected = profile.outlook_connected_email;
+      if (gmailConnected || outlookConnected) {
+        const provider = gmailConnected ? 'Gmail' : 'Outlook';
+        const email = gmailConnected || outlookConnected;
+        container.innerHTML = `
+          <div class="email-connected-box">
+            <strong>✓ ${provider} Connected</strong><br>
+            <span style="color:var(--muted);font-size:13px;">${email}</span><br>
+            <div style="display:flex;gap:10px;margin-top:12px;">
+              <button class="btn-add" onclick="disconnectEmail()" style="background:rgba(220,53,69,0.2);border:1px solid rgba(220,53,69,0.3);color:#ff8a8a;">Disconnect</button>
+              <button class="btn-add" onclick="scanEmails(event)">🔍 Scan for New FAQs</button>
+            </div>
+          </div>`;
+        loadLearnedFAQs();
+      } else {
+        container.innerHTML = `
+          <div class="email-connect-row">
+            <button class="btn-gmail" onclick="connectGmail()">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.545l8.073-6.052C21.69 2.28 24 3.434 24 5.457z"/></svg>
+              Connect Gmail
+            </button>
+            <button class="btn-outlook" onclick="connectOutlook()">
+              <svg width="18" height="18" viewBox="0 0 24 24"><path fill="currentColor" d="M7 4v16h14V4H7zm6 14c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z"/></svg>
+              Connect Outlook
+            </button>
+          </div>`;
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('email_connected')) {
+        const provider = urlParams.get('email_connected');
+        setTimeout(() => {
+          alert(`✅ ${provider === 'gmail' ? 'Gmail' : 'Outlook'} connected successfully!\n\nClick "Scan for New FAQs" to start learning from your emails.`);
+          window.history.replaceState({}, document.title, '/chatbot-settings.html');
+        }, 500);
+      } else if (urlParams.get('error')) {
+        setTimeout(() => { alert('❌ Email connection failed. Please try again.'); window.history.replaceState({}, document.title, '/chatbot-settings.html'); }, 500);
+      }
+    }
+
+    window.connectGmail = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      const clientId = '368140587749-isq0imjs2n70snmceqnb9s5coqjleak8.apps.googleusercontent.com';
+      const redirectUri = window.location.origin + '/api/auth/google/callback';
+      const scope = 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email';
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${user.id}&access_type=offline&prompt=consent`;
+    };
+
+    window.connectOutlook = async function() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      const clientId = 'da28dfdf-0a07-4fba-b512-7446c605ba4f';
+      const redirectUri = window.location.origin + '/api/auth/microsoft/callback';
+      const scope = 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read';
+      window.location.href = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${user.id}&prompt=consent`;
+    };
+
+    window.disconnectEmail = async function() {
+      if (!confirm('Disconnect email? Learned FAQs will be preserved but no new emails will be scanned.')) return;
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      await supabaseClient.from('profiles').update({ email_connected:false, gmail_access_token:null, gmail_refresh_token:null, gmail_connected_email:null, outlook_access_token:null, outlook_refresh_token:null, outlook_connected_email:null }).eq('id', user.id);
+      alert('✅ Email disconnected');
+      loadEmailStatus();
+    };
+
+    window.scanEmails = async function(event) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      const btn = event?.target;
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Scanning emails...'; }
+      try {
+        const response = await fetch('/api/scan-emails', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ userId: user.id }) });
+        const data = await response.json();
+        if (data.success) { alert(`✅ Scan complete!\n\nFound ${data.count} potential FAQs.\n\nReview them below.`); loadLearnedFAQs(); }
+        else alert('❌ Scan failed: ' + (data.error || 'Unknown error'));
+      } catch (error) { alert('❌ Error: ' + error.message); }
+      if (btn) { btn.disabled = false; btn.textContent = '🔍 Scan for New FAQs'; }
+    };
+
+    async function loadLearnedFAQs() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      const { data: learnedFAQs } = await supabaseClient.from('learned_faqs').select('*').eq('user_id', user.id).eq('status', 'pending').order('created_at', { ascending: false });
+      const container = document.getElementById('learned-faqs-container');
+      const list = document.getElementById('learned-faqs-list');
+      if (!learnedFAQs || learnedFAQs.length === 0) { container.style.display = 'none'; return; }
+      container.style.display = 'block';
+      list.innerHTML = learnedFAQs.map(faq => `
+        <div class="pending-faq">
+          <div class="faq-question"><strong>Q:</strong> ${faq.question}</div>
+          <div class="faq-answer" style="color:var(--muted);font-size:13px;margin-top:4px;"><strong>A:</strong> ${faq.answer}</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:6px;">From: ${faq.source_email_subject || 'Email'}</div>
+          <div class="pending-faq-actions">
+            <button class="btn-approve" onclick="approveFAQ('${faq.id}')">✓ Approve</button>
+            <button class="btn-reject-faq" onclick="rejectFAQ('${faq.id}')">✗ Reject</button>
+          </div>
+        </div>`).join('');
+    }
+
+    window.approveFAQ = async function(faqId) {
+      const { data: faq } = await supabaseClient.from('learned_faqs').select('*').eq('id', faqId).single();
+      if (!faq) return;
+      faqs.push({ question: faq.question, answer: faq.answer });
+      await supabaseClient.from('learned_faqs').update({ status:'approved', approved_at: new Date().toISOString() }).eq('id', faqId);
+      await saveSettings();
+      alert('✅ FAQ added to your chatbot!');
+      loadLearnedFAQs(); renderFAQs();
+    };
+
+    window.rejectFAQ = async function(faqId) {
+      await supabaseClient.from('learned_faqs').update({ status:'rejected' }).eq('id', faqId);
+      loadLearnedFAQs();
+    };
+
+    document.addEventListener('DOMContentLoaded', function() { loadSettings(); loadEmailStatus(); });
+  </script>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Content Library - TradeAI Pro</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue:#1A5490; --blue-light:#2471a3; --orange:#E8500A; --orange-light:#ff6b2b;
+      --bg:#0d1628; --bg2:#111d35; --bg3:#162240;
+      --card:rgba(255,255,255,0.07); --card-border:rgba(255,255,255,0.12);
+      --muted:rgba(255,255,255,0.65);
+      --body-font:'DM Sans',sans-serif; --heading-font:'Barlow Condensed',sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:var(--body-font);background:var(--bg);color:#fff;min-height:100vh;}
+
+    .header{background:var(--bg2);border-bottom:1px solid var(--card-border);padding:0 40px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+    .logo{font-family:var(--heading-font);font-size:22px;font-weight:800;color:white;}
+    .logo span{color:var(--orange);}
+    .btn-back{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);transition:all 0.2s;border:1px solid var(--card-border);text-decoration:none;background:var(--bg3);color:var(--muted);}
+    .btn-back:hover{color:white;border-color:rgba(255,255,255,0.25);}
+
+    .container{max-width:1400px;margin:0 auto;padding:36px 20px;}
+    .page-title{font-family:var(--heading-font);font-size:38px;font-weight:800;margin-bottom:6px;letter-spacing:0.5px;}
+    .page-subtitle{color:var(--muted);font-size:16px;margin-bottom:28px;}
+
+    /* Stats */
+    .stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px;}
+    .stat-card{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:18px 20px;}
+    .stat-value{font-family:var(--heading-font);font-size:34px;font-weight:800;color:var(--orange);margin-bottom:4px;}
+    .stat-label{font-size:13px;color:var(--muted);}
+
+    /* Tabs */
+    .tabs{display:flex;gap:0;margin-bottom:28px;background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;overflow:hidden;}
+    .tab{flex:1;padding:14px 20px;background:none;border:none;border-right:1px solid var(--card-border);cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);transition:all 0.2s;font-family:var(--body-font);}
+    .tab:last-child{border-right:none;}
+    .tab:hover{background:rgba(255,255,255,0.04);color:white;}
+    .tab.active{background:var(--bg3);color:white;}
+    .tab-content{display:none;}
+    .tab-content.active{display:block;}
+
+    .badge{display:inline-block;padding:2px 8px;background:var(--orange);color:white;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px;}
+
+    /* Cards */
+    .card{background:var(--bg2);border:1px solid var(--card-border);border-radius:16px;padding:28px;margin-bottom:20px;}
+    .card-title{font-family:var(--heading-font);font-size:22px;font-weight:700;margin-bottom:18px;letter-spacing:0.3px;}
+
+    /* Info box */
+    .info-box{background:rgba(26,84,144,0.12);border:1px solid rgba(26,84,144,0.3);border-left:3px solid var(--blue-light);padding:16px;margin-bottom:20px;border-radius:0 8px 8px 0;}
+    .info-box p{margin-bottom:6px;line-height:1.6;font-size:14px;color:rgba(255,255,255,0.85);}
+    .info-box strong{color:white;}
+
+    /* Upload section */
+    .upload-section{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;}
+    .upload-card{background:var(--bg3);border:2px dashed var(--card-border);border-radius:14px;padding:28px;text-align:center;cursor:pointer;transition:all 0.25s;}
+    .upload-card:hover{border-color:rgba(232,80,10,0.5);background:rgba(232,80,10,0.06);}
+    .upload-card.connected{border-color:rgba(16,185,129,0.4);border-style:solid;}
+    .upload-icon{font-size:40px;margin-bottom:12px;display:block;opacity:0.7;}
+    .upload-title{font-weight:700;font-size:15px;color:white;margin-bottom:6px;}
+    .upload-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+
+    /* Filter bar */
+    .filter-bar{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+    .filter-btn{padding:7px 14px;border:1px solid var(--card-border);background:var(--bg3);border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);font-family:var(--body-font);transition:all 0.2s;}
+    .filter-btn:hover{border-color:rgba(255,255,255,0.25);color:white;}
+    .filter-btn.active{background:var(--blue);color:white;border-color:var(--blue);}
+    .search-box{flex:1;min-width:240px;max-width:320px;padding:9px 14px;background:var(--bg3);border:1px solid var(--card-border);border-radius:20px;color:white;font-size:13px;font-family:var(--body-font);outline:none;transition:border-color 0.2s;}
+    .search-box:focus{border-color:var(--blue-light);}
+    .search-box::placeholder{color:rgba(255,255,255,0.3);}
+
+    /* Content grid */
+    .content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+    .content-item{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all 0.2s;}
+    .content-item:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.3);border-color:rgba(255,255,255,0.2);}
+    .content-image{width:100%;height:180px;object-fit:cover;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:40px;}
+    .content-info{padding:14px;}
+    .content-type-badge{display:inline-block;padding:3px 10px;background:rgba(26,84,144,0.2);border:1px solid rgba(26,84,144,0.3);color:rgba(255,255,255,0.8);border-radius:12px;font-size:11px;font-weight:600;margin-bottom:8px;}
+    .content-title{font-size:14px;font-weight:600;color:white;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+    .content-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px;}
+    .tag{padding:2px 7px;background:rgba(255,255,255,0.07);border-radius:4px;font-size:11px;color:var(--muted);}
+    .content-meta{display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:rgba(255,255,255,0.35);}
+
+    /* Review items */
+    .review-item{background:var(--bg3);border:1px solid var(--card-border);border-radius:12px;padding:20px;margin-bottom:14px;transition:all 0.2s;}
+    .review-item.selected{border-color:var(--blue-light);}
+    .review-item-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:12px;}
+    .review-item-content{flex:1;}
+    .review-checkbox{width:18px;height:18px;cursor:pointer;accent-color:var(--blue);flex-shrink:0;margin-top:2px;}
+    .category-badge{display:inline-block;padding:3px 10px;background:rgba(26,84,144,0.2);border:1px solid rgba(26,84,144,0.25);color:rgba(255,255,255,0.8);border-radius:20px;font-size:11px;font-weight:600;margin-right:6px;}
+    .review-title{font-weight:600;font-size:14px;color:white;margin-bottom:4px;}
+    .review-desc{font-size:13px;color:var(--muted);line-height:1.5;}
+    .review-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+    .btn-approve{padding:7px 16px;background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#6ee7b7;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-approve:hover{background:rgba(16,185,129,0.25);}
+    .btn-reject{padding:7px 16px;background:rgba(220,53,69,0.12);border:1px solid rgba(220,53,69,0.25);color:#ff8a8a;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-reject:hover{background:rgba(220,53,69,0.2);}
+    .btn-edit-item{padding:7px 16px;background:rgba(255,255,255,0.07);border:1px solid var(--card-border);color:var(--muted);border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-edit-item:hover{color:white;border-color:rgba(255,255,255,0.25);}
+
+    /* Bulk actions */
+    .bulk-actions-bar{background:var(--bg2);border:1px solid var(--card-border);border-radius:12px;padding:16px 20px;margin-bottom:16px;display:none;}
+    .bulk-actions-bar.show{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+    .bulk-btns{display:flex;gap:8px;flex-wrap:wrap;}
+    .btn-bulk{padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:var(--body-font);transition:all 0.2s;border:none;}
+
+    /* Loading */
+    .loading{text-align:center;padding:48px;display:none;}
+    .loading.show{display:block;}
+    .spinner{border:3px solid rgba(255,255,255,0.1);border-top:3px solid var(--orange);border-radius:50%;width:44px;height:44px;animation:spin 0.8s linear infinite;margin:0 auto 16px;}
+    @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+
+    /* Empty state */
+    .empty-state{text-align:center;padding:72px 20px;}
+    .empty-icon{font-size:56px;margin-bottom:14px;display:block;opacity:0.4;}
+    .empty-state h3{font-family:var(--heading-font);font-size:24px;font-weight:700;margin-bottom:8px;}
+    .empty-state p{color:var(--muted);font-size:15px;}
+
+    /* Modal */
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px);}
+    .modal.show{display:flex;}
+    .modal-content{background:var(--bg2);border:1px solid var(--card-border);padding:36px;border-radius:16px;max-width:580px;width:90%;max-height:80vh;overflow-y:auto;}
+    .modal-header{font-family:var(--heading-font);font-size:26px;font-weight:700;margin-bottom:16px;}
+    .btn-close{float:right;background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);transition:color 0.2s;}
+    .btn-close:hover{color:white;}
+    .url-input{width:100%;padding:12px 14px;background:var(--bg3);border:1px solid var(--card-border);border-radius:8px;color:white;font-size:14px;font-family:var(--body-font);margin-bottom:14px;outline:none;transition:border-color 0.2s;}
+    .url-input:focus{border-color:var(--blue-light);}
+    .btn-primary{padding:12px 24px;background:var(--orange);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:14px;font-family:var(--body-font);transition:all 0.2s;}
+    .btn-primary:hover{background:var(--orange-light);}
+    .btn-primary:disabled{background:rgba(255,255,255,0.1);color:var(--muted);cursor:not-allowed;}
+
+    @media(max-width:768px){.header{padding:0 20px;}.container{padding:24px 16px;}.tabs{flex-wrap:wrap;}.tab{flex:unset;width:50%;}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Trade<span>AI</span> Pro — <span style="font-size:16px;font-weight:600;color:var(--muted);">Content Library</span></div>
+    <a href="/dashboard.html" class="btn-back">← Dashboard</a>
+  </div>
+
+  <div class="container">
+    <h1 class="page-title">Content Library 📚</h1>
+    <p class="page-subtitle">Your centralised hub for all marketing content — use across all tools</p>
+
+    <!-- Stats -->
+    <div class="stats-bar">
+      <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-images">0</div><div class="stat-label">Images</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-testimonials">0</div><div class="stat-label">Testimonials</div></div>
+      <div class="stat-card"><div class="stat-value" id="stat-documents">0</div><div class="stat-label">Documents</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('upload')">📤 Upload Content</button>
+      <button class="tab" onclick="switchTab('pending')">❓ Pending Review <span id="pending-count" class="badge">0</span></button>
+      <button class="tab" onclick="switchTab('approved')">✅ Approved</button>
+      <button class="tab" onclick="switchTab('rejected')">❌ Rejected</button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div class="tab-content active" id="upload-tab">
+      <div class="info-box">
+        <p><strong>💡 Quick Start:</strong> Upload your existing marketing materials and let AI automatically categorise everything. This content can then be used across Social Media Manager, Email Assistant, and all other tools.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Add Content to Your Library</div>
+        <div class="upload-section">
+          <div class="upload-card" id="file-drop-zone">
+            <input type="file" id="file-input" accept=".pdf,.docx,.doc,.pptx,.ppt,.xlsx,.xls,.txt,.jpg,.jpeg,.png,.webp,.heic" multiple style="display:none">
+            <span class="upload-icon">📁</span>
+            <div class="upload-title">Click or Drop Files Here</div>
+            <div class="upload-desc"><strong>Documents:</strong> PDF, Word, PowerPoint, Excel<br><strong>Images:</strong> JPG, PNG, WEBP, HEIC<br>AI extracts everything automatically</div>
+          </div>
+          <div class="upload-card" id="website-scraper-card">
+            <span class="upload-icon">🌐</span>
+            <div class="upload-title">Import from Website</div>
+            <div class="upload-desc">Enter your website URL and AI will extract content, images, and testimonials.</div>
+          </div>
+          <div class="upload-card" id="gdrive-card">
+            <span class="upload-icon">📂</span>
+            <div class="upload-title" id="gdrive-title">Connect Google Drive</div>
+            <div class="upload-desc" id="gdrive-desc">Import project photos from your Drive folders automatically</div>
+          </div>
+          <div class="upload-card" id="email-import-card">
+            <span class="upload-icon">📧</span>
+            <div class="upload-title" id="email-title">Import from Email</div>
+            <div class="upload-desc" id="email-desc">Scan email attachments for images and extract testimonials</div>
+          </div>
+        </div>
+      </div>
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loading-text" style="color:var(--muted);font-size:14px;">Processing your content...</p>
+      </div>
+    </div>
+
+    <!-- Pending Tab -->
+    <div class="tab-content" id="pending-tab">
+      <div class="info-box"><p><strong>📋 Review Extracted Content:</strong> AI has extracted content from your uploads. Review, edit, and approve items to make them available to your tools.</p></div>
+      <div class="filter-bar" id="pending-filter-bar">
+        <button class="filter-btn active" onclick="filterByCategory('all',this)">All Categories</button>
+        <button class="filter-btn" onclick="filterByCategory('completed-jobs',this)">✅ Completed Jobs</button>
+        <button class="filter-btn" onclick="filterByCategory('marketing',this)">🎯 Marketing</button>
+        <button class="filter-btn" onclick="filterByCategory('tips',this)">💡 Tips</button>
+        <button class="filter-btn" onclick="filterByCategory('testimonial',this)">💬 Testimonials</button>
+        <button class="filter-btn" onclick="filterByCategory('team-culture',this)">👥 Team</button>
+      </div>
+      <div class="bulk-actions-bar" id="bulk-actions-pending">
+        <div><strong id="selected-count-pending">0</strong> items selected</div>
+        <div class="bulk-btns">
+          <button class="btn-bulk" style="background:rgba(16,185,129,0.2);color:#6ee7b7;" onclick="bulkApprove()">✅ Approve Selected</button>
+          <button class="btn-bulk" style="background:rgba(220,53,69,0.15);color:#ff8a8a;" onclick="bulkReject()">❌ Reject Selected</button>
+          <button class="btn-bulk" style="background:rgba(255,255,255,0.07);color:var(--muted);" onclick="clearSelection()">Clear</button>
+        </div>
+      </div>
+      <div id="pending-items-list"></div>
+      <div class="empty-state" id="pending-empty-state" style="display:none;"><span class="empty-icon">✅</span><h3>All caught up!</h3><p>No pending items to review</p></div>
+    </div>
+
+    <!-- Approved Tab -->
+    <div class="tab-content" id="approved-tab">
+      <div class="info-box"><p><strong>✅ Approved Content:</strong> These items are available for use in Social Media Manager and other tools.</p></div>
+      <div class="filter-bar" id="approved-filter-bar">
+        <button class="filter-btn active" onclick="filterByCategory('all',this)">All</button>
+        <button class="filter-btn" onclick="filterByCategory('completed-jobs',this)">✅ Jobs</button>
+        <button class="filter-btn" onclick="filterByCategory('marketing',this)">🎯 Marketing</button>
+        <button class="filter-btn" onclick="filterByCategory('testimonial',this)">💬 Testimonials</button>
+        <button class="filter-btn" onclick="filterByCategory('team-culture',this)">👥 Team</button>
+      </div>
+      <div class="bulk-actions-bar" id="bulk-actions-approved">
+        <div><strong id="selected-count-approved">0</strong> items selected</div>
+        <div class="bulk-btns">
+          <button class="btn-bulk" style="background:rgba(220,53,69,0.15);color:#ff8a8a;" onclick="bulkReject()">❌ Move to Rejected</button>
+          <button class="btn-bulk" style="background:rgba(255,255,255,0.07);color:var(--muted);" onclick="clearSelection()">Clear</button>
+        </div>
+      </div>
+      <div id="approved-items-list"></div>
+      <div class="empty-state" id="approved-empty-state" style="display:none;"><span class="empty-icon">📭</span><h3>No approved items yet</h3><p>Approve items from Pending Review to see them here</p></div>
+    </div>
+
+    <!-- Rejected Tab -->
+    <div class="tab-content" id="rejected-tab">
+      <div class="info-box"><p><strong>❌ Rejected Content:</strong> These items are hidden from your tools. You can restore or permanently delete them.</p></div>
+      <div id="rejected-items-list"></div>
+      <div class="empty-state" id="rejected-empty-state" style="display:none;"><span class="empty-icon">📭</span><h3>No rejected items</h3><p>Items you reject will appear here</p></div>
+    </div>
+  </div>
+
+  <!-- Website Modal -->
+  <div class="modal" id="website-modal">
+    <div class="modal-content">
+      <button class="btn-close" onclick="closeWebsiteModal()">×</button>
+      <div class="modal-header">Import from Website</div>
+      <p style="color:var(--muted);font-size:14px;margin-bottom:18px;">AI will scan for project galleries, testimonials, services, team bios, and company information.</p>
+      <input type="url" class="url-input" id="website-url" placeholder="https://yourwebsite.com.au">
+      <button class="btn-primary" onclick="scrapeWebsite()">Scan Website</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+  <script>
+    requireAuth();
+
+    let currentFilter = 'all';
+    let currentReviewStatus = 'pending';
+    let allContent = [];
+    let selectedItems = new Set();
+
+    // ── INIT UPLOAD HANDLERS ──
+    setTimeout(() => {
+      const dropZone = document.getElementById('file-drop-zone');
+      const fileInput = document.getElementById('file-input');
+      const websiteCard = document.getElementById('website-scraper-card');
+      if (!dropZone || !fileInput) return;
+
+      ['dragenter','dragover','dragleave','drop'].forEach(ev => document.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); }, false));
+
+      dropZone.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); fileInput.click(); });
+      fileInput.addEventListener('click', e => e.stopPropagation());
+
+      ['dragenter','dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); dropZone.style.borderColor='var(--orange)'; dropZone.style.background='rgba(232,80,10,0.08)'; }));
+      ['dragleave','drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); dropZone.style.borderColor=''; dropZone.style.background=''; }));
+      dropZone.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); handleFiles(e.dataTransfer.files); });
+      fileInput.addEventListener('change', e => handleFiles(e.target.files));
+
+      websiteCard.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); showWebsiteScraper(); });
+
+      document.getElementById('gdrive-card').addEventListener('click', async e => {
+        e.preventDefault(); e.stopPropagation();
+        const profile = await getUserProfile();
+        if (profile?.gdrive_connected) showDriveImportModal();
+        else connectGoogleDrive();
+      });
+      loadDriveStatus();
+
+      document.getElementById('email-import-card').addEventListener('click', async e => {
+        e.preventDefault(); e.stopPropagation();
+        const profile = await getUserProfile();
+        if (!profile?.gmail_access_token && !profile?.outlook_access_token) {
+          alert('⚠️ No email connected!\n\nPlease connect Gmail or Outlook first in Chatbot Settings.');
+          return;
+        }
+        if (!confirm('Scan your emails for images and testimonials?\n\nThis will check your last 20 emails with attachments.')) return;
+        await importEmailContent();
+      });
+      loadEmailStatus();
+
+      // Check for Drive connection callback
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('gdrive_connected')) {
+        alert('✅ Google Drive connected successfully!');
+        window.history.replaceState({}, document.title, '/content-library.html');
+        loadDriveStatus();
+      }
+    }, 500);
+
+    async function handleFiles(files) {
+      if (!files || files.length === 0) return;
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = `Processing ${files.length} file(s)...`;
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { alert('Please log in'); document.getElementById('loading').classList.remove('show'); return; }
+        let successCount = 0, totalItems = 0;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fileType = getFileType(file.name);
+          try {
+            let base64 = fileType === 'image' ? await compressImage(file) : await fileToBase64(file);
+            const response = await fetch('/api/process-file', {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ userId: user.id, fileName: file.name, fileType, fileData: base64 })
+            });
+            const data = await response.json();
+            if (data.success) { successCount++; totalItems += data.itemsCount; }
+          } catch (err) { console.error(`❌ ${file.name}:`, err); }
+        }
+        document.getElementById('loading').classList.remove('show');
+        if (successCount > 0) {
+          alert(`✅ Success!\n\nProcessed: ${successCount} file(s)\nExtracted: ${totalItems} items\n\nView in "Pending Review" tab`);
+          setTimeout(() => switchTab('pending'), 500);
+        } else { alert('❌ Failed to process files'); }
+      } catch (err) {
+        console.error(err); alert('Error: ' + err.message);
+        document.getElementById('loading').classList.remove('show');
+      }
+      document.getElementById('file-input').value = '';
+    }
+
+    function fileToBase64(file) {
+      return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(',')[1]); r.onerror = rej; r.readAsDataURL(file); });
+    }
+
+    function compressImage(file) {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height, maxSize = 1920;
+            if (w > maxSize || h > maxSize) { if (w > h) { h = (h/w)*maxSize; w = maxSize; } else { w = (w/h)*maxSize; h = maxSize; } }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            res(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+          };
+          img.onerror = rej; img.src = e.target.result;
+        };
+        reader.onerror = rej; reader.readAsDataURL(file);
+      });
+    }
+
+    function getFileType(name) {
+      const ext = name.toLowerCase().split('.').pop();
+      return {'pdf':'pdf','doc':'word','docx':'word','ppt':'powerpoint','pptx':'powerpoint','xls':'excel','xlsx':'excel','txt':'text','jpg':'image','jpeg':'image','png':'image','webp':'image','heic':'image'}[ext] || 'unknown';
+    }
+
+    function showWebsiteScraper() { document.getElementById('website-modal').classList.add('show'); }
+    function closeWebsiteModal() { document.getElementById('website-modal').classList.remove('show'); }
+
+    async function scrapeWebsite() {
+      const url = document.getElementById('website-url').value;
+      if (!url) { alert('Please enter a URL'); return; }
+      closeWebsiteModal();
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Scanning website...';
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      try {
+        const response = await fetch('/api/scrape-website', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: user.id, url }) });
+        const data = await response.json();
+        if (data.success) { alert(`✅ Found ${data.itemsCount} items!`); loadReviewQueue(); }
+        else alert('❌ Error: ' + data.error);
+      } catch (err) { alert('❌ Error: ' + err.message); }
+      document.getElementById('loading').classList.remove('show');
+    }
+
+    async function loadDriveStatus() {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.gdrive_connected) {
+          document.getElementById('gdrive-title').textContent = '✓ Drive Connected';
+          document.getElementById('gdrive-desc').textContent = 'Click to import photos from Drive';
+          document.getElementById('gdrive-card').classList.add('connected');
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function connectGoogleDrive() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const clientId = '368140587749-isq0imjs2n70snmceqnb9s5coqjleak8.apps.googleusercontent.com';
+      const redirectUri = `${window.location.origin}/api/auth/google-drive/callback`;
+      const scope = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email';
+      window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${user.id}&access_type=offline&prompt=consent`;
+    }
+
+    async function loadEmailStatus() {
+      try {
+        const profile = await getUserProfile();
+        if (profile?.gmail_connected_email || profile?.outlook_connected_email) {
+          const email = profile.gmail_connected_email || profile.outlook_connected_email;
+          document.getElementById('email-title').textContent = '✓ Email Connected';
+          document.getElementById('email-desc').textContent = email;
+          document.getElementById('email-import-card').classList.add('connected');
+        }
+      } catch (err) { console.error(err); }
+    }
+
+    async function importEmailContent() {
+      document.getElementById('loading').classList.add('show');
+      document.getElementById('loading-text').textContent = 'Scanning emails for content...';
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        const response = await fetch('/api/import-email-content', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ userId: user.id }) });
+        const data = await response.json();
+        if (data.success) { alert(`✅ Found ${data.itemsCount || 0} items from your emails!`); loadReviewQueue(); }
+        else alert('❌ Error: ' + (data.error || 'Unknown error'));
+      } catch (err) { alert('❌ Error: ' + err.message); }
+      document.getElementById('loading').classList.remove('show');
+    }
+
+    // ── TAB SWITCHING ──
+    window.switchTab = function(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      selectedItems.clear();
+      currentFilter = 'all';
+      const tabMap = { upload:0, pending:1, approved:2, rejected:3 };
+      document.querySelectorAll('.tab')[tabMap[tab]]?.classList.add('active');
+      document.getElementById(`${tab}-tab`).classList.add('active');
+      if (tab === 'pending') { currentReviewStatus = 'pending'; loadReviewQueue(); }
+      else if (tab === 'approved') { currentReviewStatus = 'approved'; loadReviewQueue(); }
+      else if (tab === 'rejected') { currentReviewStatus = 'rejected'; loadReviewQueue(); }
+    };
+
+    async function loadLibrary() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      const { data: content } = await supabaseClient.from('content_library').select('*').eq('user_id', user.id).eq('status','approved').order('created_at', { ascending:false });
+      allContent = content || [];
+      document.getElementById('stat-total').textContent = allContent.length;
+      document.getElementById('stat-images').textContent = allContent.filter(c => c.content_type==='image').length;
+      document.getElementById('stat-testimonials').textContent = allContent.filter(c => c.content_type==='testimonial').length;
+      document.getElementById('stat-documents').textContent = allContent.filter(c => c.content_type==='document').length;
+    }
+
+    async function loadReviewQueue() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      const { data: items } = await supabaseClient.from('content_library').select('*').eq('user_id', user.id).eq('status', currentReviewStatus).order('created_at', { ascending:false });
+      const listId = `${currentReviewStatus}-items-list`;
+      const emptyId = `${currentReviewStatus}-empty-state`;
+      const list = document.getElementById(listId);
+      const empty = document.getElementById(emptyId);
+      if (!items || items.length === 0) { if (list) list.innerHTML = ''; if (empty) empty.style.display = 'block'; return; }
+      if (empty) empty.style.display = 'none';
+
+      // Update pending badge
+      if (currentReviewStatus === 'pending') {
+        document.getElementById('pending-count').textContent = items.length;
+      }
+
+      if (list) list.innerHTML = items.map(item => `
+        <div class="review-item" id="item-${item.id}">
+          <div class="review-item-header">
+            <input type="checkbox" class="review-checkbox" onchange="toggleSelect('${item.id}', this)">
+            <div class="review-item-content">
+              <span class="category-badge">${item.category || item.content_type || 'Content'}</span>
+              <div class="review-title">${item.title || 'Untitled'}</div>
+              <div class="review-desc">${(item.description || item.content || '').substring(0, 180)}${(item.description || item.content || '').length > 180 ? '...' : ''}</div>
+              ${item.image_url ? `<img src="${item.image_url}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;margin-top:10px;">` : ''}
+            </div>
+          </div>
+          <div class="review-actions">
+            ${currentReviewStatus !== 'approved' ? `<button class="btn-approve" onclick="updateItemStatus('${item.id}','approved')">✓ Approve</button>` : ''}
+            ${currentReviewStatus !== 'rejected' ? `<button class="btn-reject" onclick="updateItemStatus('${item.id}','rejected')">✗ Reject</button>` : ''}
+            ${currentReviewStatus === 'rejected' ? `<button class="btn-approve" onclick="updateItemStatus('${item.id}','approved')">↩ Restore</button>` : ''}
+            <button class="btn-edit-item" onclick="editItem('${item.id}')">✏️ Edit</button>
+          </div>
+        </div>`).join('');
+    }
+
+    function toggleSelect(id, checkbox) {
+      if (checkbox.checked) selectedItems.add(id);
+      else selectedItems.delete(id);
+      document.getElementById(`item-${id}`)?.classList.toggle('selected', checkbox.checked);
+      const count = selectedItems.size;
+      const barId = `bulk-actions-${currentReviewStatus}`;
+      const bar = document.getElementById(barId);
+      const countEl = document.getElementById(`selected-count-${currentReviewStatus}`);
+      if (bar) bar.classList.toggle('show', count > 0);
+      if (countEl) countEl.textContent = count;
+    }
+
+    async function updateItemStatus(id, status) {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      await supabaseClient.from('content_library').update({ status }).eq('id', id).eq('user_id', user.id);
+      loadReviewQueue(); loadLibrary();
+    }
+
+    async function bulkApprove() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      for (const id of selectedItems) await supabaseClient.from('content_library').update({ status:'approved' }).eq('id', id).eq('user_id', user.id);
+      selectedItems.clear(); loadReviewQueue(); loadLibrary();
+    }
+
+    async function bulkReject() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      for (const id of selectedItems) await supabaseClient.from('content_library').update({ status:'rejected' }).eq('id', id).eq('user_id', user.id);
+      selectedItems.clear(); loadReviewQueue(); loadLibrary();
+    }
+
+    function clearSelection() {
+      selectedItems.clear();
+      document.querySelectorAll('.review-checkbox').forEach(cb => { cb.checked = false; });
+      document.querySelectorAll('.review-item').forEach(el => el.classList.remove('selected'));
+      ['pending','approved','rejected'].forEach(s => { const bar = document.getElementById(`bulk-actions-${s}`); if (bar) bar.classList.remove('show'); });
+    }
+
+    function filterByCategory(cat, btn) {
+      currentFilter = cat;
+      // Update active filter btn in current tab context
+      btn.closest('.filter-bar')?.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      loadReviewQueue();
+    }
+
+    function editItem(id) {
+      const newTitle = prompt('Edit title:');
+      if (!newTitle) return;
+      supabaseClient.auth.getUser().then(({ data: { user } }) => {
+        supabaseClient.from('content_library').update({ title: newTitle }).eq('id', id).eq('user_id', user.id).then(() => loadReviewQueue());
+      });
+    }
+
+    function showDriveImportModal() {
+      alert('📂 Google Drive Connected!\n\nDrive import modal coming soon. You can import photos from your Drive folders directly into the Content Library.');
+    }
+
+    // Init
+    setTimeout(() => { loadLibrary(); loadReviewQueue(); }, 600);
+  </script>
+</body>
+</html>
