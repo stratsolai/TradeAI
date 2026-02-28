@@ -7,7 +7,7 @@
 <script src="/pwa.js" defer></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat Bot Settings - TradeAI</title>
+  <title>Chat Bot Settings - TradeAI Pro</title>
   <style>
     * {
       margin: 0;
@@ -237,7 +237,7 @@
 </head>
 <body>
   <div class="header">
-    <div class="logo">TradeAI - Chatbot Settings</div>
+    <div class="logo">TradeAI Pro - Chatbot Settings</div>
     <div class="header-actions">
       <a href="/chatbot.html" class="btn-back">← Back to Chat Bot</a>
       <button class="btn-save" onclick="saveSettings()">Save Settings</button>
@@ -568,7 +568,7 @@
       const { data: { user } } = await supabaseClient.auth.getUser();
       if (!user) return;
 
-      const widgetCode = `<!-- TradeAI Chat Widget -->
+      const widgetCode = `<!-- TradeAI Pro Chat Widget -->
 <script src="https://trade-ai-seven-blue.vercel.app/widget.js" data-user-id="${user.id}"><\/script>`;
 
       document.getElementById('widget-code').value = widgetCode;
