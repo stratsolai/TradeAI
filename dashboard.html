@@ -36,13 +36,8 @@
       top: 0;
       z-index: 100;
     }
-    .logo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--orange);
-      letter-spacing: 0.5px;
-    }
+    .logo { display:flex; align-items:center; text-decoration:none; }
+    .logo img { height:36px; width:auto; }
     .user-info {
       display: flex;
       align-items: center;
@@ -265,7 +260,7 @@
 <body>
 
   <div class="header">
-    <div class="logo">TradeAI Pro</div>
+    <a href="/index.html" class="logo"><img src="/logo.svg" alt="TradeAI Pro" style="height:36px;width:auto;"></a>
     <div class="user-info">
       <a href="/content-library.html" class="content-lib-btn">📚 Content Library</a>
       <span class="user-name" id="user-name">Loading...</span>
