@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradeAI Pro â AI for Trade Businesses</title>
+<title>TradeAI Pro — AI for Trade Businesses</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -42,12 +42,12 @@
 
   h1, h2, h3, h4, .heading-font { font-family: 'Barlow Condensed', sans-serif; }
 
-  /* ââ SCREENS ââ */
+  /* ── SCREENS ── */
   .screen { display: none; min-height: 100vh; }
   .screen.active { display: block; animation: fadeIn 0.3s ease; }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-  /* ââ NAV ââ */
+  /* ── NAV ── */
   nav {
     position: sticky; top: 0; z-index: 100;
     background: #0d1628;
@@ -74,7 +74,7 @@
     display: flex; align-items: center; gap: 12px;
   }
 
-  /* ââ BUTTONS ââ */
+  /* ── BUTTONS ── */
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 11px 22px; border-radius: 8px;
@@ -95,12 +95,12 @@
   .btn-sm { padding: 8px 16px; font-size: 13px; }
   .btn-lg { padding: 14px 30px; font-size: 16px; }
 
-  /* ââ CONTAINERS ââ */
+  /* ── CONTAINERS ── */
   .container { max-width: 1120px; margin: 0 auto; padding: 0 32px; }
 
-  /* ââââââââââââââââââââââââââââââââââââââââââ
-     SCREEN 1 â LANDING / INDUSTRY SELECTION
-  ââââââââââââââââââââââââââââââââââââââââââ */
+  /* ══════════════════════════════════════════
+     SCREEN 1 — LANDING / INDUSTRY SELECTION
+  ══════════════════════════════════════════ */
   #screen-landing {
     background: radial-gradient(ellipse at 50% 0%, rgba(26,84,144,0.40) 0%, transparent 65%), var(--bg);
   }
@@ -208,9 +208,9 @@
     color: var(--orange);
   }
 
-  /* ââââââââââââââââââââââââââââââââââââââââââ
-     SCREEN 2 â TOOLS DASHBOARD
-  ââââââââââââââââââââââââââââââââââââââââââ */
+  /* ══════════════════════════════════════════
+     SCREEN 2 — TOOLS DASHBOARD
+  ══════════════════════════════════════════ */
   #screen-dashboard { background: var(--bg); }
 
   .dashboard-topbar {
@@ -266,7 +266,7 @@
     max-width: 1120px; margin: 0 auto;
   }
 
-  /* Tool cards â brighter, more colourful */
+  /* Tool cards — brighter, more colourful */
   .tool-card {
     background: var(--bg3);
     border: 1.5px solid rgba(255,255,255,0.16);
@@ -334,9 +334,9 @@
     0%, 100% { opacity: 1; } 50% { opacity: 0.4; }
   }
 
-  /* ââââââââââââââââââââââââââââââââââââââââââ
+  /* ══════════════════════════════════════════
      FULL-SCREEN TOOL DETAIL PANEL
-  ââââââââââââââââââââââââââââââââââââââââââ */
+  ══════════════════════════════════════════ */
   .panel-overlay {
     position: fixed; inset: 0;
     background: rgba(0,0,0,0.7);
@@ -504,7 +504,7 @@
   }
   .trial-note strong { color: var(--green); }
 
-  /* ââ RESPONSIVE ââ */
+  /* ── RESPONSIVE ── */
   @media (max-width: 640px) {
     nav { padding: 0 16px; }
     .industries-grid, .tools-grid, .categories-nav { padding-left: 16px; padding-right: 16px; }
@@ -516,96 +516,96 @@
 </head>
 <body>
 
-<!-- ââââââââââââ NAV ââââââââââââ -->
+<!-- ──────────── NAV ──────────── -->
 <nav>
   <a class="nav-logo" href="/index.html">
     <div class="nav-logo-text">Trade<span>AI</span> <span style="font-size:14px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">Pro</span></div>
   </a>
   <div class="nav-actions" id="nav-actions">
     <a href="/login.html" class="btn btn-ghost btn-sm">Sign In</a>
-    <a href="/login.html?tab=signup" class="btn btn-primary btn-sm">Start Free Trial â</a>
+    <a href="/login.html?tab=signup" class="btn btn-primary btn-sm">Start Free Trial →</a>
   </div>
 </nav>
 
-<!-- ââââââââââââââââââââââââââââââââââââââââââ
-     SCREEN 1 â LANDING
-ââââââââââââââââââââââââââââââââââââââââââ -->
+<!-- ══════════════════════════════════════════
+     SCREEN 1 — LANDING
+══════════════════════════════════════════ -->
 <div id="screen-landing" class="screen active">
   <div class="landing-hero">
     <div class="pill"><span class="pill-dot"></span>Built for Australian trades businesses</div>
     <h1><em>AI</em> Tools for Your Trade</h1>
-    <p>Simple, powerful AI built for tradies. No IT skills needed.<br>Auto socials, smart marketing, instant docs â just pick your trade.</p>
+    <p>Simple, powerful AI built for tradies. No IT skills needed.<br>Auto socials, smart marketing, instant docs — just pick your trade.</p>
     <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-      <a href="/login.html?tab=signup" class="btn btn-primary btn-lg">Start Free Trial â</a>
+      <a href="/login.html?tab=signup" class="btn btn-primary btn-lg">Start Free Trial →</a>
       <button class="btn btn-ghost btn-lg" onclick="selectIndustry('all')">See All Tools</button>
     </div>
   </div>
 
-  <p class="industries-label">â Choose your trade â</p>
+  <p class="industries-label">— Choose your trade —</p>
 
   <div class="industries-grid">
     <div class="industry-card" onclick="selectIndustry('pool')">
-      <span class="industry-icon">ð</span>
+      <span class="industry-icon">🏊</span>
       <span class="industry-count">20 tools</span>
       <h3>Pool Building</h3>
       <p>AI quotes, social media, scheduling & full workflow from consult to handover</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
-      <span class="industry-icon">âï¸</span>
+      <span class="industry-icon">❄️</span>
       <span class="industry-count">20 tools</span>
       <h3>HVAC & Refrigeration</h3>
       <p>Service scheduling, compliance, energy calculators & preventative maintenance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('electrical')">
-      <span class="industry-icon">â¡</span>
+      <span class="industry-icon">⚡</span>
       <span class="industry-count">19 tools</span>
       <h3>Electrical Contracting</h3>
       <p>Test & tag, emergency dispatch, compliance certs & marketing automation</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
-      <span class="industry-icon">ð©</span>
+      <span class="industry-icon">🔩</span>
       <span class="industry-count">20 tools</span>
       <h3>Metal Fabrication</h3>
       <p>Material optimiser, weld tracking, quality control & real-time job costing</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('plumbing')">
-      <span class="industry-icon">ð§</span>
+      <span class="industry-icon">🔧</span>
       <span class="industry-count">19 tools</span>
       <h3>Plumbing</h3>
       <p>Emergency routing, backflow scheduling, hot water selector & marketing</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
-      <span class="industry-icon">ðï¸</span>
+      <span class="industry-icon">🏗️</span>
       <span class="industry-count">20 tools</span>
       <h3>Construction</h3>
       <p>Subcontractor coordinator, site diary, variation manager & RFI tracking</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('landscaping')">
-      <span class="industry-icon">ð¿</span>
+      <span class="industry-icon">🌿</span>
       <span class="industry-count">19 tools</span>
       <h3>Landscaping</h3>
       <p>Smart plant selector, irrigation design, seasonal scheduling & marketing</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('cleaning')">
-      <span class="industry-icon">â¨</span>
+      <span class="industry-icon">✨</span>
       <span class="industry-count">19 tools</span>
       <h3>Commercial Cleaning</h3>
       <p>Roster optimiser, quality audits, consumables tracking & client reporting</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('manufacturing')">
-      <span class="industry-icon">ð­</span>
+      <span class="industry-icon">🏭</span>
       <span class="industry-count">20 tools</span>
       <h3>Manufacturing</h3>
       <p>Production scheduling, SPC quality, inventory forecasting & OEE tracking</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('concreting')">
-      <span class="industry-icon">ð§</span>
+      <span class="industry-icon">🚧</span>
       <span class="industry-count">19 tools</span>
       <h3>Concreting</h3>
       <p>Pour scheduler, weather rescheduling, mix designer & test cylinder tracking</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('handyman')">
-      <span class="industry-icon">ð¨</span>
+      <span class="industry-icon">🔨</span>
       <span class="industry-count">19 tools</span>
       <h3>Handyman Services</h3>
       <p>Multi-trade routing, smart parts finder, quick quoting & social marketing</p>
@@ -613,18 +613,18 @@
   </div>
 </div>
 
-<!-- ââââââââââââââââââââââââââââââââââââââââââ
-     SCREEN 2 â TOOLS DASHBOARD
-ââââââââââââââââââââââââââââââââââââââââââ -->
+<!-- ══════════════════════════════════════════
+     SCREEN 2 — TOOLS DASHBOARD
+══════════════════════════════════════════ -->
 <div id="screen-dashboard" class="screen">
   <div class="dashboard-topbar">
     <div class="dash-industry-name" id="dash-title">
       <span>AI Tools</span> for Pool Building
     </div>
-    <div class="dash-tagline" id="dash-sub">20 tools â built for your trade, ready to use today</div>
+    <div class="dash-tagline" id="dash-sub">20 tools — built for your trade, ready to use today</div>
     <div class="dash-actions-row">
-      <button class="btn btn-ghost btn-sm" onclick="goScreen('landing')">â All Industries</button>
-      <a href="/login.html?tab=signup" class="btn btn-primary btn-sm">Start Free Trial â</a>
+      <button class="btn btn-ghost btn-sm" onclick="goScreen('landing')">← All Industries</button>
+      <a href="/login.html?tab=signup" class="btn btn-primary btn-sm">Start Free Trial →</a>
     </div>
   </div>
 
@@ -632,32 +632,32 @@
   <div class="tools-grid" id="tools-grid"></div>
 </div>
 
-<!-- ââââââââââââââââââââââââââââââââââââââââââ
+<!-- ══════════════════════════════════════════
      TOOL DETAIL PANEL (full-screen slide-up)
-ââââââââââââââââââââââââââââââââââââââââââ -->
+══════════════════════════════════════════ -->
 <div class="panel-overlay" id="panel-overlay" onclick="closePanelBg(event)">
   <div class="panel">
     <div class="panel-header">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="btn btn-ghost btn-sm" onclick="closePanel()">â Back</button>
-        <span id="panel-breadcrumb" style="font-size:13px;color:var(--muted);">Pool Building âº Quote Generator</span>
+        <button class="btn btn-ghost btn-sm" onclick="closePanel()">← Back</button>
+        <span id="panel-breadcrumb" style="font-size:13px;color:var(--muted);">Pool Building › Quote Generator</span>
       </div>
-      <button class="panel-close" onclick="closePanel()">â</button>
+      <button class="panel-close" onclick="closePanel()">✕</button>
     </div>
 
     <div class="panel-body">
       <!-- LEFT: Info -->
       <div class="panel-left">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div id="panel-icon" style="font-size:32px;">ð</div>
-          <span id="panel-badge" class="tool-badge badge-quick">â¡ Quick Win</span>
+          <div id="panel-icon" style="font-size:32px;">📋</div>
+          <span id="panel-badge" class="tool-badge badge-quick">⚡ Quick Win</span>
         </div>
         <h2 id="panel-title">Quote Generator</h2>
         <p class="panel-tagline" id="panel-desc">Turn 3-hour quoting sessions into 10-minute tasks.</p>
         <ul class="panel-benefits" id="panel-benefits"></ul>
 
         <div class="panel-cta-row">
-          <a href="/login.html?tab=signup" class="btn btn-primary">Start Free Trial â</a>
+          <a href="/login.html?tab=signup" class="btn btn-primary">Start Free Trial →</a>
           <span id="panel-live-badge" style="display:none;" class="live-badge"><span class="live-dot"></span>Live Now</span>
         </div>
 
@@ -675,17 +675,17 @@
           <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;margin-bottom:16px;letter-spacing:0.5px;">How it works</h3>
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="how-it-works">
             <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">1ï¸â£</div>
+              <div style="font-size:24px;margin-bottom:8px;">1️⃣</div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Connect</div>
-              <div style="font-size:12px;color:var(--muted);">Set up in minutes â no IT skills needed</div>
+              <div style="font-size:12px;color:var(--muted);">Set up in minutes — no IT skills needed</div>
             </div>
             <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">2ï¸â£</div>
+              <div style="font-size:24px;margin-bottom:8px;">2️⃣</div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Let AI Work</div>
               <div style="font-size:12px;color:var(--muted);">AI handles the work automatically</div>
             </div>
             <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">3ï¸â£</div>
+              <div style="font-size:24px;margin-bottom:8px;">3️⃣</div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Grow</div>
               <div style="font-size:12px;color:var(--muted);">More customers, less effort, more time</div>
             </div>
@@ -696,7 +696,7 @@
       <!-- RIGHT: ROI Calc -->
       <div>
         <div class="roi-calc">
-          <h3>ð Your ROI</h3>
+          <h3>📊 Your ROI</h3>
           <div class="calc-field" id="roi-field-1">
             <label id="roi-label-1">How many per month?</label>
             <div class="range-val" id="roi-val-1">12</div>
@@ -738,11 +738,11 @@
         <div style="margin-top:16px;background:var(--bg3);border:1px solid rgba(255,255,255,0.18);border-radius:var(--radius);padding:20px;">
           <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;margin-bottom:12px;color:var(--white);">Included in every plan</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">â</span> 14-day free trial</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">â</span> No IT skills needed</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">â</span> Australian English & GST</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">â</span> Cancel anytime</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">â</span> Local support team</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> 14-day free trial</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> No IT skills needed</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Australian English & GST</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Cancel anytime</div>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Local support team</div>
           </div>
         </div>
       </div>
@@ -753,7 +753,7 @@
       <div class="pricing-info">
         <div>
           <div class="price-tag">From <span>$149</span>/mo</div>
-          <div style="font-size:12px;color:var(--muted);">Starter plan Â· Multiple tools included</div>
+          <div style="font-size:12px;color:var(--muted);">Starter plan · Multiple tools included</div>
         </div>
         <div style="height:40px;width:1px;background:var(--card-border);"></div>
         <div class="trial-note">
@@ -762,20 +762,20 @@
         </div>
         <div style="height:40px;width:1px;background:var(--card-border);"></div>
         <div class="trial-note">
-          <strong>Starter $149 Â· Growth $299 Â· Complete $499</strong><br>
+          <strong>Starter $149 · Growth $299 · Complete $499</strong><br>
           Switch or cancel anytime
         </div>
       </div>
-      <a href="/login.html?tab=signup" class="btn btn-primary btn-lg">Get Started â</a>
+      <a href="/login.html?tab=signup" class="btn btn-primary btn-lg">Get Started →</a>
     </div>
   </div>
 </div>
 
 
 <script>
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // DATA
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 
 const INDUSTRIES = {
   pool: { name: "Pool Building" },
@@ -791,13 +791,13 @@ const INDUSTRIES = {
   handyman: { name: "Handyman Services" },
 };
 
-// ââ CONSOLIDATED CATEGORY MAPPING ââ
+// ── CONSOLIDATED CATEGORY MAPPING ──
 // Final 5 tabs: All / Marketing / Operations / Business Intelligence / Industry Specific
-// Sales & Quotes â Operations
-// Customer Communication â Operations  
-// Documents & Admin â Operations
-// Financial Management â Operations
-// Industry-specific tools â Industry Specific
+// Sales & Quotes → Operations
+// Customer Communication → Operations  
+// Documents & Admin → Operations
+// Financial Management → Operations
+// Industry-specific tools → Industry Specific
 
 function mapCategory(cat, isIndustrySpecific) {
   if (isIndustrySpecific) return 'Industry Specific';
@@ -813,75 +813,75 @@ function mapCategory(cat, isIndustrySpecific) {
   return map[cat] || "Operations";
 }
 
-// ââ CORE TOOLS (all industries) ââ
+// ── CORE TOOLS (all industries) ──
 const CORE_TOOLS = [
   {
-    id: "lead-bot", cat: "Sales & Quotes", icon: "ð¬", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "lead-bot", cat: "Sales & Quotes", icon: "💬", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "AI Website Chatbot",
     desc: "24/7 AI chat on your website that qualifies leads, answers questions and books consultations automatically. Never miss an enquiry again.",
     live: true,
     roiLabel1: "Website visitors/month", roiLabel2: "Leads per month", roiDefault1: 500, roiDefault2: 15,
     benefits: [
-      "Live chat widget embedded on your website â set up in minutes",
+      "Live chat widget embedded on your website — set up in minutes",
       "AI responds instantly to visitors 24/7, even after hours",
       "Qualifies leads: budget, timeline, location, project type",
       "Books consultations directly into your calendar",
       "Notifies you immediately of hot leads via SMS or email",
     ],
-    example: `LIVE CHAT â 11:47 PM
+    example: `LIVE CHAT — 11:47 PM
 Visitor on your website
 
 AI: Hi! Looking for a quote? I can help!
 
 Visitor: How much does it cost?
 
-AI: Great question â every job is different. 
+AI: Great question — every job is different. 
 To give you an accurate idea, can I ask a 
 couple of quick questions?
 
-[3 mins later â lead qualified, consultation booked]
+[3 mins later — lead qualified, consultation booked]
 
 AI: Perfect! I've booked you in for Tuesday 
 at 10am. You'll get a confirmation SMS shortly.
 
-ð² NOTIFICATION TO YOU
+📲 NOTIFICATION TO YOU
 "Hot lead: James Williams, $60k budget, 
 wants to start next month. Consult booked Tue 10am."
 You wake up to a confirmed appointment.`,
   },
   {
-    id: "social-media-manager", cat: "Marketing", icon: "ð±", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "social-media-manager", cat: "Marketing", icon: "📱", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Marketing & Social Media Manager",
     desc: "Upload job photos and AI writes engaging captions, schedules posts to Facebook and Instagram, and handles everything automatically.",
     live: true,
     roiLabel1: "Posts per month", roiLabel2: "Minutes per post currently", roiDefault1: 20, roiDefault2: 25,
     benefits: [
-      "Upload job photos â AI writes captions automatically",
+      "Upload job photos → AI writes captions automatically",
       "Posts to Facebook and Instagram on your schedule",
       "AI suggests best posting times for your audience",
       "Auto-generates hashtags and local targeting",
       "Creates a 2-week content calendar in advance",
     ],
-    example: `ð± POST GENERATED â Instagram
+    example: `📱 POST GENERATED — Instagram
 
-From bare backyard to backyard paradise ðâ¨
+From bare backyard to backyard paradise 🏊✨
 
 This stunning job at Kenmore is ready! 
 Featuring custom finishes, LED lighting 
 and a heated spa.
 
-ð Kenmore, Brisbane
-ð 9 weeks start to finish
-ð¬ DM us for a free quote
+📍 Kenmore, Brisbane
+📅 9 weeks start to finish
+💬 DM us for a free quote
 
 #BrisbaneTradie #AustralianTrades #AIMarketing
 
-â Scheduled: Thursday 6:30 PM
-â Cross-posted to Facebook
-â Story version created`,
+✓ Scheduled: Thursday 6:30 PM
+✓ Cross-posted to Facebook
+✓ Story version created`,
   },
   {
-    id: "email-assistant", cat: "Operations", icon: "ð§", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "email-assistant", cat: "Operations", icon: "📧", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "AI Email Assistant",
     desc: "AI reads your inbox, flags urgent emails, summarises long threads and drafts replies. Connected to Gmail and Outlook.",
     live: true,
@@ -893,25 +893,25 @@ and a heated spa.
       "Detects action items and deadlines",
       "Connects to Gmail and Outlook",
     ],
-    example: `INBOX DIGEST â Monday 9:00 AM
+    example: `INBOX DIGEST — Monday 9:00 AM
 
-ð¨ URGENT (3)
-â¢ Customer: Pump making noise â book service today
-â¢ Supplier: Price increase Friday â order now
-â¢ Council: Permit needs cert by Friday
+🚨 URGENT (3)
+• Customer: Pump making noise — book service today
+• Supplier: Price increase Friday — order now
+• Council: Permit needs cert by Friday
 
-ð° LEADS (5)
-â¢ James Wilson â $60k budget, wants quote
-â¢ Michelle Roberts â requesting site visit
-â¢ [3 more enquiries...]
+💰 LEADS (5)
+• James Wilson — $60k budget, wants quote
+• Michelle Roberts — requesting site visit
+• [3 more enquiries...]
 
-ð ADMIN (8) â auto-organised
+📋 ADMIN (8) — auto-organised
 
 AI has drafted replies for the urgent items.
 [Review & Send]`,
   },
   {
-    id: "strategic-plan", cat: "Business Intelligence", icon: "ð¯", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: false,
+    id: "strategic-plan", cat: "Business Intelligence", icon: "🎯", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Strategic Plan Generator",
     desc: "AI interviews you and creates a full Strategic Plan + 90-Day Action Tracker. Bank-ready documents in under 30 minutes.",
     live: true,
@@ -919,77 +919,77 @@ AI has drafted replies for the urgent items.
     benefits: [
       "AI asks questions about your business, goals and finances",
       "Creates two professional documents: Strategic Plan + Operational Plan",
-      "Bank and lender ready format â satisfies finance applications",
+      "Bank and lender ready format — satisfies finance applications",
       "90-day action tracker saved to your dashboard",
-      "Update annually â takes 20 minutes with AI",
+      "Update annually — takes 20 minutes with AI",
     ],
-    example: `STRATEGIC PLAN â Blue Haven Pools
+    example: `STRATEGIC PLAN — Blue Haven Pools
 
 VISION
 To be South-East Queensland's most trusted 
-pool builder â faster and better quality 
+pool builder — faster and better quality 
 than any competitor.
 
 GOALS 2026-2029
-â¢ Revenue: $3.2M â $5.0M
-â¢ Gold Coast expansion by 2027
-â¢ Maintenance services: $500k recurring
+• Revenue: $3.2M → $5.0M
+• Gold Coast expansion by 2027
+• Maintenance services: $500k recurring
 
 12-MONTH ACTION PLAN
-Q1: Secure $300k business loan â
+Q1: Secure $300k business loan ✓
 Q2: Hire Gold Coast installer
 Q3: First 2 Gold Coast projects
 Q4: Launch maintenance service
 
-[Download Strategic Plan â Word]
-[Download Operational Plan â Word]`,
+[Download Strategic Plan — Word]
+[Download Operational Plan — Word]`,
   },
   {
-    id: "news-digest", cat: "Business Intelligence", icon: "ð°", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "news-digest", cat: "Business Intelligence", icon: "📰", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Industry News Digest",
-    desc: "AI monitors industry bodies, government announcements and trade news. Get a plain-English summary every week â nothing missed.",
+    desc: "AI monitors industry bodies, government announcements and trade news. Get a plain-English summary every week — nothing missed.",
     live: true,
     roiLabel1: "Hours on news weekly", roiLabel2: "Important updates missed/month", roiDefault1: 3, roiDefault2: 5,
     benefits: [
       "Monitors industry associations, government sites and trade media",
-      "Filters out noise â only shows what matters to your business",
+      "Filters out noise — only shows what matters to your business",
       "Alerts on grants, rebates and funding opportunities",
       "Tracks regulatory changes and compliance deadlines",
-      "Weekly digest via email â read in 5 minutes",
+      "Weekly digest via email — read in 5 minutes",
     ],
-    example: `INDUSTRY DIGEST â Week of 17 Feb 2026
+    example: `INDUSTRY DIGEST — Week of 17 Feb 2026
 
-ð° GRANT OPPORTUNITY
+💰 GRANT OPPORTUNITY
 $5,000 pool safety grants now available.
 Applications open 1 March. Past customers 
-may be eligible â email campaign opportunity.
+may be eligible — email campaign opportunity.
 
-ð REGULATORY UPDATE
+📋 REGULATORY UPDATE
 QBCC license fees up 15% from July 2026.
 Budget extra $180/year from 1 July.
 
-ð AWARDS
-Master Builders nominations open â 
+🏆 AWARDS
+Master Builders nominations open — 
 deadline 15 March. Submit your best jobs.
 
-[Read full digest â]`,
+[Read full digest →]`,
   },
   {
-    id: "quote-gen", cat: "Sales & Quotes", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "quote-gen", cat: "Sales & Quotes", icon: "📋", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Quote Generator",
-    desc: "Turn hours of quoting into minutes. Professional quotes with GST, payment schedules and warranty terms â sent as PDF.",
+    desc: "Turn hours of quoting into minutes. Professional quotes with GST, payment schedules and warranty terms — sent as PDF.",
     live: false,
     roiLabel1: "Quotes per month", roiLabel2: "Hours per quote currently", roiDefault1: 12, roiDefault2: 3.5,
     benefits: [
       "Itemised quote with materials, labour and GST",
       "Payment schedule and warranty terms included",
       "Branded with your logo and contact details",
-      "Saves as PDF â ready to email in seconds",
+      "Saves as PDF — ready to email in seconds",
     ],
-    example: `PROJECT QUOTE â Blue Haven Pools
+    example: `PROJECT QUOTE — Blue Haven Pools
 
 To: Sarah & David Thompson
-Project: In-ground pool â 8m Ã 4m
+Project: In-ground pool — 8m × 4m
 Quote #BHP-2026-0142
 
 Excavation & earthworks       $6,800
@@ -998,7 +998,7 @@ Waterproofing                  $3,100
 Tiling & coping                $8,400
 Equipment package              $5,900
 Fencing                        $4,200
-âââââââââââââââââââââââââââââââââ
+─────────────────────────────────
 Subtotal (ex GST)             $42,600
 GST (10%)                      $4,260
 TOTAL                         $46,860
@@ -1012,7 +1012,7 @@ Warranty: 7 years structural, 2 years equipment
 [PDF ready to send]`,
   },
   {
-    id: "customer-updates", cat: "Operations", icon: "ð²", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "customer-updates", cat: "Operations", icon: "📲", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Customer Progress Updates",
     desc: "Automatically send weekly progress updates with photos to every active customer. Eliminate 'where are you up to?' calls forever.",
     live: false,
@@ -1023,34 +1023,34 @@ Warranty: 7 years structural, 2 years equipment
       "Milestone celebrations keep customers excited",
       "Reduces customer calls by up to 80%",
     ],
-    example: `Week 4 Update â Your Project ð
+    example: `Week 4 Update — Your Project 🚀
 
 Hi Sarah & David,
 
 What a week! Here's what happened this week:
 
-â COMPLETED
-â¢ Concrete shell formed and cured
-â¢ Waterproofing membrane applied
-â¢ Photos attached ð¸
+✅ COMPLETED
+• Concrete shell formed and cured
+• Waterproofing membrane applied
+• Photos attached 📸
 
-ð NEXT WEEK
-â¢ Tiling begins Monday
-â¢ Coping stone delivery Wednesday
+🔜 NEXT WEEK
+• Tiling begins Monday
+• Coping stone delivery Wednesday
 
-ð On track for late March handover!
+📅 On track for late March handover!
 
 Any questions? Reply to this email.
-â The Team`,
+— The Team`,
   },
   {
-    id: "swms", cat: "Documents & Admin", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "swms", cat: "Documents & Admin", icon: "📄", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "SWMS & Safety Docs",
-    desc: "Generate compliant Safe Work Method Statements and site inductions for every job in minutes â not hours.",
+    desc: "Generate compliant Safe Work Method Statements and site inductions for every job in minutes — not hours.",
     live: false,
     roiLabel1: "Jobs per month", roiLabel2: "Hours on safety docs", roiDefault1: 8, roiDefault2: 1.5,
     benefits: [
-      "SWMS for excavation, height work, electrical â auto-generated",
+      "SWMS for excavation, height work, electrical — auto-generated",
       "Compliant with SafeWork Australia requirements",
       "Customised to each job address and scope",
       "Digital sign-off by crew members on their phones",
@@ -1062,21 +1062,21 @@ Date: 17 Feb 2026
 
 RISK: Underground services
 Controls:
-â¢ Dial Before You Dig obtained â
-â¢ Hand dig first 500mm
-â¢ Mark all services with spray paint
+• Dial Before You Dig obtained ✓
+• Hand dig first 500mm
+• Mark all services with spray paint
 
 RISK: Excavation collapse
 Controls:
-â¢ Spotter at all times
-â¢ No personnel within swing radius
-â¢ Trench shields if depth >1.5m
+• Spotter at all times
+• No personnel within swing radius
+• Trench shields if depth >1.5m
 
-Signed: Mark Chen â 17/02/2026 â
-Signed: Worker 1 â 17/02/2026 â`,
+Signed: Mark Chen — 17/02/2026 ✓
+Signed: Worker 1 — 17/02/2026 ✓`,
   },
   {
-    id: "invoice-auto", cat: "Financial Management", icon: "ð°", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "invoice-auto", cat: "Financial Management", icon: "💰", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Invoice Automation",
     desc: "Automatically generate and send progress invoices when job milestones are hit. Get paid faster with less chasing.",
     live: false,
@@ -1087,106 +1087,106 @@ Signed: Worker 1 â 17/02/2026 â`,
       "Follows up overdue invoices without you lifting a finger",
       "Syncs with Xero and MYOB",
     ],
-    example: `TAX INVOICE â Progress Claim #2
+    example: `TAX INVOICE — Progress Claim #2
 Shell Completion
 
 Due: $19,976 (inc GST)
 
-[Pay Now â bank link included]
+[Pay Now — bank link included]
 
 Auto-reminder schedule:
-â¢ Due date reminder: 3 days prior
-â¢ Overdue reminder: Day 1
-â¢ Second reminder: Day 7`,
+• Due date reminder: 3 days prior
+• Overdue reminder: Day 1
+• Second reminder: Day 7`,
   },
   {
-    id: "review-booster", cat: "Marketing", icon: "â­", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "review-booster", cat: "Marketing", icon: "⭐", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Review & Referral Booster",
     desc: "Automatically ask happy customers for Google reviews at the perfect moment. Double your reviews without any manual effort.",
     live: false,
     roiLabel1: "Jobs completed/month", roiLabel2: "Reviews per month currently", roiDefault1: 6, roiDefault2: 1,
     benefits: [
-      "Sends review request at handover â highest response rate",
+      "Sends review request at handover — highest response rate",
       "Personalised message using customer's name and project",
       "One-click link direct to your Google listing",
       "Follows up once if no response in 5 days",
     ],
     example: `Hi Sarah & David,
 
-Your project looks absolutely stunning! ð
+Your project looks absolutely stunning! 🎉
 
 We'd love to hear about your experience.
 
 If you have 2 minutes, a Google review would 
 mean the world to our small family business:
 
-â­ [Leave a Review on Google]
+⭐ [Leave a Review on Google]
 
 P.S. Know anyone who'd love the same result? 
 We're offering a $500 referral bonus.`,
   },
   {
-    id: "handover-docs", cat: "Documents & Admin", icon: "ð¦", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "handover-docs", cat: "Documents & Admin", icon: "📦", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Handover Documentation",
-    desc: "Generate a complete branded handover pack â maintenance guides, warranty docs and operation manuals â for every customer.",
+    desc: "Generate a complete branded handover pack — maintenance guides, warranty docs and operation manuals — for every customer.",
     live: false,
     roiLabel1: "Jobs completed/month", roiLabel2: "Hours on handover docs", roiDefault1: 6, roiDefault2: 1.5,
     benefits: [
       "Branded handover booklet specific to their equipment",
       "Seasonal maintenance calendar auto-generated",
       "Warranty registration handled automatically",
-      "Looks professional â builds trust and referrals",
+      "Looks professional — builds trust and referrals",
     ],
-    example: `HANDOVER GUIDE â Blue Haven Pools
+    example: `HANDOVER GUIDE — Blue Haven Pools
 Prepared for: Sarah & David Thompson
 
 YOUR SYSTEM
-Pool: 8m Ã 4m, 32,000L
+Pool: 8m × 4m, 32,000L
 Equipment: Zodiac TX35 pump
 Chlorinator: Zodiac LM3-24
 Handover: 14 February 2026
 
 WEEKLY CARE (10 mins)
-â¡ Check chlorine: 2â4 ppm
-â¡ Check pH: 7.2â7.6
-â¡ Empty skimmer basket
+□ Check chlorine: 2–4 ppm
+□ Check pH: 7.2–7.6
+□ Empty skimmer basket
 
 WARRANTIES
 Structure: 7 years
-Equipment: 2 years (registered â)`,
+Equipment: 2 years (registered ✓)`,
   },
   {
-    id: "tender-response", cat: "Sales & Quotes", icon: "ð", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: false,
+    id: "tender-response", cat: "Sales & Quotes", icon: "📑", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Tender Response Generator",
     desc: "AI reads RFT/RFQ documents, searches your files, and generates full responses. Win more government and commercial contracts.",
     live: false,
     roiLabel1: "Tenders per year", roiLabel2: "Hours per tender currently", roiDefault1: 12, roiDefault2: 25,
     benefits: [
-      "Upload RFT document â AI extracts all requirements",
+      "Upload RFT document — AI extracts all requirements",
       "Searches your internal docs for relevant experience and certs",
       "Generates a full response addressing every criterion",
       "Exports as Word document ready for final review",
     ],
-    example: `TENDER ANALYSIS â RFT-2026-045
+    example: `TENDER ANALYSIS — RFT-2026-045
 
-Requirements checked: 15/15 â
+Requirements checked: 15/15 ✓
 Your eligibility: Confirmed
 
 AI generated response:
-â¢ Executive Summary
-â¢ Technical Approach
-â¢ Project Management Plan
-â¢ Selection Criteria Responses
-â¢ Compliance Matrix
-â¢ Pricing Schedule
+• Executive Summary
+• Technical Approach
+• Project Management Plan
+• Selection Criteria Responses
+• Compliance Matrix
+• Pricing Schedule
 
-45 pages Â· Generated in 12 minutes
+45 pages · Generated in 12 minutes
 Your review time: 2-3 hours
 
-Win probability: 65-75% â`,
+Win probability: 65-75% ✓`,
   },
   {
-    id: "smart-scheduling", cat: "Operations", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "smart-scheduling", cat: "Operations", icon: "📅", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Smart Job Scheduling",
     desc: "AI optimises your crew schedule around weather, equipment and subcontractors. Stop the chaos of last-minute changes.",
     live: false,
@@ -1197,23 +1197,23 @@ Win probability: 65-75% â`,
       "Sends automated crew notifications via SMS",
       "Predicts completion date based on pace",
     ],
-    example: `WEEK SCHEDULE â 17 Feb 2026
+    example: `WEEK SCHEDULE — 17 Feb 2026
 
-MON: CREW A â Thompson job â Tiling Day 1
-     CREW B â Rodriguez â Excavation
+MON: CREW A → Thompson job — Tiling Day 1
+     CREW B → Rodriguez — Excavation
 
-TUE: CREW A â Thompson â Tiling Day 2
+TUE: CREW A → Thompson — Tiling Day 2
      Subcontractor: Electrician at Williams job
 
-WED: ð§ï¸ Rain forecast
-â ï¸ Chen excavation moved to Friday
+WED: 🌧️ Rain forecast
+⚠️ Chen excavation moved to Friday
    Both crews on sheltered work
-   â Customers notified automatically
+   → Customers notified automatically
 
 Schedule updated. All parties SMS'd.`,
   },
   {
-    id: "website-content", cat: "Marketing", icon: "âï¸", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: false,
+    id: "website-content", cat: "Marketing", icon: "✍️", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Website Content Writer",
     desc: "Generates service pages, About Us copy AND auto-converts your Industry News Digest into SEO blog posts. Content on autopilot.",
     live: false,
@@ -1228,7 +1228,7 @@ Schedule updated. All parties SMS'd.`,
 From: Industry News Digest
 
 Title: "New $5,000 Pool Safety Grants Available 
-in Queensland â Is Your Pool Eligible?"
+in Queensland — Is Your Pool Eligible?"
 
 SEO keywords: pool safety grants QLD 2026
 Meta: Queensland homeowners with pre-2010 
@@ -1239,23 +1239,23 @@ pools can now access $5,000 grants...
 [Social share version created]`,
   },
   {
-    id: "design-viz", cat: "Sales & Quotes", icon: "ð¨", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: false,
+    id: "design-viz", cat: "Sales & Quotes", icon: "🎨", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Design Visualiser",
     desc: "Upload a photo of the customer's backyard and show them exactly what the finished result will look like. Close more sales with less effort.",
     live: false,
     roiLabel1: "Quotes sent per month", roiLabel2: "Current close rate %", roiDefault1: 12, roiDefault2: 35,
     benefits: [
-      "Upload site photo â AI renders completed project in place",
+      "Upload site photo → AI renders completed project in place",
       "Show 3 options side-by-side for customer choice",
       "Dramatically increases quote-to-sale conversion",
-      "No design skills needed â AI does everything",
+      "No design skills needed — AI does everything",
     ],
     example: `DESIGN VISUALISATION
-Thompson Residence â 3 options generated
+Thompson Residence — 3 options generated
 
-Option A â Classic Rectangle $46,860
-Option B â L-Shape with Spa  $68,500
-Option C â Plunge Pool       $54,200
+Option A — Classic Rectangle $46,860
+Option B — L-Shape with Spa  $68,500
+Option C — Plunge Pool       $54,200
 
 [3 photorealistic renders attached]
 
@@ -1266,7 +1266,7 @@ Best fit and value for this property.
 [Send to Customer] [Adjust Design]`,
   },
   {
-    id: "executive-summary", cat: "Business Intelligence", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: false,
+    id: "executive-summary", cat: "Business Intelligence", icon: "📊", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Business Intelligence Dashboard",
     desc: "Live dashboard consolidating all your tools. Real-time KPIs, trends, alerts and insights. Access anywhere on any device.",
     live: false,
@@ -1277,42 +1277,42 @@ Best fit and value for this property.
       "AI insights: automatic alerts on issues and opportunities",
       "Weekly PDF reports auto-generated",
     ],
-    example: `WEEKLY SUMMARY â Blue Haven Pools
+    example: `WEEKLY SUMMARY — Blue Haven Pools
 
-Revenue this week: $47,400 â18%
+Revenue this week: $47,400 ↑18%
 Active projects: 12
 New leads: 24 (AI handled all)
 Consultations booked: 12
 
-â WINS
-â¢ Highest weekly revenue this month
-â¢ Zero safety incidents â 8 weeks running
-â¢ All projects on schedule
+✅ WINS
+• Highest weekly revenue this month
+• Zero safety incidents — 8 weeks running
+• All projects on schedule
 
-â ï¸ WATCH
-â¢ 4 overdue invoices ($18,400)
-â¢ Behind monthly target by 21%
+⚠️ WATCH
+• 4 overdue invoices ($18,400)
+• Behind monthly target by 21%
 
 TOTAL AI TIME SAVED: 63 hours
 Value: $5,355 @ $85/hr`,
   },
 ];
 
-// ââ INDUSTRY-SPECIFIC TOOLS ââ
+// ── INDUSTRY-SPECIFIC TOOLS ──
 const INDUSTRY_SPECIFIC = {
   pool: [
     {
-      id: "pool-chemistry", cat: "Operations", icon: "ð§ª", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "pool-chemistry", cat: "Operations", icon: "🧪", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Pool Chemistry Advisor",
-      desc: "Customers enter test results and AI tells them exactly what to add. Reduces support calls by 70% â builds loyalty.",
+      desc: "Customers enter test results and AI tells them exactly what to add. Reduces support calls by 70% — builds loyalty.",
       live: false,
       roiLabel1: "Pools you maintain", roiLabel2: "Support calls/month", roiDefault1: 150, roiDefault2: 40,
       benefits: ["Customers enter test strip results, AI recommends treatment", "Calculates exact dosage based on pool volume", "Reduces 'chemistry help' calls by 70%", "Seasonal adjustment recommendations included"],
-      example: `POOL CHEMISTRY â Williams Pool
+      example: `POOL CHEMISTRY — Williams Pool
 
 Test results entered: 17 Feb 2026
-Chlorine: 0.8 ppm (LOW â ï¸)
-pH: 7.9 (HIGH â ï¸)
+Chlorine: 0.8 ppm (LOW ⚠️)
+pH: 7.9 (HIGH ⚠️)
 
 WHAT TO DO NOW:
 1. Add 800g chlorine granules
@@ -1324,41 +1324,41 @@ Shopping list: ~$30 at pool shop
 [Video: How to Add Chemicals]`,
     },
     {
-      id: "warranty-tracker", cat: "Documents & Admin", icon: "ð¡ï¸", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "warranty-tracker", cat: "Documents & Admin", icon: "🛡️", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Warranty Claim Manager",
-      desc: "Track all warranties â structure, equipment, tiling. Auto-reminds customers before expiry and handles claims digitally.",
+      desc: "Track all warranties — structure, equipment, tiling. Auto-reminds customers before expiry and handles claims digitally.",
       live: false,
       roiLabel1: "Pools under warranty", roiLabel2: "Hours on warranty admin/month", roiDefault1: 200, roiDefault2: 2,
       benefits: ["Tracks structural (7yr), equipment (2yr), tiling warranties", "Sends reminders 60 days before expiry", "Digital warranty claim lodgment with photos", "Prevents warranty disputes with clear records"],
-      example: `WARRANTY STATUS â Williams Pool
+      example: `WARRANTY STATUS — Williams Pool
 
-Structure (Blue Haven): 7 years â 7yrs remaining
-Equipment (Zodiac): 2 years â 2yrs remaining
-Tiling: 2 years â 2yrs remaining
+Structure (Blue Haven): 7 years ✓ 7yrs remaining
+Equipment (Zodiac): 2 years ✓ 2yrs remaining
+Tiling: 2 years ✓ 2yrs remaining
 
 Warranty claim lodged:
-Pump grinding noise â Zodiac service notified
+Pump grinding noise → Zodiac service notified
 Tracking #ZOD-2026-447
 Resolution expected: 5-7 business days`,
     },
     {
-      id: "seasonal-reminder", cat: "Marketing", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "seasonal-reminder", cat: "Marketing", icon: "🍂", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Seasonal Pool Care Reminders",
       desc: "Auto-sends seasonal maintenance tips and service offers to your entire customer database. Generates recurring revenue effortlessly.",
       live: false,
       roiLabel1: "Pools in database", roiLabel2: "Seasonal campaigns per year", roiDefault1: 300, roiDefault2: 4,
       benefits: ["Spring opening, summer tips, winter closing campaigns", "Includes service booking links", "Upsells covers, heating, automation", "Generates $15-30k additional revenue per year"],
-      example: `WINTER CARE REMINDER â Sent to 300 customers
+      example: `WINTER CARE REMINDER — Sent to 300 customers
 
-Hi Sarah, winter's here! ð
+Hi Sarah, winter's here! 🍂
 
 CHECKLIST
-â¡ Reduce chlorinator to 20-30%
-â¡ Balance pH (7.2-7.6)
-â¡ Clean filter
+□ Reduce chlorinator to 20-30%
+□ Balance pH (7.2-7.6)
+□ Clean filter
 
 OFFER: Winter service package $180
-Covers everything in the checklist â 
+Covers everything in the checklist — 
 we come to you.
 
 [Book Winter Service]
@@ -1366,7 +1366,7 @@ we come to you.
 Results: 42 bookings = $7,560 revenue`,
     },
     {
-      id: "license-tracker", cat: "Documents & Admin", icon: "ð", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "license-tracker", cat: "Documents & Admin", icon: "📋", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "License & Compliance Tracker",
       desc: "Track QBCC licenses, insurance certificates and staff qualifications. Never miss a renewal or fail an audit.",
       live: false,
@@ -1375,72 +1375,72 @@ Results: 42 bookings = $7,560 revenue`,
       example: `COMPLIANCE DASHBOARD
 
 QBCC License #12345678
-Status: â CURRENT (expires Jun 2027)
+Status: ✓ CURRENT (expires Jun 2027)
 Renewal reminder: set for April 2027
 
-Public Liability: $20M â CURRENT
-Contract Works: â CURRENT
+Public Liability: $20M ✓ CURRENT
+Contract Works: ✓ CURRENT
 
 Staff:
-Mark Chen â Supervisor Cert â
-â ï¸ Emma Thompson â expires in 6 months
+Mark Chen — Supervisor Cert ✓
+⚠️ Emma Thompson — expires in 6 months
 
 [Download All Certificates for Tender]`,
     },
   ],
   hvac: [
     {
-      id: "service-prioritizer", cat: "Operations", icon: "ð¨", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "service-prioritizer", cat: "Operations", icon: "🚨", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Service Call Prioritiser",
       desc: "AI automatically triages incoming calls by urgency. No cooling + server room = emergency. Blocked drain = routine. Routes correctly every time.",
       live: false,
       roiLabel1: "Service calls per month", roiLabel2: "Minutes triaging per call", roiDefault1: 80, roiDefault2: 5,
       benefits: ["Auto-categorises: Emergency / Urgent / Routine / Quote", "Flags: 'no cooling', 'gas smell', 'water leak', 'burning smell'", "Dispatches urgent jobs within 4 hours automatically", "Routes to nearest technician by GPS"],
-      example: `CALL TRIAGE â Monday 9:15 AM
+      example: `CALL TRIAGE — Monday 9:15 AM
 
-ð¨ EMERGENCY
-Medical centre â AC completely dead, server room heating
-â Mike dispatched, ETA 25 mins
+🚨 EMERGENCY
+Medical centre — AC completely dead, server room heating
+→ Mike dispatched, ETA 25 mins
 
-â¡ URGENT
-"Grinding noise, burning smell" â residential
-â James scheduled 2:00 PM today
+⚡ URGENT
+"Grinding noise, burning smell" — residential
+→ James scheduled 2:00 PM today
 
-ð ROUTINE
-Slow draining â not urgent
-â Scheduled Wednesday AM
+📋 ROUTINE
+Slow draining — not urgent
+→ Scheduled Wednesday AM
 
 All customers notified automatically.`,
     },
     {
-      id: "refrigerant-tracker", cat: "Documents & Admin", icon: "ð§ª", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "refrigerant-tracker", cat: "Documents & Admin", icon: "🧪", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Refrigerant Gas Tracker",
       desc: "Track all refrigerant usage and generate EPA-compliant quarterly reports automatically. Never miss a compliance deadline.",
       live: false,
       roiLabel1: "Gas transactions/month", roiLabel2: "Minutes per record", roiDefault1: 30, roiDefault2: 8,
       benefits: ["Logs every gas purchase and usage automatically", "Generates quarterly EPA compliance reports", "Tracks technician ARCtick license expiry dates", "Alerts when stock levels are low"],
-      example: `REFRIGERANT REPORT â Q4 2025
+      example: `REFRIGERANT REPORT — Q4 2025
 
 R32: 38.5kg used across 24 jobs
 R410A: 28kg used across 18 jobs
 
-EPA Report: Ready to submit â
+EPA Report: Ready to submit ✓
 
-â ï¸ LOW STOCK â Reorder now:
-R32: 2 Ã 15kg cylinders ($1,260)
-R410A: 1 Ã 15kg cylinder ($720)
+⚠️ LOW STOCK — Reorder now:
+R32: 2 × 15kg cylinders ($1,260)
+R410A: 1 × 15kg cylinder ($720)
 
 [Auto-generate purchase order]
 [Submit EPA report]`,
     },
     {
-      id: "maintenance-scheduler-hvac", cat: "Operations", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "maintenance-scheduler-hvac", cat: "Operations", icon: "🔄", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Preventative Maintenance Scheduler",
       desc: "Auto-reminds past customers when their annual service is due. Books appointments without you lifting a finger. Guaranteed recurring revenue.",
       live: false,
       roiLabel1: "Customers with systems installed", roiLabel2: "Services booked per month", roiDefault1: 150, roiDefault2: 12,
       benefits: ["Tracks every system install date automatically", "Sends reminder 2 weeks before service due", "Customers can book online instantly", "Follows up if no response after 1 week"],
-      example: `MAINTENANCE REMINDER â Sent automatically
+      example: `MAINTENANCE REMINDER — Sent automatically
 
 Hi Sarah, your annual AC service is due!
 
@@ -1450,22 +1450,22 @@ was installed 12 months ago.
 Service cost: $180 (inc GST)
 Takes: 45 minutes
 
-[Book Online â choose your time]
+[Book Online — choose your time]
 
 Available:
-â¢ Wed 20 Feb, 10:00 AM â
-â¢ Thu 21 Feb, 2:00 PM â
+• Wed 20 Feb, 10:00 AM ✓
+• Thu 21 Feb, 2:00 PM ✓
 
-28 reminders sent this month â 12 bookings`,
+28 reminders sent this month → 12 bookings`,
     },
     {
-      id: "energy-calculator", cat: "Sales & Quotes", icon: "â¡", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "energy-calculator", cat: "Sales & Quotes", icon: "⚡", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Energy Efficiency Calculator",
       desc: "Show customers exactly how much they'll save upgrading to a new system. Convert 40% more upgrade quotes to sales with real data.",
       live: false,
       roiLabel1: "Upgrade quotes per month", roiLabel2: "Minutes calculating savings", roiDefault1: 15, roiDefault2: 20,
-      benefits: ["Calculates annual running costs of current vs new system", "Shows payback period for the upgrade investment", "Includes government rebates and incentives", "Visual comparison â proves ROI to customers"],
-      example: `ENERGY SAVINGS â Roberts Law Firm
+      benefits: ["Calculates annual running costs of current vs new system", "Shows payback period for the upgrade investment", "Includes government rebates and incentives", "Visual comparison — proves ROI to customers"],
+      example: `ENERGY SAVINGS — Roberts Law Firm
 
 Current system (2012): $3,240/year power
 New Daikin VRV: $2,173/year power
@@ -1478,7 +1478,7 @@ Upgrade cost: $20,300 (after rebates)
 Payback: 10.9 years
 
 BUT your old system needs replacement 
-anyway â upgrading now saves $8,000 
+anyway — upgrading now saves $8,000 
 versus replacing later.
 
 [Accept Quote]`,
@@ -1486,7 +1486,7 @@ versus replacing later.
   ],
   electrical: [
     {
-      id: "test-tag-manager", cat: "Documents & Admin", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "test-tag-manager", cat: "Documents & Admin", icon: "🔌", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Test & Tag Manager",
       desc: "Track all appliance testing schedules, generate AS/NZS 3760 compliant certificates and auto-remind commercial clients before retest is due.",
       live: false,
@@ -1494,55 +1494,55 @@ versus replacing later.
       benefits: ["Auto-generates AS/NZS 3760 compliant test certificates", "Tracks retest due dates for every appliance", "Sends automatic reminders to commercial clients", "Mobile app for on-site testing and QR code scanning"],
       example: `TEST & TAG CERTIFICATE
 
-HP Desktop â Asset WF-0847
+HP Desktop — Asset WF-0847
 Location: Level 2, Desk 24
 Test date: 17 Feb 2026
 Next retest: 17 Feb 2027
 
-â Earth continuity: 0.08Î©
-â Insulation: >100MÎ©
-â Polarity: Correct
+✓ Earth continuity: 0.08Ω
+✓ Insulation: >100MΩ
+✓ Polarity: Correct
 
-Result: PASS â
+Result: PASS ✓
 Tag: Green (Annual)
 
 [QR Code for asset history]`,
     },
     {
-      id: "compliance-cert-gen", cat: "Documents & Admin", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "compliance-cert-gen", cat: "Documents & Admin", icon: "📜", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Compliance Certificate Generator",
-      desc: "Auto-fill electrical compliance certificates from job details. Compliant with QLD, NSW, VIC, SA and WA regulations â generated in seconds.",
+      desc: "Auto-fill electrical compliance certificates from job details. Compliant with QLD, NSW, VIC, SA and WA regulations — generated in seconds.",
       live: false,
       roiLabel1: "Certificates per month", roiLabel2: "Minutes per certificate", roiDefault1: 35, roiDefault2: 15,
       benefits: ["Compliant with all state electrical safety regulations", "Pre-fills from job details automatically", "Digitally signed and emailed to customer", "Integrates with state authority lodgment systems"],
       example: `CERTIFICATE OF ELECTRICAL COMPLIANCE
 QLD Electrical Safety Act 2002
 
-Cert #EC-2026-08471 â 17 Feb 2026
+Cert #EC-2026-08471 — 17 Feb 2026
 Licensed Electrician: Mike Chen E12345
 
 Work: 32A supply for ducted AC system
 Location: 22 Park Ave, Paddington
 
-â Continuity of earthing: Pass
-â Insulation resistance: >50MÎ©
-â RCD trip time: 18ms (Pass)
+✓ Continuity of earthing: Pass
+✓ Insulation resistance: >50MΩ
+✓ RCD trip time: 18ms (Pass)
 
-Lodged with ESO: 17/02/2026 â`,
+Lodged with ESO: 17/02/2026 ✓`,
     },
     {
-      id: "emergency-dispatch", cat: "Operations", icon: "ð¨", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "emergency-dispatch", cat: "Operations", icon: "🚨", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Emergency Callout Dispatcher",
       desc: "Routes after-hours emergencies to your on-call electrician automatically via GPS. Calculates callout fees and sends job details.",
       live: false,
       roiLabel1: "Emergency calls/month", roiLabel2: "Minutes per dispatch", roiDefault1: 20, roiDefault2: 10,
       benefits: ["24/7 AI answering for emergency calls", "Routes to nearest available electrician via GPS", "Calculates callout fee: time and distance", "SMS job details to electrician before arrival"],
-      example: `ð¨ EMERGENCY DISPATCH â 11:47 PM
+      example: `🚨 EMERGENCY DISPATCH — 11:47 PM
 
 Customer: Sarah Williams, 22 Park Ave
 "No power, sparks from switchboard, burning smell"
 
-Risk: HIGH â immediate response
+Risk: HIGH — immediate response
 Nearest: Mike Chen (2.8km, on-call)
 
 SMS sent to Mike: 11:48 PM
@@ -1552,18 +1552,18 @@ Mike arrived: 11:58 PM
 Issue: Main switchboard fault
 Resolved: 1.2 hours
 Invoice: $394 (inc GST)
-Rating: 5/5 â­`,
+Rating: 5/5 ⭐`,
     },
   ],
   fabrication: [
     {
-      id: "material-optimizer", cat: "Operations", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "material-optimizer", cat: "Operations", icon: "📐", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Material Cutting Optimiser",
       desc: "AI calculates the most efficient way to cut steel sheets and sections. Reduce waste by 40-60% and save $5-10k per year.",
       live: false,
       roiLabel1: "Cutting jobs/month", roiLabel2: "Current waste %", roiDefault1: 50, roiDefault2: 18,
       benefits: ["Optimises cutting patterns to reduce waste by 40-60%", "Works with sheets, tubes, angles and flat bar", "Accounts for blade width (kerf) automatically", "Generates cutting diagrams for the workshop"],
-      example: `CUTTING OPTIMISATION â Job #2456
+      example: `CUTTING OPTIMISATION — Job #2456
 Steel shelving: 20 uprights + 40 shelves
 
 Standard approach: 22 lengths = $1,870
@@ -1571,43 +1571,43 @@ AI optimised: 17 lengths = $1,445
 
 YOU SAVE: $425 per job (23%)
 
-Pattern A: 2400 | 2400 | 1200 = 6000mm â
-Pattern B: 1200 Ã 4 | 600 Ã 2 = 6000mm â
+Pattern A: 2400 | 2400 | 1200 = 6000mm ✓
+Pattern B: 1200 × 4 | 600 × 2 = 6000mm ✓
 
 [Generate cutting diagrams for workshop]`,
     },
     {
-      id: "weld-tracker", cat: "Documents & Admin", icon: "ð¥", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "weld-tracker", cat: "Documents & Admin", icon: "🔥", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Welder Qualification Tracker",
-      desc: "Track welder certifications, WPS/PQR qualifications and AS 1554 compliance. Know who can work on what â every job.",
+      desc: "Track welder certifications, WPS/PQR qualifications and AS 1554 compliance. Know who can work on what — every job.",
       live: false,
       roiLabel1: "Welders on staff", roiLabel2: "Compliance checks/month", roiDefault1: 8, roiDefault2: 20,
       benefits: ["Tracks all welder qualifications and expiry dates", "Manages WPS (Welding Procedure Specifications)", "Ensures AS 1554.1 compliance automatically", "Alerts 30 days before cert expiry"],
-      example: `WELDER QUALIFICATIONS â Mike Chen
+      example: `WELDER QUALIFICATIONS — Mike Chen
 
-â Structural Steel (AS 1554.1) â expires Aug 2026
-â Pressure Vessels (AS 3992) â expires Nov 2026
-â Aluminium TIG â EXPIRED Jan 2026
+✓ Structural Steel (AS 1554.1) — expires Aug 2026
+✓ Pressure Vessels (AS 3992) — expires Nov 2026
+✗ Aluminium TIG — EXPIRED Jan 2026
 
-Job #2456 â Structural steel:
-Mike Chen: â APPROVED
+Job #2456 — Structural steel:
+Mike Chen: ✓ APPROVED
 
-â ï¸ Book requalification for aluminium cert`,
+⚠️ Book requalification for aluminium cert`,
     },
     {
-      id: "job-costing", cat: "Financial Management", icon: "ð°", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "job-costing", cat: "Financial Management", icon: "💰", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Real-Time Job Costing",
-      desc: "Track actual costs vs quoted in real-time. Know if you're making or losing money before the job finishes â not after.",
+      desc: "Track actual costs vs quoted in real-time. Know if you're making or losing money before the job finishes — not after.",
       live: false,
       roiLabel1: "Jobs running at once", roiLabel2: "Hours on manual tracking", roiDefault1: 12, roiDefault2: 3,
       benefits: ["Tracks materials, labour, consumables in real-time", "Alerts when job exceeds budget by 10%", "Shows profit margin on every active job", "Identifies which job types are most profitable"],
-      example: `JOB COSTING â #2456 Warehouse Beams
+      example: `JOB COSTING — #2456 Warehouse Beams
 
 Budget: $12,500
 Actual so far: $9,240 (65% complete)
 Projected final: $14,215
 
-â ï¸ OVER BUDGET by $1,715
+⚠️ OVER BUDGET by $1,715
 Cause: Extra steel, design change
 
 Action: Variation issued to customer $2,100
@@ -1615,64 +1615,64 @@ Action: Variation issued to customer $2,100
 Most profitable jobs:
 1. Architectural screens: 42% margin
 2. Custom gates: 38% margin
-3. Repairs: 18% â ï¸ Review pricing`,
+3. Repairs: 18% ⚠️ Review pricing`,
     },
     {
-      id: "quality-checklist", cat: "Documents & Admin", icon: "â", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "quality-checklist", cat: "Documents & Admin", icon: "✅", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Quality Inspection Checklist",
       desc: "Digital inspection checklists with photos for every job stage. Prove quality, prevent rework and reduce defects by 60%.",
       live: false,
       roiLabel1: "Jobs per month", roiLabel2: "Minutes per inspection", roiDefault1: 20, roiDefault2: 15,
       benefits: ["Pre-built checklists for common job types", "Attach photos at each inspection point", "Digital signatures from supervisors", "Automatic reports emailed to customers"],
-      example: `QUALITY INSPECTION â Job #2456
-Pre-delivery check â 16 Feb 2026
+      example: `QUALITY INSPECTION — Job #2456
+Pre-delivery check — 16 Feb 2026
 
-â Dimensional checks: All within Â±2mm
-â Weld inspection: No defects
-â Surface finish: Primer applied
-â Documentation: Certs on file
-ð¸ 3 photos attached
+✓ Dimensional checks: All within ±2mm
+✓ Weld inspection: No defects
+✓ Surface finish: Primer applied
+✓ Documentation: Certs on file
+📸 3 photos attached
 
-RESULT: PASS â Ready for delivery
+RESULT: PASS — Ready for delivery
 Signed: Sarah Wong (Supervisor)`,
     },
   ],
   plumbing: [
     {
-      id: "emergency-router", cat: "Operations", icon: "ð°", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "emergency-router", cat: "Operations", icon: "🚰", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Emergency Job Router",
       desc: "AI prioritises burst pipes and gas leaks over blocked drains. Routes urgent jobs to the nearest available plumber every time.",
       live: false,
       roiLabel1: "Service calls per day", roiLabel2: "Minutes triaging", roiDefault1: 25, roiDefault2: 5,
       benefits: ["Detects keywords: burst pipe, gas leak, no hot water", "Routes emergencies within 5 minutes", "Sends job details and customer history to plumber's phone", "Tracks response times for quality control"],
-      example: `JOB TRIAGE â 9:15 AM
+      example: `JOB TRIAGE — 9:15 AM
 
-ð¨ EMERGENCY
+🚨 EMERGENCY
 "Burst pipe in ceiling, water into bedroom"
-â Tom dispatched (2.1km), ETA 9:28 AM
+→ Tom dispatched (2.1km), ETA 9:28 AM
 
-â¡ URGENT
+⚡ URGENT
 "Gas smell in kitchen"
-â Mike dispatched (safety priority)
+→ Mike dispatched (safety priority)
 
-ð ROUTINE
+📋 ROUTINE
 "Slow draining kitchen sink"
-â James scheduled 2:00 PM
+→ James scheduled 2:00 PM
 
 All customers notified with ETA.`,
     },
     {
-      id: "backflow-scheduler", cat: "Operations", icon: "ð§", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "backflow-scheduler", cat: "Operations", icon: "💧", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Backflow Testing Scheduler",
       desc: "Annual backflow testing reminders, auto-booking and certificate generation. Guaranteed, predictable recurring revenue.",
       live: false,
       roiLabel1: "Backflow devices tracked", roiLabel2: "Services booked/month", roiDefault1: 200, roiDefault2: 15,
       benefits: ["Tracks all installed backflow devices", "Sends reminder 6 weeks before test due", "Generates compliance certificates automatically", "Generates $20-30k recurring revenue per year"],
-      example: `BACKFLOW REMINDER â Sent automatically
+      example: `BACKFLOW REMINDER — Sent automatically
 
 Hi David, your annual test is due by 31 March.
 
-Device: RPZ valve â 45 Smith St
+Device: RPZ valve — 45 Smith St
 Last tested: March 2025
 Cost: $165 inc GST
 
@@ -1682,14 +1682,14 @@ Required by law (Plumbing & Drainage Act)
 Avoid $1,100 council fines.`,
     },
     {
-      id: "hot-water-selector", cat: "Sales & Quotes", icon: "â¨ï¸", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "hot-water-selector", cat: "Sales & Quotes", icon: "♨️", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Hot Water System Selector",
-      desc: "AI recommends the perfect hot water system based on household size, usage and budget â with running costs and payback calculated.",
+      desc: "AI recommends the perfect hot water system based on household size, usage and budget — with running costs and payback calculated.",
       live: false,
       roiLabel1: "Hot water quotes/month", roiLabel2: "Minutes per recommendation", roiDefault1: 20, roiDefault2: 15,
-      benefits: ["5 questions â best system recommendation", "Compares gas, electric, heat pump, solar", "Calculates 10-year total cost of ownership", "Includes all government rebates automatically"],
+      benefits: ["5 questions → best system recommendation", "Compares gas, electric, heat pump, solar", "Calculates 10-year total cost of ownership", "Includes all government rebates automatically"],
       example: `HOT WATER RECOMMENDATION
-Williams Residence â 4 people
+Williams Residence — 4 people
 
 RECOMMENDED: Heat Pump (Stiebel Eltron 302L)
 
@@ -1706,36 +1706,36 @@ Payback: 5.7 years
   ],
   construction: [
     {
-      id: "subcontractor-coordinator", cat: "Operations", icon: "ð·", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "subcontractor-coordinator", cat: "Operations", icon: "👷", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Subcontractor Coordinator",
       desc: "Auto-schedules and tracks all subbies. Sends notifications, tracks invoices and prevents scheduling conflicts automatically.",
       live: false,
       roiLabel1: "Subbies per project", roiLabel2: "Hours coordinating/week", roiDefault1: 8, roiDefault2: 6,
       benefits: ["Auto-schedules trades in correct sequence", "Sends SMS reminders 24hrs before start", "Tracks invoices and payment schedules", "Flags scheduling conflicts automatically"],
-      example: `SUBBIE SCHEDULE â 17-21 Feb
+      example: `SUBBIE SCHEDULE — 17-21 Feb
 
-MON: Plumber â first fix â Confirmed
-TUE: â ï¸ Conflict detected
+MON: Plumber — first fix ✓ Confirmed
+TUE: ⚠️ Conflict detected
      Plumber running over
-     â Electrician rescheduled to Wed
-     â Both notified automatically
+     → Electrician rescheduled to Wed
+     → Both notified automatically
 
-THU: Gyprock â wall lining
-     â ï¸ Awaiting confirmation
+THU: Gyprock — wall lining
+     ⚠️ Awaiting confirmation
      Follow-up sent
 
-All insurance & licenses verified â`,
+All insurance & licenses verified ✓`,
     },
     {
-      id: "site-diary", cat: "Documents & Admin", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "site-diary", cat: "Documents & Admin", icon: "📔", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Digital Site Diary",
       desc: "Voice-to-text site notes with automatic weather logging, photo tagging and daily reports emailed to all stakeholders.",
       live: false,
       roiLabel1: "Diary entries/week", roiLabel2: "Minutes per entry", roiDefault1: 5, roiDefault2: 15,
       benefits: ["Voice recording converts to text automatically", "Auto-logs weather conditions and temperature", "Attach photos with automatic date/location stamps", "Daily summary emailed to client and office"],
-      example: `SITE DIARY â 17 Feb 2026
+      example: `SITE DIARY — 17 Feb 2026
 
-Weather: 28Â°C, partly cloudy â (auto-logged)
+Weather: 28°C, partly cloudy ✓ (auto-logged)
 
 Voice note transcribed:
 "Crew of 4 arrived 7:00 AM. Formwork on 
@@ -1744,22 +1744,22 @@ by 2 PM. Inspector visited 11 AM, approved
 formwork, cleared for tomorrow's pour."
 
 Photos attached: 4 (auto-tagged with time)
-Report emailed to: client, office â`,
+Report emailed to: client, office ✓`,
     },
     {
-      id: "variation-tracker", cat: "Financial Management", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "variation-tracker", cat: "Financial Management", icon: "📝", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Variation Order Manager",
       desc: "Track all design changes, generate variation quotes instantly and get digital client approval. Stop scope creep and unpaid work.",
       live: false,
       roiLabel1: "Variations per project", roiLabel2: "Hours on variation admin", roiDefault1: 8, roiDefault2: 1.5,
       benefits: ["Generates variation quotes in 5 minutes", "Digital client approval with e-signature", "Tracks all changes vs original contract", "Recovers $10-20k in missed charges per year"],
-      example: `VARIATION #004 â 14 Feb 2026
+      example: `VARIATION #004 — 14 Feb 2026
 
 Change: Additional window east wall
 Materials + labour: $1,850 + GST = $2,035
 
-Client: [Approve $2,035] â Clicked
-Status: â APPROVED â 15 Feb 9:45 AM
+Client: [Approve $2,035] ← Clicked
+Status: ✓ APPROVED — 15 Feb 9:45 AM
 Digital signature: Sarah Williams
 
 Contract updated:
@@ -1768,83 +1768,83 @@ Variations: $6,835
 New total: $291,835`,
     },
     {
-      id: "rfi-manager", cat: "Documents & Admin", icon: "â", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "rfi-manager", cat: "Documents & Admin", icon: "❓", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "RFI & Query Manager",
       desc: "Track all Requests for Information, automatically follow up, and prevent delays caused by unanswered design queries.",
       live: false,
       roiLabel1: "RFIs per project", roiLabel2: "Hours chasing responses", roiDefault1: 15, roiDefault2: 2,
       benefits: ["Generates professional RFIs from templates", "Tracks response times and overdue items", "Auto-follows up unanswered RFIs", "Prevents project delays from information gaps"],
-      example: `RFI #012 â 14 Feb 2026
+      example: `RFI #012 — 14 Feb 2026
 
 Query: Drawing shows 1800mm window but 
 spec calls for 2100mm. Which is correct?
 
 Impact if not resolved:
-â¢ Window order delayed
-â¢ Framing cannot proceed
+• Window order delayed
+• Framing cannot proceed
 
 Response required by: 18 Feb 2026
 
-STATUS: â RESOLVED in 23 hours
-"Specification correct â 2100mm. 
+STATUS: ✓ RESOLVED in 23 hours
+"Specification correct — 2100mm. 
 Drawing Rev B issued today."`,
     },
   ],
   landscaping: [
     {
-      id: "plant-selector", cat: "Sales & Quotes", icon: "ð±", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "plant-selector", cat: "Sales & Quotes", icon: "🌱", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Smart Plant Selector",
       desc: "AI recommends the right plants based on location, soil, sun and client preferences. Reduce plant failures by 70%.",
       live: false,
       roiLabel1: "Design consultations/month", roiLabel2: "Minutes researching plants", roiDefault1: 20, roiDefault2: 30,
       benefits: ["Recommends plants for Brisbane/Melbourne/Sydney climates", "Considers sun, soil, water needs automatically", "Suggests native, drought-tolerant options", "Generates plant list with supplier codes for ordering"],
-      example: `PLANT SELECTION â Williams Residence
+      example: `PLANT SELECTION — Williams Residence
 
 Site: Brisbane, north-facing, clay soil, full sun
 Preference: Native, low maintenance
 
 RECOMMENDED:
-â¢ Lilly Pilly 'Resilience' Ã8 â screening
-â¢ Coastal Banksia Ã4 â feature
-â¢ Kangaroo Paw Ã12 â colour
-â¢ Native Violet Ã30 â groundcover
+• Lilly Pilly 'Resilience' ×8 — screening
+• Coastal Banksia ×4 — feature
+• Kangaroo Paw ×12 — colour
+• Native Violet ×30 — groundcover
 
 Total: 54 plants, $1,526 (under budget)
-All drought tolerant â Brisbane suited â
+All drought tolerant ✓ Brisbane suited ✓
 
 [Generate Quote] [View 3D Preview]`,
     },
     {
-      id: "seasonal-scheduler-land", cat: "Operations", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "seasonal-scheduler-land", cat: "Operations", icon: "📅", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Seasonal Maintenance Scheduler",
       desc: "Auto-books seasonal services (pruning, fertilising, mulching) with past clients. Predictable recurring revenue.",
       live: false,
       roiLabel1: "Maintenance clients", roiLabel2: "Services booked/month", roiDefault1: 80, roiDefault2: 8,
       benefits: ["Seasonal reminders: Spring, Summer, Autumn, Winter", "Recommends services based on garden type", "Clients book online instantly", "Generates $30-50k recurring revenue annually"],
-      example: `SPRING REMINDER â Sent to 80 clients
+      example: `SPRING REMINDER — Sent to 80 clients
 
-Hi Sarah, spring is here! ð¸
+Hi Sarah, spring is here! 🌸
 
 Recommended for your native garden:
-â Spring prune & tidy
-â Fertilise garden beds
-â Fresh mulch layer
+✓ Spring prune & tidy
+✓ Fertilise garden beds
+✓ Fresh mulch layer
 
-Service time: 3 hours â $420 inc GST
+Service time: 3 hours — $420 inc GST
 
-[Book Online â 3 dates available]
+[Book Online — 3 dates available]
 
 This month: 12 bookings from 80 sent = $5,040`,
     },
     {
-      id: "irrigation-designer", cat: "Sales & Quotes", icon: "ð§", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "irrigation-designer", cat: "Sales & Quotes", icon: "💧", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Irrigation System Designer",
       desc: "AI designs efficient drip or spray irrigation systems, calculates water usage and generates parts lists ready to order.",
       live: false,
       roiLabel1: "Irrigation quotes/month", roiLabel2: "Hours per design", roiDefault1: 10, roiDefault2: 2,
       benefits: ["Designs system based on garden layout and plant needs", "Calculates pipe sizes, pump requirements and zones", "Generates parts list with supplier codes", "Shows water savings vs manual watering"],
-      example: `IRRIGATION DESIGN â Williams Residence
-180mÂ² garden, 3 zones
+      example: `IRRIGATION DESIGN — Williams Residence
+180m² garden, 3 zones
 
 Zone 1: Drip for screening plants
 Zone 2: Drip for feature beds
@@ -1862,152 +1862,152 @@ System cost: $3,234 inc install
   ],
   cleaning: [
     {
-      id: "roster-optimizer", cat: "Operations", icon: "ð¥", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "roster-optimizer", cat: "Operations", icon: "👥", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Smart Roster Optimiser",
-      desc: "AI builds optimal cleaning rosters â staff availability, skills, site requirements, travel routing. Saves 4-6 hours per week.",
+      desc: "AI builds optimal cleaning rosters — staff availability, skills, site requirements, travel routing. Saves 4-6 hours per week.",
       live: false,
       roiLabel1: "Cleaners on staff", roiLabel2: "Hours rostering/week", roiDefault1: 15, roiDefault2: 4,
       benefits: ["Optimises travel routes to minimise driving", "Matches cleaner skills to site requirements", "Handles leave requests and swaps automatically", "Sends roster via SMS to all staff"],
-      example: `ROSTER â Week 17 Feb
+      example: `ROSTER — Week 17 Feb
 
 Sarah Mitchell:
 06:00-09:00 Westfield Office (CBD)
 09:30-12:30 Roberts Law (Spring Hill)
-Travel: 12 min between sites â
+Travel: 12 min between sites ✓
 
-â ï¸ Emma Thompson: Annual leave Mon-Wed
-â Sites redistributed, all covered â
+⚠️ Emma Thompson: Annual leave Mon-Wed
+→ Sites redistributed, all covered ✓
 
-â ï¸ David Lee: Sick call received
-â Backup contacted, cover confirmed â
+⚠️ David Lee: Sick call received
+→ Backup contacted, cover confirmed ✓
 
-All staff notified via SMS â`,
+All staff notified via SMS ✓`,
     },
     {
-      id: "quality-audit", cat: "Documents & Admin", icon: "â­", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "quality-audit", cat: "Documents & Admin", icon: "⭐", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Site Quality Audit System",
       desc: "Digital checklists for every clean with photos. Prove quality to clients with monthly reports. Reduces complaints by 80%.",
       live: false,
       roiLabel1: "Sites audited/month", roiLabel2: "Minutes per audit", roiDefault1: 40, roiDefault2: 20,
       benefits: ["Pre-built checklists for offices, medical, retail", "Score each area out of 5 stars with photos", "Automatic monthly reports sent to clients", "Tracks cleaner performance over time"],
-      example: `QUALITY AUDIT â Westfield Office L8
+      example: `QUALITY AUDIT — Westfield Office L8
 
-Reception: â­â­â­â­â­ (5/5)
-Kitchen: â­â­â­â­â (4/5)
-  â ï¸ Coffee machine exterior noted
-Bathrooms: â­â­â­â­â­ (5/5)
-Offices: â­â­â­â­â­ (5/5)
+Reception: ⭐⭐⭐⭐⭐ (5/5)
+Kitchen: ⭐⭐⭐⭐☆ (4/5)
+  ⚠️ Coffee machine exterior noted
+Bathrooms: ⭐⭐⭐⭐⭐ (5/5)
+Offices: ⭐⭐⭐⭐⭐ (5/5)
 
-OVERALL: 4.75/5 â Excellent
+OVERALL: 4.75/5 — Excellent
 
-Report auto-sent to client â`,
+Report auto-sent to client ✓`,
     },
     {
-      id: "consumables-tracker", cat: "Financial Management", icon: "ð§´", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "consumables-tracker", cat: "Financial Management", icon: "🧴", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Consumables Inventory Tracker",
       desc: "Tracks chemical and consumable usage per site. Auto-reorders before stockouts and alerts unusual usage (waste or theft).",
       live: false,
       roiLabel1: "Sites serviced", roiLabel2: "Hours on stock management/week", roiDefault1: 30, roiDefault2: 3,
       benefits: ["Tracks usage of chemicals, paper, bags per site", "Auto-generates reorder when stock is low", "Detects unusual usage patterns (waste or theft)", "Calculates cost per clean for accurate pricing"],
-      example: `CONSUMABLES â February 2026
+      example: `CONSUMABLES — February 2026
 
-â ï¸ AUTO-REORDER TRIGGERED:
+⚠️ AUTO-REORDER TRIGGERED:
 Multi-purpose cleaner: Low (order 40L = $340)
 Toilet paper: Low (order 10 boxes = $450)
 
-â ï¸ UNUSUAL USAGE DETECTED:
+⚠️ UNUSUAL USAGE DETECTED:
 Gym (Fortitude Valley): Chemicals up 40%
 Action: Supervisor to investigate
 
 Cost per clean (Westfield):
-Consumables: $12 (23% of revenue â)`,
+Consumables: $12 (23% of revenue ✓)`,
     },
   ],
   manufacturing: [
     {
-      id: "production-scheduler", cat: "Operations", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "production-scheduler", cat: "Operations", icon: "📊", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Production Scheduler",
       desc: "AI optimises production runs, minimises changeovers and balances machine capacity. Reduce downtime by 30%.",
       live: false,
       roiLabel1: "Production runs/month", roiLabel2: "Hours scheduling/week", roiDefault1: 80, roiDefault2: 12,
       benefits: ["Optimises job sequence to minimise setup changes", "Balances workload across machines", "Accounts for material availability", "Predicts bottlenecks 1-2 weeks ahead"],
-      example: `PRODUCTION SCHEDULE â Week 17 Feb
+      example: `PRODUCTION SCHEDULE — Week 17 Feb
 
 AI GROUPED aluminium jobs together:
-MON AM: Job #2456 â Aluminium brackets
-MON PM: Job #2461 â Aluminium plates
-(Same material = 30 min setup saved â)
-MON LATE: Job #2458 â Steel (change)
+MON AM: Job #2456 — Aluminium brackets
+MON PM: Job #2461 — Aluminium plates
+(Same material = 30 min setup saved ✓)
+MON LATE: Job #2458 — Steel (change)
 
-â ï¸ BOTTLENECK: Powder coating 105% Thu-Fri
-â External coater contacted automatically
+⚠️ BOTTLENECK: Powder coating 105% Thu-Fri
+→ External coater contacted automatically
 
-On-time delivery: 22/23 jobs (96%) â`,
+On-time delivery: 22/23 jobs (96%) ✓`,
     },
     {
-      id: "quality-spc", cat: "Documents & Admin", icon: "ð", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "quality-spc", cat: "Documents & Admin", icon: "📈", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Statistical Process Control (SPC)",
       desc: "Track measurements, detect process drift before defects occur, and generate control charts. Reduce scrap by 50%.",
       live: false,
       roiLabel1: "Parts inspected/month", roiLabel2: "Current scrap rate %", roiDefault1: 5000, roiDefault2: 4,
       benefits: ["Real-time control charts (X-bar, R-chart)", "Detects process drift before bad parts are made", "Automatic out-of-control alerts to supervisor", "ISO 9001 compliant documentation"],
-      example: `SPC ALERT â CNC Mill #1
+      example: `SPC ALERT — CNC Mill #1
 
-Hole diameter: 12.00mm Â±0.05mm
+Hole diameter: 12.00mm ±0.05mm
 Last 7 readings: trending toward upper limit
 
-#484: 12.03mm â ï¸
-#485: 12.03mm â ï¸
-#486: 12.04mm â ï¸ AT LIMIT
-#487: 12.04mm â ï¸ AT LIMIT
+#484: 12.03mm ⚠️
+#485: 12.03mm ⚠️
+#486: 12.04mm ⚠️ AT LIMIT
+#487: 12.04mm ⚠️ AT LIMIT
 
-ð¨ STOP PRODUCTION
-Check tool wear â replace if worn
-Verify calibration â resume
+🚨 STOP PRODUCTION
+Check tool wear → replace if worn
+Verify calibration → resume
 
 Estimated scrap cost if ignored: $2,400`,
     },
     {
-      id: "inventory-forecaster", cat: "Financial Management", icon: "ð¦", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "inventory-forecaster", cat: "Financial Management", icon: "📦", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Smart Inventory Forecaster",
       desc: "AI predicts material needs 2-4 weeks ahead based on your production schedule. Auto-reorders. Prevents stockouts.",
       live: false,
       roiLabel1: "SKUs managed", roiLabel2: "Stockout incidents/month", roiDefault1: 150, roiDefault2: 8,
       benefits: ["Predicts material needs 2-4 weeks ahead", "Auto-generates purchase orders", "Prevents stockouts (95%+ fill rate)", "Reduces excess inventory by 30%"],
-      example: `INVENTORY FORECAST â Next 30 Days
+      example: `INVENTORY FORECAST — Next 30 Days
 
-ð¨ URGENT REORDER:
+🚨 URGENT REORDER:
 Aluminium 6061 Sheet: 4 days supply left
 Forecasted need: 45 sheets
-â Order 60 sheets NOW ($4,200)
+→ Order 60 sheets NOW ($4,200)
 
 Or order 100 bulk: $6,500 ($65/sheet vs $70)
-â Save $300 + free delivery
+→ Save $300 + free delivery
 
-â ï¸ LOW STOCK:
+⚠️ LOW STOCK:
 Steel bar: Order by Friday
 Carbide inserts: Order by Monday
 
 [Auto-generate all purchase orders]`,
     },
     {
-      id: "oee-tracker", cat: "Operations", icon: "â¡", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "oee-tracker", cat: "Operations", icon: "⚡", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "OEE Performance Tracker",
       desc: "Track Overall Equipment Effectiveness (availability, performance, quality) and find your biggest improvement opportunities.",
       live: false,
       roiLabel1: "Machines tracked", roiLabel2: "Current OEE %", roiDefault1: 8, roiDefault2: 65,
-      benefits: ["Calculates OEE: Availability Ã Performance Ã Quality", "Tracks downtime reasons automatically", "Benchmarks against 85% world-class standard", "Identifies top 3 improvement opportunities"],
-      example: `OEE REPORT â CNC Mill #1 Feb 2026
+      benefits: ["Calculates OEE: Availability × Performance × Quality", "Tracks downtime reasons automatically", "Benchmarks against 85% world-class standard", "Identifies top 3 improvement opportunities"],
+      example: `OEE REPORT — CNC Mill #1 Feb 2026
 
 OEE: 68% (target: 85% world-class)
 
-Availability: 82% â 29hrs downtime
+Availability: 82% — 29hrs downtime
 Biggest cause: Setup time (41%)
 
 TOP 3 IMPROVEMENTS:
-1. Reduce setup: 40min â 20min = +156hrs/yr
+1. Reduce setup: 40min → 20min = +156hrs/yr
 2. Prevent breakdowns: predictive maintenance
-3. Improve first-pass yield: 93% â 99%
+3. Improve first-pass yield: 93% → 99%
 
 If 85% OEE achieved:
 +850 parts/month = $42,500 extra revenue
@@ -2016,105 +2016,105 @@ No new capital required.`,
   ],
   concreting: [
     {
-      id: "pour-scheduler", cat: "Operations", icon: "ð", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "pour-scheduler", cat: "Operations", icon: "🚛", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Smart Pour Scheduler",
-      desc: "Coordinates concrete deliveries, crew and pump trucks â and auto-reschedules when rain is forecast. No more weather losses.",
+      desc: "Coordinates concrete deliveries, crew and pump trucks — and auto-reschedules when rain is forecast. No more weather losses.",
       live: false,
       roiLabel1: "Pours per month", roiLabel2: "Hours coordinating logistics", roiDefault1: 25, roiDefault2: 4,
       benefits: ["Books concrete truck, pump and crew in one action", "Monitors 7-day weather forecast automatically", "Auto-reschedules if rain probability >40%", "Sends reminders to all parties 24hrs before"],
-      example: `POUR SCHEDULE â Week 17-21 Feb
+      example: `POUR SCHEDULE — Week 17-21 Feb
 
-WED 19 FEB: Slab pour â safe â (10% rain)
-â 8mÂ³ Hanson concrete, 7:00 AM
-â Pump truck, crew of 4
+WED 19 FEB: Slab pour — safe ✓ (10% rain)
+✓ 8m³ Hanson concrete, 7:00 AM
+✓ Pump truck, crew of 4
 
-ð¨ FRI 21 FEB: POSTPONED
+🚨 FRI 21 FEB: POSTPONED
 Rain: 85%, 18mm expected, 35km/h wind
-â Rescheduled to Monday 24 Feb 7AM
-â All parties notified, no cancel fees`,
+→ Rescheduled to Monday 24 Feb 7AM
+→ All parties notified, no cancel fees`,
     },
     {
-      id: "mix-designer", cat: "Sales & Quotes", icon: "âï¸", badge: "advanced", badgeLabel: "â¨ Advanced", isIndustrySpecific: true,
+      id: "mix-designer", cat: "Sales & Quotes", icon: "⚗️", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: true,
       title: "Concrete Mix Designer",
-      desc: "AI recommends the optimal concrete mix for every application â strength, slump, aggregate, additives. AS 1379 compliant.",
+      desc: "AI recommends the optimal concrete mix for every application — strength, slump, aggregate, additives. AS 1379 compliant.",
       live: false,
       roiLabel1: "Different mix specs/month", roiLabel2: "Hours on mix design", roiDefault1: 15, roiDefault2: 2,
       benefits: ["Recommends mix based on application (slab, footings, driveway)", "Specifies strength grade and slump", "Suggests additives for summer heat automatically", "Complies with AS 1379 and AS 3600"],
-      example: `MIX SPECIFICATION â Exposed Driveway
+      example: `MIX SPECIFICATION — Exposed Driveway
 
-Application: 45mÂ² exposed aggregate driveway
+Application: 45m² exposed aggregate driveway
 Strength: 32MPa (above 25MPa min)
 Slump: 80mm
 
-SUMMER ADDITIVES (essential 28Â°C+):
-â¢ Retarder: 500ml/mÂ³ (extend working time)
-â¢ Plasticiser: 1L/mÂ³ (easier to finish)
-â¢ Surface retarder spray: after pour
+SUMMER ADDITIVES (essential 28°C+):
+• Retarder: 500ml/m³ (extend working time)
+• Plasticiser: 1L/m³ (easier to finish)
+• Surface retarder spray: after pour
 
 Order: Hanson "32MPa Exposed Agg Summer"
-Quantity: 5mÂ³ (with waste), 7:00 AM
+Quantity: 5m³ (with waste), 7:00 AM
 [Generate order]`,
     },
     {
-      id: "test-tracker", cat: "Documents & Admin", icon: "ð§ª", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "test-tracker", cat: "Documents & Admin", icon: "🧪", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Concrete Test Tracker",
       desc: "Track all test cylinders, lab results and compliance certificates. Never miss a required test or fail an inspection.",
       live: false,
       roiLabel1: "Pours per month", roiLabel2: "Cylinders to track", roiDefault1: 25, roiDefault2: 75,
       benefits: ["Logs every cylinder with pour date and location", "Tracks 7-day and 28-day test schedules", "Auto-reminds lab to test on correct dates", "Generates compliance certificates automatically"],
-      example: `TEST REGISTER â February 2026
+      example: `TEST REGISTER — February 2026
 
 Williams Driveway (poured 14 Feb)
-7-day test: Due 21 Feb â° Scheduled
-28-day: Due 14 Mar â reminder set
+7-day test: Due 21 Feb ⏰ Scheduled
+28-day: Due 14 Mar → reminder set
 
 Murphy Foundation (poured 10 Feb)
-7-day: Completed â 31 MPa (78% of 40MPa)
-28-day: Due 10 Mar â scheduled
+7-day: Completed ✓ 31 MPa (78% of 40MPa)
+28-day: Due 10 Mar → scheduled
 
-COMPLIANCE: 100% â all on track â
+COMPLIANCE: 100% — all on track ✓
 
 Certificates auto-emailed after 28-day result.`,
     },
   ],
   handyman: [
     {
-      id: "multi-trade-scheduler", cat: "Operations", icon: "ðï¸", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "multi-trade-scheduler", cat: "Operations", icon: "🗓️", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Multi-Trade Job Scheduler",
       desc: "AI routes you efficiently between different trade jobs. Group by location and trade type. Fit 20% more jobs every week.",
       live: false,
       roiLabel1: "Jobs per week", roiLabel2: "Hours lost to travel/admin", roiDefault1: 18, roiDefault2: 8,
       benefits: ["Groups jobs by location and trade type", "Optimises route to minimise driving", "Accounts for materials pickup stops", "Sends customers their arrival time automatically"],
-      example: `OPTIMISED SCHEDULE â Monday
+      example: `OPTIMISED SCHEDULE — Monday
 
 Standard routing: 78km, 2.8hrs driving
 AI optimised: 42km, 1.6hrs driving
 Saved: 1.2 hours = room for 2 extra jobs
 
-AM (Carpentry cluster â Paddington):
-07:30 Replace deck boards â 22 Park Ave
-09:30 Install shelves â 18 Hill St (2km â)
-11:30 Repair fence â 45 Smith St (3km â)
+AM (Carpentry cluster — Paddington):
+07:30 Replace deck boards → 22 Park Ave
+09:30 Install shelves → 18 Hill St (2km ✓)
+11:30 Repair fence → 45 Smith St (3km ✓)
 
-PM (Plumbing cluster â Bardon):
+PM (Plumbing cluster — Bardon):
 13:30 Fix tap + install vanity
 15:00 Replace shower head + toilet`,
     },
     {
-      id: "parts-finder", cat: "Operations", icon: "ð", badge: "quick", badgeLabel: "â¡ Quick Win", isIndustrySpecific: true,
+      id: "parts-finder", cat: "Operations", icon: "🔍", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: true,
       title: "Smart Parts Finder",
       desc: "Upload a photo of a broken part and AI identifies it, checks local stock and compares prices. No more wrong part purchases.",
       live: false,
       roiLabel1: "Jobs per month", roiLabel2: "Hardware store trips wasted", roiDefault1: 60, roiDefault2: 20,
-      benefits: ["Upload photo â AI identifies exact part with model number", "Checks Bunnings, Mitre 10, Reece for local stock", "Compares prices and shows today's availability", "Saves frequent parts for one-click reordering"],
-      example: `PARTS ID â Tap cartridge (photo uploaded)
+      benefits: ["Upload photo → AI identifies exact part with model number", "Checks Bunnings, Mitre 10, Reece for local stock", "Compares prices and shows today's availability", "Saves frequent parts for one-click reordering"],
+      example: `PARTS ID — Tap cartridge (photo uploaded)
 
 Match: Caroma 35mm ceramic disc (94%)
 Part: #237050W
 
-Bunnings Ashgrove (4km): $25.65 trade â
+Bunnings Ashgrove (4km): $25.65 trade ✓
 Reece Plumbing (6km): $27.20 trade
-Mitre 10 (2km): Not in stock â
+Mitre 10 (2km): Not in stock ✗
 
 Recommendation: Bunnings on the way
 Total trip + parts: ~$45
@@ -2122,13 +2122,13 @@ Total trip + parts: ~$45
 Also grab: tap washers, teflon tape (low)`,
     },
     {
-      id: "job-cost-estimator", cat: "Sales & Quotes", icon: "ðµ", badge: "popular", badgeLabel: "ð¥ Popular", isIndustrySpecific: true,
+      id: "job-cost-estimator", cat: "Sales & Quotes", icon: "💵", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: true,
       title: "Quick Job Cost Estimator",
-      desc: "Describe the job in plain English and AI calculates the full cost â materials, labour, margin. Send a quote via SMS in 2 minutes.",
+      desc: "Describe the job in plain English and AI calculates the full cost — materials, labour, margin. Send a quote via SMS in 2 minutes.",
       live: false,
       roiLabel1: "Quotes per month", roiLabel2: "Minutes per quote currently", roiDefault1: 40, roiDefault2: 25,
       benefits: ["Describe job in plain English, AI calculates cost", "Materials + labour + margin included automatically", "Adjusts for complexity and access difficulty", "Send quote via SMS in under 2 minutes"],
-      example: `QUICK QUOTE â Voice input
+      example: `QUICK QUOTE — Voice input
 
 "Replace 8 deck boards, Merbau, 2.4m, 
 deck is 15 years old"
@@ -2139,9 +2139,9 @@ Contingency: $150 (15yr deck risk)
 GST: $85
 
 TOTAL: $935 inc GST
-Margin: 29% â
+Margin: 29% ✓
 
-[Send via SMS] â ready in 2 minutes`,
+[Send via SMS] — ready in 2 minutes`,
     },
   ],
 };
@@ -2153,29 +2153,29 @@ Object.keys(INDUSTRIES).forEach(ind => {
   TOOLS_BY_INDUSTRY[ind] = [...CORE_TOOLS, ...specific];
 });
 
-// All-industries view â includes ALL core tools + ALL industry-specific tools from every industry
+// All-industries view — includes ALL core tools + ALL industry-specific tools from every industry
 const allIndustrySpecific = Object.values(INDUSTRY_SPECIFIC).flat();
 TOOLS_BY_INDUSTRY['all'] = [...CORE_TOOLS, ...allIndustrySpecific];
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // STATE
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 let currentIndustry = null;
 let currentTool = null;
 let currentCategory = 'All';
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // NAVIGATION
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 function goScreen(name) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + name).classList.add('active');
   window.scrollTo(0, 0);
 }
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // INDUSTRY SELECTION
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 function selectIndustry(id) {
   currentIndustry = id;
   currentCategory = 'All';
@@ -2186,16 +2186,16 @@ function selectIndustry(id) {
   goScreen('dashboard');
 }
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // DASHBOARD
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 function renderDashboard() {
   const tools = TOOLS_BY_INDUSTRY[currentIndustry] || CORE_TOOLS;
   const indName = currentIndustry === 'all' ? 'All Trades' : (INDUSTRIES[currentIndustry]?.name || '');
   const toolCount = tools.length;
 
   document.getElementById('dash-title').innerHTML = `<span>AI Tools</span> for ${indName}`;
-  document.getElementById('dash-sub').textContent = `${toolCount} tools â built for your trade, ready to use today`;
+  document.getElementById('dash-sub').textContent = `${toolCount} tools — built for your trade, ready to use today`;
 
   renderCategories(tools);
   renderTools(tools, currentCategory);
@@ -2244,16 +2244,16 @@ function renderTools(tools, cat) {
       <h3>${tool.title}</h3>
       <p>${tool.desc}</p>
       <div class="tool-actions">
-        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openPanel('${tool.id}')">See Demo â</button>
+        <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openPanel('${tool.id}')">See Demo →</button>
         ${!tool.live ? `<span style="font-size:12px;color:var(--muted);margin-left:auto;">Coming soon</span>` : ''}
       </div>
     </div>
   `}).join('');
 }
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // TOOL DETAIL PANEL
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 function openPanel(id) {
   const tools = TOOLS_BY_INDUSTRY[currentIndustry] || CORE_TOOLS;
   const tool = tools.find(t => t.id === id);
@@ -2261,7 +2261,7 @@ function openPanel(id) {
   currentTool = tool;
 
   const indName = currentIndustry === 'all' ? 'All Tools' : (INDUSTRIES[currentIndustry]?.name || '');
-  document.getElementById('panel-breadcrumb').textContent = `${indName} âº ${tool.title}`;
+  document.getElementById('panel-breadcrumb').textContent = `${indName} › ${tool.title}`;
   document.getElementById('panel-icon').textContent = tool.icon;
   document.getElementById('panel-badge').textContent = tool.badgeLabel;
   document.getElementById('panel-badge').className = `tool-badge badge-${tool.badge}`;
@@ -2274,7 +2274,7 @@ function openPanel(id) {
 
   const benefits = document.getElementById('panel-benefits');
   benefits.innerHTML = (tool.benefits || []).map(b => `
-    <li><span class="check-circle">â</span><span style="color:var(--muted);">${b}</span></li>
+    <li><span class="check-circle">✓</span><span style="color:var(--muted);">${b}</span></li>
   `).join('');
 
   document.getElementById('panel-example').textContent = tool.example || 'Example coming soon.';
@@ -2302,9 +2302,9 @@ function closePanelBg(e) {
 // Close on escape
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
 
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 // ROI CALCULATOR
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
 function updateROI() {
   const qty = parseFloat(document.getElementById('roi-range-1').value);
   const hrs = parseFloat(document.getElementById('roi-range-2').value);
@@ -2323,9 +2323,9 @@ function updateROI() {
   document.getElementById('roi-return').textContent = roi.toLocaleString() + '%';
 }
 
-// ââââââââââââââââââââââââââââââââââââââââââ
-// URL PARAMS â auto-open industry/tool
-// ââââââââââââââââââââââââââââââââââââââââââ
+// ══════════════════════════════════════════
+// URL PARAMS — auto-open industry/tool
+// ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function() {
   const params = new URLSearchParams(window.location.search);
   const industry = params.get('industry');
