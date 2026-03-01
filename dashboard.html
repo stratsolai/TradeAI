@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — TradeAI Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:   #0d1628;
+      --bg2:  #111d35;
+      --bg3:  #162240;
+      --card-border: rgba(255,255,255,0.10);
+      --blue: #1A5490;
+      --orange: #E8500A;
+      --muted: rgba(255,255,255,0.55);
+      --text: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'DM Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .header {
+      background: var(--bg2);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--orange);
+      letter-spacing: 0.5px;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .content-lib-btn {
+      padding: 8px 16px;
+      background: rgba(232,80,10,0.15);
+      color: var(--orange);
+      border: 1px solid rgba(232,80,10,0.4);
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .content-lib-btn:hover { background: rgba(232,80,10,0.25); }
+    .user-name {
+      font-weight: 500;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .btn-logout {
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.08);
+      color: var(--muted);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    .btn-logout:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+    /* ── CONTAINER ── */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    .welcome { margin-bottom: 36px; }
+    .welcome h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 40px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .welcome h1 span { color: var(--orange); }
+    .welcome p { color: var(--muted); font-size: 17px; }
+
+    /* ── TABS ── */
+    .tabs-container {
+      background: var(--bg2);
+      border-radius: 16px;
+      border: 1px solid var(--card-border);
+      overflow: hidden;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--card-border);
+      background: var(--bg3);
+    }
+    .tab {
+      flex: 1;
+      padding: 16px 24px;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.25s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .tab:hover { color: #fff; }
+    .tab.active {
+      color: #fff;
+      border-bottom-color: var(--orange);
+      background: rgba(232,80,10,0.06);
+    }
+    .tab-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 9px;
+      background: rgba(255,255,255,0.12);
+      color: var(--muted);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .tab.active .tab-badge {
+      background: var(--orange);
+      color: #fff;
+    }
+
+    /* ── TAB CONTENT ── */
+    .tab-content { display: none; padding: 32px; min-height: 400px; }
+    .tab-content.active { display: block; }
+
+    /* ── TOOLS GRID ── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .tool-card {
+      background: var(--bg3);
+      padding: 24px;
+      border-radius: 14px;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+    }
+    .tool-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255,255,255,0.22);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    .tool-card.available { cursor: default; }
+    .tool-card.available:hover { transform: none; box-shadow: none; }
+
+    .tool-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 14px;
+      background: rgba(40,167,69,0.18);
+      color: #4ade80;
+    }
+    .tool-status.inactive {
+      background: rgba(255,193,7,0.12);
+      color: #fbbf24;
+    }
+    .tool-icon { font-size: 44px; margin-bottom: 14px; }
+    .tool-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+    .tool-desc {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      margin-bottom: 16px;
+      min-height: 60px;
+    }
+    .tool-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--orange);
+      margin-bottom: 14px;
+    }
+    .btn-activate {
+      width: 100%;
+      padding: 12px;
+      background: var(--orange);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 14px;
+      transition: background 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-activate:hover { background: #c74408; }
+    .btn-configure {
+      width: 100%;
+      padding: 12px;
+      background: rgba(26,84,144,0.3);
+      color: #7eb3e8;
+      border: 1px solid rgba(26,84,144,0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+      text-decoration: none;
+      display: block;
+      text-align: center;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn-configure:hover { background: rgba(26,84,144,0.5); color: #fff; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+    }
+    .empty-state-icon { font-size: 64px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-state h3 { font-size: 24px; color: rgba(255,255,255,0.7); margin-bottom: 8px; }
+    .empty-state p { font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+    .btn-browse {
+      display: inline-block;
+      padding: 12px 28px;
+      background: var(--orange);
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .btn-browse:hover { background: #c74408; }
+
+    @media(max-width: 600px) {
+      .header { padding: 14px 16px; }
+      .container { padding: 24px 16px; }
+      .welcome h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">TradeAI Pro</div>
+    <div class="user-info">
+      <a href="/content-library.html" class="content-lib-btn">📚 Content Library</a>
+      <span class="user-name" id="user-name">Loading...</span>
+      <button class="btn-logout" onclick="handleLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="welcome">
+      <h1>Welcome back, <span id="business-name">there</span>! 👋</h1>
+      <p>Manage your AI tools and discover new ways to automate your business.</p>
+    </div>
+
+    <div class="tabs-container">
+      <div class="tabs">
+        <button class="tab active" onclick="switchTab('active')">
+          My Active Tools
+          <span class="tab-badge" id="active-count">0</span>
+        </button>
+        <button class="tab" onclick="switchTab('available')">
+          Available Tools
+          <span class="tab-badge" id="available-count">0</span>
+        </button>
+      </div>
+
+      <div class="tab-content active" id="active-tab">
+        <div id="active-tools-container"></div>
+      </div>
+
+      <div class="tab-content" id="available-tab">
+        <div id="available-tools-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
+  <script src="./auth.js"></script>
+
+  <script>
+    const allTools = [
+      {
+        id: 'chatbot',
+        icon: '💬',
+        name: 'AI Website Chatbot',
+        desc: 'Live chat on your website that responds instantly 24/7. AI qualifies leads, answers questions, books consultations.',
+        price: 79,
+        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf',
+        link: '/chatbot.html'
+      },
+      {
+        id: 'email',
+        icon: '📧',
+        name: 'Smart Email Assistant',
+        desc: 'AI reads your emails, prioritises urgent ones, and drafts replies. Never miss an important customer inquiry.',
+        price: 69,
+        priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL',
+        link: '/email-assistant.html'
+      },
+      {
+        id: 'social',
+        icon: '📱',
+        name: 'Social Media Manager',
+        desc: 'AI creates posts for Facebook and Instagram. Upload project photos, AI writes engaging captions.',
+        price: 59,
+        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI',
+        link: '/social.html'
+      },
+      {
+        id: 'bi',
+        icon: '📊',
+        name: 'Business Intelligence Dashboard',
+        desc: 'Real-time metrics: leads, revenue, conversion rates. AI identifies trends and suggests improvements.',
+        price: 89,
+        priceId: 'price_1T4dClHnoVvjo5gxjSvoi4ky',
+        link: '/bi.html'
+      },
+      {
+        id: 'tender',
+        icon: '📑',
+        name: 'Tender Response Generator',
+        desc: 'Upload RFT/RFQ documents. AI extracts requirements, generates comprehensive responses, identifies gaps.',
+        price: 99,
+        priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc',
+        link: '/tender.html'
+      }
+    ];
+
+    let userProfile = null;
+    let activeToolIds = [];
+
+    window.switchTab = function(tabName) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      const idx = tabName === 'active' ? 0 : 1;
+      document.querySelectorAll('.tab')[idx].classList.add('active');
+      document.getElementById(`${tabName}-tab`).classList.add('active');
+    };
+
+    async function init() {
+      const isAuthenticated = await requireAuth();
+      if (!isAuthenticated) return;
+
+      userProfile = await getUserProfile();
+      if (userProfile) {
+        // Show email as subtitle, business name as the greeting
+        document.getElementById('user-name').textContent = userProfile.email || '';
+        const name = userProfile.business_name || userProfile.full_name || null;
+        document.getElementById('business-name').textContent = name || 'there';
+
+        activeToolIds = userProfile.activated_tools || [];
+        if (activeToolIds.length === 0) {
+          activeToolIds = ['chatbot'];
+          await updateActivatedTools();
+        }
+        renderTools();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('success')) {
+          setTimeout(() => {
+            alert('🎉 Payment successful!\n\nYour tool is being activated. You should receive a confirmation email shortly.');
+            window.history.replaceState({}, document.title, '/dashboard.html');
+          }, 500);
+        } else if (urlParams.get('canceled')) {
+          setTimeout(() => {
+            alert('Payment cancelled. You can activate tools anytime from the Available Tools tab.');
+            window.history.replaceState({}, document.title, '/dashboard.html');
+          }, 500);
+        }
+      }
+    }
+
+    function renderTools() {
+      const activeTools = allTools.filter(t => activeToolIds.includes(t.id));
+      const availableTools = allTools.filter(t => !activeToolIds.includes(t.id));
+
+      document.getElementById('active-count').textContent = activeTools.length;
+      document.getElementById('available-count').textContent = availableTools.length;
+
+      // Active
+      const aC = document.getElementById('active-tools-container');
+      if (activeTools.length === 0) {
+        aC.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">📦</div>
+          <h3>No Active Tools Yet</h3>
+          <p>Browse available tools to get started!</p>
+          <a href="#" class="btn-browse" onclick="switchTab('available'); return false;">Browse Tools</a>
+        </div>`;
+      } else {
+        aC.innerHTML = `<div class="tools-grid">${activeTools.map(t => `
+          <div class="tool-card" onclick="window.location.href='${t.link}'">
+            <div class="tool-status">✓ Active</div>
+            <div class="tool-icon">${t.icon}</div>
+            <div class="tool-name">${t.name}</div>
+            <div class="tool-desc">${t.desc}</div>
+            <div class="tool-price">$${t.price}/month</div>
+            <a href="${t.link}" class="btn-configure" onclick="event.stopPropagation();">Open Tool →</a>
+          </div>`).join('')}</div>`;
+      }
+
+      // Available
+      const vC = document.getElementById('available-tools-container');
+      if (availableTools.length === 0) {
+        vC.innerHTML = `<div class="empty-state">
+          <div class="empty-state-icon">🎉</div>
+          <h3>All Tools Activated!</h3>
+          <p>You've activated all available tools. More coming soon!</p>
+        </div>`;
+      } else {
+        vC.innerHTML = `<div class="tools-grid">${availableTools.map(t => `
+          <div class="tool-card available">
+            <div class="tool-status inactive">Not Active</div>
+            <div class="tool-icon">${t.icon}</div>
+            <div class="tool-name">${t.name}</div>
+            <div class="tool-desc">${t.desc}</div>
+            <div class="tool-price">$${t.price}/month</div>
+            <button class="btn-activate" onclick="activateTool('${t.id}', '${t.name}', ${t.price}, event)">Activate Tool</button>
+          </div>`).join('')}</div>`;
+      }
+    }
+
+    window.activateTool = async function(toolId, toolName, price, event) {
+      const tool = allTools.find(t => t.id === toolId);
+      if (!tool) return;
+      const confirmed = confirm(`Activate ${toolName} for $${price}/month?\n\nYou'll be redirected to Stripe to complete payment.`);
+      if (!confirmed) return;
+      try {
+        const { data: { user } } = await supabaseClient.auth.getUser();
+        if (!user) { alert('Please log in first'); return; }
+        let btn = event?.target;
+        if (btn) { btn.disabled = true; btn.textContent = 'Loading...'; }
+        const resp = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ priceId: tool.priceId, userId: user.id, toolId: tool.id, toolName: tool.name })
+        });
+        const data = await resp.json();
+        if (data.success && data.url) {
+          window.location.href = data.url;
+        } else {
+          alert('Error creating checkout session. Please try again.');
+          if (btn) { btn.disabled = false; btn.textContent = 'Activate Tool'; }
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      }
+    };
+
+    async function updateActivatedTools() {
+      const { data: { user } } = await supabaseClient.auth.getUser();
+      if (!user) return;
+      await supabaseClient.from('profiles').update({ activated_tools: activeToolIds }).eq('id', user.id);
+    }
+
+    async function handleLogout() {
+      const result = await signOut();
+      if (result.success) window.location.href = '/';
+    }
+
+    init();
+  </script>
+</body>
+</html>

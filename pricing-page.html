@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d1628">
+  <link rel="manifest" href="/manifest.json">
+  <title>Pricing — TradeAI Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:   #0d1628;
+      --bg2:  #111d35;
+      --bg3:  #162240;
+      --card-border: rgba(255,255,255,0.10);
+      --blue: #1A5490;
+      --orange: #E8500A;
+      --green: #22c55e;
+      --muted: rgba(255,255,255,0.55);
+      --text: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans', sans-serif; color:var(--text); background:var(--bg); line-height:1.6; }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0;
+      background: rgba(13,22,40,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      z-index: 1000;
+    }
+    .nav-container {
+      max-width: 1200px; margin: 0 auto;
+      padding: 18px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px; font-weight: 700; color: var(--orange);
+      text-decoration: none; letter-spacing: 0.5px;
+    }
+    .nav-links { display: flex; gap: 28px; list-style: none; align-items: center; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 14px; transition: color 0.2s; }
+    .nav-links a:hover { color: #fff; }
+    .btn { display: inline-block; padding: 10px 22px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; transition: all 0.2s; cursor: pointer; border: none; font-family: 'DM Sans', sans-serif; }
+    .btn-primary { background: var(--orange); color: white; }
+    .btn-primary:hover { background: #c74408; transform: translateY(-1px); }
+    .btn-lg { padding: 14px 28px; font-size: 16px; border-radius: 10px; }
+    .btn-outline { background: transparent; color: var(--muted); border: 1px solid var(--card-border); }
+    .btn-outline:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    /* ── PAGE HEADER ── */
+    .page-header {
+      background: linear-gradient(135deg, #0a1220 0%, var(--bg2) 100%);
+      border-bottom: 1px solid var(--card-border);
+      padding: 80px 32px 120px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .page-header::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 70% 60% at 50% 0%, rgba(232,80,10,0.08) 0%, transparent 70%);
+    }
+    .page-header h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 64px; font-weight: 800; margin-bottom: 16px;
+      letter-spacing: -1px; position: relative;
+    }
+    .page-header p {
+      font-size: 20px; color: var(--muted); max-width: 560px; margin: 0 auto; position: relative;
+    }
+
+    /* ── PRICING GRID ── */
+    .pricing-container {
+      max-width: 1200px; margin: -60px auto 80px;
+      padding: 0 32px; position: relative; z-index: 1;
+    }
+    .pricing-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    }
+    .price-card {
+      background: var(--bg2); border: 1px solid var(--card-border);
+      border-radius: 20px; padding: 36px;
+      position: relative; transition: all 0.3s;
+    }
+    .price-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      border-color: rgba(255,255,255,0.2);
+    }
+    .price-card.featured {
+      border-color: var(--orange);
+      border-width: 2px;
+      background: linear-gradient(180deg, rgba(232,80,10,0.06) 0%, var(--bg2) 60%);
+    }
+    .popular-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--orange); color: white;
+      padding: 5px 18px; border-radius: 50px;
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+      white-space: nowrap;
+    }
+    .plan-name {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px; font-weight: 700; margin-bottom: 6px; color: #fff;
+    }
+    .plan-desc { color: var(--muted); font-size: 14px; margin-bottom: 24px; }
+    .plan-price { display: flex; align-items: baseline; margin-bottom: 6px; }
+    .price-dollar { font-size: 20px; font-weight: 700; color: var(--muted); margin-top: 8px; }
+    .price-amount { font-family: 'Barlow Condensed', sans-serif; font-size: 60px; font-weight: 800; color: #fff; line-height: 1; }
+    .price-period { font-size: 16px; color: var(--muted); margin-left: 6px; }
+    .price-savings { font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 24px; }
+    .plan-cta { width: 100%; margin-bottom: 28px; display: block; text-align: center; }
+    .plan-features { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .plan-features li { display: flex; align-items: flex-start; gap: 10px; font-size: 14px; color: rgba(255,255,255,0.75); }
+    .plan-features li::before { content: '✓'; color: var(--green); font-weight: 700; font-size: 16px; flex-shrink: 0; }
+    .feature-highlight { font-weight: 700; color: #fff; }
+
+    /* ── DIVIDER ── */
+    .section-divider { max-width: 1200px; margin: 0 auto; padding: 0 32px 60px; }
+    .section-divider hr { border: none; border-top: 1px solid var(--card-border); }
+
+    /* ── INDIVIDUAL TOOLS ── */
+    .individual-tools-section { max-width: 1200px; margin: 0 auto 80px; padding: 0 32px; }
+    .section-header { text-align: center; margin-bottom: 48px; }
+    .section-header h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 44px; font-weight: 700; margin-bottom: 12px; }
+    .section-header p { color: var(--muted); font-size: 17px; }
+    .category-label { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.5); margin: 40px 0 16px; letter-spacing: 1px; text-transform: uppercase; }
+    .tools-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 0; }
+    .tool-card {
+      background: var(--bg2); border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 22px; transition: all 0.25s; text-align: center;
+    }
+    .tool-card:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-3px); }
+    .tool-icon { font-size: 32px; margin-bottom: 10px; }
+    .tool-name { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 8px; color: #fff; }
+    .tool-price { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: var(--orange); }
+
+    /* ── FAQ ── */
+    .faq-section { background: var(--bg2); border-top: 1px solid var(--card-border); padding: 80px 32px; }
+    .faq-container { max-width: 800px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid var(--card-border); padding: 24px 0; }
+    .faq-question { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 10px; color: #fff; cursor: pointer; }
+    .faq-answer { color: var(--muted); line-height: 1.7; font-size: 15px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align: center; padding: 80px 32px;
+      background: linear-gradient(135deg, #0a1220, var(--bg2));
+      border-top: 1px solid var(--card-border);
+    }
+    .cta-section h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 52px; font-weight: 800; margin-bottom: 16px; }
+    .cta-section p { font-size: 19px; color: var(--muted); margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
+    .cta-buttons { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width: 900px) {
+      .pricing-grid { grid-template-columns: 1fr; max-width: 500px; margin: -60px auto 80px; }
+      .tools-grid { grid-template-columns: repeat(2, 1fr); }
+      .page-header h1 { font-size: 44px; }
+      .nav-links { display: none; }
+    }
+    @media(max-width: 600px) {
+      .nav-container { padding: 14px 16px; }
+      .page-header { padding: 60px 16px 100px; }
+      .pricing-container { padding: 0 16px; }
+      .individual-tools-section, .faq-container { padding: 0 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAVIGATION -->
+  <nav>
+    <div class="nav-container">
+      <a href="/index.html" class="logo">TradeAI Pro</a>
+      <ul class="nav-links">
+        <li><a href="/index.html#how-it-works">How It Works</a></li>
+        <li><a href="/prototype.html">Explore Tools</a></li>
+        <li><a href="/login.html" class="btn btn-outline">Sign In</a></li>
+        <li><a href="/login.html?signup=1" class="btn btn-primary">Start Free Trial</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- PAGE HEADER -->
+  <section class="page-header">
+    <h1>Simple, Transparent Pricing</h1>
+    <p>Everything your trades business needs in one platform. No contracts. Cancel anytime.</p>
+  </section>
+
+  <!-- PRICING CARDS -->
+  <section class="pricing-container">
+    <div class="pricing-grid">
+
+      <!-- STARTER -->
+      <div class="price-card">
+        <div class="plan-name">Starter</div>
+        <div class="plan-desc">Perfect for solo operators and 1–2 person teams getting started with AI</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">149</span>
+          <span class="price-period">/month</span>
+        </div>
+        <div class="price-savings">Save 20% vs individual tools</div>
+        <a href="/login.html?signup=1&plan=starter" class="btn btn-lg btn-outline plan-cta">Get Started</a>
+        <ul class="plan-features">
+          <li><span class="feature-highlight">3 core tools</span> of your choice</li>
+          <li>AI Website Chatbot</li>
+          <li>Social Media Manager</li>
+          <li>Industry News Digest</li>
+          <li>Email Assistant</li>
+          <li>All tool features included</li>
+          <li>Mobile app (PWA) access</li>
+          <li>Email support</li>
+          <li>Cancel anytime</li>
+        </ul>
+      </div>
+
+      <!-- GROWTH (FEATURED) -->
+      <div class="price-card featured">
+        <div class="popular-badge">Most Popular</div>
+        <div class="plan-name">Growth</div>
+        <div class="plan-desc">For small teams of 3–10 staff ready to automate and scale</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">299</span>
+          <span class="price-period">/month</span>
+        </div>
+        <div class="price-savings">Save 30% vs individual tools</div>
+        <a href="/login.html?signup=1&plan=growth" class="btn btn-lg btn-primary plan-cta">Get Started</a>
+        <ul class="plan-features">
+          <li><span class="feature-highlight">8 core tools</span> included</li>
+          <li>Everything in Starter, plus:</li>
+          <li>Strategic Plan & Ops Dashboard</li>
+          <li>Quote Generator</li>
+          <li>Customer Progress Updates</li>
+          <li>Invoice Automation</li>
+          <li>SWMS & Safety Docs</li>
+          <li>Priority email support</li>
+          <li>Quarterly strategy call</li>
+        </ul>
+      </div>
+
+      <!-- COMPLETE -->
+      <div class="price-card">
+        <div class="plan-name">Complete</div>
+        <div class="plan-desc">The full suite — every tool for your industry, unlimited usage</div>
+        <div class="plan-price">
+          <span class="price-dollar">$</span>
+          <span class="price-amount">499</span>
+          <span class="price-period">/month</span>
+        </div>
+        <div class="price-savings">All tools included + unlimited usage</div>
+        <a href="/login.html?signup=1&plan=complete" class="btn btn-lg btn-outline plan-cta">Get Started</a>
+        <ul class="plan-features">
+          <li><span class="feature-highlight">All 14–18 tools</span> for your industry</li>
+          <li>Everything in Growth, plus:</li>
+          <li>All industry-specific tools</li>
+          <li>Design Visualiser</li>
+          <li>Smart Job Scheduling</li>
+          <li>Business Intelligence Dashboard</li>
+          <li>Tender Response Generator</li>
+          <li>Dedicated account manager</li>
+          <li>Phone + email support</li>
+          <li>Monthly strategy calls</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- INDIVIDUAL TOOLS -->
+  <section class="individual-tools-section">
+    <div class="section-header">
+      <h2>Or Pick Individual Tools</h2>
+      <p>Add exactly what you need — mix and match any tools</p>
+    </div>
+
+    <div class="category-label">Marketing & Customer Acquisition</div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">💬</div><div class="tool-name">AI Website Chatbot</div><div class="tool-price">$79/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📱</div><div class="tool-name">Social Media Manager</div><div class="tool-price">$59/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">✍️</div><div class="tool-name">Website Content Writer</div><div class="tool-price">$49/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">⭐</div><div class="tool-name">Review &amp; Referral Booster</div><div class="tool-price">$29/mo</div></div>
+    </div>
+
+    <div class="category-label">Quotes, Tenders &amp; Sales</div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">📋</div><div class="tool-name">Quote Generator</div><div class="tool-price">$49/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📑</div><div class="tool-name">Tender Response Generator</div><div class="tool-price">$99/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">🎨</div><div class="tool-name">Design Visualiser</div><div class="tool-price">$99/mo</div></div>
+    </div>
+
+    <div class="category-label">Operations &amp; Communication</div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">📧</div><div class="tool-name">Email Assistant</div><div class="tool-price">$69/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📲</div><div class="tool-name">Customer Progress Updates</div><div class="tool-price">$49/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📅</div><div class="tool-name">Smart Job Scheduling</div><div class="tool-price">$129/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">🧾</div><div class="tool-name">Invoice Automation</div><div class="tool-price">$59/mo</div></div>
+    </div>
+
+    <div class="category-label">Strategy, Planning &amp; Compliance</div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-icon">📋</div><div class="tool-name">Strategic Plan Generator</div><div class="tool-price">$89/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">🦺</div><div class="tool-name">SWMS &amp; Safety Docs</div><div class="tool-price">$59/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📰</div><div class="tool-name">Industry News Digest</div><div class="tool-price">$39/mo</div></div>
+      <div class="tool-card"><div class="tool-icon">📊</div><div class="tool-name">Business Intelligence</div><div class="tool-price">$89/mo</div></div>
+    </div>
+
+    <div style="text-align:center;margin-top:48px;">
+      <a href="/prototype.html" class="btn btn-lg btn-primary">See All Tools for Your Industry →</a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq-section">
+    <div class="faq-container">
+      <div class="section-header">
+        <h2>Frequently Asked Questions</h2>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Can I change my plan anytime?</div>
+        <div class="faq-answer">Yes. Upgrade, downgrade, or cancel anytime. No lock-in contracts. Changes take effect at your next billing cycle.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">What if I only need 2–3 tools?</div>
+        <div class="faq-answer">Subscribe to individual tools à la carte. Most customers start with 2–3 tools and add more as they see the value.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Do you offer a free trial?</div>
+        <div class="faq-answer">Every plan comes with a 14-day free trial. No credit card required to get started.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Are there setup fees or hidden costs?</div>
+        <div class="faq-answer">No setup fees, no hidden costs. The price you see is what you pay. All features included in each tool, no surprises.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">What support do I get?</div>
+        <div class="faq-answer">All plans include email support. Growth and Complete plans get priority support and strategy calls. Tools are designed to be self-explanatory — no training needed.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">Do tools work on mobile?</div>
+        <div class="faq-answer">Yes — TradeAI Pro is a Progressive Web App (PWA). Install it to your phone's home screen for a native app experience. Works on iOS and Android.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question">What payment methods do you accept?</div>
+        <div class="faq-answer">We accept all major credit cards and debit cards via Stripe. Invoicing is available for Complete plan customers.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Ready to Automate Your Business?</h2>
+    <p>Pick your industry, choose your tools, and start your free trial today. No credit card required.</p>
+    <div class="cta-buttons">
+      <a href="/prototype.html" class="btn btn-lg btn-outline">Explore Tools</a>
+      <a href="/login.html?signup=1" class="btn btn-lg btn-primary">Start Free Trial →</a>
+    </div>
+  </section>
+
+</body>
+</html>

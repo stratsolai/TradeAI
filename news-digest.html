@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1628">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="/manifest.json">
+  <title>Industry News Digest — TradeAI Pro</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1628; --bg2: #111d35; --bg3: #162240;
+      --card-border: rgba(255,255,255,0.10);
+      --blue: #1A5490; --orange: #E8500A; --green: #22c55e;
+      --text: #ffffff; --muted: rgba(255,255,255,0.55);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { font-family:'DM Sans',-apple-system,sans-serif; background:var(--bg); color:var(--text); padding-bottom:calc(80px + env(safe-area-inset-bottom,0px)); }
+
+    .header {
+      background:var(--bg2); border-bottom:1px solid var(--card-border); color:white;
+      padding:16px 20px; padding-top:calc(16px + env(safe-area-inset-top,0px));
+      display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:100;
+    }
+    .header-back { background:rgba(255,255,255,0.08); border:1px solid var(--card-border); color:var(--muted); width:36px; height:36px; border-radius:8px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; text-decoration:none; flex-shrink:0; transition:all 0.2s; }
+    .header-back:hover { background:rgba(255,255,255,0.15); color:#fff; }
+    .header-title { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; flex:1; color:#fff; }
+    .header-sub { font-size:12px; color:var(--muted); }
+    .btn-icon { background:rgba(255,255,255,0.08); border:1px solid var(--card-border); color:var(--muted); width:36px; height:36px; border-radius:8px; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .btn-icon:hover { background:rgba(255,255,255,0.15); color:#fff; }
+
+    .tab-bar { background:var(--bg2); display:flex; gap:0; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid var(--card-border); position:sticky; top:68px; z-index:99; }
+    .tab-bar::-webkit-scrollbar { display:none; }
+    .tab-btn { flex-shrink:0; padding:12px 16px; border:none; background:none; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; white-space:nowrap; font-family:'DM Sans',sans-serif; }
+    .tab-btn.active { color:#fff; border-bottom-color:var(--orange); font-weight:700; }
+    .tab-btn .tab-count { background:rgba(255,255,255,0.07); border-radius:10px; padding:1px 6px; font-size:11px; margin-left:4px; }
+    .tab-btn.active .tab-count { background:rgba(232,80,10,0.2); color:var(--orange); }
+
+    .toolbar { padding:12px 16px; display:flex; gap:10px; align-items:center; background:var(--bg2); border-bottom:1px solid var(--card-border); }
+    .search-input { flex:1; padding:9px 14px; border:1px solid var(--card-border); border-radius:8px; font-size:14px; font-family:inherit; background:var(--bg3); color:var(--text); }
+    .search-input:focus { outline:none; border-color:rgba(255,255,255,0.25); }
+    .search-input::placeholder { color:var(--muted); }
+    .btn-refresh { padding:9px 14px; background:var(--orange); color:white; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; display:flex; align-items:center; gap:6px; font-family:'DM Sans',sans-serif; }
+    .btn-refresh:disabled { background:rgba(255,255,255,0.1); color:var(--muted); cursor:not-allowed; }
+
+    .settings-panel { display:none; background:var(--bg2); border-bottom:1px solid var(--card-border); padding:16px 20px; }
+    .settings-panel.show { display:block; }
+    .settings-row { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid rgba(255,255,255,0.05); }
+    .settings-row:last-child { border-bottom:none; }
+    .settings-label { font-size:14px; font-weight:500; color:var(--muted); }
+    select { padding:6px 12px; border:1px solid var(--card-border); border-radius:8px; font-size:13px; font-family:inherit; background:var(--bg3); color:var(--text); }
+    option { background:#1a2a45; }
+
+    .feed { padding:12px 16px; max-width:760px; margin:0 auto; }
+
+    .news-card { background:var(--bg2); border:1px solid var(--card-border); border-radius:14px; margin-bottom:14px; overflow:hidden; transition:all 0.2s; cursor:pointer; }
+    .news-card:hover { border-color:rgba(255,255,255,0.2); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.4); }
+    .news-card-inner { padding:18px; }
+    .news-meta { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+    .news-source { font-size:12px; font-weight:700; padding:3px 10px; border-radius:20px; white-space:nowrap; }
+    .source-email { background:rgba(234,67,53,0.12); color:#f87171; }
+    .source-web { background:rgba(26,84,144,0.2); color:#7eb3e8; }
+    .source-industry { background:rgba(34,197,94,0.12); color:var(--green); }
+    .news-category-badge { font-size:11px; padding:3px 8px; border-radius:10px; font-weight:600; }
+    .news-age { font-size:12px; color:var(--muted); margin-left:auto; flex-shrink:0; }
+    .news-title { font-size:16px; font-weight:700; color:#fff; margin-bottom:8px; line-height:1.4; }
+    .news-summary { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:12px; }
+    .news-actions { display:flex; gap:8px; flex-wrap:wrap; border-top:1px solid var(--card-border); padding-top:12px; }
+    .btn-action { padding:7px 14px; border-radius:8px; border:none; font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; font-family:'DM Sans',sans-serif; }
+    .btn-read-more { background:rgba(26,84,144,0.2); color:#7eb3e8; }
+    .btn-read-more:hover { background:var(--blue); color:white; }
+    .btn-create-post { background:rgba(232,80,10,0.15); color:var(--orange); }
+    .btn-create-post:hover { background:var(--orange); color:white; }
+    .btn-save { background:rgba(255,255,255,0.06); color:var(--muted); }
+    .btn-save:hover { background:rgba(255,255,255,0.12); color:#fff; }
+    .btn-saved { background:rgba(34,197,94,0.12); color:var(--green); }
+
+    .loading-card { display:none; text-align:center; padding:48px 24px; background:var(--bg2); border:1px solid var(--card-border); border-radius:14px; }
+    .loading-card.show { display:block; }
+    .spinner { width:44px; height:44px; border:4px solid rgba(255,255,255,0.1); border-top-color:var(--orange); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+
+    .empty-state { text-align:center; padding:48px 24px; color:var(--muted); }
+    .empty-icon { font-size:48px; margin-bottom:16px; opacity:0.4; }
+    .empty-title { font-size:18px; font-weight:600; color:rgba(255,255,255,0.6); margin-bottom:8px; }
+
+    .digest-summary {
+      background:linear-gradient(135deg, #1a2d4a, var(--bg3));
+      border:1px solid var(--card-border);
+      border-radius:14px; padding:20px; margin-bottom:16px;
+    }
+    .digest-title { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; color:#fff; margin-bottom:4px; }
+    .digest-sub { font-size:13px; color:var(--muted); margin-bottom:14px; }
+    .digest-stats { display:flex; gap:20px; }
+    .digest-stat { text-align:center; }
+    .digest-stat-num { font-size:24px; font-weight:700; line-height:1; color:#fff; }
+    .digest-stat-label { font-size:11px; color:var(--muted); margin-top:2px; }
+
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:300; align-items:flex-end; justify-content:center; }
+    .modal.show { display:flex; }
+    .modal-sheet { background:var(--bg2); border:1px solid var(--card-border); border-radius:20px 20px 0 0; width:100%; max-width:640px; max-height:90vh; overflow-y:auto; padding:24px 20px; padding-bottom:calc(24px + env(safe-area-inset-bottom,0px)); animation:slideUp 0.3s ease; }
+    @keyframes slideUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+    .modal-handle { width:40px; height:4px; background:rgba(255,255,255,0.15); border-radius:2px; margin:0 auto 20px; }
+    .modal-title { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:16px; }
+    .modal-source { font-size:13px; color:var(--muted); margin-bottom:16px; }
+    .modal-body { font-size:15px; color:rgba(255,255,255,0.8); line-height:1.7; margin-bottom:16px; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; flex-wrap:wrap; }
+    .btn-primary { flex:1; padding:13px; background:var(--blue); color:white; border:none; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif; }
+    .btn-secondary { padding:13px 20px; background:rgba(255,255,255,0.08); color:var(--muted); border:none; border-radius:10px; font-size:15px; cursor:pointer; font-family:'DM Sans',sans-serif; }
+
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; background:var(--bg2); border-top:1px solid var(--card-border); display:flex; padding:8px 0; padding-bottom:calc(8px + env(safe-area-inset-bottom,0px)); z-index:100; }
+    .nav-item { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 4px; text-decoration:none; color:var(--muted); font-size:10px; font-weight:500; }
+    .nav-item.active { color:var(--orange); }
+    .nav-icon { font-size:20px; }
+
+    @media(min-width:768px) { body { padding-bottom:0; } .bottom-nav { display:none; } .modal-sheet { border-radius:16px; margin:20px; } .modal { align-items:center; padding:20px; } }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <a href="/dashboard.html" class="header-back">←</a>
+  <div>
+    <div class="header-title">📰 Industry News Digest</div>
+    <div class="header-sub" id="last-updated-label">Loading...</div>
+  </div>
+  <div style="display:flex;gap:8px;">
+    <button class="btn-icon" onclick="toggleSettings()">⚙️</button>
+  </div>
+</div>
+
+<div class="settings-panel" id="settings-panel">
+  <div class="settings-row">
+    <span class="settings-label">Update cadence</span>
+    <select id="digest-cadence" onchange="saveCadence()">
+      <option value="manual">Manual only</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+    </select>
+  </div>
+  <div class="settings-row">
+    <span class="settings-label">News sources</span>
+    <span style="font-size:13px;color:var(--muted)">Industry bodies + web search</span>
+  </div>
+</div>
+
+<div class="tab-bar" id="tab-bar">
+  <button class="tab-btn active" onclick="filterTab('all')" id="tab-all">All <span class="tab-count" id="tc-all">0</span></button>
+  <button class="tab-btn" onclick="filterTab('regulatory')" id="tab-regulatory">⚖️ Regulatory <span class="tab-count" id="tc-regulatory">0</span></button>
+  <button class="tab-btn" onclick="filterTab('industry-body')" id="tab-industry-body">🏛️ Industry <span class="tab-count" id="tc-industry-body">0</span></button>
+  <button class="tab-btn" onclick="filterTab('supplier')" id="tab-supplier">📦 Suppliers <span class="tab-count" id="tc-supplier">0</span></button>
+  <button class="tab-btn" onclick="filterTab('business')" id="tab-business">📈 Business <span class="tab-count" id="tc-business">0</span></button>
+  <button class="tab-btn" onclick="filterTab('technology')" id="tab-technology">💻 Tech <span class="tab-count" id="tc-technology">0</span></button>
+  <button class="tab-btn" onclick="filterTab('saved')" id="tab-saved">🔖 Saved <span class="tab-count" id="tc-saved">0</span></button>
+</div>
+
+<div class="toolbar">
+  <input type="search" class="search-input" placeholder="🔍 Search news..." id="news-search" oninput="searchNews(this.value)">
+  <button class="btn-refresh" id="refresh-btn" onclick="refreshDigest()">🔄 Update</button>
+</div>
+
+<div class="feed" id="feed">
+  <div class="loading-card" id="loading-card">
+    <div class="spinner"></div>
+    <div style="font-size:16px;font-weight:600;color:#fff;">Scanning for industry news...</div>
+    <div style="font-size:13px;color:var(--muted);margin-top:8px;">Checking industry bodies, regulators and web sources</div>
+  </div>
+  <div class="empty-state" id="empty-state" style="display:none;">
+    <div class="empty-icon">📭</div>
+    <div class="empty-title">No news yet</div>
+    <p>Tap "Update" to scan for the latest industry news</p>
+  </div>
+  <div id="news-list"></div>
+</div>
+
+<div class="modal" id="article-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-source" id="modal-source"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal()">Close</button>
+      <button class="btn-primary" id="modal-post-btn" onclick="createPostFromModal()">📣 Create Social Post</button>
+    </div>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <a href="/dashboard.html" class="nav-item"><span class="nav-icon">🏠</span>Home</a>
+  <a href="/email-assistant.html" class="nav-item"><span class="nav-icon">📧</span>Email</a>
+  <a href="/content-library.html?action=photo-upload" class="nav-item"><span class="nav-icon">📷</span>Photos</a>
+  <a href="/social.html" class="nav-item"><span class="nav-icon">📣</span>Social</a>
+  <a href="/news-digest.html" class="nav-item active"><span class="nav-icon">📰</span>News</a>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script src="/pwa.js"></script>
+<script>
+let allNews = [], currentTab = 'all', savedIds = new Set(), currentArticle = null, userProfile = null;
+
+const CAT_STYLES = {
+  'regulatory':    { bg:'rgba(239,68,68,0.12)',   color:'#f87171',  label:'⚖️ Regulatory' },
+  'industry-body': { bg:'rgba(34,197,94,0.12)',    color:'#4ade80',  label:'🏛️ Industry Body' },
+  'supplier':      { bg:'rgba(251,191,36,0.12)',   color:'#fbbf24',  label:'📦 Supplier' },
+  'business':      { bg:'rgba(167,139,250,0.12)',  color:'#a78bfa',  label:'📈 Business' },
+  'technology':    { bg:'rgba(96,165,250,0.12)',   color:'#60a5fa',  label:'💻 Technology' },
+  'general':       { bg:'rgba(255,255,255,0.06)',  color:'rgba(255,255,255,0.4)', label:'📰 General' }
+};
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await requireAuth();
+  await loadProfile();
+  loadSavedIds();
+  setupCadence();
+  await loadSavedNews();
+});
+
+async function loadProfile() {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data } = await supabaseClient.from('profiles').select('*').eq('id', user.id).single();
+    userProfile = data;
+  } catch(e) {}
+}
+
+function loadSavedIds() {
+  const saved = localStorage.getItem('news-saved-ids');
+  savedIds = saved ? new Set(JSON.parse(saved)) : new Set();
+}
+
+async function loadSavedNews() {
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const { data } = await supabaseClient.from('news_digest_items').select('*').eq('user_id', user.id).order('published_at', { ascending: false }).limit(100);
+    if (data?.length) {
+      allNews = data.map(row => ({ id: row.id, title: row.title, summary: row.summary, category: row.category, source: row.source, sourceType: row.source_type, url: row.url, publishedAt: row.published_at, relevanceScore: row.relevance_score || 0 }));
+      renderNews(allNews); updateTabCounts(allNews);
+      const latest = data[0]?.created_at;
+      if (latest) document.getElementById('last-updated-label').textContent = `Updated: ${new Date(latest).toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`;
+    } else { document.getElementById('empty-state').style.display = 'block'; document.getElementById('last-updated-label').textContent = 'Never updated'; }
+  } catch(e) { document.getElementById('empty-state').style.display = 'block'; }
+  document.getElementById('loading-card').classList.remove('show');
+}
+
+window.refreshDigest = async function() {
+  document.getElementById('loading-card').classList.add('show');
+  document.getElementById('news-list').innerHTML = '';
+  document.getElementById('empty-state').style.display = 'none';
+  document.getElementById('refresh-btn').disabled = true;
+  try {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const response = await fetch('/api/news-digest-refresh', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId: user.id, industry: userProfile?.industry || 'trades', location: userProfile?.location || 'Australia', businessName: userProfile?.business_name || '' }) });
+    const data = await response.json();
+    if (data.success) {
+      allNews = data.items; renderNews(allNews); updateTabCounts(allNews);
+      document.getElementById('last-updated-label').textContent = `Updated: ${new Date().toLocaleString('en-AU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' })}`;
+    } else { alert('Error refreshing news: ' + (data.error || 'Unknown error')); }
+  } catch(err) { alert('Error: ' + err.message); }
+  document.getElementById('loading-card').classList.remove('show');
+  document.getElementById('refresh-btn').disabled = false;
+};
+
+function renderNews(items) {
+  const list = document.getElementById('news-list');
+  let toShow = currentTab === 'all' ? items : currentTab === 'saved' ? items.filter(i => savedIds.has(i.id)) : items.filter(i => i.category === currentTab);
+  if (!toShow.length) { list.innerHTML = ''; document.getElementById('empty-state').style.display = 'block'; return; }
+  document.getElementById('empty-state').style.display = 'none';
+  toShow = [...toShow].sort((a,b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+  const today = new Date();
+  const todayItems = toShow.filter(i => new Date(i.publishedAt).toDateString() === today.toDateString());
+  let html = '';
+  if (todayItems.length > 0 && currentTab === 'all') html += renderDigestSummaryCard(toShow);
+  toShow.forEach(item => { html += renderNewsCard(item); });
+  list.innerHTML = html;
+}
+
+function renderDigestSummaryCard(items) {
+  return `<div class="digest-summary"><div class="digest-title">📰 Your Industry Digest</div><div class="digest-sub">${userProfile?.industry || 'Trades'} news — ${userProfile?.location || 'Australia'}</div><div class="digest-stats"><div class="digest-stat"><div class="digest-stat-num">${items.length}</div><div class="digest-stat-label">Stories</div></div><div class="digest-stat"><div class="digest-stat-num">${items.filter(i => i.category === 'regulatory').length}</div><div class="digest-stat-label">Regulatory</div></div><div class="digest-stat"><div class="digest-stat-num">${items.filter(i => i.category === 'industry-body').length}</div><div class="digest-stat-label">Industry</div></div><div class="digest-stat"><div class="digest-stat-num">${items.filter(i => i.relevanceScore >= 8).length}</div><div class="digest-stat-label">High Relevance</div></div></div></div>`;
+}
+
+function renderNewsCard(item) {
+  const cat = CAT_STYLES[item.category] || CAT_STYLES['general'];
+  const age = formatAge(item.publishedAt);
+  const isSaved = savedIds.has(item.id);
+  const srcClass = item.sourceType === 'email' ? 'source-email' : item.sourceType === 'industry' ? 'source-industry' : 'source-web';
+  return `<div class="news-card" id="ncard-${item.id}"><div class="news-card-inner" onclick="openArticle('${item.id}')"><div class="news-meta"><span class="news-source ${srcClass}">${item.source || 'Web'}</span><span class="news-category-badge" style="background:${cat.bg};color:${cat.color}">${cat.label}</span><span class="news-age">${age}</span></div><div class="news-title">${escHtml(item.title)}</div><div class="news-summary">${escHtml((item.summary || '').substring(0, 180))}${(item.summary?.length || 0) > 180 ? '...' : ''}</div></div><div class="news-actions">${item.url ? `<button class="btn-action btn-read-more" onclick="openUrl('${item.url}')">🔗 Read More</button>` : ''}<button class="btn-action btn-create-post" onclick="createPost('${item.id}')">📣 Create Post</button><button class="btn-action ${isSaved ? 'btn-saved' : 'btn-save'}" onclick="toggleSave('${item.id}', this)">${isSaved ? '🔖 Saved' : '🔖 Save'}</button></div></div>`;
+}
+
+function updateTabCounts(items) {
+  const counts = { all:0, regulatory:0, 'industry-body':0, supplier:0, business:0, technology:0, saved:0 };
+  items.forEach(i => { counts.all++; if (counts[i.category] !== undefined) counts[i.category]++; if (savedIds.has(i.id)) counts.saved++; });
+  Object.entries(counts).forEach(([k, v]) => { const el = document.getElementById('tc-' + k); if (el) el.textContent = v; });
+}
+
+window.filterTab = function(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`)?.classList.add('active');
+  renderNews(allNews);
+};
+window.searchNews = function(q) {
+  if (!q) { renderNews(allNews); return; }
+  const ql = q.toLowerCase();
+  renderNews(allNews.filter(i => i.title?.toLowerCase().includes(ql) || i.summary?.toLowerCase().includes(ql) || i.source?.toLowerCase().includes(ql)));
+};
+window.toggleSave = function(id, btn) {
+  if (savedIds.has(id)) { savedIds.delete(id); btn.className = 'btn-action btn-save'; btn.textContent = '🔖 Save'; }
+  else { savedIds.add(id); btn.className = 'btn-action btn-saved'; btn.textContent = '🔖 Saved'; }
+  localStorage.setItem('news-saved-ids', JSON.stringify([...savedIds]));
+  updateTabCounts(allNews);
+};
+window.openArticle = function(id) {
+  const item = allNews.find(i => i.id === id); if (!item) return;
+  currentArticle = item;
+  document.getElementById('modal-title').textContent = item.title;
+  document.getElementById('modal-source').textContent = `${item.source} • ${formatAge(item.publishedAt)}`;
+  document.getElementById('modal-body').textContent = item.summary || '';
+  document.getElementById('article-modal').classList.add('show');
+};
+window.closeModal = function() { document.getElementById('article-modal').classList.remove('show'); };
+window.openUrl = function(url) { window.open(url, '_blank'); };
+window.createPost = function(id) {
+  const item = allNews.find(i => i.id === id); if (!item) return;
+  window.location.href = `/social.html?newsItem=${encodeURIComponent(JSON.stringify({ title: item.title, summary: item.summary }))}`;
+};
+window.createPostFromModal = function() { if (currentArticle) { createPost(currentArticle.id); closeModal(); } };
+window.toggleSettings = function() { document.getElementById('settings-panel').classList.toggle('show'); };
+window.saveCadence = function() { localStorage.setItem('news-cadence', document.getElementById('digest-cadence').value); setupCadence(); };
+function setupCadence() {
+  const saved = localStorage.getItem('news-cadence') || 'manual';
+  const el = document.getElementById('digest-cadence'); if (el) el.value = saved;
+}
+function formatAge(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr), now = new Date(), diff = now - d, mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(diff / 3600000);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(diff / 86400000);
+  if (days < 7) return `${days}d ago`;
+  return d.toLocaleDateString('en-AU', { day:'numeric', month:'short' });
+}
+function escHtml(t) {
+  if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML;
+}
+</script>
+</body>
+</html>
