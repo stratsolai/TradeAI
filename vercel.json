@@ -1,4 +1,5 @@
 {
+  "_test": "write test - will revert",
   "rewrites": [
     {
       "source": "/api/auth/google/callback",
