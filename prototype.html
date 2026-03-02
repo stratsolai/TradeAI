@@ -524,7 +524,9 @@
     <a href="/login.html" class="btn btn-ghost btn-sm">Sign In</a>
     <a href="/login.html?tab=signup" class="btn btn-primary btn-sm">Start Free Trial →</a>
   </div>
-</nav>
+
+      <a href="/" style="color:rgba(255,255,255,0.7); text-decoration:none; font-size:14px; display:flex; align-items:center; gap:4px;">🏠 Home</a>
+    </nav>
 
 <!-- ══════════════════════════════════════════
      SCREEN 1 — LANDING
@@ -638,7 +640,7 @@
   <div class="panel">
     <div class="panel-header">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="btn btn-ghost btn-sm" onclick="closePanel()">← Back</button>
+        <button class="btn btn-ghost btn-sm" onclick="goBack()">← Back</button>
         <span id="panel-breadcrumb" style="font-size:13px;color:var(--muted);">Pool Building › Quote Generator</span>
       </div>
       <button class="panel-close" onclick="closePanel()">✕</button>
@@ -2289,7 +2291,16 @@ function openPanel(id) {
   document.body.style.overflow = 'hidden';
 }
 
-function closePanel() {
+function goBack() {
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('from') === 'landing') {
+        window.location.href = '/';
+      } else {
+        closePanel();
+      }
+    }
+
+    function closePanel() {
   document.getElementById('panel-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
