@@ -2325,18 +2325,19 @@ function updateROI() {
 // ══════════════════════════════════════════
 // URL PARAMS — auto-open industry/tool
 // ══════════════════════════════════════════
-window.addEventListener('DOMContentLoaded', function() {
+(function() {
   const params = new URLSearchParams(window.location.search);
   const industry = params.get('industry');
   const toolId = params.get('tool');
 
-  if (industry && (TOOLS_BY_INDUSTRY[industry] || industry === 'all')) {
+  if (toolId && !industry) {
+    selectIndustry('all');
+    setTimeout(() => openPanel(toolId), 50);
+  } else if (industry && (TOOLS_BY_INDUSTRY[industry] || industry === 'all')) {
     selectIndustry(industry);
-    if (toolId) {
-      setTimeout(() => openPanel(toolId), 100);
-    }
+    if (toolId) setTimeout(() => openPanel(toolId), 50);
   }
-});
+})();
 </script>
 </body>
 </html>
