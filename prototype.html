@@ -2292,11 +2292,12 @@ function openPanel(id) {
 }
 
 function goBack() {
-      var params = new URLSearchParams(window.location.search);
-      if (params.get('from') === 'landing') {
-        window.location.href = '/';
+      if (document.referrer && document.referrer.includes(window.location.hostname)) {
+        window.history.back();
+      } else if (window.history.length > 1) {
+        window.history.back();
       } else {
-        closePanel();
+        window.location.href = '/';
       }
     }
 
