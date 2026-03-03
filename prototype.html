@@ -158,8 +158,8 @@
 
   .industries-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
     max-width: 1120px;
     margin: 0 auto;
     padding: 0 32px 80px;
@@ -168,7 +168,7 @@
     background: var(--bg3);
     border: 1.5px solid rgba(255,255,255,0.16);
     border-radius: var(--radius-lg);
-    padding: 24px 20px;
+    padding: 28px 24px;
     cursor: pointer;
     transition: all 0.2s;
     position: relative;
@@ -192,18 +192,18 @@
     background: var(--bg4);
   }
   .industry-card.selected::before { transform: scaleX(1); }
-  .industry-icon { font-size: 30px; margin-bottom: 12px; display: block; }
+  .industry-icon { font-size: 36px; margin-bottom: 14px; display: block; }
   .industry-card h3 {
     font-family: 'Barlow Condensed', sans-serif;
-    font-size: 18px; font-weight: 700; margin-bottom: 6px;
+    font-size: 22px; font-weight: 700; margin-bottom: 8px;
     text-transform: uppercase; letter-spacing: 0.3px;
   }
-  .industry-card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .industry-card p { font-size: 14px; color: var(--muted); line-height: 1.5; }
   .industry-count {
-    position: absolute; top: 14px; right: 14px;
+    position: absolute; top: 16px; right: 16px;
     background: rgba(232,80,10,0.15); border: 1px solid rgba(232,80,10,0.3);
     border-radius: 20px;
-    padding: 2px 8px; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; font-size: 12px; font-weight: 600;
     color: var(--orange);
   }
 
@@ -549,67 +549,67 @@
       <span class="industry-icon">🏊</span>
       <span class="industry-count">20 tools</span>
       <h3>Pool Building</h3>
-      <p>AI quotes, social media, scheduling & full workflow from consult to handover</p>
+      <p>Residential and commercial pool construction, renovation and maintenance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
       <span class="industry-icon">❄️</span>
       <span class="industry-count">20 tools</span>
       <h3>HVAC & Refrigeration</h3>
-      <p>Service scheduling, compliance, energy calculators & preventative maintenance</p>
+      <p>Air conditioning, heating, ventilation and refrigeration services</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('electrical')">
       <span class="industry-icon">⚡</span>
       <span class="industry-count">19 tools</span>
       <h3>Electrical Contracting</h3>
-      <p>Test & tag, emergency dispatch, compliance certs & marketing automation</p>
+      <p>Residential and commercial electrical installation, testing and maintenance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
       <span class="industry-icon">🔩</span>
       <span class="industry-count">20 tools</span>
       <h3>Metal Fabrication</h3>
-      <p>Material optimiser, weld tracking, quality control & real-time job costing</p>
+      <p>Custom fabrication, welding, structural steel and sheet metal work</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('plumbing')">
       <span class="industry-icon">🔧</span>
       <span class="industry-count">19 tools</span>
       <h3>Plumbing</h3>
-      <p>Emergency routing, backflow scheduling, hot water selector & marketing</p>
+      <p>Residential and commercial plumbing, gas fitting and drainage</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
       <span class="industry-icon">🏗️</span>
       <span class="industry-count">20 tools</span>
       <h3>Construction</h3>
-      <p>Subcontractor coordinator, site diary, variation manager & RFI tracking</p>
+      <p>Residential and commercial building, renovations and project management</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('landscaping')">
       <span class="industry-icon">🌿</span>
       <span class="industry-count">19 tools</span>
       <h3>Landscaping</h3>
-      <p>Smart plant selector, irrigation design, seasonal scheduling & marketing</p>
+      <p>Garden design, hardscaping, irrigation and outdoor living spaces</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('cleaning')">
       <span class="industry-icon">✨</span>
       <span class="industry-count">19 tools</span>
       <h3>Commercial Cleaning</h3>
-      <p>Roster optimiser, quality audits, consumables tracking & client reporting</p>
+      <p>Commercial, industrial and strata cleaning services</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('manufacturing')">
       <span class="industry-icon">🏭</span>
       <span class="industry-count">20 tools</span>
       <h3>Manufacturing</h3>
-      <p>Production scheduling, SPC quality, inventory forecasting & OEE tracking</p>
+      <p>Product manufacturing, assembly, packaging and distribution</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('concreting')">
       <span class="industry-icon">🚧</span>
       <span class="industry-count">19 tools</span>
       <h3>Concreting</h3>
-      <p>Pour scheduler, weather rescheduling, mix designer & test cylinder tracking</p>
+      <p>Residential and commercial concrete, driveways, paths and slabs</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('handyman')">
       <span class="industry-icon">🔨</span>
       <span class="industry-count">19 tools</span>
       <h3>Handyman Services</h3>
-      <p>Multi-trade routing, smart parts finder, quick quoting & social marketing</p>
+      <p>General repairs, maintenance and multi-trade property services</p>
     </div>
   </div>
 </div>
