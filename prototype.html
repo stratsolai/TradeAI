@@ -819,7 +819,7 @@ const CORE_TOOLS = [
   {
     id: "lead-bot", cat: "Sales & Quotes", icon: "💬", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "AI Website Chatbot",
-    desc: "24/7 AI chat on your website that qualifies leads, answers questions and books consultations automatically. Never miss an enquiry again.",
+    desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs — 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself — whatever works for you. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
     live: true,
     roiLabel1: "Website visitors/month", roiLabel2: "Leads per month", roiDefault1: 500, roiDefault2: 15,
     benefits: [
@@ -853,7 +853,7 @@ You wake up to a confirmed appointment.`,
   {
     id: "social-media-manager", cat: "Marketing", icon: "📱", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Marketing & Social Media Manager",
-    desc: "Upload job photos and AI writes engaging captions, schedules posts to Facebook and Instagram, and handles everything automatically.",
+    desc: "Your marketing team in a tool. Describe your latest job, upload a photo, or let the AI pull from your content library — it creates professional social posts, AI-generated graphics, and full marketing campaigns. Promote new products/services, seasonal offers, or industry news — the AI creates it all. Auto-posts to Facebook and Instagram, or download for community groups, emails, and anywhere else.",
     live: true,
     roiLabel1: "Posts per month", roiLabel2: "Minutes per post currently", roiDefault1: 20, roiDefault2: 25,
     benefits: [
@@ -884,7 +884,7 @@ and a heated spa.
   {
     id: "email-assistant", cat: "Operations", icon: "📧", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "AI Email Assistant",
-    desc: "AI reads your inbox, flags urgent emails, summarises long threads and drafts replies. Connected to Gmail and Outlook.",
+    desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything — what’s urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters.",
     live: true,
     roiLabel1: "Emails per day", roiLabel2: "Minutes on email daily", roiDefault1: 60, roiDefault2: 45,
     benefits: [
@@ -914,7 +914,7 @@ AI has drafted replies for the urgent items.
   {
     id: "strategic-plan", cat: "Business Intelligence", icon: "🎯", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Strategic Plan Generator",
-    desc: "AI interviews you and creates a full Strategic Plan + 90-Day Action Tracker. Bank-ready documents in under 30 minutes.",
+    desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
     live: true,
     roiLabel1: "Plans created per year", roiLabel2: "Hours per plan manually", roiDefault1: 2, roiDefault2: 30,
     benefits: [
@@ -948,7 +948,7 @@ Q4: Launch maintenance service
   {
     id: "news-digest", cat: "Business Intelligence", icon: "📰", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Industry News Digest",
-    desc: "AI monitors industry bodies, government announcements and trade news. Get a plain-English summary every week — nothing missed.",
+    desc: "Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices — plus searches reputable online sources — then summarises everything on an interactive dashboard. It’s personalised to your business, not generic news. Tap into any story to read more. Stay informed, stay compliant, stay ahead.",
     live: true,
     roiLabel1: "Hours on news weekly", roiLabel2: "Important updates missed/month", roiDefault1: 3, roiDefault2: 5,
     benefits: [
@@ -974,7 +974,38 @@ Master Builders nominations open —
 deadline 15 March. Submit your best jobs.
 
 [Read full digest →]`,
-  },
+  }
+  {
+    id: "executive-summary", cat: "Business Intelligence", icon: "📊", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
+    title: "Business Intelligence Dashboard",
+    desc: "Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software — then goes further. AI predicts opportunities for new products/services, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.",
+    live: true,
+    roiLabel1: "Hours on weekly reporting", roiLabel2: "Reports per month", roiDefault1: 4, roiDefault2: 5,
+    benefits: [
+      "Live dashboard updated every hour",
+      "Check business health from your phone anywhere",
+      "AI insights: automatic alerts on issues and opportunities",
+      "Weekly PDF reports auto-generated",
+    ],
+    example: `WEEKLY SUMMARY — Blue Haven Pools
+
+Revenue this week: $47,400 ↑18%
+Active projects: 12
+New leads: 24 (AI handled all)
+Consultations booked: 12
+
+✅ WINS
+• Highest weekly revenue this month
+• Zero safety incidents — 8 weeks running
+• All projects on schedule
+
+⚠️ WATCH
+• 4 overdue invoices ($18,400)
+• Behind monthly target by 21%
+
+TOTAL AI TIME SAVED: 63 hours
+Value: $5,355 @ $85/hr`,
+  },,
   {
     id: "quote-gen", cat: "Sales & Quotes", icon: "📋", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Quote Generator",
@@ -1265,37 +1296,6 @@ Based on yard size, landscaping, and budget.
 Best fit and value for this property.
 
 [Send to Customer] [Adjust Design]`,
-  },
-  {
-    id: "executive-summary", cat: "Business Intelligence", icon: "📊", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
-    title: "Business Intelligence Dashboard",
-    desc: "Live dashboard consolidating all your tools. Real-time KPIs, trends, alerts and insights. Access anywhere on any device.",
-    live: false,
-    roiLabel1: "Hours on weekly reporting", roiLabel2: "Reports per month", roiDefault1: 4, roiDefault2: 5,
-    benefits: [
-      "Live dashboard updated every hour",
-      "Check business health from your phone anywhere",
-      "AI insights: automatic alerts on issues and opportunities",
-      "Weekly PDF reports auto-generated",
-    ],
-    example: `WEEKLY SUMMARY — Blue Haven Pools
-
-Revenue this week: $47,400 ↑18%
-Active projects: 12
-New leads: 24 (AI handled all)
-Consultations booked: 12
-
-✅ WINS
-• Highest weekly revenue this month
-• Zero safety incidents — 8 weeks running
-• All projects on schedule
-
-⚠️ WATCH
-• 4 overdue invoices ($18,400)
-• Behind monthly target by 21%
-
-TOTAL AI TIME SAVED: 63 hours
-Value: $5,355 @ $85/hr`,
   },
 ];
 
@@ -2292,15 +2292,27 @@ function openPanel(id) {
 }
 
 function goBack() {
-      if (document.referrer && document.referrer.includes(window.location.hostname)) {
-        window.history.back();
-      } else if (window.history.length > 1) {
+      const panel = document.getElementById('panel-overlay');
+      if (panel && panel.style.display !== 'none') {
+        closePanel();
+        return;
+      }
+      const dashboard = document.getElementById('screen-dashboard');
+      if (dashboard && dashboard.style.display !== 'none') {
+        const landing = document.getElementById('screen-landing');
+        if (landing) {
+          dashboard.style.display = 'none';
+          landing.style.display = '';
+          window.scrollTo(0, 0);
+          return;
+        }
+      }
+      if (document.referrer && document.referrer !== window.location.href) {
         window.history.back();
       } else {
         window.location.href = '/';
       }
     }
-
     function closePanel() {
   document.getElementById('panel-overlay').classList.remove('open');
   document.body.style.overflow = '';
