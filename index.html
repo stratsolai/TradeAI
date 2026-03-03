@@ -56,8 +56,8 @@
     .nav-logo img { height:36px; width:auto; }
     .nav-links { display:flex; align-items:center; gap:32px; }
     .nav-links a {
-      color:var(--muted); text-decoration:none;
-      font-size:14px; font-weight:500; letter-spacing:0.3px;
+      color:white; text-decoration:none;
+      font-size:16px; font-weight:600; letter-spacing:0.3px;
       transition:color 0.2s;
     }
     .nav-links a:hover { color:white; }
@@ -171,8 +171,8 @@
     .tool-card:nth-child(6) { animation-delay:-2.5s; }
     @keyframes cardFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
     .tool-card-icon { font-size:26px; margin-bottom:8px; }
-    .tool-card-name { font-size:13px; font-weight:700; color:white; margin-bottom:4px; }
-    .tool-card-tagline { font-size:11px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:8px; flex:1; }
+    .tool-card-name { font-size:16px; font-weight:700; color:white; margin-bottom:4px; }
+    .tool-card-tagline { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:8px; flex:1; }
     .tool-card-stat {
       font-size:11px; color:var(--orange); font-weight:600;
       background:rgba(232,80,10,0.15); padding:3px 8px; border-radius:20px;
@@ -416,7 +416,7 @@
       <h1 class="hero-headline">
         <span class="line-blue">YOUR TRADE</span>
         <span class="line-orange">BUSINESS,</span>
-        <span class="line-blue">RUNNING ON</span>
+        <span class="line-blue">POWERED UP WITH</span>
         <span class="line-orange">AI</span>
       </h1>
 
@@ -428,7 +428,7 @@
 
       <div class="hero-actions">
         <a href="/prototype.html" class="btn-primary">Choose Your Trade →</a>
-        <a href="/prototype.html" class="btn-secondary">👁 See All Tools</a>
+        <a href="/prototype.html?industry=all" class="btn-secondary">👁 See All Tools</a>
       </div>
 
       <div class="hero-trust">
@@ -619,7 +619,7 @@
         <div class="section-tag">The Tools</div>
         <h2 class="section-title">AI that works as hard<br>as you do</h2>
       </div>
-      <a href="/prototype.html" class="btn-secondary" style="white-space:nowrap">See All Tools →</a>
+      <a href="/prototype.html?industry=all" class="btn-secondary" style="white-space:nowrap">See All Tools →</a>
     </div>
     <div class="tools-grid">
       <a href="/prototype.html?tool=social-media-manager" class="tool-tile fade-up">
@@ -734,7 +734,7 @@
       <div class="footer-col">
         <h4>Product</h4>
         <a href="#how-it-works">How It Works</a>
-        <a href="/prototype.html">All Tools</a>
+        <a href="/prototype.html?industry=all">All Tools</a>
         <a href="prototype.html">Choose Your Trade</a>
       </div>
       <div class="footer-col">
