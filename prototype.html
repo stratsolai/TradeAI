@@ -2293,8 +2293,13 @@ function openPanel(id) {
 
 function goBack() {
       const panel = document.getElementById('panel-overlay');
-      if (panel && panel.style.display !== 'none') {
+      if (panel && panel.classList.contains('open')) {
         closePanel();
+        if (window._cameFromExternal) {
+          if (document.referrer && !document.referrer.includes('prototype')) {
+            window.location.href = document.referrer;
+          }
+        }
         return;
       }
       const dashboard = document.getElementById('screen-dashboard');
@@ -2353,6 +2358,9 @@ function updateROI() {
   const params = new URLSearchParams(window.location.search);
   const industry = params.get('industry');
   const toolId = params.get('tool');
+
+      // Track if user arrived via direct URL with tool param (e.g. from landing page)
+      if (toolId) window._cameFromExternal = true;
 
   if (toolId && !industry) {
     selectIndustry('all');
