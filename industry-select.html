@@ -107,7 +107,7 @@
     // Render industry grid from INDUSTRIES array in tools-data.js
     function renderIndustries() {
       var grid = document.getElementById("industry-grid");
-      if (!grid || !window.INDUSTRIES) return;
+      if (!grid || typeof INDUSTRIES === "undefined") return;
       grid.innerHTML = INDUSTRIES.map(function(ind) {
         return "<div class=\"industry-card\" onclick=\"window.location.href='tools.html?industry=" + ind.id + "'\">"
           + "<div class=\"industry-card-top\">"
@@ -124,9 +124,11 @@
       }).join("");
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", renderIndustries);
+    } else {
       renderIndustries();
-    });
+    }
   </script>
 
 </body>
