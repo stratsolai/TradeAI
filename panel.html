@@ -1123,7 +1123,7 @@
 
       <div class="cta-row">
         <div class="price-inline" id="panel-price">$79<span>/mth</span></div>
-        <a href="login.html" class="btn-cta btn-cta-primary" id="cta-btn">Start 14 Day Free Trial →</a>
+        <button class="btn-cta btn-cta-primary" id="cta-btn">Start 14 Day Free Trial →</button>
       </div>
     </div>
 
@@ -1359,7 +1359,7 @@
       <div class="pricing-includes">
         <span><span class="check">✓</span> Cancel anytime</span>
       </div>
-      <a href="login.html" class="btn-footer-cta" id="cta-btn-footer">Start 14 Day Free Trial →</a>
+      <button class="btn-footer-cta" id="cta-btn-footer">Start 14 Day Free Trial →</button>
     </div>
   </div>
 </div>
@@ -1426,9 +1426,9 @@
     // CTA hrefs
     var ctaHref = 'login.html?tab=signup&tool=' + tool.toolId;
     var ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) ctaBtn.href = ctaHref;
+    if (ctaBtn) ctaBtn.onclick = function(){ window.location.href = ctaHref; };
     var ctaBtnFt = document.getElementById('cta-btn-footer');
-    if (ctaBtnFt) ctaBtnFt.href = ctaHref;
+    if (ctaBtnFt) ctaBtnFt.onclick = function(){ window.location.href = ctaHref; };
 
     // Back button
     var backBtn = document.getElementById('back-btn');
