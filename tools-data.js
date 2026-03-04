@@ -20,7 +20,7 @@ const CORE_TOOLS = [
     id: "lead-bot",
     toolId: "chatbot",
     status: "built",
-    icon: "🤖",
+    icon: "💬",
     category: "marketing",
     category_label: "Marketing",
     title: ["AI Website", "Chatbot"],
