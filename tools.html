@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeAI Pro - All Tools</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1628; --bg2: #172035; --bg3: #1e2d47; --bg4: #253554;
+      --card-border: rgba(255,255,255,0.14);
+      --blue: #1A5490; --orange: #E8500A; --orange-light: #ff6b2b;
+      --muted: rgba(255,255,255,0.70);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: #fff; font-family: "DM Sans", sans-serif; min-height: 100vh; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index: 100; background: var(--bg); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 36px; }
+    .nav-left { display: flex; align-items: center; gap: 20px; }
+    .btn-back { background: transparent; border: 1px solid var(--card-border); color: var(--muted); padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: "DM Sans", sans-serif; transition: all 0.2s; }
+    .btn-back:hover { border-color: var(--orange); color: #fff; }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-nav { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; }
+    .btn-nav-outline { background: transparent; border: 1px solid var(--card-border); color: #fff; }
+    .btn-nav-outline:hover { border-color: var(--orange); color: var(--orange); }
+    .btn-nav-primary { background: var(--orange); color: #fff; }
+    .btn-nav-primary:hover { background: var(--orange-light); }
+
+    /* HEADER */
+    .tools-header { padding: 40px 32px 24px; max-width: 1200px; margin: 0 auto; }
+    .tools-header h1 { font-family: "Barlow Condensed", sans-serif; font-size: clamp(28px, 4vw, 42px); font-weight: 800; margin-bottom: 6px; }
+    .tools-header h1 span { color: var(--orange); }
+    .tools-header p { color: var(--muted); font-size: 16px; }
+
+    /* FILTER TABS */
+    .filter-bar { padding: 0 32px 24px; max-width: 1200px; margin: 0 auto; }
+    .filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: 600; cursor: pointer; border: 1px solid var(--card-border); background: transparent; color: var(--muted); font-family: "DM Sans", sans-serif; transition: all 0.2s; }
+    .filter-btn:hover { border-color: var(--orange); color: #fff; }
+    .filter-btn.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+
+    /* TOOL GRID */
+    .tools-section { padding: 0 32px 80px; max-width: 1200px; margin: 0 auto; }
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .tool-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: 16px; padding: 24px; cursor: pointer; transition: all 0.2s ease; position: relative; display: flex; flex-direction: column; gap: 10px; }
+    .tool-card:hover { border-color: var(--orange); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(232,80,10,0.2); }
+    .tool-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .tool-icon { font-size: 28px; line-height: 1; }
+    .tool-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.5px; white-space: nowrap; }
+    .badge-live { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.4); color: #22c55e; }
+    .badge-live::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #22c55e; margin-right: 5px; animation: pulse 2s infinite; vertical-align: middle; }
+    .badge-soon { background: rgba(232,80,10,0.12); border: 1px solid rgba(232,80,10,0.3); color: var(--orange); }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .tool-title { font-family: "Barlow Condensed", sans-serif; font-size: 20px; font-weight: 700; line-height: 1.2; }
+    .tool-title .line2 { color: var(--orange); }
+    .tool-desc { font-size: 13px; color: var(--muted); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .tool-price { font-size: 14px; font-weight: 700; color: #fff; margin-top: 4px; }
+    .tool-price span { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .tool-arrow { font-size: 16px; color: var(--orange); opacity: 0; transition: opacity 0.2s; text-align: right; margin-top: auto; }
+    .tool-card:hover .tool-arrow { opacity: 1; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      nav { padding: 12px 16px; }
+      .tools-header, .filter-bar, .tools-section { padding-left: 16px; padding-right: 16px; }
+      .tools-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-left">
+      <a class="nav-logo" href="industry-select.html"><img src="logo.svg" alt="TradeAI Pro"></a>
+      <button class="btn-back" onclick="history.back()">&#8592; Back</button>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn-nav btn-nav-outline">Sign In</a>
+      <a href="login.html?tab=signup" class="btn-nav btn-nav-primary">Start Free Trial</a>
+    </div>
+  </nav>
+
+  <div class="tools-header">
+    <h1 id="page-heading">All <span>13 Tools</span></h1>
+    <p id="page-subheading">Choose a tool to see how it works and start your free trial.</p>
+  </div>
+
+  <div class="filter-bar"><div class="filter-tabs" id="filter-tabs"></div></div>
+
+  <div class="tools-section"><div class="tools-grid" id="tools-grid"></div></div>
+
+  <script src="tools-data.js"></script>
+<script>
+  if ("serviceWorker" in navigator) { navigator.serviceWorker.register("pwa.js").catch(function() {}); }
+
+  var currentCategory = "All";
+  var currentIndustry = null;
+  var FILTER_TABS = ["All", "Marketing", "Operations", "Business Intelligence"];
+
+  function getParams() {
+    var p = new URLSearchParams(window.location.search);
+    return { industry: p.get("industry"), cat: p.get("cat") };
+  }
+
+  function renderFilterTabs() {
+    var tabs = FILTER_TABS.slice();
+    if (currentIndustry) tabs.push("Industry Specific");
+    var el = document.getElementById("filter-tabs");
+    el.innerHTML = tabs.map(function(t) {
+      var cls = t === currentCategory ? "filter-btn active" : "filter-btn";
+      return '<button class="' + cls + '" onclick="filterCat(\''+ t +'\')">' + t + '</button>';
+    }).join("");
+  }
+
+  function filterCat(cat) { currentCategory = cat; renderFilterTabs(); renderTools(); }
+
+  function renderTools() {
+    var tools = CORE_TOOLS.slice();
+    if (currentCategory !== "All") {
+      tools = tools.filter(function(t) { return t.category_label === currentCategory; });
+    }
+    tools.sort(function(a, b) {
+      if (a.status === "built" && b.status !== "built") return -1;
+      if (a.status !== "built" && b.status === "built") return 1;
+      return 0;
+    });
+    var grid = document.getElementById("tools-grid");
+    grid.innerHTML = tools.map(function(t) {
+      var badge = t.status === "built" ? '<span class="tool-badge badge-live">Live Now</span>' : '<span class="tool-badge badge-soon">Coming Soon</span>';
+      var price = t.price === "Coming Soon" ? '<div class="tool-price">Coming Soon</div>' : '<div class="tool-price">' + t.price + '<span>/month</span></div>';
+      return '<div class="tool-card" onclick="goPanel(\''+ t.id +'\')">'
+        + '<div class="tool-card-top"><div class="tool-icon">' + t.icon + '</div>' + badge + '</div>'
+        + '<div class="tool-title"><span>' + t.title[0] + '</span> <span class="line2">' + t.title[1] + '</span></div>'
+        + '<div class="tool-desc">' + t.desc + '</div>'
+        + price + '<div class="tool-arrow">&#8594;</div></div>';
+    }).join("");
+  }
+
+  function goPanel(id) {
+    var dest = "panel.html?tool=" + id;
+    if (currentIndustry) dest += "&industry=" + currentIndustry;
+    window.location.href = dest;
+  }
+
+  document.addEventListener("DOMContentLoaded", function() {
+    var params = getParams();
+    currentIndustry = params.industry;
+    if (params.cat) currentCategory = params.cat;
+    if (currentIndustry && window.INDUSTRIES) {
+      var ind = INDUSTRIES.find(function(i) { return i.id === currentIndustry; });
+      if (ind) {
+        document.getElementById("page-heading").innerHTML = ind.label + " <span>Tools</span>";
+        document.getElementById("page-subheading").textContent = ind.toolCount + " tools available for " + ind.label + " businesses.";
+      }
+    }
+    renderFilterTabs();
+    renderTools();
+  });
+</script>
+</body>
+</html>
