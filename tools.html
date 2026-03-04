@@ -148,11 +148,11 @@
     window.location.href = dest;
   }
 
-  document.addEventListener("DOMContentLoaded", function() {
+  function init() {
     var params = getParams();
     currentIndustry = params.industry;
     if (params.cat) currentCategory = params.cat;
-    if (currentIndustry && window.INDUSTRIES) {
+    if (currentIndustry && typeof INDUSTRIES !== "undefined") {
       var ind = INDUSTRIES.find(function(i) { return i.id === currentIndustry; });
       if (ind) {
         document.getElementById("page-heading").innerHTML = ind.label + " <span>Tools</span>";
@@ -161,7 +161,12 @@
     }
     renderFilterTabs();
     renderTools();
-  });
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 </script>
 </body>
 </html>
