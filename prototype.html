@@ -751,150 +751,7 @@
 <!-- ══════════════════════════════════════════
      TOOL DETAIL PANEL (full-screen slide-up)
 ══════════════════════════════════════════ -->
-<div class="panel-overlay" id="panelOverlay">
-  <div class="panel-atmo"></div>
-  <div class="panel-organic s1"></div>
-  <div class="panel-organic s2"></div>
-  <div class="panel-organic s3"></div>
-
-  <!-- HEADER -->
-  <div class="panel-header">
-    <div class="panel-breadcrumb">
-      <a onclick="closePanel()">← Back</a>
-      <span class="sep">›</span>
-      <a onclick="closePanel()">All Tools</a>
-      <span class="sep">›</span>
-      <span class="current" id="panelBreadcrumbName"></span>
-    </div>
-    <div class="bundle-rotator">
-      <span class="bundle-rotator-icon">📦</span>
-      <div class="bundle-rotator-track" id="bundleTrack">
-        <div class="bundle-rotator-item active">Starter — 3 tools from $197/mo</div>
-        <div class="bundle-rotator-item">Growth — 6 tools from $374/mo</div>
-        <div class="bundle-rotator-item">Complete — all 13 tools from $899/mo</div>
-      </div>
-      <span class="bundle-rotator-cta">Bundle →</span>
-    </div>
-    <button class="panel-close-btn" onclick="closePanel()">✕</button>
-  </div>
-
-  <!-- HERO -->
-  <div class="panel-hero">
-    <div class="panel-hero-left">
-      <div class="panel-tool-meta">
-        <div class="panel-tool-icon" id="panelIcon"></div>
-        <div class="panel-badges" id="panelBadges"></div>
-      </div>
-      <h1 class="panel-tool-title" id="panelTitle"></h1>
-      <div class="panel-tagline" id="panelTagline"></div>
-      <p class="panel-desc" id="panelDesc"></p>
-      <ul class="panel-benefits" id="panelBenefits"></ul>
-      <div class="panel-cta-row">
-        <div class="panel-price-inline" id="panelPriceHero"></div>
-        <button class="panel-btn-primary" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
-      </div>
-    </div>
-
-    <!-- ROI CARD -->
-    <div class="panel-hero-right">
-      <div class="roi-card">
-        <div class="roi-card-header">
-          <div class="roi-header"><span>📊</span> Your Impact Calculator</div>
-        </div>
-        <div class="roi-card-body">
-          <div class="calc-fields-panel" id="roiSliders"></div>
-          <div class="roi-results">
-            <div class="roi-results-label">Your Monthly Results</div>
-            <div class="result-grid" id="roiResults"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel-divider"><div class="line"></div></div>
-
-  <!-- EXAMPLE OUTPUT -->
-  <div class="panel-example">
-    <div class="panel-section-header">
-      <div class="panel-section-label">See It In Action</div>
-      <h2 class="panel-section-title" id="panelPreviewTitle"></h2>
-      <p class="panel-section-subtitle" id="panelPreviewSubtitle"></p>
-    </div>
-    <div class="preview-container">
-      <div class="preview-chrome">
-        <div class="chrome-dots">
-          <div class="chrome-dot r"></div>
-          <div class="chrome-dot y"></div>
-          <div class="chrome-dot g"></div>
-        </div>
-        <div class="chrome-url"><span class="lock">🔒</span> yourbusiness.com.au</div>
-      </div>
-      <div class="preview-body">
-        <div class="website-hero">
-          <div class="website-nav"><span>Home</span><span>Services</span><span>Gallery</span><span>Contact</span></div>
-          <div class="website-logo"><div class="logo-icon" id="previewLogoIcon"></div> <span id="previewBizName"></span></div>
-          <div class="website-h1" id="previewH1"></div>
-          <div class="website-sub" id="previewSub"></div>
-          <a class="website-cta" href="#">Get a Free Quote →</a>
-        </div>
-        <div class="chatbot-widget">
-          <div class="widget-header">
-            <div class="widget-avatar" id="previewWidgetAvatar"></div>
-            <div>
-              <div class="widget-name" id="previewWidgetName"></div>
-              <div class="widget-status">Online now — typically replies instantly</div>
-            </div>
-          </div>
-          <div class="widget-messages" id="previewMessages"></div>
-          <div class="widget-input">
-            <div class="widget-input-field">Type a message...</div>
-            <button class="widget-send">↑</button>
-          </div>
-        </div>
-        <div class="powered-badge"><span>⚡ Powered by TradeAI Pro</span></div>
-        <div class="phone-notif" id="previewNotif">
-          <div class="phone-notif-icon">🔔</div>
-          <div class="phone-notif-text">
-            <strong id="previewNotifTitle"></strong>
-            <span id="previewNotifBody"></span>
-            <div class="phone-notif-time">Just now • via TradeAI Pro</div>
-          </div>
-        </div>
-      </div>
-      <div class="preview-tabs">
-        <button class="preview-tab active">📱 Interactive Preview</button>
-        <button class="preview-tab">▶️ Watch Demo Video</button>
-        <button class="preview-tab">📸 More Screenshots</button>
-      </div>
-    </div>
-    <div class="ai-gen-badge"><span class="sparkle">✦</span> This is how it actually looks on your website <span class="sparkle">✦</span></div>
-  </div>
-
-  <div class="panel-divider"><div class="line"></div></div>
-
-  <!-- HOW IT WORKS -->
-  <div class="panel-how">
-    <div class="panel-section-header">
-      <div class="panel-section-label">How It Works</div>
-      <h2 class="panel-section-title"><span class="warm">Live in Minutes,</span> <span class="bright">Not Days</span></h2>
-    </div>
-    <div class="steps-grid" id="panelSteps"></div>
-  </div>
-
-  <!-- PRICING FOOTER -->
-  <div class="panel-pricing">
-    <div class="pricing-card">
-      <div class="pricing-amount" id="panelPriceFooter"></div>
-      <div class="pricing-period">per month</div>
-      <div class="pricing-includes"><span><span class="check">✓</span> Cancel anytime</span></div>
-      <button class="panel-btn-footer" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
-    </div>
-  </div>
-</div>
-
-
-<script>
+ript>
 // ══════════════════════════════════════════
 // DATA
 // ══════════════════════════════════════════
@@ -2705,5 +2562,150 @@ function updateROI() {
   }
 })();
 </script>
+
+<div class="panel-overlay" id="panelOverlay">
+  <div class="panel-atmo"></div>
+  <div class="panel-organic s1"></div>
+  <div class="panel-organic s2"></div>
+  <div class="panel-organic s3"></div>
+
+  <!-- HEADER -->
+  <div class="panel-header">
+    <div class="panel-breadcrumb">
+      <a onclick="closePanel()">← Back</a>
+      <span class="sep">›</span>
+      <a onclick="closePanel()">All Tools</a>
+      <span class="sep">›</span>
+      <span class="current" id="panelBreadcrumbName"></span>
+    </div>
+    <div class="bundle-rotator">
+      <span class="bundle-rotator-icon">📦</span>
+      <div class="bundle-rotator-track" id="bundleTrack">
+        <div class="bundle-rotator-item active">Starter — 3 tools from $197/mo</div>
+        <div class="bundle-rotator-item">Growth — 6 tools from $374/mo</div>
+        <div class="bundle-rotator-item">Complete — all 13 tools from $899/mo</div>
+      </div>
+      <span class="bundle-rotator-cta">Bundle →</span>
+    </div>
+    <button class="panel-close-btn" onclick="closePanel()">✕</button>
+  </div>
+
+  <!-- HERO -->
+  <div class="panel-hero">
+    <div class="panel-hero-left">
+      <div class="panel-tool-meta">
+        <div class="panel-tool-icon" id="panelIcon"></div>
+        <div class="panel-badges" id="panelBadges"></div>
+      </div>
+      <h1 class="panel-tool-title" id="panelTitle"></h1>
+      <div class="panel-tagline" id="panelTagline"></div>
+      <p class="panel-desc" id="panelDesc"></p>
+      <ul class="panel-benefits" id="panelBenefits"></ul>
+      <div class="panel-cta-row">
+        <div class="panel-price-inline" id="panelPriceHero"></div>
+        <button class="panel-btn-primary" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
+      </div>
+    </div>
+
+    <!-- ROI CARD -->
+    <div class="panel-hero-right">
+      <div class="roi-card">
+        <div class="roi-card-header">
+          <div class="roi-header"><span>📊</span> Your Impact Calculator</div>
+        </div>
+        <div class="roi-card-body">
+          <div class="calc-fields-panel" id="roiSliders"></div>
+          <div class="roi-results">
+            <div class="roi-results-label">Your Monthly Results</div>
+            <div class="result-grid" id="roiResults"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel-divider"><div class="line"></div></div>
+
+  <!-- EXAMPLE OUTPUT -->
+  <div class="panel-example">
+    <div class="panel-section-header">
+      <div class="panel-section-label">See It In Action</div>
+      <h2 class="panel-section-title" id="panelPreviewTitle"></h2>
+      <p class="panel-section-subtitle" id="panelPreviewSubtitle"></p>
+    </div>
+    <div class="preview-container">
+      <div class="preview-chrome">
+        <div class="chrome-dots">
+          <div class="chrome-dot r"></div>
+          <div class="chrome-dot y"></div>
+          <div class="chrome-dot g"></div>
+        </div>
+        <div class="chrome-url"><span class="lock">🔒</span> yourbusiness.com.au</div>
+      </div>
+      <div class="preview-body">
+        <div class="website-hero">
+          <div class="website-nav"><span>Home</span><span>Services</span><span>Gallery</span><span>Contact</span></div>
+          <div class="website-logo"><div class="logo-icon" id="previewLogoIcon"></div> <span id="previewBizName"></span></div>
+          <div class="website-h1" id="previewH1"></div>
+          <div class="website-sub" id="previewSub"></div>
+          <a class="website-cta" href="#">Get a Free Quote →</a>
+        </div>
+        <div class="chatbot-widget">
+          <div class="widget-header">
+            <div class="widget-avatar" id="previewWidgetAvatar"></div>
+            <div>
+              <div class="widget-name" id="previewWidgetName"></div>
+              <div class="widget-status">Online now — typically replies instantly</div>
+            </div>
+          </div>
+          <div class="widget-messages" id="previewMessages"></div>
+          <div class="widget-input">
+            <div class="widget-input-field">Type a message...</div>
+            <button class="widget-send">↑</button>
+          </div>
+        </div>
+        <div class="powered-badge"><span>⚡ Powered by TradeAI Pro</span></div>
+        <div class="phone-notif" id="previewNotif">
+          <div class="phone-notif-icon">🔔</div>
+          <div class="phone-notif-text">
+            <strong id="previewNotifTitle"></strong>
+            <span id="previewNotifBody"></span>
+            <div class="phone-notif-time">Just now • via TradeAI Pro</div>
+          </div>
+        </div>
+      </div>
+      <div class="preview-tabs">
+        <button class="preview-tab active">📱 Interactive Preview</button>
+        <button class="preview-tab">▶️ Watch Demo Video</button>
+        <button class="preview-tab">📸 More Screenshots</button>
+      </div>
+    </div>
+    <div class="ai-gen-badge"><span class="sparkle">✦</span> This is how it actually looks on your website <span class="sparkle">✦</span></div>
+  </div>
+
+  <div class="panel-divider"><div class="line"></div></div>
+
+  <!-- HOW IT WORKS -->
+  <div class="panel-how">
+    <div class="panel-section-header">
+      <div class="panel-section-label">How It Works</div>
+      <h2 class="panel-section-title"><span class="warm">Live in Minutes,</span> <span class="bright">Not Days</span></h2>
+    </div>
+    <div class="steps-grid" id="panelSteps"></div>
+  </div>
+
+  <!-- PRICING FOOTER -->
+  <div class="panel-pricing">
+    <div class="pricing-card">
+      <div class="pricing-amount" id="panelPriceFooter"></div>
+      <div class="pricing-period">per month</div>
+      <div class="pricing-includes"><span><span class="check">✓</span> Cancel anytime</span></div>
+      <button class="panel-btn-footer" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
+    </div>
+  </div>
+</div>
+
+
+<sc
 </body>
 </html>
