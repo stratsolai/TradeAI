@@ -3,28 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">TradeAI Pro</title>
-  <meta name="description" id="page-desc" content="TradeAI Pro - AI tools for Australian trades businesses">
+  <title>TradeAI Pro</title>
+  <meta name="description" id="page-desc" content="TradeAI Pro">
   <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #0d1628; --bg2: #172035; --bg3: #1e2d47; --bg4: #253554;
-      --card-border: rgba(255,255,255,0.14);
-      --blue: #1A5490; --orange: #E8500A; --orange-light: #ff6b2b;
-      --muted: rgba(255,255,255,0.70);
-    }
-    @keyframes panelSlideUp {
-      from { transform: translateY(100vh); }
-      to { transform: translateY(0); }
-    }
-    #panel-wrap {
-      animation: panelSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-  </style>
-<style>
+    @keyframes panelSlideUp { from { transform: translateY(100vh); } to { transform: translateY(0); } }
+    #panel-wrap { animation: panelSlideUp 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
   :root {
     --bg: #0d1628;
     --bg2: #172035;
@@ -1082,7 +1070,8 @@
     .panel-header { padding: 0 20px; }
     .cta-row { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
-<
+
+  </style>
 </head>
 <body>
 <div id="panel-wrap">
@@ -1106,11 +1095,9 @@
         <span class="tool-icon-large" id="panel-icon">🤖</span>
         <span class="live-badge" id="panel-live-badge">Live Now</span>
       </div>
-      <h1 class="panel-title" id="panel-title">
-        <span class="line1">Tool</span> <span class="line2">Name</span>
-      </h1>
-      <p class="panel-tagline" id="panel-tagline">Tagline goes here</p>
-      <p class="panel-desc" id="panel-desc">Description goes here</p>
+      <h1 class="panel-title" id="panel-title"><span class="line1">Tool</span> <span class="line2">Name</span></h1>
+      <p class="panel-tagline" id="panel-tagline">Tagline</p>
+      <p class="panel-desc" id="panel-desc">Description</p>
       <ul class="benefit-list" id="panel-benefits"></ul>
       <div class="hero-cta">
         <a href="login.html?tab=signup" class="cta-primary" id="cta-btn">Start 14 Day Free Trial</a>
@@ -1119,10 +1106,7 @@
     </div>
     <div class="hero-right">
       <div class="roi-card">
-        <div class="roi-header">
-          <span class="roi-label">ROI Calculator</span>
-          <span class="roi-sub">See your potential return</span>
-        </div>
+        <div class="roi-header"><span class="roi-label">ROI Calculator</span><span class="roi-sub">See your potential return</span></div>
         <div class="roi-inputs" id="roi-inputs"></div>
         <div class="roi-results" id="roi-results">
           <div class="roi-result-item"><span class="roi-result-val" id="res-leads">0</span><span class="roi-result-label">Extra leads/month</span></div>
@@ -1153,87 +1137,17 @@
   </div>
 
 </div>
-  <script src="tools-data.js" onload="if(typeof _panelInit==='function')_panelInit();"></script>
-  <script>
-    if ("serviceWorker" in navigator) { navigator.serviceWorker.register("pwa.js").catch(function(){}); }
-
-    var _cameFromExternal = !document.referrer || document.referrer.indexOf(window.location.hostname) === -1;
-
-    function handleBack(e) {
-      e.preventDefault();
-      var params = new URLSearchParams(window.location.search);
-      var industry = params.get("industry");
-      if (_cameFromExternal) { window.location.href = industry ? "tools.html?industry=" + industry : "tools.html"; } else { history.back(); }
-    }
-
-    function formatNum(n) {
-      if (n >= 1000000) return "$" + (n/1000000).toFixed(1) + "M";
-      if (n >= 1000) return "$" + Math.round(n/1000) + "k";
-      return n.toString();
-    }
-
-    function updateCalc(tool) {
-      var vals = {};
-      tool.roi.inputs.forEach(function(inp) { vals[inp.id] = parseFloat(document.getElementById("inp-" + inp.id).value); });
-      try {
-        var fn = new Function(tool.roi.inputs.map(function(i) { return "var " + i.id + " = " + vals[i.id] + ";"; }).join(" ") + " " + tool.roi.calculate);
-        var result = fn();
-        document.getElementById("res-leads").textContent = result.leads || 0;
-        document.getElementById("res-afterhours").textContent = result.afterHours || 0;
-        document.getElementById("res-booked").textContent = result.booked || 0;
-        document.getElementById("res-revenue").textContent = formatNum(result.revenue || 0);
-      } catch(e) {}
-    }
-
-    function renderROI(tool) {
-      var el = document.getElementById("roi-inputs");
-      el.innerHTML = tool.roi.inputs.map(function(inp) {
-        var prefix = inp.prefix || "";
-        return '<div class="roi-input-row"><label class="roi-input-label">' + inp.label + '</label><div class="roi-input-wrap"><span class="roi-val" id="inp-' + inp.id + '-val">' + (prefix||"") + inp.default + '</span></div><input type="range" id="inp-' + inp.id + '" min="' + inp.min + '" max="' + inp.max + '" step="' + inp.step + '" value="' + inp.default + '" oninput="document.getElementById(\'inp-' + inp.id + '-val\').textContent=(this.value.indexOf(\'.\')>=0?this.value:this.value);updateCalc(window._currentTool);"></div>';
-      }).join("");
-      updateCalc(tool);
-    }
-
-    function renderSteps(tool) {
-      var el = document.getElementById("panel-steps");
-      el.innerHTML = tool.steps.map(function(step, i) {
-        return '<div class="step-card"><div class="step-num">' + (i+1) + '</div><div class="step-icon">' + step.icon + '</div><div class="step-title">' + step.title + '</div><div class="step-desc">' + step.desc + '</div></div>';
-      }).join("");
-    }
-
-    function populatePanel(tool) {
-      window._currentTool = tool;
-      document.title = tool.title[0] + " " + tool.title[1] + " | TradeAI Pro";
-      var descMeta = document.getElementById("page-desc"); if (descMeta) descMeta.setAttribute("content", tool.desc.substring(0, 155));
-      document.getElementById("panel-breadcrumb").textContent = tool.title[0] + " " + tool.title[1];
-      document.getElementById("panel-icon").textContent = tool.icon;
-      var badge = document.getElementById("panel-live-badge"); badge.style.display = tool.status === "built" ? "inline-flex" : "none";
-      document.getElementById("panel-title").innerHTML = '<span class="line1">' + tool.title[0] + '</span> <span class="line2">' + tool.title[1] + '</span>';
-      document.getElementById("panel-tagline").textContent = tool.tagline;
-      document.getElementById("panel-desc").textContent = tool.desc;
-      document.getElementById("panel-benefits").innerHTML = tool.benefits.map(function(b) { return '<li class="benefit-item"><span class="benefit-check">&#10003;</span>' + b + '</li>'; }).join("");
-      var priceStr = tool.price === "Coming Soon" ? "Coming Soon" : tool.price + '<span>/month after trial</span>';
-      document.getElementById("panel-price").innerHTML = priceStr;
-      var priceFooter = tool.price === "Coming Soon" ? "Coming Soon" : tool.price + '<span>/month</span>';
-      document.getElementById("panel-price-footer").innerHTML = priceFooter;
-      var ctaHref = "login.html?tab=signup&tool=" + tool.toolId;
-      document.getElementById("cta-btn").href = ctaHref;
-      document.getElementById("cta-btn-footer").href = ctaHref;
-      renderROI(tool);
-      renderSteps(tool);
-    }
-
-    function _panelInit() {
-      var params = new URLSearchParams(window.location.search);
-      var toolId = params.get("tool");
-      var industry = params.get("industry");
-      if (!toolId) { window.location.href = "tools.html"; return; }
-      var tool = CORE_TOOLS.find(function(t) { return t.id === toolId; });
-      if (!tool) { window.location.href = "tools.html"; return; }
-      if (industry) { document.getElementById("back-btn").href = "tools.html?industry=" + industry; }
-      populatePanel(tool);
-    }
-    if (typeof CORE_TOOLS !== "undefined") { _panelInit(); }
-  </script>
+<script src="tools-data.js"></script>
+<script>
+  if ("serviceWorker" in navigator) { navigator.serviceWorker.register("pwa.js").catch(function(){}); }
+  var _cameFromExternal = !document.referrer || document.referrer.indexOf(window.location.hostname) === -1;
+  function handleBack(e) { e.preventDefault(); var p = new URLSearchParams(window.location.search); var ind = p.get("industry"); if (_cameFromExternal) { window.location.href = ind ? "tools.html?industry="+ind : "tools.html"; } else { history.back(); } }
+  function formatNum(n) { if (n >= 1000000) return "$"+(n/1000000).toFixed(1)+"M"; if (n >= 1000) return "$"+Math.round(n/1000)+"k"; return n.toString(); }
+  function updateCalc(tool) { var vals = {}; tool.roi.inputs.forEach(function(inp) { vals[inp.id] = parseFloat(document.getElementById("inp-"+inp.id).value); }); try { var fn = new Function(tool.roi.inputs.map(function(i){return "var "+i.id+"="+vals[i.id]+";";}).join(" ")+" "+tool.roi.calculate); var r = fn(); document.getElementById("res-leads").textContent=r.leads||0; document.getElementById("res-afterhours").textContent=r.afterHours||0; document.getElementById("res-booked").textContent=r.booked||0; document.getElementById("res-revenue").textContent=formatNum(r.revenue||0); } catch(e){} }
+  function renderROI(tool) { var el = document.getElementById("roi-inputs"); el.innerHTML = tool.roi.inputs.map(function(inp) { return '<div class="roi-input-row"><label class="roi-input-label">'+inp.label+'</label><div class="roi-input-wrap"><span class="roi-val" id="inp-'+inp.id+'-val">'+inp.default+'</span></div><input type="range" id="inp-'+inp.id+'" min="'+inp.min+'" max="'+inp.max+'" step="'+inp.step+'" value="'+inp.default+'" oninput="document.getElementById(\'inp-'+inp.id+'-val\').textContent=this.value;updateCalc(window._currentTool);"></div>'; }).join(""); updateCalc(tool); }
+  function renderSteps(tool) { var el = document.getElementById("panel-steps"); el.innerHTML = tool.steps.map(function(step,i){ return '<div class="step-card"><div class="step-num">'+( i+1)+'</div><div class="step-icon">'+step.icon+'</div><div class="step-title">'+step.title+'</div><div class="step-desc">'+step.desc+'</div></div>'; }).join(""); }
+  function populatePanel(tool) { window._currentTool=tool; document.title=tool.title[0]+" "+tool.title[1]+" | TradeAI Pro"; var dm=document.getElementById("page-desc"); if(dm) dm.setAttribute("content",tool.desc.substring(0,155)); document.getElementById("panel-breadcrumb").textContent=tool.title[0]+" "+tool.title[1]; document.getElementById("panel-icon").textContent=tool.icon; var badge=document.getElementById("panel-live-badge"); badge.style.display=tool.status==="built"?"inline-flex":"none"; document.getElementById("panel-title").innerHTML='<span class="line1">'+tool.title[0]+'</span> <span class="line2">'+tool.title[1]+'</span>'; document.getElementById("panel-tagline").textContent=tool.tagline; document.getElementById("panel-desc").textContent=tool.desc; document.getElementById("panel-benefits").innerHTML=tool.benefits.map(function(b){return '<li class="benefit-item"><span class="benefit-check">&#10003;</span>'+b+'</li>';}).join(""); var ps=tool.price==="Coming Soon"?"Coming Soon":tool.price+'<span>/month after trial</span>'; document.getElementById("panel-price").innerHTML=ps; var pf=tool.price==="Coming Soon"?"Coming Soon":tool.price+'<span>/month</span>'; document.getElementById("panel-price-footer").innerHTML=pf; var h="login.html?tab=signup&tool="+tool.toolId; document.getElementById("cta-btn").href=h; document.getElementById("cta-btn-footer").href=h; renderROI(tool); renderSteps(tool); }
+  document.addEventListener("DOMContentLoaded",function(){ var p=new URLSearchParams(window.location.search); var tid=p.get("tool"); var ind=p.get("industry"); if(!tid){window.location.href="tools.html";return;} var tool=CORE_TOOLS.find(function(t){return t.id===tid;}); if(!tool){window.location.href="tools.html";return;} if(ind){document.getElementById("back-btn").href="tools.html?industry="+ind;} populatePanel(tool); });
+</script>
 </body>
 </html>
