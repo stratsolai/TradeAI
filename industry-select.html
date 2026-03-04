@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeAI Pro - AI Tools for Australian Trades</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1628;
+      --bg2: #172035;
+      --bg3: #1e2d47;
+      --bg4: #253554;
+      --card-border: rgba(255,255,255,0.14);
+      --blue: #1A5490;
+      --orange: #E8500A;
+      --orange-light: #ff6b2b;
+      --muted: rgba(255,255,255,0.70);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: #fff; font-family: "DM Sans", sans-serif; min-height: 100vh; }
+
+    /* NAV */
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 32px; border-bottom: 1px solid rgba(255,255,255,0.08); position: sticky; top: 0; z-index: 100; background: var(--bg); }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo img { height: 36px; }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .btn-nav { padding: 8px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-decoration: none; border: none; }
+    .btn-nav-outline { background: transparent; border: 1px solid var(--card-border); color: #fff; }
+    .btn-nav-outline:hover { border-color: var(--orange); color: var(--orange); }
+    .btn-nav-primary { background: var(--orange); color: #fff; }
+    .btn-nav-primary:hover { background: var(--orange-light); }
+
+    /* HERO */
+    .hero { text-align: center; padding: 64px 32px 40px; position: relative; overflow: hidden; }
+    .hero::before { content: ""; position: absolute; top: -100px; left: 50%; transform: translateX(-50%); width: 600px; height: 600px; background: radial-gradient(ellipse at center, rgba(232,80,10,0.15) 0%, transparent 70%); pointer-events: none; }
+    .hero-label { display: inline-block; background: rgba(232,80,10,0.15); border: 1px solid rgba(232,80,10,0.4); color: var(--orange); font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 6px 16px; border-radius: 20px; margin-bottom: 20px; }
+    .hero h1 { font-family: "Barlow Condensed", sans-serif; font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+    .hero h1 span { color: var(--orange); }
+    .hero p { font-size: 18px; color: var(--muted); max-width: 540px; margin: 0 auto 32px; }
+
+    /* INDUSTRY GRID */
+    .industry-section { padding: 0 32px 80px; max-width: 1200px; margin: 0 auto; }
+    .industry-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+    .industry-card { background: var(--bg2); border: 1px solid var(--card-border); border-radius: 16px; padding: 28px 28px 24px; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; gap: 10px; }
+    .industry-card:hover { border-color: var(--orange); transform: translateY(-3px); box-shadow: 0 8px 32px rgba(232,80,10,0.2); }
+    .industry-card-top { display: flex; align-items: center; gap: 14px; }
+    .industry-icon { font-size: 32px; line-height: 1; }
+    .industry-name { font-family: "Barlow Condensed", sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+    .industry-desc { font-size: 14px; color: var(--muted); line-height: 1.5; }
+    .industry-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+    .industry-tool-count { font-size: 13px; color: var(--orange); font-weight: 600; }
+    .industry-highlight { font-size: 12px; color: rgba(255,255,255,0.45); }
+    .industry-arrow { font-size: 18px; color: var(--orange); opacity: 0; transition: opacity 0.2s; }
+    .industry-card:hover .industry-arrow { opacity: 1; }
+
+    /* SEE ALL BUTTON */
+    .see-all-wrap { text-align: center; padding: 0 32px 40px; }
+    .btn-see-all { display: inline-flex; align-items: center; gap: 10px; background: transparent; border: 1px solid var(--card-border); color: var(--muted); padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: "DM Sans", sans-serif; text-decoration: none; }
+    .btn-see-all:hover { border-color: var(--orange); color: #fff; }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      nav { padding: 12px 16px; }
+      .hero { padding: 40px 16px 28px; }
+      .industry-section { padding: 0 16px 60px; }
+      .industry-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="nav-logo" href="index.html">
+      <img src="logo.svg" alt="TradeAI Pro">
+    </a>
+    <div class="nav-actions" id="nav-actions">
+      <a href="login.html" class="btn-nav btn-nav-outline">Sign In</a>
+      <a href="login.html?tab=signup" class="btn-nav btn-nav-primary">Start Free Trial</a>
+    </div>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-label">13 AI-Powered Tools</div>
+    <h1>AI tools built for <span>your trade</span></h1>
+    <p>Select your industry to see the tools built specifically for your business.</p>
+  </div>
+
+  <div class="industry-section">
+    <div class="industry-grid" id="industry-grid"></div>
+  </div>
+
+  <div class="see-all-wrap">
+    <a href="tools.html" class="btn-see-all">See All 13 Tools &#8594;</a>
+  </div>
+
+  <script src="tools-data.js"></script>
+  <script>
+    // Register service worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("pwa.js").catch(function() {});
+    }
+
+    // Render industry grid from INDUSTRIES array in tools-data.js
+    function renderIndustries() {
+      var grid = document.getElementById("industry-grid");
+      if (!grid || !window.INDUSTRIES) return;
+      grid.innerHTML = INDUSTRIES.map(function(ind) {
+        return "<div class=\"industry-card\" onclick=\"window.location.href='tools.html?industry=" + ind.id + "'\">"
+          + "<div class=\"industry-card-top\">"
+          + "<div class=\"industry-icon\">" + ind.icon + "</div>"
+          + "<div class=\"industry-name\">" + ind.label + "</div>"
+          + "</div>"
+          + "<div class=\"industry-desc\">" + ind.desc + "</div>"
+          + "<div class=\"industry-meta\">"
+          + "<span class=\"industry-tool-count\">" + ind.toolCount + " tools available</span>"
+          + "<span class=\"industry-highlight\">" + ind.highlight + "</span>"
+          + "</div>"
+          + "<div class=\"industry-arrow\">&#8594;</div>"
+          + "</div>";
+      }).join("");
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      renderIndustries();
+    });
+  </script>
+
+</body>
+</html>
