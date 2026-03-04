@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TradeAI Pro — Industry Select Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root {
+  --burnt-orange: #c4622a;
+  --copper: #d4844a;
+  --gold: #d4a04a;
+  --cream: #e8d5b8;
+  --deep-blue: #1e3a5f;
+  --navy: #162d4a;
+  --steel-blue: #2c5a82;
+  --dark-bg: #0d1628;
+  --card-bg: #172035;
+  --card-border: rgba(255,255,255,0.08);
+  --orange: #E8500A;
+  --muted: rgba(255,255,255,0.65);
+}
+
+body {
+  background: var(--dark-bg);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ATMOSPHERIC BACKGROUND ── */
+.atmo {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.atmo-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.18;
+  animation: orbFloat 12s ease-in-out infinite;
+}
+.atmo-orb.o1 { width: 600px; height: 600px; background: var(--burnt-orange); top: -200px; left: 50%; transform: translateX(-50%); animation-delay: 0s; }
+.atmo-orb.o2 { width: 400px; height: 400px; background: var(--steel-blue); top: 40%; left: -100px; animation-delay: -4s; }
+.atmo-orb.o3 { width: 350px; height: 350px; background: var(--copper); top: 60%; right: -80px; animation-delay: -8s; }
+@keyframes orbFloat {
+  0%,100% { transform: translateY(0) translateX(-50%); }
+  50% { transform: translateY(-40px) translateX(-50%); }
+}
+.atmo-orb.o2 { animation: orbFloat2 14s ease-in-out infinite; }
+.atmo-orb.o3 { animation: orbFloat3 10s ease-in-out infinite; }
+@keyframes orbFloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
+@keyframes orbFloat3 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(30px)} }
+
+/* Grid overlay */
+.atmo-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+/* ── NAV ── */
+.nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  background: rgba(13,22,40,0.7);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 38px;
+  height: 38px;
+  background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 16px rgba(196,98,42,0.4);
+}
+.logo-text {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.logo-text span { color: var(--copper); }
+.logo-sub {
+  font-size: 9px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  display: block;
+  margin-top: -2px;
+}
+.nav-actions { display: flex; align-items: center; gap: 12px; }
+.btn-signin {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-signin:hover { border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.05); }
+.btn-trial {
+  background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+  border: none;
+  color: #fff;
+  padding: 9px 22px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(196,98,42,0.35);
+}
+.btn-trial:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(196,98,42,0.5); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 72px 48px 56px;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(196,98,42,0.15);
+  border: 1px solid rgba(196,98,42,0.4);
+  border-radius: 100px;
+  padding: 6px 18px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--copper);
+  margin-bottom: 28px;
+  animation: badgePulse 3s ease-in-out infinite;
+}
+@keyframes badgePulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(196,98,42,0.3); }
+  50% { box-shadow: 0 0 0 8px rgba(196,98,42,0); }
+}
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  background: var(--copper);
+  border-radius: 50%;
+  animation: dotBlink 2s ease-in-out infinite;
+}
+@keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.hero h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: clamp(52px, 7vw, 88px);
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+.hero h1 .h-white {
+  background: linear-gradient(135deg, #fff 40%, var(--cream));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+}
+.hero h1 .h-orange {
+  background: linear-gradient(135deg, var(--burnt-orange), var(--copper), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: block;
+}
+.hero-sub {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 480px;
+  margin: 0 auto 12px;
+  line-height: 1.5;
+}
+.hero-arrow {
+  font-size: 13px;
+  color: var(--copper);
+  letter-spacing: 1px;
+  margin-top: 8px;
+  animation: arrowBounce 2s ease-in-out infinite;
+  display: block;
+}
+@keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
+
+/* ── GRID ── */
+.industry-grid-wrap {
+  position: relative;
+  z-index: 5;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 48px 48px;
+}
+.industry-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* ── INDUSTRY CARD ── */
+.industry-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 28px 32px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  animation: cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+.industry-card:nth-child(1){animation-delay:0.05s}
+.industry-card:nth-child(2){animation-delay:0.1s}
+.industry-card:nth-child(3){animation-delay:0.15s}
+.industry-card:nth-child(4){animation-delay:0.2s}
+.industry-card:nth-child(5){animation-delay:0.25s}
+.industry-card:nth-child(6){animation-delay:0.3s}
+.industry-card:nth-child(7){animation-delay:0.35s}
+.industry-card:nth-child(8){animation-delay:0.4s}
+.industry-card:nth-child(9){animation-delay:0.45s}
+.industry-card:nth-child(10){animation-delay:0.5s}
+.industry-card:nth-child(11){animation-delay:0.55s}
+@keyframes cardIn {
+  from { opacity:0; transform: translateY(24px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* Card glow on hover */
+.industry-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(196,98,42,0.12), rgba(212,132,74,0.06));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.industry-card:hover::before { opacity: 1; }
+.industry-card:hover {
+  border-color: rgba(196,98,42,0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 1px rgba(196,98,42,0.2);
+}
+
+/* Animated corner accent */
+.industry-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: linear-gradient(225deg, rgba(196,98,42,0.15), transparent);
+  border-radius: 0 20px 0 80px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.industry-card:hover::after { opacity: 1; }
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.card-icon {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, rgba(196,98,42,0.2), rgba(212,132,74,0.1));
+  border: 1px solid rgba(196,98,42,0.3);
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+.industry-card:hover .card-icon {
+  background: linear-gradient(135deg, rgba(196,98,42,0.35), rgba(212,132,74,0.2));
+  border-color: rgba(196,98,42,0.6);
+  transform: scale(1.08) rotate(-3deg);
+}
+.card-title-block {}
+.card-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #fff;
+  line-height: 1;
+}
+.card-tool-count {
+  font-size: 12px;
+  color: var(--copper);
+  font-weight: 600;
+  margin-top: 3px;
+  letter-spacing: 0.5px;
+}
+.card-desc {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-highlight {
+  font-size: 13px;
+  color: rgba(255,255,255,0.5);
+  font-style: italic;
+}
+.card-arrow {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: var(--muted);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+.industry-card:hover .card-arrow {
+  background: var(--burnt-orange);
+  border-color: var(--burnt-orange);
+  color: #fff;
+  transform: translateX(3px);
+}
+
+/* ── SEE ALL TOOLS ── */
+.see-all-card {
+  grid-column: 1 / -1;
+  background: linear-gradient(135deg, rgba(196,98,42,0.12), rgba(44,90,130,0.12));
+  border: 1px dashed rgba(196,98,42,0.35);
+  border-radius: 20px;
+  padding: 24px 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s;
+  animation: cardIn 0.5s 0.6s cubic-bezier(0.16,1,0.3,1) both;
+}
+.see-all-card:hover {
+  background: linear-gradient(135deg, rgba(196,98,42,0.2), rgba(44,90,130,0.2));
+  border-color: rgba(196,98,42,0.6);
+  transform: translateY(-2px);
+}
+.see-all-left { display: flex; align-items: center; gap: 16px; }
+.see-all-icon {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 4px 16px rgba(196,98,42,0.35);
+}
+.see-all-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+}
+.see-all-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.see-all-btn {
+  background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 4px 16px rgba(196,98,42,0.35);
+  transition: all 0.2s;
+}
+.see-all-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(196,98,42,0.5); }
+
+/* ── FOOTER STRIP ── */
+.footer-strip {
+  position: relative;
+  z-index: 5;
+  text-align: center;
+  padding: 20px 48px 40px;
+  font-size: 13px;
+  color: rgba(255,255,255,0.3);
+}
+.footer-strip a { color: rgba(255,255,255,0.4); text-decoration: none; }
+.footer-strip a:hover { color: var(--copper); }
+
+@media(max-width: 700px){
+  .nav { padding: 16px 20px; }
+  .hero { padding: 48px 20px 36px; }
+  .industry-grid-wrap { padding: 0 20px 40px; }
+  .industry-grid { grid-template-columns: 1fr; }
+  .see-all-card { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="atmo">
+  <div class="atmo-grid"></div>
+  <div class="atmo-orb o1"></div>
+  <div class="atmo-orb o2"></div>
+  <div class="atmo-orb o3"></div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div class="logo-text">TradeAI<span>Pro</span></div>
+      <span class="logo-sub">by Strategic Solutions</span>
+    </div>
+  </div>
+  <div class="nav-actions">
+    <button class="btn-signin" onclick="window.location.href='login.html'">Sign In</button>
+    <button class="btn-trial" onclick="window.location.href='login.html?tab=signup'">Start Free Trial</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    13 AI-Powered Tools
+  </div>
+  <h1>
+    <span class="h-white">AI tools built for</span>
+    <span class="h-orange">your trade</span>
+  </h1>
+  <p class="hero-sub">Select your industry to see the tools built specifically for your business.</p>
+  <span class="hero-arrow">↓ &nbsp; choose your trade below &nbsp; ↓</span>
+</div>
+
+<!-- INDUSTRY GRID -->
+<div class="industry-grid-wrap">
+  <div class="industry-grid">
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=pool'">
+      <div class="card-top">
+        <div class="card-icon">🏊</div>
+        <div class="card-title-block">
+          <div class="card-name">Pool Builders</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for pool builders and installers.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ SWMS and safety docs in minutes</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=plumber'">
+      <div class="card-top">
+        <div class="card-icon">🔧</div>
+        <div class="card-title-block">
+          <div class="card-name">Plumbers</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for plumbing businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Professional quotes and handover docs</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=electrician'">
+      <div class="card-top">
+        <div class="card-icon">⚡</div>
+        <div class="card-title-block">
+          <div class="card-name">Electricians</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for electrical contractors.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Compliance docs and tender responses</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=builder'">
+      <div class="card-top">
+        <div class="card-icon">🏗️</div>
+        <div class="card-title-block">
+          <div class="card-name">Builders</div>
+          <div class="card-tool-count">17 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for building and construction.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Tender responses and project updates</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=hvac'">
+      <div class="card-top">
+        <div class="card-icon">❄️</div>
+        <div class="card-title-block">
+          <div class="card-name">HVAC</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for HVAC businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Maintenance guides and handover packs</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=fabricator'">
+      <div class="card-top">
+        <div class="card-icon">🔩</div>
+        <div class="card-title-block">
+          <div class="card-name">Fabricators</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for fabrication businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Professional quotes and marketing content</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=cleaner'">
+      <div class="card-top">
+        <div class="card-icon">🧹</div>
+        <div class="card-title-block">
+          <div class="card-name">Cleaners</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for cleaning businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Automated reviews and referrals</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=landscaper'">
+      <div class="card-top">
+        <div class="card-icon">🌿</div>
+        <div class="card-title-block">
+          <div class="card-name">Landscapers</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for landscaping businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Design visualiser and progress updates</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=manufacturer'">
+      <div class="card-top">
+        <div class="card-icon">🏭</div>
+        <div class="card-title-block">
+          <div class="card-name">Manufacturers</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for manufacturers.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Tender responses and business intelligence</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=concreter'">
+      <div class="card-top">
+        <div class="card-icon">🪨</div>
+        <div class="card-title-block">
+          <div class="card-name">Concreters</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for concreting businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ SWMS docs and quote enhancement</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=handyman'">
+      <div class="card-top">
+        <div class="card-icon">🛠️</div>
+        <div class="card-title-block">
+          <div class="card-name">Handymen</div>
+          <div class="card-tool-count">16 tools available</div>
+        </div>
+      </div>
+      <p class="card-desc">AI tools built for handyman businesses.</p>
+      <div class="card-footer">
+        <span class="card-highlight">✦ Marketing content and review booster</span>
+        <div class="card-arrow">→</div>
+      </div>
+    </div>
+
+    <!-- SEE ALL TOOLS -->
+    <div class="see-all-card" onclick="window.location.href='tools.html'">
+      <div class="see-all-left">
+        <div class="see-all-icon">🔍</div>
+        <div>
+          <div class="see-all-title">See All 13 Tools</div>
+          <div class="see-all-sub">Browse every AI tool available across all industries</div>
+        </div>
+      </div>
+      <button class="see-all-btn">Browse All Tools →</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer-strip">
+  <a href="privacy-policy.html">Privacy</a> &nbsp;·&nbsp;
+  <a href="terms-of-service.html">Terms</a> &nbsp;·&nbsp;
+  © 2026 TradeAI Pro by Strategic Solutions
+</div>
+
+</body>
+</html>
