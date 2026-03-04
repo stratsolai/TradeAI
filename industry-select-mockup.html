@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradeAI Pro — Industry Select Mockup v2</title>
+<title>TradeAI Pro — Industry Select Mockup v3</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11,7 +11,7 @@
   --burnt-orange:#c4622a; --deep-orange:#b8521f; --rust:#a84820;
   --copper:#d4844a; --gold:#d4a04a; --cream:#e8d5b8;
   --deep-blue:#1e3a5f; --navy:#162d4a; --steel-blue:#2c5a82;
-  --dark-bg:#0d1628; --card-bg:#172035; --card-border:rgba(255,255,255,0.08);
+  --dark-bg:#0d1628; --card-bg:#172035;
   --muted:rgba(255,255,255,0.65);
 }
 body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; min-height:100vh; overflow-x:hidden; }
@@ -19,7 +19,7 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 /* ATMOSPHERE */
 .atmo { position:fixed; inset:0; pointer-events:none; z-index:0; overflow:hidden; }
 .atmo-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px); background-size:60px 60px; }
-.atmo-orb { position:absolute; border-radius:50%; filter:blur(120px); opacity:0.15; }
+.atmo-orb { position:absolute; border-radius:50%; filter:blur(130px); opacity:0.14; }
 .atmo-orb.o1 { width:700px; height:700px; background:var(--burnt-orange); top:-250px; left:50%; transform:translateX(-50%); animation:orb1 14s ease-in-out infinite; }
 .atmo-orb.o2 { width:450px; height:450px; background:var(--steel-blue); top:45%; left:-120px; animation:orb2 16s ease-in-out infinite; }
 .atmo-orb.o3 { width:380px; height:380px; background:var(--copper); bottom:-80px; right:-80px; animation:orb3 12s ease-in-out infinite; }
@@ -40,14 +40,10 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 .breadcrumb a:hover { color:#fff; }
 .breadcrumb .sep { opacity:0.4; }
 .breadcrumb .current { color:#fff; font-weight:600; }
-.bundle-rotator {
-  display:flex; align-items:center; gap:10px;
-  background:rgba(0,0,0,0.3); border:1px solid rgba(212,160,74,0.45);
-  border-radius:20px; padding:6px 16px 6px 12px; min-width:300px;
-}
+.bundle-rotator { display:flex; align-items:center; gap:10px; background:rgba(0,0,0,0.3); border:1px solid rgba(212,160,74,0.45); border-radius:20px; padding:6px 16px 6px 12px; min-width:280px; }
 .bundle-rotator-icon { font-size:14px; opacity:0.9; }
-.bundle-rotator-track { position:relative; height:20px; overflow:hidden; flex:1; min-width:180px; }
-.bundle-rotator-item { position:absolute; top:0; left:0; width:100%; font-size:12px; font-weight:600; color:var(--gold); white-space:nowrap; opacity:0; transform:translateY(100%); transition:opacity 0.5s, transform 0.5s; letter-spacing:0.3px; }
+.bundle-rotator-track { position:relative; height:20px; overflow:hidden; flex:1; min-width:160px; }
+.bundle-rotator-item { position:absolute; top:0; left:0; width:100%; font-size:12px; font-weight:600; color:var(--gold); white-space:nowrap; opacity:0; transform:translateY(100%); transition:opacity 0.5s,transform 0.5s; letter-spacing:0.3px; }
 .bundle-rotator-item.active { opacity:1; transform:translateY(0); }
 .bundle-rotator-item.exit { opacity:0; transform:translateY(-100%); }
 .bundle-rotator-cta { font-size:11px; font-weight:800; color:#fff; background:rgba(212,160,74,0.25); border:1px solid rgba(212,160,74,0.45); border-radius:12px; padding:3px 10px; cursor:pointer; white-space:nowrap; }
@@ -55,14 +51,7 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 .panel-close:hover { background:rgba(255,255,255,0.25); }
 
 /* NAV */
-.nav {
-  position:relative; z-index:10;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:18px 48px;
-  border-bottom:1px solid rgba(255,255,255,0.05);
-  backdrop-filter:blur(12px);
-  background:rgba(13,22,40,0.6);
-}
+.nav { position:relative; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:18px 48px; border-bottom:1px solid rgba(255,255,255,0.05); backdrop-filter:blur(12px); background:rgba(13,22,40,0.6); }
 .nav-logo { display:flex; align-items:center; gap:10px; }
 .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:17px; box-shadow:0 4px 14px rgba(196,98,42,0.4); }
 .logo-text { font-family:'Barlow Condensed',sans-serif; font-size:21px; font-weight:800; }
@@ -75,28 +64,28 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 .btn-trial:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(196,98,42,0.5); }
 
 /* HERO */
-.hero { position:relative; z-index:5; text-align:center; padding:60px 48px 44px; }
-.hero-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(196,98,42,0.15); border:1px solid rgba(196,98,42,0.4); border-radius:100px; padding:6px 18px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--copper); margin-bottom:24px; animation:badgePulse 3s ease-in-out infinite; }
+.hero { position:relative; z-index:5; text-align:center; padding:56px 48px 40px; }
+.hero-badge { display:inline-flex; align-items:center; gap:8px; background:rgba(196,98,42,0.15); border:1px solid rgba(196,98,42,0.4); border-radius:100px; padding:6px 18px; font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--copper); margin-bottom:22px; animation:badgePulse 3s ease-in-out infinite; }
 @keyframes badgePulse { 0%,100%{box-shadow:0 0 0 0 rgba(196,98,42,0.3)} 50%{box-shadow:0 0 0 8px rgba(196,98,42,0)} }
 .badge-dot { width:6px; height:6px; background:var(--copper); border-radius:50%; animation:dotBlink 2s ease-in-out infinite; }
 @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:0.3} }
-.hero h1 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(50px,7vw,84px); font-weight:900; line-height:0.95; text-transform:uppercase; letter-spacing:-1px; margin-bottom:18px; }
+.hero h1 { font-family:'Barlow Condensed',sans-serif; font-size:clamp(50px,7vw,82px); font-weight:900; line-height:0.95; text-transform:uppercase; letter-spacing:-1px; margin-bottom:16px; }
 .hero h1 .h-white { background:linear-gradient(135deg,#fff 40%,var(--cream)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; }
 .hero h1 .h-orange { background:linear-gradient(135deg,var(--burnt-orange),var(--copper),var(--gold)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; display:block; }
-.hero-sub { font-size:17px; color:var(--muted); max-width:460px; margin:0 auto 10px; line-height:1.5; }
+.hero-sub { font-size:17px; color:var(--muted); max-width:460px; margin:0 auto 8px; line-height:1.5; }
 .hero-arrow { font-size:12px; color:var(--copper); letter-spacing:1px; margin-top:6px; display:block; animation:arrowBounce 2s ease-in-out infinite; }
 @keyframes arrowBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(6px)} }
 
-/* GRID */
-.industry-grid-wrap { position:relative; z-index:5; max-width:1100px; margin:0 auto; padding:0 48px 48px; }
-.industry-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+/* GRID — 3 across */
+.industry-grid-wrap { position:relative; z-index:5; max-width:1200px; margin:0 auto; padding:0 40px 56px; }
+.industry-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
 
-/* CARD WITH PHOTO BACKGROUND */
+/* CARD — photo-first, tall enough to breathe */
 .industry-card {
-  position:relative; border-radius:20px; cursor:pointer; overflow:hidden;
-  min-height:180px;
-  border:1px solid rgba(255,255,255,0.1);
-  transition:all 0.35s cubic-bezier(0.16,1,0.3,1);
+  position:relative; border-radius:18px; cursor:pointer; overflow:hidden;
+  height:260px;
+  border:1px solid rgba(255,255,255,0.08);
+  transition:all 0.38s cubic-bezier(0.16,1,0.3,1);
   animation:cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;
 }
 .industry-card:nth-child(1){animation-delay:0.04s}
@@ -110,65 +99,110 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 .industry-card:nth-child(9){animation-delay:0.36s}
 .industry-card:nth-child(10){animation-delay:0.40s}
 .industry-card:nth-child(11){animation-delay:0.44s}
-@keyframes cardIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes cardIn { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
 
-/* Photo layer */
+/* Photo fills the entire card */
 .card-photo-bg {
   position:absolute; inset:0;
   background-image:var(--card-photo);
   background-size:cover; background-position:center;
-  transition:transform 0.5s cubic-bezier(0.16,1,0.3,1), opacity 0.35s;
-  opacity:0.35;
+  opacity:0.7;
+  transition:transform 0.55s cubic-bezier(0.16,1,0.3,1), opacity 0.38s;
 }
-/* Dark overlay — lighter on right side for text legibility */
+/* Gradient overlay — heavy at bottom for text, lighter at top to show photo */
 .card-photo-overlay {
   position:absolute; inset:0;
-  background:linear-gradient(135deg, rgba(13,22,40,0.82) 0%, rgba(23,32,53,0.72) 50%, rgba(13,22,40,0.65) 100%);
-  transition:background 0.35s;
+  background:linear-gradient(
+    to bottom,
+    rgba(10,18,35,0.15) 0%,
+    rgba(10,18,35,0.25) 35%,
+    rgba(10,18,35,0.75) 70%,
+    rgba(10,18,35,0.92) 100%
+  );
+  transition:background 0.38s;
 }
-.industry-card:hover .card-photo-bg { transform:scale(1.06); opacity:0.55; }
-.industry-card:hover .card-photo-overlay { background:linear-gradient(135deg,rgba(13,22,40,0.72) 0%,rgba(196,98,42,0.15) 100%); }
-.industry-card:hover { border-color:rgba(196,98,42,0.6); transform:translateY(-5px); box-shadow:0 20px 56px rgba(0,0,0,0.5), 0 0 0 1px rgba(196,98,42,0.25); }
+.industry-card:hover .card-photo-bg { transform:scale(1.07); opacity:0.85; }
+.industry-card:hover .card-photo-overlay {
+  background:linear-gradient(
+    to bottom,
+    rgba(196,98,42,0.08) 0%,
+    rgba(10,18,35,0.2) 30%,
+    rgba(10,18,35,0.7) 65%,
+    rgba(10,18,35,0.9) 100%
+  );
+}
+.industry-card:hover {
+  border-color:rgba(196,98,42,0.65);
+  transform:translateY(-5px);
+  box-shadow:0 22px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(196,98,42,0.3);
+}
 
-/* Card content sits above photo */
-.card-content { position:relative; z-index:2; padding:26px 28px; }
-.card-top { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
-.card-icon { width:50px; height:50px; background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,0.2); border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; transition:all 0.3s; }
-.industry-card:hover .card-icon { background:rgba(196,98,42,0.3); border-color:rgba(196,98,42,0.6); transform:scale(1.08) rotate(-3deg); }
-.card-name { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:800; color:#fff; line-height:1; text-shadow:0 2px 8px rgba(0,0,0,0.5); }
-.card-tool-count { font-size:12px; color:var(--copper); font-weight:600; margin-top:3px; }
-.card-desc { font-size:13.5px; color:rgba(255,255,255,0.75); line-height:1.5; margin-bottom:16px; text-shadow:0 1px 4px rgba(0,0,0,0.6); }
-.card-footer { display:flex; align-items:center; justify-content:space-between; }
-.card-highlight { font-size:12.5px; color:rgba(255,255,255,0.5); font-style:italic; }
-.card-arrow { width:30px; height:30px; border-radius:50%; border:1px solid rgba(255,255,255,0.2); display:flex; align-items:center; justify-content:center; font-size:13px; color:rgba(255,255,255,0.5); transition:all 0.3s; flex-shrink:0; }
-.industry-card:hover .card-arrow { background:var(--burnt-orange); border-color:var(--burnt-orange); color:#fff; transform:translateX(3px); }
+/* Content pinned to bottom of card */
+.card-content {
+  position:absolute; bottom:0; left:0; right:0;
+  z-index:2; padding:22px 22px 20px;
+}
+.card-icon {
+  font-size:28px; display:block; margin-bottom:10px;
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,0.6));
+  transition:transform 0.3s;
+}
+.industry-card:hover .card-icon { transform:scale(1.15); }
+.card-name {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:26px; font-weight:900; color:#fff;
+  line-height:1; text-transform:uppercase; letter-spacing:0.5px;
+  text-shadow:0 2px 10px rgba(0,0,0,0.7);
+  margin-bottom:6px;
+}
+.card-desc {
+  font-size:13px; color:rgba(255,255,255,0.82);
+  line-height:1.45; text-shadow:0 1px 5px rgba(0,0,0,0.7);
+  margin-bottom:14px;
+}
+.card-cta {
+  display:inline-flex; align-items:center; gap:7px;
+  font-size:12px; font-weight:700; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--copper);
+  transition:gap 0.2s, color 0.2s;
+}
+.industry-card:hover .card-cta { gap:11px; color:#fff; }
+.card-cta-arrow {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--burnt-orange); color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px;
+  transition:background 0.2s, transform 0.2s;
+}
+.industry-card:hover .card-cta-arrow { background:#fff; color:var(--burnt-orange); transform:translateX(3px); }
 
-/* SEE ALL */
+/* SEE ALL — spans full width, shorter */
 .see-all-card {
   grid-column:1/-1;
-  background:linear-gradient(135deg,rgba(196,98,42,0.12),rgba(44,90,130,0.12));
-  border:1px dashed rgba(196,98,42,0.35); border-radius:20px; padding:22px 28px;
+  background:linear-gradient(135deg,rgba(196,98,42,0.12),rgba(44,90,130,0.10));
+  border:1px dashed rgba(196,98,42,0.35); border-radius:18px; padding:22px 28px;
   cursor:pointer; display:flex; align-items:center; justify-content:space-between;
   transition:all 0.3s; animation:cardIn 0.5s 0.5s cubic-bezier(0.16,1,0.3,1) both;
 }
 .see-all-card:hover { background:linear-gradient(135deg,rgba(196,98,42,0.2),rgba(44,90,130,0.18)); border-color:rgba(196,98,42,0.6); transform:translateY(-2px); }
 .see-all-left { display:flex; align-items:center; gap:14px; }
 .see-all-icon { width:42px; height:42px; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:19px; box-shadow:0 4px 14px rgba(196,98,42,0.35); }
-.see-all-title { font-family:'Barlow Condensed',sans-serif; font-size:19px; font-weight:800; color:#fff; }
+.see-all-title { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800; color:#fff; }
 .see-all-sub { font-size:13px; color:var(--muted); margin-top:2px; }
-.see-all-btn { background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); color:#fff; border:none; border-radius:10px; padding:10px 22px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow:0 4px 14px rgba(196,98,42,0.35); transition:all 0.2s; }
+.see-all-btn { background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); color:#fff; border:none; border-radius:10px; padding:10px 24px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; box-shadow:0 4px 14px rgba(196,98,42,0.35); transition:all 0.2s; }
 .see-all-btn:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(196,98,42,0.5); }
 
-.footer-strip { position:relative; z-index:5; text-align:center; padding:18px 48px 36px; font-size:13px; color:rgba(255,255,255,0.28); }
+.footer-strip { position:relative; z-index:5; text-align:center; padding:16px 48px 32px; font-size:13px; color:rgba(255,255,255,0.28); }
 .footer-strip a { color:rgba(255,255,255,0.35); text-decoration:none; }
 .footer-strip a:hover { color:var(--copper); }
 
-@media(max-width:700px){
+@media(max-width:900px){ .industry-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:600px){
   .panel-header{padding:0 16px} .nav{padding:14px 18px}
-  .hero{padding:40px 18px 30px} .industry-grid-wrap{padding:0 18px 36px}
+  .hero{padding:40px 18px 28px} .industry-grid-wrap{padding:0 16px 36px}
   .industry-grid{grid-template-columns:1fr}
   .see-all-card{flex-direction:column;gap:14px;text-align:center}
-  .bundle-rotator{min-width:200px}
+  .bundle-rotator{min-width:160px}
 }
 </style>
 </head>
@@ -181,7 +215,6 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
   <div class="atmo-orb o3"></div>
 </div>
 
-<!-- ORANGE BANNER -->
 <div class="panel-header">
   <div class="breadcrumb">
     <a href="index.html">Home</a>
@@ -200,7 +233,6 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
   <button class="panel-close" onclick="window.location.href='index.html'">✕</button>
 </div>
 
-<!-- NAV -->
 <nav class="nav">
   <div class="nav-logo">
     <div class="logo-icon">⚡</div>
@@ -215,7 +247,6 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
   </div>
 </nav>
 
-<!-- HERO -->
 <div class="hero">
   <div class="hero-badge"><div class="badge-dot"></div>13 AI-Powered Tools</div>
   <h1>
@@ -223,23 +254,122 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
     <span class="h-orange">your trade</span>
   </h1>
   <p class="hero-sub">Select your industry to see the tools built specifically for your business.</p>
-  <span class="hero-arrow">↓ &nbsp; choose your trade below &nbsp; ↓</span>
+  <span class="hero-arrow">↓ &nbsp;choose your trade below&nbsp; ↓</span>
 </div>
 
-<!-- GRID -->
 <div class="industry-grid-wrap">
   <div class="industry-grid">
-<div class="industry-card" onclick="window.location.href='tools.html?industry=pool'" style="--card-photo: url('https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🏊</div><div class="card-title-block"><div class="card-name">Pool Builders</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Residential and commercial pool construction, renovation and maintenance</p><div class="card-footer"><span class="card-highlight">✦ SWMS and safety docs in minutes</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=plumber'" style="--card-photo: url('https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🔧</div><div class="card-title-block"><div class="card-name">Plumbers</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Residential and commercial plumbing, gas fitting and drainage</p><div class="card-footer"><span class="card-highlight">✦ Professional quotes and handover docs</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=electrician'" style="--card-photo: url('https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">⚡</div><div class="card-title-block"><div class="card-name">Electricians</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Residential and commercial electrical installation, testing and maintenance</p><div class="card-footer"><span class="card-highlight">✦ Compliance docs and tender responses</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=builder'" style="--card-photo: url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🏗️</div><div class="card-title-block"><div class="card-name">Builders</div><div class="card-tool-count">17 tools available</div></div></div><p class="card-desc">Residential and commercial building, renovations and project management</p><div class="card-footer"><span class="card-highlight">✦ Tender responses and project updates</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=hvac'" style="--card-photo: url('https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">❄️</div><div class="card-title-block"><div class="card-name">HVAC</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Air conditioning, heating, ventilation and refrigeration services</p><div class="card-footer"><span class="card-highlight">✦ Maintenance guides and handover packs</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=fabricator'" style="--card-photo: url('https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🔩</div><div class="card-title-block"><div class="card-name">Fabricators</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Custom fabrication, welding, structural steel and sheet metal work</p><div class="card-footer"><span class="card-highlight">✦ Professional quotes and marketing content</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=cleaner'" style="--card-photo: url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🧹</div><div class="card-title-block"><div class="card-name">Cleaners</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Commercial, industrial and strata cleaning services</p><div class="card-footer"><span class="card-highlight">✦ Automated reviews and referrals</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=landscaper'" style="--card-photo: url('https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🌿</div><div class="card-title-block"><div class="card-name">Landscapers</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Garden design, hardscaping, irrigation and outdoor living spaces</p><div class="card-footer"><span class="card-highlight">✦ Design visualiser and progress updates</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=manufacturer'" style="--card-photo: url('https://images.unsplash.com/photo-1565610222536-ef125f34ce2a?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🏭</div><div class="card-title-block"><div class="card-name">Manufacturers</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Product manufacturing, assembly, packaging and distribution</p><div class="card-footer"><span class="card-highlight">✦ Tender responses and business intelligence</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=concreter'" style="--card-photo: url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🪨</div><div class="card-title-block"><div class="card-name">Concreters</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">Residential and commercial concrete, driveways, paths and slabs</p><div class="card-footer"><span class="card-highlight">✦ SWMS docs and quote enhancement</span><div class="card-arrow">→</div></div></div></div>
-<div class="industry-card" onclick="window.location.href='tools.html?industry=handyman'" style="--card-photo: url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=60&auto=format')"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div><div class="card-content"><div class="card-top"><div class="card-icon">🛠️</div><div class="card-title-block"><div class="card-name">Handymen</div><div class="card-tool-count">16 tools available</div></div></div><p class="card-desc">General repairs, maintenance and multi-trade property services</p><div class="card-footer"><span class="card-highlight">✦ Marketing content and review booster</span><div class="card-arrow">→</div></div></div></div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=pool'" style="--card-photo:url('https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🏊</span>
+        <div class="card-name">Pool Builders</div>
+        <p class="card-desc">Build stunning pools and run your business as smooth as the water.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=plumber'" style="--card-photo:url('https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🔧</span>
+        <div class="card-name">Plumbers</div>
+        <p class="card-desc">Win more jobs and look like the most professional plumber in town.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=electrician'" style="--card-photo:url('https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">⚡</span>
+        <div class="card-name">Electricians</div>
+        <p class="card-desc">Stay compliant, win bigger contracts, and market like a premium operator.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=builder'" style="--card-photo:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🏗️</span>
+        <div class="card-name">Builders</div>
+        <p class="card-desc">From tender to handover — AI tools that match the scale of what you build.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=hvac'" style="--card-photo:url('https://images.unsplash.com/photo-1585771724684-38269d6639fd?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">❄️</span>
+        <div class="card-name">HVAC</div>
+        <p class="card-desc">Quote faster, maintain better, keep every customer comfortable year-round.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=fabricator'" style="--card-photo:url('https://images.unsplash.com/photo-1565793298595-6a879b1d9492?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🔩</span>
+        <div class="card-name">Fabricators</div>
+        <p class="card-desc">Turn precision metalwork into premium proposals that win at full price.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=cleaner'" style="--card-photo:url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🧹</span>
+        <div class="card-name">Cleaners</div>
+        <p class="card-desc">Build a brand as spotless as your work and fill your schedule on autopilot.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=landscaper'" style="--card-photo:url('https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🌿</span>
+        <div class="card-name">Landscapers</div>
+        <p class="card-desc">Show clients the vision before you lift a shovel — then deliver it professionally.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=manufacturer'" style="--card-photo:url('https://images.unsplash.com/photo-1565610222536-ef125f34ce2a?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🏭</span>
+        <div class="card-name">Manufacturers</div>
+        <p class="card-desc">Win government and commercial contracts with professional tenders and smart intel.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=concreter'" style="--card-photo:url('https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🪨</span>
+        <div class="card-name">Concreters</div>
+        <p class="card-desc">Lay the foundations for a business that quotes fast, stays safe, and grows hard.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
+    <div class="industry-card" onclick="window.location.href='tools.html?industry=handyman'" style="--card-photo:url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=700&q=75&auto=format')">
+      <div class="card-photo-bg"></div><div class="card-photo-overlay"></div>
+      <div class="card-content">
+        <span class="card-icon">🛠️</span>
+        <div class="card-name">Handymen</div>
+        <p class="card-desc">Handle every job type and market yourself as the one tradie every home needs.</p>
+        <div class="card-cta">Explore tools <div class="card-cta-arrow">→</div></div>
+      </div>
+    </div>
+
     <div class="see-all-card" onclick="window.location.href='tools.html'">
       <div class="see-all-left">
         <div class="see-all-icon">🔍</div>
@@ -250,6 +380,7 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
       </div>
       <button class="see-all-btn">Browse All Tools →</button>
     </div>
+
   </div>
 </div>
 
@@ -260,16 +391,14 @@ body { background:var(--dark-bg); color:#fff; font-family:'DM Sans',sans-serif; 
 </div>
 
 <script>
-// Bundle rotator
 (function(){
   var items = document.querySelectorAll('.bundle-rotator-item');
   var idx = 0;
-  if (items.length > 1) {
+  if(items.length > 1){
     setInterval(function(){
-      items[idx].classList.remove('active');
-      items[idx].classList.add('exit');
+      items[idx].classList.remove('active'); items[idx].classList.add('exit');
       setTimeout(function(){ items[idx].classList.remove('exit'); }, 500);
-      idx = (idx + 1) % items.length;
+      idx = (idx+1) % items.length;
       items[idx].classList.add('active');
     }, 3000);
   }
