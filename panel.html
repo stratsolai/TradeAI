@@ -1153,7 +1153,7 @@
   </div>
 
 </div>
-  <script src="tools-data.js"></script>
+  <script src="tools-data.js" onload="if(typeof _panelInit==='function')_panelInit();"></script>
   <script>
     if ("serviceWorker" in navigator) { navigator.serviceWorker.register("pwa.js").catch(function(){}); }
 
@@ -1223,7 +1223,7 @@
       renderSteps(tool);
     }
 
-    document.addEventListener("DOMContentLoaded", function() {
+    function _panelInit() {
       var params = new URLSearchParams(window.location.search);
       var toolId = params.get("tool");
       var industry = params.get("industry");
@@ -1232,7 +1232,8 @@
       if (!tool) { window.location.href = "tools.html"; return; }
       if (industry) { document.getElementById("back-btn").href = "tools.html?industry=" + industry; }
       populatePanel(tool);
-    });
+    }
+    if (typeof CORE_TOOLS !== "undefined") { _panelInit(); }
   </script>
 </body>
 </html>
