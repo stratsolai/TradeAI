@@ -3238,32 +3238,32 @@ function openPanel(id) {
   currentTool = tool;
 
   const indName = currentIndustry === 'all' ? 'All Tools' : (INDUSTRIES[currentIndustry]?.name || '');
-  document.getElementById('panel-breadcrumb').textContent = `${indName} › ${tool.title}`;
-  document.getElementById('panel-icon').textContent = tool.icon;
-  document.getElementById('panel-badge').textContent = tool.badgeLabel;
-  document.getElementById('panel-badge').className = `tool-badge badge-${tool.badge}`;
-  document.getElementById('panel-title').textContent = tool.title;
-  document.getElementById('panel-desc').textContent = tool.desc;
-  document.getElementById('panel-gen-time').textContent = `Generated in ${Math.floor(Math.random()*20+8)} seconds`;
+  (document.getElementById('panel-breadcrumb')||document.createElement('span')).textContent = `${indName} › ${tool.title}`;
+  (document.getElementById('panel-icon')||document.createElement('span')).textContent = tool.icon;
+  (document.getElementById('panel-badge')||document.createElement('span')).textContent = tool.badgeLabel;
+  (document.getElementById('panel-badge')||document.createElement('span')).className = `tool-badge badge-${tool.badge}`;
+  (document.getElementById('panel-title')||document.createElement('span')).textContent = tool.title;
+  (document.getElementById('panel-desc')||document.createElement('span')).textContent = tool.desc;
+  (document.getElementById('panel-gen-time')||document.createElement('span')).textContent = `Generated in ${Math.floor(Math.random()*20+8)} seconds`;
 
-  const liveBadge = document.getElementById('panel-live-badge');
+  const liveBadge = (document.getElementById('panel-live-badge')||document.createElement('span'));
   liveBadge.style.display = tool.live ? 'inline-flex' : 'none';
 
-  const benefits = document.getElementById('panel-benefits');
+  const benefits = (document.getElementById('panel-benefits')||document.createElement('span'));
   benefits.innerHTML = (tool.benefits || []).map(b => `
     <li><span class="check-circle">✓</span><span style="color:var(--muted);">${b}</span></li>
   `).join('');
 
-  document.getElementById('panel-example').textContent = tool.example || 'Example coming soon.';
+  (document.getElementById('panel-example')||document.createElement('span')).textContent = tool.example || 'Example coming soon.';
 
   // ROI calc
-  document.getElementById('roi-label-1').textContent = tool.roiLabel1 || 'Quantity per month';
-  document.getElementById('roi-label-2').textContent = tool.roiLabel2 || 'Hours each currently';
-  document.getElementById('roi-range-1').value = tool.roiDefault1 || 10;
-  document.getElementById('roi-range-2').value = tool.roiDefault2 || 2;
+  (document.getElementById('roi-label-1')||document.createElement('span')).textContent = tool.roiLabel1 || 'Quantity per month';
+  (document.getElementById('roi-label-2')||document.createElement('span')).textContent = tool.roiLabel2 || 'Hours each currently';
+  (document.getElementById('roi-range-1')||document.createElement('span')).value = tool.roiDefault1 || 10;
+  (document.getElementById('roi-range-2')||document.createElement('span')).value = tool.roiDefault2 || 2;
   updateROI();
 
-  document.getElementById('panel-overlay').classList.add('open');
+  (document.getElementById('panel-overlay')||document.createElement('span')).classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
