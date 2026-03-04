@@ -7,6 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
+    --burnt-orange: #c4622a; --deep-orange: #b85525; --rust: #a04520;
+    --copper: #d4844a; --gold: #d4a04a; --cream: #e8d5b8; --warm-white: #f5ece0;
+    --deep-blue: #1e3a5f; --navy: #162d4a; --steel-blue: #2c5a82;
+    --slate-blue: #3a6d94; --dusty-blue: #5a8aaa; --ice-blue: #8ab4cc;
     --bg: #0d1628;
     --bg2: #172035;
     --bg3: #1e2d47;
@@ -331,180 +335,508 @@
   /* ══════════════════════════════════════════
      FULL-SCREEN TOOL DETAIL PANEL
   ══════════════════════════════════════════ */
+  
+  /* ===== PANEL OVERLAY ===== */
   .panel-overlay {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 200;
-    display: none; align-items: flex-end;
-    backdrop-filter: blur(4px);
-    overflow: hidden;
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #0d1628;
+    z-index: 1000; overflow-y: auto;
+    transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    display: flex; flex-direction: column;
   }
-  .panel-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
-  .panel {
-    background: #172035;
-    border-top: 2px solid rgba(232,80,10,0.4);
-    width: 100%;
-    max-height: 92vh;
-    overflow-y: auto;
-    animation: slideUp 0.35s cubic-bezier(0.22,1,0.36,1);
-    position: relative;
-  }
-  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .panel-overlay.open { transform: translateY(0); }
 
+  /* ===== PANEL ATMOSPHERIC BG ===== */
+  .panel-atmo {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none; z-index: 0;
+  }
+  .panel-atmo::before {
+    content: '';
+    position: absolute; top: -20%; left: -10%;
+    width: 70%; height: 70%;
+    background: radial-gradient(ellipse, rgba(196,98,42,0.1) 0%, rgba(212,128,74,0.05) 40%, transparent 70%);
+    animation: panelAtmoDrift1 25s ease-in-out infinite;
+  }
+  .panel-atmo::after {
+    content: '';
+    position: absolute; bottom: -10%; right: -10%;
+    width: 60%; height: 60%;
+    background: radial-gradient(ellipse, rgba(30,58,95,0.12) 0%, rgba(44,90,130,0.05) 40%, transparent 70%);
+    animation: panelAtmoDrift2 30s ease-in-out infinite;
+  }
+  @keyframes panelAtmoDrift1 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(5%,3%) scale(1.05); }
+    66% { transform: translate(-3%,-2%) scale(0.98); }
+  }
+  @keyframes panelAtmoDrift2 {
+    0%,100% { transform: translate(0,0) scale(1); }
+    50% { transform: translate(-4%,-3%) scale(1.06); }
+  }
+  .panel-organic { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(80px); }
+  .panel-organic.s1 { width:400px; height:400px; top:5%; right:15%; background:radial-gradient(circle,rgba(196,98,42,0.08),transparent 70%); animation:panelOrganicFloat 20s ease-in-out infinite; }
+  .panel-organic.s2 { width:350px; height:350px; top:45%; left:5%; background:radial-gradient(circle,rgba(44,90,130,0.1),transparent 70%); animation:panelOrganicFloat 18s ease-in-out infinite reverse; }
+  .panel-organic.s3 { width:500px; height:350px; bottom:10%; right:20%; background:radial-gradient(circle,rgba(212,160,74,0.06),transparent 70%); animation:panelOrganicFloat 22s ease-in-out infinite; animation-delay:-5s; }
+  @keyframes panelOrganicFloat {
+    0%,100% { transform:translate(0,0) rotate(0deg); }
+    25% { transform:translate(20px,-15px) rotate(5deg); }
+    50% { transform:translate(-10px,20px) rotate(-3deg); }
+    75% { transform:translate(15px,10px) rotate(2deg); }
+  }
+
+  /* ===== PANEL HEADER ===== */
   .panel-header {
-    background: var(--bg3);
-    border-bottom: 1px solid var(--card-border);
-    padding: 20px 32px;
+    position: sticky; top: 0; z-index: 100;
     display: flex; align-items: center; justify-content: space-between;
-    position: sticky; top: 0; z-index: 10;
+    padding: 0 48px; height: 56px;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--deep-orange), var(--rust));
+    box-shadow: 0 4px 20px rgba(196,98,42,0.3);
   }
-  .panel-close {
+  .panel-breadcrumb {
+    font-size: 15px; color: rgba(255,255,255,0.8);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .panel-breadcrumb a { color: rgba(255,255,255,0.75); text-decoration: none; cursor: pointer; transition: color 0.2s; }
+  .panel-breadcrumb a:hover { color: #fff; }
+  .panel-breadcrumb .sep { opacity: 0.4; }
+  .panel-breadcrumb .current { color: #fff; font-weight: 600; }
+  .panel-close-btn {
     width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(255,255,255,0.08); border: 1px solid var(--card-border);
-    cursor: pointer; font-size: 18px; color: var(--muted);
+    background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: all 0.25s;
+  }
+  .panel-close-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.08); }
+
+  /* ===== BUNDLE ROTATOR ===== */
+  .bundle-rotator {
+    display: flex; align-items: center; gap: 10px; margin-right: 16px;
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(212,160,74,0.45);
+    border-radius: 20px; padding: 6px 16px 6px 12px; min-width: 320px;
+  }
+  .bundle-rotator-icon { font-size: 14px; flex-shrink: 0; opacity: 0.9; }
+  .bundle-rotator-track { position: relative; height: 20px; overflow: hidden; flex: 1; min-width: 220px; }
+  .bundle-rotator-item {
+    position: absolute; top: 0; left: 0; width: 100%;
+    font-size: 12px; font-weight: 600; color: var(--gold);
+    white-space: nowrap; opacity: 0; transform: translateY(100%);
+    transition: opacity 0.5s ease, transform 0.5s ease; letter-spacing: 0.3px;
+  }
+  .bundle-rotator-item.active { opacity: 1; transform: translateY(0); }
+  .bundle-rotator-item.exit { opacity: 0; transform: translateY(-100%); }
+  .bundle-rotator-cta {
+    font-size: 11px; font-weight: 800; color: #fff;
+    background: rgba(212,160,74,0.25); border: 1px solid rgba(212,160,74,0.4);
+    border-radius: 10px; padding: 3px 10px; white-space: nowrap;
+    letter-spacing: 0.5px; cursor: pointer; flex-shrink: 0;
+  }
+
+  /* ===== PANEL HERO ===== */
+  .panel-hero {
+    position: relative; z-index: 2;
+    padding: 70px 48px 60px;
+    display: grid; grid-template-columns: 1.15fr 0.85fr;
+    gap: 50px; align-items: start;
+    max-width: 1280px; margin: 0 auto;
+  }
+  .panel-hero-left { position: relative; z-index: 2; }
+  .panel-hero-right { position: relative; z-index: 2; }
+  .panel-tool-meta { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+  .panel-tool-icon {
+    width: 64px; height: 64px; border-radius: 18px;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+    display: flex; align-items: center; justify-content: center; font-size: 32px;
+    box-shadow: 0 8px 32px rgba(196,98,42,0.35), 0 0 0 1px rgba(255,255,255,0.1);
+    animation: panelIconGlow 4s ease-in-out infinite;
+  }
+  @keyframes panelIconGlow {
+    0%,100% { box-shadow: 0 8px 32px rgba(196,98,42,0.35); }
+    50% { box-shadow: 0 8px 48px rgba(196,98,42,0.4), 0 0 20px rgba(212,128,74,0.15); }
+  }
+  .panel-tool-badges { display: flex; gap: 10px; }
+  .panel-badge {
+    padding: 5px 16px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;
+  }
+  .panel-badge-live {
+    background: rgba(45,212,191,0.12); color: #2dd4bf;
+    border: 1px solid rgba(45,212,191,0.25);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .panel-badge-live::before {
+    content: ''; width: 7px; height: 7px; border-radius: 50%;
+    background: #2dd4bf; box-shadow: 0 0 6px #2dd4bf;
+    animation: panelLivePulse 2s ease-in-out infinite;
+  }
+  @keyframes panelLivePulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
+  .panel-badge-soon {
+    background: rgba(251,146,60,0.15); color: #fb923c;
+    border: 1px solid rgba(251,146,60,0.3);
+  }
+  .panel-tool-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 54px; font-weight: 900; line-height: 1.0;
+    margin-bottom: 6px; text-transform: uppercase; letter-spacing: -0.5px;
+  }
+  .panel-tool-title .line1 {
+    background: linear-gradient(135deg, #fff 30%, var(--cream));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .panel-tool-title .line2 {
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .panel-tool-tagline {
+    font-family: 'Playfair Display', serif; font-size: 22px; font-style: italic;
+    color: var(--copper); margin-bottom: 22px; opacity: 0.9;
+  }
+  .panel-tool-desc {
+    font-size: 18px; line-height: 1.7; color: rgba(255,255,255,0.85);
+    margin-bottom: 36px; max-width: 540px;
+  }
+  .panel-benefits-list { list-style: none; display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
+  .panel-benefit-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    font-size: 16px; line-height: 1.55; color: rgba(255,255,255,0.9);
+    opacity: 0; animation: panelFadeSlideIn 0.5s ease forwards;
+  }
+  .panel-benefit-item:nth-child(1) { animation-delay:0.1s; }
+  .panel-benefit-item:nth-child(2) { animation-delay:0.2s; }
+  .panel-benefit-item:nth-child(3) { animation-delay:0.3s; }
+  .panel-benefit-item:nth-child(4) { animation-delay:0.4s; }
+  .panel-benefit-item:nth-child(5) { animation-delay:0.5s; }
+  @keyframes panelFadeSlideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+  .panel-benefit-icon {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: linear-gradient(135deg,rgba(45,212,191,0.25),rgba(45,212,191,0.1));
+    border: 1px solid rgba(45,212,191,0.35);
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.15s;
+    font-size: 13px; color: #2dd4bf; margin-top: 2px;
   }
-  .panel-close:hover { background: rgba(255,255,255,0.15); color: var(--white); }
+  .panel-cta-row { display: flex; align-items: center; gap: 24px; }
+  .panel-btn-cta {
+    padding: 16px 40px; border-radius: 14px; font-size: 17px; font-weight: 700;
+    border: none; cursor: pointer; transition: all 0.3s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--deep-orange));
+    color: #fff; box-shadow: 0 6px 28px rgba(196,98,42,0.4);
+  }
+  .panel-btn-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 40px rgba(196,98,42,0.45); }
+  .panel-price-inline { font-family:'Barlow Condensed',sans-serif; font-size:32px; font-weight:700; color:#fff; }
+  .panel-price-inline span { font-size:16px; color:rgba(255,255,255,0.5); font-family:'DM Sans',sans-serif; font-weight:400; }
 
-  .panel-body {
-    display: grid; grid-template-columns: 1fr 380px; gap: 40px;
-    padding: 40px 32px;
-    max-width: 1100px; margin: 0 auto;
+  /* ===== ROI CARD ===== */
+  .panel-roi-card {
+    background: linear-gradient(160deg, #fdf6ee 0%, #f5e8d5 100%);
+    border: 1px solid rgba(196,98,42,0.25); border-radius: 24px;
+    padding: 0; position: relative; overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.45), 0 0 0 1px rgba(196,98,42,0.1);
   }
-  @media (max-width: 900px) { .panel-body { grid-template-columns: 1fr; } }
+  .panel-roi-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--copper), var(--gold), var(--ice-blue), var(--steel-blue));
+    background-size: 300% 100%; animation: panelWarmCoolBar 6s linear infinite; border-radius: 24px 24px 0 0;
+  }
+  @keyframes panelWarmCoolBar { 0% { background-position:0% 0; } 100% { background-position:300% 0; } }
+  .panel-roi-card-header {
+    background: linear-gradient(135deg, var(--navy), var(--deep-blue), #1a3a5c);
+    padding: 20px 28px 18px; border-bottom: 2px solid rgba(196,98,42,0.3);
+    position: relative; overflow: hidden;
+  }
+  .panel-roi-card-header::after {
+    content: ''; position: absolute; top:-30%; right:-10%; width:160px; height:160px;
+    background: radial-gradient(circle,rgba(212,128,74,0.15),transparent 70%);
+    border-radius: 50%; pointer-events: none;
+  }
+  .panel-roi-card-body { padding: 24px 28px 28px; }
+  .panel-roi-header {
+    position: relative; display: flex; align-items: center; gap: 12px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--copper), var(--gold));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .panel-roi-header span { font-size: 20px; -webkit-text-fill-color: initial; }
+  .panel-calc-fields {
+    background: rgba(255,255,255,0.6); border: 1px solid rgba(196,98,42,0.15);
+    border-radius: 16px; padding: 22px; margin-bottom: 0;
+  }
+  .panel-calc-field { margin-bottom: 20px; position: relative; }
+  .panel-calc-field:last-child { margin-bottom: 0; }
+  .panel-calc-label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#8a6a50; margin-bottom:4px; }
+  .panel-calc-value { font-family:'Barlow Condensed',sans-serif; font-size:36px; font-weight:800; color:#2a1808; margin-bottom:8px; line-height:1; }
+  .panel-range-slider {
+    -webkit-appearance:none; appearance:none; width:100%; height:8px; border-radius:5px;
+    background:linear-gradient(90deg,rgba(196,98,42,0.2),rgba(44,90,130,0.15));
+    border:1px solid rgba(196,98,42,0.2); outline:none; cursor:pointer;
+  }
+  .panel-range-slider::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none; width:24px; height:24px; border-radius:50%;
+    background:linear-gradient(135deg,var(--burnt-orange),var(--copper));
+    box-shadow:0 2px 12px rgba(196,98,42,0.45),0 0 0 3px rgba(196,98,42,0.12);
+    cursor:pointer; transition:transform 0.2s; border:2px solid #fff;
+  }
+  .panel-range-slider::-webkit-slider-thumb:hover { transform:scale(1.15); }
+  .panel-roi-results { margin-top: 20px; position: relative; }
+  .panel-roi-results-label {
+    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:2px; color:#a0724a;
+    text-align:center; margin-bottom:12px;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+  }
+  .panel-roi-results-label::before,.panel-roi-results-label::after {
+    content:''; flex:1; height:1px; background:linear-gradient(90deg,transparent,rgba(196,98,42,0.25));
+  }
+  .panel-roi-results-label::after { background:linear-gradient(90deg,rgba(196,98,42,0.25),transparent); }
+  .panel-result-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .panel-result-item { text-align:center; padding:18px 12px; border-radius:12px; transition:all 0.3s; }
+  .panel-result-item.warm {
+    background:linear-gradient(135deg,var(--burnt-orange),var(--rust));
+    border:1px solid rgba(255,255,255,0.12); box-shadow:0 4px 20px rgba(196,98,42,0.35);
+  }
+  .panel-result-item.warm:hover { transform:translateY(-3px); box-shadow:0 10px 32px rgba(196,98,42,0.45); }
+  .panel-result-item.warm .panel-result-value { color:var(--cream); -webkit-text-fill-color:var(--cream); }
+  .panel-result-item.warm .panel-result-label { color:rgba(232,213,184,0.75); }
+  .panel-result-item.cool {
+    background:linear-gradient(135deg,var(--navy),var(--deep-blue));
+    border:1px solid rgba(138,180,204,0.2); box-shadow:0 4px 20px rgba(22,45,74,0.5);
+  }
+  .panel-result-item.cool:hover { transform:translateY(-3px); box-shadow:0 10px 32px rgba(22,45,74,0.6); }
+  .panel-result-item.cool .panel-result-value { color:var(--ice-blue); -webkit-text-fill-color:var(--ice-blue); }
+  .panel-result-item.cool .panel-result-label { color:rgba(138,180,204,0.7); }
+  .panel-result-value { font-family:'Barlow Condensed',sans-serif; font-size:36px; font-weight:800; line-height:1; }
+  .panel-result-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; margin-top:5px; }
 
-  .panel-left h2 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: clamp(30px, 4vw, 44px);
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 10px;
-    line-height: 1.05;
-  }
-  .panel-tagline { font-size: 16px; color: var(--muted); line-height: 1.6; margin-bottom: 28px; }
-
-  .panel-benefits { list-style: none; margin-bottom: 32px; }
-  .panel-benefits li {
-    display: flex; align-items: flex-start; gap: 12px;
-    margin-bottom: 12px; font-size: 14px; line-height: 1.5;
-  }
-  .check-circle {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--green-bg); color: var(--green);
-    border: 1px solid rgba(34,201,122,0.3);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 11px; flex-shrink: 0; margin-top: 1px;
+  /* ===== SECTION DIVIDER ===== */
+  .panel-section-divider { max-width:1280px; margin:0 auto; padding:0 48px; }
+  .panel-section-divider .line {
+    height:1px;
+    background:linear-gradient(90deg,transparent 5%,rgba(196,98,42,0.2) 30%,rgba(44,90,130,0.2) 70%,transparent 95%);
   }
 
-  .panel-cta-row {
-    display: flex; gap: 12px; align-items: center;
-    margin-bottom: 40px;
+  /* ===== SECTION HEADERS ===== */
+  .panel-section-header { text-align:center; margin-bottom:48px; }
+  .panel-section-label {
+    font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:3px; margin-bottom:14px;
+    display:flex; align-items:center; justify-content:center; gap:12px;
+    background:linear-gradient(90deg,var(--copper),var(--gold));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
   }
+  .panel-section-label::before,.panel-section-label::after {
+    content:''; width:40px; height:1px; background:linear-gradient(90deg,transparent,var(--copper));
+    -webkit-text-fill-color:initial;
+  }
+  .panel-section-label::after { background:linear-gradient(90deg,var(--copper),transparent); }
+  .panel-section-title { font-family:'Playfair Display',serif; font-size:44px; font-weight:800; line-height:1.15; }
+  .panel-section-title .warm {
+    background:linear-gradient(135deg,var(--copper),var(--gold),var(--cream));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+  }
+  .panel-section-title .bright { color:#fff; -webkit-text-fill-color:#fff; }
+  .panel-section-subtitle { font-family:'DM Sans',sans-serif; font-size:17px; color:rgba(255,255,255,0.6); margin-top:12px; font-style:italic; }
 
-  /* Example output */
-  .example-panel {
-    background: var(--bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+  /* ===== EXAMPLE OUTPUT ===== */
+  .panel-example-section { max-width:1280px; margin:0 auto; padding:70px 48px; position:relative; z-index:2; }
+  .panel-preview-container {
+    position:relative; border-radius:24px; overflow:hidden;
+    border:1px solid rgba(255,255,255,0.1);
+    box-shadow:0 40px 100px rgba(0,0,0,0.45),0 0 60px rgba(196,98,42,0.04),0 0 100px rgba(44,90,130,0.05);
   }
-  .example-header {
-    padding: 14px 20px;
-    background: var(--bg3);
-    border-bottom: 1px solid var(--card-border);
-    display: flex; align-items: center; justify-content: space-between;
+  .panel-preview-chrome {
+    display:flex; align-items:center; padding:14px 22px;
+    background:var(--cream); border-bottom:1px solid rgba(196,98,42,0.15); gap:12px;
   }
-  .example-header h4 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  .panel-chrome-dots { display:flex; gap:7px; }
+  .panel-chrome-dot { width:11px; height:11px; border-radius:50%; }
+  .panel-chrome-dot.r { background:#e05050; } .panel-chrome-dot.y { background:var(--gold); } .panel-chrome-dot.g { background:#4a9e6a; }
+  .panel-chrome-url {
+    flex:1; background:#fff; border-radius:8px; padding:7px 16px; font-size:13px; color:#6b5540;
+    border:1px solid rgba(196,98,42,0.15); display:flex; align-items:center; gap:6px;
   }
-  .dot-row { display: flex; gap: 6px; }
-  .dot { width: 10px; height: 10px; border-radius: 50%; }
-  .dot.r { background: #ff6b6b; } .dot.y { background: #ffd166; } .dot.g { background: #06d6a0; }
-  .example-body {
-    padding: 20px;
-    font-size: 12px;
-    line-height: 1.8;
-    color: rgba(255,255,255,0.75);
-    font-family: 'DM Sans', monospace;
-    white-space: pre-wrap;
-    max-height: 280px;
-    overflow-y: auto;
+  .panel-chrome-url .lock { color:#22c55e; font-size:11px; }
+  .panel-preview-body { position:relative; min-height:520px; background:#f8f9fb; overflow:hidden; }
+  .panel-website-hero {
+    background:linear-gradient(135deg,var(--navy) 0%,var(--deep-blue) 50%,var(--steel-blue) 100%);
+    padding:50px 50px 60px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column; justify-content:center; height:520px;
   }
+  .panel-website-hero::before {
+    content:''; position:absolute; top:-20%; right:-10%; width:400px; height:400px;
+    background:radial-gradient(circle,rgba(212,128,74,0.12),transparent 70%); border-radius:50%;
+  }
+  .panel-website-hero::after {
+    content:''; position:absolute; bottom:-20%; left:-10%; width:350px; height:350px;
+    background:radial-gradient(circle,rgba(196,98,42,0.08),transparent 70%); border-radius:50%;
+  }
+  .panel-website-logo { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:700; color:#fff; margin-bottom:30px; display:flex; align-items:center; gap:10px; }
+  .panel-logo-icon { width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .panel-website-h1 { font-family:'Barlow Condensed',sans-serif; font-size:42px; font-weight:700; color:#fff; line-height:1.1; margin-bottom:14px; }
+  .panel-website-sub { font-size:17px; color:rgba(232,213,184,0.8); max-width:500px; line-height:1.5; margin-bottom:24px; }
+  .panel-website-cta { display:inline-flex; padding:12px 28px; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); color:#fff; border-radius:10px; font-weight:700; font-size:15px; text-decoration:none; width:fit-content; }
+  .panel-website-nav { position:absolute; top:20px; right:50px; display:flex; gap:24px; font-size:14px; color:rgba(232,213,184,0.7); }
+  .panel-chatbot-widget {
+    position:absolute; bottom:24px; right:30px; width:370px; background:#fff; border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.15),0 0 0 1px rgba(0,0,0,0.05); overflow:hidden;
+    opacity:0; animation:panelWidgetAppear 0.6s ease forwards; animation-delay:0.5s;
+  }
+  @keyframes panelWidgetAppear { from{opacity:0;transform:translateY(20px) scale(0.95);} to{opacity:1;transform:translateY(0) scale(1);} }
+  .panel-widget-header {
+    background:linear-gradient(135deg,var(--navy),var(--deep-blue),var(--steel-blue));
+    padding:18px 20px; display:flex; align-items:center; gap:12px; color:#fff;
+  }
+  .panel-widget-avatar { width:38px; height:38px; border-radius:50%; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); display:flex; align-items:center; justify-content:center; font-size:20px; }
+  .panel-widget-name { font-weight:700; font-size:15px; }
+  .panel-widget-status { font-size:12px; color:rgba(232,213,184,0.8); display:flex; align-items:center; gap:5px; }
+  .panel-widget-status::before { content:''; width:6px; height:6px; border-radius:50%; background:#4ade80; }
+  .panel-widget-messages { padding:20px; display:flex; flex-direction:column; gap:12px; min-height:240px; background:var(--warm-white); }
+  .panel-w-msg { max-width:85%; opacity:0; animation:panelWMsgIn 0.4s ease forwards; }
+  .panel-w-msg:nth-child(1){animation-delay:1s;} .panel-w-msg:nth-child(2){animation-delay:1.8s;} .panel-w-msg:nth-child(3){animation-delay:2.8s;} .panel-w-msg:nth-child(4){animation-delay:3.6s;} .panel-w-msg:nth-child(5){animation-delay:4.4s;}
+  @keyframes panelWMsgIn { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:translateY(0);} }
+  .panel-w-msg.ai { align-self:flex-start; } .panel-w-msg.visitor { align-self:flex-end; }
+  .panel-w-msg-bubble { padding:12px 16px; border-radius:16px; font-size:14px; line-height:1.55; }
+  .panel-w-msg.ai .panel-w-msg-bubble { background:#fff; color:#1f2937; border:1px solid rgba(196,98,42,0.1); border-bottom-left-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+  .panel-w-msg.visitor .panel-w-msg-bubble { background:linear-gradient(135deg,var(--deep-blue),var(--steel-blue)); color:#fff; border-bottom-right-radius:6px; }
+  .panel-widget-input { padding:14px 20px; background:var(--warm-white); border-top:1px solid rgba(196,98,42,0.12); display:flex; align-items:center; gap:10px; }
+  .panel-widget-input-field { flex:1; padding:10px 14px; border-radius:10px; border:1px solid rgba(196,98,42,0.15); background:#fff; font-size:13px; color:#9ca3af; }
+  .panel-widget-send { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); border:none; color:#fff; font-size:16px; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  .panel-powered-badge { position:absolute; bottom:295px; right:30px; width:370px; text-align:center; opacity:0; animation:panelBadgeFade 0.3s ease forwards; animation-delay:0.8s; }
+  @keyframes panelBadgeFade { to{opacity:1;} }
+  .panel-powered-badge span { font-size:10px; color:#9ca3af; background:#fff; padding:3px 12px; border-radius:10px; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .panel-phone-notif {
+    position:absolute; bottom:24px; left:30px; width:320px; background:#fff; border-radius:16px;
+    padding:16px 20px; display:flex; align-items:flex-start; gap:14px;
+    box-shadow:0 12px 40px rgba(196,98,42,0.12),0 0 0 1px rgba(196,98,42,0.08);
+    opacity:0; animation:panelNotifPop 0.5s ease forwards; animation-delay:5.2s;
+  }
+  @keyframes panelNotifPop { from{opacity:0;transform:translateX(-20px) scale(0.95);} to{opacity:1;transform:translateX(0) scale(1);} }
+  .panel-notif-icon { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#dcfce7,#bbf7d0); display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+  .panel-notif-text { font-size:13px; color:#3d2e1e; line-height:1.5; }
+  .panel-notif-text strong { display:block; color:#15803d; font-size:14px; margin-bottom:2px; }
+  .panel-notif-time { font-size:11px; color:#9a8a7a; margin-top:4px; }
+  .panel-preview-tabs { display:flex; justify-content:center; gap:4px; padding:16px 24px; background:var(--cream); border-top:1px solid rgba(196,98,42,0.15); }
+  .panel-preview-tab { padding:10px 28px; border-radius:10px; font-size:14px; font-weight:600; color:#6b5540; cursor:pointer; transition:all 0.2s; border:none; background:none; display:flex; align-items:center; gap:8px; }
+  .panel-preview-tab.active { background:#fff; color:#3d2e1e; box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .panel-ai-gen-badge { display:flex; align-items:center; justify-content:center; gap:10px; margin-top:20px; font-size:14px; color:rgba(255,255,255,0.45); }
+  .panel-sparkle { color:var(--copper); animation:panelSparkleRotate 4s linear infinite; display:inline-block; }
+  @keyframes panelSparkleRotate { 0%{transform:rotate(0deg) scale(1);} 25%{transform:rotate(90deg) scale(1.2);} 50%{transform:rotate(180deg) scale(1);} 75%{transform:rotate(270deg) scale(1.2);} 100%{transform:rotate(360deg) scale(1);} }
 
-  /* ROI Calculator */
-  .roi-calc {
-    background: var(--bg3);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-lg);
-    padding: 24px;
-    position: sticky; top: 80px;
+  /* ===== HOW IT WORKS ===== */
+  .panel-how-section { max-width:1280px; margin:0 auto; padding:70px 48px; position:relative; z-index:2; }
+  .panel-steps-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:24px; margin-top:44px; position:relative; }
+  .panel-steps-grid::before {
+    content:''; position:absolute; top:58px; left:16%; right:16%; height:2px;
+    background:linear-gradient(90deg,var(--burnt-orange),var(--gold),var(--steel-blue));
+    opacity:0.35; z-index:0;
   }
-  .roi-calc h3 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 20px; font-weight: 700; text-transform: uppercase;
-    margin-bottom: 20px; letter-spacing: 0.5px;
+  .panel-step-card {
+    position:relative; z-index:1; border-radius:22px; padding:34px 24px; text-align:center;
+    transition:all 0.35s; overflow:hidden;
+    opacity:0; animation:panelStepFadeIn 0.5s ease forwards;
   }
-  .calc-field { margin-bottom: 18px; }
-  .calc-field label {
-    display: block; font-size: 12px; font-weight: 500;
-    color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+  .panel-step-card:nth-child(1){animation-delay:0.1s;} .panel-step-card:nth-child(2){animation-delay:0.2s;} .panel-step-card:nth-child(3){animation-delay:0.3s;}
+  @keyframes panelStepFadeIn { from{opacity:0;transform:translateY(18px);} to{opacity:1;transform:translateY(0);} }
+  .panel-step-card:nth-child(1) { background:linear-gradient(160deg,#fff8f4,#ffeedd); border:1px solid rgba(196,98,42,0.25); box-shadow:0 8px 30px rgba(196,98,42,0.1); }
+  .panel-step-card:nth-child(2) { background:linear-gradient(160deg,#fffbf0,#fff3d0); border:1px solid rgba(212,160,74,0.3); box-shadow:0 8px 30px rgba(212,160,74,0.1); }
+  .panel-step-card:nth-child(3) { background:linear-gradient(160deg,#f0f6fc,#ddeaf5); border:1px solid rgba(44,90,130,0.25); box-shadow:0 8px 30px rgba(44,90,130,0.1); }
+  .panel-step-card:hover { transform:translateY(-6px); }
+  .panel-step-card:nth-child(1):hover { border-color:rgba(196,98,42,0.45); box-shadow:0 18px 44px rgba(196,98,42,0.15); }
+  .panel-step-card:nth-child(2):hover { border-color:rgba(212,160,74,0.5); box-shadow:0 18px 44px rgba(212,160,74,0.14); }
+  .panel-step-card:nth-child(3):hover { border-color:rgba(44,90,130,0.45); box-shadow:0 18px 44px rgba(44,90,130,0.14); }
+  .panel-step-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; border-radius:22px 22px 0 0; }
+  .panel-step-card:nth-child(1)::before { background:linear-gradient(90deg,var(--burnt-orange),var(--copper)); }
+  .panel-step-card:nth-child(2)::before { background:linear-gradient(90deg,var(--gold),var(--copper)); }
+  .panel-step-card:nth-child(3)::before { background:linear-gradient(90deg,var(--steel-blue),var(--slate-blue)); }
+  .panel-step-num {
+    width:50px; height:50px; border-radius:14px;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:800;
+    margin:0 auto 16px; color:#fff;
   }
-  .range-val {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 28px; font-weight: 700;
-    color: var(--orange); margin-bottom: 6px;
-  }
-  input[type="range"] {
-    width: 100%; accent-color: var(--orange);
-    background: transparent;
-  }
-  .roi-result {
-    background: var(--bg);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius);
-    padding: 20px; margin-top: 20px;
-  }
-  .roi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .roi-item .rv {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 26px; font-weight: 800;
-    color: var(--green);
-  }
-  .roi-item .rl { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.3px; }
-  .roi-item .rv.cost-val { color: var(--orange); }
+  .panel-step-card:nth-child(1) .panel-step-num { background:linear-gradient(135deg,var(--burnt-orange),var(--copper)); box-shadow:0 6px 20px rgba(196,98,42,0.4); }
+  .panel-step-card:nth-child(2) .panel-step-num { background:linear-gradient(135deg,var(--gold),var(--copper)); box-shadow:0 6px 20px rgba(212,160,74,0.4); }
+  .panel-step-card:nth-child(3) .panel-step-num { background:linear-gradient(135deg,var(--steel-blue),var(--slate-blue)); box-shadow:0 6px 20px rgba(44,90,130,0.4); }
+  .panel-step-graphic { width:100%; height:90px; display:flex; align-items:center; justify-content:center; margin-bottom:14px; margin-top:4px; }
+  .panel-step-svg { width:120px; height:80px; }
+  .panel-step-title { font-family:'Barlow Condensed',sans-serif; font-size:22px; font-weight:800; text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; }
+  .panel-step-card:nth-child(1) .panel-step-title { color:var(--rust); }
+  .panel-step-card:nth-child(2) .panel-step-title { color:#7a5a10; }
+  .panel-step-card:nth-child(3) .panel-step-title { color:var(--deep-blue); }
+  .panel-step-desc { font-size:15px; color:#4a3828; line-height:1.6; }
+  .panel-step-card:nth-child(3) .panel-step-desc { color:#2a4060; }
+  /* SVG animations */
+  .svg-pulse-1{animation:svgPulse 1.8s ease-in-out infinite;} @keyframes svgPulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .svg-plug{animation:svgPlugMove 2.4s ease-in-out infinite;transform-origin:60px 61px;} @keyframes svgPlugMove{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-6px);}}
+  .svg-spark{animation:svgSpark 1.8s ease-in-out infinite;} @keyframes svgSpark{0%,100%{opacity:0.2;}50%{opacity:1;stroke-dashoffset:-6;}}
+  .svg-star-1{animation:svgStar 2.2s ease-in-out infinite;} .svg-star-2{animation:svgStar 2.2s ease-in-out infinite 0.6s;} @keyframes svgStar{0%,100%{opacity:0.3;transform:scale(0.7);}50%{opacity:1;transform:scale(1.3);}}
+  .svg-knob-1{animation:svgKnob1 3s ease-in-out infinite;} @keyframes svgKnob1{0%,100%{cx:64px;}50%{cx:78px;}}
+  .svg-bar-1{animation:svgBar1 3s ease-in-out infinite;} @keyframes svgBar1{0%,100%{width:38px;}50%{width:52px;}}
+  .svg-knob-2{animation:svgKnob2 3.5s ease-in-out infinite 0.5s;} @keyframes svgKnob2{0%,100%{cx:78px;}50%{cx:55px;}}
+  .svg-bar-2{animation:svgBar2 3.5s ease-in-out infinite 0.5s;} @keyframes svgBar2{0%,100%{width:52px;}50%{width:29px;}}
+  .svg-check{animation:svgCheckPop 2s ease-in-out infinite;transform-origin:96px 18px;} @keyframes svgCheckPop{0%,80%,100%{transform:scale(1);opacity:1;}40%{transform:scale(1.2);opacity:0.7;}}
+  .svg-rocket{animation:svgRocketFloat 2.5s ease-in-out infinite;transform-origin:60px 40px;} @keyframes svgRocketFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}
+  .svg-flame{animation:svgFlame 0.4s ease-in-out infinite alternate;transform-origin:60px 54px;} @keyframes svgFlame{from{transform:scaleY(1) scaleX(1);opacity:0.9;}to{transform:scaleY(1.3) scaleX(0.85);opacity:1;}}
+  .svg-flame-inner{animation:svgFlame 0.3s ease-in-out infinite alternate 0.1s;transform-origin:60px 55px;}
+  .svg-arc-1{animation:svgArcPulse 1.6s ease-in-out infinite;} .svg-arc-2{animation:svgArcPulse 1.6s ease-in-out infinite 0.3s;} .svg-arc-3{animation:svgArcPulse 1.6s ease-in-out infinite 0.6s;} @keyframes svgArcPulse{0%,100%{opacity:0.2;}50%{opacity:1;}}
+  .svg-sparkle-a{animation:svgStar 2s ease-in-out infinite;} .svg-sparkle-b{animation:svgStar 2.4s ease-in-out infinite 0.4s;} .svg-sparkle-c{animation:svgStar 1.8s ease-in-out infinite 0.8s;}
 
-  /* Pricing strip */
-  .pricing-strip {
-    background: var(--bg);
-    border-top: 1px solid var(--card-border);
-    padding: 24px 32px;
-    display: flex; align-items: center; justify-content: space-between;
-    flex-wrap: wrap; gap: 16px;
-    max-width: 100%;
+  /* ===== PRICING FOOTER ===== */
+  .panel-pricing-footer { max-width:1280px; margin:0 auto; padding:50px 48px 80px; text-align:center; position:relative; z-index:2; }
+  .panel-pricing-card {
+    display:inline-flex; flex-direction:column; align-items:center;
+    background:linear-gradient(160deg,#1c0e04 0%,#2a1808 40%,#1e1206 100%);
+    border:1px solid rgba(196,98,42,0.25); border-radius:28px; padding:52px 100px;
+    position:relative; overflow:hidden;
+    box-shadow:0 24px 60px rgba(0,0,0,0.35),0 0 50px rgba(196,98,42,0.06);
   }
-  .pricing-info {
-    display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  .panel-pricing-card::before {
+    content:''; position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg,var(--burnt-orange),var(--copper),var(--gold),var(--copper),var(--burnt-orange));
+    background-size:300% 100%; animation:panelWarmBar 5s linear infinite;
   }
-  .price-tag {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 32px; font-weight: 800;
+  @keyframes panelWarmBar { 0%{background-position:0% 0;} 100%{background-position:300% 0;} }
+  .panel-pricing-card::after {
+    content:''; position:absolute; top:-60%; left:50%; transform:translateX(-50%);
+    width:400px; height:300px;
+    background:radial-gradient(ellipse,rgba(196,98,42,0.08),transparent 70%); pointer-events:none;
   }
-  .price-tag span { color: var(--orange); }
-  .trial-note {
-    font-size: 13px; color: var(--muted);
+  .panel-pricing-amount {
+    font-family:'Barlow Condensed',sans-serif; font-size:76px; font-weight:900;
+    background:linear-gradient(135deg,var(--cream),var(--copper));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    line-height:1; position:relative;
   }
-  .trial-note strong { color: var(--green); }
+  .panel-pricing-period { font-family:'Playfair Display',serif; font-size:18px; font-style:italic; color:var(--copper); margin-top:6px; margin-bottom:28px; }
+  .panel-pricing-includes { display:flex; gap:28px; margin-bottom:30px; font-size:16px; color:rgba(232,213,184,0.8); flex-wrap:wrap; justify-content:center; }
+  .panel-pricing-includes span { display:flex; align-items:center; gap:8px; }
+  .panel-pricing-includes .check { color:var(--copper); font-size:18px; }
+  .panel-btn-footer-cta {
+    padding:18px 60px; border-radius:16px; font-size:19px; font-weight:700;
+    border:none; cursor:pointer;
+    background:linear-gradient(135deg,var(--burnt-orange),var(--deep-orange));
+    color:var(--cream); box-shadow:0 8px 36px rgba(196,98,42,0.45);
+    transition:all 0.3s; display:flex; align-items:center; gap:10px;
+    position:relative; letter-spacing:0.5px;
+  }
+  .panel-btn-footer-cta:hover { transform:translateY(-3px); box-shadow:0 12px 48px rgba(196,98,42,0.5); }
 
-  /* ── RESPONSIVE ── */
-  @media (max-width: 640px) {
-    nav { padding: 0 16px; }
-    .industries-grid, .tools-grid, .categories-nav { padding-left: 16px; padding-right: 16px; }
-    .dashboard-topbar { padding: 16px; }
-    .panel-body { padding: 24px 16px; }
-    .pricing-strip { padding: 16px; }
+  /* ===== RESPONSIVE ===== */
+  @media (max-width:1100px) {
+    .panel-hero { grid-template-columns:1fr; gap:40px; padding:40px 28px; }
+    .panel-steps-grid { grid-template-columns:repeat(2,1fr); }
+    .panel-steps-grid::before { display:none; }
+    .panel-chatbot-widget { width:300px; }
+    .panel-phone-notif { display:none; }
+    .panel-example-section,.panel-how-section,.panel-pricing-footer { padding-left:28px; padding-right:28px; }
+    .panel-pricing-card { padding:36px 44px; }
+    .panel-tool-title { font-size:44px; }
+    .panel-section-title { font-size:36px; }
+  }
+  @media (max-width:600px) {
+    .panel-steps-grid { grid-template-columns:1fr; }
+    .panel-pricing-includes { flex-direction:column; gap:12px; align-items:center; }
+    .panel-header { padding:0 20px; }
+    .panel-cta-row { flex-direction:column; align-items:flex-start; gap:16px; }
   }
 </style>
 </head>
@@ -631,141 +963,165 @@
 <!-- ══════════════════════════════════════════
      TOOL DETAIL PANEL (full-screen slide-up)
 ══════════════════════════════════════════ -->
-<div class="panel-overlay" id="panel-overlay" onclick="closePanelBg(event)">
-  <div class="panel">
-    <div class="panel-header">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button class="btn btn-ghost btn-sm" onclick="goBack()">← Back</button>
-        <span id="panel-breadcrumb" style="font-size:13px;color:var(--muted);">Pool Building › Quote Generator</span>
+<div class="panel-overlay" id="panel-overlay">
+  <div class="panel-atmo"></div>
+  <div class="panel-organic s1"></div>
+  <div class="panel-organic s2"></div>
+  <div class="panel-organic s3"></div>
+
+  <!-- PANEL HEADER -->
+  <div class="panel-header">
+    <div class="panel-breadcrumb">
+      <a onclick="closePanel()">← Back</a>
+      <span class="sep">›</span>
+      <a onclick="closePanel()">All Tools</a>
+      <span class="sep">›</span>
+      <span class="current" id="panel-breadcrumb-name"></span>
+    </div>
+    <div class="bundle-rotator">
+      <span class="bundle-rotator-icon">📦</span>
+      <div class="bundle-rotator-track" id="bundleTrack">
+        <div class="bundle-rotator-item active">Starter — 3 tools from $197/mo</div>
+        <div class="bundle-rotator-item">Growth — 6 tools from $374/mo</div>
+        <div class="bundle-rotator-item">Complete — all 13 tools from $899/mo</div>
       </div>
-      <button class="panel-close" onclick="closePanel()">✕</button>
+      <span class="bundle-rotator-cta">Bundle →</span>
+    </div>
+    <button class="panel-close-btn" onclick="closePanel()">✕</button>
+  </div>
+
+  <!-- PANEL HERO -->
+  <div class="panel-hero">
+    <div class="panel-hero-left">
+      <div class="panel-tool-meta">
+        <div class="panel-tool-icon" id="panel-tool-icon"></div>
+        <div class="panel-tool-badges" id="panel-tool-badges"></div>
+      </div>
+      <h1 class="panel-tool-title" id="panel-tool-title"></h1>
+      <div class="panel-tool-tagline" id="panel-tool-tagline"></div>
+      <p class="panel-tool-desc" id="panel-tool-desc"></p>
+      <ul class="panel-benefits-list" id="panel-benefits-list"></ul>
+      <div class="panel-cta-row">
+        <div class="panel-price-inline" id="panel-price-inline"></div>
+        <button class="panel-btn-cta" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
+      </div>
     </div>
 
-    <div class="panel-body">
-      <!-- LEFT: Info -->
-      <div class="panel-left">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-          <div id="panel-icon" style="font-size:32px;">📋</div>
-          <span id="panel-badge" class="tool-badge badge-quick">⚡ Quick Win</span>
+    <!-- ROI CARD -->
+    <div class="panel-hero-right">
+      <div class="panel-roi-card">
+        <div class="panel-roi-card-header">
+          <div class="panel-roi-header"><span>📊</span> Your Impact Calculator</div>
         </div>
-        <h2 id="panel-title">Quote Generator</h2>
-        <p class="panel-tagline" id="panel-desc">Turn 3-hour quoting sessions into 10-minute tasks.</p>
-        <ul class="panel-benefits" id="panel-benefits"></ul>
-
-        <div class="panel-cta-row">
-          <a href="/login.html?tab=signup" class="btn btn-primary">Start Free Trial →</a>
-          <span id="panel-live-badge" style="display:none;" class="live-badge"><span class="live-dot"></span>Live Now</span>
-        </div>
-
-        <div class="example-panel">
-          <div class="example-header">
-            <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
-            <h4>Example Output</h4>
-            <span id="panel-gen-time" style="font-size:12px;color:var(--muted);">Generated in 18 seconds</span>
-          </div>
-          <div class="example-body" id="panel-example"></div>
-        </div>
-
-        <!-- How it works -->
-        <div style="margin-top:32px;">
-          <h3 style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;text-transform:uppercase;margin-bottom:16px;letter-spacing:0.5px;">How it works</h3>
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;" id="how-it-works">
-            <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">1️⃣</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Connect</div>
-              <div style="font-size:12px;color:var(--muted);">Set up in minutes — no IT skills needed</div>
-            </div>
-            <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">2️⃣</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Let AI Work</div>
-              <div style="font-size:12px;color:var(--muted);">AI handles the work automatically</div>
-            </div>
-            <div style="text-align:center;padding:16px;background:var(--bg3);border-radius:var(--radius);border:1px solid var(--card-border);">
-              <div style="font-size:24px;margin-bottom:8px;">3️⃣</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;text-transform:uppercase;margin-bottom:4px;">Grow</div>
-              <div style="font-size:12px;color:var(--muted);">More customers, less effort, more time</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT: ROI Calc -->
-      <div>
-        <div class="roi-calc">
-          <h3>📊 Your ROI</h3>
-          <div class="calc-field" id="roi-field-1">
-            <label id="roi-label-1">How many per month?</label>
-            <div class="range-val" id="roi-val-1">12</div>
-            <input type="range" min="1" max="40" value="12" oninput="updateROI()" id="roi-range-1">
-          </div>
-          <div class="calc-field" id="roi-field-2">
-            <label id="roi-label-2">Hours each currently?</label>
-            <div class="range-val" id="roi-val-2">3.5 hrs</div>
-            <input type="range" min="0.5" max="8" step="0.5" value="3.5" oninput="updateROI()" id="roi-range-2">
-          </div>
-          <div class="calc-field">
-            <label>Your hourly rate</label>
-            <div class="range-val" id="roi-val-3">$85/hr</div>
-            <input type="range" min="50" max="200" step="5" value="85" oninput="updateROI()" id="roi-range-3">
-          </div>
-          <div class="roi-result">
-            <div class="roi-grid">
-              <div class="roi-item">
-                <div class="rv" id="roi-time-saved">40 hrs</div>
-                <div class="rl">Time freed / month</div>
-              </div>
-              <div class="roi-item">
-                <div class="rv" id="roi-value">$3,400</div>
-                <div class="rl">Value / month</div>
-              </div>
-              <div class="roi-item">
-                <div class="rv cost-val" id="roi-cost">$49/mo</div>
-                <div class="rl">Tool cost</div>
-              </div>
-              <div class="roi-item">
-                <div class="rv" id="roi-return">6,839%</div>
-                <div class="rl">ROI</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Included in plan -->
-        <div style="margin-top:16px;background:var(--bg3);border:1px solid rgba(255,255,255,0.18);border-radius:var(--radius);padding:20px;">
-          <div style="font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;margin-bottom:12px;color:var(--white);">Included in every plan</div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> 14-day free trial</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> No IT skills needed</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Australian English & GST</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Cancel anytime</div>
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;"><span style="color:var(--green);">✓</span> Local support team</div>
+        <div class="panel-roi-card-body">
+          <div class="panel-calc-fields" id="panel-calc-fields"></div>
+          <div class="panel-roi-results">
+            <div class="panel-roi-results-label">Your Monthly Results</div>
+            <div class="panel-result-grid" id="panel-result-grid"></div>
           </div>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Pricing strip -->
-    <div class="pricing-strip">
-      <div class="pricing-info">
-        <div>
-          <div class="price-tag">From <span>$149</span>/mo</div>
-          <div style="font-size:12px;color:var(--muted);">Starter plan · Multiple tools included</div>
+  <div class="panel-section-divider"><div class="line"></div></div>
+
+  <!-- EXAMPLE OUTPUT -->
+  <div class="panel-example-section">
+    <div class="panel-section-header">
+      <div class="panel-section-label">See It In Action</div>
+      <h2 class="panel-section-title">
+        <span class="bright">What Your Customers</span><br>
+        <span class="warm">Will Experience</span>
+      </h2>
+      <p class="panel-section-subtitle">A real conversation — AI qualifying a lead while you're on-site</p>
+    </div>
+    <div class="panel-preview-container">
+      <div class="panel-preview-chrome">
+        <div class="panel-chrome-dots">
+          <div class="panel-chrome-dot r"></div>
+          <div class="panel-chrome-dot y"></div>
+          <div class="panel-chrome-dot g"></div>
         </div>
-        <div style="height:40px;width:1px;background:var(--card-border);"></div>
-        <div class="trial-note">
-          <strong>14-day free trial</strong><br>
-          No credit card required
+        <div class="panel-chrome-url"><span class="lock">🔒</span> yourbusiness.com.au</div>
+      </div>
+      <div class="panel-preview-body">
+        <div class="panel-website-hero">
+          <div class="panel-website-nav"><span>Home</span><span>Services</span><span>Gallery</span><span>Contact</span></div>
+          <div class="panel-website-logo"><div class="panel-logo-icon">🏊</div> Aqua Blue Pools</div>
+          <div class="panel-website-h1">Sydney's Trusted<br>Pool Builders</div>
+          <div class="panel-website-sub">Custom pools, renovations & maintenance. Over 20 years of experience delivering dream backyard transformations across Sydney.</div>
+          <a class="panel-website-cta" href="#">Get a Free Quote →</a>
         </div>
-        <div style="height:40px;width:1px;background:var(--card-border);"></div>
-        <div class="trial-note">
-          <strong>Starter $149 · Growth $299 · Complete $499</strong><br>
-          Switch or cancel anytime
+        <div class="panel-chatbot-widget">
+          <div class="panel-widget-header">
+            <div class="panel-widget-avatar">🏊</div>
+            <div>
+              <div class="panel-widget-name">Aqua Blue Pools</div>
+              <div class="panel-widget-status">Online now — typically replies instantly</div>
+            </div>
+          </div>
+          <div class="panel-widget-messages">
+            <div class="panel-w-msg ai"><div class="panel-w-msg-bubble">Hi! 👋 I'm the Aqua Blue Pools assistant. Looking for a quote, or have a question about our services?</div></div>
+            <div class="panel-w-msg visitor"><div class="panel-w-msg-bubble">Hi, I need a quote for a pool renovation — resurfacing and new tiling</div></div>
+            <div class="panel-w-msg ai"><div class="panel-w-msg-bubble">Great! I'd love to help. Can I ask a few quick questions? What's the approximate size of your pool?</div></div>
+            <div class="panel-w-msg visitor"><div class="panel-w-msg-bubble">About 8m x 4m, we're in Cronulla</div></div>
+            <div class="panel-w-msg ai"><div class="panel-w-msg-bubble">Perfect — we do a lot of work in the Sutherland Shire! For an 8x4 resurface and retile, you'd be looking at $12k–$18k. Want to book a free on-site consultation?</div></div>
+          </div>
+          <div class="panel-widget-input">
+            <div class="panel-widget-input-field">Type a message...</div>
+            <button class="panel-widget-send">↑</button>
+          </div>
+        </div>
+        <div class="panel-powered-badge"><span>⚡ Powered by TradeAI Pro</span></div>
+        <div class="panel-phone-notif">
+          <div class="panel-notif-icon">🔔</div>
+          <div class="panel-notif-text">
+            <strong>🔥 Hot Lead — James Williams</strong>
+            Pool reno in Cronulla, 8x4m, budget $15k–18k. Consultation booked Tue 10am.
+            <div class="panel-notif-time">Just now • via AI Chatbot</div>
+          </div>
         </div>
       </div>
-      <a href="/login.html?tab=signup" class="btn btn-primary btn-lg">Get Started →</a>
+      <div class="panel-preview-tabs">
+        <button class="panel-preview-tab active">📱 Interactive Preview</button>
+        <button class="panel-preview-tab">▶️ Watch Demo Video</button>
+        <button class="panel-preview-tab">📸 More Screenshots</button>
+      </div>
+    </div>
+    <div class="panel-ai-gen-badge">
+      <span class="panel-sparkle">✦</span>
+      This is how it actually looks on your website
+      <span class="panel-sparkle">✦</span>
+    </div>
+  </div>
+
+  <div class="panel-section-divider"><div class="line"></div></div>
+
+  <!-- HOW IT WORKS -->
+  <div class="panel-how-section">
+    <div class="panel-section-header">
+      <div class="panel-section-label">How It Works</div>
+      <h2 class="panel-section-title">
+        <span class="warm">Live in Minutes,</span> <span class="bright">Not Days</span>
+      </h2>
+    </div>
+    <div class="panel-steps-grid" id="panel-steps-grid"></div>
+  </div>
+
+  <!-- PRICING FOOTER -->
+  <div class="panel-pricing-footer">
+    <div class="panel-pricing-card">
+      <div class="panel-pricing-amount" id="panel-pricing-amount"></div>
+      <div class="panel-pricing-period">per month</div>
+      <div class="panel-pricing-includes">
+        <span><span class="check">✓</span> Cancel anytime</span>
+      </div>
+      <button class="panel-btn-footer-cta" onclick="window.location.href='login.html?tab=signup'">Start 14 Day Free Trial →</button>
     </div>
   </div>
 </div>
+
 
 
 <script>
@@ -2171,69 +2527,314 @@ function renderTools(tools, cat) {
 // TOOL DETAIL PANEL
 // ══════════════════════════════════════════
 function openPanel(id) {
-  const tools = TOOLS_BY_INDUSTRY[currentIndustry] || CORE_TOOLS;
-  const tool = tools.find(t => t.id === id);
+  const TOOL_PANELS = {
+    'lead-bot': {
+      icon: '[chat]', title: ['AI Website', 'Chatbot'],
+      tagline: 'Your 24/7 sales team that never sleeps [sparkle]',
+      desc: 'An AI chatbot that answers customers, qualifies leads, and books jobs on your website — around the clock. It learns your business from your emails, website, and content library. Every answer goes through your approval before it goes live.',
+      benefits: ['Live chat widget embedded on your website — set up in minutes','AI responds instantly to visitors 24/7, even after hours','Qualifies leads: budget, timeline, location, project type','Books consultations directly into your calendar','Notifies you immediately of hot leads via SMS or email'],
+      price: '$79', status: 'built',
+      roi: {
+        inputs: [{id:'visitors',label:'Website visitors per month',min:50,max:2000,val:500,step:50},{id:'missed',label:'After-hours enquiries you miss',min:1,max:50,val:12,step:1},{id:'jobval',label:'Average job value',min:500,max:50000,val:4500,step:500,prefix:'$'}],
+        outputs: [{id:'leads',label:'Leads Captured',type:'warm'},{id:'afterhours',label:'After-Hours Saves',type:'cool'},{id:'booked',label:'Jobs Booked',type:'cool'},{id:'revenue',label:'Potential Revenue',type:'warm',prefix:'$'}],
+        calc: function(v){ const vis=v.visitors,mis=v.missed,job=v.jobval; const leads=Math.round(vis*0.08); const booked=Math.round(leads*0.5); const rev=booked*job; return {leads,afterhours:mis,booked,revenue:rev}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and connect your Gmail or website — AI reads your business and creates FAQs in minutes'},{icon:'[gear]',title:'Settings',desc:'Set your greeting, tone, and booking preferences. Review AI-suggested answers — nothing goes live without your OK'},{icon:'[rocket]',title:'Live',desc:'Your chatbot is live on your website — qualifying leads, booking jobs, and notifying you of hot prospects 24/7'}]
+    },
+    'social-media-manager': {
+      icon: '[phone]', title: ['Marketing &', 'Social Media'],
+      tagline: 'Your full marketing team in a single tool [sparkle]',
+      desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram. Describe your latest job, upload a photo, or let the AI pull from your content library.',
+      benefits: ['AI-generated social posts across 9 content categories','Auto-posts directly to Facebook and Instagram','AI-generated graphics via Ideogram — no design skills needed','Creates full marketing campaigns for products, offers and news','Download content for emails, flyers and community groups'],
+      price: '$79', status: 'built',
+      roi: {
+        inputs: [{id:'posts',label:'Posts per month',min:4,max:60,val:12,step:1},{id:'followers',label:'Current followers',min:50,max:10000,val:500,step:50},{id:'jobval',label:'Average job value',min:500,max:50000,val:4500,step:500,prefix:'$'}],
+        outputs: [{id:'reach',label:'Est. Monthly Reach',type:'warm'},{id:'leads',label:'Leads Generated',type:'cool'},{id:'jobs',label:'Jobs Potential',type:'cool'},{id:'revenue',label:'Revenue Opportunity',type:'warm',prefix:'$'}],
+        calc: function(v){ const reach=Math.round(v.followers*v.posts*0.15); const leads=Math.round(reach*0.02); const jobs=Math.round(leads*0.4); const rev=jobs*v.jobval; return {reach,leads,jobs,revenue:rev}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Connect your Facebook and Instagram — takes 2 minutes. AI immediately starts learning your business'},{icon:'[gear]',title:'Create',desc:'Describe your job, upload a photo, or pick a content type — AI generates professional posts and graphics instantly'},{icon:'[rocket]',title:'Post',desc:'Review your content and tap post — AI schedules and publishes to Facebook and Instagram automatically'}]
+    },
+    'email-assistant': {
+      icon: '[email]', title: ['AI Email', 'Assistant'],
+      tagline: 'Your inbox — under control, finally [sparkle]',
+      desc: 'AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See what\'s urgent, what needs attention, and what can wait — without scrolling through hundreds of messages.',
+      benefits: ['Connects to Gmail and Outlook via secure OAuth','Smart dashboard shows urgent, action-needed and low-priority emails','Tap any email to read the full detail','Supplier pricing identification — tags and tracks supplier quotes','AI draft replies ready to review and send'],
+      price: '$59', status: 'built',
+      roi: {
+        inputs: [{id:'emails',label:'Emails received per day',min:10,max:200,val:40,step:5},{id:'hours',label:'Hours spent on email per week',min:1,max:20,val:5,step:1},{id:'rate',label:'Your hourly rate',min:50,max:300,val:120,step:10,prefix:'$'}],
+        outputs: [{id:'saved',label:'Hours Saved/Month',type:'warm'},{id:'emails_triaged',label:'Emails Auto-Triaged',type:'cool'},{id:'response',label:'Faster Response',type:'cool'},{id:'value',label:'Time Value Saved',type:'warm',prefix:'$'}],
+        calc: function(v){ const saved=Math.round(v.hours*0.6*4); const triaged=Math.round(v.emails*22*0.7); const value=saved*v.rate; return {saved,emails_triaged:triaged,response:'3x',value}; }
+      },
+      steps: [{icon:'[lightning]',title:'Connect',desc:'Securely connect your Gmail or Outlook in one click — AI immediately starts reading and categorising your inbox'},{icon:'[gear]',title:'Review',desc:'Your smart dashboard shows what\'s urgent, what needs action, and what can wait — all at a glance'},{icon:'[rocket]',title:'Control',desc:'Tap into any email for full detail, use AI draft replies, and track supplier pricing — all from one place'}]
+    },
+    'strategic-plan': {
+      icon: '[target]', title: ['Strategic Plan &', 'Operations'],
+      tagline: 'Your business roadmap — ready in minutes [sparkle]',
+      desc: 'Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Bank-ready output for finance applications.',
+      benefits: ['AI-guided interview across 6 business sections','Generates full strategic plan and operational plan documents','Bank and finance-ready output — use for loans and grants','90-day interactive action plan with progress tracking','No business degree required — AI guides you through everything'],
+      price: '$69', status: 'built',
+      roi: {
+        inputs: [{id:'revenue',label:'Annual revenue target',min:50000,max:2000000,val:250000,step:10000,prefix:'$'},{id:'staff',label:'Number of staff',min:1,max:50,val:3,step:1},{id:'goals',label:'Goals for next 90 days',min:1,max:10,val:5,step:1}],
+        outputs: [{id:'time',label:'Plan Created In',type:'warm'},{id:'actions',label:'Action Items Generated',type:'cool'},{id:'sections',label:'Plan Sections',type:'cool'},{id:'saving',label:'Consultant Cost Saving',type:'warm',prefix:'$'}],
+        calc: function(v){ const actions=v.goals*4; const saving=Math.min(v.revenue*0.02,5000); return {time:'20 min',actions,sections:6,saving}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and open the strategic plan tool — no documents or preparation needed'},{icon:'[gear]',title:'Interview',desc:'Answer 6 sections of simple questions about your business — AI guides you through each one in plain English'},{icon:'[rocket]',title:'Download',desc:'Your strategic plan and 90-day action tracker are ready — download as Word or PDF, use for bank applications'}]
+    },
+    'news-digest': {
+      icon: '[news]', title: ['Industry News &', 'Updates Digest'],
+      tagline: 'Stay informed, compliant and ahead [sparkle]',
+      desc: 'Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices — plus reputable online sources — then summarises everything on an interactive dashboard personalised to your business.',
+      benefits: ['Scans your supplier emails for pricing and product updates','Monitors industry body and regulator announcements','Searches reputable online sources via AI','Interactive dashboard — tap any story for full detail','Provides blog topic suggestions for your marketing content'],
+      price: '$59', status: 'built',
+      roi: {
+        inputs: [{id:'suppliers',label:'Number of suppliers',min:1,max:50,val:8,step:1},{id:'reading',label:'Hours spent reading industry news per week',min:1,max:10,val:3,step:1},{id:'compliance',label:'Compliance updates per year (estimate)',min:1,max:20,val:5,step:1}],
+        outputs: [{id:'hours',label:'Hours Saved/Month',type:'warm'},{id:'updates',label:'Updates Monitored',type:'cool'},{id:'alerts',label:'Compliance Alerts',type:'cool'},{id:'value',label:'Time Value',type:'warm',prefix:'$'}],
+        calc: function(v){ const hours=Math.round(v.reading*0.75*4); const updates=v.suppliers*4+20; const value=hours*80; return {hours,updates,alerts:v.compliance,value}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Select your industry and connect your email — AI immediately starts scanning for relevant updates'},{icon:'[gear]',title:'Personalise',desc:'Set your suppliers, industry body preferences, and digest frequency — daily or weekly, your choice'},{icon:'[rocket]',title:'Stay Ahead',desc:'Your personalised digest appears on your dashboard — tap any story for full detail, never miss what matters'}]
+    },
+    'executive-summary': {
+      icon: '[chart]', title: ['Business Intelligence', 'Dashboard'],
+      tagline: 'Your AI business advisor — always on [sparkle]',
+      desc: 'Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software — then predicts opportunities for new products/services, analyses your local competitive landscape, and recommends how to stay ahead.',
+      benefits: ['Dashboard summarising AI activity across all active tools','Integration with MYOB and Xero for business context','AI predictive insights — new product and service opportunities','Local competitive analysis with regional and demographic data','Management and board-ready report outputs'],
+      price: '$89', status: 'built',
+      roi: {
+        inputs: [{id:'tools',label:'Tools activated',min:1,max:13,val:4,step:1},{id:'revenue',label:'Monthly revenue',min:5000,max:500000,val:30000,step:1000,prefix:'$'},{id:'decisions',label:'Business decisions per month',min:1,max:30,val:8,step:1}],
+        outputs: [{id:'insights',label:'AI Insights/Month',type:'warm'},{id:'opportunities',label:'Opportunities Identified',type:'cool'},{id:'time',label:'Analysis Hours Saved',type:'cool'},{id:'value',label:'Advisory Value',type:'warm',prefix:'$'}],
+        calc: function(v){ const insights=v.tools*12; const opps=Math.round(v.tools*2.5); const time=Math.round(v.decisions*1.5); const value=time*150; return {insights,opportunities:opps,time,value}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Connect your accounting software and activate your other tools — the more tools active, the smarter the insights'},{icon:'[gear]',title:'Configure',desc:'Set your industry, region, and reporting preferences — AI tailors analysis to your specific market and location'},{icon:'[rocket]',title:'Advise',desc:'Your AI business advisor surfaces opportunities, competitive insights, and recommendations every week'}]
+    },
+    'tender-response': {
+      icon: '[clipboard]', title: ['Tender Response', 'Generator'],
+      tagline: 'Win more tenders with less effort [sparkle]',
+      desc: 'Upload any RFT or RFQ — AI reads the requirements, searches your content library for relevant experience, certifications, and project history, then generates a professional tender response ready to submit.',
+      benefits: ['Upload any RFT or RFQ — AI reads and breaks down requirements','Searches your content library for relevant experience and certifications','Generates a complete professional tender response document','AI-assisted editing with expand, formalise and strengthen buttons','Download as PDF or Word — ready to submit'],
+      price: '$99', status: 'pending',
+      roi: {
+        inputs: [{id:'tenders',label:'Tenders submitted per year',min:1,max:50,val:8,step:1},{id:'value',label:'Average tender value',min:5000,max:2000000,val:50000,step:5000,prefix:'$'},{id:'winrate',label:'Current win rate (%)',min:5,max:80,val:20,step:5}],
+        outputs: [{id:'time',label:'Hours Saved Per Tender',type:'warm'},{id:'winlift',label:'Win Rate Improvement',type:'cool'},{id:'extra',label:'Extra Wins Per Year',type:'cool'},{id:'revenue',label:'Revenue Uplift',type:'warm',prefix:'$'}],
+        calc: function(v){ const extra=Math.round(v.tenders*(0.35-v.winrate/100)); const revenue=Math.max(0,extra)*v.value; return {time:'8 hrs',winlift:'+35%',extra:Math.max(0,extra),revenue:Math.max(0,revenue)}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and upload your first RFT or RFQ — AI reads the full document in seconds'},{icon:'[gear]',title:'Generate',desc:'AI searches your content library for relevant experience and generates a complete professional response automatically'},{icon:'[rocket]',title:'Submit',desc:'Review with AI-assisted editing, download as PDF or Word, and submit — your most professional tender yet'}]
+    },
+    'quote-enhancer': {
+      icon: '', title: ['Quote', 'Enhancer'],
+      tagline: 'Every quote looking like a premium operator [sparkle]',
+      desc: 'Enter your line items and prices — AI transforms them into a professional branded quote. Detailed scope of works, warranty terms, payment milestones, exclusions, and a cover page with your branding.',
+      benefits: ['AI writes detailed scope of works from your line items','AI-generated warranty language from your warranty library','Trade-specific exclusions that protect against scope creep','Professional branded cover page from your business profile','Download as PDF or Word, or send directly to the customer'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'quotes',label:'Quotes sent per month',min:1,max:50,val:10,step:1},{id:'value',label:'Average quote value',min:500,max:100000,val:8000,step:500,prefix:'$'},{id:'conversion',label:'Current conversion rate (%)',min:5,max:80,val:25,step:5}],
+        outputs: [{id:'time',label:'Hours Saved/Month',type:'warm'},{id:'lift',label:'Conversion Lift',type:'cool'},{id:'extra',label:'Extra Jobs Won',type:'cool'},{id:'revenue',label:'Revenue Uplift',type:'warm',prefix:'$'}],
+        calc: function(v){ const extra=Math.round(v.quotes*(0.40-v.conversion/100)); const revenue=Math.max(0,extra)*v.value; return {time:'6 hrs',lift:'+40%',extra:Math.max(0,extra),revenue:Math.max(0,revenue)}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and enter your business details — AI sets up your branded quote template automatically'},{icon:'[gear]',title:'Input',desc:'Enter your line items and prices, or upload your existing quote — AI enhances with scope, warranty and exclusions'},{icon:'[rocket]',title:'Send',desc:'Review your professional branded quote and send directly to your customer — watch your conversion rate climb'}]
+    },
+    'swms': {
+      icon: '', title: ['SWMS &', 'Safety Docs'],
+      tagline: 'Compliant safety docs in minutes, not hours [sparkle]',
+      desc: 'Describe the job and AI generates a Safe Work Method Statement specific to the work, your trade, and your state — hazards, risks, controls, PPE, emergency procedures. Workers sign off on-site with digital signatures.',
+      benefits: ['AI generates job-specific SWMS, inductions, toolbox talks and risk assessments','State and territory compliant — correct WHS legislation per state','Digital signature capture on-site — workers sign on phone or tablet','Template library builds over time — gets smarter with every job','Mandatory review step ensures quality before download'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'jobs',label:'Jobs per month',min:1,max:100,val:15,step:1},{id:'docs',label:'Safety docs per job',min:1,max:5,val:2,step:1},{id:'time',label:'Current time per doc (mins)',min:10,max:120,val:45,step:5}],
+        outputs: [{id:'hours',label:'Hours Saved/Month',type:'warm'},{id:'docs_gen',label:'Docs Generated',type:'cool'},{id:'compliant',label:'Compliance Rate',type:'cool'},{id:'value',label:'Time Value Saved',type:'warm',prefix:'$'}],
+        calc: function(v){ const totalMins=v.jobs*v.docs*v.time; const savedMins=totalMins*0.8; const hours=Math.round(savedMins/60); const value=hours*80; return {hours,docs_gen:v.jobs*v.docs,compliant:'100%',value}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and set your trade and state — AI loads the correct WHS requirements for your location'},{icon:'[gear]',title:'Generate',desc:'Describe the job and AI generates a complete, compliant SWMS in under 2 minutes — review and edit as needed'},{icon:'[rocket]',title:'Sign Off',desc:'Workers sign digitally on their phone on-site — no paper, no delays, full compliance documentation saved automatically'}]
+    },
+    'customer-updates': {
+      icon: '[camera]', title: ['Customer Progress', 'Updates'],
+      tagline: 'No more anxious customers calling for updates [sparkle]',
+      desc: 'Take photos on-site, tap send, and AI creates a professional branded progress update — what was done today, photos, and what\'s next. Your customer gets a clean update via email or a shareable link.',
+      benefits: ['Create projects with customer details and job description','Upload photos tagged to the project during the job','One-tap update generation — AI writes from your photos and notes','Customer-facing branded progress page — shareable link, no login required','Final update triggers handover documentation and review request automatically'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'projects',label:'Active projects per month',min:1,max:50,val:6,step:1},{id:'updates',label:'Updates per project',min:1,max:20,val:4,step:1},{id:'calls',label:'Customer check-in calls per week',min:1,max:30,val:8,step:1}],
+        outputs: [{id:'time',label:'Hours Saved/Month',type:'warm'},{id:'updates_sent',label:'Updates Sent',type:'cool'},{id:'calls_saved',label:'Calls Eliminated',type:'cool'},{id:'satisfaction',label:'Customer Satisfaction',type:'warm'}],
+        calc: function(v){ const updates_sent=v.projects*v.updates; const calls_saved=Math.round(v.calls*4*0.7); const time=Math.round((updates_sent*15+calls_saved*10)/60); return {time,updates_sent,calls_saved,satisfaction:'5*'}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and create your first project — add the customer name, email, and job description'},{icon:'[gear]',title:'Update',desc:'Take photos on-site and tap Send Update — AI writes a professional branded update from your photos in seconds'},{icon:'[rocket]',title:'Impress',desc:'Your customer receives a beautiful branded progress update by email — with a link they can check anytime'}]
+    },
+    'handover-docs': {
+      icon: '[package]', title: ['Handover', 'Documentation'],
+      tagline: 'End every job like a premium operator [sparkle]',
+      desc: 'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide, warranty details — everything they need.',
+      benefits: ['AI-generated handover document with trade and job-specific sections','Before and after photos from your content library automatically included','AI-generated maintenance guide for the specific work completed','Component lookup — enter product codes, AI pulls real manufacturer data','Triggers review request automatically at handover'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'jobs',label:'Jobs completed per month',min:1,max:50,val:8,step:1},{id:'value',label:'Average job value',min:500,max:100000,val:8000,step:500,prefix:'$'},{id:'referrals',label:'Referrals received per month currently',min:0,max:20,val:2,step:1}],
+        outputs: [{id:'time',label:'Hours Saved/Month',type:'warm'},{id:'referral_lift',label:'Referral Increase',type:'cool'},{id:'reviews',label:'Reviews Expected',type:'cool'},{id:'revenue',label:'Referral Revenue',type:'warm',prefix:'$'}],
+        calc: function(v){ const time=Math.round(v.jobs*1.5); const newReferrals=Math.round(v.referrals*2); const revenue=newReferrals*v.value*0.5; return {time,referral_lift:'+100%',reviews:Math.round(v.jobs*0.6),revenue}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and set up your warranty library — enter your standard warranty terms once, use on every job'},{icon:'[gear]',title:'Generate',desc:'AI pulls project photos, job data and your warranty terms to create a complete handover pack automatically'},{icon:'[rocket]',title:'Handover',desc:'Present your customer with a professional branded pack — then sit back as the review request goes out automatically'}]
+    },
+    'review-booster': {
+      icon: '*', title: ['Review & Referral', 'Booster'],
+      tagline: 'Turn happy customers into your best marketing [sparkle]',
+      desc: 'Finish a job and a branded review request is automatically sent to your customer. It follows up if they haven\'t responded, and once they leave a review, it asks if they know someone who needs your services.',
+      benefits: ['Automated branded review request emails at job completion','Configurable follow-up reminders for customers who haven\'t responded','Referral mechanic — post-review prompt with unique tracking link','Dashboard tracking: requests sent, reviews received, conversion rate','Multiple trigger options — manual, handover-linked, or accounting-linked'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'jobs',label:'Jobs completed per month',min:1,max:100,val:10,step:1},{id:'current_reviews',label:'Google reviews received per month currently',min:0,max:20,val:1,step:1},{id:'jobval',label:'Average job value',min:500,max:50000,val:5000,step:500,prefix:'$'}],
+        outputs: [{id:'reviews',label:'New Reviews/Month',type:'warm'},{id:'referrals',label:'Referrals Generated',type:'cool'},{id:'rating',label:'Est. Rating Impact',type:'cool'},{id:'revenue',label:'Referral Revenue',type:'warm',prefix:'$'}],
+        calc: function(v){ const reviews=Math.round(v.jobs*0.35); const referrals=Math.round(reviews*0.2); const revenue=referrals*v.jobval*0.6; return {reviews,referrals,rating:'+0.4*',revenue}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and paste your Google Business review link — setup takes under 2 minutes'},{icon:'[gear]',title:'Configure',desc:'Set your follow-up timing and referral message — or use the defaults, which are already optimised for tradies'},{icon:'[rocket]',title:'Grow',desc:'Review requests go out automatically after every job — watch your Google rating climb and referrals start flowing'}]
+    },
+    'design-viz': {
+      icon: '[art]', title: ['Design', 'Visualiser'],
+      tagline: 'Show customers what they\'re paying for before you start [sparkle]',
+      desc: 'Upload a site photo, describe the project, and AI generates a professional concept visualisation. Request variations — different colours, materials, or layouts — until it\'s perfect. Use it in your quotes, tenders, and marketing.',
+      benefits: ['Upload any site photo and describe the work — AI generates a concept render','Request variations — different colours, materials, layouts and styles','Renders automatically included in your quotes and tenders','Activate with your website chatbot — customers generate their own renders','Watermark option protects your brand while still wowing the customer'],
+      price: 'Coming Soon', status: 'pending',
+      roi: {
+        inputs: [{id:'quotes',label:'Quotes sent per month',min:1,max:50,val:8,step:1},{id:'value',label:'Average quote value',min:1000,max:200000,val:15000,step:1000,prefix:'$'},{id:'conversion',label:'Current quote conversion rate (%)',min:5,max:80,val:25,step:5}],
+        outputs: [{id:'renders',label:'Renders Created',type:'warm'},{id:'lift',label:'Conversion Lift',type:'cool'},{id:'extra',label:'Extra Jobs Won',type:'cool'},{id:'revenue',label:'Revenue Uplift',type:'warm',prefix:'$'}],
+        calc: function(v){ const extra=Math.round(v.quotes*(0.45-v.conversion/100)); const revenue=Math.max(0,extra)*v.value; return {renders:v.quotes*2,lift:'+45%',extra:Math.max(0,extra),revenue:Math.max(0,revenue)}; }
+      },
+      steps: [{icon:'[lightning]',title:'Activate',desc:'Start your free trial and upload your first site photo — AI is ready to generate concept renders immediately'},{icon:'[gear]',title:'Visualise',desc:'Describe the project and AI generates a professional concept render — request variations until the customer loves it'},{icon:'[rocket]',title:'Win More',desc:'Attach renders to your quotes and tenders — customers say yes faster when they can see exactly what they\'re getting'}]
+    }
+  };
+
+  const tool = TOOL_PANELS[id];
   if (!tool) return;
-  currentTool = tool;
 
-  const indName = currentIndustry === 'all' ? 'All Tools' : (INDUSTRIES[currentIndustry]?.name || '');
-  document.getElementById('panel-breadcrumb').textContent = `${indName} › ${tool.title}`;
-  document.getElementById('panel-icon').textContent = tool.icon;
-  document.getElementById('panel-badge').textContent = tool.badgeLabel;
-  document.getElementById('panel-badge').className = `tool-badge badge-${tool.badge}`;
-  document.getElementById('panel-title').textContent = tool.title;
-  document.getElementById('panel-desc').textContent = tool.desc;
-  document.getElementById('panel-gen-time').textContent = `Generated in ${Math.floor(Math.random()*20+8)} seconds`;
+  // Populate breadcrumb
+  document.getElementById('panel-breadcrumb-name').textContent = tool.title.join(' ');
 
-  const liveBadge = document.getElementById('panel-live-badge');
-  liveBadge.style.display = tool.live ? 'inline-flex' : 'none';
+  // Icon
+  document.getElementById('panel-tool-icon').textContent = tool.icon;
 
-  const benefits = document.getElementById('panel-benefits');
-  benefits.innerHTML = (tool.benefits || []).map(b => `
-    <li><span class="check-circle">✓</span><span style="color:var(--muted);">${b}</span></li>
-  `).join('');
+  // Badges
+  const badgesEl = document.getElementById('panel-tool-badges');
+  if (tool.status === 'built') {
+    badgesEl.innerHTML = '<span class="panel-badge panel-badge-live">Live Now</span>';
+  } else {
+    badgesEl.innerHTML = '<span class="panel-badge panel-badge-soon">Coming Soon</span>';
+  }
 
-  document.getElementById('panel-example').textContent = tool.example || 'Example coming soon.';
+  // Title
+  document.getElementById('panel-tool-title').innerHTML = '<span class="line1">' + tool.title[0] + '</span><br><span class="line2">' + tool.title[1] + '</span>';
 
-  // ROI calc
-  document.getElementById('roi-label-1').textContent = tool.roiLabel1 || 'Quantity per month';
-  document.getElementById('roi-label-2').textContent = tool.roiLabel2 || 'Hours each currently';
-  document.getElementById('roi-range-1').value = tool.roiDefault1 || 10;
-  document.getElementById('roi-range-2').value = tool.roiDefault2 || 2;
-  updateROI();
+  // Tagline
+  document.getElementById('panel-tool-tagline').textContent = tool.tagline;
 
-  document.getElementById('panel-overlay').classList.add('open');
+  // Desc
+  document.getElementById('panel-tool-desc').textContent = tool.desc;
+
+  // Benefits
+  document.getElementById('panel-benefits-list').innerHTML = tool.benefits.map(b =>
+    '<li class="panel-benefit-item"><span class="panel-benefit-icon">[check]</span>' + b + '</li>'
+  ).join('');
+
+  // Price
+  const priceEl = document.getElementById('panel-price-inline');
+  if (tool.price === 'Coming Soon') {
+    priceEl.innerHTML = '<span style="font-size:18px;color:rgba(255,255,255,0.6)">Coming Soon</span>';
+  } else {
+    priceEl.innerHTML = tool.price + '<span>/mth</span>';
+  }
+
+  // Pricing footer amount
+  document.getElementById('panel-pricing-amount').innerHTML = tool.price === 'Coming Soon' ? '<span style="font-size:32px">Coming Soon</span>' : tool.price;
+
+  // ROI Calculator
+  const calcFields = document.getElementById('panel-calc-fields');
+  calcFields.innerHTML = tool.roi.inputs.map(inp =>
+    '<div class="panel-calc-field">' +
+    '<div class="panel-calc-label">' + inp.label + '</div>' +
+    '<div class="panel-calc-value" id="pv-' + inp.id + '">' + (inp.prefix || '') + inp.val.toLocaleString() + '</div>' +
+    '<input type="range" class="panel-range-slider" id="ps-' + inp.id + '" min="' + inp.min + '" max="' + inp.max + '" value="' + inp.val + '" step="' + inp.step + '" oninput="updatePanelCalc('' + id + '')">' +
+    '</div>'
+  ).join('');
+
+  const resultGrid = document.getElementById('panel-result-grid');
+  resultGrid.innerHTML = tool.roi.outputs.map(out =>
+    '<div class="panel-result-item ' + out.type + '"><div class="panel-result-value" id="pr-' + out.id + '">—</div><div class="panel-result-label">' + out.label + '</div></div>'
+  ).join('');
+
+  // Store current tool for calc updates
+  window._currentPanelTool = id;
+  window._TOOL_PANELS = TOOL_PANELS;
+  updatePanelCalc(id);
+
+  // Steps
+  const stepsGrid = document.getElementById('panel-steps-grid');
+  const svgGraphics = [
+    // Step 1 — Activate (plug/socket)
+    '<svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="panel-step-svg"><rect x="35" y="20" width="50" height="40" rx="8" fill="#fff" stroke="#c4622a" stroke-width="2"/><rect x="47" y="30" width="8" height="12" rx="2" fill="#c4622a" class="svg-pulse-1"/><rect x="65" y="30" width="8" height="12" rx="2" fill="#c4622a" class="svg-pulse-1"/><rect x="52" y="50" width="16" height="22" rx="4" fill="#d4844a" class="svg-plug"/><rect x="55" y="58" width="4" height="8" rx="1" fill="#fff"/><rect x="61" y="58" width="4" height="8" rx="1" fill="#fff"/><line x1="20" y1="38" x2="32" y2="38" stroke="#d4a04a" stroke-width="2" stroke-dasharray="3 3" class="svg-spark"/><line x1="88" y1="38" x2="100" y2="38" stroke="#d4a04a" stroke-width="2" stroke-dasharray="3 3" class="svg-spark"/><circle cx="18" cy="28" r="3" fill="#d4a04a" class="svg-star-1"/><circle cx="102" cy="48" r="2.5" fill="#d4844a" class="svg-star-2"/></svg>',
+    // Step 2 — Settings (sliders)
+    '<svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="panel-step-svg"><rect x="15" y="12" width="90" height="56" rx="8" fill="#fff" stroke="#b8851a" stroke-width="1.5"/><rect x="26" y="28" width="68" height="5" rx="2.5" fill="#f3e0c0"/><rect x="26" y="28" width="38" height="5" rx="2.5" fill="#d4a04a" class="svg-bar-1"/><circle cx="64" cy="30.5" r="6" fill="#c4622a" class="svg-knob-1"/><rect x="26" y="44" width="68" height="5" rx="2.5" fill="#f3e0c0"/><rect x="26" y="44" width="52" height="5" rx="2.5" fill="#d4a04a" class="svg-bar-2"/><circle cx="78" cy="46.5" r="6" fill="#c4622a" class="svg-knob-2"/><circle cx="96" cy="18" r="8" fill="#4ade80"/><polyline points="92,18 95,21 100,15" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-check"/></svg>',
+    // Step 3 — Live (rocket)
+    '<svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="panel-step-svg"><path d="M 30 60 Q 60 10 90 60" stroke="#3a6d94" stroke-width="2" fill="none" opacity="0.3" class="svg-arc-3"/><path d="M 38 60 Q 60 20 82 60" stroke="#2c5a82" stroke-width="2" fill="none" opacity="0.5" class="svg-arc-2"/><path d="M 46 60 Q 60 30 74 60" stroke="#1e3a5f" stroke-width="2.5" fill="none" class="svg-arc-1"/><g class="svg-rocket"><ellipse cx="60" cy="36" rx="8" ry="14" fill="#2c5a82"/><polygon points="60,22 55,30 65,30" fill="#1e3a5f"/><rect x="52" y="44" width="5" height="8" rx="2" fill="#3a6d94"/><rect x="63" y="44" width="5" height="8" rx="2" fill="#3a6d94"/><ellipse cx="60" cy="38" rx="4" ry="4" fill="#8ab4cc" opacity="0.8"/><ellipse cx="60" cy="54" rx="4" ry="6" fill="#c4622a" class="svg-flame"/><ellipse cx="60" cy="55" rx="2.5" ry="4" fill="#d4a04a" class="svg-flame-inner"/></g><circle cx="22" cy="30" r="2.5" fill="#d4a04a" class="svg-sparkle-a"/><circle cx="98" cy="25" r="2" fill="#2c5a82" class="svg-sparkle-b"/><circle cx="95" cy="55" r="2" fill="#d4844a" class="svg-sparkle-c"/></svg>'
+  ];
+  stepsGrid.innerHTML = tool.steps.map((step, i) =>
+    '<div class="panel-step-card">' +
+    '<div class="panel-step-num">' + (i+1) + '</div>' +
+    '<div class="panel-step-graphic">' + svgGraphics[i] + '</div>' +
+    '<div class="panel-step-title">' + step.title + '</div>' +
+    '<div class="panel-step-desc">' + step.desc + '</div>' +
+    '</div>'
+  ).join('');
+
+  // Open panel
+  const overlay = document.getElementById('panel-overlay');
+  overlay.classList.add('open');
+  overlay.scrollTop = 0;
   document.body.style.overflow = 'hidden';
+
+  // Start bundle rotator
+  startBundleRotator();
 }
 
-function goBack() {
-      const panel = document.getElementById('panel-overlay');
-      if (panel && panel.classList.contains('open')) {
-        closePanel();
-        if (window._cameFromExternal) {
-          if (document.referrer && !document.referrer.includes('prototype')) {
-            window.location.href = document.referrer;
-          }
+function updatePanelCalc(id) {
+  const TOOL_PANELS = window._TOOL_PANELS;
+  if (!TOOL_PANELS || !TOOL_PANELS[id]) return;
+  const tool = TOOL_PANELS[id];
+  const vals = {};
+  tool.roi.inputs.forEach(inp => {
+    const el = document.getElementById('ps-' + inp.id);
+    if (el) {
+      vals[inp.id] = parseInt(el.value);
+      const valEl = document.getElementById('pv-' + inp.id);
+      if (valEl) valEl.textContent = (inp.prefix || '') + vals[inp.id].toLocaleString();
+    }
+  });
+  const results = tool.roi.calc(vals);
+  tool.roi.outputs.forEach(out => {
+    const el = document.getElementById('pr-' + out.id);
+    if (el) {
+      const v = results[out.id];
+      if (typeof v === 'number') {
+        if (out.prefix) {
+          el.textContent = out.prefix + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? Math.round(v/1000)+'k' : v.toLocaleString());
+        } else {
+          el.textContent = v.toLocaleString();
         }
-        return;
-      }
-      const dashboard = document.getElementById('screen-dashboard');
-      if (dashboard && dashboard.style.display !== 'none') {
-        const landing = document.getElementById('screen-landing');
-        if (landing) {
-          dashboard.style.display = 'none';
-          landing.style.display = '';
-          window.scrollTo(0, 0);
-          return;
-        }
-      }
-      if (document.referrer && document.referrer !== window.location.href) {
-        window.history.back();
       } else {
-        window.location.href = '/';
+        el.textContent = v;
       }
     }
-    function closePanel() {
+  });
+}
+
+function startBundleRotator() {
+  if (window._bundleRotatorInterval) clearInterval(window._bundleRotatorInterval);
+  const items = document.querySelectorAll('.bundle-rotator-item');
+  if (!items.length) return;
+  let current = 0;
+  window._bundleRotatorInterval = setInterval(() => {
+    items[current].classList.remove('active');
+    items[current].classList.add('exit');
+    setTimeout(() => { items[current].classList.remove('exit'); }, 600);
+    current = (current + 1) % items.length;
+    items[current].classList.add('active');
+  }, 3200);
+}
+function closePanel() {
   document.getElementById('panel-overlay').classList.remove('open');
   document.body.style.overflow = '';
 }
