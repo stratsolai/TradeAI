@@ -281,13 +281,8 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 32px rgba(232,80,10,0.15);
   }
-  .tool-card.coming-soon {
-    opacity: 0.7;
-  }
-  .tool-card.coming-soon:hover {
-    border-color: var(--card-border-hover);
-    transform: none;
-  }
+  .tool-card.coming-soon { opacity: 1; }
+  
   .tool-top {
     display: flex; align-items: flex-start; justify-content: space-between;
     margin-bottom: 12px;
@@ -307,7 +302,7 @@
   .badge-quick { background: rgba(232,80,10,0.15); color: var(--orange); border: 1px solid rgba(232,80,10,0.25); }
   .badge-popular { background: rgba(34,201,122,0.12); color: var(--green); border: 1px solid rgba(34,201,122,0.25); }
   .badge-advanced { background: rgba(26,84,144,0.25); color: #60a5fa; border: 1px solid rgba(96,165,250,0.25); }
-  .badge-soon { background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--card-border); }
+  .badge-soon { background: rgba(232,80,10,0.12); color: var(--orange); border: 1px solid rgba(232,80,10,0.3); }
 
   .tool-card h3 {
     font-family: 'Barlow Condensed', sans-serif;
@@ -547,67 +542,67 @@
   <div class="industries-grid">
     <div class="industry-card" onclick="selectIndustry('pool')">
       <span class="industry-icon">🏊</span>
-      <span class="industry-count">20 tools</span>
+      <span class="industry-count">17 tools</span>
       <h3>Pool Building</h3>
       <p>Residential and commercial pool construction, renovation and maintenance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('hvac')">
       <span class="industry-icon">❄️</span>
-      <span class="industry-count">20 tools</span>
+      <span class="industry-count">17 tools</span>
       <h3>HVAC & Refrigeration</h3>
       <p>Air conditioning, heating, ventilation and refrigeration services</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('electrical')">
       <span class="industry-icon">⚡</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Electrical Contracting</h3>
       <p>Residential and commercial electrical installation, testing and maintenance</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('fabrication')">
       <span class="industry-icon">🔩</span>
-      <span class="industry-count">20 tools</span>
+      <span class="industry-count">17 tools</span>
       <h3>Metal Fabrication</h3>
       <p>Custom fabrication, welding, structural steel and sheet metal work</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('plumbing')">
       <span class="industry-icon">🔧</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Plumbing</h3>
       <p>Residential and commercial plumbing, gas fitting and drainage</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('construction')">
       <span class="industry-icon">🏗️</span>
-      <span class="industry-count">20 tools</span>
+      <span class="industry-count">17 tools</span>
       <h3>Construction</h3>
       <p>Residential and commercial building, renovations and project management</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('landscaping')">
       <span class="industry-icon">🌿</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Landscaping</h3>
       <p>Garden design, hardscaping, irrigation and outdoor living spaces</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('cleaning')">
       <span class="industry-icon">✨</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Commercial Cleaning</h3>
       <p>Commercial, industrial and strata cleaning services</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('manufacturing')">
       <span class="industry-icon">🏭</span>
-      <span class="industry-count">20 tools</span>
+      <span class="industry-count">17 tools</span>
       <h3>Manufacturing</h3>
       <p>Product manufacturing, assembly, packaging and distribution</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('concreting')">
       <span class="industry-icon">🚧</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Concreting</h3>
       <p>Residential and commercial concrete, driveways, paths and slabs</p>
     </div>
     <div class="industry-card" onclick="selectIndustry('handyman')">
       <span class="industry-icon">🔨</span>
-      <span class="industry-count">19 tools</span>
+      <span class="industry-count">16 tools</span>
       <h3>Handyman Services</h3>
       <p>General repairs, maintenance and multi-trade property services</p>
     </div>
@@ -819,7 +814,7 @@ const CORE_TOOLS = [
   {
     id: "lead-bot", cat: "Sales & Quotes", icon: "💬", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "AI Website Chatbot",
-    desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs — 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself — whatever works for you. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
+    desc: "AI chatbot for your website that answers customers, qualifies leads, and books jobs 24/7. It learns your business from your emails, website, content library, or FAQs you add yourself. Every answer goes through your approval before it goes live.",
     live: true,
     roiLabel1: "Website visitors/month", roiLabel2: "Leads per month", roiDefault1: 500, roiDefault2: 15,
     benefits: [
@@ -853,7 +848,7 @@ You wake up to a confirmed appointment.`,
   {
     id: "social-media-manager", cat: "Marketing", icon: "📱", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Marketing & Social Media Manager",
-    desc: "Your marketing team in a tool. Describe your latest job, upload a photo, or let the AI pull from your content library — it creates professional social posts, AI-generated graphics, and full marketing campaigns. Promote new products/services, seasonal offers, or industry news — the AI creates it all. Auto-posts to Facebook and Instagram, or download for community groups, emails, and anywhere else.",
+    desc: "Your marketing team in a tool. Upload a photo, describe your latest job, or let AI pull from your content library. It creates professional social posts, AI-generated graphics, and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.",
     live: true,
     roiLabel1: "Posts per month", roiLabel2: "Minutes per post currently", roiDefault1: 20, roiDefault2: 25,
     benefits: [
@@ -884,7 +879,7 @@ and a heated spa.
   {
     id: "email-assistant", cat: "Operations", icon: "📧", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "AI Email Assistant",
-    desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything — what’s urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters.",
+    desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything — what's urgent, what needs attention, and what can wait. Tap into any email to read the detail.",
     live: true,
     roiLabel1: "Emails per day", roiLabel2: "Minutes on email daily", roiDefault1: 60, roiDefault2: 45,
     benefits: [
@@ -913,7 +908,7 @@ AI has drafted replies for the urgent items.
   },
   {
     id: "strategic-plan", cat: "Business Intelligence", icon: "🎯", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
-    title: "Strategic Plan Generator",
+    title: "Strategic Plan & Operations Dashboard",
     desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
     live: true,
     roiLabel1: "Plans created per year", roiLabel2: "Hours per plan manually", roiDefault1: 2, roiDefault2: 30,
@@ -947,8 +942,8 @@ Q4: Launch maintenance service
   },
   {
     id: "news-digest", cat: "Business Intelligence", icon: "📰", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
-    title: "Industry News Digest",
-    desc: "Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices — plus searches reputable online sources — then summarises everything on an interactive dashboard. It’s personalised to your business, not generic news. Tap into any story to read more. Stay informed, stay compliant, stay ahead.",
+    title: "Industry News & Updates Digest",
+    desc: "Not another newsletter. AI scans reputable online sources and summarises everything on an interactive dashboard personalised to your business. Tap into any story to read more. Stay informed, stay compliant, stay ahead.",
     live: true,
     roiLabel1: "Hours on news weekly", roiLabel2: "Important updates missed/month", roiDefault1: 3, roiDefault2: 5,
     benefits: [
@@ -978,7 +973,7 @@ deadline 15 March. Submit your best jobs.
   {
     id: "executive-summary", cat: "Business Intelligence", icon: "📊", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Business Intelligence Dashboard",
-    desc: "Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software — then goes further. AI predicts opportunities for new products/services, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.",
+    desc: "Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software. AI predicts opportunities, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.",
     live: true,
     roiLabel1: "Hours on weekly reporting", roiLabel2: "Reports per month", roiDefault1: 4, roiDefault2: 5,
     benefits: [
@@ -1007,9 +1002,9 @@ TOTAL AI TIME SAVED: 63 hours
 Value: $5,355 @ $85/hr`,
   },
   {
-    id: "quote-gen", cat: "Sales & Quotes", icon: "📋", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
-    title: "Quote Generator",
-    desc: "Turn hours of quoting into minutes. Professional quotes with GST, payment schedules and warranty terms — sent as PDF.",
+    id: "quote-enhancer", cat: "Sales & Quotes", icon: "📋", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
+    title: "Quote Enhancer",
+    desc: "Enter your line items and prices and AI transforms them into a professional branded quote. Detailed scope of works, warranty terms, payment milestones, exclusions, and a cover page with your branding. Every quote looks like it came from a premium operator.",
     live: false,
     roiLabel1: "Quotes per month", roiLabel2: "Hours per quote currently", roiDefault1: 12, roiDefault2: 3.5,
     benefits: [
@@ -1046,7 +1041,7 @@ Warranty: 7 years structural, 2 years equipment
   {
     id: "customer-updates", cat: "Operations", icon: "📲", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Customer Progress Updates",
-    desc: "Automatically send weekly progress updates with photos to every active customer. Eliminate 'where are you up to?' calls forever.",
+    desc: "Take photos on-site, tap send, and AI creates a professional branded progress update for your customer. What was done today, photos, and what's next. Your customer gets a clean update via email or a shareable link they can check anytime.",
     live: false,
     roiLabel1: "Active projects", roiLabel2: "Mins per update currently", roiDefault1: 10, roiDefault2: 20,
     benefits: [
@@ -1078,7 +1073,7 @@ Any questions? Reply to this email.
   {
     id: "swms", cat: "Documents & Admin", icon: "📄", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "SWMS & Safety Docs",
-    desc: "Generate compliant Safe Work Method Statements and site inductions for every job in minutes — not hours.",
+    desc: "Describe the job and AI generates a Safe Work Method Statement specific to the work, your trade, and your state. Workers sign off on-site with digital signatures. Build a library of templates that get smarter with every job.",
     live: false,
     roiLabel1: "Jobs per month", roiLabel2: "Hours on safety docs", roiDefault1: 8, roiDefault2: 1.5,
     benefits: [
@@ -1106,35 +1101,10 @@ Controls:
 
 Signed: Mark Chen — 17/02/2026 ✓
 Signed: Worker 1 — 17/02/2026 ✓`,
-  },
-  {
-    id: "invoice-auto", cat: "Financial Management", icon: "💰", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
-    title: "Invoice Automation",
-    desc: "Automatically generate and send progress invoices when job milestones are hit. Get paid faster with less chasing.",
-    live: false,
-    roiLabel1: "Invoices per month", roiLabel2: "Hours on invoicing", roiDefault1: 20, roiDefault2: 0.75,
-    benefits: [
-      "Auto-generates invoices when milestones are marked complete",
-      "Sends invoice + payment link to customer automatically",
-      "Follows up overdue invoices without you lifting a finger",
-      "Syncs with Xero and MYOB",
-    ],
-    example: `TAX INVOICE — Progress Claim #2
-Shell Completion
-
-Due: $19,976 (inc GST)
-
-[Pay Now — bank link included]
-
-Auto-reminder schedule:
-• Due date reminder: 3 days prior
-• Overdue reminder: Day 1
-• Second reminder: Day 7`,
-  },
-  {
+  }{
     id: "review-booster", cat: "Marketing", icon: "⭐", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
     title: "Review & Referral Booster",
-    desc: "Automatically ask happy customers for Google reviews at the perfect moment. Double your reviews without any manual effort.",
+    desc: "Finish a job and a branded review request is automatically sent to your customer. It follows up if they haven't responded, and once they leave a review, it asks if they know someone who needs your services. The easiest way to build your online reputation.",
     live: false,
     roiLabel1: "Jobs completed/month", roiLabel2: "Reviews per month currently", roiDefault1: 6, roiDefault2: 1,
     benefits: [
@@ -1160,7 +1130,7 @@ We're offering a $500 referral bonus.`,
   {
     id: "handover-docs", cat: "Documents & Admin", icon: "📦", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
     title: "Handover Documentation",
-    desc: "Generate a complete branded handover pack — maintenance guides, warranty docs and operation manuals — for every customer.",
+    desc: "Hand your customer a professional branded pack at job completion. Project summary, before and after photos, maintenance guide, warranty details. Add key components and AI searches the manufacturer for real maintenance details and warranty terms.",
     live: false,
     roiLabel1: "Jobs completed/month", roiLabel2: "Hours on handover docs", roiDefault1: 6, roiDefault2: 1.5,
     benefits: [
@@ -1190,7 +1160,7 @@ Equipment: 2 years (registered ✓)`,
   {
     id: "tender-response", cat: "Sales & Quotes", icon: "📑", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Tender Response Generator",
-    desc: "AI reads RFT/RFQ documents, searches your files, and generates full responses. Win more government and commercial contracts.",
+    desc: "Upload any RFT or RFQ and AI reads the requirements, searches your content library for relevant experience, then generates a professional tender response. Review it with AI-assisted editing. Download as PDF or Word.",
     live: false,
     roiLabel1: "Tenders per year", roiLabel2: "Hours per tender currently", roiDefault1: 12, roiDefault2: 25,
     benefits: [
@@ -1216,64 +1186,10 @@ AI generated response:
 Your review time: 2-3 hours
 
 Win probability: 65-75% ✓`,
-  },
-  {
-    id: "smart-scheduling", cat: "Operations", icon: "📅", badge: "popular", badgeLabel: "🔥 Popular", isIndustrySpecific: false,
-    title: "Smart Job Scheduling",
-    desc: "AI optimises your crew schedule around weather, equipment and subcontractors. Stop the chaos of last-minute changes.",
-    live: false,
-    roiLabel1: "Active jobs at once", roiLabel2: "Hours/week on scheduling", roiDefault1: 8, roiDefault2: 6,
-    benefits: [
-      "Optimises schedule around weather forecasts automatically",
-      "Coordinates subcontractor timing",
-      "Sends automated crew notifications via SMS",
-      "Predicts completion date based on pace",
-    ],
-    example: `WEEK SCHEDULE — 17 Feb 2026
-
-MON: CREW A → Thompson job — Tiling Day 1
-     CREW B → Rodriguez — Excavation
-
-TUE: CREW A → Thompson — Tiling Day 2
-     Subcontractor: Electrician at Williams job
-
-WED: 🌧️ Rain forecast
-⚠️ Chen excavation moved to Friday
-   Both crews on sheltered work
-   → Customers notified automatically
-
-Schedule updated. All parties SMS'd.`,
-  },
-  {
-    id: "website-content", cat: "Marketing", icon: "✍️", badge: "quick", badgeLabel: "⚡ Quick Win", isIndustrySpecific: false,
-    title: "Website Content Writer",
-    desc: "Generates service pages, About Us copy AND auto-converts your Industry News Digest into SEO blog posts. Content on autopilot.",
-    live: false,
-    roiLabel1: "Pages/posts per year", roiLabel2: "Hours per page currently", roiDefault1: 24, roiDefault2: 2.5,
-    benefits: [
-      "Generates About Us, Services and Product pages",
-      "Auto-converts news digest items into SEO blog posts",
-      "2-4 blog posts per week from industry updates",
-      "SEO-optimised with keywords for local search",
-    ],
-    example: `BLOG POST AUTO-GENERATED
-From: Industry News Digest
-
-Title: "New $5,000 Pool Safety Grants Available 
-in Queensland — Is Your Pool Eligible?"
-
-SEO keywords: pool safety grants QLD 2026
-Meta: Queensland homeowners with pre-2010 
-pools can now access $5,000 grants...
-
-[800-word article generated]
-[Scheduled to publish Friday 9:00 AM]
-[Social share version created]`,
-  },
-  {
+  }{
     id: "design-viz", cat: "Sales & Quotes", icon: "🎨", badge: "advanced", badgeLabel: "✨ Advanced", isIndustrySpecific: false,
     title: "Design Visualiser",
-    desc: "Upload a photo of the customer's backyard and show them exactly what the finished result will look like. Close more sales with less effort.",
+    desc: "Upload a site photo, describe the project, and AI generates a professional concept visualisation. Request variations with different colours, materials, or layouts. Use it in your quotes, tenders, and marketing. Activate it with your website chatbot for customer-facing renders.",
     live: false,
     roiLabel1: "Quotes sent per month", roiLabel2: "Current close rate %", roiDefault1: 12, roiDefault2: 35,
     benefits: [
@@ -2246,8 +2162,7 @@ function renderTools(tools, cat) {
       <p>${tool.desc}</p>
       <div class="tool-actions">
         <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openPanel('${tool.id}')">See Demo →</button>
-        ${!tool.live ? `<span style="font-size:12px;color:var(--muted);margin-left:auto;">Coming soon</span>` : ''}
-      </div>
+        </div>
     </div>
   `}).join('');
 }
