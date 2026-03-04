@@ -24,7 +24,7 @@ const CORE_TOOLS = [
     category: "marketing",
     category_label: "Marketing",
     title: ["AI Website", "Chatbot"],
-    tagline: "Never miss a lead again",
+    tagline: "Your 24/7 sales team that never sleeps ✨",
     desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs - 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
     price: "$79",
     benefits: [
