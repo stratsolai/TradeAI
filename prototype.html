@@ -1390,6 +1390,16 @@
     .cta-row { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
 
+
+.panel-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none; align-items: flex-end;
+    backdrop-filter: blur(4px);
+    overflow: hidden;
+  }
+.panel-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
 </style>
 </head>
 <body>
@@ -1515,6 +1525,7 @@
 <!-- ══════════════════════════════════════════
      TOOL DETAIL PANEL (full-screen slide-up)
 ══════════════════════════════════════════ -->
+<div id="panel-overlay">
 <div class="panel">
   <div class="atmo"></div>
   <div class="organic-shape s1"></div>
@@ -1528,7 +1539,7 @@
       <span class="sep">›</span>
       <a href="#">All Tools</a>
       <span class="sep">›</span>
-      <span class="current">AI Website Chatbot</span>
+      <span class="current" id="panel-breadcrumb">AI Website Chatbot</span>
     </div>
     <div class="bundle-rotator">
       <span class="bundle-rotator-icon">📦</span>
@@ -1546,21 +1557,21 @@
   <div class="panel-hero">
     <div class="hero-left">
       <div class="tool-meta">
-        <div class="tool-icon-wrap">💬</div>
+        <div class="tool-icon-wrap" id="panel-icon">💬</div>
         <div class="tool-badges">
-          <span class="badge badge-live">Live Now</span>
+          <span class="badge badge-live" id="panel-live-badge">Live Now</span>
           <span class="badge badge-quick">⚡ Quick Win</span>
         </div>
       </div>
 
-      <h1 class="tool-title">
+      <h1 class="tool-title" id="panel-title">
         <span class="line1">AI Website</span><br>
         <span class="line2">Chatbot</span>
       </h1>
       <div class="tool-tagline">Your 24/7 sales team that never sleeps ✨</div>
-      <p class="tool-desc">An AI chatbot that answers customers, qualifies leads, and books jobs on your website — around the clock. It learns your business from your emails, website, and content library. Every answer goes through your approval before it goes live.</p>
+      <p class="tool-desc" id="panel-desc">An AI chatbot that answers customers, qualifies leads, and books jobs on your website — around the clock. It learns your business from your emails, website, and content library. Every answer goes through your approval before it goes live.</p>
 
-      <ul class="benefits-list">
+      <ul class="benefits-list" id="panel-benefits">
         <li class="benefit-item"><span class="benefit-icon">✓</span>Live chat widget embedded on your website — set up in minutes</li>
         <li class="benefit-item"><span class="benefit-icon">✓</span>AI responds instantly to visitors 24/7, even after hours</li>
         <li class="benefit-item"><span class="benefit-icon">✓</span>Qualifies leads: budget, timeline, location, project type</li>
@@ -1809,6 +1820,9 @@
       <button class="btn-footer-cta">Start 14 Day Free Trial →</button>
     </div>
   </div>
+</div>
+
+
 </div>
 
 
@@ -3216,6 +3230,42 @@ function renderTools(tools, cat) {
 // ══════════════════════════════════════════
 // TOOL DETAIL PANEL
 // ══════════════════════════════════════════
+
+function openPanel(id) {
+  const tools = TOOLS_BY_INDUSTRY[currentIndustry] || CORE_TOOLS;
+  const tool = tools.find(t => t.id === id);
+  if (!tool) return;
+  currentTool = tool;
+
+  const indName = currentIndustry === 'all' ? 'All Tools' : (INDUSTRIES[currentIndustry]?.name || '');
+  document.getElementById('panel-breadcrumb').textContent = `${indName} › ${tool.title}`;
+  document.getElementById('panel-icon').textContent = tool.icon;
+  document.getElementById('panel-badge').textContent = tool.badgeLabel;
+  document.getElementById('panel-badge').className = `tool-badge badge-${tool.badge}`;
+  document.getElementById('panel-title').textContent = tool.title;
+  document.getElementById('panel-desc').textContent = tool.desc;
+  document.getElementById('panel-gen-time').textContent = `Generated in ${Math.floor(Math.random()*20+8)} seconds`;
+
+  const liveBadge = document.getElementById('panel-live-badge');
+  liveBadge.style.display = tool.live ? 'inline-flex' : 'none';
+
+  const benefits = document.getElementById('panel-benefits');
+  benefits.innerHTML = (tool.benefits || []).map(b => `
+    <li><span class="check-circle">✓</span><span style="color:var(--muted);">${b}</span></li>
+  `).join('');
+
+  document.getElementById('panel-example').textContent = tool.example || 'Example coming soon.';
+
+  // ROI calc
+  document.getElementById('roi-label-1').textContent = tool.roiLabel1 || 'Quantity per month';
+  document.getElementById('roi-label-2').textContent = tool.roiLabel2 || 'Hours each currently';
+  document.getElementById('roi-range-1').value = tool.roiDefault1 || 10;
+  document.getElementById('roi-range-2').value = tool.roiDefault2 || 2;
+  updateROI();
+
+  document.getElementById('panel-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
 
 function updateCalc() {
   const visitors = parseInt(document.getElementById('visitors').value);
