@@ -60,8 +60,8 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 /* HERO */
 .hero{position:relative;z-index:5;text-align:center;padding:44px 48px 28px;}
 .hero h1{font-family:'Barlow Condensed',sans-serif;font-size:clamp(48px,6.5vw,80px);font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;margin-bottom:0;}
-.hero h1 .h-line1{display:block;background:none;-webkit-text-fill-color:#ffffff;color:#ffffff;}
-.hero h1 .h-line2{display:block;background:linear-gradient(135deg,var(--burnt-orange) 0%,var(--copper) 50%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero h1 .h-line1{display:block;background:linear-gradient(to right,#c4622a 0%,#d4844a 20%,#d4a04a 38%,#f0e0c0 62%,#ffffff 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hero h1 .h-line2{display:block;background:linear-gradient(to right,#a84820 0%,#c4622a 30%,#d4844a 65%,#d4a04a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:28px auto 24px;background:linear-gradient(135deg,var(--copper),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .section-label::before,.section-label::after{content:'';width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--copper));flex-shrink:0;-webkit-text-fill-color:initial;}
 .section-label::after{background:linear-gradient(90deg,var(--copper),transparent);}
@@ -124,6 +124,37 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
   .industry-grid{grid-template-columns:1fr;}
   .see-all-card{flex-direction:column;gap:12px;text-align:center;}
 }
+
+/* SIDE PANELS */
+.page-cols{display:grid;grid-template-columns:220px 1fr 220px;align-items:start;position:relative;z-index:5;}
+.page-centre{min-width:0;}
+.side-panel{padding:28px 16px;position:sticky;top:56px;max-height:calc(100vh - 56px);overflow:hidden;}
+.side-panel-inner{display:flex;flex-direction:column;gap:16px;}
+.side-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+.side-left .side-label{color:#3678c9;}
+.side-right .side-label{color:#2c5a82;}
+
+/* LEFT: Steps timeline */
+.steps-timeline{display:flex;flex-direction:column;}
+.tl-step{display:grid;grid-template-columns:26px 12px 1fr;align-items:start;gap:0;}
+.tl-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1e4d8c,#3678c9);border:1px solid rgba(54,120,201,0.5);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 10px rgba(54,120,201,0.35);margin-top:2px;}
+.tl-line{width:2px;background:linear-gradient(to bottom,rgba(54,120,201,0.4),rgba(54,120,201,0.05));margin:26px auto 0;min-height:52px;}
+.tl-step.last .tl-line{background:transparent;}
+.tl-body{padding:0 0 20px 8px;}
+.tl-icon{font-size:16px;margin-bottom:3px;}
+.tl-heading{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#ffffff;letter-spacing:0.3px;margin-bottom:4px;}
+.tl-desc{font-size:11.5px;color:rgba(255,255,255,0.55);line-height:1.45;}
+
+/* RIGHT: Trust tiles */
+.trust-tiles{display:flex;flex-direction:column;gap:10px;}
+.trust-tile{background:linear-gradient(135deg,rgba(30,58,95,0.7),rgba(22,45,74,0.5));border:1px solid rgba(44,90,130,0.3);border-radius:12px;padding:14px 14px 12px;}
+.trust-tile.highlight{background:linear-gradient(135deg,rgba(30,77,140,0.5),rgba(54,120,201,0.25));border-color:rgba(54,120,201,0.45);}
+.trust-num{font-family:'Barlow Condensed',sans-serif;font-size:32px;font-weight:900;line-height:1;background:linear-gradient(135deg,#3678c9,#5a9fd4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.trust-tile.highlight .trust-num{background:linear-gradient(135deg,#5a9fd4,#8fc4e8);-webkit-background-clip:text;background-clip:text;}
+.trust-label{font-size:11px;font-weight:700;color:rgba(255,255,255,0.8);text-transform:uppercase;letter-spacing:0.8px;margin:2px 0 5px;}
+.trust-desc{font-size:11px;color:rgba(255,255,255,0.45);line-height:1.4;}
+
+@media(max-width:1100px){.page-cols{grid-template-columns:1fr;}.side-panel{display:none;}}
 </style>
 </head>
 <body>
@@ -164,6 +195,29 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
   </div>
 </div>
 
+<div class="page-cols">
+
+<aside class="side-panel side-left">
+  <div class="side-panel-inner">
+    <div class="side-label">Up and running in minutes</div>
+    <div class="steps-timeline">
+      <div class="tl-step">
+        <div class="tl-num">1</div><div class="tl-line"></div>
+        <div class="tl-body"><div class="tl-icon">&#127959;</div><div class="tl-heading">Choose Your Trade</div><p class="tl-desc">Select from 11 Australian trade industries. Tools built around how your trade actually works.</p></div>
+      </div>
+      <div class="tl-step">
+        <div class="tl-num">2</div><div class="tl-line"></div>
+        <div class="tl-body"><div class="tl-icon">&#9889;</div><div class="tl-heading">Activate Your Tools</div><p class="tl-desc">Pick the tools that make the biggest difference first. Up and running in minutes &#8212; no IT skills needed.</p></div>
+      </div>
+      <div class="tl-step last">
+        <div class="tl-num">3</div><div class="tl-line"></div>
+        <div class="tl-body"><div class="tl-icon">&#128640;</div><div class="tl-heading">AI Starts Working</div><p class="tl-desc">Generating content, managing enquiries, creating documents &#8212; while you focus on the job.</p></div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<div class="page-centre">
 <div class="hero">
   <h1>
     <span class="h-line1">AI tools built for</span>
@@ -242,6 +296,38 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
     </div>
 
   </div>
+</div>
+
+</div></div>
+
+<aside class="side-panel side-right">
+  <div class="side-panel-inner">
+    <div class="side-label">Why TradeAI Pro</div>
+    <div class="trust-tiles">
+      <div class="trust-tile">
+        <div class="trust-num">13</div>
+        <div class="trust-label">AI-Powered Tools</div>
+        <p class="trust-desc">Purpose-built for Australian trades &#8212; not generic software.</p>
+      </div>
+      <div class="trust-tile">
+        <div class="trust-num">11</div>
+        <div class="trust-label">Trade Industries</div>
+        <p class="trust-desc">Tools tailored to how your specific trade works.</p>
+      </div>
+      <div class="trust-tile highlight">
+        <div class="trust-num">14</div>
+        <div class="trust-label">Day Free Trial</div>
+        <p class="trust-desc">Full access to every tool you activate &#8212; no credit card required.</p>
+      </div>
+      <div class="trust-tile">
+        <div class="trust-num">&#36;0</div>
+        <div class="trust-label">Lock-In Contracts</div>
+        <p class="trust-desc">Cancel any tool any time. Only pay for what works.</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
 </div>
 
 <div class="footer-strip">
