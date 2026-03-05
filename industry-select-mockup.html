@@ -57,7 +57,7 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .btn-signin:hover,.btn-trial:hover{background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.6);}
 
 /* PAGE LAYOUT */
-.page-wrap{position:relative;z-index:5;display:grid;grid-template-columns:200px 1fr 200px;min-height:calc(100vh - 56px);align-items:start;}
+.page-wrap{position:relative;z-index:5;display:grid;grid-template-columns:200px minmax(0,1fr) 200px;min-height:calc(100vh - 56px);align-items:start;}
 
 /* SIDE PANELS */
 .side-panel{padding:40px 16px;position:sticky;top:56px;max-height:calc(100vh - 56px);}
@@ -98,8 +98,8 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .section-label::after{background:linear-gradient(90deg,var(--copper),transparent);}
 
 /* GRID */
-.industry-grid-wrap{padding:0 24px 40px;}
-.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.industry-grid-wrap{padding:0 24px 40px;overflow:hidden;}
+.industry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
 
 /* CARD */
 @property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
