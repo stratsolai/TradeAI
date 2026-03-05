@@ -1,5 +1,3 @@
-import Anthropic from '@anthropic-ai/sdk';
-
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -26,7 +24,6 @@ export default async function handler(req, res) {
         }
       })
     });
-
     const data = await response.json();
     if (!response.ok) return res.status(500).json({ error: data });
     const url = data?.data?.[0]?.url;
