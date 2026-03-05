@@ -334,6 +334,184 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   text-align: center;
 }
 .btn-ribbon-cta:hover { background: var(--orange-light); }
+
+/* ── STEPS PANEL ── */
+.steps-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 32px 16px 24px;
+}
+.step {
+  width: 100%;
+  padding: 36px 24px 56px;
+  text-align: center;
+  position: relative;
+  opacity: 0;
+  transform: translateY(28px);
+  animation: stepFadeUp 0.9s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.step:nth-child(1) { animation-delay: 0.10s; }
+.step:nth-child(3) { animation-delay: 0.38s; }
+.step:nth-child(5) { animation-delay: 0.66s; }
+.step-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 95% 80% at 50% 38%, black 35%, rgba(0,0,0,0.5) 58%, transparent 82%);
+  mask-image: radial-gradient(ellipse 95% 80% at 50% 38%, black 35%, rgba(0,0,0,0.5) 58%, transparent 82%);
+}
+.step:nth-child(1) .step-bg {
+  background: radial-gradient(ellipse at 50% 25%, rgba(72,128,168,0.90) 0%, rgba(52,100,148,0.65) 30%, rgba(36,72,120,0.30) 60%, transparent 80%);
+}
+.step:nth-child(3) .step-bg {
+  background: radial-gradient(ellipse at 50% 25%, rgba(250,235,195,0.88) 0%, rgba(230,205,148,0.60) 30%, rgba(200,168,100,0.25) 60%, transparent 80%);
+}
+.step:nth-child(5) .step-bg {
+  background: radial-gradient(ellipse at 50% 25%, rgba(255,178,100,0.88) 0%, rgba(235,110,40,0.60) 30%, rgba(195,60,10,0.22) 60%, transparent 80%);
+}
+.step:nth-child(1) .step-title { color: #a8d4f0; }
+.step:nth-child(1) .step-desc  { color: rgba(180,215,240,0.68); }
+.step:nth-child(3) .step-title { color: #f8e4b0; }
+.step:nth-child(3) .step-desc  { color: rgba(248,228,175,0.68); }
+.step:nth-child(5) .step-title { color: #ffc080; }
+.step:nth-child(5) .step-desc  { color: rgba(255,205,158,0.68); }
+.step-emoji {
+  font-size: 44px;
+  display: block;
+  margin-bottom: 14px;
+  position: relative;
+  z-index: 1;
+  animation: floatStepEmoji 3.5s ease-in-out infinite;
+}
+.step:nth-child(3) .step-emoji { animation-delay: 0.9s; }
+.step:nth-child(5) .step-emoji { animation-delay: 1.8s; }
+.step-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 11px;
+  line-height: 1.1;
+  position: relative;
+  z-index: 1;
+}
+.step-desc {
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.7;
+  position: relative;
+  z-index: 1;
+}
+/* Connector */
+.connector {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  opacity: 0;
+  animation: connFadeIn 0.6s ease forwards;
+  position: relative;
+  z-index: 2;
+  height: 52px;
+  width: 2px;
+  margin: -4px 0;
+}
+.connector:nth-of-type(2) { animation-delay: 0.52s; }
+.connector:nth-of-type(4) { animation-delay: 0.78s; }
+.connector:nth-of-type(6) { animation-delay: 1.04s; }
+.connector-track {
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 2px; height: 100%;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent 100%);
+  border-radius: 2px;
+}
+.connector-pulse {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px; height: 20px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.65) 40%, rgba(255,255,255,0.85) 60%, transparent 100%);
+  animation: pulseTravelDown 2s ease-in-out infinite;
+  box-shadow: 0 0 6px 2px rgba(255,255,255,0.2);
+}
+.connector:nth-of-type(4) .connector-pulse { animation-delay: 0.67s; }
+.connector:nth-of-type(6) .connector-pulse { animation-delay: 1.34s; }
+.connector-dot {
+  position: absolute;
+  bottom: -3px; left: 50%;
+  transform: translateX(-50%);
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.28);
+  box-shadow: 0 0 8px 2px rgba(255,255,255,0.12);
+  animation: connDotPulse 2s ease-in-out infinite;
+}
+.connector:nth-of-type(4) .connector-dot { animation-delay: 0.67s; }
+.connector:nth-of-type(6) .connector-dot { animation-delay: 1.34s; }
+/* CTA */
+.cta-wrap {
+  position: relative;
+  width: 100%;
+  margin-top: 8px;
+  padding: 20px 24px 18px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: stepFadeUp 0.8s cubic-bezier(0.16,1,0.3,1) 1.1s forwards;
+}
+.cta-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 50%, rgba(210,65,5,0.62) 0%, rgba(180,45,0,0.38) 35%, rgba(150,25,0,0.12) 62%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 82% at 50% 50%, black 30%, rgba(0,0,0,0.5) 55%, transparent 80%);
+  mask-image: radial-gradient(ellipse 90% 82% at 50% 50%, black 30%, rgba(0,0,0,0.5) 55%, transparent 80%);
+}
+.cta-tile {
+  position: relative;
+  z-index: 1;
+  text-decoration: none;
+  display: block;
+  transition: transform 0.25s ease;
+}
+.cta-tile:hover { transform: translateY(-2px); }
+.cta-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #f5e6c8;
+  display: block;
+  text-shadow: 0 1px 8px rgba(180,50,0,0.4);
+}
+/* Keyframes */
+@keyframes stepFadeUp {
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes connFadeIn {
+  to { opacity: 1; }
+}
+@keyframes floatStepEmoji {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+@keyframes pulseTravelDown {
+  0%   { top: -20px; opacity: 0; }
+  15%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
+}
+@keyframes connDotPulse {
+  0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); }
+  50%       { opacity: 0.85; transform: translateX(-50%) scale(1.6); }
+}
 </style>
 </head>
 <body>
@@ -375,26 +553,54 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   <!-- LEFT: Ribbon Steps -->
   <aside class="side-panel">
-    <div class="panel-label">Up and running in minutes</div>
-    <div class="ribbon-img-wrap">
-    <img src="/iStock-1457323969.jpg" alt="How it works" class="ribbon-bg-img">
-    <div class="ribbon-overlay">
-      <div class="ribbon-overlay-step step-1">
-        <span class="rib-num">STEP 01</span>
-        <span class="rib-heading">Choose Your Trade</span>
-      </div>
-      <div class="ribbon-overlay-step step-2">
-        <span class="rib-num">STEP 02</span>
-        <span class="rib-heading">Activate Your Tools</span>
-      </div>
-      <div class="ribbon-overlay-step step-3">
-        <span class="rib-num">STEP 03</span>
-        <span class="rib-heading">AI Starts Working</span>
-      </div>
-      <div class="ribbon-overlay-cta">
-        <a href="tools.html?workflow=trial" class="btn-ribbon-cta">Start 14 Day Free Trial &rarr;</a>
-      </div>
+  <div class="steps-panel">
+
+    <div class="step">
+      <div class="step-bg"></div>
+      <span class="step-emoji">&#x1F3D7;&#xFE0F;</span>
+      <div class="step-title">Choose Your Trade</div>
+      <div class="step-desc">Select from 11 Australian trade industries — tools built around how your business actually works on the ground.</div>
     </div>
+
+    <div class="connector">
+      <div class="connector-track"></div>
+      <div class="connector-pulse"></div>
+      <div class="connector-dot"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-bg"></div>
+      <span class="step-emoji">&#x26A1;</span>
+      <div class="step-title">Activate Your Tools</div>
+      <div class="step-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-track"></div>
+      <div class="connector-pulse"></div>
+      <div class="connector-dot"></div>
+    </div>
+
+    <div class="step">
+      <div class="step-bg"></div>
+      <span class="step-emoji">&#x1FA84;</span>
+      <div class="step-title">AI Starts Working</div>
+      <div class="step-desc">Your tools get to work immediately — generating content, managing enquiries, creating professional documents.</div>
+    </div>
+
+    <div class="connector">
+      <div class="connector-track"></div>
+      <div class="connector-pulse"></div>
+      <div class="connector-dot"></div>
+    </div>
+
+    <div class="cta-wrap">
+      <div class="cta-bg"></div>
+      <a href="tools.html?workflow=trial" class="cta-tile">
+        <span class="cta-title">Start 14 Day Free Trial &rarr;</span>
+      </a>
+    </div>
+
   </div>
 </aside>
 
