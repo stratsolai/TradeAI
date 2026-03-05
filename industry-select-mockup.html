@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TradeAI Pro — Industry Select Mockup v11</title>
+<title>TradeAI Pro — Industry Select Mockup v16</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -30,7 +30,7 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .topbar{
   position:sticky;top:0;z-index:100;
   display:flex;align-items:center;
-  padding:0 24px;height:56px;gap:0;
+  padding:0 24px;height:56px;
   background:linear-gradient(135deg,#c4622a 0%,#8a3318 25%,#1a1008 48%,#0d1628 55%,#1a2d6e 72%,#1a3a8c 100%);
   box-shadow:0 4px 24px rgba(0,0,0,0.45);
   border-bottom:1px solid rgba(255,255,255,0.08);
@@ -54,16 +54,8 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .btn-signin,.btn-trial{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);color:#fff;padding:7px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;}
 .btn-signin:hover,.btn-trial:hover{background:rgba(255,255,255,0.25);border-color:rgba(255,255,255,0.6);}
 
-/* PAGE LAYOUT — three fixed columns */
-.page-wrap{
-  position:relative;z-index:5;
-  display:flex;
-  flex-direction:row;
-  align-items:flex-start;
-  width:100%;
-  margin:0 auto;
-  padding:0;
-}
+/* PAGE LAYOUT */
+.page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;margin:0 auto;}
 .side-panel{width:300px;flex-shrink:0;padding:28px 20px;}
 .page-centre{flex:1;min-width:0;padding:0;}
 
@@ -71,19 +63,16 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .hero{text-align:center;padding:36px 24px 20px;}
 .hero h1{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;}
 .hero h1 .h-line1{display:block;color:#fff;}
-.hero h1 .h-line2{display:block;background:linear-gradient(135deg,var(--burnt-orange) 0%,var(--copper) 50%,var(--gold) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 18px;background:linear-gradient(135deg,var(--copper),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.section-label::before,.section-label::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--copper));flex-shrink:0;-webkit-text-fill-color:initial;}
-.section-label::after{background:linear-gradient(90deg,var(--copper),transparent);}
+.hero h1 .h-line2{display:block;background:linear-gradient(135deg,#c4622a 0%,#d4844a 50%,#d4a04a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 18px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.section-label::before,.section-label::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;-webkit-text-fill-color:initial;}
+.section-label::after{background:linear-gradient(90deg,#d4844a,transparent);}
 
-/* INDUSTRY GRID — 3 fixed cards per row */
-.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
-
-/* CARD */
+/* INDUSTRY GRID */
 @property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
 @keyframes spinBorder{to{--angle:360deg;}}
 @keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-
+.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
 .industry-card{position:relative;border-radius:16px;cursor:pointer;height:220px;border:2px solid rgba(255,255,255,0.07);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1),box-shadow 0.35s,border-color 0.3s;animation:cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;}
 .industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}
 .industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}
@@ -91,7 +80,7 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .industry-card:nth-child(7){animation-delay:0.28s}.industry-card:nth-child(8){animation-delay:0.32s}
 .industry-card:nth-child(9){animation-delay:0.36s}.industry-card:nth-child(10){animation-delay:0.40s}
 .industry-card:nth-child(11){animation-delay:0.44s}
-.industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,var(--copper) 110deg,var(--burnt-orange) 175deg,var(--gold) 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;}
+.industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;}
 .industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
 .industry-card:hover{transform:translateY(-4px);border-color:transparent;box-shadow:0 16px 48px rgba(0,0,0,0.5),0 0 24px rgba(196,98,42,0.18);}
 .card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
@@ -100,53 +89,70 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .industry-card:hover .card-photo-bg{transform:scale(1.07);opacity:0.88;}
 .card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
 .card-icon{font-size:20px;display:block;margin-bottom:5px;}
-.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#f5d078 0%,var(--gold) 35%,var(--copper) 75%,#b85820 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
-.industry-card:hover .card-name{background:linear-gradient(160deg,#fff 0%,#f5d078 40%,var(--gold) 80%,var(--copper) 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 16px rgba(212,160,74,0.7));}
+.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#f5d078 0%,#d4a04a 35%,#d4844a 75%,#b85820 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
+.industry-card:hover .card-name{background:linear-gradient(160deg,#fff 0%,#f5d078 40%,#d4a04a 80%,#d4844a 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 16px rgba(212,160,74,0.7));}
 .card-desc{font-size:12px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
-.card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:var(--copper);transition:gap 0.2s,color 0.2s;}
+.card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;transition:gap 0.2s,color 0.2s;}
 .industry-card:hover .card-cta{gap:9px;color:#fff;}
-.card-cta-arrow{width:18px;height:18px;border-radius:50%;background:var(--burnt-orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;transition:background 0.2s,transform 0.2s;}
-.industry-card:hover .card-cta-arrow{background:#fff;color:var(--burnt-orange);transform:translateX(2px);}
+.card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;transition:background 0.2s,transform 0.2s;}
+.industry-card:hover .card-cta-arrow{background:#fff;color:#c4622a;transform:translateX(2px);}
 
 /* SEE ALL */
 .see-all-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,98,42,0.1),rgba(44,90,130,0.09));border:1px dashed rgba(196,98,42,0.32);border-radius:14px;padding:16px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s;animation:cardIn 0.5s 0.5s cubic-bezier(0.16,1,0.3,1) both;}
 .see-all-card:hover{background:linear-gradient(135deg,rgba(196,98,42,0.18),rgba(44,90,130,0.16));border-color:rgba(196,98,42,0.55);transform:translateY(-2px);}
 .see-all-left{display:flex;align-items:center;gap:12px;}
-.see-all-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--burnt-orange),var(--copper));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.see-all-icon{width:36px;height:36px;background:linear-gradient(135deg,#c4622a,#d4844a);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
 .see-all-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#fff;}
-.see-all-sub{font-size:11px;color:var(--muted);margin-top:2px;}
-.see-all-btn{background:linear-gradient(135deg,var(--burnt-orange),var(--copper));color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
+.see-all-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;}
+.see-all-btn{background:linear-gradient(135deg,#c4622a,#d4844a);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.2s;}
 .see-all-btn:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(196,98,42,0.45);}
 
-/* LEFT SIDE PANEL — Steps */
-.side-panel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--steel-blue);padding-bottom:10px;border-bottom:1px solid rgba(44,90,130,0.3);margin-bottom:18px;}
-.steps-timeline{display:flex;flex-direction:column;}
-.tl-step{display:flex;gap:10px;align-items:flex-start;margin-bottom:0;}
-.tl-left{display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:26px;}
-.tl-num{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--deep-blue),var(--steel-blue));border:1px solid rgba(44,90,130,0.5);color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 10px rgba(44,90,130,0.35);flex-shrink:0;}
-.tl-line{width:2px;flex:1;min-height:28px;background:linear-gradient(to bottom,rgba(44,90,130,0.4),rgba(44,90,130,0.08));margin:4px 0;}
-.tl-step.last .tl-line{display:none;}
-.tl-body{padding-bottom:20px;}
-.tl-icon{font-size:16px;margin-bottom:3px;}
-.tl-heading{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;color:#fff;margin-bottom:4px;}
-.tl-desc{font-size:11.5px;color:rgba(255,255,255,0.6);line-height:1.45;}
+/* LEFT PANEL — Chevron Steps */
+.panel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#2c5a82;padding-bottom:10px;border-bottom:1px solid rgba(44,90,130,0.25);margin-bottom:16px;}
+.chevron-steps{display:flex;flex-direction:column;gap:0;}
+.chev-item{position:relative;margin-bottom:4px;}
+.chev-band{
+  position:relative;display:flex;align-items:center;gap:14px;
+  padding:16px 28px 16px 18px;
+  clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%);
+  transition:filter 0.2s;
+}
+.chev-band:hover{filter:brightness(1.15);}
+.chev-item:nth-child(1) .chev-band{background:linear-gradient(135deg,#1a3264,#2456a0);}
+.chev-item:nth-child(2) .chev-band{background:linear-gradient(135deg,#1a4278,#2868b4);}
+.chev-item:nth-child(3) .chev-band{background:linear-gradient(135deg,#1658a0,#2882cc);}
+.chev-num{font-family:'Barlow Condensed',sans-serif;font-size:42px;font-weight:900;color:rgba(255,255,255,0.12);line-height:1;flex-shrink:0;width:32px;text-align:center;}
+.chev-icon{font-size:22px;flex-shrink:0;}
+.chev-content{flex:1;min-width:0;}
+.chev-heading{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#fff;text-transform:uppercase;letter-spacing:0.5px;line-height:1.1;margin-bottom:5px;}
+.chev-desc{font-size:11.5px;color:rgba(255,255,255,0.68);line-height:1.45;}
+.chev-connector{height:10px;display:flex;align-items:center;padding-left:30px;}
+.chev-connector-line{width:2px;height:10px;background:linear-gradient(to bottom,rgba(44,90,130,0.5),rgba(44,90,130,0.1));}
 
-/* RIGHT SIDE PANEL — Trust stats */
-.trust-tiles{display:flex;flex-direction:column;gap:10px;}
-.trust-tile{background:linear-gradient(135deg,rgba(44,90,130,0.2),rgba(30,61,100,0.15));border:1px solid rgba(54,120,201,0.2);border-radius:12px;padding:14px 14px;}
-.trust-tile.highlight{background:linear-gradient(135deg,rgba(196,98,42,0.15),rgba(212,132,74,0.1));border-color:rgba(196,98,42,0.3);}
-.trust-num{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--bright-blue),var(--steel-blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.trust-tile.highlight .trust-num{background:linear-gradient(135deg,var(--gold),var(--copper));-webkit-background-clip:text;background-clip:text;}
-.trust-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.8);margin:2px 0 4px;}
-.trust-desc{font-size:11px;color:rgba(255,255,255,0.5);line-height:1.4;}
+/* RIGHT PANEL — Stat Wall */
+.panel-label-right{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#2c5a82;padding-bottom:10px;border-bottom:1px solid rgba(44,90,130,0.25);margin-bottom:16px;}
+.stat-wall{display:flex;flex-direction:column;gap:10px;}
+.stat-card{position:relative;border-radius:12px;padding:18px 20px 16px 20px;overflow:hidden;transition:transform 0.25s,box-shadow 0.25s;}
+.stat-card:hover{transform:translateX(4px);box-shadow:-4px 0 20px rgba(196,98,42,0.2);}
+.stat-card:nth-child(odd){background:linear-gradient(135deg,#152840,#1e3a58);}
+.stat-card:nth-child(even){background:linear-gradient(135deg,#0f1e35,#172e4a);}
+.stat-slash{position:absolute;bottom:0;left:0;width:70px;height:70px;overflow:hidden;}
+.stat-slash::before{content:'';position:absolute;bottom:0;left:0;width:0;height:0;border-style:solid;border-width:0 0 70px 70px;border-color:transparent transparent rgba(196,98,42,0.22) transparent;}
+.stat-slash::after{content:'';position:absolute;bottom:0;left:0;width:0;height:0;border-style:solid;border-width:0 0 42px 42px;border-color:transparent transparent rgba(212,132,74,0.18) transparent;}
+.stat-number{font-family:'Barlow Condensed',sans-serif;font-size:56px;font-weight:900;line-height:0.9;color:#fff;letter-spacing:-2px;margin-bottom:6px;}
+.stat-number sup{font-size:24px;vertical-align:super;color:#d4844a;letter-spacing:0;}
+.stat-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:#d4844a;margin-bottom:5px;}
+.stat-desc{font-size:11.5px;color:rgba(255,255,255,0.5);line-height:1.4;}
+.stat-icon{position:absolute;top:14px;right:16px;font-size:22px;opacity:0.18;}
 
+/* FOOTER */
 .footer-strip{position:relative;z-index:5;text-align:center;padding:10px 24px 24px;font-size:11px;color:rgba(255,255,255,0.25);}
 .footer-strip a{color:rgba(255,255,255,0.3);text-decoration:none;}
-.footer-strip a:hover{color:var(--copper);}
+.footer-strip a:hover{color:#d4844a;}
 
-/* MOBILE — stack vertically */
+/* MOBILE */
 @media(max-width:900px){
-  .page-wrap{width:100%;flex-direction:column;align-items:center;}
+  .page-wrap{flex-direction:column;align-items:center;}
   .side-panel{width:100%;max-width:660px;padding:20px 16px 4px;}
   .page-centre{width:100%;max-width:660px;}
   .industry-grid{grid-template-columns:repeat(3,1fr);}
@@ -201,21 +207,41 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 
 <div class="page-wrap">
 
-  <!-- LEFT: 3 Steps -->
+  <!-- LEFT: Chevron Steps -->
   <aside class="side-panel">
-    <div class="side-panel-label">Up and running in minutes</div>
-    <div class="steps-timeline">
-      <div class="tl-step">
-        <div class="tl-left"><div class="tl-num">1</div><div class="tl-line"></div></div>
-        <div class="tl-body"><div class="tl-icon">&#127959;</div><div class="tl-heading">Choose Your Trade</div><p class="tl-desc">Select from 11 Australian trade industries — tools built around how your trade actually works.</p></div>
+    <div class="panel-label">Up and running in minutes</div>
+    <div class="chevron-steps">
+      <div class="chev-item">
+        <div class="chev-band">
+          <div class="chev-num">1</div>
+          <div class="chev-icon">&#127959;</div>
+          <div class="chev-content">
+            <div class="chev-heading">Choose Your Trade</div>
+            <div class="chev-desc">Select from 11 Australian trade industries — tools built around how your trade actually works.</div>
+          </div>
+        </div>
       </div>
-      <div class="tl-step">
-        <div class="tl-left"><div class="tl-num">2</div><div class="tl-line"></div></div>
-        <div class="tl-body"><div class="tl-icon">&#9889;</div><div class="tl-heading">Activate Your Tools</div><p class="tl-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</p></div>
+      <div class="chev-connector"><div class="chev-connector-line"></div></div>
+      <div class="chev-item">
+        <div class="chev-band">
+          <div class="chev-num">2</div>
+          <div class="chev-icon">&#9889;</div>
+          <div class="chev-content">
+            <div class="chev-heading">Activate Your Tools</div>
+            <div class="chev-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</div>
+          </div>
+        </div>
       </div>
-      <div class="tl-step last">
-        <div class="tl-left"><div class="tl-num">3</div><div class="tl-line"></div></div>
-        <div class="tl-body"><div class="tl-icon">&#128640;</div><div class="tl-heading">AI Starts Working</div><p class="tl-desc">Your tools get to work immediately — generating content, managing enquiries, creating documents.</p></div>
+      <div class="chev-connector"><div class="chev-connector-line"></div></div>
+      <div class="chev-item">
+        <div class="chev-band">
+          <div class="chev-num">3</div>
+          <div class="chev-icon">&#128640;</div>
+          <div class="chev-content">
+            <div class="chev-heading">AI Starts Working</div>
+            <div class="chev-desc">Your tools get to work immediately — generating content, managing enquiries, creating documents.</div>
+          </div>
+        </div>
       </div>
     </div>
   </aside>
@@ -300,34 +326,47 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
     </div>
   </div>
 
-  <!-- RIGHT: Trust stats -->
+  <!-- RIGHT: Stat Wall -->
   <aside class="side-panel">
-    <div class="side-panel-label">Why TradeAI Pro</div>
-    <div class="trust-tiles">
-      <div class="trust-tile">
-        <div class="trust-num">13</div>
-        <div class="trust-label">AI-Powered Tools</div>
-        <p class="trust-desc">Purpose-built for Australian trades — not generic software.</p>
+    <div class="panel-label-right">Why TradeAI Pro</div>
+    <div class="stat-wall">
+
+      <div class="stat-card">
+        <div class="stat-slash"></div>
+        <div class="stat-icon">&#129302;</div>
+        <div class="stat-number">13</div>
+        <div class="stat-label">AI-Powered Tools</div>
+        <div class="stat-desc">Purpose-built for Australian trades — not generic software repurposed for tradies.</div>
       </div>
-      <div class="trust-tile">
-        <div class="trust-num">11</div>
-        <div class="trust-label">Trade Industries</div>
-        <p class="trust-desc">Tools tailored to how your specific trade works.</p>
+
+      <div class="stat-card">
+        <div class="stat-slash"></div>
+        <div class="stat-icon">&#127959;</div>
+        <div class="stat-number">11</div>
+        <div class="stat-label">Trade Industries</div>
+        <div class="stat-desc">Tools built around how each specific trade works on the ground.</div>
       </div>
-      <div class="trust-tile highlight">
-        <div class="trust-num">14</div>
-        <div class="trust-label">Day Free Trial</div>
-        <p class="trust-desc">Full access, no credit card required to start.</p>
+
+      <div class="stat-card">
+        <div class="stat-slash"></div>
+        <div class="stat-icon">&#127381;</div>
+        <div class="stat-number">14<sup>day</sup></div>
+        <div class="stat-label">Free Trial</div>
+        <div class="stat-desc">Full access from day one. No credit card required to get started.</div>
       </div>
-      <div class="trust-tile">
-        <div class="trust-num">$0</div>
-        <div class="trust-label">Lock-in Contracts</div>
-        <p class="trust-desc">Cancel any tool any time. Only pay for what works.</p>
+
+      <div class="stat-card">
+        <div class="stat-slash"></div>
+        <div class="stat-icon">&#128275;</div>
+        <div class="stat-number" style="font-size:44px;letter-spacing:-1px;">No lock-in</div>
+        <div class="stat-label">Cancel Anytime</div>
+        <div class="stat-desc">Cancel any tool any time. Only ever pay for what's working for you.</div>
       </div>
+
     </div>
   </aside>
 
-</div><!-- /page-wrap -->
+</div>
 
 <div class="footer-strip">
   <a href="privacy-policy.html">Privacy</a> &nbsp;&middot;&nbsp;
