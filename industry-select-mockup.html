@@ -20,7 +20,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 @keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:56px;background:linear-gradient(135deg,#c4622a 0%,#8a3318 25%,#1a1008 48%,#0d1628 55%,#1a2d6e 72%,#1a3a8c 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.08);}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:56px;background:linear-gradient(135deg,#c4622a 0%,#8a3318 22%,#1a1008 46%,#0d1628 54%,#1a4860 72%,#1a6878 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.08);}
 .topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
 .topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
@@ -29,7 +29,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .topbar-breadcrumb a{color:rgba(255,255,255,0.7);text-decoration:none;}
 .topbar-breadcrumb .sep{opacity:0.45;}
 .topbar-breadcrumb .current{color:#fff;font-weight:600;}
-.bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:260px;flex-shrink:0;margin:0 16px;}
+.bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin:0 16px;}
 .bundle-rotator-icon{font-size:13px;flex-shrink:0;}
 .bundle-rotator-track{position:relative;height:19px;overflow:hidden;flex:1;}
 .bundle-rotator-item{position:absolute;top:0;left:0;width:100%;font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;opacity:0;transform:translateY(100%);transition:opacity 0.5s,transform 0.5s;}
@@ -62,11 +62,11 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}.industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}.industry-card:nth-child(5){animation-delay:0.20s}.industry-card:nth-child(6){animation-delay:0.24s}.industry-card:nth-child(7){animation-delay:0.28s}.industry-card:nth-child(8){animation-delay:0.32s}.industry-card:nth-child(9){animation-delay:0.36s}.industry-card:nth-child(10){animation-delay:0.40s}.industry-card:nth-child(11){animation-delay:0.44s}
 .industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;}
 .industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
-.industry-card:hover{transform:translateY(-4px);border-color:transparent;box-shadow:0 16px 48px rgba(0,0,0,0.5),0 0 24px rgba(196,98,42,0.18);}
+.industry-card:hover{border-color:transparent;}
 .card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
-.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.75;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
-.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.05) 0%,rgba(10,18,35,0.15) 30%,rgba(10,18,35,0.7) 62%,rgba(10,18,35,0.93) 100%);}
-.industry-card:hover .card-photo-bg{transform:scale(1.07);opacity:0.88;}
+.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.88;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
+.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.02) 0%,rgba(10,18,35,0.08) 25%,rgba(10,18,35,0.58) 58%,rgba(10,18,35,0.88) 100%);}
+.industry-card:hover .card-photo-bg{transform:scale(1.04);}
 .card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
 .card-icon{font-size:20px;display:block;margin-bottom:5px;}
 .card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#f5d078 0%,#d4a04a 35%,#d4844a 75%,#b85820 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
@@ -360,8 +360,8 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   position: absolute;
   inset: 0;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 95% 80% at 50% 38%, black 35%, rgba(0,0,0,0.5) 58%, transparent 82%);
-  mask-image: radial-gradient(ellipse 95% 80% at 50% 38%, black 35%, rgba(0,0,0,0.5) 58%, transparent 82%);
+  -webkit-mask-image: radial-gradient(ellipse 90% 72% at 50% 38%, black 20%, rgba(0,0,0,0.38) 48%, transparent 72%);
+  mask-image: radial-gradient(ellipse 90% 72% at 50% 38%, black 20%, rgba(0,0,0,0.38) 48%, transparent 72%);
 }
 .step:nth-child(1) .step-bg {
   background: radial-gradient(ellipse at 50% 25%, rgba(72,128,168,0.90) 0%, rgba(52,100,148,0.65) 30%, rgba(36,72,120,0.30) 60%, transparent 80%);
@@ -535,7 +535,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     <a href="index.html">Home</a><span class="sep">&#8250;</span><span class="current">Select Your Industry</span>
   </div>
   <div class="bundle-rotator">
-    <span class="bundle-rotator-icon">&#127919;</span>
+    <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
       <div class="bundle-rotator-item active">Starter &#8212; 3 tools from $197/mo</div>
       <div class="bundle-rotator-item">Growth &#8212; 6 tools from $374/mo</div>
