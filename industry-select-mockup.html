@@ -61,12 +61,11 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
   flex-direction:row;
   align-items:flex-start;
   width:100%;
-  max-width:1060px;
   margin:0 auto;
   padding:0;
 }
 .side-panel{width:200px;flex-shrink:0;padding:28px 16px;}
-.page-centre{width:660px;flex-shrink:0;padding:0;}
+.page-centre{flex:1;min-width:0;padding:0;}
 
 /* HERO */
 .hero{text-align:center;padding:36px 24px 20px;}
@@ -78,7 +77,7 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .section-label::after{background:linear-gradient(90deg,var(--copper),transparent);}
 
 /* INDUSTRY GRID — 3 fixed cards per row */
-.industry-grid{display:grid;grid-template-columns:repeat(3,200px);gap:12px;padding:0 12px 32px;}
+.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
 
 /* CARD */
 @property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
@@ -146,7 +145,7 @@ body{background:var(--dark-bg);color:#fff;font-family:'DM Sans',sans-serif;min-h
 .footer-strip a:hover{color:var(--copper);}
 
 /* MOBILE — stack vertically */
-@media(max-width:1080px){
+@media(max-width:900px){
   .page-wrap{width:100%;flex-direction:column;align-items:center;}
   .side-panel{width:100%;max-width:660px;padding:20px 16px 4px;}
   .page-centre{width:100%;max-width:660px;}
