@@ -256,6 +256,79 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   .industry-grid{grid-template-columns:repeat(2,1fr);}
   .see-all-card{flex-direction:column;gap:10px;}
 }
+
+/* Ribbon image overlay */
+.ribbon-img-wrap {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 20px 0;
+}
+.ribbon-bg-img {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+.ribbon-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12% 8% 18% 8%;
+  pointer-events: none;
+}
+.ribbon-overlay-step {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  justify-content: center;
+}
+.rib-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(255,255,255,0.85);
+  text-transform: uppercase;
+}
+.rib-heading {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.ribbon-overlay-cta {
+  display: flex;
+  justify-content: center;
+  pointer-events: all;
+  padding-top: 8px;
+}
+.btn-ribbon-cta {
+  background: var(--orange);
+  color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 12px 28px;
+  border-radius: 6px;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.btn-ribbon-cta:hover { background: var(--orange-light); }
 </style>
 </head>
 <body>
@@ -298,46 +371,27 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <!-- LEFT: Ribbon Steps -->
   <aside class="side-panel">
     <div class="panel-label">Up and running in minutes</div>
-    <div class="ribbon-steps">
-
-      <div class="ribbon-step">
-        <div class="ribbon-band">
-          <div class="ribbon-left-edge"></div>
-          <div class="ribbon-num">1</div>
-          <div class="ribbon-body">
-            <div class="ribbon-heading"><span class="ribbon-heading-icon">&#127959;</span> Choose Your Trade</div>
-          </div>
-          <div class="ribbon-fold"></div>
-        </div>
-        <div class="ribbon-desc">Select from 11 Australian trade industries — tools built around how your trade actually works on the ground.</div>
+    <div class="ribbon-img-wrap">
+    <img src="/iStock-1457323969.jpg" alt="How it works" class="ribbon-bg-img">
+    <div class="ribbon-overlay">
+      <div class="ribbon-overlay-step step-1">
+        <span class="rib-num">STEP 01</span>
+        <span class="rib-heading">Choose Your Trade</span>
       </div>
-
-      <div class="ribbon-step">
-        <div class="ribbon-band">
-          <div class="ribbon-left-edge"></div>
-          <div class="ribbon-num">2</div>
-          <div class="ribbon-body">
-            <div class="ribbon-heading"><span class="ribbon-heading-icon">&#9889;</span> Activate Your Tools</div>
-          </div>
-          <div class="ribbon-fold"></div>
-        </div>
-        <div class="ribbon-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</div>
+      <div class="ribbon-overlay-step step-2">
+        <span class="rib-num">STEP 02</span>
+        <span class="rib-heading">Activate Your Tools</span>
       </div>
-
-      <div class="ribbon-step">
-        <div class="ribbon-band">
-          <div class="ribbon-left-edge"></div>
-          <div class="ribbon-num">3</div>
-          <div class="ribbon-body">
-            <div class="ribbon-heading"><span class="ribbon-heading-icon">&#128640;</span> AI Starts Working</div>
-          </div>
-          <div class="ribbon-fold"></div>
-        </div>
-        <div class="ribbon-desc">Your tools get to work immediately — generating content, managing enquiries, and creating professional documents.</div>
+      <div class="ribbon-overlay-step step-3">
+        <span class="rib-num">STEP 03</span>
+        <span class="rib-heading">AI Starts Working</span>
       </div>
-
+      <div class="ribbon-overlay-cta">
+        <a href="tools.html?workflow=trial" class="btn-ribbon-cta">Start 14 Day Free Trial &rarr;</a>
+      </div>
     </div>
-  </aside>
+  </div>
+</aside>
 
   <!-- CENTRE -->
   <div class="page-centre">
