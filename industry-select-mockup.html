@@ -20,7 +20,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 @keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:56px;background:linear-gradient(135deg,#c4622a 0%,#8a3318 22%,#1a1008 46%,#0d1628 54%,#1a4860 72%,#1a6878 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.08);}
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:56px;background:linear-gradient(135deg,#c4622a 0%,#8a3318 22%,#1a1008 46%,#0d1628 54%,#1a3a6e 72%,#1e3a8a 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
 .topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
 .topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
@@ -42,12 +42,12 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 /* PAGE LAYOUT */
 .page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;}
 .side-panel{width:300px;flex-shrink:0;padding:24px 16px;}
-.page-centre{flex:1;min-width:0;}
+.page-centre{flex:1;min-width:0;padding:0 24px;}
 
 /* HERO */
 .hero{text-align:center;padding:36px 24px 20px;}
 .hero h1{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;}
-.hero h1 .h-line1{display:block;color:#fff;}
+.hero h1 .h-line1{display:block;background:linear-gradient(to right,#f5ece0 0%,#f0d8b8 40%,#e8b880 72%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .hero h1 .h-line2{display:block;background:linear-gradient(135deg,#c4622a 0%,#d4844a 50%,#d4a04a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 18px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
 .section-label::before,.section-label::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;-webkit-text-fill-color:initial;}
@@ -65,12 +65,12 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .industry-card:hover{border-color:transparent;}
 .card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
 .card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.88;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
-.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.02) 0%,rgba(10,18,35,0.08) 25%,rgba(10,18,35,0.58) 58%,rgba(10,18,35,0.88) 100%);}
+.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.0) 0%,rgba(10,18,35,0.05) 20%,rgba(10,18,35,0.52) 55%,rgba(10,18,35,0.86) 100%);}
 .industry-card:hover .card-photo-bg{transform:scale(1.04);}
 .card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
 .card-icon{font-size:20px;display:block;margin-bottom:5px;}
-.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#f5d078 0%,#d4a04a 35%,#d4844a 75%,#b85820 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
-.industry-card:hover .card-name{background:linear-gradient(160deg,#fff 0%,#f5d078 40%,#d4a04a 80%,#d4844a 100%);-webkit-background-clip:text;background-clip:text;}
+.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#fff 0%,#f5d078 40%,#d4a04a 80%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
+
 .card-desc{font-size:12px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
 .card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;}
 .card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;}
@@ -360,8 +360,8 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   position: absolute;
   inset: 0;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 90% 72% at 50% 38%, black 20%, rgba(0,0,0,0.38) 48%, transparent 72%);
-  mask-image: radial-gradient(ellipse 90% 72% at 50% 38%, black 20%, rgba(0,0,0,0.38) 48%, transparent 72%);
+  -webkit-mask-image: radial-gradient(ellipse 96% 78% at 50% 35%, black 18%, rgba(0,0,0,0.32) 44%, transparent 68%);
+  mask-image: radial-gradient(ellipse 96% 78% at 50% 35%, black 18%, rgba(0,0,0,0.32) 44%, transparent 68%);
 }
 .step:nth-child(1) .step-bg {
   background: radial-gradient(ellipse at 50% 25%, rgba(72,128,168,0.90) 0%, rgba(52,100,148,0.65) 30%, rgba(36,72,120,0.30) 60%, transparent 80%);
