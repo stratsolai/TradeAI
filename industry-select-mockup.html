@@ -194,53 +194,49 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .stat-wall{display:flex;flex-direction:column;gap:12px;}
 
 .stat-card{
-  border-radius:14px;
-  overflow:hidden;
+  border-radius:16px;
   position:relative;
-  display:flex;
-  align-items:stretch;
-  min-height:80px;
-  box-shadow:0 4px 20px rgba(0,0,0,0.25);
+  overflow:hidden;
+  padding:16px 16px 14px;
+  background:linear-gradient(145deg,rgba(26,48,80,0.75) 0%,rgba(10,18,35,0.92) 100%);
+  border:1px solid rgba(255,255,255,0.07);
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+  transition:border-color 0.3s,box-shadow 0.3s;
 }
-
-/* Left colour bar */
-.stat-bar{
-  width:64px;
-  flex-shrink:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:24px;
+.stat-card:hover{border-color:rgba(255,255,255,0.16);box-shadow:0 8px 30px rgba(0,0,0,0.45);}
+/* floating sparkle dots top-right corner */
+.stat-card::after{
+  content:'';
+  position:absolute;
+  top:8px;right:10px;
+  width:3px;height:3px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.9);
+  box-shadow:9px 5px 0 1px rgba(255,255,255,0.45),
+             18px 1px 0 0px rgba(255,255,255,0.25),
+             4px 14px 0 0px rgba(255,255,255,0.2),
+             14px 11px 0 1px rgba(255,255,255,0.15);
+  animation:starPulse 3s ease-in-out infinite;
 }
-.stat-card:nth-child(1) .stat-bar{background:linear-gradient(180deg,#1e6abf,#2882e0);}
-.stat-card:nth-child(2) .stat-bar{background:linear-gradient(180deg,#1a8a9a,#22aabb);}
-.stat-card:nth-child(3) .stat-bar{background:linear-gradient(180deg,#c4622a,#e07830);}
-.stat-card:nth-child(4) .stat-bar{background:linear-gradient(180deg,#2a5298,#3a6abf);}
-
-/* Light right body */
-.stat-body{
-  flex:1;
-  background:#f0f4fa;
-  padding:14px 16px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+.stat-card:nth-child(2)::after{animation-delay:0.75s;}
+.stat-card:nth-child(3)::after{animation-delay:1.5s;}
+.stat-card:nth-child(4)::after{animation-delay:2.25s;}
+@keyframes starPulse{
+  0%,100%{opacity:0.35;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.15);}
 }
-.stat-number{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:44px; font-weight:900;
-  line-height:0.9; letter-spacing:-2px;
-  margin-bottom:4px;
-}
-.stat-card:nth-child(1) .stat-number{color:#1e6abf;}
-.stat-card:nth-child(2) .stat-number{color:#1a8a9a;}
-.stat-card:nth-child(3) .stat-number{color:#c4622a;}
-.stat-card:nth-child(4) .stat-number{color:#2a5298;}
-.stat-number sup{font-size:20px;vertical-align:super;letter-spacing:0;}
-.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.8px;color:#444;margin-bottom:3px;}
-.stat-desc{font-size:11px;color:#666;line-height:1.4;}
-
-/* FOOTER */
+.stat-card-icon{font-size:28px;display:block;margin-bottom:9px;animation:iconBob 4s ease-in-out infinite;}
+.stat-card:nth-child(2) .stat-card-icon{animation-delay:1s;}
+.stat-card:nth-child(3) .stat-card-icon{animation-delay:2s;}
+.stat-card:nth-child(4) .stat-card-icon{animation-delay:3s;}
+@keyframes iconBob{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+.stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px;}
+.stat-card:nth-child(1) .stat-label{color:#6ec6e8;}
+.stat-card:nth-child(2) .stat-label{color:#e8c878;}
+.stat-card:nth-child(3) .stat-label{color:#e07840;}
+.stat-card:nth-child(4) .stat-label{color:#78c888;}
+.stat-headline{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;line-height:1.1;color:#fff;margin-bottom:4px;}
+.stat-desc{font-size:11px;color:rgba(255,255,255,0.52);line-height:1.45;}
 .footer-strip{position:relative;z-index:5;text-align:center;padding:10px 24px 24px;font-size:11px;color:rgba(255,255,255,0.25);}
 .footer-strip a{color:rgba(255,255,255,0.3);text-decoration:none;}
 
@@ -360,8 +356,8 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   position: absolute;
   inset: 0;
   pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 96% 78% at 50% 35%, black 18%, rgba(0,0,0,0.32) 44%, transparent 68%);
-  mask-image: radial-gradient(ellipse 96% 78% at 50% 35%, black 18%, rgba(0,0,0,0.32) 44%, transparent 68%);
+  -webkit-mask-image: radial-gradient(ellipse 108% 96% at 50% 52%, black 12%, rgba(0,0,0,0.22) 40%, transparent 65%);
+  mask-image: radial-gradient(ellipse 108% 96% at 50% 52%, black 12%, rgba(0,0,0,0.22) 40%, transparent 65%);
 }
 .step:nth-child(1) .step-bg {
   background: radial-gradient(ellipse at 50% 25%, rgba(72,128,168,0.90) 0%, rgba(52,100,148,0.65) 30%, rgba(36,72,120,0.30) 60%, transparent 80%);
@@ -686,37 +682,32 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     <div class="stat-wall">
 
       <div class="stat-card">
-        <div class="stat-bar">&#129302;</div>
-        <div class="stat-body">
-          <div class="stat-number">13</div>
-          <div class="stat-label">AI-Powered Tools</div>
-          <div class="stat-desc">Purpose-built for Australian trades — not generic software.</div>
-        </div>
+        <span class="stat-card-icon">&#10024;</span>
+        <div class="stat-label">AI-Powered Tools</div>
+        <div class="stat-headline">13 Tools.<br>One Platform.</div>
+        <div class="stat-desc">Purpose-built for Australian trades — not generic software repurposed for your industry.</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-bar">&#127959;</div>
-        <div class="stat-body">
-          <div class="stat-number">11</div>
-          <div class="stat-label">Trade Industries</div>
-          <div class="stat-desc">Tools built around how each specific trade works.</div>
-        </div>
+        <span class="stat-card-icon">&#128218;</span>
+        <div class="stat-label">Content Library</div>
+        <div class="stat-headline">Free With Your First Tool</div>
+        <div class="stat-desc">Every photo, job, document and AI output stored in one place — automatically organised and ready to use across every tool.</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-bar">&#127381;</div>
-        <div class="stat-body">
-          <div class="stat-number">14<sup>d</sup></div>
-          <div class="stat-label">Free Trial</div>
-          <div class="stat-desc">Full access from day one. No credit card required.</div>
-        </div>
+        <span class="stat-card-icon">&#127381;</span>
+        <div class="stat-label">Free Trial</div>
+        <div class="stat-headline">14 Days Full Access</div>
+        <div class="stat-desc">Every feature, live from day one. No credit card required to start.</div>
       </div>
 
       <div class="stat-card">
-        <div class="stat-bar">&#128275;</div>
-        <div class="stat-body">
-          <div class="stat-number" style="font-size:28px;letter-spacing:-0.5px;line-height:1.1;">No<br>lock-in</div>
-          <div class="stat-label">Cancel Anytime</div>
+        <span class="stat-card-icon">&#128275;</span>
+        <div class="stat-label">Cancel Anytime</div>
+        <div class="stat-headline">No Lock-In. Ever.</div>
+        <div class="stat-desc">Only pay for the tools that are working for you. Add, pause or cancel anytime.</div>
+      </div>
           <div class="stat-desc">Only ever pay for what is working for you.</div>
         </div>
       </div>
