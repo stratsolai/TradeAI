@@ -193,222 +193,25 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
 .stat-wall{display:flex;flex-direction:column;gap:12px;}
 
-.star-panel{padding:8px 6px;display:flex;flex-direction:column;justify-content:center;height:100%;}.star-wall{display:flex;flex-direction:column;gap:2px;align-items:center;}.star-svg{width:100%;max-width:190px;height:auto;display:block;filter:drop-shadow(0 2px 12px rgba(0,0,0,0.5));animation:starFloat 5s ease-in-out infinite;transition:transform 0.3s;}.star-svg:hover{transform:scale(1.06);}.sv2{animation-delay:1.3s;}.sv3{animation-delay:2.6s;}.sv4{animation-delay:3.9s;}@keyframes starFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(-6px);}}
-50%{transform:translateY(-4px);}}
-.footer-strip{position:relative;z-index:5;text-align:center;padding:10px 24px 24px;font-size:11px;color:rgba(255,255,255,0.25);}
-.footer-strip a{color:rgba(255,255,255,0.3);text-decoration:none;}
-
-/* MOBILE */
-@media(max-width:900px){
-  .page-wrap{flex-direction:column;align-items:center;}
-  .side-panel{width:100%;max-width:660px;}
-  .page-centre{width:100%;max-width:660px;}
-}
-@media(max-width:680px){
-  .bundle-rotator{display:none;}
-  .hero h1{font-size:44px;}
-  .industry-grid{grid-template-columns:repeat(2,1fr);}
-  .see-all-card{flex-direction:column;gap:10px;}
-}
-
-/* Ribbon image overlay */
-.ribbon-img-wrap {
-  position: relative;
-  width: 100%;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  overflow: hidden;
-}
-.ribbon-bg-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  display: block;
-}
-.ribbon-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-}
-.ribbon-overlay-step {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding-left: 30px;
-  background: rgba(0,0,0,0.18);
-}
-.ribbon-overlay-step.step-1 { background: rgba(0,80,120,0.35); }
-.ribbon-overlay-step.step-2 { background: rgba(180,100,0,0.28); }
-.ribbon-overlay-step.step-3 { background: rgba(160,60,0,0.28); }
-.rib-num {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  color: rgba(255,255,255,0.8);
-  text-transform: uppercase;
-}
-.rib-heading {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 24px;
-  font-weight: 700;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
-  line-height: 1.1;
-}
-.ribbon-overlay-cta {
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 14px 20px;
-  background: rgba(0,20,50,0.55);
-}
-.btn-ribbon-cta {
-  background: var(--orange);
-  color: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  text-decoration: none;
-  padding: 12px 28px;
-  border-radius: 6px;
-  transition: background 0.2s;
-  white-space: nowrap;
-  display: block;
-  text-align: center;
-}
-.btn-ribbon-cta:hover { background: var(--orange-light); }
-
-/* ── STEPS PANEL ── */
-.steps-panel {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 32px 16px 24px;
-}
-.step {
-  width: 100%;
-  padding: 36px 24px 56px;
-  text-align: center;
-  position: relative;
-  opacity: 0;
-  transform: translateY(28px);
-  animation: stepFadeUp 0.9s cubic-bezier(0.16,1,0.3,1) forwards;
-}
-.step:nth-child(1) { animation-delay: 0.10s; }
-.step:nth-child(3) { animation-delay: 0.38s; }
-.step:nth-child(5) { animation-delay: 0.66s; }
-.step-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  -webkit-mask-image: radial-gradient(ellipse 108% 96% at 50% 52%, black 12%, rgba(0,0,0,0.22) 40%, transparent 65%);
-  mask-image: radial-gradient(ellipse 108% 96% at 50% 52%, black 12%, rgba(0,0,0,0.22) 40%, transparent 65%);
-}
-.step:nth-child(1) .step-bg {
-  background: radial-gradient(ellipse at 50% 25%, rgba(72,128,168,0.90) 0%, rgba(52,100,148,0.65) 30%, rgba(36,72,120,0.30) 60%, transparent 80%);
-}
-.step:nth-child(3) .step-bg {
-  background: radial-gradient(ellipse at 50% 25%, rgba(250,235,195,0.88) 0%, rgba(230,205,148,0.60) 30%, rgba(200,168,100,0.25) 60%, transparent 80%);
-}
-.step:nth-child(5) .step-bg {
-  background: radial-gradient(ellipse at 50% 25%, rgba(255,178,100,0.88) 0%, rgba(235,110,40,0.60) 30%, rgba(195,60,10,0.22) 60%, transparent 80%);
-}
-.step:nth-child(1) .step-title { color: #a8d4f0; }
-.step:nth-child(1) .step-desc  { color: rgba(180,215,240,0.68); }
-.step:nth-child(3) .step-title { color: #f8e4b0; }
-.step:nth-child(3) .step-desc  { color: rgba(248,228,175,0.68); }
-.step:nth-child(5) .step-title { color: #ffc080; }
-.step:nth-child(5) .step-desc  { color: rgba(255,205,158,0.68); }
-.step-emoji {
-  font-size: 44px;
-  display: block;
-  margin-bottom: 14px;
-  position: relative;
-  z-index: 1;
-  animation: floatStepEmoji 3.5s ease-in-out infinite;
-}
-.step:nth-child(3) .step-emoji { animation-delay: 0.9s; }
-.step:nth-child(5) .step-emoji { animation-delay: 1.8s; }
-.step-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  margin-bottom: 11px;
-  line-height: 1.1;
-  position: relative;
-  z-index: 1;
-}
-.step-desc {
-  font-size: 13px;
-  font-weight: 300;
-  line-height: 1.7;
-  position: relative;
-  z-index: 1;
-}
-/* Connector */
-.connector {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  opacity: 0;
-  animation: connFadeIn 0.6s ease forwards;
-  position: relative;
-  z-index: 2;
-  height: 52px;
-  width: 2px;
-  margin: -4px 0;
-}
-.connector:nth-of-type(2) { animation-delay: 0.52s; }
-.connector:nth-of-type(4) { animation-delay: 0.78s; }
-.connector:nth-of-type(6) { animation-delay: 1.04s; }
-.connector-track {
-  position: absolute;
-  top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 2px; height: 100%;
-  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.10) 20%, rgba(255,255,255,0.10) 80%, transparent 100%);
-  border-radius: 2px;
-}
-.connector-pulse {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px; height: 20px;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, transparent 0%, rgba(255,255,255,0.65) 40%, rgba(255,255,255,0.85) 60%, transparent 100%);
-  animation: pulseTravelDown 2s ease-in-out infinite;
-  box-shadow: 0 0 6px 2px rgba(255,255,255,0.2);
-}
-.connector:nth-of-type(4) .connector-pulse { animation-delay: 0.67s; }
-.connector:nth-of-type(6) .connector-pulse { animation-delay: 1.34s; }
-.connector-dot {
-  position: absolute;
-  bottom: -3px; left: 50%;
-  transform: translateX(-50%);
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.28);
-  box-shadow: 0 0 8px 2px rgba(255,255,255,0.12);
-  animation: connDotPulse 2s ease-in-out infinite;
-}
-.connector:nth-of-type(4) .connector-dot { animation-delay: 0.67s; }
-.connector:nth-of-type(6) .connector-dot { animation-delay: 1.34s; }
-/* CTA */
+.info-panel{padding:24px 16px;display:flex;flex-direction:column;justify-content:center;height:100%;}
+.info-wall{display:flex;flex-direction:column;gap:0;align-items:stretch;}
+.info-item{padding:20px 0;border-top:1px solid rgba(255,255,255,0.10);}
+.info-item:last-child{border-bottom:1px solid rgba(255,255,255,0.10);}
+.info-item-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;}
+.info-item-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;line-height:1.1;color:#fff;margin-bottom:6px;text-transform:uppercase;}
+.info-item-desc{font-size:13px;color:rgba(255,255,255,0.60);line-height:1.5;}
+.hiw-panel{padding:28px 20px;display:flex;flex-direction:column;justify-content:center;}
+.hiw-header{margin-bottom:28px;}
+.hiw-eyebrow{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:8px;}
+.hiw-heading{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:800;text-transform:uppercase;line-height:1.1;color:#fff;}
+.hiw-steps{display:flex;flex-direction:column;gap:0;position:relative;}
+.hiw-steps::before{content:'';position:absolute;left:20px;top:40px;bottom:40px;width:2px;background:linear-gradient(to bottom,rgba(26,84,144,0.8) 0%,rgba(26,84,144,0.5) 50%,rgba(26,84,144,0.3) 100%);z-index:0;}
+.hiw-step{display:flex;align-items:flex-start;gap:16px;padding:16px 0;position:relative;z-index:1;}
+.hiw-step-num{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:#1A5490;border:2px solid #E8500A;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;position:relative;z-index:2;}
+.hiw-step-body{padding-top:6px;}
+.hiw-step-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#fff;margin-bottom:5px;}
+.hiw-step-title span{color:#E8500A;}
+.hiw-step-desc{font-size:12.5px;color:rgba(255,255,255,0.58);line-height:1.5;}
 .cta-wrap {
   position: relative;
   width: 100%;
@@ -507,54 +310,34 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   <!-- LEFT: Ribbon Steps -->
   <aside class="side-panel">
-  <div class="steps-panel">
-
-    <div class="step">
-      <div class="step-bg"></div>
-      <span class="step-emoji">&#x1F3D7;&#xFE0F;</span>
-      <div class="step-title">Choose Your Trade</div>
-      <div class="step-desc">Select from 11 Australian trade industries — tools built around how your business actually works on the ground.</div>
+  <div class="hiw-panel">
+    <div class="hiw-header">
+      <div class="hiw-eyebrow">How It Works</div>
+      <div class="hiw-heading">Up and running<br>in minutes</div>
     </div>
-
-    <div class="connector">
-      <div class="connector-track"></div>
-      <div class="connector-pulse"></div>
-      <div class="connector-dot"></div>
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <div class="hiw-step-num">1</div>
+        <div class="hiw-step-body">
+          <div class="hiw-step-title">Choose Your Trade</div>
+          <div class="hiw-step-desc">Select from 11 Australian trade industries. Tools are built around how your business actually works on the ground.</div>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-step-num">2</div>
+        <div class="hiw-step-body">
+          <div class="hiw-step-title">Activate Your Tools</div>
+          <div class="hiw-step-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</div>
+        </div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-step-num">3</div>
+        <div class="hiw-step-body">
+          <div class="hiw-step-title"><span>AI</span> Starts Working</div>
+          <div class="hiw-step-desc">Your AI tools get to work immediately — generating content, managing enquiries, creating documents, while you focus on what you do best.</div>
+        </div>
+      </div>
     </div>
-
-    <div class="step">
-      <div class="step-bg"></div>
-      <span class="step-emoji">&#x26A1;</span>
-      <div class="step-title">Activate Your Tools</div>
-      <div class="step-desc">Pick the tools that make the biggest difference first. Up and running in minutes — no IT skills needed.</div>
-    </div>
-
-    <div class="connector">
-      <div class="connector-track"></div>
-      <div class="connector-pulse"></div>
-      <div class="connector-dot"></div>
-    </div>
-
-    <div class="step">
-      <div class="step-bg"></div>
-      <span class="step-emoji">&#x1FA84;</span>
-      <div class="step-title">AI Starts Working</div>
-      <div class="step-desc">Your tools get to work immediately — generating content, managing enquiries, creating professional documents.</div>
-    </div>
-
-    <div class="connector">
-      <div class="connector-track"></div>
-      <div class="connector-pulse"></div>
-      <div class="connector-dot"></div>
-    </div>
-
-    <div class="cta-wrap">
-      <div class="cta-bg"></div>
-      <a href="tools.html?workflow=trial" class="cta-tile">
-        <span class="cta-title">Start 14 Day Free Trial &rarr;</span>
-      </a>
-    </div>
-
   </div>
 </aside>
 
@@ -636,14 +419,30 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   <!-- RIGHT: Light Stat Wall -->
   <!-- Right Star Panel -->
-  <aside class="side-panel star-panel">
-    <div class="star-wall">
-      <svg viewBox="0 0 220 220" class="star-svg sv1" xmlns="http://www.w3.org/2000/svg"><path d="M110,18 L129,74 L188,74 L140,110 L158,166 L110,132 L62,166 L80,110 L32,74 L91,74 Z" fill="rgba(18,44,82,0.82)" stroke="rgba(110,198,232,0.7)" stroke-width="2.5"/><text x="110" y="88" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="rgba(110,198,232,0.9)">AI-POWERED TOOLS</text><text x="110" y="108" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">13 Tools.</text><text x="110" y="126" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">One Platform.</text><text x="110" y="142" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.45)">Built for Australian trades.</text></svg>
-      <svg viewBox="0 0 220 220" class="star-svg sv2" xmlns="http://www.w3.org/2000/svg"><path d="M110,18 L129,74 L188,74 L140,110 L158,166 L110,132 L62,166 L80,110 L32,74 L91,74 Z" fill="rgba(62,42,8,0.82)" stroke="rgba(232,200,120,0.7)" stroke-width="2.5"/><text x="110" y="88" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="rgba(232,200,120,0.9)">CONTENT LIBRARY</text><text x="110" y="107" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="17" font-weight="900" fill="#fff">Free With Your</text><text x="110" y="124" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="17" font-weight="900" fill="#fff">First Tool</text><text x="110" y="140" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="8" fill="rgba(255,255,255,0.45)">Every photo, doc &amp; AI output saved.</text></svg>
-      <svg viewBox="0 0 220 220" class="star-svg sv3" xmlns="http://www.w3.org/2000/svg"><path d="M110,18 L129,74 L188,74 L140,110 L158,166 L110,132 L62,166 L80,110 L32,74 L91,74 Z" fill="rgba(72,28,6,0.82)" stroke="rgba(224,120,64,0.7)" stroke-width="2.5"/><text x="110" y="88" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="rgba(224,120,64,0.9)">FREE TRIAL</text><text x="110" y="108" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">14 Days</text><text x="110" y="126" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">Full Access</text><text x="110" y="142" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="8.5" fill="rgba(255,255,255,0.45)">No credit card required.</text></svg>
-      <svg viewBox="0 0 220 220" class="star-svg sv4" xmlns="http://www.w3.org/2000/svg"><path d="M110,18 L129,74 L188,74 L140,110 L158,166 L110,132 L62,166 L80,110 L32,74 L91,74 Z" fill="rgba(8,44,18,0.82)" stroke="rgba(120,200,136,0.7)" stroke-width="2.5"/><text x="110" y="86" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="9.5" font-weight="700" letter-spacing="2.5" fill="rgba(120,200,136,0.9)">CANCEL ANYTIME</text><text x="110" y="107" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">No Lock-In.</text><text x="110" y="125" text-anchor="middle" font-family="Barlow Condensed,sans-serif" font-size="20" font-weight="900" fill="#fff">Ever.</text><text x="110" y="141" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="8" fill="rgba(255,255,255,0.45)">Only pay for what works for you.</text></svg>
+  <aside class="side-panel info-panel">
+  <div class="info-wall">
+    <div class="info-item">
+      <div class="info-item-label">Content Library</div>
+      <div class="info-item-title">Free With Your First Tool</div>
+      <div class="info-item-desc">Every photo, doc, and AI output saved and organised in one place — automatically.</div>
     </div>
-  </aside>
+    <div class="info-item">
+      <div class="info-item-label">Free Trial</div>
+      <div class="info-item-title">14 Days Full Access</div>
+      <div class="info-item-desc">No credit card required. Activate any tool and use it free for 14 days — full access, no limits.</div>
+    </div>
+    <div class="info-item">
+      <div class="info-item-label">Cancel Anytime</div>
+      <div class="info-item-title">No Lock-In. Ever.</div>
+      <div class="info-item-desc">Only pay for the tools that work for you. Cancel any tool, any time — no contracts, no questions.</div>
+    </div>
+    <div class="info-item">
+      <div class="info-item-label">Pricing</div>
+      <div class="info-item-title">From $59 Per Tool</div>
+      <div class="info-item-desc">Each tool is individually priced. Activate what you need, when you need it.</div>
+    </div>
+  </div>
+</aside>
 
 </div>
 
