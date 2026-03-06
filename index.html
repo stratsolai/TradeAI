@@ -773,23 +773,11 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.1 });
 document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
 
-// Nav shadow on scroll
+// Topbar shadow on scroll
 window.addEventListener('scroll', () => {
   document.querySelector('.topbar').style.boxShadow =
     window.scrollY > 50 ? '0 4px 30px rgba(0,0,0,0.4)' : 'none';
 });
-
-// Animated counter
-function animateCount(el, target, suffix) {
-  suffix = suffix || '';
-  let start = 0;
-  const inc = target / 60;
-  const timer = setInterval(() => {
-    start += inc;
-    if (start >= target) { start = target; clearInterval(timer); }
-    el.textContent = Math.floor(start) + suffix;
-  }, 16);
-}
 
 // Bundle rotator
 const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
@@ -803,21 +791,6 @@ if (rotatorItems.length > 0) {
     rotatorItems[rotatorIndex].classList.add('active');
   }, 3000);
 }
-
-// Stats counter observer
-const statsObserver = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) {
-      const el = e.target;
-      const val = parseInt(el.getAttribute('data-target') || el.textContent);
-      const suffix = el.getAttribute('data-suffix') || '';
-      animateCount(el, val, suffix);
-      statsObserver.unobserve(el);
-    }
-  });
-}, { threshold: 0.5 });
-document.querySelectorAll('.stat-num:not(.stat-from)').forEach(el => statsObserver.observe(el));
-document.querySelectorAll('.stats-strip').forEach(el => statsObserver.observe(el));
 </script>
 
 </body>
