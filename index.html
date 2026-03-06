@@ -42,40 +42,26 @@
       opacity: 0.4;
     }
 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top:0; left:0; right:0; z-index:100;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:16px 48px;
-      background: rgba(10,15,30,0.92);
-      backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      transition: all 0.3s;
-    }
-    .nav-logo { display:flex; align-items:center; gap:12px; text-decoration:none; }
-    .nav-logo img { height:36px; width:auto; }
-    .nav-links { display:flex; align-items:center; gap:32px; }
-    .nav-links a {
-      color:white; text-decoration:none;
-      font-size:16px; font-weight:600; letter-spacing:0.3px;
-      transition:color 0.2s;
-    }
-    .nav-links a:hover { color:white; }
-    .nav-cta { display:flex; align-items:center; gap:12px; }
-    .btn-nav-login {
-      color:var(--muted); text-decoration:none;
-      font-size:14px; font-weight:500; transition:color 0.2s;
-    }
-    .btn-nav-login:hover { color:white; }
-    .btn-nav {
-      padding:9px 22px; background:var(--orange); color:white;
-      border:none; border-radius:6px; font-size:14px; font-weight:600;
-      cursor:pointer; text-decoration:none; transition:all 0.2s;
-      font-family:var(--body-font);
-    }
-    .btn-nav:hover { background:var(--orange-light); transform:translateY(-1px); }
+    /* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:56px;background:linear-gradient(135deg,#c4622a 0%,#8a3318 22%,#1a1008 46%,#0d1628 54%,#1a3a6e 72%,#1e3a8a 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
+.topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
+.topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
+.topbar-logo-sub{font-size:8px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px;}
+.topbar-nav{display:flex;align-items:center;gap:28px;margin-right:auto;margin-left:8px;}
+.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;}
+.topbar-nav a:hover{color:#fff;}
+.bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin:0 16px;}
+.bundle-rotator-icon{font-size:13px;flex-shrink:0;}
+.bundle-rotator-track{position:relative;height:19px;overflow:hidden;flex:1;}
+.bundle-rotator-item{position:absolute;top:0;left:0;width:100%;font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;opacity:0;transform:translateY(100%);transition:opacity 0.5s,transform 0.5s;}
+.bundle-rotator-item.active{opacity:1;transform:translateY(0);}
+.bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
+.bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.btn-signin,.btn-trial{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);color:#fff;padding:7px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;text-decoration:none;}
 
-    /* ── HERO ── */
+/* ── HERO ── */
     .hero {
       min-height:100vh; display:flex; align-items:center;
       position:relative; overflow:hidden;
@@ -388,19 +374,32 @@
 <body>
 
 <!-- ── NAV ── -->
-<nav>
-  <a href="/" class="nav-logo">
-    <img src="/logo.svg" alt="TradeAI Pro">
+<div class="topbar">
+  <a class="topbar-logo" href="index.html">
+    <div class="topbar-logo-icon">&#9889;</div>
+    <div>
+      <div class="topbar-logo-text">TradeAI<span style="color:rgba(255,255,255,0.75)">Pro</span></div>
+      <span class="topbar-logo-sub">by Strategic Solutions</span>
+    </div>
   </a>
-  <div class="nav-links">
+  <nav class="topbar-nav">
     <a href="#how-it-works">How It Works</a>
     <a href="#tools">Tools</a>
+  </nav>
+  <div class="bundle-rotator">
+    <span class="bundle-rotator-icon">&#128230;</span>
+    <div class="bundle-rotator-track">
+      <div class="bundle-rotator-item active">Starter &#8212; any 3 tools $149/mth</div>
+      <div class="bundle-rotator-item">Growth &#8212; any 6 tools $299/mth</div>
+      <div class="bundle-rotator-item">Complete &#8212; all tools $499/mth</div>
+    </div>
+    <span class="bundle-rotator-cta">Bundle &#8594;</span>
   </div>
-  <div class="nav-cta">
-    <a href="/login.html" class="btn-nav-login">Log In</a>
-    <a href="/login.html?tab=signup" class="btn-nav">Start Free →</a>
+  <div class="topbar-actions">
+    <a href="login.html" class="btn-signin">Sign In</a>
+    <a href="tools.html?workflow=trial" class="btn-trial">Start Free Trial</a>
   </div>
-</nav>
+</div>
 
 <!-- ── HERO ── -->
 <section class="hero">
