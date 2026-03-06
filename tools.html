@@ -641,9 +641,18 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         '</a>';
     });
     grid.innerHTML = html;
-    // Append industry-specific tools if an industry is selected
-    if (typeof industryParam !== 'undefined' && industryParam && typeof INDUSTRY_SPECIFIC !== 'undefined' && INDUSTRY_SPECIFIC[industryParam]) {
-      var indTools = INDUSTRY_SPECIFIC[industryParam];
+    // Append industry-specific tools
+    if (typeof INDUSTRY_SPECIFIC !== 'undefined') {
+      var indTools = [];
+      if (industryParam && INDUSTRY_SPECIFIC[industryParam]) {
+        // Industry filtered: show just that industry's tools
+        indTools = INDUSTRY_SPECIFIC[industryParam];
+      } else {
+        // All Tools: flatten all industries into one list
+        Object.keys(INDUSTRY_SPECIFIC).forEach(function(ind) {
+          indTools = indTools.concat(INDUSTRY_SPECIFIC[ind]);
+        });
+      }
       var indHtml = '';
       indTools.forEach(function(t) {
         indHtml += '<div class="tool-card" onclick="window.location.href=\'panel.html?tool='+t.id+'\'">' +
