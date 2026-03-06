@@ -544,6 +544,74 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   </div>
 </footer>
 <script>
+var INDUSTRY_SPECIFIC = {
+  pool: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "pool" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "pool" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "pool" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "pool" }
+  ],
+  plumber: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "plumber" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "plumber" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "plumber" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "plumber" }
+  ],
+  electrician: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "electrician" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "electrician" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "electrician" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "electrician" }
+  ],
+  builder: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "builder" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "builder" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "builder" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "builder" }
+  ],
+  hvac: [
+    { id: "service-prioritizer", icon: "🚨", title: "Service Call Prioritiser", industry: "hvac" },
+    { id: "refrigerant-tracker", icon: "🧪", title: "Refrigerant Gas Tracker", industry: "hvac" },
+    { id: "maintenance-scheduler-hvac", icon: "🔄", title: "Preventative Maintenance Scheduler", industry: "hvac" },
+    { id: "energy-calculator", icon: "⚡", title: "Energy Efficiency Calculator", industry: "hvac" }
+  ],
+  fabricator: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "fabricator" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "fabricator" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "fabricator" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "fabricator" }
+  ],
+  cleaner: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "cleaner" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "cleaner" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "cleaner" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "cleaner" }
+  ],
+  landscaper: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "landscaper" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "landscaper" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "landscaper" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "landscaper" }
+  ],
+  manufacturer: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "manufacturer" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "manufacturer" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "manufacturer" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "manufacturer" }
+  ],
+  concreter: [
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "concreter" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "concreter" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "concreter" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "concreter" }
+  ],
+  handyman: [
+    { id: "multi-trade-scheduler", icon: "🗓️", title: "Multi-Trade Job Scheduler", industry: "handyman" },
+    { id: "parts-finder", icon: "🔍", title: "Smart Parts Finder", industry: "handyman" },
+    { id: "job-cost-estimator", icon: "💵", title: "Quick Job Cost Estimator", industry: "handyman" }
+  ]
+};
+
 (function(){
   var items=document.querySelectorAll('.bundle-rotator-item'),idx=0;
   if(items.length>1){setInterval(function(){
@@ -558,7 +626,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 (function(){
   // Parse URL params
   var params = new URLSearchParams(window.location.search);
-  var industryParam = params.get('industry');
+  window._industryParam = params.get('industry');
   var workflowParam = params.get('workflow');
 
   // Update heading and breadcrumb
@@ -644,9 +712,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     // Append industry-specific tools
     if (typeof INDUSTRY_SPECIFIC !== 'undefined') {
       var indTools = [];
-      if (industryParam && INDUSTRY_SPECIFIC[industryParam]) {
+      if (window._industryParam && INDUSTRY_SPECIFIC[window._industryParam]) {
         // Industry filtered: show just that industry's tools
-        indTools = INDUSTRY_SPECIFIC[industryParam];
+        indTools = INDUSTRY_SPECIFIC[window._industryParam];
       } else {
         // All Tools: flatten all industries into one list
         Object.keys(INDUSTRY_SPECIFIC).forEach(function(ind) {
@@ -713,73 +781,7 @@ window.addEventListener('resize', alignHIW);
 
 
 
-var INDUSTRY_SPECIFIC = {
-  pool: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "pool" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "pool" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "pool" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "pool" }
-  ],
-  plumber: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "plumber" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "plumber" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "plumber" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "plumber" }
-  ],
-  electrician: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "electrician" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "electrician" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "electrician" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "electrician" }
-  ],
-  builder: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "builder" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "builder" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "builder" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "builder" }
-  ],
-  hvac: [
-    { id: "service-prioritizer", icon: "🚨", title: "Service Call Prioritiser", industry: "hvac" },
-    { id: "refrigerant-tracker", icon: "🧪", title: "Refrigerant Gas Tracker", industry: "hvac" },
-    { id: "maintenance-scheduler-hvac", icon: "🔄", title: "Preventative Maintenance Scheduler", industry: "hvac" },
-    { id: "energy-calculator", icon: "⚡", title: "Energy Efficiency Calculator", industry: "hvac" }
-  ],
-  fabricator: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "fabricator" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "fabricator" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "fabricator" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "fabricator" }
-  ],
-  cleaner: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "cleaner" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "cleaner" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "cleaner" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "cleaner" }
-  ],
-  landscaper: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "landscaper" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "landscaper" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "landscaper" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "landscaper" }
-  ],
-  manufacturer: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "manufacturer" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "manufacturer" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "manufacturer" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "manufacturer" }
-  ],
-  concreter: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "concreter" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "concreter" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "concreter" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "concreter" }
-  ],
-  handyman: [
-    { id: "multi-trade-scheduler", icon: "🗓️", title: "Multi-Trade Job Scheduler", industry: "handyman" },
-    { id: "parts-finder", icon: "🔍", title: "Smart Parts Finder", industry: "handyman" },
-    { id: "job-cost-estimator", icon: "💵", title: "Quick Job Cost Estimator", industry: "handyman" }
-  ]
-};
+
 
 </script>
 </body>
