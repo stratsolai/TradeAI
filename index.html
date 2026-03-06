@@ -364,8 +364,8 @@
     }
 
     /* ── SCROLL ANIMATIONS ── */
-    .fade-up { opacity:0; transform:translateY(30px); transition:opacity 0.6s ease, transform 0.6s ease; }
-    .fade-up.visible { opacity:1; transform:translateY(0); }
+    .fade-up { opacity:1; transform:translateY(0); transition:opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.animate { opacity:1; transform:translateY(0); }
     .fade-up:nth-child(2) { transition-delay:0.1s; }
     .fade-up:nth-child(3) { transition-delay:0.2s; }
     .fade-up:nth-child(4) { transition-delay:0.3s; }
@@ -767,15 +767,17 @@ window.addEventListener('scroll', () => {
 function animateCount(el, target, suffix='') {
   let start = 0;
   const inc = target / 60;
-const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
+const const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
 let rotatorIndex = 0;
-setInterval(() => {
-  rotatorItems[rotatorIndex].classList.remove('active');
-  rotatorItems[rotatorIndex].classList.add('exit');
-  setTimeout(() => { rotatorItems[rotatorIndex].classList.remove('exit'); }, 500);
-  rotatorIndex = (rotatorIndex + 1) % rotatorItems.length;
-  rotatorItems[rotatorIndex].classList.add('active');
-}, 3000);6);
+if (rotatorItems.length > 0) {
+  setInterval(() => {
+    rotatorItems[rotatorIndex].classList.remove('active');
+    rotatorItems[rotatorIndex].classList.add('exit');
+    setTimeout(() => { rotatorItems[rotatorIndex].classList.remove('exit'); }, 500);
+    rotatorIndex = (rotatorIndex + 1) % rotatorItems.length;
+    rotatorItems[rotatorIndex].classList.add('active');
+  }, 3000);
+}6);
 }
 const statsObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
