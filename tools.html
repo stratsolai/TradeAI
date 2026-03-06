@@ -564,7 +564,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   // Parse URL params
   var params = new URLSearchParams(window.location.search);
   var industryParam = params.get('industry');
-  if (!industryParam) { var sar = document.querySelector('.see-all-row'); if (sar) sar.style.display='none'; }
+  if (!industryParam) { var sar = document.querySelector('.see-all-row'); if (sar) sar.style.display='none'; var tg = document.querySelector('.tool-grid'); if (tg) tg.style.paddingBottom='62px'; }
   var workflowParam = params.get('workflow');
 
   // Update heading and breadcrumb
