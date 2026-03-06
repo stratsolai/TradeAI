@@ -278,16 +278,16 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .tool-card-title {
   font-family: 'Barlow Condensed', sans-serif;
   font-weight: 700;
-  font-size: 16px;
-  color: #fff;
+  font-size: 18px;
+  color: #E8500A;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
+  letter-spacing: 0.04em;
+  line-height: 1.15;
 }
 .tool-card-desc {
   font-size: 13px;
-  color: rgba(255,255,255,0.65);
-  line-height: 1.45;
+  color: rgba(255,255,255,0.72);
+  line-height: 1.5;
   flex: 1;
 }
 .tool-card-footer {
@@ -438,7 +438,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <!-- CENTRE -->
   <div class="page-centre">
     <div class="hero">
-      <h1><span class="h-line1" id="industry-heading">All Tools</span><span class="h-line2">choose your tool</span></h1>
+      <h1><span class="h-line1" id="industry-heading">All Tools</span></h1>
       <div class="section-label">Choose Your Tool</div>
       <div class="filter-tabs">
         <button class="filter-tab active" data-cat="all">All</button>
@@ -562,58 +562,45 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   // Tool data (mirrors tools-data.js CORE_TOOLS)
   var TOOLS = [
-    { id:'lead-bot', toolId:'chatbot', status:'built', icon:'🤖', cat:'marketing',
+    { id:'lead-bot', toolId:'chatbot', status:'built', icon:'💬', cat:'marketing',
       title:'AI Website Chatbot', price:'$79',
-      tagline:'Qualifies leads and books jobs 24/7',
-      desc:'An AI chatbot answers customer enquiries, qualifies leads, and books jobs — 24/7. Learns your business from your emails, your website, your content library, or FAQs you add yourself. Every answer goes through your approval before it goes live.' },
+      desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
     { id:'social-media-manager', toolId:'social', status:'built', icon:'📱', cat:'marketing',
       title:'Marketing & Social Media Manager', price:'$79',
-      tagline:'Your marketing team in a tool',
-      desc:'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram. Describe your latest job, upload a photo, or let the AI pull from your content library. Creates professional social posts, AI-generated graphics, and full marketing campaigns.' },
+      desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
     { id:'email-assistant', toolId:'email', status:'built', icon:'📧', cat:'marketing',
       title:'AI Email Assistant', price:'$59',
-      tagline:'Smart dashboard for your inbox',
-      desc:'AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything — what’s urgent, what needs attention, and what can wait. No more scrolling through hundreds of messages.' },
-    { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺️', cat:'intelligence',
-      title:'Strategic Plan & Operations Dashboard', price:'$69',
-      tagline:'Your business roadmap in minutes',
-      desc:'Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Bank-ready output for finance applications. Progress tracked and saved automatically.' },
+      desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
     { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
       title:'Industry News & Updates Digest', price:'$59',
-      tagline:'Personalised intelligence, not generic news',
-      desc:'AI scans your supplier emails, industry body updates, and regulator notices — plus searches reputable online sources — then summarises everything on an interactive dashboard. Personalised to your business, not generic news.' },
+      desc:'AI scans your supplier emails, industry body updates and regulator notices — plus searches reputable online sources — and summarises everything on one dashboard. Personalised to your business, not generic industry news.' },
     { id:'executive-summary', toolId:'bi', status:'built', icon:'📊', cat:'intelligence',
       title:'Business Intelligence Dashboard', price:'$89',
-      tagline:'Your AI business advisor',
-      desc:'Analyses activity across all your tools, your content library, and your accounting software — then goes further. AI predicts opportunities for new products and services, analyses your local competitive landscape, and recommends how to stay ahead.' },
+      desc:'Analyses activity across all your tools and accounting software, then tells you what to do next. AI predicts opportunities, analyses your local competitive landscape and recommends how to stay ahead.' },
+    { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺', cat:'intelligence',
+      title:'Strategic Plan & Operations Dashboard', price:'$69',
+      desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
     { id:'tender-response', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
       title:'Tender Response Generator', price:'$99',
-      tagline:'Win more tenders with less effort',
-      desc:'Upload any RFT or RFQ — AI reads the requirements, searches your content library for relevant experience and certifications, then generates a professional tender response. Review with AI-assisted editing. Download as PDF or Word.' },
+      desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
     { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'operations',
       title:'Quote Enhancer', price:'Coming Soon',
-      tagline:'Turn prices into professional proposals',
-      desc:'Enter your line items and prices — AI transforms them into a professional branded quote. Detailed scope of works, warranty terms, payment milestones, exclusions, and a cover page with your branding. Every quote looks premium.' },
-    { id:'swms', toolId:'swms', status:'pending', icon:'⛑️', cat:'operations',
+      desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document — detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
+    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'operations',
       title:'SWMS & Safety Docs', price:'Coming Soon',
-      tagline:'Compliant safety docs in minutes',
-      desc:'Describe the job and AI generates a Safe Work Method Statement specific to the work, your trade, and your state. Workers sign off on-site with digital signatures. Build a library of templates that get smarter with every job.' },
+      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
     { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'operations',
       title:'Customer Progress Updates', price:'Coming Soon',
-      tagline:'Keep customers in the loop effortlessly',
-      desc:'Take photos on-site, tap send, and AI creates a professional branded progress update — what was done today, photos, and what’s next. Your customer gets a clean update via email or a shareable link they can check anytime.' },
+      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
     { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'operations',
       title:'Handover Documentation', price:'Coming Soon',
-      tagline:'Finish every job like a premium operator',
-      desc:'AI creates a branded handover pack for every completed job — project summary, before and after photos, maintenance guide, warranty details — everything your customer needs. Add key components and AI pulls real manufacturer maintenance data.' },
+      desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
     { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'marketing',
       title:'Review & Referral Booster', price:'Coming Soon',
-      tagline:'Turn happy customers into growth',
-      desc:'Finish a job and a branded review request is automatically sent to your customer. It follows up if they haven’t responded, and once they leave a review, it asks if they know someone who needs your services.' },
+      desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they haven’t responded. Once they leave a review, it asks if they know someone who needs your services.' },
     { id:'design-viz', toolId:'design-viz', status:'pending', icon:'🎨', cat:'marketing',
       title:'Design Visualiser', price:'Coming Soon',
-      tagline:'Show customers what’s possible',
-      desc:'Upload a site photo, describe the project — AI generates a professional concept render to wow your customers. Request variations — different colours, materials, or layouts. Use it in your quotes, tenders, and marketing.' }
+      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' }
   ];
 
   // Filter state
