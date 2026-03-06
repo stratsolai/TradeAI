@@ -266,11 +266,10 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   min-height: 160px;
   text-decoration: none;
 }
-.tool-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(232,80,10,0.4);
-  border-color: rgba(232,80,10,0.5);
-}
+@property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
+.tool-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
+.tool-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
+.tool-card:hover{border-color:transparent;transform:translateY(-3px);}
 .tool-card-badge {
   font-size: 10px;
   font-weight: 700;
@@ -358,20 +357,24 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   margin-top: 16px;
   padding-bottom: 8px;
 }
-.btn-back-industry {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.25);
-  color: rgba(255,255,255,0.65);
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  text-decoration: none;
-  transition: all 0.2s;
-}
-.btn-back-industry:hover {
-  border-color: rgba(255,255,255,0.5);
+.btn-see-all-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #c4622a;
   color: #fff;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 22px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-see-all-tools:hover {
+  background: #d4844a;
 }
 </style>
 </head>
@@ -463,7 +466,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
       <!-- populated by JS -->
     </div>
     <div class="see-all-row">
-      <a href="industry-select.html" class="btn-back-industry">&#8592; Back to Industries</a>
+      <a href="industry-select.html" class="btn-see-all-tools">← See All Tools</a>
     </div>
   </div>
 
@@ -500,7 +503,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
       <div class="wyg-item">
         <div class="wyg-icon">&#10022;</div>
         <div class="wyg-body">
-          <div class="wyg-title">From $59 Per Tool</div>
+          <div class="wyg-title">From $59/mth Per Tool</div>
           <div class="wyg-desc">Each tool is individually priced. Activate what you need, when you need it</div>
         </div>
       </div>
