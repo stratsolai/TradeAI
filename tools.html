@@ -640,8 +640,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div>' +
         '</a>';
     });
-    grid.innerHTML = html;
-    // Append industry-specific tool tiles
+    // Build industry-specific tiles
     var indTools = [];
     if (industryParam && INDUSTRY_SPECIFIC[industryParam]) {
       indTools = INDUSTRY_SPECIFIC[industryParam];
@@ -650,17 +649,16 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         indTools = indTools.concat(INDUSTRY_SPECIFIC[ind]);
       });
     }
-    var indHtml = '';
     indTools.forEach(function(t) {
-      indHtml += '<div class="tool-card" onclick="window.location.href=\'panel.html?tool=' + t.id + '\'">' +
+      html += '<div class="tool-card" onclick="window.location.href=\'panel.html?tool=' + t.id + '\'">' +
         '<div class="tool-card-badge badge-coming">&#9679; Coming Soon</div>' +
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
-        '<div class="tool-card-desc">Industry-specific tool</div>' +
+        '<div class="tool-card-desc">Industry-specific tool — coming soon</div>' +
         '<div class="tool-card-footer"><span class="tool-price">Coming Soon</span>' +
         '<span class="tool-card-cta">Explore <span class="cta-arrow">→</span></span></div></div>';
     });
-    grid.innerHTML += indHtml;
+    grid.innerHTML = html;
   }
 
   // Filter tab clicks
