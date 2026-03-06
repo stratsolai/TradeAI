@@ -271,37 +271,6 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   box-shadow: 0 12px 40px rgba(0,0,0,0.45), 0 0 0 1px rgba(232,80,10,0.4);
   border-color: rgba(232,80,10,0.5);
 }
-.tool-card-icon {
-  font-size: 26px;
-  line-height: 1;
-}
-.tool-card-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 700;
-  font-size: 18px;
-  color: #E8500A;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  line-height: 1.15;
-}
-.tool-card-desc {
-  font-size: 13px;
-  color: rgba(255,255,255,0.72);
-  line-height: 1.5;
-  flex: 1;
-}
-.tool-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 8px;
-}
-.tool-card-price {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: #E8500A;
-}
 .tool-card-badge {
   font-size: 10px;
   font-weight: 700;
@@ -309,6 +278,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   border-radius: 10px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 .badge-live {
   background: rgba(34,197,94,0.18);
@@ -320,24 +292,61 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   color: #ff6b2b;
   border: 1px solid rgba(232,80,10,0.3);
 }
+.tool-card-icon {
+  font-size: 24px;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+.tool-card-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 26px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 26px;
+  margin-bottom: 6px;
+}
+.tool-card-desc {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  color: rgba(232,213,184,0.85);
+  line-height: 21px;
+  flex: 1;
+}
+.tool-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+}
+.tool-card-price {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: rgba(232,213,184,0.7);
+}
 .tool-card-cta {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.55);
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #d4844a;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-top: 4px;
+  letter-spacing: 1.6px;
+  margin-top: 8px;
 }
 .tool-card-cta .arrow {
-  width: 20px; height: 20px;
+  width: 18px; height: 18px;
   border-radius: 50%;
-  background: #E8500A;
+  background: #c4622a;
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; color: #fff;
+  font-size: 10px; color: #fff;
   transition: transform 0.2s;
+  flex-shrink: 0;
 }
 .tool-card:hover .arrow { transform: translateX(3px); }
 .see-all-row {
@@ -614,14 +623,15 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
       var badge = t.status === 'built'
         ? '<span class="tool-card-badge badge-live">&#9679; Live Now</span>'
         : '<span class="tool-card-badge badge-coming">Coming Soon</span>';
-      var priceHtml = t.price !== 'Coming Soon' ? '<span class="tool-card-price">' + t.price + '/mo</span>' : '<span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span>';
+      var priceHtml = t.price !== 'Coming Soon' ? '<span class="tool-card-price">' + t.price + '/mth</span>' : '<span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span>';
       var dest = 'panel.html?tool=' + t.id + (workflowParam ? '&workflow=' + workflowParam : '') + (industryParam ? '&industry=' + industryParam : '');
       html += '<a class="tool-card" href="' + dest + '">' +
+        badge +
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
         '<div class="tool-card-desc">' + t.desc + '</div>' +
-        '<div class="tool-card-footer">' + priceHtml + badge + '</div>' +
-        '<div class="tool-card-cta">Explore tool <div class="arrow">&#8594;</div></div>' +
+        '<div class="tool-card-footer">' + priceHtml + '</div>' +
+        '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div>' +
         '</a>';
     });
     grid.innerHTML = html;
@@ -640,6 +650,37 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   // Initial render
   renderTools('all');
 })();
+
+
+function alignHIW() {
+  const hiwPanel = document.querySelector('.hiw-panel');
+  const wygPanel = document.querySelector('.wyg-panel');
+  const sectionLabel = document.querySelector('.section-label');
+  if (!sectionLabel) return;
+  if (hiwPanel) {
+    hiwPanel.style.paddingTop = '0px';
+    const gap = sectionLabel.getBoundingClientRect().top - hiwPanel.getBoundingClientRect().top;
+    if (gap > 0) hiwPanel.style.paddingTop = gap + 'px';
+  }
+  if (wygPanel) {
+    wygPanel.style.paddingTop = '0px';
+    const gap2 = sectionLabel.getBoundingClientRect().top - wygPanel.getBoundingClientRect().top;
+    if (gap2 > 0) wygPanel.style.paddingTop = gap2 + 'px';
+  }
+}
+window.addEventListener('load', alignHIW);
+window.addEventListener('resize', alignHIW);
+
+// Industry card navigation
+(function(){
+  var ids=['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
+  var cards=document.querySelectorAll('.industry-card');
+  cards.forEach(function(c,i){
+    c.style.cursor='pointer';
+    c.addEventListener('click',function(){ window.location.href='tools.html?industry='+ids[i]; });
+  });
+})();
+
 </script>
 </body>
 </html>
