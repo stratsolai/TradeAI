@@ -63,14 +63,14 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
 .industry-card:hover{border-color:transparent;}
 .card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
-.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.48;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
+.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.50;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
 .card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.0) 0%,rgba(10,18,35,0.05) 20%,rgba(10,18,35,0.52) 55%,rgba(10,18,35,0.86) 100%);}
-.industry-card:hover .card-photo-bg{transform:scale(1.04);opacity:0.8;}
+.industry-card:hover .card-photo-bg{transform:scale(1.04);opacity:0.50;}
 .card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
 .card-icon{font-size:20px;display:block;margin-bottom:5px;}
 .card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#fff 0%,#f5d078 40%,#d4a04a 80%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
 
-.card-desc{font-size:12px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
+.card-desc{font-size:15px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
 .card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;}
 .card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;}
 .see-all-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,98,42,0.1),rgba(44,90,130,0.09));border:1px dashed rgba(196,98,42,0.32);border-radius:14px;padding:16px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s;animation:cardIn 0.5s 0.5s cubic-bezier(0.16,1,0.3,1) both;}
@@ -209,9 +209,12 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .hiw-step{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0;position:relative;z-index:1;width:100%;}
 .hiw-step-num{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#fff;position:relative;z-index:2;}
 .hiw-step-body{text-align:center;}
-.hiw-step-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#fff;margin-bottom:6px;}
-.hiw-step-title span{color:#E8500A;}.hiw-connector{width:2px;height:30px;background:linear-gradient(to bottom,rgba(26,84,144,0.85),rgba(26,84,144,0.35));border-radius:2px;margin:0 auto;}.wyg-panel{padding:0 24px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;}.wyg-item{display:flex;align-items:flex-start;gap:12px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.07);}.wyg-item:last-child{border-bottom:none;}.wyg-icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}.wyg-body{}.wyg-title{font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:4px;}.wyg-desc{font-size:12px;color:rgba(255,255,255,0.62);line-height:1.5;}
-.hiw-step-desc{font-size:12px;color:rgba(255,255,255,0.55);line-height:1.55;max-width:200px;margin:0 auto;}
+.hiw-step-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;background:linear-gradient(to right,#f5ece0 0%,#f0d8b8 40%,#e8b880 72%,#d4884a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:0.5px;color:#fff;margin-bottom:6px;}
+.hiw-step-title span{color:#E8500A;}.hiw-connector{width:2px;height:30px;background:linear-gradient(to bottom,rgba(26,84,144,0.85),rgba(26,84,144,0.35));border-radius:2px;margin:0 auto;}.wyg-panel{padding:0 24px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;}.wyg-item{display:flex;align-items:flex-start;gap:12px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.07);}.wyg-item:last-child{border-bottom:none;}.wyg-icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}.wyg-body{}.wyg-title{font-family:"Barlow Condensed",sans-serif;font-size:22px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;background:linear-gradient(to right,#f5ece0 0%,#f0d8b8 40%,#e8b880 72%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px;}.wyg-desc{font-size:15px;color:rgba(255,255,255,0.62);line-height:1.5;}
+.hiw-step-desc{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.55;max-width:200px;margin:0 auto;}
+
+.btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#E8500A;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
+.btn-see-all-orange:hover{background:#ff6b2b;}
 </style>
 </head>
 <body>
@@ -237,9 +240,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
-      <div class="bundle-rotator-item active">Starter &#8212; 3 tools from $197/mo</div>
-      <div class="bundle-rotator-item">Growth &#8212; 6 tools from $374/mo</div>
-      <div class="bundle-rotator-item">Complete &#8212; all 13 tools from $899/mo</div>
+      <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
+      <div class="bundle-rotator-item">Growth — any 6 tools $299/mth</div>
+      <div class="bundle-rotator-item">Complete — all tools $499/mth</div>
     </div>
     <span class="bundle-rotator-cta">Bundle &#8594;</span>
   </div>
@@ -349,16 +352,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         <div class="card-content"><span class="card-icon">&#128296;</span><div class="card-name">Handymen</div><p class="card-desc">General repairs, maintenance and multi-trade property services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
-      <div class="see-all-card">
-        <div class="see-all-left">
-          <div class="see-all-icon">&#128269;</div>
-          <div>
-            <div class="see-all-title">See All Tools</div>
-            <div class="see-all-sub">Browse every AI tool available across all industries</div>
-          </div>
-        </div>
-        <button class="see-all-btn">Browse All Tools &#8594;</button>
-      </div>
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;padding:4px 0 8px 0;">
+  <a href="tools.html" class="btn-see-all-orange">See All Tools &rarr;</a>
+</div>
     </div>
   </div>
 
@@ -368,7 +364,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <div class="wyg-panel" id="wyg-panel">
     <div class="hiw-header">
       <div class="hiw-eyebrow">What You Get</div>
-      <div class="hiw-heading">Built in,<br>from day one</div>
+      <div class="hiw-heading">Built in<br>from day one</div>
     </div>
     <div class="wyg-items">
       <div class="wyg-item">
@@ -382,8 +378,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         <div class="wyg-icon">&#10022;</div>
         <div class="wyg-body">
           <div class="wyg-title">14-Day Free Trial</div>
-          <div class="wyg-desc">No credit card required. Full access to any tool for 14 days &mdash; no limits.</div>
-        </div>
+          </div>
       </div>
       <div class="wyg-item">
         <div class="wyg-icon">&#10022;</div>
@@ -405,38 +400,35 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
 </div>
 
-<div class="footer-strip">
-  <a href="privacy-policy.html">Privacy</a> &nbsp;&middot;&nbsp; <a href="terms-of-service.html">Terms</a> &nbsp;&middot;&nbsp; &#169; 2026 TradeAI Pro by Strategic Solutions
-</div>
-
-<script>
-(function(){
-  var items=document.querySelectorAll('.bundle-rotator-item'),idx=0;
-  if(items.length>1){setInterval(function(){
-    items[idx].classList.remove('active');items[idx].classList.add('exit');
-    setTimeout(function(){items[idx].classList.remove('exit');},500);
-    idx=(idx+1)%items.length;items[idx].classList.add('active');
-  },3000);}
-})();
-</script>
-<script>
-function alignHIW() {
-  const hiwPanel = document.querySelector('.hiw-panel');
-  const wygPanel = document.querySelector('.wyg-panel');
-  const sectionLabel = document.querySelector('.section-label');
-  if (!sectionLabel) return;
-  if (hiwPanel) {
-    hiwPanel.style.paddingTop = '0px';
-    const gap = sectionLabel.getBoundingClientRect().top - hiwPanel.getBoundingClientRect().top;
-    if (gap > 0) hiwPanel.style.paddingTop = gap + 'px';
-  }
-  if (wygPanel) {
-    wygPanel.style.paddingTop = '0px';
-    const gap2 = sectionLabel.getBoundingClientRect().top - wygPanel.getBoundingClientRect().top;
-    if (gap2 > 0) wygPanel.style.paddingTop = gap2 + 'px';
-  }
-}
-window.addEventListener('load', alignHIW);
-window.addEventListener('resize', alignHIW);
-</script></body>
+<footer style="background:#0a0f1a;border-top:1px solid rgba(255,255,255,0.08);padding:48px 0 32px;">
+  <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
+    <div style="display:flex;flex-wrap:wrap;gap:40px;justify-content:space-between;margin-bottom:40px;">
+      <div style="min-width:200px;">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:700;color:#E8500A;margin-bottom:8px;">TradeAI Pro</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.6;">AI-powered tools built for<br>Australian trades businesses.</div>
+      </div>
+      <div style="min-width:160px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Product</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="industry-select.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Browse Tools</a>
+          <a href="pricing-page.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Pricing</a>
+          <a href="login.html?tab=signup" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Sign Up</a>
+        </div>
+      </div>
+      <div style="min-width:160px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);margin-bottom:12px;">Company</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <a href="contact.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Contact</a>
+          <a href="privacy-policy.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Privacy Policy</a>
+          <a href="terms-of-service.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:24px;display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:center;">
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);">&copy; 2025 Strategic Solutions. ABN 52 634 683 467. All rights reserved.</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.3);">Built for Australian trades &mdash; by Australians.</div>
+    </div>
+  </div>
+</footer>
+</body>
 </html>
