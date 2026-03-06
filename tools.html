@@ -641,6 +641,21 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         '</a>';
     });
     grid.innerHTML = html;
+    // Append industry-specific tools if an industry is selected
+    if (typeof industryParam !== 'undefined' && industryParam && typeof INDUSTRY_SPECIFIC !== 'undefined' && INDUSTRY_SPECIFIC[industryParam]) {
+      var indTools = INDUSTRY_SPECIFIC[industryParam];
+      var indHtml = '';
+      indTools.forEach(function(t) {
+        indHtml += '<div class="tool-card" onclick="window.location.href=\'panel.html?tool='+t.id+'\'">' +
+          '<div class="tool-card-badge badge-coming">&#9679; Coming Soon</div>' +
+          '<div class="tool-card-icon">' + t.icon + '</div>' +
+          '<div class="tool-card-title">' + t.title + '</div>' +
+          '<div class="tool-card-desc">' + t.desc + '</div>' +
+          '<div class="tool-card-footer"><span class="tool-price">Coming Soon</span>' +
+          '<span class="tool-card-cta">Explore Tool <span class="cta-arrow">→</span></span></div></div>';
+      });
+      grid.innerHTML += indHtml;
+    }
   }
 
   // Filter tab clicks
