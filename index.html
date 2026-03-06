@@ -187,10 +187,8 @@
     /* ── SECTIONS ── */
     section { padding:100px 48px; position:relative; }
     .section-inner { max-width:1200px; margin:0 auto; }
-    .section-tag {
-      display:inline-block; color:var(--orange); font-size:11px;
-      font-weight:700; letter-spacing:3px; text-transform:uppercase; margin-bottom:16px;
-    }
+    .section-tag{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 18px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Barlow Condensed',sans-serif}
+.section-tag::before,.section-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#d4844a,transparent);max-width:60px}
     .section-title { font-family:var(--heading-font); font-size:clamp(36px,5vw,60px); font-weight:900; line-height:1; margin-bottom:20px; }
     .section-sub { font-size:17px; color:var(--muted); line-height:1.7; max-width:560px; }
 
