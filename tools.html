@@ -645,8 +645,11 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     if (industryParam && INDUSTRY_SPECIFIC[industryParam]) {
       indTools = INDUSTRY_SPECIFIC[industryParam];
     } else {
+      var seen = {};
       Object.keys(INDUSTRY_SPECIFIC).forEach(function(ind) {
-        indTools = indTools.concat(INDUSTRY_SPECIFIC[ind]);
+        INDUSTRY_SPECIFIC[ind].forEach(function(t) {
+          if (!seen[t.id]) { seen[t.id] = true; indTools.push(t); }
+        });
       });
     }
     indTools.forEach(function(t) {
