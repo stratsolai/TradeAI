@@ -215,167 +215,6 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
 .btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#c4622a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
 .btn-see-all-orange:hover{background:#d4844a;}
-
-/* ── TOOLS PAGE OVERRIDES ── */
-.filter-tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 12px 0 20px;
-}
-.filter-tab {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.75);
-  padding: 7px 18px;
-  border-radius: 20px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.filter-tab:hover {
-  background: rgba(232,80,10,0.25);
-  border-color: #E8500A;
-  color: #fff;
-}
-.filter-tab.active {
-  background: #E8500A;
-  border-color: #E8500A;
-  color: #fff;
-  font-weight: 600;
-}
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  width: 100%;
-}
-.tool-card {
-  position: relative;
-  border-radius: 14px;
-  cursor: pointer;
-  border: 2px solid rgba(255,255,255,0.07);
-  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s, border-color 0.3s;
-  background: rgba(23,32,53,0.85);
-  padding: 18px 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 160px;
-  text-decoration: none;
-}
-@property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
-.tool-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
-.tool-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
-.tool-card:hover{border-color:transparent;transform:translateY(-3px);}
-.tool-card-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.badge-live {
-  background: rgba(34,197,94,0.18);
-  color: #4ade80;
-  border: 1px solid rgba(74,222,128,0.3);
-}
-.badge-coming {
-  background: rgba(232,80,10,0.18);
-  color: #ff6b2b;
-  border: 1px solid rgba(232,80,10,0.3);
-}
-.tool-card-icon {
-  font-size: 24px;
-  line-height: 1;
-  margin-bottom: 2px;
-}
-.tool-card-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 26px;
-  background: linear-gradient(160deg, #fff 0%, #f5d078 40%, #d4a04a 80%, #d4844a 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 26px;
-  margin-bottom: 6px;
-}
-.tool-card-desc {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  color: rgba(232,213,184,0.85);
-  line-height: 21px;
-  flex: 1;
-}
-.tool-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  margin-top: 10px;
-}
-.tool-card-price {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: rgba(232,213,184,0.7);
-}
-.tool-card-cta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  color: #d4844a;
-  text-transform: uppercase;
-  letter-spacing: 1.6px;
-  margin-top: 8px;
-}
-.tool-card-cta .arrow {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: #c4622a;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: #fff;
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-.tool-card:hover .arrow { transform: translateX(3px); }
-.see-all-row {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 16px;
-  padding-bottom: 8px;
-}
-.btn-see-all-tools {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #c4622a;
-  color: #fff;
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 10px 22px;
-  border-radius: 6px;
-  text-decoration: none;
-  transition: background 0.2s;
-}
-.btn-see-all-tools:hover {
-  background: #d4844a;
-}
 </style>
 </head>
 <body>
@@ -396,7 +235,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     </div>
   </a>
   <div class="topbar-breadcrumb">
-    <a href="index.html">Home</a><span class="sep">&#8250;</span><span id="bc-industry" class="current">All Tools</span>
+    <a href="index.html">Home</a><span class="sep">&#8250;</span><span class="current">Select Your Industry</span>
   </div>
   <div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
@@ -453,24 +292,73 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <!-- CENTRE -->
   <div class="page-centre">
     <div class="hero">
-      <h1><span class="h-line1" id="industry-heading">All Tools</span></h1>
-      <div class="section-label">Choose Your Tool</div>
-      <div class="filter-tabs">
-        <button class="filter-tab active" data-cat="all">All</button>
-        <button class="filter-tab" data-cat="marketing">Marketing</button>
-        <button class="filter-tab" data-cat="operations">Operations</button>
-        <button class="filter-tab" data-cat="intelligence">Business Intelligence</button>
+      <h1><span class="h-line1">AI tools built for</span><span class="h-line2">your trade</span></h1>
+      <div class="section-label">Choose Your Industry</div>
+    </div>
+    <div class="industry-grid">
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#127946;</span><div class="card-name">Pool Builders</div><p class="card-desc">Residential and commercial pool construction, renovation and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
-    </div>
-    <div class="tool-grid" id="tool-grid">
-      <!-- populated by JS -->
-    </div>
-    <div class="see-all-row">
-      <a href="industry-select.html" class="btn-see-all-tools">← See All Tools</a>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#128295;</span><div class="card-name">Plumbers</div><p class="card-desc">Residential and commercial plumbing, gas fitting and drainage</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#9889;</span><div class="card-name">Electricians</div><p class="card-desc">Residential and commercial electrical installation, testing and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#127959;</span><div class="card-name">Builders</div><p class="card-desc">Residential and commercial building, renovations and project management</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#10052;</span><div class="card-name">HVAC</div><p class="card-desc">Air conditioning, heating, ventilation and refrigeration services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1683830932134-2d06849534eb?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#128297;</span><div class="card-name">Fabricators</div><p class="card-desc">Custom fabrication, welding, structural steel and sheet metal work</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#129529;</span><div class="card-name">Cleaners</div><p class="card-desc">Commercial, industrial and strata cleaning services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://plus.unsplash.com/premium_photo-1664299231556-57f570023f87?w=500&auto=format&fit=crop&q=60&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#127807;</span><div class="card-name">Landscapers</div><p class="card-desc">Garden design, hardscaping, irrigation and outdoor living spaces</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1700727448686-b314cb5f9948?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#127981;</span><div class="card-name">Manufacturers</div><p class="card-desc">Product manufacturing, assembly, packaging and distribution</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1766961980272-921bba4240bc?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#129704;</span><div class="card-name">Concreters</div><p class="card-desc">Residential and commercial concrete, driveways, paths and slabs</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1676311396794-f14881e9daaa?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#128296;</span><div class="card-name">Handymen</div><p class="card-desc">General repairs, maintenance and multi-trade property services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
+      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;padding:4px 0 8px 0;">
+  <a href="tools.html" class="btn-see-all-orange">See All Tools &rarr;</a>
+</div>
     </div>
   </div>
 
-<!-- RIGHT: Light Stat Wall -->
+  <!-- RIGHT: Light Stat Wall -->
   <!-- Right Star Panel -->
   <aside class="side-panel info-panel">
   <div class="wyg-panel" id="wyg-panel">
@@ -503,7 +391,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
       <div class="wyg-item">
         <div class="wyg-icon">&#10022;</div>
         <div class="wyg-body">
-          <div class="wyg-title">From $59/mth Per Tool</div>
+          <div class="wyg-title">From $59 Per Tool</div>
           <div class="wyg-desc">Each tool is individually priced. Activate what you need, when you need it</div>
         </div>
       </div>
@@ -554,110 +442,6 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 })();
 </script>
 <script>
-// Tools page JS
-(function(){
-  // Parse URL params
-  var params = new URLSearchParams(window.location.search);
-  var industryParam = params.get('industry');
-  var workflowParam = params.get('workflow');
-
-  // Update heading and breadcrumb
-  var industryNames = {
-    pool:'Pool Builders', plumber:'Plumbers', electrician:'Electricians',
-    builder:'Builders', hvac:'HVAC', fabricator:'Fabricators',
-    cleaner:'Cleaners', landscaper:'Landscapers', manufacturer:'Manufacturers',
-    concreter:'Concreters', handyman:'Handymen'
-  };
-  if(industryParam && industryNames[industryParam]) {
-    var name = industryNames[industryParam];
-    document.getElementById('industry-heading').textContent = name;
-    var bc = document.getElementById('bc-industry');
-    if(bc) bc.textContent = name + ' Tools';
-  }
-
-  // Tool data (mirrors tools-data.js CORE_TOOLS)
-  var TOOLS = [
-    { id:'lead-bot', toolId:'chatbot', status:'built', icon:'💬', cat:'marketing',
-      title:'AI Website Chatbot', price:'$79',
-      desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
-    { id:'social-media-manager', toolId:'social', status:'built', icon:'📱', cat:'marketing',
-      title:'Marketing & Social Media Manager', price:'$79',
-      desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
-    { id:'email-assistant', toolId:'email', status:'built', icon:'📧', cat:'marketing',
-      title:'AI Email Assistant', price:'$59',
-      desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
-    { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
-      title:'Industry News & Updates Digest', price:'$59',
-      desc:'AI scans your supplier emails, industry body updates and regulator notices — plus searches reputable online sources — and summarises everything on one dashboard. Personalised to your business, not generic industry news.' },
-    { id:'executive-summary', toolId:'bi', status:'built', icon:'📊', cat:'intelligence',
-      title:'Business Intelligence Dashboard', price:'$89',
-      desc:'Analyses activity across all your tools and accounting software, then tells you what to do next. AI predicts opportunities, analyses your local competitive landscape and recommends how to stay ahead.' },
-    { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺', cat:'intelligence',
-      title:'Strategic Plan & Operations Dashboard', price:'$69',
-      desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
-    { id:'tender-response', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
-      title:'Tender Response Generator', price:'$99',
-      desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
-    { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'operations',
-      title:'Quote Enhancer', price:'Coming Soon',
-      desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document — detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
-    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'operations',
-      title:'SWMS & Safety Docs', price:'Coming Soon',
-      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
-    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'operations',
-      title:'Customer Progress Updates', price:'Coming Soon',
-      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
-    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'operations',
-      title:'Handover Documentation', price:'Coming Soon',
-      desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
-    { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'marketing',
-      title:'Review & Referral Booster', price:'Coming Soon',
-      desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they haven’t responded. Once they leave a review, it asks if they know someone who needs your services.' },
-    { id:'design-viz', toolId:'design-viz', status:'pending', icon:'🎨', cat:'marketing',
-      title:'Design Visualiser', price:'Coming Soon',
-      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' }
-  ];
-
-  // Filter state
-  var activeCat = 'all';
-
-  function renderTools(cat) {
-    var grid = document.getElementById('tool-grid');
-    var filtered = cat === 'all' ? TOOLS : TOOLS.filter(function(t){ return t.cat === cat; });
-    var html = '';
-    filtered.forEach(function(t) {
-      var badge = t.status === 'built'
-        ? '<span class="tool-card-badge badge-live">&#9679; Live Now</span>'
-        : '<span class="tool-card-badge badge-coming">Coming Soon</span>';
-      var priceHtml = t.price !== 'Coming Soon' ? '<span class="tool-card-price">' + t.price + '/mth</span>' : '<span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span>';
-      var dest = 'panel.html?tool=' + t.id + (workflowParam ? '&workflow=' + workflowParam : '') + (industryParam ? '&industry=' + industryParam : '');
-      html += '<a class="tool-card" href="' + dest + '">' +
-        badge +
-        '<div class="tool-card-icon">' + t.icon + '</div>' +
-        '<div class="tool-card-title">' + t.title + '</div>' +
-        '<div class="tool-card-desc">' + t.desc + '</div>' +
-        '<div class="tool-card-footer">' + priceHtml + '</div>' +
-        '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div>' +
-        '</a>';
-    });
-    grid.innerHTML = html;
-  }
-
-  // Filter tab clicks
-  document.querySelectorAll('.filter-tab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-tab').forEach(function(b){ b.classList.remove('active'); });
-      btn.classList.add('active');
-      activeCat = btn.dataset.cat;
-      renderTools(activeCat);
-    });
-  });
-
-  // Initial render
-  renderTools('all');
-})();
-
-
 function alignHIW() {
   const hiwPanel = document.querySelector('.hiw-panel');
   const wygPanel = document.querySelector('.wyg-panel');
@@ -686,7 +470,6 @@ window.addEventListener('resize', alignHIW);
     c.addEventListener('click',function(){ window.location.href='tools.html?industry='+ids[i]; });
   });
 })();
-
 </script>
 </body>
 </html>
