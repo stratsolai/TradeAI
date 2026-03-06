@@ -767,11 +767,15 @@ window.addEventListener('scroll', () => {
 function animateCount(el, target, suffix='') {
   let start = 0;
   const inc = target / 60;
-  const timer = setInterval(() => {
-    start += inc;
-    if(start >= target) { el.innerHTML = target + suffix; clearInterval(timer); return; }
-    el.innerHTML = Math.floor(start) + suffix;
-  }, 16);
+const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
+let rotatorIndex = 0;
+setInterval(() => {
+  rotatorItems[rotatorIndex].classList.remove('active');
+  rotatorItems[rotatorIndex].classList.add('exit');
+  setTimeout(() => { rotatorItems[rotatorIndex].classList.remove('exit'); }, 500);
+  rotatorIndex = (rotatorIndex + 1) % rotatorItems.length;
+  rotatorItems[rotatorIndex].classList.add('active');
+}, 3000);6);
 }
 const statsObserver = new IntersectionObserver((entries) => {
   entries.forEach(e => {
