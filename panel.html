@@ -1064,6 +1064,31 @@
     .panel-header { padding: 0 20px; }
     .cta-row { flex-direction: column; align-items: flex-start; gap: 16px; }
   }
+
+    /* TOPBAR */
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StaxAI &mdash; Industry Select Mockup v17</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+.atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+.atmo-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;}
+.atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
+.atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
+.atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
+.atmo-orb.o3{width:350px;height:350px;background:#2c5a82;opacity:0.11;bottom:-80px;right:-80px;animation:orb3 12s ease-in-out infinite;}
+@keyframes orb1{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-40px)}}
+@keyframes orb2{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+@keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+
+/* TOPBAR */
+
 </style>
 </head>
 <body>
@@ -1075,25 +1100,31 @@
   <div class="organic-shape s3"></div>
 
   <!-- HEADER — BURNT ORANGE -->
-  <div class="panel-header">
-    <div class="breadcrumb">
-      <a href="#" id="back-btn">← Back</a>
-      <span class="sep">›</span>
-      <a href="#">All Tools</a>
-      <span class="sep">›</span>
-      <span class="current" id="panel-breadcrumb">AI Website Chatbot</span>
+  <div class="topbar">
+  <a class="topbar-logo" href="index.html">
+    <div class="topbar-logo-icon">&#9889;</div>
+    <div>
+      <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="my-project-page-1.png" alt="StaxAI" style="height:36px;width:auto;display:block;"></a>
+      <span class="topbar-logo-sub">by Strategic Solutions</span>
     </div>
-    <div class="bundle-rotator">
-      <span class="bundle-rotator-icon">📦</span>
-      <div class="bundle-rotator-track" id="bundleTrack">
-        <div class="bundle-rotator-item active">Starter — 3 tools from $197/mo</div>
-        <div class="bundle-rotator-item">Growth — 6 tools from $374/mo</div>
-        <div class="bundle-rotator-item">Complete — all 13 tools from $899/mo</div>
-      </div>
-      <span class="bundle-rotator-cta">Bundle →</span>
-    </div>
-    <button class="panel-close" id="close-btn">✕</button>
+  </a>
+  <div class="topbar-breadcrumb">
+    <a href="javascript:void(0)" id="back-btn" onclick="history.length>1?history.back():window.location.href='index.html'">&#8592; Back</a>
   </div>
+  <div class="bundle-rotator">
+    <span class="bundle-rotator-icon">&#128230;</span>
+    <div class="bundle-rotator-track">
+      <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
+      <div class="bundle-rotator-item">Growth — any 6 tools $299/mth</div>
+      <div class="bundle-rotator-item">Complete — all tools $499/mth</div>
+    </div>
+    <span class="bundle-rotator-cta">Bundle &#8594;</span>
+  </div>
+  <div class="topbar-actions">
+    <a href="login.html" class="btn-signin">Sign In</a>
+    <a href="tools.html?workflow=trial" class="btn-trial">Start Free Trial</a>
+  </div>
+</div>
 
   <!-- HERO -->
   <div class="panel-hero">
