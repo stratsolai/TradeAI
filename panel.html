@@ -1452,15 +1452,20 @@
     // Back button
     var backBtn = document.getElementById('back-btn');
     if (backBtn) {
-      backBtn.addEventListener('click', function(e){
-        e.preventDefault();
-        var ref = document.referrer;
-        if (ref && ref.indexOf(window.location.hostname) !== -1) {
-          history.back();
-        } else {
-          window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
-        }
-      });
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function() {
+      if (history.length > 1) {
+        history.back();
+      } else if (document.referrer) {
+        window.location.href = document.referrer;
+      } else {
+        const params = new URLSearchParams(window.location.search);
+        const industry = params.get('industry');
+        window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
+      }
+    });
+  }
     }
 
     // Close button
