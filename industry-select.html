@@ -26,7 +26,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
 .topbar-logo-sub{font-size:8px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px;}
 .topbar-nav{margin-left:32px;display:flex;align-items:center;gap:28px;margin-right:auto;margin-left:8px;}
-.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;}
+.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;}.topbar-nav button{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;background:none;border:none;cursor:pointer;padding:0;}
 .topbar-nav a:hover{color:#fff;}
 .bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin:0 16px;}
 .bundle-rotator-icon{font-size:13px;flex-shrink:0;}
@@ -259,7 +259,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 <div class="topbar">
   <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
-  <div class="topbar-nav"><a id="back-btn" href="#">&#8592; Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
+  <div class="topbar-nav"><button id="back-btn">&#8592; Back</button></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
       <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
@@ -519,6 +519,19 @@ window.addEventListener('resize', alignHIW);
       });
     }
   });
+})();
+</script>
+
+<script>
+(function(){
+  var btn=document.getElementById('back-btn');
+  if(btn){
+    btn.addEventListener('click',function(){
+      if(history.length>1){history.back();}
+      else if(document.referrer){window.location.href=document.referrer;}
+      else{window.location.href='index.html';}
+    });
+  }
 })();
 </script>
 </body>
