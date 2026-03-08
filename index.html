@@ -242,8 +242,8 @@
 
     /* ── TOOLS ── */
     .tools-bg { background:var(--bg2); }
-    .tools-header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:50px; flex-wrap:wrap; gap:20px; }
-    .tools-header .section-title { text-align:left; }
+    .tools-header { display:flex; flex-direction:column; align-items:center; margin-bottom:50px; gap:20px; }
+    .tools-header .section-title { text-align:center; }
     .tools-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
     .tool-tile {
       background:var(--card); border:1px solid var(--card-border);
@@ -615,9 +615,7 @@
   <div class="section-inner">
     <div class="section-tag">The Tools</div>
     <div class="tools-header">
-      <div>
-        <h2 class="section-title"><span style="color:var(--orange)">AI</span> that works as hard<br>as you do</h2>
-      </div>
+      <h2 class="section-title"><span style="color:var(--orange)">AI</span> that works as hard<br>as you do</h2>
       <a href="/prototype.html?industry=all" class="btn-secondary" style="white-space:nowrap">See All Tools →</a>
     </div>
     <div class="tools-grid">
