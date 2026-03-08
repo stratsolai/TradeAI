@@ -259,7 +259,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 <div class="topbar">
   <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
-  <div class="topbar-nav"><a href="javascript:history.back()">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
+  <div class="topbar-nav"><a id="back-btn" href="#">&#8592; Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
       <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
@@ -497,6 +497,27 @@ window.addEventListener('resize', alignHIW);
   cards.forEach(function(c,i){
     c.style.cursor='pointer';
     c.addEventListener('click',function(){ window.location.href='tools.html?industry='+ids[i]; });
+  });
+})();
+</script>
+<script>
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var params = new URLSearchParams(window.location.search);
+        var industry = params.get('industry');
+        if (history.length > 1) {
+          history.back();
+        } else if (document.referrer) {
+          window.location.href = document.referrer;
+        } else {
+          window.location.href = industry ? 'tools.html?industry=' + industry : 'index.html';
+        }
+      });
+    }
   });
 })();
 </script>
