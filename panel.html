@@ -814,7 +814,7 @@
   
     
 
-  function renderPanel(t) {
+  window.renderPanel = function(t) {
     if(!t) return;
     var el;
     el = document.getElementById('panel-icon'); if(el && t.icon) el.textContent = t.icon;
@@ -840,7 +840,7 @@
     }
   }
 
-  function updateROI() {
+  window.updateROI = function() {
     if(!window.PANEL_TOOL || !window.PANEL_TOOL.roi) return;
     var roi = window.PANEL_TOOL.roi;
     var vals = roi.inputs.map(function(inp, idx) {
