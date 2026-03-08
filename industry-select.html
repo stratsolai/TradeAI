@@ -10,7 +10,7 @@
 body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
 
 .atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
-.atmo-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;}
+
 .atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
 .atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
 .atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
@@ -38,7 +38,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
 .btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
 
-/* ── HERO ── */.atmo-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;}
+/* ── HERO ── */
 .atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
 .atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
 .atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
@@ -250,7 +250,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 <body>
 
 <div class="atmo">
-  <div class="atmo-grid"></div>
+  
   <div class="atmo-orb o1"></div>
   <div class="atmo-orb o2"></div>
   <div class="atmo-orb o3"></div>
