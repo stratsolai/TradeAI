@@ -35,10 +35,10 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .bundle-rotator-item.active{opacity:1;transform:translateY(0);}
 .bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
 .bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
-.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
-.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
+.topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;}
 
-/* ââ HERO ââ */
+/* ── HERO ── */
     .topbar-spacer { flex: 1; }
 .atmo-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.025) 1px,transparent 1px);background-size:60px 60px;}
 .atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
@@ -67,7 +67,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
 .bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
 .topbar-actions{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-
+.btn-signin,.btn-trial{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);color:#fff;padding:7px 16px;border-radius:7px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
 
 /* PAGE LAYOUT */
 .page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;padding-top:80px;}
@@ -246,7 +246,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#c4622a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
 .btn-see-all-orange:hover{background:#ff6b2b;}
 
-/* ââ TOOLS PAGE OVERRIDES ââ */
+/* ── TOOLS PAGE OVERRIDES ── */
 .filter-tabs {
   display: flex;
   gap: 8px;
@@ -423,9 +423,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   <a href="javascript:void(0)" id="back-btn">&#8592; Back</a><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
-      <div class="bundle-rotator-item active">Starter â any 3 tools $149/mth</div>
-      <div class="bundle-rotator-item">Growth â any 6 tools $299/mth</div>
-      <div class="bundle-rotator-item">Complete â all tools $499/mth</div>
+      <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
+      <div class="bundle-rotator-item">Growth — any 6 tools $299/mth</div>
+      <div class="bundle-rotator-item">Complete — all tools $499/mth</div>
     </div>
     <span class="bundle-rotator-cta">Bundle &#8594;</span>
   </div>
@@ -488,7 +488,7 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
       <!-- populated by JS -->
     </div>
     <div class="see-all-row">
-      <a href="tools.html" class="btn-see-all-tools">See All Tools â</a>
+      <a href="tools.html" class="btn-see-all-tools">See All Tools →</a>
     </div>
   </div>
 
@@ -605,45 +605,45 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   // Tool data (mirrors tools-data.js CORE_TOOLS)
   var TOOLS = [
-    { id:'lead-bot', toolId:'chatbot', status:'built', icon:'ð¬', cat:'marketing',
+    { id:'lead-bot', toolId:'chatbot', status:'built', icon:'💬', cat:'marketing',
       title:'AI Website Chatbot', price:'$79',
-      desc:'Answers customer enquiries, qualifies leads and books jobs from your website â 24/7, even when youâre on the tools. Learns your business automatically and gets smarter with every interaction.' },
-    { id:'social-media-manager', toolId:'social', status:'built', icon:'ð±', cat:'marketing',
+      desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
+    { id:'social-media-manager', toolId:'social', status:'built', icon:'📱', cat:'marketing',
       title:'Marketing & Social Media Manager', price:'$79',
-      desc:'Describe a job, upload a photo, or let the AI pull from your content library â it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
-    { id:'email-assistant', toolId:'email', status:'built', icon:'ð§', cat:'marketing',
+      desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
+    { id:'email-assistant', toolId:'email', status:'built', icon:'📧', cat:'marketing',
       title:'AI Email Assistant', price:'$59',
-      desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard â whatâs urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
-    { id:'news-digest', toolId:'news-digest', status:'built', icon:'ð°', cat:'intelligence',
+      desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
+    { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
       title:'Industry News & Updates Digest', price:'$59',
-      desc:'AI scans your supplier emails, industry body updates and regulator notices â plus searches reputable online sources â and summarises everything on one dashboard. Personalised to your business, not generic industry news.' },
-    { id:'executive-summary', toolId:'bi', status:'built', icon:'ð', cat:'intelligence',
+      desc:'AI scans your supplier emails, industry body updates and regulator notices — plus searches reputable online sources — and summarises everything on one dashboard. Personalised to your business, not generic industry news.' },
+    { id:'executive-summary', toolId:'bi', status:'built', icon:'📊', cat:'intelligence',
       title:'Business Intelligence Dashboard', price:'$89',
       desc:'Analyses activity across all your tools and accounting software, then tells you what to do next. AI predicts opportunities, analyses your local competitive landscape and recommends how to stay ahead.' },
-    { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'ðº', cat:'intelligence',
+    { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺', cat:'intelligence',
       title:'Strategic Plan & Operations Dashboard', price:'$69',
-      desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesnât just sit in a drawer.' },
-    { id:'tender-response', toolId:'tender', status:'pending', icon:'ð', cat:'operations',
+      desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
+    { id:'tender-response', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
       title:'Tender Response Generator', price:'$99',
-      desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word â ready to submit.' },
-    { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'ð°', cat:'operations',
+      desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
+    { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'operations',
       title:'Quote Enhancer', price:'Coming Soon',
-      desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document â detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
-    { id:'swms', toolId:'swms', status:'pending', icon:'â', cat:'operations',
+      desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document — detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
+    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'operations',
       title:'SWMS & Safety Docs', price:'Coming Soon',
-      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state â compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
-    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'ð¸', cat:'operations',
+      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
+    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'operations',
       title:'Customer Progress Updates', price:'Coming Soon',
-      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer â what was done, photos, whatâs next. No more anxious calls asking whatâs happening.' },
-    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'ð¦', cat:'operations',
+      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
+    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'operations',
       title:'Handover Documentation', price:'Coming Soon',
-      desc:'Finish a job and hand your customer a professional branded pack â project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components youâve installed.' },
-    { id:'review-booster', toolId:'review-booster', status:'pending', icon:'â­', cat:'marketing',
+      desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
+    { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'marketing',
       title:'Review & Referral Booster', price:'Coming Soon',
-      desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they havenât responded. Once they leave a review, it asks if they know someone who needs your services.' },
-    { id:'design-viz', toolId:'design-viz', status:'pending', icon:'ð¨', cat:'marketing',
+      desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they haven’t responded. Once they leave a review, it asks if they know someone who needs your services.' },
+    { id:'design-viz', toolId:'design-viz', status:'pending', icon:'🎨', cat:'marketing',
       title:'Design Visualiser', price:'Coming Soon',
-      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing â or let customers generate their own renders through your website chatbot.' }
+      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' }
   ];
 
   // Filter state
@@ -685,9 +685,9 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         '<div class="tool-card-badge badge-coming">&#9679; Coming Soon</div>' +
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
-        '<div class="tool-card-desc">Industry-specific tool â coming soon</div>' +
+        '<div class="tool-card-desc">Industry-specific tool — coming soon</div>' +
         '<div class="tool-card-footer"><span class="tool-price">Coming Soon</span>' +
-        '<span class="tool-card-cta">Explore <span class="cta-arrow">â</span></span></div></div>';
+        '<span class="tool-card-cta">Explore <span class="cta-arrow">→</span></span></div></div>';
     });
     grid.innerHTML = html;
   }
@@ -704,69 +704,69 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 
   var INDUSTRY_SPECIFIC = {
   pool: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "pool" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "pool" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "pool" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "pool" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "pool" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "pool" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "pool" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "pool" }
   ],
   plumber: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "plumber" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "plumber" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "plumber" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "plumber" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "plumber" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "plumber" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "plumber" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "plumber" }
   ],
   electrician: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "electrician" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "electrician" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "electrician" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "electrician" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "electrician" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "electrician" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "electrician" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "electrician" }
   ],
   builder: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "builder" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "builder" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "builder" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "builder" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "builder" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "builder" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "builder" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "builder" }
   ],
   hvac: [
-    { id: "service-prioritizer", icon: "ð¨", title: "Service Call Prioritiser", industry: "hvac" },
-    { id: "refrigerant-tracker", icon: "ð§ª", title: "Refrigerant Gas Tracker", industry: "hvac" },
-    { id: "maintenance-scheduler-hvac", icon: "ð", title: "Preventative Maintenance Scheduler", industry: "hvac" },
-    { id: "energy-calculator", icon: "â¡", title: "Energy Efficiency Calculator", industry: "hvac" }
+    { id: "service-prioritizer", icon: "🚨", title: "Service Call Prioritiser", industry: "hvac" },
+    { id: "refrigerant-tracker", icon: "🧪", title: "Refrigerant Gas Tracker", industry: "hvac" },
+    { id: "maintenance-scheduler-hvac", icon: "🔄", title: "Preventative Maintenance Scheduler", industry: "hvac" },
+    { id: "energy-calculator", icon: "⚡", title: "Energy Efficiency Calculator", industry: "hvac" }
   ],
   fabricator: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "fabricator" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "fabricator" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "fabricator" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "fabricator" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "fabricator" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "fabricator" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "fabricator" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "fabricator" }
   ],
   cleaner: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "cleaner" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "cleaner" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "cleaner" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "cleaner" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "cleaner" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "cleaner" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "cleaner" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "cleaner" }
   ],
   landscaper: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "landscaper" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "landscaper" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "landscaper" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "landscaper" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "landscaper" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "landscaper" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "landscaper" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "landscaper" }
   ],
   manufacturer: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "manufacturer" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "manufacturer" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "manufacturer" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "manufacturer" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "manufacturer" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "manufacturer" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "manufacturer" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "manufacturer" }
   ],
   concreter: [
-    { id: "pool-chemistry", icon: "ð§ª", title: "Pool Chemistry Advisor", industry: "concreter" },
-    { id: "warranty-tracker", icon: "ð¡ï¸", title: "Warranty Claim Manager", industry: "concreter" },
-    { id: "seasonal-reminder", icon: "ð", title: "Seasonal Pool Care Reminders", industry: "concreter" },
-    { id: "license-tracker", icon: "ð", title: "License & Compliance Tracker", industry: "concreter" }
+    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "concreter" },
+    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "concreter" },
+    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "concreter" },
+    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "concreter" }
   ],
   handyman: [
-    { id: "multi-trade-scheduler", icon: "ðï¸", title: "Multi-Trade Job Scheduler", industry: "handyman" },
-    { id: "parts-finder", icon: "ð", title: "Smart Parts Finder", industry: "handyman" },
-    { id: "job-cost-estimator", icon: "ðµ", title: "Quick Job Cost Estimator", industry: "handyman" }
+    { id: "multi-trade-scheduler", icon: "🗓️", title: "Multi-Trade Job Scheduler", industry: "handyman" },
+    { id: "parts-finder", icon: "🔍", title: "Smart Parts Finder", industry: "handyman" },
+    { id: "job-cost-estimator", icon: "💵", title: "Quick Job Cost Estimator", industry: "handyman" }
   ]
 };
 
