@@ -67,16 +67,8 @@
       position:relative; overflow:hidden;
       padding: 120px 48px 80px;
     }
-    .hero-grid {
-      position:absolute; inset:0; pointer-events:none;
-      background-image:
-        linear-gradient(rgba(26,84,144,0.15) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(26,84,144,0.15) 1px, transparent 1px);
-      background-size:60px 60px;
-      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-      animation: gridPulse 8s ease-in-out infinite;
-    }
-    @keyframes gridPulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+    
+    
     .orb {
       position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none;
       animation: orbFloat 12s ease-in-out infinite;
@@ -411,7 +403,7 @@
 
 <!-- ── HERO ── -->
 <section class="hero">
-  <div class="hero-grid"></div>
+  
   <div class="orb orb-1"></div>
   <div class="orb orb-2"></div>
   <div class="orb orb-3"></div>
