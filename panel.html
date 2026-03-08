@@ -879,11 +879,19 @@
 
   // Load per-tool panel data file dynamically
   var toolId = params.get('tool') || 'chatbot';
-  var pdScript = document.createElement('script');
-  pdScript.src = 'panel-data-' + toolId + '.js';
-  pdScript.onload = function() { if(window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
-  pdScript.onerror = function() { console.warn('No panel data for: ' + toolId); };
-  document.head.appendChild(pdScript);
+  function injectPanelData() {
+    var pdScript = document.createElement('script');
+    pdScript.src = 'panel-data-' + toolId + '.js';
+    pdScript.onload = function() { if(window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
+    pdScript.onerror = function() { console.warn('No panel data for: ' + toolId); };
+    document.head.appendChild(pdScript);
+  }
+  if(document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectPanelData);
+  } else {
+    injectPanelData();
+  }
+
 
 })();
 </script>
