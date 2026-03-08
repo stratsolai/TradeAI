@@ -811,94 +811,10 @@
 
   if (!toolParam) { window.location.replace('tools.html'); return; }
 
-  document.addEventListener('DOMContentLoaded', function(){
-    if (typeof CORE_TOOLS === 'undefined') { window.location.replace('tools.html'); return; }
-    var tool = CORE_TOOLS.find(function(t){ return t.id === toolParam; });
-    if (!tool) { window.location.replace('tools.html'); return; }
+  
+    
 
-    // Title
-    document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
-
-    // Breadcrumb
-    var bc = document.getElementById('panel-breadcrumb');
-    if (bc) bc.textContent = tool.title[0] + ' ' + tool.title[1];
-
-    // Icon
-    var iconEl = document.getElementById('panel-icon');
-    if (iconEl) iconEl.textContent = tool.icon;
-
-    // Live badge
-    var liveBadge = document.getElementById('panel-live-badge');
-    if (liveBadge) liveBadge.style.display = tool.status === 'built' ? '' : 'none';
-
-    // Title lines
-    var l1 = document.getElementById('panel-title-line1');
-    var l2 = document.getElementById('panel-title-line2');
-    if (l1) l1.textContent = tool.title[0];
-    if (l2) l2.textContent = tool.title[1];
-
-    // Tagline
-    var tagEl = document.getElementById('panel-tagline');
-    if (tagEl) tagEl.textContent = tool.tagline;
-
-    // Desc
-    var descEl = document.getElementById('panel-desc');
-    if (descEl) descEl.textContent = tool.desc;
-
-    // Benefits
-    var benEl = document.getElementById('panel-benefits');
-    if (benEl && tool.benefits) {
-      benEl.innerHTML = tool.benefits.map(function(b){
-        return '<li class="benefit-item"><span class="benefit-icon">&#10003;</span>' + b + '</li>';
-      }).join('');
-    }
-
-    // Price hero
-    var prEl = document.getElementById('panel-price');
-    if (prEl) prEl.innerHTML = tool.price + '<span>/mth</span>';
-
-    // Price footer
-    var prFt = document.getElementById('panel-price-footer');
-    if (prFt) prFt.textContent = tool.price;
-
-    // CTA hrefs
-    var ctaHref = 'login.html?tab=signup&tool=' + tool.toolId;
-    var ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) ctaBtn.onclick = function(){ window.location.href = ctaHref; };
-    var ctaBtnFt = document.getElementById('cta-btn-footer');
-    if (ctaBtnFt) ctaBtnFt.onclick = function(){ window.location.href = ctaHref; };
-
-    // Back button
-    var backBtn = document.getElementById('back-btn');
-    if (backBtn) {
-      backBtn.addEventListener('click', function() {
-        var ref = document.referrer;
-        var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
-        if (onPlatform && history.length > 1) {
-          history.back();
-        } else {
-          var urlParams = new URLSearchParams(window.location.search);
-          var industry = urlParams.get('industry');
-          window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
-        }
-      });
-    }
-
-    // Close button
-    var closeBtn = document.getElementById('close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function(){
-        window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
-      });
-    }
-
-    // ROI sliders — use existing IDs from mockup
-    var roiInputs = tool.roi && tool.roi.inputs;
-    var roiCalc = tool.roi && tool.roi.calculate;
-    if (roiInputs && roiCalc) {
-      // Map tool roi input ids to the mockup's existing slider IDs
-      // mockup uses: visitors, missed, jobval / res-leads, res-afterhours, res-booked, res-revenue
-      function renderPanel(t) {
+  function renderPanel(t) {
     if(!t) return;
     var el;
     el = document.getElementById('panel-icon'); if(el && t.icon) el.textContent = t.icon;
@@ -947,8 +863,7 @@
         if (el) el.addEventListener('input', updateROI);
       });
       updateROI();
-    }
-  });
+    
 
   // Bundle rotator (preserve existing behaviour)
   var items = document.querySelectorAll('.bundle-rotator-item');
