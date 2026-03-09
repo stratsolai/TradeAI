@@ -1333,17 +1333,24 @@
 
 <script src="tools-data.js"></script>
 <script>
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  var toolParam = params.get('tool');
-  var industry = params.get('industry');
+  // Dynamic loader IIFE
+  (function() {
+    var toolId = new URLSearchParams(window.location.search).get('tool');
+    if (!toolId) return;
+    var s = document.createElement('script');
+    s.src = 'panel-data-' + toolId + '.js';
+    s.onload = function() {
+      if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL);
+    };
+    document.head.appendChild(s);
+  })();
 
-  if (!toolParam) { window.location.replace('tools.html'); return; }
+  // Module-level ROI vars (set by renderPanel, read by updateROI)
+  var roiInputs, roiCalc;
 
-  document.addEventListener('DOMContentLoaded', function(){
-    if (typeof CORE_TOOLS === 'undefined') { window.location.replace('tools.html'); return; }
-    var tool = CORE_TOOLS.find(function(t){ return t.id === toolParam; });
-    if (!tool) { window.location.replace('tools.html'); return; }
+  // renderPanel — populates all DOM elements from tool data object
+  function renderPanel(tool) {
+
 
     // Title
     document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
@@ -1422,11 +1429,22 @@
     }
 
     // ROI sliders — use existing IDs from mockup
-    var roiInputs = tool.roi && tool.roi.inputs;
-    var roiCalc = tool.roi && tool.roi.calculate;
+
+    roiInputs = tool.roi && tool.roi.inputs;
+    roiCalc = tool.roi && tool.roi.calculate;
     if (roiInputs && roiCalc) {
       // Map tool roi input ids to the mockup's existing slider IDs
       // mockup uses: visitors, missed, jobval / res-leads, res-afterhours, res-booked, res-revenue
+
+
+      roiInputs.forEach(function(inp){
+        var el = document.getElementById(inp.id);
+        if (el) el.addEventListener('input', updateROI);
+      });
+      updateROI();
+    }  }
+
+  // updateROI — at module level, reads module-level roiInputs and roiCalc
       function updateROI(){
         var vals = {};
         roiInputs.forEach(function(inp){
@@ -1456,15 +1474,9 @@
           }
         } catch(e){ console.warn('ROI error', e); }
       }
-      roiInputs.forEach(function(inp){
-        var el = document.getElementById(inp.id);
-        if (el) el.addEventListener('input', updateROI);
-      });
-      updateROI();
-    }
-  });
-
-  // Bundle rotator (preserve existing behaviour)
+  // Bundle rotator
+  document.addEventListener('DOMContentLoaded', function() {
+// Bundle rotator (preserve existing behaviour)
   var items = document.querySelectorAll('.bundle-rotator-item');
   var idx = 0;
   if (items.length > 1) {
@@ -1474,7 +1486,8 @@
       items[idx].classList.add('active');
     }, 3000);
   }
-})();
+
+  });
 </script>
 
 </body>
