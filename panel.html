@@ -1345,7 +1345,7 @@
     document.head.appendChild(s);
   })();
 
-  // Module-level ROI vars (set by renderPanel, read by updateROI)
+  // Module-level ROI vars (set by renderPanel, read by updateCalc)
   var roiInputs, roiCalc;
 
   // renderPanel — populates all DOM elements from tool data object
@@ -1439,13 +1439,13 @@
 
       roiInputs.forEach(function(inp){
         var el = document.getElementById(inp.id);
-        if (el) el.addEventListener('input', updateROI);
+        if (el) el.addEventListener('input', updateCalc);
       });
-      updateROI();
+      updateCalc();
     }  }
 
-  // updateROI — at module level, reads module-level roiInputs and roiCalc
-      function updateROI(){
+  // updateCalc — at module level, reads module-level roiInputs and roiCalc
+      function updateCalc(){
         var vals = {};
         roiInputs.forEach(function(inp){
           var el = document.getElementById(inp.id);
