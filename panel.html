@@ -1480,7 +1480,7 @@ function updateCalc() {
       var rr = document.getElementById('res-revenue');
       if (rl) rl.textContent = result["res-leads"] || 0;
       if (ra) ra.textContent = result["res-afterhours"] || 0;
-      if (rb) rb.textContent = result["res-booked"] !== undefined ? result.booked : (result.jobs || 0);
+      if (rb) rb.textContent = result["res-booked"] !== undefined ? result["res-booked"] : (result.jobs || 0);
       if (rr) rr.textContent = result["res-revenue"] || 0;
     }
   } catch(e) {}
