@@ -17,7 +17,7 @@ const INDUSTRIES = [
 
 const CORE_TOOLS = [
   {
-    id: "lead-bot",
+    id: "chatbot",
     toolId: "chatbot",
     status: "built",
     icon: "💬",
