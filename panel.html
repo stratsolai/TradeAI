@@ -1355,7 +1355,7 @@ var roiInputs, roiCalc;
 function renderPanel(tool) {
   if (!tool) { return; }
 
-  document.addEventListener('DOMContentLoaded', function(){
+  function run(){
 
     // Title
     document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
@@ -1467,8 +1467,12 @@ function renderPanel(tool) {
       });
       updateCalc();
     }
-
-  });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
 }
 
 function updateCalc() {
