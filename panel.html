@@ -1335,20 +1335,32 @@
 <script>
 (function(){
   var params = new URLSearchParams(window.location.search);
-  var toolParam = params.get('tool');
+  var toolId = params.get('tool');
   var industry = params.get('industry');
 
-  if (!toolParam) { window.location.replace('tools.html'); return; }
+  if (!toolId) { window.location.replace('tools.html'); return; }
+
+  var s = document.createElement('script');
+  s.src = 'panel-data-' + toolId + '.js';
+  s.onload = function() {
+    if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL);
+  };
+  s.onerror = function() {
+    renderPanel(null);
+  };
+  document.head.appendChild(s);
+})();
+var roiInputs, roiCalc;
+
+function renderPanel(tool) {
+  if (!tool) { return; }
 
   document.addEventListener('DOMContentLoaded', function(){
-    if (typeof CORE_TOOLS === 'undefined') { window.location.replace('tools.html'); return; }
-    var tool = CORE_TOOLS.find(function(t){ return t.id === toolParam; });
-    if (!tool) { window.location.replace('tools.html'); return; }
 
     // Title
     document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
 
-    // Breadcrumb
+    // Breadcrumb (legacy element - may not exist)
     var bc = document.getElementById('panel-breadcrumb');
     if (bc) bc.textContent = tool.title[0] + ' ' + tool.title[1];
 
@@ -1357,22 +1369,21 @@
     if (iconEl) iconEl.textContent = tool.icon;
 
     // Live badge
-    var liveBadge = document.getElementById('panel-live-badge');
-    if (liveBadge) liveBadge.style.display = tool.status === 'built' ? '' : 'none';
+    var badge = document.getElementById('panel-live-badge');
+    if (badge) badge.style.display = tool.status === 'built' ? '' : 'none';
 
     // Title lines
     var l1 = document.getElementById('panel-title-line1');
     var l2 = document.getElementById('panel-title-line2');
     if (l1) l1.textContent = tool.title[0];
     if (l2) l2.textContent = tool.title[1];
-
     // Tagline
     var tagEl = document.getElementById('panel-tagline');
     if (tagEl) tagEl.textContent = tool.tagline;
 
-    // Desc
+    // Description
     var descEl = document.getElementById('panel-desc');
-    if (descEl) descEl.textContent = tool.desc;
+    if (descEl) descEl.textContent = tool.description;
 
     // Benefits
     var benEl = document.getElementById('panel-benefits');
@@ -1382,38 +1393,36 @@
       }).join('');
     }
 
-    // Price hero
-    var prEl = document.getElementById('panel-price');
-    if (prEl) prEl.innerHTML = tool.price + '<span>/mth</span>';
+    // Price
+    var priceEl = document.getElementById('panel-price');
+    if (priceEl) priceEl.textContent = tool.price;
+    var priceFooter = document.getElementById('panel-price-footer');
+    if (priceFooter) priceFooter.textContent = tool.price;
 
-    // Price footer
-    var prFt = document.getElementById('panel-price-footer');
-    if (prFt) prFt.textContent = tool.price;
-
-    // CTA hrefs
-    var ctaHref = 'login.html?tab=signup&tool=' + tool.toolId;
+    // CTA buttons
     var ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) ctaBtn.onclick = function(){ window.location.href = ctaHref; };
-    var ctaBtnFt = document.getElementById('cta-btn-footer');
-    if (ctaBtnFt) ctaBtnFt.onclick = function(){ window.location.href = ctaHref; };
+    if (ctaBtn) ctaBtn.href = 'login.html?tab=signup&tool=' + tool.id;
+    var ctaBtnFooter = document.getElementById('cta-btn-footer');
+    if (ctaBtnFooter) ctaBtnFooter.href = 'login.html?tab=signup&tool=' + tool.id;
 
     // Back button
     var backBtn = document.getElementById('back-btn');
     if (backBtn) {
-      backBtn.addEventListener('click', function() {
+      backBtn.addEventListener('click', function(e) {
+        e.preventDefault();
         var ref = document.referrer;
         var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
         if (onPlatform && history.length > 1) {
           history.back();
         } else {
           var urlParams = new URLSearchParams(window.location.search);
-          var industry = urlParams.get('industry');
-          window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
+          var ind = urlParams.get('industry');
+          window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
         }
       });
     }
 
-    // Close button
+    // Close button (legacy - may not exist)
     var closeBtn = document.getElementById('close-btn');
     if (closeBtn) {
       closeBtn.addEventListener('click', function(){
@@ -1421,60 +1430,88 @@
       });
     }
 
-    // ROI sliders — use existing IDs from mockup
-    var roiInputs = tool.roi && tool.roi.inputs;
-    var roiCalc = tool.roi && tool.roi.calculate;
-    if (roiInputs && roiCalc) {
-      // Map tool roi input ids to the mockup's existing slider IDs
-      // mockup uses: visitors, missed, jobval / res-leads, res-afterhours, res-booked, res-revenue
-      function updateROI(){
-        var vals = {};
-        roiInputs.forEach(function(inp){
-          var el = document.getElementById(inp.id);
-          if (!el) return;
-          vals[inp.id] = parseFloat(el.value);
-          var valEl = document.getElementById(inp.id + '-val');
-          if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(el.value).toLocaleString();
-        });
-        try {
-          var args = roiInputs.map(function(i){ return i.id; });
-          var argVals = roiInputs.map(function(i){ return vals[i.id] || i['default']; });
-          var fn = new Function(args.join(','), roiCalc);
-          var result = fn.apply(null, argVals);
-          if (result) {
-            var rl = document.getElementById('res-leads');
-            var ra = document.getElementById('res-afterhours');
-            var rb = document.getElementById('res-booked');
-            var rr = document.getElementById('res-revenue');
-            if (rl) rl.textContent = result.leads || 0;
-            if (ra) ra.textContent = result.afterHours || 0;
-            if (rb) rb.textContent = result.booked !== undefined ? result.booked : (result.jobs || 0);
-            if (rr) {
-              var rev = result.revenue || 0;
-              rr.textContent = rev >= 1000 ? '$' + Math.round(rev/1000) + 'k' : '$' + rev;
-            }
-          }
-        } catch(e){ console.warn('ROI error', e); }
+    // Steps
+    var s1t = document.getElementById('step-1-title');
+    var s1d = document.getElementById('step-1-desc');
+    var s2t = document.getElementById('step-2-title');
+    var s2d = document.getElementById('step-2-desc');
+    var s3t = document.getElementById('step-3-title');
+    var s3d = document.getElementById('step-3-desc');
+    if (tool.steps && tool.steps.length >= 3) {
+      if (s1t) s1t.textContent = tool.steps[0].title;
+      if (s1d) s1d.textContent = tool.steps[0].desc;
+      if (s2t) s2t.textContent = tool.steps[1].title;
+      if (s2d) s2d.textContent = tool.steps[1].desc;
+      if (s3t) s3t.textContent = tool.steps[2].title;
+      if (s3d) s3d.textContent = tool.steps[2].desc;
+    }
+
+    // Preview
+    var previewContainer = document.getElementById('preview-container');
+    if (previewContainer && tool.preview && tool.preview.html) {
+      if (tool.preview.css) {
+        var styleEl = document.createElement('style');
+        styleEl.textContent = tool.preview.css + (tool.preview.animationCSS || '');
+        document.head.appendChild(styleEl);
       }
+      previewContainer.innerHTML = tool.preview.html;
+    }
+
+    // ROI calculator
+    roiInputs = tool.roi && tool.roi.inputs;
+    roiCalc = tool.roi && tool.roi.calculate;
+    if (roiInputs && roiCalc) {
       roiInputs.forEach(function(inp){
         var el = document.getElementById(inp.id);
-        if (el) el.addEventListener('input', updateROI);
+        if (el) el.addEventListener('input', updateCalc);
       });
-      updateROI();
+      updateCalc();
     }
-  });
 
-  // Bundle rotator (preserve existing behaviour)
-  var items = document.querySelectorAll('.bundle-rotator-item');
-  var idx = 0;
-  if (items.length > 1) {
-    setInterval(function(){
-      items[idx].classList.remove('active');
-      idx = (idx + 1) % items.length;
-      items[idx].classList.add('active');
-    }, 3000);
+  });
+}
+
+function updateCalc() {
+  if (!roiInputs || !roiCalc) return;
+  var vals = {};
+  roiInputs.forEach(function(inp){
+    var el = document.getElementById(inp.id);
+    if (!el) return;
+    vals[inp.id] = parseFloat(el.value);
+    var valEl = document.getElementById(inp.id + '-val');
+    if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(el.value).toLocaleString();
+  });
+  try {
+    var args = roiInputs.map(function(i){ return i.id; });
+    var argVals = roiInputs.map(function(i){ return vals[i.id] || i['default'] || 0; });
+    var fn = (typeof roiCalc === 'function') ? roiCalc : new Function(args.join(','), roiCalc);
+    var result = fn.apply(null, argVals);
+    if (result) {
+      var rl = document.getElementById('res-leads');
+      var ra = document.getElementById('res-afterhours');
+      var rb = document.getElementById('res-booked');
+      var rr = document.getElementById('res-revenue');
+      if (rl) rl.textContent = result.leads || 0;
+      if (ra) ra.textContent = result.afterHours || 0;
+      if (rb) rb.textContent = result.booked !== undefined ? result.booked : (result.jobs || 0);
+      if (rr) rr.textContent = result.revenue || 0;
+    }
+  } catch(e) {}
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  // Bundle rotator
+  var bundles = document.querySelectorAll('.bundle-option');
+  if (bundles.length) {
+    bundles.forEach(function(b){
+      b.addEventListener('click', function(){
+        bundles.forEach(function(x){ x.classList.remove('active'); });
+        b.classList.add('active');
+      });
+    });
   }
-})();
+});
+
 </script>
 
 </body>
