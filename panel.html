@@ -1045,7 +1045,7 @@
 
   <!-- HEADER — BURNT ORANGE -->
   <div class="topbar">
-  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="my-project-page-1.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
+  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
   <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
@@ -1405,23 +1405,6 @@ function renderPanel(tool) {
     var ctaBtnFooter = document.getElementById('cta-btn-footer');
     if (ctaBtnFooter) ctaBtnFooter.href = 'login.html?tab=signup&tool=' + tool.id;
 
-    // Back button
-    var backBtn = document.getElementById('back-btn');
-    if (backBtn) {
-      backBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        var ref = document.referrer;
-        var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
-        if (onPlatform && history.length > 1) {
-          history.back();
-        } else {
-          var urlParams = new URLSearchParams(window.location.search);
-          var ind = urlParams.get('industry');
-          window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
-        }
-      });
-    }
-
     // Close button (legacy - may not exist)
     var closeBtn = document.getElementById('close-btn');
     if (closeBtn) {
@@ -1504,6 +1487,23 @@ function updateCalc() {
 }
 
 document.addEventListener('DOMContentLoaded', function(){
+  // Back button
+  var backBtn = document.getElementById('back-btn');
+  if (backBtn) {
+    backBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      var ref = document.referrer;
+      var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
+      if (onPlatform && history.length > 1) {
+        history.back();
+      } else {
+        var urlParams = new URLSearchParams(window.location.search);
+        var ind = urlParams.get('industry');
+        window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
+      }
+    });
+  }
+
   // Bundle rotator
   var bundles = document.querySelectorAll('.bundle-option');
   if (bundles.length) {
