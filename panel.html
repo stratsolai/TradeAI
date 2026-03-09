@@ -512,13 +512,352 @@
     font-style: italic;
   }
 
+  /* ===== EXAMPLE OUTPUT ===== */
+  .example-section {
+    max-width: 1280px; margin: 0 auto;
+    padding: 70px 48px;
+    position: relative; z-index: 2;
+  }
+
+  .preview-container {
+    position: relative; border-radius: 24px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow:
+      0 40px 100px rgba(0,0,0,0.45),
+      0 0 60px rgba(196,98,42,0.04),
+      0 0 100px rgba(44,90,130,0.05);
+  }
+  .preview-chrome {
+    display: flex; align-items: center;
+    padding: 14px 22px;
+    background: var(--cream);
+    border-bottom: 1px solid rgba(196,98,42,0.15); gap: 12px;
+  }
+  .chrome-dots { display: flex; gap: 7px; }
+  .chrome-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .chrome-dot.r { background: #e05050; }
+  .chrome-dot.y { background: var(--gold); }
+  .chrome-dot.g { background: #4a9e6a; }
+  .chrome-url {
+    flex: 1; background: #fff; border-radius: 8px;
+    padding: 7px 16px; font-size: 13px; color: #6b5540;
+    border: 1px solid rgba(196,98,42,0.15);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .chrome-url .lock { color: #22c55e; font-size: 11px; }
+
+  .preview-body {
+    position: relative; min-height: 520px;
+    background: #f8f9fb; overflow: hidden;
+  }
+  .website-hero {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--deep-blue) 50%, var(--steel-blue) 100%);
+    padding: 50px 50px 60px;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center;
+    height: 520px;
+  }
+  .website-hero::before {
+    content: '';
+    position: absolute; top: -20%; right: -10%;
+    width: 400px; height: 400px;
+    background: radial-gradient(circle, rgba(212,128,74,0.12), transparent 70%);
+    border-radius: 50%;
+  }
+  .website-hero::after {
+    content: '';
+    position: absolute; bottom: -20%; left: -10%;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(196,98,42,0.08), transparent 70%);
+    border-radius: 50%;
+  }
+  .website-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 700; color: #fff;
+    margin-bottom: 30px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-icon {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
+  }
+  .website-h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 42px; font-weight: 700; color: #fff;
+    line-height: 1.1; margin-bottom: 14px;
+  }
+  .website-sub {
+    font-size: 17px; color: rgba(232,213,184,0.8);
+    max-width: 500px; line-height: 1.5; margin-bottom: 24px;
+  }
+  .website-cta {
+    display: inline-flex; padding: 12px 28px;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+    color: #fff; border-radius: 10px;
+    font-weight: 700; font-size: 15px; text-decoration: none; width: fit-content;
+  }
+  .website-nav {
+    position: absolute; top: 20px; right: 50px;
+    display: flex; gap: 24px; font-size: 14px; color: rgba(232,213,184,0.7);
+  }
+
+  /* Chatbot widget — light */
+  .chatbot-widget {
+    position: absolute; bottom: 24px; right: 30px;
+    width: 370px; background: #fff; border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+    overflow: hidden;
+    opacity: 0; animation: widgetAppear 0.6s ease forwards; animation-delay: 0.5s;
+  }
+  @keyframes widgetAppear {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .widget-header {
+    background: linear-gradient(135deg, var(--navy), var(--deep-blue), var(--steel-blue));
+    padding: 18px 20px;
+    display: flex; align-items: center; gap: 12px; color: #fff;
+  }
+  .widget-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .widget-name { font-weight: 700; font-size: 15px; }
+  .widget-status {
+    font-size: 12px; color: rgba(232,213,184,0.8);
+    display: flex; align-items: center; gap: 5px;
+  }
+  .widget-status::before {
+    content: ''; width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
+  }
+  .widget-messages {
+    padding: 20px; display: flex; flex-direction: column; gap: 12px;
+    min-height: 240px; background: var(--warm-white);
+  }
+  .w-msg {
+    max-width: 85%; opacity: 0;
+    animation: wMsgIn 0.4s ease forwards;
+  }
+  .w-msg:nth-child(1) { animation-delay: 1s; }
+  .w-msg:nth-child(2) { animation-delay: 1.8s; }
+  .w-msg:nth-child(3) { animation-delay: 2.8s; }
+  .w-msg:nth-child(4) { animation-delay: 3.6s; }
+  .w-msg:nth-child(5) { animation-delay: 4.4s; }
+  @keyframes wMsgIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .w-msg.ai { align-self: flex-start; }
+  .w-msg.visitor { align-self: flex-end; }
+  .w-msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.55; }
+  .w-msg.ai .w-msg-bubble {
+    background: #fff; color: #1f2937;
+    border: 1px solid rgba(196,98,42,0.1); border-bottom-left-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .w-msg.visitor .w-msg-bubble {
+    background: linear-gradient(135deg, var(--deep-blue), var(--steel-blue));
+    color: #fff; border-bottom-right-radius: 6px;
+  }
+  .widget-input {
+    padding: 14px 20px; background: var(--warm-white);
+    border-top: 1px solid rgba(196,98,42,0.12);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .widget-input-field {
+    flex: 1; padding: 10px 14px; border-radius: 10px;
+    border: 1px solid rgba(196,98,42,0.15); background: #fff;
+    font-size: 13px; color: #9ca3af;
+  }
+  .widget-send {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
+    border: none; color: #fff; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .powered-badge {
+    position: absolute; bottom: 295px; right: 30px; width: 370px;
+    text-align: center;
+    opacity: 0; animation: badgeFade 0.3s ease forwards; animation-delay: 0.8s;
+  }
+  @keyframes badgeFade { to { opacity: 1; } }
+  .powered-badge span {
+    font-size: 10px; color: #9ca3af;
+    background: #fff; padding: 3px 12px; border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .phone-notif {
+    position: absolute; bottom: 24px; left: 30px;
+    width: 320px; background: #fff; border-radius: 16px;
+    padding: 16px 20px;
+    display: flex; align-items: flex-start; gap: 14px;
+    box-shadow: 0 12px 40px rgba(196,98,42,0.12), 0 0 0 1px rgba(196,98,42,0.08);
+    opacity: 0; animation: notifPop 0.5s ease forwards; animation-delay: 5.2s;
+  }
+  @keyframes notifPop {
+    from { opacity: 0; transform: translateX(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+  }
+  .phone-notif-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+  }
+  .phone-notif-text { font-size: 13px; color: #3d2e1e; line-height: 1.5; }
+  .phone-notif-text strong { display: block; color: #15803d; font-size: 14px; margin-bottom: 2px; }
+  .phone-notif-time { font-size: 11px; color: #9a8a7a; margin-top: 4px; }
+
+  .preview-tabs {
+    display: flex; justify-content: center; gap: 4px;
+    padding: 16px 24px; background: var(--cream); border-top: 1px solid rgba(196,98,42,0.15);
+  }
+  .preview-tab {
+    padding: 10px 28px; border-radius: 10px;
+    font-size: 14px; font-weight: 600; color: #6b5540;
+    cursor: pointer; transition: all 0.2s;
+    border: none; background: none;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .preview-tab.active {
+    background: #fff; color: #3d2e1e;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .ai-gen-badge {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin-top: 20px;
+    font-size: 14px; color: rgba(255,255,255,0.45);
+  }
+  .sparkle {
+    color: var(--copper);
+    animation: sparkleRotate 4s linear infinite;
+    display: inline-block;
+  }
   @keyframes sparkleRotate {
     0% { transform: rotate(0deg) scale(1); }
     25% { transform: rotate(90deg) scale(1.2); }
     50% { transform: rotate(180deg) scale(1); }
     75% { transform: rotate(270deg) scale(1.2); }
     100% { transform: rotate(360deg) scale(1); }
-  }@keyframes stepFadeIn {
+  }
+
+  /* ===== STEP CARD GRAPHICS ===== */
+  .step-graphic {
+    width: 100%; height: 90px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 14px; margin-top: 4px;
+  }
+  .step-svg { width: 120px; height: 80px; }
+
+  /* Step 1 — Activate animations */
+  .svg-pulse-1 { animation: svgPulse 1.8s ease-in-out infinite; }
+  @keyframes svgPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .svg-plug { animation: svgPlugMove 2.4s ease-in-out infinite; transform-origin: 60px 61px; }
+  @keyframes svgPlugMove {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-6px); }
+  }
+  .svg-spark { animation: svgSpark 1.8s ease-in-out infinite; }
+  @keyframes svgSpark {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; stroke-dashoffset: -6; }
+  }
+  .svg-star-1 { animation: svgStar 2.2s ease-in-out infinite; }
+  .svg-star-2 { animation: svgStar 2.2s ease-in-out infinite 0.6s; }
+  @keyframes svgStar {
+    0%, 100% { opacity: 0.3; transform: scale(0.7); }
+    50% { opacity: 1; transform: scale(1.3); }
+  }
+
+  /* Step 2 — Settings animations */
+  .svg-knob-1 { animation: svgKnob1 3s ease-in-out infinite; }
+  @keyframes svgKnob1 {
+    0%, 100% { cx: 64px; }
+    50% { cx: 78px; }
+  }
+  .svg-bar-1 { animation: svgBar1 3s ease-in-out infinite; }
+  @keyframes svgBar1 {
+    0%, 100% { width: 38px; }
+    50% { width: 52px; }
+  }
+  .svg-knob-2 { animation: svgKnob2 3.5s ease-in-out infinite 0.5s; }
+  @keyframes svgKnob2 {
+    0%, 100% { cx: 78px; }
+    50% { cx: 55px; }
+  }
+  .svg-bar-2 { animation: svgBar2 3.5s ease-in-out infinite 0.5s; }
+  @keyframes svgBar2 {
+    0%, 100% { width: 52px; }
+    50% { width: 29px; }
+  }
+  .svg-check { animation: svgCheckPop 2s ease-in-out infinite; transform-origin: 96px 18px; }
+  @keyframes svgCheckPop {
+    0%, 80%, 100% { transform: scale(1); opacity: 1; }
+    40% { transform: scale(1.2); opacity: 0.7; }
+  }
+
+  /* Step 3 — Live animations */
+  .svg-rocket { animation: svgRocketFloat 2.5s ease-in-out infinite; transform-origin: 60px 40px; }
+  @keyframes svgRocketFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+  .svg-flame { animation: svgFlame 0.4s ease-in-out infinite alternate; transform-origin: 60px 54px; }
+  @keyframes svgFlame {
+    from { transform: scaleY(1) scaleX(1); opacity: 0.9; }
+    to { transform: scaleY(1.3) scaleX(0.85); opacity: 1; }
+  }
+  .svg-flame-inner { animation: svgFlame 0.3s ease-in-out infinite alternate 0.1s; transform-origin: 60px 55px; }
+  .svg-arc-1 { animation: svgArcPulse 1.6s ease-in-out infinite; }
+  .svg-arc-2 { animation: svgArcPulse 1.6s ease-in-out infinite 0.3s; }
+  .svg-arc-3 { animation: svgArcPulse 1.6s ease-in-out infinite 0.6s; }
+  @keyframes svgArcPulse {
+    0%, 100% { opacity: 0.2; }
+    50% { opacity: 1; }
+  }
+  .svg-sparkle-a { animation: svgStar 2s ease-in-out infinite; }
+  .svg-sparkle-b { animation: svgStar 2.4s ease-in-out infinite 0.4s; }
+  .svg-sparkle-c { animation: svgStar 1.8s ease-in-out infinite 0.8s; }
+  .how-section {
+    max-width: 1280px; margin: 0 auto;
+    padding: 70px 48px;
+    position: relative; z-index: 2;
+  }
+
+  .steps-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 24px; margin-top: 44px; position: relative;
+  }
+  /* Connecting line */
+  .steps-grid::before {
+    content: ''; position: absolute;
+    top: 58px; left: 16%; right: 16%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--burnt-orange), var(--gold), var(--steel-blue));
+    opacity: 0.35; z-index: 0;
+  }
+
+  .step-card {
+    position: relative; z-index: 1;
+    border-radius: 22px;
+    padding: 34px 24px;
+    text-align: center;
+    transition: all 0.35s;
+    overflow: hidden;
+    opacity: 0;
+    animation: stepFadeIn 0.5s ease forwards;
+  }
+  .step-card:nth-child(1) { animation-delay: 0.1s; }
+  .step-card:nth-child(2) { animation-delay: 0.2s; }
+  .step-card:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes stepFadeIn {
     from { opacity: 0; transform: translateY(18px); }
     to { opacity: 1; transform: translateY(0); }
   }
@@ -819,7 +1158,56 @@
     </div>
 
     <div class="preview-container">
-      
+      <div class="preview-chrome">
+        <div class="chrome-dots">
+          <div class="chrome-dot r"></div>
+          <div class="chrome-dot y"></div>
+          <div class="chrome-dot g"></div>
+        </div>
+        <div class="chrome-url"><span class="lock">🔒</span> yourbusiness.com.au</div>
+      </div>
+
+      <div class="preview-body">
+        <div class="website-hero">
+          <div class="website-nav"><span>Home</span><span>Services</span><span>Gallery</span><span>Contact</span></div>
+          <div class="website-logo"><div class="logo-icon">🏊</div> Aqua Blue Pools</div>
+          <div class="website-h1">Sydney's Trusted<br>Pool Builders</div>
+          <div class="website-sub">Custom pools, renovations & maintenance. Over 20 years of experience delivering dream backyard transformations across Sydney.</div>
+          <a class="website-cta" href="#">Get a Free Quote →</a>
+        </div>
+
+        <div class="chatbot-widget">
+          <div class="widget-header">
+            <div class="widget-avatar">🏊</div>
+            <div>
+              <div class="widget-name">Aqua Blue Pools</div>
+              <div class="widget-status">Online now — typically replies instantly</div>
+            </div>
+          </div>
+          <div class="widget-messages">
+            <div class="w-msg ai"><div class="w-msg-bubble">Hi! 👋 I'm the Aqua Blue Pools assistant. Looking for a quote, or have a question about our services?</div></div>
+            <div class="w-msg visitor"><div class="w-msg-bubble">Hi, I need a quote for a pool renovation — resurfacing and new tiling</div></div>
+            <div class="w-msg ai"><div class="w-msg-bubble">Great! I'd love to help. Can I ask a few quick questions? What's the approximate size of your pool?</div></div>
+            <div class="w-msg visitor"><div class="w-msg-bubble">About 8m x 4m, we're in Cronulla</div></div>
+            <div class="w-msg ai"><div class="w-msg-bubble">Perfect — we do a lot of work in the Sutherland Shire! For an 8x4 resurface and retile, you'd be looking at $12k–$18k. Want to book a free on-site consultation?</div></div>
+          </div>
+          <div class="widget-input">
+            <div class="widget-input-field">Type a message...</div>
+            <button class="widget-send">↑</button>
+          </div>
+        </div>
+
+        <div class="powered-badge"><span>⚡ Powered by StaxAI</span></div>
+
+        <div class="phone-notif">
+          <div class="phone-notif-icon">🔔</div>
+          <div class="phone-notif-text">
+            <strong>🔥 Hot Lead — James Williams</strong>
+            Pool reno in Cronulla, 8x4m, budget $15k–18k. Consultation booked Tue 10am.
+            <div class="phone-notif-time">Just now • via AI Chatbot</div>
+          </div>
+        </div>
+      </div>
 
       <div class="preview-tabs">
         <button class="preview-tab active">📱 Interactive Preview</button>
@@ -945,154 +1333,147 @@
 
 <script src="tools-data.js"></script>
 <script>
-(function() {
+(function(){
   var params = new URLSearchParams(window.location.search);
-  var toolId = params.get("tool");
-  var industry = params.get("industry");
+  var toolParam = params.get('tool');
+  var industry = params.get('industry');
 
-  if (!toolId) { window.location.replace("tools.html"); return; }
+  if (!toolParam) { window.location.replace('tools.html'); return; }
 
-  function loadToolData(id, callback) {
-    var script = document.createElement("script");
-    script.src = "panel-data-" + id + ".js?v=" + Date.now();
-    script.onload = function() {
-      if (window.PANEL_TOOL && window.PANEL_TOOL.id) {
-        callback(window.PANEL_TOOL);
-      } else {
-        showComingSoon();
-      }
-    };
-    script.onerror = function() { showComingSoon(); };
-    document.head.appendChild(script);
-  }
+  document.addEventListener('DOMContentLoaded', function(){
+    if (typeof CORE_TOOLS === 'undefined') { window.location.replace('tools.html'); return; }
+    var tool = CORE_TOOLS.find(function(t){ return t.id === toolParam; });
+    if (!tool) { window.location.replace('tools.html'); return; }
 
-  function showComingSoon() {
-    var pc = document.querySelector(".preview-container");
-    if (pc) pc.innerHTML = "<div class=\"coming-soon-preview\"><p>Preview coming soon</p></div>";
-  }
+    // Title
+    document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
 
-  function injectCSS(tool) {
-    if (tool.preview && tool.preview.css) {
-      var styleEl = document.createElement("style");
-      styleEl.id = "tool-preview-css";
-      styleEl.textContent = tool.preview.css;
-      document.head.appendChild(styleEl);
+    // Breadcrumb
+    var bc = document.getElementById('panel-breadcrumb');
+    if (bc) bc.textContent = tool.title[0] + ' ' + tool.title[1];
+
+    // Icon
+    var iconEl = document.getElementById('panel-icon');
+    if (iconEl) iconEl.textContent = tool.icon;
+
+    // Live badge
+    var liveBadge = document.getElementById('panel-live-badge');
+    if (liveBadge) liveBadge.style.display = tool.status === 'built' ? '' : 'none';
+
+    // Title lines
+    var l1 = document.getElementById('panel-title-line1');
+    var l2 = document.getElementById('panel-title-line2');
+    if (l1) l1.textContent = tool.title[0];
+    if (l2) l2.textContent = tool.title[1];
+
+    // Tagline
+    var tagEl = document.getElementById('panel-tagline');
+    if (tagEl) tagEl.textContent = tool.tagline;
+
+    // Desc
+    var descEl = document.getElementById('panel-desc');
+    if (descEl) descEl.textContent = tool.desc;
+
+    // Benefits
+    var benEl = document.getElementById('panel-benefits');
+    if (benEl && tool.benefits) {
+      benEl.innerHTML = tool.benefits.map(function(b){
+        return '<li class="benefit-item"><span class="benefit-icon">&#10003;</span>' + b + '</li>';
+      }).join('');
     }
-    if (tool.preview && tool.preview.animationCSS) {
-      var animEl = document.createElement("style");
-      animEl.id = "tool-anim-css";
-      animEl.textContent = tool.preview.animationCSS;
-      document.head.appendChild(animEl);
-    }
-  }
 
-  window.renderPanel = function(tool) {
-    injectCSS(tool);
-    var iconEl = document.getElementById("panel-icon");
-    if (iconEl) iconEl.textContent = tool.icon || "";
-    var liveBadge = document.getElementById("panel-live-badge");
-    if (liveBadge) liveBadge.style.display = tool.status === "built" ? "" : "none";
-    var line1 = document.getElementById("panel-title-line1");
-    if (line1) line1.textContent = tool.title.line1;
-    var line2 = document.getElementById("panel-title-line2");
-    if (line2) line2.textContent = tool.title.line2;
-    var tagline = document.getElementById("panel-tagline");
-    if (tagline) tagline.textContent = tool.tagline;
-    var desc = document.getElementById("panel-desc");
-    if (desc) desc.textContent = tool.description;
-    var benefitsList = document.getElementById("panel-benefits");
-    if (benefitsList && tool.benefits) {
-      benefitsList.innerHTML = tool.benefits.map(function(b) {
-        return "<li class=\"benefit-item\"><span class=\"benefit-icon\">\u2713</span>" + b + "</li>";
-      }).join("");
-    }
-    var priceEl = document.getElementById("panel-price");
-    if (priceEl) priceEl.textContent = tool.price;
-    var priceFooter = document.getElementById("panel-price-footer");
-    if (priceFooter) priceFooter.textContent = tool.price;
-    var ctaHref = "login.html?tab=signup&tool=" + tool.id;
-    var ctaBtn = document.getElementById("cta-btn");
-    if (ctaBtn) ctaBtn.href = ctaHref;
-    var ctaBtnFooter = document.getElementById("cta-btn-footer");
-    if (ctaBtnFooter) ctaBtnFooter.href = ctaHref;
-    var stepTitles = document.querySelectorAll(".step-title");
-    var stepDescs = document.querySelectorAll(".step-desc");
-    if (tool.steps) {
-      tool.steps.forEach(function(step, i) {
-        if (stepTitles[i]) stepTitles[i].textContent = step.title;
-        if (stepDescs[i]) stepDescs[i].textContent = step.desc;
-      });
-    }
-    if (tool.roi) {
-      var inputs = tool.roi.inputs;
-      var sliderIds = ["visitors", "missed", "jobval"];
-      var valIds = ["visitors-val", "missed-val", "jobval-val"];
-      inputs.forEach(function(inp, i) {
-        var slider = document.getElementById(sliderIds[i]);
-        var valEl = document.getElementById(valIds[i]);
-        if (slider) { slider.min = inp.min; slider.max = inp.max; slider.value = inp.default; slider.step = inp.step; }
-        if (valEl) valEl.textContent = (inp.prefix || "") + inp.default.toLocaleString();
-      });
-      window.updateROI();
-    }
-    var previewContainer = document.querySelector(".preview-container");
-    if (previewContainer && tool.preview && tool.preview.html) {
-      previewContainer.innerHTML = tool.preview.html;
-    }
-    document.title = tool.title.line1 + " " + tool.title.line2 + " | StaxAI";
-  };
+    // Price hero
+    var prEl = document.getElementById('panel-price');
+    if (prEl) prEl.innerHTML = tool.price + '<span>/mth</span>';
 
-  window.updateROI = function() {
-    var tool = window.PANEL_TOOL;
-    if (!tool || !tool.roi) return;
-    var sliderIds = ["visitors", "missed", "jobval"];
-    var valIds = ["visitors-val", "missed-val", "jobval-val"];
-    var values = sliderIds.map(function(id, i) {
-      var el = document.getElementById(id);
-      return el ? parseFloat(el.value) : tool.roi.inputs[i].default;
-    });
-    values.forEach(function(v, i) {
-      var valEl = document.getElementById(valIds[i]);
-      if (valEl) valEl.textContent = (tool.roi.inputs[i].prefix || "") + v.toLocaleString();
-    });
-    var results = tool.roi.calculate(values);
-    var resultIds = ["res-leads", "res-afterhours", "res-booked", "res-revenue"];
-    results.forEach(function(val, i) {
-      var el = document.getElementById(resultIds[i]);
-      if (el) {
-        if (i === 3) {
-          el.textContent = val >= 1000 ? "\u0024" + Math.round(val / 1000) + "k" : "\u0024" + val.toLocaleString();
-        } else {
-          el.textContent = val.toLocaleString();
-        }
-      }
-    });
-  };
+    // Price footer
+    var prFt = document.getElementById('panel-price-footer');
+    if (prFt) prFt.textContent = tool.price;
 
-  document.addEventListener("DOMContentLoaded", function() {
-    ["visitors", "missed", "jobval"].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el) el.addEventListener("input", window.updateROI);
-    });
-    loadToolData(toolId, function(tool) {
-      window.renderPanel(tool);
-    });
-    var backBtn = document.querySelector(".topbar-back");
+    // CTA hrefs
+    var ctaHref = 'login.html?tab=signup&tool=' + tool.toolId;
+    var ctaBtn = document.getElementById('cta-btn');
+    if (ctaBtn) ctaBtn.onclick = function(){ window.location.href = ctaHref; };
+    var ctaBtnFt = document.getElementById('cta-btn-footer');
+    if (ctaBtnFt) ctaBtnFt.onclick = function(){ window.location.href = ctaHref; };
+
+    // Back button
+    var backBtn = document.getElementById('back-btn');
     if (backBtn) {
-      backBtn.addEventListener("click", function(e) {
-        e.preventDefault();
+      backBtn.addEventListener('click', function() {
         var ref = document.referrer;
-        if (ref && ref.indexOf(window.location.hostname) > -1 && ref.indexOf("panel.html") === -1) {
+        var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
+        if (onPlatform && history.length > 1) {
           history.back();
         } else {
-          var dest = "tools.html";
-          if (industry) dest += "?industry=" + industry;
-          window.location.href = dest;
+          var urlParams = new URLSearchParams(window.location.search);
+          var industry = urlParams.get('industry');
+          window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
         }
       });
+    }
+
+    // Close button
+    var closeBtn = document.getElementById('close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function(){
+        window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
+      });
+    }
+
+    // ROI sliders — use existing IDs from mockup
+    var roiInputs = tool.roi && tool.roi.inputs;
+    var roiCalc = tool.roi && tool.roi.calculate;
+    if (roiInputs && roiCalc) {
+      // Map tool roi input ids to the mockup's existing slider IDs
+      // mockup uses: visitors, missed, jobval / res-leads, res-afterhours, res-booked, res-revenue
+      function updateROI(){
+        var vals = {};
+        roiInputs.forEach(function(inp){
+          var el = document.getElementById(inp.id);
+          if (!el) return;
+          vals[inp.id] = parseFloat(el.value);
+          var valEl = document.getElementById(inp.id + '-val');
+          if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(el.value).toLocaleString();
+        });
+        try {
+          var args = roiInputs.map(function(i){ return i.id; });
+          var argVals = roiInputs.map(function(i){ return vals[i.id] || i['default']; });
+          var fn = new Function(args.join(','), roiCalc);
+          var result = fn.apply(null, argVals);
+          if (result) {
+            var rl = document.getElementById('res-leads');
+            var ra = document.getElementById('res-afterhours');
+            var rb = document.getElementById('res-booked');
+            var rr = document.getElementById('res-revenue');
+            if (rl) rl.textContent = result.leads || 0;
+            if (ra) ra.textContent = result.afterHours || 0;
+            if (rb) rb.textContent = result.booked !== undefined ? result.booked : (result.jobs || 0);
+            if (rr) {
+              var rev = result.revenue || 0;
+              rr.textContent = rev >= 1000 ? '$' + Math.round(rev/1000) + 'k' : '$' + rev;
+            }
+          }
+        } catch(e){ console.warn('ROI error', e); }
+      }
+      roiInputs.forEach(function(inp){
+        var el = document.getElementById(inp.id);
+        if (el) el.addEventListener('input', updateROI);
+      });
+      updateROI();
     }
   });
 
+  // Bundle rotator (preserve existing behaviour)
+  var items = document.querySelectorAll('.bundle-rotator-item');
+  var idx = 0;
+  if (items.length > 1) {
+    setInterval(function(){
+      items[idx].classList.remove('active');
+      idx = (idx + 1) % items.length;
+      items[idx].classList.add('active');
+    }, 3000);
+  }
 })();
 </script>
 
