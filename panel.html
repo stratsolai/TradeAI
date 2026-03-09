@@ -29,7 +29,7 @@
     --dusty-blue: #5a8aaa;
     --ice-blue: #8ab4cc;
 
-    --orange: #E8500A;
+    --orange: #c4622a;
     --orange-light: #ff6b2b;
     --teal: #2dd4bf;
     --card-border: rgba(255,255,255,0.14);
@@ -1045,7 +1045,7 @@
 
   <!-- HEADER — BURNT ORANGE -->
   <div class="topbar">
-  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
+  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="my-project-page-1.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
   <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
@@ -1495,10 +1495,10 @@ function updateCalc() {
       var ra = document.getElementById('res-afterhours');
       var rb = document.getElementById('res-booked');
       var rr = document.getElementById('res-revenue');
-      if (rl) rl.textContent = result.leads || 0;
-      if (ra) ra.textContent = result.afterHours || 0;
-      if (rb) rb.textContent = result.booked !== undefined ? result.booked : (result.jobs || 0);
-      if (rr) rr.textContent = result.revenue || 0;
+      if (rl) rl.textContent = result["res-leads"] || 0;
+      if (ra) ra.textContent = result["res-afterhours"] || 0;
+      if (rb) rb.textContent = result["res-booked"] !== undefined ? result.booked : (result.jobs || 0);
+      if (rr) rr.textContent = result["res-revenue"] || 0;
     }
   } catch(e) {}
 }
