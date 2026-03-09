@@ -2,14 +2,14 @@ window.PANEL_TOOL = {
   id: "chatbot",
   icon: "💬",
   title: ["AI Website", "Chatbot"],
-  tagline: "Your website works for you around the clock.",
-  description: "Never miss another lead. Your AI chatbot learns your business from your emails, website, and content library — answering customer questions, qualifying leads, and booking jobs 24/7. No coding. No complicated setup. Just a smart chatbot that knows your trade inside out.",
+  tagline: "Your 24/7 sales team that never sleeps ✨",
+  description: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs – 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
   benefits: [
-    "Answers customer enquiries 24/7 — even after hours and on weekends",
+    "Answers customer enquiries 24/7 – even when you are on-site",
     "Qualifies leads and books jobs automatically",
-    "Learns from your emails, website, and content library",
-    "AI-created FAQs reviewed and approved before going live",
-    "Embeds on your website with a single line of code"
+    "Learns from your emails, website and content library",
+    "Every FAQ approved by you before it goes live",
+    "Gets smarter with every customer interaction"
   ],
   price: "$79",
   status: "built",
