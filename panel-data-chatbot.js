@@ -1,10 +1,7 @@
 window.PANEL_TOOL = {
   id: "chatbot",
   icon: "💬",
-  title: {
-    line1: "AI Website",
-    line2: "Chatbot"
-  },
+  title: ["AI Website", "Chatbot"],
   tagline: "Your website works for you around the clock.",
   description: "Never miss another lead. Your AI chatbot learns your business from your emails, website, and content library &#8212; answering customer questions, qualifying leads, and booking jobs 24/7. No coding. No complicated setup. Just a smart chatbot that knows your trade inside out.",
   benefits: [
