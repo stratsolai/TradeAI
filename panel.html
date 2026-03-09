@@ -1457,7 +1457,7 @@
         try {
           var args = roiInputs.map(function(i){ return i.id; });
           var argVals = roiInputs.map(function(i){ return vals[i.id] || i['default']; });
-          var fn = new Function(args.join(','), roiCalc);
+          var fn = (typeof roiCalc === 'function') ? roiCalc : new Function(args.join(','), roiCalc);
           var result = fn.apply(null, argVals);
           if (result) {
             var rl = document.getElementById('res-leads');
