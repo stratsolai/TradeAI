@@ -519,312 +519,66 @@
     position: relative; z-index: 2;
   }
 
-  .preview-container {
-    position: relative; border-radius: 24px; overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.1);
-    box-shadow:
-      0 40px 100px rgba(0,0,0,0.45),
-      0 0 60px rgba(196,98,42,0.04),
-      0 0 100px rgba(44,90,130,0.05);
-  }
-  .preview-chrome {
-    display: flex; align-items: center;
-    padding: 14px 22px;
-    background: var(--cream);
-    border-bottom: 1px solid rgba(196,98,42,0.15); gap: 12px;
-  }
-  .chrome-dots { display: flex; gap: 7px; }
-  .chrome-dot { width: 11px; height: 11px; border-radius: 50%; }
-  .chrome-dot.r { background: #e05050; }
-  .chrome-dot.y { background: var(--gold); }
-  .chrome-dot.g { background: #4a9e6a; }
-  .chrome-url {
-    flex: 1; background: #fff; border-radius: 8px;
-    padding: 7px 16px; font-size: 13px; color: #6b5540;
-    border: 1px solid rgba(196,98,42,0.15);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .chrome-url .lock { color: #22c55e; font-size: 11px; }
-
-  .preview-body {
-    position: relative; min-height: 520px;
-    background: #f8f9fb; overflow: hidden;
-  }
-  .website-hero {
-    background: linear-gradient(135deg, var(--navy) 0%, var(--deep-blue) 50%, var(--steel-blue) 100%);
-    padding: 50px 50px 60px;
-    position: relative; overflow: hidden;
-    display: flex; flex-direction: column; justify-content: center;
-    height: 520px;
-  }
-  .website-hero::before {
-    content: '';
-    position: absolute; top: -20%; right: -10%;
-    width: 400px; height: 400px;
-    background: radial-gradient(circle, rgba(212,128,74,0.12), transparent 70%);
-    border-radius: 50%;
-  }
-  .website-hero::after {
-    content: '';
-    position: absolute; bottom: -20%; left: -10%;
-    width: 350px; height: 350px;
-    background: radial-gradient(circle, rgba(196,98,42,0.08), transparent 70%);
-    border-radius: 50%;
-  }
-  .website-logo {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 22px; font-weight: 700; color: #fff;
-    margin-bottom: 30px;
-    display: flex; align-items: center; gap: 10px;
-  }
-  .logo-icon {
-    width: 36px; height: 36px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
-    display: flex; align-items: center; justify-content: center; font-size: 18px;
-  }
-  .website-h1 {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-size: 42px; font-weight: 700; color: #fff;
-    line-height: 1.1; margin-bottom: 14px;
-  }
-  .website-sub {
-    font-size: 17px; color: rgba(232,213,184,0.8);
-    max-width: 500px; line-height: 1.5; margin-bottom: 24px;
-  }
-  .website-cta {
-    display: inline-flex; padding: 12px 28px;
-    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
-    color: #fff; border-radius: 10px;
-    font-weight: 700; font-size: 15px; text-decoration: none; width: fit-content;
-  }
-  .website-nav {
-    position: absolute; top: 20px; right: 50px;
-    display: flex; gap: 24px; font-size: 14px; color: rgba(232,213,184,0.7);
-  }
-
-  /* Chatbot widget — light */
-  .chatbot-widget {
-    position: absolute; bottom: 24px; right: 30px;
-    width: 370px; background: #fff; border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
-    overflow: hidden;
-    opacity: 0; animation: widgetAppear 0.6s ease forwards; animation-delay: 0.5s;
-  }
-  @keyframes widgetAppear {
-    from { opacity: 0; transform: translateY(20px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .widget-header {
-    background: linear-gradient(135deg, var(--navy), var(--deep-blue), var(--steel-blue));
-    padding: 18px 20px;
-    display: flex; align-items: center; gap: 12px; color: #fff;
-  }
-  .widget-avatar {
-    width: 38px; height: 38px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
-    display: flex; align-items: center; justify-content: center; font-size: 20px;
-  }
-  .widget-name { font-weight: 700; font-size: 15px; }
-  .widget-status {
-    font-size: 12px; color: rgba(232,213,184,0.8);
-    display: flex; align-items: center; gap: 5px;
-  }
-  .widget-status::before {
-    content: ''; width: 6px; height: 6px; border-radius: 50%; background: #4ade80;
-  }
-  .widget-messages {
-    padding: 20px; display: flex; flex-direction: column; gap: 12px;
-    min-height: 240px; background: var(--warm-white);
-  }
-  .w-msg {
-    max-width: 85%; opacity: 0;
-    animation: wMsgIn 0.4s ease forwards;
-  }
-  .w-msg:nth-child(1) { animation-delay: 1s; }
-  .w-msg:nth-child(2) { animation-delay: 1.8s; }
-  .w-msg:nth-child(3) { animation-delay: 2.8s; }
-  .w-msg:nth-child(4) { animation-delay: 3.6s; }
-  .w-msg:nth-child(5) { animation-delay: 4.4s; }
-  @keyframes wMsgIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .w-msg.ai { align-self: flex-start; }
-  .w-msg.visitor { align-self: flex-end; }
-  .w-msg-bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.55; }
-  .w-msg.ai .w-msg-bubble {
-    background: #fff; color: #1f2937;
-    border: 1px solid rgba(196,98,42,0.1); border-bottom-left-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  }
-  .w-msg.visitor .w-msg-bubble {
-    background: linear-gradient(135deg, var(--deep-blue), var(--steel-blue));
-    color: #fff; border-bottom-right-radius: 6px;
-  }
-  .widget-input {
-    padding: 14px 20px; background: var(--warm-white);
-    border-top: 1px solid rgba(196,98,42,0.12);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .widget-input-field {
-    flex: 1; padding: 10px 14px; border-radius: 10px;
-    border: 1px solid rgba(196,98,42,0.15); background: #fff;
-    font-size: 13px; color: #9ca3af;
-  }
-  .widget-send {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: linear-gradient(135deg, var(--burnt-orange), var(--copper));
-    border: none; color: #fff; font-size: 16px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-  }
-  .powered-badge {
-    position: absolute; bottom: 295px; right: 30px; width: 370px;
-    text-align: center;
-    opacity: 0; animation: badgeFade 0.3s ease forwards; animation-delay: 0.8s;
-  }
-  @keyframes badgeFade { to { opacity: 1; } }
-  .powered-badge span {
-    font-size: 10px; color: #9ca3af;
-    background: #fff; padding: 3px 12px; border-radius: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  }
-
-  .phone-notif {
-    position: absolute; bottom: 24px; left: 30px;
-    width: 320px; background: #fff; border-radius: 16px;
-    padding: 16px 20px;
-    display: flex; align-items: flex-start; gap: 14px;
-    box-shadow: 0 12px 40px rgba(196,98,42,0.12), 0 0 0 1px rgba(196,98,42,0.08);
-    opacity: 0; animation: notifPop 0.5s ease forwards; animation-delay: 5.2s;
-  }
-  @keyframes notifPop {
-    from { opacity: 0; transform: translateX(-20px) scale(0.95); }
-    to { opacity: 1; transform: translateX(0) scale(1); }
-  }
-  .phone-notif-icon {
-    width: 44px; height: 44px; border-radius: 12px;
-    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px; flex-shrink: 0;
-  }
-  .phone-notif-text { font-size: 13px; color: #3d2e1e; line-height: 1.5; }
-  .phone-notif-text strong { display: block; color: #15803d; font-size: 14px; margin-bottom: 2px; }
-  .phone-notif-time { font-size: 11px; color: #9a8a7a; margin-top: 4px; }
-
   .preview-tabs {
-    display: flex; justify-content: center; gap: 4px;
-    padding: 16px 24px; background: var(--cream); border-top: 1px solid rgba(196,98,42,0.15);
+    display: flex; justify-content: center; gap: 8px;
+    padding: 20px 24px 0;
   }
   .preview-tab {
-    padding: 10px 28px; border-radius: 10px;
-    font-size: 14px; font-weight: 600; color: #6b5540;
+    padding: 10px 28px; border-radius: 8px;
+    font-family: "DM Sans", sans-serif;
+    font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.55);
     cursor: pointer; transition: all 0.2s;
-    border: none; background: none;
+    border: 1px solid rgba(255,255,255,0.10);
+    background: rgba(255,255,255,0.05);
     display: flex; align-items: center; gap: 8px;
   }
+  .preview-tab:hover {
+    color: rgba(255,255,255,0.80);
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(255,255,255,0.18);
+  }
   .preview-tab.active {
-    background: #fff; color: #3d2e1e;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    background: rgba(196,98,42,0.18);
+    color: #d4844a;
+    border-color: rgba(196,98,42,0.45);
   }
-
-  .ai-gen-badge {
-    display: flex; align-items: center; justify-content: center;
-    gap: 10px; margin-top: 20px;
-    font-size: 14px; color: rgba(255,255,255,0.45);
+  .preview-panel {
+    display: none;
+    min-height: 320px;
+    padding: 32px;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
-  .sparkle {
-    color: var(--copper);
-    animation: sparkleRotate 4s linear infinite;
-    display: inline-block;
+  .preview-panel.active {
+    display: flex;
   }
-  @keyframes sparkleRotate {
-    0% { transform: rotate(0deg) scale(1); }
-    25% { transform: rotate(90deg) scale(1.2); }
-    50% { transform: rotate(180deg) scale(1); }
-    75% { transform: rotate(270deg) scale(1.2); }
-    100% { transform: rotate(360deg) scale(1); }
+  .coming-soon-placeholder {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px; padding: 60px 24px;
   }
-
-  /* ===== STEP CARD GRAPHICS ===== */
-  .step-graphic {
-    width: 100%; height: 90px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 14px; margin-top: 4px;
+  .coming-soon-logo {
+    font-size: 64px; color: rgba(196,98,42,0.20);
+    line-height: 1;
   }
-  .step-svg { width: 120px; height: 80px; }
-
-  /* Step 1 — Activate animations */
-  .svg-pulse-1 { animation: svgPulse 1.8s ease-in-out infinite; }
-  @keyframes svgPulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
+  .coming-soon-label {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 28px; font-weight: 700;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.05em;
+    margin: 0;
   }
-  .svg-plug { animation: svgPlugMove 2.4s ease-in-out infinite; transform-origin: 60px 61px; }
-  @keyframes svgPlugMove {
-    0%, 60%, 100% { transform: translateY(0); }
-    30% { transform: translateY(-6px); }
+  .video-wrapper {
+    width: 100%; max-width: 800px;
   }
-  .svg-spark { animation: svgSpark 1.8s ease-in-out infinite; }
-  @keyframes svgSpark {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; stroke-dashoffset: -6; }
+  .video-wrapper iframe {
+    width: 100%; aspect-ratio: 16/9; border-radius: 12px;
   }
-  .svg-star-1 { animation: svgStar 2.2s ease-in-out infinite; }
-  .svg-star-2 { animation: svgStar 2.2s ease-in-out infinite 0.6s; }
-  @keyframes svgStar {
-    0%, 100% { opacity: 0.3; transform: scale(0.7); }
-    50% { opacity: 1; transform: scale(1.3); }
+  .preview-screenshot {
+    max-width: 100%; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.08);
   }
-
-  /* Step 2 — Settings animations */
-  .svg-knob-1 { animation: svgKnob1 3s ease-in-out infinite; }
-  @keyframes svgKnob1 {
-    0%, 100% { cx: 64px; }
-    50% { cx: 78px; }
-  }
-  .svg-bar-1 { animation: svgBar1 3s ease-in-out infinite; }
-  @keyframes svgBar1 {
-    0%, 100% { width: 38px; }
-    50% { width: 52px; }
-  }
-  .svg-knob-2 { animation: svgKnob2 3.5s ease-in-out infinite 0.5s; }
-  @keyframes svgKnob2 {
-    0%, 100% { cx: 78px; }
-    50% { cx: 55px; }
-  }
-  .svg-bar-2 { animation: svgBar2 3.5s ease-in-out infinite 0.5s; }
-  @keyframes svgBar2 {
-    0%, 100% { width: 52px; }
-    50% { width: 29px; }
-  }
-  .svg-check { animation: svgCheckPop 2s ease-in-out infinite; transform-origin: 96px 18px; }
-  @keyframes svgCheckPop {
-    0%, 80%, 100% { transform: scale(1); opacity: 1; }
-    40% { transform: scale(1.2); opacity: 0.7; }
-  }
-
-  /* Step 3 — Live animations */
-  .svg-rocket { animation: svgRocketFloat 2.5s ease-in-out infinite; transform-origin: 60px 40px; }
-  @keyframes svgRocketFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-5px); }
-  }
-  .svg-flame { animation: svgFlame 0.4s ease-in-out infinite alternate; transform-origin: 60px 54px; }
-  @keyframes svgFlame {
-    from { transform: scaleY(1) scaleX(1); opacity: 0.9; }
-    to { transform: scaleY(1.3) scaleX(0.85); opacity: 1; }
-  }
-  .svg-flame-inner { animation: svgFlame 0.3s ease-in-out infinite alternate 0.1s; transform-origin: 60px 55px; }
-  .svg-arc-1 { animation: svgArcPulse 1.6s ease-in-out infinite; }
-  .svg-arc-2 { animation: svgArcPulse 1.6s ease-in-out infinite 0.3s; }
-  .svg-arc-3 { animation: svgArcPulse 1.6s ease-in-out infinite 0.6s; }
-  @keyframes svgArcPulse {
-    0%, 100% { opacity: 0.2; }
-    50% { opacity: 1; }
-  }
-  .svg-sparkle-a { animation: svgStar 2s ease-in-out infinite; }
-  .svg-sparkle-b { animation: svgStar 2.4s ease-in-out infinite 0.4s; }
-  .svg-sparkle-c { animation: svgStar 1.8s ease-in-out infinite 0.8s; }
   .how-section {
     max-width: 1280px; margin: 0 auto;
     padding: 70px 48px;
@@ -1005,8 +759,6 @@
     .panel-hero { grid-template-columns: 1fr; gap: 40px; padding: 40px 28px; }
     .steps-grid { grid-template-columns: repeat(2, 1fr); }
     .steps-grid::before { display: none; }
-    .chatbot-widget { width: 300px; }
-    .phone-notif { display: none; }
     .example-section, .how-section, .pricing-footer { padding-left: 28px; padding-right: 28px; }
     .pricing-card { padding: 36px 44px; }
     .tool-title { font-size: 44px; }
@@ -1274,187 +1026,175 @@
 
 <script src="tools-data.js"></script>
 <script>
-(function(){
-  var params = new URLSearchParams(window.location.search);
-  var toolId = params.get('tool');
-  var industry = params.get('industry');
+  // 1. Dynamic loader IIFE
+  (function() {
+    var toolId = new URLSearchParams(window.location.search).get('tool');
+    if (!toolId) return;
+    var s = document.createElement('script');
+    s.src = 'panel-data-' + toolId + '.js';
+    s.onload = function() { if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
+    document.head.appendChild(s);
+  })();
 
-  if (!toolId) { window.location.replace('tools.html'); return; }
-
-  var s = document.createElement('script');
-  s.src = 'panel-data-' + toolId + '.js';
-  s.onload = function() {
-    if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL);
-  };
-  s.onerror = function() {
-    renderPanel(null);
-  };
-  document.head.appendChild(s);
-})();
-var roiInputs, roiCalc;
-
-function renderPanel(tool) {
-  if (!tool) { return; }
-
-  function run(){
-
-    // Title
-    document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
-
-    // Breadcrumb (legacy element - may not exist)
-
-    // Icon
-    var iconEl = document.getElementById('panel-icon');
-    if (iconEl) iconEl.textContent = tool.icon;
-
-    // Live badge
+  // 2. renderPanel
+  function renderPanel(tool) {
+    var bc = document.getElementById('panel-breadcrumb');
+    if (bc) bc.textContent = tool.title ? tool.title[0] + ' ' + tool.title[1] : '';
+    var ic = document.getElementById('panel-icon');
+    if (ic) ic.textContent = tool.icon || '';
     var badge = document.getElementById('panel-live-badge');
-    if (badge) badge.style.display = tool.status === 'built' ? '' : 'none';
-
-    // Title lines
-    var l1 = document.getElementById('panel-title-line1');
-    var l2 = document.getElementById('panel-title-line2');
-    if (l1) l1.textContent = tool.title[0];
-    if (l2) l2.textContent = tool.title[1];
-    // Tagline
-    var tagEl = document.getElementById('panel-tagline');
-    if (tagEl) tagEl.textContent = tool.tagline;
-
-    // Description
-    var descEl = document.getElementById('panel-desc');
-    if (descEl) descEl.textContent = tool.description;
-
-    // Benefits
+    if (badge) {
+      if (tool.status === 'built') {
+        badge.textContent = 'Live Now';
+        badge.className = 'tool-badge live-badge';
+      } else {
+        badge.textContent = 'Coming Soon';
+        badge.className = 'tool-badge coming-badge';
+      }
+    }
+    var t1 = document.getElementById('panel-title-line1');
+    if (t1) t1.textContent = tool.title ? tool.title[0] : '';
+    var t2 = document.getElementById('panel-title-line2');
+    if (t2) t2.textContent = tool.title ? tool.title[1] : '';
+    var tg = document.getElementById('panel-tagline');
+    if (tg) tg.textContent = tool.tagline || '';
+    var desc = document.getElementById('panel-desc');
+    if (desc) desc.textContent = tool.description || '';
     var benEl = document.getElementById('panel-benefits');
     if (benEl && tool.benefits) {
-      benEl.innerHTML = tool.benefits.map(function(b){
-        return '<li class="benefit-item"><span class="benefit-icon">&#10003;</span>' + b + '</li>';
+      benEl.innerHTML = tool.benefits.map(function(b) {
+        return '<li><span class="benefit-check">&#10003;</span>' + b + '</li>';
       }).join('');
     }
-
-    // Price
     var priceEl = document.getElementById('panel-price');
-    if (priceEl) priceEl.textContent = tool.price;
+    if (priceEl) priceEl.textContent = tool.price || 'Coming Soon';
     var priceFooter = document.getElementById('panel-price-footer');
-    if (priceFooter) priceFooter.textContent = tool.price;
-
-    // CTA buttons
+    if (priceFooter) priceFooter.textContent = tool.price || 'Coming Soon';
     var ctaBtn = document.getElementById('cta-btn');
-    if (ctaBtn) ctaBtn.href = 'login.html?tab=signup&tool=' + tool.id;
-    var ctaBtnFooter = document.getElementById('cta-btn-footer');
-    if (ctaBtnFooter) ctaBtnFooter.href = 'login.html?tab=signup&tool=' + tool.id;
-
-    // Close button (legacy - may not exist)
-    var closeBtn = document.getElementById('close-btn');
-    if (closeBtn) {
-      closeBtn.addEventListener('click', function(){
-        window.location.href = industry ? 'tools.html?industry=' + industry : 'tools.html';
-      });
-    }
-
-    // Steps
-    var s1t = document.getElementById('step-1-title');
-    var s1d = document.getElementById('step-1-desc');
-    var s2t = document.getElementById('step-2-title');
-    var s2d = document.getElementById('step-2-desc');
-    var s3t = document.getElementById('step-3-title');
-    var s3d = document.getElementById('step-3-desc');
-    if (tool.steps && tool.steps.length >= 3) {
-      if (s1t) s1t.textContent = tool.steps[0].title;
-      if (s1d) s1d.textContent = tool.steps[0].desc;
-      if (s2t) s2t.textContent = tool.steps[1].title;
-      if (s2d) s2d.textContent = tool.steps[1].desc;
-      if (s3t) s3t.textContent = tool.steps[2].title;
-      if (s3d) s3d.textContent = tool.steps[2].desc;
-    }
-
-    // Preview
-    var previewContainer = document.getElementById('preview-container');
-    if (previewContainer && tool.preview && tool.preview.html) {
-      if (tool.preview.css) {
-        var styleEl = document.createElement('style');
-        styleEl.textContent = tool.preview.css + (tool.preview.animationCSS || '');
-        document.head.appendChild(styleEl);
+    if (ctaBtn) {
+      if (tool.status === 'built') {
+        ctaBtn.textContent = 'Start 14 Day Free Trial →';
+        ctaBtn.href = 'login.html?tab=signup&tool=' + tool.id;
+      } else {
+        ctaBtn.textContent = 'Notify Me When Live';
+        ctaBtn.href = '#';
       }
-      previewContainer.innerHTML = tool.preview.html;
     }
-
-    // ROI calculator
+    var ctaFooter = document.getElementById('cta-btn-footer');
+    if (ctaFooter) {
+      if (tool.status === 'built') {
+        ctaFooter.textContent = 'Start 14 Day Free Trial →';
+        ctaFooter.href = 'login.html?tab=signup&tool=' + tool.id;
+      } else {
+        ctaFooter.textContent = 'Notify Me When Live';
+        ctaFooter.href = '#';
+      }
+    }
+    var steps = tool.steps || [];
+    for (var i = 0; i < 3; i++) {
+      var step = steps[i] || {};
+      var tEl = document.getElementById('step-' + (i+1) + '-title');
+      var dEl = document.getElementById('step-' + (i+1) + '-desc');
+      if (tEl) tEl.textContent = step.title || '';
+      if (dEl) dEl.textContent = step.desc || '';
+    }
+    var preview = tool.preview || {};
+    var videoPanel = document.getElementById('preview-video');
+    var screenshotsPanel = document.getElementById('preview-screenshots');
+    var csHTML = '<div class="coming-soon-placeholder"><div class="coming-soon-logo">◆</div><p class="coming-soon-label">Coming Soon</p></div>';
+    if (videoPanel) {
+      if (preview.videoUrl) {
+        videoPanel.innerHTML = '<div class="video-wrapper"><iframe src="' + preview.videoUrl + '" frameborder="0" allowfullscreen></iframe></div>';
+      } else {
+        videoPanel.innerHTML = csHTML;
+      }
+    }
+    if (screenshotsPanel) {
+      if (preview.screenshots && preview.screenshots.length > 0) {
+        screenshotsPanel.innerHTML = preview.screenshots.map(function(url) {
+          return '<img src="' + url + '" class="preview-screenshot" alt="Screenshot">';
+        }).join('');
+      } else {
+        screenshotsPanel.innerHTML = csHTML;
+      }
+    }
+    var tabs = document.querySelectorAll('.preview-tab');
+    var panels = document.querySelectorAll('.preview-panel');
+    tabs.forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        panels.forEach(function(p) { p.classList.remove('active'); });
+        tab.classList.add('active');
+        var targetPanel = document.getElementById('preview-' + tab.getAttribute('data-tab'));
+        if (targetPanel) targetPanel.classList.add('active');
+      });
+    });
     roiInputs = tool.roi && tool.roi.inputs;
     roiCalc = tool.roi && tool.roi.calculate;
     if (roiInputs && roiCalc) {
-      roiInputs.forEach(function(inp){
+      roiInputs.forEach(function(inp) {
         var el = document.getElementById(inp.id);
-        if (el) el.addEventListener('input', updateCalc);
+        if (el) { el.min = inp.min; el.max = inp.max; el.value = inp.def; el.step = inp.step; }
+        var valEl = document.getElementById(inp.id + '-val');
+        if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(inp.def).toLocaleString();
       });
       updateCalc();
     }
   }
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', run);
-  } else {
-    run();
-  }
-}
 
-function updateCalc() {
-  if (!roiInputs || !roiCalc) return;
-  var vals = {};
-  roiInputs.forEach(function(inp){
-    var el = document.getElementById(inp.id);
-    if (!el) return;
-    vals[inp.id] = parseFloat(el.value);
-    var valEl = document.getElementById(inp.id + '-val');
-    if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(el.value).toLocaleString();
-  });
-  try {
-    var args = roiInputs.map(function(i){ return i.id; });
-    var argVals = roiInputs.map(function(i){ return vals[i.id] || i['default'] || 0; });
-    var fn = (typeof roiCalc === 'function') ? roiCalc : new Function(args.join(','), roiCalc);
-    var result = fn.apply(null, argVals);
+  // 3. updateCalc — top-level
+  var roiInputs = null;
+  var roiCalc = null;
+  function updateCalc() {
+    if (!roiInputs || !roiCalc) return;
+    var vals = {};
+    roiInputs.forEach(function(inp) {
+      var el = document.getElementById(inp.id);
+      vals[inp.id] = el ? parseFloat(el.value) : inp.def;
+      var valEl = document.getElementById(inp.id + '-val');
+      if (valEl) valEl.textContent = (inp.prefix || '') + parseFloat(vals[inp.id]).toLocaleString();
+    });
+    var result = roiCalc(vals);
     if (result) {
-      var rl = document.getElementById('res-leads');
-      var ra = document.getElementById('res-afterhours');
-      var rb = document.getElementById('res-booked');
-      var rr = document.getElementById('res-revenue');
-      if (rl) rl.textContent = result["res-leads"] || 0;
-      if (ra) ra.textContent = result["res-afterhours"] || 0;
-      if (rb) rb.textContent = result["res-booked"] !== undefined ? result["res-booked"] : (result.jobs || 0);
-      if (rr) rr.textContent = result["res-revenue"] || 0;
-    }
-  } catch(e) {}
-}
-
-document.addEventListener('DOMContentLoaded', function(){
-  // Back button
-  var backBtn = document.getElementById('back-btn');
-  if (backBtn) {
-    backBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      var ref = document.referrer;
-      var onPlatform = ref && ref.indexOf('trade-ai-seven-blue.vercel.app') > -1;
-      if (onPlatform && history.length > 1) {
-        history.back();
-      } else {
-        var urlParams = new URLSearchParams(window.location.search);
-        var ind = urlParams.get('industry');
-        window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
-      }
-    });
-  }
-
-  // Bundle rotator
-  var bundles = document.querySelectorAll('.bundle-option');
-  if (bundles.length) {
-    bundles.forEach(function(b){
-      b.addEventListener('click', function(){
-        bundles.forEach(function(x){ x.classList.remove('active'); });
-        b.classList.add('active');
+      Object.keys(result).forEach(function(key) {
+        var el = document.getElementById(key);
+        if (el) el.textContent = result[key];
       });
-    });
+    }
   }
-});
 
+  // 4. DOMContentLoaded — back button, bundle rotator, slider listeners
+  document.addEventListener('DOMContentLoaded', function() {
+    var backBtn = document.getElementById('back-btn');
+    if (backBtn) {
+      backBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var onPlatform = document.referrer.indexOf('trade-ai-seven-blue.vercel') !== -1 ||
+                         document.referrer.indexOf('staxai.com.au') !== -1;
+        if (history.length > 1 && onPlatform) {
+          history.back();
+        } else {
+          var params = new URLSearchParams(window.location.search);
+          var ind = params.get('industry');
+          window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
+        }
+      });
+    }
+    var bundles = document.querySelectorAll('.bundle-option');
+    var bundleIdx = 0;
+    if (bundles.length > 1) {
+      setInterval(function() {
+        bundles[bundleIdx].classList.remove('active');
+        bundleIdx = (bundleIdx + 1) % bundles.length;
+        bundles[bundleIdx].classList.add('active');
+      }, 3000);
+    }
+    var sliders = document.querySelectorAll('.roi-slider');
+    sliders.forEach(function(slider) {
+      slider.addEventListener('change', updateCalc);
+      slider.addEventListener('input', updateCalc);
+    });
+  });
 </script>
 
 </body>
