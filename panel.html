@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StaxAI — Panel Mockup v5</title>
+<title>StaxAI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
 <style>
@@ -20,19 +20,13 @@
     --copper: #d4844a;
     --gold: #d4a04a;
     --cream: #e8d5b8;
-    --warm-white: #f5ece0;
 
     --deep-blue: #1e3a5f;
     --navy: #162d4a;
     --steel-blue: #2c5a82;
     --slate-blue: #3a6d94;
-    --dusty-blue: #5a8aaa;
     --ice-blue: #8ab4cc;
 
-    --orange: #c4622a;
-    --orange-light: #ff6b2b;
-    --teal: #2dd4bf;
-    --card-border: rgba(255,255,255,0.14);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -191,6 +185,7 @@
     animation: livePulse 2s ease-in-out infinite;
   }
   @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .badge-coming{background:rgba(196,98,42,0.12);color:#d4844a;border:1px solid rgba(196,98,42,0.25);}
   .badge-quick {
     background: rgba(212,160,74,0.15); color: var(--gold);
     border: 1px solid rgba(212,160,74,0.3);
@@ -1106,16 +1101,17 @@
   function renderPanel(tool) {
     var bc = document.getElementById('panel-breadcrumb');
     if (bc) bc.textContent = tool.title ? tool.title[0] + ' ' + tool.title[1] : '';
+    document.title = tool.title ? tool.title[0] + ' ' + tool.title[1] + ' | StaxAI' : 'StaxAI';
     var ic = document.getElementById('panel-icon');
     if (ic) ic.textContent = tool.icon || '';
     var badge = document.getElementById('panel-live-badge');
     if (badge) {
       if (tool.status === 'built') {
         badge.textContent = 'Live Now';
-        badge.className = 'tool-badge live-badge';
+        badge.className = 'badge badge-live';
       } else {
         badge.textContent = 'Coming Soon';
-        badge.className = 'tool-badge coming-badge';
+        badge.className = 'badge badge-coming';
       }
     }
     var t1 = document.getElementById('panel-title-line1');
