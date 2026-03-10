@@ -1242,20 +1242,17 @@
         }
       });
     }
-    var bundles = document.querySelectorAll('.bundle-rotator-item');
-    var bundleIdx = 0;
-    if (bundles.length > 1) {
-      setInterval(function() {
-        bundles[bundleIdx].classList.remove('active');
-        bundleIdx = (bundleIdx + 1) % bundles.length;
-        bundles[bundleIdx].classList.add('active');
+    const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
+    let rotatorIndex = 0;
+    if (rotatorItems.length > 0) {
+      setInterval(() => {
+        rotatorItems[rotatorIndex].classList.remove('active');
+        rotatorItems[rotatorIndex].classList.add('exit');
+        setTimeout(() => { rotatorItems[rotatorIndex].classList.remove('exit'); }, 500);
+        rotatorIndex = (rotatorIndex + 1) % rotatorItems.length;
+        rotatorItems[rotatorIndex].classList.add('active');
       }, 3000);
     }
-    var sliders = document.querySelectorAll('.range-slider');
-    sliders.forEach(function(slider) {
-      slider.addEventListener('change', updateCalc);
-      slider.addEventListener('input', updateCalc);
-    });
   });
 </script>
 
