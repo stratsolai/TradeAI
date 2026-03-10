@@ -1092,7 +1092,7 @@
     var toolId = new URLSearchParams(window.location.search).get('tool');
     if (!toolId) return;
     var s = document.createElement('script');
-    s.src = 'panel-data-' + toolId + '.js';
+    s.src = 'panel-data-' + toolId + '.js?v=' + Date.now();
     s.onload = function() { if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
     document.head.appendChild(s);
   })();
