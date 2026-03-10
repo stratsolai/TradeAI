@@ -1,32 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StaxAI &mdash; Industry Select Mockup v17</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="StaxAI — The only all-in-one AI platform built exclusively for Australian trade businesses. Social media, email, strategic planning and more. No tech skills needed.">
+  <title>StaxAI — AI Tools Built for Australian Trades</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#1a5490">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --blue: #1A5490;
+      --blue-dark: #0f3460;
+      --blue-light: #2471a3;
+      --orange: #c4622a;
+      --orange-light: #d4844a;
+      --bg: #0d1628;
+      --bg2: #111d35;
+      --card: rgba(255,255,255,0.08);
+      --card-border: rgba(255,255,255,0.16);
+      --text: #ffffff;
+      --muted: rgba(255,255,255,0.72);
+      --heading-font: 'Barlow Condensed', sans-serif;
+      --body-font: 'DM Sans', sans-serif;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family: var(--body-font);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
 
-.atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+    body::before {
+      content:'';
+      position:fixed; inset:0; pointer-events:none; z-index:0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      opacity: 0.4;
+    }
 
-.atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
-.atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
-.atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
-.atmo-orb.o3{width:350px;height:350px;background:#2c5a82;opacity:0.11;bottom:-80px;right:-80px;animation:orb3 12s ease-in-out infinite;}
-@keyframes orb1{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-40px)}}
-@keyframes orb2{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
-@keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
-
-/* TOPBAR */
+    /* ── TOPBAR ── */
 .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg,#b87028 0%,#b06828 18%,#b06832 25%,#b06832 32%,#7a5848 44%,#4a5568 54%,#4a5872 68%,#3d506a 85%,#364a63 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
 .topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
 .topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
 .topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
 .topbar-logo-sub{font-size:8px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px;}
-.topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;cursor:pointer;}
-.topbar-nav button{font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;background:none;border:none;cursor:pointer;padding:0;}
+.topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}
+
 .topbar-nav a:hover{color:#fff;}
 .bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin-right:28px;}
 .bundle-rotator-icon{font-size:13px;flex-shrink:0;}
@@ -39,6 +62,302 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
 
 /* ── HERO ── */
+    .hero {
+      min-height:100vh; display:flex; align-items:center;
+      position:relative; overflow:hidden;
+      padding: 120px 48px 80px;
+    }
+    
+    
+    .orb {
+      position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none;
+      animation: orbFloat 12s ease-in-out infinite;
+    }
+    .orb-1 { width:600px; height:600px; background:rgba(26,84,144,0.25); top:-100px; right:-100px; }
+    .orb-2 { width:400px; height:400px; background:rgba(196,98,42,0.15); bottom:-50px; left:10%; animation-delay:-4s; }
+    .orb-3 { width:300px; height:300px; background:rgba(26,84,144,0.15); top:40%; left:-50px; animation-delay:-8s; }
+    @keyframes orbFloat { 0%,100%{transform:translate(0,0)} 33%{transform:translate(20px,-30px)} 66%{transform:translate(-15px,20px)} }
+
+    .hero-content {
+      position:relative; z-index:1; max-width:1200px; margin:0 auto; width:100%;
+      display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;
+    }
+    .hero-eyebrow {
+      display:inline-flex; align-items:center; gap:8px;
+      background:rgba(196,98,42,0.14); border:1px solid rgba(196,98,42,0.32);
+      color:var(--orange); border-radius:100px; padding:6px 16px;
+      font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      margin-bottom:24px;
+    }
+    .hero-eyebrow::before { content:''; width:6px; height:6px; background:var(--orange); border-radius:50%; animation:pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
+    .hero-headline{font-family:var(--heading-font);font-size:80px;font-weight:900;line-height:0.95;letter-spacing:-1px;text-transform:uppercase;margin-bottom:28px;}
+    
+    .h-line{display:block;background:linear-gradient(to right,#ffffff,#e8d5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.rotating-word{display:inline-block;}.rotating-word.exit{opacity:0;transform:translateY(-8px);transition:opacity 0.25s,transform 0.25s;}.rotating-word.active{opacity:1;transform:translateY(0);transition:opacity 0.25s,transform 0.25s;}
+    .hero-sub {
+      font-size:18px; line-height:1.7; color:var(--muted);
+      margin-bottom:40px; max-width:480px;
+    }
+    .hero-sub strong { color:white; font-weight:600; }
+    .hero-actions { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:48px; }
+    .btn-primary {
+      display:inline-flex; align-items:center; gap:10px;
+      padding:16px 32px; background:var(--orange); color:white;
+      border:none; border-radius:8px; font-size:16px; font-weight:700;
+      cursor:pointer; text-decoration:none; transition:all 0.25s;
+      font-family:var(--body-font); position:relative; overflow:hidden;
+    }
+    .btn-primary::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent); }
+    .btn-primary:hover { background:var(--orange-light); transform:translateY(-2px); box-shadow:0 12px 40px rgba(196,98,42,0.4); }
+    .btn-secondary {
+      display:inline-flex; align-items:center; gap:10px;
+      padding:16px 32px; background:#c4622a; color:white;
+      border:1px solid rgba(255,255,255,0.2); border-radius:8px;
+      font-size:16px; font-weight:600; cursor:pointer; text-decoration:none;
+      transition:all 0.25s; font-family:var(--body-font);
+    }
+    .btn-secondary:hover { background:#d4844a; transform:translateY(-2px); box-shadow:0 12px 40px rgba(196,98,42,0.4); }
+    .hero-trust { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+    .trust-item { display:flex; align-items:center; gap:8px; font-size:13px; color:rgba(255,255,255,0.7); }
+    .trust-item::before { content:'✓'; color:var(--orange); font-weight:700; }
+
+    /* Floating tool cards */
+    .hero-visual { position:relative; }
+    .tool-cards {
+      display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:14px;
+      transform:perspective(1000px) rotateY(-8deg) rotateX(4deg);
+      transition:transform 0.5s ease;
+    }
+    .tool-cards:hover { transform:perspective(1000px) rotateY(-4deg) rotateX(2deg); }
+    .tool-card {
+      background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.25);
+      border-radius:14px; padding:26px; backdrop-filter:blur(10px);
+      animation:cardFloat 4s ease-in-out infinite; transition:all 0.3s;
+      text-decoration:none; color:inherit; display:flex; flex-direction:column;
+      cursor:pointer;
+    }
+    .tool-card:hover { background:rgba(255,255,255,0.14); border-color:rgba(26,84,144,0.55); transform:translateY(-4px) scale(1.02); }
+    .tool-card:nth-child(1) { animation-delay:0s; }
+    .tool-card:nth-child(2) { animation-delay:-1s; }
+    .tool-card:nth-child(3) { animation-delay:-2s; }
+    .tool-card:nth-child(4) { animation-delay:-3s; }
+    .tool-card:nth-child(5) { animation-delay:-1.5s; }
+    .tool-card:nth-child(6) { animation-delay:-2.5s; }
+    @keyframes cardFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    .tool-card-icon { font-size:26px; margin-bottom:8px; }
+    .tool-card-name { font-size:16px; font-weight:700; color:white; margin-bottom:4px; }
+    .tool-card-tagline { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:8px; flex:1; }
+    .tool-card-stat {
+      font-size:11px; color:var(--orange); font-weight:600;
+      background:rgba(196,98,42,0.15); padding:3px 8px; border-radius:20px;
+      display:inline-block; border:1px solid rgba(196,98,42,0.25); align-self:flex-start;
+    }
+
+    /* ── STATS ── */
+    .stats-strip {
+      background:var(--blue); padding:40px 48px; position:relative; overflow:hidden;
+    }
+    .stats-strip::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);
+    }
+    .stats-inner {
+      max-width:1200px; margin:0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap:40px; flex-wrap:wrap;
+    }
+    .stat-item { text-align:center; }
+    .stat-num { font-family:var(--heading-font); font-size:52px; font-weight:900; color:white; line-height:1; }
+    .stat-num span { color:var(--orange); }
+    .stat-from { font-size:36px; }
+    .stat-label { font-size:13px; color:rgba(255,255,255,0.75); margin-top:4px; font-weight:500; text-transform:uppercase; letter-spacing:1px; }
+    .stat-divider { width:1px; height:60px; background:rgba(255,255,255,0.2); }
+
+    /* ── SECTIONS ── */
+    section { padding:100px 48px; position:relative; }
+    .section-inner { max-width:1200px; margin:0 auto; }
+    .section-tag{display:flex;align-items:center;justify-content:center;gap:12px;font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 28px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-family:'Barlow Condensed',sans-serif}
+.section-tag::before,.section-tag::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,#d4844a,transparent);max-width:60px}
+    .section-title { font-family:var(--heading-font); font-size:clamp(36px,5vw,60px); font-weight:900; line-height:1; margin-bottom:20px; text-align:center; }
+    .section-sub { font-size:17px; color:var(--muted); line-height:1.7; max-width:560px; text-align:center; margin:0 auto; }
+
+    /* ── PROBLEM ── */
+    .problem { background:var(--bg2); }
+    .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; margin-top:60px; }
+    .problem-list { display:flex; flex-direction:column; gap:14px; }
+    .problem-item {
+      display:flex; gap:16px; align-items:flex-start; padding:20px; border-radius:12px;
+      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); transition:all 0.3s;
+    }
+    .problem-item:hover { background:rgba(255,255,255,0.08); border-color:rgba(196,98,42,0.3); }
+    .problem-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
+    .problem-text strong { display:block; font-size:15px; color:white; margin-bottom:4px; font-weight:700; }
+    .problem-text span { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.6; }
+
+    /* AI Advantage panel */
+    .ai-advantage {
+      background:linear-gradient(135deg, rgba(26,84,144,0.18) 0%, rgba(196,98,42,0.06) 100%);
+      border:1px solid rgba(26,84,144,0.35); border-radius:20px; padding:36px;
+    }
+    .ai-advantage-title { font-family:var(--heading-font); font-size:26px; font-weight:900; color:white; margin-bottom:8px; line-height:1.1; }
+    .ai-advantage-title span { color:var(--orange); }
+    .ai-advantage-sub { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
+    .ai-capability-list { display:flex; flex-direction:column; gap:10px; }
+    .ai-capability {
+      display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
+      border-radius:10px; transition:all 0.2s;
+    }
+    .ai-capability:hover { background:rgba(255,255,255,0.09); border-color:rgba(26,84,144,0.4); }
+    .ai-cap-icon { font-size:18px; flex-shrink:0; margin-top:2px; }
+    .ai-cap-text strong { color:white; display:block; font-size:13px; font-weight:700; margin-bottom:2px; }
+    .ai-cap-text span { font-size:12px; color:rgba(255,255,255,0.6); line-height:1.4; }
+    .ai-badge {
+      margin-top:20px; padding:14px 20px;
+      background:rgba(196,98,42,0.1); border:1px solid rgba(196,98,42,0.22);
+      border-radius:10px; text-align:center; font-size:13px; color:rgba(255,255,255,0.75); line-height:1.7;
+    }
+    .ai-badge strong { color:var(--orange); display:block; font-size:15px; font-family:var(--heading-font); font-weight:800; }
+
+    /* ── HOW IT WORKS ── */
+    .steps { display:flex; gap:0; margin-top:60px; position:relative; }
+    .steps::before {
+      content:''; position:absolute; top:40px; left:40px; right:40px; height:2px;
+      background:linear-gradient(90deg, var(--orange), var(--blue)); z-index:0;
+    }
+    .step { flex:1; text-align:center; padding:0 24px; position:relative; z-index:1; }
+    .step-num {
+      width:80px; height:80px; border-radius:50%;
+      background:var(--blue); border:3px solid var(--orange);
+      display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
+      font-family:var(--heading-font); font-size:32px; font-weight:900; color:white; position:relative;
+    }
+    .step-num::after { content:''; position:absolute; inset:-6px; border-radius:50%; background:var(--bg); z-index:-1; }
+    .step-icon { font-size:24px; position:absolute; bottom:-8px; right:-8px; }
+    .step h3 { font-family:var(--heading-font); font-size:22px; font-weight:800; margin-bottom:10px; }
+    .step p { font-size:14px; color:var(--muted); line-height:1.6; }
+
+    /* ── TOOLS ── */
+    .tools-bg { background:var(--bg2); }
+    .tools-header { display:flex; flex-direction:column; align-items:center; margin-bottom:50px; gap:20px; }
+    .tools-header .section-title { text-align:center; }
+    .tools-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+    .tool-tile {
+      background:var(--card); border:1px solid var(--card-border);
+      border-radius:16px; padding:28px; cursor:pointer;
+      transition:all 0.3s; position:relative; overflow:hidden;
+      text-decoration:none; color:inherit; display:block;
+    }
+    .tool-tile::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:3px;
+      background:linear-gradient(90deg,var(--blue),var(--orange));
+      transform:scaleX(0); transition:transform 0.3s; transform-origin:left;
+    }
+    .tool-tile:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); border-color:rgba(26,84,144,0.5); }
+    .tool-tile:hover::before { transform:scaleX(1); }
+    .tile-icon { font-size:32px; margin-bottom:14px; }
+    .tile-name { font-size:16px; font-weight:700; color:white; margin-bottom:8px; }
+    .tile-desc { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.6; margin-bottom:16px; }
+    .tile-tags { display:flex; gap:8px; flex-wrap:wrap; }
+    .tile-tag {
+      font-size:11px; color:var(--orange); font-weight:700;
+      background:rgba(196,98,42,0.12); padding:4px 10px; border-radius:20px;
+      border:1px solid rgba(196,98,42,0.2);
+    }
+
+    /* ── INDUSTRIES ── */
+    .industries-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:50px; }
+    .industry-card {
+      background:var(--card); border:1px solid var(--card-border);
+      border-radius:14px; padding:24px 20px; text-align:center;
+      cursor:pointer; transition:all 0.3s; text-decoration:none;
+    }
+    .industry-card:hover { background:rgba(26,84,144,0.2); border-color:rgba(26,84,144,0.5); transform:translateY(-4px); }
+    .industry-emoji { font-size:32px; margin-bottom:10px; }
+    .industry-name { font-size:14px; font-weight:700; color:white; margin-bottom:4px; }
+    .industry-count { font-size:12px; color:var(--orange); font-weight:600; }
+
+    /* ── TESTIMONIALS ── */
+    .testimonials-bg { background:var(--bg2); }
+    .testimonials-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:50px; }
+    .testimonial {
+      background:var(--card); border:1px solid var(--card-border);
+      border-radius:16px; padding:28px; transition:all 0.3s;
+    }
+    .testimonial:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); }
+    .testimonial-quote { font-size:36px; color:var(--orange); line-height:1; margin-bottom:12px; }
+    .testimonial-text { font-size:15px; line-height:1.7; color:rgba(255,255,255,0.85); margin-bottom:20px; }
+    .testimonial-author { display:flex; align-items:center; gap:12px; }
+    .author-avatar { width:44px; height:44px; border-radius:50%; background:var(--blue); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:white; flex-shrink:0; }
+    .author-name { font-size:14px; font-weight:700; color:white; }
+    .author-biz { font-size:12px; color:var(--muted); }
+    .author-stars { color:var(--orange); font-size:12px; }
+
+    /* ── CTA ── */
+    .cta-section {
+      text-align:center;
+      background:linear-gradient(135deg, var(--blue-dark) 0%, var(--bg) 100%);
+      position:relative; overflow:hidden;
+    }
+    .cta-section::before {
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(196,98,42,0.1), transparent);
+    }
+    .cta-content { position:relative; z-index:1; }
+    .cta-title { font-family:var(--heading-font); font-size:clamp(40px,6vw,72px); font-weight:900; margin-bottom:20px; line-height:1; }
+    .cta-sub { font-size:18px; color:var(--muted); max-width:500px; margin:0 auto 40px; line-height:1.7; }
+    .cta-actions { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
+    .cta-note { font-size:13px; color:var(--muted); }
+
+    /* ── FOOTER ── */
+    footer {
+      background:var(--bg2); padding:60px 48px 30px;
+      border-top:1px solid rgba(255,255,255,0.08);
+    }
+    .footer-inner { max-width:1200px; margin:0 auto; }
+    .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:60px; margin-bottom:60px; }
+    .footer-brand p { font-size:14px; color:var(--muted); line-height:1.8; margin-top:16px; max-width:300px; }
+    .footer-col h4 { font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#c4622a; margin-bottom:16px; }
+    .footer-col a { display:block; font-size:14px; color:var(--muted); text-decoration:none; margin-bottom:10px; transition:color 0.2s; }
+    .footer-col a:hover { color:white; }
+    .footer-bottom {
+      display:flex; justify-content:space-between; align-items:center;
+      padding-top:30px; border-top:1px solid rgba(255,255,255,0.08);
+      font-size:13px; color:var(--muted); flex-wrap:wrap; gap:10px;
+    }
+
+    /* ── MOBILE ── */
+    @media(max-width:900px) {
+      nav { padding:16px 24px; }
+      .nav-links { display:none; }
+      .hero { padding:100px 24px 60px; }
+      .hero-content { grid-template-columns:1fr; gap:50px; }
+      .tool-cards { transform:none; }
+      .stats-strip { padding:40px 24px; }
+      .stats-inner { justify-content:center; gap:30px; }
+      .stat-divider { display:none; }
+      section { padding:70px 24px; }
+      .problem-grid { grid-template-columns:1fr; gap:40px; }
+      .steps { flex-direction:column; gap:40px; }
+      .steps::before { display:none; }
+      .tools-grid { grid-template-columns:1fr 1fr; }
+      .industries-grid { grid-template-columns:repeat(2,1fr); }
+      .testimonials-grid { grid-template-columns:1fr; }
+      .footer-top { grid-template-columns:1fr 1fr; gap:40px; }
+      .footer-brand { grid-column:1/-1; }
+    }
+    @media(max-width:560px) {
+      .tools-grid { grid-template-columns:1fr; }
+      .hero-headline { font-size:48px; }
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .fade-up { opacity:0; transform:translateY(30px); transition:opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity:1; transform:translateY(0); }
+    .fade-up:nth-child(2) { transition-delay:0.1s; }
+    .fade-up:nth-child(3) { transition-delay:0.2s; }
+    .fade-up:nth-child(4) { transition-delay:0.3s; }
+  .atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+
 .atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
 .atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
 .atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
@@ -48,218 +367,23 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 @keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg,#b87028 0%,#b06828 18%,#b06832 25%,#b06832 32%,#7a5848 44%,#4a5568 54%,#4a5872 68%,#3d506a 85%,#364a63 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
-.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
-.topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
-.topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
-.topbar-logo-sub{font-size:8px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px;}
-.topbar-breadcrumb{font-size:13px;color:rgba(255,255,255,0.75);display:flex;align-items:center;gap:8px;flex-shrink:0;margin-right:auto;}
-.topbar-breadcrumb a{color:rgba(255,255,255,0.7);text-decoration:none;}
-.topbar-breadcrumb .sep{opacity:0.45;}
-.topbar-breadcrumb .current{color:#fff;font-weight:600;}
-.bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin-right:28px;}
-.bundle-rotator-icon{font-size:13px;flex-shrink:0;}
-.bundle-rotator-track{position:relative;height:19px;overflow:hidden;flex:1;}
-.bundle-rotator-item{position:absolute;top:0;left:0;width:100%;font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;opacity:0;transform:translateY(100%);transition:opacity 0.5s,transform 0.5s;}
-.bundle-rotator-item.active{opacity:1;transform:translateY(0);}
-.bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
-.bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
-.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
 
-
-/* PAGE LAYOUT */
-.page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;padding-top:80px;}
-.side-panel{width:300px;flex-shrink:0;padding:24px 8px;}.page-centre{flex:1;min-width:0;padding:0 100px;}
-
-/* HERO */
-.hero{text-align:center;padding:20px 24px 20px;}
-.hero h1{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;}
-.hero h1 .h-line{display:block;background:linear-gradient(to right,#ffffff,#e8d5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.hero h1 .word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.rotating-word{display:inline-block;}.rotating-word.exit{opacity:0;transform:translateY(-8px);transition:opacity 0.25s,transform 0.25s;}
-
-.section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 18px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.section-label::before,.section-label::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;-webkit-text-fill-color:initial;}
-.section-label::after{background:linear-gradient(90deg,#d4844a,transparent);}
-
-/* INDUSTRY GRID */
-@property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
-@keyframes spinBorder{to{--angle:360deg;}}
-@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
-.industry-card{position:relative;border-radius:16px;cursor:pointer;height:220px;border:2px solid rgba(255,255,255,0.07);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1),box-shadow 0.35s,border-color 0.3s;animation:cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;}
-.industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}.industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}.industry-card:nth-child(5){animation-delay:0.20s}.industry-card:nth-child(6){animation-delay:0.24s}.industry-card:nth-child(7){animation-delay:0.28s}.industry-card:nth-child(8){animation-delay:0.32s}.industry-card:nth-child(9){animation-delay:0.36s}.industry-card:nth-child(10){animation-delay:0.40s}.industry-card:nth-child(11){animation-delay:0.44s}
-.industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
-.industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
-.industry-card:hover{border-color:transparent;}
-.card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
-.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.50;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
-.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.0) 0%,rgba(10,18,35,0.05) 20%,rgba(10,18,35,0.52) 55%,rgba(10,18,35,0.86) 100%);}
-.industry-card:hover .card-photo-bg{transform:scale(1.04);opacity:0.50;}
-.card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
-.card-icon{font-size:20px;display:block;margin-bottom:5px;}
-.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;background:linear-gradient(160deg,#fff 0%,#f5d078 40%,#d4a04a 80%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
-
-.card-desc{font-size:15px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
-.card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;}
-.card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;}
-.see-all-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,98,42,0.1),rgba(44,90,130,0.09));border:1px dashed rgba(196,98,42,0.32);border-radius:14px;padding:16px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s;animation:cardIn 0.5s 0.5s cubic-bezier(0.16,1,0.3,1) both;}
-.see-all-left{display:flex;align-items:center;gap:12px;}
-.see-all-icon{width:36px;height:36px;background:linear-gradient(135deg,#c4622a,#d4844a);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;}
-.see-all-title{font-family:'Barlow Condensed',sans-serif;font-size:17px;font-weight:800;color:#fff;}
-.see-all-sub{font-size:11px;color:rgba(255,255,255,0.55);margin-top:2px;}
-.see-all-btn{background:linear-gradient(135deg,#c4622a,#d4844a);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;}
-
-/* =============================================
-   LEFT PANEL &mdash; RIBBON STEPS (like reference)
-   ============================================= */
-.panel-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#5a8fc0;padding-bottom:10px;border-bottom:1px solid rgba(44,90,130,0.25);margin-bottom:20px;}
-
-.ribbon-steps{display:flex;flex-direction:column;gap:0;}
-
-.ribbon-step{margin-bottom:28px;position:relative;}
-
-/* The ribbon band &mdash; full width with fold effect on left */
-.ribbon-band{
-  position:relative;
-  height:52px;
-  display:flex;
-  align-items:center;
-  margin-left:0;
-  margin-right:0;
-}
-
-/* Main ribbon body */
-.ribbon-body{
-  position:absolute;
-  left:28px; right:0; top:0; bottom:0;
-  display:flex;
-  align-items:center;
-  padding-left:48px;
-  padding-right:16px;
-}
-
-/* Ribbon colours per step &mdash; blue shades with a teal accent */
-.ribbon-step:nth-child(1) .ribbon-body{background:linear-gradient(90deg,#1a4a8a,#2060b0,#1e8abd);}
-.ribbon-step:nth-child(2) .ribbon-body{background:linear-gradient(90deg,#1a5a78,#207898,#1a9aaa);}
-.ribbon-step:nth-child(3) .ribbon-body{background:linear-gradient(90deg,#1a3a6e,#2858a8,#4a7acc);}
-
-/* Ribbon tail &mdash; the pointed right end */
-.ribbon-body::after{
-  content:'';
-  position:absolute;
-  right:-14px; top:0;
-  width:0; height:0;
-  border-style:solid;
-  border-width:26px 0 26px 14px;
-  border-color:transparent;
-}
-.ribbon-step:nth-child(1) .ribbon-body::after{border-left-color:#1e8abd;}
-.ribbon-step:nth-child(2) .ribbon-body::after{border-left-color:#1a9aaa;}
-.ribbon-step:nth-child(3) .ribbon-body::after{border-left-color:#4a7acc;}
-
-/* Fold shadow &mdash; the dark triangle bottom-left corner */
-.ribbon-fold{
-  position:absolute;
-  left:0; bottom:-10px;
-  width:0; height:0;
-  border-style:solid;
-  border-width:10px 14px 0 0;
-}
-.ribbon-step:nth-child(1) .ribbon-fold{border-color:#0a1e40 transparent transparent transparent;}
-.ribbon-step:nth-child(2) .ribbon-fold{border-color:#0a1e40 transparent transparent transparent;}
-.ribbon-step:nth-child(3) .ribbon-fold{border-color:#0a1e40 transparent transparent transparent;}
-
-/* The fold top part &mdash; visible ribbon left edge */
-.ribbon-left-edge{
-  position:absolute;
-  left:0; top:0;
-  width:28px; height:52px;
-}
-.ribbon-step:nth-child(1) .ribbon-left-edge{background:#1a4a8a;}
-.ribbon-step:nth-child(2) .ribbon-left-edge{background:#1a5a78;}
-.ribbon-step:nth-child(3) .ribbon-left-edge{background:#1a3a6e;}
-
-/* Step number circle on ribbon */
-.ribbon-num{
-  position:absolute;
-  left:6px; top:50%; transform:translateY(-50%);
-  width:38px; height:38px; border-radius:50%;
-  background:#fff;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:20px; font-weight:900;
-  z-index:2;
-  box-shadow:0 2px 8px rgba(0,0,0,0.3);
-}
-.ribbon-step:nth-child(1) .ribbon-num{color:#1a4a8a;}
-.ribbon-step:nth-child(2) .ribbon-num{color:#1a5a78;}
-.ribbon-step:nth-child(3) .ribbon-num{color:#1a3a6e;}
-
-/* Heading on ribbon */
-.ribbon-heading{
-  font-family:'Barlow Condensed',sans-serif;
-  font-size:17px; font-weight:800;
-  color:#fff; text-transform:uppercase;
-  letter-spacing:0.5px; line-height:1;
-  text-shadow:0 1px 3px rgba(0,0,0,0.3);
-  display:flex; align-items:center; gap:8px;
-}
-.ribbon-heading-icon{font-size:16px;}
-
-/* Description below ribbon */
-.ribbon-desc{
-  padding:10px 16px 0 76px;
-  font-size:12px;
-  color:rgba(255,255,255,0.6);
-  line-height:1.5;
-}
-
-/* =============================================
-   RIGHT PANEL &mdash; LIGHT GRAPHIC STAT CARDS
-   ============================================= */
-.panel-label-right{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:#5a8fc0;padding-bottom:10px;border-bottom:1px solid rgba(44,90,130,0.25);margin-bottom:16px;}
-
-.stat-wall{display:flex;flex-direction:column;gap:12px;}
-
-.info-panel{padding:24px 16px;display:flex;flex-direction:column;justify-content:center;height:100%;}
-.info-wall{display:flex;flex-direction:column;gap:0;align-items:stretch;}
-.info-item{padding:20px 0;border-top:1px solid rgba(255,255,255,0.10);}
-.info-item:last-child{border-bottom:1px solid rgba(255,255,255,0.10);}
-.info-item-label{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:6px;}
-.info-item-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;line-height:1.1;color:#fff;margin-bottom:6px;text-transform:uppercase;}
-.info-item-desc{font-size:13px;color:rgba(255,255,255,0.60);line-height:1.5;}
-.hiw-panel{padding:0 24px;padding-top:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center;}
-.hiw-header{margin-bottom:32px;text-align:center;}
-.hiw-eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-bottom:10px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hiw-eyebrow::before,.hiw-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(135deg,#d4844a,#d4a04a);opacity:0.5;flex-shrink:0;}
-.hiw-heading{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;text-transform:uppercase;line-height:0.95;letter-spacing:-0.5px;background:linear-gradient(to right,#f5ece0 0%,#f0d8b8 40%,#e8b880 72%,#d4844a 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hiw-steps{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;width:100%;}
-.hiw-steps::before{display:none;}
-.hiw-step{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0;position:relative;z-index:1;width:100%;}
-.hiw-step-num{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#fff;position:relative;z-index:2;}
-.hiw-step-body{text-align:center;}
-.hiw-step-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:6px;}
-.hiw-step-title span{color:#c4622a;}.hiw-connector{width:2px;height:30px;background:linear-gradient(to bottom,rgba(26,84,144,0.85),rgba(26,84,144,0.35));border-radius:2px;margin:0 auto;}.wyg-panel{padding:0 24px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;}.wyg-item{display:flex;align-items:flex-start;gap:12px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.07);}.wyg-item:last-child{border-bottom:none;}.wyg-icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}.wyg-body{}.wyg-title{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:4px;}.wyg-title-price{text-transform:none;}.wyg-desc{font-size:15px;color:rgba(255,255,255,0.62);line-height:1.5;}
-.hiw-step-desc{font-size:15px;color:rgba(255,255,255,0.55);line-height:1.55;max-width:200px;margin:0 auto;}
-
-.btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#c4622a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
-.btn-see-all-orange:hover{background:#d4844a;}
-
-    .topbar-spacer { flex: 1; }
+.topbar-nav{display:flex;align-items:center;gap:24px;margin-left:64px;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.80);text-decoration:none;letter-spacing:0.02em;transition:color 0.2s;}.topbar-nav a:hover{color:#fff;}.topbar-spacer{flex:1;}
 </style>
 </head>
 <body>
 
+<!-- ── NAV ── -->
 <div class="atmo">
   
   <div class="atmo-orb o1"></div>
   <div class="atmo-orb o2"></div>
   <div class="atmo-orb o3"></div>
 </div>
-
 <div class="topbar">
   <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
-  <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
+  <div class="topbar-nav"><a href="#how-it-works">How It Works</a><a href="#tools">Tools</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
       <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
@@ -274,162 +398,321 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   </div>
 </div>
 
-<div class="page-wrap">
+<!-- ── HERO ── -->
+<section class="hero">
+  
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
 
-  <!-- LEFT: Ribbon Steps -->
-  <aside class="side-panel">
-  <div class="hiw-panel">
-    <div class="hiw-header">
-      <div class="hiw-eyebrow">How It Works</div>
-      <div class="hiw-heading">Up and running<br>in minutes</div>
+  <div class="hero-content">
+    <div class="hero-left">
+      <div class="hero-eyebrow">Australia's #1 AI Platform for Trades</div>
+
+      <h1 class="hero-headline"><span class="h-line">YOUR <span class="word-accent rotating-word" id="rotating-word">TRADE</span></span><span class="h-line">BUSINESS</span><span class="h-line"><span class="word-accent">STAX</span> UP WITH <span class="word-accent">AI</span></span></h1>
+
+      <p class="hero-sub">
+        Put enterprise-grade AI to work in your trade business — today.
+        StaxAI gives <strong>Australian trade businesses</strong> the intelligence
+        to work smarter and grow faster — all self-serve, no IT team, no marketer, no consultant needed.
+      </p>
+
+      <div class="hero-actions">
+        <a href="/prototype.html" class="btn-primary">Choose Your Trade →</a>
+        <a href="/prototype.html?industry=all" class="btn-secondary">See All Tools →</a>
+      </div>
+
+      <div class="hero-trust">
+        <div class="trust-item">No technical skills needed</div>
+        <div class="trust-item">Cancel anytime</div>
+        <div class="trust-item">Australian-built</div>
+      </div>
     </div>
-    <div class="hiw-steps">
-      <div class="hiw-step">
-        <div class="hiw-step-num">1</div>
-        <div class="hiw-step-body">
-          <div class="hiw-step-title">Choose Your Trade</div>
-          <div class="hiw-step-desc">Select from 11 Australian trade industries. Tools built around how your business actually works</div>
-        </div>
-      </div>
-      <div class="hiw-connector"></div>
-      <div class="hiw-step">
-        <div class="hiw-step-num">2</div>
-        <div class="hiw-step-body">
-          <div class="hiw-step-title">Activate Your Tools</div>
-          <div class="hiw-step-desc">Pick the tools that make the biggest difference first. Up and running in minutes &mdash; no IT skills needed</div>
-        </div>
-      </div>
-      <div class="hiw-connector"></div>
-      <div class="hiw-step">
-        <div class="hiw-step-num">3</div>
-        <div class="hiw-step-body">
-          <div class="hiw-step-title"><span>AI</span> Starts Working</div>
-          <div class="hiw-step-desc">Your tools get to work immediately &mdash; generating content, managing enquiries, creating documents</div>
-        </div>
+
+    <div class="hero-visual">
+      <div class="tool-cards">
+        <a href="/prototype.html?tool=social-media-manager" class="tool-card">
+          <div class="tool-card-icon">📣</div>
+          <div class="tool-card-name">Marketing & Social Media Manager</div>
+          <div class="tool-card-tagline">AI builds your posts, graphics & marketing content — auto-posts to Facebook & Instagram</div>
+          <div class="tool-card-stat">✓ Live</div>
+        </a>
+        <a href="/prototype.html?tool=email-assistant" class="tool-card">
+          <div class="tool-card-icon">📧</div>
+          <div class="tool-card-name">AI Email Assistant</div>
+          <div class="tool-card-tagline">AI reads your Gmail & Outlook — summarised on one smart dashboard</div>
+          <div class="tool-card-stat">✓ Live</div>
+        </a>
+        <a href="/prototype.html?tool=lead-bot" class="tool-card">
+          <div class="tool-card-icon">🤖</div>
+          <div class="tool-card-name">AI Website Chatbot</div>
+          <div class="tool-card-tagline">AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7</div>
+          <div class="tool-card-stat">✓ Live</div>
+        </a>
+        <a href="/prototype.html?tool=strategic-plan" class="tool-card">
+          <div class="tool-card-icon">📊</div>
+          <div class="tool-card-name">Strategic Plan & Operations Dashboard</div>
+          <div class="tool-card-tagline">Create your roadmap in minutes</div>
+          <div class="tool-card-stat">✓ Live</div>
+        </a>
+        <a href="/prototype.html?tool=news-digest" class="tool-card">
+          <div class="tool-card-icon">📰</div>
+          <div class="tool-card-name">Industry News Digest</div>
+          <div class="tool-card-tagline">Industry news, regulation changes, supplier updates — personalised from your emails and the web, AI-summarised on one dashboard</div>
+          <div class="tool-card-stat">✓ Live</div>
+        </a>
+        <a href="/prototype.html?tool=executive-summary" class="tool-card">
+          <div class="tool-card-icon">📈</div>
+          <div class="tool-card-name">Business Intelligence Dashboard</div>
+          <div class="tool-card-tagline">AI-powered insights driven by your business data, your industry, your region — opportunities, competitive edge, and new products/services to offer</div>
+          <div class="tool-card-stat">Coming Soon</div>
+        </a>
       </div>
     </div>
   </div>
-</aside>
+</section>
 
-  <!-- CENTRE -->
-  <div class="page-centre">
-    <div class="hero">
-      <h1><span class="h-line">YOUR <span class="word-accent rotating-word" id="ind-rotating-word">TRADE</span></span><span class="h-line">YOUR <span class="word-accent">STAX</span></span></h1>
-      <div class="section-label">Choose Your Industry</div>
+<!-- ── STATS ── -->
+<div class="stats-strip">
+  <div class="stats-inner">
+    <div class="stat-item">
+      <div class="stat-num">11</div>
+      <div class="stat-label">Trade Industries</div>
     </div>
-    <div class="industry-grid">
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127946;</span><div class="card-name">Pool Builders</div><p class="card-desc">Residential and commercial pool construction, renovation and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128295;</span><div class="card-name">Plumbers</div><p class="card-desc">Residential and commercial plumbing, gas fitting and drainage</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#9889;</span><div class="card-name">Electricians</div><p class="card-desc">Residential and commercial electrical installation, testing and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127959;</span><div class="card-name">Builders</div><p class="card-desc">Residential and commercial building, renovations and project management</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#10052;</span><div class="card-name">HVAC</div><p class="card-desc">Air conditioning, heating, ventilation and refrigeration services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1683830932134-2d06849534eb?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128297;</span><div class="card-name">Fabricators</div><p class="card-desc">Custom fabrication, welding, structural steel and sheet metal work</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#129529;</span><div class="card-name">Cleaners</div><p class="card-desc">Commercial, industrial and strata cleaning services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://plus.unsplash.com/premium_photo-1664299231556-57f570023f87?w=500&auto=format&fit=crop&q=60&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127807;</span><div class="card-name">Landscapers</div><p class="card-desc">Garden design, hardscaping, irrigation and outdoor living spaces</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1700727448686-b314cb5f9948?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127981;</span><div class="card-name">Manufacturers</div><p class="card-desc">Product manufacturing, assembly, packaging and distribution</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1766961980272-921bba4240bc?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#129704;</span><div class="card-name">Concreters</div><p class="card-desc">Residential and commercial concrete, driveways, paths and slabs</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1676311396794-f14881e9daaa?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128296;</span><div class="card-name">Handymen</div><p class="card-desc">General repairs, maintenance and multi-trade property services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div style="grid-column:1/-1;display:flex;justify-content:flex-end;padding:4px 0 8px 0;">
-  <a href="tools.html" class="btn-see-all-orange">See All Tools &rarr;</a>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">50<span>+</span></div>
+      <div class="stat-label">Unique AI Tools</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num stat-from">From $59</div>
+      <div class="stat-label">Per Tool Per Month</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-num">0</div>
+      <div class="stat-label">IT Skills Required</div>
+    </div>
+  </div>
 </div>
-    </div>
-  </div>
 
-  <!-- RIGHT: Light Stat Wall -->
-  <!-- Right Star Panel -->
-  <aside class="side-panel info-panel">
-  <div class="wyg-panel" id="wyg-panel">
-    <div class="hiw-header">
-      <div class="hiw-eyebrow">What You Get</div>
-      <div class="hiw-heading">Built in<br>from day one</div>
-    </div>
-    <div class="wyg-items">
-      <div class="wyg-item">
-        <div class="wyg-icon">&#10022;</div>
-        <div class="wyg-body">
-          <div class="wyg-title">Content Library</div>
-          <div class="wyg-desc">Every photo, doc, and AI output saved and organised in one place &mdash; automatically</div>
-        </div>
-      </div>
-      <div class="wyg-item">
-        <div class="wyg-icon">&#10022;</div>
-        <div class="wyg-body">
-          <div class="wyg-title">14 Day Free Trial</div>
-          <div class="wyg-desc">Full access to any tool for 14 days &mdash; no limits</div>
+<!-- ── THE PROBLEM ── -->
+<section class="problem">
+  <div class="section-inner">
+    <div class="section-tag">The Problem</div>
+    <h2 class="section-title">You're great at your trade<br>Your technology isn't keeping up</h2>
+    <div class="problem-grid">
+      <div class="problem-list">
+        <div class="problem-item fade-up">
+          <div class="problem-icon">🤖</div>
+          <div class="problem-text">
+            <strong>AI feels out of reach</strong>
+            <span>Everyone's talking about AI but the tools are built for tech companies, not tradies. StaxAI changes that — AI built specifically for your trade.</span>
           </div>
-      </div>
-      <div class="wyg-item">
-        <div class="wyg-icon">&#10022;</div>
-        <div class="wyg-body">
-          <div class="wyg-title">No Lock-In. Ever.</div>
-          <div class="wyg-desc">Only pay for the tools that work for you. Cancel any tool, any time &mdash; no contracts</div>
+        </div>
+        <div class="problem-item fade-up">
+          <div class="problem-icon">📱</div>
+          <div class="problem-text">
+            <strong>Invisible on social media</strong>
+            <span>You know you should be posting, but who has the time? Your competitors are building audiences and winning work while you're on the tools.</span>
+          </div>
+        </div>
+        <div class="problem-item fade-up">
+          <div class="problem-icon">📈</div>
+          <div class="problem-text">
+            <strong>No plan for growth</strong>
+            <span>You want to scale but strategy sounds expensive and complicated. AI can now do in minutes what consultants charge thousands for.</span>
+          </div>
+        </div>
+        <div class="problem-item fade-up">
+          <div class="problem-icon">📞</div>
+          <div class="problem-text">
+            <strong>All customer interaction is still manual</strong>
+            <span>Every enquiry, every follow-up, every quote request is handled personally by you. AI can manage this intelligently — 24/7, without missing a lead.</span>
+          </div>
         </div>
       </div>
-      <div class="wyg-item">
-        <div class="wyg-icon">&#10022;</div>
-        <div class="wyg-body">
-          <div class="wyg-title wyg-title-price">From $59/mth Per Tool</div>
-          <div class="wyg-desc">Each tool is individually priced. Activate what you need, when you need it</div>
+
+      <div class="ai-advantage">
+        <div class="ai-advantage-title">What <span>AI</span> can do<br>for your business</div>
+        <div class="ai-advantage-sub">StaxAI embeds enterprise-grade AI directly into the way your trade business operates — purpose-built for your industry, not bolted on.</div>
+        <div class="ai-capability-list">
+          <div class="ai-capability">
+            <div class="ai-cap-icon">✍️</div>
+            <div class="ai-cap-text">
+              <strong>Create content automatically</strong>
+              <span>Turn job site photos into professional social posts in seconds</span>
+            </div>
+          </div>
+          <div class="ai-capability">
+            <div class="ai-cap-icon">🧠</div>
+            <div class="ai-cap-text">
+              <strong>Think strategically for you</strong>
+              <span>Generate business plans, growth strategies and roadmaps — no consultant</span>
+            </div>
+          </div>
+          <div class="ai-capability">
+            <div class="ai-cap-icon">💬</div>
+            <div class="ai-cap-text">
+              <strong>Communicate like a big business</strong>
+              <span>Professional emails, customer updates and 24/7 chatbot on autopilot</span>
+            </div>
+          </div>
+          <div class="ai-capability">
+            <div class="ai-cap-icon">📡</div>
+            <div class="ai-cap-text">
+              <strong>Stay ahead of your industry</strong>
+              <span>Daily AI digest of regulatory changes, supplier news and trade updates</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="wyg-item">
-        <div class="wyg-icon">&#10022;</div>
-        <div class="wyg-body">
-          <div class="wyg-title wyg-title-price">Users</div>
-          <div class="wyg-desc">Up to 10 users included</div>
+        <div class="ai-badge">
+          <strong>From $59/mth per tool</strong>
+          No contracts · No IT setup · Cancel anytime
         </div>
       </div>
     </div>
   </div>
-</aside>
+</section>
 
-</div>
+<!-- ── HOW IT WORKS ── -->
+<section id="how-it-works">
+  <div class="section-inner">
+    <div class="section-tag">How It Works</div>
+    <h2 class="section-title">Up and running in minutes</h2>
+    <p class="section-sub">No demos. No consultants. No IT setup. Pick your trade and your tools start working immediately.</p>
+    <div class="steps">
+      <div class="step fade-up" onclick="window.location.href='/prototype.html'" style="cursor:pointer;">
+        <div class="step-num">1 <span class="step-icon">🏗️</span></div>
+        <h3>Choose Your Trade</h3>
+        <p>Select from 11 Australian trade industries. Tools include standard AI-managed business tools plus industry-specific options built around how your trade actually works.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">2 <span class="step-icon">⚡</span></div>
+        <h3>Activate Your Tools</h3>
+        <p>Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes.</p>
+      </div>
+      <div class="step fade-up">
+        <div class="step-num">3 <span class="step-icon">🚀</span></div>
+        <h3><span style="color:var(--orange)">AI</span> Starts Working</h3>
+        <p>Your AI tools get to work immediately — generating content, managing enquiries, creating documents — while you focus on what you do best.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
+<!-- ── TOOLS ── -->
+<section id="tools" class="tools-bg">
+  <div class="section-inner">
+    <div class="section-tag">The Tools</div>
+    <div class="tools-header">
+      <h2 class="section-title"><span style="color:var(--orange)">AI</span> that works as hard<br>as you do</h2>
+      <a href="/prototype.html?industry=all" class="btn-secondary" style="white-space:nowrap">See All Tools →</a>
+    </div>
+    <div class="tools-grid">
+      <a href="/prototype.html?tool=social-media-manager" class="tool-tile fade-up">
+        <div class="tile-icon">📣</div>
+        <div class="tile-name">Marketing & Social Media Manager</div>
+        <div class="tile-desc">Your marketing team in a tool. Describe your latest job, upload a photo, or let the AI pull from your content library — it creates professional social posts, AI-generated graphics, and full marketing campaigns. Promote new products/services, seasonal offers, or industry news — the AI creates it all. Auto-posts to Facebook and Instagram, or download for community groups, emails, and anywhere else.</div>
+        <div class="tile-tags"><span class="tile-tag">AI Content</span><span class="tile-tag">Auto-posting</span></div>
+      </a>
+      <a href="/prototype.html?tool=email-assistant" class="tool-tile fade-up">
+        <div class="tile-icon">📧</div>
+        <div class="tile-name">AI Email Assistant</div>
+        <div class="tile-desc">AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything — what’s urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters.</div>
+        <div class="tile-tags"><span class="tile-tag">Gmail & Outlook</span><span class="tile-tag">Smart Inbox</span></div>
+      </a>
+      <a href="/prototype.html?tool=lead-bot" class="tool-tile fade-up">
+        <div class="tile-icon">🤖</div>
+        <div class="tile-name">AI Website Chatbot</div>
+        <div class="tile-desc">An AI chatbot answers customer enquiries, qualifies leads, and books jobs — 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself — whatever works for you. Every answer goes through your approval before it goes live. It keeps learning as it goes.</div>
+        <div class="tile-tags"><span class="tile-tag">24/7 Coverage</span><span class="tile-tag">Lead Capture</span></div>
+      </a>
+      <a href="/prototype.html?tool=strategic-plan" class="tool-tile fade-up">
+        <div class="tile-icon">📊</div>
+        <div class="tile-name">Strategic Plan & Operations Dashboard</div>
+        <div class="tile-desc">Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.</div>
+        <div class="tile-tags"><span class="tile-tag">AI Interview</span><span class="tile-tag">90-Day Tracker</span></div>
+      </a>
+      <a href="/prototype.html?tool=news-digest" class="tool-tile fade-up">
+        <div class="tile-icon">📰</div>
+        <div class="tile-name">Industry News Digest</div>
+        <div class="tile-desc">Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices — plus searches reputable online sources — then summarises everything on an interactive dashboard. It’s personalised to your business, not generic news. Tap into any story to read more. Stay informed, stay compliant, stay ahead.</div>
+        <div class="tile-tags"><span class="tile-tag">Daily Digest</span><span class="tile-tag">Regulatory Alerts</span></div>
+      </a>
+      <a href="/prototype.html?tool=executive-summary" class="tool-tile fade-up">
+        <div class="tile-icon">📈</div>
+        <div class="tile-name">Business Intelligence Dashboard</div>
+        <div class="tile-desc">Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software — then goes further. AI predicts opportunities for new products/services, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.</div>
+        <div class="tile-tags"><span class="tile-tag">Live KPIs</span><span class="tile-tag">Coming Soon</span></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── TESTIMONIALS ── -->
+<section class="testimonials-bg">
+  <div class="section-inner">
+    <div class="section-tag">What Tradies Say</div>
+    <h2 class="section-title">Real results for<br>real trade businesses</h2>
+    <div class="testimonials-grid">
+      <div class="testimonial fade-up">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">I was spending half my Sunday nights writing social posts. Now StaxAI does it from my job photos in seconds. My Instagram has never looked better and I haven't written a caption in three months.</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">M</div>
+          <div>
+            <div class="author-stars">★★★★★</div>
+            <div class="author-name">Mark T.</div>
+            <div class="author-biz">Electrician, Brisbane</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">The email assistant alone is worth every cent. It flags which emails are urgent leads and drafts a reply that sounds exactly like me. I've won three jobs I would have missed just by responding faster.</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">S</div>
+          <div>
+            <div class="author-stars">★★★★★</div>
+            <div class="author-name">Sarah K.</div>
+            <div class="author-biz">Plumber, Melbourne</div>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial fade-up">
+        <div class="testimonial-quote">"</div>
+        <p class="testimonial-text">I needed a strategic plan for a bank loan and was quoted $4,000 by a consultant. StaxAI generated a better document in 20 minutes. Bank approved my finance the following week.</p>
+        <div class="testimonial-author">
+          <div class="author-avatar">D</div>
+          <div>
+            <div class="author-stars">★★★★★</div>
+            <div class="author-name">Dave R.</div>
+            <div class="author-biz">Pool Builder, Sydney</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <div class="section-inner">
+    <div class="cta-content">
+      <div class="section-tag">Get Started</div>
+      <h2 class="cta-title">See what <span style="color:var(--orange)">AI</span> can do<br>for your business</h2>
+      <p class="cta-sub">Enterprise AI, built for Australian tradies. Pick your industry, choose your tools, and put AI to work in your business today.</p>
+      <div class="cta-actions">
+        <a href="/prototype.html" class="btn-primary" style="font-size:18px;padding:18px 40px">Choose Your Trade →</a>
+      </div>
+      <p class="cta-note">✓ From $59/mth per tool &nbsp;·&nbsp; ✓ Cancel anytime &nbsp;·&nbsp; ✓ Australian support</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
 <footer style="background:#0a0f1a;border-top:1px solid rgba(255,255,255,0.08);padding:48px 0 32px;">
   <div style="max-width:1200px;margin:0 auto;padding:0 24px;">
     <div style="display:flex;flex-wrap:wrap;gap:40px;justify-content:space-between;margin-bottom:40px;">
@@ -460,73 +743,49 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     </div>
   </div>
 </footer>
+
 <script>
-(function(){
-  var items=document.querySelectorAll('.bundle-rotator-item'),idx=0;
-  if(items.length>1){setInterval(function(){
-    items[idx].classList.remove('active');items[idx].classList.add('exit');
-    setTimeout(function(){items[idx].classList.remove('exit');},500);
-    idx=(idx+1)%items.length;items[idx].classList.add('active');
-  },3000);}
-})();
-</script>
-<script>
-function alignHIW() {
-  const hiwPanel = document.querySelector('.hiw-panel');
-  const wygPanel = document.querySelector('.wyg-panel');
-  const sectionLabel = document.querySelector('.section-label');
-  if (!sectionLabel) return;
-  if (hiwPanel) {
-    hiwPanel.style.paddingTop = '0px';
-    const gap = sectionLabel.getBoundingClientRect().top - hiwPanel.getBoundingClientRect().top;
-    if (gap > 0) hiwPanel.style.paddingTop = gap + 'px';
-  }
-  if (wygPanel) {
-    wygPanel.style.paddingTop = '0px';
-    const gap2 = sectionLabel.getBoundingClientRect().top - wygPanel.getBoundingClientRect().top;
-    if (gap2 > 0) wygPanel.style.paddingTop = gap2 + 'px';
-  }
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// Topbar shadow on scroll
+window.addEventListener('scroll', () => {
+  document.querySelector('.topbar').style.boxShadow =
+    window.scrollY > 50 ? '0 4px 30px rgba(0,0,0,0.4)' : 'none';
+});
+
+// Bundle rotator
+const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
+let rotatorIndex = 0;
+if (rotatorItems.length > 0) {
+  setInterval(() => {
+    rotatorItems[rotatorIndex].classList.remove('active');
+    rotatorItems[rotatorIndex].classList.add('exit');
+    setTimeout(() => { rotatorItems[rotatorIndex].classList.remove('exit'); }, 500);
+    rotatorIndex = (rotatorIndex + 1) % rotatorItems.length;
+    rotatorItems[rotatorIndex].classList.add('active');
+  }, 3000);
 }
-window.addEventListener('load', alignHIW);
-window.addEventListener('resize', alignHIW);
 
-// Industry card navigation
-(function(){
-  var ids=['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
-  var cards=document.querySelectorAll('.industry-card');
-  cards.forEach(function(c,i){
-    c.style.cursor='pointer';
-    c.addEventListener('click',function(){ window.location.href='tools.html?industry='+ids[i]; });
-  });
-})();
-</script>
-<script>
-(function() {
-  var indWordItems = ['TRADE', 'SERVICE'];
-  var indWordIndex = 0;
-  function rotateIndWord() {
-    var el = document.getElementById('ind-rotating-word');
-    if (!el || indWordItems.length === 0) return;
-    el.classList.add('exit');
-    setTimeout(function() {
-      el.classList.remove('exit');
-      indWordIndex = (indWordIndex + 1) % indWordItems.length;
-      el.textContent = indWordItems[indWordIndex];
-    }, 400);
-  }
-  setTimeout(function() { setInterval(rotateIndWord, 3000); }, 1500);
-
-  document.addEventListener('DOMContentLoaded', function() {
-
-    var backBtn=document.getElementById('back-btn');if(backBtn){backBtn.addEventListener('click',function(){var ref=document.referrer;var onPlatform=ref&&ref.indexOf('trade-ai-seven-blue.vercel.app')>-1;if(onPlatform&&history.length>1){history.back();}else{window.location.href='tools.html';}});}
-  });
-})();
+var wordItems = ['TRADE', 'SERVICE'];
+var wordIndex = 0;
+function rotateWord() {
+  var el = document.getElementById('rotating-word');
+  if (!el || wordItems.length === 0) return;
+  el.classList.add('exit');
+  setTimeout(function() {
+    el.classList.remove('exit');
+    wordIndex = (wordIndex + 1) % wordItems.length;
+    el.textContent = wordItems[wordIndex];
+    el.classList.add('active');
+    setTimeout(function() { el.classList.remove('active'); }, 300);
+  }, 300);
+}
+setTimeout(function() { setInterval(rotateWord, 3000); }, 1500);
 </script>
 
-<script>
-(function(){
-
-})();
-</script>
 </body>
 </html>
