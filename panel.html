@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StaxAI — Panel Mockup v5</title>
+<title>StaxAI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,800;1,700&display=swap" rel="stylesheet">
 <style>
@@ -1104,6 +1104,7 @@
 
   // 2. renderPanel
   function renderPanel(tool) {
+    document.title = tool.title ? tool.title[0] + ' ' + tool.title[1] + ' | StaxAI' : 'StaxAI';
     var bc = document.getElementById('panel-breadcrumb');
     if (bc) bc.textContent = tool.title ? tool.title[0] + ' ' + tool.title[1] : '';
     var ic = document.getElementById('panel-icon');
