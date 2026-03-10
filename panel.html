@@ -1157,7 +1157,7 @@
       <p class="section-subtitle">A real conversation — AI qualifying a lead while you're on-site</p>
     </div>
 
-    <div class="preview-container">
+    <div id="preview-container" class="preview-container">
       <div class="preview-chrome">
         <div class="chrome-dots">
           <div class="chrome-dot r"></div>
@@ -1361,8 +1361,6 @@ function renderPanel(tool) {
     document.title = tool.title[0] + ' ' + tool.title[1] + ' | StaxAI';
 
     // Breadcrumb (legacy element - may not exist)
-    var bc = document.getElementById('panel-breadcrumb');
-    if (bc) bc.textContent = tool.title[0] + ' ' + tool.title[1];
 
     // Icon
     var iconEl = document.getElementById('panel-icon');
