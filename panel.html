@@ -1046,22 +1046,14 @@
 
 <script src="tools-data.js"></script>
 <script>
-  // 1. Dynamic loader IIFE
-  (function() {
+  document.addEventListener('DOMContentLoaded', function() {
     var toolId = new URLSearchParams(window.location.search).get('tool');
     if (!toolId) return;
     var s = document.createElement('script');
     s.src = 'panel-data-' + toolId + '.js';
-    s.onload = function() {
-      if (!window.PANEL_TOOL) return;
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { renderPanel(window.PANEL_TOOL); });
-      } else {
-        renderPanel(window.PANEL_TOOL);
-      }
-    };
+    s.onload = function() { if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
     document.head.appendChild(s);
-  })();
+  });
 
   // 2. renderPanel
   function renderPanel(tool) {
