@@ -25,7 +25,10 @@ window.PANEL_TOOL = {
       { id: "res-booked", label: "Jobs Booked" },
       { id: "res-revenue", label: "Potential Revenue" }
     ],
-    calculate: function(visitors, missed, jobval) {
+    calculate: function(vals) {
+      var visitors = vals["visitors"];
+      var missed = vals["missed"];
+      var jobval = vals["jobval"];
       var leads = Math.round(visitors * 0.04);
       var afterhours = missed;
       var booked = Math.round((leads + afterhours) * 0.85);
