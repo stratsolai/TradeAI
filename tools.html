@@ -606,22 +606,22 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
     { id:'chatbot', toolId:'chatbot', status:'built', icon:'💬', cat:'marketing',
       title:'AI Website Chatbot', price:'$79',
       desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
-    { id:'social-media-manager', toolId:'social', status:'built', icon:'📱', cat:'marketing',
+    { id:'social', toolId:'social', status:'built', icon:'📱', cat:'marketing',
       title:'Marketing & Social Media Manager', price:'$79',
       desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
-    { id:'email-assistant', toolId:'email', status:'built', icon:'📧', cat:'marketing',
+    { id:'email', toolId:'email', status:'built', icon:'📧', cat:'marketing',
       title:'AI Email Assistant', price:'$59',
       desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
     { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
       title:'Industry News & Updates Digest', price:'$59',
       desc:'AI scans your supplier emails, industry body updates and regulator notices — plus searches reputable online sources — and summarises everything on one dashboard. Personalised to your business, not generic industry news.' },
-    { id:'executive-summary', toolId:'bi', status:'built', icon:'📊', cat:'intelligence',
+    { id:'bi', toolId:'bi', status:'built', icon:'📊', cat:'intelligence',
       title:'Business Intelligence Dashboard', price:'$89',
       desc:'Analyses activity across all your tools and accounting software, then tells you what to do next. AI predicts opportunities, analyses your local competitive landscape and recommends how to stay ahead.' },
     { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺', cat:'intelligence',
       title:'Strategic Plan & Operations Dashboard', price:'$69',
       desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
-    { id:'tender-response', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
+    { id:'tender', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
       title:'Tender Response Generator', price:'$99',
       desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
     { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'operations',
@@ -704,67 +704,62 @@ body{background:#0d1628;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   pool: [
     { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "pool" },
     { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "pool" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "pool" },
+    { id: "seasonal-reminder", icon: "📅", title: "Seasonal Pool Care Reminders", industry: "pool" },
     { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "pool" }
   ],
   plumber: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "plumber" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "plumber" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "plumber" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "plumber" }
+    { id: "emergency-router", icon: "🚨", title: "Emergency Job Router", industry: "plumber" },
+    { id: "backflow-scheduler", icon: "🔄", title: "Backflow Testing Scheduler", industry: "plumber" },
+    { id: "hot-water-selector", icon: "🚿", title: "Hot Water System Selector", industry: "plumber" }
   ],
   electrician: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "electrician" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "electrician" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "electrician" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "electrician" }
+    { id: "test-tag-manager", icon: "🔌", title: "Test & Tag Manager", industry: "electrician" },
+    { id: "compliance-cert-gen", icon: "📜", title: "Compliance Certificate Generator", industry: "electrician" },
+    { id: "emergency-dispatch", icon: "⚡", title: "Emergency Callout Dispatcher", industry: "electrician" }
   ],
   builder: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "builder" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "builder" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "builder" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "builder" }
+    { id: "subcontractor-coordinator", icon: "👷", title: "Subcontractor Coordinator", industry: "builder" },
+    { id: "site-diary", icon: "📓", title: "Digital Site Diary", industry: "builder" },
+    { id: "variation-tracker", icon: "📝", title: "Variation Order Manager", industry: "builder" },
+    { id: "rfi-manager", icon: "❓", title: "RFI & Query Manager", industry: "builder" }
   ],
   hvac: [
-    { id: "service-prioritizer", icon: "🚨", title: "Service Call Prioritiser", industry: "hvac" },
-    { id: "refrigerant-tracker", icon: "🧪", title: "Refrigerant Gas Tracker", industry: "hvac" },
-    { id: "maintenance-scheduler-hvac", icon: "🔄", title: "Preventative Maintenance Scheduler", industry: "hvac" },
-    { id: "energy-calculator", icon: "⚡", title: "Energy Efficiency Calculator", industry: "hvac" }
+    { id: "service-prioritiser", icon: "🌡️", title: "Service Call Prioritiser", industry: "hvac" },
+    { id: "refrigerant-tracker", icon: "❄️", title: "Refrigerant Gas Tracker", industry: "hvac" },
+    { id: "maintenance-scheduler-hvac", icon: "🔧", title: "Preventative Maintenance Scheduler", industry: "hvac" },
+    { id: "energy-calculator", icon: "💡", title: "Energy Efficiency Calculator", industry: "hvac" }
   ],
   fabricator: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "fabricator" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "fabricator" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "fabricator" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "fabricator" }
+    { id: "material-optimizer", icon: "✂️", title: "Material Cutting Optimiser", industry: "fabricator" },
+    { id: "weld-tracker", icon: "🔥", title: "Welder Qualification Tracker", industry: "fabricator" },
+    { id: "job-costing", icon: "📊", title: "Real-Time Job Costing", industry: "fabricator" },
+    { id: "quality-checklist", icon: "✅", title: "Quality Inspection Checklist", industry: "fabricator" }
   ],
   cleaner: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "cleaner" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "cleaner" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "cleaner" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "cleaner" }
+    { id: "roster-optimizer", icon: "📆", title: "Smart Roster Optimiser", industry: "cleaner" },
+    { id: "quality-audit", icon: "🔍", title: "Site Quality Audit System", industry: "cleaner" },
+    { id: "consumables-tracker", icon: "🧴", title: "Consumables Inventory Tracker", industry: "cleaner" }
   ],
   landscaper: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "landscaper" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "landscaper" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "landscaper" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "landscaper" }
+    { id: "plant-selector", icon: "🌿", title: "Smart Plant Selector", industry: "landscaper" },
+    { id: "seasonal-scheduler-land", icon: "🍂", title: "Seasonal Maintenance Scheduler", industry: "landscaper" },
+    { id: "irrigation-designer", icon: "💧", title: "Irrigation System Designer", industry: "landscaper" }
   ],
   manufacturer: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "manufacturer" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "manufacturer" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "manufacturer" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "manufacturer" }
+    { id: "production-scheduler", icon: "🏭", title: "Production Scheduler", industry: "manufacturer" },
+    { id: "quality-spc", icon: "📈", title: "Statistical Process Control (SPC)", industry: "manufacturer" },
+    { id: "inventory-forecaster", icon: "📦", title: "Smart Inventory Forecaster", industry: "manufacturer" },
+    { id: "oee-tracker", icon: "⚙️", title: "OEE Performance Tracker", industry: "manufacturer" }
   ],
   concreter: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "concreter" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "concreter" },
-    { id: "seasonal-reminder", icon: "🍂", title: "Seasonal Pool Care Reminders", industry: "concreter" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "concreter" }
+    { id: "pour-scheduler", icon: "🌤️", title: "Smart Pour Scheduler", industry: "concreter" },
+    { id: "mix-designer", icon: "🪣", title: "Concrete Mix Designer", industry: "concreter" },
+    { id: "test-tracker", icon: "🧱", title: "Compressive Strength Test Tracker", industry: "concreter" }
   ],
   handyman: [
     { id: "multi-trade-scheduler", icon: "🗓️", title: "Multi-Trade Job Scheduler", industry: "handyman" },
-    { id: "parts-finder", icon: "🔍", title: "Smart Parts Finder", industry: "handyman" },
-    { id: "job-cost-estimator", icon: "💵", title: "Quick Job Cost Estimator", industry: "handyman" }
+    { id: "parts-finder", icon: "🔩", title: "Spare Parts Finder", industry: "handyman" },
+    { id: "job-cost-estimator", icon: "💰", title: "Job Cost Estimator", industry: "handyman" }
   ]
 };
 
