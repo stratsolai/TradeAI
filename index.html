@@ -122,38 +122,138 @@
     .trust-item::before { content:'✓'; color:var(--orange); font-weight:700; }
 
     /* Floating tool cards */
-    .hero-visual { position:relative; }
-    .tool-cards {
-      display:grid; grid-template-columns:1fr 1fr; grid-auto-rows:1fr; gap:14px;
-      transform:perspective(1000px) rotateY(-8deg) rotateX(4deg);
-      transition:transform 0.5s ease;
+    .hero-visual {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      justify-content: center;
     }
-    .tool-cards:hover { transform:perspective(1000px) rotateY(-4deg) rotateX(2deg); }
-    .tool-card {
-      background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.25);
-      border-radius:14px; padding:26px; backdrop-filter:blur(10px);
-      animation:cardFloat 4s ease-in-out infinite; transition:all 0.3s;
-      text-decoration:none; color:inherit; display:flex; flex-direction:column;
-      cursor:pointer;
+    .stax-stack {
+      position: relative;
+      width: 280px;
+      height: 360px;
+      margin-left: auto;
     }
-    .tool-card:hover { background:rgba(255,255,255,0.14); border-color:rgba(26,84,144,0.55); transform:translateY(-4px) scale(1.02); }
-    .tool-card:nth-child(1) { animation-delay:0s; }
-    .tool-card:nth-child(2) { animation-delay:-1s; }
-    .tool-card:nth-child(3) { animation-delay:-2s; }
-    .tool-card:nth-child(4) { animation-delay:-3s; }
-    .tool-card:nth-child(5) { animation-delay:-1.5s; }
-    .tool-card:nth-child(6) { animation-delay:-2.5s; }
-    @keyframes cardFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
-    .tool-card-icon { font-size:26px; margin-bottom:8px; }
-    .tool-card-name { font-size:16px; font-weight:700; color:white; margin-bottom:4px; }
-    .tool-card-tagline { font-size:13px; color:rgba(255,255,255,0.6); line-height:1.4; margin-bottom:8px; flex:1; }
-    .tool-card-stat {
-      font-size:11px; color:var(--orange); font-weight:600;
-      background:rgba(196,98,42,0.15); padding:3px 8px; border-radius:20px;
-      display:inline-block; border:1px solid rgba(196,98,42,0.25); align-self:flex-start;
+    .stax-card {
+      position: absolute;
+      top: 0; left: 0;
+      width: 280px;
+      height: 340px;
+      border-radius: 12px;
+      background: #ffffff;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+      text-decoration: none;
     }
-
-    /* ── STATS ── */
+    .stax-card[data-pos="0"] { z-index: 4; transform: translateX(0)    translateY(0)    scale(1);    opacity: 1; }
+    .stax-card[data-pos="1"] { z-index: 3; transform: translateX(18px)  translateY(12px) scale(0.96); opacity: 0.85; }
+    .stax-card[data-pos="2"] { z-index: 2; transform: translateX(36px)  translateY(24px) scale(0.92); opacity: 0.70; }
+    .stax-card[data-pos="3"] { z-index: 1; transform: translateX(54px)  translateY(36px) scale(0.88); opacity: 0.55; }
+    .stax-card[data-pos="1"]:hover { opacity: 1;    transform: translateX(18px)  translateY(8px)  scale(0.96); }
+    .stax-card[data-pos="2"]:hover { opacity: 0.85; transform: translateX(36px)  translateY(20px) scale(0.92); }
+    .stax-card[data-pos="3"]:hover { opacity: 0.70; transform: translateX(54px)  translateY(32px) scale(0.88); }
+    .stax-card-screenshot {
+      width: 100%;
+      height: 70%;
+      object-fit: cover;
+      display: block;
+    }
+    .stax-card-placeholder {
+      width: 100%;
+      height: 70%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .stax-card-placeholder-icon {
+      font-size: 56px;
+      opacity: 0.25;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+    .stax-card-placeholder-name {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+      color: #ffffff;
+      text-align: center;
+      padding: 0 12px;
+    }
+    .stax-card-placeholder-sub {
+      font-family: "DM Sans", sans-serif;
+      font-size: 11px;
+      color: rgba(255,255,255,0.6);
+      margin-top: 4px;
+    }
+    .stax-card-info {
+      height: 30%;
+      background: #ffffff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .stax-card-info-icon {
+      font-size: 26px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .stax-card-info-text { overflow: hidden; }
+    .stax-card-info-name {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a2e;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stax-card-info-benefit {
+      font-family: "DM Sans", sans-serif;
+      font-size: 11px;
+      color: rgba(0,0,0,0.55);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .stax-card.is-exiting {
+      transition: transform 0.4s ease, opacity 0.4s ease;
+      transform: translateX(54px) translateY(52px) scale(0.82) !important;
+      opacity: 0 !important;
+    }
+    .stax-card.is-entering {
+      transform: translateX(54px) translateY(52px) scale(0.82) !important;
+      opacity: 0 !important;
+      transition: none;
+    }
+    .stax-tagline {
+      font-family: "DM Sans", sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.55);
+      font-style: italic;
+      text-align: right;
+      margin-top: 14px;
+      margin-right: 0;
+      max-width: 360px;
+    }
+    @media (max-width: 1100px) {
+      .stax-stack { margin: 40px auto 0; }
+      .stax-tagline { text-align: center; margin-right: auto; }
+    }
+    @media (max-width: 767px) {
+      .stax-stack { width: 240px; height: 300px; }
+      .stax-card { width: 240px; height: 290px; }
+      .stax-card[data-pos="2"],
+      .stax-card[data-pos="3"] { display: none; }
+      .stax-card[data-pos="1"] { transform: translateX(14px) translateY(10px) scale(0.96); }
+      .stax-tagline { display: none; }
+    }
+    
     .stats-strip {
       background:var(--blue); padding:40px 48px; position:relative; overflow:hidden;
     }
@@ -331,7 +431,6 @@
       .nav-links { display:none; }
       .hero { padding:100px 24px 60px; }
       .hero-content { grid-template-columns:1fr; gap:50px; }
-      .tool-cards { transform:none; }
       .stats-strip { padding:40px 24px; }
       .stats-inner { justify-content:center; gap:30px; }
       .stat-divider { display:none; }
@@ -430,44 +529,13 @@
     </div>
 
     <div class="hero-visual">
-      <div class="tool-cards">
-        <a href="/prototype.html?tool=social-media-manager" class="tool-card">
-          <div class="tool-card-icon">📣</div>
-          <div class="tool-card-name">Marketing & Social Media Manager</div>
-          <div class="tool-card-tagline">AI builds your posts, graphics & marketing content — auto-posts to Facebook & Instagram</div>
-          <div class="tool-card-stat">✓ Live</div>
-        </a>
-        <a href="/prototype.html?tool=email-assistant" class="tool-card">
-          <div class="tool-card-icon">📧</div>
-          <div class="tool-card-name">AI Email Assistant</div>
-          <div class="tool-card-tagline">AI reads your Gmail & Outlook — summarised on one smart dashboard</div>
-          <div class="tool-card-stat">✓ Live</div>
-        </a>
-        <a href="/prototype.html?tool=lead-bot" class="tool-card">
-          <div class="tool-card-icon">🤖</div>
-          <div class="tool-card-name">AI Website Chatbot</div>
-          <div class="tool-card-tagline">AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7</div>
-          <div class="tool-card-stat">✓ Live</div>
-        </a>
-        <a href="/prototype.html?tool=strategic-plan" class="tool-card">
-          <div class="tool-card-icon">📊</div>
-          <div class="tool-card-name">Strategic Plan & Operations Dashboard</div>
-          <div class="tool-card-tagline">Create your roadmap in minutes</div>
-          <div class="tool-card-stat">✓ Live</div>
-        </a>
-        <a href="/prototype.html?tool=news-digest" class="tool-card">
-          <div class="tool-card-icon">📰</div>
-          <div class="tool-card-name">Industry News Digest</div>
-          <div class="tool-card-tagline">Industry news, regulation changes, supplier updates — personalised from your emails and the web, AI-summarised on one dashboard</div>
-          <div class="tool-card-stat">✓ Live</div>
-        </a>
-        <a href="/prototype.html?tool=executive-summary" class="tool-card">
-          <div class="tool-card-icon">📈</div>
-          <div class="tool-card-name">Business Intelligence Dashboard</div>
-          <div class="tool-card-tagline">AI-powered insights driven by your business data, your industry, your region — opportunities, competitive edge, and new products/services to offer</div>
-          <div class="tool-card-stat">Coming Soon</div>
-        </a>
+      <div class="stax-stack" id="stax-stack">
+        <div class="stax-card" data-pos="0"></div>
+        <div class="stax-card" data-pos="1"></div>
+        <div class="stax-card" data-pos="2"></div>
+        <div class="stax-card" data-pos="3"></div>
       </div>
+      <p class="stax-tagline">The more tools you activate, the smarter your Stax gets.</p>
     </div>
   </div>
 </section>
@@ -745,6 +813,140 @@
 </footer>
 
 <script>
+  var HERO_TOOLS = [
+    { id: "social",         icon: "📱", name: "Marketing & Social Media Manager", benefit: "AI builds your posts, graphics & marketing content",        screenshotUrl: null, panelUrl: "panel.html?tool=social",         accentColor: "#c4622a" },
+    { id: "email",          icon: "✉️",  name: "AI Email Assistant",               benefit: "Reads and summarises your entire inbox automatically",       screenshotUrl: null, panelUrl: "panel.html?tool=email",          accentColor: "#1A5490" },
+    { id: "chatbot",        icon: "💬", name: "AI Website Chatbot",               benefit: "Answers customer enquiries 24/7 and qualifies leads",        screenshotUrl: null, panelUrl: "panel.html?tool=chatbot",        accentColor: "#2d6a4f" },
+    { id: "news-digest",    icon: "📰", name: "Industry News & Updates Digest",   benefit: "Personalised industry news summarised and delivered daily",  screenshotUrl: null, panelUrl: "panel.html?tool=news-digest",    accentColor: "#6b3fa0" },
+    { id: "bi",             icon: "📊", name: "Business Intelligence Dashboard",  benefit: "AI insights across all your tools in one dashboard",         screenshotUrl: null, panelUrl: "panel.html?tool=bi",             accentColor: "#b5451b" },
+    { id: "strategic-plan", icon: "🎯", name: "Strategic Plan & Operations",      benefit: "Bank-ready strategic and operational plan in minutes",       screenshotUrl: null, panelUrl: "panel.html?tool=strategic-plan",  accentColor: "#1a4a7a" }
+  ];
+
+  (function() {
+    var visibleSet = [0, 1, 2, 3];
+    var poolIndex = 4;
+    var rotateTimer = null;
+    var resumeTimer = null;
+    var stack = null;
+
+    function buildCard(toolIndex) {
+      var t = HERO_TOOLS[toolIndex];
+      var card = document.createElement("div");
+      card.className = "stax-card";
+      card.setAttribute("data-tool-index", toolIndex);
+      card.style.cursor = "pointer";
+      card.addEventListener("click", function() { window.location.href = t.panelUrl; });
+
+      if (t.screenshotUrl) {
+        var img = document.createElement("img");
+        img.className = "stax-card-screenshot";
+        img.src = t.screenshotUrl;
+        img.alt = t.name;
+        card.appendChild(img);
+      } else {
+        var ph = document.createElement("div");
+        ph.className = "stax-card-placeholder";
+        ph.style.background = "linear-gradient(135deg, " + t.accentColor + ", " + t.accentColor + "99)";
+        var phIcon = document.createElement("div");
+        phIcon.className = "stax-card-placeholder-icon";
+        phIcon.textContent = t.icon;
+        var phName = document.createElement("div");
+        phName.className = "stax-card-placeholder-name";
+        phName.textContent = t.name;
+        var phSub = document.createElement("div");
+        phSub.className = "stax-card-placeholder-sub";
+        phSub.textContent = "Preview coming soon";
+        ph.appendChild(phIcon);
+        ph.appendChild(phName);
+        ph.appendChild(phSub);
+        card.appendChild(ph);
+      }
+
+      var info = document.createElement("div");
+      info.className = "stax-card-info";
+      var infoIcon = document.createElement("div");
+      infoIcon.className = "stax-card-info-icon";
+      infoIcon.textContent = t.icon;
+      var infoText = document.createElement("div");
+      infoText.className = "stax-card-info-text";
+      var infoName = document.createElement("div");
+      infoName.className = "stax-card-info-name";
+      infoName.textContent = t.name;
+      var infoBenefit = document.createElement("div");
+      infoBenefit.className = "stax-card-info-benefit";
+      infoBenefit.textContent = t.benefit;
+      infoText.appendChild(infoName);
+      infoText.appendChild(infoBenefit);
+      info.appendChild(infoIcon);
+      info.appendChild(infoText);
+      card.appendChild(info);
+
+      return card;
+    }
+
+    function swapBackCard() {
+      var cards = stack.querySelectorAll(".stax-card");
+      var backCard = cards[3];
+      if (!backCard) return;
+
+      var nextIndex = poolIndex % HERO_TOOLS.length;
+      var attempts = 0;
+      while (visibleSet.indexOf(nextIndex) !== -1 && attempts < HERO_TOOLS.length) {
+        poolIndex++;
+        nextIndex = poolIndex % HERO_TOOLS.length;
+        attempts++;
+      }
+
+      backCard.classList.add("is-exiting");
+
+      setTimeout(function() {
+        var newCard = buildCard(nextIndex);
+        newCard.classList.add("is-entering");
+        newCard.setAttribute("data-pos", "3");
+        stack.replaceChild(newCard, backCard);
+        void newCard.offsetWidth;
+        newCard.classList.remove("is-entering");
+        newCard.style.transition = "transform 0.4s ease, opacity 0.4s ease";
+        visibleSet[3] = nextIndex;
+        poolIndex++;
+      }, 300);
+    }
+
+    function startRotation() {
+      rotateTimer = setInterval(swapBackCard, 4000);
+    }
+
+    function pauseRotation() {
+      clearInterval(rotateTimer);
+      rotateTimer = null;
+    }
+
+    function scheduleResume() {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(startRotation, 2000);
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      stack = document.getElementById("stax-stack");
+      if (!stack) return;
+
+      stack.innerHTML = "";
+      visibleSet.forEach(function(toolIndex, pos) {
+        var card = buildCard(toolIndex);
+        card.setAttribute("data-pos", pos);
+        stack.appendChild(card);
+      });
+
+      stack.addEventListener("mouseenter", function() {
+        pauseRotation();
+        clearTimeout(resumeTimer);
+      });
+      stack.addEventListener("mouseleave", scheduleResume);
+
+      startRotation();
+    });
+  })();
+
 // Scroll reveal
 const observer = new IntersectionObserver((entries) => {
   entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
