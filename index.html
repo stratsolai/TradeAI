@@ -131,15 +131,15 @@
     }
     .stax-stack {
       position: relative;
-      width: 360px;
-      height: 400px;
+      width: 460px;
+      height: 520px;
       margin-left: auto;
     }
     .stax-card {
       position: absolute;
       top: 0; left: 0;
-      width: 280px;
-      height: 340px;
+      width: 360px;
+      height: 440px;
       border-radius: 14px;
       background: #ffffff;
       box-shadow: 0 12px 40px rgba(0,0,0,0.50);
@@ -821,7 +821,7 @@
 
     function applyPos(card, posIdx, animate) {
       var p = POSITIONS[posIdx];
-      card.style.transition    = animate ? "transform 0.45s ease, opacity 0.45s ease" : "none";
+      card.style.transition    = animate ? "transform 0.7s ease, opacity 0.7s ease" : "none";
       card.style.transform     = "translateX(" + p.tx + "px) translateY(" + p.ty + "px) scale(" + p.sc + ")";
       card.style.opacity       = String(p.op);
       card.style.zIndex        = String(4 - posIdx);
@@ -837,7 +837,7 @@
       card.addEventListener("click", function () { window.location.href = t.panelUrl; });
       card.addEventListener("mouseenter", function () {
         card.style.transition = "transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease";
-        card.style.transform  = "translateX(0px) translateY(-6px) scale(1.04)";
+        card.style.transform  = "translateX(0px) translateY(-10px) scale(1.08)";
         card.style.opacity    = "1";
         card.style.zIndex     = "10";
         card.style.boxShadow  = "0 20px 60px rgba(0,0,0,0.65)";
@@ -875,7 +875,7 @@
       if (cards.length < 4) { isRotating = false; return; }
 
       var front = cards[0];
-      front.style.transition = "transform 0.35s ease, opacity 0.35s ease";
+      front.style.transition = "transform 0.6s ease, opacity 0.6s ease";
       front.style.transform  = "translateX(-20px) translateY(-20px) scale(1.04)";
       front.style.opacity    = "0";
 
@@ -904,10 +904,10 @@
         visibleIdx = currentTis.concat([nextTi]);
         poolNext++;
         isRotating = false;
-      }, 350);
+      }, 600);
     }
 
-    function startRot() { if (!rotTimer) rotTimer = setInterval(doRotate, 4000); }
+    function startRot() { if (!rotTimer) rotTimer = setInterval(doRotate, 7000); }
     function pauseRot() { clearInterval(rotTimer); rotTimer = null; }
     function resumeRot() { clearTimeout(resumeTmr); resumeTmr = setTimeout(startRot, 2000); }
 
