@@ -131,15 +131,15 @@
     }
     .stax-stack {
       position: relative;
-      width: 460px;
-      height: 525px;
+      width: 360px;
+      height: 400px;
       margin-left: auto;
     }
     .stax-card {
       position: absolute;
       top: 0; left: 0;
-      width: 380px;
-      height: 460px;
+      width: 280px;
+      height: 340px;
       border-radius: 14px;
       background: #ffffff;
       box-shadow: 0 12px 40px rgba(0,0,0,0.50);
@@ -808,48 +808,48 @@
   (function () {
     var POSITIONS = [
       { tx: 0,  ty: 0,  sc: 1,    op: 1    },
-      { tx: 22, ty: 15, sc: 0.96, op: 0.82 },
-      { tx: 44, ty: 30, sc: 0.92, op: 0.65 },
-      { tx: 66, ty: 45, sc: 0.88, op: 0.50 }
+      { tx: 18, ty: 12, sc: 0.96, op: 0.85 },
+      { tx: 36, ty: 24, sc: 0.92, op: 0.70 },
+      { tx: 54, ty: 36, sc: 0.88, op: 0.55 }
     ];
-    var visibleSet = [0, 1, 2, 3];
-    var poolIdx    = 4;
+    var visibleIdx = [0, 1, 2, 3];
+    var poolNext   = 4;
     var rotTimer   = null;
     var resumeTmr  = null;
-    var isSwapping = false;
+    var isRotating = false;
     var stackEl    = null;
 
     function applyPos(card, posIdx, animate) {
       var p = POSITIONS[posIdx];
-      card.style.transition    = animate ? "transform 0.4s ease, opacity 0.4s ease" : "none";
+      card.style.transition    = animate ? "transform 0.45s ease, opacity 0.45s ease" : "none";
       card.style.transform     = "translateX(" + p.tx + "px) translateY(" + p.ty + "px) scale(" + p.sc + ")";
       card.style.opacity       = String(p.op);
       card.style.zIndex        = String(4 - posIdx);
-      card.style.pointerEvents = posIdx === 0 ? "auto" : "none";
+      card.style.pointerEvents = "auto";
       card.dataset.pos         = String(posIdx);
     }
 
     function makeCard(toolIdx) {
-      var t    = HERO_TOOLS[toolIdx];
+      var t = HERO_TOOLS[toolIdx];
       var card = document.createElement("div");
-      card.className = "stax-card";
+      card.className       = "stax-card";
+      card.dataset.toolIdx = String(toolIdx);
       card.addEventListener("click", function () { window.location.href = t.panelUrl; });
       card.addEventListener("mouseenter", function () {
-        var pi = parseInt(card.dataset.pos, 10);
-        if (pi > 0) {
-          var p = POSITIONS[pi];
-          card.style.transition = "transform 0.25s ease, opacity 0.25s ease";
-          card.style.transform  = "translateX(" + p.tx + "px) translateY(" + (p.ty - 10) + "px) scale(" + (p.sc + 0.02) + ")";
-          card.style.opacity    = String(Math.min(1, p.op + 0.18));
-        }
+        card.style.transition = "transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease";
+        card.style.transform  = "translateX(0px) translateY(-6px) scale(1.04)";
+        card.style.opacity    = "1";
+        card.style.zIndex     = "10";
+        card.style.boxShadow  = "0 20px 60px rgba(0,0,0,0.65)";
       });
       card.addEventListener("mouseleave", function () {
+        card.style.boxShadow = "";
         applyPos(card, parseInt(card.dataset.pos, 10), true);
       });
 
       var ph = document.createElement("div");
       ph.className        = "stax-card-placeholder";
-      ph.style.background = "linear-gradient(135deg," + t.accentColor + "," + t.accentColor + "99)";
+      ph.style.background = "linear-gradient(135deg," + t.accentColor + "cc," + t.accentColor + "88)";
 
       var phIco  = document.createElement("div"); phIco.className  = "stax-card-placeholder-icon"; phIco.textContent = t.icon;
       var phName = document.createElement("div"); phName.className = "stax-card-placeholder-name"; phName.textContent = t.name;
@@ -857,7 +857,7 @@
       ph.appendChild(phIco); ph.appendChild(phName); ph.appendChild(phSub);
       card.appendChild(ph);
 
-      var info  = document.createElement("div"); info.className  = "stax-card-info";
+      var info  = document.createElement("div"); info.className = "stax-card-info";
       var iIco  = document.createElement("div"); iIco.className  = "stax-card-info-icon";    iIco.textContent  = t.icon;
       var iTxt  = document.createElement("div"); iTxt.className  = "stax-card-info-text";
       var iName = document.createElement("div"); iName.className = "stax-card-info-name";    iName.textContent = t.name;
@@ -868,58 +868,59 @@
       return card;
     }
 
-    function doSwap() {
-      if (isSwapping || !stackEl) return;
-      var cards = stackEl.querySelectorAll(".stax-card");
-      if (cards.length < 4) return;
-      isSwapping = true;
-      var backCard = cards[cards.length - 1];
-      var nextIdx  = poolIdx % HERO_TOOLS.length;
-      var guard    = 0;
-      while (visibleSet.indexOf(nextIdx) !== -1 && guard < HERO_TOOLS.length) {
-        poolIdx++; nextIdx = poolIdx % HERO_TOOLS.length; guard++;
-      }
-      backCard.style.transition = "transform 0.35s ease, opacity 0.35s ease";
-      backCard.style.transform  = "translateX(80px) translateY(60px) scale(0.80)";
-      backCard.style.opacity    = "0";
+    function doRotate() {
+      if (isRotating || !stackEl) return;
+      isRotating = true;
+      var cards = Array.from(stackEl.querySelectorAll(".stax-card"));
+      if (cards.length < 4) { isRotating = false; return; }
+
+      var front = cards[0];
+      front.style.transition = "transform 0.35s ease, opacity 0.35s ease";
+      front.style.transform  = "translateX(-20px) translateY(-20px) scale(1.04)";
+      front.style.opacity    = "0";
+
       setTimeout(function () {
-        var fresh = makeCard(nextIdx);
+        stackEl.removeChild(front);
+        var remaining = Array.from(stackEl.querySelectorAll(".stax-card"));
+        remaining.forEach(function (c, i) { applyPos(c, i, true); });
+
+        var nextTi = poolNext % HERO_TOOLS.length;
+        var guard  = 0;
+        var currentTis = remaining.map(function(c){ return parseInt(c.dataset.toolIdx, 10); });
+        while (currentTis.indexOf(nextTi) !== -1 && guard < HERO_TOOLS.length) {
+          poolNext++; nextTi = poolNext % HERO_TOOLS.length; guard++;
+        }
+
+        var fresh = makeCard(nextTi);
         fresh.style.transition = "none";
-        fresh.style.transform  = "translateX(80px) translateY(60px) scale(0.80)";
+        fresh.style.transform  = "translateX(80px) translateY(60px) scale(0.82)";
         fresh.style.opacity    = "0";
         fresh.style.zIndex     = "1";
-        stackEl.replaceChild(fresh, backCard);
+        fresh.dataset.pos      = "3";
+        stackEl.appendChild(fresh);
         void fresh.offsetWidth;
         applyPos(fresh, 3, true);
-        visibleSet[3] = nextIdx;
-        poolIdx++;
-        isSwapping = false;
-      }, 380);
+
+        visibleIdx = currentTis.concat([nextTi]);
+        poolNext++;
+        isRotating = false;
+      }, 350);
     }
 
-    function startRot() { if (!rotTimer) rotTimer = setInterval(doSwap, 4000); }
+    function startRot() { if (!rotTimer) rotTimer = setInterval(doRotate, 4000); }
     function pauseRot() { clearInterval(rotTimer); rotTimer = null; }
     function resumeRot() { clearTimeout(resumeTmr); resumeTmr = setTimeout(startRot, 2000); }
 
     function initStack() {
       stackEl = document.getElementById("stax-stack");
       if (!stackEl) return;
-      visibleSet.forEach(function (ti, posIdx) {
+      [0, 1, 2, 3].forEach(function (ti, posIdx) {
         var c = makeCard(ti);
         applyPos(c, posIdx, false);
         stackEl.appendChild(c);
       });
-      stackEl.addEventListener("mouseenter", function () {
-        pauseRot();
-        clearTimeout(resumeTmr);
-        var cs = stackEl.querySelectorAll(".stax-card");
-        for (var i = 0; i < cs.length; i++) cs[i].style.pointerEvents = "auto";
-      });
-      stackEl.addEventListener("mouseleave", function () {
-        var cs = stackEl.querySelectorAll(".stax-card");
-        for (var i = 0; i < cs.length; i++) cs[i].style.pointerEvents = i === 0 ? "auto" : "none";
-        resumeRot();
-      });
+      stackEl.addEventListener("mouseenter", function () { pauseRot(); clearTimeout(resumeTmr); });
+      stackEl.addEventListener("mouseleave", resumeRot);
       startRot();
     }
 
