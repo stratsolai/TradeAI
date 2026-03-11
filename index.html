@@ -134,6 +134,7 @@
       width: 460px;
       height: 520px;
       margin-left: auto;
+      padding-left: 40px;
     }
     .stax-card {
       position: absolute;
@@ -821,7 +822,7 @@
 
     function applyPos(card, posIdx, animate) {
       var p = POSITIONS[posIdx];
-      card.style.transition    = animate ? "transform 0.7s ease, opacity 0.7s ease" : "none";
+      card.style.transition    = animate ? "transform 1.0s ease, opacity 1.0s ease" : "none";
       card.style.transform     = "translateX(" + p.tx + "px) translateY(" + p.ty + "px) scale(" + p.sc + ")";
       card.style.opacity       = String(p.op);
       card.style.zIndex        = String(4 - posIdx);
@@ -836,7 +837,7 @@
       card.dataset.toolIdx = String(toolIdx);
       card.addEventListener("click", function () { window.location.href = t.panelUrl; });
       card.addEventListener("mouseenter", function () {
-        card.style.transition = "transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease";
+        card.style.transition = "transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease";
         card.style.transform  = "translateX(0px) translateY(-10px) scale(1.08)";
         card.style.opacity    = "1";
         card.style.zIndex     = "10";
@@ -875,8 +876,8 @@
       if (cards.length < 4) { isRotating = false; return; }
 
       var front = cards[0];
-      front.style.transition = "transform 0.6s ease, opacity 0.6s ease";
-      front.style.transform  = "translateX(-20px) translateY(-20px) scale(1.04)";
+      front.style.transition = "transform 1.2s ease, opacity 1.2s ease";
+      front.style.transform  = "translateX(0px) translateY(-8px) scale(0.98)";
       front.style.opacity    = "0";
 
       setTimeout(function () {
@@ -904,7 +905,7 @@
         visibleIdx = currentTis.concat([nextTi]);
         poolNext++;
         isRotating = false;
-      }, 600);
+      }, 1200);
     }
 
     function startRot() { if (!rotTimer) rotTimer = setInterval(doRotate, 7000); }
