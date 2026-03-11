@@ -131,35 +131,20 @@
     }
     .stax-stack {
       position: relative;
-      width: 280px;
-      height: 360px;
+      width: 400px;
+      height: 500px;
       margin-left: auto;
     }
     .stax-card {
       position: absolute;
       top: 0; left: 0;
-      width: 280px;
-      height: 340px;
-      border-radius: 12px;
+      width: 380px;
+      height: 460px;
+      border-radius: 14px;
       background: #ffffff;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.50);
       cursor: pointer;
       overflow: hidden;
-      transition: transform 0.25s ease, opacity 0.25s ease;
-      text-decoration: none;
-    }
-    .stax-card[data-pos="0"] { z-index: 4; transform: translateX(0)    translateY(0)    scale(1);    opacity: 1; }
-    .stax-card[data-pos="1"] { z-index: 3; transform: translateX(18px)  translateY(12px) scale(0.96); opacity: 0.85; }
-    .stax-card[data-pos="2"] { z-index: 2; transform: translateX(36px)  translateY(24px) scale(0.92); opacity: 0.70; }
-    .stax-card[data-pos="3"] { z-index: 1; transform: translateX(54px)  translateY(36px) scale(0.88); opacity: 0.55; }
-    .stax-card[data-pos="1"]:hover { opacity: 1;    transform: translateX(18px)  translateY(8px)  scale(0.96); }
-    .stax-card[data-pos="2"]:hover { opacity: 0.85; transform: translateX(36px)  translateY(20px) scale(0.92); }
-    .stax-card[data-pos="3"]:hover { opacity: 0.70; transform: translateX(54px)  translateY(32px) scale(0.88); }
-    .stax-card-screenshot {
-      width: 100%;
-      height: 70%;
-      object-fit: cover;
-      display: block;
     }
     .stax-card-placeholder {
       width: 100%;
@@ -168,38 +153,37 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      position: relative;
     }
     .stax-card-placeholder-icon {
-      font-size: 56px;
+      font-size: 64px;
       opacity: 0.25;
       line-height: 1;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .stax-card-placeholder-name {
       font-family: "Barlow Condensed", sans-serif;
       font-weight: 800;
-      font-size: 18px;
+      font-size: 20px;
       color: #ffffff;
       text-align: center;
-      padding: 0 12px;
+      padding: 0 20px;
     }
     .stax-card-placeholder-sub {
       font-family: "DM Sans", sans-serif;
-      font-size: 11px;
+      font-size: 12px;
       color: rgba(255,255,255,0.6);
-      margin-top: 4px;
+      margin-top: 6px;
     }
     .stax-card-info {
       height: 30%;
       background: #ffffff;
-      padding: 12px 16px;
+      padding: 16px 20px;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
     }
     .stax-card-info-icon {
-      font-size: 26px;
+      font-size: 30px;
       line-height: 1;
       flex-shrink: 0;
     }
@@ -207,7 +191,7 @@
     .stax-card-info-name {
       font-family: "Barlow Condensed", sans-serif;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 16px;
       color: #1a1a2e;
       white-space: nowrap;
       overflow: hidden;
@@ -215,44 +199,36 @@
     }
     .stax-card-info-benefit {
       font-family: "DM Sans", sans-serif;
-      font-size: 11px;
+      font-size: 12px;
       color: rgba(0,0,0,0.55);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-    }
-    .stax-card.is-exiting {
-      transition: transform 0.4s ease, opacity 0.4s ease;
-      transform: translateX(54px) translateY(52px) scale(0.82) !important;
-      opacity: 0 !important;
-    }
-    .stax-card.is-entering {
-      transform: translateX(54px) translateY(52px) scale(0.82) !important;
-      opacity: 0 !important;
-      transition: none;
+      margin-top: 2px;
     }
     .stax-tagline {
       font-family: "DM Sans", sans-serif;
       font-size: 13px;
+      font-weight: 500;
       color: rgba(255,255,255,0.55);
-      font-style: italic;
       text-align: right;
-      margin-top: 14px;
+      margin-top: 16px;
       margin-right: 0;
-      max-width: 360px;
+      max-width: 420px;
+      letter-spacing: 0.01em;
     }
     @media (max-width: 1100px) {
       .stax-stack { margin: 40px auto 0; }
       .stax-tagline { text-align: center; margin-right: auto; }
     }
     @media (max-width: 767px) {
-      .stax-stack { width: 240px; height: 300px; }
-      .stax-card { width: 240px; height: 290px; }
-      .stax-card[data-pos="2"],
-      .stax-card[data-pos="3"] { display: none; }
-      .stax-card[data-pos="1"] { transform: translateX(14px) translateY(10px) scale(0.96); }
+      .stax-stack { width: 300px; height: 380px; }
+      .stax-card { width: 285px; height: 360px; }
+      .stax-card[data-pos-idx="2"],
+      .stax-card[data-pos-idx="3"] { display: none; }
       .stax-tagline { display: none; }
     }
+    
     
     .stats-strip {
       background:var(--blue); padding:40px 48px; position:relative; overflow:hidden;
@@ -535,7 +511,7 @@
         <div class="stax-card" data-pos="2"></div>
         <div class="stax-card" data-pos="3"></div>
       </div>
-      <p class="stax-tagline">The more tools you activate, the smarter your Stax gets.</p>
+      <p class="stax-tagline">Pick your tools. Stack them together. Watch your business get smarter.</p>
     </div>
   </div>
 </section>
@@ -814,53 +790,74 @@
 
 <script>
   var HERO_TOOLS = [
-    { id: "social",         icon: "📱", name: "Marketing & Social Media Manager", benefit: "AI builds your posts, graphics & marketing content",        screenshotUrl: null, panelUrl: "panel.html?tool=social",         accentColor: "#c4622a" },
-    { id: "email",          icon: "✉️",  name: "AI Email Assistant",               benefit: "Reads and summarises your entire inbox automatically",       screenshotUrl: null, panelUrl: "panel.html?tool=email",          accentColor: "#1A5490" },
-    { id: "chatbot",        icon: "💬", name: "AI Website Chatbot",               benefit: "Answers customer enquiries 24/7 and qualifies leads",        screenshotUrl: null, panelUrl: "panel.html?tool=chatbot",        accentColor: "#2d6a4f" },
-    { id: "news-digest",    icon: "📰", name: "Industry News & Updates Digest",   benefit: "Personalised industry news summarised and delivered daily",  screenshotUrl: null, panelUrl: "panel.html?tool=news-digest",    accentColor: "#6b3fa0" },
-    { id: "bi",             icon: "📊", name: "Business Intelligence Dashboard",  benefit: "AI insights across all your tools in one dashboard",         screenshotUrl: null, panelUrl: "panel.html?tool=bi",             accentColor: "#b5451b" },
-    { id: "strategic-plan", icon: "🎯", name: "Strategic Plan & Operations",      benefit: "Bank-ready strategic and operational plan in minutes",       screenshotUrl: null, panelUrl: "panel.html?tool=strategic-plan",  accentColor: "#1a4a7a" }
+    { id: "social",         icon: "📱", name: "Marketing & Social Media Manager", benefit: "AI builds your posts, graphics & marketing content",       screenshotUrl: null, panelUrl: "panel.html?tool=social",         accentColor: "#c4622a" },
+    { id: "email",          icon: "✉️",  name: "AI Email Assistant",               benefit: "Reads and summarises your entire inbox automatically",      screenshotUrl: null, panelUrl: "panel.html?tool=email",          accentColor: "#1A5490" },
+    { id: "chatbot",        icon: "💬", name: "AI Website Chatbot",               benefit: "Answers customer enquiries 24/7 and qualifies leads",       screenshotUrl: null, panelUrl: "panel.html?tool=chatbot",        accentColor: "#2d6a4f" },
+    { id: "news-digest",    icon: "📰", name: "Industry News & Updates Digest",   benefit: "Personalised industry news summarised and delivered daily", screenshotUrl: null, panelUrl: "panel.html?tool=news-digest",    accentColor: "#6b3fa0" },
+    { id: "bi",             icon: "📊", name: "Business Intelligence Dashboard",  benefit: "AI insights across all your tools in one dashboard",        screenshotUrl: null, panelUrl: "panel.html?tool=bi",             accentColor: "#b5451b" },
+    { id: "strategic-plan", icon: "🎯", name: "Strategic Plan & Operations",      benefit: "Bank-ready strategic and operational plan in minutes",      screenshotUrl: null, panelUrl: "panel.html?tool=strategic-plan",  accentColor: "#1a4a7a" }
   ];
 
   (function() {
+    var CARD_W = 340;
+    var CARD_H = 420;
+    var positions = [
+      { tx: 0,   ty: 0,   scale: 1,    opacity: 1    },
+      { tx: 20,  ty: 14,  scale: 0.96, opacity: 0.85 },
+      { tx: 40,  ty: 28,  scale: 0.92, opacity: 0.70 },
+      { tx: 60,  ty: 42,  scale: 0.88, opacity: 0.55 }
+    ];
     var visibleSet = [0, 1, 2, 3];
     var poolIndex = 4;
     var rotateTimer = null;
     var resumeTimer = null;
     var stack = null;
+    var isSwapping = false;
+
+    function applyPosition(card, posIdx, animate) {
+      var p = positions[posIdx];
+      card.style.transition = animate ? "transform 0.4s ease, opacity 0.4s ease" : "none";
+      card.style.transform = "translateX(" + p.tx + "px) translateY(" + p.ty + "px) scale(" + p.scale + ")";
+      card.style.opacity = p.opacity;
+      card.style.zIndex = 4 - posIdx;
+    }
 
     function buildCard(toolIndex) {
       var t = HERO_TOOLS[toolIndex];
       var card = document.createElement("div");
       card.className = "stax-card";
       card.setAttribute("data-tool-index", toolIndex);
-      card.style.cursor = "pointer";
       card.addEventListener("click", function() { window.location.href = t.panelUrl; });
+      card.addEventListener("mouseenter", function() {
+        var posIdx = parseInt(card.getAttribute("data-pos-idx"), 10);
+        if (posIdx > 0) {
+          var p = positions[posIdx];
+          card.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+          card.style.transform = "translateX(" + p.tx + "px) translateY(" + (p.ty - 6) + "px) scale(" + (p.scale + 0.02) + ")";
+          card.style.opacity = Math.min(1, p.opacity + 0.15);
+        }
+      });
+      card.addEventListener("mouseleave", function() {
+        var posIdx = parseInt(card.getAttribute("data-pos-idx"), 10);
+        applyPosition(card, posIdx, true);
+      });
 
-      if (t.screenshotUrl) {
-        var img = document.createElement("img");
-        img.className = "stax-card-screenshot";
-        img.src = t.screenshotUrl;
-        img.alt = t.name;
-        card.appendChild(img);
-      } else {
-        var ph = document.createElement("div");
-        ph.className = "stax-card-placeholder";
-        ph.style.background = "linear-gradient(135deg, " + t.accentColor + ", " + t.accentColor + "99)";
-        var phIcon = document.createElement("div");
-        phIcon.className = "stax-card-placeholder-icon";
-        phIcon.textContent = t.icon;
-        var phName = document.createElement("div");
-        phName.className = "stax-card-placeholder-name";
-        phName.textContent = t.name;
-        var phSub = document.createElement("div");
-        phSub.className = "stax-card-placeholder-sub";
-        phSub.textContent = "Preview coming soon";
-        ph.appendChild(phIcon);
-        ph.appendChild(phName);
-        ph.appendChild(phSub);
-        card.appendChild(ph);
-      }
+      var ph = document.createElement("div");
+      ph.className = "stax-card-placeholder";
+      ph.style.background = "linear-gradient(135deg, " + t.accentColor + ", " + t.accentColor + "99)";
+      var phIcon = document.createElement("div");
+      phIcon.className = "stax-card-placeholder-icon";
+      phIcon.textContent = t.icon;
+      var phName = document.createElement("div");
+      phName.className = "stax-card-placeholder-name";
+      phName.textContent = t.name;
+      var phSub = document.createElement("div");
+      phSub.className = "stax-card-placeholder-sub";
+      phSub.textContent = "Preview coming soon";
+      ph.appendChild(phIcon);
+      ph.appendChild(phName);
+      ph.appendChild(phSub);
+      card.appendChild(ph);
 
       var info = document.createElement("div");
       info.className = "stax-card-info";
@@ -880,15 +877,15 @@
       info.appendChild(infoIcon);
       info.appendChild(infoText);
       card.appendChild(info);
-
       return card;
     }
 
     function swapBackCard() {
+      if (isSwapping) return;
       var cards = stack.querySelectorAll(".stax-card");
+      if (cards.length < 4) return;
+      isSwapping = true;
       var backCard = cards[3];
-      if (!backCard) return;
-
       var nextIndex = poolIndex % HERO_TOOLS.length;
       var attempts = 0;
       while (visibleSet.indexOf(nextIndex) !== -1 && attempts < HERO_TOOLS.length) {
@@ -896,31 +893,33 @@
         nextIndex = poolIndex % HERO_TOOLS.length;
         attempts++;
       }
-
-      backCard.classList.add("is-exiting");
-
+      backCard.style.transition = "transform 0.35s ease, opacity 0.35s ease";
+      backCard.style.transform = "translateX(60px) translateY(58px) scale(0.82)";
+      backCard.style.opacity = "0";
       setTimeout(function() {
         var newCard = buildCard(nextIndex);
-        newCard.classList.add("is-entering");
-        newCard.setAttribute("data-pos", "3");
+        newCard.setAttribute("data-pos-idx", "3");
+        newCard.style.transition = "none";
+        newCard.style.transform = "translateX(60px) translateY(58px) scale(0.82)";
+        newCard.style.opacity = "0";
+        newCard.style.zIndex = "1";
         stack.replaceChild(newCard, backCard);
         void newCard.offsetWidth;
-        newCard.classList.remove("is-entering");
-        newCard.style.transition = "transform 0.4s ease, opacity 0.4s ease";
+        applyPosition(newCard, 3, true);
         visibleSet[3] = nextIndex;
         poolIndex++;
-      }, 300);
+        isSwapping = false;
+      }, 380);
     }
 
     function startRotation() {
+      if (rotateTimer) return;
       rotateTimer = setInterval(swapBackCard, 4000);
     }
-
     function pauseRotation() {
       clearInterval(rotateTimer);
       rotateTimer = null;
     }
-
     function scheduleResume() {
       clearTimeout(resumeTimer);
       resumeTimer = setTimeout(startRotation, 2000);
@@ -929,23 +928,19 @@
     document.addEventListener("DOMContentLoaded", function() {
       stack = document.getElementById("stax-stack");
       if (!stack) return;
-
       stack.innerHTML = "";
       visibleSet.forEach(function(toolIndex, pos) {
         var card = buildCard(toolIndex);
-        card.setAttribute("data-pos", pos);
+        card.setAttribute("data-pos-idx", pos);
+        applyPosition(card, pos, false);
         stack.appendChild(card);
       });
-
-      stack.addEventListener("mouseenter", function() {
-        pauseRotation();
-        clearTimeout(resumeTimer);
-      });
+      stack.addEventListener("mouseenter", function() { pauseRotation(); clearTimeout(resumeTimer); });
       stack.addEventListener("mouseleave", scheduleResume);
-
       startRotation();
     });
   })();
+
 
 // Scroll reveal
 const observer = new IntersectionObserver((entries) => {
