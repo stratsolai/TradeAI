@@ -280,35 +280,38 @@
 
     /* ── PROBLEM ── */
     .problem { background:var(--bg2); }
-    .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; margin-top:60px; }
-    .problem-list { display:flex; flex-direction:column; gap:14px; }
+    .problem .section-title .h-line { background:linear-gradient(to right,#ffffff,#e8d5b8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .problem .section-title .word-accent { background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; margin-top:60px; }
+    .problem-list { display:flex; flex-direction:column; gap:0; }
     .problem-item {
-      display:flex; gap:16px; align-items:flex-start; padding:20px; border-radius:12px;
-      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); transition:all 0.3s;
+      display:flex; gap:20px; align-items:flex-start; padding:24px 0 24px 20px;
+      border-left:3px solid rgba(196,98,42,0.25); margin-bottom:8px;
+      transition:border-color 0.3s;
     }
-    .problem-item:hover { background:rgba(255,255,255,0.08); border-color:rgba(196,98,42,0.3); }
-    .problem-icon { font-size:22px; flex-shrink:0; margin-top:2px; }
-    .problem-text strong { display:block; font-size:15px; color:white; margin-bottom:4px; font-weight:700; }
-    .problem-text span { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.6; }
+    .problem-item:hover { border-left-color:rgba(196,98,42,0.8); }
+    .problem-icon { font-size:26px; flex-shrink:0; margin-top:4px; }
+    .problem-text strong { display:block; font-size:18px; color:white; margin-bottom:6px; font-weight:800; font-family:var(--heading-font); letter-spacing:-0.01em; }
+    .problem-text span { font-size:14px; color:rgba(255,255,255,0.60); line-height:1.7; }
 
     /* AI Advantage panel */
     .ai-advantage {
-      background:linear-gradient(135deg, rgba(26,84,144,0.18) 0%, rgba(196,98,42,0.06) 100%);
-      border:1px solid rgba(26,84,144,0.35); border-radius:20px; padding:36px;
+      background:linear-gradient(160deg, rgba(196,98,42,0.10) 0%, rgba(26,84,144,0.14) 100%);
+      border:1px solid rgba(196,98,42,0.22); border-radius:20px; padding:40px;
     }
-    .ai-advantage-title { font-family:var(--heading-font); font-size:26px; font-weight:900; color:white; margin-bottom:8px; line-height:1.1; }
+    .ai-advantage-title { font-family:var(--heading-font); font-size:34px; font-weight:900; color:white; margin-bottom:10px; line-height:1.05; }
     .ai-advantage-title span { color:var(--orange); }
-    .ai-advantage-sub { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
-    .ai-capability-list { display:flex; flex-direction:column; gap:10px; }
+    .ai-advantage-sub { font-size:14px; color:rgba(255,255,255,0.65); margin-bottom:32px; line-height:1.7; }
+    .ai-capability-list { display:flex; flex-direction:column; gap:0; }
     .ai-capability {
-      display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
-      background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.09);
-      border-radius:10px; transition:all 0.2s;
+      display:flex; align-items:center; gap:16px; padding:18px 0;
+      border-bottom:1px solid rgba(255,255,255,0.07); transition:all 0.2s;
     }
-    .ai-capability:hover { background:rgba(255,255,255,0.09); border-color:rgba(26,84,144,0.4); }
-    .ai-cap-icon { font-size:18px; flex-shrink:0; margin-top:2px; }
-    .ai-cap-text strong { color:white; display:block; font-size:13px; font-weight:700; margin-bottom:2px; }
-    .ai-cap-text span { font-size:12px; color:rgba(255,255,255,0.6); line-height:1.4; }
+    .ai-capability:last-child { border-bottom:none; }
+    .ai-capability:hover { opacity:0.85; }
+    .ai-cap-icon { font-size:26px; flex-shrink:0; }
+    .ai-cap-text strong { color:white; display:block; font-size:15px; font-weight:700; margin-bottom:3px; font-family:var(--heading-font); letter-spacing:-0.01em; }
+    .ai-cap-text span { font-size:13px; color:rgba(255,255,255,0.60); line-height:1.5; }
     .ai-badge {
       margin-top:20px; padding:14px 20px;
       background:rgba(196,98,42,0.1); border:1px solid rgba(196,98,42,0.22);
@@ -570,7 +573,7 @@
 <section class="problem">
   <div class="section-inner">
     <div class="section-tag">The Problem</div>
-    <h2 class="section-title">You're great at your trade<br>Your technology isn't keeping up</h2>
+    <h2 class="section-title"><span class="h-line">You're great at your trade</span><br><span class="h-line">Your technology isn't <span class="word-accent">keeping up</span></span></h2>
     <div class="problem-grid">
       <div class="problem-list">
         <div class="problem-item fade-up">
