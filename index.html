@@ -320,7 +320,7 @@
     .steps { display:flex; gap:0; margin-top:60px; position:relative; }
     .steps::before {
       content:''; position:absolute; top:40px; left:40px; right:40px; height:2px;
-      background:linear-gradient(90deg, var(--orange), var(--blue)); z-index:0;
+      background:var(--blue); z-index:0;
     }
     .step { flex:1; text-align:center; padding:0 24px; position:relative; z-index:1; }
     .step-num {
@@ -675,18 +675,18 @@
     <div class="steps">
       <div class="step fade-up" onclick="window.location.href='/prototype.html'" style="cursor:pointer;">
         <div class="step-num">1 <span class="step-icon">🏗️</span></div>
-        <h3>Choose Your Trade</h3>
-        <p>Select from 11 Australian trade industries. Tools include standard AI-managed business tools plus industry-specific options built around how your trade actually works.</p>
+        <h3>Choose your trade</h3>
+        <p>Select from 12 industries — tools built around how your trade actually works.</p>
       </div>
       <div class="step fade-up">
         <div class="step-num">2 <span class="step-icon">⚡</span></div>
-        <h3>Activate Your Tools</h3>
+        <h3>Create your <span class="word-accent">STAX</span></h3>
         <p>Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes.</p>
       </div>
       <div class="step fade-up">
         <div class="step-num">3 <span class="step-icon">🚀</span></div>
-        <h3><span style="color:var(--orange)">AI</span> Starts Working</h3>
-        <p>Your AI tools get to work immediately — generating content, managing enquiries, creating documents — while you focus on what you do best.</p>
+        <h3>Your <span class="word-accent">STAX</span> is live</h3>
+        <p>Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with your trade.</p>
       </div>
     </div>
   </div>
