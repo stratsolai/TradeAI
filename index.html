@@ -282,57 +282,92 @@
     .problem { background:var(--bg2); }
     .problem .section-title .h-line { background:linear-gradient(to right,#ffffff,#e8d5b8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
     .problem .section-title .word-accent { background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; margin-top:60px; }
-    .problem-list { display:flex; flex-direction:column; gap:0; }
-    .problem-item {
-      display:flex; gap:20px; align-items:flex-start; padding:22px 0;
-      border-bottom:1px solid rgba(255,255,255,0.07);
-      transition:all 0.3s;
+
+    /* Graphic grid: left col | arrow col | right col, 4 rows + header row */
+    .prob-graphic {
+      display:grid;
+      grid-template-columns:1fr 52px 1fr;
+      grid-template-rows:auto auto auto auto auto;
+      gap:0;
+      border-radius:16px;
+      overflow:hidden;
     }
-    .problem-item:first-child { padding-top:0; }
-    .problem-item:last-child { border-bottom:none; }
-    .problem-item:hover .problem-num { background:rgba(196,98,42,0.5); }
-    .problem-num {
-      flex-shrink:0; width:36px; height:36px; border-radius:50%;
-      background:rgba(196,98,42,0.22); border:1px solid rgba(196,98,42,0.45);
+
+    /* Column headers */
+    .prob-header {
+      display:flex; align-items:center; gap:10px;
+      padding:14px 28px;
+      font-family:var(--heading-font); font-size:13px; font-weight:900;
+      letter-spacing:0.12em; text-transform:uppercase;
+    }
+    .prob-header-left {
+      background:rgba(220,50,50,0.12);
+      border-bottom:1px solid rgba(220,50,50,0.20);
+      color:rgba(255,255,255,0.70);
+    }
+    .prob-header-right {
+      background:rgba(196,98,42,0.14);
+      border-bottom:1px solid rgba(196,98,42,0.25);
+      color:rgba(255,255,255,0.70);
+    }
+
+    /* Arrow column header cell */
+    .prob-header + .prob-header-right { grid-column:3; }
+
+    /* Rows */
+    .prob-row {
+      display:flex; align-items:flex-start; gap:16px;
+      padding:20px 28px;
+      transition:background 0.2s;
+    }
+    .prob-row-left {
+      background:rgba(12,18,35,0.60);
+      border-right:none;
+      border-bottom:1px solid rgba(220,50,50,0.10);
+    }
+    .prob-row-left:last-of-type { border-bottom:none; }
+    .prob-row-left:hover { background:rgba(220,50,50,0.07); }
+    .prob-row-right {
+      background:rgba(196,98,42,0.07);
+      border-bottom:1px solid rgba(196,98,42,0.10);
+    }
+    .prob-row-right:hover { background:rgba(196,98,42,0.13); }
+
+    /* Arrow column cells */
+    .prob-arrow {
+      display:flex; align-items:center; justify-content:center;
+      background:rgba(8,13,26,0.80);
+      border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Number / check badges */
+    .prob-num {
+      flex-shrink:0; width:34px; height:34px; border-radius:50%;
       display:flex; align-items:center; justify-content:center;
       font-family:var(--heading-font); font-size:13px; font-weight:900;
-      color:#d4844a; letter-spacing:0; margin-top:3px; transition:background 0.3s;
+      margin-top:2px;
     }
-    .problem-text strong { display:block; font-size:17px; color:white; margin-bottom:5px; font-weight:800; font-family:var(--heading-font); }
-    .problem-text span { font-size:13px; color:rgba(255,255,255,0.58); line-height:1.7; }
+    .prob-num-red {
+      background:rgba(220,50,50,0.14);
+      border:1.5px solid rgba(220,50,50,0.35);
+      color:#e07070;
+    }
+    .prob-num-orange {
+      background:rgba(196,98,42,0.18);
+      border:1.5px solid rgba(196,98,42,0.45);
+      color:#d4844a;
+      font-size:16px;
+    }
 
-    /* AI Advantage panel */
-    .ai-advantage {
-      background:linear-gradient(160deg, rgba(196,98,42,0.14) 0%, rgba(26,84,144,0.20) 100%);
-      border:1px solid rgba(196,98,42,0.30); border-radius:20px; padding:40px;
-      box-shadow:0 0 60px rgba(196,98,42,0.08);
+    .prob-title {
+      font-family:var(--heading-font); font-size:16px; font-weight:800;
+      color:#ffffff; margin-bottom:4px; line-height:1.2;
     }
-    .ai-advantage-title { font-family:var(--heading-font); font-size:34px; font-weight:900; color:white; margin-bottom:10px; line-height:1.05; }
-    .ai-advantage-title span { color:var(--orange); }
-    .ai-advantage-sub { font-size:14px; color:rgba(255,255,255,0.65); margin-bottom:32px; line-height:1.7; }
-    .ai-capability-list { display:flex; flex-direction:column; gap:0; }
-    .ai-capability {
-      display:flex; align-items:center; gap:16px; padding:18px 0;
-      border-bottom:1px solid rgba(255,255,255,0.07); transition:all 0.2s;
+    .prob-body {
+      font-size:13px; color:rgba(255,255,255,0.55); line-height:1.6;
     }
-    .ai-capability:last-child { border-bottom:none; }
-    .ai-capability:hover { opacity:1; }
-    .ai-capability:hover .ai-cap-check { background:rgba(196,98,42,0.5); border-color:rgba(196,98,42,0.8); }
-    .ai-cap-check {
-      flex-shrink:0; width:28px; height:28px; border-radius:50%;
-      background:rgba(196,98,42,0.20); border:1px solid rgba(196,98,42,0.45);
-      display:flex; align-items:center; justify-content:center;
-      font-size:14px; font-weight:900; color:#d4844a; transition:all 0.3s;
-    }
-    .ai-cap-text strong { color:white; display:block; font-size:15px; font-weight:700; margin-bottom:3px; font-family:var(--heading-font); }
-    .ai-cap-text span { font-size:13px; color:rgba(255,255,255,0.60); line-height:1.5; }
-    .ai-badge {
-      margin-top:20px; padding:14px 20px;
-      background:rgba(196,98,42,0.1); border:1px solid rgba(196,98,42,0.22);
-      border-radius:10px; text-align:center; font-size:13px; color:rgba(255,255,255,0.75); line-height:1.7;
-    }
-    .ai-badge strong { color:var(--orange); display:block; font-size:15px; font-family:var(--heading-font); font-weight:800; }
+    .prob-row-left .prob-title { color:rgba(255,255,255,0.88); }
+    .prob-row-right .prob-title { color:#ffffff; }
 
     /* ── HOW IT WORKS ── */
     .steps { display:flex; gap:0; margin-top:60px; position:relative; }
@@ -588,77 +623,97 @@
 <section class="problem">
   <div class="section-inner">
     <div class="section-tag">The Problem</div>
-    <h2 class="section-title" style="line-height:0.95;margin-bottom:48px;"><span class="h-line">You're great at your <span class="word-accent">trade</span></span><br><span class="h-line">Your <span class="word-accent">technology</span> isn't keeping up</span></h2>
-    <div class="problem-grid">
-      <div class="problem-list">
-        <div class="problem-item fade-up">
-          <div class="problem-num">01</div>
-          <div class="problem-text">
-            <strong>AI feels out of reach</strong>
-            <span>Everyone's talking about AI but the tools are built for tech companies, not tradies. StaxAI changes that — AI built specifically for your trade.</span>
-          </div>
-        </div>
-        <div class="problem-item fade-up">
-          <div class="problem-num">02</div>
-          <div class="problem-text">
-            <strong>Invisible on social media</strong>
-            <span>You know you should be posting, but who has the time? Your competitors are building audiences and winning work while you're on the tools.</span>
-          </div>
-        </div>
-        <div class="problem-item fade-up">
-          <div class="problem-num">03</div>
-          <div class="problem-text">
-            <strong>No plan for growth</strong>
-            <span>You want to scale but strategy sounds expensive and complicated. AI can now do in minutes what consultants charge thousands for.</span>
-          </div>
-        </div>
-        <div class="problem-item fade-up">
-          <div class="problem-num">04</div>
-          <div class="problem-text">
-            <strong>All customer interaction is still manual</strong>
-            <span>Every enquiry, every follow-up, every quote request is handled personally by you. AI can manage this intelligently — 24/7, without missing a lead.</span>
-          </div>
+    <h2 class="section-title" style="line-height:0.92;margin-bottom:56px;"><span class="h-line">You're great at your <span class="word-accent">trade</span></span><br><span class="h-line">Your <span class="word-accent">technology</span> isn't keeping up</span></h2>
+
+    <div class="prob-graphic">
+
+      <!-- COLUMN HEADERS -->
+      <div class="prob-header prob-header-left">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="8.5" stroke="#e05a5a" stroke-width="1.2"/><line x1="5.5" y1="5.5" x2="12.5" y2="12.5" stroke="#e05a5a" stroke-width="1.8" stroke-linecap="round"/><line x1="12.5" y1="5.5" x2="5.5" y2="12.5" stroke="#e05a5a" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>THE PROBLEM</span>
+      </div>
+      <div class="prob-header prob-header-right">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="8.5" stroke="#c4622a" stroke-width="1.2"/><polyline points="4.5,9.5 7.5,12.5 13.5,6" stroke="#c4622a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>THE STAXAI FIX</span>
+      </div>
+
+      <!-- ROW 1 -->
+      <div class="prob-row prob-row-left">
+        <div class="prob-num prob-num-red">01</div>
+        <div class="prob-content">
+          <div class="prob-title">AI feels out of reach</div>
+          <div class="prob-body">Everyone&rsquo;s talking about AI but the tools are built for tech companies, not tradies.</div>
         </div>
       </div>
-      <div class="ai-advantage">
-        <div class="ai-advantage-title">What <span>AI</span> can do<br>for your business</div>
-        <div class="ai-advantage-sub">StaxAI embeds enterprise-grade AI directly into the way your trade business operates — purpose-built for your industry, not bolted on.</div>
-        <div class="ai-capability-list">
-          <div class="ai-capability">
-            <div class="ai-cap-check">&#10003;</div>
-            <div class="ai-cap-text">
-              <strong>Create content automatically</strong>
-              <span>Turn job site photos into professional social posts in seconds</span>
-            </div>
-          </div>
-          <div class="ai-capability">
-            <div class="ai-cap-check">&#10003;</div>
-            <div class="ai-cap-text">
-              <strong>Think strategically for you</strong>
-              <span>Generate business plans, growth strategies and roadmaps — no consultant</span>
-            </div>
-          </div>
-          <div class="ai-capability">
-            <div class="ai-cap-check">&#10003;</div>
-            <div class="ai-cap-text">
-              <strong>Communicate like a big business</strong>
-              <span>Professional emails, customer updates and 24/7 chatbot on autopilot</span>
-            </div>
-          </div>
-          <div class="ai-capability">
-            <div class="ai-cap-check">&#10003;</div>
-            <div class="ai-cap-text">
-              <strong>Stay ahead of your industry</strong>
-              <span>Daily AI digest of regulatory changes, supplier news and trade updates</span>
-            </div>
-          </div>
-        </div>
-        <div class="ai-badge">
-          <strong>From $59/mth per tool</strong>
-          No contracts · No IT setup · Cancel anytime
+      <div class="prob-arrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="prob-row prob-row-right">
+        <div class="prob-num prob-num-orange">&#10003;</div>
+        <div class="prob-content">
+          <div class="prob-title">Create content automatically</div>
+          <div class="prob-body">Turn job site photos into professional social posts in seconds.</div>
         </div>
       </div>
-    </div>
+
+      <!-- ROW 2 -->
+      <div class="prob-row prob-row-left">
+        <div class="prob-num prob-num-red">02</div>
+        <div class="prob-content">
+          <div class="prob-title">Invisible on social media</div>
+          <div class="prob-body">Your competitors are building audiences and winning work while you&rsquo;re on the tools.</div>
+        </div>
+      </div>
+      <div class="prob-arrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="prob-row prob-row-right">
+        <div class="prob-num prob-num-orange">&#10003;</div>
+        <div class="prob-content">
+          <div class="prob-title">Think strategically for you</div>
+          <div class="prob-body">Generate business plans, growth strategies and roadmaps — no consultant needed.</div>
+        </div>
+      </div>
+
+      <!-- ROW 3 -->
+      <div class="prob-row prob-row-left">
+        <div class="prob-num prob-num-red">03</div>
+        <div class="prob-content">
+          <div class="prob-title">No plan for growth</div>
+          <div class="prob-body">You want to scale but strategy sounds expensive and complicated.</div>
+        </div>
+      </div>
+      <div class="prob-arrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="prob-row prob-row-right">
+        <div class="prob-num prob-num-orange">&#10003;</div>
+        <div class="prob-content">
+          <div class="prob-title">Communicate like a big business</div>
+          <div class="prob-body">Professional emails, customer updates and 24/7 chatbot on autopilot.</div>
+        </div>
+      </div>
+
+      <!-- ROW 4 -->
+      <div class="prob-row prob-row-left">
+        <div class="prob-num prob-num-red">04</div>
+        <div class="prob-content">
+          <div class="prob-title">All customer interaction is still manual</div>
+          <div class="prob-body">Every enquiry, every follow-up handled personally by you. AI manages this 24/7.</div>
+        </div>
+      </div>
+      <div class="prob-arrow">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="prob-row prob-row-right">
+        <div class="prob-num prob-num-orange">&#10003;</div>
+        <div class="prob-content">
+          <div class="prob-title">Stay ahead of your industry</div>
+          <div class="prob-body">Daily AI digest of regulatory changes, supplier news and trade updates.</div>
+        </div>
+      </div>
+
+    </div><!-- /prob-graphic -->
   </div>
 </section>
 
