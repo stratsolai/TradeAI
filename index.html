@@ -478,8 +478,26 @@
   display: flex;
   gap: 24px;
   padding: 8px 0 16px;
-  transition: transform 0.75s cubic-bezier(0.4,0,0.2,1);
+  animation: reviewStep 24s linear infinite;
   will-change: transform;
+}
+.review-track:hover {
+  animation-play-state: paused;
+}
+@keyframes reviewStep {
+  0%       { transform: translateX(0px); }
+  13.542%  { transform: translateX(0px); }
+  16.667%  { transform: translateX(-364px); }
+  30.208%  { transform: translateX(-364px); }
+  33.333%  { transform: translateX(-728px); }
+  46.875%  { transform: translateX(-728px); }
+  50%      { transform: translateX(-1092px); }
+  63.542%  { transform: translateX(-1092px); }
+  66.667%  { transform: translateX(-1456px); }
+  80.208%  { transform: translateX(-1456px); }
+  83.333%  { transform: translateX(-1820px); }
+  96.875%  { transform: translateX(-1820px); }
+  100%     { transform: translateX(-2184px); }
 }
 .review-card {
   width: 340px;
@@ -1243,30 +1261,5 @@ setTimeout(function() { setInterval(rotateWord, 3000); }, 1500);
 </script>
 
 
-<script>
-(function(){
-  var track = document.getElementById('reviewTrack');
-  if(!track) return;
-  var CARD_W = 340, GAP = 24, STEP = CARD_W + GAP; // 364px per step
-  var TOTAL_REAL = 6;
-  var current = 0;
-  var timer = null;
-  var paused = false;
-
-  function advance() {
-    if(paused) return;
-    current++;
-    if(current >= TOTAL_REAL) current = 0;
-    track.style.transform = 'translateX(-' + (current * STEP) + 'px)';
-    timer = setTimeout(advance, 3700); // 750ms transition + 3000ms pause (set in CSS)
-  }
-
-  track.addEventListener('mouseenter', function(){ paused = true; clearTimeout(timer); });
-  track.addEventListener('mouseleave', function(){ paused = false; timer = setTimeout(advance, 3000); });
-
-  // Start after initial 3s
-  timer = setTimeout(advance, 3000);
-})();
-</script>
 </body>
 </html>
