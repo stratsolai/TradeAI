@@ -285,19 +285,28 @@
     .problem-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:start; margin-top:60px; }
     .problem-list { display:flex; flex-direction:column; gap:0; }
     .problem-item {
-      display:flex; gap:20px; align-items:flex-start; padding:24px 0 24px 20px;
-      border-left:3px solid rgba(196,98,42,0.25); margin-bottom:8px;
-      transition:border-color 0.3s;
+      display:flex; gap:20px; align-items:flex-start; padding:22px 0;
+      border-bottom:1px solid rgba(255,255,255,0.07);
+      transition:all 0.3s;
     }
-    .problem-item:hover { border-left-color:rgba(196,98,42,0.8); }
-    .problem-icon { font-size:26px; flex-shrink:0; margin-top:4px; }
-    .problem-text strong { display:block; font-size:18px; color:white; margin-bottom:6px; font-weight:800; font-family:var(--heading-font); letter-spacing:-0.01em; }
-    .problem-text span { font-size:14px; color:rgba(255,255,255,0.60); line-height:1.7; }
+    .problem-item:first-child { padding-top:0; }
+    .problem-item:last-child { border-bottom:none; }
+    .problem-item:hover .problem-num { background:rgba(196,98,42,0.5); }
+    .problem-num {
+      flex-shrink:0; width:36px; height:36px; border-radius:50%;
+      background:rgba(196,98,42,0.22); border:1px solid rgba(196,98,42,0.45);
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--heading-font); font-size:13px; font-weight:900;
+      color:#d4844a; letter-spacing:0; margin-top:3px; transition:background 0.3s;
+    }
+    .problem-text strong { display:block; font-size:17px; color:white; margin-bottom:5px; font-weight:800; font-family:var(--heading-font); }
+    .problem-text span { font-size:13px; color:rgba(255,255,255,0.58); line-height:1.7; }
 
     /* AI Advantage panel */
     .ai-advantage {
-      background:linear-gradient(160deg, rgba(196,98,42,0.10) 0%, rgba(26,84,144,0.14) 100%);
-      border:1px solid rgba(196,98,42,0.22); border-radius:20px; padding:40px;
+      background:linear-gradient(160deg, rgba(196,98,42,0.14) 0%, rgba(26,84,144,0.20) 100%);
+      border:1px solid rgba(196,98,42,0.30); border-radius:20px; padding:40px;
+      box-shadow:0 0 60px rgba(196,98,42,0.08);
     }
     .ai-advantage-title { font-family:var(--heading-font); font-size:34px; font-weight:900; color:white; margin-bottom:10px; line-height:1.05; }
     .ai-advantage-title span { color:var(--orange); }
@@ -308,9 +317,15 @@
       border-bottom:1px solid rgba(255,255,255,0.07); transition:all 0.2s;
     }
     .ai-capability:last-child { border-bottom:none; }
-    .ai-capability:hover { opacity:0.85; }
-    .ai-cap-icon { font-size:26px; flex-shrink:0; }
-    .ai-cap-text strong { color:white; display:block; font-size:15px; font-weight:700; margin-bottom:3px; font-family:var(--heading-font); letter-spacing:-0.01em; }
+    .ai-capability:hover { opacity:1; }
+    .ai-capability:hover .ai-cap-check { background:rgba(196,98,42,0.5); border-color:rgba(196,98,42,0.8); }
+    .ai-cap-check {
+      flex-shrink:0; width:28px; height:28px; border-radius:50%;
+      background:rgba(196,98,42,0.20); border:1px solid rgba(196,98,42,0.45);
+      display:flex; align-items:center; justify-content:center;
+      font-size:14px; font-weight:900; color:#d4844a; transition:all 0.3s;
+    }
+    .ai-cap-text strong { color:white; display:block; font-size:15px; font-weight:700; margin-bottom:3px; font-family:var(--heading-font); }
     .ai-cap-text span { font-size:13px; color:rgba(255,255,255,0.60); line-height:1.5; }
     .ai-badge {
       margin-top:20px; padding:14px 20px;
@@ -573,66 +588,65 @@
 <section class="problem">
   <div class="section-inner">
     <div class="section-tag">The Problem</div>
-    <h2 class="section-title"><span class="h-line">You're great at your trade</span><br><span class="h-line">Your technology isn't <span class="word-accent">keeping up</span></span></h2>
+    <h2 class="section-title" style="line-height:0.95;margin-bottom:48px;"><span class="h-line">You're great at your <span class="word-accent">trade</span></span><br><span class="h-line">Your <span class="word-accent">technology</span> isn't keeping up</span></h2>
     <div class="problem-grid">
       <div class="problem-list">
         <div class="problem-item fade-up">
-          <div class="problem-icon">🤖</div>
+          <div class="problem-num">01</div>
           <div class="problem-text">
             <strong>AI feels out of reach</strong>
             <span>Everyone's talking about AI but the tools are built for tech companies, not tradies. StaxAI changes that — AI built specifically for your trade.</span>
           </div>
         </div>
         <div class="problem-item fade-up">
-          <div class="problem-icon">📱</div>
+          <div class="problem-num">02</div>
           <div class="problem-text">
             <strong>Invisible on social media</strong>
             <span>You know you should be posting, but who has the time? Your competitors are building audiences and winning work while you're on the tools.</span>
           </div>
         </div>
         <div class="problem-item fade-up">
-          <div class="problem-icon">📈</div>
+          <div class="problem-num">03</div>
           <div class="problem-text">
             <strong>No plan for growth</strong>
             <span>You want to scale but strategy sounds expensive and complicated. AI can now do in minutes what consultants charge thousands for.</span>
           </div>
         </div>
         <div class="problem-item fade-up">
-          <div class="problem-icon">📞</div>
+          <div class="problem-num">04</div>
           <div class="problem-text">
             <strong>All customer interaction is still manual</strong>
             <span>Every enquiry, every follow-up, every quote request is handled personally by you. AI can manage this intelligently — 24/7, without missing a lead.</span>
           </div>
         </div>
       </div>
-
       <div class="ai-advantage">
         <div class="ai-advantage-title">What <span>AI</span> can do<br>for your business</div>
         <div class="ai-advantage-sub">StaxAI embeds enterprise-grade AI directly into the way your trade business operates — purpose-built for your industry, not bolted on.</div>
         <div class="ai-capability-list">
           <div class="ai-capability">
-            <div class="ai-cap-icon">✍️</div>
+            <div class="ai-cap-check">&#10003;</div>
             <div class="ai-cap-text">
               <strong>Create content automatically</strong>
               <span>Turn job site photos into professional social posts in seconds</span>
             </div>
           </div>
           <div class="ai-capability">
-            <div class="ai-cap-icon">🧠</div>
+            <div class="ai-cap-check">&#10003;</div>
             <div class="ai-cap-text">
               <strong>Think strategically for you</strong>
               <span>Generate business plans, growth strategies and roadmaps — no consultant</span>
             </div>
           </div>
           <div class="ai-capability">
-            <div class="ai-cap-icon">💬</div>
+            <div class="ai-cap-check">&#10003;</div>
             <div class="ai-cap-text">
               <strong>Communicate like a big business</strong>
               <span>Professional emails, customer updates and 24/7 chatbot on autopilot</span>
             </div>
           </div>
           <div class="ai-capability">
-            <div class="ai-cap-icon">📡</div>
+            <div class="ai-cap-check">&#10003;</div>
             <div class="ai-cap-text">
               <strong>Stay ahead of your industry</strong>
               <span>Daily AI digest of regulatory changes, supplier news and trade updates</span>
