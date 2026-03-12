@@ -279,214 +279,91 @@
     .section-sub { font-size:17px; color:var(--muted); line-height:1.7; max-width:560px; text-align:center; margin:0 auto; }
 
     /* ── PROBLEM ── */
-    .problem { background:var(--bg2); }
-    .problem .section-title .h-line { background:linear-gradient(to right,#ffffff,#e8d5b8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .problem .section-title .word-accent { background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-
-    /* Graphic grid: left col | arrow col | right col, 4 rows + header row */
-    .prob-graphic {
-      display:grid;
-      grid-template-columns:1fr 52px 1fr;
-      grid-template-rows:auto auto auto auto auto;
-      gap:0;
-      border-radius:16px;
-      overflow:hidden;
-    }
-
-    /* Column headers */
-    .prob-header {
-      display:flex; align-items:center; gap:10px;
-      padding:14px 28px;
-      font-family:var(--heading-font); font-size:13px; font-weight:900;
-      letter-spacing:0.12em; text-transform:uppercase;
-    }
-    .prob-header-left {
-      background:rgba(220,50,50,0.12);
-      border-bottom:1px solid rgba(220,50,50,0.20);
-      color:rgba(255,255,255,0.70);
-    }
-    .prob-header-right {
-      background:rgba(196,98,42,0.14);
-      border-bottom:1px solid rgba(196,98,42,0.25);
-      color:rgba(255,255,255,0.70);
-    }
-
-    /* Arrow column header cell */
-    .prob-header + .prob-header-right { grid-column:3; }
-
-    /* Rows */
-    .prob-row {
-      display:flex; align-items:flex-start; gap:16px;
-      padding:20px 28px;
-      transition:background 0.2s;
-    }
-    .prob-row-left {
-      background:rgba(12,18,35,0.60);
-      border-right:none;
-      border-bottom:1px solid rgba(220,50,50,0.10);
-    }
-    .prob-row-left:last-of-type { border-bottom:none; }
-    .prob-row-left:hover { background:rgba(220,50,50,0.07); }
-    .prob-row-right {
-      background:rgba(196,98,42,0.07);
-      border-bottom:1px solid rgba(196,98,42,0.10);
-    }
-    .prob-row-right:hover { background:rgba(196,98,42,0.13); }
-
-    /* Arrow column cells */
-    .prob-arrow {
-      display:flex; align-items:center; justify-content:center;
-      background:rgba(8,13,26,0.80);
-      border-bottom:1px solid rgba(255,255,255,0.04);
-    }
-
-    /* Number / check badges */
-    .prob-num {
-      flex-shrink:0; width:34px; height:34px; border-radius:50%;
-      display:flex; align-items:center; justify-content:center;
-      font-family:var(--heading-font); font-size:13px; font-weight:900;
-      margin-top:2px;
-    }
-    .prob-num-red {
-      background:rgba(220,50,50,0.14);
-      border:1.5px solid rgba(220,50,50,0.35);
-      color:#e07070;
-    }
-    .prob-num-orange {
-      background:rgba(196,98,42,0.18);
-      border:1.5px solid rgba(196,98,42,0.45);
-      color:#d4844a;
-      font-size:16px;
-    }
-
-    .prob-title {
-      font-family:var(--heading-font); font-size:16px; font-weight:800;
-      color:#ffffff; margin-bottom:4px; line-height:1.2;
-    }
-    .prob-body {
-      font-size:13px; color:rgba(255,255,255,0.55); line-height:1.6;
-    }
-    .prob-row-left .prob-title { color:rgba(255,255,255,0.88); }
-    .prob-row-right .prob-title { color:#ffffff; }
-
-    /* ── HOW IT WORKS ── */
-    .steps { display:flex; gap:0; margin-top:60px; position:relative; }
-    .steps::before {
-      content:''; position:absolute; top:40px; left:40px; right:40px; height:2px;
-      background:linear-gradient(90deg, var(--orange), var(--blue)); z-index:0;
-    }
-    .step { flex:1; text-align:center; padding:0 24px; position:relative; z-index:1; }
-    .step-num {
-      width:80px; height:80px; border-radius:50%;
-      background:var(--blue); border:3px solid var(--orange);
-      display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
-      font-family:var(--heading-font); font-size:32px; font-weight:900; color:white; position:relative;
-    }
-    .step-num::after { content:''; position:absolute; inset:-6px; border-radius:50%; background:var(--bg); z-index:-1; }
-    .step-icon { font-size:24px; position:absolute; bottom:-8px; right:-8px; }
-    .step h3 { font-family:var(--heading-font); font-size:22px; font-weight:800; margin-bottom:10px; }
-    .step p { font-size:14px; color:var(--muted); line-height:1.6; }
-
-    /* ── TOOLS ── */
-    .tools-bg { background:var(--bg2); }
-    .tools-header { display:flex; flex-direction:column; align-items:center; margin-bottom:50px; gap:20px; }
-    .tools-header .section-title { text-align:center; }
-    .tools-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
-    .tool-tile {
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:16px; padding:28px; cursor:pointer;
-      transition:all 0.3s; position:relative; overflow:hidden;
-      text-decoration:none; color:inherit; display:block;
-    }
-    .tool-tile::before {
-      content:''; position:absolute; top:0; left:0; right:0; height:3px;
-      background:linear-gradient(90deg,var(--blue),var(--orange));
-      transform:scaleX(0); transition:transform 0.3s; transform-origin:left;
-    }
-    .tool-tile:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); border-color:rgba(26,84,144,0.5); }
-    .tool-tile:hover::before { transform:scaleX(1); }
-    .tile-icon { font-size:32px; margin-bottom:14px; }
-    .tile-name { font-size:16px; font-weight:700; color:white; margin-bottom:8px; }
-    .tile-desc { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.6; margin-bottom:16px; }
-    .tile-tags { display:flex; gap:8px; flex-wrap:wrap; }
-    .tile-tag {
-      font-size:11px; color:var(--orange); font-weight:700;
-      background:rgba(196,98,42,0.12); padding:4px 10px; border-radius:20px;
-      border:1px solid rgba(196,98,42,0.2);
-    }
-
-    /* ── INDUSTRIES ── */
-    .industries-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; margin-top:50px; }
-    .industry-card {
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:14px; padding:24px 20px; text-align:center;
-      cursor:pointer; transition:all 0.3s; text-decoration:none;
-    }
-    .industry-card:hover { background:rgba(26,84,144,0.2); border-color:rgba(26,84,144,0.5); transform:translateY(-4px); }
-    .industry-emoji { font-size:32px; margin-bottom:10px; }
-    .industry-name { font-size:14px; font-weight:700; color:white; margin-bottom:4px; }
-    .industry-count { font-size:12px; color:var(--orange); font-weight:600; }
-
-    /* ── TESTIMONIALS ── */
-    .testimonials-bg { background:var(--bg2); }
-    .testimonials-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:50px; }
-    .testimonial {
-      background:var(--card); border:1px solid var(--card-border);
-      border-radius:16px; padding:28px; transition:all 0.3s;
-    }
-    .testimonial:hover { background:rgba(255,255,255,0.1); transform:translateY(-4px); }
-    .testimonial-quote { font-size:36px; color:var(--orange); line-height:1; margin-bottom:12px; }
-    .testimonial-text { font-size:15px; line-height:1.7; color:rgba(255,255,255,0.85); margin-bottom:20px; }
-    .testimonial-author { display:flex; align-items:center; gap:12px; }
-    .author-avatar { width:44px; height:44px; border-radius:50%; background:var(--blue); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:700; color:white; flex-shrink:0; }
-    .author-name { font-size:14px; font-weight:700; color:white; }
-    .author-biz { font-size:12px; color:var(--muted); }
-    .author-stars { color:var(--orange); font-size:12px; }
-
-    /* ── CTA ── */
-    .cta-section {
-      text-align:center;
-      background:linear-gradient(135deg, var(--blue-dark) 0%, var(--bg) 100%);
-      position:relative; overflow:hidden;
-    }
-    .cta-section::before {
-      content:''; position:absolute; inset:0;
-      background:radial-gradient(ellipse 60% 60% at 50% 50%, rgba(196,98,42,0.1), transparent);
-    }
-    .cta-content { position:relative; z-index:1; }
-    .cta-title { font-family:var(--heading-font); font-size:clamp(40px,6vw,72px); font-weight:900; margin-bottom:20px; line-height:1; }
-    .cta-sub { font-size:18px; color:var(--muted); max-width:500px; margin:0 auto 40px; line-height:1.7; }
-    .cta-actions { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:24px; }
-    .cta-note { font-size:13px; color:var(--muted); }
-
-    /* ── FOOTER ── */
-    footer {
-      background:var(--bg2); padding:60px 48px 30px;
-      border-top:1px solid rgba(255,255,255,0.08);
-    }
-    .footer-inner { max-width:1200px; margin:0 auto; }
-    .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:60px; margin-bottom:60px; }
-    .footer-brand p { font-size:14px; color:var(--muted); line-height:1.8; margin-top:16px; max-width:300px; }
-    .footer-col h4 { font-size:12px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:#c4622a; margin-bottom:16px; }
-    .footer-col a { display:block; font-size:14px; color:var(--muted); text-decoration:none; margin-bottom:10px; transition:color 0.2s; }
-    .footer-col a:hover { color:white; }
-    .footer-bottom {
-      display:flex; justify-content:space-between; align-items:center;
-      padding-top:30px; border-top:1px solid rgba(255,255,255,0.08);
-      font-size:13px; color:var(--muted); flex-wrap:wrap; gap:10px;
-    }
-
-    /* ── MOBILE ── */
-    @media(max-width:900px) {
-      nav { padding:16px 24px; }
-      .nav-links { display:none; }
-      .hero { padding:100px 24px 60px; }
-      .hero-content { grid-template-columns:1fr; gap:50px; }
-      .stats-strip { padding:40px 24px; }
-      .stats-inner { justify-content:center; gap:30px; }
-      .stat-divider { display:none; }
-      section { padding:70px 24px; }
-      .problem-grid { grid-template-columns:1fr; gap:40px; }
+    .problem {
+  padding: 80px 48px;
+  background: #0d1628;
+}
+.problem .section-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.problem .section-tag {
+  text-align: center;
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 24px;
+}
+.problem .section-title {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 900;
+  font-size: 52px;
+  color: #fff;
+  text-align: center;
+  line-height: 1.1;
+  margin-bottom: 48px;
+}
+.pairs-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+.pair-row {
+  display: grid;
+  grid-template-columns: 1fr 48px 1fr;
+  align-items: center;
+}
+.problem-cell, .solution-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: 10px;
+}
+.problem-cell {
+  background: rgba(196,98,42,0.18);
+  border: 1px solid rgba(196,98,42,0.35);
+}
+.solution-cell {
+  background: rgba(30,58,138,0.35);
+  border: 1px solid rgba(255,255,255,0.10);
+}
+.problem-icon, .solution-icon {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.solution-icon {
+  font-size: 16px;
+  font-weight: 700;
+  color: #4ade80;
+}
+.problem-title, .solution-title {
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #fff;
+  line-height: 1.2;
+  margin-bottom: 4px;
+}
+.problem-desc, .solution-desc {
+  font-family: "DM Sans", sans-serif;
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+}
+.arrow-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255,255,255,0.45);
+}
       .steps { flex-direction:column; gap:40px; }
       .steps::before { display:none; }
       .tools-grid { grid-template-columns:1fr 1fr; }
@@ -622,98 +499,41 @@
 <!-- ── THE PROBLEM ── -->
 <section class="problem">
   <div class="section-inner">
-    <div class="section-tag">The Problem</div>
-    <h2 class="section-title" style="line-height:0.92;margin-bottom:56px;"><span class="h-line">You're great at your <span class="word-accent">trade</span></span><br><span class="h-line">Your <span class="word-accent">technology</span> isn't keeping up</span></h2>
+    <div class="section-tag">THE PROBLEM</div>
+    <h2 class="section-title">You're great at your trade<br>Your technology isn't keeping up</h2>
+    <div class="pairs-grid">
 
-    <div class="prob-graphic">
-
-      <!-- COLUMN HEADERS -->
-      <div class="prob-header prob-header-left">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="8.5" stroke="#e05a5a" stroke-width="1.2"/><line x1="5.5" y1="5.5" x2="12.5" y2="12.5" stroke="#e05a5a" stroke-width="1.8" stroke-linecap="round"/><line x1="12.5" y1="5.5" x2="5.5" y2="12.5" stroke="#e05a5a" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>THE PROBLEM</span>
-      </div>
-      <div class="prob-header prob-header-right">
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="8.5" stroke="#c4622a" stroke-width="1.2"/><polyline points="4.5,9.5 7.5,12.5 13.5,6" stroke="#c4622a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>THE STAXAI FIX</span>
+      <div class="pair-row">
+        <div class="problem-cell"><div class="problem-icon">🔥</div><div class="cell-text"><div class="problem-title">AI feels out of reach</div><div class="problem-desc">Everyone's talking about AI but the tools are built for tech companies, not tradies.</div></div></div>
+        <div class="arrow-col"><svg width="48" height="40" viewBox="0 0 48 40" fill="none"><path d="M8 10 L22 20 L8 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 10 L38 20 L24 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="solution-cell"><div class="solution-icon">&#10003;</div><div class="cell-text"><div class="solution-title">Create content automatically</div><div class="solution-desc">Turn job site photos into professional social posts in seconds.</div></div></div>
       </div>
 
-      <!-- ROW 1 -->
-      <div class="prob-row prob-row-left">
-        <div class="prob-num prob-num-red">01</div>
-        <div class="prob-content">
-          <div class="prob-title">AI feels out of reach</div>
-          <div class="prob-body">Everyone&rsquo;s talking about AI but the tools are built for tech companies, not tradies.</div>
-        </div>
-      </div>
-      <div class="prob-arrow">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="prob-row prob-row-right">
-        <div class="prob-num prob-num-orange">&#10003;</div>
-        <div class="prob-content">
-          <div class="prob-title">Create content automatically</div>
-          <div class="prob-body">Turn job site photos into professional social posts in seconds.</div>
-        </div>
+      <div class="pair-row">
+        <div class="problem-cell"><div class="problem-icon">🔥</div><div class="cell-text"><div class="problem-title">Invisible on social media</div><div class="problem-desc">Your competitors are building audiences and winning work while you're on the tools.</div></div></div>
+        <div class="arrow-col"><svg width="48" height="40" viewBox="0 0 48 40" fill="none"><path d="M8 10 L22 20 L8 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 10 L38 20 L24 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="solution-cell"><div class="solution-icon">&#10003;</div><div class="cell-text"><div class="solution-title">Think strategically for you</div><div class="solution-desc">Business plans, growth strategies and roadmaps &mdash; no consultant needed.</div></div></div>
       </div>
 
-      <!-- ROW 2 -->
-      <div class="prob-row prob-row-left">
-        <div class="prob-num prob-num-red">02</div>
-        <div class="prob-content">
-          <div class="prob-title">Invisible on social media</div>
-          <div class="prob-body">Your competitors are building audiences and winning work while you&rsquo;re on the tools.</div>
-        </div>
-      </div>
-      <div class="prob-arrow">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="prob-row prob-row-right">
-        <div class="prob-num prob-num-orange">&#10003;</div>
-        <div class="prob-content">
-          <div class="prob-title">Think strategically for you</div>
-          <div class="prob-body">Generate business plans, growth strategies and roadmaps — no consultant needed.</div>
-        </div>
+      <div class="pair-row">
+        <div class="problem-cell"><div class="problem-icon">🔥</div><div class="cell-text"><div class="problem-title">No plan for growth</div><div class="problem-desc">You want to scale but strategy sounds expensive and complicated.</div></div></div>
+        <div class="arrow-col"><svg width="48" height="40" viewBox="0 0 48 40" fill="none"><path d="M8 10 L22 20 L8 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 10 L38 20 L24 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="solution-cell"><div class="solution-icon">&#10003;</div><div class="cell-text"><div class="solution-title">Communicate like a big business</div><div class="solution-desc">Professional emails, customer updates and 24/7 chatbot on autopilot.</div></div></div>
       </div>
 
-      <!-- ROW 3 -->
-      <div class="prob-row prob-row-left">
-        <div class="prob-num prob-num-red">03</div>
-        <div class="prob-content">
-          <div class="prob-title">No plan for growth</div>
-          <div class="prob-body">You want to scale but strategy sounds expensive and complicated.</div>
-        </div>
-      </div>
-      <div class="prob-arrow">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="prob-row prob-row-right">
-        <div class="prob-num prob-num-orange">&#10003;</div>
-        <div class="prob-content">
-          <div class="prob-title">Communicate like a big business</div>
-          <div class="prob-body">Professional emails, customer updates and 24/7 chatbot on autopilot.</div>
-        </div>
+      <div class="pair-row">
+        <div class="problem-cell"><div class="problem-icon">🔥</div><div class="cell-text"><div class="problem-title">All customer contact is still manual</div><div class="problem-desc">Every enquiry, every follow-up handled personally by you.</div></div></div>
+        <div class="arrow-col"><svg width="48" height="40" viewBox="0 0 48 40" fill="none"><path d="M8 10 L22 20 L8 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 10 L38 20 L24 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="solution-cell"><div class="solution-icon">&#10003;</div><div class="cell-text"><div class="solution-title">Stay ahead of your industry</div><div class="solution-desc">Daily AI digest of regulatory changes, supplier news and trade updates.</div></div></div>
       </div>
 
-      <!-- ROW 4 -->
-      <div class="prob-row prob-row-left">
-        <div class="prob-num prob-num-red">04</div>
-        <div class="prob-content">
-          <div class="prob-title">All customer interaction is still manual</div>
-          <div class="prob-body">Every enquiry, every follow-up handled personally by you. AI manages this 24/7.</div>
-        </div>
-      </div>
-      <div class="prob-arrow">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="15" fill="rgba(196,98,42,0.15)" stroke="rgba(196,98,42,0.4)" stroke-width="1"/><polyline points="11,16 21,16" stroke="#c4622a" stroke-width="2" stroke-linecap="round"/><polyline points="17,12 21,16 17,20" stroke="#c4622a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </div>
-      <div class="prob-row prob-row-right">
-        <div class="prob-num prob-num-orange">&#10003;</div>
-        <div class="prob-content">
-          <div class="prob-title">Stay ahead of your industry</div>
-          <div class="prob-body">Daily AI digest of regulatory changes, supplier news and trade updates.</div>
-        </div>
+      <div class="pair-row">
+        <div class="problem-cell"><div class="problem-icon">🔥</div><div class="cell-text"><div class="problem-title">No time to chase reviews or referrals</div><div class="problem-desc">Happy customers forget to leave reviews without a prompt.</div></div></div>
+        <div class="arrow-col"><svg width="48" height="40" viewBox="0 0 48 40" fill="none"><path d="M8 10 L22 20 L8 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M24 10 L38 20 L24 30" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="solution-cell"><div class="solution-icon">&#10003;</div><div class="cell-text"><div class="solution-title">Automate your reputation</div><div class="solution-desc">Review requests and referral follow-ups sent automatically at job completion.</div></div></div>
       </div>
 
-    </div><!-- /prob-graphic -->
+    </div>
   </div>
 </section>
 
