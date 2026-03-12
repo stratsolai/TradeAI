@@ -280,8 +280,7 @@
 
     /* ── PROBLEM ── */
     .problem { background:var(--bg2); }
-    .problem-grid { display:grid; grid-template-columns:1fr 56px 1fr; gap:0; align-items:start; margin-top:60px; }
-    .prob-arrow { font-family:var(--heading-font); font-size:26px; font-weight:700; color:#c4622a; display:flex; align-items:center; justify-content:center; min-height:74px; }
+    .problem-grid { display:flex; flex-direction:column; gap:14px; margin-top:60px; } .prob-row { display:grid; grid-template-columns:1fr 56px 1fr; align-items:center; gap:0; } .prob-arrow { font-family:var(--heading-font); font-size:26px; font-weight:700; color:#c4622a; display:flex; align-items:center; justify-content:center; align-self:stretch; }
     .problem-list { display:flex; flex-direction:column; gap:14px; }
     .problem-item {
       display:flex; gap:16px; align-items:flex-start; padding:20px; border-radius:12px;
@@ -571,83 +570,87 @@
     <h2 class="section-title" style="line-height:0.95;margin-bottom:48px;"><span class="h-line" style="display:block;">You&apos;re great at your <span class="word-accent">trade</span></span><span class="h-line" style="display:block;">Your <span class="word-accent">technology</span> isn&apos;t keeping up</span></h2>
     <div class="problem-grid">
 
-      <div class="problem-list">
-        <div class="problem-item fade-up" style="border-color:rgba(196,98,42,0.35);">
+      <div class="prob-row">
+        <div class="problem-item" style="border-color:rgba(196,98,42,0.35);">
           <div class="problem-icon">🔥</div>
           <div class="problem-text">
             <strong>AI feels out of reach</strong>
             <span>Everyone&apos;s talking about AI but the tools are built for tech companies, not tradies. StaxAI changes that — AI built specifically for your trade.</span>
           </div>
         </div>
-        <div class="problem-item fade-up" style="border-color:rgba(196,98,42,0.35);">
+        <div class="prob-arrow">&rarr;</div>
+        <div class="ai-capability" style="border-color:rgba(255,255,255,0.10);">
+          <div class="ai-cap-text">
+            <strong>Create content automatically</strong>
+            <span>Turn job site photos into professional social posts in seconds</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prob-row">
+        <div class="problem-item" style="border-color:rgba(196,98,42,0.35);">
           <div class="problem-icon">🔥</div>
           <div class="problem-text">
             <strong>Invisible on social media</strong>
             <span>You know you should be posting, but who has the time? Your competitors are building audiences and winning work while you&apos;re on the tools.</span>
           </div>
         </div>
-        <div class="problem-item fade-up" style="border-color:rgba(196,98,42,0.35);">
+        <div class="prob-arrow">&rarr;</div>
+        <div class="ai-capability" style="border-color:rgba(255,255,255,0.10);">
+          <div class="ai-cap-text">
+            <strong>Think strategically for you</strong>
+            <span>Generate business plans, growth strategies and roadmaps — no consultant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prob-row">
+        <div class="problem-item" style="border-color:rgba(196,98,42,0.35);">
           <div class="problem-icon">🔥</div>
           <div class="problem-text">
             <strong>No plan for growth</strong>
             <span>You want to scale but strategy sounds expensive and complicated. AI can now do in minutes what consultants charge thousands for.</span>
           </div>
         </div>
-        <div class="problem-item fade-up" style="border-color:rgba(196,98,42,0.35);">
+        <div class="prob-arrow">&rarr;</div>
+        <div class="ai-capability" style="border-color:rgba(255,255,255,0.10);">
+          <div class="ai-cap-text">
+            <strong>Communicate like a big business</strong>
+            <span>Professional emails, customer updates and 24/7 chatbot on autopilot</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prob-row">
+        <div class="problem-item" style="border-color:rgba(196,98,42,0.35);">
           <div class="problem-icon">🔥</div>
           <div class="problem-text">
             <strong>All customer interaction is still manual</strong>
             <span>Every enquiry, every follow-up, every quote request is handled personally by you. AI can manage this intelligently — 24/7, without missing a lead.</span>
           </div>
         </div>
-        <div class="problem-item fade-up" style="border-color:rgba(196,98,42,0.35);">
+        <div class="prob-arrow">&rarr;</div>
+        <div class="ai-capability" style="border-color:rgba(255,255,255,0.10);">
+          <div class="ai-cap-text">
+            <strong>Stay ahead of your industry</strong>
+            <span>Daily AI digest of regulatory changes, supplier news and trade updates</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="prob-row">
+        <div class="problem-item" style="border-color:rgba(196,98,42,0.35);">
           <div class="problem-icon">🔥</div>
           <div class="problem-text">
             <strong>Winning tenders and quotes takes too long</strong>
             <span>You spend hours writing responses that bigger competitors polish in minutes. AI reads the brief and writes a professional response for you.</span>
           </div>
         </div>
-      </div>
-
-      <div style="display:flex;flex-direction:column;gap:14px;align-items:center;padding-top:0;">
         <div class="prob-arrow">&rarr;</div>
-        <div class="prob-arrow">&rarr;</div>
-        <div class="prob-arrow">&rarr;</div>
-        <div class="prob-arrow">&rarr;</div>
-        <div class="prob-arrow">&rarr;</div>
-      </div>
-
-      <div class="ai-advantage">
-        <div class="ai-capability-list">
-          <div class="ai-capability fade-up">
-            <div class="ai-cap-text">
-              <strong>Create content automatically</strong>
-              <span>Turn job site photos into professional social posts in seconds</span>
-            </div>
-          </div>
-          <div class="ai-capability fade-up">
-            <div class="ai-cap-text">
-              <strong>Think strategically for you</strong>
-              <span>Generate business plans, growth strategies and roadmaps — no consultant</span>
-            </div>
-          </div>
-          <div class="ai-capability fade-up">
-            <div class="ai-cap-text">
-              <strong>Communicate like a big business</strong>
-              <span>Professional emails, customer updates and 24/7 chatbot on autopilot</span>
-            </div>
-          </div>
-          <div class="ai-capability fade-up">
-            <div class="ai-cap-text">
-              <strong>Stay ahead of your industry</strong>
-              <span>Daily AI digest of regulatory changes, supplier news and trade updates</span>
-            </div>
-          </div>
-          <div class="ai-capability fade-up">
-            <div class="ai-cap-text">
-              <strong>Win more tenders and quotes</strong>
-              <span>AI reads the brief, searches your business history, and generates a professional response — ready to submit</span>
-            </div>
+        <div class="ai-capability" style="border-color:rgba(255,255,255,0.10);">
+          <div class="ai-cap-text">
+            <strong>Win more tenders and quotes</strong>
+            <span>AI reads the brief, searches your business history, and generates a professional response — ready to submit</span>
           </div>
         </div>
       </div>
