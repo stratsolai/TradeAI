@@ -466,6 +466,131 @@
 /* TOPBAR */
 
 .topbar-nav{display:flex;align-items:center;gap:24px;margin-left:64px;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.80);text-decoration:none;letter-spacing:0.02em;transition:color 0.2s;}.topbar-nav a:hover{color:#fff;}.topbar-spacer{flex:1;}
+
+/* ===== REVIEW BANNER ===== */
+.review-banner-wrap {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 0 48px;
+  width: 100%;
+}
+.review-track {
+  display: flex;
+  gap: 24px;
+  width: max-content;
+  animation: reviewScroll 48s linear infinite;
+  padding: 8px 0 16px;
+}
+.review-track:hover {
+  animation-play-state: paused;
+}
+@keyframes reviewScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.review-card {
+  width: 340px;
+  flex-shrink: 0;
+}
+.review-card-inner {
+  background: linear-gradient(135deg, rgba(196,98,42,0.10) 0%, rgba(30,58,95,0.42) 100%);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid #c4622a;
+  border-radius: 12px;
+  padding: 24px 22px 20px;
+  height: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.review-card-inner:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.28);
+}
+.review-top-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.reviewer-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--heading-font, 'Barlow Condensed', sans-serif);
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.03em;
+  border: 2px solid rgba(255,255,255,0.18);
+}
+.reviewer-meta {
+  flex: 1;
+  min-width: 0;
+}
+.reviewer-tool {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.50);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 3px;
+}
+.reviewer-pillar {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.72);
+}
+.review-stars {
+  color: #c4622a;
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.review-text {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 15px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.65;
+  margin: 0 0 16px;
+}
+.reviewer-id {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 13px;
+  color: rgba(255,255,255,0.42);
+  font-weight: 400;
+}
+.review-fade-left,
+.review-fade-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 80px;
+  pointer-events: none;
+  z-index: 2;
+}
+.review-fade-left {
+  left: 0;
+  background: linear-gradient(to right, var(--dark, #0d1b2a) 0%, transparent 100%);
+}
+.review-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--dark, #0d1b2a) 0%, transparent 100%);
+}
+@media (max-width: 768px) {
+  .review-card { width: 290px; }
+  .review-fade-left, .review-fade-right { width: 40px; }
+}
+/* ===== END REVIEW BANNER ===== */
 </style>
 </head>
 <body>
@@ -699,46 +824,205 @@
 <section class="testimonials-bg">
   <div class="section-inner">
     <div class="section-tag"><span class="word-accent">Stax</span> Community Reviews</div>
-    <h2 class="section-title"><span class="h-line">The <span class="word-accent">results</span> speak for themselves</span></h2>
-    <div class="testimonials-grid">
-      <div class="testimonial fade-up">
-        <div class="testimonial-quote">"</div>
-        <p class="testimonial-text">I was spending half my Sunday nights writing social posts. Now StaxAI does it from my job photos in seconds. My Instagram has never looked better and I haven't written a caption in three months.</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">M</div>
-          <div>
-            <div class="author-stars">★★★★★</div>
-            <div class="author-name">Mark T.</div>
-            <div class="author-biz">Electrician, Brisbane</div>
-          </div>
-        </div>
-      </div>
-      <div class="testimonial fade-up">
-        <div class="testimonial-quote">"</div>
-        <p class="testimonial-text">The email assistant alone is worth every cent. It flags which emails are urgent leads and drafts a reply that sounds exactly like me. I've won three jobs I would have missed just by responding faster.</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">S</div>
-          <div>
-            <div class="author-stars">★★★★★</div>
-            <div class="author-name">Sarah K.</div>
-            <div class="author-biz">Plumber, Melbourne</div>
-          </div>
-        </div>
-      </div>
-      <div class="testimonial fade-up">
-        <div class="testimonial-quote">"</div>
-        <p class="testimonial-text">I needed a strategic plan for a bank loan and was quoted $4,000 by a consultant. StaxAI generated a better document in 20 minutes. Bank approved my finance the following week.</p>
-        <div class="testimonial-author">
-          <div class="author-avatar">D</div>
-          <div>
-            <div class="author-stars">★★★★★</div>
-            <div class="author-name">Dave R.</div>
-            <div class="author-biz">Pool Builder, Sydney</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <h2 class="section-title" style="line-height:1.05;margin-bottom:48px;"><span class="h-line">The <span class="word-accent">results</span> speak for themselves</span></h2>
   </div>
+
+  <!-- Scroll banner -->
+  <div class="review-banner-wrap">
+    <div class="review-track" id="reviewTrack">
+
+      <!-- CARD 1: Mark T. — Electrician, Brisbane — AI Website Chatbot -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1e3a5f,#2c5a82);">MT</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">AI Website Chatbot</div>
+              <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I had the chatbot live on my website in under an hour. Customers now get answers at midnight when I'm finishing a job — I picked up two leads last week I would have missed completely.</p>
+          <div class="reviewer-id">Mark T. &middot; Electrician &middot; Brisbane</div>
+        </div>
+      </div>
+
+      <!-- CARD 2: Sarah K. — Plumber, Melbourne — AI Email Assistant -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#2c5a82,#1a5490);">SK</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">AI Email Assistant</div>
+              <div class="reviewer-pillar">&#128295; No technical expertise needed</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I'm not a tech person at all, but I had this set up myself in about 20 minutes. It tells me every morning what actually needs my attention. I don't dread opening my inbox anymore.</p>
+          <div class="reviewer-id">Sarah K. &middot; Plumber &middot; Melbourne</div>
+        </div>
+      </div>
+
+      <!-- CARD 3: Dave R. — Pool Builder, Gold Coast — Marketing & Social -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#c4622a,#a04f22);">DR</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Marketing &amp; Social Media Manager</div>
+              <div class="reviewer-pillar">&#128142; Premium quality, fair price</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">The AI-generated graphics look like a professional photographer shot them. Clients have actually asked who does my marketing. For what it costs, it's extraordinary value — I was paying three times as much for a social media agency that did half the work.</p>
+          <div class="reviewer-id">Dave R. &middot; Pool Builder &middot; Gold Coast</div>
+        </div>
+      </div>
+
+      <!-- CARD 4: Jodie M. — Builder, Sydney — Strategic Plan -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1e3a5f,#c4622a);">JM</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Strategic Plan &amp; Operations Dashboard</div>
+              <div class="reviewer-pillar">&#129521; Build your own Stax</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I've been meaning to write a proper business plan for four years. The AI interview walked me through it and I had a bank-ready document in one sitting. My broker was genuinely impressed — used it to get finance for our next project.</p>
+          <div class="reviewer-id">Jodie M. &middot; Builder &middot; Sydney</div>
+        </div>
+      </div>
+
+      <!-- CARD 5: Craig B. — HVAC, Perth — Industry News Digest -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#2c5a82,#3a7ab5);">CB</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Industry News &amp; Updates Digest</div>
+              <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">There was a refrigerant regulation change last quarter that would have caught me out. The digest flagged it two weeks before it hit the industry forums. That alone justified the subscription for the whole year.</p>
+          <div class="reviewer-id">Craig B. &middot; HVAC &middot; Perth</div>
+        </div>
+      </div>
+
+      <!-- CARD 6: Tracey W. — Landscaper, Adelaide — BI Dashboard -->
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#a04f22,#1e3a5f);">TW</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Business Intelligence Dashboard</div>
+              <div class="reviewer-pillar">&#129521; Build your own Stax</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I activated three tools over the first month and watched the dashboard get smarter as each one came online. It flagged that I was underpricing irrigation jobs by about 18% compared to the local market. Fixed that immediately.</p>
+          <div class="reviewer-id">Tracey W. &middot; Landscaper &middot; Adelaide</div>
+        </div>
+      </div>
+
+      <!-- DUPLICATE SET for seamless loop -->
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1e3a5f,#2c5a82);">MT</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">AI Website Chatbot</div>
+              <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I had the chatbot live on my website in under an hour. Customers now get answers at midnight when I'm finishing a job — I picked up two leads last week I would have missed completely.</p>
+          <div class="reviewer-id">Mark T. &middot; Electrician &middot; Brisbane</div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#2c5a82,#1a5490);">SK</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">AI Email Assistant</div>
+              <div class="reviewer-pillar">&#128295; No technical expertise needed</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I'm not a tech person at all, but I had this set up myself in about 20 minutes. It tells me every morning what actually needs my attention. I don't dread opening my inbox anymore.</p>
+          <div class="reviewer-id">Sarah K. &middot; Plumber &middot; Melbourne</div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#c4622a,#a04f22);">DR</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Marketing &amp; Social Media Manager</div>
+              <div class="reviewer-pillar">&#128142; Premium quality, fair price</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">The AI-generated graphics look like a professional photographer shot them. Clients have actually asked who does my marketing. For what it costs, it's extraordinary value — I was paying three times as much for a social media agency that did half the work.</p>
+          <div class="reviewer-id">Dave R. &middot; Pool Builder &middot; Gold Coast</div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1e3a5f,#c4622a);">JM</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Strategic Plan &amp; Operations Dashboard</div>
+              <div class="reviewer-pillar">&#129521; Build your own Stax</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I've been meaning to write a proper business plan for four years. The AI interview walked me through it and I had a bank-ready document in one sitting. My broker was genuinely impressed — used it to get finance for our next project.</p>
+          <div class="reviewer-id">Jodie M. &middot; Builder &middot; Sydney</div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#2c5a82,#3a7ab5);">CB</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Industry News &amp; Updates Digest</div>
+              <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">There was a refrigerant regulation change last quarter that would have caught me out. The digest flagged it two weeks before it hit the industry forums. That alone justified the subscription for the whole year.</p>
+          <div class="reviewer-id">Craig B. &middot; HVAC &middot; Perth</div>
+        </div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-card-inner">
+          <div class="review-top-row">
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#a04f22,#1e3a5f);">TW</div>
+            <div class="reviewer-meta">
+              <div class="reviewer-tool">Business Intelligence Dashboard</div>
+              <div class="reviewer-pillar">&#129521; Build your own Stax</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">I activated three tools over the first month and watched the dashboard get smarter as each one came online. It flagged that I was underpricing irrigation jobs by about 18% compared to the local market. Fixed that immediately.</p>
+          <div class="reviewer-id">Tracey W. &middot; Landscaper &middot; Adelaide</div>
+        </div>
+      </div>
+
+    </div><!-- /review-track -->
+    <div class="review-fade-left"></div>
+    <div class="review-fade-right"></div>
+  </div><!-- /review-banner-wrap -->
 </section>
 
 <!-- ── CTA ── -->
