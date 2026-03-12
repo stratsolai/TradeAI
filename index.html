@@ -325,7 +325,7 @@
     .step { flex:1; text-align:center; padding:0 24px; position:relative; z-index:1; }
     .step-num {
       width:80px; height:80px; border-radius:50%;
-      background:linear-gradient(135deg,#0d5c63,#17a4b0); border:2px solid rgba(255,255,255,0.2);
+      background:linear-gradient(135deg,#0d6b6b,#12a8a8); border:2px solid rgba(255,255,255,0.2);
       display:flex; align-items:center; justify-content:center; margin:0 auto 20px;
       font-family:var(--heading-font); font-size:32px; font-weight:900; color:white; position:relative;
     }
@@ -468,59 +468,36 @@
 .topbar-nav{display:flex;align-items:center;gap:24px;margin-left:64px;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.80);text-decoration:none;letter-spacing:0.02em;transition:color 0.2s;}.topbar-nav a:hover{color:#fff;}.topbar-spacer{flex:1;}
 
 /* ===== REVIEW BANNER ===== */
-.testimonials-bg {
-  background: #f5f0eb !important;
-}
-.testimonials-bg .section-tag {
-  color: #1e3a5f;
-  background: rgba(196,98,42,0.10);
-  border-color: rgba(196,98,42,0.25);
-}
-.testimonials-bg .section-tag .word-accent { color: #c4622a; }
-.testimonials-bg .section-title .h-line {
-  background: linear-gradient(135deg, #1e3a5f 0%, #2c5a82 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.testimonials-bg .section-title .word-accent {
-  background: none;
-  -webkit-text-fill-color: #c4622a;
-  color: #c4622a;
-}
 .review-banner-wrap {
   position: relative;
   overflow: hidden;
-  padding: 8px 0 52px;
+  padding: 20px 0 48px;
   width: 100%;
 }
 .review-track {
   display: flex;
   gap: 24px;
   padding: 8px 0 16px;
-  transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.75s cubic-bezier(0.4,0,0.2,1);
   will-change: transform;
 }
 .review-card {
-  width: calc((100vw - 120px) / 3);
-  max-width: 380px;
-  min-width: 280px;
+  width: 340px;
   flex-shrink: 0;
 }
 .review-card-inner {
-  background: #ffffff;
-  border: 1px solid rgba(196,98,42,0.14);
+  background: linear-gradient(135deg, rgba(196,98,42,0.13) 0%, rgba(44,80,120,0.55) 100%);
+  border: 1px solid rgba(255,255,255,0.13);
   border-left: 3px solid #c4622a;
   border-radius: 12px;
   padding: 24px 22px 20px;
   height: 100%;
   box-sizing: border-box;
-  box-shadow: 0 2px 12px rgba(30,58,95,0.07);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .review-card-inner:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 28px rgba(30,58,95,0.13);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
 }
 .review-top-row {
   display: flex;
@@ -541,7 +518,7 @@
   font-weight: 800;
   color: #fff;
   letter-spacing: 0.04em;
-  border: 2px solid rgba(255,255,255,0.25);
+  border: 2px solid rgba(255,255,255,0.22);
 }
 .reviewer-meta {
   flex: 1;
@@ -551,7 +528,7 @@
   font-family: var(--body-font, 'DM Sans', sans-serif);
   font-size: 11px;
   font-weight: 700;
-  color: rgba(30,58,95,0.50);
+  color: rgba(255,255,255,0.48);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   white-space: normal;
@@ -560,13 +537,13 @@
 }
 .reviewer-pillar {
   font-family: var(--body-font, 'DM Sans', sans-serif);
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
-  color: #c4622a;
+  color: rgba(255,255,255,0.75);
 }
 .review-stars {
   color: #c4622a;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 2px;
   margin-bottom: 12px;
 }
@@ -574,15 +551,15 @@
   font-family: var(--body-font, 'DM Sans', sans-serif);
   font-size: 15px;
   font-weight: 400;
-  color: #2a2a2a;
+  color: rgba(255,255,255,0.88);
   line-height: 1.65;
   margin: 0 0 16px;
 }
 .reviewer-id {
   font-family: var(--body-font, 'DM Sans', sans-serif);
-  font-size: 12.5px;
-  color: rgba(30,58,95,0.45);
-  font-weight: 500;
+  font-size: 13px;
+  color: rgba(255,255,255,0.42);
+  font-weight: 400;
 }
 .review-fade-left,
 .review-fade-right {
@@ -595,18 +572,15 @@
 }
 .review-fade-left {
   left: 0;
-  background: linear-gradient(to right, #f5f0eb 0%, transparent 100%);
+  background: linear-gradient(to right, var(--dark, #0d1b2a) 0%, transparent 100%);
 }
 .review-fade-right {
   right: 0;
-  background: linear-gradient(to left, #f5f0eb 0%, transparent 100%);
+  background: linear-gradient(to left, var(--dark, #0d1b2a) 0%, transparent 100%);
 }
-@media (max-width: 900px) {
-  .review-card { width: calc((100vw - 80px) / 2); min-width: 260px; }
-}
-@media (max-width: 600px) {
-  .review-card { width: calc(100vw - 60px); }
-  .review-fade-left, .review-fade-right { width: 30px; }
+@media (max-width: 768px) {
+  .review-card { width: 290px; }
+  .review-fade-left, .review-fade-right { width: 40px; }
 }
 /* ===== END REVIEW BANNER ===== */
 </style>
@@ -853,7 +827,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#0d5c63,#17a4b0);">MT</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#0d6b6b,#12a8a8);">MT</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">AI Website Chatbot</div>
               <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
@@ -869,7 +843,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1a6b3a,#2ea855);">SK</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1a6b3a,#28a855);">SK</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">AI Email Assistant</div>
               <div class="reviewer-pillar">&#128295; No technical expertise needed</div>
@@ -885,7 +859,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#b8860b,#e0a820);">DR</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#b07d0a,#d4a017);">DR</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Marketing &amp; Social Media Manager</div>
               <div class="reviewer-pillar">&#128142; Premium quality, fair price</div>
@@ -901,7 +875,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#4a1a6b,#8b35c8);">JM</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#4a1a6b,#8b2fc9);">JM</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Strategic Plan &amp; Operations Dashboard</div>
               <div class="reviewer-pillar">&#129521; Build your own Stax</div>
@@ -917,7 +891,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1540a0,#3a6fde);">CB</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1040a0,#3068d8);">CB</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Industry News &amp; Updates Digest</div>
               <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
@@ -933,7 +907,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#8b1a4a,#c4356e);">TW</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#8b1a4a,#c42060);">TW</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Business Intelligence Dashboard</div>
               <div class="reviewer-pillar">&#129521; Build your own Stax</div>
@@ -950,7 +924,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#0d5c63,#17a4b0);">MT</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#0d6b6b,#12a8a8);">MT</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">AI Website Chatbot</div>
               <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
@@ -965,7 +939,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1a6b3a,#2ea855);">SK</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1a6b3a,#28a855);">SK</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">AI Email Assistant</div>
               <div class="reviewer-pillar">&#128295; No technical expertise needed</div>
@@ -980,7 +954,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#b8860b,#e0a820);">DR</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#b07d0a,#d4a017);">DR</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Marketing &amp; Social Media Manager</div>
               <div class="reviewer-pillar">&#128142; Premium quality, fair price</div>
@@ -995,7 +969,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#4a1a6b,#8b35c8);">JM</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#4a1a6b,#8b2fc9);">JM</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Strategic Plan &amp; Operations Dashboard</div>
               <div class="reviewer-pillar">&#129521; Build your own Stax</div>
@@ -1010,7 +984,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1540a0,#3a6fde);">CB</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#1040a0,#3068d8);">CB</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Industry News &amp; Updates Digest</div>
               <div class="reviewer-pillar">&#9889; Quick and easy to set up</div>
@@ -1025,7 +999,7 @@
       <div class="review-card">
         <div class="review-card-inner">
           <div class="review-top-row">
-            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#8b1a4a,#c4356e);">TW</div>
+            <div class="reviewer-avatar" style="background:linear-gradient(135deg,#8b1a4a,#c42060);">TW</div>
             <div class="reviewer-meta">
               <div class="reviewer-tool">Business Intelligence Dashboard</div>
               <div class="reviewer-pillar">&#129521; Build your own Stax</div>
@@ -1273,42 +1247,26 @@ setTimeout(function() { setInterval(rotateWord, 3000); }, 1500);
 (function(){
   var track = document.getElementById('reviewTrack');
   if(!track) return;
-  var cards = track.querySelectorAll('.review-card');
-  var totalReal = 6; // real cards (duplicated set follows)
-  var cardW = 0;
-  var gap = 24;
-  var offset = 0;
+  var CARD_W = 340, GAP = 24, STEP = CARD_W + GAP; // 364px per step
+  var TOTAL_REAL = 6;
+  var current = 0;
+  var timer = null;
   var paused = false;
 
-  function getCardW() {
-    return cards[0] ? cards[0].offsetWidth : 340;
-  }
-
-  function step() {
+  function advance() {
     if(paused) return;
-    offset += 1;
-    if(offset >= totalReal) offset = 0;
-    var w = getCardW();
-    track.style.transform = 'translateX(-' + (offset * (w + gap)) + 'px)';
+    current++;
+    if(current >= TOTAL_REAL) current = 0;
+    track.style.transform = 'translateX(-' + (current * STEP) + 'px)';
+    timer = setTimeout(advance, 3700); // 750ms transition + 3000ms pause (set in CSS)
   }
 
-  var timer = null;
-  function scheduleNext() {
-    timer = setTimeout(function(){
-      step();
-      // brief pause after each step before next
-      timer = setTimeout(scheduleNext, 3000);
-    }, 700); // 700ms transition then 3s pause
-  }
-
-  // pause on hover
   track.addEventListener('mouseenter', function(){ paused = true; clearTimeout(timer); });
-  track.addEventListener('mouseleave', function(){ paused = false; scheduleNext(); });
+  track.addEventListener('mouseleave', function(){ paused = false; timer = setTimeout(advance, 3000); });
 
-  // start after initial 3s
-  timer = setTimeout(scheduleNext, 3000);
+  // Start after initial 3s
+  timer = setTimeout(advance, 3000);
 })();
 </script>
-
 </body>
 </html>
