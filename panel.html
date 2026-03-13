@@ -882,6 +882,27 @@
   .live-dot::before { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.4); animation:livePulse 2s ease-out infinite; }
   .live-dot::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.15); animation:livePulse 2s ease-out infinite 0.5s; }
   .live-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#4a7fa5; }
+
+/* HIW2 — How It Works timeline */
+.hiw2-section{padding:80px 40px;text-align:center}
+.hiw2-label{font-family:"Barlow Condensed",sans-serif;font-size:13px;letter-spacing:3px;color:#c4622a;text-transform:uppercase;display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:16px}
+.hiw2-label::before,.hiw2-label::after{content:"";display:block;width:40px;height:1px;background:#c4622a}
+.hiw2-heading{font-family:"Barlow Condensed",sans-serif;font-size:48px;font-weight:700;color:#fff;text-transform:uppercase;margin:0 0 60px 0}
+.hiw2-heading span{color:#c4622a}
+.hiw2-track-wrap{position:relative;display:flex;align-items:flex-start;justify-content:center;max-width:860px;margin:0 auto}
+.hiw2-line{position:absolute;top:28px;left:calc(16.666% + 0px);right:calc(16.666% + 0px);height:2px;background:rgba(255,255,255,0.12);overflow:hidden}
+.hiw2-line::after{content:"";position:absolute;top:-3px;left:-120px;width:120px;height:8px;border-radius:4px;background:linear-gradient(90deg,transparent 0%,#c4622a 60%,#fff 85%,transparent 100%);animation:hiw2-shoot 3s ease-in-out infinite;box-shadow:0 0 12px 3px rgba(196,98,42,0.8),0 0 24px 6px rgba(196,98,42,0.3)}
+@keyframes hiw2-shoot{0%{left:-120px;animation-timing-function:ease-in}30%{left:28%;animation-timing-function:ease-out}38%{left:28%;animation-timing-function:ease-in}68%{left:56%;animation-timing-function:ease-out}76%{left:56%;animation-timing-function:ease-in}100%{left:calc(100% + 20px)}}
+.hiw2-step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+.hiw2-node{width:56px;height:56px;border-radius:50%;background:#172035;border:2px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:20px;position:relative;z-index:2}
+.hiw2-step.is-live .hiw2-node{width:68px;height:68px;margin-top:-6px;background:linear-gradient(135deg,#1A5490 0%,#0d1628 100%);border:2px solid #c4622a;box-shadow:0 0 20px rgba(196,98,42,0.4);font-size:28px}
+.hiw2-step-num{font-family:"Barlow Condensed",sans-serif;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.35);text-transform:uppercase;margin-bottom:6px}
+.hiw2-step-title{font-family:"Barlow Condensed",sans-serif;font-size:20px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;margin-bottom:8px}
+.hiw2-step.is-live .hiw2-step-title{color:#c4622a;font-size:24px}
+.hiw2-step-desc{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.5;max-width:200px}
+.hiw2-live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(196,98,42,0.15);border:1px solid rgba(196,98,42,0.4);border-radius:20px;padding:3px 10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#c4622a;margin-bottom:8px}
+.hiw2-live-dot{width:6px;height:6px;border-radius:50%;background:#c4622a;animation:hiw2-pulse 1.5s ease-in-out infinite}
+@keyframes hiw2-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
 </style>
 </head>
 <body>
@@ -1016,48 +1037,32 @@
   <div class="section-divider"><div class="line"></div></div>
 
   <!-- HOW IT WORKS — LANDING PAGE STYLE -->
-  <div <div class="how-section" style="padding-bottom:80px">
-    <div class="section-header">
-      <div class="section-label">How It Works</div>
-      <h2 class="section-title">LIVE IN <span class="word-accent">MINUTES</span></h2>
+  <div <div class="hiw2-section">
+  <div class="hiw2-label">How It Works</div>
+  <h2 class="hiw2-heading">Live in <span>minutes</span></h2>
+  <div class="hiw2-track-wrap">
+    <div class="hiw2-line"></div>
+    <div class="hiw2-step">
+      <div class="hiw2-node">&#9889;</div>
+      <div class="hiw2-step-num">Step 01</div>
+      <div class="hiw2-step-title">Activate</div>
+      <div class="hiw2-step-desc">Subscribe and the chatbot is ready to configure from your dashboard.</div>
     </div>
-
-    <div class="hiw-connector">
-      <div class="conn-dot" id="hiw-dot1" id="hiw-dot1"></div>
-      <div class="conn-segment"><div class="conn-segment-fill" id="hiw-fill1" id="hiw-fill1"></div></div>
-      <div class="conn-dot" id="hiw-dot2" id="hiw-dot2"></div>
-      <div class="conn-segment"><div class="conn-segment-fill" id="hiw-fill2" id="hiw-fill2"></div></div>
-      <div class="conn-dot" id="hiw-dot3" id="hiw-dot3"></div>
+    <div class="hiw2-step">
+      <div class="hiw2-node">&#9881;&#65039;</div>
+      <div class="hiw2-step-num">Step 02</div>
+      <div class="hiw2-step-title">Settings</div>
+      <div class="hiw2-step-desc">Connect your website, emails, and content library so the AI learns your business.</div>
     </div>
-    <div class="hiw-track">
-      <div class="hiw-step" id="hiw-step1">
-        <div class="step-watermark">Activate</div>
-        <span class="step-icon">&#x26A1;</span>
-        <span class="step-num">Step 01</span>
-        <span class="step-title" id="step-1-title">Activate</span>
-        <p class="step-desc" id="step-1-desc"Start your free trial and connect your email or website &#x2014; your tool is reading your business within minutes..</p>
-      </div>
-      <div class="hiw-step" id="hiw-step2">
-        <div class="step-watermark">Settings</div>
-        <span class="step-icon">&#x2699;&#xFE0F;</span>
-        <span class="step-num">Step 02</span>
-        <span class="step-title" id="step-2-title">Settings</span>
-        <p class="step-desc" id="step-2-desc"Review what the AI has created, make any tweaks, and set your preferences. No technical knowledge needed..</p>
-      </div>
-      <div class="hiw-step" id="hiw-step3">
-        <div class="step-watermark">Live</div>
-        <div class="live-badge">
-          <div class="live-dot"></div>
-          <span class="live-label">Live</span>
-        </div>
-        <span class="step-num">Step 03</span>
-        <span class="step-title" id="step-3-title">Live</span>
-        <p class="step-desc" id="step-3-desc"Your tool is live and working for your business &#x2014; automatically, around the clock. You stay in control..</p>
-      </div>
+    <div class="hiw2-step is-live">
+      <div class="hiw2-node">&#128640;</div>
+      <div class="hiw2-live-badge"><span class="hiw2-live-dot"></span>Live</div>
+      <div class="hiw2-step-title">Live</div>
+      <div class="hiw2-step-desc">Paste one line of code on your website and your AI chatbot is live 24/7.</div>
     </div>
-
-  <!-- PRICING FOOTER — WARM PALETTE -->
-  <div class="pricing-footer">
+  </div>
+</div>
+<div class="pricing-footer">
     
   </div>
 </div>
