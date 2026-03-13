@@ -860,7 +860,7 @@
     .hiw-step:last-child { padding-right:0; }
     .hiw-step.hiw-visible { opacity:1; transform:translateY(0); }
     .hiw-step + .hiw-step { padding-left:40px; border-left:1px solid rgba(255,255,255,0.06); }
-    .step-watermark { font-family:"Barlow Condensed",sans-serif; font-size:72px; font-weight:900; text-transform:uppercase; letter-spacing:-2px; line-height:1; color:rgba(255,255,255,0.035); margin-bottom:-14px; user-select:none; pointer-events:none; white-space:nowrap; overflow:hidden; transition:color 0.4s ease; }
+    .step-watermark { font-family:"Barlow Condensed",sans-serif; font-size:72px; font-weight:900; text-transform:uppercase; letter-spacing:-2px; line-height:1; color:rgba(255,255,255,0.035); margin-bottom:-28px; user-select:none; pointer-events:none; white-space:nowrap; overflow:hidden; transition:color 0.4s ease; }
     .hiw-step-live .step-watermark { color:rgba(196,98,42,0.08); }
     .hiw-step:hover .step-watermark { color:rgba(196,98,42,0.12); }
     .step-icon-hiw { font-size:28px; margin-bottom:14px; line-height:1; display:block; }
@@ -888,7 +888,7 @@
   .hiw-step:last-child .step-watermark { color:rgba(196,98,42,0.08); }
   .hiw-step:hover .step-watermark { color:rgba(196,98,42,0.12); }
   .step-icon { font-size:28px; margin-bottom:14px; line-height:1; display:block; }
-  .step-num { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#c4622a; margin-bottom:10px; display:block; white-space:nowrap; }
+  .step-num { font-family:'Barlow Condensed',sans-serif; font-size:14px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#c4622a; margin-top:14px; margin-bottom:2px; display:block; white-space:nowrap; text-align:left; }
   .step-title { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#ffffff; margin-bottom:12px; line-height:1.1; display:block; }
   .step-desc { font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.7; color:rgba(255,255,255,0.60); }
   .hiw-step:last-child .step-title { background:linear-gradient(135deg,#c4622a,#d4844a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
@@ -1031,7 +1031,7 @@
   <div class="section-divider"><div class="line"></div></div>
 
   <!-- HOW IT WORKS — LANDING PAGE STYLE -->
-  <div class="how-section">
+  <div <div class="how-section" style="padding-bottom:80px">
     <div class="section-header">
       <div class="section-label">How It Works</div>
       <h2 class="section-title">Live in <span class="word-accent">minutes</span></h2>
@@ -1050,14 +1050,14 @@
         <span class="step-icon">&#x26A1;</span>
         <span class="step-num">Step 01</span>
         <span class="step-title" id="step-1-title">Activate</span>
-        <p class="step-desc" id="step-1-desc">Start your free trial and connect your email or website &#x2014; your tool is reading your business within minutes.</p>
+        <p class="step-desc" id="step-1-desc"Start your free trial and connect your email or website &#x2014; your tool is reading your business within minutes..</p>
       </div>
       <div class="hiw-step" id="hiw-step2">
         <div class="step-watermark">Settings</div>
         <span class="step-icon">&#x2699;&#xFE0F;</span>
         <span class="step-num">Step 02</span>
         <span class="step-title" id="step-2-title">Settings</span>
-        <p class="step-desc" id="step-2-desc">Review what the AI has created, make any tweaks, and set your preferences. No technical knowledge needed.</p>
+        <p class="step-desc" id="step-2-desc"Review what the AI has created, make any tweaks, and set your preferences. No technical knowledge needed..</p>
       </div>
       <div class="hiw-step" id="hiw-step3">
         <div class="step-watermark">Live</div>
@@ -1067,7 +1067,7 @@
         </div>
         <span class="step-num">Step 03</span>
         <span class="step-title" id="step-3-title">Live</span>
-        <p class="step-desc" id="step-3-desc">Your tool is live and working for your business &#x2014; automatically, around the clock. You stay in control.</p>
+        <p class="step-desc" id="step-3-desc"Your tool is live and working for your business &#x2014; automatically, around the clock. You stay in control..</p>
       </div>
     </div>
 
@@ -1273,7 +1273,7 @@
     setTimeout(function(){ dot3.style.transition='opacity 0.2s ease'; dot3.style.opacity='1'; }, 1550);
     setTimeout(function(){ s3.classList.add('visible'); }, 1600);
   }
-  window.addEventListener('load', animateHIW);
+  document.addEventListener('DOMContentLoaded', function() { setTimeout(animateHIW, 300); });
 
   function animateHIW() {
     var dot1 = document.getElementById("hiw-dot1");
