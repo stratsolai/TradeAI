@@ -849,6 +849,30 @@
 
 /* ── HERO ── */
     .topbar-spacer { flex: 1; }
+
+    /* HIW connector-track */
+    .hiw-connector { display:flex; align-items:center; margin-bottom:36px; }
+    .conn-dot { width:10px; height:10px; border-radius:50%; background:#c4622a; flex-shrink:0; position:relative; z-index:2; opacity:0; }
+    .conn-segment { flex:1; height:1px; background:rgba(196,98,42,0.15); position:relative; overflow:hidden; }
+    .conn-segment-fill { position:absolute; top:0; left:0; height:100%; width:0%; background:#c4622a; }
+    .hiw-track { display:flex; gap:0; }
+    .hiw-step { flex:1; min-width:0; position:relative; padding:0 40px 0 0; opacity:0; transform:translateY(16px); transition:opacity 0.5s ease,transform 0.5s ease; }
+    .hiw-step:last-child { padding-right:0; }
+    .hiw-step.hiw-visible { opacity:1; transform:translateY(0); }
+    .hiw-step + .hiw-step { padding-left:40px; border-left:1px solid rgba(255,255,255,0.06); }
+    .step-watermark { font-family:"Barlow Condensed",sans-serif; font-size:72px; font-weight:900; text-transform:uppercase; letter-spacing:-2px; line-height:1; color:rgba(255,255,255,0.035); margin-bottom:-14px; user-select:none; pointer-events:none; white-space:nowrap; overflow:hidden; transition:color 0.4s ease; }
+    .hiw-step-live .step-watermark { color:rgba(196,98,42,0.08); }
+    .hiw-step:hover .step-watermark { color:rgba(196,98,42,0.12); }
+    .step-icon-hiw { font-size:28px; margin-bottom:14px; line-height:1; display:block; }
+    .step-num-hiw { font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#c4622a; margin-bottom:10px; display:block; }
+    .step-title-hiw { font-family:"Barlow Condensed",sans-serif; font-size:26px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#ffffff; margin-bottom:12px; line-height:1.1; display:block; }
+    .hiw-title-live { background:linear-gradient(135deg,#c4622a,#d4844a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .step-desc-hiw { font-family:"DM Sans",sans-serif; font-size:15px; line-height:1.7; color:rgba(255,255,255,0.60); }
+    .hiw-live-badge { display:inline-flex; align-items:center; gap:9px; margin-bottom:14px; }
+    .hiw-live-dot { width:9px; height:9px; border-radius:50%; background:#4a7fa5; position:relative; flex-shrink:0; }
+    .hiw-live-dot::before { content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.4); animation:livePulse 2s ease-out infinite; }
+    .hiw-live-dot::after { content:""; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.15); animation:livePulse 2s ease-out infinite 0.5s; }
+    .hiw-live-label { font-family:"Barlow Condensed",sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#4a7fa5; }
 </style>
 </head>
 <body>
@@ -989,87 +1013,38 @@
       <h2 class="section-title">Live in <span class="word-accent">minutes</span></h2>
     </div>
 
-    <div class="steps-grid">
-
-      <!-- STEP 1: ACTIVATE — animated connection/plug graphic -->
-      <div class="step-card">
-        <div class="step-num">1</div>
-        <div class="step-graphic">
-          <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="step-svg step-svg-1">
-            <!-- Power socket -->
-            <rect x="35" y="20" width="50" height="40" rx="8" fill="#fff" stroke="#c4622a" stroke-width="2"/>
-            <rect x="47" y="30" width="8" height="12" rx="2" fill="#c4622a" class="svg-pulse-1"/>
-            <rect x="65" y="30" width="8" height="12" rx="2" fill="#c4622a" class="svg-pulse-1"/>
-            <!-- Plug -->
-            <rect x="52" y="50" width="16" height="22" rx="4" fill="#d4844a" class="svg-plug"/>
-            <rect x="55" y="58" width="4" height="8" rx="1" fill="#fff"/>
-            <rect x="61" y="58" width="4" height="8" rx="1" fill="#fff"/>
-            <!-- Spark lines -->
-            <line x1="20" y1="38" x2="32" y2="38" stroke="#d4a04a" stroke-width="2" stroke-dasharray="3 3" class="svg-spark"/>
-            <line x1="88" y1="38" x2="100" y2="38" stroke="#d4a04a" stroke-width="2" stroke-dasharray="3 3" class="svg-spark"/>
-            <!-- Stars -->
-            <circle cx="18" cy="28" r="3" fill="#d4a04a" class="svg-star-1"/>
-            <circle cx="102" cy="48" r="2.5" fill="#d4844a" class="svg-star-2"/>
-          </svg>
-        </div>
-        <div id="step-1-title" class="step-title">Activate</div>
-        <div id="step-1-desc" class="step-desc">Start your free trial and connect your Gmail or website — AI reads your business and creates FAQs in minutes</div>
+    <div class="hiw-connector">
+      <div class="conn-dot" id="hiw-dot1"></div>
+      <div class="conn-segment"><div class="conn-segment-fill" id="hiw-fill1"></div></div>
+      <div class="conn-dot" id="hiw-dot2"></div>
+      <div class="conn-segment"><div class="conn-segment-fill" id="hiw-fill2"></div></div>
+      <div class="conn-dot" id="hiw-dot3"></div>
+    </div>
+    <div class="hiw-track">
+      <div class="hiw-step" id="hiw-step1">
+        <div class="step-watermark">Activate</div>
+        <span class="step-icon-hiw">&#x26A1;</span>
+        <span class="step-num-hiw">Step 01</span>
+        <span class="step-title-hiw" id="step-1-title"></span>
+        <p class="step-desc-hiw" id="step-1-desc"></p>
       </div>
-
-      <!-- STEP 2: SETTINGS — animated sliders/dials graphic -->
-      <div class="step-card">
-        <div class="step-num">2</div>
-        <div class="step-graphic">
-          <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="step-svg step-svg-2">
-            <!-- Panel background -->
-            <rect x="15" y="12" width="90" height="56" rx="8" fill="#fff" stroke="#b8851a" stroke-width="1.5"/>
-            <!-- Slider track 1 -->
-            <rect x="26" y="28" width="68" height="5" rx="2.5" fill="#f3e0c0"/>
-            <rect x="26" y="28" width="38" height="5" rx="2.5" fill="#d4a04a" class="svg-bar-1"/>
-            <circle cx="64" cy="30.5" r="6" fill="#c4622a" class="svg-knob-1"/>
-            <!-- Slider track 2 -->
-            <rect x="26" y="44" width="68" height="5" rx="2.5" fill="#f3e0c0"/>
-            <rect x="26" y="44" width="52" height="5" rx="2.5" fill="#d4a04a" class="svg-bar-2"/>
-            <circle cx="78" cy="46.5" r="6" fill="#c4622a" class="svg-knob-2"/>
-            <!-- Check mark -->
-            <circle cx="96" cy="18" r="8" fill="#4ade80"/>
-            <polyline points="92,18 95,21 100,15" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="svg-check"/>
-          </svg>
-        </div>
-        <div id="step-2-title" class="step-title">Settings</div>
-        <div id="step-2-desc" class="step-desc">Set your greeting, tone, and booking preferences. Review AI-suggested answers — nothing goes live without your OK</div>
+      <div class="hiw-step" id="hiw-step2">
+        <div class="step-watermark">Settings</div>
+        <span class="step-icon-hiw">&#x2699;&#xFE0F;</span>
+        <span class="step-num-hiw">Step 02</span>
+        <span class="step-title-hiw" id="step-2-title"></span>
+        <p class="step-desc-hiw" id="step-2-desc"></p>
       </div>
-
-      <!-- STEP 3: LIVE — animated rocket/signal graphic -->
-      <div class="step-card">
-        <div class="step-num">3</div>
-        <div class="step-graphic">
-          <svg viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg" class="step-svg step-svg-3">
-            <!-- Signal arcs -->
-            <path d="M 30 60 Q 60 10 90 60" stroke="#3a6d94" stroke-width="2" fill="none" opacity="0.3" class="svg-arc-3"/>
-            <path d="M 38 60 Q 60 20 82 60" stroke="#2c5a82" stroke-width="2" fill="none" opacity="0.5" class="svg-arc-2"/>
-            <path d="M 46 60 Q 60 30 74 60" stroke="#1e3a5f" stroke-width="2.5" fill="none" class="svg-arc-1"/>
-            <!-- Rocket -->
-            <g class="svg-rocket">
-              <ellipse cx="60" cy="36" rx="8" ry="14" fill="#2c5a82"/>
-              <polygon points="60,22 55,30 65,30" fill="#1e3a5f"/>
-              <rect x="52" y="44" width="5" height="8" rx="2" fill="#3a6d94"/>
-              <rect x="63" y="44" width="5" height="8" rx="2" fill="#3a6d94"/>
-              <ellipse cx="60" cy="38" rx="4" ry="4" fill="#8ab4cc" opacity="0.8"/>
-              <!-- Flame -->
-              <ellipse cx="60" cy="54" rx="4" ry="6" fill="#c4622a" class="svg-flame"/>
-              <ellipse cx="60" cy="55" rx="2.5" ry="4" fill="#d4a04a" class="svg-flame-inner"/>
-            </g>
-            <!-- Sparkles -->
-            <circle cx="22" cy="30" r="2.5" fill="#d4a04a" class="svg-sparkle-a"/>
-            <circle cx="98" cy="25" r="2" fill="#2c5a82" class="svg-sparkle-b"/>
-            <circle cx="95" cy="55" r="2" fill="#d4844a" class="svg-sparkle-c"/>
-          </svg>
+      <div class="hiw-step hiw-step-live" id="hiw-step3">
+        <div class="step-watermark">Live</div>
+        <div class="hiw-live-badge">
+          <div class="hiw-live-dot"></div>
+          <span class="hiw-live-label">Live</span>
         </div>
-        <div id="step-3-title" class="step-title">Live</div>
-        <div id="step-3-desc" class="step-desc">Your chatbot is live on your website — qualifying leads, booking jobs, and notifying you of hot prospects 24/7</div>
+        <span class="step-num-hiw">Step 03</span>
+        <span class="step-title-hiw hiw-title-live" id="step-3-title"></span>
+        <p class="step-desc-hiw" id="step-3-desc"></p>
       </div>
-
     </div>
   </div>
 
@@ -1227,6 +1202,7 @@
 
   // 4. DOMContentLoaded — back button, bundle rotator, slider listeners
   document.addEventListener('DOMContentLoaded', function() {
+    animateHIW();
     var backBtn = document.getElementById('back-btn');
     if (backBtn) {
       backBtn.addEventListener('click', function(e) {
@@ -1254,6 +1230,26 @@
       }, 3000);
     }
   });
+
+  function animateHIW() {
+    var dot1 = document.getElementById("hiw-dot1");
+    var dot2 = document.getElementById("hiw-dot2");
+    var dot3 = document.getElementById("hiw-dot3");
+    var fill1 = document.getElementById("hiw-fill1");
+    var fill2 = document.getElementById("hiw-fill2");
+    var s1 = document.getElementById("hiw-step1");
+    var s2 = document.getElementById("hiw-step2");
+    var s3 = document.getElementById("hiw-step3");
+    if (!dot1) return;
+    setTimeout(function() { dot1.style.transition = "opacity 0.2s ease"; dot1.style.opacity = "1"; }, 200);
+    setTimeout(function() { fill1.style.transition = "width 0.55s ease"; fill1.style.width = "100%"; }, 350);
+    setTimeout(function() { s1.classList.add("hiw-visible"); }, 400);
+    setTimeout(function() { dot2.style.transition = "opacity 0.2s ease"; dot2.style.opacity = "1"; }, 900);
+    setTimeout(function() { fill2.style.transition = "width 0.55s ease"; fill2.style.width = "100%"; }, 1000);
+    setTimeout(function() { s2.classList.add("hiw-visible"); }, 1050);
+    setTimeout(function() { dot3.style.transition = "opacity 0.2s ease"; dot3.style.opacity = "1"; }, 1550);
+    setTimeout(function() { s3.classList.add("hiw-visible"); }, 1600);
+  }
 </script>
 
 </body>
