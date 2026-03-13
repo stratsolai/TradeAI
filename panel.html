@@ -464,30 +464,33 @@
   /* ===== SECTION HEADERS ===== */
   .section-header { text-align: center; margin-bottom: 48px; }
   .section-label {
-    font-size: 13px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 3px;
-    margin-bottom: 14px;
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    background: linear-gradient(90deg, var(--copper), var(--gold));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    margin: 0 auto 16px;
+    background: linear-gradient(135deg, #d4844a, #d4a04a);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-  .section-label::before, .section-label::after {
-    content: ''; width: 40px; height: 1px;
-    background: linear-gradient(90deg, transparent, var(--copper));
+  .section-label::before,
+  .section-label::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #d4844a, transparent);
+    max-width: 60px;
     -webkit-text-fill-color: initial;
   }
-  .section-label::after {
-    background: linear-gradient(90deg, var(--copper), transparent);
-  }
 
-  .section-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 44px;
-    font-weight: 800;
-    line-height: 1.15;
-  }
+  .section-title { font-family: "Barlow Condensed", sans-serif; font-size: clamp(36px, 5vw, 60px); font-weight: 900; line-height: 1.05; margin-bottom: 20px; text-align: center; }
+  .word-accent { background: linear-gradient(135deg, #c4622a, #d4844a, #d4a04a); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
   .section-title .warm {
     background: linear-gradient(135deg, var(--copper), var(--gold), var(--cream));
     -webkit-background-clip: text;
@@ -962,8 +965,8 @@
   <!-- EXAMPLE OUTPUT -->
   <div class="example-section">
     <div class="section-header">
-      <div class="section-label">— SEE IT IN ACTION —</div>
-      <h2 class="section-title">See It In Action</h2>
+      <div class="section-label">SEE IT IN ACTION</div>
+
     </div>
 
     <div class="preview-tabs">
@@ -983,9 +986,7 @@
   <div class="how-section">
     <div class="section-header">
       <div class="section-label">How It Works</div>
-      <h2 class="section-title">
-        <span class="warm">Live in Minutes,</span> <span class="bright">Not Days</span>
-      </h2>
+      <h2 class="section-title">Live in <span class="word-accent">Minutes</span></h2>
     </div>
 
     <div class="steps-grid">
