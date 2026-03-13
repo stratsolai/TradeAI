@@ -182,7 +182,9 @@
   .badge-live::before {
     content: ''; width: 7px; height: 7px; border-radius: 50%;
     background: #2dd4bf; box-shadow: 0 0 6px #2dd4bf;
+    animation: livePulse 2s ease-in-out infinite;
   }
+  @keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
   .badge-coming{background:rgba(196,98,42,0.12);color:#d4844a;border:1px solid rgba(196,98,42,0.25);}
   .badge-quick {
     background: rgba(212,160,74,0.15); color: var(--gold);
@@ -875,6 +877,11 @@
   .step-title { font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:#ffffff; margin-top:4px; margin-bottom:12px; line-height:1.1; display:block; }
   .step-desc { font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.7; color:rgba(255,255,255,0.60); }
   .hiw-step:last-child .step-title { background:linear-gradient(135deg,#c4622a,#d4844a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+  .live-badge { display:inline-flex; align-items:center; gap:9px; margin-bottom:14px; }
+  .live-dot { width:9px; height:9px; border-radius:50%; background:#4a7fa5; position:relative; flex-shrink:0; }
+  .live-dot::before { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.4); animation:livePulse 2s ease-out infinite; }
+  .live-dot::after { content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:9px; height:9px; border-radius:50%; background:rgba(74,127,165,0.15); animation:livePulse 2s ease-out infinite 0.5s; }
+  .live-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#4a7fa5; }
 </style>
 </head>
 <body>
@@ -1039,7 +1046,8 @@
       </div>
       <div class="hiw-step" id="hiw-step3">
         <div class="step-watermark">Live</div>
-        
+        <div class="live-badge">
+          <div class="live-dot"></div>
           <span class="live-label">Live</span>
         </div>
         <span class="step-num">Step 03</span>
