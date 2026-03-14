@@ -146,7 +146,7 @@ window.DASH_WIDGETS = (function() {
       });
       if (rows.length > 0) {
         lastUpdated = 'Updated ' + fmtShort(rows[0].created_at);
-        bodyHtml += '<div style="margin-bottom:10px;">' + svgBars(counts, '#4A6D8C', 80) + '</div><ul class="widget-list">';
+        bodyHtml += '<div style="margin-bottom:8px;">' + svgBars(counts, '#4A6D8C', 80) + '</div><ul class="widget-list">';
         rows.forEach(function(item) {
           bodyHtml += '<li class="widget-list-item"><span class="widget-list-item-main"><div class="widget-list-item-sender">' + (item.headline||'') + '</div>' + (item.source ? '<div class="widget-list-item-subj">' + item.source + '</div>' : '') + '</span><span class="widget-list-item-time">' + timeAgo(item.created_at) + '</span></li>';
         });
@@ -173,7 +173,7 @@ window.DASH_WIDGETS = (function() {
         if (wa < 4) wkCounts[3 - wa]++;
       });
       bodyHtml += statTiles([{val:rows.length,lbl:'This Month'},{val:published.length,lbl:'Published'},{val:pending.length,lbl:'Pending Review'}]);
-      bodyHtml += '<div style="margin:10px 0 8px;">' + (rows.length > 0 ? svgBars(wkCounts, '#C4622A', 72) : svgGhostBars(4, 72)) + '</div>';
+      bodyHtml += '<div style="margin:6px 0 6px;">' + (rows.length > 0 ? svgBars(wkCounts, '#C4622A', 72) : svgGhostBars(4, 72)) + '</div>';
       if (pending.length > 0) {
         bodyHtml += '<div class="widget-subsection-label">Pending Review</div><ul class="widget-list">';
         pending.slice(0,3).forEach(function(p) {
@@ -274,7 +274,7 @@ window.DASH_WIDGETS = (function() {
   }
 
   function renderBITeaser() {
-    return '<div class="widget-panel wide placeholder" id="widget-bi">' +
+    return '<div class="widget-panel placeholder" id="widget-bi">' +
       '<div class="widget-header" style="opacity:0.5;"><span class="widget-icon">🧠</span><span class="widget-title">AI Business Insights</span><span class="badge badge-coming">Available</span></div>' +
       '<div class="widget-body"><div style="margin-bottom:10px;">' + svgGhostSparkline(52) + '</div>' +
         '<div class="widget-empty" style="padding-top:4px;"><p>Activate the Business Intelligence Dashboard to unlock AI-powered cross-tool insights — the more tools you activate, the smarter it gets.</p>' +
