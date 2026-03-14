@@ -1,88 +1,109 @@
-(function() {
-  window.DASH_DATA = {
-    init: function(supabase) {
-      if (!supabase) return;
-      supabase.auth.getUser().then(function(result) {
-        if (!result.data.user) return;
-        var userId = result.data.user.id;
-        // Load active tools from Supabase profiles/subscriptions
-        supabase.from("profiles").select("active_tools, profile_complete").eq("id", userId).single()
-          .then(function(res) {
-            var activeTools = (res.data && res.data.active_tools) ? res.data.active_tools : [];
-            var profileComplete = res.data ? res.data.profile_complete : false;
-            if (!profileComplete) {
-              var prompt = document.getElementById("profile-prompt");
-              if (prompt) prompt.classList.remove("hidden");
-            }
-            DASH_DATA.renderStax(activeTools);
-            DASH_DATA.loadNotifications(supabase, userId, activeTools);
-          });
-      });
-    },
+window.DASH_DATA = (function() {
 
-    TOOLS: [
-      { id: "social", icon: "📱", name: "Marketing & Social Media Manager", desc: "AI builds your posts, graphics & marketing content — auto-posts to Facebook & Instagram.", price: "$79", url: "social.html", stripe: "price_social" },
-      { id: "email", icon: "📧", name: "AI Email Assistant", desc: "AI reads your Gmail & Outlook — summarised on one smart dashboard.", price: "$59", url: "email-assistant.html", stripe: "price_email" },
-      { id: "chatbot", icon: "💬", name: "AI Website Chatbot", desc: "AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7.", price: "$79", url: "chatbot.html", stripe: "price_chatbot" },
-      { id: "news-digest", icon: "📰", name: "Industry News & Updates Digest", desc: "Industry news, regulation changes, supplier updates — personalised and AI-summarised.", price: "$59", url: "news-digest.html", stripe: "price_news" },
-      { id: "bi", icon: "📊", name: "Business Intelligence Dashboard", desc: "AI-powered insights driven by your business data, your industry, your region.", price: "$89", url: "business-intelligence.html", stripe: "price_bi" },
-      { id: "strategic-plan", icon: "🗺️", name: "Strategic Plan & Operations Dashboard", desc: "Create your roadmap in minutes from a simple AI-guided interview.", price: "$69", url: "strategic-plan.html", stripe: "price_strategic" },
-      { id: "tender", icon: "📋", name: "Tender Response Generator", desc: "AI reads the tender brief and generates a full professional response — ready to submit.", price: "$99", url: "tender-response.html", stripe: "price_1T4dDMHnoVvjo5gxWhPHyqQc" },
-      { id: "quote-enhancer", icon: "💰", name: "Quote Enhancer", desc: "Turn your prices into a professional branded quote with AI-written scope and warranty terms.", price: "Coming Soon", url: null, stripe: null },
-      { id: "swms", icon: "🦺", name: "SWMS & Safety Docs", desc: "AI generates job-specific SWMS and safety docs — compliant with your state's WHS requirements.", price: "Coming Soon", url: null, stripe: null },
-      { id: "customer-updates", icon: "📸", name: "Customer Progress Updates", desc: "Send professional branded progress updates with photos — AI does the writing.", price: "Coming Soon", url: null, stripe: null },
-      { id: "handover-docs", icon: "📦", name: "Handover Documentation", desc: "AI creates a branded handover pack for every completed job — maintenance guide, warranty, summary.", price: "Coming Soon", url: null, stripe: null },
-      { id: "review-booster", icon: "⭐", name: "Review & Referral Booster", desc: "Automatically request Google reviews at job completion — then turn happy customers into referrals.", price: "Coming Soon", url: null, stripe: null },
-      { id: "design-viz", icon: "🎨", name: "Design Visualiser", desc: "Upload a site photo, describe the project — AI generates a professional concept render.", price: "Coming Soon", url: null, stripe: null }
-    ],
+  var TOOLS = [
+    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79', status: 'built',   url: 'social.html' },
+    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59', status: 'built',   url: 'email-assistant.html' },
+    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79', status: 'built',   url: 'chatbot.html' },
+    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59', status: 'built',   url: 'news-digest.html' },
+    { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89', status: 'built',   url: 'dashboard.html' },
+    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69', status: 'built',   url: 'strategic-plan.html' },
+    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99', status: 'pending', url: 'panel.html?tool=tender' },
+    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=quote-enhancer' },
+    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=swms' },
+    { id: 'customer-updates', icon: '📲', name: 'Customer Progress Updates',     desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=customer-updates' },
+    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=handover-docs' },
+    { id: 'review-booster',icon: '⭐', name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=review-booster' },
+    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'Coming Soon', status: 'pending', url: 'panel.html?tool=design-viz' }
+  ];
 
-    renderStax: function(activeTools) {
-      var grid = document.getElementById("stax-grid");
-      if (!grid) return;
-      grid.innerHTML = "";
-      DASH_DATA.TOOLS.forEach(function(tool) {
-        var isActive = activeTools.indexOf(tool.id) > -1;
-        var isComingSoon = !tool.stripe && tool.price === "Coming Soon";
-        var card = document.createElement("div");
-        card.className = "stax-card" + (isActive ? " active" : "") + (isComingSoon ? " coming-soon" : "");
-        var badge = isActive ? '<span class="badge-live">Live</span>' : (isComingSoon ? '<span class="badge-coming">Coming Soon</span>' : "");
-        var btn = "";
-        if (isActive && tool.url) {
-          btn = '<a href="' + tool.url + '" class="btn-open-tool">Open Tool</a>';
-        } else if (!isComingSoon && tool.stripe) {
-          btn = '<a href="login.html?tab=signup&tool=' + tool.id + '" class="btn-activate">Activate — ' + tool.price + "/mo</a>";
-        }
-        card.innerHTML = '<div class="stax-card-icon">' + tool.icon + '</div>' +
-          '<div>' + badge + '</div>' +
-          '<div class="stax-card-name">' + tool.name + '</div>' +
-          '<div class="stax-card-desc">' + tool.desc + '</div>' +
-          (tool.price !== "Coming Soon" && !isActive ? '<div class="stax-card-price">' + tool.price + "/mo</div>" : "") +
-          '<div class="stax-card-footer">' + btn + '</div>';
-        grid.appendChild(card);
-      });
-    },
+  function renderStax(activeTools) {
+    var grid = document.getElementById('stax-grid');
+    if (!grid) return;
+    var html = '';
+    TOOLS.forEach(function(tool) {
+      var isActive  = activeTools.indexOf(tool.id) !== -1;
+      var isPending = tool.status === 'pending';
+      var cardClass = isActive ? 'stax-card active' : (isPending ? 'stax-card coming-soon' : 'stax-card');
+      html += '<div class="' + cardClass + '">';
+      html += '<div class="stax-card-top">';
+      html += '<span class="stax-card-icon">' + tool.icon + '</span>';
+      html += '<span class="stax-card-name">' + tool.name + '</span>';
+      if (isActive) {
+        html += '<span class="stax-card-badge badge badge-live">Live</span>';
+      } else if (isPending) {
+        html += '<span class="stax-card-badge badge badge-coming">Coming Soon</span>';
+      }
+      html += '</div>';
+      html += '<p class="stax-card-desc">' + tool.desc + '</p>';
+      html += '<div class="stax-card-actions">';
+      if (isActive) {
+        html += '<a href="' + tool.url + '" class="btn-open-tool">Open Tool</a>';
+      } else if (!isPending) {
+        html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
+        html += '<a href="login.html?tab=signup&tool=' + tool.id + '" class="btn-activate-tool" style="margin-top:8px;display:inline-block;">Activate</a>';
+      }
+      html += '</div>';
+      html += '</div>';
+    });
+    grid.innerHTML = html;
+  }
 
-    loadNotifications: function(supabase, userId, activeTools) {
-      var bar = document.getElementById("notif-bar");
-      if (!bar) return;
-      var notifs = [];
-      // Check content library pending items
-      supabase.from("content_library").select("id", { count: "exact" })
-        .eq("user_id", userId).eq("status", "pending")
-        .then(function(res) {
-          var count = res.count || 0;
-          if (count > 0) {
-            notifs.push(count + " item" + (count > 1 ? "s" : "") + " awaiting approval in <a href='content-library.html'>Content Library</a>");
-          }
-          DASH_DATA.renderNotifications(bar, notifs);
-        });
-    },
+  async function loadNotifications(userId) {
+    var bar = document.getElementById('notification-bar');
+    if (!bar) return;
+    var items = [];
 
-    renderNotifications: function(bar, notifs) {
-      if (!notifs.length) { bar.innerHTML = ""; return; }
-      bar.innerHTML = notifs.map(function(msg) {
-        return '<div class="notif-item">⚠️ ' + msg + '<button class="notif-dismiss" onclick="this.parentElement.remove()">×</button></div>';
-      }).join("");
+    try {
+      var profRes = await supabase.from('profiles').select('profile_complete').eq('id', userId).single();
+      if (profRes.data && !profRes.data.profile_complete) {
+        items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: 'content-library.html#business-profile', linkText: 'Complete now' });
+      }
+    } catch(e) {}
+
+    try {
+      var clRes = await supabase.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
+      if (clRes.count && clRes.count > 0) {
+        items.push({ msg: clRes.count + ' item' + (clRes.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: 'content-library.html', linkText: 'Review' });
+      }
+    } catch(e) {}
+
+    try {
+      var spRes = await supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
+      if (spRes.count && spRes.count > 0) {
+        items.push({ msg: spRes.count + ' post' + (spRes.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: 'social.html', linkText: 'Review' });
+      }
+    } catch(e) {}
+
+    if (items.length === 0) { bar.style.display = 'none'; return; }
+    items = items.slice(0, 3);
+    bar.innerHTML = items.map(function(item) {
+      return '<div class="notif-item"><span>' + item.msg + '</span><a href="' + item.link + '">' + item.linkText + '</a><button class="notif-dismiss" title="Dismiss">&times;</button></div>';
+    }).join('');
+  }
+
+  async function init(user) {
+    var userId = user.id;
+
+    var activeTools = [];
+    try {
+      var profRes = await supabase.from('profiles').select('active_tools').eq('id', userId).single();
+      if (profRes.data && Array.isArray(profRes.data.active_tools)) {
+        activeTools = profRes.data.active_tools;
+      }
+    } catch(e) {}
+
+    renderStax(activeTools);
+    await loadNotifications(userId);
+
+    var widgetZone = document.getElementById('widget-zone');
+    if (activeTools.length > 0 && widgetZone) {
+      widgetZone.classList.add('visible');
+      if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.render === 'function') {
+        await window.DASH_WIDGETS.render(userId, activeTools);
+      }
     }
-  };
+  }
+
+  return { init: init, TOOLS: TOOLS };
+
 })();
