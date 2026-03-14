@@ -19,6 +19,7 @@ window.DASH_WIDGETS = (function() {
 
   function svgBars(values, color, h) {
     color = color || '#C4622A'; h = h || 60;
+    if (values.every(function(v){ return v === 0; })) return svgGhostBars(values.length, h);
     var max = Math.max.apply(null, values.concat([1]));
     var w = 100, bw = Math.floor(w / values.length) - 2;
     var bars = values.map(function(v, i) {
@@ -43,6 +44,7 @@ window.DASH_WIDGETS = (function() {
   function svgSparkline(values, color, h) {
     color = color || '#4A6D8C'; h = h || 50;
     if (!values || values.length < 2) return svgGhostSparkline(h);
+    if (values.every(function(v){ return v === 0; })) return svgGhostSparkline(h);
     var max = Math.max.apply(null, values.concat([1]));
     var min = Math.min.apply(null, values);
     var range = max - min || 1, pad = 4;
