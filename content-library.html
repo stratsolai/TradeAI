@@ -22,67 +22,24 @@
       --border: #e5e5e5;
       --text: #333333;
       --text-muted: #888888;
-    }
+    
+  --heading-font: 'Barlow Condensed', sans-serif;
+  --body-font: 'DM Sans', sans-serif;}
 
     body {
-  padding-top: 68px;
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
 
     /* ─── HEADER ─── */
-    .topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 68px;
-  background: linear-gradient(90deg, #C4622A 0%, #9B3D1A 30%, #1A3A6B 70%, #1E3A8A 100%);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  z-index: 1000;
-  flex-shrink: 0;
-}
-.topbar-logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  flex-shrink: 0;
-}
-.topbar-logo img {
-  height: 38px;
-  width: auto;
-  display: block;
-}
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 28px;
-  flex-shrink: 0;
-}
-.btn-signin {
-  background: rgba(255,255,255,0.15);
-  color: #ffffff;
-  border: 1px solid rgba(255,255,255,0.35);
-  border-radius: 7px;
-  padding: 7px 16px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: "DM Sans", sans-serif;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  transition: background 0.2s, border-color 0.2s;
-}
-.btn-signin:hover {
-  background: rgba(255,255,255,0.25);
-  border-color: rgba(255,255,255,0.55);
-}
+    
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg,#b87028 0%,#b06828 18%,#b06832 25%,#b06832 32%,#7a5848 44%,#4a5568 54%,#4a5872 68%,#3d506a 85%,#364a63 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
+
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
+
+.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
+.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
 
     /* ─── MAIN LAYOUT ─── */
     .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
