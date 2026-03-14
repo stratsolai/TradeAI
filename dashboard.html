@@ -402,7 +402,43 @@
       border-radius: 4px;
       transition: width 0.4s ease;
     }
-  </style>
+  
+    /* ── WIDGET SUBSECTION LABEL ── */
+    .widget-subsection-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin: 8px 0 6px;
+    }
+
+    /* ── STAT TILE VARIANT ── */
+    .stat-val-sm {
+      font-size: 20px !important;
+    }
+
+    /* ── CHART CONTAINER ── */
+    .chart-wrap {
+      margin: 8px 0;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    /* ── WIDGET PANEL SIZING ── */
+    .widget-panel {
+      min-height: 220px;
+    }
+
+    /* ── DONUT + STAT ROW ── */
+    .donut-row {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+</style>
 </head>
 <body>
 
@@ -446,8 +482,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase-client.js"></script>
-  <script src="dashboard-data.js?v=2"></script>
-  <script src="dashboard-widgets.js?v=2"></script>
+  <script src="dashboard-data.js?v=3"></script>
+  <script src="dashboard-widgets.js?v=3"></script>
 
   <script>
     document.getElementById("account-btn").addEventListener("click", function(e) {
