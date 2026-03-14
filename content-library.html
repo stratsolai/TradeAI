@@ -963,12 +963,12 @@
     </div>
     <div id="modal-detail-body"></div>
   </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="./supabase-client.js"></script>
 <script src="./auth.js"></script>
 <script>
-
 requireAuth();
 
 // ─── STATE ────────────────────────────────────
@@ -1017,7 +1017,6 @@ window.switchPTab = function(tab) {
 };
 
 // ─── STATS ────────────────────────────────────
-async 
 
   async function loadStats() {
   const { data: { user } } = await supabaseClient.auth.getUser();
@@ -1064,6 +1063,65 @@ async
   const ext = name.toLowerCase().split('.').pop();
   return { pdf:'pdf',doc:'word',docx:'word',ppt:'powerpoint',pptx:'powerpoint',xls:'excel',xlsx:'excel',txt:'text',jpg:'image',jpeg:'image',png:'image',webp:'image',heic:'image' }[ext] || 'unknown';
 }
+
+function fileToBase64(file) {
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = e => res(e.target.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function compressImage(file) {
+  return new Promise((res,rej) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let [w,h] = [img.width, img.height];
+        const max = 1920;
+        if (w > max || h > max) { if (w>h) { h=h/w*max; w=max; } else { w=w/h*max; h=max; } }
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
+      };
+      img.onerror = rej;
+      img.src = e.target.result;
+    };
+    reader.onerror = rej;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── INIT ──────────────────────────────────────
+setTimeout(() => {
+  initUpload();
+  loadStats();
+
+  // Check for OAuth callbacks
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('gdrive_connected') === 'true') {
+    alert('✅ Google Drive connected!');
+    loadConnectionStatus();
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+  if (params.get('error')) {
+    alert('❌ Connection error: ' + params.get('details'));
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}, 400);
+
+// ── ENHANCED PHOTO UPLOAD ─────────────────────────────────────────────────────
+
+let selectedPhotoFiles = [];
+let generatedPostText = '';
+
+['camera-input', 'photo-library-input'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', handlePhotoSelection);
+});
   window.getFileType = getFileType;
 
   const catBadge = (cat) => {
@@ -1078,7 +1136,7 @@ async
     };
     const [cls, label] = map[cat] || ['', cat];
     return `<span class="cat-badge ${cls}">${label || cat}</span>`;
-  };
+  }
   window.catBadge = catBadge;
 
   // Dynamic loader - tab JS files with cache-busting
