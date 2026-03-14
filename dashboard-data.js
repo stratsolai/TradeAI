@@ -54,21 +54,21 @@ window.DASH_DATA = (function() {
     var items = [];
 
     try {
-      var profRes = await supabase.from('profiles').select('profile_complete').eq('id', userId).single();
+      var profRes = await supabaseClient.from('profiles').select('profile_complete').eq('id', userId).single();
       if (profRes.data && !profRes.data.profile_complete) {
         items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: 'content-library.html#business-profile', linkText: 'Complete now' });
       }
     } catch(e) {}
 
     try {
-      var clRes = await supabase.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
+      var clRes = await supabaseClient.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
       if (clRes.count && clRes.count > 0) {
         items.push({ msg: clRes.count + ' item' + (clRes.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: 'content-library.html', linkText: 'Review' });
       }
     } catch(e) {}
 
     try {
-      var spRes = await supabase.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
+      var spRes = await supabaseClient.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
       if (spRes.count && spRes.count > 0) {
         items.push({ msg: spRes.count + ' post' + (spRes.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: 'social.html', linkText: 'Review' });
       }
@@ -86,7 +86,7 @@ window.DASH_DATA = (function() {
 
     var activeTools = [];
     try {
-      var profRes = await supabase.from('profiles').select('active_tools').eq('id', userId).single();
+      var profRes = await supabaseClient.from('profiles').select('active_tools').eq('id', userId).single();
       if (profRes.data && Array.isArray(profRes.data.active_tools)) {
         activeTools = profRes.data.active_tools;
       }
