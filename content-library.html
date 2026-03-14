@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Content Library - TradeAI Pro</title>
+  <title>Content Library - StaxAI</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,47 +25,64 @@
     }
 
     body {
+  padding-top: 68px;
       font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--bg);
       color: var(--text);
     }
 
     /* ─── HEADER ─── */
-    .header {
-      background: var(--white);
-      padding: 0 40px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      height: 64px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .logo { font-size: 22px; font-weight: 700; color: var(--blue); }
-
-    .header-actions { display: flex; gap: 10px; align-items: center; }
-
-    .btn-header {
-      padding: 8px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
-
-    .btn-header.blue { background: var(--blue); color: white; }
-    .btn-header.blue:hover { background: #144070; }
-    .btn-header.grey { background: #f0f0f0; color: #555; }
-    .btn-header.grey:hover { background: #e0e0e0; }
+    .topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 68px;
+  background: linear-gradient(90deg, #C4622A 0%, #9B3D1A 30%, #1A3A6B 70%, #1E3A8A 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 1000;
+  flex-shrink: 0;
+}
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.topbar-logo img {
+  height: 38px;
+  width: auto;
+  display: block;
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-shrink: 0;
+}
+.btn-signin {
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 7px;
+  padding: 7px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: "DM Sans", sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-signin:hover {
+  background: rgba(255,255,255,0.25);
+  border-color: rgba(255,255,255,0.55);
+}
 
     /* ─── MAIN LAYOUT ─── */
     .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
@@ -875,11 +892,13 @@
 <body>
 
 <!-- ─── HEADER ─── -->
-<div class="header">
-  <div class="logo">TradeAI Pro — Content Library 📚</div>
-  <div class="header-actions">
-    <a href="/social.html" class="btn-header blue">📣 Marketing Hub</a>
-    <a href="/dashboard.html" class="btn-header grey">← Dashboard</a>
+<div class="topbar">
+  <a href="index.html" class="topbar-logo">
+    <img src="StaxAI Cropped Transparent.png" alt="StaxAI">
+  </a>
+  <div class="topbar-actions">
+    <a href="/social.html" class="btn-signin">&#128227; Marketing Hub</a>
+    <a href="/dashboard.html" class="btn-signin">&#8592; Dashboard</a>
   </div>
 </div>
 
@@ -2280,7 +2299,7 @@ async function queuePhotosOffline(files, context) {
 }
 
 function openQueueDB() {
-  return new Promise((resolve, reject) => { const req = indexedDB.open('TradeAI Pro-photo-queue', 1); req.onupgradeneeded = e => e.target.result.createObjectStore('photo-queue', { autoIncrement: true }); req.onsuccess = e => resolve(e.target.result); req.onerror = reject; });
+  return new Promise((resolve, reject) => { const req = indexedDB.open('StaxAI-photo-queue', 1); req.onupgradeneeded = e => e.target.result.createObjectStore('photo-queue', { autoIncrement: true }); req.onsuccess = e => resolve(e.target.result); req.onerror = reject; });
 }
 
 async function updateQueueBanner() {
