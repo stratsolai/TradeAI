@@ -38,7 +38,7 @@ window.DASH_WIDGETS = (function() {
   async function renderEmail(userId) {
     var bodyHtml = '';
     try {
-      var res = await supabase.from('email_summaries')
+      var res = await supabaseClient.from('email_summaries')
         .select('id, sender, subject, summary, urgency, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -71,7 +71,7 @@ window.DASH_WIDGETS = (function() {
     var bodyHtml = '';
     var lastUpdated = '';
     try {
-      var res = await supabase.from('news_digest_items')
+      var res = await supabaseClient.from('news_digest_items')
         .select('id, headline, source, summary, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -102,7 +102,7 @@ window.DASH_WIDGETS = (function() {
   async function renderSocial(userId) {
     var bodyHtml = '';
     try {
-      var res = await supabase.from('social_posts')
+      var res = await supabaseClient.from('social_posts')
         .select('id, caption, scheduled_at, status, platform, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -151,20 +151,20 @@ window.DASH_WIDGETS = (function() {
       today.setHours(0, 0, 0, 0);
       var todayStr = today.toISOString();
       var weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
-      var todayRes = await supabase.from('chatbot_interactions')
+      var todayRes = await supabaseClient.from('chatbot_interactions')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .gte('created_at', todayStr);
-      var weekRes = await supabase.from('chatbot_interactions')
+      var weekRes = await supabaseClient.from('chatbot_interactions')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .gte('created_at', weekAgo);
-      var recentRes = await supabase.from('chatbot_interactions')
+      var recentRes = await supabaseClient.from('chatbot_interactions')
         .select('visitor_name, message_excerpt, created_at')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
         .limit(3);
-      var faqRes = await supabase.from('learned_faqs')
+      var faqRes = await supabaseClient.from('learned_faqs')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('status', 'pending');
@@ -201,7 +201,7 @@ window.DASH_WIDGETS = (function() {
   async function renderStrategicPlan(userId) {
     var bodyHtml = '';
     try {
-      var planRes = await supabase.from('strategic_plans')
+      var planRes = await supabaseClient.from('strategic_plans')
         .select('id, created_at, cycle_end_date')
         .eq('user_id', userId)
         .order('created_at', { ascending: false })
@@ -210,7 +210,7 @@ window.DASH_WIDGETS = (function() {
         bodyHtml = emptyState('No plan created yet. Open Strategic Plan to complete your AI-guided interview.');
       } else {
         var plan = planRes.data[0];
-        var actRes = await supabase.from('action_tracker')
+        var actRes = await supabaseClient.from('action_tracker')
           .select('id, title, due_date, status')
           .eq('user_id', userId)
           .eq('plan_id', plan.id)
