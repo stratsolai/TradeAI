@@ -114,7 +114,7 @@ window.DASH_WIDGETS = (function() {
       var med  = rows.filter(function(r){ return r.urgency==='medium'; }).length;
       if (rows.length > 0) {
         bodyHtml += '<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">' +
-          svgDonut(high > 0 ? Math.round((high/rows.length)*100) : 0, '#C62828', 90) +
+          svgDonut(high > 0 ? Math.round((high/rows.length)*100) : 0, '#C62828', 100) +
           '<div>' + statTiles([{val:rows.length,lbl:'Total'},{val:high,lbl:'High Priority'},{val:med,lbl:'Medium'}]) + '</div>' +
         '</div>';
         bodyHtml += '<ul class="widget-list">';
@@ -124,9 +124,9 @@ window.DASH_WIDGETS = (function() {
         });
         bodyHtml += '</ul>';
       } else {
-        bodyHtml = emptyBody('<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">' + svgGhostDonut(90) + '<div>' + statTiles([{val:'-',lbl:'Total'},{val:'-',lbl:'High Priority'},{val:'-',lbl:'Medium'}]) + '</div></div>', 'Connect Gmail or Outlook to see your inbox summary here.');
+        bodyHtml = emptyBody('<div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">' + svgGhostDonut(110) + '<div>' + statTiles([{val:'-',lbl:'Total'},{val:'-',lbl:'High Priority'},{val:'-',lbl:'Medium'}]) + '</div></div>', 'Connect Gmail or Outlook to see your inbox summary here.');
       }
-    } catch(e) { bodyHtml = emptyBody(svgGhostDonut(90), 'Connect Gmail or Outlook to see your inbox summary here.'); }
+    } catch(e) { bodyHtml = emptyBody(svgGhostDonut(110), 'Connect Gmail or Outlook to see your inbox summary here.'); }
     return panel('email', '📧', 'AI Email Assistant', bodyHtml, '', 'email-assistant.html', 'Open Email Assistant');
   }
 
@@ -144,15 +144,15 @@ window.DASH_WIDGETS = (function() {
       });
       if (rows.length > 0) {
         lastUpdated = 'Updated ' + fmtShort(rows[0].created_at);
-        bodyHtml += '<div style="margin-bottom:10px;">' + svgBars(counts, '#4A6D8C', 60) + '</div><ul class="widget-list">';
+        bodyHtml += '<div style="margin-bottom:10px;">' + svgBars(counts, '#4A6D8C', 80) + '</div><ul class="widget-list">';
         rows.forEach(function(item) {
           bodyHtml += '<li class="widget-list-item"><span class="widget-list-item-main"><div class="widget-list-item-sender">' + (item.headline||'') + '</div>' + (item.source ? '<div class="widget-list-item-subj">' + item.source + '</div>' : '') + '</span><span class="widget-list-item-time">' + timeAgo(item.created_at) + '</span></li>';
         });
         bodyHtml += '</ul>';
       } else {
-        bodyHtml = emptyBody('<div style="margin-bottom:10px;">' + svgGhostBars(7, 60) + '</div>', 'Your first digest will appear here. Open News Digest to run your first scan.');
+        bodyHtml = emptyBody('<div style="margin-bottom:10px;">' + svgGhostBars(7, 80) + '</div>', 'Your first digest will appear here. Open News Digest to run your first scan.');
       }
-    } catch(e) { bodyHtml = emptyBody('<div style="margin-bottom:10px;">' + svgGhostBars(7, 60) + '</div>', 'Your first digest will appear here. Open News Digest to run your first scan.'); }
+    } catch(e) { bodyHtml = emptyBody('<div style="margin-bottom:10px;">' + svgGhostBars(7, 80) + '</div>', 'Your first digest will appear here. Open News Digest to run your first scan.'); }
     return panel('news-digest', '📰', 'Industry News Digest', bodyHtml, lastUpdated, 'news-digest.html', 'Open News Digest');
   }
 
@@ -171,7 +171,7 @@ window.DASH_WIDGETS = (function() {
         if (wa < 4) wkCounts[3 - wa]++;
       });
       bodyHtml += statTiles([{val:rows.length,lbl:'This Month'},{val:published.length,lbl:'Published'},{val:pending.length,lbl:'Pending Review'}]);
-      bodyHtml += '<div style="margin:10px 0 8px;">' + (rows.length > 0 ? svgBars(wkCounts, '#C4622A', 56) : svgGhostBars(4, 56)) + '</div>';
+      bodyHtml += '<div style="margin:10px 0 8px;">' + (rows.length > 0 ? svgBars(wkCounts, '#C4622A', 72) : svgGhostBars(4, 72)) + '</div>';
       if (pending.length > 0) {
         bodyHtml += '<div class="widget-subsection-label">Pending Review</div><ul class="widget-list">';
         pending.slice(0,3).forEach(function(p) {
@@ -212,7 +212,7 @@ window.DASH_WIDGETS = (function() {
         if (da < 14) dayCounts[13 - da]++;
       });
       bodyHtml += statTiles([{val:todayRes.count||0,lbl:'Leads Today'},{val:weekRes.count||0,lbl:'This Week'}]);
-      bodyHtml += '<div style="margin:10px 0 8px;">' + svgSparkline(dayCounts, '#C4622A', 44) + '</div>';
+      bodyHtml += '<div style="margin:10px 0 8px;">' + svgSparkline(dayCounts, '#C4622A', 56) + '</div>';
       if (faqRes.count && faqRes.count > 0) {
         bodyHtml += '<div style="font-size:12px;color:var(--orange);font-weight:600;margin-bottom:8px;">' + faqRes.count + ' FAQ suggestion' + (faqRes.count>1?'s':'') + ' to review</div>';
       }
@@ -227,7 +227,7 @@ window.DASH_WIDGETS = (function() {
         bodyHtml += '<p style="font-size:13px;color:var(--muted);">Your chatbot is active. Enquiries and leads will appear here.</p>';
       }
     } catch(e) {
-      bodyHtml = statTiles([{val:'-',lbl:'Leads Today'},{val:'-',lbl:'This Week'}]) + '<div style="margin:10px 0 8px;">' + svgGhostSparkline(44) + '</div><p style="font-size:13px;color:var(--muted);">Your chatbot is active. Enquiries and leads will appear here.</p>';
+      bodyHtml = statTiles([{val:'-',lbl:'Leads Today'},{val:'-',lbl:'This Week'}]) + '<div style="margin:10px 0 8px;">' + svgGhostSparkline(56) + '</div><p style="font-size:13px;color:var(--muted);">Your chatbot is active. Enquiries and leads will appear here.</p>';
     }
     return panel('chatbot', '💬', 'AI Website Chatbot', bodyHtml, '', 'chatbot.html', 'Open Chatbot Settings');
   }
@@ -239,7 +239,7 @@ window.DASH_WIDGETS = (function() {
         .select('id, created_at, cycle_end_date').eq('user_id',userId)
         .order('created_at',{ascending:false}).limit(1);
       if (!planRes.data || planRes.data.length === 0) {
-        bodyHtml = emptyBody(svgGhostDonut(100), 'No plan created yet. Open Strategic Plan to complete your AI-guided interview.');
+        bodyHtml = emptyBody(svgGhostDonut(110), 'No plan created yet. Open Strategic Plan to complete your AI-guided interview.');
       } else {
         var plan = planRes.data[0];
         var actRes = await supabaseClient.from('action_tracker')
@@ -254,7 +254,7 @@ window.DASH_WIDGETS = (function() {
           daysLabel = daysLeft > 0 ? daysLeft + ' days remaining' : 'Cycle ended ' + fmtDate(plan.cycle_end_date);
         }
         bodyHtml += '<div style="display:flex;gap:16px;align-items:center;margin-bottom:12px;">' +
-          svgDonut(pct, '#C4622A', 100) +
+          svgDonut(pct, '#C4622A', 110) +
           '<div style="flex:1;"><div style="font-family:&quot;Barlow Condensed&quot;,sans-serif;font-size:20px;font-weight:700;color:' + (daysLeft < 14 && daysLeft > 0 ? '#C4622A' : '#666666') + ';margin-bottom:4px;">' + daysLabel + '</div>' +
           statTiles([{val:done,lbl:'Complete'},{val:actions.length-done,lbl:'Remaining'}]) + '</div></div>';
         var upcoming = actions.filter(function(a){ return a.status!=='complete'; }).slice(0,3);
@@ -267,14 +267,14 @@ window.DASH_WIDGETS = (function() {
           bodyHtml += '</ul>';
         }
       }
-    } catch(e) { bodyHtml = emptyBody(svgGhostDonut(100), 'No plan created yet. Open Strategic Plan to complete your AI-guided interview.'); }
+    } catch(e) { bodyHtml = emptyBody(svgGhostDonut(110), 'No plan created yet. Open Strategic Plan to complete your AI-guided interview.'); }
     return panel('strategic-plan', '🗺️', 'Strategic Plan', bodyHtml, '', 'strategic-plan.html', 'Open Strategic Plan');
   }
 
   function renderBITeaser() {
     return '<div class="widget-panel wide placeholder" id="widget-bi">' +
       '<div class="widget-header" style="opacity:0.5;"><span class="widget-icon">🧠</span><span class="widget-title">AI Business Insights</span><span class="badge badge-coming">Available</span></div>' +
-      '<div class="widget-body"><div style="margin-bottom:10px;">' + svgGhostSparkline(40) + '</div>' +
+      '<div class="widget-body"><div style="margin-bottom:10px;">' + svgGhostSparkline(52) + '</div>' +
         '<div class="widget-empty" style="padding-top:4px;"><p>Activate the Business Intelligence Dashboard to unlock AI-powered cross-tool insights — the more tools you activate, the smarter it gets.</p>' +
         '<a href="panel.html?tool=bi" class="btn-activate">Learn More</a></div>' +
       '</div></div>';
@@ -291,7 +291,7 @@ window.DASH_WIDGETS = (function() {
     var html = '', hasBi = activeTools.indexOf('bi') !== -1;
     if (hasBi) {
       html += '<div class="widget-panel wide" id="widget-bi"><div class="widget-header"><span class="widget-icon">🧠</span><span class="widget-title">AI Business Insights</span><span class="badge badge-live">Live</span></div>' +
-        '<div class="widget-body">' + svgGhostSparkline(40) + '<div class="widget-empty"><p>AI Insights panel coming soon — requires bi_insights table setup.</p></div></div></div>';
+        '<div class="widget-body">' + svgGhostSparkline(52) + '<div class="widget-empty"><p>AI Insights panel coming soon — requires bi_insights table setup.</p></div></div></div>';
     }
     for (var i = 0; i < activeTools.length; i++) {
       var id = activeTools[i];
