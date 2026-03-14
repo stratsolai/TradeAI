@@ -864,11 +864,11 @@
   .conn-dot { width:10px; height:10px; border-radius:50%; background:#c4622a; flex-shrink:0; position:relative; z-index:2; opacity:0; }
   .conn-segment { flex:1; height:1px; background:rgba(196,98,42,0.15); position:relative; overflow:hidden; }
   .conn-segment-fill { position:absolute; top:0; left:0; height:100%; width:0%; background:#c4622a; }
-  .hiw-track { display:flex; gap:0; }
+  .hiw-track { display:flex; gap:0; width:100%; justify-content:space-between; }
 
   .hiw-step:last-child { padding-right:0; }
   .hiw-step.visible { opacity:1; transform:translateY(0); }
-  .hiw-step + .hiw-step { padding-left:40px; border-left:1px solid rgba(255,255,255,0.06); }
+  .hiw-step + .hiw-step { padding-left:56px; border-left:1px solid rgba(255,255,255,0.06); }
   .step-watermark { font-family:'Barlow Condensed',sans-serif; font-size:72px; font-weight:900; text-transform:uppercase; letter-spacing:-2px; line-height:1; color:rgba(255,255,255,0.12); margin-bottom:20px; user-select:none; pointer-events:none; white-space:nowrap; overflow:hidden; transition:color 0.4s ease; }
   .hiw-step:last-child .step-watermark { color:rgba(196,98,42,0.18); }
   .hiw-step:hover .step-watermark { color:rgba(255,255,255,0.20); }
