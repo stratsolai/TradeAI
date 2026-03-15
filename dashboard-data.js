@@ -1,19 +1,19 @@
 window.DASH_DATA = (function() {
 
   var TOOLS = [
-    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: 'social.html' },
-    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: 'email-assistant.html' },
-    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: 'chatbot.html' },
-    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html' },
-    { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'built',   url: 'dashboard.html' },
-    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: 'strategic-plan.html' },
-    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: 'panel.html?tool=tender' },
-    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=quote-enhancer' },
-    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=swms' },
-    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: 'panel.html?tool=customer-updates' },
-    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: 'panel.html?tool=handover-docs' },
-    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: 'panel.html?tool=review-booster' },
-    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: 'panel.html?tool=design-viz' }
+    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: 'social.html',        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI' },
+    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: 'email-assistant.html', priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL' },
+    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: 'chatbot.html',        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf' },
+    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html',    priceId: null },
+    { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'pending', url: 'bi.html',             priceId: null },
+    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: 'strategic-plan.html', priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego' },
+    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: 'panel.html?tool=tender',          priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc' },
+    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=quote-enhancer', priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI' },
+    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=swms',            priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF' },
+    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: 'panel.html?tool=customer-updates', priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN' },
+    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: 'panel.html?tool=handover-docs',  priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL' },
+    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: 'panel.html?tool=review-booster', priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa' },
+    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: 'panel.html?tool=design-viz',     priceId: null }
   ];
 
   function renderStax(activeTools) {
@@ -87,6 +87,29 @@ window.DASH_DATA = (function() {
     renderStax(activeTools);
   }
 
-  return { init: init };
+  function activateTool(toolId) {
+    var tool = TOOLS.find(function(t) { return t.id === toolId; });
+    if (!tool || !tool.priceId) {
+      console.warn('activateTool: no priceId for tool', toolId);
+      return;
+    }
+    window.DASH_DATA.supabaseClient.auth.getUser().then(function(res) {
+      var user = res.data && res.data.user;
+      if (!user) { window.location.href = '/login.html'; return; }
+      fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceId: tool.priceId, userId: user.id, toolId: toolId })
+      })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.url) { window.location.href = data.url; }
+        else { console.error('activateTool: no checkout URL returned', data); }
+      })
+      .catch(function(e) { console.error('activateTool: fetch error', e); });
+    });
+  }
+
+  return { init: init, activateTool: activateTool };
 
 })();
