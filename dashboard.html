@@ -46,7 +46,7 @@
     }
     .topbar-logo { height: 38px; display: block; }
     .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
-    .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; }
+    .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
     .topbar-link:hover { text-decoration: underline; }
     .topbar-account { position: relative; }
     .topbar-account-btn { background: none; border: none; color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -155,7 +155,7 @@
   <header class="topbar">
     <a href="dashboard.html"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo"></a>
     <nav class="topbar-right">
-      <a href="content-library.html" class="topbar-link">Content Library</a>
+      <button class="topbar-link" onclick="DASH_WIDGETS.renderAll()">Refresh Data</button>
       <div class="topbar-account" id="account-menu">
         <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
         <div class="account-dropdown" id="account-dropdown">
