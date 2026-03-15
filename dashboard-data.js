@@ -4,7 +4,7 @@ window.DASH_DATA = (function() {
     { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: 'social.html',        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI' },
     { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: 'email-assistant.html', priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL' },
     { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: 'chatbot.html',        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf' },
-    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html',    priceId: null },
+    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html',    priceId: 'price_1TB7IdHnoVvjo5gxTA1rOKRI' },
     { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'pending', url: 'bi.html',             priceId: null },
     { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: 'strategic-plan.html', priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego' },
     { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: 'panel.html?tool=tender',          priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc' },
@@ -90,7 +90,11 @@ window.DASH_DATA = (function() {
   function activateTool(toolId) {
     var tool = TOOLS.find(function(t) { return t.id === toolId; });
     if (!tool || !tool.priceId) {
-      console.warn('activateTool: no priceId for tool', toolId);
+      var msg = document.createElement('div');
+      msg.textContent = 'Coming Soon — this tool is not yet available for purchase.';
+      msg.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#4A6D8C;color:#fff;padding:14px 28px;border-radius:8px;font-family:DM Sans,sans-serif;font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);';
+      document.body.appendChild(msg);
+      setTimeout(function(){ if (msg.parentNode) msg.parentNode.removeChild(msg); }, 3500);
       return;
     }
     window.DASH_DATA.supabaseClient.auth.getUser().then(function(res) {
