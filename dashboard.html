@@ -203,9 +203,8 @@
     document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
     document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
     window.dashboardInit = async function() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) { window.location.href = "login.html"; return; }
-      const user = session.user;
+      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
+      if (!user || _authErr) { window.location.href = "login.html"; return; }
       const email = user.email || "";
       document.getElementById("account-dropdown-email").textContent = email;
       document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
