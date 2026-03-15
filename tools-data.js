@@ -64,7 +64,7 @@ const CORE_TOOLS = [
     title: ["Industry News and", "Updates Digest"],
     desc: "Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices - plus searches reputable online sources - then summarises everything on an interactive dashboard. It is personalised to your business, not generic news. Tap into any story to read more.",
     price: "$59",
-    priceId: null,
+    priceId: "price_1TB7IdHnoVvjo5gxTA1rOKRI",
   },
   {
     id: "bi",
