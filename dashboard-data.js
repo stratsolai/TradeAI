@@ -120,7 +120,7 @@ window.DASH_DATA = (function() {
     if (!btn) return;
     var toolId = btn.getAttribute('data-toolid');
     if (!toolId) return;
-    activateTool(toolId);
+    DASH_DATA.activateTool(toolId);
   });
 
   return { init: init, activateTool: activateTool };
