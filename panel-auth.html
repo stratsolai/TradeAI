@@ -903,6 +903,19 @@
 .hiw2-live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(196,98,42,0.15);border:1px solid rgba(196,98,42,0.4);border-radius:20px;padding:3px 10px;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#c4622a;margin-bottom:8px}
 .hiw2-live-dot{width:6px;height:6px;border-radius:50%;background:#c4622a;animation:hiw2-pulse 1.5s ease-in-out infinite}
 @keyframes hiw2-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+
+    .topbar-logo { height: 38px; display: block; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+    .topbar-link { color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
+    .topbar-link:hover { text-decoration: underline; }
+    .topbar-account { position: relative; }
+    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .topbar-account-btn:hover { text-decoration: none; }
+    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--border); }
+    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
+    .account-dropdown-item:hover { background: var(--bg-page); }
 </style>
 </head>
 <body>
@@ -916,26 +929,16 @@
   <!-- HEADER — BURNT ORANGE -->
   <div class="topbar">
   <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
-  
-  <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
-    <span class="bundle-rotator-icon">&#128230;</span>
-    <div class="bundle-rotator-track">
-      <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
-      <div class="bundle-rotator-item">Growth — any 6 tools $299/mth</div>
-      <div class="bundle-rotator-item">Complete — all tools $499/mth</div>
-    </div>
-    <span class="bundle-rotator-cta">Bundle &#8594;</span>
-  </div>
-  <div class="topbar-actions">
-    <span id="auth-user-name" style="color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;margin-right:8px;"></span>
-    <div class="auth-dropdown" style="position:relative;display:inline-block;">
-      <button id="auth-menu-btn" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 14px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;">Account &#9660;</button>
-      <div id="auth-menu-dropdown" style="display:none;position:absolute;right:0;top:110%;background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.15);min-width:140px;z-index:100;">
-        <a href="/dashboard.html" style="display:block;padding:10px 16px;color:#333;text-decoration:none;font-family:'DM Sans',sans-serif;font-size:14px;">Dashboard</a>
-        <a id="auth-signout" href="#" style="display:block;padding:10px 16px;color:#333;text-decoration:none;font-family:'DM Sans',sans-serif;font-size:14px;border-top:1px solid #eee;">Sign Out</a>
+  <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div>
+  <nav class="topbar-right">
+    <div class="topbar-account" id="account-menu">
+        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email">—</div>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+        </div>
       </div>
-    </div>
-  </div>
+  </nav>
 </div>
 
   <!-- HERO -->
@@ -1335,5 +1338,23 @@ function handleCTA() {
 }
 </script>
 
+<script>
+    document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
+    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
+    document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
+    document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
+    window.dashboardInit = async function() {
+      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
+      if (!user || _authErr) { window.location.href = "login.html"; return; }
+      const email = user.email || "";
+      document.getElementById("account-dropdown-email").textContent = email;
+      document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
+      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
+      const ws = document.getElementById("welcome-strip");
+      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
+      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
+    };
+    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
+  </script>
 </body>
 </html>
