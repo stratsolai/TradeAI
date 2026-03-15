@@ -1342,7 +1342,7 @@ function handleCTA() {
 <script>
     document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
     document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
+    var _signOutBtn = document.getElementById("sign-out-btn"); if (_signOutBtn) { _signOutBtn.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; }); }
     document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
     window.dashboardInit = async function() {
       const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
