@@ -80,7 +80,7 @@ window.DASH_WIDGETS = (function() {
     var headerRight = isActive
       ? '<button class="widget-refresh" data-panel="'+id+'" title="Refresh">&#8635;</button>'
           + ' <a href="'+toolUrl+'" style="color:var(--orange);font-size:12px;font-weight:600;text-decoration:none;">Open Tool</a>'
-      : '<a href="panel.html?tool='+id+'" class="btn-activate-header">Activate &mdash; '+price+'/mo</a>';
+      : '<a href="panel-auth.html?tool='+id+'" class="btn-activate-header">Learn More</a><button class="btn-activate-header btn-activate-cta" data-toolid="'+id+'">Activate</button>';
     var banner = '<div class="sample-banner">\ud83d\udd14 Sample data &mdash; activate this tool to see your live results</div>';
     var footer = isActive
       ? '<div class="widget-footer"><span>'+(lastUpdated||'')+'</span><a href="'+toolUrl+'">Open Tool</a></div>'
@@ -392,6 +392,17 @@ window.DASH_WIDGETS = (function() {
     ]);
     wireRefresh(userId, activeTools);
   }
+
+  // Wire activate buttons via event delegation
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-activate-cta');
+    if (!btn) return;
+    var toolId = btn.getAttribute('data-toolid');
+    if (!toolId) return;
+    if (window.DASH_DATA && typeof window.DASH_DATA.activateTool === 'function') {
+      window.DASH_DATA.activateTool(toolId);
+    }
+  });
 
   return { renderAll: renderAll };
 
