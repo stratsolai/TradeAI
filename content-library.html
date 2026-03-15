@@ -851,7 +851,7 @@
     .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
     .topbar-link:hover { text-decoration: underline; }
     .topbar-account { position: relative; }
-    .topbar-account-btn { background: none; border: none; color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
     .topbar-account-btn:hover { text-decoration: underline; }
     .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
     .account-dropdown.open { display: block; }
@@ -865,10 +865,10 @@
 <body>
 
 <div class="topbar">
-      <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div>
       <a href="index.html" class="topbar-logo">
     <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
+      <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div>
       <nav class="topbar-right">
       <div class="topbar-account" id="account-menu">
         <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
