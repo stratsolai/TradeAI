@@ -77,8 +77,8 @@ window.DASH_DATA = (function() {
     var userId = user.id;
     var activeTools = [];
     try {
-      var pr = await window.supabaseClient.from('profiles').select('active_tools').eq('id', userId).single();
-      if (pr.data && Array.isArray(pr.data.active_tools)) activeTools = pr.data.active_tools.map(function(id) { return TOOLS.find(function(t) { return t.id === id; }) || { id: id }; }).filter(Boolean);
+      var pr = await window.supabaseClient.from('profiles').select('activated_tools').eq('id', userId).single();
+      if (pr.data && Array.isArray(pr.data.activated_tools)) activeTools = pr.data.activated_tools.map(function(id) { return TOOLS.find(function(t) { return t.id === id; }) || { id: id }; }).filter(Boolean);
     } catch(e) {}
     await loadNotifications(userId);
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
