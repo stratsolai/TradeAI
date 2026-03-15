@@ -49,19 +49,19 @@ window.DASH_DATA = (function() {
     if (!bar) return;
     var items = [];
     try {
-      var pr = await supabaseClient.from('profiles').select('profile_complete').eq('id', userId).single();
+      var pr = await window.supabaseClient.from('profiles').select('profile_complete').eq('id', userId).single();
       if (pr.data && !pr.data.profile_complete) {
         items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: 'content-library.html#business-profile', linkText: 'Complete now' });
       }
     } catch(e) {}
     try {
-      var cr = await supabaseClient.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
+      var cr = await window.supabaseClient.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
       if (cr.count && cr.count > 0) {
         items.push({ msg: cr.count + ' item' + (cr.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: 'content-library.html', linkText: 'Review' });
       }
     } catch(e) {}
     try {
-      var sp = await supabaseClient.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
+      var sp = await window.supabaseClient.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
       if (sp.count && sp.count > 0) {
         items.push({ msg: sp.count + ' post' + (sp.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: 'social.html', linkText: 'Review' });
       }
@@ -77,8 +77,8 @@ window.DASH_DATA = (function() {
     var userId = user.id;
     var activeTools = [];
     try {
-      var pr = await supabaseClient.from('profiles').select('active_tools').eq('id', userId).single();
-      if (pr.data && Array.isArray(pr.data.active_tools)) activeTools = pr.data.active_tools;
+      var pr = await window.supabaseClient.from('profiles').select('active_tools').eq('id', userId).single();
+      if (pr.data && Array.isArray(pr.data.active_tools)) activeTools = pr.data.active_tools.map(function(id) { return TOOLS.find(function(t) { return t.id === id; }) || { id: id }; }).filter(Boolean);
     } catch(e) {}
     await loadNotifications(userId);
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
@@ -97,7 +97,7 @@ window.DASH_DATA = (function() {
       setTimeout(function(){ if (msg.parentNode) msg.parentNode.removeChild(msg); }, 3500);
       return;
     }
-    window.DASH_DATA.supabaseClient.auth.getUser().then(function(res) {
+    window.DASH_DATA.window.supabaseClient.auth.getUser().then(function(res) {
       var user = res.data && res.data.user;
       if (!user) { window.location.href = '/login.html'; return; }
       fetch('/api/create-checkout', {
