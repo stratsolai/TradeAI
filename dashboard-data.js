@@ -37,7 +37,7 @@ window.DASH_DATA = (function() {
         html += '<a href="' + tool.url + '" class="btn-stax-open">Open Tool</a>';
       } else if (!isPending) {
         html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
-        html += '<a href="login.html?tab=signup&tool=' + tool.id + '" class="btn-stax-activate" style="margin-top:6px;display:inline-block;">Activate</a>';
+        html += '<a href="panel-auth.html?tool=" + tool.id + "" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="" + tool.id + "" style="margin-top:6px;display:inline-block;">Activate</button>';
       }
       html += '</div></div>';
     });
@@ -113,6 +113,15 @@ window.DASH_DATA = (function() {
       .catch(function(e) { console.error('activateTool: fetch error', e); });
     });
   }
+
+  // Wire stax-section activate buttons via event delegation
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.btn-stax-activate');
+    if (!btn) return;
+    var toolId = btn.getAttribute('data-toolid');
+    if (!toolId) return;
+    activateTool(toolId);
+  });
 
   return { init: init, activateTool: activateTool };
 
