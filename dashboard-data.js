@@ -1,5 +1,49 @@
 window.DASH_DATA = (function() {
 
+  var TOOLS = [
+    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: 'social.html' },
+    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: 'email-assistant.html' },
+    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: 'chatbot.html' },
+    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html' },
+    { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'built',   url: 'dashboard.html' },
+    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: 'strategic-plan.html' },
+    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: 'panel.html?tool=tender' },
+    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=quote-enhancer' },
+    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=swms' },
+    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: 'panel.html?tool=customer-updates' },
+    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: 'panel.html?tool=handover-docs' },
+    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: 'panel.html?tool=review-booster' },
+    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: 'panel.html?tool=design-viz' }
+  ];
+
+  function renderStax(activeTools) {
+    var grid = document.getElementById('stax-grid');
+    if (!grid) return;
+    var html = '';
+    TOOLS.forEach(function(tool) {
+      var isActive  = activeTools.indexOf(tool.id) !== -1;
+      var isPending = tool.status === 'pending';
+      var cls = 'stax-card' + (isActive ? ' stax-active' : '') + (isPending ? ' stax-coming' : '');
+      html += '<div class="' + cls + '">';
+      html += '<div class="stax-card-top">';
+      html += '<span class="stax-card-icon">' + tool.icon + '</span>';
+      html += '<span class="stax-card-name">' + tool.name + '</span>';
+      if (isActive) html += '<span class="stax-card-badge badge badge-live">Live</span>';
+      else if (isPending) html += '<span class="stax-card-badge badge badge-inactive">Soon</span>';
+      html += '</div>';
+      html += '<p class="stax-card-desc">' + tool.desc + '</p>';
+      html += '<div class="stax-card-actions">';
+      if (isActive) {
+        html += '<a href="' + tool.url + '" class="btn-stax-open">Open Tool</a>';
+      } else if (!isPending) {
+        html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
+        html += '<a href="login.html?tab=signup&tool=' + tool.id + '" class="btn-stax-activate" style="margin-top:6px;display:inline-block;">Activate</a>';
+      }
+      html += '</div></div>';
+    });
+    grid.innerHTML = html;
+  }
+
   async function loadNotifications(userId) {
     var bar = document.getElementById('notification-bar');
     if (!bar) return;
@@ -40,6 +84,7 @@ window.DASH_DATA = (function() {
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
       await window.DASH_WIDGETS.renderAll(userId, activeTools);
     }
+    renderStax(activeTools);
   }
 
   return { init: init };
