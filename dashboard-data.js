@@ -97,7 +97,7 @@ window.DASH_DATA = (function() {
       setTimeout(function(){ if (msg.parentNode) msg.parentNode.removeChild(msg); }, 3500);
       return;
     }
-    window.DASH_DATA.window.supabaseClient.auth.getUser().then(function(res) {
+    window.supabaseClient.auth.getUser().then(function(res) {
       var user = res.data && res.data.user;
       if (!user) { window.location.href = '/login.html'; return; }
       fetch('/api/create-checkout', {
