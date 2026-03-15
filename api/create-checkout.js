@@ -38,6 +38,7 @@ module.exports = async (req, res) => {
         toolName: toolName
       },
       client_reference_id: userId,
+      allow_promotion_codes: true,
     });
 
     return res.status(200).json({
