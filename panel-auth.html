@@ -44,7 +44,7 @@
   .panel {
     position: relative;
     min-height: 100vh;
-    background: var(--bg);
+    background: #F5F7FA;
     overflow: hidden;
   }
 
@@ -1340,22 +1340,39 @@ function handleCTA() {
 </script>
 
 <script>
-    document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
-    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    var _signOutBtn = document.getElementById("sign-out-btn"); if (_signOutBtn) { _signOutBtn.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; }); }
-    document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
-    window.dashboardInit = async function() {
-      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
-      if (!user || _authErr) { window.location.href = "login.html"; return; }
-      const email = user.email || "";
-      document.getElementById("account-dropdown-email").textContent = email;
-      document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
-      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
-      const ws = document.getElementById("welcome-strip");
-      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
-      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
-    };
-    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
-  </script>
+document.addEventListener("DOMContentLoaded", async function() {
+  // Populate account email from session
+  try {
+    var r = await supabaseClient.auth.getUser();
+    var user = r.data && r.data.user ? r.data.user : null;
+    if (user) {
+      var email = user.email || "";
+      var shortName = (user.user_metadata && user.user_metadata.first_name) ? user.user_metadata.first_name : email.split("@")[0];
+      var emailShortEl = document.getElementById("account-email-short");
+      if (emailShortEl) emailShortEl.textContent = shortName;
+      var dropdownEmailEl = document.getElementById("account-dropdown-email");
+      if (dropdownEmailEl) dropdownEmailEl.textContent = email;
+    }
+  } catch(e) {}
+  // Wire account dropdown toggle
+  var acctBtn = document.getElementById("account-btn");
+  var dropdown = document.getElementById("account-dropdown");
+  if (acctBtn && dropdown) {
+    acctBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+    });
+    document.addEventListener("click", function() { dropdown.style.display = "none"; });
+  }
+  // Wire sign out
+  var signOutBtn = document.getElementById("sign-out-btn");
+  if (signOutBtn) {
+    signOutBtn.addEventListener("click", async function() {
+      await supabaseClient.auth.signOut();
+      window.location.href = "login.html";
+    });
+  }
+});
+</script>
 </body>
 </html>
