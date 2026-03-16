@@ -44,18 +44,17 @@
     .topbar-back:hover { color: #fff; }
     .topbar-right { display: flex; align-items: center; gap: 16px; }
     .topbar-settings-btn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
-      color: rgba(255,255,255,0.85);
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.75);
       font-family: "DM Sans", sans-serif;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
-      padding: 7px 16px;
-      border-radius: 8px;
+      padding: 0;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: color 0.2s;
     }
-    .topbar-settings-btn:hover { background: rgba(255,255,255,0.22); }
+    .topbar-settings-btn:hover { color: #fff; }
     .account-dropdown { position: relative; }
     .account-btn {
       background: none;
@@ -460,7 +459,7 @@
   <div class="topbar">
     <div class="topbar-left">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo">
-      <a href="/dashboard.html" class="topbar-back">&#8592; Dashboard</a>
+      <a href="/dashboard.html" class="topbar-back">Dashboard</a>
     </div>
     <div class="topbar-right">
       <button class="topbar-settings-btn" onclick="window.ND_LOGIC.openSettings()">Settings</button>
