@@ -255,19 +255,30 @@
   // ---------------------------------------------------------------------------
   // generate() \u2014 collects data and calls the API
   // ---------------------------------------------------------------------------
-  function generate() {
+  async function generate() {
     var btn = document.querySelector('.btn-sp-generate');
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Generating your plan...';
     }
 
+    var clContext = null;
+    var biInsights = null;
+    var cycleEndDate = new Date(Date.now() + 90*24*60*60*1000).toISOString().substring(0,10);
+    try {
+      var _sess = window.supabaseClient ? await window.supabaseClient.auth.getSession() : null;
+      var _jwt = _sess && _sess.data && _sess.data.session ? _sess.data.session.access_token : null;
+      if (_jwt) {
+        var _cr = await fetch('/api/strategic-plan-load-context', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + _jwt } });
+        if (_cr.ok) { var _cd = await _cr.json(); clContext = _cd.clContext || null; biInsights = _cd.biInsights || null; }
+      }
+    } catch(e) { /* context load is optional */ }
     var data = collectSectionData();
 
     fetch('/api/strategic-plan-generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ planData: data, clContext: clContext, biInsights: biInsights, cycleEndDate: cycleEndDate })
     })
     .then(function(r) { return r.json(); })
     .then(function(result) {
@@ -310,8 +321,28 @@
         }).join('');
       }
     }
-
+    if (result.planId) window._currentPlanId = result.planId;
+    if (result.strategyUrl || result.opsUrl) {
+      var linksEl = document.getElementById('sp-download-links');
+      if (linksEl) {
+        var dlHtml = '';
+        if (result.strategyUrl) dlHtml += '<a href="' + result.strategyUrl + '" class="btn-sp-download" download>Strategic Plan (Word)</a> ';
+        if (result.opsUrl) dlHtml += '<a href="' + result.opsUrl + '" class="btn-sp-download" download>90-Day Ops Plan (Word)</a> <button class="btn-sp-print" onclick="window.print()" type="button">Print / Save as PDF</button>';
+        linksEl.innerHTML = dlHtml;
+      }
+    }
+    var regenEl = document.getElementById('sp-regen-note');
+    if (!regenEl) {
+      regenEl = document.createElement('div');
+      regenEl.id = 'sp-regen-note';
+      regenEl.className = 'sp-regen-guidance';
+      regenEl.innerHTML = 'Not happy with the output? Adjust your answers and regenerate at any time. Your previous version is always saved. <a href="#sp-version-history" onclick="SP_LOGIC.loadVersionHistory()">View version history</a>';
+      var resultsEl = document.getElementById('sp-results');
+      if (resultsEl) resultsEl.appendChild(regenEl);
+    }
     loadActionTracker();
+    loadVersionHistory();
+    checkCycleRenewal();
   }
 
   // ---------------------------------------------------------------------------
@@ -324,7 +355,7 @@
       if (!user) return;
       window.supabaseClient
         .from('action_tracker')
-        .select('*')
+        .select('id, title, due_date, status, priority, month_group, is_carried_forward, owner, plan_id')
         .eq('user_id', user.id)
         .order('due_date', { ascending: true })
         .then(function(res) {
@@ -337,38 +368,35 @@
   // renderTracker() \u2014 renders the 90-day action tracker UI
   // ---------------------------------------------------------------------------
   function renderTracker(tasks) {
-    var container = document.getElementById('sp-tracker');
-    if (!container) return;
-
-    if (!tasks || tasks.length === 0) {
-      container.innerHTML = '<p class="sp-tracker-empty">No tasks yet. Generate your plan to create your 90-day action tracker.</p>';
-      return;
-    }
-
-    var statusOrder = { 'pending': 0, 'in-progress': 1, 'done': 2 };
-    var priorityClass = { 'High': 'sp-priority-high', 'Medium': 'sp-priority-med', 'Low': 'sp-priority-low' };
-
-    container.innerHTML = '<div class="sp-tracker-list">' +
-      tasks.map(function(task) {
-        var due = task.due_date ? new Date(task.due_date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '';
-        var pClass = priorityClass[task.priority] || 'sp-priority-low';
-        var isDone = task.status === 'done';
-        return '<div class="sp-task' + (isDone ? ' sp-task-done' : '') + '" data-id="' + task.id + '">' +
-          '<div class="sp-task-check" onclick="SP_LOGIC.toggleTask(\'' + task.id + '\')">' +
-            (isDone ? '&#10003;' : '') +
-          '</div>' +
-          '<div class="sp-task-body">' +
-            '<div class="sp-task-title">' + task.title + '</div>' +
-            (due ? '<div class="sp-task-meta">Due ' + due + ' <span class="sp-task-priority ' + pClass + '">' + (task.priority || '') + '</span></div>' : '') +
-          '</div>' +
-        '</div>';
-      }).join('') +
-    '</div>';
+    var el = document.getElementById('sp-tracker');
+    if (!el) return;
+    if (!tasks || tasks.length === 0) { el.innerHTML = '<p class="sp-empty">No tasks yet. Generate your plan to populate the 90-day action tracker.</p>'; return; }
+    var groups = { 1: [], 2: [], 3: [], 0: [] };
+    tasks.forEach(function(t) { var g = t.month_group || 0; if (!groups[g]) groups[g] = []; groups[g].push(t); });
+    var html = '';
+    [1, 2, 3, 0].forEach(function(g) {
+      if (!groups[g] || groups[g].length === 0) return;
+      var heading = g === 1 ? 'Month 1 (Days 1-30)' : g === 2 ? 'Month 2 (Days 31-60)' : g === 3 ? 'Month 3 (Days 61-90)' : 'General Tasks';
+      html += '<div class="sp-month-group" data-month="' + g + '"><h4 class="sp-month-heading">' + heading + '</h4>';
+      groups[g].forEach(function(task) {
+        var done = task.status === 'done';
+        var cf = task.is_carried_forward ? ' <span class="sp-cf-badge">Carried Forward</span>' : '';
+        html += '<div class="sp-task' + (done ? ' sp-task-done' : '') + '" data-id="' + task.id + '">';
+        html += '<input type="checkbox" class="sp-task-check"' + (done ? ' checked' : '') + ' onchange="SP_LOGIC.toggleTask(\'' + task.id + '\')">';
+        html += '<span class="sp-task-title" onclick="SP_LOGIC.editTaskTitle(\'' + task.id + '\')">' + (task.title || '') + '</span>' + cf;
+        html += '<div class="sp-task-meta">';
+        if (task.owner) html += '<span class="sp-task-owner">' + task.owner + '</span>';
+        if (task.due_date) html += '<span class="sp-task-due">' + task.due_date + '</span>';
+        html += '<select class="sp-task-priority" onchange="SP_LOGIC.saveTaskField(\'' + task.id + '\', \'priority\', this.value)">';
+        ['High', 'Medium', 'Low'].forEach(function(p) { html += '<option value="' + p + '"' + (task.priority === p ? ' selected' : '') + '>' + p + '</option>'; });
+        html += '</select>';
+        html += '<button class="sp-task-delete" onclick="SP_LOGIC.deleteTask(\'' + task.id + '\')" type="button">Delete</button>';
+        html += '</div></div>';
+      });
+      html += '<button class="btn-sp-add-task" onclick="SP_LOGIC.addTask(' + g + ')" type="button">+ Add Task</button></div>';
+    });
+    el.innerHTML = html;
   }
-
-  // ---------------------------------------------------------------------------
-  // toggleTask() \u2014 marks a task done/pending in Supabase
-  // ---------------------------------------------------------------------------
   function toggleTask(taskId) {
     if (!window.supabaseClient) return;
     var taskEl = document.querySelector('[data-id="' + taskId + '"]');
@@ -398,6 +426,138 @@
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
+  function loadVersionHistory() {
+    var el = document.getElementById('sp-version-history');
+    if (!el || !window.supabaseClient) return;
+    window.supabaseClient.auth.getUser().then(function(r) {
+      var user = r.data && r.data.user;
+      if (!user) return;
+      window.supabaseClient.from('strategic_plans').select('id, version, plan_name, cycle_end_date, created_at, is_current, document_1_url, document_2_url').eq('user_id', user.id).order('version', { ascending: false }).then(function(res) {
+        if (res.data) renderVersionHistory(res.data);
+      });
+    });
+  }
+
+  function renderVersionHistory(versions) {
+    var el = document.getElementById('sp-version-history');
+    if (!el || !versions || versions.length === 0) return;
+    var html = '<div class="sp-version-list">';
+    versions.forEach(function(v) {
+      var label = v.plan_name || ('Plan v' + v.version);
+      var dateStr = v.created_at ? v.created_at.substring(0, 10) : '';
+      var cycleStr = v.cycle_end_date ? ' | Cycle ends: ' + v.cycle_end_date : '';
+      var badge = v.is_current ? ' <span class="sp-current-badge">Current Plan</span>' : '';
+      var doc1 = v.document_1_url ? '<a href="' + v.document_1_url + '" class="sp-vh-link" download>Strategic Plan</a> ' : '';
+      var doc2 = v.document_2_url ? '<a href="' + v.document_2_url + '" class="sp-vh-link" download>Ops Plan</a> ' : '';
+      var useBtn = v.is_current ? '' : '<button class="btn-sp-use-template" onclick="SP_LOGIC.useAsTemplate(\'' + v.id + '\')" type="button">Use as Template</button>';
+      html += '<div class="sp-version-row' + (v.is_current ? ' sp-version-current' : '') + '">';
+      html += '<div class="sp-vh-label">' + label + badge + '</div>';
+      html += '<div class="sp-vh-meta">Generated: ' + dateStr + cycleStr + '</div>';
+      html += '<div class="sp-vh-actions">' + doc1 + doc2 + useBtn + '</div></div>';
+    });
+    html += '</div>';
+    el.innerHTML = html;
+    el.style.display = 'block';
+  }
+
+  function useAsTemplate(planId) {
+    if (!window.supabaseClient) return;
+    window.supabaseClient.from('strategic_plans').select('interview_data').eq('id', planId).single().then(function(res) {
+      if (res.data && res.data.interview_data) {
+        Object.keys(res.data.interview_data).forEach(function(key) { var el = document.getElementById(key); if (el) el.value = res.data.interview_data[key]; });
+        var iv = document.getElementById('sp-interview');
+        if (iv) iv.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  }
+
+  function checkCycleRenewal() {
+    if (!window.supabaseClient) return;
+    window.supabaseClient.auth.getUser().then(function(r) {
+      var user = r.data && r.data.user;
+      if (!user) return;
+      window.supabaseClient.from('strategic_plans').select('cycle_end_date, interview_data').eq('user_id', user.id).eq('is_current', true).single().then(function(res) {
+        if (!res.data || !res.data.cycle_end_date) return;
+        var daysLeft = Math.ceil((new Date(res.data.cycle_end_date) - new Date()) / (1000*60*60*24));
+        if (daysLeft <= 14) {
+          var banner = document.getElementById('sp-cycle-banner');
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'sp-cycle-banner';
+            banner.className = 'sp-cycle-renewal-banner';
+            banner.innerHTML = 'Your current 90-day plan cycle ends on ' + res.data.cycle_end_date + '. Ready to plan your next quarter? <button class="btn-sp-new-cycle" onclick="SP_LOGIC.startNewCycle()" type="button">Start New Cycle</button> <button onclick="this.parentNode.style.display=\'none\'" type="button">Dismiss</button>';
+            var iv = document.getElementById('sp-interview');
+            if (iv) iv.parentNode.insertBefore(banner, iv);
+          }
+          banner.style.display = 'block';
+        }
+      });
+    });
+  }
+
+  function startNewCycle() {
+    if (!window.supabaseClient) return;
+    window.supabaseClient.auth.getUser().then(function(r) {
+      var user = r.data && r.data.user;
+      if (!user) return;
+      window.supabaseClient.from('strategic_plans').select('interview_data').eq('user_id', user.id).eq('is_current', true).single().then(function(res) {
+        if (res.data && res.data.interview_data) {
+          Object.keys(res.data.interview_data).forEach(function(key) { var el = document.getElementById(key); if (el) el.value = res.data.interview_data[key]; });
+          var iv = document.getElementById('sp-interview');
+          if (iv) iv.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  }
+
+  function editTaskTitle(taskId) {
+    var titleEl = document.querySelector('.sp-task[data-id="' + taskId + '"] .sp-task-title');
+    if (!titleEl || titleEl.querySelector('input')) return;
+    var current = titleEl.textContent;
+    titleEl.innerHTML = '<input type="text" class="sp-task-title-input" value="' + current.replace(/"/g, '&quot;') + '">';
+    var input = titleEl.querySelector('input');
+    input.focus();
+    function save() { var v = input.value.trim(); if (v && v !== current) { saveTaskField(taskId, 'title', v); titleEl.textContent = v; } else { titleEl.textContent = current; } }
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', function(e) { if (e.key === 'Enter') input.blur(); });
+  }
+
+  function saveTaskField(taskId, field, value) {
+    if (!window.supabaseClient) return;
+    var update = {};
+    update[field] = value;
+    window.supabaseClient.from('action_tracker').update(update).eq('id', taskId).then(function(res) {
+      if (!res.error) {
+        var el = document.querySelector('.sp-task[data-id="' + taskId + '"]');
+        if (el) { el.classList.add('sp-task-saved'); setTimeout(function() { el.classList.remove('sp-task-saved'); }, 1200); }
+      }
+    });
+  }
+
+  function deleteTask(taskId) {
+    var btn = document.querySelector('.sp-task[data-id="' + taskId + '"] .sp-task-delete');
+    if (btn && btn.dataset.confirm !== 'true') {
+      btn.dataset.confirm = 'true'; btn.textContent = 'Confirm';
+      setTimeout(function() { if (btn.dataset.confirm === 'true') { btn.dataset.confirm = ''; btn.textContent = 'Delete'; } }, 3000);
+      return;
+    }
+    if (!window.supabaseClient) return;
+    window.supabaseClient.from('action_tracker').delete().eq('id', taskId).then(function(res) {
+      if (!res.error) { var el = document.querySelector('.sp-task[data-id="' + taskId + '"]'); if (el) el.remove(); }
+    });
+  }
+
+  function addTask(monthGroup) {
+    if (!window.supabaseClient) return;
+    window.supabaseClient.auth.getUser().then(function(r) {
+      var user = r.data && r.data.user;
+      if (!user) return;
+      window.supabaseClient.from('action_tracker').insert({ user_id: user.id, title: 'New task', status: 'pending', priority: 'Medium', month_group: monthGroup || null, plan_id: window._currentPlanId || null, is_carried_forward: false }).select().single().then(function(res) {
+        if (!res.error) loadActionTracker();
+      });
+    });
+  }
+
   window.SP_LOGIC = {
     init: init,
     goToSection: goToSection,
@@ -405,7 +565,14 @@
     toggleChip: toggleChip,
     generate: generate,
     toggleTask: toggleTask,
-    loadActionTracker: loadActionTracker
+    loadActionTracker: loadActionTracker,
+    loadVersionHistory: loadVersionHistory,
+    useAsTemplate: useAsTemplate,
+    startNewCycle: startNewCycle,
+    editTaskTitle: editTaskTitle,
+    saveTaskField: saveTaskField,
+    deleteTask: deleteTask,
+    addTask: addTask,
   };
 
 })();
