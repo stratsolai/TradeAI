@@ -16,12 +16,12 @@ window.SP_SECTIONS = [
     fields: [
       { id: "s0-business-name", profileKey: "business_name", label: "Business Name", type: "text", required: false, placeholder: "e.g. Smith Plumbing Pty Ltd, Apex Legal Group, Chen Advisory" },
       { id: "s0-abn", profileKey: "abn", label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
-      { id: "s0-structure", label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "sole-trader", label: "Sole Trader" },{ value: "partnership", label: "Partnership" },{ value: "company", label: "Pty Ltd Company" },{ value: "trust", label: "Trust" }] },
+      { id: "s0-structure", profileKey: "business_structure", label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "sole-trader", label: "Sole Trader" },{ value: "partnership", label: "Partnership" },{ value: "company", label: "Pty Ltd Company" },{ value: "trust", label: "Trust" }] },
       { id: "s0-industry", profileKey: "industry", label: "Industry / Profession", type: "text", required: false, placeholder: "e.g. Plumbing, Commercial Law, Accounting & Advisory, Landscaping" },
-      { id: "s0-years", label: "Years in Business", type: "text", required: false, placeholder: "e.g. 8" },
+      { id: "s0-years", profileKey: "years_in_business", label: "Years in Business", type: "text", required: false, placeholder: "e.g. 8" },
       { id: "s0-location", profileKey: "location", label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
       { id: "s0-team-size", profileKey: "team_size", label: "Team Size", labelHint: "(including yourself)", type: "text", required: false, placeholder: "e.g. 4" },
-      { id: "s0-licences", label: "Licences & Certifications", type: "text", required: false, placeholder: "e.g. A-Grade Electrician Licence, QBCC, Legal Practising Certificate" },
+      { id: "s0-licences", profileKey: "licences", label: "Licences & Certifications", type: "text", required: false, placeholder: "e.g. A-Grade Electrician Licence, QBCC, Legal Practising Certificate" },
       { id: "s0-key-person", label: "Key Person Dependency", labelHint: "(optional)", type: "chip-single", group: "key-person-chips", required: false, helpText: "If you couldn't work for 2 weeks, what would happen to the business?", options: [{ value: "runs-fine", label: "Business keeps running" },{ value: "slows-down", label: "It would slow down" },{ value: "would-stop", label: "It would stop completely" }] }
     ]
   },
@@ -114,7 +114,7 @@ window.SP_SECTIONS = [
       { id: "s5-risks", label: "Biggest Risks to Your Business", labelHint: "(select all that apply)", type: "chip-multi", group: "risk-chips", required: false, options: [{ value: "seasonal", label: "SeaYnal slowdowns" },{ value: "key-person", label: "Key person risk" },{ value: "late-payments", label: "Late payments / bad debts" },{ value: "key-clients", label: "Dependence on a few key clients" },{ value: "material-costs", label: "Material cost increases" },{ value: "staff-shortage", label: "Staff availability / skills shortage" },{ value: "regulatory", label: "Regulatory / compliance changes" },{ value: "equipment", label: "Equipment breakdown" }] },
       { id: "s5-contingency", label: "How would you handle a slow 3-month period?", type: "textarea", required: false, placeholder: "e.g. We have 3 months of operating costs in reserve, would reduce discretionary spending, activate referral campaigns" },
       { id: "s5-insurance", label: "Insurance Coverage", labelHint: "(what you currently hold)", type: "chip-multi", group: "insurance-chips", required: false, options: [{ value: "public-liability", label: "Public Liability" },{ value: "tools-equipment", label: "Tools & Equipment" },{ value: "vehicle-fleet", label: "Vehicle / Fleet" },{ value: "workers-comp", label: "Workers Compensation" },{ value: "prof-indemnity", label: "Professional Indemnity" },{ value: "biz-interruption", label: "Business Interruption" }] },
-      { id: "s5-additional", label: "Anything else you would like included?", labelHint: "(optional)", type: "textarea", required: false, placeholder: "Any awards, certifications, notable projects, community involvement, unique strengths?" }
+      { id: "s5-additional", label: "Anything else you'd like the AI to consider about your business?", labelHint: "(optional)", type: "textarea", required: false, placeholder: "e.g. We are targeting a major contract in Q2, planning to open a second location, or facing a specific challenge you want the plan to address..." }
     ]
   }
 ];
