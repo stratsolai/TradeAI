@@ -1,6 +1,6 @@
 // strategic-plan-data.js
 // Section definitions for the Strategic Plan & 90-Day Ops tool.
-// Defines window.SP_SECTIONS â read by strategic-plan-logic.js to render the interview.
+// Defines window.SP_SECTIONS \u2014 read by strategic-plan-logic.js to render the interview.
 // To add, remove, or edit questions: edit this file only.
 
 window.SP_SECTIONS = [
@@ -10,7 +10,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 0,
-    icon: "ð",
+    icon: "\u{1F4CB}",
     title: "1. Business Snapshot",
     subtitle: "Basic details about your business. We've pre-filled what we know - just confirm or update.",
     fields: [
@@ -31,7 +31,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 1,
-    icon: "ð§",
+    icon: "\u{1F527}",
     title: "2. What You Do & Who For",
     subtitle: "Describe your services and customers. This is the heart of your business case.",
     fields: [
@@ -49,7 +49,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 2,
-    icon: "ð°",
+    icon: "\u{1F4B0}",
     title: "3. Where You Are - Financial",
     subtitle: "This section is what banks and lenders focus on most. Approximate figures are fine - you are not being audited.",
     infoBox: "This information is used to build your financial overview section. It is stored securely and never shared. Approximate figures are completely fine.",
@@ -70,7 +70,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 3,
-    icon: "ð¯",
+    icon: "\u{1F3AF}",
     title: "4. Where You Are Going - Goals",
     subtitle: "What does success look like for your business? This section shows lenders and partners that you have a clear direction.",
     fields: [
@@ -88,7 +88,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 4,
-    icon: "âï¸",
+    icon: "\u2699",
     title: "5. How You Operate & Who Does What",
     subtitle: "How your business runs day-to-day. Shows you have a solid operational foundation.",
     fields: [
@@ -107,7 +107,7 @@ window.SP_SECTIONS = [
   // -------------------------------------------------------------------------
   {
     id: 5,
-    icon: "ð¡ï¸",
+    icon: "\u{1F6E1}",
     title: "6. Risk & Contingency",
     subtitle: "Showing you have thought about risks and have a plan makes lenders much more comfortable. Be honest - no business is risk-free.",
     fields: [
