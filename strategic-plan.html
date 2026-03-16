@@ -195,21 +195,29 @@
     }
 
     .sp-nav-chip {
-      padding: 6px 14px;
-      border-radius: 20px;
+      padding: 10px 16px;
+      border-radius: 10px;
       border: 1px solid #E0E0E0;
+      border-left: 4px solid #1A5490;
       background: #ffffff;
-      color: #666666;
+      color: #333333;
       font-size: 13px;
-      font-weight: 500;
+      font-weight: 600;
       font-family: 'DM Sans', sans-serif;
       cursor: pointer;
       transition: all 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      white-space: nowrap;
     }
-
-    .sp-nav-chip:hover { border-color: #4A6D8C; color: #4A6D8C; }
-    .sp-nav-chip-active { background: #4A6D8C; border-color: #4A6D8C; color: #ffffff; }
-    .sp-nav-chip-done { background: #EBF3FB; border-color: #1A5490; color: #1A5490; }
+    .sp-nav-chip.c-blue   { border-left-color: #1A5490; }
+    .sp-nav-chip.c-orange { border-left-color: #E8500A; }
+    .sp-nav-chip.c-green  { border-left-color: #28A745; }
+    .sp-nav-chip.c-purple { border-left-color: #7B2D8B; }
+    .sp-nav-chip.c-teal   { border-left-color: #0D9488; }
+    .sp-nav-chip.c-red    { border-left-color: #C4622A; }
+    .sp-nav-chip:hover { opacity: 0.85; }
+    .sp-nav-chip-active { background: #ffffff; color: #333333; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .sp-nav-chip-done { background: #EBF3FB; color: #1A5490; }
 
     /* -----------------------------------------------------------------------
        Sections container — filled dynamically by SP_LOGIC
