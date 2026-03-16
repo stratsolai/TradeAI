@@ -71,7 +71,7 @@
       transition: color 0.2s;
     }
     .account-btn:hover { color: #fff; }
-    .account-menu {
+    .account-dropdown {
       display: none;
       position: absolute;
       right: 0;
@@ -83,14 +83,14 @@
       overflow: hidden;
       z-index: 200;
     }
-    .account-menu.open { display: block; }
-    .account-menu-email {
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email {
       padding: 12px 16px;
       font-size: 13px;
       color: #888;
       border-bottom: 1px solid #f0f0f0;
     }
-    .account-menu-item {
+    .account-dropdown-item {
       display: block;
       width: 100%;
       padding: 11px 16px;
@@ -103,7 +103,7 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .account-menu-item:hover { background: #f5f5f5; }
+    .account-dropdown-item:hover { background: #f5f5f5; }
 
     .nd-page {
       max-width: 900px;
@@ -456,23 +456,21 @@
 </head>
 <body>
 
-  <div class="topbar">
+    <div class="topbar">
     <div class="topbar-left">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo">
-      <a href="/dashboard.html" class="topbar-back">Dashboard</a>
+      <div class="topbar-nav"><a id="back-btn" href="/dashboard.html">Back</a></div>
     </div>
-    <div class="topbar-right">
+    <nav class="topbar-right">
       <button class="topbar-settings-btn" onclick="window.ND_LOGIC.openSettings()">Settings</button>
-      <div class="account-dropdown" id="account-dropdown">
-        <button class="account-btn" id="account-btn" onclick="document.getElementById('account-menu').classList.toggle('open')">
-          <span id="account-email">Account</span> &#9660;
-        </button>
-        <div class="account-menu" id="account-menu">
-          <div class="account-menu-email" id="account-menu-email"></div>
-          <button class="account-menu-item" onclick="window._supabase.auth.signOut().then(() => { window.location.href = '/login.html'; })">Sign Out</button>
+      <div class="topbar-account" id="account-menu">
+        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email">&#8212;</div>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
-    </div>
+    </nav>
   </div>
 
   <div class="nd-page">
@@ -519,20 +517,34 @@
           var session = result.data && result.data.session;
           if (session && session.user) {
             var email = session.user.email || "";
-            var emailEl = document.getElementById("account-email");
-            var menuEmailEl = document.getElementById("account-menu-email");
-            if (emailEl) emailEl.textContent = email;
-            if (menuEmailEl) menuEmailEl.textContent = email;
+            var shortEl = document.getElementById("account-email-short");
+            var dropEmailEl = document.getElementById("account-dropdown-email");
+            if (shortEl) shortEl.textContent = email;
+            if (dropEmailEl) dropEmailEl.textContent = email;
           }
         });
       }
-      document.addEventListener("click", function (e) {
-        var dropdown = document.getElementById("account-dropdown");
-        var menu = document.getElementById("account-menu");
-        if (dropdown && menu && !dropdown.contains(e.target)) {
-          menu.classList.remove("open");
-        }
-      });
+      var accountBtn = document.getElementById("account-btn");
+      var accountDropdown = document.getElementById("account-dropdown");
+      if (accountBtn && accountDropdown) {
+        accountBtn.addEventListener("click", function (e) {
+          e.stopPropagation();
+          accountDropdown.classList.toggle("open");
+        });
+        document.addEventListener("click", function () {
+          accountDropdown.classList.remove("open");
+        });
+      }
+      var signOutBtn = document.getElementById("sign-out-btn");
+      if (signOutBtn) {
+        signOutBtn.addEventListener("click", function () {
+          if (window._supabase) {
+            window._supabase.auth.signOut().then(function () {
+              window.location.href = "/login.html";
+            });
+          }
+        });
+      }
       if (window.ND_LOGIC) {
         window.ND_LOGIC.init();
       }
