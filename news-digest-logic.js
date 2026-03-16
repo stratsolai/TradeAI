@@ -11,11 +11,11 @@
     // ── INIT ────────────────────────────────────────────────────────────────
 
     async init() {
-      if (!window._supabase) {
+      if (!window.supabaseClient) {
         console.error("ND_LOGIC: supabase client not ready");
         return;
       }
-      const { data: { session } } = await window._supabase.auth.getSession();
+      const { data: { session } } = await window.supabaseClient.auth.getSession();
       if (!session) {
         window.location.href = "/login.html";
         return;
@@ -117,7 +117,7 @@
 
     async loadSavedNews() {
       try {
-        const { data, error } = await window._supabase
+        const { data, error } = await window.supabaseClient
           .from("news_digest_items")
           .select("*")
           .eq("user_id", this._userId)
@@ -287,7 +287,7 @@
 
       const newSaved = !item.is_saved;
 
-      const { error } = await window._supabase
+      const { error } = await window.supabaseClient
         .from("news_digest_items")
         .update({ is_saved: newSaved })
         .eq("id", itemId)
