@@ -225,16 +225,14 @@
   // prefillFromProfile() â sets field values from profile data
   // ---------------------------------------------------------------------------
   function prefillFromProfile(profile) {
-    var map = {
-      's0-business-name': profile.business_name,
-      's0-abn': profile.abn,
-      's0-industry': profile.industry,
-      's0-location': profile.location,
-      's0-team-size': profile.team_size
-    };
-    Object.keys(map).forEach(function(id) {
-      var el = document.getElementById(id);
-      if (el && map[id]) el.value = map[id];
+    // Reads profileKey from SP_SECTIONS — no hardcoded field IDs in this file
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        if (field.profileKey && profile[field.profileKey]) {
+          var el = document.getElementById(field.id);
+          if (el) el.value = profile[field.profileKey];
+        }
+      });
     });
   }
 
