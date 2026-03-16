@@ -29,8 +29,9 @@
       top: 0;
       z-index: 100;
     }
-    .topbar-left { display: flex; align-items: center; gap: 16px; }
-    .topbar-logo { height: 38px; display: block; }
+    
+    .topbar-logo { display: flex; align-items: center; }
+    .topbar-logo img { height: 38px; display: block; }
     .topbar-back {
       color: rgba(255,255,255,0.75);
       font-size: 16px;
@@ -462,11 +463,11 @@
 </head>
 <body>
 
-    <div class="topbar">
-    <div class="topbar-left">
-      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo">
-      <div class="topbar-nav"><a id="back-btn" href="/dashboard.html" class="topbar-back">Back</a></div>
-    </div>
+      <div class="topbar">
+    <a href="/index.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+    </a>
+    <div class="topbar-nav"><a id="back-btn" href="/dashboard.html" class="topbar-back">Back</a></div>
     <nav class="topbar-right">
       <button class="topbar-settings-btn" onclick="window.ND_LOGIC.openSettings()">Settings</button>
       <div class="topbar-account" id="account-menu">
