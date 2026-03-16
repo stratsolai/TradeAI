@@ -37,7 +37,7 @@ function httpsPost(hostname, apiPath, headers, body) {
 }
 
 // ─── CLAUDE CONTENT GENERATOR ─────────────────────────────────────────────────
-async function generatePlanContent(claudeKey, planData) {
+async function generatePlanContent(claudeKey, planData, clContext, biInsights) {
   const revenueLabels = {
     'under-100k': 'Under $100,000', '100k-250k': '$100,000–$250,000',
     '250k-500k': '$250,000–$500,000', '500k-1m': '$500,000–$1,000,000',
@@ -48,7 +48,7 @@ async function generatePlanContent(claudeKey, planData) {
 Write professional, polished business plan content suitable for submission to banks, lenders, or investors.
 Use plain language — avoid jargon. Write in third person (e.g. "The business operates..." not "We operate...").
 All content must be specific to the business data provided, not generic filler.
-Return ONLY a JSON object — no markdown, no preamble.`;
+Return ONLY a JSON object — no markdown, no preamble. If BI Intelligence Insights are provided, incorporate them into the Growth Strategy, Market Analysis, and Products & Services sections of Document 1. Do not fabricate insights — only reference what is explicitly listed. Always include a SWOT Analysis section in Document 1 with exactly 3-5 dot points each for Strengths, Weaknesses, Opportunities, and Threats. After the full document content, append a JSON block delimited by ###SWOT_JSON_START### and ###SWOT_JSON_END### containing: {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]}.`;
 
   const userPrompt = `Generate comprehensive business plan content for this business:
 
@@ -140,7 +140,10 @@ IMPORTANT INSTRUCTIONS FOR TASK GENERATION:
 - Each task must include a day offset (e.g. Day 14, Day 30) as the dueDay field.
 - Always include the 45-day review checkpoint task in Month 2.
 - Set owner to the relevant role from keyRoles if provided, otherwise use "Owner".
-- Focus on 3-5 key priorities for the quarter. Each priority should have concrete actions.`;
+- Focus on 3-5 key priorities for the quarter. Each priority should have concrete actions.
+
+${clContext ? '\n\nADDITIONAL BUSINESS CONTEXT FROM CONTENT LIBRARY:\n' + clContext : ''}
+${biInsights && biInsights.length > 0 ? '\n\nBI INTELLIGENCE INSIGHTS (from Business Intelligence Dashboard):\n' + biInsights.map(i => i.insight_type + ': ' + i.title + ' --- ' + i.summary).join('\n') : ''}`;
 
   const response = await httpsPost('api.anthropic.com', '/v1/messages',
     {
@@ -159,8 +162,23 @@ IMPORTANT INSTRUCTIONS FOR TASK GENERATION:
   if (response.status !== 200) throw new Error('Claude API error: ' + JSON.stringify(response.body));
 
   const text = response.body.content?.[0]?.text || '{}';
-  const clean = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  let clean = text.replace(/```json|```/g, '').trim();
+  // Extract SWOT JSON block if present
+  let swotData = null;
+  const swotStartMarker = '###SWOT_JSON_START###';
+  const swotEndMarker = '###SWOT_JSON_END###';
+  const swotStart = clean.indexOf(swotStartMarker);
+  const swotEnd = clean.indexOf(swotEndMarker);
+  if (swotStart !== -1 && swotEnd !== -1) {
+    try {
+      const swotRaw = clean.substring(swotStart + swotStartMarker.length, swotEnd).trim();
+      swotData = JSON.parse(swotRaw);
+    } catch(e) { swotData = null; }
+    clean = clean.substring(0, swotStart).trim();
+  }
+  const parsed = JSON.parse(clean);
+  parsed.__swotData = swotData;
+  return parsed;
 }
 
 // ─── DOCX GENERATORS ──────────────────────────────────────────────────────────
@@ -648,7 +666,7 @@ Packer.toBuffer(doc).then(buf => { fs.writeFileSync('${outputPath}', buf); conso
 module.exports = async (req, res) => {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { userId, planData } = req.body;
+  const { userId, planData, clContext, biInsights, cycleEndDate } = req.body;
   if (!userId || !planData) return res.status(400).json({ error: 'userId and planData required' });
 
   const claudeKey   = process.env.CLAUDE_API_KEY;
@@ -669,7 +687,7 @@ module.exports = async (req, res) => {
   try {
     // 1. Generate content with Claude
     console.log('[strategic-plan] Generating content...');
-    const content = await generatePlanContent(claudeKey, planData);
+    const content = await generatePlanContent(claudeKey, planData, clContext, biInsights);
 
     // 2. Generate both Word docs
     console.log('[strategic-plan] Generating Strategy doc...');
@@ -725,7 +743,85 @@ module.exports = async (req, res) => {
     // Cleanup temp files
     try { fs.unlinkSync(strategyPath); fs.unlinkSync(opsPath); } catch(e) {}
 
-    return res.status(200).json({ success: true, strategyUrl, opsUrl });
+    // Extract swotData from content (populated by generatePlanContent via __swotData)
+    const swotData = (content && content.__swotData) ? content.__swotData : null;
+
+    // --- Write to strategic_plans ---
+    let planId = null;
+    try {
+      // Mark all prior versions for this user as not current
+      await supabase.from('strategic_plans').update({ is_current: false }).eq('user_id', userId);
+
+      // Get highest existing version number for this user
+      const { data: priorPlans } = await supabase
+        .from('strategic_plans')
+        .select('version')
+        .eq('user_id', userId)
+        .order('version', { ascending: false })
+        .limit(1);
+      const nextVersion = (priorPlans && priorPlans.length > 0) ? priorPlans[0].version + 1 : 1;
+
+      const { data: planRow, error: planErr } = await supabase
+        .from('strategic_plans')
+        .insert({
+          user_id: userId,
+          version: nextVersion,
+          is_current: true,
+          cycle_end_date: cycleEndDate || null,
+          interview_data: planData || null,
+          swot_data: swotData,
+          document_1_url: strategyUrl || null,
+          document_2_url: opsUrl || null,
+        })
+        .select('id')
+        .single();
+
+      if (!planErr && planRow) planId = planRow.id;
+    } catch (e) {
+      console.error('[strategic-plan] strategic_plans insert error:', e.message);
+    }
+
+    // --- Carry forward incomplete tasks from prior plan ---
+    if (planId) {
+      try {
+        const { data: priorPlanRows } = await supabase
+          .from('strategic_plans')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('is_current', false)
+          .order('version', { ascending: false })
+          .limit(1);
+
+        if (priorPlanRows && priorPlanRows.length > 0) {
+          const priorPlanId = priorPlanRows[0].id;
+          const { data: incompleteTasks } = await supabase
+            .from('action_tracker')
+            .select('title, due_date, status, priority, month_group, due_day_offset, owner')
+            .eq('plan_id', priorPlanId)
+            .neq('status', 'done');
+
+          if (incompleteTasks && incompleteTasks.length > 0) {
+            const carried = incompleteTasks.map(t => ({
+              user_id: userId,
+              plan_id: planId,
+              title: t.title,
+              due_date: t.due_date,
+              status: 'pending',
+              priority: t.priority,
+              month_group: t.month_group,
+              due_day_offset: t.due_day_offset,
+              owner: t.owner,
+              is_carried_forward: true,
+            }));
+            await supabase.from('action_tracker').insert(carried);
+          }
+        }
+      } catch (e) {
+        console.error('[strategic-plan] carry-forward error:', e.message);
+      }
+    }
+
+    return res.status(200).json({ success: true, strategyUrl, opsUrl, swotData, planId });
 
   } catch(err) {
     console.error('[strategic-plan] Error:', err);
