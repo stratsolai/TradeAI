@@ -14,7 +14,7 @@
   var previousPlan = null;
 
   // ---------------------------------------------------------------------------
-  // renderSections() â builds all 6 section forms from SP_SECTIONS config
+  // renderSections() \u2014 builds all 6 section forms from SP_SECTIONS config
   // ---------------------------------------------------------------------------
   function renderSections() {
     var sections = window.SP_SECTIONS;
@@ -37,7 +37,7 @@
       }).join('');
 
       var infoBox = s.infoBox
-        ? '<div class="sp-info-box"><span class="sp-info-icon">ð¡</span> ' + s.infoBox + '</div>'
+        ? '<div class="sp-info-box"><span class="sp-info-icon">\u{1F4A1}</span> ' + s.infoBox + '</div>'
         : '';
 
       return '<div class="sp-section" id="section-' + s.id + '" style="display:none;">' +
@@ -61,7 +61,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // renderField() â renders a single field based on its type
+  // renderField() \u2014 renders a single field based on its type
   // ---------------------------------------------------------------------------
   function renderField(field) {
     var label = '<label class="sp-field-label" for="' + field.id + '">' +
@@ -101,7 +101,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // toggleChip() â handles chip selection (single or multi)
+  // toggleChip() \u2014 handles chip selection (single or multi)
   // ---------------------------------------------------------------------------
   function toggleChip(el, groupId, isMulti) {
     var group = document.getElementById(groupId + '-chips');
@@ -109,11 +109,11 @@
     var chips = group.querySelectorAll('.sp-chip');
 
     if (!isMulti) {
-      // Single select â deselect all others
+      // Single select \u2014 deselect all others
       chips.forEach(function(c) { c.classList.remove('sp-chip-active'); });
       el.classList.add('sp-chip-active');
     } else {
-      // Multi select â toggle this one
+      // Multi select \u2014 toggle this one
       el.classList.toggle('sp-chip-active');
     }
 
@@ -125,7 +125,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // goToSection() / navigate() â section navigation
+  // goToSection() / navigate() \u2014 section navigation
   // ---------------------------------------------------------------------------
   function goToSection(index) {
     var sections = window.SP_SECTIONS;
@@ -141,7 +141,7 @@
     var target = document.getElementById('section-' + index);
     if (target) {
       target.style.display = 'block';
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     currentSection = index;
@@ -162,7 +162,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // updateProgress() â updates the segmented progress bar
+  // updateProgress() \u2014 updates the segmented progress bar
   // ---------------------------------------------------------------------------
   function updateProgress(index) {
     var bar = document.getElementById('sp-progress-bar');
@@ -178,7 +178,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // loadProfile() â loads user profile from Supabase and prefills section 0
+  // loadProfile() \u2014 loads user profile from Supabase and prefills section 0
   // ---------------------------------------------------------------------------
   function loadProfile() {
     if (!window.supabaseClient) return;
@@ -200,7 +200,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // loadPreviousPlan() â loads most recent plan for this user
+  // loadPreviousPlan() \u2014 loads most recent plan for this user
   // ---------------------------------------------------------------------------
   function loadPreviousPlan() {
     if (!window.supabaseClient) return;
@@ -222,7 +222,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // prefillFromProfile() â sets field values from profile data
+  // prefillFromProfile() \u2014 sets field values from profile data
   // ---------------------------------------------------------------------------
   function prefillFromProfile(profile) {
     // Reads profileKey from SP_SECTIONS — no hardcoded field IDs in this file
@@ -237,7 +237,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // collectSectionData() â collects all field values and calls the API
+  // collectSectionData() \u2014 collects all field values and calls the API
   // ---------------------------------------------------------------------------
   function collectSectionData() {
     var data = {};
@@ -252,7 +252,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // generate() â collects data and calls the API
+  // generate() \u2014 collects data and calls the API
   // ---------------------------------------------------------------------------
   function generate() {
     var btn = document.querySelector('.btn-sp-generate');
@@ -287,7 +287,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // showResults() â displays download links after generation
+  // showResults() \u2014 displays download links after generation
   // ---------------------------------------------------------------------------
   function showResults(result) {
     var container = document.getElementById('sp-sections-container');
@@ -314,7 +314,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // loadActionTracker() â loads tasks from Supabase for this user
+  // loadActionTracker() \u2014 loads tasks from Supabase for this user
   // ---------------------------------------------------------------------------
   function loadActionTracker() {
     if (!window.supabaseClient) return;
@@ -333,7 +333,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // renderTracker() â renders the 90-day action tracker UI
+  // renderTracker() \u2014 renders the 90-day action tracker UI
   // ---------------------------------------------------------------------------
   function renderTracker(tasks) {
     var container = document.getElementById('sp-tracker');
@@ -366,7 +366,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // toggleTask() â marks a task done/pending in Supabase
+  // toggleTask() \u2014 marks a task done/pending in Supabase
   // ---------------------------------------------------------------------------
   function toggleTask(taskId) {
     if (!window.supabaseClient) return;
@@ -384,7 +384,7 @@
   }
 
   // ---------------------------------------------------------------------------
-  // init() â called on DOMContentLoaded
+  // init() \u2014 called on DOMContentLoaded
   // ---------------------------------------------------------------------------
   function init() {
     renderSections();
