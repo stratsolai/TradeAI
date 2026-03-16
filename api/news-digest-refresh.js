@@ -111,22 +111,36 @@ const TRADE_SOURCES = {
   }
 };
 
-function getTradeQueries(industry) {
-  if (!industry) return TRADE_SOURCES.default.queries;
-  const lower = industry.toLowerCase();
-  for (const [key, val] of Object.entries(TRADE_SOURCES)) {
-    if (lower.includes(key)) return val.queries;
+function buildSearchQueries(industry, location, categories) {
+  const queries = [];
+  const loc = location ? location : "Australia";
+  const activeCategories = (categories || []).filter(c => c.enabled);
+
+  const categoryTopics = {
+    "regulatory": ["regulatory changes", "compliance requirements", "licensing updates", "legal obligations"],
+    "industry-body": ["industry association updates", "peak body announcements", "industry standards"],
+    "suppliers": ["supplier news", "product updates", "supply chain", "pricing changes"],
+    "workplace-safety": ["workplace safety", "WHS OHS updates", "safety standards", "incident reports"],
+    "economic-market": ["economic conditions", "interest rates", "labour market", "material costs"],
+    "technology": ["new technology", "software tools", "equipment innovations", "digital tools"]
+  };
+
+  for (const cat of activeCategories) {
+    const topics = categoryTopics[cat.id] || [cat.label + " news", cat.label + " updates"];
+    for (const topic of topics.slice(0, 2)) {
+      queries.push(industry + " " + topic + " " + loc);
+      queries.push(industry + " " + topic + " Australia 2025");
+    }
   }
-  // Build custom queries from industry name
-  return [
-    `${industry} industry news Australia`,
-    `${industry} regulations update Australia`,
-    `${industry} industry body news`,
-    `${industry} licensing changes`
-  ];
+
+  if (queries.length === 0) {
+    queries.push(industry + " news " + loc);
+    queries.push(industry + " industry updates Australia");
+  }
+
+  return queries;
 }
 
-// ─── WEB SEARCH ──────────────────────────────────────────────────────────────
 async function searchWeb(queries) {
   const serpKey = process.env.SERP_API_KEY;
   const bingKey = process.env.BING_SEARCH_API_KEY;
@@ -191,194 +205,234 @@ async function searchWeb(queries) {
 }
 
 // ─── EMAIL NEWS ITEMS ────────────────────────────────────────────────────────
-async function getEmailNewsItems(userId, supabase) {
+async async function getEmailNewsItems(userId, supabase) {
   try {
-    // Pull industry-category emails from email_summaries that were scanned recently
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await supabase
-      .from('email_summaries')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('category', 'industry')
-      .gte('scanned_at', since)
-      .order('received_at', { ascending: false })
-      .limit(20);
+    const { data, error } = await supabase
+      .from("content_library")
+      .select("id, title, body, created_at")
+      .eq("user_id", userId)
+      .eq("status", "approved")
+      .contains("tool_tags", ["news-digest"]);
 
-    return (data || []).map(row => ({
-      title: row.subject,
-      summary: row.preview || '',
+    if (error || !data || data.length === 0) return [];
+
+    return data.map(item => ({
+      title: item.title || "Business Update",
+      summary: item.body ? item.body.substring(0, 300) : "",
       url: null,
-      source: row.sender,
-      publishedAt: row.received_at || new Date().toISOString(),
-      sourceType: 'email'
+      source_name: "Your Content Library",
+      source_domain: "content-library",
+      source_type: "email",
+      category: null,
+      published_at: item.created_at
     }));
-  } catch(e) {
+  } catch (err) {
     return [];
   }
 }
 
-// ─── CLAUDE ENRICHER ─────────────────────────────────────────────────────────
-async function enrichWithClaude(items, claudeKey, industry, location) {
-  if (!items.length) return [];
+async function enrichWithClaude(items, claudeKey, categories) {
+  const activeCategories = (categories || []).filter(c => c.enabled);
+  const categoryList = activeCategories.map(c => c.id + ": " + c.label).join(", ");
 
-  const itemList = items.slice(0, 30).map((item, i) =>
-    `${i}: TITLE: ${item.title} | SOURCE: ${item.source} | SUMMARY: ${(item.summary || '').substring(0, 200)}`
-  ).join('\n');
+  const systemPrompt = "You are a news categorisation assistant for an Australian business platform. " +
+    "Categorise and summarise news items for business owners. " +
+    "Prioritise authoritative sources: government bodies, regulators, peak industry associations, and established trade publications over general blogs or social media. " +
+    "Flag each item source_type as: primary (government/regulator/peak body) or secondary (trade media/general press). " +
+    "For email items already marked source_type email, keep that value.";
 
-  const systemPrompt = `You are an expert trade industry analyst for Australian businesses.
-Analyse news items and:
-1. Categorise each into: regulatory, industry-body, supplier, business, technology, or general
-2. Write a clear 2-3 sentence summary in plain English relevant to a ${industry} business in ${location}
-3. Score relevance 1-10 (10 = extremely relevant to a ${industry} tradesperson)
-4. Filter out anything irrelevant or too generic (score under 3)
+  const userPrompt = "Active categories for this user: " + (categoryList || "general") + "\n\n" +
+    "For each news item below, return a JSON array where each object has:\n" +
+    "- title: string (cleaned title)\n" +
+    "- summary: string (2-3 sentence summary in plain Australian English)\n" +
+    "- category: string (one of the active category IDs, or the closest match)\n" +
+    "- source_type: string (primary, secondary, or email)\n" +
+    "- source_domain: string (domain extracted from url, e.g. worksafe.vic.gov.au, or null if no url)\n\n" +
+    "Also return a digest_summary object with one 2-3 sentence summary per active category ID based on the top stories in that category.\n\n" +
+    "Return ONLY valid JSON in this shape:\n" +
+    "{ \"items\": [...], \"digest_summary\": { \"regulatory\": \"...\", \"technology\": \"...\" } }\n\n" +
+    "News items:\n" + JSON.stringify(items.map(i => ({
+      title: i.title,
+      url: i.url || null,
+      snippet: i.snippet || i.summary || "",
+      source_type: i.source_type || null
+    })));
 
-Return ONLY a JSON array, no other text:
-[{"index": 0, "category": "regulatory", "summary": "Plain English summary...", "relevanceScore": 8}, ...]
-Only include items with relevanceScore >= 4.`;
+  const requestBody = JSON.stringify({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 4096,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }]
+  });
 
   try {
-    const response = await httpsPost('api.anthropic.com', '/v1/messages',
-      { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-      {
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 3000,
-        system: systemPrompt,
-        messages: [{ role: 'user', content: `Analyse these news items for a ${industry} business:\n\n${itemList}` }]
-      }
-    );
+    const responseText = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: "api.anthropic.com",
+        path: "/v1/messages",
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": claudeKey,
+          "anthropic-version": "2023-06-01",
+          "Content-Length": Buffer.byteLength(requestBody)
+        }
+      };
+      const req = https.request(options, res => {
+        let data = "";
+        res.on("data", chunk => { data += chunk; });
+        res.on("end", () => resolve(data));
+      });
+      req.on("error", reject);
+      req.write(requestBody);
+      req.end();
+    });
 
-    const text = response.body.content?.[0]?.text || '[]';
-    const clean = text.replace(/```json|```/g, '').trim();
-    const enriched = JSON.parse(clean);
+    const parsed = JSON.parse(responseText);
+    const textContent = parsed.content && parsed.content[0] && parsed.content[0].text;
+    if (!textContent) return { items: items, digest_summary: {} };
 
-    return enriched
-      .filter(e => e.relevanceScore >= 4)
-      .map(e => {
-        const original = items[e.index];
-        if (!original) return null;
-        return { ...original, category: e.category, summary: e.summary, relevanceScore: e.relevanceScore };
-      })
-      .filter(Boolean);
+    const jsonMatch = textContent.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return { items: items, digest_summary: {} };
 
-  } catch(err) {
-    console.error('[news-digest] Claude enrichment error:', err.message);
-    // Fall back: return items with default categorisation
-    return items.map(i => ({ ...i, category: 'general', relevanceScore: 5 }));
+    const result = JSON.parse(jsonMatch[0]);
+    const enrichedItems = (result.items || []).map((enriched, idx) => {
+      const original = items[idx] || {};
+      return Object.assign({}, original, {
+        title: enriched.title || original.title,
+        summary: enriched.summary || original.summary || "",
+        category: enriched.category || original.category || null,
+        source_type: enriched.source_type || original.source_type || "secondary",
+        source_domain: enriched.source_domain || original.source_domain || null
+      });
+    });
+
+    return { items: enrichedItems, digest_summary: result.digest_summary || {} };
+  } catch (err) {
+    return { items: items, digest_summary: {} };
   }
 }
 
-// ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
 module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { userId, industry, location, businessName } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-
-  const claudeKey   = process.env.CLAUDE_API_KEY;
+  const claudeApiKey = process.env.CLAUDE_API_KEY;
   const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
+  const serpApiKey = process.env.SERP_API_KEY;
 
-  if (!claudeKey || !supabaseUrl || !supabaseKey) {
-    return res.status(500).json({ error: 'Server configuration error' });
+  const { createClient } = require("@supabase/supabase-js");
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const supabase = createClient(supabaseUrl, supabaseKey);
+  const { userId, industry: bodyIndustry, location: bodyLocation } = req.body;
+  if (!userId) {
+    return res.status(400).json({ error: "userId required" });
+  }
 
+  // Fetch user settings (categories, cadence, overrides)
+  let categories = null;
+  let industryOverride = null;
+  let locationOverride = null;
   try {
-    console.log(`[news-digest] Refreshing for ${industry} in ${location}...`);
-
-    // 1. Get web search results
-    const queries = getTradeQueries(industry);
-    const webItems = await searchWeb(queries);
-    console.log(`[news-digest] Web search found ${webItems.length} items`);
-
-    // 2. Get email industry items
-    const emailItems = await getEmailNewsItems(userId, supabase);
-    console.log(`[news-digest] Email found ${emailItems.length} industry items`);
-
-    const allRaw = [...emailItems, ...webItems];
-
-    if (!allRaw.length) {
-      return res.status(200).json({ success: true, items: [], message: 'No news found' });
+    const { data: settings } = await supabase
+      .from("news_digest_settings")
+      .select("categories, industry_override, location_override")
+      .eq("user_id", userId)
+      .single();
+    if (settings) {
+      categories = settings.categories;
+      industryOverride = settings.industry_override;
+      locationOverride = settings.location_override;
     }
+  } catch (e) {}
 
-    // 3. Enrich and filter with Claude
-    console.log(`[news-digest] Enriching ${allRaw.length} items with Claude...`);
-    const enriched = await enrichWithClaude(allRaw, claudeKey, industry, location);
-    console.log(`[news-digest] ${enriched.length} items after filtering`);
-
-    // 4. Save to database
-    const toInsert = enriched.map(item => ({
-      user_id: userId,
-      title: item.title,
-      summary: item.summary,
-      category: item.category,
-      source: item.source,
-      source_type: item.sourceType,
-      url: item.url || null,
-      relevance_score: item.relevanceScore,
-      published_at: item.publishedAt,
-      industry
-    }));
-
-    // Delete items older than 30 days before inserting
-    await supabase
-      .from('news_digest_items')
-      .delete()
-      .eq('user_id', userId)
-      .lt('published_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-
-    // Insert new items (ignore duplicates by title+user)
-    const { data: inserted, error: insertErr } = await supabase
-      .from('news_digest_items')
-      .upsert(toInsert, { onConflict: 'user_id,title', ignoreDuplicates: true })
-      .select('id, title, summary, category, source, source_type, url, published_at, relevance_score');
-
-    if (insertErr) console.error('[news-digest] Insert error:', insertErr);
-
-    // 5. Also save high-relevance items to Content Library for use in Marketing tool
-    const highRelevance = enriched.filter(i => i.relevanceScore >= 7);
-    for (const item of highRelevance) {
-      await supabase.from('content_library').upsert({
-        user_id: userId,
-        title: item.title,
-        content_type: 'industry-news',
-        tool_source: 'news-digest',
-        status: 'approved',
-        metadata: JSON.stringify({
-          summary: item.summary,
-          source: item.source,
-          url: item.url,
-          category: item.category,
-          publishedAt: item.publishedAt
-        })
-      }, { onConflict: 'user_id,title' });
-    }
-
-    // Return inserted items with IDs
-    const { data: allItems } = await supabase
-      .from('news_digest_items')
-      .select('*')
-      .eq('user_id', userId)
-      .order('published_at', { ascending: false })
-      .limit(100);
-
-    const formatted = (allItems || []).map(row => ({
-      id: row.id,
-      title: row.title,
-      summary: row.summary,
-      category: row.category,
-      source: row.source,
-      sourceType: row.source_type,
-      url: row.url,
-      publishedAt: row.published_at,
-      relevanceScore: row.relevance_score
-    }));
-
-    return res.status(200).json({ success: true, items: formatted });
-
-  } catch(err) {
-    console.error('[news-digest] Error:', err);
-    return res.status(500).json({ error: err.message });
+  // Fetch profile for industry and location if not overridden
+  let industry = industryOverride || bodyIndustry || "general business";
+  let location = locationOverride || bodyLocation || "Australia";
+  if (!industryOverride || !locationOverride) {
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("industry, location")
+        .eq("user_id", userId)
+        .single();
+      if (profile) {
+        if (!industryOverride) industry = profile.industry || industry;
+        if (!locationOverride) location = profile.location || location;
+      }
+    } catch (e) {}
   }
+
+  // Use default categories if none saved
+  if (!categories || !Array.isArray(categories) || categories.length === 0) {
+    categories = [
+      { id: "regulatory", label: "Regulatory", enabled: true, is_custom: false },
+      { id: "industry-body", label: "Industry Body", enabled: true, is_custom: false },
+      { id: "suppliers", label: "Suppliers", enabled: true, is_custom: false },
+      { id: "workplace-safety", label: "Workplace & Safety", enabled: true, is_custom: false },
+      { id: "economic-market", label: "Economic & Market", enabled: true, is_custom: false },
+      { id: "technology", label: "Technology", enabled: true, is_custom: false }
+    ];
+  }
+
+  // Build dynamic queries from industry + location + categories
+  const queries = buildSearchQueries(industry, location, categories);
+
+  // Fetch email-sourced CL items tagged news-digest
+  const emailItems = await getEmailNewsItems(userId, supabase);
+
+  // Search web via SerpAPI
+  let webItems = [];
+  try {
+    webItems = await searchWeb(queries, serpApiKey);
+  } catch (e) {}
+
+  const allItems = [...emailItems, ...webItems];
+  if (allItems.length === 0) {
+    return res.status(200).json({ message: "No items found", count: 0 });
+  }
+
+  // Enrich with Claude - dynamic categories, source_domain, digest_summary
+  const { items: enrichedItems, digest_summary } = await enrichWithClaude(allItems, claudeApiKey, categories);
+
+  // Upsert items into news_digest_items
+  const upsertRows = enrichedItems.map(item => ({
+    user_id: userId,
+    title: item.title || "",
+    summary: item.summary || "",
+    category: item.category || null,
+    url: item.url || null,
+    source_name: item.source_name || null,
+    source_domain: item.source_domain || null,
+    source_type: item.source_type || "secondary",
+    published_at: item.published_at || new Date().toISOString()
+  }));
+
+  const { error: upsertError } = await supabase
+    .from("news_digest_items")
+    .upsert(upsertRows, { onConflict: "user_id,url" });
+
+  if (upsertError) {
+    return res.status(500).json({ error: "Failed to save news items" });
+  }
+
+  // Store digest_summary back to settings
+  if (digest_summary && Object.keys(digest_summary).length > 0) {
+    await supabase
+      .from("news_digest_settings")
+      .update({
+        updated_summary: digest_summary,
+        summary_generated_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+      .eq("user_id", userId);
+  }
+
+  return res.status(200).json({
+    message: "Digest refreshed",
+    count: enrichedItems.length,
+    digest_summary: digest_summary
+  });
 };
