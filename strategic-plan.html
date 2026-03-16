@@ -630,7 +630,21 @@
       .btn-sp-next, .btn-sp-generate { width: 100%; margin-left: 0; }
       .btn-sp-back { width: 100%; }
     }
-  </style>
+  @media print {
+  .topbar, .sp-nav-chips, .sp-interview, #sp-progress-container, #sp-cycle-banner,
+  #sp-version-history, .btn-sp-print, .btn-sp-download, .btn-sp-add-task,
+  .sp-task-delete, .sp-task-priority, #sp-regen-note { display: none !important; }
+  body { background: #fff; color: #000; }
+  #sp-results { display: block !important; }
+  .sp-month-heading { font-size: 14pt; font-weight: bold; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+  .sp-task { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 10pt; page-break-inside: avoid; }
+  .sp-task-check { flex-shrink: 0; }
+  .sp-task-title { flex: 1; }
+  .sp-cf-badge::after { content: ' (CF)'; font-size: 8pt; color: #666; }
+  .sp-cf-badge { font-size: 0; }
+  .sp-month-group { page-break-inside: avoid; margin-bottom: 16px; }
+}
+</style>
 </head>
 <body>
 
