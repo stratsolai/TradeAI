@@ -44,13 +44,13 @@ async function generatePlanContent(claudeKey, planData) {
     '1m-2m': '$1,000,000–$2,000,000', 'over-2m': 'Over $2,000,000'
   };
 
-  const systemPrompt = `You are an expert business plan writer specialising in Australian trades and construction businesses.
+  const systemPrompt = `You are an expert business plan writer specialising in Australian small and medium businesses across trades, construction, professional services, and other industries.
 Write professional, polished business plan content suitable for submission to banks, lenders, or investors.
 Use plain language — avoid jargon. Write in third person (e.g. "The business operates..." not "We operate...").
 All content must be specific to the business data provided, not generic filler.
 Return ONLY a JSON object — no markdown, no preamble.`;
 
-  const userPrompt = `Generate comprehensive business plan content for this trades business:
+  const userPrompt = `Generate comprehensive business plan content for this business:
 
 BUSINESS DATA:
 - Name: ${planData.businessName}
@@ -85,6 +85,14 @@ BUSINESS DATA:
 - Contingency: ${planData.contingency || 'Not specified'}
 - Insurance: ${(planData.insurance || []).join(', ')}
 - Additional: ${planData.additionalInfo || 'None'}
+- Key Person Dependency: ${planData.keyPersonDependency || 'Not provided'}
+- Most Profitable Service: ${planData.mostProfitableService || 'Not provided'}
+- Average Payment Time: ${planData.avgPaymentTime || 'Not provided'}
+- Gross Margin Awareness: ${planData.grossMarginAwareness || 'Not provided'}
+- Monthly Marketing Budget: ${planData.marketingBudget || 'Not provided'}
+- Biggest Marketing Challenges: ${(planData.marketingChallenges || []).join(', ') || 'Not provided'}
+- Key Roles in Business: ${(planData.keyRoles || []).join(', ') || 'Not provided'}
+- Compliance Actions Due: ${planData.complianceActions || 'Not provided'}
 
 Return this exact JSON structure:
 {
@@ -101,34 +109,38 @@ Return this exact JSON structure:
   "conclusion": "1 strong closing paragraph",
   "operationalActions": [
     {
-      "category": "Financial",
+      "month": "Month 1 (Days 1-30)",
       "actions": [
-        {"action": "Specific action item", "priority": "High", "timeframe": "30 days", "notes": "Brief context"},
+        {"title": "Specific action title", "dueDay": "Day 14", "priority": "High", "owner": "Owner", "notes": "Brief context"},
         ...
       ]
     },
     {
-      "category": "Marketing",
-      "actions": [...]
+      "month": "Month 2 (Days 31-60)",
+      "actions": [
+        {"title": "Specific action title", "dueDay": "Day 45", "priority": "Medium", "owner": "Owner", "notes": "Brief context"},
+        ...
+      ]
     },
     {
-      "category": "Operations",
-      "actions": [...]
-    },
-    {
-      "category": "Compliance & Safety",
-      "actions": [...]
-    },
-    {
-      "category": "Growth",
-      "actions": [...]
+      "month": "Month 3 (Days 61-90)",
+      "actions": [
+        {"title": "Specific action title", "dueDay": "Day 75", "priority": "Low", "owner": "Owner", "notes": "Brief context"},
+        ...
+      ]
     }
-  ]
+  ],
+  "quarterlyFinancialTarget": "Financial target tied to the 12-month revenue goal",
+  "reviewCheckpoint": {"title": "45-Day Plan Review", "dueDay": "Day 45", "priority": "High", "owner": "Owner", "notes": "Review progress and adjust plan as needed"}
 }
 
-Each category should have 3-6 specific, actionable items relevant to this business. Total actions: 20-30.
-Priority must be exactly: "High", "Medium", or "Low".
-Timeframe options: "30 days", "60 days", "90 days", "6 months", "12 months".`;
+IMPORTANT INSTRUCTIONS FOR TASK GENERATION:
+- Generate between 8 and 20 tasks total across all three months. Prioritise quality and focus over quantity. Do not pad the list.
+- Group tasks by month: Month 1 (Days 1-30), Month 2 (Days 31-60), Month 3 (Days 61-90).
+- Each task must include a day offset (e.g. Day 14, Day 30) as the dueDay field.
+- Always include the 45-day review checkpoint task in Month 2.
+- Set owner to the relevant role from keyRoles if provided, otherwise use "Owner".
+- Focus on 3-5 key priorities for the quarter. Each priority should have concrete actions.`;
 
   const response = await httpsPost('api.anthropic.com', '/v1/messages',
     {
@@ -302,6 +314,11 @@ const sections = [
   heading1('1. Executive Summary'),
   ...flatten(body(content.executiveSummary)),
   spacer(1),
+  heading1('2. SWOT Analysis'),
+  ...flatten(body(
+    'SWOT Analysis\n\nBased on all information provided, generate a SWOT Analysis with exactly 4 quadrants. Each quadrant must have 3 to 5 concise, specific dot points relevant to this business. Format as:\n\nSTRENGTHS\n- [point]\n- [point]\n- [point]\n\nWEAKNESSES\n- [point]\n- [point]\n- [point]\n\nOPPORTUNITIES\n- [point]\n- [point]\n- [point]\n\nTHREATS\n- [point]\n- [point]\n- [point]\n\nUse only the information provided. Do not invent facts. Keep each point under 15 words.'
+  )),
+  spacer(1),
   heading1('2. Business Overview'),
   ...flatten(body(content.businessOverview)),
   spacer(1),
@@ -310,6 +327,11 @@ const sections = [
   spacer(1),
   heading1('4. Market Analysis'),
   ...flatten(body(content.marketAnalysis)),
+  spacer(1),
+  heading1('4b. Competitor Analysis'),
+  ...flatten(body(
+    'Competitor Analysis\n\nUsing the competitor names provided (if any) and the business differentiators stated, write a brief competitor positioning analysis. Identify where this business stands relative to its competitors based only on the information provided. Do not invent competitor details, pricing, or capabilities. If no competitor names were provided, write a general market positioning statement based on the differentiators alone. Keep this section to 3 to 5 sentences.'
+  )),
   spacer(1),
   heading1('5. Marketing Strategy'),
   ...flatten(body(content.marketingStrategy)),
