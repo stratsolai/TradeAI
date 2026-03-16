@@ -43,7 +43,13 @@
       transition: color 0.2s;
     }
     .topbar-back:hover { color: #fff; }
-    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; margin-right: auto; }
+    .topbar-nav a { font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.75); text-decoration: none; transition: color 0.2s; }
+    .topbar-nav a:hover { color: #fff; }
+    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
+    .topbar-account { position: relative; }
+    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .topbar-account-btn:hover { color: #fff; }
     .topbar-settings-btn {
       background: none;
       border: none;
@@ -57,20 +63,7 @@
     }
     .topbar-settings-btn:hover { color: #fff; }
     .account-dropdown { position: relative; }
-    .account-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-family: "DM Sans", sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 0;
-      transition: color 0.2s;
-    }
+    
     .topbar-account { position: relative; }
     .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); min-width: 200px; overflow: hidden; z-index: 200; }
     .account-dropdown.open { display: block; }
@@ -471,7 +464,7 @@
     <nav class="topbar-right">
       <button class="topbar-settings-btn" onclick="window.ND_LOGIC.openSettings()">Settings</button>
       <div class="topbar-account" id="account-menu">
-        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
           <div class="account-dropdown-email" id="account-dropdown-email">&#8212;</div>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
