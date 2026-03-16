@@ -512,14 +512,14 @@
   <script src="/news-digest-logic.js?v=1"></script>
   <script>
     document.addEventListener("DOMContentLoaded", function () {
-      if (window._supabase) {
-        window._supabase.auth.getSession().then(function (result) {
+      if (window.supabaseClient) {
+        window.supabaseClient.auth.getSession().then(function (result) {
           var session = result.data && result.data.session;
           if (session && session.user) {
             var email = session.user.email || "";
             var shortEl = document.getElementById("account-email-short");
             var dropEmailEl = document.getElementById("account-dropdown-email");
-            if (shortEl) shortEl.textContent = email;
+            if (shortEl) shortEl.textContent = email.split('@')[0];
             if (dropEmailEl) dropEmailEl.textContent = email;
           }
         });
@@ -538,8 +538,8 @@
       var signOutBtn = document.getElementById("sign-out-btn");
       if (signOutBtn) {
         signOutBtn.addEventListener("click", function () {
-          if (window._supabase) {
-            window._supabase.auth.signOut().then(function () {
+          if (window.supabaseClient) {
+            window.supabaseClient.auth.signOut().then(function () {
               window.location.href = "/login.html";
             });
           }
