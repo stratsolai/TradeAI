@@ -14,13 +14,13 @@ window.SP_SECTIONS = [
     title: "1. Business Snapshot",
     subtitle: "Basic details about your business. We've pre-filled what we know - just confirm or update.",
     fields: [
-      { id: "s0-business-name", label: "Business Name", type: "text", required: false, placeholder: "e.g. Smith Plumbing Pty Ltd, Apex Legal Group, Chen Advisory" },
-      { id: "s0-abn", label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
+      { id: "s0-business-name", profileKey: "business_name", label: "Business Name", type: "text", required: false, placeholder: "e.g. Smith Plumbing Pty Ltd, Apex Legal Group, Chen Advisory" },
+      { id: "s0-abn", profileKey: "abn", label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
       { id: "s0-structure", label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "sole-trader", label: "Sole Trader" },{ value: "partnership", label: "Partnership" },{ value: "company", label: "Pty Ltd Company" },{ value: "trust", label: "Trust" }] },
-      { id: "s0-industry", label: "Industry / Profession", type: "text", required: false, placeholder: "e.g. Plumbing, Commercial Law, Accounting & Advisory, Landscaping" },
+      { id: "s0-industry", profileKey: "industry", label: "Industry / Profession", type: "text", required: false, placeholder: "e.g. Plumbing, Commercial Law, Accounting & Advisory, Landscaping" },
       { id: "s0-years", label: "Years in Business", type: "text", required: false, placeholder: "e.g. 8" },
-      { id: "s0-location", label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
-      { id: "s0-team-size", label: "Team Size", labelHint: "(including yourself)", type: "text", required: false, placeholder: "e.g. 4" },
+      { id: "s0-location", profileKey: "location", label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
+      { id: "s0-team-size", profileKey: "team_size", label: "Team Size", labelHint: "(including yourself)", type: "text", required: false, placeholder: "e.g. 4" },
       { id: "s0-licences", label: "Licences & Certifications", type: "text", required: false, placeholder: "e.g. A-Grade Electrician Licence, QBCC, Legal Practising Certificate" },
       { id: "s0-key-person", label: "Key Person Dependency", labelHint: "(optional)", type: "chip-single", group: "key-person-chips", required: false, helpText: "If you couldn't work for 2 weeks, what would happen to the business?", options: [{ value: "runs-fine", label: "Business keeps running" },{ value: "slows-down", label: "It would slow down" },{ value: "would-stop", label: "It would stop completely" }] }
     ]
