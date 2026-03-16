@@ -629,13 +629,11 @@
   <!-- Topbar — authenticated standard -->
   <div class="topbar">
     <div class="topbar-left">
+      <a href="dashboard.html" class="topbar-logo"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" height="38"></a>
       <div class="topbar-nav">
         <a href="dashboard.html">Back</a>
       </div>
     </div>
-    <a href="dashboard.html" class="topbar-logo">
-      <img src="StaxAI Cropped Transparent.png" alt="StaxAI">
-    </a>
     <div class="topbar-right">
       <button class="topbar-account-btn" id="account-btn" onclick="toggleAccountDropdown()">
         <span id="account-display">Account</span> &#9662;
@@ -698,7 +696,7 @@
     (function() {
       var ts = Date.now();
       var s1 = document.createElement('script'); s1.src = '/strategic-plan-data.js?v=' + ts; document.head.appendChild(s1);
-      var s2 = document.createElement('script'); s2.src = '/strategic-plan-logic.js?v=' + ts; s2.defer = true; document.head.appendChild(s2);
+      var s2 = document.createElement('script'); s2.src = '/strategic-plan-logic.js?v=' + ts; s2.onload = function(){ if(window.SP_LOGIC) window.SP_LOGIC.init(); }; document.head.appendChild(s2);
     })();
   </script>
 
