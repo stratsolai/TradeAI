@@ -22,7 +22,8 @@
 
     // Build progress nav chips
     var navHtml = sections.map(function(s, i) {
-      return '<button class="sp-nav-chip" data-section="' + i + '" onclick="SP_LOGIC.goToSection(' + i + ')">' + (i + 1) + '. ' + s.title.split('. ')[1] + '</button>';
+      var chipColors = ['c-blue','c-orange','c-green','c-purple','c-teal','c-red'];
+      return '<button class="sp-nav-chip ' + (chipColors[i] || 'c-blue') + '" data-section="' + i + '" onclick="SP_LOGIC.goToSection(' + i + ')">' + (i + 1) + '. ' + s.title.split('. ')[1] + '</button>';
     }).join('');
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) navEl.innerHTML = navHtml;
