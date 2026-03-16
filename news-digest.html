@@ -70,6 +70,12 @@
       padding: 6px 0;
       transition: color 0.2s;
     }
+    .topbar-account { position: relative; }
+    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 8px); background: #fff; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.15); min-width: 200px; overflow: hidden; z-index: 200; }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: #888; border-bottom: 1px solid #f0f0f0; }
+    .account-dropdown-item { display: block; width: 100%; padding: 11px 16px; background: none; border: none; text-align: left; font-family: "DM Sans", sans-serif; font-size: 14px; color: #333; cursor: pointer; transition: background 0.15s; }
+    .account-dropdown-item:hover { background: #f5f5f5; }
     .account-btn:hover { color: #fff; }
     .account-dropdown {
       display: none;
@@ -459,12 +465,12 @@
     <div class="topbar">
     <div class="topbar-left">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo">
-      <div class="topbar-nav"><a id="back-btn" href="/dashboard.html">Back</a></div>
+      <div class="topbar-nav"><a id="back-btn" href="/dashboard.html" class="topbar-back">Back</a></div>
     </div>
     <nav class="topbar-right">
       <button class="topbar-settings-btn" onclick="window.ND_LOGIC.openSettings()">Settings</button>
       <div class="topbar-account" id="account-menu">
-        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
           <div class="account-dropdown-email" id="account-dropdown-email">&#8212;</div>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
