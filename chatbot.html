@@ -184,25 +184,23 @@
     .filter-tab {
       display: flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       border-radius: 20px;
       border: 1px solid rgba(0,0,0,0.10);
-      border-left: 3px solid #888888;
+      border-left-width: 4px;
       font-size: 13px;
       font-weight: 600;
       color: #555555;
       background: #fff;
       cursor: pointer;
       font-family: "DM Sans", sans-serif;
+      transition: opacity 0.15s;
     }
-    .filter-tab:hover { border-color: #1A5490; color: #1A5490; }
-    .filter-tab.active {
-      background: #1A5490;
-      color: #fff;
-      border-color: #1A5490;
-      border-left-color: #1A5490;
-    }
+    .filter-tab[data-filter="all"] { border-left-color: #1A5490; }
+    .filter-tab[data-filter="leads"] { border-left-color: #C4622A; }
+    .filter-tab[data-filter="appointments"] { border-left-color: #2e7d32; }
+    .filter-tab:hover { opacity: 0.8; }
+    .filter-tab.active { background: #f0f4f8; font-weight: 700; color: #1A5490; }
 
     .unanswered-section {
       padding: 16px 20px;
