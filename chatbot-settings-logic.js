@@ -54,6 +54,7 @@ window.CHAT_SETTINGS_LOGIC = {
     this.renderAppointmentSettings();
     this.renderWidgetConfig();
     this.renderDesignVizToggle();
+    this.wireSettingsTabs();
     this.wireSaveButtons();
   },
 
@@ -358,7 +359,28 @@ window.CHAT_SETTINGS_LOGIC = {
     });
   },
 
-  wireSaveButtons: function () {
+  wireSettingsTabs: function () {
+    const tabs = document.querySelectorAll(".settings-tab");
+    const panels = document.querySelectorAll(".tab-panel");
+    tabs.forEach(function(tab) {
+      tab.addEventListener("click", function() {
+        tabs.forEach(function(t) { t.classList.remove("active"); });
+        panels.forEach(function(p) { p.classList.remove("active"); });
+        tab.classList.add("active");
+        const panelId = "tab-" + tab.dataset.tab;
+        const panel = document.getElementById(panelId);
+        if (panel) panel.classList.add("active");
+      });
+    });
+    // Handle hash navigation e.g. chatbot-settings.html#faq
+    const hash = window.location.hash.replace("#", "");
+    if (hash) {
+      const target = document.querySelector(".settings-tab[data-tab='" + hash + "']");
+      if (target) target.click();
+    }
+  },
+
+    wireSaveButtons: function () {
     const saveWidget = document.getElementById("save-widget-settings");
     if (saveWidget) saveWidget.addEventListener("click", () => this.saveWidgetSettings());
     const saveAppt = document.getElementById("save-appt-settings");
