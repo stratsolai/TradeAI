@@ -1,223 +1,533 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Website Chatbot - TradeAI Pro</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Website Chatbot — StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --blue: #1A5490; --blue-light: #2471a3; --orange: #E8500A; --orange-light: #ff6b2b;
-      --bg: #0d1628; --bg2: #111d35; --bg3: #162240;
-      --card: rgba(255,255,255,0.07); --card-border: rgba(255,255,255,0.12);
-      --muted: rgba(255,255,255,0.65);
-      --body-font: 'DM Sans', sans-serif; --heading-font: 'Barlow Condensed', sans-serif;
+      --bg: #F5F7FA;
+      --card: #FFFFFF;
+      --topbar: #4A6D8C;
+      --orange: #C4622A;
+      --blue: #1A5490;
+      --text: #333333;
+      --muted: #888888;
+      --border: rgba(0,0,0,0.08);
+      --shadow: 0 2px 8px rgba(0,0,0,0.15);
+      --radius: 12px;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:var(--body-font); background:var(--bg); color:#fff; min-height:100vh; }
 
-    .header {
-      background:var(--bg2); border-bottom:1px solid var(--card-border);
-      padding:0 40px; height:64px;
-      display:flex; align-items:center; justify-content:space-between;
-      position:sticky; top:0; z-index:100;
+    body {
+      font-family: "DM Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
     }
-    .logo { font-family:var(--heading-font); font-size:22px; font-weight:800; color:white; }
-    .logo span { color:var(--orange); }
-    .header-actions { display:flex; gap:10px; }
-    .btn-back, .btn-settings {
-      padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600;
-      text-decoration:none; transition:all 0.2s; border:1px solid var(--card-border);
-      font-family:var(--body-font); cursor:pointer;
-    }
-    .btn-back { background:var(--bg3); color:var(--muted); }
-    .btn-back:hover { color:white; border-color:rgba(255,255,255,0.25); }
-    .btn-settings { background:rgba(232,80,10,0.15); color:var(--orange); border-color:rgba(232,80,10,0.3); }
-    .btn-settings:hover { background:rgba(232,80,10,0.25); }
 
-    .container { max-width:900px; margin:0 auto; padding:40px 20px; }
-    .page-title { font-family:var(--heading-font); font-size:38px; font-weight:800; margin-bottom:6px; letter-spacing:0.5px; }
-    .page-subtitle { color:var(--muted); font-size:16px; margin-bottom:36px; }
+    .topbar {
+      height: 68px;
+      background: #4A6D8C;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .topbar-logo img { height: 38px; }
+    .topbar-nav {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .topbar-nav a {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-nav a:hover { color: #fff; }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+    }
+    .account-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .account-btn:hover { background: rgba(255,255,255,0.25); }
+    .account-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 200;
+    }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #888888;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+    .account-dropdown a {
+      display: block;
+      padding: 10px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333333;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .account-dropdown a:hover { background: #F5F7FA; }
+
+    .page-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 900;
+      font-size: 32px;
+      color: #1A5490;
+    }
+    .page-header p {
+      font-size: 15px;
+      color: #888888;
+      margin-top: 4px;
+    }
+    .page-header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .btn-settings {
+      background: #C4622A;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-settings:hover { opacity: 0.9; }
+
+    .chatbot-grid {
+      display: grid;
+      grid-template-columns: 1fr 0.8fr;
+      gap: 24px;
+      align-items: start;
+    }
 
     .card {
-      background:var(--bg2); border:1px solid var(--card-border);
-      border-radius:16px; padding:36px; margin-bottom:28px;
+      background: #FFFFFF;
+      border-radius: 12px;
+      border-left: 4px solid #1A5490;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      overflow: hidden;
     }
-    .section-title { font-family:var(--heading-font); font-size:22px; font-weight:700; margin-bottom:18px; letter-spacing:0.3px; }
+    .card-header {
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-header h2 {
+      font-family: "Barlow Condensed", sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #1A5490;
+    }
+    .card-body { padding: 20px; }
 
-    .info-box {
-      background:rgba(26,84,144,0.12); border:1px solid rgba(26,84,144,0.3);
-      border-left:3px solid var(--blue-light);
-      padding:16px; margin-bottom:24px; border-radius:8px;
+    .filter-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 12px 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background: #fafbfc;
     }
-    .info-box p { margin-bottom:6px; line-height:1.6; color:rgba(255,255,255,0.85); font-size:14px; }
-    .info-box strong { color:white; }
+    .filter-tab {
+      padding: 6px 16px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #888888;
+      background: #fff;
+      cursor: pointer;
+    }
+    .filter-tab.active {
+      background: #1A5490;
+      color: #fff;
+      border-color: #1A5490;
+    }
 
-    /* Chat widget */
-    .chat-container {
-      max-width:420px; margin:0 auto;
-      border:1px solid var(--card-border); border-radius:16px; overflow:hidden;
-      box-shadow:0 16px 48px rgba(0,0,0,0.4);
+    .unanswered-section {
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      background: #fffbf5;
     }
-    .chat-header {
-      background:linear-gradient(135deg, var(--blue), var(--blue-light));
-      color:white; padding:18px 20px; font-weight:700; font-size:16px;
-      display:flex; align-items:center; gap:10px;
+    .unanswered-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #C4622A;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .chat-header::before {
-      content:''; width:10px; height:10px; border-radius:50%;
-      background:#6ee7b7; box-shadow:0 0 8px rgba(110,231,183,0.6);
+    .unanswered-badge {
+      background: #C4622A;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
     }
-    .chat-messages {
-      height:420px; overflow-y:auto; padding:20px;
-      background:var(--bg3);
-      scrollbar-width:thin; scrollbar-color:rgba(255,255,255,0.1) transparent;
+    .unanswered-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(0,0,0,0.04);
     }
-    .message { margin-bottom:16px; display:flex; flex-direction:column; }
-    .message.user { align-items:flex-end; }
-    .message.bot { align-items:flex-start; }
-    .message-bubble {
-      max-width:80%; padding:12px 16px; border-radius:12px; line-height:1.5; font-size:14px;
+    .unanswered-item:last-child { border-bottom: none; }
+    .btn-answer {
+      font-size: 12px;
+      font-weight: 600;
+      color: #C4622A;
+      text-decoration: none;
+      white-space: nowrap;
     }
-    .message.user .message-bubble { background:var(--orange); color:white; border-radius:12px 12px 4px 12px; }
-    .message.bot .message-bubble { background:var(--bg2); color:rgba(255,255,255,0.9); border:1px solid var(--card-border); border-radius:12px 12px 12px 4px; }
+    .unanswered-empty { font-size: 13px; color: #888888; }
 
-    .typing-indicator {
-      display:none; padding:12px 16px;
-      background:var(--bg2); border:1px solid var(--card-border);
-      border-radius:12px 12px 12px 4px; max-width:70px; margin-bottom:16px;
+    .conversation-list { padding: 12px 20px; }
+    .conv-empty {
+      font-size: 14px;
+      color: #888888;
+      padding: 20px 0;
+      text-align: center;
     }
-    .typing-indicator.active { display:block; }
-    .typing-dot {
-      display:inline-block; width:8px; height:8px; border-radius:50%;
-      background:var(--muted); margin:0 2px;
-      animation:typing 1.4s infinite;
+    .conv-card {
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      margin-bottom: 10px;
+      cursor: pointer;
+      transition: box-shadow 0.15s;
+      overflow: hidden;
     }
-    .typing-dot:nth-child(2) { animation-delay:0.2s; }
-    .typing-dot:nth-child(3) { animation-delay:0.4s; }
-    @keyframes typing { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-8px)} }
+    .conv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .conv-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px 6px;
+    }
+    .conv-meta { display: flex; align-items: center; gap: 10px; }
+    .conv-date { font-size: 12px; color: #888888; }
+    .conv-duration { font-size: 12px; color: #888888; }
+    .conv-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .conv-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .badge-completed { background: #e8f5e9; color: #2e7d32; }
+    .badge-abandoned { background: #fafafa; color: #888888; }
+    .badge-lead { background: #fff3e0; color: #e65100; }
+    .badge-appt { background: #e3f2fd; color: #1565c0; }
+    .conv-preview { padding: 4px 14px 10px; font-size: 13px; color: #333333; }
+    .conv-lead-details {
+      padding: 6px 14px;
+      background: #fffbf5;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 13px;
+    }
+    .conv-lead-details a { color: #C4622A; text-decoration: none; font-weight: 600; }
+    .conv-slots {
+      padding: 8px 14px;
+      background: #f0f7ff;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      font-size: 13px;
+    }
+    .conv-slots ul { margin: 4px 0 0 16px; }
+    .conv-slots li { margin-bottom: 2px; }
+    .conv-transcript {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      border-top: 1px solid transparent;
+    }
+    .conv-transcript.open {
+      max-height: 400px;
+      overflow-y: auto;
+      border-top: 1px solid rgba(0,0,0,0.08);
+    }
+    .transcript-inner { padding: 12px 14px; }
+    .transcript-msg { margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
+    .transcript-user { color: #333333; }
+    .transcript-assistant { color: #1A5490; }
 
-    .chat-input-container {
-      display:flex; padding:14px 16px;
-      background:var(--bg2); border-top:1px solid var(--card-border); gap:10px;
+    .test-widget { display: flex; flex-direction: column; height: 560px; }
+    .test-chat-log {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #fafbfc;
     }
-    .chat-input {
-      flex:1; padding:11px 14px;
-      background:var(--bg3); border:1px solid var(--card-border);
-      border-radius:8px; color:white; font-size:14px; font-family:var(--body-font);
-      outline:none; transition:border-color 0.2s;
+    .test-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
     }
-    .chat-input:focus { border-color:var(--blue-light); }
-    .chat-input::placeholder { color:rgba(255,255,255,0.3); }
-    .chat-send {
-      padding:11px 20px; background:var(--orange); color:white;
-      border:none; border-radius:8px; cursor:pointer; font-weight:700;
-      font-family:var(--body-font); font-size:14px; transition:all 0.2s;
+    .test-msg-user {
+      background: #1A5490;
+      color: #fff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
     }
-    .chat-send:hover { background:var(--orange-light); }
-    .chat-send:disabled { background:rgba(255,255,255,0.1); color:var(--muted); cursor:not-allowed; }
+    .test-msg-assistant {
+      background: #fff;
+      color: #333333;
+      align-self: flex-start;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-bottom-left-radius: 4px;
+    }
+    .test-thinking { color: #888888; font-style: italic; }
+    .test-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid rgba(0,0,0,0.08);
+      background: #fff;
+    }
+    .test-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: "DM Sans", sans-serif;
+      outline: none;
+    }
+    .test-input:focus { border-color: #1A5490; }
+    .btn-send {
+      background: #C4622A;
+      color: #fff;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-send:hover { opacity: 0.9; }
+    .btn-clear {
+      background: transparent;
+      border: 1px solid rgba(0,0,0,0.08);
+      color: #888888;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn-clear:hover { border-color: #888888; }
+    .faq-link {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1A5490;
+      text-decoration: none;
+    }
+    .faq-badge {
+      background: #C4622A;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      display: none;
+    }
 
-    @media(max-width:768px) { .header{padding:0 20px;} .container{padding:24px 16px;} }
+    .appt-picker {
+      background: #f0f7ff;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 10px;
+      padding: 14px;
+      margin-top: 8px;
+      align-self: stretch;
+    }
+    .appt-picker-title { font-size: 13px; font-weight: 700; color: #1A5490; margin-bottom: 10px; }
+    .appt-calendar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .appt-day { border-radius: 8px; padding: 8px 10px; min-width: 90px; }
+    .appt-day.unavailable { background: #f0f0f0; opacity: 0.5; }
+    .appt-day.available { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
+    .appt-date { display: block; font-size: 12px; font-weight: 700; color: #333333; margin-bottom: 6px; }
+    .appt-slots { display: flex; flex-direction: column; gap: 4px; }
+    .appt-slot {
+      background: #e3f2fd;
+      color: #1565c0;
+      border: none;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .appt-slot.selected { background: #1A5490; color: #fff; }
+    .appt-selected { font-size: 12px; color: #888888; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .appt-slot-tag { background: #1A5490; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .appt-confirm {
+      background: #C4622A;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
+    .appt-confirm:hover { opacity: 0.9; }
+
+    @media (max-width: 900px) {
+      .chatbot-grid { grid-template-columns: 1fr; }
+      .test-widget { height: 420px; }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">Trade<span>AI</span> Pro</div>
-    <div class="header-actions">
-      <a href="/chatbot-settings.html" class="btn-settings">⚙️ Settings</a>
-      <a href="/dashboard.html" class="btn-back">← Dashboard</a>
+
+  <nav class="topbar">
+    <a class="topbar-logo" href="dashboard.html">
+      <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
+    </a>
+    <div class="topbar-nav">
+      <a href="dashboard.html">Back</a>
+    </div>
+    <nav class="topbar-right">
+      <button class="account-btn" id="account-btn">
+        <span id="account-email-short"></span> &#9662;
+      </button>
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-email" id="account-dropdown-email"></div>
+        <a id="sign-out-btn">Sign Out</a>
+      </div>
+    </nav>
+  </nav>
+
+  <div class="page-wrap">
+
+    <div class="page-header page-header-actions">
+      <div>
+        <h1>AI Website Chatbot</h1>
+        <p>Customer conversations from your live widget. Test your chatbot on the right.</p>
+      </div>
+      <a href="chatbot-settings.html" class="btn-settings">Chatbot Settings</a>
+    </div>
+
+    <div class="chatbot-grid">
+
+      <div>
+
+        <div class="card" style="margin-bottom: 20px;">
+          <div class="unanswered-section">
+            <div class="unanswered-header">
+              Questions to Answer
+              <span class="unanswered-badge" id="unanswered-badge">0</span>
+            </div>
+            <div id="unanswered-questions">
+              <p class="unanswered-empty">Loading...</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2>Conversations</h2>
+            <a href="chatbot-settings.html#faq" class="faq-link">
+              FAQs to Approve
+              <span class="faq-badge" id="faq-badge">0</span>
+            </a>
+          </div>
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="leads">Leads</button>
+            <button class="filter-tab" data-filter="appointments">Appointments</button>
+          </div>
+          <div class="conversation-list" id="conversation-list">
+            <div class="conv-empty">Loading conversations...</div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Test Your Chatbot</h2>
+        </div>
+        <div class="test-widget">
+          <div class="test-chat-log" id="test-chat-log"></div>
+          <div class="test-input-row">
+            <input class="test-input" id="test-input" type="text" placeholder="Type a test message..." autocomplete="off" />
+            <button class="btn-send" id="test-send">Send</button>
+            <button class="btn-clear" id="test-clear">Clear</button>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <div class="container">
-    <h1 class="page-title">AI Website Chatbot 💬</h1>
-    <p class="page-subtitle">Live demo of your AI-powered website chatbot</p>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="chatbot-logic.js?v=1"></script>
 
-    <div class="card">
-      <h2 class="section-title">Try the Chatbot</h2>
-      <div class="info-box">
-        <p><strong>This is a working demo!</strong></p>
-        <p>Type a message below and the AI will respond in real-time using your chatbot settings.</p>
-      </div>
-      <div class="chat-container">
-        <div class="chat-header" id="chat-header-title">Chat with us</div>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="typing-indicator" id="typing-indicator">
-          <span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>
-        </div>
-        <div class="chat-input-container">
-          <input type="text" class="chat-input" id="chat-input" placeholder="Type your message..."
-            onkeypress="if(event.key==='Enter') sendMessage()">
-          <button class="chat-send" id="send-btn" onclick="sendMessage()">Send</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./supabase-client.js"></script>
-  <script src="./auth.js"></script>
-  <script>
-    requireAuth();
-    let conversationHistory = [];
-
-    async function loadGreeting() {
-      try {
-        const profile = await getUserProfile();
-        if (!profile) return;
-        const settings = profile.chatbot_settings || {};
-        const greeting = settings.greeting_message || '👋 Hi! How can I help you today?';
-        const businessName = settings.business_name || profile.business_name || 'us';
-        document.getElementById('chat-header-title').textContent = `Chat with ${businessName}`;
-        const messagesContainer = document.getElementById('chat-messages');
-        if (messagesContainer.children.length === 0) addMessage(greeting, 'bot');
-      } catch (error) { console.error('Error in loadGreeting:', error); }
-    }
-
-    window.addEventListener('DOMContentLoaded', () => { setTimeout(loadGreeting, 500); });
-
-    async function sendMessage() {
-      const input = document.getElementById('chat-input');
-      const message = input.value.trim();
-      if (!message) return;
-      input.disabled = true;
-      document.getElementById('send-btn').disabled = true;
-      addMessage(message, 'user');
-      input.value = '';
-      document.getElementById('typing-indicator').classList.add('active');
-      try {
-        const { data: { user } } = await supabaseClient.auth.getUser();
-        const response = await fetch('/api/chatbot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message, conversationHistory, userId: user?.id })
-        });
-        const data = await response.json();
-        document.getElementById('typing-indicator').classList.remove('active');
-        if (data.success) { addMessage(data.message, 'bot'); conversationHistory = data.conversationHistory; }
-        else addMessage('Sorry, I encountered an error. Please try again.', 'bot');
-      } catch (error) {
-        document.getElementById('typing-indicator').classList.remove('active');
-        addMessage("Sorry, I couldn't connect to the server. Please try again.", 'bot');
-      }
-      input.disabled = false;
-      document.getElementById('send-btn').disabled = false;
-      input.focus();
-    }
-
-    function addMessage(text, sender) {
-      const container = document.getElementById('chat-messages');
-      const div = document.createElement('div');
-      div.className = `message ${sender}`;
-      const bubble = document.createElement('div');
-      bubble.className = 'message-bubble';
-      bubble.textContent = text;
-      div.appendChild(bubble);
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-  </script>
 </body>
 </html>
