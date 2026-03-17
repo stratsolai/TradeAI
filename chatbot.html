@@ -36,12 +36,31 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 0 24px;
+      gap: 16px;
       position: sticky;
       top: 0;
       z-index: 100;
     }
+    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+    .topbar-logo img { height: 38px; }
+    .topbar-back {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-back:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .topbar-nav-link {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
     .topbar-logo {
       display: flex;
       align-items: center;
@@ -67,16 +86,16 @@
       position: relative;
     }
     .account-btn {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: #fff;
-      font-size: 14px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
       font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 6px;
       cursor: pointer;
+      padding: 0;
+      font-family: "DM Sans", sans-serif;
     }
-    .account-btn:hover { background: rgba(255,255,255,0.25); }
+    .account-btn:hover { color: #fff; }
     .account-dropdown {
       display: none;
       position: absolute;
@@ -123,24 +142,8 @@
       color: #888888;
       margin-top: 4px;
     }
-    .page-header-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-    .btn-settings {
-      background: #C4622A;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 10px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .btn-settings:hover { opacity: 0.9; }
+    
+    
 
     .chatbot-grid {
       display: grid;
@@ -173,25 +176,32 @@
 
     .filter-tabs {
       display: flex;
-      gap: 4px;
-      padding: 12px 20px;
+      gap: 8px;
+      padding: 16px 20px;
       border-bottom: 1px solid rgba(0,0,0,0.08);
-      background: #fafbfc;
+      flex-wrap: wrap;
     }
     .filter-tab {
-      padding: 6px 16px;
-      border: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
       border-radius: 20px;
+      border: 1px solid rgba(0,0,0,0.10);
+      border-left: 3px solid #888888;
       font-size: 13px;
       font-weight: 600;
-      color: #888888;
+      color: #555555;
       background: #fff;
       cursor: pointer;
+      font-family: "DM Sans", sans-serif;
     }
+    .filter-tab:hover { border-color: #1A5490; color: #1A5490; }
     .filter-tab.active {
       background: #1A5490;
       color: #fff;
       border-color: #1A5490;
+      border-left-color: #1A5490;
     }
 
     .unanswered-section {
@@ -355,16 +365,17 @@
     }
     .test-input:focus { border-color: #1A5490; }
     .btn-send {
-      background: #C4622A;
+      background: #1A5490;
       color: #fff;
       font-size: 14px;
       font-weight: 700;
-      padding: 10px 18px;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      font-family: "DM Sans", sans-serif;
     }
-    .btn-send:hover { opacity: 0.9; }
+    .btn-send:hover { background: #163f73; }
     .btn-clear {
       background: transparent;
       border: 1px solid rgba(0,0,0,0.08);
@@ -448,28 +459,26 @@
     <a class="topbar-logo" href="dashboard.html">
       <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
     </a>
-    <div class="topbar-nav">
-      <a href="dashboard.html">Back</a>
-    </div>
-    <nav class="topbar-right">
-      <button class="account-btn" id="account-btn">
-        <span id="account-email-short"></span> &#9662;
-      </button>
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-email" id="account-dropdown-email"></div>
-        <a id="sign-out-btn">Sign Out</a>
+    <a class="topbar-back" href="dashboard.html">Back</a>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a class="topbar-nav-link" href="chatbot-settings.html">Settings</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short"></span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <a id="sign-out-btn">Sign Out</a>
+        </div>
       </div>
-    </nav>
+    </div>
+  </nav>
   </nav>
 
   <div class="page-wrap">
 
-    <div class="page-header page-header-actions">
-      <div>
-        <h1>AI Website Chatbot</h1>
-        <p>Customer conversations from your live widget. Test your chatbot on the right.</p>
-      </div>
-      <a href="chatbot-settings.html" class="btn-settings">Chatbot Settings</a>
+    <div class="page-header">
+      <h1>AI Website Chatbot</h1>
+      <p>Customer conversations from your live widget. Test your chatbot on the right.</p>
     </div>
 
     <div class="chatbot-grid">
