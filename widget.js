@@ -2,6 +2,13 @@
   // Get the script tag that loaded this widget
   const scriptTag = document.currentScript;
   const userId = scriptTag.getAttribute('data-user-id');
+  let _chatbotSettings = {};
+  (async function() {
+    try {
+      const _settingsRes = await fetch('/api/chatbot-widget-settings?userId=' + userId);
+      if (_settingsRes.ok) _chatbotSettings = await _settingsRes.json();
+    } catch(e) { /* non-fatal */ }
+  })();
   
   if (!userId) {
     console.error('TradeAI Widget: Missing data-user-id attribute');
@@ -376,6 +383,9 @@
 
         if (data.success) {
           addMessage(data.message, 'bot');
+        if (data.trigger_appointment_picker && _chatbotSettings.appointment_booking_enabled) {
+          renderAppointmentPicker(_chatbotSettings, messagesContainer, messages, userId);
+        }
           conversationHistory = data.conversationHistory;
         } else {
           addMessage('Sorry, I encountered an error. Please try again.', 'bot');
@@ -408,5 +418,91 @@
       // Scroll to bottom
       messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
+  }
+
+  function renderAppointmentPicker(settings, container, messages, userId) {
+    var availability = settings.availability || {};
+    var timeLabels = settings.time_labels || ['Morning', 'Afternoon', 'Evening'];
+    var dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    var today = new Date();
+    var days = [];
+    for (var i = 1; i <= 14; i++) {
+      var d = new Date(today);
+      d.setDate(today.getDate() + i);
+      var dayKey = dayNames[d.getDay() === 0 ? 6 : d.getDay() - 1];
+      var availableSlots = availability[dayKey] || [];
+      days.push({ date: d, dayKey: dayKey, availableSlots: availableSlots });
+    }
+    var picker = document.createElement('div');
+    picker.style.cssText = 'background:#f0f7ff;border-radius:10px;padding:12px;margin:8px 0;';
+    var title = document.createElement('div');
+    title.style.cssText = 'font-weight:700;font-size:13px;color:#1A5490;margin-bottom:10px;';
+    title.textContent = 'Select your preferred times (up to 4)';
+    picker.appendChild(title);
+    var grid = document.createElement('div');
+    grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
+    var selectedSlots = [];
+    days.forEach(function(day) {
+      var dateStr = day.date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+      var fullDay = day.date.toLocaleDateString('en-AU', { weekday: 'long' });
+      var fullDate = day.date.toISOString().split('T')[0];
+      var isAvailable = day.availableSlots.length > 0;
+      var dayEl = document.createElement('div');
+      dayEl.style.cssText = isAvailable ? 'background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:8px;padding:6px 8px;min-width:80px;' : 'background:#f0f0f0;border-radius:8px;padding:6px 8px;min-width:80px;opacity:0.4;';
+      var dateLabel = document.createElement('div');
+      dateLabel.style.cssText = 'font-size:11px;font-weight:700;color:#333;margin-bottom:4px;';
+      dateLabel.textContent = dateStr;
+      dayEl.appendChild(dateLabel);
+      if (isAvailable) {
+        day.availableSlots.forEach(function(idx) {
+          var slotBtn = document.createElement('button');
+          slotBtn.textContent = timeLabels[idx] || ('Slot ' + (idx + 1));
+          slotBtn.style.cssText = 'display:block;width:100%;background:#e3f2fd;color:#1565c0;border:none;border-radius:4px;font-size:11px;font-weight:600;padding:3px 6px;margin-top:3px;cursor:pointer;';
+          slotBtn.dataset.date = fullDate;
+          slotBtn.dataset.day = fullDay;
+          slotBtn.dataset.slot = timeLabels[idx] || ('Slot ' + (idx + 1));
+          slotBtn.addEventListener('click', function() {
+            if (slotBtn.dataset.selected === 'true') {
+              slotBtn.dataset.selected = 'false';
+              slotBtn.style.background = '#e3f2fd';
+              slotBtn.style.color = '#1565c0';
+              var i = selectedSlots.findIndex(function(s) { return s.date === slotBtn.dataset.date && s.slot === slotBtn.dataset.slot; });
+              if (i > -1) selectedSlots.splice(i, 1);
+            } else if (selectedSlots.length < 4) {
+              slotBtn.dataset.selected = 'true';
+              slotBtn.style.background = '#1A5490';
+              slotBtn.style.color = '#fff';
+              selectedSlots.push({ date: slotBtn.dataset.date, day: slotBtn.dataset.day, slot: slotBtn.dataset.slot });
+            }
+            updateSummary();
+          });
+          dayEl.appendChild(slotBtn);
+        });
+      }
+      grid.appendChild(dayEl);
+    });
+    picker.appendChild(grid);
+    var summary = document.createElement('div');
+    summary.style.cssText = 'font-size:12px;color:#888;margin-bottom:8px;';
+    summary.textContent = 'No times selected yet';
+    picker.appendChild(summary);
+    function updateSummary() {
+      summary.textContent = selectedSlots.length === 0 ? 'No times selected yet' : 'Selected: ' + selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
+    }
+    var confirmBtn = document.createElement('button');
+    confirmBtn.textContent = 'Confirm Preferred Times';
+    confirmBtn.style.cssText = 'background:#C4622A;color:#fff;font-weight:700;font-size:13px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;width:100%;';
+    confirmBtn.addEventListener('click', function() {
+      if (selectedSlots.length === 0) return;
+      picker.remove();
+      var summaryText = 'Preferred times: ' + selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
+      messages.push({ role: 'user', content: summaryText });
+      messages.push({ role: 'system_slots', content: JSON.stringify(selectedSlots) });
+      addMessage(summaryText, 'user');
+      addMessage('Thank you \u2014 we will be in touch to confirm the best time.', 'bot');
+    });
+    picker.appendChild(confirmBtn);
+    container.appendChild(picker);
+    container.scrollTop = container.scrollHeight;
   }
 })();
