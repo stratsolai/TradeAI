@@ -1,300 +1,300 @@
 /**
- * /api/email.js
+ * api/email.js
  *
- * Unified email API — routes on req.body.action:
- *   'scan'  → scan Gmail/Outlook inbox and categorise with Claude
- *   'draft' → generate a reply draft for a given email
+ * AI Email Assistant API
+ * action: scan → fetch, summarise and categorise emails via Claude
  *
- * Replaces: email-scan.js + email-draft.js
- *
- * ENV: CLAUDE_API_KEY, SUPABASE_URL, SUPABASE_SERVICE_KEY,
- *      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET,
- *      MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET
+ * Supports Gmail and Outlook (Microsoft Graph).
+ * Categories are passed dynamically from the client — never hardcoded.
+ * message_url is stored at scan time for deep-link on email card tap.
  */
 
 const https = require('https');
 const { createClient } = require('@supabase/supabase-js');
 
-// ─── HTTP HELPERS ─────────────────────────────────────────────────────────────
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function httpsRequest(method, hostname, path, headers, body) {
   return new Promise((resolve, reject) => {
-    const bodyStr = body ? JSON.stringify(body) : null;
-    const req = https.request({
-      hostname, path, method,
-      headers: {
-        ...headers,
-        ...(bodyStr ? { 'Content-Length': Buffer.byteLength(bodyStr) } : {})
-      }
-    }, (res) => {
+    const options = { method, hostname, path, headers };
+    const req = https.request(options, (res) => {
       let data = '';
-      res.on('data', c => data += c);
+      res.on('data', chunk => { data += chunk; });
       res.on('end', () => {
         try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
         catch { resolve({ status: res.statusCode, body: data }); }
       });
     });
     req.on('error', reject);
-    if (bodyStr) req.write(bodyStr);
+    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
     req.end();
   });
 }
-
-function formPost(hostname, path, params) {
-  return new Promise((resolve, reject) => {
-    const body = params.toString();
-    const req = https.request({
-      hostname, path, method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Content-Length': Buffer.byteLength(body)
-      }
-    }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve(data); } });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
-}
-
-// ─── TOKEN REFRESH ────────────────────────────────────────────────────────────
 
 async function refreshGmailToken(refreshToken) {
-  return formPost('oauth2.googleapis.com', '/token', new URLSearchParams({
+  const params = new URLSearchParams({
     client_id:     process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type:    'refresh_token'
-  }));
+  }).toString();
+  const res = await httpsRequest(
+    'POST', 'oauth2.googleapis.com', '/token',
+    { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params) },
+    params
+  );
+  if (!res.body.access_token) throw new Error('Gmail token refresh failed');
+  return res.body.access_token;
 }
 
 async function refreshOutlookToken(refreshToken) {
-  return formPost('login.microsoftonline.com', '/common/oauth2/v2.0/token', new URLSearchParams({
+  const params = new URLSearchParams({
     client_id:     process.env.MICROSOFT_CLIENT_ID,
     client_secret: process.env.MICROSOFT_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type:    'refresh_token',
-    scope:         'https://graph.microsoft.com/Mail.Read offline_access'
-  }));
+    scope:         'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
+  }).toString();
+  const res = await httpsRequest(
+    'POST', 'login.microsoftonline.com', '/common/oauth2/v2.0/token',
+    { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params) },
+    params
+  );
+  if (!res.body.access_token) throw new Error('Outlook token refresh failed');
+  return res.body.access_token;
 }
+// ---------------------------------------------------------------------------
+// Email fetchers
+// ---------------------------------------------------------------------------
 
-// ─── GMAIL FETCHER ────────────────────────────────────────────────────────────
-
-async function fetchGmailEmails(accessToken) {
-  const listResp = await httpsRequest('GET', 'gmail.googleapis.com',
-    '/gmail/v1/users/me/messages?maxResults=50&q=is:unread+in:inbox&labelIds=INBOX',
+async function fetchGmailMessages(accessToken, maxResults) {
+  const listRes = await httpsRequest(
+    'GET', 'gmail.googleapis.com',
+    `/gmail/v1/users/me/messages?maxResults=${maxResults}&q=in:inbox`,
     { 'Authorization': `Bearer ${accessToken}` }
   );
-
-  if (!listResp.body?.messages?.length) return [];
+  if (!listRes.body.messages) return [];
 
   const emails = [];
-  for (const msg of listResp.body.messages.slice(0, 30)) {
-    try {
-      const detail = await httpsRequest('GET', 'gmail.googleapis.com',
-        `/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-        { 'Authorization': `Bearer ${accessToken}` }
-      );
-      if (detail.status !== 200) continue;
-
-      const headers   = detail.body.payload?.headers || [];
-      const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
-      const fromRaw   = getHeader('From');
-      const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/);
-
-      emails.push({
-        id:          msg.id,
-        provider:    'gmail',
-        sender:      fromMatch ? fromMatch[1].trim().replace(/"/g, '') : fromRaw,
-        senderEmail: fromMatch ? fromMatch[2] : fromRaw,
-        subject:     getHeader('Subject'),
-        preview:     (detail.body.snippet || '').substring(0, 200),
-        receivedAt:  new Date(parseInt(detail.body.internalDate)).toISOString(),
-        unread:      detail.body.labelIds?.includes('UNREAD') ?? true
-      });
-    } catch(e) {
-      console.log('[email] Gmail message error:', e.message);
-    }
+  for (const msg of listRes.body.messages.slice(0, maxResults)) {
+    const detailRes = await httpsRequest(
+      'GET', 'gmail.googleapis.com',
+      `/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
+      { 'Authorization': `Bearer ${accessToken}` }
+    );
+    const m = detailRes.body;
+    if (!m || !m.payload) continue;
+    const headers = m.payload.headers || [];
+    const getHeader = (name) => (headers.find(h => h.name === name) || {}).value || '';
+    const fromRaw = getHeader('From');
+    const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/) || [];
+    emails.push({
+      id:          m.id,
+      provider:    'gmail',
+      sender:      fromMatch[2] ? fromMatch[1].replace(/"/g, '').trim() : fromRaw,
+      email:       fromMatch[2] || fromRaw,
+      subject:     getHeader('Subject') || '(no subject)',
+      date:        getHeader('Date'),
+      snippet:     m.snippet || '',
+      message_url: `https://mail.google.com/mail/u/0/#inbox/${m.id}`
+    });
   }
   return emails;
 }
 
-// ─── OUTLOOK FETCHER ──────────────────────────────────────────────────────────
-
-async function fetchOutlookEmails(accessToken) {
-  const resp = await httpsRequest('GET', 'graph.microsoft.com',
-    '/v1.0/me/mailFolders/Inbox/messages?$top=30&$filter=isRead eq false&$select=id,from,subject,bodyPreview,receivedDateTime,isRead',
-    { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' }
+async function fetchOutlookMessages(accessToken, maxResults) {
+  const listRes = await httpsRequest(
+    'GET', 'graph.microsoft.com',
+    `/v1.0/me/mailFolders/inbox/messages?$top=${maxResults}&$select=id,subject,from,receivedDateTime,bodyPreview,webLink`,
+    { 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' }
   );
+  if (!listRes.body.value) return [];
 
-  if (resp.status !== 200 || !resp.body?.value?.length) return [];
-
-  return resp.body.value.map(msg => ({
-    id:          msg.id,
+  return listRes.body.value.map(m => ({
+    id:          m.id,
     provider:    'outlook',
-    sender:      msg.from?.emailAddress?.name || msg.from?.emailAddress?.address || 'Unknown',
-    senderEmail: msg.from?.emailAddress?.address || '',
-    subject:     msg.subject || '(No subject)',
-    preview:     (msg.bodyPreview || '').substring(0, 200),
-    receivedAt:  msg.receivedDateTime,
-    unread:      !msg.isRead
+    sender:      (m.from && m.from.emailAddress && m.from.emailAddress.name)  || '',
+    email:       (m.from && m.from.emailAddress && m.from.emailAddress.address) || '',
+    subject:     m.subject || '(no subject)',
+    date:        m.receivedDateTime,
+    snippet:     m.bodyPreview || '',
+    message_url: m.webLink || null
   }));
 }
+// ---------------------------------------------------------------------------
+// Claude categorisation
+// ---------------------------------------------------------------------------
 
-// ─── CLAUDE CATEGORISER ───────────────────────────────────────────────────────
-
-async function categoriseEmails(emails, claudeKey, businessName, industry) {
+async function categoriseEmails(emails, categories, businessName, industry) {
   if (!emails.length) return [];
 
-  const emailList = emails.map((e, i) =>
-    `${i}: FROM: ${e.sender} <${e.senderEmail}> | SUBJECT: ${e.subject} | PREVIEW: ${e.preview?.substring(0, 120)}`
-  ).join('\n');
+  const categoryList = categories
+    .filter(c => c.enabled)
+    .map(c => c.id + ': ' + c.label)
+    .join(', ');
 
-  const response = await httpsRequest('POST', 'api.anthropic.com', '/v1/messages',
-    { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
+  const emailList = emails.map((e, i) =>
+    `[${i}] From: ${e.sender} <${e.email}>\nSubject: ${e.subject}\nPreview: ${e.snippet.substring(0, 150)}`
+  ).join('\n\n');
+
+  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
+
+  const res = await httpsRequest(
+    'POST', 'api.anthropic.com', '/v1/messages',
     {
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1000,
-      system: `You are an email categorisation assistant for ${businessName}, a ${industry} business.
-Categorise each email into EXACTLY one of: urgent, leads, enquiries, jobs, invoices, industry, low.
-Also set urgent true/false (urgent = needs response today).
-Respond ONLY with a JSON array: [{"index": 0, "category": "leads", "urgent": false}, ...]`,
-      messages: [{ role: 'user', content: `Categorise:\n\n${emailList}` }]
+      'Content-Type':      'application/json',
+      'x-api-key':         process.env.ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01'
+    },
+    {
+      model:    'claude-haiku-4-5-20251001',
+      max_tokens: 2048,
+      messages: [{ role: 'user', content: prompt }]
     }
   );
 
+  const text = res.body && res.body.content && res.body.content[0]
+    ? res.body.content[0].text : '[]';
+
   try {
-    const text  = response.body.content?.[0]?.text || '[]';
     const clean = text.replace(/```json|```/g, '').trim();
-    const cats  = JSON.parse(clean);
-    return emails.map((email, i) => {
-      const match = cats.find(c => c.index === i);
-      return { ...email, category: match?.category || 'low', urgent: match?.urgent || false };
-    });
+    return JSON.parse(clean);
   } catch {
-    return emails.map(e => ({ ...e, category: 'low', urgent: false }));
+    return [];
   }
 }
+// ---------------------------------------------------------------------------
+// Main handler
+// ---------------------------------------------------------------------------
 
-// ─── ACTION: SCAN ─────────────────────────────────────────────────────────────
+module.exports = async (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-async function handleScan(req, res) {
-  const { userId, providers, businessName, industry } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.replace('Bearer ', '').trim();
+  if (!token) return res.status(401).json({ error: 'Unauthorised' });
 
-  const claudeKey   = process.env.CLAUDE_API_KEY;
-  const supabase    = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  );
 
-  const { data: profile } = await supabase
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) return res.status(401).json({ error: 'Unauthorised' });
+
+  const body       = req.body || {};
+  const { action } = body;
+
+  if (action !== 'scan') return res.status(400).json({ error: 'Invalid action' });
+
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('gmail_access_token, gmail_refresh_token, outlook_access_token, outlook_refresh_token, active_tools')
-    .eq('id', userId)
+    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry')
+    .eq('id', user.id)
     .single();
 
-  let allEmails = [];
+  if (profileError) return res.status(500).json({ error: 'Could not load profile' });
 
-  if (providers.includes('gmail') && profile?.gmail_access_token) {
-    try {
-      let token = profile.gmail_access_token;
-      if (profile.gmail_refresh_token) {
-        const refreshed = await refreshGmailToken(profile.gmail_refresh_token);
-        if (refreshed.access_token) {
-          token = refreshed.access_token;
-          await supabase.from('profiles').update({ gmail_access_token: token }).eq('id', userId);
-        }
-      }
-      allEmails = allEmails.concat(await fetchGmailEmails(token));
-    } catch(e) { console.error('[email/scan] Gmail error:', e.message); }
+  if (!profile.gmail_connected && !profile.outlook_connected) {
+    return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
   }
 
-  if (providers.includes('outlook') && profile?.outlook_access_token) {
+  const categories   = Array.isArray(body.categories) && body.categories.length > 0
+    ? body.categories
+    : [{ id: 'general', label: 'General', enabled: true }];
+
+  const maxResults   = 20;
+  const businessName = profile.business_name || 'your business';
+  const industry     = profile.industry       || 'general business';
+  let   allEmails    = [];
+
+  if (profile.gmail_connected && profile.gmail_access_token) {
     try {
-      let token = profile.outlook_access_token;
-      if (profile.outlook_refresh_token) {
-        const refreshed = await refreshOutlookToken(profile.outlook_refresh_token);
-        if (refreshed.access_token) {
-          token = refreshed.access_token;
-          await supabase.from('profiles').update({ outlook_access_token: token }).eq('id', userId);
+      let accessToken = profile.gmail_access_token;
+      try {
+        const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
+        allEmails = allEmails.concat(gmailEmails);
+      } catch (fetchErr) {
+        if (profile.gmail_refresh_token) {
+          accessToken = await refreshGmailToken(profile.gmail_refresh_token);
+          await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', user.id);
+          const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
+          allEmails = allEmails.concat(gmailEmails);
         }
       }
-      allEmails = allEmails.concat(await fetchOutlookEmails(token));
-    } catch(e) { console.error('[email/scan] Outlook error:', e.message); }
+    } catch (err) {
+      console.error('Gmail fetch error:', err.message);
+    }
+  }
+
+  if (profile.outlook_connected && profile.outlook_access_token) {
+    try {
+      let accessToken = profile.outlook_access_token;
+      try {
+        const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
+        allEmails = allEmails.concat(outlookEmails);
+      } catch (fetchErr) {
+        if (profile.outlook_refresh_token) {
+          accessToken = await refreshOutlookToken(profile.outlook_refresh_token);
+          await supabase.from('profiles').update({ outlook_access_token: accessToken }).eq('id', user.id);
+          const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
+          allEmails = allEmails.concat(outlookEmails);
+        }
+      }
+    } catch (err) {
+      console.error('Outlook fetch error:', err.message);
+    }
   }
 
   if (!allEmails.length) {
-    return res.status(200).json({ success: true, emails: [], message: 'No new emails found' });
+    return res.status(200).json({ emails: [] });
   }
 
-  const categorised = await categoriseEmails(allEmails, claudeKey, businessName, industry);
+  const categorised = await categoriseEmails(allEmails, categories, businessName, industry);
 
-  // Save industry emails to content library if News Digest is active
-  if (profile?.active_tools?.includes('news-digest')) {
-    for (const email of categorised.filter(e => e.category === 'industry')) {
-      await supabase.from('content_library').upsert({
-        user_id: userId,
-        title: email.subject,
-        content_type: 'industry-news',
-        source: `email-${email.provider}`,
-        tool_source: 'news-digest',
-        status: 'approved',
-        metadata: JSON.stringify({ sender: email.sender, senderEmail: email.senderEmail, preview: email.preview, receivedAt: email.receivedAt })
-      }, { onConflict: 'user_id,title' });
-    }
+  const results = allEmails.map((email, i) => {
+    const analysis = categorised.find(c => c.index === i) || {};
+    return {
+      id:          email.id,
+      provider:    email.provider,
+      sender:      email.sender,
+      email:       email.email,
+      subject:     email.subject,
+      date:        email.date,
+      summary:     analysis.summary || '',
+      category:    analysis.category || 'general',
+      message_url: email.message_url || null,
+      handled:     false
+    };
+  });
+
+  const rows = results.map(r => ({
+    user_id:      user.id,
+    message_id:   r.id,
+    provider:     r.provider,
+    sender:       r.sender,
+    sender_email: r.email,
+    subject:      r.subject,
+    received_at:  r.date,
+    summary:      r.summary,
+    category:     r.category,
+    message_url:  r.message_url,
+    handled:      false
+  }));
+
+  const { error: storeError } = await supabase
+    .from('email_summaries')
+    .upsert(rows, { onConflict: 'user_id,message_id' });
+
+  if (storeError) {
+    console.error('Store error:', storeError.message);
   }
 
-  return res.status(200).json({ success: true, emails: categorised });
-}
-
-// ─── ACTION: DRAFT ────────────────────────────────────────────────────────────
-
-async function handleDraft(req, res) {
-  const { emailFrom, emailSubject, emailPreview, emailCategory, businessName, industry } = req.body;
-  const claudeKey = process.env.CLAUDE_API_KEY;
-
-  const categoryContext = {
-    urgent:    'Urgent — respond promptly and address the issue directly.',
-    leads:     'New sales lead — warm, professional, offer to quote or discuss.',
-    enquiries: 'Customer enquiry — helpful and clear.',
-    jobs:      'Job/scheduling — practical, confirm details, clear next steps.',
-    invoices:  'Invoice/payment — professional, clear on figures and timelines.',
-    industry:  'Industry/supplier — brief acknowledgement.',
-    low:       'Low priority — brief and polite.'
-  };
-
-  const response = await httpsRequest('POST', 'api.anthropic.com', '/v1/messages',
-    { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-    {
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 400,
-      system: `You are a professional email assistant for ${businessName}, a ${industry} business.
-Write a professional, friendly reply. Sound like a real tradesperson — concise, under 150 words.
-${categoryContext[emailCategory] || 'Be helpful and professional.'}
-End with a sign-off using "${businessName}". No subject line. No placeholders.
-Respond with ONLY the email body, ready to send.`,
-      messages: [{ role: 'user', content: `Draft a reply:\nFrom: ${emailFrom}\nSubject: ${emailSubject}\nMessage: ${emailPreview}` }]
-    }
-  );
-
-  const draft = response.body.content?.[0]?.text?.trim() || '';
-  return res.status(200).json({ success: true, draft });
-}
-
-// ─── MAIN ROUTER ─────────────────────────────────────────────────────────────
-
-module.exports = async (req, res) => {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const { action } = req.body;
-
-  try {
-    if (action === 'scan')  return await handleScan(req, res);
-    if (action === 'draft') return await handleDraft(req, res);
-    return res.status(400).json({ error: 'action must be "scan" or "draft"' });
-  } catch(err) {
-    console.error('[email]', err);
-    return res.status(500).json({ error: err.message });
-  }
+  return res.status(200).json({ emails: results });
 };
