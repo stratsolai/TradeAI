@@ -375,11 +375,56 @@ module.exports = async (req, res) => {
       res.redirect('/content-library.html?gdrive_connected=true');
     } else {
       res.redirect('/chatbot-settings.html?email_connected=' + provider);
+
+    if (provider === 'gmail') {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
+
+      const userInfo = await new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'www.googleapis.com',
+          path: '/oauth2/v2/userinfo',
+          method: 'GET',
+          headers: { 'Authorization': 'Bearer ' + tokenData.access_token }
+        };
+        const req = https.request(options, (googleRes) => {
+          let data = '';
+          googleRes.on('data', chunk => { data += chunk; });
+          googleRes.on('end', () => { try { resolve(JSON.parse(data)); } catch(e) { reject(e); } });
+        });
+        req.on('error', reject);
+        req.end();
+      });
+
+      if (!userInfo.email) throw new Error('Could not retrieve Gmail account email');
+
+      const updateBody = JSON.stringify({
+        gmail_connected:     true,
+        gmail_access_token:  tokenData.access_token,
+        gmail_refresh_token: tokenData.refresh_token || null
+      });
+
+      await httpsRequest(
+        'PATCH',
+        new URL(supabaseUrl).hostname,
+        '/rest/v1/profiles?select=id',
+        {
+          'Content-Type':   'application/json',
+          'apikey':         supabaseKey,
+          'Authorization':  'Bearer ' + supabaseKey,
+          'Content-Length': Buffer.byteLength(updateBody),
+          'Prefer':         'return=minimal'
+        },
+        updateBody
+      );
+
+      res.redirect('/email-assistant.html?gmail_connected=true');
+    }
     }
 
   } catch (error) {
     console.error(`${provider} OAuth error:`, error);
-    const redirectPage = provider === 'google-drive' ? 'content-library' : 'chatbot-settings';
+    const redirectPage = provider === 'google-drive' ? 'content-library' : provider === 'gmail' ? 'email-assistant' : 'chatbot-settings';
     res.redirect(`/${redirectPage}.html?error=oauth_failed&details=${encodeURIComponent(error.message)}`);
   }
 };
