@@ -155,7 +155,7 @@
       gap: 12px;
     }
     #ea-scan-btn {
-      background: var(--orange);
+      background: #4A6D8C;
       color: #fff;
       border: none;
       font-family: 'DM Sans', sans-serif;
@@ -165,7 +165,7 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    #ea-scan-btn:hover { background: var(--orange-light); }
+    #ea-scan-btn:hover { background: #3d5c78; }
     #ea-scan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
     /* -----------------------------------------------------------------------
@@ -205,7 +205,7 @@
       background: #fff;
       border-width: 1px 1px 1px 4px;
       border-style: solid;
-      border-color: #e0e0e0 #e0e0e0 #e0e0e0 #c4622a;
+      border-color: #e0e0e0 #e0e0e0 #e0e0e0 #1A5490;
       border-radius: 10px;
       color: #333;
       font-family: 'DM Sans', sans-serif;
@@ -219,6 +219,14 @@
     }
     .ea-tab:hover { opacity: 0.85; }
     .ea-tab.active { font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+    .ea-tab[data-category="all"]    { border-left-color: #1A5490; }
+    .ea-tab[data-category="urgent"]    { border-left-color: #c4622a; }
+    .ea-tab[data-category="leads"]     { border-left-color: #28a745; }
+    .ea-tab[data-category="enquiries"] { border-left-color: #7b2d8b; }
+    .ea-tab[data-category="jobs"]      { border-left-color: #0d9488; }
+    .ea-tab[data-category="invoices"]  { border-left-color: #e8500a; }
+    .ea-tab[data-category="suppliers"] { border-left-color: #1A5490; }
+    .ea-tab[data-category="low"]       { border-left-color: #64748b; }
 
     /* -----------------------------------------------------------------------
        Error message
@@ -407,7 +415,7 @@
     }
     .ea-btn-connect:hover { border-color: #94a3b8; color: #1a3a5c; }
     .ea-btn-primary {
-      background: var(--orange);
+      background: #4A6D8C;
       color: #fff;
       border: none;
       font-family: 'DM Sans', sans-serif;
@@ -417,7 +425,7 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    .ea-btn-primary:hover { background: var(--orange-light); }
+    .ea-btn-primary:hover { background: #3d5c78; }
     .ea-btn-secondary {
       background: #f8fafc;
       color: #475569;
