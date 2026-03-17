@@ -11,6 +11,8 @@ module.exports = async (req, res) => {
     provider = 'google-drive';
   } else if (path.includes('/google/')) {
     provider = 'google';
+  } else if (path.includes('/gmail/')) {
+    provider = 'gmail';
   } else if (path.includes('/microsoft/')) {
     provider = 'microsoft';
   } else if (path.includes('/meta/')) {
