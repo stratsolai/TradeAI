@@ -101,39 +101,56 @@
 
     .settings-tabs {
       display: flex;
-      gap: 0;
-      border-bottom: 2px solid rgba(0,0,0,0.08);
-      margin-bottom: 0;
+      gap: 8px;
+      padding: 20px 0 16px 0;
       flex-wrap: wrap;
     }
     .settings-tab {
-      padding: 12px 20px;
-      border: none;
-      background: none;
-      font-size: 14px;
+      display: flex;
+      align-items: center;
+      padding: 7px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,0,0,0.10);
+      border-left-width: 4px;
+      font-size: 13px;
       font-weight: 600;
-      color: #888888;
+      color: #555555;
+      background: #fff;
       cursor: pointer;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
       font-family: "DM Sans", sans-serif;
-      transition: color 0.15s;
+      transition: opacity 0.15s;
     }
-    .settings-tab:hover { color: #1A5490; }
-    .settings-tab.active {
-      color: #C4622A;
-      border-bottom-color: #C4622A;
-    }
+    .settings-tab[data-tab="knowledge"] { border-left-color: #1A5490; }
+    .settings-tab[data-tab="faq"] { border-left-color: #C4622A; }
+    .settings-tab[data-tab="greeting"] { border-left-color: #2e7d32; }
+    .settings-tab[data-tab="appointments"] { border-left-color: #6a1b9a; }
+    .settings-tab[data-tab="widget"] { border-left-color: #00695c; }
+    .settings-tab[data-tab="design-viz"] { border-left-color: #e65100; }
+    .settings-tab:hover { opacity: 0.8; }
+    .settings-tab.active { background: #f0f4f8; font-weight: 700; color: #1A5490; }
     .settings-panel {
       background: #FFFFFF;
-      border-radius: 0 0 12px 12px;
+      border-radius: 12px;
       border: 1px solid rgba(0,0,0,0.08);
-      border-top: none;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
     .tab-panel { display: none; padding: 28px; }
     .tab-panel.active { display: block; }
     .panel-intro { margin-bottom: 20px; }
+    .tab-panel h2 {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: #1A5490;
+      margin-bottom: 4px;
+    }
+    .tab-panel h3 {
+      font-family: "Barlow Condensed", sans-serif;
+      font-weight: 800;
+      font-size: 16px;
+      color: #1A5490;
+      margin-bottom: 12px;
+    }
     .panel-intro p { font-size: 14px; color: #888888; }
     
 
@@ -144,8 +161,8 @@
     input[type="text"]:focus, textarea:focus, select:focus { border-color: #1A5490; }
     textarea { resize: vertical; }
 
-    .btn-primary { background: #C4622A; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary { background: #4A6D8C; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; }
+    .btn-primary:hover { background: #3a5a78; }
     .btn-secondary { background: #fff; color: #1A5490; font-size: 14px; font-weight: 600; padding: 10px 22px; border: 1px solid #1A5490; border-radius: 8px; cursor: pointer; }
     .btn-secondary:hover { background: #f0f7ff; }
     .btn-sm { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; }
@@ -252,7 +269,7 @@
 
       <!-- Knowledge Base -->
       <div class="tab-panel active" id="tab-knowledge">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>Knowledge Base</h2>
           <p>The AI answers customer questions from this approved knowledge. At least one approved item is required before the chatbot responds.</p>
         </div>
         <div id="knowledge-list"><p class="empty-state">Loading knowledge items...</p></div>
@@ -268,7 +285,7 @@
 
       <!-- FAQ Queue -->
       <div class="tab-panel" id="tab-faq">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>FAQ Queue</h2>
           <p>Suggested FAQs from unanswered customer questions. Edit the answer inline, then approve.</p>
         </div>
         <div id="faq-list"><p class="empty-state">Loading FAQs...</p></div>
@@ -283,7 +300,7 @@
 
       <!-- Greeting -->
       <div class="tab-panel" id="tab-greeting">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>Greeting Message</h2>
           <p>The first message customers see when they open the chat widget.</p>
         </div>
         <div class="form-row"><label>Widget Title</label><input type="text" id="widget-title" placeholder="Your business name (shown in widget header)" /></div>
@@ -294,7 +311,7 @@
 
       <!-- Appointments -->
       <div class="tab-panel" id="tab-appointments">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>Appointment Settings</h2>
           <p>Allow customers to select preferred appointment times directly in the chat widget.</p>
         </div>
         <div class="toggle-row">
@@ -331,7 +348,7 @@
 
       <!-- Widget Configuration -->
       <div class="tab-panel" id="tab-widget">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>Widget Configuration</h2>
           <p>Copy the embed code and paste it into your website before the closing &lt;/body&gt; tag.</p>
         </div>
         <div class="form-row">
@@ -343,7 +360,7 @@
 
       <!-- Design Visualiser -->
       <div class="tab-panel" id="tab-design-viz">
-        <div class="panel-intro">
+        <div class="panel-intro"><h2>Design Visualiser</h2>
           <p>Allow customers to upload a site photo and receive an AI-generated concept render through the chat widget.</p>
         </div>
         <div class="form-row">
