@@ -203,17 +203,22 @@
     }
     .ea-tab {
       background: #fff;
-      border: 1px solid #e2e8f0;
-      color: #475569;
+      border-width: 1px 1px 1px 4px;
+      border-style: solid;
+      border-color: #e0e0e0 #e0e0e0 #e0e0e0 #c4622a;
+      border-radius: 10px;
+      color: #333;
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
       font-weight: 600;
-      padding: 7px 16px;
-      border-radius: 20px;
+      padding: 10px 16px;
       cursor: pointer;
+      transition: opacity 0.2s;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      white-space: nowrap;
     }
-    .ea-tab:hover { color: #1a3a5c; border-color: #94a3b8; }
-    .ea-tab.active { background: var(--orange); border-color: var(--orange); color: #fff; }
+    .ea-tab:hover { opacity: 0.85; }
+    .ea-tab.active { font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
 
     /* -----------------------------------------------------------------------
        Error message
