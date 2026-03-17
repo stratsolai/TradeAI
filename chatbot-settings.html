@@ -36,21 +36,59 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.15);
       display: flex;
       align-items: center;
-      justify-content: space-between;
       padding: 0 24px;
+      gap: 16px;
       position: sticky;
       top: 0;
       z-index: 100;
     }
+    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+    .topbar-logo img { height: 38px; }
+    .topbar-back {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-back:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .topbar-nav-link {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
     .topbar-logo { display: flex; align-items: center; text-decoration: none; }
     .topbar-logo img { height: 38px; }
     .topbar-nav { display: flex; align-items: center; gap: 24px; }
     .topbar-nav a { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
     .topbar-nav a:hover { color: #fff; }
     .topbar-right { display: flex; align-items: center; gap: 16px; position: relative; }
-    .account-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 14px; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; }
-    .account-btn:hover { background: rgba(255,255,255,0.25); }
-    .account-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 200px; z-index: 200; }
+    .account-btn {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      font-family: "DM Sans", sans-serif;
+    }
+    .account-btn:hover { color: #fff; }
+    .account-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      min-width: 200px;
+      z-index: 200;
+    }
     .account-dropdown.open { display: block; }
     .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: #888888; border-bottom: 1px solid rgba(0,0,0,0.08); }
     .account-dropdown a { display: block; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #333333; text-decoration: none; cursor: pointer; }
@@ -61,11 +99,43 @@
     .page-header h1 { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 32px; color: #1A5490; }
     .page-header p { font-size: 15px; color: #888888; margin-top: 4px; }
 
-    .settings-card { background: #FFFFFF; border-radius: 12px; border-left: 4px solid #1A5490; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 24px; overflow: visible; }
-    .card-header { padding: 18px 24px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); }
-    .card-header h2 { font-family: "Barlow Condensed", sans-serif; font-size: 20px; font-weight: 800; color: #1A5490; }
-    .card-header p { font-size: 13px; color: #888888; margin-top: 3px; }
-    .card-body { padding: 20px 24px; }
+    .settings-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid rgba(0,0,0,0.08);
+      margin-bottom: 0;
+      flex-wrap: wrap;
+    }
+    .settings-tab {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #888888;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      font-family: "DM Sans", sans-serif;
+      transition: color 0.15s;
+    }
+    .settings-tab:hover { color: #1A5490; }
+    .settings-tab.active {
+      color: #C4622A;
+      border-bottom-color: #C4622A;
+    }
+    .settings-panel {
+      background: #FFFFFF;
+      border-radius: 0 0 12px 12px;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-top: none;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .tab-panel { display: none; padding: 28px; }
+    .tab-panel.active { display: block; }
+    .panel-intro { margin-bottom: 20px; }
+    .panel-intro p { font-size: 14px; color: #888888; }
+    
 
     .form-row { margin-bottom: 16px; }
     .form-row label { display: block; font-size: 13px; font-weight: 600; color: #333333; margin-bottom: 6px; }
@@ -147,18 +217,19 @@
     <a class="topbar-logo" href="dashboard.html">
       <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
     </a>
-    <div class="topbar-nav">
-      <a href="dashboard.html">Back</a>
-    </div>
-    <nav class="topbar-right">
-      <button class="account-btn" id="account-btn">
-        <span id="account-email-short"></span> &#9662;
-      </button>
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-email" id="account-dropdown-email"></div>
-        <a id="sign-out-btn">Sign Out</a>
+    <a class="topbar-back" href="dashboard.html">Back</a>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a class="topbar-nav-link" href="chatbot.html">Chatbot</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short"></span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <a id="sign-out-btn">Sign Out</a>
+        </div>
       </div>
-    </nav>
+    </div>
+  </nav>
   </nav>
 
   <div class="page-wrap">
@@ -168,43 +239,38 @@
       <p>Manage your knowledge base, FAQs, appointment availability, and widget configuration.</p>
     </div>
 
-    <div class="settings-card">
-      <div class="card-header">
-        <h2>Business Information</h2>
-        <p>Prefilled from your profile. Shown to the chatbot as context about your business.</p>
-      </div>
-      <div class="card-body">
-        <div class="form-row"><label>Business Name</label><input type="text" id="biz-name" placeholder="Your business name" /></div>
-        <div class="form-row"><label>Industry / Trade</label><input type="text" id="biz-industry" placeholder="e.g. Plumbing, Landscaping, Accounting" /></div>
-        <div class="form-row"><label>Location / Service Area</label><input type="text" id="biz-location" placeholder="e.g. Brisbane, QLD" /></div>
-        <p class="help-text" style="font-size:12px;color:#888888;">To update these details permanently, edit your profile from the dashboard.</p>
-      </div>
+    <div class="settings-tabs">
+      <button class="settings-tab active" data-tab="knowledge">Knowledge Base</button>
+      <button class="settings-tab" data-tab="faq">FAQ Queue</button>
+      <button class="settings-tab" data-tab="greeting">Greeting</button>
+      <button class="settings-tab" data-tab="appointments">Appointments</button>
+      <button class="settings-tab" data-tab="widget">Widget</button>
+      <button class="settings-tab" data-tab="design-viz">Design Visualiser</button>
     </div>
 
-    <div class="settings-card" id="knowledge">
-      <div class="card-header">
-        <h2>Knowledge Base</h2>
-        <p>The AI answers customer questions from this approved knowledge. At least one approved item is required before the chatbot responds.</p>
-      </div>
-      <div class="card-body">
+    <div class="settings-panel">
+
+      <!-- Knowledge Base -->
+      <div class="tab-panel active" id="tab-knowledge">
+        <div class="panel-intro">
+          <p>The AI answers customer questions from this approved knowledge. At least one approved item is required before the chatbot responds.</p>
+        </div>
         <div id="knowledge-list"><p class="empty-state">Loading knowledge items...</p></div>
         <div class="add-item-form">
           <h3>Add Knowledge Item</h3>
           <div class="form-row"><label>Category</label><select id="new-knowledge-category"><option value="">Select a category</option><option value="services">Services</option><option value="pricing">Pricing Guide</option><option value="process">Process &amp; Timelines</option><option value="areas">Service Areas</option><option value="business">Business Details</option><option value="custom_qa">Custom Q&amp;A</option></select></div>
           <div class="form-row"><label>Title</label><input type="text" id="new-knowledge-title" placeholder="e.g. Pool Installation Pricing" /></div>
-          <div class="form-row"><label>Content</label><textarea id="new-knowledge-data" rows="5" placeholder="Enter your knowledge content here. You can write plain text or valid JSON."></textarea><p class="help-text">Plain text is fine — the AI will interpret it. JSON format also accepted.</p></div>
+          <div class="form-row"><label>Content</label><textarea id="new-knowledge-data" rows="5" placeholder="Enter your knowledge content here. Plain text or valid JSON accepted."></textarea></div>
           <button class="btn-primary" id="add-knowledge-btn">Add Item</button>
           <div class="settings-msg" id="knowledge-msg"></div>
         </div>
       </div>
-    </div>
 
-    <div class="settings-card" id="faq">
-      <div class="card-header">
-        <h2>FAQ Queue</h2>
-        <p>Suggested FAQs from unanswered customer questions. Edit the answer inline, then approve.</p>
-      </div>
-      <div class="card-body">
+      <!-- FAQ Queue -->
+      <div class="tab-panel" id="tab-faq">
+        <div class="panel-intro">
+          <p>Suggested FAQs from unanswered customer questions. Edit the answer inline, then approve.</p>
+        </div>
         <div id="faq-list"><p class="empty-state">Loading FAQs...</p></div>
         <div class="add-item-form">
           <h3>Add FAQ Manually</h3>
@@ -214,26 +280,31 @@
           <div class="settings-msg" id="faq-msg"></div>
         </div>
       </div>
-    </div>
 
-    <div class="settings-card">
-      <div class="card-header"><h2>Greeting Message</h2><p>The first message customers see when they open the chat widget.</p></div>
-      <div class="card-body">
+      <!-- Greeting -->
+      <div class="tab-panel" id="tab-greeting">
+        <div class="panel-intro">
+          <p>The first message customers see when they open the chat widget.</p>
+        </div>
         <div class="form-row"><label>Widget Title</label><input type="text" id="widget-title" placeholder="Your business name (shown in widget header)" /></div>
-        <div class="form-row"><label>Greeting Message</label><textarea id="greeting-message" rows="3" placeholder="e.g. Hi there — how can we help you today?"></textarea></div>
+        <div class="form-row"><label>Greeting Message</label><textarea id="greeting-message" rows="3" placeholder="e.g. Hi there &#8212; how can we help you today?"></textarea></div>
         <button class="btn-primary" id="save-widget-settings">Save</button>
         <div class="settings-msg" id="widget-settings-msg"></div>
       </div>
-    </div>
 
-    <div class="settings-card">
-      <div class="card-header"><h2>Appointment Settings</h2><p>Allow customers to select preferred appointment times directly in the chat widget.</p></div>
-      <div class="card-body">
-        <div class="toggle-row"><input type="checkbox" id="appt-toggle" /><span class="toggle-label">Enable appointment booking in widget</span></div>
+      <!-- Appointments -->
+      <div class="tab-panel" id="tab-appointments">
+        <div class="panel-intro">
+          <p>Allow customers to select preferred appointment times directly in the chat widget.</p>
+        </div>
+        <div class="toggle-row">
+          <input type="checkbox" id="appt-toggle" />
+          <span class="toggle-label">Enable appointment booking in widget</span>
+        </div>
         <div id="appt-config" style="display:none;">
           <div class="form-row">
             <label>Time of Day Labels</label>
-            <p class="help-text" style="margin-bottom:10px;">Set the label for each of your three available time slots. These are shown to customers in the appointment picker.</p>
+            <p class="help-text" style="margin-bottom:10px;">Set the label for each of your three available time slots shown to customers.</p>
             <div class="time-labels-row">
               <div class="time-label-field"><input type="text" id="time-label-0" placeholder="e.g. Morning" /></div>
               <div class="time-label-field"><input type="text" id="time-label-1" placeholder="e.g. Afternoon" /></div>
@@ -242,51 +313,53 @@
           </div>
           <div class="form-row">
             <label>Availability</label>
-            <p class="help-text" style="margin-bottom:10px;">Select which days you are available, then tick which time slots apply for each day.</p>
+            <p class="help-text" style="margin-bottom:10px;">Select which days you are available and which time slots apply for each day.</p>
             <div class="avail-grid">
-              <div class="avail-day-row"><span class="avail-day-name">Monday</span><input type="checkbox" id="avail-monday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-monday"><label class="avail-slot-check"><input type="checkbox" id="slot-monday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Tuesday</span><input type="checkbox" id="avail-tuesday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-tuesday"><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Wednesday</span><input type="checkbox" id="avail-wednesday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-wednesday"><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Thursday</span><input type="checkbox" id="avail-thursday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-thursday"><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Friday</span><input type="checkbox" id="avail-friday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-friday"><label class="avail-slot-check"><input type="checkbox" id="slot-friday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Saturday</span><input type="checkbox" id="avail-saturday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-saturday"><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Sunday</span><input type="checkbox" id="avail-sunday" /> <span style="font-size:13px;">Available</span><div class="avail-slots-row" id="avail-slots-sunday"><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Monday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-monday" /> Available</label><div class="avail-slots-row" id="avail-slots-monday"><label class="avail-slot-check"><input type="checkbox" id="slot-monday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Tuesday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-tuesday" /> Available</label><div class="avail-slots-row" id="avail-slots-tuesday"><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Wednesday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-wednesday" /> Available</label><div class="avail-slots-row" id="avail-slots-wednesday"><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Thursday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-thursday" /> Available</label><div class="avail-slots-row" id="avail-slots-thursday"><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Friday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-friday" /> Available</label><div class="avail-slots-row" id="avail-slots-friday"><label class="avail-slot-check"><input type="checkbox" id="slot-friday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Saturday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-saturday" /> Available</label><div class="avail-slots-row" id="avail-slots-saturday"><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-2" /> <span>Slot 3</span></label></div></div>
+              <div class="avail-day-row"><span class="avail-day-name">Sunday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-sunday" /> Available</label><div class="avail-slots-row" id="avail-slots-sunday"><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-2" /> <span>Slot 3</span></label></div></div>
             </div>
           </div>
         </div>
         <button class="btn-primary" id="save-appt-settings" style="margin-top:16px;">Save Appointment Settings</button>
         <div class="settings-msg" id="appt-msg"></div>
       </div>
-    </div>
 
-    <div class="settings-card">
-      <div class="card-header"><h2>Widget Configuration</h2><p>Copy the embed code and paste it into your website before the closing &lt;/body&gt; tag.</p></div>
-      <div class="card-body">
+      <!-- Widget Configuration -->
+      <div class="tab-panel" id="tab-widget">
+        <div class="panel-intro">
+          <p>Copy the embed code and paste it into your website before the closing &lt;/body&gt; tag.</p>
+        </div>
         <div class="form-row">
           <label>Embed Code</label>
           <div class="embed-wrap"><textarea id="embed-code" rows="3" readonly></textarea><button class="btn-secondary" id="copy-embed">Copy</button></div>
           <p class="help-text">Paste this snippet into your website HTML to activate the chatbot widget.</p>
         </div>
       </div>
-    </div>
 
-    <div class="settings-card">
-      <div class="card-header"><h2>Design Visualiser Integration</h2><p>Allow customers to upload a site photo and receive an AI-generated concept render through the chat widget.</p></div>
-      <div class="card-body">
+      <!-- Design Visualiser -->
+      <div class="tab-panel" id="tab-design-viz">
+        <div class="panel-intro">
+          <p>Allow customers to upload a site photo and receive an AI-generated concept render through the chat widget.</p>
+        </div>
         <div class="form-row">
           <label>Mode</label>
           <select id="design-viz-mode">
             <option value="off">Off</option>
-            <option value="watermarked">Watermarked — render delivered with business logo watermark</option>
-            <option value="full_access">Full Access — unwatermarked render delivered directly</option>
+            <option value="watermarked">Watermarked &#8212; render delivered with business logo watermark</option>
+            <option value="full_access">Full Access &#8212; unwatermarked render delivered directly</option>
           </select>
-          <p class="design-viz-note" id="design-viz-note">Requires Design Visualiser — activate this tool from your dashboard to enable render generation.</p>
+          <p class="design-viz-note" id="design-viz-note">Requires Design Visualiser &#8212; activate this tool from your dashboard to enable render generation.</p>
         </div>
         <button class="btn-primary" id="save-design-viz">Save</button>
         <div class="settings-msg" id="design-viz-msg"></div>
       </div>
-    </div>
 
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
