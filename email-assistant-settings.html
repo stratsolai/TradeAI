@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Assistant Settings — StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "DM Sans", sans-serif; background: #F5F7FA; color: #333333; min-height: 100vh; }
+    .topbar { height: 68px; background: #4A6D8C; box-shadow: 0 2px 8px rgba(0,0,0,0.15); display: flex; align-items: center; padding: 0 24px; position: sticky; top: 0; z-index: 100; }
+    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+    .topbar-logo img { height: 38px; }
+    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; }
+    .topbar-back { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-back:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
+    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
+    .account-btn:hover { color: #fff; }
+    .account-dropdown { display: none; position: absolute; top: calc(100% + 8px); right: 0; background: #fff; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); min-width: 200px; z-index: 200; }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: #888888; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    .account-dropdown a { display: block; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #333333; text-decoration: none; cursor: pointer; }
+    .account-dropdown a:hover { background: #F5F7FA; }
+    .page-wrap { max-width: 720px; margin: 0 auto; padding: 32px 24px; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 32px; color: #1A5490; }
+    .page-header p { font-size: 15px; color: #888888; margin-top: 4px; }
+    .settings-card { background: #FFFFFF; border-radius: 12px; border-left: 4px solid #1A5490; box-shadow: 0 1px 4px rgba(0,0,0,0.06); margin-bottom: 24px; overflow: hidden; }
+    .card-header { padding: 18px 24px 14px; border-bottom: 1px solid rgba(0,0,0,0.08); }
+    .card-header h2 { font-family: "Barlow Condensed", sans-serif; font-size: 20px; font-weight: 800; color: #1A5490; }
+    .card-header p { font-size: 13px; color: #888888; margin-top: 3px; }
+    .card-body { padding: 20px 24px; }
+    .form-row { margin-bottom: 16px; }
+    .form-row label { display: block; font-size: 13px; font-weight: 600; color: #333333; margin-bottom: 6px; }
+    select { width: 100%; padding: 10px 14px; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; font-size: 14px; font-family: "DM Sans", sans-serif; color: #333333; background: #fff; outline: none; }
+    select:focus { border-color: #1A5490; }
+    .btn-primary { background: #4A6D8C; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; font-family: "DM Sans", sans-serif; }
+    .btn-primary:hover { background: #3a5a78; }
+    .btn-secondary { background: #fff; color: #1A5490; font-size: 14px; font-weight: 600; padding: 10px 22px; border: 1px solid #1A5490; border-radius: 8px; cursor: pointer; font-family: "DM Sans", sans-serif; text-decoration: none; display: inline-block; }
+    .btn-secondary:hover { background: #f0f7ff; }
+    .btn-connect { background: #4A6D8C; color: #fff; font-size: 13px; font-weight: 700; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-family: "DM Sans", sans-serif; }
+    .btn-connect:hover { background: #3a5a78; }
+    .btn-sm { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; font-family: "DM Sans", sans-serif; }
+    .btn-add-category { background: #e3f2fd; color: #1565c0; }
+    .btn-remove { background: #fce4ec; color: #c62828; }
+    .settings-msg { display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 12px; }
+    .settings-msg.success { background: #e8f5e9; color: #2e7d32; }
+    .settings-msg.error { background: #fce4ec; color: #c62828; }
+    .email-account-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .email-account-row:last-child { border-bottom: none; }
+    .email-account-label { font-size: 14px; font-weight: 600; }
+    .connection-status { font-size: 12px; font-weight: 600; padding: 3px 8px; border-radius: 10px; }
+    .connection-status.connected { background: #e8f5e9; color: #2e7d32; }
+    .connection-status.disconnected { background: #fafafa; color: #888888; }
+    .category-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .category-row input[type="text"] { flex: 1; padding: 8px 12px; border: 1px solid rgba(0,0,0,0.12); border-radius: 6px; font-size: 13px; font-family: "DM Sans", sans-serif; outline: none; }
+    .category-row input[type="text"]:focus { border-color: #1A5490; }
+    .toggle-switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 22px; transition: 0.2s; }
+    .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+    input:checked + .toggle-slider { background: #C4622A; }
+    input:checked + .toggle-slider:before { transform: translateX(18px); }
+    .toggle-row { display: flex; align-items: center; gap: 12px; }
+    .toggle-label { font-size: 14px; font-weight: 600; }
+    .save-row { display: flex; gap: 12px; margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <nav class="topbar">
+    <a class="topbar-logo" href="dashboard.html"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" /></a>
+    <div class="topbar-nav"><a class="topbar-back" href="dashboard.html">Dashboard</a></div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a class="topbar-nav-link" href="email-assistant.html">Email Assistant</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short"></span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <a id="sign-out-btn">Sign Out</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <div class="page-wrap">
+    <div class="page-header">
+      <h1>Email Assistant Settings</h1>
+      <p>Connect your email account and configure how your inbox is organised.</p>
+    </div>
+    <div class="settings-card">
+      <div class="card-header"><h2>Email Accounts</h2><p>Connect your inbox to start scanning emails.</p></div>
+      <div class="card-body">
+        <div class="email-account-row">
+          <span class="email-account-label">Gmail</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="connection-status disconnected" id="gmail-status">Not connected</span>
+            <button class="btn-connect" id="connect-gmail-btn">Connect Gmail</button>
+          </div>
+        </div>
+        <div class="email-account-row">
+          <span class="email-account-label">Outlook</span>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="connection-status disconnected" id="outlook-status">Not connected</span>
+            <button class="btn-connect" id="connect-outlook-btn">Connect Outlook</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="settings-card">
+      <div class="card-header"><h2>Categories</h2><p>Toggle categories on or off and rename them to suit your business.</p></div>
+      <div class="card-body">
+        <div id="categories-list"></div>
+        <button class="btn-sm btn-add-category" id="add-category-btn" style="margin-top:8px;">Add Category</button>
+      </div>
+    </div>
+    <div class="settings-card">
+      <div class="card-header"><h2>Scan Frequency</h2><p>How often your inbox is scanned for new emails.</p></div>
+      <div class="card-body"><div class="form-row"><select id="scan-cadence"><option value="manual">Manual only</option><option value="hourly">Hourly</option><option value="daily">Daily</option></select></div></div>
+    </div>
+    <div class="settings-card">
+      <div class="card-header"><h2>Display</h2></div>
+      <div class="card-body"><div class="toggle-row"><label class="toggle-switch"><input type="checkbox" id="show-handled" /><span class="toggle-slider"></span></label><span class="toggle-label">Show handled emails</span></div></div>
+    </div>
+    <div class="save-row">
+      <button class="btn-primary" id="save-settings-btn">Save Settings</button>
+      <a class="btn-secondary" href="email-assistant.html">Cancel</a>
+    </div>
+    <div class="settings-msg" id="settings-msg"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="supabase-client.js"></script>
+  <script src="email-assistant-settings-logic.js?v=1"></script>
+</body>
+</html>
