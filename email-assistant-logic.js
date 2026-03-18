@@ -14,7 +14,6 @@ window.EA_LOGIC = (function () {
   let _settings      = null;
   let _emails        = [];
   let _activeCategory = 'all';
-  let _settingsOpen  = false;
 
   // -------------------------------------------------------------------------
   // Init
@@ -68,27 +67,7 @@ window.EA_LOGIC = (function () {
     }
   }
 
-  async function _saveSettings() {
-    try {
-      const res = await fetch('/api/email-assistant-settings', {
-        method:  'POST',
-        headers: {
-          'Authorization': 'Bearer ' + _session.access_token,
-          'Content-Type':  'application/json'
-        },
-        body: JSON.stringify(_settings)
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        _showError(data.error || 'Could not save settings');
-        return false;
-      }
-      return true;
-    } catch (e) {
-      _showError('Could not save settings');
-      return false;
-    }
-  }
+
 
   // -------------------------------------------------------------------------
   // Connection status
@@ -304,157 +283,6 @@ window.EA_LOGIC = (function () {
   }
 
   // -------------------------------------------------------------------------
-  // Settings panel
-  // -------------------------------------------------------------------------
-  function _openSettings() {
-    _settingsOpen = true;
-    const modal = document.getElementById('ea-settings-modal');
-    if (!modal) return;
-    _renderSettingsModal();
-    modal.classList.add('open');
-  }
-
-  function _closeSettings() {
-    _settingsOpen = false;
-    const modal = document.getElementById('ea-settings-modal');
-    if (modal) modal.classList.remove('open');
-  }
-
-  function _renderSettingsModal() {
-    const body = document.getElementById('ea-settings-body');
-    if (!body) return;
-
-    const cadenceOptions = ['manual', 'daily', 'weekly'].map(opt =>
-      "<option value=\"" + opt + "\"" + (_settings.scan_cadence === opt ? " selected" : "") + ">" +
-      (opt === 'manual' ? 'Manual only' : opt.charAt(0).toUpperCase() + opt.slice(1)) +
-      "</option>"
-    ).join('');
-
-    const categoriesHtml = _settings.categories.map((cat, i) =>
-      "<div class=\"ea-setting-row\" data-index=\"" + i + "\">" +
-        "<label class=\"ea-toggle\">" +
-          "<input type=\"checkbox\" class=\"cat-enabled\" " + (cat.enabled ? "checked" : "") + " />" +
-          "<span class=\"ea-toggle-slider\"></span>" +
-        "</label>" +
-        "<input type=\"text\" class=\"cat-label ea-text-input\" value=\"" + _esc(cat.label) + "\" maxlength=\"40\" />" +
-      "</div>"
-    ).join('');
-
-    const connHtml = document.getElementById('ea-connection-status')
-      ? document.getElementById('ea-connection-status').innerHTML
-      : '';
-
-    body.innerHTML =
-      "<div class=\"ea-settings-section\">" +
-        "<h3 class=\"ea-settings-heading\">Email Accounts</h3>" +
-        "<div class=\"ea-connection-detail\">" + connHtml + "</div>" +
-        "<div class=\"ea-connect-buttons\">" +
-          "<a href=\"/api/auth/gmail/connect\" class=\"ea-btn-connect\">Connect Gmail</a>" +
-          "<a href=\"/api/auth/outlook/connect\" class=\"ea-btn-connect\">Connect Outlook</a>" +
-        "</div>" +
-      "</div>" +
-      "<div class=\"ea-settings-section\">" +
-        "<h3 class=\"ea-settings-heading\">Categories</h3>" +
-        "<div id=\"ea-categories-list\">" + categoriesHtml + "</div>" +
-        "<button id=\"ea-add-category\" class=\"ea-btn-secondary\">Add Category</button>" +
-      "</div>" +
-      "<div class=\"ea-settings-section\">" +
-        "<h3 class=\"ea-settings-heading\">Scan Frequency</h3>" +
-        "<select id=\"ea-scan-cadence\" class=\"ea-select\">" + cadenceOptions + "</select>" +
-      "</div>" +
-      "<div class=\"ea-settings-section\">" +
-        "<h3 class=\"ea-settings-heading\">Display</h3>" +
-        "<label class=\"ea-toggle-row\">" +
-          "<span>Show handled emails</span>" +
-          "<label class=\"ea-toggle\">" +
-            "<input type=\"checkbox\" id=\"ea-show-handled\" " + (_settings.show_handled ? "checked" : "") + " />" +
-            "<span class=\"ea-toggle-slider\"></span>" +
-          "</label>" +
-        "</label>" +
-      "</div>" +
-      "<div class=\"ea-settings-actions\">" +
-        "<button id=\"ea-settings-save\" class=\"ea-btn-primary\">Save</button>" +
-        "<button id=\"ea-settings-cancel\" class=\"ea-btn-secondary\">Cancel</button>" +
-      "</div>";
-
-    document.getElementById('ea-add-category').addEventListener('click', () => {
-      _settings.categories.push({ id: 'custom-' + Date.now(), label: 'New Category', enabled: true });
-      _renderSettingsModal();
-    });
-
-    document.getElementById('ea-settings-save').addEventListener('click', async () => {
-      _collectSettingsFromModal();
-      const ok = await _saveSettings();
-      if (ok) {
-        _closeSettings();
-        _buildCategoryTabs();
-        await _loadStoredEmails();
-      }
-    });
-
-    document.getElementById('ea-settings-cancel').addEventListener('click', _closeSettings);
-  }
-
-  function _collectSettingsFromModal() {
-    const rows = document.querySelectorAll('#ea-categories-list .ea-setting-row');
-    rows.forEach((row, i) => {
-      const enabled = row.querySelector('.cat-enabled').checked;
-      const label   = row.querySelector('.cat-label').value.trim() || _settings.categories[i].label;
-      _settings.categories[i].enabled = enabled;
-      _settings.categories[i].label   = label;
-    });
-    _settings.scan_cadence = document.getElementById('ea-scan-cadence').value;
-    _settings.show_handled = document.getElementById('ea-show-handled').checked;
-  }
-  // -------------------------------------------------------------------------
-  // Account dropdown
-  // -------------------------------------------------------------------------
-  function _renderAccountDropdown() {
-    const email = _session.user.email || '';
-    const short = email.split('@')[0];
-    const shortEl    = document.getElementById('account-email-short');
-    const dropEmail  = document.getElementById('account-dropdown-email');
-    if (shortEl)   shortEl.textContent   = short;
-    if (dropEmail) dropEmail.textContent = email;
-
-    const signOutBtn = document.getElementById('sign-out-btn');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', async () => {
-        await window.supabaseClient.auth.signOut();
-        window.location.href = 'index.html';
-      });
-    }
-
-    const accountBtn      = document.getElementById('account-btn');
-    const accountDropdown = document.getElementById('account-dropdown');
-    if (accountBtn && accountDropdown) {
-      accountBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        accountDropdown.classList.toggle('open');
-      });
-      document.addEventListener('click', () => accountDropdown.classList.remove('open'));
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Wire global events
-  // -------------------------------------------------------------------------
-  function _wireEvents() {
-    const scanBtn     = document.getElementById('ea-scan-btn');
-    const settingsBtn = document.getElementById('settings-btn');
-    const modalClose  = document.getElementById('ea-settings-close');
-    const modal       = document.getElementById('ea-settings-modal');
-
-    if (scanBtn)     scanBtn.addEventListener('click', _scan);
-    if (settingsBtn) settingsBtn.addEventListener('click', _openSettings);
-    if (modalClose)  modalClose.addEventListener('click', _closeSettings);
-    if (modal) {
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) _closeSettings();
-      });
-    }
-  }
-
   // -------------------------------------------------------------------------
   // Helpers
   // -------------------------------------------------------------------------
