@@ -1,218 +1,121 @@
-module.exports = async (req, res) => {
+import Anthropic from '@anthropic-ai/sdk';
+import { createClient } from '@supabase/supabase-js';
+
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId, category, formData, image, platforms, tone, businessName, industry } = req.body;
+  // JWT auth
+  const authHeader = req.headers['authorization'];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorised' });
+  }
+  const token = authHeader.replace('Bearer ', '');
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: 'Unauthorised' });
+  }
 
-  // Check if this is a legacy simple caption request (from old code)
-  const isLegacyRequest = !category && req.body.postType;
+  const { input_type, category, tone, job_description, location, offer_what, offer_price, offer_valid_until, offer_detail, topic, extra_context } = req.body;
 
-  const claudeApiKey = process.env.CLAUDE_API_KEY;
+  if (!input_type) {
+    return res.status(400).json({ error: 'input_type is required' });
+  }
 
-  if (!claudeApiKey) {
-    return res.status(500).json({ error: 'Claude API not configured' });
+  // Load user profile for industry
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('industry, business_name, location')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return res.status(400).json({ error: 'User profile not found' });
+  }
+
+  const industry = profile.industry || 'business';
+  const businessName = profile.business_name || 'your business';
+  const businessLocation = profile.location || location || '';
+  const toneLabel = tone || 'Friendly';
+
+  // Build prompt dynamically based on input_type
+  let promptContent = '';
+
+  if (input_type === 'job') {
+    promptContent = `You are creating a social media post for a ${industry} business called ${businessName}${businessLocation ? ' based in ' + businessLocation : ''}.
+
+Post type: Completed job or project showcase
+Category: ${category || 'completed-job'}
+Tone: ${toneLabel}
+Job description: ${job_description || ''}
+${location ? 'Location: ' + location : ''}
+
+Write a single engaging social media post (2-4 sentences, max 280 characters for the main text). 
+- Highlight the work completed and the outcome for the customer
+- Tone must be ${toneLabel.toLowerCase()}
+- Use Australian English spelling
+- Do not use exclamation marks
+- Do not mention specific dollar amounts unless provided
+- End with 3-5 relevant hashtags on a new line
+- Do not include the business name unless it flows naturally`;
+
+  } else if (input_type === 'offer') {
+    promptContent = `You are creating a social media post for a ${industry} business called ${businessName}${businessLocation ? ' based in ' + businessLocation : ''}.
+
+Post type: Offer or promotion
+Category: ${category || 'seasonal-offer'}
+Tone: ${toneLabel}
+What is the offer: ${offer_what || ''}
+${offer_price ? 'Price or value: ' + offer_price : ''}
+${offer_valid_until ? 'Valid until: ' + offer_valid_until : ''}
+${offer_detail ? 'Extra detail: ' + offer_detail : ''}
+
+Write a single engaging social media post (2-4 sentences, max 280 characters for the main text).
+- Clearly communicate the offer and its value
+- Tone must be ${toneLabel.toLowerCase()}
+- Use Australian English spelling
+- Do not use exclamation marks
+- Create a sense of opportunity without being pushy
+- End with 3-5 relevant hashtags on a new line`;
+
+  } else if (input_type === 'tips') {
+    promptContent = `You are creating a social media post for a ${industry} business called ${businessName}${businessLocation ? ' based in ' + businessLocation : ''}.
+
+Post type: News or tips
+Category: ${category || 'tips-advice'}
+Tone: ${toneLabel}
+Topic: ${topic || ''}
+${extra_context ? 'Extra context: ' + extra_context : ''}
+
+Write a single engaging social media post (2-4 sentences, max 280 characters for the main text).
+- Share a genuinely useful tip or insight relevant to the topic and the ${industry} industry
+- Tone must be ${toneLabel.toLowerCase()}
+- Use Australian English spelling
+- Do not use exclamation marks
+- Position the business as knowledgeable and helpful
+- End with 3-5 relevant hashtags on a new line`;
+
+  } else {
+    return res.status(400).json({ error: 'Invalid input_type. Must be job, offer, or tips.' });
   }
 
   try {
-    const https = require('https');
-
-    // Build platform-specific guidance
-    const platformGuide = platforms.map(p => {
-      switch(p) {
-        case 'facebook': return 'Facebook: Conversational, can be longer, use emojis';
-        case 'instagram': return 'Instagram: Visual focus, hashtags important, trendy language';
-        case 'linkedin': return 'LinkedIn: Professional, business-focused, industry insights';
-        default: return '';
-      }
-    }).join('. ');
-
-    // Build tone guidance
-    const toneGuide = {
-      'professional': 'Professional and polished tone - "We\'re pleased to announce the completion of this pool installation in Mosman."',
-      'casual': 'Casual, friendly, and approachable tone - "Check out this beauty we just finished in Mosman! 🏊‍♂️"',
-      'promotional': 'Promotional and sales-focused tone - "AMAZING pool installation completed! Want one like this? Call now for 20% off!"',
-      'educational': 'Educational and informative tone - "Here\'s what goes into a professional pool installation..."'
-    }[tone] || 'Professional tone';
-
-    let categoryContext = '';
-
-    // Handle legacy simple requests
-    if (isLegacyRequest) {
-      const postTypeGuide = {
-        'project-showcase': 'Showcasing completed work',
-        'before-after': 'Before and after transformation',
-        'customer-testimonial': 'Customer success story',
-        'tip-advice': 'Helpful tip or industry advice',
-        'behind-scenes': 'Behind the scenes look at the work'
-      }[req.body.postType] || 'Project showcase';
-
-      categoryContext = `This is a social media post.
-Post Type: ${postTypeGuide}
-${req.body.context ? `Context: ${req.body.context}` : ''}
-
-Focus on: Creating engaging content for social media.`;
-    } 
-    // Handle category-specific requests
-    else if (category === 'marketing') {
-      categoryContext = `This is a MARKETING & PROMOTIONS post.
-Promotion Type: ${formData.promoType}
-Offer Details: ${formData.offerDetails}
-${formData.validUntil ? `Valid Until: ${formData.validUntil}` : ''}
-Call-to-Action: ${formData.cta}
-
-Focus on: Creating urgency, highlighting the offer, clear call-to-action, benefits to customer.`;
-    
-    } else if (category === 'completed-jobs') {
-      categoryContext = `This is a COMPLETED JOB SHOWCASE post.
-Project Type: ${formData.projectType}
-Location: ${formData.location}
-Duration: ${formData.duration}
-${formData.challenges ? `Special Challenges: ${formData.challenges}` : ''}
-${formData.testimonial ? `Customer Testimonial: "${formData.testimonial}"` : ''}
-
-Focus on: Showcasing quality work, location-specific details, project complexity, customer satisfaction.`;
-    
-    } else if (category === 'tips') {
-      categoryContext = `This is a TIPS & ADVICE post.
-Tip Category: ${formData.tipCategory}
-Main Tip: ${formData.mainTip}
-Why It Matters: ${formData.whyMatters}
-
-Focus on: Providing valuable advice, educating followers, establishing expertise, actionable insights.`;
-    
-    } else if (category === 'industry-trends') {
-      categoryContext = `This is an INDUSTRY TRENDS post.
-Trend Topic: ${formData.trendTopic}
-Expert Take: ${formData.expertTake}
-
-Focus on: Demonstrating industry knowledge, sharing professional perspective, thought leadership.`;
-    
-    } else if (category === 'team-culture') {
-      categoryContext = `This is a TEAM & CULTURE post.
-Post Type: ${formData.teamPostType}
-${formData.teamMemberName ? `Team Member: ${formData.teamMemberName}` : ''}
-Highlight: ${formData.teamHighlight}
-
-Focus on: Humanizing the brand, showcasing team expertise, building trust, company personality.`;
-    }
-
-    const prompt = `You are a social media expert for ${businessName}, a ${industry} business.
-
-Create 3 different social media post captions based on the following:
-
-${categoryContext}
-
-Platform Guidelines: ${platformGuide}
-Tone: ${toneGuide}
-
-Requirements:
-- Each caption should be unique and engaging
-- Include relevant emojis
-- For Instagram: add 5-10 relevant hashtags at the end
-- For LinkedIn: focus on professionalism and industry insights
-- For Facebook: make it conversational and shareable
-- Keep captions concise but impactful (50-150 words each)
-- Match the specified tone exactly
-- Include appropriate call-to-action based on category
-${formData?.testimonial ? '- Incorporate the customer testimonial naturally' : ''}
-
-Return ONLY a JSON array of 3 caption strings, nothing else.
-
-Example format:
-["Caption 1 text here...", "Caption 2 text here...", "Caption 3 text here..."]`;
-
-    // Build request body - include image if provided
-    const messageContent = [];
-    
-    if (image) {
-      messageContent.push({
-        type: 'image',
-        source: {
-          type: 'base64',
-          media_type: 'image/jpeg',
-          data: image
-        }
-      });
-    }
-    
-    messageContent.push({
-      type: 'text',
-      text: prompt
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 512,
+      messages: [{ role: 'user', content: promptContent }]
     });
 
-    const requestBody = JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1500,
-      messages: [
-        {
-          role: 'user',
-          content: messageContent
-        }
-      ]
-    });
+    const generatedText = message.content[0].text.trim();
 
-    const response = await new Promise((resolve, reject) => {
-      const options = {
-        hostname: 'api.anthropic.com',
-        path: '/v1/messages',
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': claudeApiKey,
-          'anthropic-version': '2023-06-01',
-          'Content-Length': Buffer.byteLength(requestBody)
-        }
-      };
+    return res.status(200).json({ content: generatedText });
 
-      const req = https.request(options, (res) => {
-        let data = '';
-        res.on('data', (chunk) => { data += chunk; });
-        res.on('end', () => {
-          try {
-            resolve(JSON.parse(data));
-          } catch (e) {
-            reject(e);
-          }
-        });
-      });
-
-      req.on('error', reject);
-      req.write(requestBody);
-      req.end();
-    });
-
-    if (response.error) {
-      throw new Error(response.error.message || 'Claude API error');
-    }
-
-    const aiResponse = response.content[0].text;
-    
-    // Extract JSON array from response
-    let captions;
-    try {
-      const jsonMatch = aiResponse.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        captions = JSON.parse(jsonMatch[0]);
-      } else {
-        // Fallback: split by lines if JSON parsing fails
-        captions = aiResponse.split('\n').filter(line => line.trim().length > 10).slice(0, 3);
-      }
-    } catch (e) {
-      console.error('Failed to parse captions:', e);
-      captions = [aiResponse];
-    }
-
-    return res.status(200).json({
-      success: true,
-      captions: captions
-    });
-
-  } catch (error) {
-    console.error('Content generation error:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message
-    });
+  } catch (err) {
+    console.error('generate-social-content error:', err);
+    return res.status(500).json({ error: 'Content generation failed. Please try again.' });
   }
-};
+}
