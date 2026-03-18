@@ -11,7 +11,7 @@
     :root {
       --blue: #1a5490;
       --blue-light: #e8f4fd;
-      --orange: #e8500a;
+      --orange: #C4622A;
       --orange-light: #fff3ee;
       --green: #28a745;
       --green-light: #edfaf1;
@@ -870,7 +870,7 @@
       <a href="index.html" class="topbar-logo">
     <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
-      <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div>
+      <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Dashboard</a></div>
       <nav class="topbar-right">
       <div class="topbar-account" id="account-menu">
         <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
@@ -893,21 +893,18 @@
     <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
     <div class="stat-card orange"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
     <div class="stat-card green"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card purple"><div class="stat-value" id="stat-queue">0</div><div class="stat-label">Publishing Queue</div></div>
-    <div class="stat-card teal"><div class="stat-value" id="stat-published">0</div><div class="stat-label">Published</div></div>
+        <div class="stat-card teal"><div class="stat-value" id="stat-published">0</div><div class="stat-label">Published</div></div>
   </div>
 
 <div class="primary-tabs">
     <button class="ptab active" onclick="switchPTab('upload')">📤 Upload & Import</button>
     <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review <span class="tab-badge" id="badge-pending">0</span></button>
-    <button class="ptab" onclick="switchPTab('queue')">📣 Publishing Queue <span class="tab-badge" id="badge-queue">0</span></button>
-    <button class="ptab" onclick="switchPTab('outputs')">🤖 AI Tool Outputs & Published</button>
+        <button class="ptab" onclick="switchPTab('outputs')">🤖 AI Tool Outputs & Published</button>
   </div>
 
   <div id="cl-tab-upload" class="ptab-content active"></div>
   <div id="cl-tab-review" class="ptab-content"></div>
-  <div id="cl-tab-queue" class="ptab-content"></div>
-  <div id="cl-tab-outputs" class="ptab-content"></div>
+    <div id="cl-tab-outputs" class="ptab-content"></div>
 
 </div>
 
@@ -1030,12 +1027,11 @@ window.switchPTab = function(tab) {
   document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.ptab-content').forEach(c => c.classList.remove('active'));
 
-  const tabMap = { upload: 0, review: 1, queue: 2, outputs: 3 };
+  const tabMap = { upload: 0, review: 1, outputs: 2 };
   document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
   document.getElementById(`cl-tab-${tab}`).classList.add('active');
 
   if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.init(window.supabaseClient);
-  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.init(window.supabaseClient);
   if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);
 };
 
@@ -1044,11 +1040,7 @@ window.switchPTab = function(tab) {
   async function loadStats() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
-  const [libResult, queueResult, publishedResult] = await Promise.all([
     supabaseClient.from('content_library').select('status', { count: 'exact' }).eq('user_id', user.id),
-    supabaseClient.from('publishing_queue').select('status', { count: 'exact' }).eq('user_id', user.id).in('status', ['pending_approval','approved','scheduled']),
-    supabaseClient.from('publishing_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'posted')
-  ]);
 
   const items = libResult.data || [];
   const total = items.length;
@@ -1058,10 +1050,8 @@ window.switchPTab = function(tab) {
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-approved').textContent = approved;
-  document.getElementById('stat-queue').textContent = queueResult.count || 0;
   document.getElementById('stat-published').textContent = publishedResult.count || 0;
   document.getElementById('badge-pending').textContent = pending;
-  document.getElementById('badge-queue').textContent = queueResult.count || 0;
   document.getElementById('stab-pending-count').textContent = pending;
 }
 
@@ -1172,8 +1162,8 @@ let generatedPostText = '';
     }
     loadScript("cl-upload.js", function() { if (window.CL_UPLOAD) window.CL_UPLOAD.init(s); });
     loadScript("cl-review.js", function() { if (window.CL_REVIEW) window.CL_REVIEW.init(s); });
-    loadScript("cl-queue.js", function() { if (window.CL_QUEUE) window.CL_QUEUE.init(s); });
     loadScript("cl-outputs.js", function() { if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s); });
+    loadScript("cl-profile.js", function() { if (window.CL_PROFILE) window.CL_PROFILE.init(s); });
   })();
 </script>
 
