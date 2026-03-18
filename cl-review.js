@@ -189,7 +189,7 @@ window.showDetail = function(id) {
       <label>Description / Content</label>
       <textarea id="detail-desc" rows="5">${escHtml(item.description||'')}</textarea>
     </div>
-    <div style="display:flex; gap:10px; margin-top:16px;">
+    <div id="item-tag-panel" class="tag-panel"><div class="tag-panel-title">Tool Tags</div><div id="tag-panel-list" class="tag-panel-list"></div></div><div style="display:flex; gap:10px; margin-top:16px;">
       <button class="btn btn-primary" onclick="saveDetail()" style="flex:1">💾 Save Changes</button>
       <button class="btn btn-green" onclick="saveAndApprove()" style="flex:1">✅ Save & Approve</button>
       <button class="btn btn-grey" onclick="closeModal('modal-detail')" style="flex:1">Cancel</button>
@@ -205,6 +205,17 @@ window.saveDetail = async function() {
     category: document.getElementById('detail-category').value,
     description: document.getElementById('detail-desc').value,
     tags: document.getElementById('detail-tags').value.split(',').map(t=>t.trim()).filter(Boolean)
+    // Render tag panel with activated tools context
+    (async function() {
+      try {
+        var user = (await supabase.auth.getUser()).data.user;
+        var profileRow = user ? (await supabase.from("profiles").select("activated_tools").eq("user_id", user.id).single()).data : null;
+        var activatedTools = (profileRow && profileRow.activated_tools) || [];
+        window.CL_REVIEW.renderTagPanel(item, activatedTools);
+      } catch(e) {
+        window.CL_REVIEW.renderTagPanel(item, []);
+      }
+    })();
   };
   await supabaseClient.from('content_library').update(updates).eq('id', currentDetailItem.id);
   closeModal('modal-detail');
@@ -236,6 +247,60 @@ window.switchQueueTab = function(status) {
     t.classList.toggle('active', ['pending_approval','approved','rejected'][i] === status);
   });
   loadQueueItems();
+,
+
+  renderTagPanel: function(item, activatedTools) {
+    var list = document.getElementById("tag-panel-list");
+    if (!list) return;
+    var coreTools = (window.CORE_TOOLS || []);
+    var currentTags = (item.tool_tags || []);
+    var html = "";
+    coreTools.forEach(function(tool) {
+      var toolId = tool.toolId || tool.id;
+      var isActive = activatedTools.indexOf(toolId) !== -1;
+      var isTagged = currentTags.indexOf(toolId) !== -1;
+      if (isActive) {
+        html += "<div class=\"tag-row\">" +
+          "<span class=\"tag-tool-name\">" + (tool.name || toolId) + "</span>" +
+          "<label class=\"tag-toggle\">" +
+          "<input type=\"checkbox\" class=\"tag-checkbox\" data-toolid=\"" + toolId + "\"" + (isTagged ? " checked" : "") + " />" +
+          "<span class=\"tag-toggle-slider\"></span>" +
+          "</label>" +
+          "</div>";
+      } else {
+        html += "<div class=\"tag-row tag-row-inactive\">" +
+          "<span class=\"tag-tool-name\">" + (tool.name || toolId) + "</span>" +
+          "<span class=\"tag-inactive-label\">Not activated &mdash; <a href=\"panel.html?tool=" + toolId + "\" class=\"tag-learn-link\">Learn more</a></span>" +
+          "</div>";
+      }
+    });
+    list.innerHTML = html;
+    // Wire up save on any toggle change
+    var checkboxes = list.querySelectorAll(".tag-checkbox");
+    checkboxes.forEach(function(cb) {
+      cb.addEventListener("change", function() {
+        var selected = [];
+        list.querySelectorAll(".tag-checkbox:checked").forEach(function(c) {
+          selected.push(c.getAttribute("data-toolid"));
+        });
+        window.CL_REVIEW.saveItemTags(item.id, selected);
+      });
+    });
+  },
+
+  saveItemTags: async function(itemId, tags) {
+    var supabase = window._clSupabase;
+    if (!supabase) return;
+    try {
+      await supabase
+        .from("content_library")
+        .update({ tool_tags: tags })
+        .eq("id", itemId);
+    } catch (err) {
+      console.error("saveItemTags error:", err);
+    }
+  }
+
 };
 
 })();
