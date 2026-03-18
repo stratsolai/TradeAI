@@ -1031,11 +1031,11 @@ window.switchPTab = function(tab) {
 
   const tabMap = { upload: 0, review: 1, queue: 2, outputs: 3 };
   document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
-  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.getElementById(`cl-tab-${tab}`).classList.add('active');
 
-  if (tab === 'review') loadReviewItems();
-  if (tab === 'queue') loadQueueItems();
-  if (tab === 'outputs') { loadToolTiles(); loadPublished(); }
+  if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.loadReviewItems();
+  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.loadQueueItems();
+  if (tab === 'outputs' && window.CL_OUTPUTS) { window.CL_OUTPUTS.loadToolTiles(); window.CL_OUTPUTS.loadPublished(); }
 };
 
 // ─── STATS ────────────────────────────────────
