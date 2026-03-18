@@ -1171,10 +1171,10 @@ let generatedPostText = '';
 </script>
 
 <script>
-    document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
+    var _el_"account-btn" = document.getElementById("account-btn"); if (_el_"account-btn") _el_"account-btn".addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
     document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
-    document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
+    var _el_"sign-out-btn" = document.getElementById("sign-out-btn"); if (_el_"sign-out-btn") _el_"sign-out-btn".addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
+    var _el_"notification-bar" = document.getElementById("notification-bar"); if (_el_"notification-bar") _el_"notification-bar".addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
     window.dashboardInit = async function() {
       const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
       if (!user || _authErr) { window.location.href = "login.html"; return; }
