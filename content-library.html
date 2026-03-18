@@ -1033,9 +1033,9 @@ window.switchPTab = function(tab) {
   document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
   document.getElementById(`cl-tab-${tab}`).classList.add('active');
 
-  if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.loadReviewItems();
-  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.loadQueueItems();
-  if (tab === 'outputs' && window.CL_OUTPUTS) { window.CL_OUTPUTS.loadToolTiles(); window.CL_OUTPUTS.loadPublished(); }
+  if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.init(window.supabaseClient);
+  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.init(window.supabaseClient);
+  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);
 };
 
 // ─── STATS ────────────────────────────────────
@@ -1162,7 +1162,7 @@ let generatedPostText = '';
 
   // Dynamic loader - tab JS files with cache-busting
   (function() {
-    var s = window.__supabaseClient;
+    var s = window.supabaseClient;
     function loadScript(src, cb) {
       var el = document.createElement("script");
       el.src = src + "?v=" + Date.now();
