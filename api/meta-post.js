@@ -323,6 +323,18 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // JWT auth
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ error: "Unauthorised" });
+  }
+  const token = authHeader.split(" ")[1];
+  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  if (authError || !user) {
+    return res.status(401).json({ error: "Unauthorised" });
+  }
+
+
   const { action, userId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
