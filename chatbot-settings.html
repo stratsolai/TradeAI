@@ -37,11 +37,20 @@
       display: flex;
       align-items: center;
       padding: 0 24px;
-      gap: 16px;
       position: sticky;
       top: 0;
       z-index: 100;
     }
+    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
+    .topbar-logo img { height: 38px; }
+    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; }
+    .topbar-back { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-back:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
+    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
     .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
     .topbar-logo img { height: 38px; }
     .topbar-back {
@@ -234,7 +243,9 @@
     <a class="topbar-logo" href="dashboard.html">
       <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
     </a>
-    <a class="topbar-back" href="dashboard.html">Back</a>
+    <div class="topbar-nav">
+      <a class="topbar-back" href="dashboard.html">Dashboard</a>
+    </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
       <a class="topbar-nav-link" href="chatbot.html">Chatbot</a>
