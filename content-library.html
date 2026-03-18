@@ -1,1196 +1,133 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Content Library - StaxAI</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-<style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+window.CL_OUTPUTS = {
+  _supabase: null,
+  _selectedTool: null,
 
-    :root {
-      --blue: #1a5490;
-      --blue-light: #e8f4fd;
-      --orange: #c4622a;
-      --orange-light: #fff3ee;
-      --green: #28a745;
-      --green-light: #edfaf1;
-      --red: #dc3545;
-      --grey: #6c757d;
-      --bg: #f5f7fa;
-      --white: #ffffff;
-      --border: #e5e5e5;
-      --text: #333333;
-      --text-muted: #888888;
-    
-  --heading-font: 'Barlow Condensed', sans-serif;
-  --body-font: 'DM Sans', sans-serif;}
+  _tools: [
+    { id: 'social',        name: 'Marketing & Social Media Manager', state: 'active' },
+    { id: 'chatbot',       name: 'AI Website Chatbot',               state: 'active' },
+    { id: 'email',         name: 'AI Email Assistant',               state: 'active' },
+    { id: 'bi',            name: 'Business Intelligence Dashboard',  state: 'active' },
+    { id: 'news-digest',   name: 'Industry News & Updates Digest',   state: 'active' },
+    { id: 'strategic-plan',name: 'Strategic Plan & Operations',      state: 'active' },
+    { id: 'tender',        name: 'Tender Response Generator',        state: 'coming-soon' },
+    { id: 'quote-enhancer',name: 'Quote Enhancer',                   state: 'coming-soon' },
+    { id: 'swms',          name: 'SWMS & Safety Docs',               state: 'coming-soon' },
+    { id: 'customer-updates', name: 'Customer Progress Updates',     state: 'coming-soon' },
+    { id: 'handover-docs', name: 'Handover Documentation',           state: 'coming-soon' },
+    { id: 'review-booster',name: 'Review & Referral Booster',        state: 'coming-soon' },
+    { id: 'design-viz',    name: 'Design Visualiser',                state: 'coming-soon' }
+  ],
 
-    body {
-      font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--bg);
-      color: var(--text);
+  init: function(supabase) {
+    this._supabase = supabase;
+    this._render();
+  },
+
+  _render: function() {
+    var container = document.getElementById('cl-tab-outputs');
+    if (!container) return;
+
+    var self = this;
+    var html = "<div class=\"outputs-layout\">";
+
+    // Left sidebar - tool list
+    html += "<div class=\"outputs-sidebar\">";
+    html += "<div class=\"outputs-sidebar-title\">AI Tool Outputs</div>";
+    this._tools.forEach(function(tool) {
+      var cls = "tool-row";
+      if (tool.state === "coming-soon") cls += " tool-row-coming";
+      if (self._selectedTool === tool.id) cls += " tool-row-active";
+      var badge = tool.state === "coming-soon" ? " <span class=\"tool-coming-badge\">Coming Soon</span>" : "";
+      html += "<div class=\"" + cls + "\" data-tool-id=\"" + tool.id + "\">" + tool.name + badge + "</div>";
+    });
+    html += "</div>";
+
+    // Right panel - outputs
+    html += "<div class=\"outputs-panel\" id=\"outputs-panel\">";
+    if (!this._selectedTool) {
+      html += "<div class=\"outputs-empty\">Select a tool from the list to view its outputs.</div>";
+    }
+    html += "</div>";
+
+    html += "</div>";
+    container.innerHTML = html;
+
+    // Wire up tool row clicks
+    var rows = container.querySelectorAll(".tool-row:not(.tool-row-coming)");
+    rows.forEach(function(row) {
+      row.addEventListener("click", function() {
+        self._selectedTool = row.getAttribute("data-tool-id");
+        // Update active state
+        container.querySelectorAll(".tool-row").forEach(function(r) {
+          r.classList.remove("tool-row-active");
+        });
+        row.classList.add("tool-row-active");
+        self._loadOutputs(self._selectedTool);
+      });
+    });
+  },
+
+  _loadOutputs: function(toolId) {
+    var panel = document.getElementById("outputs-panel");
+    if (!panel) return;
+    var self = this;
+
+    panel.innerHTML = "<div class=\"outputs-loading\">Loading outputs…</div>";
+
+    if (!this._supabase) {
+      panel.innerHTML = "<div class=\"outputs-empty\">Unable to load outputs. Please refresh the page.</div>";
+      return;
     }
 
-    /* ─── HEADER ─── */
-    
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:68px;background:#4A6D8C;box-shadow:0 2px 8px rgba(0,0,0,0.15);border-bottom:none;}
-
-.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
-.topbar-logo img{height:38px;width:auto;display:block;}
-
-.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
-.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
-
-    /* ─── MAIN LAYOUT ─── */
-    .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
-
-    .page-header { margin-bottom: 28px; }
-    .page-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .page-subtitle { color: var(--text-muted); font-size: 15px; }
-
-    /* ─── STATS BAR ─── */
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-
-    .stat-card {
-      background: var(--white);
-      padding: 18px 20px;
-      border-radius: 10px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      border-left: 4px solid var(--blue);
-    }
-
-    .stat-card.orange { border-left-color: var(--orange); }
-    .stat-card.green { border-left-color: var(--green); }
-    .stat-card.purple { border-left-color: #7b2d8b; }
-    .stat-card.teal { border-left-color: #0d9488; }
-
-    .stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 4px; }
-    .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
-
-    /* ─── PRIMARY TABS ─── */
-    .primary-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 28px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    .primary-tabs::-webkit-scrollbar { display: none; }
-
-    .ptab {
-      padding: 13px 24px;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-    }
-
-    .ptab:hover { color: var(--blue); }
-    .ptab.active { color: var(--blue); border-bottom-color: var(--orange); }
-
-    .tab-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      height: 20px;
-      padding: 0 6px;
-      background: var(--orange);
-      color: white;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .tab-badge.blue { background: var(--blue); }
-    .tab-badge.green { background: var(--green); }
-    .tab-badge.grey { background: #aaa; }
-
-    .ptab-content { display: none; }
-    .ptab-content.active > .ptab-content { display: block; }
-    .ptab-content.active { display: block; }
-
-    /* ─── CARDS ─── */
-    .card {
-      background: var(--white);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      margin-bottom: 20px;
-    }
-
-    .card-header {
-      padding: 20px 24px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .card-title { font-size: 17px; font-weight: 700; color: var(--text); }
-    .card-body { padding: 20px 24px 24px; }
-
-    /* ─── BUTTONS ─── */
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: inherit;
-      transition: all 0.2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-primary { background: var(--blue); color: white; }
-    .btn-primary:hover { background: #144070; }
-    .btn-orange { background: var(--orange); color: white; }
-    .btn-orange:hover { background: #c74408; }
-    .btn-green { background: var(--green); color: white; }
-    .btn-green:hover { background: #218838; }
-    .btn-red { background: var(--red); color: white; }
-    .btn-red:hover { background: #c82333; }
-    .btn-grey { background: #f0f0f0; color: #555; }
-    .btn-grey:hover { background: #e0e0e0; }
-    .btn-outline { background: white; color: var(--blue); border: 2px solid var(--blue); }
-    .btn-outline:hover { background: var(--blue-light); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-    .btn-full { width: 100%; justify-content: center; }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-    /* ─── FORMS ─── */
-    .form-group { margin-bottom: 16px; }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    input[type="text"], input[type="url"], input[type="date"],
-    textarea, select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      color: var(--text);
-      transition: border-color 0.2s;
-      background: white;
-    }
-
-    input:focus, textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--blue);
-    }
-
-    textarea { resize: vertical; min-height: 80px; }
-    .help-text { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
-
-    /* ─── INFO BOXES ─── */
-    .info-box {
-      padding: 14px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      line-height: 1.6;
-      margin-bottom: 18px;
-      border-left: 4px solid var(--blue);
-      background: var(--blue-light);
-      color: var(--text);
-    }
-
-    .info-box.orange { border-left-color: var(--orange); background: var(--orange-light); }
-    .info-box.green { border-left-color: var(--green); background: var(--green-light); }
-    .info-box.red { border-left-color: var(--red); background: #fef2f2; }
-
-    /* ─── LOADING ─── */
-    .loading { text-align: center; padding: 48px; display: none; }
-    .loading.show { display: block; }
-
-    .spinner {
-      border: 3px solid #f0f0f0;
-      border-top: 3px solid var(--blue);
-      border-radius: 50%;
-      width: 40px; height: 40px;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto 16px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ─── EMPTY STATE ─── */
-    .empty-state { text-align: center; padding: 64px 20px; color: var(--text-muted); }
-    .empty-state-icon { font-size: 52px; margin-bottom: 14px; opacity: 0.4; }
-    .empty-state h3 { font-size: 18px; color: #555; margin-bottom: 8px; }
-    .empty-state p { font-size: 14px; }
-
-    /* ─── MODAL ─── */
-    .modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-
-    .modal.show { display: flex; }
-
-    .modal-content {
-      background: white;
-      border-radius: 14px;
-      width: 100%;
-      max-width: 640px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 32px;
-    }
-
-    .modal-content.wide { max-width: 900px; }
-
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .modal-title { font-size: 20px; font-weight: 700; }
-
-    .btn-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #aaa;
-      line-height: 1;
-      padding: 0 4px;
-    }
-
-    .btn-close:hover { color: #555; }
-
-    /* ════════════════════════════════════════════
-       TAB 1: UPLOAD & IMPORT
-    ════════════════════════════════════════════ */
-
-    .upload-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .upload-card {
-      border: 2px dashed var(--border);
-      border-radius: 12px;
-      padding: 28px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.25s;
-      background: white;
-    }
-
-    .upload-card:hover {
-      border-color: var(--blue);
-      background: var(--blue-light);
-      transform: translateY(-2px);
-    }
-
-    .upload-card.connected {
-      border-color: var(--green);
-      border-style: solid;
-      background: var(--green-light);
-    }
-
-    .upload-icon { font-size: 40px; margin-bottom: 12px; display: block; }
-    .upload-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-    .upload-desc { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-
-    /* ════════════════════════════════════════════
-       TAB 2: SOURCE MATERIAL REVIEW
-    ════════════════════════════════════════════ */
-
-    .filter-bar {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-      align-items: center;
-    }
-
-    .filter-btn {
-      padding: 7px 14px;
-      border: 1.5px solid var(--border);
-      background: white;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 12px;
-      font-weight: 600;
-      color: #555;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
-
-    .filter-btn:hover { border-color: var(--blue); color: var(--blue); }
-    .filter-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
-
-    .search-input {
-      flex: 1;
-      min-width: 200px;
-      padding: 8px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      font-size: 13px;
-      font-family: inherit;
-    }
-
-    .search-input:focus { outline: none; border-color: var(--blue); }
-
-    /* Secondary tabs (Pending/Approved/Rejected) */
-    .secondary-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    .stab {
-      padding: 9px 20px;
-      border: 2px solid var(--border);
-      background: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 600;
-      color: #666;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-    }
-
-    .stab:hover { border-color: var(--blue); }
-    .stab.active { background: var(--blue); color: white; border-color: var(--blue); }
-
-    /* Review Items */
-    .review-item {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 14px;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-
-    .review-item:hover { border-color: #ccc; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
-    .review-item.selected { border-color: var(--blue); background: var(--blue-light); }
-
-    .review-item-header {
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      cursor: pointer;
-    }
-
-    .review-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
-
-    .review-item-thumb {
-      width: 60px; height: 60px;
-      border-radius: 8px;
-      object-fit: cover;
-      flex-shrink: 0;
-      background: #f0f0f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-    }
-
-    .review-item-thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-
-    .review-item-info { flex: 1; min-width: 0; }
-
-    .review-item-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .review-item-meta { font-size: 12px; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
-
-    .cat-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-
-    .cat-badge.orange { background: var(--orange-light); color: var(--orange); }
-    .cat-badge.green { background: var(--green-light); color: var(--green); }
-    .cat-badge.purple { background: #f5eeff; color: #7b2d8b; }
-
-    .review-item-actions {
-      padding: 10px 18px 14px;
-      display: flex;
-      gap: 8px;
-      border-top: 1px solid var(--border);
-      flex-wrap: wrap;
-    }
-
-    /* Bulk actions */
-    .bulk-bar {
-      background: var(--blue);
-      border-radius: 10px;
-      padding: 14px 18px;
-      display: none;
-      margin-bottom: 16px;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-
-    .bulk-bar.show { display: flex; }
-    .bulk-bar-label { color: white; font-size: 14px; font-weight: 600; }
-    .bulk-bar-actions { display: flex; gap: 8px; }
-
-    /* Content grid (approved view) */
-    .content-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-    }
-
-    .content-card {
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.07);
-      cursor: pointer;
-      transition: all 0.2s;
-      border: 1.5px solid transparent;
-    }
-
-    .content-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-      border-color: var(--blue);
-    }
-
-    .content-card-img {
-      width: 100%;
-      height: 160px;
-      object-fit: cover;
-      background: #f0f0f0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 48px;
-    }
-
-    .content-card-img img { width: 100%; height: 100%; object-fit: cover; }
-
-    .content-card-info { padding: 12px 14px; }
-    .content-card-title { font-size: 13px; font-weight: 600; margin-bottom: 6px; line-height: 1.4; }
-    .content-card-meta { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; }
-
-    /* ════════════════════════════════════════════
-       TAB 3: PUBLISHING QUEUE
-    ════════════════════════════════════════════ */
-
-    .pub-secondary-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
-    }
-
-    /* Publishing post card */
-    .pub-card {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      margin-bottom: 16px;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-
-    .pub-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.09); }
-    .pub-card.approved { border-left: 4px solid var(--green); }
-    .pub-card.rejected { border-left: 4px solid var(--red); }
-    .pub-card.pending_approval { border-left: 4px solid var(--orange); }
-    .pub-card.scheduled { border-left: 4px solid var(--blue); }
-    .pub-card.posted { border-left: 4px solid #aaa; }
-
-    .pub-card-main {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
-      gap: 20px;
-      padding: 20px;
-      align-items: start;
-    }
-
-    .pub-card-graphic {
-      width: 120px;
-      height: 120px;
-      border-radius: 10px;
-      object-fit: cover;
-      background: linear-gradient(135deg, var(--blue-light), #dbeafe);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      flex-shrink: 0;
-      overflow: hidden;
-    }
-
-    .pub-card-graphic img { width: 100%; height: 100%; object-fit: cover; }
-
-    .pub-card-content { min-width: 0; }
-
-    .pub-card-meta {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-bottom: 10px;
-    }
-
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .status-badge.pending { background: var(--orange-light); color: var(--orange); }
-    .status-badge.approved { background: var(--green-light); color: var(--green); }
-    .status-badge.rejected { background: #fef2f2; color: var(--red); }
-    .status-badge.scheduled { background: var(--blue-light); color: var(--blue); }
-    .status-badge.posted { background: #f0f0f0; color: #666; }
-
-    .platform-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
-      background: #f0f0f0;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #555;
-    }
-
-    .pub-card-text {
-      font-size: 13px;
-      line-height: 1.6;
-      color: #444;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .pub-card-date { font-size: 12px; color: var(--text-muted); }
-
-    .pub-card-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex-shrink: 0;
-      min-width: 120px;
-    }
-
-    .pub-card-footer {
-      padding: 12px 20px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      background: #fafafa;
-    }
-
-    /* Schedule picker inline */
-    .schedule-inline {
-      display: none;
-      padding: 14px 20px;
-      border-top: 1px solid var(--border);
-      background: var(--blue-light);
-      gap: 14px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .schedule-inline.show { display: flex; }
-    .schedule-inline input { width: auto; padding: 8px 12px; }
-
-    /* ════════════════════════════════════════════
-       TAB 4: AI TOOL OUTPUTS
-    ════════════════════════════════════════════ */
-
-    .tool-outputs-layout {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      gap: 24px;
-      min-height: 500px;
-    }
-
-    /* Tool tile sidebar */
-    .tool-tiles { display: flex; flex-direction: column; gap: 10px; }
-
-    .tool-tile {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      padding: 14px 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .tool-tile:hover { border-color: var(--blue); background: var(--blue-light); }
-    .tool-tile.active { border-color: var(--blue); background: var(--blue-light); box-shadow: 0 2px 8px rgba(26,84,144,0.15); }
-
-    .tool-tile.inactive {
-      opacity: 0.55;
-      cursor: pointer;
-      background: #fafafa;
-    }
-
-    .tool-tile.inactive:hover { opacity: 0.75; border-color: var(--orange); background: var(--orange-light); }
-
-    .tool-tile-icon { font-size: 24px; flex-shrink: 0; }
-
-    .tool-tile-info { flex: 1; min-width: 0; }
-    .tool-tile-name { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-    .tool-tile-count { font-size: 11px; color: var(--text-muted); }
-
-    .tool-tile-lock { font-size: 14px; opacity: 0.5; }
-
-    /* Tool output panel */
-    .tool-output-panel {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-      min-height: 400px;
-      overflow: hidden;
-    }
-
-    .tool-output-header {
-      padding: 20px 24px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .tool-output-title { font-size: 17px; font-weight: 700; }
-    .tool-output-body { padding: 24px; }
-
-    /* Upsell panel */
-    .upsell-panel {
-      padding: 40px 32px;
-      text-align: center;
-    }
-
-    .upsell-icon { font-size: 56px; margin-bottom: 16px; }
-    .upsell-title { font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-    .upsell-desc { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 24px; max-width: 400px; margin-left: auto; margin-right: auto; }
-    .upsell-price { font-size: 24px; font-weight: 700; color: var(--blue); margin-bottom: 20px; }
-    .upsell-features { text-align: left; max-width: 360px; margin: 0 auto 28px; }
-    .upsell-feature { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 13px; color: #444; border-bottom: 1px solid #f0f0f0; }
-    .upsell-feature:last-child { border-bottom: none; }
-
-    /* Output document list */
-    .output-list { display: flex; flex-direction: column; gap: 12px; }
-
-    .output-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 14px 16px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-
-    .output-item:hover { border-color: var(--blue); background: var(--blue-light); }
-
-    .output-item-icon { font-size: 28px; flex-shrink: 0; }
-
-    .output-item-info { flex: 1; min-width: 0; }
-    .output-item-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
-    .output-item-meta { font-size: 12px; color: var(--text-muted); }
-
-    .output-item-actions { display: flex; gap: 6px; }
-
-    /* Published sub-section inside AI Tool Outputs */
-    .published-section { margin-top: 28px; }
-    .published-section-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 14px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .published-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 14px;
-    }
-
-    .published-card {
-      background: white;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      transition: all 0.2s;
-    }
-
-    .published-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.1); }
-
-    .published-card-img {
-      width: 100%; height: 130px;
-      object-fit: cover;
-      background: linear-gradient(135deg, var(--blue-light), #dbeafe);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 36px;
-      overflow: hidden;
-    }
-
-    .published-card-img img { width: 100%; height: 100%; object-fit: cover; }
-
-    .published-card-info { padding: 10px 12px; }
-    .published-card-date { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
-    .published-card-platforms { display: flex; gap: 4px; flex-wrap: wrap; }
-
-    /* ─── WEBSITE MODAL ─── */
-    .url-input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 8px;
-      font-size: 14px;
-      margin-bottom: 12px;
-      font-family: inherit;
-    }
-
-    /* ─── DRIVE MODAL ─── */
-    .drive-folder-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 14px 16px;
-      border: 1.5px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .drive-folder-item:hover { border-color: var(--blue); background: var(--blue-light); }
-
-    /* ─── DETAIL MODAL ─── */
-    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-
-    @media (max-width: 768px) {
-      .tool-outputs-layout { grid-template-columns: 1fr; }
-      .pub-card-main { grid-template-columns: 1fr; }
-      .pub-card-actions { flex-direction: row; }
-      .detail-grid { grid-template-columns: 1fr; }
-      .header { padding: 0 20px; }
-      .container { padding: 20px 16px; }
-    }
-  
-    .topbar-logo { height: 38px; display: block; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
-    .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
-    .topbar-link:hover { text-decoration: underline; }
-    .topbar-account { position: relative; }
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .topbar-nav a:hover{color:#fff;}
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--border); }
-    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
-    .account-dropdown-item:hover { background: var(--bg-page); }
-    .topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}
-    .topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;cursor:pointer;}
-</style>
-</head>
-<body>
-
-<div class="topbar">
-      <a href="index.html" class="topbar-logo">
-    <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
-  </a>
-      <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Dashboard</a></div>
-      <nav class="topbar-right">
-      <div class="topbar-account" id="account-menu">
-        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
-        <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email">—</div>
-          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
-        </div>
-      </nav>
-    </div>
-</div>
-
-<div class="container">
-
-<div class="page-header">
-    <h1 class="page-title">Content Library</h1>
-    <p class="page-subtitle">Your centralised hub — source material for AI tools and a publishing pipeline for marketing output</p>
-  </div>
-
-<div class="stats-bar">
-    <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
-    <div class="stat-card orange"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
-    <div class="stat-card green"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card teal"><div class="stat-value" id="stat-published">0</div><div class="stat-label">Published</div></div>
-  </div>
-
-<div class="primary-tabs">
-    <button class="ptab active" onclick="switchPTab('upload')">📤 Upload & Import</button>
-    <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review <span class="tab-badge" id="badge-pending">0</span></button>
-    <button class="ptab" onclick="switchPTab('outputs')">🤖 AI Tool Outputs & Published</button>
-  </div>
-
-  <div id="cl-tab-upload" class="ptab-content active"></div>
-  <div id="cl-tab-review" class="ptab-content"></div>
-  <div id="cl-tab-outputs" class="ptab-content"></div>
-
-</div>
-
-<div class="modal" id="modal-website">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">🌐 Import from Website</div>
-      <button class="btn-close" onclick="closeModal('modal-website')">×</button>
-    </div>
-    <p style="color:#666; font-size:14px; margin-bottom:16px;">Enter your website URL. AI will scan for project galleries, service descriptions, testimonials, team bios, and company information.</p>
-    <input type="url" class="url-input" id="website-url" placeholder="https://yourwebsite.com.au">
-    <button class="btn btn-primary btn-full" onclick="scrapeWebsite()">🔍 Scan Website</button>
-  </div>
-</div>
-
-<!-- Google Drive Folders -->
-<div class="modal" id="modal-drive">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">📂 Import from Google Drive</div>
-      <button class="btn-close" onclick="closeModal('modal-drive')">×</button>
-    </div>
-    <p style="color:#666; font-size:14px; margin-bottom:16px;">Select a folder to import images from:</p>
-    <div id="drive-folders-list"><div class="loading show"><div class="spinner"></div><p>Loading folders...</p></div></div>
-  </div>
-</div>
-
-<!-- Approve + Schedule -->
-<div class="modal" id="modal-schedule">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">📅 Approve & Schedule Post</div>
-      <button class="btn-close" onclick="closeModal('modal-schedule')">×</button>
-    </div>
-    <div class="info-box green">Post approved! Set a date and time to schedule it for posting, or approve without scheduling to post manually later.</div>
-    <div class="form-group">
-      <label>Schedule Date (Optional)</label>
-      <input type="date" id="sched-date">
-    </div>
-    <div class="form-group">
-      <label>Schedule Time</label>
-      <input type="time" id="sched-time" value="09:00">
-    </div>
-    <div style="display:flex; gap:10px; margin-top:16px;">
-      <button class="btn btn-green" style="flex:1" onclick="confirmApprove(true)">📅 Approve & Schedule</button>
-      <button class="btn btn-outline" style="flex:1" onclick="confirmApprove(false)">✅ Approve Only</button>
-    </div>
-  </div>
-</div>
-
-<!-- Reject / Request Revision -->
-<div class="modal" id="modal-reject">
-  <div class="modal-content">
-    <div class="modal-header">
-      <div class="modal-title">🔄 Request Revision</div>
-      <button class="btn-close" onclick="closeModal('modal-reject')">×</button>
-    </div>
-    <div class="info-box orange">Tell us what you'd like changed and AI will regenerate the post.</div>
-    <div class="form-group">
-      <label>What needs to change?</label>
-      <textarea id="reject-reason" placeholder="E.g. Too salesy — make it more friendly. Add something about our 10-year warranty. Change the tone to casual." rows="4"></textarea>
-    </div>
-    <div style="display:flex; gap:10px; margin-top:16px;">
-      <button class="btn btn-orange" style="flex:1" onclick="confirmReject()">🔄 Request Revision</button>
-      <button class="btn btn-grey" style="flex:1" onclick="closeModal('modal-reject')">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Content Detail / Edit -->
-<div class="modal" id="modal-detail">
-  <div class="modal-content wide">
-    <div class="modal-header">
-      <div class="modal-title">✏️ Review & Edit</div>
-      <button class="btn-close" onclick="closeModal('modal-detail')">×</button>
-    </div>
-    <div id="modal-detail-body"></div>
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./supabase-client.js"></script>
-<script src="./auth.js"></script>
-<script>
-requireAuth();
-
-// ─── STATE ────────────────────────────────────
-let currentReviewStatus = 'pending';
-let currentReviewFilter = 'all';
-let currentQueueStatus = 'pending_approval';
-let selectedItems = new Set();
-let allReviewItems = [];
-let allLibraryItems = [];
-let currentDetailItem = null;
-let pendingActionItemId = null;
-let currentToolId = null;
-
-// All 16 core tools + expandable
-const ALL_TOOLS = [
-  { id: 'social',        icon: '📣', name: 'Marketing & Social Media Manager', price: 59,  link: '/social.html',   outputType: 'posts' },
-  { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               price: 79,  link: '/chatbot.html',  outputType: 'conversations' },
-  { id: 'email',         icon: '📧', name: 'Smart Email Assistant',            price: 69,  link: '/email.html',    outputType: 'emails' },
-  { id: 'bi',            icon: '📊', name: 'Business Intelligence Dashboard',  price: 89,  link: '/bi.html',       outputType: 'reports' },
-  { id: 'tender',        icon: '📑', name: 'Tender Response Generator',        price: 99,  link: '/tender.html',   outputType: 'documents' },
-  { id: 'quote',         icon: '💰', name: 'Quote Generator',                  price: 69,  link: '/quote.html',    outputType: 'documents' },
-  { id: 'scheduling',    icon: '📅', name: 'Smart Job Scheduling',             price: 59,  link: '/scheduling.html', outputType: 'schedules' },
-  { id: 'progress',      icon: '🔔', name: 'Customer Progress Updates',        price: 49,  link: '/progress.html', outputType: 'messages' },
-  { id: 'visualiser',    icon: '🎨', name: 'Design Visualiser',                price: 79,  link: '/visualiser.html', outputType: 'designs' },
-  { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Documents',          price: 69,  link: '/swms.html',     outputType: 'documents' },
-  { id: 'invoice',       icon: '🧾', name: 'Invoice Automation',               price: 59,  link: '/invoice.html',  outputType: 'documents' },
-  { id: 'website',       icon: '✍️', name: 'Website Content Writer',           price: 59,  link: '/website.html',  outputType: 'content' },
-  { id: 'review',        icon: '⭐', name: 'Review & Referral Booster',        price: 49,  link: '/review.html',   outputType: 'messages' },
-  { id: 'handover',      icon: '📋', name: 'Handover Documentation',           price: 59,  link: '/handover.html', outputType: 'documents' },
-  { id: 'news',          icon: '📰', name: 'Industry News & Updates Digest',   price: 39,  link: '/news.html',     outputType: 'content' },
-  { id: 'strategic',     icon: '🏗️', name: 'Strategic & Operational Plan Generator', price: 119, link: '/strategic.html', outputType: 'documents' },
-];
-
-// ─── PRIMARY TAB SWITCHING ────────────────────
-window.switchPTab = function(tab) {
-  document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.ptab-content').forEach(c => c.classList.remove('active'));
-
-  const tabMap = { upload: 0, review: 1, queue: 2, outputs: 3 };
-  document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
-  document.getElementById(`cl-tab-${tab}`).classList.add('active');
-
-  if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.init(window.supabaseClient);
-  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.init(window.supabaseClient);
-  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);
+    this._supabase
+      .from("content_library")
+      .select("id, title, body, created_at, tool_tags, status, source")
+      .eq("status", "approved")
+      .eq("source", "tool")
+      .contains("tool_tags", [toolId])
+      .order("created_at", { ascending: false })
+      .then(function(result) {
+        if (result.error) {
+          panel.innerHTML = "<div class=\"outputs-empty\">Could not load outputs.</div>";
+          return;
+        }
+        var rows = result.data || [];
+        if (rows.length === 0) {
+          panel.innerHTML = "<div class=\"outputs-empty\">No outputs yet for this tool. Outputs will appear here once the tool generates and approves content.</div>";
+          return;
+        }
+        var html = "<div class=\"outputs-list\">";
+        rows.forEach(function(row) {
+          var date = row.created_at ? new Date(row.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
+          var excerpt = row.body ? row.body.substring(0, 180).replace(/</g, "&lt;") + (row.body.length > 180 ? "…" : "") : "";
+          html += "<div class=\"output-card\">";
+          html += "<div class=\"output-card-title\">" + (row.title || "Untitled") + "</div>";
+          html += "<div class=\"output-card-date\">" + date + "</div>";
+          html += "<div class=\"output-card-excerpt\">" + excerpt + "</div>";
+          html += "<button class=\"output-card-btn\" data-id=\"" + row.id + "\">View Full</button>";
+          html += "</div>";
+        });
+        html += "</div>";
+        panel.innerHTML = html;
+
+        // Wire up View Full buttons
+        panel.querySelectorAll(".output-card-btn").forEach(function(btn) {
+          btn.addEventListener("click", function() {
+            self._viewFull(btn.getAttribute("data-id"), rows);
+          });
+        });
+      });
+  },
+
+  _viewFull: function(id, rows) {
+    var row = rows.find(function(r) { return String(r.id) === String(id); });
+    if (!row) return;
+    var modal = document.getElementById("item-modal");
+    if (!modal) return;
+    var titleEl = document.getElementById("modal-item-title");
+    var bodyEl = document.getElementById("modal-item-body");
+    if (titleEl) titleEl.textContent = row.title || "Untitled";
+    if (bodyEl) bodyEl.textContent = row.body || "";
+    modal.classList.add("active");
+  }
 };
-
-// ─── STATS ────────────────────────────────────
-
-  async function loadStats() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
-
-  const [libResult, queueResult, publishedResult] = await Promise.all([
-    supabaseClient.from('content_library').select('status', { count: 'exact' }).eq('user_id', user.id),
-    supabaseClient.from('publishing_queue').select('status', { count: 'exact' }).eq('user_id', user.id).in('status', ['pending_approval','approved','scheduled']),
-    supabaseClient.from('publishing_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'posted')
-  ]);
-
-  const items = libResult.data || [];
-  const total = items.length;
-  const pending = items.filter(i => i.status === 'pending').length;
-  const approved = items.filter(i => i.status === 'approved').length;
-
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-pending').textContent = pending;
-  document.getElementById('stat-approved').textContent = approved;
-  var _sq = document.getElementById('stat-queue'); if (_sq) _sq.textContent = queueResult.count || 0;
-  document.getElementById('stat-published').textContent = publishedResult.count || 0;
-  document.getElementById('badge-pending').textContent = pending;
-  document.getElementById('badge-queue').textContent = queueResult.count || 0;
-  document.getElementById('stab-pending-count').textContent = pending;
-}
-
-  // Shared utilities - exposed on window for tab JS files
-  function escHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-  window.escHtml = escHtml;
-
-  function getTypeIcon(type) {
-  return { image:'📸', document:'📄', testimonial:'💬', project:'✅', text:'📝', word:'📝', pdf:'📑', powerpoint:'📊', excel:'📊' }[type] || '📦';
-}
-  window.getTypeIcon = getTypeIcon;
-
-  function getDocIcon(type) {
-  return { pdf:'📑', word:'📝', powerpoint:'📊', excel:'📊', document:'📄', content:'✍️', text:'📝' }[type] || '📄';
-}
-  window.getDocIcon = getDocIcon;
-
-  function getFileType(name) {
-  const ext = name.toLowerCase().split('.').pop();
-  return { pdf:'pdf',doc:'word',docx:'word',ppt:'powerpoint',pptx:'powerpoint',xls:'excel',xlsx:'excel',txt:'text',jpg:'image',jpeg:'image',png:'image',webp:'image',heic:'image' }[ext] || 'unknown';
-}
-
-function fileToBase64(file) {
-  return new Promise((res,rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-function compressImage(file) {
-  return new Promise((res,rej) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let [w,h] = [img.width, img.height];
-        const max = 1920;
-        if (w > max || h > max) { if (w>h) { h=h/w*max; w=max; } else { w=w/h*max; h=max; } }
-        canvas.width=w; canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
-      };
-      img.onerror = rej;
-      img.src = e.target.result;
-    };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
-  });
-}
-
-// ─── INIT ──────────────────────────────────────
-setTimeout(() => {
-  loadStats();
-
-  // Check for OAuth callbacks
-  const params = new URLSearchParams(window.location.search);
-  if (params.get('gdrive_connected') === 'true') {
-    alert('✅ Google Drive connected!');
-    loadConnectionStatus();
-    window.history.replaceState({}, '', window.location.pathname);
-  }
-  if (params.get('error')) {
-    alert('❌ Connection error: ' + params.get('details'));
-    window.history.replaceState({}, '', window.location.pathname);
-  }
-}, 400);
-
-// ── ENHANCED PHOTO UPLOAD ─────────────────────────────────────────────────────
-
-let selectedPhotoFiles = [];
-let generatedPostText = '';
-
-['camera-input', 'photo-library-input'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('change', handlePhotoSelection);
-});
-  window.getFileType = getFileType;
-
-  const catBadge = (cat) => {
-    const map = {
-      'completed-jobs': ['green','✅ Completed Job'],
-      'marketing': ['orange','🎯 Marketing'],
-      'testimonial': ['purple','💬 Testimonial'],
-      'tips': ['','💡 Tips'],
-      'team-culture': ['','👥 Team'],
-      'company': ['','🏢 Company'],
-      'service': ['','⚙️ Service'],
-    };
-    const [cls, label] = map[cat] || ['', cat];
-    return `<span class="cat-badge ${cls}">${label || cat}</span>`;
-  }
-  window.catBadge = catBadge;
-
-  // Dynamic loader - tab JS files with cache-busting
-  (function() {
-    var s = window.supabaseClient;
-    function loadScript(src, cb) {
-      var el = document.createElement("script");
-      el.src = src + "?v=" + Date.now();
-      el.onload = cb;
-      document.body.appendChild(el);
-    }
-    loadScript("cl-upload.js", function() { if (window.CL_UPLOAD) window.CL_UPLOAD.init(s); });
-    loadScript("cl-review.js", function() { if (window.CL_REVIEW) window.CL_REVIEW.init(s); });
-    loadScript("cl-profile.js", function() { if (window.CL_PROFILE) window.CL_PROFILE.init(s); });
-    loadScript("cl-outputs.js", function() { if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s); });
-  })();
-</script>
-
-<script>
-    document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
-    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
-    var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
-    window.dashboardInit = async function() {
-      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
-      if (!user || _authErr) { window.location.href = "login.html"; return; }
-      const email = user.email || "";
-      document.getElementById("account-dropdown-email").textContent = email;
-      document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
-      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
-      const ws = document.getElementById("welcome-strip");
-      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
-      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
-    };
-    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
-  </script>
-</body>
-</html>
