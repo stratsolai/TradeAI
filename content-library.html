@@ -1032,10 +1032,9 @@ window.switchPTab = function(tab) {
   document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
   document.getElementById(`cl-tab-${tab}`).classList.add('active');
 
+  if (tab === 'upload' && window.CL_UPLOAD) window.CL_UPLOAD.init(window.supabaseClient);
   if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.init(window.supabaseClient);
-  if (tab === 'queue' && window.CL_QUEUE) window.CL_QUEUE.init(window.supabaseClient);
-  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);
-};
+  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);};
 
 // ─── STATS ────────────────────────────────────
 
