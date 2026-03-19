@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Account Management — StaxAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/tools-data.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #F5F7FA;
+      color: #333333;
+      min-height: 100vh;
+    }
+
+    /* Topbar */
+    .topbar {
+      height: 68px;
+      background: #4A6D8C;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-logo a {
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .topbar-logo img {
+      height: 38px;
+    }
+    .topbar-nav {
+      margin-left: 64px;
+    }
+    .topbar-nav a {
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .topbar-nav a:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .topbar-account-wrap {
+      position: relative;
+    }
+    .topbar-account-btn {
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .topbar-account-btn:hover { background: rgba(255,255,255,0.2); }
+    .account-dropdown {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: calc(100% + 8px);
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      min-width: 220px;
+      z-index: 200;
+      overflow: hidden;
+    }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email {
+      padding: 12px 16px;
+      font-size: 13px;
+      color: #888;
+      border-bottom: 1px solid #eee;
+    }
+    .account-dropdown a,
+    .account-dropdown button {
+      display: block;
+      width: 100%;
+      padding: 11px 16px;
+      text-align: left;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: #333;
+      background: none;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .account-dropdown a:hover,
+    .account-dropdown button:hover { background: #f5f7fa; }
+    .account-dropdown .sign-out { color: #c4622a; }
+
+    /* Page layout */
+    .al-page {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+    .al-page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 36px;
+      font-weight: 800;
+      color: #1A3A5C;
+      margin-bottom: 32px;
+    }
+
+    /* Cards */
+    .al-card {
+      background: #fff;
+      border-radius: 12px;
+      border-left: 4px solid #1A5490;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 28px 28px 24px;
+      margin-bottom: 24px;
+    }
+    .al-card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: #1A3A5C;
+      margin-bottom: 18px;
+    }
+
+    /* Subscriptions */
+    .al-sub-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .al-sub-row:last-child { border-bottom: none; }
+    .al-sub-icon {
+      font-size: 24px;
+      width: 36px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .al-sub-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .al-sub-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: #333;
+    }
+    .al-sub-price {
+      font-size: 13px;
+      color: #888888;
+    }
+    .al-sub-status { flex-shrink: 0; }
+    .al-status-badge {
+      background: #e8f5e9;
+      color: #2e7d32;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+    .al-empty {
+      font-size: 14px;
+      color: #888;
+      padding: 8px 0;
+    }
+    .al-empty a {
+      color: #c4622a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .al-empty a:hover { text-decoration: underline; }
+
+    /* Billing */
+    .al-billing-btn {
+      display: inline-block;
+      background: #1A5490;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      padding: 10px 24px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 4px;
+    }
+    .al-billing-btn:hover { background: #164a7d; }
+    .al-billing-note {
+      font-size: 13px;
+      color: #888;
+      margin-top: 10px;
+    }
+
+    /* Account details */
+    .al-detail-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .al-detail-row:last-child { border-bottom: none; }
+    .al-detail-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #888;
+      width: 120px;
+      flex-shrink: 0;
+    }
+    .al-detail-value {
+      font-size: 14px;
+      color: #333;
+    }
+    .al-change-pw {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 14px;
+      color: #c4622a;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .al-change-pw:hover { text-decoration: underline; }
+    .al-coming-soon-note {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 4px;
+    }
+
+    /* User management placeholder */
+    .al-placeholder {
+      background: #f9f9f9;
+      border: 1px dashed #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      color: #aaa;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-logo">
+      <a href="/dashboard.html">
+        <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" />
+      </a>
+    </div>
+    <nav class="topbar-nav">
+      <a href="/dashboard.html">Dashboard</a>
+    </nav>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <div class="topbar-account-wrap">
+        <button class="topbar-account-btn" id="account-btn">
+          <span id="account-email-short">Account</span> ▾
+        </button>
+        <div class="account-dropdown" id="account-dropdown">
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <a href="/account.html">Account Management</a>
+          <button class="sign-out" id="sign-out-btn">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="al-page">
+    <h1 class="al-page-title">Account Management</h1>
+
+    <!-- Active Subscriptions -->
+    <div class="al-card">
+      <h2 class="al-card-title">Active Subscriptions</h2>
+      <div id="subscriptions-list">
+        <p class="al-empty">Loading your subscriptions...</p>
+      </div>
+    </div>
+
+    <!-- Billing -->
+    <div class="al-card">
+      <h2 class="al-card-title">Billing</h2>
+      <p style="font-size:14px;color:#555;margin-bottom:14px;">Manage your payment method, download invoices, or cancel a subscription via the Stripe billing portal.</p>
+      <button class="al-billing-btn" id="manage-billing-btn">Manage Billing</button>
+      <p class="al-billing-note">Opens in a new tab. Handled securely by Stripe.</p>
+    </div>
+
+    <!-- Account Details -->
+    <div class="al-card">
+      <h2 class="al-card-title">Account Details</h2>
+      <div class="al-detail-row">
+        <span class="al-detail-label">Email</span>
+        <span class="al-detail-value" id="account-details-email"></span>
+      </div>
+      <a href="/reset-password.html" class="al-change-pw">Change password</a>
+      <p class="al-coming-soon-note">Password reset coming soon.</p>
+    </div>
+
+    <!-- User Management placeholder -->
+    <div class="al-card">
+      <h2 class="al-card-title">User Management</h2>
+      <div class="al-placeholder">
+        User management — invite team members and manage access levels — coming soon.
+      </div>
+    </div>
+
+  </main>
+
+  <script src="/account-logic.js?v=" id="account-logic-script"></script>
+  <script>
+    document.getElementById('account-logic-script').src = '/account-logic.js?v=' + Date.now();
+  </script>
+
+</body>
+</html>
