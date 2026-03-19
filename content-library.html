@@ -895,12 +895,12 @@
     .btn-scan:hover { background: #1a4070; }
     .scan-status { font-size: 13px; color: #888; margin-top: 6px; }
     .connection-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 8px; }
-    .connection-tile { background: #fff; border: 1px solid #dde3ea; border-radius: 12px; padding: 18px 20px; display: flex; align-items: flex-start; gap: 16px; }
+    .connection-tile { background: #fff; border: 1px solid #dde3ea; border-radius: 12px; padding: 18px 20px; display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
     .connection-tile-icon { font-size: 28px; flex-shrink: 0; }
-    .connection-tile-info { flex: 1; min-width: 0; }
+    .connection-tile-info { flex: 1; min-width: 100px; }
     .connection-tile-name { font-size: 15px; font-weight: 700; color: #222; margin-bottom: 4px; }
     .connection-status-label { font-size: 13px; color: #888; margin-bottom: 8px; }
-    .connection-tile-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .connection-tile-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; margin-top: 4px; padding-left: 54px; }
     .status-badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
     .status-connected { background: #d4edda; color: #155724; }
     .status-disconnected { background: #f8d7da; color: #721c24; }
