@@ -13,7 +13,7 @@
       supabaseClient = supabase;
       var panel = document.getElementById('cl-tab-review');
       if (!panel) return;
-      panel.innerHTML = '<div id="review-sub-tabs" class="sub-tab-bar">' +
+      panel.innerHTML = '<div id="review-sub-tabs" class="secondary-tabs">' +
         '<button class="stab active" onclick="window.CL_REVIEW.switchStatus(\'pending\')">⏳ Pending</button>' +
         '<button class="stab" onclick="window.CL_REVIEW.switchStatus(\'approved\')">✅ Approved</button>' +
         '<button class="stab" onclick="window.CL_REVIEW.switchStatus(\'rejected\')">❌ Rejected</button>' +
