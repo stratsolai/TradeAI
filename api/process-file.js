@@ -3,7 +3,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId, fileName, fileType, fileData } = req.body;
+  const { userId, fileName, fileType, fileData, businessProfile } = req.body;
 
   if (!userId || !fileData || !fileType) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -39,6 +39,7 @@ module.exports = async (req, res) => {
 
     return res.status(200).json({
       success: true,
+      items: result.items || [],
       itemsCount: result.itemsCount,
       message: result.message
     });
