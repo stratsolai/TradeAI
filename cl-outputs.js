@@ -67,7 +67,7 @@ window.CL_OUTPUTS = {
     });
   },
 
-  _loadOutputs: function(toolId) {
+  _loadOutputs: async function(toolId) {
     var panel = document.getElementById("outputs-panel");
     if (!panel) return;
     var self = this;
@@ -79,9 +79,13 @@ window.CL_OUTPUTS = {
       return;
     }
 
+    var authResp = await this._supabase.auth.getUser();
+    var user = authResp.data ? authResp.data.user : null;
+    if (!user) { panel.innerHTML = '<div class="outputs-empty">Please sign in to view outputs.</div>'; return; }
     this._supabase
       .from("content_library")
       .select("id, title, body, created_at, tool_tags, status, source")
+      .eq("user_id", user.id)
       .eq("status", "approved")
       .eq("source", "tool")
       .contains("tool_tags", [toolId])
