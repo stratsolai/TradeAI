@@ -15,7 +15,7 @@ window.CL_UPLOAD = {
   // ── RENDER UPLOAD TAB HTML ──────────────────────────────────────────────────
 
   _renderUploadTab: function() {
-    const container = document.getElementById('tab-upload');
+    const container = document.getElementById('cl-tab-upload');
     if (!container) return;
     container.innerHTML = `
       <div class="upload-tab-inner">
@@ -408,7 +408,7 @@ window.CL_UPLOAD = {
   // ── UPLOAD CONFIRMATION ──────────────────────────────────────────────────────
 
   _showUploadConfirmation: function(type, count) {
-    const container = document.getElementById('tab-upload');
+    const container = document.getElementById('cl-tab-upload');
     if (!container) return;
     const msg = document.createElement('div');
     msg.className = 'upload-confirmation';
