@@ -204,6 +204,7 @@ window.CL_REVIEW = {
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
     const body = escHtml(item.body || '');
+    const bodyPreview = escHtml((item.body || '').substring(0, 120));
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -238,16 +239,14 @@ window.CL_REVIEW = {
       <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
+    <div class="review-preview-row" data-id="${id}"><button class="review-expand-btn" data-id="${id}" aria-label="Expand content">&#9660;</button><span class="review-body-preview">${bodyPreview}</span></div>
   </div>
   <div class="review-card-footer">
     <button class="btn-link review-toggle" data-id="${id}" data-section="body">&#8964; Content</button>
     <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
     <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
   </div>
-  <div class="review-section" id="review-body-${id}" style="display:none">
-    <div class="review-section-head"><span>Content</span><button class="btn-link review-close" data-id="${id}" data-section="body">Close</button></div>
-    <div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div>
-  </div>
+  <div class="review-body-expanded" id="review-body-${id}" style="display:none"><div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div></div>
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
@@ -266,6 +265,18 @@ window.CL_REVIEW = {
         if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
         self._updateBulkBar();
       });
+    });
+    document.getElementById('review-list').addEventListener('click', function(e) {
+      var btn = e.target.classList.contains('review-expand-btn') ? e.target : (e.target.closest ? e.target.closest('.review-expand-btn') : null);
+      if (!btn) return;
+      var id = btn.dataset.id;
+      var body = document.getElementById('review-body-' + id);
+      var preview = document.querySelector('.review-preview-row[data-id="' + id + '"]');
+      if (!body) return;
+      var expanded = body.style.display !== 'none';
+      body.style.display = expanded ? 'none' : 'block';
+      btn.innerHTML = expanded ? '&#9660;' : '&#9650;';
+      if (preview) preview.style.display = expanded ? '' : 'none';
     });
     document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'approved'); });
