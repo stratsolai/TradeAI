@@ -944,6 +944,8 @@
     <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
       <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Dashboard</a></div>
+      <div class="topbar-spacer"></div>
+      <a href="cl-settings.html" class="topbar-link">Settings</a>
       <nav class="topbar-right">
       <div class="topbar-account" id="account-menu">
         <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
@@ -972,13 +974,15 @@
 
 <div class="primary-tabs">
     <button class="ptab active" onclick="switchPTab('upload')">📤 Upload & Import</button>
-    <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review <span class="tab-badge" id="badge-pending">0</span></button>
-    <button class="ptab" onclick="switchPTab('outputs')">🤖 AI Tool Outputs & Published</button>
+    <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review</button>
+    <button class="ptab" onclick="switchPTab('outputs')">📄 Tool Outputs</button>
+    <button class="ptab" onclick="switchPTab('profile')">👤 Business Profile</button>
   </div>
 
   <div id="cl-tab-upload" class="ptab-content active"></div>
   <div id="cl-tab-review" class="ptab-content"></div>
   <div id="cl-tab-outputs" class="ptab-content"></div>
+  <div id="cl-tab-profile" class="ptab-content"></div>
 
 </div>
 
@@ -1101,13 +1105,14 @@ window.switchPTab = function(tab) {
   document.querySelectorAll('.ptab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.ptab-content').forEach(c => c.classList.remove('active'));
 
-  const tabMap = { upload: 0, review: 1, outputs: 2 };
+  const tabMap = { upload: 0, review: 1, outputs: 2, profile: 3 };
   document.querySelectorAll('.ptab')[tabMap[tab]].classList.add('active');
   document.getElementById(`cl-tab-${tab}`).classList.add('active');
 
   if (tab === 'upload' && window.CL_UPLOAD) window.CL_UPLOAD.init(window.supabaseClient);
   if (tab === 'review' && window.CL_REVIEW) window.CL_REVIEW.init(window.supabaseClient);
-  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);};
+  if (tab === 'outputs' && window.CL_OUTPUTS) window.CL_OUTPUTS.init(window.supabaseClient);
+  if (tab === 'profile' && window.CL_PROFILE) window.CL_PROFILE.init(window.supabaseClient);};
 
 // ─── STATS ────────────────────────────────────
 
