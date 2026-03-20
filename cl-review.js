@@ -237,8 +237,8 @@ window.CL_REVIEW = {
       <span class="review-type-badge">${escHtml(typeLabel)}</span>
     </div>
     <div class="review-card-preview-row">
-      <span class="review-body-preview">${escHtml(bodyRaw)}</span>
-      <button class="review-expand-btn btn-link" data-id="${id}" data-section="body" title="Expand content">&#8964;</button>
+      <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
+      <span class="review-body-preview" id="review-preview-${id}">${escHtml(bodyRaw)}</span>
     </div>
     <div class="review-card-meta-row">
       <span class="review-source-badge">${sourceLabel}</span>
@@ -249,10 +249,7 @@ window.CL_REVIEW = {
       </div>
     </div>
   </div>
-  <div class="review-section" id="review-body-${id}" style="display:none">
-    <div class="review-section-head"><span>Content</span><button class="btn-link review-close" data-id="${id}" data-section="body">Close</button></div>
-    <div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div>
-  </div>
+
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
@@ -278,13 +275,20 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
     });
-    document.querySelectorAll('.review-toggle, .review-expand-btn').forEach(function(btn) {
+    document.querySelectorAll('.review-toggle').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
-        if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
       });
     });
-    document.querySelectorAll('.review-close').forEach(function(btn) {
+    document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const preview = document.getElementById('review-preview-' + btn.dataset.id);
+        if (!preview) return;
+        const expanded = preview.classList.toggle('review-body-preview-expanded');
+        btn.innerHTML = expanded ? '&#9660;' : '&#9654;';
+      });
+    });    document.querySelectorAll('.review-close').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = 'none';
