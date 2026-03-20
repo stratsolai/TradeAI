@@ -204,7 +204,7 @@ window.CL_REVIEW = {
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
     const body = escHtml(item.content_text || '');
-    const bodyRaw = (item.content_text || '').split('\n')[0].substring(0, 120);
+    const bodyRaw = (item.content_text || '').replace(/\n/g, ' ').substring(0, 120);
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
