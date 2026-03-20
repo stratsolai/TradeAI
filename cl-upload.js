@@ -42,49 +42,9 @@ window.CL_UPLOAD = {
         "<a href=\"#\" id=\"cl-goto-review\" class=\"btn-link\">Go to Review tab</a>",
       "</div>",
       "<div class=\"upload-section\">",
-        "<div class=\"upload-section-title\">Import from Website</div>",
-        "<div class=\"website-import-row\">",
-          "<input type=\"url\" id=\"website-url-input\" class=\"input-url\" placeholder=\"https://yourwebsite.com.au\" />",
-          "<button id=\"website-scan-btn\" class=\"btn-primary\">Scan Website</button>",
-        "</div>",
-        "<div id=\"website-scan-status\" class=\"scan-status\" style=\"display:none\"></div>",
-      "</div>",
-      "<div class=\"upload-section\">",
         "<div class=\"upload-section-title\">Sources</div>",
-        "<div class=\"sources-tiles\">",
-          "<div class=\"source-tile\" id=\"email-source-tile\">",
-            "<div class=\"source-tile-icon\">📧</div>",
-            "<div class=\"source-tile-body\">",
-              "<div class=\"source-tile-name\">Business Email</div>",
-              "<div class=\"source-tile-desc\">Scans your business inbox for supplier updates, industry news and business content.</div>",
-            "</div>",
-            "<div class=\"source-tile-right\">",
-              "<span id=\"email-status-badge\" class=\"status-badge status-checking\">Checking...</span>",
-              "<div id=\"email-tile-action\" class=\"source-tile-action\"></div>",
-            "</div>",
-          "</div>",
-          "<div class=\"source-tile\" id=\"gdrive-source-tile\">",
-            "<div class=\"source-tile-icon\">📂</div>",
-            "<div class=\"source-tile-body\">",
-              "<div class=\"source-tile-name\">Google Drive</div>",
-              "<div class=\"source-tile-desc\">Imports photos and documents from your Drive folders.</div>",
-            "</div>",
-            "<div class=\"source-tile-right\">",
-              "<span id=\"gdrive-status-badge\" class=\"status-badge status-checking\">Checking...</span>",
-              "<div id=\"gdrive-tile-action\" class=\"source-tile-action\"></div>",
-            "</div>",
-          "</div>",
-          "<div class=\"source-tile\" id=\"website-source-tile\">",
-            "<div class=\"source-tile-icon\">🌐</div>",
-            "<div class=\"source-tile-body\">",
-              "<div class=\"source-tile-name\">Website</div>",
-              "<div class=\"source-tile-desc\">Scans your website pages for service descriptions, team info and other business content.</div>",
-            "</div>",
-            "<div class=\"source-tile-right\">",
-              "<span id=\"website-status-badge\" class=\"status-badge status-checking\">Checking...</span>",
-              "<div id=\"website-tile-action\" class=\"source-tile-action\"></div>",
-            "</div>",
-          "</div>",
+        "<div class=\"sources-tiles\" id=\"cl-sources-grid\">",
+          "<div class=\"source-tile source-tile-loading\"><span>Checking connections...</span></div>",
         "</div>",
       "</div>",
       "</div>"
@@ -106,10 +66,7 @@ window.CL_UPLOAD = {
     var docBrowseBtn = document.getElementById("cl-doc-browse-btn");
     var docInput = document.getElementById("cl-doc-input");
     if (docBrowseBtn && docInput) {
-      docBrowseBtn.addEventListener("click", function(e) {
-        e.stopPropagation();
-        docInput.click();
-      });
+      docBrowseBtn.addEventListener("click", function(e) { e.stopPropagation(); docInput.click(); });
       docInput.addEventListener("change", function(e) {
         var files = Array.from(e.target.files || []);
         if (files.length) self._handleDocUpload(files);
@@ -121,28 +78,15 @@ window.CL_UPLOAD = {
       dropZone.addEventListener("dragover", function(e) { e.preventDefault(); dropZone.classList.add("drag-over"); });
       dropZone.addEventListener("dragleave", function() { dropZone.classList.remove("drag-over"); });
       dropZone.addEventListener("drop", function(e) {
-        e.preventDefault();
-        dropZone.classList.remove("drag-over");
+        e.preventDefault(); dropZone.classList.remove("drag-over");
         var files = Array.from(e.dataTransfer.files || []);
         if (files.length) self._handleDocUpload(files);
       });
     }
     var dismissBtn = document.getElementById("cl-offline-dismiss");
-    if (dismissBtn) {
-      dismissBtn.addEventListener("click", function() {
-        var banner = document.getElementById("cl-offline-banner");
-        if (banner) banner.style.display = "none";
-      });
-    }
+    if (dismissBtn) { dismissBtn.addEventListener("click", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "none"; }); }
     var reviewLink = document.getElementById("cl-goto-review");
-    if (reviewLink) {
-      reviewLink.addEventListener("click", function(e) {
-        e.preventDefault();
-        if (typeof window.switchPTab === "function") window.switchPTab("review");
-      });
-    }
-    var scanBtn = document.getElementById("website-scan-btn");
-    if (scanBtn) { scanBtn.addEventListener("click", function() { self._handleWebsiteScan(); }); }
+    if (reviewLink) { reviewLink.addEventListener("click", function(e) { e.preventDefault(); if (typeof window.switchPTab === "function") window.switchPTab("review"); }); }
     if (!navigator.onLine) { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "flex"; }
     window.addEventListener("offline", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "flex"; });
     window.addEventListener("online", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "none"; });
@@ -150,40 +94,58 @@ window.CL_UPLOAD = {
 
   _loadConnectionStatus: async function() {
     var supabase = this._supabase;
+    var grid = document.getElementById("cl-sources-grid");
+    if (!grid) return;
     try {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
       var resp = await supabase.from("profiles").select("gdrive_connected, business_email_gmail, business_email_outlook, website_urls").eq("user_id", user.id).single();
       var profile = resp.data || {};
-      this._setTileStatus("email", !!(profile.business_email_gmail || profile.business_email_outlook));
-      this._setTileStatus("gdrive", !!profile.gdrive_connected);
-      this._setTileStatus("website", !!(profile.website_urls && profile.website_urls.length > 0));
-    } catch (err) {
-      this._setTileStatus("email", false);
-      this._setTileStatus("gdrive", false);
-      this._setTileStatus("website", false);
-    }
-  },
+      var tiles = [];
 
-  _setTileStatus: function(source, connected) {
-    var self = this;
-    var badge = document.getElementById(source + "-status-badge");
-    var actionDiv = document.getElementById(source + "-tile-action");
-    if (!badge || !actionDiv) return;
-    if (connected) {
-      badge.className = "status-badge status-connected";
-      badge.textContent = "Connected";
-      var scanBtn = document.createElement("button");
-      scanBtn.className = "btn-primary btn-sm";
-      scanBtn.textContent = "Scan Now";
-      scanBtn.addEventListener("click", function() { self._handleScanNow(source, scanBtn); });
-      actionDiv.innerHTML = "";
-      actionDiv.appendChild(scanBtn);
-    } else {
-      badge.className = "status-badge status-disconnected";
-      badge.textContent = "Not connected";
-      actionDiv.innerHTML = "<a href=\"cl-settings.html\" class=\"btn-settings-link\">Connect in CL Settings</a>";
+      if (profile.business_email_gmail) {
+        tiles.push({ id: "gmail", icon: "📧", name: profile.business_email_gmail, desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true });
+      } else {
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false });
+      }
+
+      if (profile.business_email_outlook) {
+        tiles.push({ id: "outlook", icon: "📧", name: profile.business_email_outlook, desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true });
+      } else {
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false });
+      }
+
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.gdrive_connected });
+
+      var websiteUrl = profile.website_urls && profile.website_urls.length > 0 ? profile.website_urls[0] : null;
+      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl });
+
+      grid.innerHTML = tiles.map(function(t) {
+        return [
+          "<div class=\"source-tile\">",
+            "<div class=\"source-tile-top\">",
+              "<span class=\"source-tile-icon\">" + t.icon + "</span>",
+              "<div class=\"source-tile-body\">",
+                "<div class=\"source-tile-name\">" + t.name + "</div>",
+                "<div class=\"source-tile-desc\">" + t.desc + "</div>",
+              "</div>",
+            "</div>",
+            "<div class=\"source-tile-actions\">",
+              "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
+              "<a href=\"cl-settings.html\" class=\"source-action-btn source-connect-btn" + (!t.connected ? "" : " source-btn-disabled") + "\"" + (t.connected ? " tabindex=\"-1\" aria-disabled=\"true\"" : "") + ">Connect Now</a>",
+            "</div>",
+          "</div>"
+        ].join("\n");
+      }).join("\n");
+
+      var self = this;
+      grid.querySelectorAll(".source-scan-btn:not(.source-btn-disabled)").forEach(function(btn) {
+        btn.addEventListener("click", function() { self._handleScanNow(btn.getAttribute("data-source"), btn); });
+      });
+
+    } catch (err) {
+      if (grid) grid.innerHTML = "<div class=\"source-tile-error\">Unable to load connection status. Please refresh the page.</div>";
     }
   },
 
@@ -192,31 +154,6 @@ window.CL_UPLOAD = {
     btn.textContent = "Scanning... check Review tab shortly";
     btn.disabled = true;
     setTimeout(function() { btn.textContent = original; btn.disabled = false; }, 4000);
-  },
-
-  _handleWebsiteScan: async function() {
-    var urlInput = document.getElementById("website-url-input");
-    var statusDiv = document.getElementById("website-scan-status");
-    if (!urlInput || !statusDiv) return;
-    var url = (urlInput.value || "").trim();
-    if (!url) { statusDiv.style.display = "block"; statusDiv.textContent = "Please enter a website URL."; statusDiv.className = "scan-status scan-error"; return; }
-    statusDiv.style.display = "block";
-    statusDiv.textContent = "Scanning website... this may take a moment.";
-    statusDiv.className = "scan-status scan-info";
-    try {
-      var supabase = this._supabase;
-      var userResp = await supabase.auth.getUser();
-      var user = userResp.data && userResp.data.user;
-      if (!user) throw new Error("Not authenticated");
-      var resp = await fetch("/api/process-file", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type: "website", url: url, user_id: user.id }) });
-      if (!resp.ok) throw new Error("Scan request failed");
-      statusDiv.textContent = "Website scan started. Items will appear in the Review tab shortly.";
-      statusDiv.className = "scan-status scan-success";
-      urlInput.value = "";
-    } catch (err) {
-      statusDiv.textContent = "Something went wrong with the scan. Please try again.";
-      statusDiv.className = "scan-status scan-error";
-    }
   },
 
   _handlePhotoUpload: async function(files) {
