@@ -1092,9 +1092,15 @@
   font-size:13px; font-family:inherit; font-weight:600;
   cursor:pointer; transition:opacity 0.15s;
 }
-.review-status-btn[data-status="pending"] { border-left-color:#1A5490; color:#1A5490; }
-.review-status-btn[data-status="approved"] { border-left-color:#2e7d32; color:#2e7d32; }
-.review-status-btn[data-status="rejected"] { border-left-color:#dc3545; color:#dc3545; }
+.review-status-btn[data-status="pending"] {
+  border-left-color:#1A5490;
+}
+.review-status-btn[data-status="approved"] {
+  border-left-color:#2e7d32;
+}
+.review-status-btn[data-status="rejected"] {
+  border-left-color:#dc3545;
+}
 .review-status-btn.active[data-status="pending"] {
   background:#EEF3F9; color:#1A5490; font-weight:700;
 }
