@@ -246,8 +246,7 @@ window.CL_REVIEW = {
     </div>
   </div>
   <div class="review-card-footer">
-    <button class="btn-link review-toggle" data-id="${id}" data-section="body">&#8964; Content</button>
-    <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
+        <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
     <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
   </div>
   <div class="review-body-expanded" id="review-body-${id}" style="display:none"><div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div></div>
