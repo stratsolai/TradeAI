@@ -271,10 +271,10 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        const preview = document.getElementById('review-preview-' + btn.dataset.id);
-        if (!preview) return;
-        const expanded = preview.style.display === 'none';
-        preview.style.display = expanded ? '' : 'none';
+        const body = document.getElementById('review-body-' + btn.dataset.id);
+        if (!body) return;
+        const expanded = body.style.display !== 'none';
+        body.style.display = expanded ? 'none' : 'block';
         btn.innerHTML = expanded ? '&#9654;' : '&#9660;';
       });
     });
