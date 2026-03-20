@@ -1095,9 +1095,15 @@
 .review-status-btn[data-status="pending"] { border-left-color:#1A5490; color:#1A5490; }
 .review-status-btn[data-status="approved"] { border-left-color:#2e7d32; color:#2e7d32; }
 .review-status-btn[data-status="rejected"] { border-left-color:#dc3545; color:#dc3545; }
-.review-status-btn.active[data-status="pending"] { background:#1A5490; color:#fff; }
-.review-status-btn.active[data-status="approved"] { background:#2e7d32; color:#fff; }
-.review-status-btn.active[data-status="rejected"] { background:#dc3545; color:#fff; }
+.review-status-btn.active[data-status="pending"] {
+  background:#EEF3F9; color:#1A5490; font-weight:700;
+}
+.review-status-btn.active[data-status="approved"] {
+  background:#EAF4EB; color:#2e7d32; font-weight:700;
+}
+.review-status-btn.active[data-status="rejected"] {
+  background:#FDECEA; color:#dc3545; font-weight:700;
+}
 .review-status-btn:hover { opacity:0.85; }
 
 /* Filter pills — category and tool */
