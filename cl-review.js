@@ -222,7 +222,7 @@ window.CL_REVIEW = {
     if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email account:</span> ' + escHtml(detail.account_email) + '</div>');
     if (detail.sender) sourceDetailParts.push('<div><span class="source-detail-label">From:</span> ' + escHtml(detail.sender) + '</div>');
     if (detail.subject) sourceDetailParts.push('<div><span class="source-detail-label">Subject:</span> ' + escHtml(detail.subject) + '</div>');
-    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> ' + escHtml(detail.url) + '</div>');
+    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> <a href="' + escHtml(detail.url) + '" target="_blank" class="review-source-link">' + escHtml(detail.url) + '</a></div>');
     if (detail.folder_name) sourceDetailParts.push('<div><span class="source-detail-label">Drive folder:</span> ' + escHtml(detail.folder_name) + '</div>');
     if (item.source_item_id && detail.file_url) {
       sourceDetailParts.push('<div><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
@@ -277,7 +277,7 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
     });
-    document.querySelectorAll('.review-toggle').forEach(function(btn) {
+    document.querySelectorAll('.review-toggle, .review-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
