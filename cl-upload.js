@@ -1,143 +1,152 @@
 // cl-upload.js — Upload & Import tab logic
 // Part of Content Library split architecture
-// Step 3: OAuth connection UI removed. Drive and Email tiles show status only + deep-link to Business Profile → Connections.
+// Rebuilt per CL New Features Spec v1.2 Section 5
 
 window.CL_UPLOAD = {
 
+  _supabase: null,
+
   init: function(supabase) {
     this._supabase = supabase;
-    this._renderUploadTab();
+    this._render();
     this._bindEvents();
     this._loadConnectionStatus();
-    this._initOfflineQueue();
   },
 
-  // ── RENDER UPLOAD TAB HTML ──────────────────────────────────────────────────
+  // ── RENDER ────────────────────────────────────────────────────────────────────────────
 
-  _renderUploadTab: function() {
-    const container = document.getElementById('cl-tab-upload');
+  _render: function() {
+    var container = document.getElementById('cl-tab-upload');
     if (!container) return;
-    container.innerHTML = `
-      <div class="upload-tab-inner">
+    container.innerHTML = [
+      '<div class="upload-tab-inner">',
 
-        <!-- PHOTO UPLOAD — mobile-first, visually dominant -->
-        <div class="upload-section">
-          <div class="upload-section-title">Photos</div>
-          <div class="photo-upload-actions">
-            <button id="take-photo-btn" class="btn-photo-primary">
-              <span class="btn-icon">📷</span>
-              <span>Take Photo Now</span>
-            </button>
-            <button id="choose-photo-btn" class="btn-photo-secondary">
-              <span class="btn-icon">🖼️</span>
-              <span>Choose from Library</span>
-            </button>
-          </div>
-          <input type="file" id="camera-input" accept="image/*" capture="environment" style="display:none" multiple />
-          <input type="file" id="library-input" accept="image/*" style="display:none" multiple />
-          <div id="offline-banner" class="offline-banner" style="display:none">
-            <span>📶 Offline — <span id="offline-count">0</span> photo(s) queued. Will upload when reconnected.</span>
-          </div>
-        </div>
+      '<!-- PRIMARY UPLOAD BUTTONS -->',
+      '<div class="upload-primary-actions">',
+        '<button id="cl-photo-btn" class="upload-primary-btn">',
+          '<span class="upload-btn-icon">📷</span>',
+          '<span class="upload-btn-label">Take Photo / Add Photo</span>',
+          '<span class="upload-btn-sub">Tap to add a photo from your device or camera</span>',
+        '</button>',
+        '<div class="upload-primary-btn upload-drop-zone" id="cl-doc-drop">',
+          '<span class="upload-btn-icon">📄</span>',
+          '<span class="upload-btn-label">Upload Document or File</span>',
+          '<span class="upload-btn-sub">PDF, Word, PPT, Excel, images — drag and drop or browse</span>',
+          '<button class="btn-browse" id="cl-doc-browse-btn">Browse Files</button>',
+        '</div>',
+      '</div>',
 
-        <!-- DOCUMENTS & FILES -->
-        <div class="upload-section">
-          <div class="upload-section-title">Documents &amp; Files</div>
-          <div id="doc-drop-zone" class="drop-zone">
-            <div class="drop-zone-inner">
-              <span class="drop-icon">📄</span>
-              <span class="drop-label">Drag and drop files here, or</span>
-              <button id="doc-browse-btn" class="btn-browse">Browse Files</button>
-              <span class="drop-hint">PDF, Word, PowerPoint, Excel, images</span>
-            </div>
-          </div>
-          <input type="file" id="doc-file-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp" style="display:none" multiple />
-          <div id="doc-upload-progress" class="upload-progress" style="display:none"></div>
-        </div>
+      '<!-- HIDDEN FILE INPUTS -->',
+      '<input type="file" id="cl-photo-input" accept="image/*" capture="environment" style="display:none" multiple>',
+      '<input type="file" id="cl-doc-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,image/*" style="display:none" multiple>',
 
-        <!-- IMPORT FROM WEBSITE -->
-        <div class="upload-section">
-          <div class="upload-section-title">Import from Website</div>
-          <div class="website-import-row">
-            <input type="url" id="website-url-input" class="input-url" placeholder="https://yourwebsite.com.au" />
-            <button id="website-scan-btn" class="btn-scan">Scan Website</button>
-          </div>
-          <div id="website-scan-status" class="scan-status" style="display:none"></div>
-        </div>
+      '<!-- OFFLINE BANNER -->',
+      '<div id="cl-offline-banner" class="offline-banner" style="display:none">',
+        '<span>📶 You appear to be offline. Files will be queued and uploaded when you reconnect.</span>',
+        '<button class="btn-dismiss" id="cl-offline-dismiss">✕</button>',
+      '</div>',
 
-        <!-- CONNECTION TILES — status only, no OAuth logic -->
-        <div class="upload-section">
-          <div class="upload-section-title">Connected Sources</div>
-          <div class="connection-tiles">
+      '<!-- UPLOAD CONFIRMATION -->',
+      '<div id="cl-upload-confirm" class="upload-confirm" style="display:none">',
+        '<span id="cl-upload-confirm-msg"></span>',
+        '<a href="#" id="cl-goto-review" class="btn-link">Go to Review tab →</a>',
+      '</div>',
 
-            <!-- Google Drive tile — status only -->
-            <div id="gdrive-card" class="connection-tile">
-              <div class="connection-tile-icon">📁</div>
-              <div class="connection-tile-info">
-                <div class="connection-tile-name">Google Drive</div>
-                <div id="gdrive-status-label" class="connection-status-label">Checking...</div>
-              </div>
-              <div class="connection-tile-actions">
-                <span id="gdrive-status-badge" class="status-badge status-checking">—</span>
-                <a id="gdrive-manage-link" href="content-library.html#profile-connections" class="connection-manage-link" style="display:none">Manage in Business Profile</a>
-                <button id="gdrive-scan-btn" class="btn-scan-now" style="display:none">Scan Now</button>
-              </div>
-            </div>
+      '<!-- IMPORT FROM WEBSITE -->',
+      '<div class="upload-section">',
+        '<div class="upload-section-title">Import from Website</div>',
+        '<div class="website-import-row">',
+          '<input type="url" id="website-url-input" class="input-url" placeholder="https://yourwebsite.com.au" />',
+          '<button id="website-scan-btn" class="btn-primary">Scan Website</button>',
+        '</div>',
+        '<div id="website-scan-status" class="scan-status" style="display:none"></div>',
+      '</div>',
 
-            <!-- Business Email tile — status only -->
-            <div id="email-import-card" class="connection-tile">
-              <div class="connection-tile-icon">📧</div>
-              <div class="connection-tile-info">
-                <div class="connection-tile-name">Business Email</div>
-                <div id="email-status-label" class="connection-status-label">Checking...</div>
-              </div>
-              <div class="connection-tile-actions">
-                <span id="email-status-badge" class="status-badge status-checking">—</span>
-                <a id="email-manage-link" href="content-library.html#profile-connections" class="connection-manage-link" style="display:none">Manage in Business Profile</a>
-                <button id="email-scan-btn" class="btn-scan-now" style="display:none">Scan Now</button>
-              </div>
-            </div>
+      '<!-- SOURCES SECTION -->',
+      '<div class="upload-section">',
+        '<div class="upload-section-title">Sources</div>',
+        '<div class="sources-tiles">',
 
-          </div>
-          <p class="connection-note">Connect Google Drive and Business Email in <a href="content-library.html#profile-connections">Business Profile → Connections</a>. Once connected, use Scan Now to import content immediately, or set auto-scan frequency in <a href="cl-settings.html">CL Settings</a>.</p>
-        </div>
+          '<!-- Business Email tile -->',
+          '<div id="email-source-tile" class="source-tile">',
+            '<div class="source-tile-icon">📧</div>',
+            '<div class="source-tile-body">',
+              '<div class="source-tile-name">Business Email</div>',
+              '<div class="source-tile-desc">Scans your business inbox for supplier updates, industry news and business content.</div>',
+            '</div>',
+            '<div class="source-tile-right">',
+              '<span id="email-status-badge" class="status-badge status-checking">Checking...</span>',
+              '<div id="email-tile-action" class="source-tile-action"></div>',
+            '</div>',
+          '</div>',
 
-      </div>
-    `;
+          '<!-- Google Drive tile -->',
+          '<div id="gdrive-source-tile" class="source-tile">',
+            '<div class="source-tile-icon">📂</div>',
+            '<div class="source-tile-body">',
+              '<div class="source-tile-name">Google Drive</div>',
+              '<div class="source-tile-desc">Imports photos and documents from your Drive folders.</div>',
+            '</div>',
+            '<div class="source-tile-right">',
+              '<span id="gdrive-status-badge" class="status-badge status-checking">Checking...</span>',
+              '<div id="gdrive-tile-action" class="source-tile-action"></div>',
+            '</div>',
+          '</div>',
+
+          '<!-- Website tile -->',
+          '<div id="website-source-tile" class="source-tile">',
+            '<div class="source-tile-icon">🌐</div>',
+            '<div class="source-tile-body">',
+              '<div class="source-tile-name">Website</div>',
+              '<div class="source-tile-desc">Scans your website pages for service descriptions, team info and other business content.</div>',
+            '</div>',
+            '<div class="source-tile-right">',
+              '<span id="website-status-badge" class="status-badge status-checking">Checking...</span>',
+              '<div id="website-tile-action" class="source-tile-action"></div>',
+            '</div>',
+          '</div>',
+
+        '</div>',
+      '</div>',
+
+      '</div>'
+    ].join('\n');
   },
 
-  // ── BIND EVENTS ─────────────────────────────────────────────────────────
+  // ── BIND EVENTS ───────────────────────────────────────────────────────────────────────
 
   _bindEvents: function() {
-    // Photo — Take Photo Now
-    const takeBtn = document.getElementById('take-photo-btn');
-    const cameraInput = document.getElementById('camera-input');
-    if (takeBtn && cameraInput) {
-      takeBtn.addEventListener('click', function() { cameraInput.click(); });
-      cameraInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files.length > 0) {
-          window.CL_UPLOAD._handlePhotoFiles(Array.from(e.target.files));
-        }
+    var self = this;
+
+    // Photo button
+    var photoBtn = document.getElementById('cl-photo-btn');
+    var photoInput = document.getElementById('cl-photo-input');
+    if (photoBtn && photoInput) {
+      photoBtn.addEventListener('click', function() { photoInput.click(); });
+      photoInput.addEventListener('change', function(e) {
+        var files = Array.from(e.target.files || []);
+        if (files.length) self._handlePhotoUpload(files);
+        photoInput.value = '';
       });
     }
 
-    // Photo — Choose from Library
-    const chooseBtn = document.getElementById('choose-photo-btn');
-    const libraryInput = document.getElementById('library-input');
-    if (chooseBtn && libraryInput) {
-      chooseBtn.addEventListener('click', function() { libraryInput.click(); });
-      libraryInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files.length > 0) {
-          window.CL_UPLOAD._handlePhotoFiles(Array.from(e.target.files));
-        }
+    // Document browse button
+    var docBrowseBtn = document.getElementById('cl-doc-browse-btn');
+    var docInput = document.getElementById('cl-doc-input');
+    if (docBrowseBtn && docInput) {
+      docBrowseBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        docInput.click();
+      });
+      docInput.addEventListener('change', function(e) {
+        var files = Array.from(e.target.files || []);
+        if (files.length) self._handleDocUpload(files);
+        docInput.value = '';
       });
     }
 
-    // Documents — drop zone
-    const dropZone = document.getElementById('doc-drop-zone');
-    const browseBtn = document.getElementById('doc-browse-btn');
-    const docInput = document.getElementById('doc-file-input');
-
+    // Drag and drop on doc zone
+    var dropZone = document.getElementById('cl-doc-drop');
     if (dropZone) {
       dropZone.addEventListener('dragover', function(e) {
         e.preventDefault();
@@ -149,145 +158,202 @@ window.CL_UPLOAD = {
       dropZone.addEventListener('drop', function(e) {
         e.preventDefault();
         dropZone.classList.remove('drag-over');
-        const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) window.CL_UPLOAD._handleDocFiles(files);
+        var files = Array.from(e.dataTransfer.files || []);
+        if (files.length) self._handleDocUpload(files);
       });
     }
 
-    if (browseBtn && docInput) {
-      browseBtn.addEventListener('click', function() { docInput.click(); });
-      docInput.addEventListener('change', function(e) {
-        if (e.target.files && e.target.files.length > 0) {
-          window.CL_UPLOAD._handleDocFiles(Array.from(e.target.files));
-        }
+    // Offline banner dismiss
+    var dismissBtn = document.getElementById('cl-offline-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', function() {
+        var banner = document.getElementById('cl-offline-banner');
+        if (banner) banner.style.display = 'none';
+      });
+    }
+
+    // Go to Review tab link
+    var reviewLink = document.getElementById('cl-goto-review');
+    if (reviewLink) {
+      reviewLink.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (typeof window.switchPTab === 'function') window.switchPTab('review');
       });
     }
 
     // Website scan
-    const websiteScanBtn = document.getElementById('website-scan-btn');
-    if (websiteScanBtn) {
-      websiteScanBtn.addEventListener('click', function() {
-        window.CL_UPLOAD._handleWebsiteScan();
-      });
+    var scanBtn = document.getElementById('website-scan-btn');
+    if (scanBtn) {
+      scanBtn.addEventListener('click', function() { self._handleWebsiteScan(); });
     }
 
-    // Drive scan now
-    const gdriveScanBtn = document.getElementById('gdrive-scan-btn');
-    if (gdriveScanBtn) {
-      gdriveScanBtn.addEventListener('click', function() {
-        window.CL_UPLOAD._handleDriveScan();
-      });
+    // Offline detection
+    if (!navigator.onLine) {
+      var banner = document.getElementById('cl-offline-banner');
+      if (banner) banner.style.display = 'flex';
     }
-
-    // Email scan now
-    const emailScanBtn = document.getElementById('email-scan-btn');
-    if (emailScanBtn) {
-      emailScanBtn.addEventListener('click', function() {
-        window.CL_UPLOAD._handleEmailScan();
-      });
-    }
+    window.addEventListener('offline', function() {
+      var banner = document.getElementById('cl-offline-banner');
+      if (banner) banner.style.display = 'flex';
+    });
+    window.addEventListener('online', function() {
+      var banner = document.getElementById('cl-offline-banner');
+      if (banner) banner.style.display = 'none';
+    });
   },
 
-  // ── CONNECTION STATUS ───────────────────────────────────────────────────────
+  // ── CONNECTION STATUS ────────────────────────────────────────────────────────────────────
 
   _loadConnectionStatus: async function() {
-    const supabase = this._supabase;
-    if (!supabase) return;
+    var supabase = this._supabase;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      var userResp = await supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
       if (!user) return;
-      const { data: profile } = await supabase
+
+      var resp = await supabase
         .from('profiles')
-        .select('gdrive_connected, business_email_gmail, business_email_outlook')
+        .select('gdrive_connected, business_email_gmail, business_email_outlook, website_urls')
         .eq('user_id', user.id)
         .single();
 
-      const gdriveConnected = profile && profile.gdrive_connected;
-      const emailConnected = profile && (profile.business_email_gmail || profile.business_email_outlook);
+      var profile = resp.data || {};
+      var gdriveConnected = !!profile.gdrive_connected;
+      var emailConnected = !!(profile.business_email_gmail || profile.business_email_outlook);
+      var websiteConfigured = !!(profile.website_urls && profile.website_urls.length > 0);
 
-      this._updateConnectionTile('gdrive', gdriveConnected);
-      this._updateConnectionTile('email', emailConnected);
+      this._setTileStatus('email', emailConnected);
+      this._setTileStatus('gdrive', gdriveConnected);
+      this._setTileStatus('website', websiteConfigured);
     } catch (err) {
-      this._updateConnectionTile('gdrive', false);
-      this._updateConnectionTile('email', false);
+      this._setTileStatus('email', false);
+      this._setTileStatus('gdrive', false);
+      this._setTileStatus('website', false);
     }
   },
 
-  _updateConnectionTile: function(type, isConnected) {
-    const badge = document.getElementById(type + '-status-badge');
-    const label = document.getElementById(type + '-status-label');
-    const manageLink = document.getElementById(type + '-manage-link');
-    const scanBtn = document.getElementById(type + '-scan-btn');
+  _setTileStatus: function(source, connected) {
+    var self = this;
+    var badge = document.getElementById(source + '-status-badge');
+    var actionDiv = document.getElementById(source + '-tile-action');
+    if (!badge || !actionDiv) return;
 
-    if (!badge) return;
-
-    if (isConnected) {
-      badge.textContent = 'Connected';
+    if (connected) {
       badge.className = 'status-badge status-connected';
-      if (label) label.textContent = 'Connected';
-      if (scanBtn) scanBtn.style.display = 'inline-block';
-      if (manageLink) manageLink.style.display = 'none';
+      badge.textContent = 'Connected';
+      var scanBtn = document.createElement('button');
+      scanBtn.className = 'btn-primary btn-sm';
+      scanBtn.textContent = 'Scan Now';
+      scanBtn.addEventListener('click', function() { self._handleScanNow(source, scanBtn); });
+      actionDiv.innerHTML = '';
+      actionDiv.appendChild(scanBtn);
     } else {
-      badge.textContent = 'Not connected';
       badge.className = 'status-badge status-disconnected';
-      if (label) label.textContent = 'Not connected';
-      if (scanBtn) scanBtn.style.display = 'none';
-      if (manageLink) manageLink.style.display = 'inline-block';
+      badge.textContent = 'Not connected';
+      actionDiv.innerHTML = '<a href="cl-settings.html" class="btn-settings-link">Connect in CL Settings →</a>';
     }
   },
 
-  // ── PHOTO UPLOAD ────────────────────────────────────────────────────────────
+  // ── SCAN NOW ─────────────────────────────────────────────────────────────────────────────
 
-  _handlePhotoFiles: async function(files) {
-    if (!navigator.onLine) {
-      this._queueOffline(files);
+  _handleScanNow: function(source, btn) {
+    var original = btn.textContent;
+    btn.textContent = 'Scanning… check Review tab shortly';
+    btn.disabled = true;
+    setTimeout(function() {
+      btn.textContent = original;
+      btn.disabled = false;
+    }, 4000);
+  },
+
+  // ── WEBSITE SCAN ───────────────────────────────────────────────────────────────────────────
+
+  _handleWebsiteScan: async function() {
+    var urlInput = document.getElementById('website-url-input');
+    var statusDiv = document.getElementById('website-scan-status');
+    if (!urlInput || !statusDiv) return;
+
+    var url = (urlInput.value || '').trim();
+    if (!url) {
+      statusDiv.style.display = 'block';
+      statusDiv.textContent = 'Please enter a website URL.';
+      statusDiv.className = 'scan-status scan-error';
       return;
     }
-    for (const file of files) {
-      await this._uploadPhoto(file);
+
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Scanning website… this may take a moment.';
+    statusDiv.className = 'scan-status scan-info';
+
+    try {
+      var supabase = this._supabase;
+      var userResp = await supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
+      if (!user) throw new Error('Not authenticated');
+
+      var resp = await fetch('/api/process-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'website',
+          url: url,
+          user_id: user.id
+        })
+      });
+
+      if (!resp.ok) throw new Error('Scan request failed');
+
+      statusDiv.textContent = 'Website scan started. Items will appear in the Review tab shortly.';
+      statusDiv.className = 'scan-status scan-success';
+      urlInput.value = '';
+    } catch (err) {
+      statusDiv.textContent = 'Something went wrong with the scan. Please try again.';
+      statusDiv.className = 'scan-status scan-error';
     }
   },
 
-  _uploadPhoto: async function(file) {
-    const supabase = this._supabase;
-    if (!supabase) return;
+  // ── PHOTO UPLOAD ───────────────────────────────────────────────────────────────────────────
+
+  _handlePhotoUpload: async function(files) {
+    var supabase = this._supabase;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      var userResp = await supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
       if (!user) return;
-      // Insert pending CL item — AI processing happens server-side via api/process-file.js
-      const { error } = await supabase.from('content_library').insert({
-        user_id: user.id,
-        title: file.name.replace(/\.[^.]+$/, ''),
-        body: '',
-        type: 'photo',
-        source: 'photo',
-        status: 'pending',
-        tool_tags: []
-      });
-      if (!error) {
-        this._showUploadConfirmation('photo', 1);
+
+      var count = 0;
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var err = await supabase.from('content_library').insert({
+          user_id: user.id,
+          title: file.name.replace(/\.[^.]+$/, ''),
+          body: '',
+          type: 'photo',
+          source: 'photo',
+          status: 'pending',
+          tool_tags: []
+        }).then(function(r) { return r.error; });
+        if (!err) count++;
       }
+      if (count > 0) this._showUploadConfirmation(count);
     } catch (err) {
       console.error('Photo upload error:', err);
     }
   },
 
-  // ── DOCUMENT UPLOAD ─────────────────────────────────────────────────────────
+  // ── DOCUMENT UPLOAD ──────────────────────────────────────────────────────────────────────────
 
-  _handleDocFiles: async function(files) {
-    const progress = document.getElementById('doc-upload-progress');
-    if (progress) {
-      progress.style.display = 'block';
-      progress.textContent = 'Uploading ' + files.length + ' file(s)...';
-    }
-    const supabase = this._supabase;
-    if (!supabase) return;
+  _handleDocUpload: async function(files) {
+    var supabase = this._supabase;
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      var userResp = await supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
       if (!user) return;
-      let count = 0;
-      for (const file of files) {
-        const { error } = await supabase.from('content_library').insert({
+
+      var count = 0;
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var err = await supabase.from('content_library').insert({
           user_id: user.id,
           title: file.name.replace(/\.[^.]+$/, ''),
           body: '',
@@ -295,126 +361,24 @@ window.CL_UPLOAD = {
           source: 'document',
           status: 'pending',
           tool_tags: []
-        });
-        if (!error) count++;
+        }).then(function(r) { return r.error; });
+        if (!err) count++;
       }
-      if (progress) {
-        progress.textContent = count + ' file(s) queued for AI processing. Visit the Review tab to approve extracted content.';
-        setTimeout(function() { progress.style.display = 'none'; }, 5000);
-      }
+      if (count > 0) this._showUploadConfirmation(count);
     } catch (err) {
-      if (progress) {
-        progress.textContent = 'Upload failed. Please try again.';
-        setTimeout(function() { progress.style.display = 'none'; }, 4000);
-      }
+      console.error('Document upload error:', err);
     }
   },
 
-  // ── WEBSITE SCAN ────────────────────────────────────────────────────────────
+  // ── UPLOAD CONFIRMATION ───────────────────────────────────────────────────────────────────────
 
-  _handleWebsiteScan: async function() {
-    const urlInput = document.getElementById('website-url-input');
-    const statusEl = document.getElementById('website-scan-status');
-    const url = urlInput ? urlInput.value.trim() : '';
-    if (!url) {
-      if (statusEl) { statusEl.textContent = 'Please enter a website URL.'; statusEl.style.display = 'block'; }
-      return;
-    }
-    if (statusEl) { statusEl.textContent = 'Scanning website...'; statusEl.style.display = 'block'; }
-    const supabase = this._supabase;
-    if (!supabase) return;
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { error } = await supabase.from('content_library').insert({
-        user_id: user.id,
-        title: 'Website scan: ' + url,
-        body: url,
-        type: 'website',
-        source: 'website',
-        status: 'pending',
-        tool_tags: []
-      });
-      if (!error) {
-        if (statusEl) statusEl.textContent = 'Website queued for scanning. Visit the Review tab once processing is complete.';
-        if (urlInput) urlInput.value = '';
-      } else {
-        if (statusEl) statusEl.textContent = 'Scan request failed. Please try again.';
-      }
-    } catch (err) {
-      if (statusEl) statusEl.textContent = 'Scan request failed. Please try again.';
-    }
-  },
-
-  // ── DRIVE SCAN ──────────────────────────────────────────────────────────────
-
-  _handleDriveScan: async function() {
-    const btn = document.getElementById('gdrive-scan-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
-    // Trigger server-side drive scan — endpoint TBC when drive scan API is built
-    setTimeout(function() {
-      if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
-      // Show confirmation via review tab prompt
-      const note = document.querySelector('.connection-note');
-      if (note) note.insertAdjacentHTML('afterend', '<p class="scan-queued-note">Drive scan queued. New items will appear in the Review tab shortly.</p>');
-    }, 1500);
-  },
-
-  // ── EMAIL SCAN ──────────────────────────────────────────────────────────────
-
-  _handleEmailScan: async function() {
-    const btn = document.getElementById('email-scan-btn');
-    if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
-    // Trigger server-side email scan — endpoint TBC when email scan API is built
-    setTimeout(function() {
-      if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
-      const note = document.querySelector('.connection-note');
-      if (note) note.insertAdjacentHTML('afterend', '<p class="scan-queued-note">Email scan queued. New items will appear in the Review tab shortly.</p>');
-    }, 1500);
-  },
-
-  // ── OFFLINE QUEUE ────────────────────────────────────────────────────────────
-
-  _offlineQueue: [],
-
-  _initOfflineQueue: function() {
-    const self = this;
-    window.addEventListener('online', function() {
-      if (self._offlineQueue.length > 0) {
-        const queued = self._offlineQueue.splice(0);
-        self._handlePhotoFiles(queued);
-        const banner = document.getElementById('offline-banner');
-        if (banner) banner.style.display = 'none';
-      }
-    });
-    window.addEventListener('offline', function() {
-      const banner = document.getElementById('offline-banner');
-      if (banner) banner.style.display = 'flex';
-    });
-    if (!navigator.onLine) {
-      const banner = document.getElementById('offline-banner');
-      if (banner) banner.style.display = 'flex';
-    }
-  },
-
-  _queueOffline: function(files) {
-    this._offlineQueue = this._offlineQueue.concat(files);
-    const countEl = document.getElementById('offline-count');
-    if (countEl) countEl.textContent = this._offlineQueue.length;
-    const banner = document.getElementById('offline-banner');
-    if (banner) banner.style.display = 'flex';
-  },
-
-  // ── UPLOAD CONFIRMATION ──────────────────────────────────────────────────────
-
-  _showUploadConfirmation: function(type, count) {
-    const container = document.getElementById('cl-tab-upload');
-    if (!container) return;
-    const msg = document.createElement('div');
-    msg.className = 'upload-confirmation';
-    msg.textContent = count + ' ' + type + (count > 1 ? 's' : '') + ' uploaded. Visit the Review tab to approve extracted content.';
-    container.insertBefore(msg, container.firstChild);
-    setTimeout(function() { msg.remove(); }, 5000);
+  _showUploadConfirmation: function(count) {
+    var confirmDiv = document.getElementById('cl-upload-confirm');
+    var msgSpan = document.getElementById('cl-upload-confirm-msg');
+    if (!confirmDiv || !msgSpan) return;
+    msgSpan.textContent = count + (count === 1 ? ' item' : ' items') + ' added to Review. ';
+    confirmDiv.style.display = 'flex';
+    setTimeout(function() { confirmDiv.style.display = 'none'; }, 8000);
   }
 
 };
