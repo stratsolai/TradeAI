@@ -231,18 +231,22 @@ window.CL_REVIEW = {
     return `<div class="review-card" data-id="${id}">
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
-    <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
-    <span class="review-type-badge">${escHtml(typeLabel)}</span>
-    <span class="review-source-badge">${sourceLabel}</span>
-    <div class="review-card-btns">
-      <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
+    <div class="review-card-title-row">
+      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
+      <span class="review-type-badge">${escHtml(typeLabel)}</span>
     </div>
-  </div>
-  <div class="review-card-footer">
-    <button class="btn-link review-toggle" data-id="${id}" data-section="body">&#8964; Content</button>
-    <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
-    <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
+    <div class="review-card-preview-row">
+      <span class="review-body-preview">${escHtml((body||"").split("\n")[0].substring(0,120))}</span>
+      <button class="review-expand-btn btn-link" data-id="${id}" data-section="body" title="Expand content">&#8964;</button>
+    </div>
+    <div class="review-card-meta-row">
+      <span class="review-source-badge">${sourceLabel}</span>
+      <div class="review-card-actions">
+        <button class="review-tools-btn btn-outline-sm" data-id="${id}" data-section="tags">&#9741; Tools</button>
+        <button class="btn-approve review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
+        <button class="btn-reject review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
+      </div>
+    </div>
   </div>
   <div class="review-section" id="review-body-${id}" style="display:none">
     <div class="review-section-head"><span>Content</span><button class="btn-link review-close" data-id="${id}" data-section="body">Close</button></div>
@@ -256,7 +260,7 @@ window.CL_REVIEW = {
     <div class="review-section-head"><span>Source</span><button class="btn-link review-close" data-id="${id}" data-section="source">Close</button></div>
     <div class="review-source-detail">${sourceDetailHtml}</div>
   </div>
-</div>`;
+</div>`
   },
 
   _bindCardEvents: function() {
