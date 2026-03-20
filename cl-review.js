@@ -238,7 +238,7 @@ window.CL_REVIEW = {
     </div>
     <span class="review-type-badge">${escHtml(typeLabel)}</span>
     <div class="review-card-btns">
-      <span class="review-source-badge">${sourceLabel}</span>
+      <button class="review-source-btn" data-id="${id}" title="View source document">&#128196; ${sourceLabel}</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
