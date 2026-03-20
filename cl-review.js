@@ -1,4 +1,3 @@
-// cl-review v416a1c13
 window.CL_REVIEW = {
   _supabase: null,
   _status: 'pending',
@@ -244,13 +243,12 @@ window.CL_REVIEW = {
     <div class="review-card-meta-row">
       <span class="review-source-badge">${sourceLabel}</span>
       <div class="review-card-actions">
-        <button class="review-tools-btn btn-outline-sm" data-id="${id}" data-section="tags">&#9741; Tools</button>
+        <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tools</button>
         <button class="btn-approve review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
         <button class="btn-reject review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
       </div>
     </div>
   </div>
-
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
