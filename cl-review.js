@@ -204,6 +204,7 @@ window.CL_REVIEW = {
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
     const body = escHtml(item.body || '');
+    const bodyRaw = (item.body || '').split('\n')[0].substring(0, 120);
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -236,7 +237,7 @@ window.CL_REVIEW = {
       <span class="review-type-badge">${escHtml(typeLabel)}</span>
     </div>
     <div class="review-card-preview-row">
-      <span class="review-body-preview">${escHtml((body||"").split("\n")[0].substring(0,120))}</span>
+      <span class="review-body-preview">${escHtml(bodyRaw)}</span>
       <button class="review-expand-btn btn-link" data-id="${id}" data-section="body" title="Expand content">&#8964;</button>
     </div>
     <div class="review-card-meta-row">
