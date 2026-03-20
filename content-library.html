@@ -968,20 +968,26 @@
     .btn-settings-link { display: inline-block; padding: 6px 14px; background: #f0f5fb; color: #1A5490; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid #1A5490; }
     .btn-settings-link:hover { background: #e8f0fb; }
     .btn-sm { padding: 6px 14px; font-size: 13px; }
+
+    .topbar-right { display: flex; align-items: center; gap: 16px; position: relative; }
+    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-nav-link:hover { color: #fff; }
+    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
+    .account-btn:hover { color: #fff; }
 </style>
 </head>
 <body>
 
-<div class="topbar">
+<nav class="topbar">
       <a href="index.html" class="topbar-logo">
     <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
-      <div class="topbar-nav" style="margin-left:64px"><a id="back-btn" href="dashboard.html">Dashboard</a></div>
+      <div class="topbar-nav" style="margin-left:64px"><a href="dashboard.html">Dashboard</a></div>
       <div class="topbar-spacer"></div>
-      <div class="topbar-account-wrap">
-        <a href="cl-settings.html" class="topbar-link">Settings</a>
-        <div class="topbar-account" id="account-menu">
-          <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+      <div class="topbar-right">
+        <a href="cl-settings.html" class="topbar-nav-link">Settings</a>
+        <div class="topbar-account-wrap">
+          <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
           <div class="account-dropdown" id="account-dropdown">
             <div class="account-dropdown-email" id="account-dropdown-email">—</div>
             <a href="/account.html" class="account-dropdown-item">Account Management</a>
@@ -989,7 +995,7 @@
           </div>
         </div>
       </div>
-</div>
+    </nav>
 
 <div class="container">
 
