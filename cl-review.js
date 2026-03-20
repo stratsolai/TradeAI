@@ -197,10 +197,14 @@ window.CL_REVIEW = {
     const id = escHtml(item.id);
     const title = escHtml(item.title || 'Untitled');
     const typeLabel = item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Unknown';
-    const sourceParts = [];
-    if (item.source) sourceParts.push(item.source.charAt(0).toUpperCase() + item.source.slice(1));
-    if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
-    const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
+    const uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-AU') : '';
+    const sourceParts = [(item.source || 'unknown').slice(0,1).toUpperCase() + (item.source || 'unknown').slice(1)];
+    if (item.source_detail) {
+      const d = typeof item.source_detail === 'string' ? JSON.parse(item.source_detail) : item.source_detail;
+      if (d.filename) sourceParts.push(d.filename);
+      else if (d.url) sourceParts.push(d.url);
+    }
+    const sourceLabel = escHtml(sourceParts.join(' — '));
     const body = escHtml(item.content_text || '');
     const bodyRaw = (item.content_text || '').replace(/\n/g, ' ');
     const bodyPreview = escHtml(bodyRaw);
@@ -238,7 +242,7 @@ window.CL_REVIEW = {
     </div>
     <span class="review-type-badge">${escHtml(typeLabel)}</span>
     <div class="review-card-btns">
-      <button class="review-source-btn" data-id="${id}" title="View source document">&#128196; ${sourceLabel}</button>
+      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
