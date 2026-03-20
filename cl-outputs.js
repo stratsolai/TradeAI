@@ -36,7 +36,7 @@ window.CL_OUTPUTS = {
     this._tools.forEach(function(tool) {
       var cls = "tool-row";
       if (tool.state === "coming-soon") cls += " tool-row-coming";
-      if (self._selectedTool === tool.id) cls += " tool-row-active";
+      if (self._selectedTool === tool.id) cls += " active";
       var badge = tool.state === "coming-soon" ? " <span class=\"tool-coming-badge\">Coming Soon</span>" : "";
       html += "<div class=\"" + cls + "\" data-tool-id=\"" + tool.id + "\">" + tool.name + badge + "</div>";
     });
@@ -59,9 +59,9 @@ window.CL_OUTPUTS = {
         self._selectedTool = row.getAttribute("data-tool-id");
         // Update active state
         container.querySelectorAll(".tool-row").forEach(function(r) {
-          r.classList.remove("tool-row-active");
+          r.classList.remove("active");
         });
-        row.classList.add("tool-row-active");
+        row.classList.add("active");
         self._loadOutputs(self._selectedTool);
       });
     });
