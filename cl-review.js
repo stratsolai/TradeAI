@@ -280,12 +280,12 @@ window.CL_REVIEW = {
         if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
       });
     });
-    document.addEventListener('click', function(e) {
-      const btn = e.target.closest('.review-expand-btn');
+    document.getElementById('review-list').addEventListener('click', function(e) {
+      var btn = e.target.classList.contains('review-expand-btn') ? e.target : (e.target.parentElement && e.target.parentElement.classList.contains('review-expand-btn') ? e.target.parentElement : null);
       if (!btn) return;
-      const preview = document.getElementById('review-preview-' + btn.dataset.id);
+      var preview = document.getElementById('review-preview-' + btn.dataset.id);
       if (!preview) return;
-      const expanded = preview.classList.toggle('review-body-preview-expanded');
+      var expanded = preview.classList.toggle('review-body-preview-expanded');
       btn.innerHTML = expanded ? '&#9660;' : '&#9654;';
     });    document.querySelectorAll('.review-close').forEach(function(btn) {
       btn.addEventListener('click', function() {
