@@ -1109,10 +1109,10 @@
   </div>
 
 <div class="stats-bar">
-    <div class="stat-card"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
-    <div class="stat-card orange"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
-    <div class="stat-card green"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card teal"><div class="stat-value" id="stat-published">0</div><div class="stat-label">Published</div></div>
+    <div class="stat-card" data-status="all" style="cursor:pointer"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
+    <div class="stat-card orange" data-status="pending" style="cursor:pointer"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
+    <div class="stat-card green" data-status="approved" style="cursor:pointer"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
   </div>
 
 <div class="primary-tabs">
@@ -1277,7 +1277,7 @@ window.switchPTab = function(tab) {
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-approved').textContent = approved;
   var _sq = document.getElementById('stat-queue'); if (_sq) _sq.textContent = queueResult.count || 0;
-  document.getElementById('stat-published').textContent = publishedResult.count || 0;
+  document.getElementById('stat-rejected').textContent = publishedResult.count || 0;
   document.getElementById('badge-pending').textContent = pending;
   document.getElementById('badge-queue').textContent = queueResult.count || 0;
   document.getElementById('stab-pending-count').textContent = pending;
