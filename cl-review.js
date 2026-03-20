@@ -236,15 +236,15 @@ window.CL_REVIEW = {
     <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
     <span class="review-type-badge">${escHtml(typeLabel)}</span>
     <span class="review-source-badge">${sourceLabel}</span>
-    <div class="review-card-btns">
-      <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
-    </div>
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>
-  </div>
+    <div class="review-card-btns">
+      <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
+    </div>
+      </div>
   <div class="review-card-footer">
         <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
     <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
