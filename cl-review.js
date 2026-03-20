@@ -249,7 +249,6 @@ window.CL_REVIEW = {
       </div>
   <div class="review-card-footer">
         <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
-    <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
   </div>
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
