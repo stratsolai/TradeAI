@@ -204,7 +204,7 @@ window.CL_REVIEW = {
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
     const body = escHtml(item.content_text || '');
-    const bodyRaw = (item.content_text || '').split('\n')[0].substring(0, 120);
+    const bodyRaw = (item.content_text || '').replace(/\n/g, ' ');
     const bodyPreview = escHtml(bodyRaw);
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
@@ -249,7 +249,6 @@ window.CL_REVIEW = {
         <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
     <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
   </div>
-  <div class="review-body-expanded" id="review-body-${id}" style="display:none"><div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div></div>
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
@@ -271,11 +270,20 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        const body = document.getElementById('review-body-' + btn.dataset.id);
-        if (!body) return;
-        const expanded = body.style.display !== 'none';
-        body.style.display = expanded ? 'none' : 'block';
-        btn.innerHTML = expanded ? '&#9654;' : '&#9660;';
+        const span = document.getElementById('review-preview-' + btn.dataset.id);
+        if (!span) return;
+        const expanded = span.dataset.expanded === '1';
+        if (expanded) {
+          span.style.whiteSpace = 'nowrap';
+          span.style.overflow = 'hidden';
+          span.dataset.expanded = '0';
+          btn.innerHTML = '&#9654;';
+        } else {
+          span.style.whiteSpace = 'normal';
+          span.style.overflow = 'visible';
+          span.dataset.expanded = '1';
+          btn.innerHTML = '&#9660;';
+        }
       });
     });
     document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
