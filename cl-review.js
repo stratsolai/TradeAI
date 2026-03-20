@@ -50,13 +50,11 @@ window.CL_REVIEW = {
           <button class="review-status-btn active" data-status="pending">Pending</button>
           <button class="review-status-btn" data-status="approved">Approved</button>
           <button class="review-status-btn" data-status="rejected">Rejected</button>
+          <input type="text" id="review-search" class="review-search-input" placeholder="Search items...">
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
           <div id="review-cat-pills" class="review-pill-row"></div>
           <div id="review-tool-pills" class="review-pill-row"></div>
-        </div>
-        <div class="review-search-row">
-          <input type="text" id="review-search" class="review-search-input" placeholder="Search by title...">
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
