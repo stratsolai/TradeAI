@@ -203,8 +203,8 @@ window.CL_REVIEW = {
     if (item.source) sourceParts.push(item.source.charAt(0).toUpperCase() + item.source.slice(1));
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
-    const body = escHtml(item.body || '');
-    const bodyRaw = (item.body || '').split('\n')[0].substring(0, 120);
+    const body = escHtml(item.content_text || '');
+    const bodyRaw = (item.content_text || '').split('\n')[0].substring(0, 120);
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
