@@ -203,8 +203,7 @@ window.CL_REVIEW = {
     if (item.source) sourceParts.push(item.source.charAt(0).toUpperCase() + item.source.slice(1));
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
-    const body = escHtml(item.content_text || '');
-    const bodyRaw = (item.content_text || '').replace(/\n/g, ' ').substring(0, 120);
+    const body = escHtml(item.body || '');
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -223,7 +222,7 @@ window.CL_REVIEW = {
     if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email account:</span> ' + escHtml(detail.account_email) + '</div>');
     if (detail.sender) sourceDetailParts.push('<div><span class="source-detail-label">From:</span> ' + escHtml(detail.sender) + '</div>');
     if (detail.subject) sourceDetailParts.push('<div><span class="source-detail-label">Subject:</span> ' + escHtml(detail.subject) + '</div>');
-    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> <a href="' + escHtml(detail.url) + '" target="_blank" class="review-source-link">' + escHtml(detail.url) + '</a></div>');
+    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> ' + escHtml(detail.url) + '</div>');
     if (detail.folder_name) sourceDetailParts.push('<div><span class="source-detail-label">Drive folder:</span> ' + escHtml(detail.folder_name) + '</div>');
     if (item.source_item_id && detail.file_url) {
       sourceDetailParts.push('<div><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
@@ -232,22 +231,22 @@ window.CL_REVIEW = {
     return `<div class="review-card" data-id="${id}">
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
-    <div class="review-card-title-row">
-      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
-      <span class="review-type-badge">${escHtml(typeLabel)}</span>
+    <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
+    <span class="review-type-badge">${escHtml(typeLabel)}</span>
+    <span class="review-source-badge">${sourceLabel}</span>
+    <div class="review-card-btns">
+      <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
-    <div class="review-card-preview-row">
-      <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
-      <span class="review-body-preview" id="review-preview-${id}">${escHtml(bodyRaw)}</span>
-    </div>
-    <div class="review-card-meta-row">
-      <span class="review-source-badge">${sourceLabel}</span>
-      <div class="review-card-actions">
-        <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tools</button>
-        <button class="btn-approve review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
-        <button class="btn-reject review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
-      </div>
-    </div>
+  </div>
+  <div class="review-card-footer">
+    <button class="btn-link review-toggle" data-id="${id}" data-section="body">&#8964; Content</button>
+    <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
+    <button class="btn-link review-toggle" data-id="${id}" data-section="source">&#9432; Source</button>
+  </div>
+  <div class="review-section" id="review-body-${id}" style="display:none">
+    <div class="review-section-head"><span>Content</span><button class="btn-link review-close" data-id="${id}" data-section="body">Close</button></div>
+    <div class="review-body-text" contenteditable="true" data-id="${id}">${body}</div>
   </div>
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
@@ -257,7 +256,7 @@ window.CL_REVIEW = {
     <div class="review-section-head"><span>Source</span><button class="btn-link review-close" data-id="${id}" data-section="source">Close</button></div>
     <div class="review-source-detail">${sourceDetailHtml}</div>
   </div>
-</div>`
+</div>`;
   },
 
   _bindCardEvents: function() {
@@ -277,17 +276,10 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-toggle').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
-        if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
       });
     });
-    document.getElementById('review-list').addEventListener('click', function(e) {
-      var btn = e.target.classList.contains('review-expand-btn') ? e.target : (e.target.parentElement && e.target.parentElement.classList.contains('review-expand-btn') ? e.target.parentElement : null);
-      if (!btn) return;
-      var preview = document.getElementById('review-preview-' + btn.dataset.id);
-      if (!preview) return;
-      var expanded = preview.classList.toggle('review-body-preview-expanded');
-      btn.innerHTML = expanded ? '&#9660;' : '&#9654;';
-    });    document.querySelectorAll('.review-close').forEach(function(btn) {
+    document.querySelectorAll('.review-close').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = 'none';
