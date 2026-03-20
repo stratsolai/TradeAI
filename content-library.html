@@ -1192,8 +1192,8 @@
 .review-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
 .review-expand-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:12px; padding:0; flex-shrink:0; }
 .review-body-preview { font-size:13px; color:#888888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
-.review-body-expanded { padding:8px 12px 12px 12px; }
-.review-body-expanded .review-body-text { min-width:0; }
+.review-body-expanded { flex-basis:100%; padding:0 16px 12px 16px; }
+.review-body-expanded .review-body-text { white-space:pre-wrap; word-break:break-word; font-size:14px; color:#333333; line-height:1.6; border:1px solid #e0e0e0; border-radius:6px; padding:10px 12px; background:#fafafa; outline:none; width:100%; box-sizing:border-box; }
 
 /* Tool tag pills */
 .review-tool-pills { display:flex; flex-wrap:wrap; gap:8px; }
