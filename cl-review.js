@@ -204,7 +204,8 @@ window.CL_REVIEW = {
     if (item.created_at) sourceParts.push(new Date(item.created_at).toLocaleDateString('en-AU'));
     const sourceLabel = escHtml(sourceParts.join(' \u2014 ') || 'Unknown source');
     const body = escHtml(item.body || '');
-    const bodyPreview = escHtml((item.body || '').substring(0, 120));
+    const bodyRaw = (item.content_text || '').split('\n')[0].substring(0, 120);
+    const bodyPreview = escHtml(bodyRaw);
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -239,7 +240,10 @@ window.CL_REVIEW = {
       <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
-    <div class="review-preview-row" data-id="${id}"><button class="review-expand-btn" data-id="${id}" aria-label="Expand content">&#9660;</button><span class="review-body-preview">${bodyPreview}</span></div>
+    <div class="review-card-preview-row">
+      <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
+      <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
+    </div>
   </div>
   <div class="review-card-footer">
     <button class="btn-link review-toggle" data-id="${id}" data-section="body">&#8964; Content</button>
@@ -266,17 +270,14 @@ window.CL_REVIEW = {
         self._updateBulkBar();
       });
     });
-    document.getElementById('review-list').addEventListener('click', function(e) {
-      var btn = e.target.classList.contains('review-expand-btn') ? e.target : (e.target.closest ? e.target.closest('.review-expand-btn') : null);
-      if (!btn) return;
-      var id = btn.dataset.id;
-      var body = document.getElementById('review-body-' + id);
-      var preview = document.querySelector('.review-preview-row[data-id="' + id + '"]');
-      if (!body) return;
-      var expanded = body.style.display !== 'none';
-      body.style.display = expanded ? 'none' : 'block';
-      btn.innerHTML = expanded ? '&#9660;' : '&#9650;';
-      if (preview) preview.style.display = expanded ? '' : 'none';
+    document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        const preview = document.getElementById('review-preview-' + btn.dataset.id);
+        if (!preview) return;
+        const expanded = preview.style.display === 'none';
+        preview.style.display = expanded ? '' : 'none';
+        btn.innerHTML = expanded ? '&#9654;' : '&#9660;';
+      });
     });
     document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'approved'); });
