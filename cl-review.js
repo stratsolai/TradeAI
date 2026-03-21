@@ -277,6 +277,13 @@ window.CL_REVIEW = {
       }
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
     }).join('');
+    const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['photo','service','testimonial','offer','team','company','compliance','tip','portfolio'];
+    const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
+    const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
+      const isTagged = catTags.indexOf(cat) > -1;
+      const label = cat.charAt(0).toUpperCase() + cat.slice(1);
+      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
+    }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
     if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span> ' + escHtml(detail.filename) + '</div>');
@@ -298,7 +305,7 @@ window.CL_REVIEW = {
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
-    <span class="review-type-badge">${escHtml(typeLabel)}</span>
+    <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
@@ -309,6 +316,10 @@ window.CL_REVIEW = {
   <div class="review-section" id="review-tags-${id}" style="display:none">
     <div class="review-section-head"><span>Tagged Tools</span></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
+  </div>
+  <div class="review-section" id="review-cats-${id}" style="display:none">
+    <div class="review-section-head"><span>Tagged Categories</span></div>
+    <div class="review-tool-pills">${catPillsHtml}</div>
   </div>
   <div class="review-section" id="review-source-${id}" style="display:none">
     <div class="review-section-head"><span>Source</span><button class="btn-link review-close" data-id="${id}" data-section="source">Close</button></div>
@@ -349,7 +360,7 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
     });
-    document.querySelectorAll('.review-toggle, .review-tools-btn').forEach(function(btn) {
+    document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
@@ -370,6 +381,9 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.tool-pill[data-item-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
+    });
+    document.querySelectorAll('.tool-pill[data-cat-id]').forEach(function(pill) {
+      pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
     });
   },
 
@@ -410,6 +424,17 @@ window.CL_REVIEW = {
     item.tool_tags = tags;
     await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
     pill.classList.toggle('tool-pill-tagged', tags.indexOf(toolId) > -1);
+  },
+
+  _toggleCategoryTag: async function(itemId, catId, pill) {
+    const item = this._items.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    const tags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags.slice() : (item.category ? [item.category] : []);
+    const idx = tags.indexOf(catId);
+    if (idx > -1) { tags.splice(idx, 1); } else { tags.push(catId); }
+    item.category_tags = tags;
+    await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
+    pill.classList.toggle('tool-pill-tagged', tags.indexOf(catId) > -1);
   },
 
   _updateBulkBar: function() {
