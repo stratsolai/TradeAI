@@ -307,7 +307,7 @@ window.CL_REVIEW = {
       </div>
   
   <div class="review-section" id="review-tags-${id}" style="display:none">
-    <div class="review-section-head"><span>Tagged Tools</span><button class="btn-link review-close" data-id="${id}" data-section="tags">Close</button></div>
+    <div class="review-section-head"><span>Tagged Tools</span></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
   </div>
   <div class="review-section" id="review-source-${id}" style="display:none">
