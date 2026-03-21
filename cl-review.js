@@ -240,7 +240,7 @@ window.CL_REVIEW = {
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>
-    <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tools</button>
+    <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <span class="review-type-badge">${escHtml(typeLabel)}</span>
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" title="View source document">&#128196; Source</button>
@@ -292,7 +292,7 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
     });
-    document.querySelectorAll('.review-toggle').forEach(function(btn) {
+    document.querySelectorAll('.review-toggle, .review-tools-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
