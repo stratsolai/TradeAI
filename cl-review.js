@@ -115,6 +115,47 @@ window.CL_REVIEW = {
     this._updateBulkBar();
     this._renderFilterRow();
     this._renderList();
+    const self2 = this;
+    const filterToolsBtn = document.querySelector('.review-filter-tools-btn');
+    const filterCatBtn = document.querySelector('.review-filter-cat-btn');
+    if (filterToolsBtn) {
+      filterToolsBtn.addEventListener('click', function() {
+        const filterRow = document.getElementById('review-filter-row');
+        const toolPills = document.getElementById('review-tool-pills');
+        const catPills = document.getElementById('review-cat-pills');
+        const isOpen = filterToolsBtn.classList.contains('active');
+        if (isOpen) {
+          filterToolsBtn.classList.remove('active');
+          if (filterRow) filterRow.style.display = 'none';
+        } else {
+          filterToolsBtn.classList.add('active');
+          if (filterCatBtn) filterCatBtn.classList.remove('active');
+          if (catPills) catPills.style.display = 'none';
+          if (toolPills) toolPills.style.display = 'block';
+          if (filterRow) filterRow.style.display = 'block';
+          self2._renderFilterRow();
+        }
+      });
+    }
+    if (filterCatBtn) {
+      filterCatBtn.addEventListener('click', function() {
+        const filterRow = document.getElementById('review-filter-row');
+        const toolPills = document.getElementById('review-tool-pills');
+        const catPills = document.getElementById('review-cat-pills');
+        const isOpen = filterCatBtn.classList.contains('active');
+        if (isOpen) {
+          filterCatBtn.classList.remove('active');
+          if (filterRow) filterRow.style.display = 'none';
+        } else {
+          filterCatBtn.classList.add('active');
+          if (filterToolsBtn) filterToolsBtn.classList.remove('active');
+          if (toolPills) toolPills.style.display = 'none';
+          if (catPills) catPills.style.display = 'block';
+          if (filterRow) filterRow.style.display = 'block';
+          self2._renderFilterRow();
+        }
+      });
+    }
   },
 
   _renderFilterRow: function() {
