@@ -84,7 +84,7 @@ window.CL_OUTPUTS = {
     if (!user) { panel.innerHTML = '<div class="outputs-empty">Please sign in to view outputs.</div>'; return; }
     this._supabase
       .from("content_library")
-      .select("id, title, body, created_at, tool_tags, status, source")
+      .select("id, title, content_text, created_at, tool_tags, status, source")
       .eq("user_id", user.id)
       .eq("status", "approved")
       .eq("source", "tool")
@@ -103,7 +103,7 @@ window.CL_OUTPUTS = {
         var html = "<div class=\"outputs-list\">";
         rows.forEach(function(row) {
           var date = row.created_at ? new Date(row.created_at).toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) : "";
-          var excerpt = row.body ? row.body.substring(0, 180).replace(/</g, "&lt;") + (row.body.length > 180 ? "\u2026" : "") : "";
+          var excerpt = row.content_text ? row.content_text.substring(0, 180).replace(/</g, "&lt;") + (row.content_text.length > 180 ? "\u2026" : "") : "";
           html += "<div class=\"output-card\">";
           html += "<div class=\"output-card-title\">" + (row.title || "Untitled") + "</div>";
           html += "<div class=\"output-card-date\">" + date + "</div>";
@@ -131,7 +131,7 @@ window.CL_OUTPUTS = {
     var titleEl = document.getElementById("modal-item-title");
     var bodyEl = document.getElementById("modal-item-body");
     if (titleEl) titleEl.textContent = row.title || "Untitled";
-    if (bodyEl) bodyEl.textContent = row.body || "";
+    if (bodyEl) bodyEl.textContent = row.content_text || "";
     modal.classList.add("active");
   }
 };
