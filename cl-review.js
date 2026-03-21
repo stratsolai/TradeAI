@@ -240,7 +240,7 @@ window.CL_REVIEW = {
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>
-    <button class="btn-link review-toggle" data-id="${id}" data-section="tags">&#9741; Tools</button>
+    <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tools</button>
     <span class="review-type-badge">${escHtml(typeLabel)}</span>
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" title="View source document">&#128196; Source</button>
