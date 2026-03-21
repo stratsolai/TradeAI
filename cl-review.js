@@ -131,7 +131,7 @@ window.CL_REVIEW = {
           filterToolsBtn.classList.add('active');
           if (filterCatBtn) filterCatBtn.classList.remove('active');
           if (catPills) catPills.style.display = 'none';
-          if (toolPills) toolPills.style.display = 'block';
+          if (toolPills) toolPills.style.display = 'flex';
           self2._renderFilterRow();
           if (filterRow) filterRow.style.display = 'block';
         }
@@ -150,7 +150,7 @@ window.CL_REVIEW = {
           filterCatBtn.classList.add('active');
           if (filterToolsBtn) filterToolsBtn.classList.remove('active');
           if (toolPills) toolPills.style.display = 'none';
-          if (catPills) catPills.style.display = 'block';
+          if (catPills) catPills.style.display = 'flex';
           self2._renderFilterRow();
           if (filterRow) filterRow.style.display = 'block';
         }
