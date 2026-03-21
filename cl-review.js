@@ -177,20 +177,12 @@ window.CL_REVIEW = {
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
 
-    const allToolIds = new Set();
-    this._items.forEach(function(item) {
-      if (Array.isArray(item.tool_tags)) item.tool_tags.forEach(function(t) { allToolIds.add(t); });
-    });
     const tools = window.CORE_TOOLS || [];
-    const relevantTools = tools.filter(function(t) { return allToolIds.has(t.id); });
-    if (relevantTools.length > 0) {
-      toolPillsEl.innerHTML = relevantTools.map(function(tool) {
-        const isActive = self._toolFilters.indexOf(tool.id) > -1;
-        return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
-      }).join('');
-    } else {
-      toolPillsEl.innerHTML = '';
-    }
+    const relevantTools = tools;
+    toolPillsEl.innerHTML = relevantTools.map(function(tool) {
+      const isActive = self._toolFilters.indexOf(tool.id) > -1;
+      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
+    }).join('');
 
     catPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
