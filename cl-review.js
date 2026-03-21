@@ -55,6 +55,7 @@ window.CL_REVIEW = {
         <div class="review-filter-btns-row">
           <button class="review-filter-tools-btn">&#9783; Filter by Tools</button>
           <button class="review-filter-cat-btn">&#9776; Filter by Category</button>
+          <button class="review-clear-filters-btn">&#10005; Clear All Filters</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
           <div id="review-cat-pills" class="review-pill-row"></div>
@@ -154,6 +155,18 @@ window.CL_REVIEW = {
           self2._renderFilterRow();
           if (filterRow) filterRow.style.display = 'block';
         }
+      });
+    }
+    const clearBtn = document.querySelector('.review-clear-filters-btn');
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() {
+        self2._toolFilters = [];
+        self2._categoryFilter = [];
+        if (filterToolsBtn) filterToolsBtn.classList.remove('active');
+        if (filterCatBtn) filterCatBtn.classList.remove('active');
+        if (filterRow) filterRow.style.display = 'none';
+        self2._renderFilterRow();
+        self2._renderList();
       });
     }
   },
