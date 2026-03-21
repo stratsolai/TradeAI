@@ -132,8 +132,8 @@ window.CL_REVIEW = {
           if (filterCatBtn) filterCatBtn.classList.remove('active');
           if (catPills) catPills.style.display = 'none';
           if (toolPills) toolPills.style.display = 'block';
-          if (filterRow) filterRow.style.display = 'block';
           self2._renderFilterRow();
+          if (filterRow) filterRow.style.display = 'block';
         }
       });
     }
@@ -151,8 +151,8 @@ window.CL_REVIEW = {
           if (filterToolsBtn) filterToolsBtn.classList.remove('active');
           if (toolPills) toolPills.style.display = 'none';
           if (catPills) catPills.style.display = 'block';
-          if (filterRow) filterRow.style.display = 'block';
           self2._renderFilterRow();
+          if (filterRow) filterRow.style.display = 'block';
         }
       });
     }
