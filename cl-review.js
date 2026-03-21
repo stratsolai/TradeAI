@@ -163,7 +163,9 @@ window.CL_REVIEW = {
     const catPillsEl = document.getElementById('review-cat-pills');
     const toolPillsEl = document.getElementById('review-tool-pills');
     if (!filterRow || !catPillsEl || !toolPillsEl) return;
-    filterRow.style.display = '';
+    var _toolsActive = document.querySelector('.review-filter-tools-btn.active');
+    var _catActive = document.querySelector('.review-filter-cat-btn.active');
+    filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
     const self = this;
 
     const cats = ['all'].concat([...new Set(this._items.map(function(i) { return i.category; }).filter(Boolean))]);
