@@ -1,7 +1,7 @@
 window.CL_REVIEW = {
   _supabase: null,
   _status: 'pending',
-  _categoryFilter: 'all',
+  _categoryFilter: [],
   _toolFilters: [],
   _searchTerm: '',
   _items: [],
@@ -168,10 +168,12 @@ window.CL_REVIEW = {
     filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
     const self = this;
 
-    const cats = ['all'].concat([...new Set(this._items.map(function(i) { return i.category; }).filter(Boolean))]);
+    const cats = (window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0)
+      ? window.CL_CATEGORIES
+      : [...new Set(this._items.map(function(i) { return i.category; }).filter(Boolean))];
     catPillsEl.innerHTML = cats.map(function(cat) {
-      const isActive = cat === (self._categoryFilter || 'all');
-      const label = cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1);
+      const isActive = self._categoryFilter.indexOf(cat) > -1;
+      const label = cat.charAt(0).toUpperCase() + cat.slice(1);
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
 
@@ -184,7 +186,9 @@ window.CL_REVIEW = {
 
     catPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
-        self._categoryFilter = pill.dataset.cat;
+        var id = pill.dataset.cat;
+        var idx = self._categoryFilter.indexOf(id);
+        if (idx > -1) { self._categoryFilter.splice(idx, 1); } else { self._categoryFilter.push(id); }
         self._renderFilterRow();
         self._renderList();
       });
@@ -203,7 +207,7 @@ window.CL_REVIEW = {
   _filteredItems: function() {
     const self = this;
     return this._items.filter(function(item) {
-      if (self._categoryFilter && self._categoryFilter !== 'all' && item.category !== self._categoryFilter) return false;
+      if (self._categoryFilter.length > 0 && self._categoryFilter.indexOf(item.category) === -1) return false;
       if (self._toolFilters.length > 0) {
         const tags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
         if (!self._toolFilters.some(function(f) { return tags.indexOf(f) > -1; })) return false;
