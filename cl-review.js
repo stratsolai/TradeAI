@@ -7,10 +7,15 @@ window.CL_REVIEW = {
   _items: [],
   _selected: new Set(),
 
-  init: function(supabase) {
+  init: async function(supabase) {
     this._supabase = supabase;
     this._render();
     this._bindStatTiles();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+      window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
+    }
     this._load();
   },
 
@@ -268,7 +273,7 @@ window.CL_REVIEW = {
       const isTagged = toolTags.indexOf(tool.id) > -1;
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
-        return '<span class="tool-pill tool-pill-inactive">' + escHtml(tool.name) + ' <a href="dashboard.html" class="tool-pill-activate">Activate</a></span>';
+        return '<a href="panel-auth.html?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Add to your Stax to use this data">' + escHtml(tool.name) + ' <span class="tool-pill-add-stax">+ Add to Stax</span></a>';
       }
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
     }).join('');
