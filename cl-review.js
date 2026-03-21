@@ -163,10 +163,6 @@ window.CL_REVIEW = {
     const catPillsEl = document.getElementById('review-cat-pills');
     const toolPillsEl = document.getElementById('review-tool-pills');
     if (!filterRow || !catPillsEl || !toolPillsEl) return;
-    if (this._status === 'pending') {
-      filterRow.style.display = 'none';
-      return;
-    }
     filterRow.style.display = '';
     const self = this;
 
