@@ -170,7 +170,7 @@ window.CL_REVIEW = {
     filterRow.style.display = '';
     const self = this;
 
-    const cats = ['all'].concat([...new Set(this._items.map(function(i) { return i.type; }).filter(Boolean))]);
+    const cats = ['all'].concat([...new Set(this._items.map(function(i) { return i.category; }).filter(Boolean))]);
     catPillsEl.innerHTML = cats.map(function(cat) {
       const isActive = cat === (self._categoryFilter || 'all');
       const label = cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1);
@@ -213,7 +213,7 @@ window.CL_REVIEW = {
   _filteredItems: function() {
     const self = this;
     return this._items.filter(function(item) {
-      if (self._categoryFilter && self._categoryFilter !== 'all' && item.type !== self._categoryFilter) return false;
+      if (self._categoryFilter && self._categoryFilter !== 'all' && item.category !== self._categoryFilter) return false;
       if (self._toolFilters.length > 0) {
         const tags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
         if (!self._toolFilters.some(function(f) { return tags.indexOf(f) > -1; })) return false;
@@ -241,7 +241,7 @@ window.CL_REVIEW = {
   _cardHtml: function(item) {
     const id = escHtml(item.id);
     const title = escHtml(item.title || 'Untitled');
-    const typeLabel = item.type ? item.type.charAt(0).toUpperCase() + item.type.slice(1) : 'Unknown';
+    const typeLabel = item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Unknown';
     const uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-AU') : '';
     const sourceParts = [(item.source || 'unknown').slice(0,1).toUpperCase() + (item.source || 'unknown').slice(1)];
     if (item.source_detail) {
