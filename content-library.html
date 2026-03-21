@@ -1233,8 +1233,11 @@
   padding:5px 14px; border-radius:20px;
   border:1px solid #E0E0E0; background:#F5F7FA; color:#aaa;
   font-size:13px; display:inline-flex; align-items:center; gap:6px;
+  text-decoration:none; cursor:pointer; transition:background 0.15s, border-color 0.15s;
 }
-.tool-pill-activate { font-size:11px; color:#C4622A; text-decoration:none; }
+.tool-pill-inactive:hover { background:#EEF2F7; border-color:#4A6D8C; color:#4A6D8C; }
+.tool-pill-add-stax { font-size:11px; font-weight:600; color:#4A6D8C; white-space:nowrap; }
+.tool-pill-inactive:hover .tool-pill-add-stax { color:#2e5070; }
 
 /* Source detail */
 .review-source-detail { font-size:13px; color:#555; line-height:1.8; }
