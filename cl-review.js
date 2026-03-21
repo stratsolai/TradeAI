@@ -16,7 +16,7 @@ window.CL_REVIEW = {
 
   setStatus: function(status) {
     this._status = status;
-    this._categoryFilter = 'all';
+    this._categoryFilter = [];
     this._toolFilters = [];
     this._searchTerm = '';
     this._selected = new Set();
@@ -79,7 +79,7 @@ window.CL_REVIEW = {
         document.querySelectorAll('.review-status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         self._status = btn.dataset.status;
-        self._categoryFilter = 'all';
+        self._categoryFilter = [];
         self._toolFilters = [];
         self._selected = new Set();
         self._load();
