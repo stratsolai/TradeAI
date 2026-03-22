@@ -157,7 +157,7 @@ window.CL_SETTINGS_LOGIC = {
 
 document.addEventListener('DOMContentLoaded', async function() {
 
-  const supabase = window.supabase;
+  const supabase = window.supabaseClient;
   if (!supabase) { console.error('Supabase not available'); return; }
 
   // -- Auth --
