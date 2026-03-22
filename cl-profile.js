@@ -360,7 +360,7 @@ window.CL_PROFILE = {
         '<label class="profile-label">Additional Theme Statements <span class="profile-optional">(optional)</span></label>' +
         '<input type="text" id="prof-extra-primary" class="profile-input" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" style="margin-bottom:8px;" />' +
         '<div id="prof-extras-extra">' + extraRowsHtml + '</div>' +
-        '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>' +
+        '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;display:inline-block;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>' +
       '</div>' +
     '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
