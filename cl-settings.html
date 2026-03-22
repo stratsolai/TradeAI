@@ -263,15 +263,16 @@
     }
   
     /* Connection UI */
-    .connection-status { font-size: 13px; color: var(--text-muted); margin-right: 8px; }
+    .connection-status { font-size: 13px; color: var(--text-muted); display: inline-block; }
+    .connection-status:empty { display: none; }
     .connection-status.connected { color: var(--green); font-weight: 600; }
-    .btn-connect { background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: var(--body-font); }
-    .btn-connect:hover { background: var(--blue); color: var(--white); }
-    .btn-connect.disconnect { color: var(--red); border-color: var(--red); }
+    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); transition: background 0.15s; }
+    .btn-connect:hover { background: #154070; }
+    .btn-connect.disconnect { background: var(--red); }
     .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
     .settings-text-input { border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
     .settings-text-input:focus { outline: none; border-color: var(--blue); }
-    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-left: 8px; }
+    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background 0.15s; }
     .btn-save-inline:hover { opacity: 0.9; }
     .settings-card-title { font-family: var(--heading-font); font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
     .settings-card-hint { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-family: var(--body-font); }
