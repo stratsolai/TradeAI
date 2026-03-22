@@ -33,9 +33,13 @@ window.CL_OUTPUTS = {
     // Left sidebar - tool list
     html += "<div class=\"outputs-sidebar\">";
     html += "<div class=\"outputs-sidebar-title\">AI Tool Outputs</div>";
+    var dividerAdded = false;
     this._tools.forEach(function(tool) {
       var cls = "tool-row";
-      if (tool.state === "coming-soon") cls += " tool-row-coming";
+      if (tool.state === "coming-soon") {
+        cls += " tool-row-coming";
+        if (!dividerAdded) { html += "<hr class=\"outputs-sidebar-divider\">"; dividerAdded = true; }
+      }
       if (self._selectedTool === tool.id) cls += " active";
       var badge = tool.state === "coming-soon" ? " <span class=\"tool-coming-badge\">Coming Soon</span>" : "";
       html += "<div class=\"" + cls + "\" data-tool-id=\"" + tool.id + "\">" + tool.name + badge + "</div>";
