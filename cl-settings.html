@@ -297,7 +297,7 @@
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .btn-disconnect { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: var(--body-font); }
     .btn-disconnect:hover { background: var(--red); color: var(--white); }
-    .btn-add-connection { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 10px; }
+    .btn-add-connection { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 10px; min-width: 160px; text-align: center; }
     .btn-add-connection:hover { background: var(--blue); color: var(--white); }
     /* Website multi-URL list */
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -390,7 +390,7 @@
 
       </div>
       <div class="settings-footer">
-        <button class="btn-save" id="save-settings-btn">Save Settings</button>
+        <button class="btn-save" id="save-settings-btn">Save</button>
         <span class="save-msg" id="save-scan-msg"></span>
       </div>
     </div>
@@ -426,27 +426,26 @@
           </div>
         </div>
 
-        <div class="settings-row">
+        <div class="settings-row" style="align-items:flex-start;">
           <div>
             <div class="settings-row-label">Google Drive</div>
             <div class="settings-row-desc">Connect your Google Drive to import documents automatically.</div>
           </div>
-          <div class="connection-row-control" style="flex-direction:row;align-items:center;gap:8px;">
-            <div id="drive-status" class="connection-status"></div>
-            <button id="drive-btn" class="btn-connect">Connect</button>
+          <div class="connection-row-control">
+            <div id="drive-connections-list" class="connection-list"></div>
+            <button id="add-drive-btn" class="btn-add-connection">+ Google Drive</button>
           </div>
         </div>
 
-        <div class="settings-row" style="flex-direction:column;align-items:flex-start;">
-          <div style="margin-bottom:12px;">
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
             <div class="settings-row-label">Website</div>
             <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
           </div>
-          <div style="width:100%;">
+          <div class="connection-row-control">
             <div id="website-urls-list"></div>
-            <button id="add-website-btn" class="btn-add-website">+ Add Website</button>
-            <br>
-            <button id="website-save-btn" class="btn-save-urls">Save</button>
+            <button id="add-website-btn" class="btn-add-connection" style="margin-top:8px;">+ Add Website</button>
+            <button id="website-save-btn" class="btn-save-urls" style="margin-top:8px;">Save</button>
           </div>
         </div>
 
