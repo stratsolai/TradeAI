@@ -198,6 +198,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const connectedEmails = (profile && profile.cl_connected_emails) ? profile.cl_connected_emails : [];
   const driveConnected = profile && profile.cl_drive_connected;
   const websiteUrls = (profile && profile.website_urls) ? profile.website_urls : [];
+  renderWebsiteUrls();
 
   // -- Render Gmail connections --
   function renderEmailList(provider) {
