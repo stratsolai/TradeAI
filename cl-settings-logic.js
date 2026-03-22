@@ -252,6 +252,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     } else if (provider === 'outlook') {
       oauthProvider = 'azure';
       scopes = 'email offline_access Mail.Read';
+    } else if (provider === 'drive') {
+      oauthProvider = 'google';
+      scopes = 'email profile https://www.googleapis.com/auth/drive.readonly';
     }
     supabase.auth.signInWithOAuth({
       provider: oauthProvider,
@@ -259,42 +262,41 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  // -- Google Drive (single connection) --
-  function renderDriveStatus(isConnected) {
-    const statusEl = document.getElementById('drive-status');
-    const btn = document.getElementById('drive-btn');
-    if (!statusEl || !btn) return;
-    if (isConnected) {
-      statusEl.textContent = 'Connected';
-      statusEl.className = 'connection-status connected';
-      btn.textContent = 'Disconnect';
-      btn.onclick = async function() {
-        const { error } = await supabase.from('profiles').update({ cl_drive_connected: false }).eq('user_id', user.id);
-        if (!error) renderDriveStatus(false);
-      };
+  // -- Google Drive (multi-account) --
+  function renderDriveList() {
+    const listEl = document.getElementById('drive-connections-list');
+    if (!listEl) return;
+    const driveAccounts = connectedEmails.filter(function(e) { return e.provider === 'drive'; });
+    if (driveAccounts.length === 0) {
+      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No account connected</div>';
     } else {
-      statusEl.textContent = '';
-      statusEl.className = 'connection-status';
-      btn.textContent = 'Connect';
-      btn.onclick = function() {
-        const redirectTo = window.location.origin + '/api/auth/oauth-callback.js?flow=cl&provider=drive';
-        supabase.auth.signInWithOAuth({
-          provider: 'google',
-          options: { scopes: 'email profile https://www.googleapis.com/auth/drive.readonly', redirectTo: redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
+      listEl.innerHTML = driveAccounts.map(function(e) {
+        return '<div class="connection-item">' +
+          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
+          '<button class="btn-disconnect" data-provider="drive" data-email="' + e.email + '">Disconnect</button>' +
+        '</div>';
+      }).join('');
+      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          await disconnectEmail('drive', btn.getAttribute('data-email'));
+          renderDriveList();
         });
-      };
+      });
     }
   }
-  renderDriveStatus(driveConnected);
+  renderDriveList();
+
+  const addDriveBtn = document.getElementById('add-drive-btn');
+  if (addDriveBtn) {
+    addDriveBtn.addEventListener('click', function() { handleOAuthConnect('drive'); });
+  }
 
   // -- Website URLs --
   function renderWebsiteUrls() {
     const listEl = document.getElementById('website-urls-list');
     if (!listEl) return;
-    if (websiteUrls.length === 0) {
-      listEl.innerHTML = '<div class="website-url-item"><input type="url" class="website-url-input" placeholder="https://yourwebsite.com.au" /></div>';
-    } else {
-      listEl.innerHTML = websiteUrls.map(function(url) {
+    const urlsToRender = websiteUrls.length === 0 ? [''] : websiteUrls;
+    listEl.innerHTML = urlsToRender.map(function(url) {
         return '<div class="website-url-item">' +
           '<input type="url" class="website-url-input" value="' + url + '" placeholder="https://yourwebsite.com.au" />' +
           '<button class="btn-remove-url" title="Remove">&times;</button>' +
@@ -306,7 +308,6 @@ document.addEventListener('DOMContentLoaded', async function() {
           renderWebsiteUrls();
         });
       });
-    }
   }
   renderWebsiteUrls();
 
