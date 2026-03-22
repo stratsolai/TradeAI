@@ -1012,12 +1012,12 @@
     @media (max-width: 640px) { .outputs-layout { grid-template-columns: 1fr; } }
     .outputs-sidebar { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; }
     .outputs-sidebar-title { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0; }
-    .tool-row { display: flex; align-items: center; padding: 10px 12px; border-radius: 8px; border-left: 4px solid #e5eaf0; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; background: #fafafa; transition: all 0.15s; margin-bottom: 4px; }
+    .tool-row { display: flex; align-items: center; padding: 10px 12px; border-radius: 8px; border-left: 4px solid #e5eaf0; cursor: pointer; font-size: 13px; font-weight: 500; color: #555; background: #fafafa; transition: all 0.15s; margin-bottom: 4px; min-height: 44px; }
     .tool-row:hover { background: #f0f4fa; border-left-color: #4A6D8C; color: #333; }
     .tool-row.active { background: #fff; border-left: 4px solid var(--blue, #1A5490); color: var(--blue, #1A5490); font-weight: 700; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .tool-row-coming { display: flex; align-items: center; padding: 9px 12px; border-radius: 8px; border-left: 4px solid transparent; font-size: 12px; color: #ccc; cursor: default; margin-bottom: 4px; background: none; }
+    .tool-row-coming { display: flex; align-items: center; padding: 9px 12px; border-radius: 8px; border-left: 4px solid transparent; font-size: 12px; color: #ccc; cursor: default; margin-bottom: 4px; background: none; min-height: 44px; }
     .outputs-sidebar-divider { border: none; border-top: 1px solid #f0f0f0; margin: 8px 0; }
-    .tool-coming-badge { font-size: 11px; background: #f0f0f0; color: #bbb; padding: 2px 8px; border-radius: 10px; margin-left: auto; }
+    .tool-coming-badge { font-size: 11px; background: #f0f0f0; color: #bbb; padding: 2px 8px; border-radius: 10px; margin-left: auto; flex-shrink: 0; }
     .outputs-panel { min-height: 200px; }
     .outputs-empty { text-align: center; padding: 60px 20px; color: #999; font-size: 15px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
     .outputs-loading { text-align: center; padding: 40px 20px; color: #999; font-size: 14px; }
