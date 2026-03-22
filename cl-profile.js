@@ -341,24 +341,57 @@ window.CL_PROFILE = {
   },
 
   _renderMarketing: function() {
-    var extras = Array.isArray(this._profile.marketing_theme_extra) ? this._profile.marketing_theme_extra : [];
-    var extrasHtml = extras.map(function(item, i) { return '<div class="profile-repeating-row" id="prof-extra-' + i + '"><input type="text" class="profile-input prof-extra-input" value="' + window.escHtml(item) + '" placeholder="Additional theme statement" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button></div>'; }).join('');
+    var p = this._profile;
+    var extras = Array.isArray(p.marketing_theme_extra) ? p.marketing_theme_extra : [];
+    var extraRowsHtml = extras.map(function(item, i) {
+      return '<div class="profile-repeating-row" id="prof-extra-' + i + '">' +
+        '<input type="text" class="profile-input prof-extra-input" value="' + window.escHtml(item) + '" placeholder="Additional theme statement" />' +
+        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button>' +
+      '</div>';
+    }).join('');
     var body = '<div class="profile-fields">' +
-      this._field('What do you want your customers to know about your business?', this._textarea('prof-theme-aware', this._v('marketing_theme_awareness'), 'e.g. We have been serving our local community for over 15 years with honest, reliable service', 3)) +
-      this._field('What sets you apart from your competitors?', this._textarea('prof-theme-diff', this._v('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
-      this._field('What feeling do you want customers to have when they interact with you?', this._textarea('prof-theme-feel', this._v('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
-      this._field('Additional Theme Statements <span class="profile-optional">(optional)</span>', '<div id="prof-extras-wrap">' + extrasHtml + '</div><button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>') +
+      this._field('What do you want your customers to know about your business?',
+        this._textarea('prof-theme-aware', this._v('marketing_theme_awareness'), 'e.g. We have been serving our local community for over 15 years with honest, reliable service', 3)) +
+      this._field('What sets you apart from your competitors?',
+        this._textarea('prof-theme-diff', this._v('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
+      this._field('What feeling do you want customers to have when they interact with you?',
+        this._textarea('prof-theme-feel', this._v('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
+      '<div class="profile-field-full">' +
+        '<label class="profile-label">Additional Theme Statements <span class="profile-optional">(optional)</span></label>' +
+        '<input type="text" id="prof-extra-primary" class="profile-input" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" style="margin-bottom:8px;" />' +
+        '<div id="prof-extras-extra">' + extraRowsHtml + '</div>' +
+        '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>' +
+      '</div>' +
     '</div>';
-    document.getElementById('prof-panel-marketing').innerHTML = this._card('\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save', '_saveMarketing');
+    document.getElementById('prof-panel-marketing').innerHTML = this._card(
+      '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save', '_saveMarketing'
+    );
   },
 
   _addExtra: function() {
-    var c = document.getElementById('prof-extras-wrap'); var i = c.children.length; var d = document.createElement('div'); d.className = 'profile-repeating-row'; d.id = 'prof-extra-' + i;
-    d.innerHTML = '<input type="text" class="profile-input prof-extra-input" placeholder="Additional theme statement" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button>'; c.appendChild(d);
+    var wrap = document.getElementById('prof-extras-extra');
+    if (!wrap) return;
+    var i = wrap.querySelectorAll('.profile-repeating-row').length + 1;
+    var d = document.createElement('div');
+    d.className = 'profile-repeating-row';
+    d.id = 'prof-extra-' + i;
+    d.innerHTML = '<input type="text" class="profile-input prof-extra-input" placeholder="Additional theme statement" />' +
+      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button>';
+    wrap.appendChild(d);
   },
 
   _saveMarketing: function() {
-    var extras = Array.from(document.querySelectorAll('.prof-extra-input')).map(function(el) { return el.value.trim(); }).filter(Boolean);
-    this._save({ marketing_theme_awareness: document.getElementById('prof-theme-aware').value.trim(), marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(), marketing_theme_feeling: document.getElementById('prof-theme-feel').value.trim(), marketing_theme_extra: extras }, 'prof-mkt-save');
+    var statements = [];
+    var primary = document.getElementById('prof-extra-primary');
+    if (primary && primary.value.trim()) statements.push(primary.value.trim());
+    Array.from(document.querySelectorAll('#prof-extras-extra .prof-extra-input')).forEach(function(el) {
+      if (el.value.trim()) statements.push(el.value.trim());
+    });
+    this._save({
+      marketing_theme_awareness: document.getElementById('prof-theme-aware').value.trim(),
+      marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(),
+      marketing_theme_feeling: document.getElementById('prof-theme-feel').value.trim(),
+      marketing_theme_extra: statements
+    }, 'prof-mkt-save');
   }
 };
