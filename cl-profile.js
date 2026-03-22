@@ -165,56 +165,164 @@ window.CL_PROFILE = {
     this._save({ business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').value, industry: document.getElementById('prof-industry').value.trim() }, 'prof-id-save');
   },
 
-  _renderLocation: function() {
-    var p = this._profile;
-    var isMulti = p.is_multi_location || false;
-    var phones = Array.isArray(p.additional_phones) ? p.additional_phones : [];
-    var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
-    var locs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
-    var phonesHtml = phones.map(function(ph, i) { return '<div class="profile-repeating-row" id="prof-ph-' + i + '"><input type="text" class="profile-input prof-add-phone" value="' + window.escHtml(ph) + '" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-ph-' + i + '\')">Remove</button></div>'; }).join('');
-    var sitesHtml = sites.map(function(u, i) { return '<div class="profile-repeating-row" id="prof-site-' + i + '"><input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button></div>'; }).join('');
-    var locsHtml = locs.map(function(loc, i) {
-      return '<div class="profile-location-block" id="prof-loc-' + i + '"><div class="profile-location-row-header"><strong style="color:#1A5490;">Location ' + (i + 2) + '</strong><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-loc-' + i + '\')">Remove</button></div><input type="text" class="profile-input loc-name" placeholder="Location name" value="' + window.escHtml(loc.name || '') + '" style="margin-bottom:8px;" /><input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" style="margin-bottom:8px;" /><div class="profile-address-row" style="margin-bottom:8px;"><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /><input type="text" class="profile-input loc-state" placeholder="State" value="' + window.escHtml(loc.state || '') + '" /><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div><input type="text" class="profile-input loc-phone" placeholder="Phone" value="' + window.escHtml(loc.phone || '') + '" /></div>';
+    _locationBlock: function(loc, idx, isPrimary) {
+    var idPfx = isPrimary ? 'loc-p' : 'loc-' + idx;
+    var nameVal = loc.name || '';
+    var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Main', number: loc.phone }] : [{ type: 'Main', number: '' }]);
+    var typeOpts = ['Main', 'Mobile', 'Secondary Landline', 'Fax', 'After Hours'];
+    var phonesHtml = phones.map(function(ph, pi) {
+      var typeSelect = '<select class="profile-select loc-phone-type" style="width:160px;flex-shrink:0;">' +
+        typeOpts.map(function(t) { return '<option value="' + t + '"' + (ph.type === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') +
+      '</select>';
+      return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
+        typeSelect +
+        '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(ph.number || '') + '" placeholder="Phone number" />' +
+        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + pi + '\')">Remove</button>' +
+      '</div>';
     }).join('');
-    var body = '<div class="profile-fields">' +
-      this._field('Street Address', this._input('prof-street', 'text', this._v('address_street'), 'Street address')) +
-      '<div class="profile-field-full"><div class="profile-address-row"><div><label class="profile-label">Suburb</label>' + this._input('prof-suburb', 'text', this._v('address_suburb'), 'Suburb') + '</div><div><label class="profile-label">State</label>' + this._input('prof-state', 'text', this._v('address_state'), 'State') + '</div><div><label class="profile-label">Postcode</label>' + this._input('prof-postcode', 'text', this._v('address_postcode'), 'Postcode') + '</div></div></div>' +
-      this._field('Primary Phone', this._input('prof-phone', 'text', this._v('phone'), 'Primary phone number')) +
-      this._field('Additional Phone Numbers', '<div id="prof-phones-wrap">' + phonesHtml + '</div><button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addPhone()">+ Add Phone</button>') +
-      this._field('Website URL(s)', '<div id="prof-sites-wrap">' + sitesHtml + '</div><button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>') +
-      '<div class="profile-field-full"><label class="profile-label">Number of locations</label><div class="profile-toggle-row"><button id="prof-loc-single" class="profile-nav-chip' + (!isMulti ? ' active' : '') + '" style="border-left-color:#E8500A;" onclick="window.CL_PROFILE._setMulti(false)">Single location</button><button id="prof-loc-multi" class="profile-nav-chip' + (isMulti ? ' active' : '') + '" style="border-left-color:#E8500A;" onclick="window.CL_PROFILE._setMulti(true)">Multiple locations</button></div><div class="profile-section-subtitle" style="margin-top:6px;">Select Multiple locations to add your other sites</div></div>' +
-      '<div id="prof-locs-wrap" class="profile-field-full"' + (!isMulti ? ' style="display:none"' : '') + '><div id="prof-locs-inner">' + locsHtml + '</div><button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button></div>' +
+    var removeBtn = isPrimary ? '' :
+      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'loc-block-' + idx + '\')">Remove Location</button>';
+    return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
+      '<div class="profile-location-row-header">' +
+        '<strong style="color:#1A5490;">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
+        removeBtn +
+      '</div>' +
+      '<div class="profile-fields" style="margin-bottom:12px;">' +
+        '<div class="profile-field-full"><label class="profile-label">Location Name</label>' +
+          '<input type="text" class="profile-input loc-name" placeholder="e.g. Main Office, Warehouse, Bendigo Site" value="' + window.escHtml(nameVal) + '" /></div>' +
+        '<div class="profile-field-full"><label class="profile-label">Suite / Level / Unit <span class="profile-optional">(optional)</span></label>' +
+          '<input type="text" class="profile-input loc-unit" placeholder="e.g. Suite 4, Level 2, Shed 3" value="' + window.escHtml(loc.unit || '') + '" /></div>' +
+        '<div class="profile-field-full"><label class="profile-label">Street Address</label>' +
+          '<input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /></div>' +
+        '<div class="profile-field-full"><div class="profile-address-row">' +
+          '<div><label class="profile-label">Suburb</label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
+          '<div><label class="profile-label">State</label><input type="text" class="profile-input loc-state" placeholder="State" value="' + window.escHtml(loc.state || '') + '" /></div>' +
+          '<div><label class="profile-label">Postcode</label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
+        '</div></div>' +
+      '</div>' +
+      '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
+      '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
+      '<button class="profile-nav-chip" style="border-left-color:#E8500A;margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
     '</div>';
-    document.getElementById('prof-panel-location').innerHTML = this._card('\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation');
   },
 
-  _addPhone: function() {
-    var c = document.getElementById('prof-phones-wrap'); var i = c.children.length; var d = document.createElement('div'); d.className = 'profile-repeating-row'; d.id = 'prof-ph-' + i;
-    d.innerHTML = '<input type="text" class="profile-input prof-add-phone" placeholder="Phone number" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-ph-' + i + '\')">Remove</button>'; c.appendChild(d);
+  _renderLocation: function() {
+    var p = this._profile;
+    var primaryLoc = {
+      name: this._v('address_name'),
+      unit: this._v('address_unit'),
+      street: this._v('address_street'),
+      suburb: this._v('address_suburb'),
+      state: this._v('address_state'),
+      postcode: this._v('address_postcode'),
+      phones: Array.isArray(p.primary_phones) ? p.primary_phones : (p.phone ? [{ type: 'Main', number: p.phone }] : [{ type: 'Main', number: '' }])
+    };
+    var extraLocs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
+    var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
+    var extraLocsHtml = extraLocs.map(function(loc, i) {
+      return window.CL_PROFILE._locationBlock(loc, i, false);
+    }).join('');
+    var extraSitesHtml = sites.slice(1).map(function(u, i) {
+      return '<div class="profile-repeating-row" id="prof-site-' + (i + 1) + '">' +
+        '<input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" placeholder="https://yoursite.com.au" />' +
+        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + (i + 1) + '\')">Remove</button>' +
+      '</div>';
+    }).join('');
+    var body =
+      this._locationBlock(primaryLoc, 0, true) +
+      '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
+      '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button>' +
+      '<div class="profile-section-card" style="margin-top:0;border-left-color:#E8500A;">' +
+        '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
+        '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
+        '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
+        '<button class="profile-nav-chip" style="border-left-color:#E8500A;margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
+      '</div>';
+    document.getElementById('prof-panel-location').innerHTML = this._card(
+      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation'
+    );
+  },
+
+  _addPhone: function(idPfx) {
+    var wrap = document.getElementById(idPfx + '-phones');
+    if (!wrap) return;
+    var i = wrap.querySelectorAll('.profile-repeating-row').length;
+    var typeOpts = ['Main', 'Mobile', 'Secondary Landline', 'Fax', 'After Hours'];
+    var d = document.createElement('div');
+    d.className = 'profile-repeating-row';
+    d.id = idPfx + '-ph-' + i;
+    d.innerHTML = '<select class="profile-select loc-phone-type" style="width:160px;flex-shrink:0;">' +
+      typeOpts.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
+    '</select>' +
+    '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
+    '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
+    wrap.appendChild(d);
   },
 
   _addSite: function() {
-    var c = document.getElementById('prof-sites-wrap'); var i = c.children.length; var d = document.createElement('div'); d.className = 'profile-repeating-row'; d.id = 'prof-site-' + i;
-    d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" /><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button>'; c.appendChild(d);
+    var wrap = document.getElementById('prof-sites-extra');
+    if (!wrap) return;
+    var i = wrap.querySelectorAll('.profile-repeating-row').length + 1;
+    var d = document.createElement('div');
+    d.className = 'profile-repeating-row';
+    d.id = 'prof-site-' + i;
+    d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" />' +
+      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button>';
+    wrap.appendChild(d);
   },
 
   _addLocation: function() {
-    var c = document.getElementById('prof-locs-inner'); var i = c.children.length; var d = document.createElement('div'); d.className = 'profile-location-block'; d.id = 'prof-loc-' + i;
-    d.innerHTML = '<div class="profile-location-row-header"><strong style="color:#1A5490;">Location ' + (i + 2) + '</strong><button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-loc-' + i + '\')">Remove</button></div><input type="text" class="profile-input loc-name" placeholder="Location name" style="margin-bottom:8px;" /><input type="text" class="profile-input loc-street" placeholder="Street address" style="margin-bottom:8px;" /><div class="profile-address-row" style="margin-bottom:8px;"><input type="text" class="profile-input loc-suburb" placeholder="Suburb" /><input type="text" class="profile-input loc-state" placeholder="State" /><input type="text" class="profile-input loc-postcode" placeholder="Postcode" /></div><input type="text" class="profile-input loc-phone" placeholder="Phone" />'; c.appendChild(d);
-  },
-
-  _setMulti: function(isMulti) {
-    document.getElementById('prof-loc-single').classList.toggle('active', !isMulti);
-    document.getElementById('prof-loc-multi').classList.toggle('active', isMulti);
-    document.getElementById('prof-locs-wrap').style.display = isMulti ? '' : 'none';
+    var wrap = document.getElementById('prof-extra-locs');
+    if (!wrap) return;
+    var i = wrap.querySelectorAll('.profile-location-block').length;
+    var emptyLoc = { name: '', unit: '', street: '', suburb: '', state: '', postcode: '', phones: [{ type: 'Main', number: '' }] };
+    var div = document.createElement('div');
+    div.innerHTML = window.CL_PROFILE._locationBlock(emptyLoc, i, false);
+    wrap.appendChild(div.firstChild);
   },
 
   _saveLocation: function() {
-    var phones = Array.from(document.querySelectorAll('.prof-add-phone')).map(function(el) { return el.value.trim(); }).filter(Boolean);
-    var sites = Array.from(document.querySelectorAll('.prof-add-site')).map(function(el) { return el.value.trim(); }).filter(Boolean);
-    var isMulti = document.getElementById('prof-loc-multi').classList.contains('active');
-    var locs = Array.from(document.querySelectorAll('#prof-locs-inner .profile-location-block')).map(function(b) { return { name: b.querySelector('.loc-name').value.trim(), street: b.querySelector('.loc-street').value.trim(), suburb: b.querySelector('.loc-suburb').value.trim(), state: b.querySelector('.loc-state').value.trim(), postcode: b.querySelector('.loc-postcode').value.trim(), phone: b.querySelector('.loc-phone').value.trim() }; });
-    this._save({ address_street: document.getElementById('prof-street').value.trim(), address_suburb: document.getElementById('prof-suburb').value.trim(), address_state: document.getElementById('prof-state').value.trim(), address_postcode: document.getElementById('prof-postcode').value.trim(), phone: document.getElementById('prof-phone').value.trim(), additional_phones: phones, website_urls: sites, is_multi_location: isMulti, additional_locations: locs }, 'prof-loc-save');
+    // Read primary location
+    var pb = document.getElementById('loc-primary-block');
+    var primaryPhones = Array.from(pb.querySelectorAll('#loc-p-phones .profile-repeating-row')).map(function(row) {
+      return { type: row.querySelector('.loc-phone-type').value, number: row.querySelector('.loc-phone-number').value.trim() };
+    }).filter(function(ph) { return ph.number; });
+    // Read extra locations
+    var extraBlocks = document.querySelectorAll('#prof-extra-locs .profile-location-block');
+    var locs = Array.from(extraBlocks).map(function(b, i) {
+      var idPfx = 'loc-' + i;
+      var phones = Array.from(b.querySelectorAll('#' + idPfx + '-phones .profile-repeating-row')).map(function(row) {
+        return { type: row.querySelector('.loc-phone-type').value, number: row.querySelector('.loc-phone-number').value.trim() };
+      }).filter(function(ph) { return ph.number; });
+      return {
+        name: b.querySelector('.loc-name').value.trim(),
+        unit: b.querySelector('.loc-unit').value.trim(),
+        street: b.querySelector('.loc-street').value.trim(),
+        suburb: b.querySelector('.loc-suburb').value.trim(),
+        state: b.querySelector('.loc-state').value.trim(),
+        postcode: b.querySelector('.loc-postcode').value.trim(),
+        phones: phones
+      };
+    });
+    // Read websites
+    var sites = [];
+    var primary = document.getElementById('prof-site-primary');
+    if (primary && primary.value.trim()) sites.push(primary.value.trim());
+    Array.from(document.querySelectorAll('#prof-sites-extra .prof-add-site')).forEach(function(el) {
+      if (el.value.trim()) sites.push(el.value.trim());
+    });
+    this._save({
+      address_name: pb.querySelector('.loc-name').value.trim(),
+      address_unit: pb.querySelector('.loc-unit').value.trim(),
+      address_street: pb.querySelector('.loc-street').value.trim(),
+      address_suburb: pb.querySelector('.loc-suburb').value.trim(),
+      address_state: pb.querySelector('.loc-state').value.trim(),
+      address_postcode: pb.querySelector('.loc-postcode').value.trim(),
+      primary_phones: primaryPhones,
+      phone: primaryPhones.length ? primaryPhones[0].number : '',
+      additional_locations: locs,
+      website_urls: sites
+    }, 'prof-loc-save');
   },
 
   _renderDetails: function() {
