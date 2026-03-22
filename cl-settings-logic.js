@@ -157,19 +157,19 @@ window.CL_SETTINGS_LOGIC = {
 
 document.addEventListener('DOMContentLoaded', async function() {
 
-  // -- Supabase client --
   const supabase = window.supabase;
-  if (!supabase) return;
+  if (!supabase) { console.error('Supabase not available'); return; }
 
-  // -- Auth check --
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) { window.location.href = '/login.html'; return; }
+  // -- Auth --
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData || !authData.user) { window.location.href = '/login.html'; return; }
+  const user = authData.user;
 
   // -- Account dropdown --
-  const emailEl = document.getElementById('account-email-short');
+  const emailShortEl = document.getElementById('account-email-short');
+  if (emailShortEl) emailShortEl.textContent = user.email || 'Account';
   const dropdownEmailEl = document.getElementById('account-dropdown-email');
   if (dropdownEmailEl) dropdownEmailEl.textContent = user.email || '';
-  if (emailEl) emailEl.textContent = user.email || 'Account';
 
   const acctBtn = document.getElementById('account-btn');
   const acctDropdown = document.getElementById('account-dropdown');
@@ -178,114 +178,167 @@ document.addEventListener('DOMContentLoaded', async function() {
       e.stopPropagation();
       acctDropdown.classList.toggle('open');
     });
-    document.addEventListener('click', function() {
-      acctDropdown.classList.remove('open');
-    });
+    document.addEventListener('click', function() { acctDropdown.classList.remove('open'); });
   }
-
-  const signoutBtn = document.getElementById('sign-out-btn');
-  if (signoutBtn) {
-    signoutBtn.addEventListener('click', async function() {
+  const signOutBtn = document.getElementById('sign-out-btn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', async function() {
       await supabase.auth.signOut();
       window.location.href = '/login.html';
     });
   }
 
-  // -- Load existing connection status from profiles --
+  // -- Load profile --
   const { data: profile } = await supabase
     .from('profiles')
-    .select('cl_gmail_connected, cl_gmail_email, cl_outlook_connected, cl_outlook_email, cl_drive_connected, website_urls')
+    .select('cl_connected_emails, cl_drive_connected, website_urls')
     .eq('user_id', user.id)
     .single();
 
-  if (profile) {
-    renderConnectionStatus('gmail', profile.cl_gmail_connected, profile.cl_gmail_email);
-    renderConnectionStatus('outlook', profile.cl_outlook_connected, profile.cl_outlook_email);
-    renderConnectionStatus('drive', profile.cl_drive_connected, null);
-    if (profile.website_urls && profile.website_urls.length > 0) {
-      const websiteInput = document.getElementById('website-url-input');
-      if (websiteInput) websiteInput.value = profile.website_urls[0];
+  const connectedEmails = (profile && profile.cl_connected_emails) ? profile.cl_connected_emails : [];
+  const driveConnected = profile && profile.cl_drive_connected;
+  const websiteUrls = (profile && profile.website_urls) ? profile.website_urls : [];
+
+  // -- Render Gmail connections --
+  function renderEmailList(provider) {
+    const listEl = document.getElementById(provider + '-connections-list');
+    if (!listEl) return;
+    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
+    if (providerEmails.length === 0) {
+      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No accounts connected</div>';
+    } else {
+      listEl.innerHTML = providerEmails.map(function(e, i) {
+        return '<div class="connection-item">' +
+          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
+          '<button class="btn-disconnect" data-provider="' + provider + '" data-email="' + e.email + '">Disconnect</button>' +
+        '</div>';
+      }).join('');
+      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
+        btn.addEventListener('click', async function() {
+          await disconnectEmail(btn.getAttribute('data-provider'), btn.getAttribute('data-email'));
+        });
+      });
     }
   }
 
-  // -- Render connection status helper --
-  function renderConnectionStatus(provider, isConnected, email) {
-    const statusEl = document.getElementById(provider + '-status');
-    const btn = document.getElementById(provider + '-btn');
-    if (!statusEl || !btn) return;
-    if (isConnected) {
-      statusEl.textContent = email ? 'Connected: ' + email : 'Connected';
-      statusEl.className = 'connection-status connected';
-      btn.textContent = 'Disconnect';
-      btn.className = 'btn-connect disconnect';
-      btn.onclick = function() { handleDisconnect(provider); };
-    } else {
-      statusEl.textContent = 'Not connected';
-      statusEl.className = 'connection-status';
-      btn.textContent = 'Connect';
-      btn.className = 'btn-connect';
-      btn.onclick = function() { handleConnect(provider); };
+  renderEmailList('gmail');
+  renderEmailList('outlook');
+
+  // -- Disconnect email --
+  async function disconnectEmail(provider, email) {
+    const updated = connectedEmails.filter(function(e) { return !(e.provider === provider && e.email === email); });
+    const { error } = await supabase.from('profiles').update({ cl_connected_emails: updated }).eq('user_id', user.id);
+    if (!error) {
+      connectedEmails.splice(0, connectedEmails.length, ...updated);
+      renderEmailList(provider);
     }
   }
+
+  // -- Add Gmail / Outlook buttons --
+  ['gmail', 'outlook'].forEach(function(provider) {
+    const addBtn = document.getElementById('add-' + provider + '-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', function() { handleOAuthConnect(provider); });
+    }
+  });
 
   // -- OAuth connect --
-  async function handleConnect(provider) {
-    let oauthProvider, scopes, redirectTo;
-    redirectTo = window.location.origin + '/api/auth/cl-oauth-callback.js?provider=' + provider;
-
+  function handleOAuthConnect(provider) {
+    const redirectTo = window.location.origin + '/api/auth/oauth-callback.js?flow=cl&provider=' + provider;
+    let oauthProvider, scopes;
     if (provider === 'gmail') {
       oauthProvider = 'google';
       scopes = 'email profile https://www.googleapis.com/auth/gmail.readonly';
     } else if (provider === 'outlook') {
       oauthProvider = 'azure';
       scopes = 'email offline_access Mail.Read';
-    } else if (provider === 'drive') {
-      oauthProvider = 'google';
-      scopes = 'email profile https://www.googleapis.com/auth/drive.readonly';
     }
-
-    const { error } = await supabase.auth.signInWithOAuth({
+    supabase.auth.signInWithOAuth({
       provider: oauthProvider,
-      options: {
-        scopes: scopes,
-        redirectTo: redirectTo,
-        queryParams: { access_type: 'offline', prompt: 'consent' }
-      }
+      options: { scopes: scopes, redirectTo: redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
     });
-    if (error) console.error('OAuth error:', error.message);
   }
 
-  // -- Disconnect --
-  async function handleDisconnect(provider) {
-    const update = {};
-    if (provider === 'gmail') {
-      update.cl_gmail_connected = false;
-      update.cl_gmail_email = null;
-    } else if (provider === 'outlook') {
-      update.cl_outlook_connected = false;
-      update.cl_outlook_email = null;
-    } else if (provider === 'drive') {
-      update.cl_drive_connected = false;
+  // -- Google Drive (single connection) --
+  function renderDriveStatus(isConnected) {
+    const statusEl = document.getElementById('drive-status');
+    const btn = document.getElementById('drive-btn');
+    if (!statusEl || !btn) return;
+    if (isConnected) {
+      statusEl.textContent = 'Connected';
+      statusEl.className = 'connection-status connected';
+      btn.textContent = 'Disconnect';
+      btn.onclick = async function() {
+        const { error } = await supabase.from('profiles').update({ cl_drive_connected: false }).eq('user_id', user.id);
+        if (!error) renderDriveStatus(false);
+      };
+    } else {
+      statusEl.textContent = '';
+      statusEl.className = 'connection-status';
+      btn.textContent = 'Connect';
+      btn.onclick = function() {
+        const redirectTo = window.location.origin + '/api/auth/oauth-callback.js?flow=cl&provider=drive';
+        supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { scopes: 'email profile https://www.googleapis.com/auth/drive.readonly', redirectTo: redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
+        });
+      };
     }
-    const { error } = await supabase.from('profiles').update(update).eq('user_id', user.id);
-    if (!error) renderConnectionStatus(provider, false, null);
+  }
+  renderDriveStatus(driveConnected);
+
+  // -- Website URLs --
+  function renderWebsiteUrls() {
+    const listEl = document.getElementById('website-urls-list');
+    if (!listEl) return;
+    if (websiteUrls.length === 0) {
+      listEl.innerHTML = '<div class="website-url-item"><input type="url" class="website-url-input" placeholder="https://yourwebsite.com.au" /></div>';
+    } else {
+      listEl.innerHTML = websiteUrls.map(function(url) {
+        return '<div class="website-url-item">' +
+          '<input type="url" class="website-url-input" value="' + url + '" placeholder="https://yourwebsite.com.au" />' +
+          '<button class="btn-remove-url" title="Remove">&times;</button>' +
+        '</div>';
+      }).join('');
+      listEl.querySelectorAll('.btn-remove-url').forEach(function(btn, i) {
+        btn.addEventListener('click', function() {
+          websiteUrls.splice(i, 1);
+          renderWebsiteUrls();
+        });
+      });
+    }
+  }
+  renderWebsiteUrls();
+
+  const addWebsiteBtn = document.getElementById('add-website-btn');
+  if (addWebsiteBtn) {
+    addWebsiteBtn.addEventListener('click', function() {
+      websiteUrls.push('');
+      renderWebsiteUrls();
+      const inputs = document.querySelectorAll('.website-url-input');
+      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+    });
   }
 
-  // -- Website URL save --
   const websiteSaveBtn = document.getElementById('website-save-btn');
   if (websiteSaveBtn) {
     websiteSaveBtn.addEventListener('click', async function() {
-      const urlInput = document.getElementById('website-url-input');
-      const url = urlInput ? urlInput.value.trim() : '';
-      if (!url) return;
-      const { error } = await supabase
-        .from('profiles')
-        .update({ website_urls: [url] })
-        .eq('user_id', user.id);
+      const inputs = document.querySelectorAll('.website-url-input');
+      const urls = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(function(v) { return v.length > 0; });
+      websiteUrls.splice(0, websiteUrls.length, ...urls);
+      const { error } = await supabase.from('profiles').update({ website_urls: urls }).eq('user_id', user.id);
       if (!error) {
         websiteSaveBtn.textContent = 'Saved';
         setTimeout(function() { websiteSaveBtn.textContent = 'Save'; }, 2000);
       }
+    });
+  }
+
+  // -- Save Settings button (Auto-Scan Frequency) --
+  const saveSettingsBtn = document.getElementById('save-settings-btn');
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', async function() {
+      if (window.CL_SETTINGS) window.CL_SETTINGS.init(supabase);
     });
   }
 
