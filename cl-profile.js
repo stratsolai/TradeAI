@@ -5,7 +5,7 @@ window.CL_PROFILE = {
 
   init: function(supabase) {
     this._supabase = supabase;
-    const container = document.getElementById('cl-tab-profile');
+    var container = document.getElementById('cl-tab-profile');
     if (!container) return;
     container.innerHTML = this._renderShell();
     this._bindTabSwitching();
@@ -13,12 +13,12 @@ window.CL_PROFILE = {
   },
 
   _renderShell: function() {
-    return '<div class="profile-wrap">' +
-      '<div class="profile-subtabs">' +
-        '<button class="ptab active" data-ptab="identity">Identity</button>' +
-        '<button class="ptab" data-ptab="location">Location &amp; Contact</button>' +
-        '<button class="ptab" data-ptab="details">Business Details</button>' +
-        '<button class="ptab" data-ptab="marketing">Marketing Theme</button>' +
+    return '<div class="sp-page" style="padding:32px 40px 80px;">' +
+      '<div class="sp-nav-chips" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:24px;">' +
+        '<button class="sp-nav-chip sp-nav-chip-active" data-ptab="identity" style="background:#E8F0F7;">Identity</button>' +
+        '<button class="sp-nav-chip" data-ptab="location">Location &amp; Contact</button>' +
+        '<button class="sp-nav-chip" data-ptab="details">Business Details</button>' +
+        '<button class="sp-nav-chip" data-ptab="marketing">Marketing Theme</button>' +
       '</div>' +
       '<div id="profile-tab-identity" class="profile-panel"></div>' +
       '<div id="profile-tab-location" class="profile-panel" style="display:none"></div>' +
@@ -28,28 +28,27 @@ window.CL_PROFILE = {
   },
 
   _bindTabSwitching: function() {
-    const self = this;
-    const container = document.getElementById('cl-tab-profile');
-    container.querySelectorAll('.profile-subtabs .ptab').forEach(function(btn) {
+    var container = document.getElementById('cl-tab-profile');
+    container.querySelectorAll('.sp-nav-chip').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        container.querySelectorAll('.profile-subtabs .ptab').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        container.querySelectorAll('.profile-panel').forEach(function(p) { p.style.display = 'none'; });
+        container.querySelectorAll('.sp-nav-chip').forEach(function(b) {
+          b.classList.remove('sp-nav-chip-active'); b.style.background = '';
+        });
+        btn.classList.add('sp-nav-chip-active'); btn.style.background = '#E8F0F7';
+        container.querySelectorAll('.profile-panel').forEach(function(p) {
+          p.style.display = 'none';
+        });
         document.getElementById('profile-tab-' + btn.dataset.ptab).style.display = '';
       });
     });
   },
 
   _loadProfile: async function() {
-    const session = await this._supabase.auth.getSession();
+    var session = await this._supabase.auth.getSession();
     if (!session.data.session) return;
     this._userId = session.data.session.user.id;
-    const { data, error } = await this._supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', this._userId)
-      .single();
-    if (!data) { this._profile = {}; } else { this._profile = data; }
+    var result = await this._supabase.from('profiles').select('*').eq('id', this._userId).single();
+    this._profile = result.data || {};
     this._renderIdentity();
     this._renderLocation();
     this._renderDetails();
@@ -57,20 +56,16 @@ window.CL_PROFILE = {
   },
 
   _val: function(key) {
-    const v = this._profile[key];
-    if (v === null || v === undefined) return '';
-    return v;
+    var v = this._profile[key];
+    return (v === null || v === undefined) ? '' : v;
   },
 
-  _saveSection: async function(sectionId, updates, btnId) {
-    const btn = document.getElementById(btnId);
+  _saveSection: async function(updates, btnId) {
+    var btn = document.getElementById(btnId);
     if (btn) btn.textContent = 'Saving...';
-    const { error } = await this._supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', this._userId);
+    var result = await this._supabase.from('profiles').update(updates).eq('id', this._userId);
     if (btn) {
-      if (error) {
+      if (result.error) {
         btn.textContent = 'Error saving';
       } else {
         Object.assign(this._profile, updates);
@@ -80,196 +75,194 @@ window.CL_PROFILE = {
     }
   },
 
+  _section: function(content) {
+    return '<div class="sp-section">' + content + '</div>';
+  },
+
+  _field: function(label, inputHtml, hint) {
+    return '<div class="sp-field">' +
+      '<label class="sp-field-label">' + label + '</label>' +
+      (hint ? '<div class="sp-field-help">' + hint + '</div>' : '') +
+      inputHtml +
+    '</div>';
+  },
+
+  _input: function(id, type, value, placeholder, extra) {
+    return '<input id="' + id + '" type="' + type + '" class="sp-input" value="' + window.escHtml(String(value)) + '" placeholder="' + placeholder + '" ' + (extra || '') + ' />';
+  },
+
+  _textarea: function(id, value, placeholder, rows) {
+    return '<textarea id="' + id + '" class="sp-input" rows="' + (rows || 4) + '" placeholder="' + placeholder + '">' + window.escHtml(String(value)) + '</textarea>';
+  },
+
+  _select: function(id, options, selected) {
+    var opts = options.map(function(o) {
+      return '<option value="' + window.escHtml(o) + '"' + (selected === o ? ' selected' : '') + '>' + window.escHtml(o) + '</option>';
+    }).join('');
+    return '<select id="' + id + '" class="sp-select"><option value="">Select...</option>' + opts + '</select>';
+  },
+
+  _saveRow: function(btnId, handler) {
+    return '<div style="display:flex;align-items:center;gap:16px;margin-top:24px;">' +
+      '<button id="' + btnId + '" class="btn-sp-generate" onclick="window.CL_PROFILE.' + handler + '()">Save</button>' +
+    '</div>';
+  },
+
   // ---- IDENTITY ----
   _renderIdentity: function() {
-    const p = this._profile;
-    const industries = ['Pool Building','Plumbing','Electrical','Building & Construction','HVAC','Fabrication','Cleaning','Landscaping','Manufacturing','Concreting','Handyman','Other'];
-    const industryOptions = industries.map(function(i) {
-      return '<option value="' + window.escHtml(i) + '"' + (p.industry === i ? ' selected' : '') + '>' + window.escHtml(i) + '</option>';
-    }).join('');
-    const structures = ['Sole Trader','Partnership','Company','Trust','Other'];
-    const structureOptions = structures.map(function(s) {
-      return '<option value="' + window.escHtml(s) + '"' + (p.business_structure === s ? ' selected' : '') + '>' + window.escHtml(s) + '</option>';
-    }).join('');
+    var p = this._profile;
+    var industries = ['Pool Building','Plumbing','Electrical','Building & Construction','HVAC','Fabrication','Cleaning','Landscaping','Manufacturing','Concreting','Handyman','Other'];
+    var structures = ['Sole Trader','Partnership','Company','Trust','Other'];
 
-    document.getElementById('profile-tab-identity').innerHTML =
-      '<div class="profile-section-card">' +
-        '<h3 class="profile-section-title">Identity</h3>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">Legal Business Name</label>' +
-          '<input id="prof-legal-name" type="text" class="profile-input" value="' + window.escHtml(this._val('business_name')) + '" placeholder="Your registered business name" />' +
-        '</div>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">Trading Name / t/as <span class="profile-optional">(optional)</span></label>' +
-          '<input id="prof-trading-name" type="text" class="profile-input" value="' + window.escHtml(this._val('trading_name')) + '" placeholder="Trading name if different from legal name" />' +
-        '</div>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">ABN</label>' +
-          '<input id="prof-abn" type="text" class="profile-input" value="' + window.escHtml(this._val('abn')) + '" placeholder="xx xxx xxx xxx" maxlength="14" />' +
-        '</div>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">Business Structure</label>' +
-          '<select id="prof-structure" class="profile-select"><option value="">Select structure</option>' + structureOptions + '</select>' +
-        '</div>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">Industry</label>' +
-          '<select id="prof-industry" class="profile-select"><option value="">Select industry</option>' + industryOptions + '</select>' +
-        '</div>' +
-        '<div class="profile-field-group">' +
-          '<label class="profile-label">Business Logo</label>' +
-          '<div class="profile-logo-wrap">' +
-            (p.logo_url ? '<img id="prof-logo-preview" src="' + window.escHtml(p.logo_url) + '" class="profile-logo-preview" alt="Business logo" />' : '<div id="prof-logo-preview" class="profile-logo-placeholder">No logo uploaded</div>') +
-            '<input id="prof-logo-input" type="file" accept="image/*" class="profile-file-input" />' +
-            '<button class="btn-outline" onclick="document.getElementById(\'prof-logo-input\').click()">Upload Logo</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="profile-save-row">' +
-          '<button id="prof-identity-save" class="btn-primary" onclick="window.CL_PROFILE._saveIdentity()">Save</button>' +
-          '<span id="prof-identity-status" class="profile-save-status"></span>' +
-        '</div>' +
-      '</div>';
+    var logoHtml = '<div style="display:flex;align-items:center;gap:16px;margin-top:8px;">' +
+      (p.logo_url ? '<img src="' + window.escHtml(p.logo_url) + '" id="prof-logo-preview" style="height:60px;border-radius:6px;border:1px solid #E0E0E0;" alt="Logo" />' :
+        '<div id="prof-logo-preview" style="width:80px;height:60px;background:#F5F7FA;border:1px solid #E0E0E0;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#999;font-size:12px;">No logo</div>') +
+      '<div><input id="prof-logo-input" type="file" accept="image/*" style="display:none" />' +
+      '<button class="btn-sp-back" onclick="document.getElementById(\'prof-logo-input\').click()">Upload Logo</button></div>' +
+    '</div>';
 
-    const self = this;
+    document.getElementById('profile-tab-identity').innerHTML = this._section(
+      '<div class="sp-section-header"><div class="sp-section-icon">\uD83C\uDFE2</div><div><div class="sp-section-title">Identity</div><div class="sp-section-subtitle">Your registered business details</div></div></div>' +
+      '<div class="sp-fields">' +
+        this._field('Legal Business Name', this._input('prof-legal-name', 'text', this._val('business_name'), 'Your registered business name')) +
+        this._field('Trading Name / t/as <span style="font-weight:400;color:#888;">(optional)</span>', this._input('prof-trading-name', 'text', this._val('trading_name'), 'Trading name if different from legal name')) +
+        this._field('ABN', this._input('prof-abn', 'text', this._val('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
+        this._field('Business Structure', this._select('prof-structure', structures, this._val('business_structure'))) +
+        this._field('Industry', this._select('prof-industry', industries, this._val('industry'))) +
+        this._field('Business Logo', logoHtml) +
+      '</div>' +
+      this._saveRow('prof-identity-save', '_saveIdentity')
+    );
+
+    var self = this;
     document.getElementById('prof-logo-input').addEventListener('change', function(e) {
       self._uploadLogo(e.target.files[0]);
     });
     document.getElementById('prof-abn').addEventListener('input', function(e) {
-      let val = e.target.value.replace(/\D/g, '').substring(0, 11);
-      let formatted = '';
-      if (val.length > 0) formatted = val.substring(0, 2);
-      if (val.length > 2) formatted += ' ' + val.substring(2, 5);
-      if (val.length > 5) formatted += ' ' + val.substring(5, 8);
-      if (val.length > 8) formatted += ' ' + val.substring(8, 11);
-      e.target.value = formatted;
+      var v = e.target.value.replace(/\D/g, '').substring(0, 11);
+      var f = '';
+      if (v.length > 0) f = v.substring(0, 2);
+      if (v.length > 2) f += ' ' + v.substring(2, 5);
+      if (v.length > 5) f += ' ' + v.substring(5, 8);
+      if (v.length > 8) f += ' ' + v.substring(8, 11);
+      e.target.value = f;
     });
   },
 
   _uploadLogo: async function(file) {
     if (!file) return;
-    const ext = file.name.split('.').pop();
-    const path = 'logos/' + this._userId + '.' + ext;
-    const { data, error } = await this._supabase.storage.from('cl-assets').upload(path, file, { upsert: true });
-    if (error) { alert('Logo upload failed: ' + error.message); return; }
-    const { data: urlData } = this._supabase.storage.from('cl-assets').getPublicUrl(path);
-    const logoUrl = urlData.publicUrl;
+    var ext = file.name.split('.').pop();
+    var path = 'logos/' + this._userId + '.' + ext;
+    var up = await this._supabase.storage.from('cl-assets').upload(path, file, { upsert: true });
+    if (up.error) { alert('Logo upload failed: ' + up.error.message); return; }
+    var urlData = this._supabase.storage.from('cl-assets').getPublicUrl(path);
+    var logoUrl = urlData.data.publicUrl;
     await this._supabase.from('profiles').update({ logo_url: logoUrl }).eq('id', this._userId);
     this._profile.logo_url = logoUrl;
-    const preview = document.getElementById('prof-logo-preview');
-    if (preview) { preview.src = logoUrl; preview.style.display = ''; }
+    var prev = document.getElementById('prof-logo-preview');
+    if (prev) { prev.src = logoUrl; }
   },
 
   _saveIdentity: function() {
-    const updates = {
+    this._saveSection({
       business_name: document.getElementById('prof-legal-name').value.trim(),
       trading_name: document.getElementById('prof-trading-name').value.trim(),
       abn: document.getElementById('prof-abn').value.trim(),
       business_structure: document.getElementById('prof-structure').value,
       industry: document.getElementById('prof-industry').value
-    };
-    this._saveSection('identity', updates, 'prof-identity-save');
+    }, 'prof-identity-save');
   },
 
   _renderLocation: function() {
-    const p = this._profile;
-    const isMulti = p.is_multi_location || false;
-    const addPhones = Array.isArray(p.additional_phones) ? p.additional_phones : [];
-    const websites = Array.isArray(p.website_urls) ? p.website_urls : [];
-    const addLocations = Array.isArray(p.additional_locations) ? p.additional_locations : [];
-    let addPhonesHtml = addPhones.map(function(ph, i) {
-      return '<div class="profile-repeating-row" id="add-phone-row-' + i + '"><input type="text" class="profile-input add-phone-input" value="' + window.escHtml(ph) + '" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'add-phone-row-' + i + '\')">Remove</button></div>';
-    }).join('');
-    let websitesHtml = websites.map(function(url, i) {
-      return '<div class="profile-repeating-row" id="website-row-' + i + '"><input type="url" class="profile-input website-input" value="' + window.escHtml(url) + '" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'website-row-' + i + '\')">Remove</button></div>';
-    }).join('');
-    let addLocationsHtml = addLocations.map(function(loc, i) {
-      return '<div class="profile-location-block" id="add-loc-row-' + i + '"><div class="profile-location-row-header"><span>Location ' + (i + 2) + '</span><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'add-loc-row-' + i + '\')">Remove</button></div><input type="text" class="profile-input loc-name" placeholder="Location name" value="' + window.escHtml(loc.name || '') + '" /><input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /><div class="profile-address-row"><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /><input type="text" class="profile-input loc-state" placeholder="State" value="' + window.escHtml(loc.state || '') + '" /><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div><input type="text" class="profile-input loc-phone" placeholder="Phone" value="' + window.escHtml(loc.phone || '') + '" /></div>' ;
-    }).join('');
-    document.getElementById('profile-tab-location').innerHTML = '<div class="profile-section-card"><h3 class="profile-section-title">Location &amp; Contact</h3><div class="profile-field-group"><label class="profile-label">Street Address</label><input id="prof-street" type="text" class="profile-input" value="' + window.escHtml(this._val('address_street')) + '" placeholder="Street address" /></div><div class="profile-address-row"><div class="profile-field-group"><label class="profile-label">Suburb</label><input id="prof-suburb" type="text" class="profile-input" value="' + window.escHtml(this._val('address_suburb')) + '" placeholder="Suburb" /></div><div class="profile-field-group"><label class="profile-label">State</label><input id="prof-state" type="text" class="profile-input" value="' + window.escHtml(this._val('address_state')) + '" placeholder="State" /></div><div class="profile-field-group"><label class="profile-label">Postcode</label><input id="prof-postcode" type="text" class="profile-input" value="' + window.escHtml(this._val('address_postcode')) + '" placeholder="Postcode" /></div></div><div class="profile-field-group"><label class="profile-label">Primary Phone</label><input id="prof-phone" type="text" class="profile-input" value="' + window.escHtml(this._val('phone')) + '" placeholder="Primary phone number" /></div><div class="profile-field-group"><label class="profile-label">Additional Phone Numbers</label><div id="add-phones-container">' + addPhonesHtml + '</div><button class="btn-outline btn-sm profile-add-btn" onclick="window.CL_PROFILE._addPhone()">+ Add Phone</button></div><div class="profile-field-group"><label class="profile-label">Website URL(s)</label><div id="websites-container">' + websitesHtml + '</div><button class="btn-outline btn-sm profile-add-btn" onclick="window.CL_PROFILE._addWebsite()">+ Add Website</button></div><div class="profile-field-group"><label class="profile-label">Locations</label><div class="profile-toggle-row"><button id="loc-toggle-single" class="ptab' + (!isMulti ? ' active' : '') + '" onclick="window.CL_PROFILE._setMultiLocation(false)">Single location</button><button id="loc-toggle-multi" class="ptab' + (isMulti ? ' active' : '') + '" onclick="window.CL_PROFILE._setMultiLocation(true)">Multiple locations</button></div></div><div id="additional-locations-wrap"' + (!isMulti ? ' style="display:none"' : '') + '><div id="add-locations-container">' + addLocationsHtml + '</div><button class="btn-outline btn-sm profile-add-btn" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button></div><div class="profile-save-row"><button id="prof-location-save" class="btn-primary" onclick="window.CL_PROFILE._saveLocation()">Save</button><span id="prof-location-status" class="profile-save-status"></span></div></div>';
+    var p = this._profile;
+    var isMulti = p.is_multi_location || false;
+    var addPhones = Array.isArray(p.additional_phones) ? p.additional_phones : [];
+    var websites = Array.isArray(p.website_urls) ? p.website_urls : [];
+    var addLocations = Array.isArray(p.additional_locations) ? p.additional_locations : [];
+    var addPhonesHtml = addPhones.map(function(ph, i) { return '<div style="display:flex;gap:8px;margin-bottom:8px;" id="add-phone-row-' + i + '"><input type="text" class="sp-input add-phone-input" value="' + window.escHtml(ph) + '" style="flex:1;" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'add-phone-row-' + i + '\')">Remove</button></div>'; }).join('');
+    var websitesHtml = websites.map(function(url, i) { return '<div style="display:flex;gap:8px;margin-bottom:8px;" id="website-row-' + i + '"><input type="url" class="sp-input website-input" value="' + window.escHtml(url) + '" style="flex:1;" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'website-row-' + i + '\')">Remove</button></div>'; }).join('');
+    var addLocationsHtml = addLocations.map(function(loc, i) { return '<div class="sp-section" style="margin-bottom:12px;" id="add-loc-row-' + i + '"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><strong style="color:#1A5490;">Location ' + (i + 2) + '</strong><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'add-loc-row-' + i + '\')">Remove</button></div><input type="text" class="sp-input loc-name" placeholder="Location name" value="' + window.escHtml(loc.name || '') + '" style="margin-bottom:8px;" /><input type="text" class="sp-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" style="margin-bottom:8px;" /><div style="display:grid;grid-template-columns:1fr 80px 90px;gap:8px;margin-bottom:8px;"><input type="text" class="sp-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /><input type="text" class="sp-input loc-state" placeholder="State" value="' + window.escHtml(loc.state || '') + '" /><input type="text" class="sp-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div><input type="text" class="sp-input loc-phone" placeholder="Phone" value="' + window.escHtml(loc.phone || '') + '" /></div>'; }).join('');
+    document.getElementById('profile-tab-location').innerHTML = this._section(
+      '<div class="sp-section-header"><div class="sp-section-icon">\uD83D\uDCCD4</div><div><div class="sp-section-title">Location &amp; Contact</div><div class="sp-section-subtitle">Where you operate and how to reach you</div></div></div>' +
+      '<div class="sp-fields">' +
+        this._field('Street Address', this._input('prof-street', 'text', this._val('address_street'), 'Street address')) +
+        '<div style="display:grid;grid-template-columns:1fr 80px 90px;gap:16px;">' +
+          this._field('Suburb', this._input('prof-suburb', 'text', this._val('address_suburb'), 'Suburb')) +
+          this._field('State', this._input('prof-state', 'text', this._val('address_state'), 'State')) +
+          this._field('Postcode', this._input('prof-postcode', 'text', this._val('address_postcode'), 'Postcode')) +
+        '</div>' +
+        this._field('Primary Phone', this._input('prof-phone', 'text', this._val('phone'), 'Primary phone number')) +
+        this._field('Additional Phone Numbers', '<div id="add-phones-container">' + addPhonesHtml + '</div><button class="btn-sp-back" onclick="window.CL_PROFILE._addPhone()" style="margin-top:4px;">+ Add Phone</button>') +
+        this._field('Website URL(s)', '<div id="websites-container">' + websitesHtml + '</div><button class="btn-sp-back" onclick="window.CL_PROFILE._addWebsite()" style="margin-top:4px;">+ Add Website</button>') +
+        '<div class="sp-field"><label class="sp-field-label">Locations</label><div style="display:flex;gap:8px;margin-top:8px;"><button id="loc-toggle-single" class="sp-nav-chip' + (!isMulti ? ' sp-nav-chip-active' : '') + '" onclick="window.CL_PROFILE._setMultiLocation(false)">Single location</button><button id="loc-toggle-multi" class="sp-nav-chip' + (isMulti ? ' sp-nav-chip-active' : '') + '" onclick="window.CL_PROFILE._setMultiLocation(true)">Multiple locations</button></div></div>' +
+        '<div id="additional-locations-wrap"' + (!isMulti ? ' style="display:none"' : '') + '><div id="add-locations-container">' + addLocationsHtml + '</div><button class="btn-sp-back" onclick="window.CL_PROFILE._addLocation()" style="margin-top:8px;">+ Add Location</button></div>' +
+      '</div>' +
+      this._saveRow('prof-location-save', '_saveLocation')
+    );
   },
 
-  _addPhone: function() {
-    const container = document.getElementById('add-phones-container');
-    const i = container.children.length;
-    const row = document.createElement('div');
-    row.className = 'profile-repeating-row';
-    row.id = 'add-phone-row-' + i;
-    row.innerHTML = '<input type="text" class="profile-input add-phone-input" placeholder="Phone number" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'add-phone-row-' + i + '\')">Remove</button>';
-    container.appendChild(row);
-  },
+  _addPhone: function() { var c = document.getElementById('add-phones-container'); var i = c.children.length; var d = document.createElement('div'); d.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;'; d.id = 'add-phone-row-' + i; d.innerHTML = '<input type="text" class="sp-input add-phone-input" placeholder="Phone number" style="flex:1;" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'add-phone-row-' + i + '\')">Remove</button>'; c.appendChild(d); },
 
-  _addWebsite: function() {
-    const container = document.getElementById('websites-container');
-    const i = container.children.length;
-    const row = document.createElement('div');
-    row.className = 'profile-repeating-row';
-    row.id = 'website-row-' + i;
-    row.innerHTML = '<input type="url" class="profile-input website-input" placeholder="https://yoursite.com.au" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'website-row-' + i + '\')">Remove</button>';
-    container.appendChild(row);
-  },
+  _addWebsite: function() { var c = document.getElementById('websites-container'); var i = c.children.length; var d = document.createElement('div'); d.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;'; d.id = 'website-row-' + i; d.innerHTML = '<input type="url" class="sp-input website-input" placeholder="https://yoursite.com.au" style="flex:1;" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'website-row-' + i + '\')">Remove</button>'; c.appendChild(d); },
 
-  _addLocation: function() {
-    const container = document.getElementById('add-locations-container');
-    const i = container.children.length;
-    const num = i + 2;
-    const block = document.createElement('div');
-    block.className = 'profile-location-block';
-    block.id = 'add-loc-row-' + i;
-    block.innerHTML = '<div class="profile-location-row-header"><span>Location ' + num + '</span><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'add-loc-row-' + i + '\')">Remove</button></div><input type="text" class="profile-input loc-name" placeholder="Location name" /><input type="text" class="profile-input loc-street" placeholder="Street address" /><div class="profile-address-row"><input type="text" class="profile-input loc-suburb" placeholder="Suburb" /><input type="text" class="profile-input loc-state" placeholder="State" /><input type="text" class="profile-input loc-postcode" placeholder="Postcode" /></div><input type="text" class="profile-input loc-phone" placeholder="Phone" />';
-    container.appendChild(block);
-  },
+  _addLocation: function() { var c = document.getElementById('add-locations-container'); var i = c.children.length; var num = i + 2; var d = document.createElement('div'); d.className = 'sp-section'; d.style.marginBottom = '12px'; d.id = 'add-loc-row-' + i; d.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;"><strong style="color:#1A5490;">Location ' + num + '</strong><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'add-loc-row-' + i + '\')">Remove</button></div><input type="text" class="sp-input loc-name" placeholder="Location name" style="margin-bottom:8px;" /><input type="text" class="sp-input loc-street" placeholder="Street address" style="margin-bottom:8px;" /><div style="display:grid;grid-template-columns:1fr 80px 90px;gap:8px;margin-bottom:8px;"><input type="text" class="sp-input loc-suburb" placeholder="Suburb" /><input type="text" class="sp-input loc-state" placeholder="State" /><input type="text" class="sp-input loc-postcode" placeholder="Postcode" /></div><input type="text" class="sp-input loc-phone" placeholder="Phone" />'; c.appendChild(d); },
 
-  _removeRepeatingRow: function(rowId) {
-    const row = document.getElementById(rowId);
-    if (row) row.parentNode.removeChild(row);
-  },
+  _removeRow: function(id) { var r = document.getElementById(id); if (r) r.parentNode.removeChild(r); },
 
   _setMultiLocation: function(isMulti) {
-    document.getElementById('loc-toggle-single').classList.toggle('active', !isMulti);
-    document.getElementById('loc-toggle-multi').classList.toggle('active', isMulti);
+    document.getElementById('loc-toggle-single').classList.toggle('sp-nav-chip-active', !isMulti);
+    document.getElementById('loc-toggle-multi').classList.toggle('sp-nav-chip-active', isMulti);
     document.getElementById('additional-locations-wrap').style.display = isMulti ? '' : 'none';
   },
 
   _saveLocation: function() {
-    const addPhones = Array.from(document.querySelectorAll('.add-phone-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
-    const websites = Array.from(document.querySelectorAll('.website-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
-    const isMulti = document.getElementById('loc-toggle-multi').classList.contains('active');
-    const locBlocks = document.querySelectorAll('#add-locations-container .profile-location-block');
-    const addLocations = Array.from(locBlocks).map(function(block) {
-      return { name: block.querySelector('.loc-name').value.trim(), street: block.querySelector('.loc-street').value.trim(), suburb: block.querySelector('.loc-suburb').value.trim(), state: block.querySelector('.loc-state').value.trim(), postcode: block.querySelector('.loc-postcode').value.trim(), phone: block.querySelector('.loc-phone').value.trim() };
-    });
-    this._saveSection('location', { address_street: document.getElementById('prof-street').value.trim(), address_suburb: document.getElementById('prof-suburb').value.trim(), address_state: document.getElementById('prof-state').value.trim(), address_postcode: document.getElementById('prof-postcode').value.trim(), phone: document.getElementById('prof-phone').value.trim(), additional_phones: addPhones, website_urls: websites, is_multi_location: isMulti, additional_locations: addLocations }, 'prof-location-save');
+    var addPhones = Array.from(document.querySelectorAll('.add-phone-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
+    var websites = Array.from(document.querySelectorAll('.website-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
+    var isMulti = document.getElementById('loc-toggle-multi').classList.contains('sp-nav-chip-active');
+    var locBlocks = document.querySelectorAll('#add-locations-container .sp-section');
+    var addLocations = Array.from(locBlocks).map(function(b) { return { name: b.querySelector('.loc-name').value.trim(), street: b.querySelector('.loc-street').value.trim(), suburb: b.querySelector('.loc-suburb').value.trim(), state: b.querySelector('.loc-state').value.trim(), postcode: b.querySelector('.loc-postcode').value.trim(), phone: b.querySelector('.loc-phone').value.trim() }; });
+    this._saveSection({ address_street: document.getElementById('prof-street').value.trim(), address_suburb: document.getElementById('prof-suburb').value.trim(), address_state: document.getElementById('prof-state').value.trim(), address_postcode: document.getElementById('prof-postcode').value.trim(), phone: document.getElementById('prof-phone').value.trim(), additional_phones: addPhones, website_urls: websites, is_multi_location: isMulti, additional_locations: addLocations }, 'prof-location-save');
   },
 
   _renderDetails: function() {
-    const p = this._profile;
-    const ranges = ['1','2-5','6-10','11-20','21-50','50+'];
-    const rangeOptions = ranges.map(function(r) { return '<option value="' + r + '"' + (p.employee_range === r ? ' selected' : '') + '>' + r + '</option>'; }).join('');
-    document.getElementById('profile-tab-details').innerHTML = '<div class="profile-section-card"><h3 class="profile-section-title">Business Details</h3><div class="profile-field-group"><label class="profile-label">Services Provided</label><textarea id="prof-services" class="profile-textarea" rows="4" placeholder="Describe the services your business provides">' + window.escHtml(this._val('services')) + '</textarea></div><div class="profile-field-group"><label class="profile-label">Products Offered <span class="profile-optional">(optional)</span></label><textarea id="prof-products" class="profile-textarea" rows="3" placeholder="Describe any products your business sells">' + window.escHtml(this._val('products')) + '</textarea></div><div class="profile-field-group"><label class="profile-label">Number of Employees</label><select id="prof-employee-range" class="profile-select"><option value="">Select range</option>' + rangeOptions + '</select></div><div class="profile-field-group"><label class="profile-label">Years in Business</label><input id="prof-years" type="number" class="profile-input profile-input-sm" min="0" max="200" value="' + window.escHtml(String(this._val('years_in_business'))) + '" placeholder="e.g. 5" /></div><div class="profile-save-row"><button id="prof-details-save" class="btn-primary" onclick="window.CL_PROFILE._saveDetails()">Save</button><span id="prof-details-status" class="profile-save-status"></span></div></div>';
+    var p = this._profile;
+    var ranges = ['1','2-5','6-10','11-20','21-50','50+'];
+    document.getElementById('profile-tab-details').innerHTML = this._section(
+      '<div class="sp-section-header"><div class="sp-section-icon">\uD83D\uDCC4</div><div><div class="sp-section-title">Business Details</div><div class="sp-section-subtitle">What your business does and how it operates</div></div></div>' +
+      '<div class="sp-fields">' +
+        this._field('Services Provided', this._textarea('prof-services', this._val('services'), 'Describe the services your business provides', 4)) +
+        this._field('Products Offered <span style="font-weight:400;color:#888;">(optional)</span>', this._textarea('prof-products', this._val('products'), 'Describe any products your business sells', 3)) +
+        this._field('Number of Employees', this._select('prof-employee-range', ranges, this._val('employee_range'))) +
+        this._field('Years in Business', this._input('prof-years', 'number', this._val('years_in_business'), 'e.g. 5', 'min="0" max="200" style="max-width:120px;"')) +
+      '</div>' +
+      this._saveRow('prof-details-save', '_saveDetails')
+    );
   },
 
   _saveDetails: function() {
-    this._saveSection('details', { services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-employee-range').value, years_in_business: parseInt(document.getElementById('prof-years').value) || null }, 'prof-details-save');
+    this._saveSection({ services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-employee-range').value, years_in_business: parseInt(document.getElementById('prof-years').value) || null }, 'prof-details-save');
   },
 
   _renderMarketing: function() {
-    const p = this._profile;
-    const extras = Array.isArray(p.marketing_theme_extra) ? p.marketing_theme_extra : [];
-    let extrasHtml = extras.map(function(item, i) { return '<div class="profile-repeating-row" id="theme-extra-row-' + i + '"><input type="text" class="profile-input theme-extra-input" value="' + window.escHtml(item) + '" placeholder="Additional theme statement" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'theme-extra-row-' + i + '\')">Remove</button></div>'; }).join('');
-    document.getElementById('profile-tab-marketing').innerHTML = '<div class="profile-section-card"><h3 class="profile-section-title">Marketing Theme</h3><p class="profile-section-desc">These answers are used across every StaxAI tool to personalise your outputs. The more detail you provide, the better your results.</p><div class="profile-field-group"><label class="profile-label">What do you want your customers to know about your business?</label><textarea id="prof-theme-awareness" class="profile-textarea" rows="3" placeholder="e.g. We have been serving our local community for over 15 years with honest, reliable service">' + window.escHtml(this._val('marketing_theme_awareness')) + '</textarea></div><div class="profile-field-group"><label class="profile-label">What sets you apart from your competitors?</label><textarea id="prof-theme-diff" class="profile-textarea" rows="3" placeholder="e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee">' + window.escHtml(this._val('marketing_theme_differentiators')) + '</textarea></div><div class="profile-field-group"><label class="profile-label">What feeling do you want customers to have when they interact with you?</label><textarea id="prof-theme-feeling" class="profile-textarea" rows="3" placeholder="e.g. Confident, reassured, and well looked after">' + window.escHtml(this._val('marketing_theme_feeling')) + '</textarea></div><div class="profile-field-group"><label class="profile-label">Additional Theme Statements <span class="profile-optional">(optional)</span></label><div id="theme-extras-container">' + extrasHtml + '</div><button class="btn-outline btn-sm profile-add-btn" onclick="window.CL_PROFILE._addThemeExtra()">+ Add Statement</button></div><div class="profile-save-row"><button id="prof-marketing-save" class="btn-primary" onclick="window.CL_PROFILE._saveMarketing()">Save</button><span id="prof-marketing-status" class="profile-save-status"></span></div></div>';
+    var p = this._profile;
+    var extras = Array.isArray(p.marketing_theme_extra) ? p.marketing_theme_extra : [];
+    var extrasHtml = extras.map(function(item, i) { return '<div style="display:flex;gap:8px;margin-bottom:8px;" id="theme-extra-row-' + i + '"><input type="text" class="sp-input theme-extra-input" value="' + window.escHtml(item) + '" style="flex:1;" placeholder="Additional theme statement" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'theme-extra-row-' + i + '\')">Remove</button></div>'; }).join('');
+    document.getElementById('profile-tab-marketing').innerHTML = this._section(
+      '<div class="sp-section-header"><div class="sp-section-icon">\uD83C\uDFA8</div><div><div class="sp-section-title">Marketing Theme</div><div class="sp-section-subtitle">These answers personalise your outputs across every StaxAI tool</div></div></div>' +
+      '<div class="sp-fields">' +
+        this._field('What do you want your customers to know about your business?', this._textarea('prof-theme-awareness', this._val('marketing_theme_awareness'), 'e.g. We have been serving our local community for over 15 years with honest, reliable service', 3)) +
+        this._field('What sets you apart from your competitors?', this._textarea('prof-theme-diff', this._val('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
+        this._field('What feeling do you want customers to have when they interact with you?', this._textarea('prof-theme-feeling', this._val('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
+        this._field('Additional Theme Statements <span style="font-weight:400;color:#888;">(optional)</span>', '<div id="theme-extras-container">' + extrasHtml + '</div><button class="btn-sp-back" onclick="window.CL_PROFILE._addThemeExtra()" style="margin-top:4px;">+ Add Statement</button>') +
+      '</div>' +
+      this._saveRow('prof-marketing-save', '_saveMarketing')
+    );
   },
 
-  _addThemeExtra: function() {
-    const container = document.getElementById('theme-extras-container');
-    const i = container.children.length;
-    const row = document.createElement('div');
-    row.className = 'profile-repeating-row';
-    row.id = 'theme-extra-row-' + i;
-    row.innerHTML = '<input type="text" class="profile-input theme-extra-input" placeholder="Additional theme statement" /><button class="btn-outline btn-sm" onclick="window.CL_PROFILE._removeRepeatingRow(\'theme-extra-row-' + i + '\')">Remove</button>';
-    container.appendChild(row);
-  },
+  _addThemeExtra: function() { var c = document.getElementById('theme-extras-container'); var i = c.children.length; var d = document.createElement('div'); d.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;'; d.id = 'theme-extra-row-' + i; d.innerHTML = '<input type="text" class="sp-input theme-extra-input" placeholder="Additional theme statement" style="flex:1;" /><button class="btn-sp-back" onclick="window.CL_PROFILE._removeRow(\'theme-extra-row-' + i + '\')">Remove</button>'; c.appendChild(d); },
 
   _saveMarketing: function() {
-    const extras = Array.from(document.querySelectorAll('.theme-extra-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
-    this._saveSection('marketing', { marketing_theme_awareness: document.getElementById('prof-theme-awareness').value.trim(), marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(), marketing_theme_feeling: document.getElementById('prof-theme-feeling').value.trim(), marketing_theme_extra: extras }, 'prof-marketing-save');
+    var extras = Array.from(document.querySelectorAll('.theme-extra-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
+    this._saveSection({ marketing_theme_awareness: document.getElementById('prof-theme-awareness').value.trim(), marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(), marketing_theme_feeling: document.getElementById('prof-theme-feeling').value.trim(), marketing_theme_extra: extras }, 'prof-marketing-save');
   }
 };
