@@ -166,7 +166,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!user) { window.location.href = '/login.html'; return; }
 
   // -- Account dropdown --
-  const emailEl = document.getElementById('user-email');
+  const emailEl = document.getElementById('account-email-short');
+  const dropdownEmailEl = document.getElementById('account-dropdown-email');
+  if (dropdownEmailEl) dropdownEmailEl.textContent = user.email || '';
   if (emailEl) emailEl.textContent = user.email || 'Account';
 
   const acctBtn = document.getElementById('account-btn');
@@ -181,7 +183,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
-  const signoutBtn = document.getElementById('signout-btn');
+  const signoutBtn = document.getElementById('sign-out-btn');
   if (signoutBtn) {
     signoutBtn.addEventListener('click', async function() {
       await supabase.auth.signOut();
