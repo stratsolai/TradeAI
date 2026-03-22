@@ -24,7 +24,7 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
+      background: #F5F7FA; color: #333333;
       color: #fff;
       min-height: 100vh;
     }
@@ -145,8 +145,8 @@
 
     /* ── SETTINGS CARD ── */
     .settings-card {
-      background: var(--bg2);
-      border: 1px solid var(--card-border);
+      background: #FFFFFF;
+      border: 1px solid #E0E0E0;
       border-radius: 12px;
       margin-bottom: 24px;
       overflow: hidden;
@@ -256,7 +256,23 @@
       font-size: 16px;
       color: var(--muted);
     }
-  </style>
+  
+    /* Connection UI */
+    .connection-status { font-size: 13px; color: #888888; margin-right: 8px; }
+    .connection-status.connected { color: #2a7a3b; font-weight: 600; }
+    .btn-connect { background: #FFFFFF; color: var(--blue); border: 1px solid var(--blue); border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: "DM Sans", sans-serif; }
+    .btn-connect:hover { background: var(--blue); color: #FFFFFF; }
+    .btn-connect.disconnect { color: #c0392b; border-color: #c0392b; }
+    .btn-connect.disconnect:hover { background: #c0392b; color: #FFFFFF; }
+    .settings-text-input { border: 1px solid #CCCCCC; border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: "DM Sans", sans-serif; color: #333333; width: 220px; }
+    .settings-text-input:focus { outline: none; border-color: var(--blue); }
+    .btn-save-inline { background: var(--blue); color: #FFFFFF; border: none; border-radius: 6px; padding: 7px 16px; font-size: 13px; cursor: pointer; font-family: "DM Sans", sans-serif; margin-left: 8px; }
+    .btn-save-inline:hover { opacity: 0.9; }
+    .settings-card-title { font-family: "Barlow Condensed", sans-serif; font-size: 18px; font-weight: 600; color: #333333; }
+    .settings-card-hint { font-size: 13px; color: #888888; margin-top: 4px; }
+    .settings-row-label { font-weight: 600; color: #333333; font-size: 14px; }
+    .settings-row-desc { font-size: 13px; color: #888888; margin-top: 2px; }
+</style>
 </head>
 <body>
 
@@ -267,10 +283,10 @@
       <a href="/dashboard.html">Dashboard</a>
     </nav>
     <div class="topbar-spacer"></div>
-    <div class="topbar-right">
+    <div class="topbar-right topbar-account-wrap">
       <a href="/content-library.html" class="topbar-cl-link">Content Library</a>
       <div class="account-dropdown-wrap">
-        <button class="account-btn" id="account-btn">Account ▾</button>
+        <button class="account-btn" id="account-btn"><span id="user-email">Account</span> ▾</button>
         <div class="account-dropdown" id="account-dropdown">
           <a href="/account.html">Account Management</a>
           <button id="signout-btn">Sign Out</button>
@@ -338,7 +354,61 @@
 
   </div>
 
-  <div class="auth-loading" id="auth-loading">Loading...</div>
+  <div class="auth-loading" id="auth-loading">Loading...
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <div class="settings-card-title">Connections</div>
+        <div class="settings-card-hint">Connect your business sources. These connections are shared across all tools.</div>
+      </div>
+      <div class="settings-rows" id="connections-rows">
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Business Email (Gmail)</div>
+            <div class="settings-row-desc">Connect your business Gmail inbox for automatic scanning.</div>
+          </div>
+          <div class="settings-row-control">
+            <div id="gmail-status" class="connection-status"></div>
+            <button id="gmail-btn" class="btn-connect">Connect</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Business Email (Outlook)</div>
+            <div class="settings-row-desc">Connect your business Outlook inbox for automatic scanning.</div>
+          </div>
+          <div class="settings-row-control">
+            <div id="outlook-status" class="connection-status"></div>
+            <button id="outlook-btn" class="btn-connect">Connect</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Google Drive</div>
+            <div class="settings-row-desc">Connect your Google Drive to import documents automatically.</div>
+          </div>
+          <div class="settings-row-control">
+            <div id="drive-status" class="connection-status"></div>
+            <button id="drive-btn" class="btn-connect">Connect</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Website</div>
+            <div class="settings-row-desc">Enter your website URL for automatic content scanning.</div>
+          </div>
+          <div class="settings-row-control">
+            <input type="url" id="website-url-input" placeholder="https://yourwebsite.com.au" class="settings-text-input" />
+            <button id="website-save-btn" class="btn-save-inline">Save</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+</div>
 
   <script src="/cl-settings-logic.js"></script>
   <script>
