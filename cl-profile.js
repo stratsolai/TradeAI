@@ -356,13 +356,12 @@ window.CL_PROFILE = {
         this._textarea('prof-theme-diff', this._v('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
       this._field('What feeling do you want customers to have when they interact with you?',
         this._textarea('prof-theme-feel', this._v('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
-      '<div class="profile-field-full">' +
-        '<label class="profile-label">Additional Theme Statements <span class="profile-optional">(optional)</span></label>' +
+      this._field('Additional Theme Statements <span class="profile-optional">(optional)</span>',
         '<input type="text" id="prof-extra-primary" class="profile-input" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" style="margin-bottom:8px;" />' +
-        '<div id="prof-extras-extra">' + extraRowsHtml + '</div>' +
-        '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;display:inline-block;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>' +
-      '</div>' +
-    '</div>';
+        '<div id="prof-extras-extra">' + extraRowsHtml + '</div>'
+      ) +
+    '</div>' +
+    '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save', '_saveMarketing'
     );
