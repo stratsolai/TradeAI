@@ -320,6 +320,60 @@ module.exports = async (req, res) => {
 
     console.log('Saving to database for user:', userId);
 
+    // CL flow — handles business email/drive connections for Content Library
+    if (req.query && req.query.flow === 'cl') {
+      try {
+        const clProvider = req.query.provider || provider;
+        const clUpdateData = {};
+
+        if (clProvider === 'gmail' || clProvider === 'outlook' || clProvider === 'drive') {
+          // Read existing cl_connected_emails array
+          const existingRes = await fetch(
+            `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails,cl_drive_connected`,
+            {
+              headers: {
+                'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+              }
+            }
+          );
+          const existingData = await existingRes.json();
+          const existing = existingData[0] || {};
+
+          if (clProvider === 'drive') {
+            clUpdateData.cl_drive_connected = true;
+          } else {
+            const currentEmails = existing.cl_connected_emails || [];
+            const alreadyConnected = currentEmails.some(function(e) { return e.email === userEmail && e.provider === clProvider; });
+            if (!alreadyConnected) {
+              currentEmails.push({ provider: clProvider, email: userEmail, connected_at: new Date().toISOString() });
+            }
+            clUpdateData.cl_connected_emails = currentEmails;
+          }
+
+          const qs = querystring.stringify({ id: `eq.${userId}` });
+          await fetch(
+            `${process.env.SUPABASE_URL}/rest/v1/profiles?${qs}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'return=minimal'
+              },
+              body: JSON.stringify(clUpdateData)
+            }
+          );
+        }
+
+        return res.redirect(`/cl-settings.html?connected=${clProvider}`);
+      } catch (clErr) {
+        console.error('CL OAuth callback error:', clErr);
+        return res.redirect('/cl-settings.html?error=connection_failed');
+      }
+    }
+
     let updateData = {};
     
     if (provider === 'google') {
