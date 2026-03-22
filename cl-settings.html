@@ -47,12 +47,13 @@
       z-index: 100;
     }
     .topbar-logo {
-      font-family: var(--heading-font);
-      font-weight: 700;
-      font-size: 22px;
-      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 9px;
       text-decoration: none;
-      letter-spacing: 0.5px;
+      color: #fff;
+      flex-shrink: 0;
+      margin-right: 20px;
     }
     .topbar-nav {
       display: flex;
@@ -84,16 +85,14 @@
     .topbar-cl-link:hover { color: #fff; }
     .account-dropdown-wrap { position: relative; }
     .account-btn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.18);
-      color: #fff;
-      font-family: var(--body-font);
-      font-size: 14px;
-      font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 6px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.75);
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.15s;
+      padding: 0;
+      font-family: var(--body-font);
     }
     .account-btn:hover { background: rgba(255,255,255,0.18); }
     .account-dropdown {
@@ -141,7 +140,7 @@
       font-family: var(--heading-font);
       font-size: 32px;
       font-weight: 700;
-      color: #fff;
+      color: var(--text);
       margin-bottom: 6px;
     }
     .page-subtitle {
@@ -220,7 +219,7 @@
       color: #fff;
     }
     .freq-btn.active {
-      background: var(--orange);
+      background: var(--blue);
       color: #fff;
     }
 
@@ -233,7 +232,7 @@
       gap: 12px;
     }
     .btn-save {
-      background: var(--orange);
+      background: var(--blue);
       color: #fff;
       border: none;
       font-family: var(--body-font);
@@ -244,7 +243,7 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-save:hover { background: var(--orange-light); }
+    .btn-save:hover { background: #154070; }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
     .save-msg {
       font-size: 13px;
@@ -278,28 +277,40 @@
     .settings-card-hint { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-family: var(--body-font); }
     .settings-row-label { font-weight: 600; color: var(--text); font-size: 14px; font-family: var(--body-font); }
     .settings-row-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; font-family: var(--body-font); }
+
+    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
+    .account-dropdown.open { display: block; }
+    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: var(--text-muted); border-bottom: 1px solid var(--border); font-family: var(--body-font); }
+    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: var(--body-font); }
+    .account-dropdown-item:hover { background: var(--bg); }
 </style>
 </head>
 <body>
 
   <!-- TOPBAR -->
-  <header class="topbar">
-    <a href="/index.html" class="topbar-logo">StaxAI</a>
-    <nav class="topbar-nav">
-      <a href="/dashboard.html">Dashboard</a>
-    </nav>
+  <nav class="topbar">
+    <a href="index.html" class="topbar-logo">
+      <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;">
+    </a>
+    <div class="topbar-nav" style="margin-left:64px">
+      <a href="dashboard.html">Dashboard</a>
+    </div>
     <div class="topbar-spacer"></div>
-    <div class="topbar-right topbar-account-wrap">
-      <a href="/content-library.html" class="topbar-cl-link">Content Library</a>
-      <div class="account-dropdown-wrap">
-        <button class="account-btn" id="account-btn"><span id="user-email">Account</span> ▾</button>
+    <div class="topbar-right">
+      <a href="content-library.html" class="topbar-nav-link">Content Library</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn">
+          <span id="account-email-short">Account</span> &#9660;
+        </button>
         <div class="account-dropdown" id="account-dropdown">
-          <a href="/account.html">Account Management</a>
-          <button id="signout-btn">Sign Out</button>
+          <div class="account-dropdown-email" id="account-dropdown-email"></div>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign Out</button>
         </div>
       </div>
     </div>
-  </header>
+  </nav>
 
   <!-- PAGE -->
   <div class="page-wrap" id="page-wrap" style="display:none">
