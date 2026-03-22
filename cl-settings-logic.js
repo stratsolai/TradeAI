@@ -151,3 +151,140 @@ window.CL_SETTINGS_LOGIC = {
   }
 
 };
+
+
+// ---- CL Settings: Auth, Account Dropdown & Connections ----
+
+document.addEventListener('DOMContentLoaded', async function() {
+
+  // -- Supabase client --
+  const supabase = window.supabase;
+  if (!supabase) return;
+
+  // -- Auth check --
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) { window.location.href = '/login.html'; return; }
+
+  // -- Account dropdown --
+  const emailEl = document.getElementById('user-email');
+  if (emailEl) emailEl.textContent = user.email || 'Account';
+
+  const acctBtn = document.getElementById('account-btn');
+  const acctDropdown = document.getElementById('account-dropdown');
+  if (acctBtn && acctDropdown) {
+    acctBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      acctDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+      acctDropdown.classList.remove('open');
+    });
+  }
+
+  const signoutBtn = document.getElementById('signout-btn');
+  if (signoutBtn) {
+    signoutBtn.addEventListener('click', async function() {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
+    });
+  }
+
+  // -- Load existing connection status from profiles --
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('cl_gmail_connected, cl_gmail_email, cl_outlook_connected, cl_outlook_email, cl_drive_connected, website_urls')
+    .eq('user_id', user.id)
+    .single();
+
+  if (profile) {
+    renderConnectionStatus('gmail', profile.cl_gmail_connected, profile.cl_gmail_email);
+    renderConnectionStatus('outlook', profile.cl_outlook_connected, profile.cl_outlook_email);
+    renderConnectionStatus('drive', profile.cl_drive_connected, null);
+    if (profile.website_urls && profile.website_urls.length > 0) {
+      const websiteInput = document.getElementById('website-url-input');
+      if (websiteInput) websiteInput.value = profile.website_urls[0];
+    }
+  }
+
+  // -- Render connection status helper --
+  function renderConnectionStatus(provider, isConnected, email) {
+    const statusEl = document.getElementById(provider + '-status');
+    const btn = document.getElementById(provider + '-btn');
+    if (!statusEl || !btn) return;
+    if (isConnected) {
+      statusEl.textContent = email ? 'Connected: ' + email : 'Connected';
+      statusEl.className = 'connection-status connected';
+      btn.textContent = 'Disconnect';
+      btn.className = 'btn-connect disconnect';
+      btn.onclick = function() { handleDisconnect(provider); };
+    } else {
+      statusEl.textContent = 'Not connected';
+      statusEl.className = 'connection-status';
+      btn.textContent = 'Connect';
+      btn.className = 'btn-connect';
+      btn.onclick = function() { handleConnect(provider); };
+    }
+  }
+
+  // -- OAuth connect --
+  async function handleConnect(provider) {
+    let oauthProvider, scopes, redirectTo;
+    redirectTo = window.location.origin + '/api/auth/cl-oauth-callback.js?provider=' + provider;
+
+    if (provider === 'gmail') {
+      oauthProvider = 'google';
+      scopes = 'email profile https://www.googleapis.com/auth/gmail.readonly';
+    } else if (provider === 'outlook') {
+      oauthProvider = 'azure';
+      scopes = 'email offline_access Mail.Read';
+    } else if (provider === 'drive') {
+      oauthProvider = 'google';
+      scopes = 'email profile https://www.googleapis.com/auth/drive.readonly';
+    }
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: oauthProvider,
+      options: {
+        scopes: scopes,
+        redirectTo: redirectTo,
+        queryParams: { access_type: 'offline', prompt: 'consent' }
+      }
+    });
+    if (error) console.error('OAuth error:', error.message);
+  }
+
+  // -- Disconnect --
+  async function handleDisconnect(provider) {
+    const update = {};
+    if (provider === 'gmail') {
+      update.cl_gmail_connected = false;
+      update.cl_gmail_email = null;
+    } else if (provider === 'outlook') {
+      update.cl_outlook_connected = false;
+      update.cl_outlook_email = null;
+    } else if (provider === 'drive') {
+      update.cl_drive_connected = false;
+    }
+    const { error } = await supabase.from('profiles').update(update).eq('user_id', user.id);
+    if (!error) renderConnectionStatus(provider, false, null);
+  }
+
+  // -- Website URL save --
+  const websiteSaveBtn = document.getElementById('website-save-btn');
+  if (websiteSaveBtn) {
+    websiteSaveBtn.addEventListener('click', async function() {
+      const urlInput = document.getElementById('website-url-input');
+      const url = urlInput ? urlInput.value.trim() : '';
+      if (!url) return;
+      const { error } = await supabase
+        .from('profiles')
+        .update({ website_urls: [url] })
+        .eq('user_id', user.id);
+      if (!error) {
+        websiteSaveBtn.textContent = 'Saved';
+        setTimeout(function() { websiteSaveBtn.textContent = 'Save'; }, 2000);
+      }
+    });
+  }
+
+});
