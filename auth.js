@@ -91,7 +91,7 @@ async function getUserProfile() {
 async function requireAuth() {
   const session = await checkAuth();
   if (!session) {
-    window.location.href = '/login.html';
+    window.location.href = '//login';
     return false;
   }
   return true;
