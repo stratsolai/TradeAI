@@ -1,19 +1,19 @@
 window.DASH_DATA = (function() {
 
   var TOOLS = [
-    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: 'social.html',        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI' },
-    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: 'email-assistant.html', priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL' },
-    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: 'chatbot.html',        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf' },
-    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: 'news-digest.html',    priceId: 'price_1TB7IdHnoVvjo5gxTA1rOKRI' },
+    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: '/social',        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI' },
+    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: '/email', priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL' },
+    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: '/chatbot',        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf' },
+    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: '/news',    priceId: 'price_1TB7IdHnoVvjo5gxTA1rOKRI' },
     { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'pending', url: 'bi.html',             priceId: null },
-    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: 'strategic-plan.html', priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego' },
-    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: 'panel.html?tool=tender',          priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc' },
-    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=quote-enhancer', priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI' },
-    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: 'panel.html?tool=swms',            priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF' },
-    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: 'panel.html?tool=customer-updates', priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN' },
-    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: 'panel.html?tool=handover-docs',  priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL' },
-    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: 'panel.html?tool=review-booster', priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa' },
-    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: 'panel.html?tool=design-viz',     priceId: null }
+    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: '/strategy', priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego' },
+    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: '/panel?tool=tender',          priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc' },
+    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: '/panel?tool=quote-enhancer', priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI' },
+    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: '/panel?tool=swms',            priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF' },
+    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: '/panel?tool=customer-updates', priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN' },
+    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: '/panel?tool=handover-docs',  priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL' },
+    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: '/panel?tool=review-booster', priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa' },
+    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: '/panel?tool=design-viz',     priceId: null }
   ];
 
   function renderStax(activeTools) {
@@ -37,7 +37,7 @@ window.DASH_DATA = (function() {
         html += '<a href="' + tool.url + '" class="btn-stax-open">Open Tool</a>';
       } else if (!isPending) {
         html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
-        html += '<a href="panel-auth.html?tool=" + tool.id + "" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="" + tool.id + "" style="margin-top:6px;display:inline-block;">Activate</button>';
+        html += '<a href="/activate?tool=" + tool.id + "" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="" + tool.id + "" style="margin-top:6px;display:inline-block;">Activate</button>';
       }
       html += '</div></div>';
     });
@@ -51,19 +51,19 @@ window.DASH_DATA = (function() {
     try {
       var pr = await window.supabaseClient.from('profiles').select('profile_complete').eq('id', userId).single();
       if (pr.data && !pr.data.profile_complete) {
-        items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: 'content-library.html#business-profile', linkText: 'Complete now' });
+        items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: '/library#business-profile', linkText: 'Complete now' });
       }
     } catch(e) {}
     try {
       var cr = await window.supabaseClient.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
       if (cr.count && cr.count > 0) {
-        items.push({ msg: cr.count + ' item' + (cr.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: 'content-library.html', linkText: 'Review' });
+        items.push({ msg: cr.count + ' item' + (cr.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: '/library', linkText: 'Review' });
       }
     } catch(e) {}
     try {
       var sp = await window.supabaseClient.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
       if (sp.count && sp.count > 0) {
-        items.push({ msg: sp.count + ' post' + (sp.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: 'social.html', linkText: 'Review' });
+        items.push({ msg: sp.count + ' post' + (sp.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: '/social', linkText: 'Review' });
       }
     } catch(e) {}
     if (items.length === 0) { bar.style.display = 'none'; return; }
@@ -99,7 +99,7 @@ window.DASH_DATA = (function() {
     }
     window.supabaseClient.auth.getUser().then(function(res) {
       var user = res.data && res.data.user;
-      if (!user) { window.location.href = '/login.html'; return; }
+      if (!user) { window.location.href = '//login'; return; }
       fetch('/api/create-checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
