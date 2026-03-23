@@ -16,6 +16,86 @@
     {
       "source": "/api/auth/google-drive/callback",
       "destination": "/api/auth/oauth-callback.js"
+    },
+    {
+      "source": "/tools",
+      "destination": "/tools.html"
+    },
+    {
+      "source": "/industry",
+      "destination": "/industry-select.html"
+    },
+    {
+      "source": "/pricing",
+      "destination": "/pricing-page.html"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/forgot-password",
+      "destination": "/forgot-password.html"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/reset-password.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
+    },
+    {
+      "source": "/activate",
+      "destination": "/panel-auth.html"
+    },
+    {
+      "source": "/library",
+      "destination": "/content-library.html"
+    },
+    {
+      "source": "/library/settings",
+      "destination": "/cl-settings.html"
+    },
+    {
+      "source": "/strategy",
+      "destination": "/strategic-plan.html"
+    },
+    {
+      "source": "/chatbot",
+      "destination": "/chatbot.html"
+    },
+    {
+      "source": "/chatbot/settings",
+      "destination": "/chatbot-settings.html"
+    },
+    {
+      "source": "/email",
+      "destination": "/email-assistant.html"
+    },
+    {
+      "source": "/email/settings",
+      "destination": "/email-assistant-settings.html"
+    },
+    {
+      "source": "/news",
+      "destination": "/news-digest.html"
+    },
+    {
+      "source": "/news/settings",
+      "destination": "/news-digest-settings.html"
+    },
+    {
+      "source": "/social",
+      "destination": "/social.html"
+    },
+    {
+      "source": "/social/settings",
+      "destination": "/social-settings.html"
+    },
+    {
+      "source": "/account",
+      "destination": "/account.html"
     }
   ]
 }
