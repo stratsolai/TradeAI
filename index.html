@@ -279,10 +279,11 @@
     .section-sub { font-size:17px; color:var(--muted); line-height:1.7; max-width:560px; text-align:center; margin:0 auto; }
 
     /* ── PROBLEM ── */
-    .problem { background:var(--bg2); }
+    .problem { background:#1a2f4a; }
     .problem-grid { display:flex; flex-direction:column; gap:14px; margin-top:60px; } .prob-row { display:grid; grid-template-columns:1fr 56px 1fr; align-items:stretch; gap:0; } .prob-arrow { display:flex; align-items:center; justify-content:center; align-self:stretch; }
     .problem-list { display:flex; flex-direction:column; gap:14px; }
     .problem-item {
+      background:#c8cfd8; color:#1a2535;
       display:flex; gap:16px; align-items:flex-start; padding:20px; border-radius:12px;
       background:rgba(255,255,255,0.05); border:1px solid rgba(196,98,42,0.20);
       border-left:3px solid #c4622a; transition:all 0.3s; box-sizing:border-box;
@@ -299,6 +300,7 @@
     .ai-advantage-sub { font-size:13px; color:var(--muted); margin-bottom:24px; line-height:1.6; }
     .ai-capability-list { display:flex; flex-direction:column; gap:10px; }
     .ai-capability {
+      background:#c8cfd8; color:#1a2535;
       display:flex; align-items:flex-start; gap:16px; padding:20px;
       background:rgba(255,255,255,0.05); border:1px solid rgba(74,109,140,0.20);
       border-left:3px solid #4A6D8C; border-radius:12px; transition:all 0.3s; box-sizing:border-box;
@@ -375,7 +377,7 @@
     .industry-count { font-size:12px; color:var(--orange); font-weight:600; }
 
     /* ── TESTIMONIALS ── */
-    .testimonials-bg { background:var(--bg2); }
+    .testimonials-bg { background:#1a2f4a; }
     .testimonials-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:50px; }
     .testimonial {
       background:var(--card); border:1px solid var(--card-border);
@@ -393,7 +395,7 @@
     /* ── CTA ── */
     .cta-section {
       text-align:center;
-      background:var(--bg);
+      background:#1e3a5f;
       position:relative; overflow:hidden;
     }
     .cta-section::before {
@@ -408,7 +410,7 @@
 
     /* ── FOOTER ── */
     footer {
-      background:var(--bg2); padding:60px 48px 30px;
+      background:#0d1628; padding:60px 48px 30px;
       border-top:1px solid rgba(255,255,255,0.08);
     }
     .footer-inner { max-width:1200px; margin:0 auto; }
@@ -504,8 +506,8 @@
   flex-shrink: 0;
 }
 .review-card-inner {
-  background: linear-gradient(135deg, rgba(196,98,42,0.13) 0%, rgba(44,80,120,0.55) 100%);
-  border: 1px solid rgba(255,255,255,0.13);
+  background: #c8cfd8; color: #1a2535;
+  border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
   border-left: 3px solid #c4622a;
   border-radius: 12px;
   padding: 24px 22px 20px;
@@ -580,18 +582,8 @@
   font-weight: 400;
 }
 .review-fade-left,
-.review-fade-right {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 80px;
-  pointer-events: none;
-  z-index: 2;
-}
-.review-fade-left {
-  left: 0;
-  background: linear-gradient(to right, var(--dark, #0d1b2a) 0%, transparent 100%);
-}
+.review-fade-right { display:none; }
+.review-fade-left { display:none; }
 .review-fade-right {
   right: 0;
   background: linear-gradient(to left, var(--dark, #0d1b2a) 0%, transparent 100%);
@@ -803,7 +795,7 @@
 </section>
 
 <!-- ── HOW IT WORKS ── -->
-<section id="how-it-works">
+<section id="how-it-works" style="background:#1e3a5f">
   <div class="section-inner">
     <div class="section-tag">HOW IT WORKS</div>
     <h2 class="section-title">LIVE IN MINUTES</h2>
