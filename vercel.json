@@ -96,6 +96,22 @@
     {
       "source": "/account",
       "destination": "/account.html"
+    },
+    {
+      "source": "/panel",
+      "destination": "/panel.html"
+    },
+    {
+      "source": "/contact",
+      "destination": "/contact.html"
+    },
+    {
+      "source": "/privacy",
+      "destination": "/privacy-policy.html"
+    },
+    {
+      "source": "/terms",
+      "destination": "/terms-of-service.html"
     }
   ]
 }
