@@ -80,7 +80,7 @@ window.DASH_WIDGETS = (function() {
     var headerRight = isActive
       ? '<button class="widget-refresh" data-panel="'+id+'" title="Refresh">&#8635;</button>'
           + ' <a href="'+toolUrl+'" style="color:var(--orange);font-size:12px;font-weight:600;text-decoration:none;">Open Tool</a>'
-      : '<a href="panel-auth.html?tool='+id+'" class="btn-activate-header">Learn More</a><button class="btn-activate-header btn-activate-cta" data-toolid="'+id+'">Activate</button>';
+      : '<a href="/activate?tool='+id+'" class="btn-activate-header">Learn More</a><button class="btn-activate-header btn-activate-cta" data-toolid="'+id+'">Activate</button>';
     var banner = '<div class="sample-banner">\ud83d\udd14 Sample data &mdash; activate this tool to see your live results</div>';
     var footer = isActive
       ? '<div class="widget-footer"><span>'+(lastUpdated||'')+'</span><a href="'+toolUrl+'">Open Tool</a></div>'
@@ -209,7 +209,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-social');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('social','\ud83d\udcf1','Marketing & Social Media','$79',isActive,'social.html','','',kpis,'Posts/week',chartHtml,sec);
+    el.innerHTML = buildPanel('social','\ud83d\udcf1','Marketing & Social Media','$79',isActive,'/social','','',kpis,'Posts/week',chartHtml,sec);
   }
 
   async function renderEmail(userId, isActive) {
@@ -239,7 +239,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-email');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('email','\ud83d\udce7','AI Email Assistant','$59',isActive,'email-assistant.html','','',kpis,'Urgency breakdown',chartHtml,sec);
+    el.innerHTML = buildPanel('email','\ud83d\udce7','AI Email Assistant','$59',isActive,'/email','','',kpis,'Urgency breakdown',chartHtml,sec);
   }
 
   async function renderChatbot(userId, isActive) {
@@ -274,7 +274,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-chatbot');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('chatbot','\ud83d\udcac','AI Website Chatbot','$79',isActive,'chatbot.html','','',kpis,'14-day lead trend',chartHtml,sec);
+    el.innerHTML = buildPanel('chatbot','\ud83d\udcac','AI Website Chatbot','$79',isActive,'/chatbot','','',kpis,'14-day lead trend',chartHtml,sec);
   }
 
   async function renderNews(userId, isActive) {
@@ -305,7 +305,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-news-digest');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('news-digest','\ud83d\udcf0','Industry News Digest','$59',isActive,'news-digest.html','','',kpis,'Stories per day (7 days)',chartHtml,sec);
+    el.innerHTML = buildPanel('news-digest','\ud83d\udcf0','Industry News Digest','$59',isActive,'/news','','',kpis,'Stories per day (7 days)',chartHtml,sec);
   }
 
   async function renderBI(userId, isActive) {
@@ -328,7 +328,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-bi');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('bi','\ud83e\udde0','Business Intelligence Dashboard','$89',isActive,'dashboard.html','','',kpis,'30-day insight activity',chartHtml,sec);
+    el.innerHTML = buildPanel('bi','\ud83e\udde0','Business Intelligence Dashboard','$89',isActive,'/dashboard','','',kpis,'30-day insight activity',chartHtml,sec);
   }
 
   async function renderStrategic(userId, isActive) {
@@ -360,7 +360,7 @@ window.DASH_WIDGETS = (function() {
     var el = document.getElementById('panel-strategic-plan');
     if (!el) return;
     if (!isActive) el.classList.add('inactive');
-    el.innerHTML = buildPanel('strategic-plan','\ud83d\uddfa\ufe0f','Strategic Plan & Operations','$69',isActive,'strategic-plan.html','','',kpis,'90-day plan progress',chartHtml,sec);
+    el.innerHTML = buildPanel('strategic-plan','\ud83d\uddfa\ufe0f','Strategic Plan & Operations','$69',isActive,'/strategy','','',kpis,'90-day plan progress',chartHtml,sec);
   }
 
   // ── REFRESH WIRING ──
