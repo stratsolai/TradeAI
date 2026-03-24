@@ -569,7 +569,8 @@
   <section class="bundles-section" id="bundles">
     <div class="section-title">
       <h2>BUNDLE AND <span class="stax-tagline-stax">SAVE</span></h2>
-      <p>Choose a <span class="stax-tagline-stax">STAX</span> bundle and pick the tools that suit your business. All 13 tools purchased individually would cost $997/mth — bundles give you the same power for less.</p>
+      <p>Choose a <span class="stax-tagline-stax">STAX</span> bundle and pick the tools that suit your business</p>
+      <p>All 13 tools purchased individually would cost $997/mth — bundles give you the same power for less</p>
     </div>
 
     <div class="bundle-cards">
@@ -650,7 +651,8 @@
   <section class="tools-section" id="individual">
     <div class="section-title">
       <h2>OR SUBSCRIBE TO <span class="stax-tagline-stax">INDIVIDUAL TOOLS</span></h2>
-      <p>Start with one tool and add more when you are ready. Each tool is a monthly subscription — cancel or change any time.</p>
+      <p>Start with one tool and add more when you are ready</p>
+      <p>Each tool is a monthly subscription — cancel or change any time</p>
     </div>
     <div class="pricing-grid" id="pricing-grid"></div>
   </section>
@@ -666,7 +668,7 @@
   <!-- CLOSING CTA -->
   <section class="closing-section">
     <h2>READY TO BUILD YOUR <span class="stax-tagline-stax">STAX</span></h2>
-    <p>Every plan includes a 14-day free trial with full access to your chosen tools.</p>
+    <p>Every plan includes a 14-day free trial with full access to your chosen tools</p>
     <a class="hero-cta" href="#bundles">Start Your Free Trial</a>
     <p class="hero-note"><span class="tick">✓</span> From $59/mth per tool &nbsp;·&nbsp; <span class="tick">✓</span> Cancel anytime &nbsp;·&nbsp; <span class="tick">✓</span> Australian support</p>
   </section>
@@ -730,42 +732,52 @@
       }).join('');
     }
 
-    function renderFAQ() {
+    window.renderFAQ = function() {
       var list = document.getElementById("faq-list");
-      var html = FAQ.map(function(f, i) {
-        var hidden = i >= 2 ? ' faq-hidden' : '';
-        return '<div class="faq-item' + hidden + '" id="faq-' + i + '">' +
-          '<button class="faq-question" onclick="toggleFAQ(' + i + ')">' +
-          '<span>' + f.q + '</span><span class="faq-icon" id="faq-icon-' + i + '">+</span>' +
+      if (!list) return;
+      var html = "";
+      for (var i = 0; i < FAQ.length; i++) {
+        var hidden = i >= 2 ? " faq-hidden" : "";
+        html += '<div class="faq-item' + hidden + '" id="faq-' + i + '">' +
+          '<button class="faq-question" onclick="window.toggleFAQ(' + i + ')">' +
+          '<span>' + FAQ[i].q + '</span><span class="faq-icon" id="faq-icon-' + i + '">+</span>' +
           '</button>' +
-          '<div class="faq-answer" id="faq-ans-' + i + '">' + f.a + '</div>' +
+          '<div class="faq-answer" id="faq-ans-' + i + '">' + FAQ[i].a + '</div>' +
           '</div>';
-      }).join('');
-      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE <span class="faq-arrow">⬇️</span></button></div>';
+      }
+      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="window.toggleFaqMore()">MORE <span class="faq-arrow">⬇️</span></button></div>';
       list.innerHTML = html;
-    }
+    };
+    function renderFAQ() { window.renderFAQ(); }
 
-    function toggleFAQ(i) {
-      var answer = document.getElementById('faq-ans-' + i);
-      var icon = document.getElementById('faq-icon-' + i);
-      var isOpen = answer.classList.contains('open');
-      document.querySelectorAll('.faq-answer.open').forEach(function(a) {
-        a.classList.remove('open');
-        var idx = a.id.replace('faq-ans-', '');
-        var ic = document.getElementById('faq-icon-' + idx);
-        if (ic) { ic.textContent = '+'; }
-      });
-      if (!isOpen) { answer.classList.add('open'); icon.textContent = '×'; }
-    }
+    window.toggleFAQ = function(i) {
+      var answer = document.getElementById("faq-ans-" + i);
+      var icon = document.getElementById("faq-icon-" + i);
+      if (!answer || !icon) return;
+      var isOpen = answer.classList.contains("open");
+      var all = document.querySelectorAll(".faq-answer.open");
+      for (var j = 0; j < all.length; j++) {
+        all[j].classList.remove("open");
+        var idx = all[j].id.replace("faq-ans-", "");
+        var ic = document.getElementById("faq-icon-" + idx);
+        if (ic) ic.textContent = "+";
+      }
+      if (!isOpen) { answer.classList.add("open"); icon.textContent = "×"; }
+    };
+    function toggleFAQ(i) { window.toggleFAQ(i); }
 
-    function toggleFaqMore() {
-      var hidden = document.querySelectorAll('.faq-hidden');
-      var btn = document.getElementById('faq-more-btn');
-      var expanded = btn.getAttribute('data-expanded') === 'true';
-      hidden.forEach(function(el) { el.style.display = expanded ? '' : 'block'; });
-      btn.setAttribute('data-expanded', expanded ? 'false' : 'true');
+    window.toggleFaqMore = function() {
+      var hidden = document.querySelectorAll(".faq-hidden");
+      var btn = document.getElementById("faq-more-btn");
+      if (!btn) return;
+      var expanded = btn.getAttribute("data-expanded") === "true";
+      for (var k = 0; k < hidden.length; k++) {
+        hidden[k].style.display = expanded ? "" : "block";
+      }
+      btn.setAttribute("data-expanded", expanded ? "false" : "true");
       btn.innerHTML = expanded ? 'MORE <span class="faq-arrow">⬇️</span>' : 'LESS <span class="faq-arrow">⬆️</span>';
-    }
+    };
+    function toggleFaqMore() { window.toggleFaqMore(); }
     function openPicker(tier, limit) {
       pickerTier = tier;
       pickerLimit = limit;
