@@ -651,9 +651,9 @@
   <!-- Topbar — authenticated standard -->
   <div class="topbar">
     <div class="topbar-left">
-      <a href="dashboard.html" class="topbar-logo"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" height="38"></a>
+      <a href="/dashboard" class="topbar-logo"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" height="38"></a>
       <div class="topbar-nav">
-        <a href="dashboard.html">Back</a>
+        <a href="/dashboard">Back</a>
       </div>
     </div>
     <div class="topbar-right">
@@ -662,7 +662,7 @@
       </button>
       <div class="account-dropdown" id="account-dropdown">
         <div class="account-dropdown-email" id="account-email"></div>
-        <a href="/account.html" class="account-dropdown-item">Account Management</a>
+        <a href="//account" class="account-dropdown-item">Account Management</a>
         <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
       </div>
     </div>
@@ -745,7 +745,7 @@
     function signOut() {
       if (window.supabaseClient) {
         window.supabaseClient.auth.signOut().then(function() {
-          window.location.href = 'login.html';
+          window.location.href = '/login';
         });
       }
     }
