@@ -1092,7 +1092,7 @@
 /* ── Review Tab ─────────────────────────────────────────── */
 .review-wrap { padding-bottom: 40px; }
 
-/* Status pill buttons — matches chatbot.html filter-tab pattern */
+/* Status pill buttons — matches /chatbot filter-tab pattern */
 .review-status-row { display:flex; gap:8px; padding:16px 0; align-items:center; }
 .review-status-btn {
   display:flex; align-items:center; padding:10px 16px;
@@ -1307,18 +1307,18 @@
 <body>
 
 <nav class="topbar">
-      <a href="index.html" class="topbar-logo">
+      <a href="/" class="topbar-logo">
     <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
-      <div class="topbar-nav" style="margin-left:64px"><a href="dashboard.html">Dashboard</a></div>
+      <div class="topbar-nav" style="margin-left:64px"><a href="/dashboard">Dashboard</a></div>
       <div class="topbar-spacer"></div>
       <div class="topbar-right">
-        <a href="cl-settings.html" class="topbar-nav-link">Settings</a>
+        <a href="/library/settings" class="topbar-nav-link">Settings</a>
         <div class="topbar-account-wrap">
           <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
           <div class="account-dropdown" id="account-dropdown">
             <div class="account-dropdown-email" id="account-dropdown-email">—</div>
-            <a href="/account.html" class="account-dropdown-item">Account Management</a>
+            <a href="//account" class="account-dropdown-item">Account Management</a>
             <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
           </div>
         </div>
@@ -1449,9 +1449,9 @@ let currentToolId = null;
 
 // All 16 core tools + expandable
 const ALL_TOOLS = [
-  { id: 'social',        icon: '📣', name: 'Marketing & Social Media Manager', price: 59,  link: '/social.html',   outputType: 'posts' },
-  { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               price: 79,  link: '/chatbot.html',  outputType: 'conversations' },
-  { id: 'email',         icon: '📧', name: 'Smart Email Assistant',            price: 69,  link: '/email.html',    outputType: 'emails' },
+  { id: 'social',        icon: '📣', name: 'Marketing & Social Media Manager', price: 59,  link: '//social',   outputType: 'posts' },
+  { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               price: 79,  link: '//chatbot',  outputType: 'conversations' },
+  { id: 'email',         icon: '📧', name: 'Smart Email Assistant',            price: 69,  link: '//email',    outputType: 'emails' },
   { id: 'bi',            icon: '📊', name: 'Business Intelligence Dashboard',  price: 89,  link: '/bi.html',       outputType: 'reports' },
   { id: 'tender',        icon: '📑', name: 'Tender Response Generator',        price: 99,  link: '/tender.html',   outputType: 'documents' },
   { id: 'quote',         icon: '💰', name: 'Quote Generator',                  price: 69,  link: '/quote.html',    outputType: 'documents' },
@@ -1463,8 +1463,8 @@ const ALL_TOOLS = [
   { id: 'website',       icon: '✍️', name: 'Website Content Writer',           price: 59,  link: '/website.html',  outputType: 'content' },
   { id: 'review',        icon: '⭐', name: 'Review & Referral Booster',        price: 49,  link: '/review.html',   outputType: 'messages' },
   { id: 'handover',      icon: '📋', name: 'Handover Documentation',           price: 59,  link: '/handover.html', outputType: 'documents' },
-  { id: 'news',          icon: '📰', name: 'Industry News & Updates Digest',   price: 39,  link: '/news.html',     outputType: 'content' },
-  { id: 'strategic',     icon: '🏗️', name: 'Strategic & Operational Plan Generator', price: 119, link: '/strategic.html', outputType: 'documents' },
+  { id: 'news',          icon: '📰', name: 'Industry News & Updates Digest',   price: 39,  link: '//news',     outputType: 'content' },
+  { id: 'strategic',     icon: '🏗️', name: 'Strategic & Operational Plan Generator', price: 119, link: '//strategy', outputType: 'documents' },
 ];
 
 // ─── PRIMARY TAB SWITCHING ────────────────────
@@ -1622,11 +1622,11 @@ let generatedPostText = '';
 <script>
     var _ab = document.getElementById("account-btn"); if (_ab) _ab.addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
     document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    var _sb = document.getElementById("sign-out-btn"); if (_sb) _sb.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "login.html"; });
+    var _sb = document.getElementById("sign-out-btn"); if (_sb) _sb.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "/login"; });
     var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
     window.dashboardInit = async function() {
       const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
-      if (!user || _authErr) { window.location.href = "login.html"; return; }
+      if (!user || _authErr) { window.location.href = "/login"; return; }
       const email = user.email || "";
       document.getElementById("account-dropdown-email").textContent = email;
       document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
