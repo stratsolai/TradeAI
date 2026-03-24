@@ -915,7 +915,7 @@
 
   <!-- HEADER — BURNT ORANGE -->
   <div class="topbar">
-  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
+  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
   
   <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
@@ -927,8 +927,8 @@
     <span class="bundle-rotator-cta">Bundle &#8594;</span>
   </div>
   <div class="topbar-actions">
-    <a href="login.html" class="btn-signin">Sign In</a>
-    <a href="tools.html?workflow=trial" class="btn-trial">Start Free Trial</a>
+    <a href="/login" class="btn-signin">Sign In</a>
+    <a href="/tools?workflow=trial" class="btn-trial">Start Free Trial</a>
   </div>
 </div>
 
@@ -1119,7 +1119,7 @@
     if (ctaBtn) {
       if (tool.status === 'built') {
         ctaBtn.textContent = 'Start 14 Day Free Trial →';
-        ctaBtn.href = 'login.html?tab=signup&tool=' + tool.id;
+        ctaBtn.href = '/login?tab=signup&tool=' + tool.id;
       } else {
         ctaBtn.textContent = 'Notify Me When Live';
         ctaBtn.href = '#';
@@ -1129,7 +1129,7 @@
     if (ctaFooter) {
       if (tool.status === 'built') {
         ctaFooter.textContent = 'Start 14 Day Free Trial →';
-        ctaFooter.href = 'login.html?tab=signup&tool=' + tool.id;
+        ctaFooter.href = '/login?tab=signup&tool=' + tool.id;
       } else {
         ctaFooter.textContent = 'Notify Me When Live';
         ctaFooter.href = '#';
@@ -1222,7 +1222,7 @@
         } else {
           var params = new URLSearchParams(window.location.search);
           var ind = params.get('industry');
-          window.location.href = ind ? 'tools.html?industry=' + ind : 'tools.html';
+          window.location.href = ind ? '/tools?industry=' + ind : '/tools';
         }
       });
     }
