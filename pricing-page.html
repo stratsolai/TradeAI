@@ -530,8 +530,9 @@
     .faq-question.active .faq-icon { transform: rotate(45deg); }
     .faq-hidden { display: none; }
     .faq-more-wrap { display: flex; justify-content: flex-end; margin-top: 24px; }
-    .faq-more-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 8px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s, color 0.2s; }
-    .faq-more-btn:hover { border-color: #c4622a; color: #fff; }
+    .faq-more-btn { background: none; border: none; padding: 0; color: rgba(255,255,255,0.85); font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; letter-spacing: 0.3px; transition: color 0.2s; }
+    .faq-more-btn:hover { color: #fff; }
+    .faq-arrow { color: #c4622a; }
     /* FOOTER */
     footer { background: #0A0F1A; padding: 40px 24px; text-align: center; }
     footer p { font-size: 14px; color: rgba(255,255,255,0.4); }
@@ -659,43 +660,7 @@
     <div class="section-title">
       <h2><span class="stax-tagline-stax">FAQ's</span></h2>
     </div>
-    <div id="faq-list">
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>Can I change my tools or plan at any time?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">Yes. Swap individual tools from your account page at any time. Upgrade or cancel your subscription at any time. Changes to your subscription take effect at your next billing cycle. Tool swaps are immediate.</div>
-      </div>
-      <div class="faq-item">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>What if I only need 1 or 2 tools?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">Subscribe to individual tools directly. Most users start with one or two tools and add more as they see results. Individual tools start from $59/mth.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>Do you offer a free trial?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">Every plan includes a 14-day free trial. No credit card required to get started.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>Are there setup fees or hidden costs?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">No setup fees, no hidden costs. The price shown is what you pay. All features included in each tool, no surprises.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>What support is included?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">All plans include email support. Tools are designed to be self-explanatory - no technical skills or training needed.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>Do tools work on mobile?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">Yes. StaxAI is a Progressive Web App (PWA). Add it to your phone's home screen for a native app experience. Works on iOS and Android.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>What payment methods do you accept?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">All major credit and debit cards via Stripe. Stripe is used by millions of businesses worldwide and is fully PCI compliant.</div>
-      </div>
-      <div class="faq-item faq-hidden">
-        <div class="faq-question" onclick="toggleFaq(this)"><span>What happens to my data if I cancel?</span><span class="faq-icon">+</span></div>
-        <div class="faq-answer">Your data is retained for 30 days after cancellation. You can reactivate at any time within that period to restore full access. After 30 days, data is permanently deleted.</div>
-      </div>
-      <div class="faq-more-wrap">
-        <button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE ⬇️</button>
-      </div>
-    </div>
+    <div id="faq-list"></div>
   </section>
 
   <!-- CLOSING CTA -->
@@ -767,26 +732,40 @@
 
     function renderFAQ() {
       var list = document.getElementById("faq-list");
-      list.innerHTML = FAQ.map(function(f, i) {
-        return '<div class="faq-item" id="faq-' + i + '">' +
+      var html = FAQ.map(function(f, i) {
+        var hidden = i >= 2 ? ' faq-hidden' : '';
+        return '<div class="faq-item' + hidden + '" id="faq-' + i + '">' +
           '<button class="faq-question" onclick="toggleFAQ(' + i + ')">' +
-          f.q + '<span class="faq-icon">+</span></button>' +
-          '<div class="faq-answer">' + f.a + '</div>' +
+          '<span>' + f.q + '</span><span class="faq-icon" id="faq-icon-' + i + '">+</span>' +
+          '</button>' +
+          '<div class="faq-answer" id="faq-ans-' + i + '">' + f.a + '</div>' +
           '</div>';
       }).join('');
+      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE <span class="faq-arrow">⬇️</span></button></div>';
+      list.innerHTML = html;
     }
 
     function toggleFAQ(i) {
-      var item = document.getElementById("faq-" + i);
-      var isOpen = item.classList.contains("open");
-      document.querySelectorAll(".faq-item.open").forEach(function(el) { el.classList.remove("open"); });
-      if (!isOpen) item.classList.add("open");
+      var answer = document.getElementById('faq-ans-' + i);
+      var icon = document.getElementById('faq-icon-' + i);
+      var isOpen = answer.classList.contains('open');
+      document.querySelectorAll('.faq-answer.open').forEach(function(a) {
+        a.classList.remove('open');
+        var idx = a.id.replace('faq-ans-', '');
+        var ic = document.getElementById('faq-icon-' + idx);
+        if (ic) { ic.textContent = '+'; }
+      });
+      if (!isOpen) { answer.classList.add('open'); icon.textContent = '×'; }
     }
 
-    var pickerTier = null;
-    var pickerLimit = 0;
-    var pickerSelected = [];
-
+    function toggleFaqMore() {
+      var hidden = document.querySelectorAll('.faq-hidden');
+      var btn = document.getElementById('faq-more-btn');
+      var expanded = btn.getAttribute('data-expanded') === 'true';
+      hidden.forEach(function(el) { el.style.display = expanded ? '' : 'block'; });
+      btn.setAttribute('data-expanded', expanded ? 'false' : 'true');
+      btn.innerHTML = expanded ? 'MORE <span class="faq-arrow">⬇️</span>' : 'LESS <span class="faq-arrow">⬆️</span>';
+    }
     function openPicker(tier, limit) {
       pickerTier = tier;
       pickerLimit = limit;
@@ -876,24 +855,7 @@
     renderPricingGrid();
     renderFAQ();
     handlePromptParam();
-  
-
-function toggleFaq(el) {
-  var answer = el.nextElementSibling;
-  var isOpen = answer.classList.contains('open');
-  // Close all open answers
-  document.querySelectorAll('.faq-answer.open').forEach(function(a) { a.classList.remove('open'); a.previousElementSibling.classList.remove('active'); });
-  if (!isOpen) { answer.classList.add('open'); el.classList.add('active'); }
-}
-
-function toggleFaqMore() {
-  var hidden = document.querySelectorAll('.faq-hidden');
-  var btn = document.getElementById('faq-more-btn');
-  var expanded = btn.getAttribute('data-expanded') === 'true';
-  hidden.forEach(function(el) { el.style.display = expanded ? 'none' : 'block'; });
-  btn.setAttribute('data-expanded', expanded ? 'false' : 'true');
-  btn.innerHTML = expanded ? 'MORE ⬇️' : 'LESS ⬆️';
-}</script>
+  </script>
 
 </body>
 </html>
