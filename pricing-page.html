@@ -37,7 +37,9 @@
       z-index: 100;
       height: 68px;
       padding: 0 24px;
-      background: linear-gradient(90deg, #C4622A 0%, #8B3A8F 40%, #1E3A8A 100%);
+      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.45);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
       display: flex;
       align-items: center;
     }
@@ -521,20 +523,15 @@
 <body>
 
   <!-- TOPBAR -->
-  <header class="topbar">
-    <a class="topbar-logo" href="/">
-      <img src="StaxAI Cropped Transparent.png" alt="StaxAI">
-    </a>
-    <nav class="topbar-nav">
-      <a href="/tools">Tools</a>
-      <a href="/pricing">Pricing</a>
-    </nav>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-actions">
-      <a class="btn-signin" href="/login">Sign In</a>
-      <a class="btn-trial" href="/pricing#bundles">Start Free Trial</a>
-    </div>
-  </header>
+  <div class="topbar">
+  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
+  <div class="topbar-nav"><a id="back-btn" href="javascript:history.back()">Back</a></div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-actions">
+    <a href="/login" class="btn-signin">Sign In</a>
+    <a href="/tools?workflow=trial" class="btn-trial">Start Free Trial</a>
+  </div>
+</div>
 
   <!-- HERO -->
   <section class="hero">
