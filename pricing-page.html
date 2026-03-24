@@ -732,25 +732,25 @@
       }).join('');
     }
 
-    window.renderFAQ = function() {
+    
+    function renderFAQ() {
       var list = document.getElementById("faq-list");
       if (!list) return;
       var html = "";
       for (var i = 0; i < FAQ.length; i++) {
         var hidden = i >= 2 ? " faq-hidden" : "";
         html += '<div class="faq-item' + hidden + '" id="faq-' + i + '">' +
-          '<button class="faq-question" onclick="window.toggleFAQ(' + i + ')">' +
+          '<button class="faq-question" onclick="toggleFAQ(' + i + ')">' +
           '<span>' + FAQ[i].q + '</span><span class="faq-icon" id="faq-icon-' + i + '">+</span>' +
           '</button>' +
           '<div class="faq-answer" id="faq-ans-' + i + '">' + FAQ[i].a + '</div>' +
           '</div>';
       }
-      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="window.toggleFaqMore()">MORE <span class="faq-arrow">⬇️</span></button></div>';
+      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE <span class="faq-arrow">&#x2B07;</span></button></div>';
       list.innerHTML = html;
-    };
-    function renderFAQ() { window.renderFAQ(); }
+    }
 
-    window.toggleFAQ = function(i) {
+    function toggleFAQ(i) {
       var answer = document.getElementById("faq-ans-" + i);
       var icon = document.getElementById("faq-icon-" + i);
       if (!answer || !icon) return;
@@ -763,10 +763,9 @@
         if (ic) ic.textContent = "+";
       }
       if (!isOpen) { answer.classList.add("open"); icon.textContent = "×"; }
-    };
-    function toggleFAQ(i) { window.toggleFAQ(i); }
+    }
 
-    window.toggleFaqMore = function() {
+    function toggleFaqMore() {
       var hidden = document.querySelectorAll(".faq-hidden");
       var btn = document.getElementById("faq-more-btn");
       if (!btn) return;
@@ -775,9 +774,10 @@
         hidden[k].style.display = expanded ? "" : "block";
       }
       btn.setAttribute("data-expanded", expanded ? "false" : "true");
-      btn.innerHTML = expanded ? 'MORE <span class="faq-arrow">⬇️</span>' : 'LESS <span class="faq-arrow">⬆️</span>';
-    };
-    function toggleFaqMore() { window.toggleFaqMore(); }
+      btn.innerHTML = expanded ? 'MORE <span class="faq-arrow">&#x2B07;</span>' : 'LESS <span class="faq-arrow">&#x2B06;</span>';
+    }
+
+
     function openPicker(tier, limit) {
       pickerTier = tier;
       pickerLimit = limit;
