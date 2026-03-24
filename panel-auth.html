@@ -928,14 +928,14 @@
 
   <!-- HEADER — BURNT ORANGE -->
   <div class="topbar">
-  <a href="dashboard.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
-  <div class="topbar-nav"><a id="back-btn" href="dashboard.html">Back</a></div>
+  <a href="/dashboard" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;" loading="eager" fetchpriority="high"></a>
+  <div class="topbar-nav"><a id="back-btn" href="/dashboard">Back</a></div>
   <nav class="topbar-right">
     <div class="topbar-account" id="account-menu">
         <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
         <div class="account-dropdown" id="account-dropdown">
           <div class="account-dropdown-email" id="account-dropdown-email">—</div>
-          <a href="/account.html" class="account-dropdown-item">Account Management</a>
+          <a href="//account" class="account-dropdown-item">Account Management</a>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
@@ -1132,7 +1132,7 @@
     if (ctaBtn) {
       if (tool.status === 'built') {
         ctaBtn.textContent = 'Activate';
-        ctaBtn.href = 'login.html?tab=signup&tool=' + tool.id;
+        ctaBtn.href = '/login?tab=signup&tool=' + tool.id;
       } else {
         ctaBtn.textContent = 'Notify Me When Live';
         ctaBtn.href = '#';
@@ -1142,7 +1142,7 @@
     if (ctaFooter) {
       if (tool.status === 'built') {
         ctaFooter.textContent = 'Activate';
-        ctaFooter.href = 'login.html?tab=signup&tool=' + tool.id;
+        ctaFooter.href = '/login?tab=signup&tool=' + tool.id;
       } else {
         ctaFooter.textContent = 'Notify Me When Live';
         ctaFooter.href = '#';
@@ -1235,7 +1235,7 @@
         } else {
           var params = new URLSearchParams(window.location.search);
           var ind = params.get('industry');
-          window.location.href = ind ? 'dashboard.html?industry=' + ind : 'dashboard.html';
+          window.location.href = ind ? '/dashboard?industry=' + ind : '/dashboard';
         }
       });
     }
@@ -1305,7 +1305,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (typeof window.supabaseClient === 'undefined') return;
   window.supabaseClient.auth.getUser().then(function(res) {
     var user = res.data && res.data.user;
-    if (!user) { window.location.href = '/login.html'; return; }
+    if (!user) { window.location.href = '//login'; return; }
     var name = (user.user_metadata && user.user_metadata.full_name) || user.email || '';
     var nameEl = document.getElementById('auth-user-name');
     if (nameEl) nameEl.textContent = name;
@@ -1325,7 +1325,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (signOut) {
     signOut.addEventListener('click', function(e) {
       e.preventDefault();
-      window.supabaseClient.auth.signOut().then(function() { window.location.href = '/login.html'; });
+      window.supabaseClient.auth.signOut().then(function() { window.location.href = '//login'; });
     });
   }
 });
@@ -1370,7 +1370,7 @@ document.addEventListener("DOMContentLoaded", async function() {
   if (signOutBtn) {
     signOutBtn.addEventListener("click", async function() {
       await supabaseClient.auth.signOut();
-      window.location.href = "login.html";
+      window.location.href = "/login";
     });
   }
 });
