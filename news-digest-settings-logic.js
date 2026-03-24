@@ -1,6 +1,6 @@
 (async function () {
   const { data: { session } } = await window.supabaseClient.auth.getSession();
-  if (!session) { window.location.href = "login.html"; return; }
+  if (!session) { window.location.href = "/login"; return; }
   const user = session.user;
 
   const elShort = document.getElementById("account-email-short");
@@ -18,7 +18,7 @@
   if (signOutBtn) {
     signOutBtn.addEventListener("click", async function () {
       await window.supabaseClient.auth.signOut();
-      window.location.href = "login.html";
+      window.location.href = "/login";
     });
   }
 
