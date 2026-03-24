@@ -133,6 +133,7 @@
       color: rgba(255,255,255,0.5);
     }
     .tick { color: #c4622a; }
+    .closing-section .hero-note { font-family: 'DM Sans', sans-serif; font-size: 14px; color: rgba(255,255,255,0.5); }
 
     /* SECTION TITLES */
     .section-title {
@@ -520,6 +521,17 @@
     .closing-section h2 span { color: var(--orange); }
     .closing-section p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
 
+    /* FAQ */
+    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); padding: 20px 0; }
+    .faq-question { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; color: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-answer { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-answer.open { max-height: 200px; padding-top: 12px; }
+    .faq-question .faq-icon { color: #c4622a; font-size: 18px; flex-shrink: 0; transition: transform 0.3s; }
+    .faq-question.active .faq-icon { transform: rotate(45deg); }
+    .faq-hidden { display: none; }
+    .faq-more-wrap { display: flex; justify-content: flex-end; margin-top: 24px; }
+    .faq-more-btn { background: none; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.75); font-family: 'DM Sans', sans-serif; font-size: 14px; padding: 8px 20px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: border-color 0.2s, color 0.2s; }
+    .faq-more-btn:hover { border-color: #c4622a; color: #fff; }
     /* FOOTER */
     footer { background: #0A0F1A; padding: 40px 24px; text-align: center; }
     footer p { font-size: 14px; color: rgba(255,255,255,0.4); }
@@ -647,7 +659,43 @@
     <div class="section-title">
       <h2><span class="stax-tagline-stax">FAQ's</span></h2>
     </div>
-    <div id="faq-list"></div>
+    <div id="faq-list">
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>Can I change my tools or plan at any time?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">Yes. Swap individual tools from your account page at any time. Upgrade or cancel your subscription at any time. Changes to your subscription take effect at your next billing cycle. Tool swaps are immediate.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>What if I only need 1 or 2 tools?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">Subscribe to individual tools directly. Most users start with one or two tools and add more as they see results. Individual tools start from $59/mth.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>Do you offer a free trial?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">Every plan includes a 14-day free trial. No credit card required to get started.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>Are there setup fees or hidden costs?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">No setup fees, no hidden costs. The price shown is what you pay. All features included in each tool, no surprises.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>What support is included?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">All plans include email support. Tools are designed to be self-explanatory - no technical skills or training needed.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>Do tools work on mobile?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">Yes. StaxAI is a Progressive Web App (PWA). Add it to your phone's home screen for a native app experience. Works on iOS and Android.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>What payment methods do you accept?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">All major credit and debit cards via Stripe. Stripe is used by millions of businesses worldwide and is fully PCI compliant.</div>
+      </div>
+      <div class="faq-item faq-hidden">
+        <div class="faq-question" onclick="toggleFaq(this)"><span>What happens to my data if I cancel?</span><span class="faq-icon">+</span></div>
+        <div class="faq-answer">Your data is retained for 30 days after cancellation. You can reactivate at any time within that period to restore full access. After 30 days, data is permanently deleted.</div>
+      </div>
+      <div class="faq-more-wrap">
+        <button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE ⬇️</button>
+      </div>
+    </div>
   </section>
 
   <!-- CLOSING CTA -->
@@ -828,7 +876,24 @@
     renderPricingGrid();
     renderFAQ();
     handlePromptParam();
-  </script>
+  
+
+function toggleFaq(el) {
+  var answer = el.nextElementSibling;
+  var isOpen = answer.classList.contains('open');
+  // Close all open answers
+  document.querySelectorAll('.faq-answer.open').forEach(function(a) { a.classList.remove('open'); a.previousElementSibling.classList.remove('active'); });
+  if (!isOpen) { answer.classList.add('open'); el.classList.add('active'); }
+}
+
+function toggleFaqMore() {
+  var hidden = document.querySelectorAll('.faq-hidden');
+  var btn = document.getElementById('faq-more-btn');
+  var expanded = btn.getAttribute('data-expanded') === 'true';
+  hidden.forEach(function(el) { el.style.display = expanded ? 'none' : 'block'; });
+  btn.setAttribute('data-expanded', expanded ? 'false' : 'true');
+  btn.innerHTML = expanded ? 'MORE ⬇️' : 'LESS ⬆️';
+}</script>
 
 </body>
 </html>
