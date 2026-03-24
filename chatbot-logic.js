@@ -15,7 +15,7 @@ window.CHAT_LOGIC = {
     // Auth check
     const { data: { session } } = await window.supabaseClient.auth.getSession();
     if (!session) {
-      window.location.href = "login.html";
+      window.location.href = "/login";
       return;
     }
     this._user = session.user;
@@ -33,7 +33,7 @@ window.CHAT_LOGIC = {
     if (signOutBtn) {
       signOutBtn.addEventListener("click", async () => {
         await window.supabaseClient.auth.signOut();
-        window.location.href = "login.html";
+        window.location.href = "/login";
       });
     }
 
@@ -242,7 +242,7 @@ window.CHAT_LOGIC = {
       }
 
       container.innerHTML = allQuestions.slice(0, 10).map(q =>
-        "<div class=\"unanswered-item\"><span>" + this.escapeHtml(q) + "</span><a href=\"chatbot-settings.html\" class=\"btn-answer\">Add to knowledge base</a></div>"
+        "<div class=\"unanswered-item\"><span>" + this.escapeHtml(q) + "</span><a href=\"/chatbot/settings\" class=\"btn-answer\">Add to knowledge base</a></div>"
       ).join("");
     } catch (e) {
       // non-fatal
