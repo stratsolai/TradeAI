@@ -605,7 +605,7 @@
   <div class="atmo-orb o3"></div>
 </div>
 <div class="topbar">
-  <a href="index.html" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
+  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
   
   <div class="topbar-nav"><a href="#how-it-works">How It Works</a><a href="#tools">Tools</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
@@ -617,8 +617,8 @@
     <span class="bundle-rotator-cta">Bundle &#8594;</span>
   </div>
   <div class="topbar-actions">
-    <a href="login.html" class="btn-signin">Sign In</a>
-    <a href="tools.html?workflow=trial" class="btn-trial">Start Free Trial</a>
+    <a href="/login" class="btn-signin">Sign In</a>
+    <a href="/tools?workflow=trial" class="btn-trial">Start Free Trial</a>
   </div>
 </div>
 
@@ -646,8 +646,8 @@
       </p>
 
       <div class="hero-actions">
-        <a href="/industry-select.html" class="btn-primary">Choose Your Trade →</a>
-        <a href="/tools.html" class="btn-secondary">See All Tools →</a>
+        <a href="//industry" class="btn-primary">Choose Your Trade →</a>
+        <a href="//tools" class="btn-secondary">See All Tools →</a>
       </div>
 
       <div class="hero-trust">
@@ -800,7 +800,7 @@
     <div class="section-tag">HOW IT WORKS</div>
     <h2 class="section-title">LIVE IN <span class="word-accent">MINUTES</span></h2>
     <div class="steps">
-      <div class="step fade-up" onclick="window.location.href='/industry-select.html'" style="cursor:pointer;">
+      <div class="step fade-up" onclick="window.location.href='//industry'" style="cursor:pointer;">
         <div class="step-num">1 <span class="step-icon">🏗️</span></div>
         <h3>Choose your trade</h3>
         <p>Select from 12 industries — tools built around how your trade actually works.</p>
@@ -1035,7 +1035,7 @@
       <h2 class="section-title" style="line-height:1.05;margin-bottom:48px;"><span class="h-line">YOUR <span class="word-accent">STAX</span> | YOUR WAY</span></h2>
       <p class="cta-sub">Professional AI tools for smart marketing &amp; socials, document creation, customer communications and business intelligence.</p>
       <div class="cta-actions">
-        <a href="/industry-select.html" class="btn-primary" style="font-size:18px;padding:18px 40px">Choose Your Trade →</a>
+        <a href="//industry" class="btn-primary" style="font-size:18px;padding:18px 40px">Choose Your Trade →</a>
       </div>
       <p class="cta-note">✓ From $59/mth per tool &nbsp;·&nbsp; ✓ Cancel anytime &nbsp;·&nbsp; ✓ Australian support</p>
     </div>
@@ -1053,17 +1053,17 @@
       <div style="min-width:160px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#c4622a;margin-bottom:12px;">Product</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <a href="industry-select.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Browse Tools</a>
-          <a href="pricing-page.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Pricing</a>
-          <a href="login.html?tab=signup" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Sign Up</a>
+          <a href="/industry" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Browse Tools</a>
+          <a href="/pricing" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Pricing</a>
+          <a href="/login?tab=signup" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Sign Up</a>
         </div>
       </div>
       <div style="min-width:160px;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#c4622a;margin-bottom:12px;">Company</div>
         <div style="display:flex;flex-direction:column;gap:8px;">
-          <a href="contact.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Contact</a>
-          <a href="privacy-policy.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Privacy Policy</a>
-          <a href="terms-of-service.html" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Terms of Service</a>
+          <a href="/contact" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Contact</a>
+          <a href="/privacy" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Privacy Policy</a>
+          <a href="/terms" style="font-size:13px;color:rgba(255,255,255,0.6);text-decoration:none;">Terms of Service</a>
         </div>
       </div>
     </div>
@@ -1076,12 +1076,12 @@
 
 <script>
   var HERO_TOOLS = [
-    { id: "social",         icon: "📱", name: "Marketing & Social Media Manager", benefit: "AI builds your posts, graphics and marketing content",       screenshotUrl: null, panelUrl: "panel.html?tool=social",         accentColor: "#c4622a" },
-    { id: "email",          icon: "✉️",  name: "AI Email Assistant",               benefit: "Reads and summarises your entire inbox automatically",      screenshotUrl: null, panelUrl: "panel.html?tool=email",          accentColor: "#1A5490" },
-    { id: "chatbot",        icon: "💬", name: "AI Website Chatbot",               benefit: "Answers customer enquiries 24/7 and qualifies leads",       screenshotUrl: null, panelUrl: "panel.html?tool=chatbot",        accentColor: "#2d6a4f" },
-    { id: "news-digest",    icon: "📰", name: "Industry News & Updates Digest",   benefit: "Personalised industry news summarised and delivered daily", screenshotUrl: null, panelUrl: "panel.html?tool=news-digest",    accentColor: "#6b3fa0" },
-    { id: "bi",             icon: "📊", name: "Business Intelligence Dashboard",  benefit: "AI insights across all your tools in one dashboard",        screenshotUrl: null, panelUrl: "panel.html?tool=bi",             accentColor: "#b5451b" },
-    { id: "strategic-plan", icon: "🎯", name: "Strategic Plan & Operations",      benefit: "Bank-ready strategic and operational plan in minutes",      screenshotUrl: null, panelUrl: "panel.html?tool=strategic-plan",  accentColor: "#1a4a7a" }
+    { id: "social",         icon: "📱", name: "Marketing & Social Media Manager", benefit: "AI builds your posts, graphics and marketing content",       screenshotUrl: null, panelUrl: "/panel?tool=social",         accentColor: "#c4622a" },
+    { id: "email",          icon: "✉️",  name: "AI Email Assistant",               benefit: "Reads and summarises your entire inbox automatically",      screenshotUrl: null, panelUrl: "/panel?tool=email",          accentColor: "#1A5490" },
+    { id: "chatbot",        icon: "💬", name: "AI Website Chatbot",               benefit: "Answers customer enquiries 24/7 and qualifies leads",       screenshotUrl: null, panelUrl: "/panel?tool=chatbot",        accentColor: "#2d6a4f" },
+    { id: "news-digest",    icon: "📰", name: "Industry News & Updates Digest",   benefit: "Personalised industry news summarised and delivered daily", screenshotUrl: null, panelUrl: "/panel?tool=news-digest",    accentColor: "#6b3fa0" },
+    { id: "bi",             icon: "📊", name: "Business Intelligence Dashboard",  benefit: "AI insights across all your tools in one dashboard",        screenshotUrl: null, panelUrl: "/panel?tool=bi",             accentColor: "#b5451b" },
+    { id: "strategic-plan", icon: "🎯", name: "Strategic Plan & Operations",      benefit: "Bank-ready strategic and operational plan in minutes",      screenshotUrl: null, panelUrl: "/panel?tool=strategic-plan",  accentColor: "#1a4a7a" }
   ];
 
   (function () {
