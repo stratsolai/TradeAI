@@ -654,16 +654,16 @@
       <p>Start with one tool and add more when you are ready</p>
       <p>Each tool is a monthly subscription — cancel or change any time</p>
     </div>
-    <div class="pricing-grid" id="pricing-grid"></div>
-  </section>
+</section>
+
 
   <!-- FAQ -->
   <section class="faq-section">
     <div class="section-title">
       <h2><span class="stax-tagline-stax">FAQ's</span></h2>
     </div>
-    <div id="faq-list"></div>
-  </section>
+</section>
+
 
   <!-- CLOSING CTA -->
   <section class="closing-section">
@@ -688,95 +688,9 @@
   </footer>
 
   <script>
-    var TOOLS = [
-      { id: "chatbot", icon: "💬", name: "AI Website Chatbot", desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs 24/7.", price: "$79", status: "built" },
-      { id: "social", icon: "📱", name: "Marketing & Social Media Manager", desc: "Generate social posts, blog content, and marketing copy tailored to your business.", price: "$89", status: "built" },
-      { id: "email-assistant", icon: "📧", name: "AI Email Assistant", desc: "Summarises your inbox, flags urgent items, and drafts replies in your tone.", price: "$59", status: "built" },
-      { id: "strategic-plan", icon: "📊", name: "Strategic Plan & Operations Dashboard", desc: "AI-generated strategic plans and 90-day operational roadmaps for your business.", price: "$89", status: "built" },
-      { id: "news-digest", icon: "📰", name: "Industry News & Updates Digest", desc: "Daily AI-curated news and insights relevant to your trade and location.", price: "$59", status: "built" },
-      { id: "bi-dashboard", icon: "📈", name: "Business Intelligence Dashboard", desc: "Live business performance insights drawn from your jobs, revenue, and activity.", price: "$89", status: "built" },
-      { id: "tender-response", icon: "📋", name: "Tender Response Generator", desc: "AI-written tender responses tailored to the job, your business, and the client.", price: "$89", status: "pending" },
-      { id: "quote-enhancer", icon: "💼", name: "Quote Enhancer", desc: "Transforms basic quotes into professional, persuasive proposals.", price: "$79", status: "pending" },
-      { id: "swms", icon: "🦺", name: "SWMS & Safety Docs", desc: "Generates job-specific SWMS, inductions, and safety documents with digital sign-off.", price: "$79", status: "pending" },
-      { id: "customer-updates", icon: "📲", name: "Customer Progress Updates", desc: "Automated, professional progress updates sent to customers at key job milestones.", price: "$69", status: "pending" },
-      { id: "handover", icon: "📁", name: "Handover Documentation", desc: "Produces complete handover packs including warranties, manuals, and completion reports.", price: "$79", status: "pending" },
-      { id: "review-referral", icon: "⭐", name: "Review & Referral Booster", desc: "Automates review requests and referral prompts at the right moment after each job.", price: "$69", status: "pending" },
-      { id: "design-visualiser", icon: "🎨", name: "Design Visualiser", desc: "AI-generated visual concepts and mood boards to help clients see the finished result.", price: "$89", status: "pending" }
-    ];
-
-    var FAQ = [
-      { q: "Can I change my tools or plan at any time?", a: "Yes. Swap individual tools from your account page at any time. Upgrade or cancel your subscription at any time. Changes to your subscription take effect at your next billing cycle. Tool swaps are immediate." },
-      { q: "What if I only need 1 or 2 tools?", a: "Subscribe to individual tools directly. Most users start with one or two tools and add more as they see results. Individual tools start from $59/mth." },
-      { q: "Do you offer a free trial?", a: "Every plan — individual tools and all bundle tiers — includes a 14-day free trial. No credit card required to get started." },
-      { q: "Are there setup fees or hidden costs?", a: "No setup fees, no hidden costs. The price shown is what you pay. All features included in each tool, no surprises." },
-      { q: "What support is included?", a: "All plans include email support. Tools are designed to be self-explanatory — no technical skills or training needed." },
-      { q: "Do tools work on mobile?", a: "Yes. StaxAI is a Progressive Web App (PWA). Add it to your phone's home screen for a native app experience. Works on iOS and Android." },
-      { q: "What payment methods do you accept?", a: "All major credit and debit cards via Stripe. Stripe is used by millions of businesses worldwide and is fully PCI compliant." },
-      { q: "What happens to my data if I cancel?", a: "Your data is retained for 30 days after cancellation. You can reactivate at any time within that period to restore full access. After 30 days, data is permanently deleted." }
-    ];
-
-    function renderPricingGrid() {
-      var grid = document.getElementById("pricing-grid");
-      grid.innerHTML = TOOLS.map(function(t) {
-        var statusLabel = t.status === "built" ? '<span class="pricing-card-status status-live">Live Now</span>' : '<span class="pricing-card-status status-soon">Coming Soon</span>';
-        var priceStr = t.status === "built"
-          ? '<span class="pricing-card-price">' + t.price + '<span class="per">/mth</span></span>'
-          : '<span class="pricing-card-price" style="font-size:18px;color:var(--muted);">Coming Soon</span>';
-        var learnMore = '<a class="pricing-card-link" href="/panel?tool=' + t.id + '">Learn more</a>';
-        return '<div class="pricing-card">' +
-          '<div class="pricing-card-top"><span class="pricing-card-icon">' + t.icon + '</span>' + statusLabel + '</div>' +
-          '<div class="pricing-card-name">' + t.name + '</div>' +
-          '<div class="pricing-card-desc">' + t.desc + '</div>' +
-          '<div class="pricing-card-bottom">' + priceStr + learnMore + '</div>' +
-          '</div>';
-      }).join('');
-    }
+    
 
     
-    function renderFAQ() {
-      var list = document.getElementById("faq-list");
-      if (!list) return;
-      var html = "";
-      for (var i = 0; i < FAQ.length; i++) {
-        var hidden = i >= 2 ? " faq-hidden" : "";
-        html += '<div class="faq-item' + hidden + '" id="faq-' + i + '">' +
-          '<button class="faq-question" onclick="toggleFAQ(' + i + ')">' +
-          '<span>' + FAQ[i].q + '</span><span class="faq-icon" id="faq-icon-' + i + '">+</span>' +
-          '</button>' +
-          '<div class="faq-answer" id="faq-ans-' + i + '">' + FAQ[i].a + '</div>' +
-          '</div>';
-      }
-      html += '<div class="faq-more-wrap"><button class="faq-more-btn" id="faq-more-btn" onclick="toggleFaqMore()">MORE <span class="faq-arrow">&#x2B07;</span></button></div>';
-      list.innerHTML = html;
-    }
-
-    function toggleFAQ(i) {
-      var answer = document.getElementById("faq-ans-" + i);
-      var icon = document.getElementById("faq-icon-" + i);
-      if (!answer || !icon) return;
-      var isOpen = answer.classList.contains("open");
-      var all = document.querySelectorAll(".faq-answer.open");
-      for (var j = 0; j < all.length; j++) {
-        all[j].classList.remove("open");
-        var idx = all[j].id.replace("faq-ans-", "");
-        var ic = document.getElementById("faq-icon-" + idx);
-        if (ic) ic.textContent = "+";
-      }
-      if (!isOpen) { answer.classList.add("open"); icon.textContent = "×"; }
-    }
-
-    function toggleFaqMore() {
-      var hidden = document.querySelectorAll(".faq-hidden");
-      var btn = document.getElementById("faq-more-btn");
-      if (!btn) return;
-      var expanded = btn.getAttribute("data-expanded") === "true";
-      for (var k = 0; k < hidden.length; k++) {
-        hidden[k].style.display = expanded ? "" : "block";
-      }
-      btn.setAttribute("data-expanded", expanded ? "false" : "true");
-      btn.innerHTML = expanded ? 'MORE <span class="faq-arrow">&#x2B07;</span>' : 'LESS <span class="faq-arrow">&#x2B06;</span>';
-    }
-
 
     function openPicker(tier, limit) {
       pickerTier = tier;
@@ -798,24 +712,9 @@
     }
 
     function renderPickerGrid() {
-      var grid = document.getElementById("picker-grid");
-      var builtTools = TOOLS.filter(function(t) { return t.status === "built"; });
-      var pendingTools = TOOLS.filter(function(t) { return t.status === "pending"; });
-      var allTools = builtTools.concat(pendingTools);
-      grid.innerHTML = allTools.map(function(t) {
-        var isPending = t.status === "pending";
-        var cls = "picker-tool" + (isPending ? " pending-tool" : "");
-        var badge = isPending ? '<div class="picker-tool-badge">Coming Soon</div>' : '';
-        var onclick = isPending ? "" : 'onclick="togglePickerTool('' + t.id + '')"';
-        return '<div class="' + cls + '" id="pt-' + t.id + '" ' + onclick + '>' +
-          '<div class="picker-tool-icon">' + t.icon + '</div>' +
-          '<div class="picker-tool-name">' + t.name + '</div>' +
-          '<div class="picker-tool-desc">' + t.desc + '</div>' +
-          '<div class="picker-tool-price">' + t.price + '/mth</div>' +
-          badge + '</div>';
-      }).join('');
+        var grid = document.getElementById("picker-grid");
+        if (grid) grid.innerHTML = "";
     }
-
     function togglePickerTool(id) {
       var idx = pickerSelected.indexOf(id);
       if (idx !== -1) {
@@ -864,8 +763,8 @@
       }
     }
 
-    renderPricingGrid();
-    renderFAQ();
+    
+    
     handlePromptParam();
   </script>
 
