@@ -404,6 +404,64 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .btn-see-all-tools:hover {
   background: #d4844a;
 }
+
+/* PICK MODE */
+.pick-banner {
+  background: #1e2d47;
+  border: 1px solid #c4622a;
+  border-radius: 10px;
+  padding: 14px 20px;
+  margin: 0 auto 24px;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: 'DM Sans', sans-serif;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+.pick-banner-count { color: #c4622a; font-size: 18px; font-weight: 700; margin: 0 8px; }
+.tool-card.pick-selected {
+  border: 2px solid #c4622a;
+  background: rgba(196,98,42,0.12);
+  box-shadow: 0 0 0 2px rgba(196,98,42,0.3);
+}
+.tool-card.pick-disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.pick-confirm-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #1e2d47;
+  border-top: 2px solid #c4622a;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 500;
+  font-family: 'DM Sans', sans-serif;
+}
+.pick-confirm-bar .pick-summary { color: rgba(255,255,255,0.75); font-size: 15px; }
+.pick-confirm-btn {
+  background: #c4622a;
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.pick-confirm-btn.active { opacity: 1; pointer-events: auto; }
 </style>
 </head>
 <body>
@@ -655,7 +713,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
         : '<span class="tool-card-badge badge-coming">Coming Soon</span>';
       var priceHtml = t.price !== 'Coming Soon' ? '<span class="tool-card-price">' + t.price + '/mth</span>' : '<span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span>';
       var dest = '/panel?tool=' + t.id + (workflowParam ? '&workflow=' + workflowParam : '') + (industryParam ? '&industry=' + industryParam : '');
-      html += '<a class="tool-card" href="' + dest + '">' +
+      html += '<a class="tool-card" href="' + dest + '" data-toolid="' + t.toolId + '" data-status="' + t.status + '">' +
         badge +
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
@@ -800,8 +858,93 @@ window.addEventListener('resize', alignHIW);
 </script>
 
 <script>
-(function(){
-  var backBtn=document.getElementById('back-btn');if(backBtn){backBtn.addEventListener('click',function(){var ref=document.referrer;var onPlatform=ref&&ref.indexOf('trade-ai-seven-blue.vercel.app')>-1;if(onPlatform&&history.length>1){history.back();}else{window.location.href='/industry';}});}
+(function() {
+  var backBtn = document.getElementById('backBtn');
+  if (backBtn) backBtn.addEventListener('click', function() { history.back(); });
+
+  var params = new URLSearchParams(window.location.search);
+  var tier = params.get('tier');
+  var slotLimit = tier === 'stax3' ? 3 : tier === 'stax6' ? 6 : 0;
+
+  if (slotLimit > 0) {
+    var selected = [];
+
+    // Inject banner above grid
+    var grid = document.getElementById('tool-grid');
+    if (grid) {
+      var banner = document.createElement('div');
+      banner.className = 'pick-banner';
+      banner.id = 'pick-banner';
+      banner.innerHTML = '<span>Choose your <strong>' + slotLimit + ' tools</strong> to include in your bundle</span><span><span class="pick-banner-count" id="pick-count">0</span> of ' + slotLimit + ' selected</span>';
+      grid.parentNode.insertBefore(banner, grid);
+    }
+
+    // Inject confirm bar
+    var confirmBar = document.createElement('div');
+    confirmBar.className = 'pick-confirm-bar';
+    confirmBar.id = 'pick-confirm-bar';
+    confirmBar.innerHTML = '<span class="pick-summary" id="pick-summary">Select ' + slotLimit + ' tools to continue</span><button class="pick-confirm-btn" id="pick-confirm-btn">Continue to Sign Up</button>';
+    document.body.appendChild(confirmBar);
+
+    var confirmBtn = document.getElementById('pick-confirm-btn');
+
+    function updatePicker() {
+      var count = selected.length;
+      var countEl = document.getElementById('pick-count');
+      if (countEl) countEl.textContent = count;
+      var summaryEl = document.getElementById('pick-summary');
+      if (summaryEl) summaryEl.textContent = count + ' of ' + slotLimit + ' tools selected';
+      if (confirmBtn) {
+        if (count === slotLimit) { confirmBtn.classList.add('active'); }
+        else { confirmBtn.classList.remove('active'); }
+      }
+      // Update card states
+      var cards = document.querySelectorAll('.tool-card');
+      cards.forEach(function(card) {
+        var id = card.getAttribute('data-toolid');
+        var status = card.getAttribute('data-status');
+        if (status !== 'built') return;
+        if (selected.indexOf(id) > -1) {
+          card.classList.add('pick-selected');
+          card.classList.remove('pick-disabled');
+        } else if (count >= slotLimit) {
+          card.classList.remove('pick-selected');
+          card.classList.add('pick-disabled');
+        } else {
+          card.classList.remove('pick-selected');
+          card.classList.remove('pick-disabled');
+        }
+      });
+    }
+
+    // Wire card clicks
+    document.addEventListener('click', function(e) {
+      var card = e.target.closest('.tool-card');
+      if (!card) return;
+      var status = card.getAttribute('data-status');
+      if (status !== 'built') return;
+      e.preventDefault();
+      var id = card.getAttribute('data-toolid');
+      var idx = selected.indexOf(id);
+      if (idx > -1) {
+        selected.splice(idx, 1);
+      } else if (selected.length < slotLimit) {
+        selected.push(id);
+      }
+      updatePicker();
+    });
+
+    // Confirm button
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', function() {
+        if (selected.length === slotLimit) {
+          window.location.href = 'login.html?tab=signup&tier=' + tier + '&tools=' + selected.join(',');
+        }
+      });
+    }
+
+    updatePicker();
+  }
 })();
 </script></body>
 </html>
