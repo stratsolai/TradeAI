@@ -527,7 +527,16 @@
     footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
     footer a:hover { color: rgba(255,255,255,0.8); }
     .footer-links { display: flex; justify-content: center; gap: 28px; margin-bottom: 16px; flex-wrap: wrap; }
-  </style>
+
+    /* INDIVIDUAL CTA */
+    .individual-cta { text-align: center; margin-top: 32px; }
+
+    /* FAQ EXTRAS */
+    .faq-hidden { display: none; }
+    .faq-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
+    .faq-more { background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.75); padding: 0; }
+    .faq-more:hover { color: #fff; }
+    </style>
 </head>
 <body>
 
@@ -642,13 +651,77 @@
       <p>Start with one tool and add more when you are ready</p>
       <p>Each tool is a monthly subscription — cancel or change any time</p>
     </div>
+    <div class="individual-cta">
+      <a href="tools.html" class="hero-cta">Choose Your Tool</a>
+    </div>
 </section>
 
 
   <!-- FAQ -->
   <section class="faq-section">
     <div class="section-title">
-      <h2><span class="stax-tagline-stax">FAQ's</span></h2>
+      <h2><span class="stax-tagline-stax">FAQ</span></h2>
+    </div>
+    <div class="faq-container">
+      <div class="faq-item" id="faq-1">
+        <button class="faq-question" id="faq-btn-1" aria-expanded="false">
+          Can I change my tools or plan at any time?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">Yes. Swap individual tools from your account page at any time. Upgrade or cancel your subscription at any time. Changes to your subscription take effect at your next billing cycle. Tool swaps are immediate.</div>
+      </div>
+      <div class="faq-item" id="faq-2">
+        <button class="faq-question" id="faq-btn-2" aria-expanded="false">
+          What if I only need 1 or 2 tools?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">Subscribe to individual tools directly. Most users start with one or two tools and add more as they see results. Individual tools start from $59/mth.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-3">
+        <button class="faq-question" id="faq-btn-3" aria-expanded="false">
+          Do you offer a free trial?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">Every plan — individual tools and all bundle tiers — includes a 14-day free trial. No credit card required to get started.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-4">
+        <button class="faq-question" id="faq-btn-4" aria-expanded="false">
+          Are there setup fees or hidden costs?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">No setup fees, no hidden costs. The price shown is what you pay. All features included in each tool, no surprises.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-5">
+        <button class="faq-question" id="faq-btn-5" aria-expanded="false">
+          What support is included?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">All plans include email support. Tools are designed to be self-explanatory — no technical skills or training needed.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-6">
+        <button class="faq-question" id="faq-btn-6" aria-expanded="false">
+          Do tools work on mobile?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">Yes. StaxAI is a Progressive Web App (PWA). Add it to your phone&#39;s home screen for a native app experience. Works on iOS and Android.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-7">
+        <button class="faq-question" id="faq-btn-7" aria-expanded="false">
+          What payment methods do you accept?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">All major credit and debit cards via Stripe. Stripe is used by millions of businesses worldwide and is fully PCI compliant.</div>
+      </div>
+      <div class="faq-item faq-hidden" id="faq-8">
+        <button class="faq-question" id="faq-btn-8" aria-expanded="false">
+          What happens to my data if I cancel?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">Your data is retained for 30 days after cancellation. You can reactivate at any time within that period to restore full access. After 30 days, data is permanently deleted.</div>
+      </div>
+      <div class="faq-footer">
+        <button class="faq-more" id="faq-more-btn">More</button>
+      </div>
     </div>
 </section>
 
@@ -763,7 +836,24 @@
       if (bc) bc.addEventListener('click', closePicker);
       var bp = document.getElementById('picker-continue');
       if (bp) bp.addEventListener('click', proceedWithPicker);
-    });
+          // FAQ accordion
+      document.querySelectorAll('.faq-question').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var item = btn.closest('.faq-item');
+          var isOpen = item.classList.contains('open');
+          document.querySelectorAll('.faq-item.open').forEach(function(el) { el.classList.remove('open'); el.querySelector('.faq-question').setAttribute('aria-expanded', 'false'); });
+          if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
+        });
+      });
+      // FAQ more button
+      var faqMoreBtn = document.getElementById('faq-more-btn');
+      if (faqMoreBtn) {
+        faqMoreBtn.addEventListener('click', function() {
+          document.querySelectorAll('.faq-hidden').forEach(function(el) { el.style.display = 'block'; el.classList.remove('faq-hidden'); });
+          faqMoreBtn.style.display = 'none';
+        });
+      }
+});
   </script>
 
 </body>
