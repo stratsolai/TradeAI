@@ -34,7 +34,7 @@ const CORE_TOOLS = [
     title: ["Marketing and", "Social Media Manager"],
     desc: "Describe your latest job, upload a photo, or let the AI pull from your content library - it creates professional social posts, AI-generated graphics, and full marketing campaigns. Promote new products and services, seasonal offers, or industry news. Auto-posts to Facebook and Instagram, or download for community groups, emails, and anywhere else.",
     price: "$89",
-    priceId: "price_1T4dCEHnoVvjo5gxQysf0vQI",
+    priceId: "price_1TEQg8HnoVvjo5gxkxUaFrok",
   },
   {
     id: "email",
@@ -54,7 +54,7 @@ const CORE_TOOLS = [
     title: ["Strategic Plan and", "Operations Dashboard"],
     desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
     price: "$89",
-    priceId: "price_1TB7DDHnoVvjo5gxgLzZbego",
+    priceId: "price_1TEQiMHnoVvjo5gxbGu86saG",
   },
   {
     id: "news-digest",
@@ -84,7 +84,7 @@ const CORE_TOOLS = [
     title: ["Tender Response", "Generator"],
     desc: "Upload any RFT or RFQ - AI reads the requirements, searches your content library for relevant experience, certifications, and project history, then generates a professional tender response. Review it with AI-assisted editing - tap a button to expand sections, add detail, or adjust tone. Download as PDF or Word.",
     price: "$89",
-    priceId: "price_1T4dDMHnoVvjo5gxWhPHyqQc",
+    priceId: "price_1TEQjVHnoVvjo5gxfyLbHE3M",
   },
   {
     id: "quote-enhancer",
@@ -333,7 +333,7 @@ window.BUNDLE_TIERS = {
     price: "$199",
     priceMonthly: 199,
     description: "Pick any 3 tools",
-    priceId: null,
+    priceId: "price_1TEQc9HnoVvjo5gxHQ1CQYAT",
   },
   stax6: {
     id: "stax6",
@@ -342,7 +342,7 @@ window.BUNDLE_TIERS = {
     price: "$369",
     priceMonthly: 369,
     description: "Pick any 6 tools",
-    priceId: null,
+    priceId: "price_1TEQdAHnoVvjo5gxg6uwVWV1",
   },
   "stax-all": {
     id: "stax-all",
@@ -351,6 +351,6 @@ window.BUNDLE_TIERS = {
     price: "$699",
     priceMonthly: 699,
     description: "All 13 core tools + industry tools",
-    priceId: null,
+    priceId: "price_1TEQdoHnoVvjo5gxlNMGajr8",
   },
 };
