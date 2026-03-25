@@ -521,18 +521,6 @@
     .closing-section h2 span { color: var(--orange); }
     .closing-section p { font-size: 17px; color: var(--muted); margin-bottom: 36px; }
 
-    /* FAQ */
-    .faq-item { border-bottom: 1px solid rgba(255,255,255,0.07); padding: 20px 0; }
-    .faq-question { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; color: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-    .faq-answer { font-family: 'DM Sans', sans-serif; font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.7; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
-    .faq-answer.open { max-height: 200px; padding-top: 12px; }
-    .faq-question .faq-icon { color: #c4622a; font-size: 18px; flex-shrink: 0; transition: transform 0.3s; }
-    .faq-question.active .faq-icon { transform: rotate(45deg); }
-    .faq-hidden { display: none; }
-    .faq-more-wrap { display: flex; justify-content: flex-end; margin-top: 24px; }
-    .faq-more-btn { background: none; border: none; padding: 0; color: rgba(255,255,255,0.85); font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; letter-spacing: 0.3px; transition: color 0.2s; }
-    .faq-more-btn:hover { color: #fff; }
-    .faq-arrow { color: #c4622a; }
     /* FOOTER */
     footer { background: #0A0F1A; padding: 40px 24px; text-align: center; }
     footer p { font-size: 14px; color: rgba(255,255,255,0.4); }
@@ -590,7 +578,7 @@
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
-        <button class="bundle-cta" id="btn-stax3" onclick="openPicker('stax3', 3)">Choose your 3 tools</button>
+        <button class="bundle-cta" id="btn-stax3">Choose your 3 tools</button>
       </div>
 
       <!-- STAX6 -->
@@ -609,7 +597,7 @@
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
-        <button class="bundle-cta" id="btn-stax6" onclick="openPicker('stax6', 6)">Choose your 6 tools</button>
+        <button class="bundle-cta" id="btn-stax6">Choose your 6 tools</button>
       </div>
 
       <!-- STAX ALL -->
@@ -640,8 +628,8 @@
       </div>
       <div class="picker-grid" id="picker-grid"></div>
       <div class="picker-actions">
-        <button class="picker-cancel" onclick="closePicker()">Cancel</button>
-        <button class="picker-continue" id="picker-continue" disabled onclick="proceedWithPicker()">Choose your tools to continue</button>
+        <button class="picker-cancel" id="picker-cancel">Cancel</button>
+        <button class="picker-continue" id="picker-continue" disabled>Choose your tools to continue</button>
       </div>
     </div>
 
@@ -765,7 +753,17 @@
 
     
     
-    handlePromptParam();
+    document.addEventListener('DOMContentLoaded', function() {
+      handlePromptParam();
+      var b3 = document.getElementById('btn-stax3');
+      if (b3) b3.addEventListener('click', function() { openPicker('stax3', 3); });
+      var b6 = document.getElementById('btn-stax6');
+      if (b6) b6.addEventListener('click', function() { openPicker('stax6', 6); });
+      var bc = document.getElementById('picker-cancel');
+      if (bc) bc.addEventListener('click', closePicker);
+      var bp = document.getElementById('picker-continue');
+      if (bp) bp.addEventListener('click', proceedWithPicker);
+    });
   </script>
 
 </body>
