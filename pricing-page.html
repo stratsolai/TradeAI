@@ -278,111 +278,6 @@
     }
     .bundle-cta.secondary:hover { border-color: rgba(255,255,255,0.4); color: #fff; background: transparent; }
 
-    /* TOOL PICKER */
-    .tool-picker {
-      display: none;
-      margin-top: 40px;
-      background: var(--bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 36px 28px;
-    }
-    .tool-picker.active { display: block; }
-    .picker-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 28px;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    .picker-header h3 {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900;
-      font-size: 28px;
-    }
-    .picker-header h3 span { color: var(--orange); }
-    .picker-counter {
-      background: var(--bg3);
-      border: 1px solid var(--card-border);
-      border-radius: 8px;
-      padding: 8px 18px;
-      font-size: 15px;
-      font-weight: 600;
-    }
-    .picker-counter .count { color: var(--orange); }
-    .picker-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 16px;
-      margin-bottom: 28px;
-    }
-    .picker-tool {
-      background: var(--bg2);
-      border: 2px solid var(--card-border);
-      border-radius: 12px;
-      padding: 18px 16px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      user-select: none;
-    }
-    .picker-tool:hover:not(.disabled):not(.selected) { border-color: rgba(255,255,255,0.2); }
-    .picker-tool.selected { border-color: var(--orange); background: rgba(196,98,42,0.12); }
-    .picker-tool.disabled { opacity: 0.4; cursor: not-allowed; }
-    .picker-tool.pending-tool { opacity: 0.35; cursor: not-allowed; }
-    .picker-tool-icon { font-size: 26px; margin-bottom: 8px; }
-    .picker-tool-name {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 800;
-      font-size: 17px;
-      margin-bottom: 4px;
-    }
-    .picker-tool-desc { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.4; }
-    .picker-tool-price { font-size: 13px; font-weight: 700; color: var(--orange-light); }
-    .picker-tool-badge {
-      display: inline-block;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 2px 8px;
-      border-radius: 10px;
-      background: rgba(255,255,255,0.1);
-      color: rgba(255,255,255,0.5);
-      margin-top: 6px;
-    }
-    .picker-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 16px;
-      align-items: center;
-    }
-    .picker-cancel {
-      background: none;
-      border: none;
-      color: var(--muted);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
-      cursor: pointer;
-      padding: 8px 0;
-      text-decoration: underline;
-    }
-    .picker-cancel:hover { color: #fff; }
-    .picker-continue {
-      background: var(--orange);
-      color: #fff;
-      border: none;
-      padding: 13px 28px;
-      border-radius: 8px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .picker-continue:hover:not(:disabled) { background: var(--orange-light); }
-    .picker-continue:disabled { background: var(--bg4); color: rgba(255,255,255,0.4); cursor: not-allowed; }
-
     /* INDIVIDUAL TOOLS */
     .tools-section {
       padding: 80px 24px;
@@ -587,7 +482,7 @@
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
-        <button class="bundle-cta" id="btn-stax3">Choose your 3 tools</button>
+        <button class="bundle-cta" id="btn-stax3">Choose Your 3 Tools</button>
       </div>
 
       <!-- STAX6 -->
@@ -606,7 +501,7 @@
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
-        <button class="bundle-cta" id="btn-stax6">Choose your 6 tools</button>
+        <button class="bundle-cta" id="btn-stax6">Choose Your 6 Tools</button>
       </div>
 
       <!-- STAX ALL -->
@@ -624,23 +519,12 @@
           <li>14-day free trial, no credit card required</li>
           <li>Up to 5 team members per subscription</li>
         </ul>
-        <a class="bundle-cta" href="/login?tab=signup&tier=stax-all">Start free trial — all tools</a>
+        <a class="bundle-cta" href="/login?tab=signup&tier=stax-all">Start Free Trial — All Tools</a>
       </div>
 
     </div>
 
-    <!-- TOOL PICKER (inline expand) -->
-    <div class="tool-picker" id="tool-picker">
-      <div class="picker-header">
-        <h3>Choose your <span id="picker-tier-label">3</span> tools</h3>
-        <div class="picker-counter"><span class="count" id="picker-count">0</span> of <span id="picker-limit">3</span> selected</div>
-      </div>
-      <div class="picker-grid" id="picker-grid"></div>
-      <div class="picker-actions">
-        <button class="picker-cancel" id="picker-cancel">Cancel</button>
-        <button class="picker-continue" id="picker-continue" disabled>Choose your tools to continue</button>
-      </div>
-    </div>
+    
 
   </section>
 
@@ -750,94 +634,24 @@
   </footer>
 
   <script>
-    
-
-    
-
-    function openPicker(tier, limit) {
-      pickerTier = tier;
-      pickerLimit = limit;
-      pickerSelected = [];
-      document.getElementById("picker-tier-label").textContent = limit;
-      document.getElementById("picker-limit").textContent = limit;
-      updatePickerCount();
-      renderPickerGrid();
-      var picker = document.getElementById("tool-picker");
-      picker.classList.add("active");
-      picker.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-
-    function closePicker() {
-      document.getElementById("tool-picker").classList.remove("active");
-      pickerTier = null;
-      pickerSelected = [];
-    }
-
-    function renderPickerGrid() {
-        var grid = document.getElementById("picker-grid");
-        if (grid) grid.innerHTML = "";
-    }
-    function togglePickerTool(id) {
-      var idx = pickerSelected.indexOf(id);
-      if (idx !== -1) {
-        pickerSelected.splice(idx, 1);
-        document.getElementById("pt-" + id).classList.remove("selected");
-      } else {
-        if (pickerSelected.length >= pickerLimit) return;
-        pickerSelected.push(id);
-        document.getElementById("pt-" + id).classList.add("selected");
-      }
-      updatePickerCount();
-      TOOLS.forEach(function(t) {
-        if (t.status !== "built") return;
-        var el = document.getElementById("pt-" + t.id);
-        if (!el) return;
-        if (pickerSelected.length >= pickerLimit && pickerSelected.indexOf(t.id) === -1) {
-          el.classList.add("disabled");
-        } else {
-          el.classList.remove("disabled");
-        }
-      });
-    }
-
-    function updatePickerCount() {
-      document.getElementById("picker-count").textContent = pickerSelected.length;
-      var btn = document.getElementById("picker-continue");
-      if (pickerSelected.length === pickerLimit) {
-        btn.disabled = false;
-        btn.textContent = "Continue — " + pickerSelected.length + " tools selected";
-      } else {
-        btn.disabled = true;
-        btn.textContent = "Choose your tools to continue";
-      }
-    }
-
-    function proceedWithPicker() {
-      if (pickerSelected.length !== pickerLimit) return;
-      var toolsParam = pickerSelected.join(",");
-      window.location.href = "/login?tab=signup&tier=" + pickerTier + "&tools=" + toolsParam;
-    }
-
     function handlePromptParam() {
-      if (window.location.search.indexOf("prompt=true") !== -1) {
-        var el = document.getElementById("bundles");
-        if (el) setTimeout(function() { el.scrollIntoView({ behavior: "smooth" }); }, 200);
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('prompt') === 'true') {
+        var bundles = document.getElementById('bundles');
+        if (bundles) bundles.scrollIntoView({ behavior: 'smooth' });
       }
     }
 
-    
-    
     document.addEventListener('DOMContentLoaded', function() {
       handlePromptParam();
+
       var b3 = document.getElementById('btn-stax3');
-      if (b3) b3.addEventListener('click', function() { openPicker('stax3', 3); });
+      if (b3) b3.addEventListener('click', function() { window.location.href = 'tools.html?tier=stax3'; });
+
       var b6 = document.getElementById('btn-stax6');
-      if (b6) b6.addEventListener('click', function() { openPicker('stax6', 6); });
-      var bc = document.getElementById('picker-cancel');
-      if (bc) bc.addEventListener('click', closePicker);
-      var bp = document.getElementById('picker-continue');
-      if (bp) bp.addEventListener('click', proceedWithPicker);
-          // FAQ accordion
+      if (b6) b6.addEventListener('click', function() { window.location.href = 'tools.html?tier=stax6'; });
+
+      // FAQ accordion
       document.querySelectorAll('.faq-question').forEach(function(btn) {
         btn.addEventListener('click', function() {
           var item = btn.closest('.faq-item');
@@ -846,7 +660,8 @@
           if (!isOpen) { item.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); }
         });
       });
-      // FAQ more button
+
+      // FAQ more/less
       var faqMoreBtn = document.getElementById('faq-more-btn');
       var faqLessBtn = document.getElementById('faq-less-btn');
       if (faqMoreBtn) {
@@ -866,7 +681,7 @@
           if (faqMoreBtn) faqMoreBtn.style.display = 'inline';
         });
       }
-});
+    });
   </script>
 
 </body>
