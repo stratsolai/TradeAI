@@ -721,6 +721,7 @@
       </div>
       <div class="faq-footer">
         <button class="faq-more" id="faq-more-btn">More</button>
+        <button class="faq-more" id="faq-less-btn" style="display:none">Show Less</button>
       </div>
     </div>
 </section>
@@ -847,10 +848,22 @@
       });
       // FAQ more button
       var faqMoreBtn = document.getElementById('faq-more-btn');
+      var faqLessBtn = document.getElementById('faq-less-btn');
       if (faqMoreBtn) {
         faqMoreBtn.addEventListener('click', function() {
           document.querySelectorAll('.faq-hidden').forEach(function(el) { el.style.display = 'block'; el.classList.remove('faq-hidden'); });
           faqMoreBtn.style.display = 'none';
+          if (faqLessBtn) faqLessBtn.style.display = 'inline';
+        });
+      }
+      if (faqLessBtn) {
+        faqLessBtn.addEventListener('click', function() {
+          var allItems = document.querySelectorAll('.faq-item');
+          allItems.forEach(function(el, i) {
+            if (i >= 2) { el.classList.remove('open'); el.style.display = 'none'; el.classList.add('faq-collapsed'); }
+          });
+          faqLessBtn.style.display = 'none';
+          if (faqMoreBtn) faqMoreBtn.style.display = 'inline';
         });
       }
 });
