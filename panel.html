@@ -1119,7 +1119,7 @@
     if (ctaBtn) {
       if (tool.status === 'built') {
         ctaBtn.textContent = 'Start 14 Day Free Trial →';
-        window.location.href = '/login?tab=signup&tool=' + tool.id;
+        ctaBtn.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
       } else {
         ctaBtn.textContent = 'Notify Me When Live';
         ctaBtn.href = '#';
@@ -1129,7 +1129,7 @@
     if (ctaFooter) {
       if (tool.status === 'built') {
         ctaFooter.textContent = 'Start 14 Day Free Trial →';
-        window.location.href = '/login?tab=signup&tool=' + tool.id;
+        ctaFooter.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
       } else {
         ctaFooter.textContent = 'Notify Me When Live';
         ctaFooter.href = '#';
