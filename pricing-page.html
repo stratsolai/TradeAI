@@ -227,7 +227,7 @@
     }
     .bundle-saving {
       font-size: 13px;
-      color: #6ee7b7;
+      color: var(--orange);
       margin-bottom: 28px;
       font-weight: 600;
     }
@@ -620,6 +620,11 @@
     .footer-eyebrow::before { content:''; width:20px; height:1px; background:linear-gradient(90deg,transparent,#d4844a); flex-shrink:0; }
     .footer-eyebrow::after { content:''; width:20px; height:1px; background:linear-gradient(90deg,#d4844a,transparent); flex-shrink:0; }
   
+
+    .bundle-card.selected {
+      border-color: var(--orange);
+      background: linear-gradient(160deg, #1e2d47 0%, #172035 100%);
+    }
 </style>
 </head>
 <body>
@@ -651,7 +656,7 @@
     <div class="section-title">
       <h2>BUNDLE AND <span class="stax-tagline-stax">SAVE</span></h2>
       <p>Choose a <span class="stax-tagline-stax">STAX</span> bundle and pick the tools that suit your business</p>
-      <p>All 13 tools purchased individually would cost $997/mth — bundles give you the same power for less</p>
+      
     </div>
 
     <div class="bundle-cards">
@@ -666,8 +671,8 @@
         <div class="bundle-saving">Save compared to individual pricing</div>
         <ul class="bundle-features">
           <li>Choose any 3 tools from the full library</li>
-          <li>Swap tools any time from your account</li>
-          <li>14-day free trial, no credit card required</li>
+          <li>Swap tools any time during trial period</li>
+          
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
@@ -685,8 +690,8 @@
         <div class="bundle-saving">Save up to $225/mth vs individual pricing</div>
         <ul class="bundle-features">
           <li>Choose any 6 tools from the full library</li>
-          <li>Swap tools any time from your account</li>
-          <li>14-day free trial, no credit card required</li>
+          <li>Swap tools any time during trial period</li>
+          
           <li>Up to 5 team members per subscription</li>
           <li>Full access to Content Library</li>
         </ul>
@@ -705,9 +710,10 @@
           <li>All 13 core tools included</li>
           <li>All industry-specific tools for your trade</li>
           <li>New tools added automatically at no extra cost</li>
-          <li>14-day free trial, no credit card required</li>
+          
           <li>Up to 5 team members per subscription</li>
-        </ul>
+                   <li>Full access to Content Library</li>
+</ul>
         <a class="bundle-cta" href="/login?tab=signup&tier=stax-all">Start Free Trial — All Tools</a>
       </div>
 
@@ -885,7 +891,19 @@
         });
       }
     });
-  </script>
+  
+  // Bundle tile selection
+  document.querySelectorAll('.bundle-card').forEach(function(card) {
+    card.addEventListener('click', function(e) {
+      // Don't steal clicks from buttons inside the card
+      if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+      document.querySelectorAll('.bundle-card').forEach(function(c) {
+        c.classList.remove('selected', 'featured');
+      });
+      card.classList.add('selected');
+    });
+  });
+</script>
 
 </body>
 </html>
