@@ -1,4 +1,4 @@
-// tools-data.js - TradeAI Pro
+// tools-data.js - StaxAI
 // Single source of truth for all tool and industry data
 
 const INDUSTRIES = [
@@ -330,8 +330,8 @@ window.BUNDLE_TIERS = {
     id: "stax3",
     name: "STAX3",
     slots: 3,
-    price: "$199",
-    priceMonthly: 199,
+    price: "$149",
+    priceMonthly: 149,
     description: "Pick any 3 tools",
     priceId: "price_1TEQc9HnoVvjo5gxHQ1CQYAT",
   },
@@ -339,8 +339,8 @@ window.BUNDLE_TIERS = {
     id: "stax6",
     name: "STAX6",
     slots: 6,
-    price: "$369",
-    priceMonthly: 369,
+    price: "$299",
+    priceMonthly: 299,
     description: "Pick any 6 tools",
     priceId: "price_1TEQdAHnoVvjo5gxg6uwVWV1",
   },
@@ -348,8 +348,8 @@ window.BUNDLE_TIERS = {
     id: "stax-all",
     name: "STAX All",
     slots: null,
-    price: "$699",
-    priceMonthly: 699,
+    price: "$499",
+    priceMonthly: 499,
     description: "All 13 core tools + industry tools",
     priceId: "price_1TEQdoHnoVvjo5gxlNMGajr8",
   },
