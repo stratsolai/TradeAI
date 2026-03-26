@@ -4,9 +4,9 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#1a5490">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <script src="/pwa.js" defer></script>
-  <meta charset="UTF-8">
+    <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="/pwa.js" defer></script>
   <title>StaxAI — Log In / Sign Up</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,9 +67,7 @@
     footer { margin-top: auto; }
 
     /* Logo */
-    .logo { text-align:center; margin-bottom:32px; }
-    .logo img { height:40px; width:auto; }
-    .logo p { color:var(--muted); font-size:13px; margin-top:8px; }
+    
 
     /* Tabs */
     .tabs {
@@ -149,9 +147,7 @@
     }
     .trust-item { display:flex; align-items:center; gap:6px; font-size:12px; color:rgba(255,255,255,0.45); }
     .trust-item::before { content:'✓'; color:var(--orange); font-weight:700; }
-    .back-home { position:relative; z-index:1; text-align:center; margin-top:14px; }
-    .back-home a { font-size:13px; color:var(--muted); text-decoration:none; transition:color 0.2s; }
-    .back-home a:hover { color:white; }
+    
 
     @media(max-width:480px) { .container { padding:28px 20px; } }
   footer {
@@ -176,22 +172,7 @@
 .footer-eyebrow::after{content:'';width:20px;height:1px;background:linear-gradient(90deg,#d4844a,transparent);flex-shrink:0;}
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;width:100%;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
-.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
-.topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
-.topbar-logo-text{font-family:'Barlow Condensed',sans-serif;font-size:19px;font-weight:800;color:#fff;line-height:1;}
-.topbar-logo-sub{font-size:8px;color:rgba(255,255,255,0.6);letter-spacing:1.5px;text-transform:uppercase;display:block;margin-top:1px;}
-.topbar-breadcrumb{font-size:13px;color:rgba(255,255,255,0.75);display:flex;align-items:center;gap:8px;flex-shrink:0;margin-right:auto;}
-.topbar-breadcrumb a{color:rgba(255,255,255,0.7);text-decoration:none;}
-.topbar-breadcrumb .sep{opacity:0.45;}
-.topbar-breadcrumb .current{color:#fff;font-weight:600;}
-.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
 
-
-/* PAGE LAYOUT */
-.page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;padding-top:72px;}
-.side-panel{width:300px;flex-shrink:0;padding:24px 8px;}.page-centre{flex:1;min-width:0;padding:0 100px;}
-
-/* HERO */
 </style>
 </head>
 <body>
@@ -200,7 +181,6 @@
   <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a><div class="topbar-nav"><a id="back-btn" onclick="history.back()" style="cursor:pointer;">Back</a></div>
   
 </div>
-<div class="bg-grid"></div>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
 
