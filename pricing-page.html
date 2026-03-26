@@ -431,7 +431,196 @@
     .faq-footer { display: flex; justify-content: flex-end; margin-top: 24px; }
     .faq-more { background: none; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.75); padding: 0; }
     .faq-more:hover { color: #fff; }
-    </style>
+    footer {
+      background:#1a2f4a; padding:32px 48px 20px;
+      border-top:1px solid rgba(255,255,255,0.08);
+    }
+    .footer-inner { max-width:1200px; margin:0 auto; }
+    .footer-top { display:grid; grid-template-columns:2fr 1fr 1fr; gap:60px; margin-bottom:24px; }
+    .footer-brand p { font-size:14px; font-family:'DM Sans',sans-serif; font-weight:400; color:rgba(255,255,255,0.75); line-height:1.6; margin-top:8px; max-width:300px; }
+    .footer-col h4 { font-size:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:3px; text-transform:uppercase; background:linear-gradient(135deg,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; }
+    .footer-col a { display:block; font-size:14px; font-family:'DM Sans',sans-serif; font-weight:600; color:rgba(255,255,255,0.75); text-decoration:none; margin-bottom:6px; transition:color 0.2s; }
+    .footer-col a:hover { color:white; }
+    .footer-bottom {
+      display:flex; justify-content:space-between; align-items:center;
+      padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);
+      font-size:13px; font-family:'DM Sans',sans-serif; font-weight:400; color:rgba(255,255,255,0.75); flex-wrap:wrap; gap:10px;
+    }
+
+    /* ── MOBILE ── */
+    @media(max-width:900px) {
+      nav { padding:16px 24px; }
+      .nav-links { display:none; }
+      .hero { padding:100px 24px 60px; }
+      .hero-content { grid-template-columns:1fr; gap:50px; }
+      .stats-strip { padding:40px 24px; }
+      .stats-inner { justify-content:center; gap:30px; }
+      .stat-divider { display:none; }
+      section { padding:70px 24px; }
+      .problem-grid { grid-template-columns:1fr; gap:40px; }
+      .steps { flex-direction:column; gap:40px; }
+      .steps::before { display:none; }
+      .tools-grid { grid-template-columns:1fr 1fr; }
+      .industries-grid { grid-template-columns:repeat(2,1fr); }
+      .testimonials-grid { grid-template-columns:1fr; }
+      .footer-top { grid-template-columns:1fr 1fr; gap:40px; }
+      .footer-brand { grid-column:1/-1; }
+    }
+    @media(max-width:560px) {
+      .tools-grid { grid-template-columns:1fr; }
+      .hero-headline { font-size:48px; }
+    }
+
+    /* ── SCROLL ANIMATIONS ── */
+    .fade-up { opacity:0; transform:translateY(30px); transition:opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity:1; transform:translateY(0); }
+    .fade-up:nth-child(2) { transition-delay:0.1s; }
+    .fade-up:nth-child(3) { transition-delay:0.2s; }
+    .fade-up:nth-child(4) { transition-delay:0.3s; }
+  .atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+
+.atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
+.atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
+.atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
+.atmo-orb.o3{width:350px;height:350px;background:#2c5a82;opacity:0.11;bottom:-80px;right:-80px;animation:orb3 12s ease-in-out infinite;}
+@keyframes orb1{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-40px)}}
+@keyframes orb2{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+@keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+
+/* TOPBAR */
+
+.topbar-nav{display:flex;align-items:center;gap:24px;margin-left:64px;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,0.80);text-decoration:none;letter-spacing:0.02em;transition:color 0.2s;}.topbar-nav a:hover{color:#fff;}.topbar-spacer{flex:1;}
+
+/* ===== REVIEW BANNER ===== */
+.review-banner-wrap {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 0 48px;
+  width: 100%;
+}
+.review-track {
+  display: flex;
+  gap: 24px;
+  padding: 8px 0 16px;
+  animation: reviewStep 48s linear infinite;
+  will-change: transform;
+}
+.review-track:hover {
+  animation-play-state: paused;
+}
+@keyframes reviewStep {
+  0%       { transform: translateX(0px); }
+  13.542%  { transform: translateX(0px); }
+  16.667%  { transform: translateX(-364px); }
+  30.208%  { transform: translateX(-364px); }
+  33.333%  { transform: translateX(-728px); }
+  46.875%  { transform: translateX(-728px); }
+  50%      { transform: translateX(-1092px); }
+  63.542%  { transform: translateX(-1092px); }
+  66.667%  { transform: translateX(-1456px); }
+  80.208%  { transform: translateX(-1456px); }
+  83.333%  { transform: translateX(-1820px); }
+  96.875%  { transform: translateX(-1820px); }
+  100%     { transform: translateX(-2184px); }
+}
+.review-card {
+  width: 340px;
+  flex-shrink: 0;
+}
+.review-card-inner {
+  background: #c8cfd8; color: #1a2535;
+  border: 1px solid rgba(0,0,0,0.08); border-radius: 12px;
+  border-left: 3px solid #c4622a;
+  border-radius: 12px;
+  padding: 24px 22px 20px;
+  height: 100%;
+  box-sizing: border-box;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.review-card-inner:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+}
+.review-top-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.reviewer-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--heading-font, 'Barlow Condensed', sans-serif);
+  font-size: 15px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: 0.04em;
+  border: 2px solid rgba(26,37,53,0.15);
+}
+.reviewer-meta {
+  flex: 1;
+  min-width: 0;
+}
+.reviewer-tool {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(26,37,53,0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: normal;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.reviewer-pillar {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(26,37,53,0.7);
+}
+.review-stars {
+  color: #c4622a;
+  font-size: 15px;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+}
+.review-text {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 15px;
+  font-weight: 400;
+  color: #1a2535;
+  line-height: 1.65;
+  margin: 0 0 16px;
+}
+.reviewer-id {
+  font-family: var(--body-font, 'DM Sans', sans-serif);
+  font-size: 13px;
+  color: rgba(26,37,53,0.62);
+  font-weight: 400;
+}
+.review-fade-left,
+.review-fade-right { display:none; }
+.review-fade-left { display:none; }
+.review-fade-right {
+  right: 0;
+  background: linear-gradient(to left, var(--dark, #0d1b2a) 0%, transparent 100%);
+}
+@media (max-width: 768px) {
+  .review-card { width: 290px; }
+  .review-fade-left, .review-fade-right { width: 40px; }
+}
+/* ===== END REVIEW BANNER ===== */
+
+    .footer-eyebrow { display:flex; align-items:center; gap:8px; font-size:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:3px; text-transform:uppercase; background:linear-gradient(135deg,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; margin-left:-28px; }
+    .footer-eyebrow::before { content:''; width:20px; height:1px; background:linear-gradient(90deg,transparent,#d4844a); flex-shrink:0; }
+    .footer-eyebrow::after { content:''; width:20px; height:1px; background:linear-gradient(90deg,#d4844a,transparent); flex-shrink:0; }
+  
+</style>
 </head>
 <body>
 
@@ -621,17 +810,31 @@
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-links">
-      <a href="/">Home</a>
-      <a href="/tools">Tools</a>
-      <a href="/pricing">Pricing</a>
-      <a href="/login">Sign In</a>
-      <a href="/privacy">Privacy Policy</a>
-      <a href="/terms">Terms of Service</a>
-      <a href="/contact">Contact</a>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:1px;margin-bottom:8px;"><span style="background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">STAXAI</span></div>
+        <p>AI-powered tools built for Australian business</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-eyebrow">Product</div>
+        <a href="/industry">Browse Tools</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/login?tab=signup">Sign Up</a>
+      </div>
+      <div class="footer-col" style="margin-left:auto">
+        <div class="footer-eyebrow">Company</div>
+        <a href="/contact">Contact</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/terms">Terms of Service</a>
+      </div>
     </div>
-    <p>&copy; 2026 StaxAI &nbsp;·&nbsp; ABN 52 634 683 467 &nbsp;·&nbsp; AI tools, your way</p>
-  </footer>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Strategic Solutions ABN 83 861 537 021 All rights reserved</p>
+      
+    </div>
+  </div>
+</footer>
 
   <script>
     function handlePromptParam() {
