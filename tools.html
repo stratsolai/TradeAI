@@ -903,8 +903,7 @@ footer {
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
         '<div class="card-desc-wrap"><div class="tool-card-desc" id="desc-' + t.id + '">' + t.desc + '</div><button class="card-desc-toggle" data-desc-id="desc-' + t.id + '" title="Expand">+</button></div>' +
-        '<div class="tool-card-footer">' + priceHtml + '</div>' +
-        '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div>' +
+        '<div class="tool-card-footer">' + priceHtml + '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div></div>' +
         '</a>';
     });
     // Build industry-specific tiles
@@ -925,8 +924,7 @@ footer {
         '<div class="tool-card-icon">' + t.icon + '</div>' +
         '<div class="tool-card-title">' + t.title + '</div>' +
         '<div class="tool-card-desc">Industry-specific tool — coming soon</div>' +
-        '<div class="tool-card-footer"><span class="tool-price">Coming Soon</span>' +
-        '<span class="tool-card-cta">Explore <span class="cta-arrow">→</span></span></div></div>';
+        '<div class="tool-card-footer"><span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span><div class="tool-card-cta">Explore <div class="arrow">&#8594;</div></div></div></div>';
     });
     grid.innerHTML = html;
   }
