@@ -170,7 +170,12 @@
       font-size:13px; font-family:'DM Sans',sans-serif; font-weight:400; color:rgba(255,255,255,0.75); flex-wrap:wrap; gap:10px;
     }
 
-    /* TOPBAR */
+    .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}
+.footer-eyebrow{display:flex;align-items:center;gap:8px;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;margin-left:-28px;}
+.footer-eyebrow::before{content:'';width:20px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;}
+.footer-eyebrow::after{content:'';width:20px;height:1px;background:linear-gradient(90deg,#d4844a,transparent);flex-shrink:0;}
+/* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
 .topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
 .topbar-logo-icon{width:30px;height:30px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;}
