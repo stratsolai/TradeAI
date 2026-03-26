@@ -249,78 +249,78 @@
 <script src="/auth.js"></script>
 
 <script>
-  function showLogin() {
-    document.getElementById('login-form').style.display = 'block';
-    document.getElementById('signup-form').style.display = 'none';
-    document.querySelectorAll('.tab')[0].classList.add('active');
-    document.querySelectorAll('.tab')[1].classList.remove('active');
-    hideMessages();
-  }
+  document.addEventListener("DOMContentLoaded", async function() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("tab") === "signup") showSignup();
 
-  function showSignup() {
-    document.getElementById('login-form').style.display = 'none';
-    document.getElementById('signup-form').style.display = 'block';
-    document.querySelectorAll('.tab')[0].classList.remove('active');
-    document.querySelectorAll('.tab')[1].classList.add('active');
-    hideMessages();
-  }
+    // Store trial context from URL params into sessionStorage
+    var toolParam = params.get("tool");
+    var tierParam = params.get("tier");
+    var toolsParam = params.get("tools");
+    if (toolParam) sessionStorage.setItem("trial_tool", toolParam);
+    if (tierParam) sessionStorage.setItem("trial_tier", tierParam);
+    if (toolsParam) sessionStorage.setItem("trial_tools", toolsParam);
 
-  function showError(message) {
-    const el = document.getElementById('error-message');
-    el.textContent = message; el.style.display = 'block';
-  }
+    // Handle login --- unchanged from original
+    document.getElementById("login-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      hideMessages();
+      var email = document.getElementById("login-email").value;
+      var password = document.getElementById("login-password").value;
+      var result = await signIn(email, password);
+      if (result.success) {
+        window.location.href = "//dashboard";
+      } else {
+        showError(result.error || "Login failed. Please check your credentials.");
+      }
+    });
 
-  function showSuccess(message) {
-    const el = document.getElementById('success-message');
-    el.textContent = message; el.style.display = 'block';
-  }
-
-  function hideMessages() {
-    document.getElementById('error-message').style.display = 'none';
-    document.getElementById('success-message').style.display = 'none';
-  }
-
-  // Activate signup tab if ?tab=signup in URL
-  window.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('tab') === 'signup') showSignup();
-  });
-
-  // Handle login — unchanged from original
-  document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideMessages();
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const result = await signIn(email, password);
-    if (result.success) {
-      window.location.href = '//dashboard';
-    } else {
-      showError(result.error || 'Login failed. Please check your credentials.');
-    }
-  });
-
-  // Handle signup — unchanged from original
-  document.getElementById('signup-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideMessages();
-    const businessName = document.getElementById('signup-business').value;
-    const email = document.getElementById('signup-email').value;
-    const password = document.getElementById('signup-password').value;
-    const phone = document.getElementById('signup-phone').value;
-    const industry = document.getElementById('signup-industry').value;
-    const result = await signUp(email, password, businessName, phone, industry);
-    if (result.success) {
-      showSuccess('Account created! Please check your email to verify your account.');
-      setTimeout(() => { window.location.href = '//dashboard'; }, 2000);
-    } else {
-      showError(result.error || 'Signup failed. Please try again.');
-    }
-  });
-
-  // Check if already logged in — unchanged from original
-  checkAuth().then(session => {
-    if (session) { window.location.href = '//dashboard'; }
+    // Handle signup
+    document.getElementById("signup-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      hideMessages();
+      var email = document.getElementById("signup-email").value;
+      var password = document.getElementById("signup-password").value;
+      var businessName = document.getElementById("signup-business").value;
+      var phone = document.getElementById("signup-phone").value;
+      var industry = document.getElementById("signup-industry").value;
+      var result = await signUp(email, password, businessName, phone, industry);
+      if (result.success) {
+        // Write trial activation to Supabase profiles
+        var trialTool = sessionStorage.getItem("trial_tool");
+        var trialTier = sessionStorage.getItem("trial_tier");
+        var trialTools = sessionStorage.getItem("trial_tools");
+        var userId = result.data && result.data.user ? result.data.user.id : null;
+        var activatedTools = [];
+        var bundleTier = null;
+        if (trialTool) {
+          activatedTools = [trialTool];
+          bundleTier = null;
+        } else if (trialTier === "stax-all") {
+          activatedTools = ["chatbot","social","email","strategic-plan","news-digest","bi","tender","quote-enhancer","swms","customer-updates","handover-docs","review-booster","design-viz"];
+          bundleTier = "stax-all";
+        } else if (trialTier && trialTools) {
+          activatedTools = trialTools.split(",");
+          bundleTier = trialTier;
+        }
+        if (activatedTools.length > 0 && userId) {
+          var trialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+          await window.supabaseClient.from("profiles").upsert({
+            id: userId,
+            activated_tools: activatedTools,
+            trial_expires_at: trialExpiresAt,
+            bundle_tier: bundleTier,
+            is_trial: true,
+            trial_used: true
+          });
+        }
+        showSuccess("Account created. Please check your email to verify your account.");
+        var redirectParam = trialTool ? "?activated=" + trialTool : (trialTier ? "?tier=" + trialTier : "");
+        setTimeout(function() { window.location.href = "//dashboard" + redirectParam; }, 2000);
+      } else {
+        showError(result.error || "Signup failed. Please try again.");
+      }
+    });
   });
 </script>
 
