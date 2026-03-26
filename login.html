@@ -91,6 +91,11 @@
 
     /* Form */
     .form-group { margin-bottom:18px; }
+    input[type=text],input[type=email],input[type=password],input[type=tel],select { width:100%; padding:11px 14px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; color:#fff; font-size:15px; font-family:var(--body-font); outline:none; transition:border 0.2s; box-sizing:border-box; }
+    input::placeholder { color:rgba(255,255,255,0.35); }
+    input:focus,select:focus { border-color:var(--orange); }
+    select option { background:#172035; }
+
     label { display:block; font-size:13px; font-weight:600; color:rgba(255,255,255,0.85); margin-bottom:7px; }
     input, select {
       width:100%; padding:12px 16px;
@@ -399,15 +404,7 @@
 <body>
 
 <div class="topbar">
-  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a><div class="topbar-nav"><a id="back-btn">Back</a></div><div class="bundle-rotator">
-    <span class="bundle-rotator-icon">&#128230;</span>
-    <div class="bundle-rotator-track">
-      <div class="bundle-rotator-item active">Starter — any 3 tools $149/mth</div>
-      <div class="bundle-rotator-item">Growth — any 6 tools $299/mth</div>
-      <div class="bundle-rotator-item">Complete — all tools $499/mth</div>
-    </div>
-    <span class="bundle-rotator-cta">Bundle &#8594;</span>
-  </div>
+  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a><div class="topbar-nav"><a id="back-btn">Back</a></div>
   
 </div>
 <div class="bg-grid"></div>
