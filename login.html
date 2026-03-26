@@ -84,7 +84,6 @@
       cursor:pointer; transition:all 0.2s; background:transparent; color:var(--muted);
     }
     .tab.active { background:var(--orange); color:white; box-shadow:0 4px 16px rgba(196,98,42,0.35); }
-    .tab:hover { background:rgba(196,98,42,0.2); }
     .tab:not(.active):hover { color:white; background:rgba(255,255,255,0.08); }
 
     /* Form */
@@ -120,7 +119,7 @@
       cursor:pointer; transition:all 0.25s; position:relative; overflow:hidden;
     }
     .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent); }
-    .btn:hover { background:var(--orange-light); transform:translateY(-1px); box-shadow:0 8px 30px rgba(196,98,42,0.4); }
+    
 
     /* Messages */
     .error {
@@ -436,7 +435,7 @@
     <div class="forgot-row">
       <a href="/forgot-password" class="forgot-link">Forgot password?</a>
     </div>
-    <button type="submit" class="btn">Log In →</button>
+    <button type="submit" class="btn">Log In</button>
   </form>
 
   <!-- Signup Form -->
@@ -474,7 +473,7 @@
         <option value="handyman">Handyman Services</option>
       </select>
     </div>
-    <button type="submit" class="btn">Create Account →</button>
+    <button type="submit" class="btn">Create Account</button>
     <div class="terms-note">
       By signing up you agree to our
       <a href="/terms">Terms of Service</a> and
