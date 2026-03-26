@@ -132,7 +132,7 @@
     }
 
     #login-form { display:block; }
-    #signup-form { display:none; }
+    
 
     /* Terms */
     .terms-note { font-size:12px; color:rgba(255,255,255,0.4); text-align:center; margin-top:16px; line-height:1.6; }
@@ -573,14 +573,14 @@
   });
 
   function showLogin() {
-    document.getElementById('login-form').style.display = '';
+    document.getElementById('login-form').style.display = 'block';
     document.getElementById('signup-form').style.display = 'none';
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab')[0].classList.add('active');
   }
   function showSignup() {
     document.getElementById('login-form').style.display = 'none';
-    document.getElementById('signup-form').style.display = '';
+    document.getElementById('signup-form').style.display = 'block';
     document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.tab')[1].classList.add('active');
   }
