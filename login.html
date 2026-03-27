@@ -273,6 +273,22 @@
 <script src="/auth.js"></script>
 
 <script>
+  function hideMessages() {
+    var e = document.getElementById('error-message');
+    var s = document.getElementById('success-message');
+    if (e) { e.style.display = 'none'; e.textContent = ''; }
+    if (s) { s.style.display = 'none'; s.textContent = ''; }
+  }
+  function showError(msg) {
+    hideMessages();
+    var e = document.getElementById('error-message');
+    if (e) { e.textContent = msg; e.style.display = 'block'; }
+  }
+  function showSuccess(msg) {
+    hideMessages();
+    var s = document.getElementById('success-message');
+    if (s) { s.textContent = msg; s.style.display = 'block'; }
+  }
   document.addEventListener("DOMContentLoaded", async function() {
     showLogin();
     var params = new URLSearchParams(window.location.search);
