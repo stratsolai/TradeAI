@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy & Data Security Policy — StaxAI</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0d1628;
+      --bg2:          #172035;
+      --bg3:          #1e2d47;
+      --bg4:          #253554;
+      --card-border:  rgba(255,255,255,0.07);
+      --blue:         #1A5490;
+      --orange:       #c4622a;
+      --orange-light: #d4844a;
+      --muted:        rgba(255,255,255,0.70);
+      --text:         rgba(255,255,255,0.90);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* TOPBAR */
+    .topbar {
+      background: #4A6D8C;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .topbar-logo img { height: 36px; display: block; }
+    .topbar-nav { display: flex; align-items: center; margin-left: 64px; gap: 8px; }
+    .topbar-nav a {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 6px;
+      transition: background 0.2s;
+    }
+    .topbar-nav a:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    /* HERO */
+    .hero {
+      background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%);
+      border-bottom: 1px solid var(--card-border);
+      padding: 64px 32px 48px;
+      text-align: center;
+    }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(196,98,42,0.15);
+      border: 1px solid rgba(196,98,42,0.3);
+      color: var(--orange-light);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: clamp(36px, 5vw, 56px);
+      font-weight: 700;
+      line-height: 1.1;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .hero-meta {
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .hero-meta span { margin: 0 12px; }
+
+    /* LAYOUT */
+    .page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 56px 32px 80px;
+    }
+
+    /* SECTION */
+    .section {
+      background: var(--bg2);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 36px 40px;
+      margin-bottom: 24px;
+    }
+
+    .section-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--orange);
+      border-radius: 50%;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+    }
+
+    h3 {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--orange-light);
+      margin: 24px 0 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    p { color: var(--muted); margin-bottom: 14px; }
+    p:last-child { margin-bottom: 0; }
+
+    ul {
+      color: var(--muted);
+      padding-left: 20px;
+      margin-bottom: 14px;
+    }
+    ul li { margin-bottom: 8px; }
+    ul li:last-child { margin-bottom: 0; }
+
+    /* CALLOUT BOXES */
+    .callout {
+      background: rgba(26,84,144,0.15);
+      border: 1px solid rgba(26,84,144,0.3);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin: 16px 0;
+    }
+    .callout.positive {
+      background: rgba(34,197,94,0.08);
+      border-color: rgba(34,197,94,0.25);
+    }
+    .callout.orange {
+      background: rgba(196,98,42,0.1);
+      border-color: rgba(196,98,42,0.25);
+    }
+    .callout p { margin: 0; font-size: 15px; }
+    .callout-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .callout.positive .callout-label { color: #4ade80; }
+    .callout .callout-label { color: #60a5fa; }
+    .callout.orange .callout-label { color: var(--orange-light); }
+
+    /* DATA TABLE */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    .data-table th {
+      background: var(--bg3);
+      color: rgba(255,255,255,0.6);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .data-table td {
+      padding: 12px 14px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--card-border);
+      vertical-align: top;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table td strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+
+    /* SUBPROCESSORS */
+    .processor-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .processor-card {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .processor-name {
+      font-weight: 700;
+      color: #fff;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+    .processor-role {
+      font-size: 13px;
+      color: var(--orange-light);
+      margin-bottom: 6px;
+    }
+    .processor-location {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg3);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-bottom: 32px;
+    }
+    .toc-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 16px;
+    }
+    .toc ol {
+      padding-left: 20px;
+      color: var(--muted);
+    }
+    .toc ol li { margin-bottom: 8px; }
+    .toc a {
+      color: var(--orange-light);
+      text-decoration: none;
+    }
+    .toc a:hover { text-decoration: underline; }
+
+    /* CONTACT */
+    .contact-box {
+      background: linear-gradient(135deg, var(--bg3), var(--bg4));
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 32px 40px;
+      text-align: center;
+      margin-top: 32px;
+    }
+    .contact-box h2 {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 12px;
+    }
+    .contact-box p { margin-bottom: 20px; }
+    .contact-email {
+      display: inline-block;
+      background: var(--orange);
+      color: #fff;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 12px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .contact-email:hover { background: var(--orange-light); }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg2);
+      border-top: 1px solid var(--card-border);
+      padding: 24px 32px;
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.4);
+    }
+    footer a { color: rgba(255,255,255,0.5); text-decoration: none; }
+    footer a:hover { color: var(--orange-light); }
+
+    a { color: var(--orange-light); }
+
+    @media (max-width: 640px) {
+      .section { padding: 24px 20px; }
+      .page-wrap { padding: 32px 16px 60px; }
+      .processor-grid { grid-template-columns: 1fr; }
+      .hero { padding: 40px 16px 32px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      <a href="/index.html">
+        <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
+      </a>
+    </div>
+    <nav class="topbar-nav">
+      <a href="/index.html">Home</a>
+      <a href="/tools.html">Tools</a>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">Legal</div>
+    <h1>Privacy &amp; Data Security Policy</h1>
+    <div class="hero-meta">
+      <span>Effective: 27 March 2026</span>
+      <span>·</span>
+      <span>StaxAI — ABN 52 634 683 467</span>
+    </div>
+  </div>
+
+  <div class="page-wrap">
+
+    <!-- INTRO -->
+    <div class="section">
+      <p>This Privacy &amp; Data Security Policy explains what information StaxAI collects from you, how we use it, where it is stored, who can see it, and what your rights are. We have written this document in plain language because we believe you deserve to understand exactly what happens to your data — not just tick a box to get past a legal wall.</p>
+      <p>StaxAI is operated by Strategic Solutions (ABN 52 634 683 467). We are an Australian business and we take Australian privacy law seriously. This policy complies with the <strong>Privacy Act 1988 (Cth)</strong> and the <strong>Australian Privacy Principles (APPs)</strong>.</p>
+      <div class="callout positive">
+        <div class="callout-label">&#10003; Key commitment</div>
+        <p>Your business data is stored in Australia on AWS Sydney (ap-southeast-2) infrastructure. We do not sell your data, share it with advertisers, or use it for any purpose other than operating the platform on your behalf.</p>
+      </div>
+    </div>
+
+    <!-- TOC -->
+    <div class="toc">
+      <div class="toc-title">Contents</div>
+      <ol>
+        <li><a href="#s1">What information we collect</a></li>
+        <li><a href="#s2">How we use your information</a></li>
+        <li><a href="#s3">Where your data is stored</a></li>
+        <li><a href="#s4">AI processing and Anthropic</a></li>
+        <li><a href="#s5">Data security and encryption</a></li>
+        <li><a href="#s6">Who can see your data</a></li>
+        <li><a href="#s7">Third-party sub-processors</a></li>
+        <li><a href="#s8">Chatbot lead data</a></li>
+        <li><a href="#s9">How long we keep your data</a></li>
+        <li><a href="#s10">Your rights</a></li>
+        <li><a href="#s11">Cookies and analytics</a></li>
+        <li><a href="#s12">Changes to this policy</a></li>
+        <li><a href="#s13">Contact us</a></li>
+      </ol>
+    </div>
+
+    <!-- S1 -->
+    <div class="section" id="s1">
+      <div class="section-title"><span class="section-number">1</span>What information we collect</div>
+
+      <h3>Account information</h3>
+      <p>When you sign up, we collect your email address and a password (stored as a secure hash — we never store your password in plain text). This is the minimum required to create and secure your account.</p>
+
+      <h3>Business Profile</h3>
+      <p>To personalise the AI tools to your business, we ask you to complete a Business Profile. This includes your business name, trading name, ABN, trade or industry, location, services and products offered, team size, and marketing preferences. This information is stored in your account and used exclusively to make the AI output relevant to your business. You can update or delete it at any time.</p>
+
+      <h3>Content Library uploads</h3>
+      <p>When you upload documents, photos, or other files to the Content Library, or connect external sources (your website, Google Drive, or business email), that content is processed by our AI to extract useful business information. The raw files and the extracted information are stored in your account.</p>
+
+      <h3>Email data (AI Email Assistant)</h3>
+      <p>If you use the AI Email Assistant, you connect your personal Gmail or Outlook inbox via OAuth. We access your email metadata (sender, subject, date, preview) and use AI to summarise and categorise your emails. Email summaries are stored per user — no other user on your account can see your inbox. We do not read the full body of emails unless the subject and preview suggest it is relevant to your business.</p>
+
+      <h3>Subscription and billing</h3>
+      <p>When you subscribe, payment is processed entirely by Stripe. StaxAI never sees or stores your credit card number. We store your Stripe customer ID, your active tool subscriptions, and your billing status.</p>
+
+      <h3>Usage data</h3>
+      <p>We collect anonymised, aggregated data about how the platform is used — for example, which tools are most popular, how often features are used, and common content patterns. This data cannot be linked back to you as an individual and is used solely to improve the platform.</p>
+
+      <h3>Team member data</h3>
+      <p>If you invite team members to your account, we store their email address, security level, and the date they joined. This is used to manage access to your account.</p>
+    </div>
+
+    <!-- S2 -->
+    <div class="section" id="s2">
+      <div class="section-title"><span class="section-number">2</span>How we use your information</div>
+      <table class="data-table">
+        <thead>
+          <tr><th>Data</th><th>How we use it</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Account email</strong></td><td>Authentication, account recovery, transactional notifications (subscription confirmations, password resets)</td></tr>
+          <tr><td><strong>Business Profile</strong></td><td>Personalising all AI tool outputs to your specific business, trade, and location</td></tr>
+          <tr><td><strong>Content Library data</strong></td><td>Powering AI tools — the content you approve flows into the tools you have activated</td></tr>
+          <tr><td><strong>Email summaries</strong></td><td>Displaying your email dashboard within the AI Email Assistant only</td></tr>
+          <tr><td><strong>Subscription data</strong></td><td>Managing your active tools, trial status, and billing</td></tr>
+          <tr><td><strong>Usage data</strong></td><td>Anonymised product improvement only — never linked to your identity</td></tr>
+          <tr><td><strong>Team member data</strong></td><td>Access control only — who can log in to your account and what they can see</td></tr>
+        </tbody>
+      </table>
+      <p>We do not send marketing emails. Promotional offers are displayed as in-platform banners only. You will never receive unsolicited commercial email from StaxAI.</p>
+    </div>
+
+    <!-- S3 -->
+    <div class="section" id="s3">
+      <div class="section-title"><span class="section-number">3</span>Where your data is stored</div>
+
+      <div class="callout positive">
+        <div class="callout-label">&#10003; Data stored in Australia</div>
+        <p>Your business data is stored in the <strong>AWS Sydney region (ap-southeast-2)</strong>, located in Sydney, Australia. This covers your Business Profile, Content Library, email summaries, account data, and all tool outputs.</p>
+      </div>
+
+      <h3>How data storage works</h3>
+      <p>StaxAI uses <strong>Supabase</strong> as its database and authentication platform. Supabase operates on AWS infrastructure and your data is provisioned in the AWS Sydney data centre. Supabase is the direct data processor — AWS is their infrastructure provider. Both Supabase and AWS are US-headquartered companies operating Australian infrastructure. Your data does not leave Australia during normal platform use.</p>
+
+      <h3>The one exception — AI processing</h3>
+      <p>When you use an AI-powered feature (generating a social post, summarising emails, refreshing your news digest, analysing your strategic plan), the relevant content is temporarily transmitted to <strong>Anthropic's API in the United States</strong> for processing. This is explained in detail in Section 4. The result is returned to your account in Sydney. Anthropic does not store your content after processing is complete.</p>
+
+      <h3>Platform hosting</h3>
+      <p>The StaxAI web application is hosted on <strong>Vercel</strong>. Vercel's serverless functions — which handle all AI calls and data processing — run in the Sydney region (syd1). Stripe (payment processing) and SerpAPI (news search) operate from servers outside Australia. None of these services store your personal business data.</p>
+    </div>
+
+    <!-- S4 -->
+    <div class="section" id="s4">
+      <div class="section-title"><span class="section-number">4</span>AI processing and Anthropic</div>
+
+      <p>StaxAI is powered by <strong>Anthropic's Claude AI</strong>. When you use any AI feature on the platform, the relevant content from your account is sent to Anthropic's API for processing. This is how the AI reads your uploaded documents, summarises your emails, generates your social posts, and produces your strategic plan.</p>
+
+      <div class="callout orange">
+        <div class="callout-label">Important — overseas transmission</div>
+        <p>Anthropic is a US company. When AI processing occurs, your content is temporarily transmitted to servers in the United States. This is an overseas disclosure under the Australian Privacy Principles (APP 8). We disclose this transparently here.</p>
+      </div>
+
+      <h3>What Anthropic does with your data</h3>
+      <p>Under Anthropic's API terms of service (which govern our use of their API), content submitted via the API is <strong>not used to train Anthropic's AI models</strong> and is <strong>not retained by Anthropic</strong> after your request is processed. Your content goes in, the AI response comes back, and Anthropic does not keep a copy.</p>
+
+      <h3>What content is sent to Anthropic</h3>
+      <ul>
+        <li>Documents, photos, and files you upload to the Content Library (for AI extraction)</li>
+        <li>Email subject lines and previews (for AI Email Assistant categorisation and summarisation)</li>
+        <li>Your Business Profile context (so the AI can personalise outputs to your business)</li>
+        <li>News articles retrieved from web searches (for News Digest summarisation)</li>
+        <li>Your strategic planning inputs (for Strategic Plan generation)</li>
+        <li>Social post briefs (for Marketing &amp; Social Media Manager)</li>
+      </ul>
+
+      <h3>What content is never sent to Anthropic</h3>
+      <ul>
+        <li>Your password or authentication credentials</li>
+        <li>Your full email body content (only subject, sender, and preview are sent)</li>
+        <li>Your payment or billing information</li>
+        <li>OAuth tokens for Gmail, Outlook, or Google Drive</li>
+      </ul>
+
+      <h3>Why this is necessary</h3>
+      <p>The AI capabilities that make StaxAI valuable — personalised content generation, intelligent email summarisation, strategic business analysis — require Anthropic's API. There is no Australian-hosted equivalent that provides comparable capability. We have chosen to be fully transparent about this rather than obscure it in legal language.</p>
+    </div>
+
+    <!-- S5 -->
+    <div class="section" id="s5">
+      <div class="section-title"><span class="section-number">5</span>Data security and encryption</div>
+
+      <h3>Encryption at rest</h3>
+      <p>All data stored in Supabase (on AWS Sydney) is encrypted at rest using <strong>AES-256 encryption</strong> — the same standard used by banks and government agencies. This means that even if someone gained unauthorised access to the underlying storage infrastructure, your data would be unreadable without the encryption keys.</p>
+
+      <h3>Encryption in transit</h3>
+      <p>All data transmitted between your browser and StaxAI, and between StaxAI's servers and Supabase, is encrypted using <strong>TLS (HTTPS)</strong>. You will always see the padlock icon in your browser when using StaxAI. We do not support unencrypted HTTP connections.</p>
+
+      <h3>Access control</h3>
+      <p>Your data is protected by <strong>Row Level Security (RLS)</strong> — a database-level access control system that ensures every query is automatically filtered so you can only access your own data. Even within the platform, no user can read another user's data. RLS is enforced at the database level, not just the application level, meaning it cannot be bypassed by application bugs.</p>
+
+      <h3>Authentication security</h3>
+      <p>Passwords are hashed using industry-standard cryptographic functions before storage. We never store plain-text passwords. Authentication is managed by Supabase Auth, which follows security best practices including secure session token management and email verification.</p>
+
+      <h3>OAuth token storage</h3>
+      <p>If you connect Gmail, Outlook, or Google Drive, the OAuth access and refresh tokens are stored encrypted in your account profile. These tokens give StaxAI read access to the connected service on your behalf. You can revoke this access at any time from the Settings page, which deletes the stored tokens immediately.</p>
+
+      <h3>API key protection</h3>
+      <p>All sensitive API keys (Anthropic, Stripe, Google, Microsoft) are stored as encrypted environment variables on Vercel's servers and are never exposed to your browser. All AI calls are made server-side through Vercel serverless functions.</p>
+    </div>
+
+    <!-- S6 -->
+    <div class="section" id="s6">
+      <div class="section-title"><span class="section-number">6</span>Who can see your data</div>
+
+      <h3>You and your team members</h3>
+      <p>Your account data is accessible to you and any team members you have invited, subject to the security level you have assigned them. Level 1 (Account Owner) has full access. Level 2 (Manager) can access all tools and your Business Profile. Level 3 (Staff) can access activated tools only. The AI Email Assistant is always private — each user sees only their own inbox, regardless of security level.</p>
+
+      <h3>StaxAI administrators</h3>
+      <p>As the operator of StaxAI, we have administrative access to the Supabase database and can view data stored in any user account. We want to be honest about this because we believe you deserve to know. This access exists for legitimate purposes — diagnosing technical issues, investigating support requests, and ensuring the platform operates correctly.</p>
+      <p>We commit to the following: we will not access your account data without a legitimate reason, we will not share your data with any third party except as described in this policy, and we will not use your business content for any purpose other than operating the platform on your behalf. If we access your account to investigate a support issue, we will tell you we did so if you ask.</p>
+
+      <h3>Third parties</h3>
+      <p>We do not sell your data. We do not share your data with advertisers. We do not share your data with any third party except the sub-processors listed in Section 7, and only to the extent necessary to operate the platform.</p>
+
+      <h3>Legal requirements</h3>
+      <p>We may be required to disclose your data if compelled by Australian law, a court order, or a regulator with lawful authority to require disclosure. We will notify you of any such request where we are legally permitted to do so.</p>
+    </div>
+
+    <!-- S7 -->
+    <div class="section" id="s7">
+      <div class="section-title"><span class="section-number">7</span>Third-party sub-processors</div>
+      <p>The following companies process data on our behalf as part of operating the StaxAI platform. We have assessed each against our privacy and security requirements.</p>
+
+      <div class="processor-grid">
+        <div class="processor-card">
+          <div class="processor-name">Anthropic</div>
+          <div class="processor-role">AI processing</div>
+          <div class="processor-location">🇺🇸 United States — temporary processing only, no data retained</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">Supabase</div>
+          <div class="processor-role">Database &amp; authentication</div>
+          <div class="processor-location">🇦🇺 AWS Sydney (ap-southeast-2) — primary data storage</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">Vercel</div>
+          <div class="processor-role">Platform hosting &amp; functions</div>
+          <div class="processor-location">🇦🇺 Sydney region (syd1) — application hosting</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">Stripe</div>
+          <div class="processor-role">Payment processing</div>
+          <div class="processor-location">🇺🇸 United States — payment data only, no business data</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">Google</div>
+          <div class="processor-role">Gmail &amp; Google Drive OAuth</div>
+          <div class="processor-location">🇺🇸 United States — OAuth tokens for connected services only</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">Microsoft</div>
+          <div class="processor-role">Outlook OAuth</div>
+          <div class="processor-location">🇺🇸 United States — OAuth tokens for connected services only</div>
+        </div>
+        <div class="processor-card">
+          <div class="processor-name">SerpAPI</div>
+          <div class="processor-role">News search</div>
+          <div class="processor-location">🇺🇸 United States — search queries only, no personal data</div>
+        </div>
+      </div>
+
+      <p style="margin-top:16px;">Under Australian Privacy Principle 8, we disclose that some of these sub-processors are located overseas. By using StaxAI, you consent to these disclosures as necessary for the operation of the platform. We have taken reasonable steps to ensure each sub-processor handles data appropriately.</p>
+    </div>
+
+    <!-- S8 -->
+    <div class="section" id="s8">
+      <div class="section-title"><span class="section-number">8</span>Chatbot lead data</div>
+
+      <p>If you subscribe to the AI Website Chatbot tool and embed it on your own website, your customers may submit their contact details (name, email address, phone number) and enquiry information through the chatbot. This data is stored in your StaxAI account.</p>
+
+      <div class="callout orange">
+        <div class="callout-label">Important — your responsibility</div>
+        <p>When you embed the StaxAI chatbot on your website, <strong>you</strong> become the data controller for your customers' information. StaxAI is the data processor — we store and process that data on your instruction. You are responsible for ensuring your website visitors are informed that their data is being collected and for obtaining any consent required by applicable law.</p>
+      </div>
+
+      <p>StaxAI does not use your customers' contact details for any purpose other than displaying them to you in your chatbot dashboard. We do not contact your customers, add them to any mailing list, or share their information with any third party.</p>
+    </div>
+
+    <!-- S9 -->
+    <div class="section" id="s9">
+      <div class="section-title"><span class="section-number">9</span>How long we keep your data</div>
+
+      <p>While your account is active, we retain all data associated with your account. When you cancel your subscription and close your account, we retain your data for <strong>30 days</strong> to allow for account recovery in case of accidental cancellation. After 30 days, your data is permanently deleted from our systems.</p>
+
+      <p>Anonymised aggregate usage data (which cannot be linked to you) may be retained indefinitely as it is used for platform improvement.</p>
+
+      <p>If you request deletion of your account and data before the 30-day period, we will action that request within 5 business days. See Section 10 for how to make this request.</p>
+
+      <p>Stripe retains billing records and transaction history for their own legal and compliance requirements. This is governed by Stripe's privacy policy and is outside our control.</p>
+    </div>
+
+    <!-- S10 -->
+    <div class="section" id="s10">
+      <div class="section-title"><span class="section-number">10</span>Your rights</div>
+
+      <p>Under the Australian Privacy Principles, you have the following rights in relation to your personal information:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr><th>Right</th><th>What it means</th><th>How to exercise it</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Access</strong></td>
+            <td>You can request a copy of the personal information we hold about you</td>
+            <td>Email <a href="mailto:privacy@staxai.com.au">privacy@staxai.com.au</a></td>
+          </tr>
+          <tr>
+            <td><strong>Correction</strong></td>
+            <td>You can update your Business Profile and account details directly in the platform at any time</td>
+            <td>In-platform via your account settings</td>
+          </tr>
+          <tr>
+            <td><strong>Deletion</strong></td>
+            <td>You can request deletion of your account and all associated data</td>
+            <td>Email <a href="mailto:privacy@staxai.com.au">privacy@staxai.com.au</a></td>
+          </tr>
+          <tr>
+            <td><strong>Complaint</strong></td>
+            <td>If you believe we have mishandled your personal information, you can lodge a complaint with us or with the Office of the Australian Information Commissioner (OAIC)</td>
+            <td>Email <a href="mailto:privacy@staxai.com.au">privacy@staxai.com.au</a> or <a href="https://www.oaic.gov.au" target="_blank">oaic.gov.au</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>We will respond to all privacy requests within 30 days. If your request is complex, we will acknowledge it within 5 business days and provide a timeline for resolution.</p>
+    </div>
+
+    <!-- S11 -->
+    <div class="section" id="s11">
+      <div class="section-title"><span class="section-number">11</span>Cookies and analytics</div>
+      <p>StaxAI uses essential cookies only — small files stored in your browser that are necessary for the platform to function, such as keeping you logged in. We do not use advertising cookies, tracking pixels, or third-party analytics platforms that profile your behaviour across the web.</p>
+      <p>We use anonymised aggregate usage data (collected within our own platform) to understand how the product is being used. This is not cookie-based tracking and does not involve any third-party analytics service.</p>
+      <p>StaxAI does not display advertisements and does not allow advertisers to target you based on your usage of the platform.</p>
+    </div>
+
+    <!-- S12 -->
+    <div class="section" id="s12">
+      <div class="section-title"><span class="section-number">12</span>Changes to this policy</div>
+      <p>We may update this Privacy &amp; Data Security Policy from time to time as the platform evolves. When we make material changes, we will notify you via an in-platform banner at least 14 days before the changes take effect. The effective date at the top of this document will always reflect the most recent version.</p>
+      <p>Continued use of the platform after the effective date of any changes constitutes acceptance of the updated policy. If you do not agree with a material change, you may close your account before the change takes effect.</p>
+    </div>
+
+    <!-- S13 / CONTACT -->
+    <div class="contact-box" id="s13">
+      <h2>Privacy questions or concerns?</h2>
+      <p>We are committed to handling your data responsibly. If you have any questions about this policy, want to access or delete your data, or have a privacy concern you'd like to raise, please get in touch.</p>
+      <a href="mailto:privacy@staxai.com.au" class="contact-email">privacy@staxai.com.au</a>
+      <p style="margin-top:20px;font-size:13px;color:rgba(255,255,255,0.4);">Strategic Solutions &nbsp;·&nbsp; ABN 52 634 683 467 &nbsp;·&nbsp; staxai.com.au</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>&copy; 2026 StaxAI — Strategic Solutions ABN 52 634 683 467 &nbsp;·&nbsp; <a href="/privacy-policy.html">Privacy &amp; Data Security</a> &nbsp;·&nbsp; <a href="/terms-of-service.html">Terms of Service</a></p>
+  </footer>
+
+</body>
+</html>
