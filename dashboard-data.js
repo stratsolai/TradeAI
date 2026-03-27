@@ -77,13 +77,14 @@ window.DASH_DATA = (function() {
     var userId = user.id;
     var activeTools = [];
     try {
-      var pr = await window.supabaseClient.from('profiles').select('activated_tools').eq('id', userId).single();
+      var pr = await window.supabaseClient.from('profiles').select('activated_tools, trial_expires_at, is_trial, bundle_tier').eq('id', userId).single();
       if (pr.data && Array.isArray(pr.data.activated_tools)) activeTools = pr.data.activated_tools;
     } catch(e) {}
     await loadNotifications(userId);
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
       await window.DASH_WIDGETS.renderAll(userId, activeTools);
     }
+    renderTrialBanner(pr.data);
     renderStax(activeTools);
   }
 
@@ -122,6 +123,51 @@ window.DASH_DATA = (function() {
     if (!toolId) return;
     DASH_DATA.activateTool(toolId);
   });
+
+  function renderTrialBanner(profile) {
+    var DISMISS_KEY = 'trial_banner_dismissed';
+    var banner = document.getElementById('trial-banner');
+    var msg = document.getElementById('trial-banner-msg');
+    var cta = document.getElementById('trial-banner-cta');
+    var dismiss = document.getElementById('trial-banner-dismiss');
+    if (!banner || !profile) return;
+    if (!profile.is_trial || !profile.trial_expires_at) return;
+    if (sessionStorage.getItem(DISMISS_KEY) === 'true') return;
+    var now = new Date();
+    var expires = new Date(profile.trial_expires_at);
+    var msLeft = expires - now;
+    var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    var bannerClass, bannerMsg;
+    if (daysLeft <= 0) {
+      bannerClass = 'trial-banner--expired';
+      bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
+    } else if (daysLeft <= 1) {
+      bannerClass = 'trial-banner--urgent';
+      bannerMsg = 'Your free trial ends tomorrow.';
+    } else if (daysLeft <= 3) {
+      bannerClass = 'trial-banner--warning';
+      bannerMsg = '3 days left on your free trial.';
+    } else if (daysLeft <= 7) {
+      bannerClass = 'trial-banner--info';
+      bannerMsg = 'Your free trial ends in 7 days. Subscribe to keep your Stax.';
+    } else {
+      return;
+    }
+    banner.className = 'trial-banner ' + bannerClass + ' visible';
+    msg.textContent = bannerMsg;
+    var tier = profile.bundle_tier;
+    cta.onclick = function() {
+      if (tier === 'stax3' || tier === 'stax6') {
+        window.location.href = 'subscribe-confirm.html?tier=' + tier;
+      } else {
+        window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
+      }
+    };
+    dismiss.onclick = function() {
+      sessionStorage.setItem(DISMISS_KEY, 'true');
+      banner.classList.remove('visible');
+    };
+  }
 
   return { init: init, activateTool: activateTool };
 
