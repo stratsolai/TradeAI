@@ -273,6 +273,12 @@
 <script src="/auth.js"></script>
 
 <script>
+  function hideMessages() {
+    var em = document.getElementById('error-message');
+    var sm = document.getElementById('success-message');
+    if (em) { em.style.display = 'none'; em.textContent = ''; }
+    if (sm) { sm.style.display = 'none'; sm.textContent = ''; }
+  }
   document.addEventListener("DOMContentLoaded", async function() {
     showLogin();
     var params = new URLSearchParams(window.location.search);
