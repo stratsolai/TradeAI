@@ -1,8 +1,8 @@
 // Wait for Supabase to load, then initialize
 (function() {
   // Your Supabase credentials
-  const SUPABASE_URL = 'https://ogdeckglmqyleahwfuqs.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9nZGVja2dsbXF5bGVhaHdmdXFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE5NjE0NzksImV4cCI6MjA4NzUzNzQ3OX0.-Qvuw_5ZcEFkG2c6YrVwd_fbhm1OjO-wABceCq74M68';
+  const SUPABASE_URL = 'https://yzojtzghzbpqsfujxrxl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl6b2p0emdoemJwcXNmdWp4cnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1ODQ0ODksImV4cCI6MjA5MDE2MDQ4OX0.rmgiZFvV1jKScXQFAz3vVDMQyO0e0svK3kzxc_PNmrI';
 
   // Wait for Supabase library to load
   function initSupabase() {
