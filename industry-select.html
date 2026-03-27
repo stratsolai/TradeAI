@@ -36,7 +36,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
 .bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
 .topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
-.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
+.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
 
 /* ── HERO ── */
 .atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
@@ -230,7 +230,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .hiw-panel{padding:0 24px;padding-top:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center;}
 .hiw-header{margin-bottom:32px;text-align:center;}
 .hiw-eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-bottom:32px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.hiw-eyebrow::before,.hiw-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(135deg,#d4844a,#d4a04a);opacity:0.5;flex-shrink:0;}
+.hiw-eyebrow::before{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);opacity:1;flex-shrink:0;}.hiw-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,#d4844a,transparent);opacity:1;flex-shrink:0;}
 .hiw-heading{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;text-transform:uppercase;line-height:0.95;letter-spacing:-0.5px;color:#e8d5b8;margin-bottom:0px;}
 .hiw-steps{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;width:100%;}
 .hiw-steps::before{display:none;}
@@ -241,7 +241,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .hiw-step-title span{color:#c4622a;}.hiw-connector{width:2px;height:30px;background:linear-gradient(to bottom,rgba(26,84,144,0.85),rgba(26,84,144,0.35));border-radius:2px;margin:0 auto;}.wyg-panel{padding:0 24px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;}.wyg-item{display:flex;align-items:flex-start;gap:12px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.07);}.wyg-item:last-child{border-bottom:none;}.wyg-icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}.wyg-body{}.wyg-title{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:4px;}.wyg-title-price{}.wyg-desc{font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;}
 .hiw-step-desc{font-size:15px;color:rgba(255,255,255,0.92);line-height:1.55;max-width:200px;margin:0 auto;}
 
-.btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#c4622a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
+.btn-see-all-orange{display:inline-flex;align-items:center;gap:8px;background:#c4622a;color:#fff;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.5px;padding:10px 22px;border-radius:6px;text-decoration:none;transition:background 0.2s;}
 .btn-see-all-orange:hover{background:#d4844a;}
 
     .topbar-spacer { flex: 1; }
@@ -459,7 +459,7 @@ footer {
   </div>
   <div class="topbar-actions">
     <a href="/login" class="btn-signin">Sign In</a>
-    <a href="/tools?workflow=trial" class="btn-trial">Start Free Trial</a>
+    <a href="/pricing-page.html" class="btn-trial">Start Free Trial</a>
   </div>
 </div>
 
