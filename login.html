@@ -279,6 +279,16 @@
     if (em) { em.style.display = 'none'; em.textContent = ''; }
     if (sm) { sm.style.display = 'none'; sm.textContent = ''; }
   }
+  function showError(msg) {
+    hideMessages();
+    var em = document.getElementById('error-message');
+    if (em) { em.textContent = msg; em.style.display = 'block'; }
+  }
+  function showSuccess(msg) {
+    hideMessages();
+    var sm = document.getElementById('success-message');
+    if (sm) { sm.textContent = msg; sm.style.display = 'block'; }
+  }
   document.addEventListener("DOMContentLoaded", async function() {
     showLogin();
     var params = new URLSearchParams(window.location.search);
