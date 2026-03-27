@@ -1302,7 +1302,7 @@ footer {
     var ctaBtn = document.getElementById('cta-btn');
     if (ctaBtn) {
       if (tool.status === 'built') {
-        ctaBtn.textContent = 'Start 14 Day Free Trial →';
+        ctaBtn.textContent = 'Start 14 Day Free Trial';
         ctaBtn.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
       } else {
         ctaBtn.textContent = 'Notify Me When Live';
@@ -1312,7 +1312,7 @@ footer {
     var ctaFooter = document.getElementById('cta-btn-footer');
     if (ctaFooter) {
       if (tool.status === 'built') {
-        ctaFooter.textContent = 'Start 14 Day Free Trial →';
+        ctaFooter.textContent = 'Start 14 Day Free Trial';
         ctaFooter.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
       } else {
         ctaFooter.textContent = 'Notify Me When Live';
