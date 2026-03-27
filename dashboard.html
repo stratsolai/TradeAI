@@ -149,6 +149,20 @@
     .btn-stax-activate:hover { background: #FEF2EC; }
     .btn-stax-learn { display: inline-block; padding: 6px 14px; background: #4A6D8C; color: #FFFFFF; border: 1.5px solid #4A6D8C; border-radius: 8px; font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; }
     .btn-stax-learn:hover { background: #3d5f7a; }
+
+    /* Trial Banner */
+    .trial-banner { display: none; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-radius: 10px; margin: 0 0 24px 0; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; }
+    .trial-banner.trial-banner--info    { background: #e8f0fe; border: 1px solid #4A6D8C; color: #1F3864; }
+    .trial-banner.trial-banner--warning  { background: #fff8e1; border: 1px solid #FFC000; color: #7a5000; }
+    .trial-banner.trial-banner--urgent   { background: #fdecea; border: 1px solid #c0392b; color: #7a1010; }
+    .trial-banner.trial-banner--expired  { background: #f2f2f2; border: 1px solid #aaaaaa; color: #555555; }
+    .trial-banner.visible { display: flex; }
+    .trial-banner__msg { flex: 1; }
+    .trial-banner__actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .trial-banner__cta { background: #c4622a; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .trial-banner__cta:hover { background: #a8521f; }
+    .trial-banner__dismiss { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; color: inherit; opacity: 0.6; padding: 0 4px; }
+    .trial-banner__dismiss:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -171,6 +185,13 @@
   <div id="notification-bar"></div>
 
   <main class="main">
+    <div class="trial-banner" id="trial-banner" role="alert">
+      <span class="trial-banner__msg" id="trial-banner-msg"></span>
+      <div class="trial-banner__actions">
+        <button class="trial-banner__cta" id="trial-banner-cta">Subscribe Now</button>
+        <button class="trial-banner__dismiss" id="trial-banner-dismiss" aria-label="Dismiss">×</button>
+      </div>
+    </div>
     <p class="welcome-strip" id="welcome-strip">Welcome back.</p>
     <h2 class="section-heading">LIVE <span class="accent">INTELLIGENCE</span></h2>
     <div class="panel-grid">
