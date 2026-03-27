@@ -60,7 +60,7 @@ module.exports = async (req, res) => {
       
       if (userId && toolId) {
         console.log(`Attempting to activate ${toolId} for user ${userId}`);
-        await activateTool(userId, toolId);
+        await confirmSubscription(session);
         console.log(`Successfully activated ${toolId} for user ${userId}`);
       } else {
         console.error('Missing userId or toolId in webhook');
@@ -81,6 +81,45 @@ module.exports = async (req, res) => {
 };
 
 // Activate tool for user
+
+async function confirmSubscription(session) {
+  try {
+    var meta = session.metadata || {};
+    var userId = meta.userId || session.client_reference_id;
+    var tier = meta.tier || null;
+    if (!userId) {
+      console.error("confirmSubscription: no userId in session metadata");
+      return;
+    }
+    var updatePayload = {
+      is_trial: false,
+      trial_expires_at: null,
+      bundle_tier: tier
+    };
+    var res = await fetch(
+      process.env.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId,
+      {
+        method: "PATCH",
+        headers: {
+          "apikey": process.env.SUPABASE_SERVICE_KEY,
+          "Authorization": "Bearer " + process.env.SUPABASE_SERVICE_KEY,
+          "Content-Type": "application/json",
+          "Prefer": "return=minimal"
+        },
+        body: JSON.stringify(updatePayload)
+      }
+    );
+    if (!res.ok) {
+      var errText = await res.text();
+      console.error("confirmSubscription PATCH failed:", res.status, errText);
+    } else {
+      console.log("confirmSubscription: profiles updated for userId", userId, "tier", tier);
+    }
+  } catch (err) {
+    console.error("confirmSubscription error:", err);
+  }
+}
+
 async function activateTool(userId, toolId) {
   const https = require('https');
   
