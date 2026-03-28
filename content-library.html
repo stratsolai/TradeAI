@@ -940,7 +940,7 @@
     .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
     .topbar-account-btn:hover { text-decoration: none; color: #fff; }
     .topbar-nav a:hover{color:#fff;}
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
+    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
     .account-dropdown.open { display: block; }
     .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--border); }
     .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
@@ -1317,7 +1317,6 @@
         <div class="topbar-account-wrap">
           <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
           <div class="account-dropdown" id="account-dropdown">
-            <div class="account-dropdown-email" id="account-dropdown-email">—</div>
             <a href="/account" class="account-dropdown-item">Account Management</a>
             <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
           </div>
@@ -1628,8 +1627,7 @@ let generatedPostText = '';
       const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
       if (!user || _authErr) { window.location.href = "/login"; return; }
       const email = user.email || "";
-      document.getElementById("account-dropdown-email").textContent = email;
-      document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
+      document.getElementById("account-email-short").textContent = "Account";
       const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
       const ws = document.getElementById("welcome-strip");
       ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
