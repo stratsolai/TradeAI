@@ -165,20 +165,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!authData || !authData.user) { window.location.href = '/login.html'; return; }
   const user = authData.user;
 
-  // -- Account dropdown --
-  const emailShortEl = document.getElementById('account-email-short');
-  if (emailShortEl) emailShortEl.textContent = 'Account';
-  const dropdownEmailEl = document.getElementById('account-dropdown-email');
-  
 
-  
-  const signOutBtn = document.getElementById('sign-out-btn');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', async function() {
-      await supabase.auth.signOut();
-      window.location.href = '/login.html';
-    });
-  }
 
   // -- Load profile --
   const { data: profile } = await supabase
@@ -197,6 +184,42 @@ document.addEventListener('DOMContentLoaded', async function() {
     const listEl = document.getElementById(provider + '-connections-list');
     if (!listEl) return;
     const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
+
+  })();
+
+
+    var _ab = document.getElementById("account-btn"); if (_ab) _ab.addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
+    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
+    var _sb = document.getElementById("sign-out-btn"); if (_sb) _sb.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "/login"; });
+    var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
+    window.dashboardInit = async function() {
+      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
+      if (!user || _authErr) { window.location.href = "/login"; return; }
+      const email = user.email || "";
+      document.getElementById("account-email-short").textContent = "Account";
+      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
+      const ws = document.getElementById("welcome-strip");
+      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
+      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
+    };
+    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
+  
+window.CORE_TOOLS = [
+  { id: "social", name: "Marketing & Social Media" },
+  { id: "email", name: "AI Email Assistant" },
+  { id: "chatbot", name: "AI Website Chatbot" },
+  { id: "news-digest", name: "Industry News Digest" },
+  { id: "bi", name: "Business Intelligence" },
+  { id: "strategic-plan", name: "Strategic Plan" },
+  { id: "tender", name: "Tender Response Generator" },
+  { id: "quote-enhancer", name: "Quote Enhancer" },
+  { id: "swms", name: "SWMS & Safety Docs" },
+  { id: "customer-updates", name: "Customer Progress Updates" },
+  { id: "handover-docs", name: "Handover Documentation" },
+  { id: "review-booster", name: "Review & Referral Booster" },
+  { id: "design-viz", name: "Design Visualiser" }
+];
+
     if (providerEmails.length === 0) {
       listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No accounts connected</div>';
     } else {
