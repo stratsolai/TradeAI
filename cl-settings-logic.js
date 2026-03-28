@@ -339,14 +339,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 
-document.addEventListener('DOMContentLoaded', function() {
-  var acctBtn = document.getElementById('account-btn');
-  var acctDropdown = document.getElementById('account-dropdown');
-  if (acctBtn && acctDropdown) {
-    acctBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      acctDropdown.classList.toggle('open');
-    });
     document.addEventListener('click', function() {
       acctDropdown.classList.remove('open');
     });
