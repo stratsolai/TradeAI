@@ -328,7 +328,7 @@
       <a href="/content-library.html" class="topbar-nav-link">Content Library</a>
       <div class="topbar-account-wrap">
         <button class="account-btn" id="account-btn">
-          <span id="account-email-short">Account</span> &#9660;
+          <span id="account-email-short">Account</span> ▾
         </button>
         <div class="account-dropdown" id="account-dropdown">
           <a href="/account.html" class="account-dropdown-item">Account Management</a>
@@ -491,17 +491,19 @@
     })();
   
     // Account dropdown toggle
-        var accountBtn = document.getElementById('account-btn');
+        document.addEventListener('DOMContentLoaded', function() {
+    var accountBtn = document.getElementById('account-btn');
     var accountDropdown = document.getElementById('account-dropdown');
-    if (accountBtn) {
+    if (accountBtn && accountDropdown) {
       accountBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         accountDropdown.classList.toggle('open');
       });
+      document.addEventListener('click', function() {
+        accountDropdown.classList.remove('open');
+      });
     }
-    document.addEventListener('click', function() {
-      if (accountDropdown) accountDropdown.classList.remove('open');
-    });
+  });
   </script>
 
 </body>
