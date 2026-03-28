@@ -263,6 +263,18 @@
     .btn-save-urls:hover { background: #154070; }
     /* Connection row control — override for non-toggle rows */
     .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; min-width: 200px; }
+
+    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
+    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
+    .topbar-nav a:hover{color:#fff;}
+    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
+    .account-dropdown.open { display: block; }
+    
+    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
+    .account-dropdown-item:hover { background: var(--bg-page); }
+
+    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
+    .account-btn:hover { color: #fff; }
 </style>
 </head>
 <body>
@@ -278,7 +290,16 @@
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
       <a href="/content-library.html" class="topbar-nav-link">Content Library</a>
-    </div>
+    
+      <div class="topbar-right">
+        <a href="/library/settings" class="topbar-nav-link">Settings</a>
+        <div class="topbar-account-wrap">
+          <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+          <div class="account-dropdown" id="account-dropdown">
+            <a href="/account" class="account-dropdown-item">Account Management</a>
+            <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+          </div>
+        </div></div>
   </nav>
 
   <!-- PAGE -->
