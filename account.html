@@ -12,11 +12,9 @@
   <script src="/tools-data.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg:           #F5F7FA;
       --card:         #FFFFFF;
-      --topbar:       #4A6D8C;
       --orange:       #c4622a;
       --orange-light: #d4844a;
       --navy:         #1A3A5C;
@@ -32,467 +30,154 @@
       --shadow:       0 1px 4px rgba(0,0,0,0.08);
       --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
     }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height: 100vh; }
 
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── TOPBAR ── */
+    /* TOPBAR */
     .topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 68px;
-      background: var(--topbar);
-      display: flex;
-      align-items: center;
-      padding: 0 28px;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: fixed; top: 0; left: 0; right: 0; height: 68px;
+      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+      display: flex; align-items: center; padding: 0 28px;
+      z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .topbar-logo {
-      font-family: var(--font-head);
-      font-size: 22px;
-      font-weight: 700;
-      color: #fff;
-      text-decoration: none;
-      letter-spacing: 0.5px;
-    }
-    .topbar-logo span { color: var(--orange); }
-    .topbar-dash-link {
-      color: rgba(255,255,255,0.85);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      margin-left: 64px;
-      transition: color 0.2s;
-    }
-    .topbar-dash-link:hover { color: #fff; }
+    .topbar-logo img { height: 36px; display: block; }
+    .topbar-logo { text-decoration: none; }
+    .topbar-nav { display: flex; align-items: center; margin-left: 64px; }
+    .topbar-back { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .topbar-back:hover { color: #fff; }
     .topbar-spacer { flex: 1; }
-    .topbar-account { position: relative; }
-    .topbar-account-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.25);
-      border-radius: 6px;
-      padding: 6px 14px;
-      color: #fff;
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .topbar-account-btn:hover { background: rgba(255,255,255,0.22); }
-    .topbar-account-btn svg { width: 16px; height: 16px; }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-md);
-      min-width: 200px;
-      overflow: hidden;
-      z-index: 200;
-    }
+    .topbar-right { display: flex; align-items: center; gap: 20px; }
+    .topbar-nav-link { color: rgba(255,255,255,0.85); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+    .topbar-nav-link:hover { color: #fff; }
+    .topbar-account-wrap { position: relative; }
+    .account-btn { background: none; border: none; color: rgba(255,255,255,0.85); font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--font-body); padding: 0; transition: color 0.2s; }
+    .account-btn:hover { color: #fff; }
+    .account-dropdown { display: none; position: absolute; top: calc(100% + 10px); right: 0; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); min-width: 220px; overflow: hidden; z-index: 200; }
     .account-dropdown.open { display: block; }
-    .account-dropdown a {
-      display: block;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: var(--text);
-      text-decoration: none;
-      transition: background 0.15s;
-    }
-    .account-dropdown a:hover { background: var(--bg); }
-    .account-dropdown a.active {
-      color: var(--orange);
-      font-weight: 600;
-    }
-    .account-dropdown .dd-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 4px 0;
-    }
-    .account-dropdown a.signout { color: var(--danger); }
+    .account-dropdown-email { padding: 10px 16px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); }
+    .account-dropdown-item { display: block; width: 100%; padding: 11px 16px; font-size: 14px; color: var(--text); text-decoration: none; background: none; border: none; text-align: left; cursor: pointer; font-family: var(--font-body); transition: background 0.15s; }
+    .account-dropdown-item:hover { background: var(--bg); }
+    .account-dropdown-item.active-page { color: var(--orange); font-weight: 600; }
 
-    /* ── PAGE LAYOUT ── */
-    .page-wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 100px 24px 60px;
-    }
-    .page-heading {
-      font-family: var(--font-head);
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-      letter-spacing: 0.3px;
-    }
-    .page-subheading {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 36px;
-    }
+    /* PAGE */
+    .page-wrap { max-width: 860px; margin: 0 auto; padding: 100px 24px 60px; }
+    .page-heading { font-family: var(--font-head); font-size: 32px; font-weight: 700; color: var(--navy); margin-bottom: 6px; letter-spacing: 0.3px; }
+    .page-subheading { font-size: 14px; color: var(--muted); margin-bottom: 36px; }
 
-    /* ── SECTION CARDS ── */
-    .section-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .section-header {
-      padding: 18px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .section-title {
-      font-family: var(--font-head);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--navy);
-      letter-spacing: 0.3px;
-    }
+    /* SECTION CARDS */
+    .section-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 24px; overflow: hidden; }
+    .section-header { padding: 18px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .section-title { font-family: var(--font-head); font-size: 18px; font-weight: 600; color: var(--navy); letter-spacing: 0.3px; }
     .section-body { padding: 24px; }
 
-    /* ── SUBSCRIPTIONS ── */
-    .sub-empty {
-      text-align: center;
-      padding: 32px 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .sub-empty a {
-      color: var(--orange);
-      text-decoration: none;
-      font-weight: 600;
-    }
+    /* SUBSCRIPTIONS */
+    .sub-empty { text-align: center; padding: 32px 0; color: var(--muted); font-size: 14px; }
+    .sub-empty a { color: var(--orange); text-decoration: none; font-weight: 600; }
     .sub-list { display: flex; flex-direction: column; gap: 12px; }
-    .sub-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 16px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-    .sub-icon {
-      width: 40px; height: 40px;
-      background: var(--navy);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      flex-shrink: 0;
-    }
+    .sub-item { display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+    .sub-icon { width: 40px; height: 40px; background: var(--navy); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .sub-info { flex: 1; }
-    .sub-name {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text);
-    }
-    .sub-desc {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .sub-price {
-      font-family: var(--font-head);
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--navy);
-      white-space: nowrap;
-    }
+    .sub-name { font-weight: 600; font-size: 14px; color: var(--text); }
+    .sub-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .sub-price { font-family: var(--font-head); font-size: 16px; font-weight: 600; color: var(--navy); white-space: nowrap; }
 
-    /* ── BILLING ── */
-    .billing-body {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    .billing-text {
-      font-size: 14px;
-      color: var(--muted);
-      max-width: 480px;
-      line-height: 1.5;
-    }
+    /* BILLING */
+    .billing-body { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .billing-text { font-size: 14px; color: var(--muted); max-width: 480px; line-height: 1.5; }
 
-    /* ── USER MANAGEMENT ── */
+    /* TEAM */
     .team-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-    .team-item {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding: 12px 16px;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-    .team-avatar {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--navy-light);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-head);
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-    }
+    .team-item { display: flex; align-items: center; gap: 14px; padding: 12px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; }
+    .team-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--navy-light); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 15px; font-weight: 700; color: #fff; flex-shrink: 0; }
     .team-info { flex: 1; min-width: 0; }
-    .team-email {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .team-meta {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .level-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      white-space: nowrap;
-    }
+    .team-email { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .team-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .level-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
     .level-1 { background: rgba(196,98,42,0.12); color: var(--orange); }
     .level-2 { background: rgba(26,58,92,0.10); color: var(--navy); }
     .level-3 { background: rgba(107,124,147,0.15); color: var(--muted); }
-    .pending-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      background: rgba(196,98,42,0.10);
-      color: var(--orange);
-      white-space: nowrap;
-    }
-
+    .pending-badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 20px; background: rgba(196,98,42,0.10); color: var(--orange); white-space: nowrap; }
     .team-actions { display: flex; gap: 8px; }
 
-    /* ── INVITE SECTION ── */
-    .invite-section {
-      border-top: 1px solid var(--border);
-      padding-top: 24px;
-      margin-top: 8px;
-    }
-    .invite-title {
-      font-family: var(--font-head);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--navy);
-      margin-bottom: 14px;
-    }
-    .invite-form {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: flex-end;
-    }
+    /* INVITE */
+    .invite-section { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 8px; }
+    .invite-title { font-family: var(--font-head); font-size: 15px; font-weight: 600; color: var(--navy); margin-bottom: 14px; }
+    .invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
     .invite-form .field { display: flex; flex-direction: column; gap: 5px; }
-    .invite-form label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .invite-form input,
-    .invite-form select {
-      height: 38px;
-      padding: 0 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      color: var(--text);
-      background: #fff;
-      outline: none;
-      transition: border-color 0.2s;
-    }
+    .invite-form label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+    .invite-form input, .invite-form select { height: 38px; padding: 0 12px; border: 1px solid var(--border); border-radius: 6px; font-family: var(--font-body); font-size: 14px; color: var(--text); background: #fff; outline: none; transition: border-color 0.2s; }
     .invite-form input { width: 260px; }
-    .invite-form input:focus,
-    .invite-form select:focus { border-color: var(--navy-light); }
-    .invite-max-msg {
-      font-size: 13px;
-      color: var(--muted);
-      padding: 12px 0;
-    }
+    .invite-form input:focus, .invite-form select:focus { border-color: var(--navy-light); }
+    .invite-max-msg { font-size: 13px; color: var(--muted); padding: 12px 0; }
 
-    /* ── ACCOUNT DETAILS ── */
-    .detail-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--border);
-    }
+    /* ACCOUNT DETAILS */
+    .detail-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid var(--border); }
     .detail-row:last-child { border-bottom: none; }
-    .detail-label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .detail-value {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-    }
+    .detail-label { font-size: 13px; color: var(--muted); font-weight: 500; }
+    .detail-value { font-size: 14px; font-weight: 500; color: var(--text); }
 
-    /* ── BUTTONS ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      height: 38px;
-      padding: 0 18px;
-      border-radius: 6px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      text-decoration: none;
-      transition: opacity 0.2s, background 0.2s;
-      white-space: nowrap;
-    }
+    /* BUTTONS */
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 18px; border-radius: 6px; font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; border: none; text-decoration: none; transition: opacity 0.2s, background 0.2s; white-space: nowrap; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-primary { background: var(--orange); color: #fff; }
     .btn-primary:hover { background: var(--orange-light); }
     .btn-navy { background: var(--navy); color: #fff; }
     .btn-navy:hover { opacity: 0.88; }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
     .btn-outline:hover { border-color: var(--navy-light); color: var(--navy); }
-    .btn-danger-outline {
-      background: transparent;
-      border: 1px solid #e2b8b8;
-      color: var(--danger);
-      font-size: 12px;
-      height: 30px;
-      padding: 0 12px;
-    }
+    .btn-danger-outline { background: transparent; border: 1px solid #e2b8b8; color: var(--danger); font-size: 12px; height: 30px; padding: 0 12px; }
     .btn-danger-outline:hover { background: rgba(192,57,43,0.06); }
-    .btn-sm-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 12px;
-      height: 30px;
-      padding: 0 12px;
-    }
+    .btn-sm-outline { background: transparent; border: 1px solid var(--border); color: var(--muted); font-size: 12px; height: 30px; padding: 0 12px; }
     .btn-sm-outline:hover { border-color: var(--navy-light); color: var(--navy); }
 
-    /* ── MESSAGES ── */
-    .msg {
-      display: none;
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 16px;
-    }
+    /* MESSAGES */
+    .msg { display: none; padding: 12px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 16px; }
     .msg.show { display: block; }
     .msg-error { background: rgba(192,57,43,0.08); color: var(--danger); border: 1px solid rgba(192,57,43,0.2); }
     .msg-success { background: rgba(26,122,74,0.08); color: var(--success); border: 1px solid rgba(26,122,74,0.2); }
 
-    /* ── LOADER ── */
-    .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid rgba(0,0,0,0.1);
-      border-top-color: var(--orange);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
+    /* LOADER */
+    .spinner { width: 20px; height: 20px; border: 2px solid rgba(0,0,0,0.1); border-top-color: var(--orange); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 20px 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
+    .loading-row { display: flex; align-items: center; gap: 10px; padding: 20px 0; color: var(--muted); font-size: 14px; }
 
-    /* ── LEVEL-BASED VISIBILITY ── */
     .owner-only { display: none; }
-    .manager-hidden { display: none; }
   </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
-<header class="topbar">
-  <a href="/index.html" class="topbar-logo">Stax<span>AI</span></a>
-  <a href="/dashboard.html" class="topbar-dash-link">Dashboard</a>
+<nav class="topbar">
+  <a class="topbar-logo" href="/dashboard.html"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" /></a>
+  <div class="topbar-nav"><a class="topbar-back" href="/dashboard.html">Dashboard</a></div>
   <div class="topbar-spacer"></div>
-  <div class="topbar-account">
-    <button class="topbar-account-btn" id="accountBtn">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-      <span id="accountLabel">Account</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-    <div class="account-dropdown" id="accountDropdown">
-      <a href="/account.html" class="active">Account Management</a>
-      <div class="dd-divider"></div>
-      <a href="#" id="signOutLink" class="signout">Sign Out</a>
+  <div class="topbar-right">
+    <a class="topbar-nav-link" href="#" id="topbarToolLink" style="display:none"></a>
+    <div class="topbar-account-wrap">
+      <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9660;</button>
+      <div class="account-dropdown" id="account-dropdown">
+        <div class="account-dropdown-email" id="account-dropdown-email"></div>
+        <a href="/account.html" class="account-dropdown-item active-page">Account Management</a>
+        <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+      </div>
     </div>
   </div>
-</header>
+</nav>
 
-<!-- PAGE -->
 <main class="page-wrap">
   <h1 class="page-heading">Account Management</h1>
   <p class="page-subheading">Manage your subscriptions, billing, and team.</p>
 
-  <!-- GLOBAL MESSAGE -->
   <div class="msg msg-error" id="globalError"></div>
   <div class="msg msg-success" id="globalSuccess"></div>
 
-  <!-- ACTIVE SUBSCRIPTIONS -->
   <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">Active Subscriptions</span>
-    </div>
+    <div class="section-header"><span class="section-title">Active Subscriptions</span></div>
     <div class="section-body" id="subsBody">
-      <div class="loading-row"><span class="spinner"></span> Loading subscriptions…</div>
+      <div class="loading-row"><span class="spinner"></span> Loading subscriptions...</div>
     </div>
   </div>
 
-  <!-- BILLING (Level 1 only) -->
   <div class="section-card owner-only" id="billingCard">
-    <div class="section-header">
-      <span class="section-title">Billing</span>
-    </div>
+    <div class="section-header"><span class="section-title">Billing</span></div>
     <div class="section-body">
       <div class="billing-body">
         <p class="billing-text">Use the billing portal to update your payment method, download invoices, or cancel subscriptions.</p>
@@ -501,30 +186,26 @@
     </div>
   </div>
 
-  <!-- USER MANAGEMENT (Level 1 only) -->
   <div class="section-card owner-only" id="userMgmtCard">
     <div class="section-header">
       <span class="section-title">Team Members</span>
       <span id="teamCount" style="font-size:13px;color:var(--muted);"></span>
     </div>
     <div class="section-body" id="teamBody">
-      <div class="loading-row"><span class="spinner"></span> Loading team…</div>
+      <div class="loading-row"><span class="spinner"></span> Loading team...</div>
     </div>
   </div>
 
-  <!-- ACCOUNT DETAILS -->
   <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">Account Details</span>
-    </div>
+    <div class="section-header"><span class="section-title">Account Details</span></div>
     <div class="section-body">
       <div class="detail-row">
         <span class="detail-label">Email address</span>
-        <span class="detail-value" id="accountEmail">—</span>
+        <span class="detail-value" id="accountEmail">--</span>
       </div>
       <div class="detail-row">
         <span class="detail-label">Account type</span>
-        <span class="detail-value" id="accountRole">—</span>
+        <span class="detail-value" id="accountRole">--</span>
       </div>
       <div class="detail-row">
         <span class="detail-label">Password</span>
@@ -532,359 +213,206 @@
       </div>
     </div>
   </div>
-
 </main>
 
 <script>
 (async function() {
-  // ── AUTH CHECK ──
-  const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
+
+  var supabase = window.supabaseClient;
+  var session, user, accountOwnerId, securityLevel;
+
+  // AUTH CHECK
+  var sessResult = await supabase.auth.getSession();
+  session = sessResult.data.session;
   if (!session) { window.location.href = '/login.html'; return; }
+  user = session.user;
 
-  const user = session.user;
-  document.getElementById('accountEmail').textContent = user.email;
-  document.getElementById('accountLabel').textContent = 'Account';
-
-  // ── ACCOUNT OWNER RESOLUTION ──
-  // Check if this user is a team member
-  let accountOwnerId = user.id;
-  let securityLevel = 1;
-
-  const { data: memberRow } = await window.supabaseClient
-    .from('team_members')
-    .select('account_owner_id, security_level')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (memberRow) {
-    accountOwnerId = memberRow.account_owner_id;
-    securityLevel = memberRow.security_level;
+  // ACCOUNT OWNER RESOLUTION
+  accountOwnerId = user.id;
+  securityLevel = 1;
+  var memberResult = await supabase.from('team_members').select('account_owner_id, security_level').eq('user_id', user.id).eq('status', 'active').maybeSingle();
+  if (memberResult.data) {
+    accountOwnerId = memberResult.data.account_owner_id;
+    securityLevel = memberResult.data.security_level;
   }
-
   window.accountOwnerId = accountOwnerId;
   window.userSecurityLevel = securityLevel;
 
-  // ── ROLE LABEL ──
-  const roleLabels = { 1: 'Account Owner', 2: 'Manager', 3: 'Staff' };
+  // ACCOUNT DETAILS
+  document.getElementById('accountEmail').textContent = user.email;
+  var roleLabels = { 1: 'Account Owner', 2: 'Manager', 3: 'Staff' };
   document.getElementById('accountRole').textContent = roleLabels[securityLevel] || 'User';
 
-  // ── SHOW OWNER-ONLY SECTIONS ──
-  if (securityLevel === 1) {
-    document.querySelectorAll('.owner-only').forEach(el => el.style.display = '');
-  }
-
-  // ── LOAD SUBSCRIPTIONS ──
-  const { data: profile } = await window.supabaseClient
-    .from('profiles')
-    .select('activated_tools')
-    .eq('id', accountOwnerId)
-    .maybeSingle();
-
-  const subsBody = document.getElementById('subsBody');
-  const activatedTools = (profile && profile.activated_tools) ? profile.activated_tools : [];
-
-  if (activatedTools.length === 0) {
-    subsBody.innerHTML = '<div class="sub-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
-  } else {
-    // Look up tool details from tools-data.js (window.TOOLS_DATA)
-    const toolsData = (typeof window.TOOLS_DATA !== 'undefined') ? window.TOOLS_DATA : [];
-    const items = activatedTools.map(toolId => {
-      const tool = toolsData.find(t => t.toolId === toolId || t.id === toolId);
-      return tool || { name: toolId, icon: '🔧', price: '—' };
-    });
-
-    subsBody.innerHTML = '<div class="sub-list">' + items.map(t => `
-      <div class="sub-item">
-        <div class="sub-icon">${t.icon || '🔧'}</div>
-        <div class="sub-info">
-          <div class="sub-name">${t.name || t.toolId || t.id}</div>
-          <div class="sub-desc">${t.shortDesc || t.description || ''}</div>
-        </div>
-        <div class="sub-price">${t.price ? '$' + t.price + '/mo' : '—'}</div>
-      </div>`).join('') + '</div>';
-  }
-
-  // ── BILLING PORTAL LINK ──
-  document.getElementById('billingPortalBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    this.textContent = 'Opening…';
-    this.style.pointerEvents = 'none';
+  // TOPBAR
+  document.getElementById('account-dropdown-email').textContent = user.email;
+  var lastTool = sessionStorage.getItem('stax_last_tool');
+  if (lastTool) {
     try {
-      const res = await fetch('/api/billing-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
-      } else {
-        showGlobalError('Could not open billing portal. Please try again.');
+      var t = JSON.parse(lastTool);
+      if (t.name && t.href) {
+        var tl = document.getElementById('topbarToolLink');
+        tl.textContent = t.name;
+        tl.href = t.href;
+        tl.style.display = '';
       }
-    } catch {
-      showGlobalError('Could not open billing portal. Please try again.');
-    }
-    this.textContent = 'Manage Billing';
-    this.style.pointerEvents = '';
-  });
-
-  // ── TEAM MEMBERS (Level 1 only) ──
-  if (securityLevel === 1) {
-    await loadTeam();
+    } catch(e) {}
   }
 
-  async function loadTeam() {
-    const teamBody = document.getElementById('teamBody');
-
-    const { data: activeMembers } = await window.supabaseClient
-      .from('team_members')
-      .select('id, email, security_level, status, joined_at, invited_at')
-      .eq('account_owner_id', user.id)
-      .eq('status', 'active')
-      .order('joined_at', { ascending: true });
-
-    const { data: pendingMembers } = await window.supabaseClient
-      .from('team_members')
-      .select('id, email, security_level, status, invited_at')
-      .eq('account_owner_id', user.id)
-      .eq('status', 'pending')
-      .order('invited_at', { ascending: false });
-
-    const active = activeMembers || [];
-    const pending = pendingMembers || [];
-    const total = active.length + pending.length;
-
-    document.getElementById('teamCount').textContent = `${total} of 4 team member${total !== 1 ? 's' : ''}`;
-
-    let html = '<div class="team-list">';
-
-    // Owner row (always first)
-    const ownerInitial = user.email.charAt(0).toUpperCase();
-    html += `
-      <div class="team-item">
-        <div class="team-avatar">${ownerInitial}</div>
-        <div class="team-info">
-          <div class="team-email">${user.email}</div>
-          <div class="team-meta">You</div>
-        </div>
-        <span class="level-badge level-1">Account Owner</span>
-      </div>`;
-
-    // Active members
-    active.forEach(m => {
-      const initial = m.email.charAt(0).toUpperCase();
-      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
-      const levelClass = m.security_level === 2 ? 'level-2' : 'level-3';
-      const joined = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-      html += `
-        <div class="team-item" id="member-${m.id}">
-          <div class="team-avatar">${initial}</div>
-          <div class="team-info">
-            <div class="team-email">${m.email}</div>
-            <div class="team-meta">Joined ${joined}</div>
-          </div>
-          <span class="level-badge ${levelClass}">${levelLabel}</span>
-          <div class="team-actions">
-            <button class="btn btn-danger-outline" onclick="removeMember('${m.id}', '${m.email}')">Remove</button>
-          </div>
-        </div>`;
-    });
-
-    // Pending invites
-    pending.forEach(m => {
-      const initial = m.email.charAt(0).toUpperCase();
-      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
-      const invited = m.invited_at ? new Date(m.invited_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-      html += `
-        <div class="team-item" id="member-${m.id}">
-          <div class="team-avatar" style="background:var(--muted);">${initial}</div>
-          <div class="team-info">
-            <div class="team-email">${m.email}</div>
-            <div class="team-meta">Invited ${invited} · ${levelLabel}</div>
-          </div>
-          <span class="pending-badge">Pending</span>
-          <div class="team-actions">
-            <button class="btn btn-sm-outline" onclick="resendInvite('${m.id}', '${m.email}', ${m.security_level})">Resend</button>
-            <button class="btn btn-danger-outline" onclick="cancelInvite('${m.id}')">Cancel</button>
-          </div>
-        </div>`;
-    });
-
-    html += '</div>';
-
-    // Invite form or max message
-    if (total < 4) {
-      html += `
-        <div class="invite-section">
-          <div class="invite-title">Invite Team Member</div>
-          <div id="inviteMsg" class="msg"></div>
-          <div class="invite-form">
-            <div class="field">
-              <label>Email address</label>
-              <input type="email" id="inviteEmail" placeholder="teammate@example.com" />
-            </div>
-            <div class="field">
-              <label>Access level</label>
-              <select id="inviteLevel">
-                <option value="2">Manager</option>
-                <option value="3">Staff</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" id="inviteBtn" onclick="sendInvite()">Send Invite</button>
-          </div>
-        </div>`;
-    } else {
-      html += `
-        <div class="invite-section">
-          <p class="invite-max-msg">Your account has reached the maximum of 5 users (you + 4 team members).</p>
-        </div>`;
-    }
-
-    teamBody.innerHTML = html;
-  }
-
-  // ── INVITE ──
-  window.sendInvite = async function() {
-    const email = document.getElementById('inviteEmail').value.trim();
-    const level = parseInt(document.getElementById('inviteLevel').value);
-    const btn = document.getElementById('inviteBtn');
-    const msg = document.getElementById('inviteMsg');
-
-    if (!email) { showInviteMsg('Please enter an email address.', false); return; }
-
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    msg.className = 'msg';
-    msg.style.display = 'none';
-
-    try {
-      const res = await fetch('/api/invite-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ email, security_level: level })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showInviteMsg('Invite sent to ' + email, true);
-        document.getElementById('inviteEmail').value = '';
-        await loadTeam();
-      } else {
-        showInviteMsg(data.error || 'Could not send invite. Please try again.', false);
-      }
-    } catch {
-      showInviteMsg('Could not send invite. Please try again.', false);
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Send Invite';
-  };
-
-  function showInviteMsg(text, success) {
-    const msg = document.getElementById('inviteMsg');
-    if (!msg) return;
-    msg.textContent = text;
-    msg.className = 'msg show ' + (success ? 'msg-success' : 'msg-error');
-  }
-
-  // ── REMOVE MEMBER ──
-  window.removeMember = async function(id, email) {
-    if (!confirm('Remove ' + email + ' from your team? They will lose access immediately.')) return;
-    try {
-      const res = await fetch('/api/remove-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ team_member_id: id })
-      });
-      if (res.ok) {
-        showGlobalSuccess(email + ' has been removed from your team.');
-        await loadTeam();
-      } else {
-        const data = await res.json();
-        showGlobalError(data.error || 'Could not remove user. Please try again.');
-      }
-    } catch {
-      showGlobalError('Could not remove user. Please try again.');
-    }
-  };
-
-  // ── RESEND INVITE ──
-  window.resendInvite = async function(id, email, level) {
-    try {
-      const res = await fetch('/api/invite-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ email, security_level: level, resend: true })
-      });
-      if (res.ok) {
-        showGlobalSuccess('Invite resent to ' + email);
-      } else {
-        const data = await res.json();
-        showGlobalError(data.error || 'Could not resend invite.');
-      }
-    } catch {
-      showGlobalError('Could not resend invite.');
-    }
-  };
-
-  // ── CANCEL INVITE ──
-  window.cancelInvite = async function(id) {
-    const { error } = await window.supabaseClient
-      .from('team_members')
-      .update({ status: 'revoked' })
-      .eq('id', id)
-      .eq('account_owner_id', user.id);
-    if (error) { showGlobalError('Could not cancel invite.'); return; }
-    showGlobalSuccess('Invite cancelled.');
-    await loadTeam();
-  };
-
-  // ── CHANGE PASSWORD ──
-  document.getElementById('changePasswordLink').addEventListener('click', async function(e) {
-    e.preventDefault();
-    this.textContent = 'Sending…';
-    this.style.pointerEvents = 'none';
-    const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email);
-    if (error) {
-      showGlobalError('Could not send reset email. Please try again.');
-    } else {
-      showGlobalSuccess('Password reset email sent to ' + user.email);
-    }
-    this.textContent = 'Change Password';
-    this.style.pointerEvents = '';
-  });
-
-  // ── ACCOUNT DROPDOWN ──
-  const accountBtn = document.getElementById('accountBtn');
-  const accountDropdown = document.getElementById('accountDropdown');
+  // DROPDOWN TOGGLE
+  var accountBtn = document.getElementById('account-btn');
+  var accountDropdown = document.getElementById('account-dropdown');
   accountBtn.addEventListener('click', function(e) {
     e.stopPropagation();
     accountDropdown.classList.toggle('open');
   });
   document.addEventListener('click', function() { accountDropdown.classList.remove('open'); });
 
-  // ── SIGN OUT ──
-  document.getElementById('signOutLink').addEventListener('click', async function(e) {
-    e.preventDefault();
-    await window.supabaseClient.auth.signOut();
+  // SIGN OUT
+  document.getElementById('sign-out-btn').addEventListener('click', async function() {
+    await supabase.auth.signOut();
     window.location.href = '/login.html';
   });
 
-  // ── HELPERS ──
+  // SHOW OWNER-ONLY SECTIONS
+  if (securityLevel === 1) {
+    document.querySelectorAll('.owner-only').forEach(function(el) { el.style.display = ''; });
+  }
+
+  // SUBSCRIPTIONS
+  var profileResult = await supabase.from('profiles').select('activated_tools').eq('id', accountOwnerId).maybeSingle();
+  var subsBody = document.getElementById('subsBody');
+  var activatedTools = (profileResult.data && profileResult.data.activated_tools) ? profileResult.data.activated_tools : [];
+  if (activatedTools.length === 0) {
+    subsBody.innerHTML = '<div class="sub-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
+  } else {
+    var toolsData = (typeof window.TOOLS_DATA !== 'undefined') ? window.TOOLS_DATA : [];
+    var items = activatedTools.map(function(toolId) {
+      var tool = toolsData.find(function(t) { return t.toolId === toolId || t.id === toolId; });
+      return tool || { name: toolId, icon: '🔧', price: null };
+    });
+    var html = '<div class="sub-list">';
+    items.forEach(function(t) {
+      html += '<div class="sub-item"><div class="sub-icon">' + (t.icon || '🔧') + '</div><div class="sub-info"><div class="sub-name">' + (t.name || t.toolId || t.id) + '</div><div class="sub-desc">' + (t.shortDesc || t.description || '') + '</div></div><div class="sub-price">' + (t.price ? '$' + t.price + '/mo' : '--') + '</div></div>';
+    });
+    html += '</div>';
+    subsBody.innerHTML = html;
+  }
+
+  // BILLING PORTAL
+  document.getElementById('billingPortalBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    this.textContent = 'Opening...';
+    this.style.pointerEvents = 'none';
+    try {
+      var res = await fetch('/api/billing-portal', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token } });
+      var data = await res.json();
+      if (data.url) { window.open(data.url, '_blank'); } else { showGlobalError('Could not open billing portal. Please try again.'); }
+    } catch(e) { showGlobalError('Could not open billing portal. Please try again.'); }
+    this.textContent = 'Manage Billing';
+    this.style.pointerEvents = '';
+  });
+
+  // TEAM
+  if (securityLevel === 1) { await loadTeam(); }
+
+  async function loadTeam() {
+    var teamBody = document.getElementById('teamBody');
+    var activeResult = await supabase.from('team_members').select('id, email, security_level, status, joined_at, invited_at').eq('account_owner_id', user.id).eq('status', 'active').order('joined_at', { ascending: true });
+    var pendingResult = await supabase.from('team_members').select('id, email, security_level, status, invited_at').eq('account_owner_id', user.id).eq('status', 'pending').order('invited_at', { ascending: false });
+    var active = activeResult.data || [];
+    var pending = pendingResult.data || [];
+    var total = active.length + pending.length;
+    document.getElementById('teamCount').textContent = total + ' of 4 team member' + (total !== 1 ? 's' : '');
+    var html = '<div class="team-list">';
+    html += '<div class="team-item"><div class="team-avatar">' + user.email.charAt(0).toUpperCase() + '</div><div class="team-info"><div class="team-email">' + user.email + '</div><div class="team-meta">You</div></div><span class="level-badge level-1">Account Owner</span></div>';
+    active.forEach(function(m) {
+      var ll = m.security_level === 2 ? 'Manager' : 'Staff';
+      var lc = m.security_level === 2 ? 'level-2' : 'level-3';
+      var jd = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '--';
+      html += '<div class="team-item" id="member-' + m.id + '"><div class="team-avatar">' + m.email.charAt(0).toUpperCase() + '</div><div class="team-info"><div class="team-email">' + m.email + '</div><div class="team-meta">Joined ' + jd + '</div></div><span class="level-badge ' + lc + '">' + ll + '</span><div class="team-actions"><button class="btn btn-danger-outline" onclick="removeMember(\'' + m.id + '\',\'' + m.email + '\')">Remove</button></div></div>';
+    });
+    pending.forEach(function(m) {
+      var ll = m.security_level === 2 ? 'Manager' : 'Staff';
+      var id = m.invited_at ? new Date(m.invited_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '--';
+      html += '<div class="team-item" id="member-' + m.id + '"><div class="team-avatar" style="background:var(--muted);">' + m.email.charAt(0).toUpperCase() + '</div><div class="team-info"><div class="team-email">' + m.email + '</div><div class="team-meta">Invited ' + id + ' · ' + ll + '</div></div><span class="pending-badge">Pending</span><div class="team-actions"><button class="btn btn-sm-outline" onclick="resendInvite(\'' + m.id + '\',\'' + m.email + '\',' + m.security_level + ')">Resend</button><button class="btn btn-danger-outline" onclick="cancelInvite(\'' + m.id + '\')">Cancel</button></div></div>';
+    });
+    html += '</div>';
+    if (total < 4) {
+      html += '<div class="invite-section"><div class="invite-title">Invite Team Member</div><div id="inviteMsg" class="msg"></div><div class="invite-form"><div class="field"><label>Email address</label><input type="email" id="inviteEmail" placeholder="teammate@example.com" /></div><div class="field"><label>Access level</label><select id="inviteLevel"><option value="2">Manager</option><option value="3">Staff</option></select></div><button class="btn btn-primary" id="inviteBtn" onclick="sendInvite()">Send Invite</button></div></div>';
+    } else {
+      html += '<div class="invite-section"><p class="invite-max-msg">Your account has reached the maximum of 5 users (you + 4 team members).</p></div>';
+    }
+    teamBody.innerHTML = html;
+  }
+
+  window.sendInvite = async function() {
+    var email = document.getElementById('inviteEmail').value.trim();
+    var level = parseInt(document.getElementById('inviteLevel').value);
+    var btn = document.getElementById('inviteBtn');
+    if (!email) { showInviteMsg('Please enter an email address.', false); return; }
+    btn.disabled = true; btn.textContent = 'Sending...';
+    try {
+      var res = await fetch('/api/invite-user', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, body: JSON.stringify({ email: email, security_level: level }) });
+      var data = await res.json();
+      if (res.ok) { showInviteMsg('Invite sent to ' + email, true); document.getElementById('inviteEmail').value = ''; await loadTeam(); }
+      else { showInviteMsg(data.error || 'Could not send invite. Please try again.', false); }
+    } catch(e) { showInviteMsg('Could not send invite. Please try again.', false); }
+    btn.disabled = false; btn.textContent = 'Send Invite';
+  };
+
+  window.removeMember = async function(id, email) {
+    if (!confirm('Remove ' + email + ' from your team? They will lose access immediately.')) return;
+    try {
+      var res = await fetch('/api/remove-user', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, body: JSON.stringify({ team_member_id: id }) });
+      if (res.ok) { showGlobalSuccess(email + ' has been removed from your team.'); await loadTeam(); }
+      else { var data = await res.json(); showGlobalError(data.error || 'Could not remove user. Please try again.'); }
+    } catch(e) { showGlobalError('Could not remove user. Please try again.'); }
+  };
+
+  window.resendInvite = async function(id, email, level) {
+    try {
+      var res = await fetch('/api/invite-user', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }, body: JSON.stringify({ email: email, security_level: level, resend: true }) });
+      if (res.ok) { showGlobalSuccess('Invite resent to ' + email); }
+      else { var data = await res.json(); showGlobalError(data.error || 'Could not resend invite.'); }
+    } catch(e) { showGlobalError('Could not resend invite.'); }
+  };
+
+  window.cancelInvite = async function(id) {
+    var result = await supabase.from('team_members').update({ status: 'revoked' }).eq('id', id).eq('account_owner_id', user.id);
+    if (result.error) { showGlobalError('Could not cancel invite.'); return; }
+    showGlobalSuccess('Invite cancelled.');
+    await loadTeam();
+  };
+
+  document.getElementById('changePasswordLink').addEventListener('click', async function(e) {
+    e.preventDefault();
+    this.textContent = 'Sending...';
+    this.style.pointerEvents = 'none';
+    var result = await supabase.auth.resetPasswordForEmail(user.email);
+    if (result.error) { showGlobalError('Could not send reset email. Please try again.'); }
+    else { showGlobalSuccess('Password reset email sent to ' + user.email); }
+    this.textContent = 'Change Password';
+    this.style.pointerEvents = '';
+  });
+
   function showGlobalError(msg) {
-    const el = document.getElementById('globalError');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 5000);
+    var el = document.getElementById('globalError');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 5000);
   }
   function showGlobalSuccess(msg) {
-    const el = document.getElementById('globalSuccess');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 5000);
+    var el = document.getElementById('globalSuccess');
+    el.textContent = msg; el.classList.add('show');
+    setTimeout(function() { el.classList.remove('show'); }, 5000);
+  }
+  function showInviteMsg(text, success) {
+    var msg = document.getElementById('inviteMsg');
+    if (!msg) return;
+    msg.textContent = text;
+    msg.className = 'msg show ' + (success ? 'msg-success' : 'msg-error');
   }
 
 })();
 </script>
-
 </body>
 </html>
