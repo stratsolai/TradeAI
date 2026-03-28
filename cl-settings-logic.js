@@ -206,3 +206,14 @@ document.addEventListener("DOMContentLoaded", function() {
     });
   }
 });
+
+window.addEventListener('pageshow', function(e) {
+  if (!e.persisted) return;
+  if (window.CL_SETTINGS_LOGIC && window.CL_SETTINGS_LOGIC.init) window.CL_SETTINGS_LOGIC.init();
+  var btn = document.getElementById('account-btn');
+  var drop = document.getElementById('account-dropdown');
+  if (btn && drop) {
+    btn.addEventListener('click', function(ev) { ev.stopPropagation(); drop.classList.toggle('open'); });
+    document.addEventListener('click', function() { drop.classList.remove('open'); });
+  }
+});
