@@ -171,15 +171,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const dropdownEmailEl = document.getElementById('account-dropdown-email');
   
 
-  const acctBtn = document.getElementById('account-btn');
-  const acctDropdown = document.getElementById('account-dropdown');
-  if (acctBtn && acctDropdown) {
-    acctBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      acctDropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', function() { acctDropdown.classList.remove('open'); });
-  }
+  
   const signOutBtn = document.getElementById('sign-out-btn');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', async function() {
@@ -344,4 +336,19 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
   }
 
+});
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  var acctBtn = document.getElementById('account-btn');
+  var acctDropdown = document.getElementById('account-dropdown');
+  if (acctBtn && acctDropdown) {
+    acctBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      acctDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+      acctDropdown.classList.remove('open');
+    });
+  }
 });
