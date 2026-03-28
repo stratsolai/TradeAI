@@ -462,46 +462,4 @@
 
   <script src="/cl-settings-logic.js"></script>
   <script>
-    (function() {
-      var supabase = window.supabaseClient;
-      if (!supabase) { document.getElementById('auth-loading').textContent = 'Configuration error. Please refresh.'; return; }
-
-      supabase.auth.getUser().then(function(resp) {
-        if (!resp.data || !resp.data.user) {
-          window.location.href = '/index.html';
-          return;
-        }
-        document.getElementById('auth-loading').style.display = 'none';
-        document.getElementById('page-wrap').style.display = 'block';
-        if (window.CL_SETTINGS_LOGIC && window.CL_SETTINGS_LOGIC.init) {
-          window.CL_SETTINGS_LOGIC.init(supabase);
-        }
-      });
-
-      
-
-      var signoutBtn = document.getElementById('signout-btn');
-      if (signoutBtn) {
-        signoutBtn.addEventListener('click', function() {
-          supabase.auth.signOut().then(function() {
-            window.location.href = '/index.html';
-          });
-        });
-      }
-    })();
-  
-    // Account dropdown toggle
-document.addEventListener('DOMContentLoaded', function() {
-  var btn = document.getElementById('account-btn');
-  var drop = document.getElementById('account-dropdown');
-  if (btn && drop) {
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      drop.classList.toggle('open');
-    });
-    document.addEventListener('click', function() {
-      drop.classList.remove('open');
-    });
-  }
-});
 </script>
