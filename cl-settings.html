@@ -478,17 +478,7 @@
         }
       });
 
-      var accountBtn = document.getElementById('account-btn');
-      var accountDropdown = document.getElementById('account-dropdown');
-      if (accountBtn) {
-        accountBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          accountDropdown.classList.toggle('open');
-        });
-      }
-      document.addEventListener('click', function() {
-        if (accountDropdown) accountDropdown.classList.remove('open');
-      });
+      
 
       var signoutBtn = document.getElementById('signout-btn');
       if (signoutBtn) {
@@ -499,6 +489,19 @@
         });
       }
     })();
+  
+    // Account dropdown toggle
+        var accountBtn = document.getElementById('account-btn');
+    var accountDropdown = document.getElementById('account-dropdown');
+    if (accountBtn) {
+      accountBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        accountDropdown.classList.toggle('open');
+      });
+    }
+    document.addEventListener('click', function() {
+      if (accountDropdown) accountDropdown.classList.remove('open');
+    });
   </script>
 
 </body>
