@@ -165,7 +165,20 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (!authData || !authData.user) { window.location.href = '/login.html'; return; }
   const user = authData.user;
 
+  // -- Account dropdown --
+  const emailShortEl = document.getElementById('account-email-short');
+  if (emailShortEl) emailShortEl.textContent = 'Account';
+  const dropdownEmailEl = document.getElementById('account-dropdown-email');
+  
 
+  
+  const signOutBtn = document.getElementById('sign-out-btn');
+  if (signOutBtn) {
+    signOutBtn.addEventListener('click', async function() {
+      await supabase.auth.signOut();
+      window.location.href = '/login.html';
+    });
+  }
 
   // -- Load profile --
   const { data: profile } = await supabase
