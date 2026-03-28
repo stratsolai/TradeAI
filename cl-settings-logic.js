@@ -185,8 +185,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!listEl) return;
     const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
 
-// -- Account dropdown --
-document.addEventListener("DOMContentLoaded", function() {
+
   var btn = document.getElementById("account-btn");
   var drop = document.getElementById("account-dropdown");
   if (btn && drop) {
@@ -205,4 +204,6 @@ document.addEventListener("DOMContentLoaded", function() {
       if (supabase) supabase.auth.signOut().then(function() { window.location.href = "/login"; });
     });
   }
+
 });
+window.addEventListener('pageshow', function(e) { if (e.persisted && window.CL_SETTINGS_LOGIC && window.CL_SETTINGS_LOGIC.init) window.CL_SETTINGS_LOGIC.init(); });
