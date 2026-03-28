@@ -185,185 +185,24 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (!listEl) return;
     const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
 
-  })();
-
-
-    var _ab = document.getElementById("account-btn"); if (_ab) _ab.addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
-    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    var _sb = document.getElementById("sign-out-btn"); if (_sb) _sb.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "/login"; });
-    var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
-    window.dashboardInit = async function() {
-      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
-      if (!user || _authErr) { window.location.href = "/login"; return; }
-      const email = user.email || "";
-      document.getElementById("account-email-short").textContent = "Account";
-      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
-      const ws = document.getElementById("welcome-strip");
-      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
-      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
-    };
-    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
-  
-window.CORE_TOOLS = [
-  { id: "social", name: "Marketing & Social Media" },
-  { id: "email", name: "AI Email Assistant" },
-  { id: "chatbot", name: "AI Website Chatbot" },
-  { id: "news-digest", name: "Industry News Digest" },
-  { id: "bi", name: "Business Intelligence" },
-  { id: "strategic-plan", name: "Strategic Plan" },
-  { id: "tender", name: "Tender Response Generator" },
-  { id: "quote-enhancer", name: "Quote Enhancer" },
-  { id: "swms", name: "SWMS & Safety Docs" },
-  { id: "customer-updates", name: "Customer Progress Updates" },
-  { id: "handover-docs", name: "Handover Documentation" },
-  { id: "review-booster", name: "Review & Referral Booster" },
-  { id: "design-viz", name: "Design Visualiser" }
-];
-
-    if (providerEmails.length === 0) {
-      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No accounts connected</div>';
-    } else {
-      listEl.innerHTML = providerEmails.map(function(e, i) {
-        return '<div class="connection-item">' +
-          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
-          '<button class="btn-disconnect" data-provider="' + provider + '" data-email="' + e.email + '">Disconnect</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          await disconnectEmail(btn.getAttribute('data-provider'), btn.getAttribute('data-email'));
-        });
-      });
-    }
-  }
-
-  renderEmailList('gmail');
-  renderEmailList('outlook');
-
-  // -- Disconnect email --
-  async function disconnectEmail(provider, email) {
-    const updated = connectedEmails.filter(function(e) { return !(e.provider === provider && e.email === email); });
-    const { error } = await supabase.from('profiles').update({ cl_connected_emails: updated }).eq('user_id', user.id);
-    if (!error) {
-      connectedEmails.splice(0, connectedEmails.length, ...updated);
-      renderEmailList(provider);
-    }
-  }
-
-  // -- Add Gmail / Outlook buttons --
-  ['gmail', 'outlook'].forEach(function(provider) {
-    const addBtn = document.getElementById('add-' + provider + '-btn');
-    if (addBtn) {
-      addBtn.addEventListener('click', function() { handleOAuthConnect(provider); });
-    }
-  });
-
-  // -- OAuth connect --
-  function handleOAuthConnect(provider) {
-    const redirectTo = window.location.origin + '/api/auth/oauth-callback.js?flow=cl&provider=' + provider;
-    let oauthProvider, scopes;
-    if (provider === 'gmail') {
-      oauthProvider = 'google';
-      scopes = 'email profile https://www.googleapis.com/auth/gmail.readonly';
-    } else if (provider === 'outlook') {
-      oauthProvider = 'azure';
-      scopes = 'email offline_access Mail.Read';
-    } else if (provider === 'drive') {
-      oauthProvider = 'google';
-      scopes = 'email profile https://www.googleapis.com/auth/drive.readonly';
-    }
-    supabase.auth.signInWithOAuth({
-      provider: oauthProvider,
-      options: { scopes: scopes, redirectTo: redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
+// -- Account dropdown --
+document.addEventListener("DOMContentLoaded", function() {
+  var btn = document.getElementById("account-btn");
+  var drop = document.getElementById("account-dropdown");
+  if (btn && drop) {
+    btn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      drop.classList.toggle("open");
+    });
+    document.addEventListener("click", function() {
+      drop.classList.remove("open");
     });
   }
-
-  // -- Google Drive (multi-account) --
-  function renderDriveList() {
-    const listEl = document.getElementById('drive-connections-list');
-    if (!listEl) return;
-    const driveAccounts = connectedEmails.filter(function(e) { return e.provider === 'drive'; });
-    if (driveAccounts.length === 0) {
-      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No account connected</div>';
-    } else {
-      listEl.innerHTML = driveAccounts.map(function(e) {
-        return '<div class="connection-item">' +
-          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
-          '<button class="btn-disconnect" data-provider="drive" data-email="' + e.email + '">Disconnect</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          await disconnectEmail('drive', btn.getAttribute('data-email'));
-          renderDriveList();
-        });
-      });
-    }
-  }
-  renderDriveList();
-
-  const addDriveBtn = document.getElementById('add-drive-btn');
-  if (addDriveBtn) {
-    addDriveBtn.addEventListener('click', function() { handleOAuthConnect('drive'); });
-  }
-
-  // -- Website URLs --
-  function renderWebsiteUrls() {
-    const listEl = document.getElementById('website-urls-list');
-    if (!listEl) return;
-    const urlsToRender = websiteUrls.length === 0 ? [''] : websiteUrls;
-    listEl.innerHTML = urlsToRender.map(function(url) {
-        return '<div class="website-url-item">' +
-          '<input type="url" class="website-url-input" value="' + url + '" placeholder="https://yourwebsite.com.au" />' +
-          '<button class="btn-remove-url" title="Remove">&times;</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-remove-url').forEach(function(btn, i) {
-        btn.addEventListener('click', function() {
-          websiteUrls.splice(i, 1);
-          renderWebsiteUrls();
-        });
-      });
-  }
-  renderWebsiteUrls();
-
-  const addWebsiteBtn = document.getElementById('add-website-btn');
-  if (addWebsiteBtn) {
-    addWebsiteBtn.addEventListener('click', function() {
-      websiteUrls.push('');
-      renderWebsiteUrls();
-      const inputs = document.querySelectorAll('.website-url-input');
-      if (inputs.length > 0) inputs[inputs.length - 1].focus();
-    });
-  }
-
-  const websiteSaveBtn = document.getElementById('website-save-btn');
-  if (websiteSaveBtn) {
-    websiteSaveBtn.addEventListener('click', async function() {
-      const inputs = document.querySelectorAll('.website-url-input');
-      const urls = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(function(v) { return v.length > 0; });
-      websiteUrls.splice(0, websiteUrls.length, ...urls);
-      const { error } = await supabase.from('profiles').update({ website_urls: urls }).eq('user_id', user.id);
-      if (!error) {
-        websiteSaveBtn.textContent = 'Saved';
-        setTimeout(function() { websiteSaveBtn.textContent = 'Save'; }, 2000);
-      }
-    });
-  }
-
-  // -- Save Settings button (Auto-Scan Frequency) --
-  const saveSettingsBtn = document.getElementById('save-settings-btn');
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', async function() {
-      if (window.CL_SETTINGS) window.CL_SETTINGS.init(supabase);
-    });
-  }
-
-});
-
-
-    document.addEventListener('click', function() {
-      acctDropdown.classList.remove('open');
+  var signOutBtn = document.getElementById("sign-out-btn");
+  if (signOutBtn) {
+    signOutBtn.addEventListener("click", function() {
+      var supabase = window.supabaseClient;
+      if (supabase) supabase.auth.signOut().then(function() { window.location.href = "/login"; });
     });
   }
 });
