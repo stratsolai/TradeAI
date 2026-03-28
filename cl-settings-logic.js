@@ -167,9 +167,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   // -- Account dropdown --
   const emailShortEl = document.getElementById('account-email-short');
-  if (emailShortEl) emailShortEl.textContent = user.email || 'Account';
+  if (emailShortEl) emailShortEl.textContent = 'Account';
   const dropdownEmailEl = document.getElementById('account-dropdown-email');
-  if (dropdownEmailEl) dropdownEmailEl.textContent = user.email || '';
+  
 
   const acctBtn = document.getElementById('account-btn');
   const acctDropdown = document.getElementById('account-dropdown');
