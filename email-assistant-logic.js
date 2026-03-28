@@ -26,7 +26,7 @@ window.EA_LOGIC = (function () {
       return;
     }
     _session = session;
-    _renderAccountDropdown();
+
     await _loadSettings();
     _buildCategoryTabs();
     _renderConnectionStatus();
