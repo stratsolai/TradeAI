@@ -5,7 +5,7 @@ window._initSettings = async function () {
 
   const elShort = document.getElementById("account-email-short");
   const elFull = document.getElementById("account-dropdown-email");
-  if (elShort) elShort.textContent = user.email ? user.email.split("@")[0] : "";
+  if (elShort) elShort.textContent = "Account";
   if (elFull) elFull.textContent = user.email || "";
 
   const accountBtn = document.getElementById("account-btn");
