@@ -491,20 +491,17 @@
     })();
   
     // Account dropdown toggle
-        document.addEventListener('DOMContentLoaded', function() {
-    var accountBtn = document.getElementById('account-btn');
-    var accountDropdown = document.getElementById('account-dropdown');
-    if (accountBtn && accountDropdown) {
-      accountBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        accountDropdown.classList.toggle('open');
-      });
-      document.addEventListener('click', function() {
-        accountDropdown.classList.remove('open');
-      });
-    }
-  });
-  </script>
-
-</body>
-</html>
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('account-btn');
+  var drop = document.getElementById('account-dropdown');
+  if (btn && drop) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      drop.classList.toggle('open');
+    });
+    document.addEventListener('click', function() {
+      drop.classList.remove('open');
+    });
+  }
+});
+</script>
