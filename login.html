@@ -310,7 +310,7 @@
       var password = document.getElementById("login-password").value;
       var result = await signIn(email, password);
       if (result.success) {
-        window.location.href = "//dashboard";
+        window.location.href = "/dashboard.html";
       } else {
         showError(result.error || "Login failed. Please check your credentials.");
       }
@@ -357,7 +357,7 @@
         }
         showSuccess("Account created. Please check your email to verify your account.");
         var redirectParam = trialTool ? "?activated=" + trialTool : (trialTier ? "?tier=" + trialTier : "");
-        setTimeout(function() { window.location.href = "//dashboard" + redirectParam; }, 2000);
+        setTimeout(function() { window.location.href = "/dashboard.html" + redirectParam; }, 2000);
       } else {
         showError(result.error || "Signup failed. Please try again.");
       }
