@@ -519,8 +519,8 @@
   if (activatedTools.length === 0) {
     subsBody.innerHTML = '<div class="sub-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
   } else {
-    // Look up tool details from tools-data.js (window.TOOLS_DATA)
-    const toolsData = (typeof window.TOOLS_DATA !== 'undefined') ? window.TOOLS_DATA : [];
+    // Look up tool details from tools-data.js (window.CORE_TOOLS)
+    const toolsData = (typeof window.CORE_TOOLS !== 'undefined') ? window.CORE_TOOLS : [];
     const items = activatedTools.map(toolId => {
       const tool = toolsData.find(t => t.toolId === toolId || t.id === toolId);
       return tool || { name: toolId, icon: '🔧', price: '—' };
