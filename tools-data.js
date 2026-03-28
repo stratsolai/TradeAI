@@ -354,3 +354,5 @@ window.BUNDLE_TIERS = {
     priceId: "price_1TEQdoHnoVvjo5gxlNMGajr8",
   },
 };
+
+window.CORE_TOOLS = CORE_TOOLS;
