@@ -4,332 +4,887 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Account Management — StaxAI</title>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-client.js"></script>
   <script src="/tools-data.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #F5F7FA;
+      --card:         #FFFFFF;
+      --topbar:       #4A6D8C;
+      --orange:       #c4622a;
+      --orange-light: #d4844a;
+      --navy:         #1A3A5C;
+      --navy-light:   #4A6D8C;
+      --text:         #1a2a3a;
+      --muted:        #6b7c93;
+      --border:       #e2e8f0;
+      --danger:       #c0392b;
+      --success:      #1a7a4a;
+      --font-body:    'DM Sans', sans-serif;
+      --font-head:    'Barlow Condensed', sans-serif;
+      --radius:       10px;
+      --shadow:       0 1px 4px rgba(0,0,0,0.08);
+      --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
+    }
+
     body {
-      font-family: 'DM Sans', sans-serif;
-      background: #F5F7FA;
-      color: #333333;
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
     }
 
-    /* Topbar */
+    /* ── TOPBAR ── */
     .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
       height: 68px;
-      background: #4A6D8C;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      background: var(--topbar);
       display: flex;
       align-items: center;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
+      padding: 0 28px;
       z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
-    .topbar-logo a {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-    }
-    .topbar-logo img {
-      height: 38px;
-    }
-    .topbar-nav {
-      margin-left: 64px;
-    }
-    .topbar-nav a {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .topbar-account-wrap {
-      position: relative;
-    }
-    .topbar-account-btn {
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
+    .topbar-logo {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 700;
       color: #fff;
-      font-family: 'DM Sans', sans-serif;
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+    .topbar-logo span { color: var(--orange); }
+    .topbar-dash-link {
+      color: rgba(255,255,255,0.85);
+      text-decoration: none;
       font-size: 14px;
-      font-weight: 600;
-      padding: 6px 14px;
-      cursor: pointer;
+      font-weight: 500;
+      margin-left: 64px;
+      transition: color 0.2s;
+    }
+    .topbar-dash-link:hover { color: #fff; }
+    .topbar-spacer { flex: 1; }
+    .topbar-account { position: relative; }
+    .topbar-account-btn {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 6px;
+      padding: 6px 14px;
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .topbar-account-btn:hover { background: rgba(255,255,255,0.2); }
+    .topbar-account-btn:hover { background: rgba(255,255,255,0.22); }
+    .topbar-account-btn svg { width: 16px; height: 16px; }
     .account-dropdown {
       display: none;
       position: absolute;
-      right: 0;
       top: calc(100% + 8px);
+      right: 0;
       background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      min-width: 220px;
-      z-index: 200;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      min-width: 200px;
       overflow: hidden;
+      z-index: 200;
     }
     .account-dropdown.open { display: block; }
-    .account-dropdown-email {
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #888;
-      border-bottom: 1px solid #eee;
-    }
-    .account-dropdown a,
-    .account-dropdown button {
+    .account-dropdown a {
       display: block;
-      width: 100%;
-      padding: 11px 16px;
-      text-align: left;
-      font-family: 'DM Sans', sans-serif;
+      padding: 12px 16px;
       font-size: 14px;
-      font-weight: 500;
-      color: #333;
-      background: none;
-      border: none;
-      cursor: pointer;
+      color: var(--text);
       text-decoration: none;
+      transition: background 0.15s;
     }
-    .account-dropdown a:hover,
-    .account-dropdown button:hover { background: #f5f7fa; }
-    .account-dropdown .sign-out { color: #c4622a; }
+    .account-dropdown a:hover { background: var(--bg); }
+    .account-dropdown a.active {
+      color: var(--orange);
+      font-weight: 600;
+    }
+    .account-dropdown .dd-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+    .account-dropdown a.signout { color: var(--danger); }
 
-    /* Page layout */
-    .al-page {
-      max-width: 820px;
+    /* ── PAGE LAYOUT ── */
+    .page-wrap {
+      max-width: 860px;
       margin: 0 auto;
-      padding: 40px 24px 80px;
+      padding: 100px 24px 60px;
     }
-    .al-page-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 36px;
-      font-weight: 800;
-      color: #1A3A5C;
-      margin-bottom: 32px;
+    .page-heading {
+      font-family: var(--font-head);
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+    .page-subheading {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 36px;
     }
 
-    /* Cards */
-    .al-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      padding: 28px 28px 24px;
+    /* ── SECTION CARDS ── */
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
       margin-bottom: 24px;
+      overflow: hidden;
     }
-    .al-card-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #1A3A5C;
-      margin-bottom: 18px;
+    .section-header {
+      padding: 18px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--navy);
+      letter-spacing: 0.3px;
+    }
+    .section-body { padding: 24px; }
+
+    /* ── SUBSCRIPTIONS ── */
+    .sub-empty {
+      text-align: center;
+      padding: 32px 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .sub-empty a {
+      color: var(--orange);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .sub-list { display: flex; flex-direction: column; gap: 12px; }
+    .sub-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .sub-icon {
+      width: 40px; height: 40px;
+      background: var(--navy);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .sub-info { flex: 1; }
+    .sub-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+    .sub-desc {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .sub-price {
+      font-family: var(--font-head);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--navy);
+      white-space: nowrap;
     }
 
-    /* Subscriptions */
-    .al-sub-row {
+    /* ── BILLING ── */
+    .billing-body {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .billing-text {
+      font-size: 14px;
+      color: var(--muted);
+      max-width: 480px;
+      line-height: 1.5;
+    }
+
+    /* ── USER MANAGEMENT ── */
+    .team-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .team-item {
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 12px 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .al-sub-row:last-child { border-bottom: none; }
-    .al-sub-icon {
-      font-size: 24px;
-      width: 36px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-    .al-sub-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-    .al-sub-name {
-      font-size: 15px;
-      font-weight: 600;
-      color: #333;
-    }
-    .al-sub-price {
-      font-size: 13px;
-      color: #888888;
-    }
-    .al-sub-status { flex-shrink: 0; }
-    .al-status-badge {
-      background: #e8f5e9;
-      color: #2e7d32;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 20px;
-    }
-    .al-empty {
-      font-size: 14px;
-      color: #888;
-      padding: 8px 0;
-    }
-    .al-empty a {
-      color: #c4622a;
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .al-empty a:hover { text-decoration: underline; }
-
-    /* Billing */
-    .al-billing-btn {
-      display: inline-block;
-      background: #1A5490;
-      color: #fff;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      padding: 10px 24px;
+      padding: 12px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      margin-top: 4px;
     }
-    .al-billing-btn:hover { background: #164a7d; }
-    .al-billing-note {
-      font-size: 13px;
-      color: #888;
-      margin-top: 10px;
-    }
-
-    /* Account details */
-    .al-detail-row {
+    .team-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--navy-light);
       display: flex;
       align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .al-detail-row:last-child { border-bottom: none; }
-    .al-detail-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #888;
-      width: 120px;
+      justify-content: center;
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
       flex-shrink: 0;
     }
-    .al-detail-value {
+    .team-info { flex: 1; min-width: 0; }
+    .team-email {
       font-size: 14px;
-      color: #333;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .al-change-pw {
-      display: inline-block;
-      margin-top: 14px;
-      font-size: 14px;
-      color: #c4622a;
+    .team-meta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .level-badge {
+      font-size: 11px;
       font-weight: 600;
-      text-decoration: none;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
     }
-    .al-change-pw:hover { text-decoration: underline; }
-    .al-coming-soon-note {
-      font-size: 13px;
-      color: #aaa;
-      margin-top: 4px;
+    .level-1 { background: rgba(196,98,42,0.12); color: var(--orange); }
+    .level-2 { background: rgba(26,58,92,0.10); color: var(--navy); }
+    .level-3 { background: rgba(107,124,147,0.15); color: var(--muted); }
+    .pending-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(196,98,42,0.10);
+      color: var(--orange);
+      white-space: nowrap;
     }
 
-    /* User management placeholder */
-    .al-placeholder {
-      background: #f9f9f9;
-      border: 1px dashed #ddd;
-      border-radius: 8px;
-      padding: 20px;
-      text-align: center;
-      color: #aaa;
+    .team-actions { display: flex; gap: 8px; }
+
+    /* ── INVITE SECTION ── */
+    .invite-section {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      margin-top: 8px;
+    }
+    .invite-title {
+      font-family: var(--font-head);
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--navy);
+      margin-bottom: 14px;
+    }
+    .invite-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .invite-form .field { display: flex; flex-direction: column; gap: 5px; }
+    .invite-form label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .invite-form input,
+    .invite-form select {
+      height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .invite-form input { width: 260px; }
+    .invite-form input:focus,
+    .invite-form select:focus { border-color: var(--navy-light); }
+    .invite-max-msg {
+      font-size: 13px;
+      color: var(--muted);
+      padding: 12px 0;
+    }
+
+    /* ── ACCOUNT DETAILS ── */
+    .detail-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label {
+      font-size: 13px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    .detail-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 38px;
+      padding: 0 18px;
+      border-radius: 6px;
+      font-family: var(--font-body);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: opacity 0.2s, background 0.2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--orange); color: #fff; }
+    .btn-primary:hover { background: var(--orange-light); }
+    .btn-navy { background: var(--navy); color: #fff; }
+    .btn-navy:hover { opacity: 0.88; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { border-color: var(--navy-light); color: var(--navy); }
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid #e2b8b8;
+      color: var(--danger);
+      font-size: 12px;
+      height: 30px;
+      padding: 0 12px;
+    }
+    .btn-danger-outline:hover { background: rgba(192,57,43,0.06); }
+    .btn-sm-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      height: 30px;
+      padding: 0 12px;
+    }
+    .btn-sm-outline:hover { border-color: var(--navy-light); color: var(--navy); }
+
+    /* ── MESSAGES ── */
+    .msg {
+      display: none;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+    .msg.show { display: block; }
+    .msg-error { background: rgba(192,57,43,0.08); color: var(--danger); border: 1px solid rgba(192,57,43,0.2); }
+    .msg-success { background: rgba(26,122,74,0.08); color: var(--success); border: 1px solid rgba(26,122,74,0.2); }
+
+    /* ── LOADER ── */
+    .spinner {
+      width: 20px; height: 20px;
+      border: 2px solid rgba(0,0,0,0.1);
+      border-top-color: var(--orange);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 20px 0;
+      color: var(--muted);
       font-size: 14px;
     }
+
+    /* ── LEVEL-BASED VISIBILITY ── */
+    .owner-only { display: none; }
+    .manager-hidden { display: none; }
   </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <div class="topbar-logo">
-      <a href="/dashboard.html">
-        <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" />
-      </a>
+<!-- TOPBAR -->
+<header class="topbar">
+  <a href="/index.html" class="topbar-logo">Stax<span>AI</span></a>
+  <a href="/dashboard.html" class="topbar-dash-link">Dashboard</a>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-account">
+    <button class="topbar-account-btn" id="accountBtn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      <span id="accountLabel">Account</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="account-dropdown" id="accountDropdown">
+      <a href="/account.html" class="active">Account Management</a>
+      <div class="dd-divider"></div>
+      <a href="#" id="signOutLink" class="signout">Sign Out</a>
     </div>
-    <nav class="topbar-nav">
-      <a href="/dashboard.html">Dashboard</a>
-    </nav>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-right">
-      <div class="topbar-account-wrap">
-        <button class="topbar-account-btn" id="account-btn">
-          <span id="account-email-short">Account</span> ▾
-        </button>
-        <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email"></div>
-          <a href="/account.html">Account Management</a>
-          <button class="sign-out" id="sign-out-btn">Sign Out</button>
+  </div>
+</header>
+
+<!-- PAGE -->
+<main class="page-wrap">
+  <h1 class="page-heading">Account Management</h1>
+  <p class="page-subheading">Manage your subscriptions, billing, and team.</p>
+
+  <!-- GLOBAL MESSAGE -->
+  <div class="msg msg-error" id="globalError"></div>
+  <div class="msg msg-success" id="globalSuccess"></div>
+
+  <!-- ACTIVE SUBSCRIPTIONS -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Active Subscriptions</span>
+    </div>
+    <div class="section-body" id="subsBody">
+      <div class="loading-row"><span class="spinner"></span> Loading subscriptions…</div>
+    </div>
+  </div>
+
+  <!-- BILLING (Level 1 only) -->
+  <div class="section-card owner-only" id="billingCard">
+    <div class="section-header">
+      <span class="section-title">Billing</span>
+    </div>
+    <div class="section-body">
+      <div class="billing-body">
+        <p class="billing-text">Use the billing portal to update your payment method, download invoices, or cancel subscriptions.</p>
+        <a href="#" id="billingPortalBtn" class="btn btn-navy" target="_blank" rel="noopener">Manage Billing</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- USER MANAGEMENT (Level 1 only) -->
+  <div class="section-card owner-only" id="userMgmtCard">
+    <div class="section-header">
+      <span class="section-title">Team Members</span>
+      <span id="teamCount" style="font-size:13px;color:var(--muted);"></span>
+    </div>
+    <div class="section-body" id="teamBody">
+      <div class="loading-row"><span class="spinner"></span> Loading team…</div>
+    </div>
+  </div>
+
+  <!-- ACCOUNT DETAILS -->
+  <div class="section-card">
+    <div class="section-header">
+      <span class="section-title">Account Details</span>
+    </div>
+    <div class="section-body">
+      <div class="detail-row">
+        <span class="detail-label">Email address</span>
+        <span class="detail-value" id="accountEmail">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Account type</span>
+        <span class="detail-value" id="accountRole">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Password</span>
+        <a href="#" id="changePasswordLink" class="btn btn-outline" style="height:32px;font-size:13px;padding:0 14px;">Change Password</a>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+(async function() {
+  // ── AUTH CHECK ──
+  const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
+  if (!session) { window.location.href = '/login.html'; return; }
+
+  const user = session.user;
+  document.getElementById('accountEmail').textContent = user.email;
+  document.getElementById('accountLabel').textContent = 'Account';
+
+  // ── ACCOUNT OWNER RESOLUTION ──
+  // Check if this user is a team member
+  let accountOwnerId = user.id;
+  let securityLevel = 1;
+
+  const { data: memberRow } = await window.supabaseClient
+    .from('team_members')
+    .select('account_owner_id, security_level')
+    .eq('user_id', user.id)
+    .eq('status', 'active')
+    .maybeSingle();
+
+  if (memberRow) {
+    accountOwnerId = memberRow.account_owner_id;
+    securityLevel = memberRow.security_level;
+  }
+
+  window.accountOwnerId = accountOwnerId;
+  window.userSecurityLevel = securityLevel;
+
+  // ── ROLE LABEL ──
+  const roleLabels = { 1: 'Account Owner', 2: 'Manager', 3: 'Staff' };
+  document.getElementById('accountRole').textContent = roleLabels[securityLevel] || 'User';
+
+  // ── SHOW OWNER-ONLY SECTIONS ──
+  if (securityLevel === 1) {
+    document.querySelectorAll('.owner-only').forEach(el => el.style.display = '');
+  }
+
+  // ── LOAD SUBSCRIPTIONS ──
+  const { data: profile } = await window.supabaseClient
+    .from('profiles')
+    .select('activated_tools')
+    .eq('id', accountOwnerId)
+    .maybeSingle();
+
+  const subsBody = document.getElementById('subsBody');
+  const activatedTools = (profile && profile.activated_tools) ? profile.activated_tools : [];
+
+  if (activatedTools.length === 0) {
+    subsBody.innerHTML = '<div class="sub-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
+  } else {
+    // Look up tool details from tools-data.js (window.TOOLS_DATA)
+    const toolsData = (typeof window.TOOLS_DATA !== 'undefined') ? window.TOOLS_DATA : [];
+    const items = activatedTools.map(toolId => {
+      const tool = toolsData.find(t => t.toolId === toolId || t.id === toolId);
+      return tool || { name: toolId, icon: '🔧', price: '—' };
+    });
+
+    subsBody.innerHTML = '<div class="sub-list">' + items.map(t => `
+      <div class="sub-item">
+        <div class="sub-icon">${t.icon || '🔧'}</div>
+        <div class="sub-info">
+          <div class="sub-name">${t.name || t.toolId || t.id}</div>
+          <div class="sub-desc">${t.shortDesc || t.description || ''}</div>
         </div>
-      </div>
-    </div>
-  </header>
+        <div class="sub-price">${t.price ? '$' + t.price + '/mo' : '—'}</div>
+      </div>`).join('') + '</div>';
+  }
 
-  <main class="al-page">
-    <h1 class="al-page-title">Account Management</h1>
+  // ── BILLING PORTAL LINK ──
+  document.getElementById('billingPortalBtn').addEventListener('click', async function(e) {
+    e.preventDefault();
+    this.textContent = 'Opening…';
+    this.style.pointerEvents = 'none';
+    try {
+      const res = await fetch('/api/billing-portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        showGlobalError('Could not open billing portal. Please try again.');
+      }
+    } catch {
+      showGlobalError('Could not open billing portal. Please try again.');
+    }
+    this.textContent = 'Manage Billing';
+    this.style.pointerEvents = '';
+  });
 
-    <!-- Active Subscriptions -->
-    <div class="al-card">
-      <h2 class="al-card-title">Active Subscriptions</h2>
-      <div id="subscriptions-list">
-        <p class="al-empty">Loading your subscriptions...</p>
-      </div>
-    </div>
+  // ── TEAM MEMBERS (Level 1 only) ──
+  if (securityLevel === 1) {
+    await loadTeam();
+  }
 
-    <!-- Billing -->
-    <div class="al-card">
-      <h2 class="al-card-title">Billing</h2>
-      <p style="font-size:14px;color:#555;margin-bottom:14px;">Manage your payment method, download invoices, or cancel a subscription via the Stripe billing portal.</p>
-      <button class="al-billing-btn" id="manage-billing-btn">Manage Billing</button>
-      <p class="al-billing-note">Opens in a new tab. Handled securely by Stripe.</p>
-    </div>
+  async function loadTeam() {
+    const teamBody = document.getElementById('teamBody');
 
-    <!-- Account Details -->
-    <div class="al-card">
-      <h2 class="al-card-title">Account Details</h2>
-      <div class="al-detail-row">
-        <span class="al-detail-label">Email</span>
-        <span class="al-detail-value" id="account-details-email"></span>
-      </div>
-      <a href="/reset-password.html" class="al-change-pw">Change password</a>
-      <p class="al-coming-soon-note">Password reset coming soon.</p>
-    </div>
+    const { data: activeMembers } = await window.supabaseClient
+      .from('team_members')
+      .select('id, email, security_level, status, joined_at, invited_at')
+      .eq('account_owner_id', user.id)
+      .eq('status', 'active')
+      .order('joined_at', { ascending: true });
 
-    <!-- User Management placeholder -->
-    <div class="al-card">
-      <h2 class="al-card-title">User Management</h2>
-      <div class="al-placeholder">
-        User management — invite team members and manage access levels — coming soon.
-      </div>
-    </div>
+    const { data: pendingMembers } = await window.supabaseClient
+      .from('team_members')
+      .select('id, email, security_level, status, invited_at')
+      .eq('account_owner_id', user.id)
+      .eq('status', 'pending')
+      .order('invited_at', { ascending: false });
 
-  </main>
+    const active = activeMembers || [];
+    const pending = pendingMembers || [];
+    const total = active.length + pending.length;
 
-  <script src="/account-logic.js?v=" id="account-logic-script"></script>
-  <script>
-    document.getElementById('account-logic-script').src = '/account-logic.js?v=' + Date.now();
-  </script>
+    document.getElementById('teamCount').textContent = `${total} of 4 team member${total !== 1 ? 's' : ''}`;
+
+    let html = '<div class="team-list">';
+
+    // Owner row (always first)
+    const ownerInitial = user.email.charAt(0).toUpperCase();
+    html += `
+      <div class="team-item">
+        <div class="team-avatar">${ownerInitial}</div>
+        <div class="team-info">
+          <div class="team-email">${user.email}</div>
+          <div class="team-meta">You</div>
+        </div>
+        <span class="level-badge level-1">Account Owner</span>
+      </div>`;
+
+    // Active members
+    active.forEach(m => {
+      const initial = m.email.charAt(0).toUpperCase();
+      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
+      const levelClass = m.security_level === 2 ? 'level-2' : 'level-3';
+      const joined = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      html += `
+        <div class="team-item" id="member-${m.id}">
+          <div class="team-avatar">${initial}</div>
+          <div class="team-info">
+            <div class="team-email">${m.email}</div>
+            <div class="team-meta">Joined ${joined}</div>
+          </div>
+          <span class="level-badge ${levelClass}">${levelLabel}</span>
+          <div class="team-actions">
+            <button class="btn btn-danger-outline" onclick="removeMember('${m.id}', '${m.email}')">Remove</button>
+          </div>
+        </div>`;
+    });
+
+    // Pending invites
+    pending.forEach(m => {
+      const initial = m.email.charAt(0).toUpperCase();
+      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
+      const invited = m.invited_at ? new Date(m.invited_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+      html += `
+        <div class="team-item" id="member-${m.id}">
+          <div class="team-avatar" style="background:var(--muted);">${initial}</div>
+          <div class="team-info">
+            <div class="team-email">${m.email}</div>
+            <div class="team-meta">Invited ${invited} · ${levelLabel}</div>
+          </div>
+          <span class="pending-badge">Pending</span>
+          <div class="team-actions">
+            <button class="btn btn-sm-outline" onclick="resendInvite('${m.id}', '${m.email}', ${m.security_level})">Resend</button>
+            <button class="btn btn-danger-outline" onclick="cancelInvite('${m.id}')">Cancel</button>
+          </div>
+        </div>`;
+    });
+
+    html += '</div>';
+
+    // Invite form or max message
+    if (total < 4) {
+      html += `
+        <div class="invite-section">
+          <div class="invite-title">Invite Team Member</div>
+          <div id="inviteMsg" class="msg"></div>
+          <div class="invite-form">
+            <div class="field">
+              <label>Email address</label>
+              <input type="email" id="inviteEmail" placeholder="teammate@example.com" />
+            </div>
+            <div class="field">
+              <label>Access level</label>
+              <select id="inviteLevel">
+                <option value="2">Manager</option>
+                <option value="3">Staff</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="inviteBtn" onclick="sendInvite()">Send Invite</button>
+          </div>
+        </div>`;
+    } else {
+      html += `
+        <div class="invite-section">
+          <p class="invite-max-msg">Your account has reached the maximum of 5 users (you + 4 team members).</p>
+        </div>`;
+    }
+
+    teamBody.innerHTML = html;
+  }
+
+  // ── INVITE ──
+  window.sendInvite = async function() {
+    const email = document.getElementById('inviteEmail').value.trim();
+    const level = parseInt(document.getElementById('inviteLevel').value);
+    const btn = document.getElementById('inviteBtn');
+    const msg = document.getElementById('inviteMsg');
+
+    if (!email) { showInviteMsg('Please enter an email address.', false); return; }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending…';
+    msg.className = 'msg';
+    msg.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ email, security_level: level })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showInviteMsg('Invite sent to ' + email, true);
+        document.getElementById('inviteEmail').value = '';
+        await loadTeam();
+      } else {
+        showInviteMsg(data.error || 'Could not send invite. Please try again.', false);
+      }
+    } catch {
+      showInviteMsg('Could not send invite. Please try again.', false);
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Send Invite';
+  };
+
+  function showInviteMsg(text, success) {
+    const msg = document.getElementById('inviteMsg');
+    if (!msg) return;
+    msg.textContent = text;
+    msg.className = 'msg show ' + (success ? 'msg-success' : 'msg-error');
+  }
+
+  // ── REMOVE MEMBER ──
+  window.removeMember = async function(id, email) {
+    if (!confirm('Remove ' + email + ' from your team? They will lose access immediately.')) return;
+    try {
+      const res = await fetch('/api/remove-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ team_member_id: id })
+      });
+      if (res.ok) {
+        showGlobalSuccess(email + ' has been removed from your team.');
+        await loadTeam();
+      } else {
+        const data = await res.json();
+        showGlobalError(data.error || 'Could not remove user. Please try again.');
+      }
+    } catch {
+      showGlobalError('Could not remove user. Please try again.');
+    }
+  };
+
+  // ── RESEND INVITE ──
+  window.resendInvite = async function(id, email, level) {
+    try {
+      const res = await fetch('/api/invite-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({ email, security_level: level, resend: true })
+      });
+      if (res.ok) {
+        showGlobalSuccess('Invite resent to ' + email);
+      } else {
+        const data = await res.json();
+        showGlobalError(data.error || 'Could not resend invite.');
+      }
+    } catch {
+      showGlobalError('Could not resend invite.');
+    }
+  };
+
+  // ── CANCEL INVITE ──
+  window.cancelInvite = async function(id) {
+    const { error } = await window.supabaseClient
+      .from('team_members')
+      .update({ status: 'revoked' })
+      .eq('id', id)
+      .eq('account_owner_id', user.id);
+    if (error) { showGlobalError('Could not cancel invite.'); return; }
+    showGlobalSuccess('Invite cancelled.');
+    await loadTeam();
+  };
+
+  // ── CHANGE PASSWORD ──
+  document.getElementById('changePasswordLink').addEventListener('click', async function(e) {
+    e.preventDefault();
+    this.textContent = 'Sending…';
+    this.style.pointerEvents = 'none';
+    const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email);
+    if (error) {
+      showGlobalError('Could not send reset email. Please try again.');
+    } else {
+      showGlobalSuccess('Password reset email sent to ' + user.email);
+    }
+    this.textContent = 'Change Password';
+    this.style.pointerEvents = '';
+  });
+
+  // ── ACCOUNT DROPDOWN ──
+  const accountBtn = document.getElementById('accountBtn');
+  const accountDropdown = document.getElementById('accountDropdown');
+  accountBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    accountDropdown.classList.toggle('open');
+  });
+  document.addEventListener('click', function() { accountDropdown.classList.remove('open'); });
+
+  // ── SIGN OUT ──
+  document.getElementById('signOutLink').addEventListener('click', async function(e) {
+    e.preventDefault();
+    await window.supabaseClient.auth.signOut();
+    window.location.href = '/login.html';
+  });
+
+  // ── HELPERS ──
+  function showGlobalError(msg) {
+    const el = document.getElementById('globalError');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+  function showGlobalSuccess(msg) {
+    const el = document.getElementById('globalSuccess');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 5000);
+  }
+
+})();
+</script>
 
 </body>
 </html>
