@@ -16,7 +16,6 @@
     :root {
       --bg:           #F5F7FA;
       --card:         #FFFFFF;
-      --topbar:       #4A6D8C;
       --orange:       #c4622a;
       --orange-light: #d4844a;
       --navy:         #1A3A5C;
@@ -384,7 +383,6 @@
 
     /* ── LEVEL-BASED VISIBILITY ── */
     .owner-only { display: none; }
-    .manager-hidden { display: none; }
   </style>
 </head>
 <body>
@@ -459,6 +457,10 @@
       <div class="detail-row">
         <span class="detail-label">Password</span>
         <a href="#" id="changePasswordLink" class="btn btn-outline" style="height:32px;font-size:13px;padding:0 14px;">Change Password</a>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Session</span>
+        <button id="signOutBtn" class="btn btn-danger-outline" style="height:32px;font-size:13px;padding:0 14px;">Sign Out</button>
       </div>
     </div>
   </div>
@@ -781,6 +783,12 @@
     }
     this.textContent = 'Change Password';
     this.style.pointerEvents = '';
+  });
+
+  // SIGN OUT
+  document.getElementById('signOutBtn').addEventListener('click', async function() {
+    await supabase.auth.signOut();
+    window.location.href = '/login.html';
   });
 
   // ── TOPBAR TOOL LINK ──
