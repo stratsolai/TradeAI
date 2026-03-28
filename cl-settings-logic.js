@@ -150,6 +150,7 @@ window.CL_SETTINGS_LOGIC = {
     setTimeout(function() { msgEl.style.display = 'none'; }, 3500);
   }
 
+  wireDropdown();
 };
 
 
@@ -209,11 +210,7 @@ function wireDropdown() {
     });
   }
 }
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", wireDropdown);
-} else {
-  wireDropdown();
-}
+
     });
   }
 });
