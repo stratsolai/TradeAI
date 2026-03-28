@@ -186,23 +186,34 @@ document.addEventListener('DOMContentLoaded', async function() {
     const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
 
 // -- Account dropdown --
-document.addEventListener("DOMContentLoaded", function() {
+function wireDropdown() {
   var btn = document.getElementById("account-btn");
-  var drop = document.getElementById("account-dropdown");
-  if (btn && drop) {
-    btn.addEventListener("click", function(e) {
-      e.stopPropagation();
-      drop.classList.toggle("open");
-    });
-    document.addEventListener("click", function() {
-      drop.classList.remove("open");
-    });
-  }
+  var menu = document.getElementById("account-menu");
+  if (!btn || !menu) return;
+  btn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    menu.classList.toggle("open");
+  });
+  document.addEventListener("click", function() {
+    menu.classList.remove("open");
+  });
+  menu.addEventListener("click", function(e) {
+    e.stopPropagation();
+  });
   var signOutBtn = document.getElementById("sign-out-btn");
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function() {
-      var supabase = window.supabaseClient;
-      if (supabase) supabase.auth.signOut().then(function() { window.location.href = "/login"; });
+      window.supabaseClient.auth.signOut().then(function() {
+        window.location.href = "/login";
+      });
+    });
+  }
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", wireDropdown);
+} else {
+  wireDropdown();
+}
     });
   }
 });
