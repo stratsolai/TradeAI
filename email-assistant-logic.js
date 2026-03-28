@@ -504,3 +504,4 @@ window.EA_LOGIC = (function () {
 })();
 
 document.addEventListener('DOMContentLoaded', () => window.EA_LOGIC.init());
+window.addEventListener('pageshow', (e) => { if (e.persisted) window.EA_LOGIC.init(); });
