@@ -1,4 +1,4 @@
-(async function () {
+window._initSettings = async function () {
   const { data: { session } } = await window.supabaseClient.auth.getSession();
   if (!session) { window.location.href = "/login"; return; }
   const user = session.user;
@@ -136,4 +136,6 @@
       else { showMsg("Settings saved.", "success"); }
     });
   }
-})();
+};
+window._initSettings();
+window.addEventListener('pageshow', (e) => { if (e.persisted) window._initSettings(); });
