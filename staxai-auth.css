@@ -386,7 +386,9 @@ a:hover { opacity: 0.85; }
   display: flex;
   gap: 0;
   border-bottom: 2px solid var(--border);
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .ptab,
