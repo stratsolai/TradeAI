@@ -63,7 +63,7 @@ window.CL_SETTINGS_LOGIC = {
       var resp = await supabase
         .from('cl_settings')
         .select('email_scan_frequency, drive_scan_frequency, website_scan_frequency')
-        .eq('user_id', user.id)
+        .eq('id', user.id)
         .maybeSingle();
 
       if (resp.data) {
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   const { data: profile } = await supabase
     .from('profiles')
     .select('cl_connected_emails, cl_drive_connected, website_urls')
-    .eq('user_id', user.id)
+    .eq('id', user.id)
     .single();
 
   const connectedEmails = (profile && profile.cl_connected_emails) ? profile.cl_connected_emails : [];
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   // -- Disconnect email --
   async function disconnectEmail(provider, email) {
     const updated = connectedEmails.filter(function(e) { return !(e.provider === provider && e.email === email); });
-    const { error } = await supabase.from('profiles').update({ cl_connected_emails: updated }).eq('user_id', user.id);
+    const { error } = await supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', user.id);
     if (!error) {
       connectedEmails.splice(0, connectedEmails.length, ...updated);
       renderEmailList(provider);
@@ -326,7 +326,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       const inputs = document.querySelectorAll('.website-url-input');
       const urls = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(function(v) { return v.length > 0; });
       websiteUrls.splice(0, websiteUrls.length, ...urls);
-      const { error } = await supabase.from('profiles').update({ website_urls: urls }).eq('user_id', user.id);
+      const { error } = await supabase.from('profiles').update({ website_urls: urls }).eq('id', user.id);
       if (!error) {
         websiteSaveBtn.textContent = 'Saved';
         setTimeout(function() { websiteSaveBtn.textContent = 'Save'; }, 2000);
