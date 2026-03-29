@@ -107,12 +107,9 @@ window.CL_REVIEW = {
   _load: async function() {
     const list = document.getElementById('review-list');
     if (list) list.innerHTML = '<div class="review-loading">Loading...</div>';
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { this._renderList([]); return; }
     const result = await this._supabase
       .from('content_library')
       .select('*')
-      .eq('user_id', user.id)
       .eq('status', this._status)
       .order('created_at', { ascending: false });
     if (result.error) {
