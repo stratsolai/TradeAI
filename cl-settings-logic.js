@@ -346,6 +346,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 window.addEventListener('pageshow', function(e) {
   if (e.persisted) {
+    var _esl = document.querySelector('#account-email-short'); if (_esl) _esl.textContent = 'Account';
     var btn = document.querySelector('#account-btn');
     var drop = document.querySelector('#account-dropdown');
     if (btn && drop) {
