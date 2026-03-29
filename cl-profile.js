@@ -1,3 +1,4 @@
+var _clOrange = getComputedStyle(document.documentElement).getPropertyValue('--orange').trim();
 window.CL_PROFILE = {
   _supabase: null,
   _userId: null,
@@ -16,7 +17,7 @@ window.CL_PROFILE = {
     return '<div class="profile-wrap">' +
       '<div class="profile-nav-chips">' +
         '<button class="profile-nav-chip active" data-ptab="identity" style="border-left-color:#1A5490;">1. Identity</button>' +
-        '<button class="profile-nav-chip" data-ptab="location" style="border-left-color:#c4622a;">2. Location &amp; Contact</button>' +
+        '<button class="profile-nav-chip" data-ptab="location" style="border-left-color:'+_clOrange+';">2. Location &amp; Contact</button>' +
         '<button class="profile-nav-chip" data-ptab="details" style="border-left-color:#28a745;">3. Business Details</button>' +
         '<button class="profile-nav-chip" data-ptab="marketing" style="border-left-color:#7b2d8b;">4. Marketing Theme</button>' +
       '</div>' +
@@ -202,7 +203,7 @@ window.CL_PROFILE = {
       '</div>' +
       '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn btn-outline" style="border-left-color:#c4622a;margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
+      '<button class="btn btn-outline" style="border-left-color:'+_clOrange+';margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -232,11 +233,11 @@ window.CL_PROFILE = {
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
       '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button>' +
-      '<div class="profile-section-card" style="margin-top:0;border-left-color:#c4622a;">' +
+      '<div class="profile-section-card" style="margin-top:0;border-left-color:'+_clOrange+';">' +
         '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn btn-outline" style="border-left-color:#c4622a;margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
+        '<button class="btn btn-outline" style="border-left-color:'+_clOrange+';margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation'
