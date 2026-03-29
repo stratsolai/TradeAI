@@ -16,7 +16,7 @@ window.CL_PROFILE = {
     return '<div class="profile-wrap">' +
       '<div class="profile-nav-chips">' +
         '<button class="profile-nav-chip active" data-ptab="identity" style="border-left-color:#1A5490;">1. Identity</button>' +
-        '<button class="profile-nav-chip" data-ptab="location" style="border-left-color:#E8500A;">2. Location &amp; Contact</button>' +
+        '<button class="profile-nav-chip" data-ptab="location" style="border-left-color:#c4622a;">2. Location &amp; Contact</button>' +
         '<button class="profile-nav-chip" data-ptab="details" style="border-left-color:#28a745;">3. Business Details</button>' +
         '<button class="profile-nav-chip" data-ptab="marketing" style="border-left-color:#7b2d8b;">4. Marketing Theme</button>' +
       '</div>' +
@@ -202,7 +202,7 @@ window.CL_PROFILE = {
       '</div>' +
       '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="profile-nav-chip" style="border-left-color:#E8500A;margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
+      '<button class="btn btn-outline" style="border-left-color:#c4622a;margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -232,11 +232,11 @@ window.CL_PROFILE = {
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
       '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button>' +
-      '<div class="profile-section-card" style="margin-top:0;border-left-color:#E8500A;">' +
+      '<div class="profile-section-card" style="margin-top:0;border-left-color:#c4622a;">' +
         '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="profile-nav-chip" style="border-left-color:#E8500A;margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
+        '<button class="btn btn-outline" style="border-left-color:#c4622a;margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation'
@@ -361,7 +361,7 @@ window.CL_PROFILE = {
         '<div id="prof-extras-extra">' + extraRowsHtml + '</div>'
       ) +
     '</div>' +
-    '<button class="profile-nav-chip" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>';
+    '<button class="btn btn-outline" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save', '_saveMarketing'
     );
