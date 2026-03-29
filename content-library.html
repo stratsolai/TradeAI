@@ -22,60 +22,6 @@
     .page-subtitle { color: var(--text-muted); font-size: 15px; }
 
     /* ─── STATS BAR ─── */
-    .primary-tabs {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 28px;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-
-    .primary-tabs::-webkit-scrollbar { display: none; }
-
-    .ptab {
-      padding: 13px 24px;
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-muted);
-      transition: all 0.2s;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: inherit;
-    }
-
-    .ptab:hover { color: var(--blue); }
-    .ptab.active { color: var(--blue); border-bottom-color: var(--orange); }
-
-    .tab-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 20px;
-      height: 20px;
-      padding: 0 6px;
-      background: var(--orange);
-      color: white;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .tab-badge.blue { background: var(--blue); }
-    .tab-badge.green { background: var(--green); }
-    .tab-badge.grey { background: #aaa; }
-
-    .ptab-content { display: none; }
-    .ptab-content.active > .ptab-content { display: block; }
-    .ptab-content.active { display: block; }
-
-    /* ─── CARDS ─── */
     .card {
       background: var(--white);
       border-radius: 12px;
@@ -1288,7 +1234,7 @@
     <div class="stat-card teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
   </div>
 
-<div class="primary-tabs">
+<div class="tab-nav">
     <button class="ptab active" onclick="switchPTab('upload')">📤 Upload & Import</button>
     <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review</button>
     <button class="ptab" onclick="switchPTab('outputs')">📄 Tool Outputs</button>
