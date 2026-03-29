@@ -63,7 +63,7 @@ window.CL_SETTINGS_LOGIC = {
       var resp = await supabase
         .from('cl_settings')
         .select('email_scan_frequency, drive_scan_frequency, website_scan_frequency')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
 
       if (resp.data) {
