@@ -183,13 +183,12 @@ document.addEventListener('DOMContentLoaded', async function() {
   function renderEmailList(provider) {
     const listEl = document.getElementById(provider + '-connections-list');
     if (!listEl) return;
-    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; 
+    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
 
-  // -- Account dropdown & sign out --
-  var btn = document.querySelector("#account-btn");
-  var drop = document.querySelector("#account-dropdown");
-  var signOutBtn = document.querySelector("#sign-out-btn");
-
+// -- Account dropdown --
+document.addEventListener("DOMContentLoaded", function() {
+  var btn = document.getElementById("account-btn");
+  var drop = document.getElementById("account-dropdown");
   if (btn && drop) {
     btn.addEventListener("click", function(e) {
       e.stopPropagation();
@@ -199,38 +198,11 @@ document.addEventListener('DOMContentLoaded', async function() {
       drop.classList.remove("open");
     });
   }
-
+  var signOutBtn = document.getElementById("sign-out-btn");
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function() {
       var supabase = window.supabaseClient;
-      if (supabase) supabase.auth.signOut().then(function() {
-        window.location.href = "/login";
-      });
+      if (supabase) supabase.auth.signOut().then(function() { window.location.href = "/login"; });
     });
-  }
-});
-
-window.addEventListener("pageshow", function(e) {
-  if (e.persisted) {
-    var btn = document.querySelector("#account-btn");
-    var drop = document.querySelector("#account-dropdown");
-    var signOutBtn = document.querySelector("#sign-out-btn");
-    if (btn && drop) {
-      btn.addEventListener("click", function(e) {
-        e.stopPropagation();
-        drop.classList.toggle("open");
-      });
-      document.addEventListener("click", function() {
-        drop.classList.remove("open");
-      });
-    }
-    if (signOutBtn) {
-      signOutBtn.addEventListener("click", function() {
-        var supabase = window.supabaseClient;
-        if (supabase) supabase.auth.signOut().then(function() {
-          window.location.href = "/login";
-        });
-      });
-    }
   }
 });
