@@ -1,0 +1,478 @@
+/* ============================================================
+   staxai-auth.css — Shared stylesheet for all authenticated pages
+   StaxAI Platform — v1.0 March 2026
+   Scope: 11 authenticated pages (see Auth CSS Spec v1.0)
+   ⚠️  Do not add tool-specific styles to this file.
+   ⚠️  No hardcoded hex values in authenticated page CSS after this build.
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   1. CSS VARIABLES (:root)
+   ------------------------------------------------------------ */
+:root {
+  /* Colour */
+  --blue:          #4A6D8C;
+  --blue-light:    #e8f4fd;
+  --orange:        #c4622a;
+  --orange-light:  #fff3ee;
+  --green:         #28a745;
+  --green-light:   #edfaf1;
+  --red:           #dc3545;
+  --purple:        #7b2d8b;
+  --teal:          #0d9488;
+  --grey:          #6c757d;
+  --bg:            #f5f7fa;
+  --white:         #ffffff;
+  --border:        #e5e5e5;
+  --text:          #333333;
+  --text-muted:    #888888;
+
+  /* Typography */
+  --heading-font:  'Barlow Condensed', sans-serif;
+  --body-font:     'DM Sans', sans-serif;
+}
+
+/* ------------------------------------------------------------
+   2. GLOBAL BASE
+   ------------------------------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--body-font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--heading-font);
+  color: var(--text);
+  margin: 0 0 8px;
+}
+
+h1 { font-weight: 900; font-size: 28px; }
+h2 { font-weight: 700; }
+
+p { margin: 0 0 12px; }
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { opacity: 0.85; }
+
+/* ------------------------------------------------------------
+   3. PAGE WRAPPER
+   ------------------------------------------------------------ */
+.page-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px;
+}
+
+/* ------------------------------------------------------------
+   4. TOPBAR
+   ------------------------------------------------------------ */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: 68px;
+  padding: 0 24px;
+  background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.topbar-logo img {
+  height: 36px;
+  width: auto;
+}
+
+.topbar-nav {
+  margin-left: 64px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.topbar-nav a {
+  color: #ffffff;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.topbar-nav a:hover {
+  opacity: 1;
+}
+
+.topbar-spacer {
+  flex: 1;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+  position: relative;
+}
+
+.topbar-right a {
+  color: #ffffff;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  opacity: 0.9;
+}
+
+.topbar-right a:hover {
+  opacity: 1;
+}
+
+/* Topbar account wrap & dropdown */
+.topbar-account-wrap {
+  position: relative;
+}
+
+.topbar-account-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: #ffffff;
+  font-family: var(--body-font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.topbar-account-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+.topbar-account-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  min-width: 200px;
+  overflow: hidden;
+  display: none;
+  z-index: 200;
+}
+
+.topbar-account-dropdown.open {
+  display: block;
+}
+
+.topbar-account-dropdown a,
+.topbar-account-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  text-align: left;
+  font-family: var(--body-font);
+  font-size: 14px;
+  color: var(--text);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.topbar-account-dropdown a:hover,
+.topbar-account-dropdown button:hover {
+  background: #4A6D8C;
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------
+   5. CARDS
+   ------------------------------------------------------------ */
+.card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ------------------------------------------------------------
+   6. STAT TILES
+   ------------------------------------------------------------ */
+.stat-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.stat-tile .stat-value {
+  font-family: var(--heading-font);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-tile .stat-label {
+  font-family: var(--body-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ------------------------------------------------------------
+   7. BUTTONS
+   ------------------------------------------------------------ */
+
+/* Primary blue button */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--blue);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btn-primary:hover {
+  opacity: 0.85;
+  color: #ffffff;
+}
+
+/* Outline blue button */
+.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--white);
+  color: var(--blue);
+  border: 1.5px solid var(--blue);
+  border-radius: 8px;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-outline:hover {
+  background: var(--blue-light);
+  color: var(--blue);
+}
+
+/* Outline orange button */
+.btn-orange {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 20px;
+  background: var(--white);
+  color: var(--orange);
+  border: 1.5px solid var(--orange);
+  border-radius: 8px;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-orange:hover {
+  background: var(--orange-light);
+  color: var(--orange);
+}
+
+/* ------------------------------------------------------------
+   8. UNDERLINE PAGE TABS (.tab-nav-item)
+   ------------------------------------------------------------ */
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.tab-nav-item {
+  padding: 10px 20px;
+  font-family: var(--body-font);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-nav-item:hover {
+  color: var(--text);
+  opacity: 0.85;
+}
+
+.tab-nav-item.active {
+  color: var(--orange);
+  border-bottom-color: var(--orange);
+}
+
+/* ------------------------------------------------------------
+   9. PILL TABS (.pill-tab)
+   ------------------------------------------------------------ */
+.pill-tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--body-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.pill-tab:hover {
+  opacity: 0.85;
+}
+
+.pill-tab.active {
+  background: var(--blue-light);
+  color: var(--blue);
+  border-color: var(--blue);
+  border-left-color: var(--blue);
+  font-weight: 600;
+}
+
+/* Accent modifiers — left border colour only */
+.pill-tab.accent-blue   { border-left-color: var(--blue); }
+.pill-tab.accent-orange { border-left-color: var(--orange); }
+.pill-tab.accent-green  { border-left-color: var(--green); }
+.pill-tab.accent-purple { border-left-color: var(--purple); }
+.pill-tab.accent-teal   { border-left-color: var(--teal); }
+.pill-tab.accent-red    { border-left-color: var(--red); }
+
+/* ------------------------------------------------------------
+   10. FILTER PILLS (.filter-pill)
+   ------------------------------------------------------------ */
+.filter-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-family: var(--body-font);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.filter-pill:hover {
+  opacity: 0.85;
+}
+
+.filter-pill.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+
+/* ------------------------------------------------------------
+   11. FORM INPUTS & SEARCH FIELDS
+   ------------------------------------------------------------ */
+.form-input,
+.search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--body-font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--white);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.form-input:focus,
+.search-input:focus {
+  border-color: var(--blue);
+}
+
+/* ------------------------------------------------------------
+   12. SECTION LABELS
+   ------------------------------------------------------------ */
+.section-label {
+  font-family: var(--body-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+/* ------------------------------------------------------------
+   13. BADGES & STATUS LABELS (.badge)
+   ------------------------------------------------------------ */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--body-font);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.badge-blue   { background: var(--blue-light);  color: var(--blue); }
+.badge-green  { background: var(--green-light); color: var(--green); }
+.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-red    { background: #fdecea;             color: var(--red); }
+.badge-grey   { background: #f0f0f0;             color: var(--greyi; }
