@@ -166,13 +166,13 @@ document.addEventListener('DOMContentLoaded', async function() {
   const user = authData.user;
 
   // -- Account dropdown --
-  const emailShortEl = document.getElementById('account-email-short');
+  const emailShortEl = document.querySelector('#account-email-short');
   if (emailShortEl) emailShortEl.textContent = 'Account';
-  const dropdownEmailEl = document.getElementById('account-dropdown-email');
+  const dropdownEmailEl = document.querySelector('#account-dropdown-email');
   
 
-  const acctBtn = document.getElementById('account-btn');
-  const acctDropdown = document.getElementById('account-dropdown');
+  const acctBtn = document.querySelector('#account-btn');
+  const acctDropdown = document.querySelector('#account-dropdown');
   if (acctBtn && acctDropdown) {
     acctBtn.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     document.addEventListener('click', function() { acctDropdown.classList.remove('open'); });
   }
-  const signOutBtn = document.getElementById('sign-out-btn');
+  const signOutBtn = document.querySelector('#sign-out-btn');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', async function() {
       await supabase.auth.signOut();
