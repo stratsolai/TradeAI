@@ -168,8 +168,6 @@ document.addEventListener('DOMContentLoaded', async function() {
   // -- Account dropdown --
   const emailShortEl = document.querySelector('#account-email-short');
   if (emailShortEl) emailShortEl.textContent = 'Account';
-  const dropdownEmailEl = document.querySelector('#account-dropdown-email');
-  
 
   const acctBtn = document.querySelector('#account-btn');
   const acctDropdown = document.querySelector('#account-dropdown');
