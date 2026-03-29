@@ -108,6 +108,7 @@ window.CL_REVIEW = {
     const list = document.getElementById('review-list');
     if (list) list.innerHTML = '<div class="review-loading">Loading...</div>';
       const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { this._renderList([]); return; }
     const result = await this._supabase
       .from('content_library')
       .select('*')
