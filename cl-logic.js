@@ -134,3 +134,14 @@ let generatedPostText = '';
     document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
     var _sb = document.getElementById("sign-out-btn"); if (_sb) _sb.addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "/login"; });
     var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
+function switchPTab(tab) {
+  document.querySelectorAll('.ptab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.ptab').forEach(function(el) { el.classList.remove('active'); });
+  var panel = document.getElementById('cl-tab-' + tab);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.ptab').forEach(function(el) {
+    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'" + tab + "'")) {
+      el.classList.add('active');
+    }
+  });
+}
