@@ -183,10 +183,9 @@ document.addEventListener('DOMContentLoaded', async function() {
   function renderEmailList(provider) {
     const listEl = document.getElementById(provider + '-connections-list');
     if (!listEl) return;
-    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
+    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; 
 
-// -- Account dropdown & sign out --
-document.addEventListener("DOMContentLoaded", function() {
+  // -- Account dropdown & sign out --
   var btn = document.querySelector("#account-btn");
   var drop = document.querySelector("#account-dropdown");
   var signOutBtn = document.querySelector("#sign-out-btn");
@@ -198,9 +197,6 @@ document.addEventListener("DOMContentLoaded", function() {
     });
     document.addEventListener("click", function() {
       drop.classList.remove("open");
-    });
-    btn.addEventListener("click", function(e) {
-      e.stopPropagation();
     });
   }
 
@@ -226,9 +222,6 @@ window.addEventListener("pageshow", function(e) {
       });
       document.addEventListener("click", function() {
         drop.classList.remove("open");
-      });
-      btn.addEventListener("click", function(e) {
-        e.stopPropagation();
       });
     }
     if (signOutBtn) {
