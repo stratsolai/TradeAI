@@ -58,7 +58,7 @@ window.ACCOUNT_LOGIC = {
     client
       .from('profiles')
       .select('activated_tools, business_name')
-      .eq('user_id', userId)
+      .eq('id', userId)
       .single()
       .then(function(result) {
         if (result.error) {
