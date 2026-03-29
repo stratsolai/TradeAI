@@ -100,7 +100,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("gdrive_connected, business_email_gmail, business_email_outlook, website_urls").eq("user_id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_connected, business_email_gmail, business_email_outlook, website_urls").eq("user_id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
@@ -116,7 +116,7 @@ window.CL_UPLOAD = {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false });
       }
 
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.gdrive_connected });
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.cl_drive_connected });
 
       var websiteUrl = profile.website_urls && profile.website_urls.length > 0 ? profile.website_urls[0] : null;
       tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl });
