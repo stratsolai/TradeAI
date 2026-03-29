@@ -57,7 +57,7 @@
       margin-bottom: 28px;
     }
 
-    .stat-tile {
+    .stat-card {
       background: var(--white);
       padding: 18px 20px;
       border-radius: 10px;
@@ -65,10 +65,10 @@
       border-left: 4px solid var(--blue);
     }
 
-    .stat-tile.orange { border-left-color: var(--orange); }
-    .stat-tile.green { border-left-color: var(--green); }
-    .stat-tile.purple { border-left-color: #7b2d8b; }
-    .stat-tile.teal { border-left-color: #0d9488; }
+    .stat-card.orange { border-left-color: var(--orange); }
+    .stat-card.green { border-left-color: var(--green); }
+    .stat-card.purple { border-left-color: #7b2d8b; }
+    .stat-card.teal { border-left-color: #0d9488; }
 
     .stat-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; margin-bottom: 4px; }
     .stat-label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
@@ -85,7 +85,7 @@
 
     .primary-tabs::-webkit-scrollbar { display: none; }
 
-    .tab-nav-item {
+    .ptab {
       padding: 13px 24px;
       background: none;
       border: none;
@@ -102,8 +102,8 @@
       font-family: inherit;
     }
 
-    .tab-nav-item:hover { color: var(--blue); }
-    .tab-nav-item.active { color: var(--blue); border-bottom-color: var(--orange); }
+    .ptab:hover { color: var(--blue); }
+    .ptab.active { color: var(--blue); border-bottom-color: var(--orange); }
 
     .tab-badge {
       display: inline-flex;
@@ -969,8 +969,8 @@
     .drop-zone-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .drop-icon { font-size: 36px; }
     .drop-label { font-size: 15px; color: #555; }
-    .btn-primary { background: var(--blue, #1A5490); color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-primary:hover { background: #1a4070; }
+    .btn-browse { background: var(--blue, #1A5490); color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-browse:hover { background: #1a4070; }
     .drop-hint { font-size: 12px; color: #999; }
     .upload-progress { margin-top: 12px; font-size: 14px; color: #555; }
     .website-import-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -1039,8 +1039,8 @@
     .upload-btn-icon { font-size: 32px; }
     .upload-btn-label { font-size: 15px; font-weight: 700; color: #1A5490; }
     .upload-btn-sub { font-size: 13px; color: #888; }
-    .btn-primary { margin-top: 8px; padding: 8px 20px; background: #1A5490; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-primary:hover { background: #164070; }
+    .btn-browse { margin-top: 8px; padding: 8px 20px; background: #1A5490; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-browse:hover { background: #164070; }
     .offline-banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; background: #fff3ee; border: 1px solid #c4622a; border-radius: 8px; margin-bottom: 16px; font-size: 14px; color: #c4622a; }
     .btn-dismiss { background: none; border: none; color: #c4622a; font-size: 16px; cursor: pointer; padding: 0 4px; }
     .upload-confirm { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #edfaf1; border: 1px solid #28a745; border-radius: 8px; margin-bottom: 16px; font-size: 14px; color: #28a745; }
@@ -1304,7 +1304,6 @@
 .profile-location-block { background: #F8FAFC; border-radius: 8px; border: 1px solid #E0E0E0; padding: 16px; margin-bottom: 12px; }
 .profile-location-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 </style>
-<link rel="stylesheet" href="staxai-auth.css">
 </head>
 <body>
 
@@ -1334,17 +1333,17 @@
   </div>
 
 <div class="stats-bar">
-    <div class="stat-tile" data-status="all" style="cursor:pointer"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
-    <div class="stat-tile orange" data-status="pending" style="cursor:pointer"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
-    <div class="stat-tile green" data-status="approved" style="cursor:pointer"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
-    <div class="stat-tile teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
+    <div class="stat-card" data-status="all" style="cursor:pointer"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
+    <div class="stat-card orange" data-status="pending" style="cursor:pointer"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
+    <div class="stat-card green" data-status="approved" style="cursor:pointer"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
   </div>
 
 <div class="primary-tabs">
-    <button class="tab-nav-item active" onclick="switchPTab('upload')">📤 Upload & Import</button>
-    <button class="tab-nav-item" onclick="switchPTab('review')">⏳ Source Material Review</button>
-    <button class="tab-nav-item" onclick="switchPTab('outputs')">📄 Tool Outputs</button>
-    <button class="tab-nav-item" onclick="switchPTab('profile')">👤 Business Profile</button>
+    <button class="ptab active" onclick="switchPTab('upload')">📤 Upload & Import</button>
+    <button class="ptab" onclick="switchPTab('review')">⏳ Source Material Review</button>
+    <button class="ptab" onclick="switchPTab('outputs')">📄 Tool Outputs</button>
+    <button class="ptab" onclick="switchPTab('profile')">👤 Business Profile</button>
   </div>
 
   <div id="cl-tab-upload" class="ptab-content active"></div>
