@@ -1,64 +1,71 @@
 /* ============================================================
    staxai-auth.css — Shared stylesheet for all authenticated pages
-   StaxAI Platform — v1.0 March 2026
-   Scope: 11 authenticated pages (see Auth CSS Spec v1.0)
+   StaxAI Platform — v1.2 March 2026
+   Source of truth: content-library.html (approved reference)
    ⚠️  Do not add tool-specific styles to this file.
-   ⚠️  No hardcoded hex values in authenticated page CSS after this build.
    ============================================================ */
 
 /* ------------------------------------------------------------
    1. CSS VARIABLES (:root)
    ------------------------------------------------------------ */
 :root {
-  /* Colour */
-  --blue:          #4A6D8C;
-  --blue-light:    #e8f4fd;
-  --orange:        #c4622a;
-  --orange-light:  #fff3cd;
-  --green:         #155724;
-  --green-light:   #d4edda;
-  --red:           #dc3545;
-  --purple:        #7b2d8b;
-  --teal:          #0d9488;
-  --grey:          #6c757d;
-  --bg:            #f5f7fa;
-  --white:         #ffffff;
-  --border:        #e5e5e5;
-  --border-blue:   #c8d6e5;
-  --text:          #333333;
-  --text-muted:    #888888;
+  /* Core colours */
+  --blue:               #4A6D8C;
+  --blue-light:         #e8f4fd;
+  --orange:             #c4622a;
+  --orange-light:       #fff3ee;
+  --green:              #28a745;
+  --green-light:        #edfaf1;
+  --red:                #dc3545;
+  --purple:             #7b2d8b;
+  --teal:               #0d9488;
+  --grey:               #6c757d;
+  --bg:                 #f5f7fa;
+  --white:              #ffffff;
+  --border:             #e5e5e5;
+  --border-blue:        #c8d6e5;
+  --text:               #333333;
+  --text-muted:         #888888;
+
+  /* Badge-specific colours (separate from core vars) */
+  --badge-green-bg:     #d4edda;
+  --badge-green-text:   #155724;
+  --badge-orange-bg:    #fff3cd;
+  --badge-orange-text:  #856404;
+  --badge-purple-bg:    #e8d5f5;
+  --badge-purple-text:  #6a1b9a;
 
   /* Typography */
-  --heading-font:  'Barlow Condensed', sans-serif;
-  --body-font:     'DM Sans', sans-serif;
+  --heading-font:       'Barlow Condensed', sans-serif;
+  --body-font:          'DM Sans', sans-serif;
 }
 
 /* ------------------------------------------------------------
-   2. GLOBAL BASE
+   2. GLOBAL RESET & BASE
    ------------------------------------------------------------ */
 *, *::before, *::after {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
   font-family: var(--body-font);
-  font-size: 14px;
-  color: var(--text);
   background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
   line-height: 1.6;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--heading-font);
   color: var(--text);
-  margin: 0 0 8px;
 }
 
 h1 { font-weight: 900; font-size: 28px; }
 h2 { font-weight: 700; }
 
-p { margin: 0 0 12px; }
+p { margin-bottom: 12px; }
 
 a { color: var(--blue); text-decoration: none; }
 a:hover { opacity: 0.85; }
@@ -79,43 +86,51 @@ a:hover { opacity: 0.85; }
   position: sticky;
   top: 0;
   z-index: 100;
-  height: 68px;
-  padding: 0 24px;
-  background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: 0 24px;
+  height: 68px;
+  background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .topbar-logo {
   display: flex;
   align-items: center;
+  gap: 9px;
   text-decoration: none;
+  color: #fff;
+  flex-shrink: 0;
+  margin-right: 20px;
 }
 
 .topbar-logo img {
-  height: 36px;
+  height: 38px;
   width: auto;
+  display: block;
 }
 
 .topbar-nav {
   margin-left: 64px;
+  margin-right: auto;
   display: flex;
   align-items: center;
   gap: 24px;
 }
 
-.topbar-nav a {
-  color: #ffffff;
-  font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 500;
+.topbar-nav a,
+.topbar-nav-link {
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  font-weight: 600;
   text-decoration: none;
-  opacity: 0.9;
+  transition: color 0.15s;
 }
 
-.topbar-nav a:hover {
+.topbar-nav a:hover,
+.topbar-nav-link:hover {
+  color: #fff;
   opacity: 1;
 }
 
@@ -124,26 +139,28 @@ a:hover { opacity: 0.85; }
 }
 
 .topbar-right {
+  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 40px;
   position: relative;
 }
 
-.topbar-right a {
-  color: #ffffff;
-  font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 500;
+.topbar-link {
+  color: rgba(255,255,255,0.75);
+  font-size: 16px;
+  font-weight: 600;
   text-decoration: none;
-  opacity: 0.9;
+  transition: color 0.15s;
 }
 
-.topbar-right a:hover {
+.topbar-link:hover {
+  color: #fff;
   opacity: 1;
 }
 
-/* Topbar account wrap & dropdown */
+/* Account wrap & dropdown */
+.topbar-account,
 .topbar-account-wrap {
   position: relative;
 }
@@ -160,6 +177,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
+  transition: color 0.15s;
 }
 
 .topbar-account-btn:hover {
@@ -185,7 +203,8 @@ a:hover { opacity: 0.85; }
 }
 
 .topbar-account-dropdown a,
-.topbar-account-dropdown button {
+.topbar-account-dropdown button,
+.sign-out-btn {
   display: block;
   width: 100%;
   padding: 11px 16px;
@@ -197,12 +216,22 @@ a:hover { opacity: 0.85; }
   border: none;
   cursor: pointer;
   text-decoration: none;
+  transition: background 0.15s, color 0.15s;
 }
 
 .topbar-account-dropdown a:hover,
-.topbar-account-dropdown button:hover {
-  background: #4A6D8C;
+.topbar-account-dropdown button:hover,
+.sign-out-btn:hover {
+  background: var(--blue);
   color: #ffffff;
+  opacity: 1;
+}
+
+.account-dropdown-email {
+  padding: 4px 16px 12px;
+  color: #64748b;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border);
 }
 
 /* ------------------------------------------------------------
@@ -216,8 +245,9 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   6. STAT TILES
+   6. STAT TILES (.stat-card / .stat-tile)
    ------------------------------------------------------------ */
+.stat-card,
 .stat-tile {
   background: var(--white);
   padding: 18px 20px;
@@ -226,7 +256,23 @@ a:hover { opacity: 0.85; }
   border-left: 4px solid var(--blue);
 }
 
-.stat-tile .stat-value {
+.stat-card.orange,
+.stat-tile.orange { border-left-color: var(--orange); }
+
+.stat-card.green,
+.stat-tile.green  { border-left-color: var(--green); }
+
+.stat-card.purple,
+.stat-tile.purple { border-left-color: var(--purple); }
+
+.stat-card.teal,
+.stat-tile.teal   { border-left-color: var(--teal); }
+
+.stat-card.red,
+.stat-tile.red    { border-left-color: var(--red); }
+
+.stat-tile .stat-value,
+.stat-card .stat-value {
   font-family: var(--heading-font);
   font-size: 32px;
   font-weight: 900;
@@ -235,7 +281,8 @@ a:hover { opacity: 0.85; }
   margin-bottom: 4px;
 }
 
-.stat-tile .stat-label {
+.stat-tile .stat-label,
+.stat-card .stat-label {
   font-family: var(--body-font);
   font-size: 12px;
   font-weight: 600;
@@ -248,43 +295,43 @@ a:hover { opacity: 0.85; }
    7. BUTTONS
    ------------------------------------------------------------ */
 
-/* Primary blue button */
+/* Primary blue — filled */
 .btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 13px 24px;
   background: var(--blue);
-  color: #ffffff;
+  color: white;
   border: none;
   border-radius: 8px;
+  padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
   transition: opacity 0.15s;
 }
 
 .btn-primary:hover {
   opacity: 0.85;
-  color: #ffffff;
+  color: white;
 }
 
-/* Outline blue button */
+/* Outline blue */
 .btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: var(--white);
+  background: white;
   color: var(--blue);
   border: 2px solid var(--blue);
   border-radius: 8px;
+  padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
   transition: background 0.15s, color 0.15s;
 }
@@ -292,33 +339,34 @@ a:hover { opacity: 0.85; }
 .btn-outline:hover {
   background: var(--blue-light);
   color: var(--blue);
+  opacity: 1;
 }
 
-/* Outline orange button */
+/* Outline orange */
 .btn-orange {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 20px;
-  background: var(--white);
+  background: white;
   color: var(--orange);
-  border: 1.5px solid var(--orange);
+  border: 2px solid var(--orange);
   border-radius: 8px;
+  padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: opacity 0.15s;
 }
 
 .btn-orange:hover {
-  background: var(--orange-light);
+  opacity: 0.85;
   color: var(--orange);
 }
 
 /* ------------------------------------------------------------
-   8. UNDERLINE PAGE TABS (.tab-nav-item)
+   8. UNDERLINE PAGE TABS (.ptab / .tab-nav-item)
    ------------------------------------------------------------ */
 .tab-nav {
   display: flex;
@@ -327,29 +375,33 @@ a:hover { opacity: 0.85; }
   margin-bottom: 24px;
 }
 
+.ptab,
 .tab-nav-item {
-  padding: 10px 20px;
-  font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-muted);
+  padding: 13px 24px;
   background: none;
   border: none;
   border-bottom: 3px solid transparent;
   margin-bottom: -2px;
   cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--body-font);
   text-decoration: none;
-  display: inline-block;
-  transition: color 0.15s, border-color 0.15s;
 }
 
+.ptab:hover,
 .tab-nav-item:hover {
-  color: var(--text);
   opacity: 0.85;
 }
 
+.ptab.active,
 .tab-nav-item.active {
-  color: var(--blue);
   border-bottom-color: var(--orange);
 }
 
@@ -373,9 +425,7 @@ a:hover { opacity: 0.85; }
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.pill-tab:hover {
-  opacity: 0.85;
-}
+.pill-tab:hover { opacity: 0.85; }
 
 .pill-tab.active {
   background: var(--blue-light);
@@ -385,7 +435,6 @@ a:hover { opacity: 0.85; }
   font-weight: 600;
 }
 
-/* Accent modifiers — left border colour only */
 .pill-tab.accent-blue   { border-left-color: var(--blue); }
 .pill-tab.accent-orange { border-left-color: var(--orange); }
 .pill-tab.accent-green  { border-left-color: var(--green); }
@@ -397,29 +446,26 @@ a:hover { opacity: 0.85; }
    10. FILTER PILLS (.filter-pill)
    ------------------------------------------------------------ */
 .filter-pill {
-  display: inline-flex;
-  align-items: center;
   padding: 6px 16px;
-  background: var(--white);
-  border: 1px solid var(--border-blue);
   border-radius: 20px;
-  font-family: var(--body-font);
+  border: 1px solid var(--border-blue);
+  background: var(--white);
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: #555;
   cursor: pointer;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.filter-pill:hover {
-  opacity: 0.85;
-}
+.filter-pill:hover { opacity: 0.85; }
 
 .filter-pill.active {
   background: var(--blue);
   border-color: var(--blue);
-  color: #ffffff;
+  color: #fff;
 }
 
 /* ------------------------------------------------------------
@@ -438,6 +484,10 @@ a:hover { opacity: 0.85; }
   transition: border-color 0.15s;
 }
 
+.form-input:focus {
+  border-color: var(--blue);
+}
+
 .search-input {
   flex: 1;
   min-width: 200px;
@@ -445,10 +495,11 @@ a:hover { opacity: 0.85; }
   border: 1.5px solid var(--border);
   border-radius: 20px;
   font-size: 13px;
-  font-family: inherit;
+  font-family: var(--body-font);
+  outline: none;
+  transition: border-color 0.15s;
 }
 
-.form-input:focus,
 .search-input:focus {
   border-color: var(--blue);
 }
@@ -478,8 +529,38 @@ a:hover { opacity: 0.85; }
   font-weight: 600;
 }
 
-.badge-blue   { background: var(--blue-light);  color: var(--blue); }
-.badge-green  { background: var(--green-light); color: var(--green); }
-.badge-orange { background: var(--orange-light); color: #856404; }
-.badge-red    { background: #fdecea;             color: var(--red); }
-.badge-grey   { background: #f0f0f0;             color: var(--greyi; }
+.badge-blue   { background: var(--blue-light);        color: var(--blue); }
+.badge-green  { background: var(--badge-green-bg);    color: var(--badge-green-text); }
+.badge-orange { background: var(--badge-orange-bg);   color: var(--badge-orange-text); }
+.badge-red    { background: #fdecea;                  color: var(--red); }
+.badge-grey   { background: #f0f0f0;                  color: var(--grey); }
+.badge-purple { background: var(--badge-purple-bg);   color: var(--badge-purple-text); }
+
+/* ------------------------------------------------------------
+   14. EMPTY STATES
+   ------------------------------------------------------------ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.4;
+}
+
+.empty-state h3 {
+  font-family: var(--heading-font);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.empty-state p {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
