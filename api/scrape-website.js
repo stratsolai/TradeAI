@@ -33,7 +33,8 @@ module.exports = async (req, res) => {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; TradeAI/1.0)'
         }
-      };
+      ,
+    rejectUnauthorized: false};
 
       const protocol = urlObj.protocol === 'https:' ? https : require('http');
 
@@ -116,7 +117,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
           'anthropic-version': '2023-06-01',
           'Content-Length': Buffer.byteLength(requestBody)
         }
-      };
+      ,
+    rejectUnauthorized: false};
 
       const req = https.request(options, (res) => {
         let data = '';
@@ -184,7 +186,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         }
-      };
+      ,
+    rejectUnauthorized: false};
 
       const supabaseReq = https.request(options, (supabaseRes) => {
         supabaseRes.on('data', () => {});
@@ -290,7 +293,8 @@ async function insertContent(userId, contentType, sourceType, data, supabaseUrl,
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       }
-    };
+    ,
+    rejectUnauthorized: false};
 
     const supabaseReq = https.request(options, (supabaseRes) => {
       supabaseRes.on('data', () => {});
