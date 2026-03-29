@@ -89,7 +89,7 @@ window.CL_OUTPUTS = {
     this._supabase
       .from("content_library")
       .select("id, title, content_text, created_at, tool_tags, status, source")
-      .eq("user_id", user.id)
+      .eq("id", user.id)
       .eq("status", "approved")
       .eq("source", "tool")
       .contains("tool_tags", [toolId])
