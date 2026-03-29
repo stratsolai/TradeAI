@@ -345,3 +345,19 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
 });
+
+window.addEventListener('pageshow', function(e) {
+  if (e.persisted) {
+    var btn = document.querySelector('#account-btn');
+    var drop = document.querySelector('#account-dropdown');
+    if (btn && drop) {
+      btn.addEventListener('click', function(ev) {
+        ev.stopPropagation();
+        drop.classList.toggle('open');
+      });
+      document.addEventListener('click', function() {
+        drop.classList.remove('open');
+      });
+    }
+  }
+});
