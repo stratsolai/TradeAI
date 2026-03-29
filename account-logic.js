@@ -54,12 +54,7 @@ window.ACCOUNT_LOGIC = {
     var email = self._user.email;
 
     var emailShort = document.getElementById('account-email-short');
-    var dropdownEmail = document.getElementById('account-dropdown-email');
-    if (emailShort) emailShort.textContent = email.split('@')[0];
-    if (dropdownEmail) dropdownEmail.textContent = email;
 
-    var accountEmailEl = document.getElementById('account-details-email');
-    if (accountEmailEl) accountEmailEl.textContent = email;
 
     client
       .from('profiles')
