@@ -436,9 +436,6 @@
         }
         document.getElementById('auth-loading').style.display = 'none';
         document.getElementById('page-wrap').style.display = 'block';
-        if (window.CL_SETTINGS_LOGIC && window.CL_SETTINGS_LOGIC.init) {
-          window.CL_SETTINGS_LOGIC.init(supabase);
-        }
       });
 
       
