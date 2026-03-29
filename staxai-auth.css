@@ -14,9 +14,9 @@
   --blue:          #4A6D8C;
   --blue-light:    #e8f4fd;
   --orange:        #c4622a;
-  --orange-light:  #fff3ee;
-  --green:         #28a745;
-  --green-light:   #edfaf1;
+  --orange-light:  #fff3cd;
+  --green:         #155724;
+  --green-light:   #d4edda;
   --red:           #dc3545;
   --purple:        #7b2d8b;
   --teal:          #0d9488;
@@ -24,6 +24,7 @@
   --bg:            #f5f7fa;
   --white:         #ffffff;
   --border:        #e5e5e5;
+  --border-blue:   #c8d6e5;
   --text:          #333333;
   --text-muted:    #888888;
 
@@ -148,23 +149,21 @@ a:hover { opacity: 0.85; }
 }
 
 .topbar-account-btn {
-  background: rgba(255,255,255,0.15);
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 20px;
-  padding: 6px 14px;
-  color: #ffffff;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
   font-family: var(--body-font);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
-  white-space: nowrap;
+  text-decoration: none;
 }
 
 .topbar-account-btn:hover {
-  background: rgba(255,255,255,0.25);
+  color: #ffffff;
 }
 
 .topbar-account-dropdown {
@@ -211,10 +210,9 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .card {
   background: var(--white);
-  border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  margin-bottom: 20px;
 }
 
 /* ------------------------------------------------------------
@@ -222,10 +220,10 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .stat-tile {
   background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 20px 24px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  padding: 18px 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 4px solid var(--blue);
 }
 
 .stat-tile .stat-value {
@@ -255,7 +253,7 @@ a:hover { opacity: 0.85; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
+  padding: 13px 24px;
   background: var(--blue);
   color: #ffffff;
   border: none;
@@ -281,7 +279,7 @@ a:hover { opacity: 0.85; }
   padding: 10px 20px;
   background: var(--white);
   color: var(--blue);
-  border: 1.5px solid var(--blue);
+  border: 2px solid var(--blue);
   border-radius: 8px;
   font-family: var(--body-font);
   font-size: 14px;
@@ -351,7 +349,7 @@ a:hover { opacity: 0.85; }
 }
 
 .tab-nav-item.active {
-  color: var(--orange);
+  color: var(--blue);
   border-bottom-color: var(--orange);
 }
 
@@ -403,7 +401,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   padding: 6px 16px;
   background: var(--white);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-blue);
   border-radius: 20px;
   font-family: var(--body-font);
   font-size: 13px;
@@ -427,8 +425,7 @@ a:hover { opacity: 0.85; }
 /* ------------------------------------------------------------
    11. FORM INPUTS & SEARCH FIELDS
    ------------------------------------------------------------ */
-.form-input,
-.search-input {
+.form-input {
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -439,6 +436,16 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   outline: none;
   transition: border-color 0.15s;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-size: 13px;
+  font-family: inherit;
 }
 
 .form-input:focus,
@@ -473,6 +480,6 @@ a:hover { opacity: 0.85; }
 
 .badge-blue   { background: var(--blue-light);  color: var(--blue); }
 .badge-green  { background: var(--green-light); color: var(--green); }
-.badge-orange { background: var(--orange-light); color: var(--orange); }
+.badge-orange { background: var(--orange-light); color: #856404; }
 .badge-red    { background: #fdecea;             color: var(--red); }
 .badge-grey   { background: #f0f0f0;             color: var(--greyi; }
