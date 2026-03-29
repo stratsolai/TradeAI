@@ -145,3 +145,15 @@ function switchPTab(tab) {
     }
   });
 }
+
+window.addEventListener('pageshow', function(e) {
+  if (!e.persisted) return;
+  var s = window.supabaseClient;
+  setTimeout(function() {
+    loadStats();
+    if (window.CL_UPLOAD)  window.CL_UPLOAD.init(s);
+    if (window.CL_REVIEW)  window.CL_REVIEW.init(s);
+    if (window.CL_PROFILE) window.CL_PROFILE.init(s);
+    if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s);
+  }, 400);
+});
