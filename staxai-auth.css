@@ -111,6 +111,13 @@ a:hover { opacity: 0.85; }
   display: block;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  flex-shrink: 0;
+}
+
 .topbar-nav {
   margin-left: 64px;
   margin-right: auto;
