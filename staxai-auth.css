@@ -420,6 +420,9 @@ a:hover { opacity: 0.85; }
   border-bottom-color: var(--orange);
 }
 
+.ptab-content { display: none; }
+.ptab-content.active { display: block; }
+
 /* ------------------------------------------------------------
    9. PILL TABS (.pill-tab)
    ------------------------------------------------------------ */
