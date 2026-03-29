@@ -254,6 +254,13 @@ a:hover { opacity: 0.85; }
 /* ------------------------------------------------------------
    6. STAT TILES (.stat-card / .stat-tile)
    ------------------------------------------------------------ */
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
 .stat-card,
 .stat-tile {
   background: var(--white);
