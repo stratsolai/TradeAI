@@ -187,8 +187,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 // -- Account dropdown --
 document.addEventListener("DOMContentLoaded", function() {
-  var btn = document.querySelector("#account-btn");
-  var drop = document.querySelector("#account-dropdown");
+  var btn = document.getElementById("account-btn");
+  var drop = document.getElementById("account-dropdown");
   if (btn && drop) {
     btn.addEventListener("click", function(e) {
       e.stopPropagation();
@@ -198,23 +198,11 @@ document.addEventListener("DOMContentLoaded", function() {
       drop.classList.remove("open");
     });
   }
-  var signOutBtn = document.querySelector("#sign-out-btn");
+  var signOutBtn = document.getElementById("sign-out-btn");
   if (signOutBtn) {
     signOutBtn.addEventListener("click", function() {
       var supabase = window.supabaseClient;
       if (supabase) supabase.auth.signOut().then(function() { window.location.href = "/login"; });
     });
   }
-})
-
-window.addEventListener('pageshow', function(e) {
-  if (e.persisted) {
-    var btn = document.querySelector("#account-btn");
-    var drop = document.querySelector("#account-dropdown");
-    if (btn && drop) {
-      btn.addEventListener('click', function(e) { e.stopPropagation(); drop.classList.toggle('open'); });
-      document.addEventListener('click', function() { drop.classList.remove('open'); });
-      btn.addEventListener('click', function(e) { e.stopPropagation(); });
-    }
-  }
-});;
+});
