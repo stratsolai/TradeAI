@@ -53,7 +53,6 @@ window.ACCOUNT_LOGIC = {
     var userId = self._user.id;
     var email = self._user.email;
 
-    var emailShort = document.getElementById('account-email-short');
 
 
     client
