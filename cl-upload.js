@@ -100,7 +100,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("cl_drive_connected, business_email_gmail, business_email_outlook, website_urls").eq("user_id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_connected, business_email_gmail, business_email_outlook, website_urls").eq("id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
