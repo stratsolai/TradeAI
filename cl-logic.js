@@ -15,11 +15,7 @@
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-approved').textContent = approved;
-  var _sq = document.getElementById('stat-queue'); if (_sq) _sq.textContent = queueResult.count || 0;
   document.getElementById('stat-rejected').textContent = publishedResult.count || 0;
-  document.getElementById('badge-pending').textContent = pending;
-  document.getElementById('badge-queue').textContent = queueResult.count || 0;
-  document.getElementById('stab-pending-count').textContent = pending;
 }
 
   // Shared utilities - exposed on window for tab JS files
