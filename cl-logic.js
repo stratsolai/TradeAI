@@ -157,3 +157,36 @@ window.addEventListener('pageshow', function(e) {
     if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s);
   }, 400);
 });
+
+
+async function scrapeWebsite() {
+  var urlInput = document.getElementById('website-url');
+  var url = urlInput ? urlInput.value.trim() : '';
+  if (!url) {
+    alert('Please enter a website URL.');
+    return;
+  }
+  var btn = document.querySelector('#modal-website .btn-primary');
+  var origText = btn ? btn.textContent : '';
+  if (btn) { btn.textContent = 'Scanning...'; btn.disabled = true; }
+  try {
+    var userData = await supabaseClient.auth.getUser();
+    var user = userData.data.user;
+    if (!user) throw new Error('Not authenticated');
+    var res = await fetch('/api/scrape-website', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user.id, url: url })
+    });
+    var data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.error || 'Scan failed');
+    closeModal('modal-website');
+    if (urlInput) urlInput.value = '';
+    if (typeof loadStats === 'function') loadStats();
+    alert(data.message || ('Scan complete. ' + data.itemsCount + ' items extracted.'));
+  } catch (err) {
+    alert('Scan error: ' + err.message);
+  } finally {
+    if (btn) { btn.textContent = origText; btn.disabled = false; }
+  }
+}
