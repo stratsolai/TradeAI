@@ -206,9 +206,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
         title: service.name,
         description: service.description,
         content_text: `${service.description}\n\n${service.benefits || ''}`,
-        category: 'service',
-        tags: ['service', 'website'],
-        ai_keywords: [service.name].filter(Boolean)
+        status: 'pending',
+        source: 'website'
       }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
@@ -218,9 +217,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
         title: project.title,
         description: project.description,
         content_text: project.description,
-        category: 'completed-job',
-        tags: [project.location, 'project', 'website'].filter(Boolean),
-        ai_keywords: [project.title, project.location].filter(Boolean)
+        status: 'pending',
+        source: 'website'
       }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
@@ -229,9 +227,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
       if (await insertContent(userId, 'testimonial', 'website', {
         title: `Testimonial from ${testimonial.author || 'Customer'}`,
         content_text: testimonial.quote,
-        category: 'testimonial',
-        tags: ['testimonial', 'website'],
-        ai_keywords: [testimonial.author].filter(Boolean)
+        status: 'pending',
+        source: 'website'
       }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
@@ -240,9 +237,8 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
       if (await insertContent(userId, 'text', 'website', {
         title: 'About Us',
         content_text: extractedData.company.about,
-        category: 'company',
-        tags: ['about', 'website'],
-        ai_keywords: []
+        status: 'pending',
+        source: 'website'
       }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
@@ -251,9 +247,7 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
     return res.status(200).json({
       success: true,
       itemsCount: itemsCount,
-      message: `Extracted ${itemsCount} items from website`,
-      _debug_htmlLen: websiteHtml ? websiteHtml.length : 0,
-      _debug_aiResponse: aiResponse ? aiResponse.substring(0, 500) : "no aiResponse"
+      message: `Extracted ${itemsCount} items from website`
     });
 
   } catch (error) {
