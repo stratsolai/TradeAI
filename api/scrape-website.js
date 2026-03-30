@@ -24,7 +24,12 @@ module.exports = async (req, res) => {
 
     // Fetch the website HTML
     const websiteHtml = await new Promise((resolve, reject) => {
-      const urlObj = new URL(url);
+      // Normalise URL — accept www.domain.com, http://, or https://
+  url = url.trim();
+  if (url.startsWith('http://')) url = url.replace('http://', 'https://');
+  if (!url.startsWith('https://')) url = 'https://' + url;
+
+  const urlObj = new URL(url);
       
       const options = {
         hostname: urlObj.hostname,
@@ -34,7 +39,8 @@ module.exports = async (req, res) => {
           'User-Agent': 'Mozilla/5.0 (compatible; TradeAI/1.0)'
         }
       ,
-    rejectUnauthorized: false};
+    rejectUnauthorized: false,
+    port: urlObj.protocol === 'https:' ? 443 : 80};
 
       const protocol = urlObj.protocol === 'https:' ? https : require('http');
 
@@ -122,7 +128,8 @@ ${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
           'Content-Length': Buffer.byteLength(requestBody)
         }
       ,
-    rejectUnauthorized: false};
+    rejectUnauthorized: false,
+    port: urlObj.protocol === 'https:' ? 443 : 80};
 
       const req = https.request(options, (res) => {
         let data = '';
@@ -190,7 +197,8 @@ ${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
           'Prefer': 'return=minimal'
         }
       ,
-    rejectUnauthorized: false};
+    rejectUnauthorized: false,
+    port: urlObj.protocol === 'https:' ? 443 : 80};
 
       const supabaseReq = https.request(options, (supabaseRes) => {
         supabaseRes.on('data', () => {});
@@ -297,7 +305,8 @@ async function insertContent(userId, contentType, sourceType, data, supabaseUrl,
         'Prefer': 'return=minimal'
       }
     ,
-    rejectUnauthorized: false};
+    rejectUnauthorized: false,
+    port: urlObj.protocol === 'https:' ? 443 : 80};
 
     const supabaseReq = https.request(options, (supabaseRes) => {
       supabaseRes.on('data', () => {});
