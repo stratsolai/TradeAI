@@ -157,7 +157,7 @@ window.CL_UPLOAD = {
       btn.disabled = true;
       (async function() {
         try {
-          var ud = await supabaseClient.auth.getUser();
+          var ud = await self._supabase.auth.getUser();
           var user = ud && ud.data ? ud.data.user : null;
           if (!user) throw new Error("Not authenticated");
           if (source === "website") {
