@@ -265,6 +265,7 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
 
 // Helper function to insert content
 async function insertContent(userId, contentType, sourceType, data, supabaseUrl, supabaseKey) {
+  const https = require('https');
   return new Promise((resolve, reject) => {
     const insertData = JSON.stringify({
       user_id: userId,
