@@ -96,6 +96,7 @@ Website HTML:
 ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
 
     const requestBody = JSON.stringify({
+      system: 'You are a data extraction API. You must respond with only a valid JSON object. No markdown, no code fences, no explanation before or after. Return only raw JSON.',
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       messages: [
