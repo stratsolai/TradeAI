@@ -423,6 +423,13 @@ a:hover { opacity: 0.85; }
 .ptab-content { display: none; }
 .ptab-content.active { display: block; }
 
+/* Settings pages — blue active underline (overrides orange default) */
+.ptab.settings-active,
+.tab-nav-item.settings-active {
+  border-bottom-color: var(--blue);
+  color: var(--text);
+}
+
 /* ------------------------------------------------------------
    9. PILL TABS (.pill-tab)
    ------------------------------------------------------------ */
