@@ -182,13 +182,14 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
-          'Prefer': 'return=minimal'
+          'Prefer': 'return=representation'
         }
       };
 
       const supabaseReq = https.request(options, (supabaseRes) => {
-        supabaseRes.on('data', () => {});
-        supabaseRes.on('end', resolve);
+        let sdBody = '';
+      supabaseRes.on('data', (chunk) => { sdBody += chunk; });
+        supabaseRes.on('end', () => { if (supabaseRes.statusCode === 201) { resolve(); } else { console.error('source_documents insert failed:', supabaseRes.statusCode, sdBody); resolve(); } });
       });
 
       supabaseReq.on('error', reject);
@@ -201,52 +202,48 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
 
     // Insert services
     for (const service of extractedData.services || []) {
-      await insertContent(userId, 'text', 'website', {
+      if (await insertContent(userId, 'text', 'website', {
         title: service.name,
         description: service.description,
         content_text: `${service.description}\n\n${service.benefits || ''}`,
         category: 'service',
         tags: ['service', 'website'],
         ai_keywords: [service.name].filter(Boolean)
-      }, supabaseUrl, supabaseKey);
-      itemsCount++;
+      }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
     // Insert projects
     for (const project of extractedData.projects || []) {
-      await insertContent(userId, 'project', 'website', {
+      if (await insertContent(userId, 'project', 'website', {
         title: project.title,
         description: project.description,
         content_text: project.description,
         category: 'completed-job',
         tags: [project.location, 'project', 'website'].filter(Boolean),
         ai_keywords: [project.title, project.location].filter(Boolean)
-      }, supabaseUrl, supabaseKey);
-      itemsCount++;
+      }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
     // Insert testimonials
     for (const testimonial of extractedData.testimonials || []) {
-      await insertContent(userId, 'testimonial', 'website', {
+      if (await insertContent(userId, 'testimonial', 'website', {
         title: `Testimonial from ${testimonial.author || 'Customer'}`,
         content_text: testimonial.quote,
         category: 'testimonial',
         tags: ['testimonial', 'website'],
         ai_keywords: [testimonial.author].filter(Boolean)
-      }, supabaseUrl, supabaseKey);
-      itemsCount++;
+      }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
     // Insert company info
     if (extractedData.company && extractedData.company.about) {
-      await insertContent(userId, 'text', 'website', {
+      if (await insertContent(userId, 'text', 'website', {
         title: 'About Us',
         content_text: extractedData.company.about,
         category: 'company',
         tags: ['about', 'website'],
         ai_keywords: []
-      }, supabaseUrl, supabaseKey);
-      itemsCount++;
+      }, supabaseUrl, supabaseKey)) itemsCount++;
     }
 
     console.log(`Inserted ${itemsCount} items into content library`);
@@ -268,37 +265,42 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
 
 // Helper function to insert content
 async function insertContent(userId, contentType, sourceType, data, supabaseUrl, supabaseKey) {
-  const https = require('https');
-
   return new Promise((resolve, reject) => {
-    const url = new URL(`${supabaseUrl}/rest/v1/content_library`);
-
     const insertData = JSON.stringify({
       user_id: userId,
       content_type: contentType,
       source_type: sourceType,
       ...data
     });
-
+    const urlObj = new URL(`${supabaseUrl}/rest/v1/content_library`);
     const options = {
-      hostname: url.hostname,
-      path: url.pathname,
-      method: 'POST',
+      hostname: urlObj.hostname,
+      path: urlObj.pathname,
+      method: "POST",
       headers: {
-        'apikey': supabaseKey,
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
       }
     };
-
-    const supabaseReq = https.request(options, (supabaseRes) => {
-      supabaseRes.on('data', () => {});
-      supabaseRes.on('end', resolve);
+    const req = https.request(options, (res) => {
+      let body = "";
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => {
+        if (res.statusCode === 201) {
+          resolve(true);
+        } else {
+          console.error("Supabase insert failed:", res.statusCode, body);
+          resolve(false);
+        }
+      });
     });
-
-    supabaseReq.on('error', reject);
-    supabaseReq.write(insertData);
-    supabaseReq.end();
+    req.on("error", (err) => {
+      console.error("Insert request error:", err.message);
+      resolve(false);
+    });
+    req.write(insertData);
+    req.end();
   });
 }
