@@ -14,6 +14,8 @@ window.CL_SETTINGS_LOGIC = {
     this._bindToggleButtons();
     this._bindSave();
     this._loadSettings();
+    this._bindCategories();
+    this._loadCategories();
   },
 
   // ── BIND TOGGLE BUTTONS ─────────────────────────────────────────────────
@@ -23,9 +25,9 @@ window.CL_SETTINGS_LOGIC = {
     var allBtns = document.querySelectorAll('.freq-btn');
     allBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var field = btn.getAttribute('data-field');
-        var value = btn.getAttribute('data-value');
+        var value = btn.getAttribute('data-val');
         var ctrl = btn.parentElement;
+        var field = ctrl ? ctrl.id.replace('-ctrl', '').replace(/-/g, '_') + '_freq' : null;
         if (ctrl) {
           ctrl.querySelectorAll('.freq-btn').forEach(function(b) {
             b.classList.remove('active');
@@ -148,6 +150,80 @@ window.CL_SETTINGS_LOGIC = {
     msgEl.className = isError ? 'save-msg save-msg-error' : 'save-msg save-msg-ok';
     msgEl.style.display = 'inline';
     setTimeout(function() { msgEl.style.display = 'none'; }, 3500);
+  },
+
+  // ── CATEGORIES ──────────────────────────────────────────────────────────
+
+  _activeCategories: [],
+  _customCategories: [],
+
+  _loadCategories: async function() {
+    var self = this;
+    if (!self._supabase || !self._userId) return;
+    var result = await self._supabase.from('profiles').select('cl_active_categories, cl_custom_categories').eq('id', self._userId).single();
+    if (result.data) {
+      self._activeCategories = result.data.cl_active_categories || ["service","about","portfolio","testimonial","offer","team","tip","faq","news","compliance"];
+      self._customCategories = result.data.cl_custom_categories || [];
+    } else {
+      self._activeCategories = ["service","about","portfolio","testimonial","offer","team","tip","faq","news","compliance"];
+      self._customCategories = [];
+    }
+    self._renderCategories();
+  },
+
+  _renderCategories: function() {
+    var self = this;
+    var grid = document.getElementById('category-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    var defaults = [{"id":"service","label":"Services","icon":"🔧"},{"id":"about","label":"About Us","icon":"🏢"},{"id":"portfolio","label":"Portfolio","icon":"📸"},{"id":"testimonial","label":"Testimonials","icon":"⭐"},{"id":"offer","label":"Offers","icon":"🎁"},{"id":"team","label":"Team","icon":"👥"},{"id":"tip","label":"Tips","icon":"💡"},{"id":"faq","label":"FAQ","icon":"❓"},{"id":"news","label":"News","icon":"📰"},{"id":"compliance","label":"Compliance","icon":"✅"}];
+    var allCats = defaults.slice();
+    self._customCategories.forEach(function(id) {
+      if (!allCats.find(function(c){ return c.id === id; })) {
+        allCats.push({ id: id, label: id.charAt(0).toUpperCase() + id.slice(1), icon: '🏷️' });
+      }
+    });
+    allCats.forEach(function(cat) {
+      var card = document.createElement('div');
+      card.className = 'cat-card' + (self._activeCategories.indexOf(cat.id) !== -1 ? ' active' : '');
+      card.innerHTML = '<span class="cat-icon">' + cat.icon + '</span>' + cat.label;
+      card.addEventListener('click', function() {
+        var idx = self._activeCategories.indexOf(cat.id);
+        if (idx === -1) { self._activeCategories.push(cat.id); card.classList.add('active'); }
+        else { self._activeCategories.splice(idx, 1); card.classList.remove('active'); }
+      });
+      grid.appendChild(card);
+    });
+  },
+
+  _bindCategories: function() {
+    var self = this;
+    var addBtn = document.getElementById('add-category-btn');
+    var input = document.getElementById('category-custom-input');
+    var saveBtn = document.getElementById('save-categories-btn');
+    var msgEl = document.getElementById('save-categories-msg');
+    if (addBtn && input) {
+      addBtn.addEventListener('click', function() {
+        var val = input.value.trim().toLowerCase().replace(/\\s+/g, '-');
+        if (!val) return;
+        if (self._customCategories.indexOf(val) === -1) {
+          self._customCategories.push(val);
+          self._activeCategories.push(val);
+          self._renderCategories();
+        }
+        input.value = '';
+      });
+    }
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function() {
+        if (!self._supabase || !self._userId) return;
+        var result = await self._supabase.from('profiles').update({ cl_active_categories: self._activeCategories, cl_custom_categories: self._customCategories }).eq('id', self._userId);
+        if (!result.error && msgEl) {
+          msgEl.style.display = 'inline';
+          setTimeout(function() { msgEl.style.display = 'none'; }, 3000);
+        }
+      });
+    }
   }
 
 };
