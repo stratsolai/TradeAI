@@ -3,454 +3,609 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Content Library Settings — StaxAI</title>
+  <title>StaxAI — Content Library Settings</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabase-client.js"></script>
   <style>
     :root {
-    --blue: #4A6D8C;
-    --blue-light: #e8f4fd;
-    --orange: #c4622a;
-    --orange-light: #fff3ee;
-    --green: #28a745;
-    --green-light: #edfaf1;
-    --red: #dc3545;
-    --grey: #6c757d;
-    --bg: #f5f7fa;
-    --white: #ffffff;
-    --border: #e5e5e5;
-    --text: #333333;
-    --text-muted: #888888;
-    --heading-font: 'Barlow Condensed', sans-serif;
-    --body-font: 'DM Sans', sans-serif;
-  }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      --bg: #f5f7fa;
+      --white: #ffffff;
+      --blue: #4A6D8C;
+      --orange: #c4622a;
+      --border: #e5e5e5;
+      --text: #333333;
+      --text-muted: #888888;
+      --red: #cc3333;
+      --green: #2a7a2a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: var(--body-font);
-      background: var(--bg); color: var(--text);
-      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
     }
 
-    /* ── TOPBAR ── */
-    .topbar {
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+    nav.topbar {
+      background: linear-gradient(90deg, #deeef8 0%, #e8f4fd 40%, #f0f4f8 100%);
+      border-bottom: 1px solid var(--border);
       height: 68px;
       display: flex;
       align-items: center;
-      padding: 0 24px;
+      padding: 0 28px;
+      gap: 0;
       position: sticky;
       top: 0;
       z-index: 100;
     }
-    .topbar-logo {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      text-decoration: none;
-      color: #fff;
-      flex-shrink: 0;
-      margin-right: 20px;
-    }
-    .topbar-nav {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-left: 64px;
-    }
-    .topbar-nav a {
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 600;
-      transition: color 0.15s;
-    }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right {
+
+    .topbar-left {
       display: flex;
       align-items: center;
       gap: 16px;
+      flex: 1;
     }
-    .topbar-cl-link {
-      color: rgba(255,255,255,0.85);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
-    .topbar-cl-link:hover { color: #fff; }
 
-    /* ── PAGE ── */
-    .page-wrap {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 40px 24px 80px;
-    }
-    .page-header {
-      margin-bottom: 32px;
-    }
-    .page-title {
-      font-family: var(--heading-font);
-      font-size: 32px;
+    .topbar-logo {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
       font-weight: 700;
+      color: var(--blue);
+      text-decoration: none;
+      letter-spacing: 0.5px;
+    }
+
+    .topbar-divider {
+      width: 1px;
+      height: 24px;
+      background: var(--border);
+    }
+
+    .topbar-page-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
       color: var(--text);
-      margin-bottom: 6px;
-    }
-    .page-subtitle {
-      font-size: 15px;
-      color: var(--text-muted);
+      letter-spacing: 0.3px;
     }
 
-    /* ── SETTINGS CARD ── */
-    .settings-card {
-      background: var(--white);
-      border: 1px solid var(--border); border-left: 4px solid var(--blue);
-      border-radius: 12px;
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .settings-card-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .settings-card-title {
-      font-family: var(--heading-font);
-      font-size: 20px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 4px;
-    }
-    .settings-card-hint {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-    .settings-rows {
-      padding: 0;
-    }
-    .settings-row {
+    .topbar-actions {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border);
-    }
-    .settings-row:last-child { border-bottom: none; }
-    .settings-row-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: #fff;
-      margin-bottom: 2px;
-    }
-    .settings-row-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-    .settings-row-control {
-      display: flex;
-      gap: 0;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      flex-shrink: 0;
-      margin-left: 16px;
-    }
-    .freq-btn {
-      background: var(--white);
-      color: var(--text-muted);
-      border: none;
-      font-family: var(--body-font);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 8px 14px;
-      cursor: pointer;
-      transition: background 0.12s, color 0.12s;
-      border-right: 1px solid var(--border);
-      min-width: 90px;
-      text-align: center;
-    }
-    .freq-btn:last-child { border-right: none; }
-    .freq-btn:hover {
-      background: var(--bg);
-      color: #fff;
-    }
-    .freq-btn.active {
-      background: var(--blue);
-      color: #fff;
+      gap: 28px;
     }
 
-    /* ── SAVE FOOTER ── */
-    .settings-footer {
-      padding: 16px 24px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .btn-save {
-      background: var(--blue);
-      color: #fff;
-      border: none;
-      font-family: var(--body-font);
+    .back-link {
       font-size: 14px;
-      font-weight: 600;
-      padding: 10px 22px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 500;
     }
-    .btn-save:hover { background: #154070; }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
-    .save-msg {
-      font-size: 13px;
-      display: none;
-    }
-    .save-msg-ok { color: #4ade80; }
-    .save-msg-error { color: #f87171; }
 
-    /* ── AUTH GATE ── */
-    .auth-loading {
+    .back-link:hover { text-decoration: underline; }
+
+    .account-wrap { position: relative; }
+
+    #account-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    #account-btn:hover { background: rgba(0,0,0,0.04); }
+
+    #account-email-short { font-size: 13px; }
+
+    #account-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+      min-width: 180px;
+      z-index: 200;
+      overflow: hidden;
+    }
+
+    #account-dropdown.open { display: block; }
+
+    #sign-out-btn {
+      width: 100%;
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      text-align: left;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      color: var(--red);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    #sign-out-btn:hover { background: #fff5f5; }
+
+    #auth-loading {
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 60vh;
-      font-size: 16px;
+      font-size: 15px;
       color: var(--text-muted);
     }
-  
-    /* Connection UI */
-    .connection-status { font-size: 13px; color: var(--text-muted); display: inline-block; }
-    .connection-status:empty { display: none; }
-    .connection-status.connected { color: var(--green); font-weight: 600; }
-    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); transition: background 0.15s; }
-    .btn-connect:hover { background: #154070; }
-    .btn-connect.disconnect { background: var(--red); }
-    .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
-    .settings-text-input { border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
-    .settings-text-input:focus { outline: none; border-color: var(--blue); }
-    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background 0.15s; }
-    .btn-save-inline:hover { opacity: 0.9; }
-    .settings-card-title { font-family: var(--heading-font); font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
-    .settings-card-hint { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-family: var(--body-font); }
-    .settings-row-label { font-weight: 600; color: var(--text); font-size: 14px; font-family: var(--body-font); }
-    .settings-row-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; font-family: var(--body-font); }
 
-    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-nav-link:hover { color: #fff; }
+    #page-wrap {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 36px 24px 60px;
+      display: none;
+    }
 
-    /* Connection multi-account list */
-    .connection-list { width: 100%; }
-    .connection-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .connection-item:last-child { border-bottom: none; }
-    .connection-item-email { font-size: 14px; color: var(--text); font-family: var(--body-font); }
-    .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .btn-disconnect { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: var(--body-font); }
-    .btn-disconnect:hover { background: var(--red); color: var(--white); }
-    .btn-add-connection { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 10px; min-width: 160px; text-align: center; }
-    .btn-add-connection:hover { background: var(--blue); color: var(--white); }
-    /* Website multi-URL list */
-    .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .website-url-input { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 14px; font-family: var(--body-font); color: var(--text); flex: 1; }
-    .website-url-input:focus { outline: none; border-color: var(--blue); }
-    .btn-remove-url { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1; }
-    .btn-remove-url:hover { color: var(--red); }
-    .btn-add-website { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 4px; }
-    .btn-add-website:hover { background: var(--blue); color: var(--white); }
-    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background 0.15s; }
-    .btn-save-urls:hover { background: #154070; }
-    /* Connection row control — override for non-toggle rows */
-    .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; min-width: 200px; }
+    .page-heading {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
 
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .topbar-nav a:hover{color:#fff;}
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; overflow: hidden; }
-    .account-dropdown.open { display: block; }
-    
-    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
-    .account-dropdown-item:hover { background: #4A6D8C; color: #fff; }
+    .page-subheading {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
 
-    .topbar-account-wrap { position: relative; }
-    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
-    .account-btn:hover { color: #fff; }
-</style>
+    .stab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .stab {
+      padding: 10px 22px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .stab:hover { color: var(--text); }
+
+    .stab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 600;
+    }
+
+    .stab-panel { display: none; }
+    .stab-panel.active { display: block; }
+
+    .settings-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .settings-card-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .settings-card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 18px;
+    }
+
+    .connection-section { margin-bottom: 24px; }
+    .connection-section:last-child { margin-bottom: 0; }
+
+    .connection-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conn-icon { font-size: 16px; }
+
+    .connection-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 10px;
+      min-height: 0;
+    }
+
+    .conn-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+    }
+
+    .conn-item-email { color: var(--text); font-weight: 500; }
+
+    .conn-remove {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 12px;
+      padding: 2px 6px;
+    }
+
+    .conn-remove:hover { color: var(--red); }
+
+    .btn-add-conn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--blue);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .btn-add-conn:hover { background: rgba(74,109,140,0.06); }
+
+    .url-input-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .url-input:focus { outline: none; border-color: var(--blue); }
+
+    .btn-save-url {
+      padding: 9px 18px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save-url:hover { opacity: 0.9; }
+
+    #scan-frequency-card .freq-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    #scan-frequency-card .freq-row:last-child { border-bottom: none; }
+
+    .freq-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .freq-ctrl { display: flex; gap: 6px; }
+
+    .freq-btn {
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .freq-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .freq-btn.selected { background: var(--blue); color: var(--white); border-color: var(--blue); }
+
+    .btn-save-settings {
+      margin-top: 20px;
+      padding: 10px 24px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save-settings:hover { opacity: 0.9; }
+
+    #save-scan-msg {
+      display: none;
+      font-size: 13px;
+      color: var(--green);
+      margin-top: 10px;
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .cat-card {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .cat-card:hover { border-color: var(--blue); color: var(--text); }
+
+    .cat-card.active {
+      border-color: var(--blue);
+      background: rgba(74,109,140,0.08);
+      color: var(--blue);
+      font-weight: 600;
+    }
+
+    .cat-icon { font-size: 20px; display: block; margin-bottom: 6px; }
+
+    .custom-cat-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    #category-custom-input {
+      flex: 1;
+      padding: 9px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    #category-custom-input:focus { outline: none; border-color: var(--blue); }
+
+    #add-category-btn {
+      padding: 9px 18px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--blue);
+      cursor: pointer;
+    }
+
+    #add-category-btn:hover { background: rgba(74,109,140,0.06); }
+
+    #save-categories-btn {
+      padding: 10px 24px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    #save-categories-btn:hover { opacity: 0.9; }
+
+    #save-categories-msg {
+      display: none;
+      font-size: 13px;
+      color: var(--green);
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- TOPBAR -->
   <nav class="topbar">
-    <a href="/dashboard.html" class="topbar-logo">
-      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;">
-    </a>
-    <div class="topbar-nav" style="margin-left:64px">
-      <a href="/dashboard.html">Dashboard</a>
+    <div class="topbar-left">
+      <a class="topbar-logo" href="/dashboard.html">StaxAI</a>
+      <div class="topbar-divider"></div>
+      <span class="topbar-page-title">Content Library &#8212; Settings</span>
     </div>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-right">
-      <a href="/content-library.html" class="topbar-nav-link">Content Library</a>
-    
-      <div class="topbar-account-wrap">
-          <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
-          <div class="account-dropdown" id="account-dropdown">
-            <a href="/account" class="account-dropdown-item">Account Management</a>
-            <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
-          </div>
+    <div class="topbar-actions">
+      <a class="back-link" href="/content-library.html">&#8592; Back to Content Library</a>
+      <div class="account-wrap">
+        <button id="account-btn">
+          <span id="account-email-short"></span>
+          <span>&#9660;</span>
+        </button>
+        <div id="account-dropdown">
+          <button id="sign-out-btn">Sign out</button>
+        </div>
       </div>
+    </div>
   </nav>
 
-  <!-- PAGE -->
-  <div class="page-wrap" id="page-wrap" style="display:none">
-    <div class="page-header">
-      <h1 class="page-title">Content Library Settings</h1>
-      <p class="page-subtitle">Control how frequently your connected sources are scanned for new content.</p>
+  <div id="auth-loading">Checking session&#8230;</div>
+
+  <div id="page-wrap">
+    <h1 class="page-heading">Content Library Settings</h1>
+    <p class="page-subheading">Manage your connections, scan schedule, and content categories.</p>
+
+    <div class="stab-bar">
+      <button class="stab active" data-tab="connections">Connections</button>
+      <button class="stab" data-tab="scan">Scan Settings</button>
+      <button class="stab" data-tab="categories">Categories</button>
     </div>
 
-    <div class="settings-card" id="scan-frequency-card">
-      <div class="settings-card-header">
+    <div class="stab-panel active" id="tab-connections">
+      <div class="settings-card">
+        <div class="settings-card-title">Email Connections</div>
+        <div class="settings-card-desc">Connect your email accounts to scan inbound messages for content.</div>
+        <div id="connections-rows">
+          <div class="connection-section">
+            <div class="connection-label"><span class="conn-icon">&#x2709;&#xFE0F;</span> Gmail</div>
+            <div class="connection-list" id="gmail-connections-list"></div>
+            <button class="btn-add-conn" id="add-gmail-btn">+ Connect Gmail</button>
+          </div>
+          <div class="connection-section">
+            <div class="connection-label"><span class="conn-icon">&#x1F4E7;</span> Outlook</div>
+            <div class="connection-list" id="outlook-connections-list"></div>
+            <button class="btn-add-conn" id="add-outlook-btn">+ Connect Outlook</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Google Drive</div>
+        <div class="settings-card-desc">Connect Google Drive to scan documents and files for content.</div>
+        <div class="connection-list" id="drive-connections-list"></div>
+        <button class="btn-add-conn" id="add-drive-btn">+ Connect Google Drive</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-title">Website URL</div>
+        <div class="settings-card-desc">Add your website URL to scan pages for content automatically.</div>
+        <div id="website-urls-list"></div>
+        <div class="url-input-row">
+          <input type="url" class="url-input" id="website-url-input" placeholder="https://yourbusiness.com.au" />
+          <button class="btn-save-url" id="website-save-btn">Save URL</button>
+          <button class="btn-add-conn" id="add-website-btn">+ Add Another</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stab-panel" id="tab-scan">
+      <div class="settings-card" id="scan-frequency-card">
         <div class="settings-card-title">Auto-Scan Frequency</div>
-        <div class="settings-card-hint">Automatic scans run in the background. You can always trigger a manual scan from the Upload &amp; Import tab.</div>
-      </div>
-      <div class="settings-rows">
-
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Business Email</div>
-            <div class="settings-row-desc">Scans your connected Gmail or Outlook inbox for new content.</div>
-          </div>
-          <div class="settings-row-control" id="email-freq-ctrl">
-            <button class="freq-btn active" data-field="email_scan_frequency" data-value="daily">Daily</button>
-            <button class="freq-btn" data-field="email_scan_frequency" data-value="weekly">Weekly</button>
-            <button class="freq-btn" data-field="email_scan_frequency" data-value="manual">Manual only</button>
+        <div class="settings-card-desc">Choose how often StaxAI scans each source for new content.</div>
+        <div class="freq-row">
+          <span class="freq-label">&#x2709;&#xFE0F; Email</span>
+          <div class="freq-ctrl" id="email-freq-ctrl">
+            <button class="freq-btn" data-val="daily">Daily</button>
+            <button class="freq-btn" data-val="weekly">Weekly</button>
+            <button class="freq-btn" data-val="off">Off</button>
           </div>
         </div>
-
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Google Drive</div>
-            <div class="settings-row-desc">Scans your connected Drive folders for new photos and documents.</div>
-          </div>
-          <div class="settings-row-control" id="drive-freq-ctrl">
-            <button class="freq-btn" data-field="drive_scan_frequency" data-value="daily">Daily</button>
-            <button class="freq-btn active" data-field="drive_scan_frequency" data-value="weekly">Weekly</button>
-            <button class="freq-btn" data-field="drive_scan_frequency" data-value="manual">Manual only</button>
+        <div class="freq-row">
+          <span class="freq-label">&#x1F4C1; Google Drive</span>
+          <div class="freq-ctrl" id="drive-freq-ctrl">
+            <button class="freq-btn" data-val="daily">Daily</button>
+            <button class="freq-btn" data-val="weekly">Weekly</button>
+            <button class="freq-btn" data-val="off">Off</button>
           </div>
         </div>
-
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Website</div>
-            <div class="settings-row-desc">Scans your connected website pages for updated content.</div>
-          </div>
-          <div class="settings-row-control" id="website-freq-ctrl">
-            <button class="freq-btn" data-field="website_scan_frequency" data-value="weekly">Weekly</button>
-            <button class="freq-btn active" data-field="website_scan_frequency" data-value="monthly">Monthly</button>
-            <button class="freq-btn" data-field="website_scan_frequency" data-value="manual">Manual only</button>
+        <div class="freq-row">
+          <span class="freq-label">&#x1F310; Website</span>
+          <div class="freq-ctrl" id="website-freq-ctrl">
+            <button class="freq-btn" data-val="daily">Daily</button>
+            <button class="freq-btn" data-val="weekly">Weekly</button>
+            <button class="freq-btn" data-val="off">Off</button>
           </div>
         </div>
-
-      </div>
-      <div class="settings-footer">
-        <button class="btn-save" id="save-settings-btn">Save</button>
-        <span class="save-msg" id="save-scan-msg"></span>
+        <button class="btn-save-settings" id="save-settings-btn">Save Settings</button>
+        <div id="save-scan-msg">Settings saved.</div>
       </div>
     </div>
 
-  
-
-    <div class="settings-card">
-      <div class="settings-card-header">
-        <div class="settings-card-title">Connections</div>
-        <div class="settings-card-hint">Connect your business sources. These connections are shared across all tools.</div>
+    <div class="stab-panel" id="tab-categories">
+      <div class="settings-card">
+        <div class="settings-card-title">Content Categories</div>
+        <div class="settings-card-desc">Choose which categories are active for your Content Library. These categories are used when scanning your website, emails, and files.</div>
+        <div class="category-grid" id="category-grid"></div>
+        <div class="custom-cat-row">
+          <input type="text" id="category-custom-input" placeholder="Add a custom category&#8230;" maxlength="40" />
+          <button id="add-category-btn">+ Add</button>
+        </div>
+        <button id="save-categories-btn">Save Categories</button>
+        <div id="save-categories-msg">Categories saved.</div>
       </div>
-      <div class="settings-rows" id="connections-rows">
-
-        <div class="settings-row" style="align-items:flex-start;">
-          <div>
-            <div class="settings-row-label">Business Email (Gmail)</div>
-            <div class="settings-row-desc">Connect your business Gmail inboxes for automatic scanning.</div>
-          </div>
-          <div class="connection-row-control">
-            <div id="gmail-connections-list" class="connection-list"></div>
-            <button id="add-gmail-btn" class="btn-add-connection">+ Add Gmail</button>
-          </div>
-        </div>
-
-        <div class="settings-row" style="align-items:flex-start;">
-          <div>
-            <div class="settings-row-label">Business Email (Outlook)</div>
-            <div class="settings-row-desc">Connect your business Outlook inboxes for automatic scanning.</div>
-          </div>
-          <div class="connection-row-control">
-            <div id="outlook-connections-list" class="connection-list"></div>
-            <button id="add-outlook-btn" class="btn-add-connection">+ Add Outlook</button>
-          </div>
-        </div>
-
-        <div class="settings-row" style="align-items:flex-start;">
-          <div>
-            <div class="settings-row-label">Google Drive</div>
-            <div class="settings-row-desc">Connect your Google Drive to import documents automatically.</div>
-          </div>
-          <div class="connection-row-control">
-            <div id="drive-connections-list" class="connection-list"></div>
-            <button id="add-drive-btn" class="btn-add-connection">+ Google Drive</button>
-          </div>
-        </div>
-
-        <div class="settings-row" style="align-items:flex-start;">
-          <div style="flex:1;">
-            <div class="settings-row-label">Website</div>
-            <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
-          </div>
-          <div class="connection-row-control">
-            <div id="website-urls-list"></div>
-            <button id="add-website-btn" class="btn-add-connection" style="margin-top:8px;">+ Add Website</button>
-          </div>
-        </div>
-        <div style="padding: 12px 24px 16px;">
-          <button id="website-save-btn" class="btn-save">Save</button>
-        </div>
     </div>
-</div>
 
   </div>
 
-  
-
-  <div class="auth-loading" id="auth-loading">Loading...
-    
-
-  <script src="/cl-settings-logic.js"></script>
   <script>
-    (function() {
-      var supabase = window.supabaseClient;
-      if (!supabase) { document.getElementById('auth-loading').textContent = 'Configuration error. Please refresh.'; return; }
-
-      supabase.auth.getUser().then(function(resp) {
-        if (!resp.data || !resp.data.user) {
-          window.location.href = '/index.html';
-          return;
-        }
-        document.getElementById('auth-loading').style.display = 'none';
-        document.getElementById('page-wrap').style.display = 'block';
+    document.querySelectorAll('.stab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
+        if (panel) panel.classList.add('active');
       });
-
-      
-
-      var signoutBtn = document.getElementById('signout-btn');
-      if (signoutBtn) {
-        signoutBtn.addEventListener('click', function() {
-          supabase.auth.signOut().then(function() {
-            window.location.href = '/index.html';
-          });
-        });
-      }
-    })();
-  
-    // Account dropdown toggle</script>
+    });
+    var accountBtn = document.getElementById('account-btn');
+    var accountDropdown = document.getElementById('account-dropdown');
+    if (accountBtn) {
+      accountBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        accountDropdown.classList.toggle('open');
+      });
+    }
+    document.addEventListener('click', function() {
+      if (accountDropdown) accountDropdown.classList.remove('open');
+    });
+  </script>
 
 </body>
 </html>
