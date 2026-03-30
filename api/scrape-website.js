@@ -251,7 +251,9 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
     return res.status(200).json({
       success: true,
       itemsCount: itemsCount,
-      message: `Extracted ${itemsCount} items from website`
+      message: `Extracted ${itemsCount} items from website`,
+      _debug_htmlLen: websiteHtml ? websiteHtml.length : 0,
+      _debug_aiResponse: aiResponse ? aiResponse.substring(0, 500) : "no aiResponse"
     });
 
   } catch (error) {
