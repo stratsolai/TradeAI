@@ -93,7 +93,10 @@ Return your response as a JSON object:
 Only include items you actually find. Return empty arrays for categories with no content.
 
 Website HTML:
-${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
+${websiteHtml.substring(0, 50000)}
+
+Website content to analyse:
+${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
 
     const requestBody = JSON.stringify({
       system: 'You are a data extraction API. You must respond with only a valid JSON object. No markdown, no code fences, no explanation before or after. Return only raw JSON.',
