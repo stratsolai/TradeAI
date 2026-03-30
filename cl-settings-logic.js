@@ -13,9 +13,11 @@ window.CL_SETTINGS_LOGIC = {
     this._supabase = supabase;
     this._bindToggleButtons();
     this._bindSave();
-    this._loadSettings();
-    this._bindCategories();
-    this._loadCategories();
+    var self = this;
+    this._loadSettings().then(function() {
+      self._bindCategories();
+      self._loadCategories();
+    });
   },
 
   // ── BIND TOGGLE BUTTONS ─────────────────────────────────────────────────
@@ -25,9 +27,8 @@ window.CL_SETTINGS_LOGIC = {
     var allBtns = document.querySelectorAll('.freq-btn');
     allBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var value = btn.getAttribute('data-val');
-        var ctrl = btn.parentElement;
-        var field = ctrl ? ctrl.id.replace('-freq-ctrl', '') + '_freq' : null;
+        var field = btn.getAttribute('data-field');
+        var value = btn.getAttribute('data-value');
         if (ctrl) {
           ctrl.querySelectorAll('.freq-btn').forEach(function(b) {
             b.classList.remove('active');
