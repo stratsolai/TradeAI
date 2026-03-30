@@ -27,7 +27,7 @@ window.CL_SETTINGS_LOGIC = {
       btn.addEventListener('click', function() {
         var value = btn.getAttribute('data-val');
         var ctrl = btn.parentElement;
-        var field = ctrl ? ctrl.id.replace('-ctrl', '').replace(/-/g, '_') + '_freq' : null;
+        var field = ctrl ? ctrl.id.replace('-freq-ctrl', '') + '_freq' : null;
         if (ctrl) {
           ctrl.querySelectorAll('.freq-btn').forEach(function(b) {
             b.classList.remove('active');
@@ -176,27 +176,46 @@ window.CL_SETTINGS_LOGIC = {
     var grid = document.getElementById('category-grid');
     if (!grid) return;
     grid.innerHTML = '';
-    var defaults = [{"id":"service","label":"Services","icon":"🔧"},{"id":"about","label":"About Us","icon":"🏢"},{"id":"portfolio","label":"Portfolio","icon":"📸"},{"id":"testimonial","label":"Testimonials","icon":"⭐"},{"id":"offer","label":"Offers","icon":"🎁"},{"id":"team","label":"Team","icon":"👥"},{"id":"tip","label":"Tips","icon":"💡"},{"id":"faq","label":"FAQ","icon":"❓"},{"id":"news","label":"News","icon":"📰"},{"id":"compliance","label":"Compliance","icon":"✅"}];
+    var defaults = [
+      {id:'service',label:'Services'},{id:'about',label:'About Us'},{id:'portfolio',label:'Portfolio'},
+      {id:'testimonial',label:'Testimonials'},{id:'offer',label:'Offers'},{id:'team',label:'Team'},
+      {id:'tip',label:'Tips'},{id:'faq',label:'FAQ'},{id:'news',label:'News'},{id:'compliance',label:'Compliance'}
+    ];
     var allCats = defaults.slice();
     self._customCategories.forEach(function(id) {
       if (!allCats.find(function(c){ return c.id === id; })) {
-        allCats.push({ id: id, label: id.charAt(0).toUpperCase() + id.slice(1), icon: '🏷️' });
+        allCats.push({ id: id, label: id.charAt(0).toUpperCase() + id.slice(1) });
       }
     });
     allCats.forEach(function(cat) {
-      var card = document.createElement('div');
-      card.className = 'cat-card' + (self._activeCategories.indexOf(cat.id) !== -1 ? ' active' : '');
-      card.innerHTML = '<span class="cat-icon">' + cat.icon + '</span>' + cat.label;
-      card.addEventListener('click', function() {
+      var isActive = self._activeCategories.indexOf(cat.id) !== -1;
+      var row = document.createElement('div');
+      row.className = 'settings-row cat-toggle-row';
+      row.setAttribute('data-cat-id', cat.id);
+      var labelDiv = document.createElement('div');
+      labelDiv.className = 'settings-row-label';
+      labelDiv.textContent = cat.label;
+      var toggle = document.createElement('button');
+      toggle.className = 'cat-toggle-btn' + (isActive ? ' active' : '');
+      toggle.textContent = isActive ? 'On' : 'Off';
+      toggle.addEventListener('click', function() {
         var idx = self._activeCategories.indexOf(cat.id);
-        if (idx === -1) { self._activeCategories.push(cat.id); card.classList.add('active'); }
-        else { self._activeCategories.splice(idx, 1); card.classList.remove('active'); }
+        if (idx === -1) {
+          self._activeCategories.push(cat.id);
+          toggle.classList.add('active');
+          toggle.textContent = 'On';
+        } else {
+          self._activeCategories.splice(idx, 1);
+          toggle.classList.remove('active');
+          toggle.textContent = 'Off';
+        }
       });
-      grid.appendChild(card);
+      row.appendChild(labelDiv);
+      row.appendChild(toggle);
+      grid.appendChild(row);
     });
   },
-
-  _bindCategories: function() {
+    _bindCategories: function() {
     var self = this;
     var addBtn = document.getElementById('add-category-btn');
     var input = document.getElementById('category-custom-input');
