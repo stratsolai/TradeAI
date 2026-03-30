@@ -24,12 +24,7 @@ module.exports = async (req, res) => {
 
     // Fetch the website HTML
     const websiteHtml = await new Promise((resolve, reject) => {
-      // Normalise URL — accept www.domain.com, http://, or https://
-  url = url.trim();
-  if (url.startsWith('http://')) url = url.replace('http://', 'https://');
-  if (!url.startsWith('https://')) url = 'https://' + url;
-
-  const urlObj = new URL(url);
+      const urlObj = new URL(url);
       
       const options = {
         hostname: urlObj.hostname,
@@ -38,9 +33,7 @@ module.exports = async (req, res) => {
         headers: {
           'User-Agent': 'Mozilla/5.0 (compatible; TradeAI/1.0)'
         }
-      ,
-    rejectUnauthorized: false,
-    port: urlObj.protocol === 'https:' ? 443 : 80};
+      };
 
       const protocol = urlObj.protocol === 'https:' ? https : require('http');
 
@@ -99,13 +92,9 @@ Return your response as a JSON object:
 Only include items you actually find. Return empty arrays for categories with no content.
 
 Website HTML:
-${websiteHtml.substring(0, 50000)}
-
-Website content to analyse:
-${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
+${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
 
     const requestBody = JSON.stringify({
-      system: 'You are a data extraction API. You must respond with only a valid JSON object. No markdown, no code fences, no explanation before or after. Return only raw JSON.',
       model: 'claude-sonnet-4-20250514',
       max_tokens: 4000,
       messages: [
@@ -127,9 +116,7 @@ ${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
           'anthropic-version': '2023-06-01',
           'Content-Length': Buffer.byteLength(requestBody)
         }
-      ,
-    rejectUnauthorized: false,
-    port: urlObj.protocol === 'https:' ? 443 : 80};
+      };
 
       const req = https.request(options, (res) => {
         let data = '';
@@ -157,12 +144,13 @@ ${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
     // Parse the JSON response
     let extractedData;
     try {
-        // Strip markdown code fences then extract JSON
-        const cleanedText = claudeText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-        const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) throw new Error('No JSON found in response');
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
         extractedData = JSON.parse(jsonMatch[0]);
-      } catch (e) {
+      } else {
+        throw new Error('No JSON found in response');
+      }
+    } catch (e) {
       console.error('Failed to parse Claude response:', e);
       extractedData = {
         services: [],
@@ -196,9 +184,7 @@ ${websiteHtml.substring(0, 15000)}`; // Limit to 50k chars
           'Content-Type': 'application/json',
           'Prefer': 'return=minimal'
         }
-      ,
-    rejectUnauthorized: false,
-    port: urlObj.protocol === 'https:' ? 443 : 80};
+      };
 
       const supabaseReq = https.request(options, (supabaseRes) => {
         supabaseRes.on('data', () => {});
@@ -304,9 +290,7 @@ async function insertContent(userId, contentType, sourceType, data, supabaseUrl,
         'Content-Type': 'application/json',
         'Prefer': 'return=minimal'
       }
-    ,
-    rejectUnauthorized: false,
-    port: urlObj.protocol === 'https:' ? 443 : 80};
+    };
 
     const supabaseReq = https.request(options, (supabaseRes) => {
       supabaseRes.on('data', () => {});
