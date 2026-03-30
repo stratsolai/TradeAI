@@ -118,8 +118,9 @@ window.CL_UPLOAD = {
 
       tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.cl_drive_connected });
 
-      var websiteUrl = profile.website_urls && profile.website_urls.length > 0 ? profile.website_urls[0] : null;
-      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl });
+      var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
+      var websiteUrl = websiteUrls[0] || null;
+      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl, urls: websiteUrls });
 
       grid.innerHTML = tiles.map(function(t) {
         return [
@@ -131,7 +132,7 @@ window.CL_UPLOAD = {
                 "<div class=\"source-tile-desc\">" + t.desc + "</div>",
               "</div>",
             "</div>",
-            "<div class=\"source-tile-actions\">",
+            (t.id === "website" && t.urls && t.urls.length > 1 ? "<div class=\"source-tile-urls\">" + t.urls.map(function(u) { return "<label class=\"source-url-item\"><input type=\"checkbox\" class=\"source-url-checkbox\" data-url=\"" + u + "\" checked=\"checked\"><span class=\"source-url-label\">" + u + "</span></label>"; }).join("") + "</div>" : "") + "<div class=\"source-tile-actions\">",
               "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
               "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn" + (!t.connected ? "" : " source-btn-disabled") + "\"" + (t.connected ? " tabindex=\"-1\" aria-disabled=\"true\"" : "") + ">Connect Now</a>",
             "</div>",
@@ -150,11 +151,45 @@ window.CL_UPLOAD = {
   },
 
   _handleScanNow: function(source, btn) {
-    var original = btn.textContent;
-    btn.textContent = "Scanning... check Review tab shortly";
-    btn.disabled = true;
-    setTimeout(function() { btn.textContent = original; btn.disabled = false; }, 4000);
-  },
+      var self = this;
+      var originalText = btn.textContent;
+      btn.textContent = "Scanning...";
+      btn.disabled = true;
+      (async function() {
+        try {
+          var ud = await supabaseClient.auth.getUser();
+          var user = ud && ud.data ? ud.data.user : null;
+          if (!user) throw new Error("Not authenticated");
+          if (source === "website") {
+            var tile = btn.closest(".source-tile");
+            var cbs = tile ? tile.querySelectorAll(".source-url-checkbox") : [];
+            var urls = [];
+            if (cbs.length > 0) {
+              cbs.forEach(function(cb) { if (cb.checked) urls.push(cb.getAttribute("data-url")); });
+            } else {
+              var nm = tile ? tile.querySelector(".source-tile-name") : null;
+              if (nm && nm.textContent) urls.push(nm.textContent.trim());
+            }
+            if (urls.length === 0) throw new Error("No URLs selected to scan");
+            for (var j = 0; j < urls.length; j++) {
+              var raw = urls[j].trim();
+              if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
+              await fetch("/api/scrape-website", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id, url: raw })
+              });
+            }
+            if (typeof loadStats === "function") loadStats();
+          }
+        } catch (err) {
+          console.error("Scan error:", err.message);
+        } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }
+      })();
+    },
 
   _handlePhotoUpload: async function(files) {
     var supabase = this._supabase;
