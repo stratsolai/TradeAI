@@ -146,13 +146,12 @@ ${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
     // Parse the JSON response
     let extractedData;
     try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
+        // Strip markdown code fences then extract JSON
+        const cleanedText = claudeText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+        const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('No JSON found in response');
         extractedData = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
-      }
-    } catch (e) {
+      } catch (e) {
       console.error('Failed to parse Claude response:', e);
       extractedData = {
         services: [],
