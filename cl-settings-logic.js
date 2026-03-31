@@ -268,14 +268,14 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     this._supabase
       .from('profiles')
-      .select('cl_connected_emails, cl_drive_connected, website_urls, business_website')
+      .select('cl_connected_emails, cl_drive_connected, website_urls')
       .eq('id', this._userId)
       .maybeSingle()
       .then(function(res) {
         var data = res.data || {};
         self.renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId, self);
         self.renderDriveList(data.cl_drive_connected || false, self._supabase, self._userId);
-        self.renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId, data.business_website || "");
+        self.renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId, "");
       });
   }
 
@@ -340,7 +340,7 @@ window.CL_SETTINGS_LOGIC = {
     });
   } else {
     list.innerHTML = '';
-    handleOAuthConnect('google', supabase);
+    self.handleOAuthConnect('google', supabase);
   }
 },
 
