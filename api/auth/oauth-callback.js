@@ -43,7 +43,7 @@ module.exports = async (req, res) => {
       const APP_BASE_URL = 'https://trade-ai-seven-blue.vercel.app';
       const REDIRECT_URI = `${APP_BASE_URL}/api/auth/meta/callback`;
       const GRAPH = 'v19.0';
-      const userId = state;
+      const userId = (function() { try { return JSON.parse(Buffer.from(state, 'base64').toString('utf8')).userId; } catch(e) { return state; } })();
 
       function httpsGet(hostname, path, params = '') {
         const fullPath = params ? `${path}?${params}` : path;
@@ -314,7 +314,7 @@ module.exports = async (req, res) => {
     }
 
     // Store tokens in database
-    const userId = state;
+    const userId = (function() { try { return JSON.parse(Buffer.from(state, 'base64').toString('utf8')).userId; } catch(e) { return state; } })();
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
