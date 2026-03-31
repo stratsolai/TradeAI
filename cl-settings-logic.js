@@ -75,8 +75,6 @@ window.CL_SETTINGS_LOGIC = {
 
   _bindSave: function() {
     var self = this;
-    var saveBtn = document.getElementById('save-settings-btn');
-    if (!saveBtn) return;
     saveBtn.addEventListener('click', function() {
       self._saveSettings();
     });
@@ -234,8 +232,6 @@ window.CL_SETTINGS_LOGIC = {
           .update({ cl_active_categories: active, cl_custom_categories: custom })
           .eq('id', self._userId)
           .then(function(res) {
-            var catBtn = document.getElementById('save-categories-btn');
-            if (catBtn && !res.error) { catBtn.textContent = 'Saved'; catBtn.style.color = '#4A6D8C'; catBtn.style.borderColor = '#4A6D8C'; setTimeout(function(){ catBtn.textContent = 'Save'; catBtn.style.color = ''; catBtn.style.borderColor = ''; }, 2000); }
             self._showMsg(msg, res.error ? 'error' : 'ok');
           });
       });
