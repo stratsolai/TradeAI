@@ -195,7 +195,7 @@ module.exports = async (req, res) => {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry')
+    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry, cl_active_categories, cl_custom_categories')
     .eq('id', user.id)
     .single();
 
@@ -205,9 +205,13 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
   }
 
-  const categories   = Array.isArray(body.categories) && body.categories.length > 0
-    ? body.categories
-    : [{ id: 'general', label: 'General', enabled: true }];
+  const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
+  const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0
+    ? profile.cl_active_categories
+    : defaultCategories;
+  const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
+  const allCategories = activeFromProfile.concat(customFromProfile);
+  const categories = allCategories.map(function(c) { return { id: c, label: c, enabled: true }; });
 
   const maxResults   = 20;
   const businessName = profile.business_name || 'your business';
