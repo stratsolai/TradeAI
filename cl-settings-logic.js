@@ -75,12 +75,30 @@ window.CL_SETTINGS_LOGIC = {
 
   _bindSave: function() {
     var self = this;
-    saveBtn.addEventListener('click', function() {
-      self._saveSettings();
-    });
+    var saveBtn = document.getElementById('save-settings-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function() {
+        await self._saveSettings();
+        if (!self._lastSaveError) {
+          saveBtn.textContent = 'Saved';
+          saveBtn.style.color = '#4A6D8C';
+          saveBtn.style.borderColor = '#4A6D8C';
+          var onChange = function() {
+            saveBtn.textContent = 'Save';
+            saveBtn.style.color = '';
+            saveBtn.style.borderColor = '';
+            saveBtn.removeEventListener('change', onChange);
+          };
+          document.querySelectorAll('#scan-frequency-card select, #scan-frequency-card input').forEach(function(el) {
+            el.addEventListener('change', onChange, { once: true });
+          });
+        }
+      });
+    }
   },
 
-  _saveSettings: async function() {
+ this._lastSaveError = res.error;
+ _saveSettings: async function() {
     var self = this;
     var msg = document.getElementById('save-scan-msg');
     const { data: existingRow } = await this._supabase
@@ -166,31 +184,36 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var grid = document.getElementById('category-grid');
     var input = document.getElementById('category-custom-input');
+    // Custom category add handler
+    var self = this;
     var addBtn = document.getElementById('add-category-btn');
-    var saveBtn = document.getElementById('save-categories-btn');
-    var msg = document.getElementById('save-categories-msg');
-
-    if (grid) {
-      grid.addEventListener('click', function(e) {
-        var removeBtn = e.target.closest('[data-cat-remove]');
-        if (removeBtn) {
-          var row = grid.querySelector('.cat-row[data-category="' + removeBtn.getAttribute('data-cat-remove') + '"]');
-          if (row) row.remove();
-          return;
-        }
-        var btn = e.target.closest('.freq-btn[data-cat]');
-        if (btn) {
-          var cat = btn.getAttribute('data-cat');
-          grid.querySelectorAll('.freq-btn[data-cat="' + cat + '"]').forEach(function(b) {
-            b.classList.toggle('active', b === btn);
-          });
-        }
+    var input = document.getElementById('category-custom-input');
+    if (!self._settings.custom_categories) self._settings.custom_categories = [];
+    function renderCustomCategories() {
+      var container = document.getElementById('custom-categories-list');
+      if (!container) return;
+      container.innerHTML = self._settings.custom_categories.map(function(cat, idx) {
+        return '<div class="connection-row"><span class="connection-row-label">' + cat + '</span>' +
+        '<button class="btn-remove-url" data-index="' + idx + '">Remove</button></div>';
+      }).join('');
+      container.querySelectorAll('.btn-remove-url').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          self._settings.custom_categories.splice(parseInt(this.dataset.index), 1);
+          renderCustomCategories();
+        });
       });
     }
-
+    renderCustomCategories();
     if (addBtn && input) {
       addBtn.addEventListener('click', function() {
         var val = input.value.trim();
+        if (!val) return;
+        self._settings.custom_categories.push(val);
+        input.value = '';
+        renderCustomCategories();
+      });
+    }
+
         if (!val || !grid) return;
         if (grid.querySelector('.cat-row[data-category="' + val + '"]')) {
           input.value = '';
@@ -232,7 +255,16 @@ window.CL_SETTINGS_LOGIC = {
           .update({ cl_active_categories: active, cl_custom_categories: custom })
           .eq('id', self._userId)
           .then(function(res) {
-            self._showMsg(msg, res.error ? 'error' : 'ok');
+            saveBtn.textContent = 'Saved';
+            saveBtn.style.color = '#4A6D8C';
+            saveBtn.style.borderColor = '#4A6D8C';
+            document.querySelectorAll('#category-grid input, #category-custom-input').forEach(function(el) {
+              el.addEventListener('change', function() {
+                saveBtn.textContent = 'Save';
+                saveBtn.style.color = '';
+                saveBtn.style.borderColor = '';
+              }, { once: true });
+            });
           });
       });
     }
@@ -319,7 +351,7 @@ function renderDriveList(connected, supabase, userId) {
         .then(function() { renderDriveList(false, supabase, userId); });
     });
   } else {
-    list.innerHTML = '<button type="button" class="btn-connect" id="add-drive-btn">Connect Google Drive</button>';
+    list.    list.innerHTML = '';
     handleOAuthConnect('google', supabase);
   }
 }
