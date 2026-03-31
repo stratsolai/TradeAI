@@ -273,17 +273,15 @@ window.CL_SETTINGS_LOGIC = {
       .maybeSingle()
       .then(function(res) {
         var data = res.data || {};
-        renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId);
-        renderDriveList(data.cl_drive_connected || false, self._supabase, self._userId);
-        renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId, data.business_website || "");
+        self.renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId, self);
+        self.renderDriveList(data.cl_drive_connected || false, self._supabase, self._userId);
+        self.renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId, data.business_website || "");
       });
   }
 
-};
+,
 
-// EMAIL
-
-function renderEmailList(emails, supabase, userId) {
+  renderEmailList: function(emails, supabase, userId, self) {
   var emailList = document.querySelector('.connection-list[data-type="email"]') ||
     document.getElementById('gmail-connections-list');
   if (!emailList) return;
@@ -300,18 +298,18 @@ function renderEmailList(emails, supabase, userId) {
   emailList.innerHTML = html;
   emailList.querySelectorAll('.btn-disconnect').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
+      self.disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
     });
   });
-}
+},
 
-function disconnectEmail(email, emails, supabase, userId) {
+  disconnectEmail: function(email, emails, supabase, userId) {
   var updated = emails.filter(function(e) { return e !== email; });
   supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', userId)
     .then(function() { renderEmailList(updated, supabase, userId); });
-}
+},
 
-function handleOAuthConnect(provider, supabase) {
+  handleOAuthConnect: function(provider, supabase) {
   var btn = document.getElementById('add-' + provider + '-btn');
   if (!btn) return;
   btn.addEventListener('click', function() {
@@ -324,11 +322,9 @@ function handleOAuthConnect(provider, supabase) {
       }
     });
   });
-}
+},
 
-// DRIVE
-
-function renderDriveList(connected, supabase, userId) {
+  renderDriveList: function(connected, supabase, userId) {
   var list = document.getElementById('drive-connections-list');
   if (!list) return;
   if (connected) {
@@ -345,11 +341,9 @@ function renderDriveList(connected, supabase, userId) {
     list.    list.innerHTML = '';
     handleOAuthConnect('google', supabase);
   }
-}
+},
 
-// WEBSITE URLS
-
-function renderWebsiteUrls(urls, supabase, userId, businessWebsite) {
+  renderWebsiteUrls: function(urls, supabase, userId, businessWebsite) {
   var list = document.getElementById('website-urls-list');
   var addBtn = document.getElementById('add-website-btn');
   var saveBtn = document.getElementById('website-save-btn');
@@ -359,6 +353,9 @@ function renderWebsiteUrls(urls, supabase, userId, businessWebsite) {
 
   function render() {
     var html = '';
+    if (businessWebsite) {
+      html += '<div class="website-url-item"><input type="url" class="website-url-input" value="' + businessWebsite + '" placeholder="https://example.com.au" readonly style="opacity:0.7"><span style="font-size:12px;color:#4A6D8C;margin-left:8px">From Business Profile</span></div>';
+    }
     current.forEach(function(url, idx) {
       html += '<div class="website-url-item">' +
         '<input type="url" class="website-url-input" value="' + url + '" data-index="' + idx + '" placeholder="https://example.com.au">' +
@@ -372,12 +369,6 @@ function renderWebsiteUrls(urls, supabase, userId, businessWebsite) {
         render();
       });
     });
-  }
-  if (businessWebsite) {
-    var defItem = document.createElement("div");
-    defItem.className = "website-url-item";
-    defItem.innerHTML = "<input type=\"url\" class=\"website-url-input\" value=\"" + businessWebsite + "\" placeholder=\"https://example.com.au\" readonly style=\"opacity:0.7\"> <span style=\"font-size:12px;color:#4A6D8C;margin-left:8px\">From Business Profile</span>";
-    list.insertBefore(defItem, list.firstChild);
   }
 
   render();
@@ -405,6 +396,10 @@ function renderWebsiteUrls(urls, supabase, userId, businessWebsite) {
     });
   }
 }
+
+};
+
+
 
 // INIT
 
