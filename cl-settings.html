@@ -300,13 +300,27 @@
     #save-categories-btn { padding:10px 24px; background:var(--blue); color:#ffffff; border:none; border-radius:8px; font-family:var(--body-font); font-size:14px; font-weight:600; cursor:pointer; }
     #save-categories-btn:hover { opacity:0.9; }
     #save-categories-msg { display:none; font-size:13px; color:var(--green); margin-top:10px; }
-    .category-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
+    /* ── Category rows */
+    .category-row { display:flex; align-items:center; padding:11px 0 11px 16px; border-bottom:1px solid var(--border); }
     .category-row:last-child { border-bottom:none; }
-    .category-label { font-size:15px; color:var(--text); font-weight:500; }
-    .toggle-btn { padding:6px 18px; border-radius:6px; border:1px solid var(--border); background:#fff; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; }
-    .toggle-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
-    .website-input-row { display:flex; align-items:center; gap:10px; padding:12px 0; }
-    .website-url-input { flex:1; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--body-font); color:var(--text); }
+    .category-label { flex:1; font-size:15px; color:var(--text); font-weight:500; }
+    .category-toggle-group { display:flex; border:1px solid var(--border); border-radius:6px; overflow:hidden; margin-right:12px; }
+    .category-toggle-btn { padding:5px 14px; border:none; background:#fff; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; }
+    .category-toggle-btn:first-child { border-right:1px solid var(--border); }
+    .category-toggle-btn.active { background:var(--blue); color:#fff; }
+    .btn-remove-category { background:none; border:none; color:#aaa; font-size:14px; cursor:pointer; padding:4px 8px; border-radius:4px; }
+    .btn-remove-category:hover { color:#c0392b; background:rgba(192,57,43,0.06); }
+    /* ── Custom category input row */
+    .category-add-row { display:flex; align-items:center; gap:8px; padding:12px 0 12px 16px; border-top:1px solid var(--border); margin-top:4px; }
+    #category-custom-input { width:200px; padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:14px; font-family:var(--body-font); color:var(--text); }
+    /* ── Website input row */
+    .website-input-row { display:flex; align-items:center; gap:8px; padding:10px 0 4px; }
+    .website-url-input { flex:1; padding:9px 12px; border:1px solid var(--border); border-radius:6px; font-size:14px; font-family:var(--body-font); color:var(--text); }
+    .website-url-item { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); font-size:14px; color:var(--text); }
+    .website-url-item:last-child { border-bottom:none; }
+    .btn-remove-url { background:none; border:none; color:#aaa; font-size:13px; cursor:pointer; padding:4px 8px; border-radius:4px; }
+    .btn-remove-url:hover { color:#c0392b; }
+    .btn-save-small { padding:8px 16px; background:var(--blue); color:#fff; border:none; border-radius:6px; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -393,14 +407,10 @@
             <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
           </div>
           <div class="connection-row-control">
-            <div id="website-urls-list"></div>
-            <button id="add-website-btn" class="btn-add-connection" style="margin-top:8px;">+ Add Website</button>
-          </div>
-        </div>
-        <div style="padding: 12px 24px 16px;">
-          <div id="website-input-row" class="website-input-row" style="display:none;">
+            <div id="website-urls-list" class="website-urls-list"></div>
+        <div class="website-input-row">
           <input id="website-url-input" type="url" placeholder="https://yourwebsite.com.au" class="website-url-input" />
-          <button id="website-save-btn" class="btn-save">Save</button>
+          <button id="website-save-btn" class="btn-save-small">+ Add</button>
         </div>
         </div>
     </div>
@@ -471,8 +481,10 @@
         </div>
         <div class="settings-rows" id="category-grid"></div>
         <div class="custom-cat-row">
-          <input type="text" id="category-custom-input" placeholder="Add a custom category&#8230;" maxlength="40" />
+        <div class="category-add-row">
+          <input id="category-custom-input" type="text" placeholder="Add a custom category..." />
           <button id="add-category-btn" class="btn-add">+ Add</button>
+        </div>
         </div>
         <div class="settings-footer">
           <button id="save-categories-btn" class="btn-save">Save</button>
