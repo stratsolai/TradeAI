@@ -300,6 +300,13 @@
     #save-categories-btn { padding:10px 24px; background:var(--blue); color:#ffffff; border:none; border-radius:8px; font-family:var(--body-font); font-size:14px; font-weight:600; cursor:pointer; }
     #save-categories-btn:hover { opacity:0.9; }
     #save-categories-msg { display:none; font-size:13px; color:var(--green); margin-top:10px; }
+    .category-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
+    .category-row:last-child { border-bottom:none; }
+    .category-label { font-size:15px; color:var(--text); font-weight:500; }
+    .toggle-btn { padding:6px 18px; border-radius:6px; border:1px solid var(--border); background:#fff; color:var(--text-muted); font-size:13px; font-weight:600; cursor:pointer; }
+    .toggle-btn.active { background:var(--blue); color:#fff; border-color:var(--blue); }
+    .website-input-row { display:flex; align-items:center; gap:10px; padding:12px 0; }
+    .website-url-input { flex:1; padding:10px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:var(--body-font); color:var(--text); }
 </style>
 </head>
 <body>
@@ -391,7 +398,10 @@
           </div>
         </div>
         <div style="padding: 12px 24px 16px;">
+          <div id="website-input-row" class="website-input-row" style="display:none;">
+          <input id="website-url-input" type="url" placeholder="https://yourwebsite.com.au" class="website-url-input" />
           <button id="website-save-btn" class="btn-save">Save</button>
+        </div>
         </div>
     </div>
 </div>
