@@ -1,458 +1,349 @@
-// cl-settings-logic.js — Content Library Settings logic
-// Part of Content Library split architecture
-// Step 6: New file. window.CL_SETTINGS_LOGIC = { init: function(supabase) {} } pattern.
-// Reads/writes cl_settings table. Handles auto-scan frequency toggles.
-
 window.CL_SETTINGS_LOGIC = {
 
   _supabase: null,
   _userId: null,
-  _settings: {},
-
-  init: function(supabase) {
-    this._supabase = supabase;
-    this._bindToggleButtons();
-    this._bindSave();
-    var self = this;
-    this._loadSettings().then(function() {
-      self._bindCategories();
-      self._loadCategories();
-    });
+  _settings: {
+    email_scan_frequency: 'manual',
+    drive_scan_frequency: 'manual',
+    website_scan_frequency: 'manual'
   },
 
-  // ── BIND TOGGLE BUTTONS ─────────────────────────────────────────────────
-
-  _bindToggleButtons: function() {
+  init: function(supabaseClient) {
+    this._supabase = supabaseClient;
     var self = this;
-    var allBtns = document.querySelectorAll('.freq-btn');
-    allBtns.forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var field = btn.getAttribute('data-field');
-        var value = btn.getAttribute('data-value');
-        if (ctrl) {
-          ctrl.querySelectorAll('.freq-btn').forEach(function(b) {
-            b.classList.remove('active');
-          });
-        }
-        btn.classList.add('active');
-        self._settings[field] = value;
-      });
-    });
-  },
-
-  // ── BIND SAVE ───────────────────────────────────────────────────────────
-
-  _bindSave: function() {
-    var self = this;
-    var saveBtn = document.getElementById('save-scan-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function() {
-        self._saveSettings();
-      });
-    }
-  },
-
-  // ── LOAD SETTINGS ────────────────────────────────────────────────────
-
-  _loadSettings: async function() {
-    var supabase = this._supabase;
-    if (!supabase) return;
-    try {
-      var userResp = await supabase.auth.getUser();
-      var user = userResp.data.user;
-      if (!user) return;
-      this._userId = user.id;
-
-      var resp = await supabase
-        .from('cl_settings')
-        .select('email_scan_frequency, drive_scan_frequency, website_scan_frequency')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (resp.data) {
-        this._settings = {
-          email_scan_frequency: resp.data.email_scan_frequency || 'daily',
-          drive_scan_frequency: resp.data.drive_scan_frequency || 'weekly',
-          website_scan_frequency: resp.data.website_scan_frequency || 'weekly'
-        };
-      } else {
-        this._settings = {
-          email_scan_frequency: 'daily',
-          drive_scan_frequency: 'weekly',
-          website_scan_frequency: 'weekly'
-        };
+    this._supabase.auth.getUser().then(function(res) {
+      if (!res.data || !res.data.user) {
+        window.location.href = '/login.html';
+        return;
       }
-
-      this._applyToUI();
-
-    } catch (err) {
-      console.error('CL_SETTINGS_LOGIC load error:', err);
-    }
+      self._userId = res.data.user.id;
+      self._loadSettings().then(function() {
+        self._bindToggleButtons();
+        self._bindSave();
+      });
+      self._loadCategories();
+      self._loadConnections();
+    });
   },
 
-  // ── APPLY TO UI ─────────────────────────────────────────────────────────
+  _loadSettings: function() {
+    var self = this;
+    return this._supabase
+      .from('cl_settings')
+      .select('email_scan_frequency, drive_scan_frequency, website_scan_frequency')
+      .eq('user_id', this._userId)
+      .single()
+      .then(function(res) {
+        if (res.data) {
+          self._settings.email_scan_frequency = res.data.email_scan_frequency || 'manual';
+          self._settings.drive_scan_frequency = res.data.drive_scan_frequency || 'manual';
+          self._settings.website_scan_frequency = res.data.website_scan_frequency || 'manual';
+        }
+        self._applyToUI();
+      });
+  },
 
   _applyToUI: function() {
     var self = this;
-    var fields = ['email_scan_frequency', 'drive_scan_frequency', 'website_scan_frequency'];
-    fields.forEach(function(field) {
-      var value = self._settings[field];
-      var btns = document.querySelectorAll('.freq-btn[Data-field="' + field + '"]');
+    ['email_scan_frequency', 'drive_scan_frequency', 'website_scan_frequency'].forEach(function(field) {
+      var val = self._settings[field];
+      var btns = document.querySelectorAll('.freq-btn[data-field="' + field + '"]');
       btns.forEach(function(btn) {
-        if (btn.getAttribute('data-value') === value) {
-          btn.classList.add('active');
-        } else {
-          btn.classList.remove('active');
-        }
+        btn.classList.toggle('active', btn.getAttribute('data-value') === val);
       });
     });
   },
 
-  // ── SAVE SETTINGS ──────────────────────────────────────────────────────
-
-  _saveSettings: async function() {
-    var supabase = this._supabase;
-    var userId = this._userId;
-    if (!supabase || !userId) return;
-
-    var saveBtn = document.getElementById('save-scan-btn');
-    var saveMsg = document.getElementById('save-scan-msg');
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
-
-    try {
-      var updates = {
-        user_id: userId,
-        email_scan_frequency: this._settings.email_scan_frequency || 'daily',
-        drive_scan_frequency: this._settings.drive_scan_frequency || 'weekly',
-        website_scan_frequency: this._settings.website_scan_frequency || 'weekly',
-        updated_at: new Date().toISOString()
-      };
-
-      var resp = await supabase
-        .from('cl_settings')
-        .upsert(updates, { onConflict: 'user_id' });
-
-      if (resp.error) throw resp.error;
-      this._showMsg(saveMsg, 'Saved', false);
-
-    } catch (err) {
-      console.error('CL_SETTINGS_LOGIC save error:', err);
-      this._showMsg(saveMsg, 'Save failed. Please try again.', true);
-    } finally {
-      if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = 'Save Settings'; }
-    }
-  },
-
-  // ── HELPERS ──────────────────────────────────────────────────────────────────
-
-  _showMsg: function(msgEl, text, isError) {
-    if (!msgEl) return;
-    msgEl.textContent = text;
-    msgEl.className = isError ? 'save-msg save-msg-error' : 'save-msg save-msg-ok';
-    msgEl.style.display = 'inline';
-    setTimeout(function() { msgEl.style.display = 'none'; }, 3500);
-  },
-
-  // ── CATEGORIES ──────────────────────────────────────────────────────────
-
-  _activeCategories: [],
-  _customCategories: [],
-
-  _loadCategories: async function() {
+  _bindToggleButtons: function() {
     var self = this;
-    if (!self._supabase || !self._userId) return;
-    var result = await self._supabase.from('profiles').select('cl_active_categories, cl_custom_categories').eq('id', self._userId).single();
-    if (result.data) {
-      self._activeCategories = result.data.cl_active_categories || ["service","about","portfolio","testimonial","offer","team","tip","faq","news","compliance"];
-      self._customCategories = result.data.cl_custom_categories || [];
-    } else {
-      self._activeCategories = ["service","about","portfolio","testimonial","offer","team","tip","faq","news","compliance"];
-      self._customCategories = [];
-    }
-    self._renderCategories();
+    var btns = document.querySelectorAll('.freq-btn');
+    btns.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var field = btn.getAttribute('data-field');
+        var val = btn.getAttribute('data-value');
+        self._settings[field] = val;
+        document.querySelectorAll('.freq-btn[data-field="' + field + '"]').forEach(function(b) {
+          b.classList.toggle('active', b === btn);
+        });
+      });
+    });
   },
 
-  _renderCategories: function() {
+  _bindSave: function() {
     var self = this;
+    var saveBtn = document.getElementById('save-settings-btn');
+    if (!saveBtn) return;
+    saveBtn.addEventListener('click', function() {
+      self._saveSettings();
+    });
+  },
+
+  _saveSettings: function() {
+    var self = this;
+    var msg = document.getElementById('save-scan-msg');
+    this._supabase
+      .from('cl_settings')
+      .upsert({
+        user_id: this._userId,
+        email_scan_frequency: this._settings.email_scan_frequency,
+        drive_scan_frequency: this._settings.drive_scan_frequency,
+        website_scan_frequency: this._settings.website_scan_frequency
+      }, { onConflict: 'user_id' })
+      .then(function(res) {
+        self._showMsg(msg, res.error ? 'error' : 'ok');
+      });
+  },
+
+  _showMsg: function(el, type) {
+    if (!el) return;
+    el.className = 'save-msg ' + (type === 'ok' ? 'save-msg-ok' : 'save-msg-error');
+    el.textContent = type === 'ok' ? 'Saved' : 'Error saving';
+    el.style.display = 'inline';
+    setTimeout(function() { el.style.display = 'none'; }, 3000);
+  },
+
+  // CATEGORIES
+
+  _loadCategories: function() {
+    var self = this;
+    this._supabase
+      .from('profiles')
+      .select('cl_active_categories, cl_custom_categories')
+      .eq('id', this._userId)
+      .single()
+      .then(function(res) {
+        var active = (res.data && res.data.cl_active_categories) || [];
+        var custom = (res.data && res.data.cl_custom_categories) || [];
+        self._renderCategories(active, custom);
+        self._bindCategories();
+      });
+  },
+
+  _renderCategories: function(active, custom) {
     var grid = document.getElementById('category-grid');
     if (!grid) return;
-    grid.innerHTML = '';
     var defaults = [
-      {id:'service',label:'Services'},{id:'about',label:'About Us'},{id:'portfolio',label:'Portfolio'},
-      {id:'testimonial',label:'Testimonials'},{id:'offer',label:'Offers'},{id:'team',label:'Team'},
-      {id:'tip',label:'Tips'},{id:'faq',label:'FAQ'},{id:'news',label:'News'},{id:'compliance',label:'Compliance'}
+      'Services & Pricing', 'Projects & Portfolio', 'Team & Culture',
+      'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials',
+      'Tips & How-To', 'Industry News', 'Company Updates', 'Seasonal Content'
     ];
-    var allCats = defaults.slice();
-    self._customCategories.forEach(function(id) {
-      if (!allCats.find(function(c){ return c.id === id; })) {
-        allCats.push({ id: id, label: id.charAt(0).toUpperCase() + id.slice(1) });
-      }
+    var all = defaults.concat(custom);
+    var html = '';
+    all.forEach(function(cat) {
+      var isActive = active.indexOf(cat) > -1;
+      html += '<div class="cat-item' + (isActive ? ' active' : '') + '" data-category="' + cat + '">' +
+        '<span>' + cat + '</span>' +
+        (defaults.indexOf(cat) === -1 ? '<button type="button" class="btn-remove-cat" data-category="' + cat + '">×</button>' : '') +
+        '</div>';
     });
-    allCats.forEach(function(cat) {
-      var isActive = self._activeCategories.indexOf(cat.id) !== -1;
-      var row = document.createElement('div');
-      row.className = 'settings-row cat-toggle-row';
-      row.setAttribute('data-cat-id', cat.id);
-      var labelDiv = document.createElement('div');
-      labelDiv.className = 'settings-row-label';
-      labelDiv.textContent = cat.label;
-      var toggle = document.createElement('button');
-      toggle.className = 'cat-toggle-btn' + (isActive ? ' active' : '');
-      toggle.textContent = isActive ? 'On' : 'Off';
-      toggle.addEventListener('click', function() {
-        var idx = self._activeCategories.indexOf(cat.id);
-        if (idx === -1) {
-          self._activeCategories.push(cat.id);
-          toggle.classList.add('active');
-          toggle.textContent = 'On';
-        } else {
-          self._activeCategories.splice(idx, 1);
-          toggle.classList.remove('active');
-          toggle.textContent = 'Off';
+    grid.innerHTML = html;
+  },
+
+  _bindCategories: function() {
+    var self = this;
+    var grid = document.getElementById('category-grid');
+    var input = document.getElementById('category-custom-input');
+    var addBtn = document.getElementById('add-category-btn');
+    var saveBtn = document.getElementById('save-categories-btn');
+    var msg = document.getElementById('save-categories-msg');
+
+    if (grid) {
+      grid.addEventListener('click', function(e) {
+        var item = e.target.closest('.cat-item');
+        var removeBtn = e.target.closest('.btn-remove-cat');
+        if (removeBtn) {
+          var cat = removeBtn.getAttribute('data-category');
+          var el = grid.querySelector('.cat-item[data-category="' + cat + '"]');
+          if (el) el.remove();
+          return;
+        }
+        if (item) {
+          item.classList.toggle('active');
         }
       });
-      row.appendChild(labelDiv);
-      row.appendChild(toggle);
-      grid.appendChild(row);
-    });
-  },
-    _bindCategories: function() {
-    var self = this;
-    var addBtn = document.getElementById('add-category-btn');
-    var input = document.getElementById('category-custom-input');
-    var saveBtn = document.getElementById('save-categories-btn');
-    var msgEl = document.getElementById('save-categories-msg');
+    }
+
     if (addBtn && input) {
       addBtn.addEventListener('click', function() {
-        var val = input.value.trim().toLowerCase().replace(/\\s+/g, '-');
-        if (!val) return;
-        if (self._customCategories.indexOf(val) === -1) {
-          self._customCategories.push(val);
-          self._activeCategories.push(val);
-          self._renderCategories();
-        }
+        var val = input.value.trim();
+        if (!val || !grid) return;
+        var exists = grid.querySelector('.cat-item[data-category="' + val + '"]');
+        if (exists) { input.value = ''; return; }
+        var div = document.createElement('div');
+        div.className = 'cat-item active';
+        div.setAttribute('data-category', val);
+        div.innerHTML = '<span>' + val + '</span><button type="button" class="btn-remove-cat" data-category="' + val + '">×</button>';
+        grid.appendChild(div);
         input.value = '';
       });
     }
+
     if (saveBtn) {
-      saveBtn.addEventListener('click', async function() {
-        if (!self._supabase || !self._userId) return;
-        var result = await self._supabase.from('profiles').update({ cl_active_categories: self._activeCategories, cl_custom_categories: self._customCategories }).eq('id', self._userId);
-        if (!result.error && msgEl) {
-          msgEl.style.display = 'inline';
-          setTimeout(function() { msgEl.style.display = 'none'; }, 3000);
-        }
+      saveBtn.addEventListener('click', function() {
+        if (!self._userId || !grid) return;
+        var active = [];
+        var custom = [];
+        var defaults = [
+          'Services & Pricing', 'Projects & Portfolio', 'Team & Culture',
+          'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials',
+          'Tips & How-To', 'Industry News', 'Company Updates', 'Seasonal Content'
+        ];
+        grid.querySelectorAll('.cat-item.active').forEach(function(el) {
+          active.push(el.getAttribute('data-category'));
+        });
+        grid.querySelectorAll('.cat-item').forEach(function(el) {
+          var cat = el.getAttribute('data-category');
+          if (defaults.indexOf(cat) === -1) custom.push(cat);
+        });
+        self._supabase
+          .from('profiles')
+          .update({ cl_active_categories: active, cl_custom_categories: custom })
+          .eq('id', self._userId)
+          .then(function(res) {
+            self._showMsg(msg, res.error ? 'error' : 'ok');
+          });
       });
     }
+  },
+
+  // CONNECTIONS
+
+  _loadConnections: function() {
+    var self = this;
+    this._supabase
+      .from('profiles')
+      .select('cl_connected_emails, cl_drive_connected, website_urls')
+      .eq('id', this._userId)
+      .single()
+      .then(function(res) {
+        var data = res.data || {};
+        renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId);
+        renderDriveList(data.cl_drive_connected || false, self._supabase, self._userId);
+        renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId);
+      });
   }
 
 };
 
+// EMAIL
 
-// ---- CL Settings: Auth, Account Dropdown & Connections ----
-
-document.addEventListener('DOMContentLoaded', async function() {
-
-  const supabase = window.supabaseClient;
-  if (!supabase) { console.error('Supabase not available'); return; }
-
-  // -- Auth --
-  const { data: authData } = await supabase.auth.getUser();
-  if (!authData || !authData.user) { window.location.href = '/login.html'; return; }
-  const user = authData.user;
-
-  // -- Account dropdown --
-  const emailShortEl = document.querySelector('#account-email-short');
-  if (emailShortEl) emailShortEl.textContent = 'Account';
-
-  const acctBtn = document.querySelector('#account-btn');
-  const acctDropdown = document.querySelector('#account-dropdown');
-  if (acctBtn && acctDropdown) {
-    acctBtn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      acctDropdown.classList.toggle('open');
-    });
-    document.addEventListener('click', function() { acctDropdown.classList.remove('open'); });
+function renderEmailList(emails, supabase, userId) {
+  var emailList = document.querySelector('.connection-list[data-type="email"]') ||
+    document.getElementById('drive-connections-list');
+  if (!emailList) return;
+  if (!emails.length) {
+    emailList.innerHTML = '<span class="connection-status">No email accounts connected</span>';
+    return;
   }
-  const signOutBtn = document.querySelector('#sign-out-btn');
-  if (signOutBtn) {
-    signOutBtn.addEventListener('click', async function() {
-      await supabase.auth.signOut();
-      window.location.href = '/login.html';
-    });
-  }
-
-  // -- Load profile --
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('cl_connected_emails, cl_drive_connected, website_urls')
-    .eq('id', user.id)
-    .single();
-
-  const connectedEmails = (profile && profile.cl_connected_emails) ? profile.cl_connected_emails : [];
-  const driveConnected = profile && profile.cl_drive_connected;
-  const websiteUrls = (profile && profile.website_urls) ? profile.website_urls : [];
-  renderWebsiteUrls();
-
-  // -- Render Gmail connections --
-  function renderEmailList(provider) {
-    const listEl = document.getElementById(provider + '-connections-list');
-    if (!listEl) return;
-    const providerEmails = connectedEmails.filter(function(e) { return e.provider === provider; });
-    if (providerEmails.length === 0) {
-      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No accounts connected</div>';
-    } else {
-      listEl.innerHTML = providerEmails.map(function(e, i) {
-        return '<div class="connection-item">' +
-          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
-          '<button class="btn-disconnect" data-provider="' + provider + '" data-email="' + e.email + '">Disconnect</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          await disconnectEmail(btn.getAttribute('data-provider'), btn.getAttribute('data-email'));
-        });
-      });
-    }
-  }
-
-  renderEmailList('gmail');
-  renderEmailList('outlook');
-
-  // -- Disconnect email --
-  async function disconnectEmail(provider, email) {
-    const updated = connectedEmails.filter(function(e) { return !(e.provider === provider && e.email === email); });
-    const { error } = await supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', user.id);
-    if (!error) {
-      connectedEmails.splice(0, connectedEmails.length, ...updated);
-      renderEmailList(provider);
-    }
-  }
-
-  // -- Add Gmail / Outlook buttons --
-  ['gmail', 'outlook'].forEach(function(provider) {
-    const addBtn = document.getElementById('add-' + provider + '-btn');
-    if (addBtn) {
-      addBtn.addEventListener('click', function() { handleOAuthConnect(provider); });
-    }
+  var html = '';
+  emails.forEach(function(email) {
+    html += '<div class="connection-item">' +
+      '<span class="connection-item-email">' + email + '</span>' +
+      '<button type="button" class="btn-disconnect" data-email="' + email + '">Disconnect</button>' +
+      '</div>';
   });
+  emailList.innerHTML = html;
+  emailList.querySelectorAll('.btn-disconnect').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
+    });
+  });
+}
 
-  // -- OAuth connect --
-  function handleOAuthConnect(provider) {
-    const redirectTo = window.location.origin + '/api/auth/oauth-callback.js?flow=cl&provider=' + provider;
-    let oauthProvider, scopes;
-    if (provider === 'gmail') {
-      oauthProvider = 'google';
-      scopes = 'email profile https://www.googleapis.com/auth/gmail.readonly';
-    } else if (provider === 'outlook') {
-      oauthProvider = 'azure';
-      scopes = 'email offline_access Mail.Read';
-    } else if (provider === 'drive') {
-      oauthProvider = 'google';
-      scopes = 'email profile https://www.googleapis.com/auth/drive.readonly';
-    }
+function disconnectEmail(email, emails, supabase, userId) {
+  var updated = emails.filter(function(e) { return e !== email; });
+  supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', userId)
+    .then(function() { renderEmailList(updated, supabase, userId); });
+}
+
+function handleOAuthConnect(provider, supabase) {
+  var btn = document.getElementById('add-' + provider + '-btn');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
     supabase.auth.signInWithOAuth({
-      provider: oauthProvider,
-      options: { scopes: scopes, redirectTo: redirectTo, queryParams: { access_type: 'offline', prompt: 'consent' } }
-    });
-  }
-
-  // -- Google Drive (multi-account) --
-  function renderDriveList() {
-    const listEl = document.getElementById('drive-connections-list');
-    if (!listEl) return;
-    const driveAccounts = connectedEmails.filter(function(e) { return e.provider === 'drive'; });
-    if (driveAccounts.length === 0) {
-      listEl.innerHTML = '<div style="font-size:13px;color:var(--text-muted);padding:4px 0;">No account connected</div>';
-    } else {
-      listEl.innerHTML = driveAccounts.map(function(e) {
-        return '<div class="connection-item">' +
-          '<div><div class="connection-item-email">' + e.email + '</div></div>' +
-          '<button class="btn-disconnect" data-provider="drive" data-email="' + e.email + '">Disconnect</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-disconnect').forEach(function(btn) {
-        btn.addEventListener('click', async function() {
-          await disconnectEmail('drive', btn.getAttribute('data-email'));
-          renderDriveList();
-        });
-      });
-    }
-  }
-  renderDriveList();
-
-  const addDriveBtn = document.getElementById('add-drive-btn');
-  if (addDriveBtn) {
-    addDriveBtn.addEventListener('click', function() { handleOAuthConnect('drive'); });
-  }
-
-  // -- Website URLs --
-  function renderWebsiteUrls() {
-    const listEl = document.getElementById('website-urls-list');
-    if (!listEl) return;
-    const urlsToRender = websiteUrls.length === 0 ? [''] : websiteUrls;
-    listEl.innerHTML = urlsToRender.map(function(url) {
-        return '<div class="website-url-item">' +
-          '<input type="url" class="website-url-input" value="' + url + '" placeholder="https://yourwebsite.com.au" />' +
-          '<button class="btn-remove-url" title="Remove">&times;</button>' +
-        '</div>';
-      }).join('');
-      listEl.querySelectorAll('.btn-remove-url').forEach(function(btn, i) {
-        btn.addEventListener('click', function() {
-          websiteUrls.splice(i, 1);
-          renderWebsiteUrls();
-        });
-      });
-  }
-  renderWebsiteUrls();
-
-  const addWebsiteBtn = document.getElementById('add-website-btn');
-  if (addWebsiteBtn) {
-    addWebsiteBtn.addEventListener('click', function() {
-      websiteUrls.push('');
-      renderWebsiteUrls();
-      const inputs = document.querySelectorAll('.website-url-input');
-      if (inputs.length > 0) inputs[inputs.length - 1].focus();
-    });
-  }
-
-  const websiteSaveBtn = document.getElementById('website-save-btn');
-  if (websiteSaveBtn) {
-    websiteSaveBtn.addEventListener('click', async function() {
-      const inputs = document.querySelectorAll('.website-url-input');
-      const urls = Array.from(inputs).map(function(i) { return i.value.trim(); }).filter(function(v) { return v.length > 0; });
-      websiteUrls.splice(0, websiteUrls.length, ...urls);
-      const { error } = await supabase.from('profiles').update({ website_urls: urls }).eq('id', user.id);
-      if (!error) {
-        websiteSaveBtn.textContent = 'Saved';
-        setTimeout(function() { websiteSaveBtn.textContent = 'Save'; }, 2000);
+      provider: provider,
+      options: {
+        scopes: provider === 'google'
+          ? 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.readonly'
+          : 'Mail.Read'
       }
     });
-  }
+  });
+}
 
-  // -- Save Settings button (Auto-Scan Frequency) --
-  const saveSettingsBtn = document.getElementById('save-settings-btn');
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', async function() {
-      if (window.CL_SETTINGS) window.CL_SETTINGS.init(supabase);
+// DRIVE
+
+function renderDriveList(connected, supabase, userId) {
+  var list = document.getElementById('drive-connections-list');
+  if (!list) return;
+  if (connected) {
+    list.innerHTML = '<div class="connection-item">' +
+      '<span class="connection-status connected">Connected</span>' +
+      '<button type="button" class="btn-disconnect" id="disconnect-drive-btn">Disconnect</button>' +
+      '</div>';
+    var btn = document.getElementById('disconnect-drive-btn');
+    if (btn) btn.addEventListener('click', function() {
+      supabase.from('profiles').update({ cl_drive_connected: false }).eq('id', userId)
+        .then(function() { renderDriveList(false, supabase, userId); });
+    });
+  } else {
+    list.innerHTML = '<button type="button" class="btn-connect" id="add-drive-btn">Connect Google Drive</button>';
+    handleOAuthConnect('google', supabase);
+  }
+}
+
+// WEBSITE URLS
+
+function renderWebsiteUrls(urls, supabase, userId) {
+  var list = document.getElementById('website-urls-list');
+  var addBtn = document.getElementById('add-website-btn');
+  var saveBtn = document.getElementById('website-save-btn');
+  if (!list) return;
+
+  function render(currentUrls) {
+    var html = '';
+    currentUrls.forEach(function(url, idx) {
+      html += '<div class="website-url-item">' +
+        '<input type="url" class="website-url-input" value="' + url + '" data-index="' + idx + '">' +
+        '<button type="button" class="btn-remove-url" data-index="' + idx + '">×</button>' +
+        '</div>';
+    });
+    list.innerHTML = html;
+    list.querySelectorAll('.btn-remove-url').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var idx = parseInt(btn.getAttribute('data-index'), 10);
+        currentUrls.splice(idx, 1);
+        render(currentUrls);
+      });
     });
   }
 
-});
+  render(urls);
 
-window.addEventListener('pageshow', function(e) {
-  if (e.persisted) {
-    var _esl = document.querySelector('#account-email-short'); if (_esl) _esl.textContent = 'Account';
-    var btn = document.querySelector('#account-btn');
-    var drop = document.querySelector('#account-dropdown');
-    if (btn && drop) {
-      btn.addEventListener('click', function(ev) {
-        ev.stopPropagation();
-        drop.classList.toggle('open');
-      });
-      document.addEventListener('click', function() {
-        drop.classList.remove('open');
-      });
-    }
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      urls.push('');
+      render(urls);
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function() {
+      var inputs = list.querySelectorAll('.website-url-input');
+      var updated = [];
+      inputs.forEach(function(inp) { if (inp.value.trim()) updated.push(inp.value.trim()); });
+      supabase.from('profiles').update({ website_urls: updated }).eq('id', userId)
+        .then(function(res) {
+          if (!res.error) { urls = updated; render(urls); }
+        });
+    });
+  }
+}
+
+// INIT
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.supabase && window.CL_SETTINGS_LOGIC) {
+    window.CL_SETTINGS_LOGIC.init(window.supabase);
   }
 });
