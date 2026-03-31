@@ -428,7 +428,13 @@ window.CL_SETTINGS_LOGIC = {
 
     if (saveBtn) {
       saveBtn.onclick = async function() {
-        var vals = Array.from(list.querySelectorAll('.website-url-input:not([readonly])')).map(function(i) { return i.value.trim(); }).filter(function(v) { return v; });
+        var vals = Array.from(list.querySelectorAll('.website-url-input:not([readonly])')).map(function(i) {
+        var v = i.value.trim();
+        if (!v) return '';
+        if (v.match(/^www\./i)) v = 'https://' + v;
+        else if (!v.match(/^https?:\/\//i)) v = 'https://' + v;
+        return v;
+      }).filter(function(v) { return v; });
         await supabase.from('profiles').update({ website_urls: vals }).eq('id', userId);
         saveBtn.textContent = 'Saved';
         saveBtn.style.color = '#4A6D8C';
