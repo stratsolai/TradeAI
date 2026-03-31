@@ -76,8 +76,8 @@ window.CL_SETTINGS_LOGIC = {
   _bindSave: function() {
     var saveBtn = document.getElementById('save-settings-btn');
     var self = this;
-    saveBtn.addEventListener('click', function() {
-      self._saveSettings();
+    saveBtn.addEventListener('click', async function() {
+      await self._saveSettings();
     saveBtn.textContent = 'Saved';
     saveBtn.style.color = '#4A6D8C';
     saveBtn.style.borderColor = '#4A6D8C';
@@ -160,8 +160,8 @@ window.CL_SETTINGS_LOGIC = {
         '<div class="settings-row-control">' +
           '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="on">On</button>' +
           '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="off">Off</button>' +
-          (isCustom ? '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '" style="margin-left:8px;">×</button>' : '') +
-        '</div>' +
+          (isCustom ? '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '">Remove</button>' : '') +
+          '</div>' +
       '</div>';
     });
     grid.innerHTML = html;
@@ -271,7 +271,7 @@ window.CL_SETTINGS_LOGIC = {
 
 function renderEmailList(emails, supabase, userId) {
   var emailList = document.querySelector('.connection-list[data-type="email"]') ||
-    document.getElementById('drive-connections-list');
+    document.getElementById('gmail-connections-list');
   if (!emailList) return;
   if (!emails.length) {
     emailList.innerHTML = '<span class="connection-status">No email accounts connected</span>';
