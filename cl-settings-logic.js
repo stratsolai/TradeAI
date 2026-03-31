@@ -24,12 +24,17 @@ window.CL_SETTINGS_LOGIC = {
       var authResp = await self._supabase.auth.getUser();
       if (!authResp.data || !authResp.data.user) return;
       self._userId = authResp.data.user.id;
+      // Load settings and categories in parallel — connections loaded separately
+      // so a connection error never blocks bindings from running
       await Promise.all([
         self._loadSettings(),
-        self._loadCategories(),
-        self._renderConnections()
+        self._loadCategories()
       ]);
       self._bindAll();
+      // Connections rendered after bindings — failure is isolated
+      self._renderConnections().catch(function(e) {
+        console.error('CL_SETTINGS_LOGIC._renderConnections error:', e);
+      });
     } catch (e) {
       console.error('CL_SETTINGS_LOGIC._loadAll error:', e);
     }
@@ -232,8 +237,8 @@ window.CL_SETTINGS_LOGIC = {
 
   // ── CONNECTIONS
 
-  _renderConnections: function() {
-    this._renderWebsiteUrls();
+  _renderConnections: async function() {
+    await this._renderWebsiteUrls();
   },
 
   _renderWebsiteUrls: async function() {
@@ -259,7 +264,7 @@ window.CL_SETTINGS_LOGIC = {
   _bindConnections: function() {
     var self = this;
 
-    // Website save
+    // Website save — reads from website-url-input
     var websiteSaveBtn = document.getElementById('website-save-btn');
     var websiteInput = document.getElementById('website-url-input');
     if (websiteSaveBtn && websiteInput) {
@@ -280,6 +285,16 @@ window.CL_SETTINGS_LOGIC = {
           .eq('user_id', self._userId);
         websiteInput.value = '';
         self._renderWebsiteUrls();
+      });
+    }
+
+    // Add website btn — shows the input row
+    var addWebsiteBtn = document.getElementById('add-website-btn');
+    var websiteInputRow = document.getElementById('website-input-row');
+    if (addWebsiteBtn && websiteInputRow) {
+      addWebsiteBtn.addEventListener('click', function() {
+        websiteInputRow.style.display = 'flex';
+        if (websiteInput) websiteInput.focus();
       });
     }
 
