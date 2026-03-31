@@ -172,9 +172,9 @@ window.CL_SETTINGS_LOGIC = {
           (isCustom ? '<div class="settings-row-desc">Custom category</div>' : '') +
         '</div>' +
         '<div class="settings-row-control">' +
+          (isCustom ? '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '">Remove</button>' : '') +
           '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="on">On</button>' +
           '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="off">Off</button>' +
-          (isCustom ? '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '">Remove</button>' : '') +
           '</div>' +
       '</div>';
     });
