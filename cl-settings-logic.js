@@ -94,6 +94,8 @@ window.CL_SETTINGS_LOGIC = {
         website_scan_frequency: this._settings.website_scan_frequency
       }, { onConflict: 'user_id' })
       .then(function(res) {
+        var btn = document.getElementById('save-settings-btn');
+        if (btn && !res.error) { btn.textContent = 'Saved'; btn.style.color = '#1A5490'; btn.style.borderColor = '#1A5490'; setTimeout(function(){ btn.textContent = 'Save'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000); }
         self._showMsg(msg, res.error ? 'error' : 'ok');
       });
   },
