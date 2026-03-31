@@ -32,7 +32,7 @@ window.CL_SETTINGS_LOGIC = {
       .from('cl_settings')
       .select('email_scan_frequency, drive_scan_frequency, website_scan_frequency')
       .eq('user_id', this._userId)
-      .single()
+      .maybeSingle()
       .then(function(res) {
         if (res.data) {
           self._settings.email_scan_frequency = res.data.email_scan_frequency || 'manual';
@@ -110,7 +110,7 @@ window.CL_SETTINGS_LOGIC = {
       .from('profiles')
       .select('cl_active_categories, cl_custom_categories')
       .eq('id', this._userId)
-      .single()
+      .maybeSingle()
       .then(function(res) {
         var active = (res.data && res.data.cl_active_categories) || [];
         var custom = (res.data && res.data.cl_custom_categories) || [];
@@ -231,7 +231,7 @@ window.CL_SETTINGS_LOGIC = {
       .from('profiles')
       .select('cl_connected_emails, cl_drive_connected, website_urls')
       .eq('id', this._userId)
-      .single()
+      .maybeSingle()
       .then(function(res) {
         var data = res.data || {};
         renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId);
