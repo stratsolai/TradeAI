@@ -345,58 +345,63 @@ window.CL_SETTINGS_LOGIC = {
 },
 
   renderWebsiteUrls: function(urls, supabase, userId, businessWebsite) {
-  var list = document.getElementById('website-urls-list');
-  var addBtn = document.getElementById('add-website-btn');
-  var saveBtn = document.getElementById('website-save-btn');
-  if (!list) return;
+    var self = this;
+    var list = document.getElementById('website-urls-list');
+    var addBtn = document.getElementById('add-website-btn');
+    var saveBtn = document.getElementById('website-save-btn');
+    if (!list) return;
 
-  var current = urls.slice();
+    var current = urls.slice();
 
-  function render() {
-    var html = '';
-    if (businessWebsite) {
-      html += '<div class="website-url-item"><input type="url" class="website-url-input" value="' + businessWebsite + '" placeholder="https://example.com.au" readonly style="opacity:0.7"><span style="font-size:12px;color:#4A6D8C;margin-left:8px">From Business Profile</span></div>';
-    }
-    current.forEach(function(url, idx) {
-      html += '<div class="website-url-item">' +
-        '<input type="url" class="website-url-input" value="' + url + '" data-index="' + idx + '" placeholder="https://example.com.au">' +
-        '<button type="button" class="btn-remove-url" data-index="' + idx + '">Remove</button>' +
-        '</div>';
-    });
-    list.innerHTML = html;
-    list.querySelectorAll('.btn-remove-url').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        current.splice(parseInt(btn.getAttribute('data-index'), 10), 1);
-        render();
+    function render() {
+      var html = '';
+      if (businessWebsite) {
+        html += '<div class="website-url-item"><input type="url" class="website-url-input" value="' + businessWebsite + '" placeholder="https://example.com.au" readonly style="opacity:0.7"><span style="font-size:12px;color:#4A6D8C;margin-left:8px">From Business Profile</span></div>';
+      }
+      current.forEach(function(url, idx) {
+        html += '<div class="website-url-item">';
+        html += '<input type="url" class="website-url-input" value="' + url + '" placeholder="https://example.com.au" data-index="' + idx + '">';
+        html += '<button type="button" class="btn-remove-url" data-index="' + idx + '">Remove</button>';
+        html += '</div>';
       });
-    });
-  }
-
-  render();
-
-  if (addBtn) {
-    var newAddBtn = addBtn.cloneNode(true);
-    addBtn.parentNode.replaceChild(newAddBtn, addBtn);
-    newAddBtn.addEventListener('click', function() {
-      current.push('');
-      render();
-    });
-  }
-
-  if (saveBtn) {
-    var newSaveBtn = saveBtn.cloneNode(true);
-    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-    newSaveBtn.addEventListener('click', function() {
-      var inputs = list.querySelectorAll('.website-url-input');
-      var updated = [];
-      inputs.forEach(function(inp) { if (inp.value.trim()) updated.push(inp.value.trim()); });
-      supabase.from('profiles').update({ website_urls: updated }).eq('id', userId)
-        .then(function(res) {
-          if (!res.error) { current = updated; render(); }
+      list.innerHTML = html;
+      list.querySelectorAll('.btn-remove-url').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          current.splice(parseInt(btn.getAttribute('data-index')), 1);
+          render();
         });
-    });
+      });
+      list.querySelectorAll('.website-url-input:not([readonly])').forEach(function(input) {
+        input.addEventListener('input', function() {
+          current[parseInt(input.getAttribute('data-index'))] = input.value.trim();
+        });
+      });
+    }
+
+    render();
+
+    if (addBtn) {
+      addBtn.onclick = function() {
+        current.push('');
+        render();
+      };
+    }
+
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        var vals = Array.from(list.querySelectorAll('.website-url-input:not([readonly])')).map(function(i) { return i.value.trim(); }).filter(function(v) { return v; });
+        await supabase.from('profiles').update({ website_urls: vals }).eq('id', userId);
+        saveBtn.textContent = 'Saved';
+        saveBtn.style.color = '#4A6D8C';
+        saveBtn.style.borderColor = '#4A6D8C';
+        if (addBtn) addBtn.addEventListener('click', function() {
+          saveBtn.textContent = 'Save';
+          saveBtn.style.color = '';
+          saveBtn.style.borderColor = '';
+        }, { once: true });
+      };
+    }
   }
-}
 
 };
 
