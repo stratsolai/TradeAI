@@ -8,8 +8,8 @@ window.CL_SETTINGS_LOGIC = {
     website_scan_frequency: 'manual'
   },
 
-  init: function(supabaseClient) {
-    this._supabase = supabaseClient;
+  init: function() {
+    this._supabase = window.supabaseClient;
     var self = this;
     this._supabase.auth.getUser().then(function(res) {
       if (!res.data || !res.data.user) {
@@ -366,6 +366,6 @@ function renderWebsiteUrls(urls, supabase, userId) {
 
 document.addEventListener('DOMContentLoaded', function() {
   if (window.supabase && window.CL_SETTINGS_LOGIC) {
-    window.CL_SETTINGS_LOGIC.init(window.supabase);
+    window.CL_SETTINGS_LOGIC.init();
   }
 });
