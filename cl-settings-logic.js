@@ -331,19 +331,13 @@ window.CL_SETTINGS_LOGIC = {
 },
 
   handleOAuthConnect: function(provider, supabase) {
-  var btn = document.getElementById('add-' + provider + '-btn');
-  if (!btn) return;
-  btn.addEventListener('click', function() {
-    supabase.auth.signInWithOAuth({
-      provider: provider,
-      options: {
-        scopes: provider === 'google'
-          ? 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/drive.readonly'
-          : 'Mail.Read'
-      }
+    var self = this;
+    var btn = document.getElementById('add-' + provider + '-btn');
+    if (!btn || !self._userId) return;
+    btn.addEventListener('click', function() {
+      window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId;
     });
-  });
-},
+  },
 
   renderDriveList: function(connected, supabase, userId) {
     var self = this;
