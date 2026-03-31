@@ -325,6 +325,7 @@ window.CL_SETTINGS_LOGIC = {
 },
 
   renderDriveList: function(connected, supabase, userId) {
+    var self = this;
   var list = document.getElementById('drive-connections-list');
   if (!list) return;
   if (connected) {
@@ -335,10 +336,10 @@ window.CL_SETTINGS_LOGIC = {
     var btn = document.getElementById('disconnect-drive-btn');
     if (btn) btn.addEventListener('click', function() {
       supabase.from('profiles').update({ cl_drive_connected: false }).eq('id', userId)
-        .then(function() { renderDriveList(false, supabase, userId); });
+        .then(function() { self.renderDriveList(false, supabase, userId); });
     });
   } else {
-    list.    list.innerHTML = '';
+    list.innerHTML = '';
     handleOAuthConnect('google', supabase);
   }
 },
