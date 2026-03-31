@@ -130,11 +130,19 @@ window.CL_SETTINGS_LOGIC = {
     var all = defaults.concat(custom);
     var html = '';
     all.forEach(function(cat) {
-      var isActive = active.indexOf(cat) > -1;
-      html += '<div class="cat-item' + (isActive ? ' active' : '') + '" data-category="' + cat + '">' +
-        '<span>' + cat + '</span>' +
-        (defaults.indexOf(cat) === -1 ? '<button type="button" class="btn-remove-cat" data-category="' + cat + '">×</button>' : '') +
-        '</div>';
+      var isOn = active.indexOf(cat) > -1;
+      var isCustom = defaults.indexOf(cat) === -1;
+      html += '<div class="settings-row cat-row" data-category="' + cat + '">' +
+        '<div>' +
+          '<div class="settings-row-label">' + cat + '</div>' +
+          (isCustom ? '<div class="settings-row-desc">Custom category</div>' : '') +
+        '</div>' +
+        '<div class="settings-row-control">' +
+          '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="on">On</button>' +
+          '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="off">Off</button>' +
+          (isCustom ? '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '" style="margin-left:8px;">×</button>' : '') +
+        '</div>' +
+      '</div>';
     });
     grid.innerHTML = html;
   },
@@ -149,16 +157,18 @@ window.CL_SETTINGS_LOGIC = {
 
     if (grid) {
       grid.addEventListener('click', function(e) {
-        var item = e.target.closest('.cat-item');
-        var removeBtn = e.target.closest('.btn-remove-cat');
+        var removeBtn = e.target.closest('[data-cat-remove]');
         if (removeBtn) {
-          var cat = removeBtn.getAttribute('data-category');
-          var el = grid.querySelector('.cat-item[data-category="' + cat + '"]');
-          if (el) el.remove();
+          var row = grid.querySelector('.cat-row[data-category="' + removeBtn.getAttribute('data-cat-remove') + '"]');
+          if (row) row.remove();
           return;
         }
-        if (item) {
-          item.classList.toggle('active');
+        var btn = e.target.closest('.freq-btn[data-cat]');
+        if (btn) {
+          var cat = btn.getAttribute('data-cat');
+          grid.querySelectorAll('.freq-btn[data-cat="' + cat + '"]').forEach(function(b) {
+            b.classList.toggle('active', b === btn);
+          });
         }
       });
     }
@@ -167,13 +177,21 @@ window.CL_SETTINGS_LOGIC = {
       addBtn.addEventListener('click', function() {
         var val = input.value.trim();
         if (!val || !grid) return;
-        var exists = grid.querySelector('.cat-item[data-category="' + val + '"]');
-        if (exists) { input.value = ''; return; }
-        var div = document.createElement('div');
-        div.className = 'cat-item active';
-        div.setAttribute('data-category', val);
-        div.innerHTML = '<span>' + val + '</span><button type="button" class="btn-remove-cat" data-category="' + val + '">×</button>';
-        grid.appendChild(div);
+        if (grid.querySelector('.cat-row[data-category="' + val + '"]')) {
+          input.value = '';
+          return;
+        }
+        var row = document.createElement('div');
+        row.className = 'settings-row cat-row';
+        row.setAttribute('data-category', val);
+        row.innerHTML =
+          '<div><div class="settings-row-label">' + val + '</div><div class="settings-row-desc">Custom category</div></div>' +
+          '<div class="settings-row-control">' +
+            '<button type="button" class="freq-btn active" data-cat="' + val + '" data-val="on">On</button>' +
+            '<button type="button" class="freq-btn" data-cat="' + val + '" data-val="off">Off</button>' +
+            '<button type="button" class="btn-remove-url" data-cat-remove="' + val + '" style="margin-left:8px;">×</button>' +
+          '</div>';
+        grid.appendChild(row);
         input.value = '';
       });
     }
@@ -188,11 +206,10 @@ window.CL_SETTINGS_LOGIC = {
           'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials',
           'Tips & How-To', 'Industry News', 'Company Updates', 'Seasonal Content'
         ];
-        grid.querySelectorAll('.cat-item.active').forEach(function(el) {
-          active.push(el.getAttribute('data-category'));
-        });
-        grid.querySelectorAll('.cat-item').forEach(function(el) {
-          var cat = el.getAttribute('data-category');
+        grid.querySelectorAll('.cat-row').forEach(function(row) {
+          var cat = row.getAttribute('data-category');
+          var onBtn = row.querySelector('.freq-btn[data-val="on"]');
+          if (onBtn && onBtn.classList.contains('active')) active.push(cat);
           if (defaults.indexOf(cat) === -1) custom.push(cat);
         });
         self._supabase
@@ -300,41 +317,46 @@ function renderWebsiteUrls(urls, supabase, userId) {
   var saveBtn = document.getElementById('website-save-btn');
   if (!list) return;
 
-  function render(currentUrls) {
+  var current = urls.slice();
+
+  function render() {
     var html = '';
-    currentUrls.forEach(function(url, idx) {
+    current.forEach(function(url, idx) {
       html += '<div class="website-url-item">' +
-        '<input type="url" class="website-url-input" value="' + url + '" data-index="' + idx + '">' +
-        '<button type="button" class="btn-remove-url" data-index="' + idx + '">×</button>' +
+        '<input type="url" class="website-url-input" value="' + url + '" data-index="' + idx + '" placeholder="https://example.com.au">' +
+        '<button type="button" class="btn-remove-url" data-index="' + idx + '">Remove</button>' +
         '</div>';
     });
     list.innerHTML = html;
     list.querySelectorAll('.btn-remove-url').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var idx = parseInt(btn.getAttribute('data-index'), 10);
-        currentUrls.splice(idx, 1);
-        render(currentUrls);
+        current.splice(parseInt(btn.getAttribute('data-index'), 10), 1);
+        render();
       });
     });
   }
 
-  render(urls);
+  render();
 
   if (addBtn) {
-    addBtn.addEventListener('click', function() {
-      urls.push('');
-      render(urls);
+    var newAddBtn = addBtn.cloneNode(true);
+    addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+    newAddBtn.addEventListener('click', function() {
+      current.push('');
+      render();
     });
   }
 
   if (saveBtn) {
-    saveBtn.addEventListener('click', function() {
+    var newSaveBtn = saveBtn.cloneNode(true);
+    saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+    newSaveBtn.addEventListener('click', function() {
       var inputs = list.querySelectorAll('.website-url-input');
       var updated = [];
       inputs.forEach(function(inp) { if (inp.value.trim()) updated.push(inp.value.trim()); });
       supabase.from('profiles').update({ website_urls: updated }).eq('id', userId)
         .then(function(res) {
-          if (!res.error) { urls = updated; render(urls); }
+          if (!res.error) { current = updated; render(); }
         });
     });
   }
