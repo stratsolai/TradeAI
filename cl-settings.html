@@ -348,6 +348,55 @@
         <div class="settings-card-title">Connections</div>
         <div class="settings-card-hint">Connect your business sources. These connections are shared across all tools.</div>
       </div>
+      <div class="settings-rows" id="connections-rows">
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">Business Email (Gmail)</div>
+            <div class="settings-row-desc">Connect your business Gmail inboxes for automatic scanning.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="gmail-connections-list" class="connection-list"></div>
+            <button id="add-gmail-btn" class="btn-add-connection">+ Add Gmail</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">Business Email (Outlook)</div>
+            <div class="settings-row-desc">Connect your business Outlook inboxes for automatic scanning.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="outlook-connections-list" class="connection-list"></div>
+            <button id="add-outlook-btn" class="btn-add-connection">+ Add Outlook</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">Google Drive</div>
+            <div class="settings-row-desc">Connect your Google Drive to import documents automatically.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="drive-connections-list" class="connection-list"></div>
+            <button id="add-drive-btn" class="btn-add-connection">+ Google Drive</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="settings-row-label">Website</div>
+            <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="website-urls-list"></div>
+            <button id="add-website-btn" class="btn-add-connection" style="margin-top:8px;">+ Add Website</button>
+          </div>
+        </div>
+        <div style="padding: 12px 24px 16px;">
+          <button id="website-save-btn" class="btn-save">Save</button>
+        </div>
+    </div>
 </div>
     </div>
 
