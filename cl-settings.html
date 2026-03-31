@@ -258,7 +258,7 @@
     .website-url-input { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 14px; font-family: var(--body-font); color: var(--text); flex: 1; 
     min-width: 360px;}
     .website-url-input:focus { outline: none; border-color: var(--blue); }
-    .btn-remove-url { background: none; border: 1px solid rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; transition: all 0.2s; }
+    .btn-remove-url { background: none; border: 1px solid rgba(74,109,140,0.4); color: rgba(74,109,140,0.8); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; transition: all 0.2s; }
     .btn-remove-url:hover { border-color: #e05c5c; color: #e05c5c; }
     .btn-remove-url:hover { color: var(--red); }
     .btn-add-website { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 4px; }
@@ -464,12 +464,13 @@
         </div>
         <div class="settings-rows" id="category-grid"></div>
         <div class="custom-cat-row">
-          <input type="text" id="category-custom-input" class="settings-text-input" placeholder="Add a custom category...">
+          <input type="text" id="category-custom-input" class="settings-text-input" style="max-width:220px" placeholder="Add a custom category...">
           <button type="button" id="add-category-btn" class="btn-add">+ Add</button>
         </div>
+        <div id="custom-categories-list" class="settings-rows"></div>
         <div class="settings-footer">
           <button type="button" id="save-categories-btn" class="btn-save">Save</button>
-          <span id="save-categories-msg" class="save-msg" style="display:none;"></span>
+          
         </div>
       </div>
       <div class="auth-loading" id="auth-loading" style="display:none;">Loading...</div>
