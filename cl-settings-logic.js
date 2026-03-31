@@ -24,17 +24,12 @@ window.CL_SETTINGS_LOGIC = {
       var authResp = await self._supabase.auth.getUser();
       if (!authResp.data || !authResp.data.user) return;
       self._userId = authResp.data.user.id;
-      // Load settings and categories in parallel — connections loaded separately
-      // so a connection error never blocks bindings from running
       await Promise.all([
         self._loadSettings(),
-        self._loadCategories()
+        self._loadCategories(),
+        self._renderWebsiteUrls()
       ]);
       self._bindAll();
-      // Connections rendered after bindings — failure is isolated
-      self._renderConnections().catch(function(e) {
-        console.error('CL_SETTINGS_LOGIC._renderConnections error:', e);
-      });
     } catch (e) {
       console.error('CL_SETTINGS_LOGIC._loadAll error:', e);
     }
@@ -94,7 +89,7 @@ window.CL_SETTINGS_LOGIC = {
     if (resp.error) {
       self._showMsg('save-scan-msg', 'Error saving settings.', 'error');
     } else {
-      self._showMsg('save-scan-msg', 'Settings saved.', 'success');
+      self._showMsg('save-scan-msg', 'Saved.', 'success');
     }
   },
 
@@ -152,19 +147,32 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var grid = document.getElementById('category-grid');
     if (!grid) return;
-    var allCategories = self._activeCategories.concat(
-      self._customCategories.filter(function(c) {
-        return self._activeCategories.indexOf(c) === -1;
-      })
-    );
+    var defaultCategories = [
+      'Services', 'Products', 'Pricing', 'Process',
+      'Compliance', 'Team', 'Projects', 'Testimonials'
+    ];
     var html = '';
-    allCategories.forEach(function(cat) {
+    // Default categories — toggle only, no remove
+    defaultCategories.forEach(function(cat) {
       var isActive = self._activeCategories.indexOf(cat) > -1;
       html += '<div class="category-row">' +
         '<span class="category-label">' + cat + '</span>' +
-        '<button class="toggle-btn' + (isActive ? ' active' : '') + '" data-category="' + cat + '">' +
-        (isActive ? 'On' : 'Off') +
-        '</button>' +
+        '<div class="category-toggle-group">' +
+        '<button class="category-toggle-btn' + (isActive ? ' active' : '') + '" data-category="' + cat + '" data-state="on">On</button>' +
+        '<button class="category-toggle-btn' + (!isActive ? ' active' : '') + '" data-category="' + cat + '" data-state="off">Off</button>' +
+        '</div>' +
+        '</div>';
+    });
+    // Custom categories — toggle + remove
+    self._customCategories.forEach(function(cat) {
+      var isActive = self._activeCategories.indexOf(cat) > -1;
+      html += '<div class="category-row">' +
+        '<span class="category-label">' + cat + '</span>' +
+        '<div class="category-toggle-group">' +
+        '<button class="category-toggle-btn' + (isActive ? ' active' : '') + '" data-category="' + cat + '" data-state="on">On</button>' +
+        '<button class="category-toggle-btn' + (!isActive ? ' active' : '') + '" data-category="' + cat + '" data-state="off">Off</button>' +
+        '</div>' +
+        '<button class="btn-remove-category" data-category="' + cat + '" title="Remove">&#10005;</button>' +
         '</div>';
     });
     grid.innerHTML = html;
@@ -183,30 +191,46 @@ window.CL_SETTINGS_LOGIC = {
     if (resp.error) {
       self._showMsg('save-categories-msg', 'Error saving categories.', 'error');
     } else {
-      self._showMsg('save-categories-msg', 'Categories saved.', 'success');
+      self._showMsg('save-categories-msg', 'Saved.', 'success');
     }
   },
 
   _bindCategoriesUI: function() {
     var self = this;
 
-    // Toggle buttons — event delegation on category-grid
+    // Toggle and remove — event delegation on category-grid
     var grid = document.getElementById('category-grid');
     if (grid) {
       grid.addEventListener('click', function(e) {
-        var btn = e.target.closest('.toggle-btn');
-        if (!btn) return;
-        var cat = btn.getAttribute('data-category');
-        if (!cat) return;
-        var idx = self._activeCategories.indexOf(cat);
-        if (idx > -1) {
-          self._activeCategories.splice(idx, 1);
-          btn.classList.remove('active');
-          btn.textContent = 'Off';
-        } else {
-          self._activeCategories.push(cat);
-          btn.classList.add('active');
-          btn.textContent = 'On';
+        // Toggle On/Off
+        var toggleBtn = e.target.closest('.category-toggle-btn');
+        if (toggleBtn) {
+          var cat = toggleBtn.getAttribute('data-category');
+          var state = toggleBtn.getAttribute('data-state');
+          if (!cat || !state) return;
+          var idx = self._activeCategories.indexOf(cat);
+          if (state === 'on' && idx === -1) {
+            self._activeCategories.push(cat);
+          } else if (state === 'off' && idx > -1) {
+            self._activeCategories.splice(idx, 1);
+          }
+          var row = toggleBtn.closest('.category-row');
+          if (row) {
+            var isNowActive = self._activeCategories.indexOf(cat) > -1;
+            row.querySelectorAll('.category-toggle-btn').forEach(function(b) {
+              b.classList.toggle('active', (b.getAttribute('data-state') === 'on') === isNowActive);
+            });
+          }
+          return;
+        }
+        // Remove custom category
+        var removeBtn = e.target.closest('.btn-remove-category');
+        if (removeBtn) {
+          var cat = removeBtn.getAttribute('data-category');
+          if (!cat) return;
+          self._customCategories = self._customCategories.filter(function(c) { return c !== cat; });
+          self._activeCategories = self._activeCategories.filter(function(c) { return c !== cat; });
+          self._renderCategories();
         }
       });
     }
@@ -235,11 +259,7 @@ window.CL_SETTINGS_LOGIC = {
     }
   },
 
-  // ── CONNECTIONS
-
-  _renderConnections: async function() {
-    await this._renderWebsiteUrls();
-  },
+  // ── CONNECTIONS / WEBSITE
 
   _renderWebsiteUrls: async function() {
     var self = this;
@@ -261,44 +281,41 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = html;
   },
 
+  _saveWebsiteUrl: async function(url) {
+    var self = this;
+    if (!url) return;
+    var resp = await self._supabase
+      .from('profiles')
+      .select('website_urls')
+      .eq('user_id', self._userId)
+      .maybeSingle();
+    var existing = (resp.data && resp.data.website_urls) ? resp.data.website_urls : [];
+    if (existing.indexOf(url) > -1) return;
+    existing.push(url);
+    await self._supabase
+      .from('profiles')
+      .update({ website_urls: existing })
+      .eq('user_id', self._userId);
+    self._renderWebsiteUrls();
+  },
+
   _bindConnections: function() {
     var self = this;
 
-    // Website save — reads from website-url-input
+    // Website save
     var websiteSaveBtn = document.getElementById('website-save-btn');
     var websiteInput = document.getElementById('website-url-input');
     if (websiteSaveBtn && websiteInput) {
-      websiteSaveBtn.addEventListener('click', async function() {
+      websiteSaveBtn.addEventListener('click', function() {
         var url = websiteInput.value.trim();
         if (!url) return;
-        var resp = await self._supabase
-          .from('profiles')
-          .select('website_urls')
-          .eq('user_id', self._userId)
-          .maybeSingle();
-        var existing = (resp.data && resp.data.website_urls) ? resp.data.website_urls : [];
-        if (existing.indexOf(url) > -1) return;
-        existing.push(url);
-        await self._supabase
-          .from('profiles')
-          .update({ website_urls: existing })
-          .eq('user_id', self._userId);
-        websiteInput.value = '';
-        self._renderWebsiteUrls();
+        self._saveWebsiteUrl(url).then(function() {
+          websiteInput.value = '';
+        });
       });
     }
 
-    // Add website btn — shows the input row
-    var addWebsiteBtn = document.getElementById('add-website-btn');
-    var websiteInputRow = document.getElementById('website-input-row');
-    if (addWebsiteBtn && websiteInputRow) {
-      addWebsiteBtn.addEventListener('click', function() {
-        websiteInputRow.style.display = 'flex';
-        if (websiteInput) websiteInput.focus();
-      });
-    }
-
-    // Website remove — event delegation on website-urls-list
+    // Website remove — event delegation
     var urlsList = document.getElementById('website-urls-list');
     if (urlsList) {
       urlsList.addEventListener('click', async function(e) {
@@ -327,7 +344,7 @@ window.CL_SETTINGS_LOGIC = {
     var el = document.getElementById(id);
     if (!el) return;
     el.textContent = text;
-    el.className = 'save-msg ' + (type === 'error' ? 'msg-error' : 'msg-success');
+    el.style.color = type === 'error' ? '#c0392b' : '#27ae60';
     el.style.display = 'inline';
     setTimeout(function() { el.style.display = 'none'; }, 3000);
   }
