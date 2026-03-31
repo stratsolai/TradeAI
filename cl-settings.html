@@ -463,16 +463,14 @@
           <div class="settings-card-hint">Choose which categories are active for AI content scanning.</div>
         </div>
         <div class="settings-rows" id="category-grid"></div>
-        <div class="custom-cat-row">
-          <input type="text" id="category-custom-input" class="settings-text-input" style="max-width:220px" placeholder="Add a custom category...">
-          <button type="button" id="add-category-btn" class="btn-add">+ Add</button>
+        <div class="settings-row">
+          <div class="settings-row-label"></div>
+          <div class="settings-row-control">
+            <input type="text" id="category-custom-input" class="settings-text-input" style="width:440px;min-width:440px" placeholder="Add a custom category...">
+            <button type="button" id="add-category-btn" class="btn-add">+ Add</button>
+          </div>
         </div>
         <div id="custom-categories-list" class="settings-rows"></div>
-        <div class="settings-footer">
-          <button type="button" id="save-categories-btn" class="btn-save">Save</button>
-          
-        </div>
-      </div>
       <div class="auth-loading" id="auth-loading" style="display:none;">Loading...</div>
     </div>
 
