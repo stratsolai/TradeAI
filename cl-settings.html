@@ -287,7 +287,7 @@
     .stab-panel.active { display:block; width:100%; box-sizing:border-box; }
 
     /* ── CATEGORIES ── */
-    .category-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-bottom:20px; }
+    .category-grid { display:flex; flex-direction:column; gap:0; }
     .cat-card { padding:14px 16px; border:1px solid #e5e5e5; border-radius:10px; background:#ffffff; cursor:pointer; transition:all 0.15s; text-align:center; font-size:13px; font-weight:500; color:#888888; user-select:none; }
     .cat-card:hover { border-color:#4A6D8C; color:#333333; }
     .cat-card.active { border-color:#4A6D8C; background:rgba(74,109,140,0.08); color:#4A6D8C; font-weight:600; }
@@ -454,26 +454,22 @@
     </div>
 
     <div class="stab-panel" id="tab-categories">
-      <div class="settings-card">
-        <div class="settings-card-title">Content Categories</div>
-        <div class="settings-card-desc">Choose which categories are active for your Content Library. Used when scanning your website, emails and files.</div>
-        <div class="category-grid" id="category-grid"></div>
-        <div class="custom-cat-row">
-          <input type="text" id="category-custom-input" placeholder="Add a custom category&#8230;" maxlength="40" />
-          <button id="add-category-btn" class="btn-add">+ Add</button>
+      <div class="settings-card" id="category-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Content Categories</div>
+          <div class="settings-card-hint">Choose which categories are active for AI content scanning.</div>
         </div>
-        <button id="save-categories-btn" class="btn-save-settings">Save Categories</button>
-        <div id="save-categories-msg" class="save-msg">Categories saved.</div>
+        <div class="settings-rows" id="category-grid"></div>
+        <div class="custom-cat-row">
+          <input type="text" id="category-custom-input" class="settings-text-input" placeholder="Add a custom category...">
+          <button type="button" id="add-category-btn" class="btn-add">+ Add</button>
+        </div>
+        <div class="settings-footer">
+          <button type="button" id="save-categories-btn" class="btn-save">Save</button>
+          <span id="save-categories-msg" class="save-msg" style="display:none;"></span>
+        </div>
       </div>
-    </div>  </div>
-
-
-
-  
-
-  <div class="auth-loading" id="auth-loading">Loading...
-    
-
+      <div class="auth-loading" id="auth-loading" style="display:none;">Loading...</div>
     </div>
 
   <script src="/cl-settings-logic.js"></script>
