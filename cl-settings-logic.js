@@ -82,6 +82,20 @@ window.CL_SETTINGS_LOGIC = {
     saveBtn.style.color = '#4A6D8C';
     saveBtn.style.borderColor = '#4A6D8C';
     document.querySelectorAll('#scan-frequency-card .freq-btn').forEach(function(el) { el.addEventListener('click', function() { saveBtn.textContent = 'Save'; saveBtn.style.color = ''; saveBtn.style.borderColor = ''; }, { once: true }); });
+    var websiteBtn = document.getElementById('website-save-btn');
+    if (websiteBtn) {
+      websiteBtn.addEventListener('click', async function() {
+        await self._saveSettings();
+        websiteBtn.textContent = 'Saved';
+        websiteBtn.style.color = '#4A6D8C';
+        websiteBtn.style.borderColor = '#4A6D8C';
+        var revertFn = function() { websiteBtn.textContent = 'Save'; websiteBtn.style.color = ''; websiteBtn.style.borderColor = ''; };
+        ['add-gmail-btn', 'add-outlook-btn', 'add-drive-btn', 'add-website-btn'].forEach(function(btnId) {
+          var el = document.getElementById(btnId);
+          if (el) el.addEventListener('click', revertFn, { once: true });
+        });
+      });
+    }
     });
   },
 
@@ -254,14 +268,14 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     this._supabase
       .from('profiles')
-      .select('cl_connected_emails, cl_drive_connected, website_urls')
+      .select('cl_connected_emails, cl_drive_connected, website_urls, business_website')
       .eq('id', this._userId)
       .maybeSingle()
       .then(function(res) {
         var data = res.data || {};
         renderEmailList(data.cl_connected_emails || [], self._supabase, self._userId);
         renderDriveList(data.cl_drive_connected || false, self._supabase, self._userId);
-        renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId);
+        renderWebsiteUrls(data.website_urls || [], self._supabase, self._userId, data.business_website || "");
       });
   }
 
@@ -274,7 +288,6 @@ function renderEmailList(emails, supabase, userId) {
     document.getElementById('gmail-connections-list');
   if (!emailList) return;
   if (!emails.length) {
-    emailList.innerHTML = '<span class="connection-status">No email accounts connected</span>';
     return;
   }
   var html = '';
@@ -336,7 +349,7 @@ function renderDriveList(connected, supabase, userId) {
 
 // WEBSITE URLS
 
-function renderWebsiteUrls(urls, supabase, userId) {
+function renderWebsiteUrls(urls, supabase, userId, businessWebsite) {
   var list = document.getElementById('website-urls-list');
   var addBtn = document.getElementById('add-website-btn');
   var saveBtn = document.getElementById('website-save-btn');
@@ -359,6 +372,12 @@ function renderWebsiteUrls(urls, supabase, userId) {
         render();
       });
     });
+  }
+  if (businessWebsite) {
+    var defItem = document.createElement("div");
+    defItem.className = "website-url-item";
+    defItem.innerHTML = "<input type=\"url\" class=\"website-url-input\" value=\"" + businessWebsite + "\" placeholder=\"https://example.com.au\" readonly style=\"opacity:0.7\"> <span style=\"font-size:12px;color:#4A6D8C;margin-left:8px\">From Business Profile</span>";
+    list.insertBefore(defItem, list.firstChild);
   }
 
   render();
