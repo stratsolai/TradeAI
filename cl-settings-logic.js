@@ -82,22 +82,33 @@ window.CL_SETTINGS_LOGIC = {
     });
   },
 
-  _saveSettings: function() {
+  _saveSettings: async function() {
     var self = this;
     var msg = document.getElementById('save-scan-msg');
-    this._supabase
+    const { data: existingRow } = await this._supabase
       .from('cl_settings')
-      .upsert({
+      .select('user_id')
+      .eq('user_id', this._userId)
+      .maybeSingle();
+    const payload = {
         user_id: this._userId,
         email_scan_frequency: this._settings.email_scan_frequency,
         drive_scan_frequency: this._settings.drive_scan_frequency,
         website_scan_frequency: this._settings.website_scan_frequency
-      }, { onConflict: 'user_id' })
-      .then(function(res) {
-        var btn = document.getElementById('save-settings-btn');
-        if (btn && !res.error) { btn.textContent = 'Saved'; btn.style.color = '#1A5490'; btn.style.borderColor = '#1A5490'; setTimeout(function(){ btn.textContent = 'Save'; btn.style.color = ''; btn.style.borderColor = ''; }, 2000); }
-        self._showMsg(msg, res.error ? 'error' : 'ok');
-      });
+    };
+    let res;
+    if (existingRow) {
+      const { error } = await this._supabase
+        .from('cl_settings')
+        .update(payload)
+        .eq('user_id', this._userId);
+      res = { error };
+    } else {
+      const { error } = await this._supabase
+        .from('cl_settings')
+        .insert(payload);
+      res = { error };
+    }
   },
 
   _showMsg: function(el, type) {
@@ -223,6 +234,8 @@ window.CL_SETTINGS_LOGIC = {
           .update({ cl_active_categories: active, cl_custom_categories: custom })
           .eq('id', self._userId)
           .then(function(res) {
+            var catBtn = document.getElementById('save-categories-btn');
+            if (catBtn && !res.error) { catBtn.textContent = 'Saved'; catBtn.style.color = '#4A6D8C'; catBtn.style.borderColor = '#4A6D8C'; setTimeout(function(){ catBtn.textContent = 'Save'; catBtn.style.color = ''; catBtn.style.borderColor = ''; }, 2000); }
             self._showMsg(msg, res.error ? 'error' : 'ok');
           });
       });
