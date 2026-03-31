@@ -404,7 +404,7 @@ window.CL_SETTINGS_LOGIC = {
 // INIT
 
 document.addEventListener('DOMContentLoaded', function() {
-  if (window.supabase && window.CL_SETTINGS_LOGIC) {
+  if (window.supabaseClient && window.CL_SETTINGS_LOGIC) {
     window.CL_SETTINGS_LOGIC.init();
   }
 });
