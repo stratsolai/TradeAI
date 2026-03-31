@@ -193,7 +193,9 @@ window.CL_SETTINGS_LOGIC = {
       grid.addEventListener('click', function(e) {
         var removeBtn = e.target.closest('[data-cat-remove]');
         if (removeBtn) {
-          var row = grid.querySelector('.cat-row[data-category="' + removeBtn.getAttribute('data-cat-remove') + '"]');
+          var catVal = removeBtn.getAttribute('data-cat-remove');
+          var row = grid.querySelector('.cat-row[data-category="' + catVal + '"]');
+          if (!row) { var cl = document.getElementById('custom-categories-list'); if (cl) row = cl.querySelector('.cat-row[data-category="' + catVal + '"]'); }
           if (row) row.remove();
           return;
         }
@@ -201,6 +203,24 @@ window.CL_SETTINGS_LOGIC = {
         if (btn) {
           var cat = btn.getAttribute('data-cat');
           grid.querySelectorAll('.freq-btn[data-cat="' + cat + '"]').forEach(function(b) {
+            b.classList.toggle('active', b === btn);
+          });
+        }
+      });
+    }
+
+    var customList = document.getElementById('custom-categories-list');
+    if (customList) {
+      customList.addEventListener('click', function(e) {
+        var removeBtn = e.target.closest('[data-cat-remove]');
+        if (removeBtn) {
+          var row = removeBtn.closest('.cat-row');
+          if (row) row.remove();
+        }
+        var btn = e.target.closest('.freq-btn[data-cat]');
+        if (btn) {
+          var cat = btn.getAttribute('data-cat');
+          customList.querySelectorAll('.freq-btn[data-cat="' + cat + '"]').forEach(function(b) {
             b.classList.toggle('active', b === btn);
           });
         }
