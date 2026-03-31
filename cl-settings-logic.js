@@ -221,11 +221,12 @@ window.CL_SETTINGS_LOGIC = {
         row.innerHTML =
           '<div><div class="settings-row-label">' + val + '</div><div class="settings-row-desc">Custom category</div></div>' +
           '<div class="settings-row-control">' +
-            '<button type="button" class="freq-btn active" data-cat="' + val + '" data-val="on">On</button>' +
-            '<button type="button" class="freq-btn" data-cat="' + val + '" data-val="off">Off</button>' +
-            '<button type="button" class="btn-remove-url" data-cat-remove="' + val + '" style="margin-left:8px;">×</button>' +
+          '<button type="button" class="btn-remove-url" data-cat-remove="' + val + '">Remove</button>' +
+          '<button type="button" class="freq-btn active" data-cat="' + val + '" data-val="on">On</button>' +
+          '<button type="button" class="freq-btn" data-cat="' + val + '" data-val="off">Off</button>' +
           '</div>';
-        grid.appendChild(row);
+        var customList = document.getElementById('custom-categories-list');
+        (customList || grid).appendChild(row);;
         input.value = '';
       });
     }
