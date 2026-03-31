@@ -390,6 +390,8 @@ window.CL_SETTINGS_LOGIC = {
         btn.addEventListener('click', function() {
           current.splice(parseInt(btn.getAttribute('data-index')), 1);
           render();
+          addBtn.disabled = false;
+          addBtn.style.opacity = '';
         });
       });
       list.querySelectorAll('.website-url-input:not([readonly])').forEach(function(input) {
@@ -405,6 +407,22 @@ window.CL_SETTINGS_LOGIC = {
       addBtn.onclick = function() {
         current.push('');
         render();
+        addBtn.disabled = true;
+        addBtn.style.opacity = '0.5';
+        // Re-enable when user types a valid URL in the new empty input
+        var newInput = list.querySelector('.website-url-input[value=""]');
+        if (newInput) {
+          newInput.addEventListener('input', function() {
+            var val = newInput.value.trim();
+            if (val.length > 3) {
+              addBtn.disabled = false;
+              addBtn.style.opacity = '';
+            } else {
+              addBtn.disabled = true;
+              addBtn.style.opacity = '0.5';
+            }
+          });
+        }
       };
     }
 
