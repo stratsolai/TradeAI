@@ -93,6 +93,14 @@ async function handleListFolders(req, res) {
 
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
+  const claudeApiKey = process.env.ANTHROPIC_API_KEY;
+  const defaultCats = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
+  const { data: profile } = await supabase.from('profiles').select('business_name, industry, cl_active_categories, cl_custom_categories').eq('id', userId).single();
+  const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCats;
+  const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
+  const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
+  const businessName = (profile && profile.business_name) || 'your business';
+
   try {
     const token = await getValidToken(userId, supabase);
 
@@ -155,6 +163,21 @@ async function handleImportImages(req, res) {
       const imageUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
       const thumbUrl = file.thumbnailLink || imageUrl;
 
+            // Claude categorisation
+      let aiCategory = category || 'General';
+      let aiToolTags = ['social-media'];
+      if (claudeApiKey) {
+        try {
+          const catPrompt = 'Categorise file for ' + businessName + '. File: "' + file.name + '", type: ' + file.mimeType + '. Pick the most relevant category from: ' + activeCategories + '. Return JSON only: {"category":"...","tool_tags":[...]} using tags from ["social-media","email-assistant","chatbot","strategic-plan"].';
+          const catBody = JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: catPrompt }] });
+          const catFetch = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': claudeApiKey, 'anthropic-version': '2023-06-01' }, body: catBody });
+          const catData = await catFetch.json();
+          const catParsed = JSON.parse(catData.content[0].text);
+          if (catParsed.category) aiCategory = catParsed.category;
+          if (catParsed.tool_tags) aiToolTags = catParsed.tool_tags;
+        } catch(catErr) {}
+      }
+
       const { error } = await supabase.from('content_library').upsert({
         user_id:      userId,
         title:        file.name,
@@ -163,7 +186,8 @@ async function handleImportImages(req, res) {
         thumbnail_url: thumbUrl,
         source:       'google-drive',
         tool_source:  'drive-import',
-        category:     category || 'completed-jobs',
+        category:      aiCategory,
+          tool_tags:     aiToolTags,
         status:       'approved',
         metadata:     JSON.stringify({
           driveFileId: file.id,
