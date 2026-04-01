@@ -19,6 +19,12 @@ module.exports = async (req, res) => {
       scopes: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email',
       redirectUri: APP_BASE_URL + '/api/auth/google-drive/callback'
     },
+    gmail: {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+      scopes: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email',
+      redirectUri: APP_BASE_URL + '/api/auth/google/callback'
+    },
     microsoft: {
       clientId: process.env.MICROSOFT_CLIENT_ID,
       authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
