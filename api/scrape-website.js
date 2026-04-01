@@ -27,13 +27,14 @@ module.exports = async (req, res) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('industry, business_name, cl_active_categories, cl_custom_categories')
+      .select('industry, business_name, cl_active_categories, cl_custom_categories, activated_tools')
       .eq('id', userId)
       .single();
     const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
     const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCategories;
     const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
     const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
+    const toolIdList = (profile && Array.isArray(profile.activated_tools) && profile.activated_tools.length > 0) ? profile.activated_tools.join(', ') : 'social-media, email-assistant, chatbot, strategic-plan';
     const businessName = (profile && profile.business_name) || 'your business';
     const industry = (profile && profile.industry) || 'your industry';
 
@@ -75,7 +76,7 @@ For each piece of content found, return a JSON object with:
 - "title": short descriptive title (max 10 words)
 - "body": extracted content as clean plain text, preserving factual detail
 - "category": the single most relevant category from this list: ${activeCategories}
-- "tool_tags": array from ["social-media","email-assistant","chatbot","strategic-plan"] of tools that could use this content
+- "tool_tags": array of tool IDs that could use this content. Use only IDs from this list: ${toolIdList}
 - "source_url": "${url}"
 
 Return ONLY a valid JSON array. No preamble, no explanation, no markdown code fences. Empty array if nothing relevant found.
@@ -166,7 +167,7 @@ ${websiteHtml.substring(0, 50000)}`;
           'apikey': supabaseKey,
           'Authorization': `Bearer ${supabaseKey}`,
           'Content-Type': 'application/json',
-          'Prefer': 'return=representation'
+          'Prefer': 'resolution=merge-duplicates,return=representation'
         }
       };
 
@@ -251,7 +252,8 @@ async function insertContent(userId, contentType, sourceType, data, supabaseUrl,
       user_id: userId,
       content_type: contentType,
       source_type: sourceType,
-      ...data
+      ...data,
+        source_ref: 'web:' + (data.source_url || '') + ':' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(data.title||'')+String(data.source_url||''))
     });
     const urlObj = new URL(`${supabaseUrl}/rest/v1/content_library`);
     const options = {
