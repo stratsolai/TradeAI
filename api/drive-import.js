@@ -1,295 +1,235 @@
-/**
- * /api/drive-import.js
- *
- * Unified Google Drive & email content import API — routes on req.body.action:
- *   'list-folders'    → list Google Drive folders for picker
- *   'import-images'   → import images from a Drive folder into content library
- *   'import-email'    → import content from a connected email source
- *
- * Replaces: list-drive-folders.js + import-drive-images.js + import-email-content.js
- *
- * ENV: SUPABASE_URL, SUPABASE_SERVICE_KEY,
- *      GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
- */
+import { createClient } from '@supabase/supabase-js';
 
-const https = require('https');
-const { createClient } = require('@supabase/supabase-js');
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-// ─── HTTP HELPERS ─────────────────────────────────────────────────────────────
+// djb2 hash for source_ref dedup
+function djb2(s) {
+  var h = 5381;
+  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h) ^ s.charCodeAt(i); h = h >>> 0; }
+  return h.toString(36);
+}
 
-function httpsGet(hostname, path, headers) {
-  return new Promise((resolve, reject) => {
-    https.get({ hostname, path, headers }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-        catch { resolve({ status: res.statusCode, body: data }); }
-      });
-    }).on('error', reject);
+// Refresh Google OAuth token
+async function refreshGoogleToken(refreshToken) {
+  const res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token',
+    }),
   });
+  const data = await res.json();
+  if (!data.access_token) throw new Error('Token refresh failed: ' + JSON.stringify(data));
+  return data.access_token;
 }
 
-function formPost(hostname, path, params) {
-  return new Promise((resolve, reject) => {
-    const body = params.toString();
-    const req = https.request({
-      hostname, path, method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }
-    }, (res) => {
-      let data = '';
-      res.on('data', c => data += c);
-      res.on('end', () => { try { resolve(JSON.parse(data)); } catch { resolve(data); } });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
+// Fetch text content from a Drive file via export API
+async function fetchDriveFileText(fileId, mimeType, accessToken) {
+  let exportMime = null;
+  if (mimeType === 'application/vnd.google-apps.document') exportMime = 'text/plain';
+  else if (mimeType === 'application/vnd.google-apps.spreadsheet') exportMime = 'text/csv';
+  else if (mimeType === 'application/vnd.google-apps.presentation') exportMime = 'text/plain';
+  else if (mimeType === 'application/pdf') exportMime = 'text/plain';
+  else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') exportMime = 'text/plain';
+  else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') exportMime = 'text/csv';
+  else if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') exportMime = 'text/plain';
+  else if (mimeType === 'text/plain') exportMime = 'text/plain';
+
+  if (!exportMime) return null;
+
+  const isGoogleDoc = mimeType.startsWith('application/vnd.google-apps.');
+  const url = isGoogleDoc
+    ? `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent(exportMime)}`
+    : `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+  if (!res.ok) return null;
+  const text = await res.text();
+  return text.substring(0, 8000);
+}
+
+// Run unified CL extraction prompt against content
+async function runExtractionPrompt(content, fileName, mimeType, businessName, industry, categoryList, toolIdList) {
+  const isImage = mimeType.startsWith('image/');
+  const systemPrompt = isImage
+    ? 'You are a content extraction assistant for a business content library. You are processing an image asset from Google Drive. Based on the filename, folder, and context provided, assign a category and tool tags. Return a JSON array with exactly one object.'
+    : 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Return only a valid JSON array. Each element must have: title (string, max 10 words), body (string, clean plain text preserving factual detail), category (string, must be from the category list), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
+
+  const userContent = isImage
+    ? 'Business: ' + businessName + ' (' + industry + ').\nFile name: ' + fileName + '\nMime type: ' + mimeType + '\nCategory list: ' + categoryList + '\nTool ID list: ' + toolIdList + '\nReturn a JSON array with one object: { "title": filename without extension, "body": "Image asset: " + filename, "category": most relevant category, "tool_tags": array of relevant tool IDs }. JSON only.'
+    : 'Business: ' + businessName + ' (' + industry + ').\nActive categories: ' + categoryList + '\nActive tool IDs: ' + toolIdList + '\n\nSOURCE CONTENT (' + fileName + '):\n' + content + '\n\nExtract all discrete pieces of useful business content. JSON array only.';
+
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }],
+    }),
   });
-}
-
-// ─── TOKEN REFRESH ────────────────────────────────────────────────────────────
-
-async function refreshGmailToken(refreshToken) {
-  return formPost('oauth2.googleapis.com', '/token', new URLSearchParams({
-    client_id:     process.env.GOOGLE_CLIENT_ID,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    refresh_token: refreshToken,
-    grant_type:    'refresh_token'
-  }));
-}
-
-async function getValidToken(userId, supabase) {
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('gmail_access_token, gmail_refresh_token')
-    .eq('id', userId)
-    .single();
-
-  if (!profile?.gmail_access_token) throw new Error('Google account not connected');
-
-  // Try to refresh
-  if (profile.gmail_refresh_token) {
-    try {
-      const refreshed = await refreshGmailToken(profile.gmail_refresh_token);
-      if (refreshed.access_token) {
-        await supabase.from('profiles')
-          .update({ gmail_access_token: refreshed.access_token })
-          .eq('id', userId);
-        return refreshed.access_token;
-      }
-    } catch(e) {
-      console.log('[drive-import] Token refresh failed, using existing:', e.message);
-    }
-  }
-
-  return profile.gmail_access_token;
-}
-
-// ─── ACTION: LIST FOLDERS ─────────────────────────────────────────────────────
-
-async function handleListFolders(req, res) {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
-  const claudeApiKey = process.env.ANTHROPIC_API_KEY;
-  const defaultCats = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
-  const { data: profile } = await supabase.from('profiles').select('business_name, industry, cl_active_categories, cl_custom_categories').eq('id', userId).single();
-  const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCats;
-  const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
-  const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
-  const businessName = (profile && profile.business_name) || 'your business';
-
+  const data = await response.json();
+  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
-    const token = await getValidToken(userId, supabase);
-
-    // List folders from Drive
-    const resp = await httpsGet(
-      'www.googleapis.com',
-      '/drive/v3/files?q=mimeType%3D%22application%2Fvnd.google-apps.folder%22+and+trashed%3Dfalse&fields=files(id,name,modifiedTime)&orderBy=name&pageSize=50',
-      { 'Authorization': `Bearer ${token}` }
-    );
-
-    if (resp.status !== 200) {
-      return res.status(400).json({ error: 'Failed to list Drive folders', details: resp.body });
-    }
-
-    const folders = (resp.body.files || []).map(f => ({
-      id: f.id,
-      name: f.name,
-      modifiedTime: f.modifiedTime
-    }));
-
-    return res.status(200).json({ success: true, folders });
-
-  } catch(err) {
-    return res.status(500).json({ error: err.message });
+    const clean = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    return [];
   }
 }
 
-// ─── ACTION: IMPORT IMAGES ────────────────────────────────────────────────────
-
-async function handleImportImages(req, res) {
-  const { userId, folderId, folderName, category } = req.body;
-  if (!userId || !folderId) return res.status(400).json({ error: 'userId and folderId required' });
-
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
-  try {
-    const token = await getValidToken(userId, supabase);
-
-    // List image files in the folder
-    const query = encodeURIComponent(
-      `'${folderId}' in parents and mimeType contains 'image/' and trashed = false`
-    );
-    const resp = await httpsGet(
-      'www.googleapis.com',
-      `/drive/v3/files?q=${query}&fields=files(id,name,mimeType,thumbnailLink,webContentLink,createdTime,size)&pageSize=100&orderBy=createdTime+desc`,
-      { 'Authorization': `Bearer ${token}` }
-    );
-
-    if (resp.status !== 200) {
-      return res.status(400).json({ error: 'Failed to list folder images', details: resp.body });
-    }
-
-    const files = resp.body.files || [];
-    if (!files.length) return res.status(200).json({ success: true, imported: 0, message: 'No images found in folder' });
-
-    // Save each image reference to content library
-    let imported = 0;
-    for (const file of files) {
-      // Build a direct image URL using Drive's export link
-      const imageUrl = `https://drive.google.com/uc?export=view&id=${file.id}`;
-      const thumbUrl = file.thumbnailLink || imageUrl;
-
-            // Claude categorisation
-      let aiCategory = category || 'General';
-      let aiToolTags = ['social-media'];
-      if (claudeApiKey) {
-        try {
-          const catPrompt = 'Categorise file for ' + businessName + '. File: "' + file.name + '", type: ' + file.mimeType + '. Pick the most relevant category from: ' + activeCategories + '. Return JSON only: {"category":"...","tool_tags":[...]} using tags from ["social-media","email-assistant","chatbot","strategic-plan"].';
-          const catBody = JSON.stringify({ model: 'claude-haiku-4-5-20251001', max_tokens: 200, messages: [{ role: 'user', content: catPrompt }] });
-          const catFetch = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-api-key': claudeApiKey, 'anthropic-version': '2023-06-01' }, body: catBody });
-          const catData = await catFetch.json();
-          const catParsed = JSON.parse(catData.content[0].text);
-          if (catParsed.category) aiCategory = catParsed.category;
-          if (catParsed.tool_tags) aiToolTags = catParsed.tool_tags;
-        } catch(catErr) {}
-      }
-
-      const { error } = await supabase.from('content_library').upsert({
-        user_id:      userId,
-        title:        file.name,
-        content_type: 'image',
-        file_url:     imageUrl,
-        thumbnail_url: thumbUrl,
-        source:       'google-drive',
-        tool_source:  'drive-import',
-        category:      aiCategory,
-          tool_tags:     aiToolTags,
-        status:       'approved',
-        metadata:     JSON.stringify({
-          driveFileId: file.id,
-          mimeType: file.mimeType,
-          folderName: folderName || folderId,
-          size: file.size,
-          createdTime: file.createdTime
-        })
-      }, { onConflict: 'user_id,title' });
-
-      if (!error) imported++;
-    }
-
-    return res.status(200).json({ success: true, imported, total: files.length });
-
-  } catch(err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
-
-// ─── ACTION: IMPORT EMAIL CONTENT ─────────────────────────────────────────────
-
-async function handleImportEmail(req, res) {
-  const { userId, source, maxItems } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
-
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
-
-  try {
-    const token = await getValidToken(userId, supabase);
-    const limit = Math.min(maxItems || 20, 50);
-
-    // Fetch recent emails that might have useful content
-    // Focuses on emails with attachments or from known trade sources
-    const query = encodeURIComponent('has:attachment OR from:newsletter OR from:industry');
-    const resp = await httpsGet(
-      'gmail.googleapis.com',
-      `/gmail/v1/users/me/messages?maxResults=${limit}&q=${query}&labelIds=INBOX`,
-      { 'Authorization': `Bearer ${token}` }
-    );
-
-    if (!resp.body?.messages?.length) {
-      return res.status(200).json({ success: true, imported: 0, message: 'No matching emails found' });
-    }
-
-    let imported = 0;
-    for (const msg of resp.body.messages.slice(0, limit)) {
-      try {
-        const detail = await httpsGet(
-          'gmail.googleapis.com',
-          `/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-          { 'Authorization': `Bearer ${token}` }
-        );
-
-        if (detail.status !== 200) continue;
-
-        const headers   = detail.body.payload?.headers || [];
-        const getHeader = (name) => headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value || '';
-        const subject   = getHeader('Subject');
-        const from      = getHeader('From');
-        const date      = getHeader('Date');
-        const snippet   = detail.body.snippet || '';
-
-        if (!subject) continue;
-
-        await supabase.from('content_library').upsert({
-          user_id:      userId,
-          title:        subject,
-          content_type: 'email-content',
-          source:       'gmail',
-          tool_source:  'drive-import',
-          status:       'pending',
-          metadata:     JSON.stringify({ from, date, preview: snippet, messageId: msg.id })
-        }, { onConflict: 'user_id,title' });
-
-        imported++;
-      } catch(e) {
-        console.log('[drive-import] Email import error:', e.message);
-      }
-    }
-
-    return res.status(200).json({ success: true, imported });
-
-  } catch(err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
-
-// ─── MAIN ROUTER ─────────────────────────────────────────────────────────────
-
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { action } = req.body;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const { action, userId, folderId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'userId required' });
 
   try {
-    if (action === 'list-folders')  return await handleListFolders(req, res);
-    if (action === 'import-images') return await handleImportImages(req, res);
-    if (action === 'import-email')  return await handleImportEmail(req, res);
-    return res.status(400).json({ error: 'action must be list-folders, import-images, or import-email' });
-  } catch(err) {
-    console.error('[drive-import]', err);
+    // --- LIST FOLDERS ---
+    if (action === 'list-folders') {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('gmail_access_token, gmail_refresh_token')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.gmail_access_token) throw new Error('Google account not connected');
+
+      let accessToken = profile.gmail_access_token;
+      try {
+        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
+        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+      } catch (e) {}
+
+      const driveRes = await fetch(
+        "https://www.googleapis.com/drive/v3/files?q=mimeType%3D'application%2Fvnd.google-apps.folder'&fields=files(id,name)&pageSize=50",
+        { headers: { Authorization: 'Bearer ' + accessToken } }
+      );
+      const driveData = await driveRes.json();
+      return res.status(200).json({ success: true, folders: driveData.files || [] });
+    }
+
+    // --- IMPORT DRIVE FILES (images + documents) ---
+    if (action === 'import-images' || action === 'import-docs' || action === 'import-all') {
+      if (!folderId) return res.status(400).json({ error: 'folderId required' });
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, activated_tools')
+        .eq('id', userId)
+        .single();
+
+      if (!profile?.gmail_access_token) throw new Error('Google account not connected');
+
+      let accessToken = profile.gmail_access_token;
+      try {
+        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
+        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+      } catch (e) {}
+
+      const businessName = profile.business_name || 'this business';
+      const industry = profile.industry || 'general';
+      const defaultCats = ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
+      const activeFromProfile = Array.isArray(profile.cl_active_categories) ? profile.cl_active_categories : defaultCats;
+      const customFromProfile = Array.isArray(profile.cl_custom_categories) ? profile.cl_custom_categories : [];
+      const categoryList = activeFromProfile.concat(customFromProfile).join(', ');
+      const toolIdList = (Array.isArray(profile.activated_tools) && profile.activated_tools.length > 0)
+        ? profile.activated_tools.join(', ')
+        : 'social-media, email-assistant, chatbot, strategic-plan';
+
+      const folderRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files/' + folderId + '?fields=name',
+        { headers: { Authorization: 'Bearer ' + accessToken } }
+      );
+      const folderData = await folderRes.json();
+      const folderName = folderData.name || folderId;
+
+      const filesRes = await fetch(
+        'https://www.googleapis.com/drive/v3/files?q=' + encodeURIComponent("'" + folderId + "' in parents and trashed=false") + '&fields=files(id,name,mimeType,size,createdTime,thumbnailLink,webContentLink)&pageSize=100',
+        { headers: { Authorization: 'Bearer ' + accessToken } }
+      );
+      const filesData = await filesRes.json();
+      const files = filesData.files || [];
+
+      let imported = 0;
+      for (const file of files) {
+        const isImage = file.mimeType.startsWith('image/');
+        const isDoc = [
+          'application/vnd.google-apps.document',
+          'application/vnd.google-apps.spreadsheet',
+          'application/vnd.google-apps.presentation',
+          'application/pdf',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+          'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+          'text/plain',
+        ].includes(file.mimeType);
+
+        if (!isImage && !isDoc) continue;
+
+        let textContent = null;
+        if (isDoc) {
+          textContent = await fetchDriveFileText(file.id, file.mimeType, accessToken);
+          if (!textContent) continue;
+        }
+
+        const items = await runExtractionPrompt(
+          textContent || '',
+          file.name,
+          file.mimeType,
+          businessName,
+          industry,
+          categoryList,
+          toolIdList
+        );
+
+        for (const item of items) {
+          const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
+          const row = {
+            user_id: userId,
+            title: String(item.title || file.name).substring(0, 200),
+            body: String(item.body || ''),
+            category: item.category || activeFromProfile[0] || 'general',
+            tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
+            status: 'pending',
+            source: 'google-drive',
+            tool_source: 'drive-import',
+            source_ref: sourceRef,
+            metadata: JSON.stringify({
+              driveFileId: file.id,
+              mimeType: file.mimeType,
+              folderName: folderName,
+              size: file.size,
+              createdTime: file.createdTime,
+              fileUrl: isImage ? (file.webContentLink || null) : null,
+              thumbnailUrl: isImage ? (file.thumbnailLink || null) : null,
+            }),
+          };
+          const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
+          if (!error) imported++;
+        }
+      }
+
+      return res.status(200).json({ success: true, imported, total: files.length });
+    }
+
+    return res.status(400).json({ error: 'Unknown action' });
+
+  } catch (err) {
+    console.error('drive-import error:', err.message);
     return res.status(500).json({ error: err.message });
   }
-};
+}
