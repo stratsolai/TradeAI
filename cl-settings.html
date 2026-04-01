@@ -488,6 +488,7 @@
         }
         document.getElementById('auth-loading').style.display = 'none';
         document.getElementById('page-wrap').style.display = 'block';
+        if (window.CL_SETTINGS) CL_SETTINGS.init(supabase, resp.data.user.id);
       });
 
       
