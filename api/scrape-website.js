@@ -34,7 +34,7 @@ module.exports = async (req, res) => {
     const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCategories;
     const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
     const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
-    const toolIdList = 'social, chatbot, email, strategic-plan, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
+    const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
     const businessName = (profile && profile.business_name) || 'your business';
     const industry = (profile && profile.industry) || 'your industry';
 
