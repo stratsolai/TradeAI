@@ -151,7 +151,8 @@ module.exports = async (req, res) => {
           file_type: fileType,
           extracted_at: new Date().toISOString()
         },
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        source_ref: 'manual:' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500))
       };
 
       if (source_item_id) { row.source_item_id = source_item_id; }
