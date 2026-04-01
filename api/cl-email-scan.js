@@ -101,7 +101,7 @@ export default async function handler(req, res) {
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, activated_tools, cl_email_last_scanned_at')
+      .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, cl_email_last_scanned_at')
       .eq('id', userId)
       .single();
 
@@ -121,9 +121,7 @@ export default async function handler(req, res) {
     const activeFromProfile = Array.isArray(profile.cl_active_categories) ? profile.cl_active_categories : defaultCats;
     const customFromProfile = Array.isArray(profile.cl_custom_categories) ? profile.cl_custom_categories : [];
     const categoryList = activeFromProfile.concat(customFromProfile).join(', ');
-    const toolIdList = (Array.isArray(profile.activated_tools) && profile.activated_tools.length > 0)
-      ? profile.activated_tools.join(', ')
-      : 'social-media, email-assistant, chatbot, strategic-plan';
+    const toolIdList = 'social, chatbot, email, strategic-plan, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
     const days = parseInt(daysBack) || 30;
     let afterTimestamp;
