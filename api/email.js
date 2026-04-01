@@ -139,7 +139,8 @@ async function categoriseEmails(emails, categories, businessName, industry) {
     `[${i}] From: ${e.sender} <${e.email}>\nSubject: ${e.subject}\nPreview: ${e.snippet.substring(0, 150)}`
   ).join('\n\n');
 
-  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
+  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}
+- tool_tags: array from ["social-media","email-assistant","chatbot","strategic-plan"] relevant to this email\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
 
   const res = await httpsRequest(
     'POST', 'api.anthropic.com', '/v1/messages',
@@ -289,6 +290,7 @@ module.exports = async (req, res) => {
     summary:      r.summary,
     category:     r.category,
     message_url:  r.message_url,
+    tool_tags:    r.tool_tags || ['email-assistant'],
     handled:      false
   }));
 
