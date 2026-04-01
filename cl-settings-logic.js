@@ -90,7 +90,7 @@ window.CL_SETTINGS_LOGIC = {
         websiteBtn.style.color = '#4A6D8C';
         websiteBtn.style.borderColor = '#4A6D8C';
         var revertFn = function() { websiteBtn.textContent = 'Save'; websiteBtn.style.color = ''; websiteBtn.style.borderColor = ''; };
-        ['add-gmail-btn', 'add-outlook-btn', 'add-drive-btn', 'add-website-btn'].forEach(function(btnId) {
+        ['add-drive-btn', 'add-website-btn'].forEach(function(btnId) {
           var el = document.getElementById(btnId);
           if (el) el.addEventListener('click', revertFn, { once: true });
         });
@@ -322,6 +322,12 @@ window.CL_SETTINGS_LOGIC = {
       self.disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
     });
   });
+  // Wire Gmail and Outlook connect buttons
+  var self2 = this;
+  var gmailBtn = document.getElementById('add-gmail-btn');
+  if (gmailBtn) gmailBtn.addEventListener('click', function() { self2.handleOAuthConnect('gmail', supabase); }, { once: true });
+  var outlookBtn = document.getElementById('add-outlook-btn');
+  if (outlookBtn) outlookBtn.addEventListener('click', function() { self2.handleOAuthConnect('microsoft', supabase); }, { once: true });
 },
 
   disconnectEmail: function(email, emails, supabase, userId) {
