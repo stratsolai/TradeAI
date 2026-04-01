@@ -27,14 +27,14 @@ module.exports = async (req, res) => {
     const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('industry, business_name, cl_active_categories, cl_custom_categories, activated_tools')
+      .select('industry, business_name, cl_active_categories, cl_custom_categories')
       .eq('id', userId)
       .single();
     const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
     const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCategories;
     const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
     const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
-    const toolIdList = (profile && Array.isArray(profile.activated_tools) && profile.activated_tools.length > 0) ? profile.activated_tools.join(', ') : 'social-media, email-assistant, chatbot, strategic-plan';
+    const toolIdList = 'social, chatbot, email, strategic-plan, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
     const businessName = (profile && profile.business_name) || 'your business';
     const industry = (profile && profile.industry) || 'your industry';
 
