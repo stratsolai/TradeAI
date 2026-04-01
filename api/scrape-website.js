@@ -22,6 +22,21 @@ module.exports = async (req, res) => {
 
     console.log('Scraping website:', url);
 
+    // Fetch user profile for active categories
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('industry, business_name, cl_active_categories, cl_custom_categories')
+      .eq('id', userId)
+      .single();
+    const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
+    const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCategories;
+    const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
+    const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
+    const businessName = (profile && profile.business_name) || 'your business';
+    const industry = (profile && profile.industry) || 'your industry';
+
     // Fetch the website HTML
     const websiteHtml = await new Promise((resolve, reject) => {
       const urlObj = new URL(url);
@@ -54,55 +69,24 @@ module.exports = async (req, res) => {
     console.log('Website HTML fetched, analyzing with Claude...');
 
     // Use Claude to analyze the website
-    const analysisPrompt = `You are analyzing a business website. Extract all useful marketing content.
+    const analysisPrompt = `You are analysing a business website for ${businessName} (${industry}). Extract discrete pieces of marketing-relevant content.
 
-Please extract and categorize:
+For each piece of content found, return a JSON object with:
+- "title": short descriptive title (max 10 words)
+- "body": extracted content as clean plain text, preserving factual detail
+- "category": the single most relevant category from this list: ${activeCategories}
+- "tool_tags": array from ["social-media","email-assistant","chatbot","strategic-plan"] of tools that could use this content
+- "source_url": "${url}"
 
-1. SERVICES:
-   - Service names and descriptions
-   - Key features and benefits
-
-2. PROJECTS/PORTFOLIO:
-   - Project names
-   - Descriptions
-   - Locations if mentioned
-
-3. TESTIMONIALS/REVIEWS:
-   - Customer quotes
-   - Names if provided
-
-4. ABOUT/COMPANY INFO:
-   - Company description
-   - Team information
-   - History/achievements
-
-5. CONTACT/LOCATION:
-   - Service areas
-   - Locations
-
-Return your response as a JSON object:
-{
-  "services": [{"name": "", "description": "", "benefits": ""}],
-  "projects": [{"title": "", "description": "", "location": ""}],
-  "testimonials": [{"quote": "", "author": ""}],
-  "company": {"about": "", "team": [], "locations": []},
-  "images": [{"url": "", "alt": "", "context": ""}]
-}
-
-Only include items you actually find. Return empty arrays for categories with no content.
+Return ONLY a valid JSON array. No preamble, no explanation, no markdown code fences. Empty array if nothing relevant found.
 
 Website HTML:
-${websiteHtml.substring(0, 50000)}`; // Limit to 50k chars
+${websiteHtml.substring(0, 50000)}`;
 
     const requestBody = JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
-      messages: [
-        {
-          role: 'user',
-          content: analysisPrompt
-        }
-      ]
+      messages: [{ role: 'user', content: analysisPrompt }]
     });
 
     const claudeResponse = await new Promise((resolve, reject) => {
