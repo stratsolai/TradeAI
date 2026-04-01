@@ -306,6 +306,11 @@ window.CL_SETTINGS_LOGIC = {
   var emailList = document.querySelector('.connection-list[data-type="email"]') ||
     document.getElementById('gmail-connections-list');
   if (!emailList) return;
+  var self2 = this;
+  var gmailBtn = document.getElementById('add-gmail-btn');
+  if (gmailBtn) { gmailBtn.onclick = null; gmailBtn.addEventListener('click', function() { self2.handleOAuthConnect('gmail', supabase); }, { once: true }); }
+  var outlookBtn = document.getElementById('add-outlook-btn');
+  if (outlookBtn) { outlookBtn.onclick = null; outlookBtn.addEventListener('click', function() { self2.handleOAuthConnect('microsoft', supabase); }, { once: true }); }
   if (!emails.length) {
     return;
   }
@@ -322,12 +327,6 @@ window.CL_SETTINGS_LOGIC = {
       self.disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
     });
   });
-  // Wire Gmail and Outlook connect buttons
-  var self2 = this;
-  var gmailBtn = document.getElementById('add-gmail-btn');
-  if (gmailBtn) gmailBtn.addEventListener('click', function() { self2.handleOAuthConnect('gmail', supabase); }, { once: true });
-  var outlookBtn = document.getElementById('add-outlook-btn');
-  if (outlookBtn) outlookBtn.addEventListener('click', function() { self2.handleOAuthConnect('microsoft', supabase); }, { once: true });
 },
 
   disconnectEmail: function(email, emails, supabase, userId) {
