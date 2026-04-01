@@ -82,7 +82,7 @@ module.exports = async (req, res) => {
     const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Return only a valid JSON array. No preamble, no explanation, no markdown code fences.';
 
     const categoryList = allCategories.join(', ');
-    const toolIdList = 'social, chatbot, email, strategic-plan, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
+    const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
     const instructions = [
       'Extract all discrete pieces of business information from the content above.',
