@@ -146,7 +146,7 @@ export default async function handler(req, res) {
       const activeFromProfile = Array.isArray(profile.cl_active_categories) ? profile.cl_active_categories : defaultCats;
       const customFromProfile = Array.isArray(profile.cl_custom_categories) ? profile.cl_custom_categories : [];
       const categoryList = activeFromProfile.concat(customFromProfile).join(', ');
-      const toolIdList = 'social, chatbot, email, strategic-plan, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
+      const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
       const folderRes = await fetch(
         'https://www.googleapis.com/drive/v3/files/' + folderId + '?fields=name',
