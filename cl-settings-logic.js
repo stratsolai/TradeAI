@@ -308,9 +308,9 @@ window.CL_SETTINGS_LOGIC = {
   if (!emailList) return;
   var self2 = this;
   var gmailBtn = document.getElementById('add-gmail-btn');
-  if (gmailBtn) { gmailBtn.onclick = null; gmailBtn.addEventListener('click', function() { self2.handleOAuthConnect('gmail', supabase); }, { once: true }); }
+  if (gmailBtn) { gmailBtn.onclick = null; gmailBtn.addEventListener('click', function() { self2.handleOAuthConnect('gmail', supabase); }); }
   var outlookBtn = document.getElementById('add-outlook-btn');
-  if (outlookBtn) { outlookBtn.onclick = null; outlookBtn.addEventListener('click', function() { self2.handleOAuthConnect('microsoft', supabase); }, { once: true }); }
+  if (outlookBtn) { outlookBtn.onclick = null; outlookBtn.addEventListener('click', function() { self2.handleOAuthConnect('microsoft', supabase); }); }
   if (!emails.length) {
     return;
   }
