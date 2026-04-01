@@ -139,8 +139,7 @@ async function categoriseEmails(emails, categories, businessName, industry) {
     `[${i}] From: ${e.sender} <${e.email}>\nSubject: ${e.subject}\nPreview: ${e.snippet.substring(0, 150)}`
   ).join('\n\n');
 
-  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}
-- tool_tags: array from ["social-media","email-assistant","chatbot","strategic-plan"] relevant to this email\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
+  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
 
   const res = await httpsRequest(
     'POST', 'api.anthropic.com', '/v1/messages',
@@ -196,7 +195,7 @@ module.exports = async (req, res) => {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry, cl_active_categories, cl_custom_categories')
+    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry')
     .eq('id', user.id)
     .single();
 
@@ -206,13 +205,9 @@ module.exports = async (req, res) => {
     return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
   }
 
-  const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
-  const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0
-    ? profile.cl_active_categories
-    : defaultCategories;
-  const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
-  const allCategories = activeFromProfile.concat(customFromProfile);
-  const categories = allCategories.map(function(c) { return { id: c, label: c, enabled: true }; });
+  const categories   = Array.isArray(body.categories) && body.categories.length > 0
+    ? body.categories
+    : [{ id: 'general', label: 'General', enabled: true }];
 
   const maxResults   = 20;
   const businessName = profile.business_name || 'your business';
@@ -290,7 +285,6 @@ module.exports = async (req, res) => {
     summary:      r.summary,
     category:     r.category,
     message_url:  r.message_url,
-    tool_tags:    r.tool_tags || ['email-assistant'],
     handled:      false
   }));
 
