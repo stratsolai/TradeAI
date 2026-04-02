@@ -325,7 +325,7 @@ module.exports = async (req, res) => {
     // CL flow — handles business email/drive connections for Content Library
     if (stateFlow === 'cl') {
       try {
-        const clProvider = stateObj.provider || req.query.provider || provider;
+        const clProvider = stateObj.provider || req.query.provider;
         const clUpdateData = {};
 
         if (clProvider === 'gmail' || clProvider === 'google' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
