@@ -4,7 +4,7 @@ module.exports = async (req, res) => {
   const { provider, userId, flow } = req.query;
   if (!provider || !userId) return res.status(400).json({ error: 'Missing provider or userId' });
 
-  const APP_BASE_URL = 'https://trade-ai-seven-blue.vercel.app';
+  const APP_BASE_URL = 'https://staxai.com.au';
 
   const PROVIDERS = {
     google: {
