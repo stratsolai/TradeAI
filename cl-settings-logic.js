@@ -338,7 +338,13 @@ window.CL_SETTINGS_LOGIC = {
   handleOAuthConnect: function(provider, supabase) {
     var self = this;
     if (!self._userId) return;
-    window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId + '&flow=cl';
+    var btnId = provider === 'microsoft' ? 'add-outlook-btn' : provider === 'google-drive' ? 'add-drive-btn' : 'add-gmail-btn';
+    var btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.onclick = null;
+    btn.addEventListener('click', function() {
+      window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId + '&flow=cl';
+    });
   },
 
   renderDriveList: function(connected, supabase, userId) {
