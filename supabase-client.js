@@ -8,7 +8,7 @@
   function initSupabase() {
     if (typeof window.supabase !== 'undefined') {
       // Initialize Supabase client
-      window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+      window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       console.log('Supabase initialized!');
     } else {
       // If not loaded yet, wait and try again
