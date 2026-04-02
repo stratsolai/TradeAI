@@ -357,7 +357,8 @@ window.CL_SETTINGS_LOGIC = {
     });
   } else {
     list.innerHTML = '';
-    self.handleOAuthConnect('google-drive', supabase);
+    var driveBtn = document.getElementById('add-drive-btn');
+    if (driveBtn) { driveBtn.addEventListener('click', function() { self.handleOAuthConnect('google-drive', supabase); }); }
   }
 },
 
