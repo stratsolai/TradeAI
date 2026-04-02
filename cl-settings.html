@@ -478,36 +478,32 @@
   <script src="/cl-settings-logic.js"></script>
   <script>
     (function() {
-      var supabase = window.supabaseClient;
-      if (!supabase) { document.getElementById('auth-loading').textContent = 'Configuration error. Please refresh.'; return; }
-
-      supabase.auth.getSession().then(function(sessResp) {
-        var session = sessResp.data && sessResp.data.session;
-        if (!session) {
-          window.location.href = '/index.html';
+      var attempts = 0;
+      function waitForSupabase() {
+        if (typeof window.supabaseClient === "undefined") {
+          if (attempts++ < 20) { setTimeout(waitForSupabase, 100); }
+          else { document.getElementById("auth-loading").textContent = "Configuration error. Please refresh."; }
           return;
         }
-        supabase.auth.getUser().then(function(resp) {
-          if (!resp.data || !resp.data.user) {
-            window.location.href = '/index.html';
+        var supabase = window.supabaseClient;
+        supabase.auth.getSession().then(function(sessResp) {
+          var session = sessResp.data && sessResp.data.session;
+          if (!session) {
+            window.location.href = "/index.html";
             return;
           }
-          document.getElementById('auth-loading').style.display = 'none';
-          document.getElementById('page-wrap').style.display = 'block';
-          if (window.CL_SETTINGS_LOGIC) CL_SETTINGS_LOGIC.init();
-        });
-      });
-
-      
-
-      var signoutBtn = document.getElementById('signout-btn');
-      if (signoutBtn) {
-        signoutBtn.addEventListener('click', function() {
-          supabase.auth.signOut().then(function() {
-            window.location.href = '/index.html';
+          supabase.auth.getUser().then(function(resp) {
+            if (!resp.data || !resp.data.user) {
+              window.location.href = "/index.html";
+              return;
+            }
+            document.getElementById("auth-loading").style.display = "none";
+            document.getElementById("page-wrap").style.display = "block";
+            if (window.CL_SETTINGS_LOGIC) CL_SETTINGS_LOGIC.init();
           });
         });
       }
+      waitForSupabase();
     })();
   
     // Account dropdown toggle
