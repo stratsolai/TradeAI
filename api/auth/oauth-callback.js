@@ -328,7 +328,7 @@ module.exports = async (req, res) => {
         const clProvider = stateObj.provider || req.query.provider || provider;
         const clUpdateData = {};
 
-        if (clProvider === 'gmail' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
+        if (clProvider === 'gmail' || clProvider === 'google' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
           // Read existing cl_connected_emails array
           const existingRes = await fetch(
             `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails,cl_drive_connected`,
