@@ -479,42 +479,41 @@
   <script>
     (function() {
       var supabase = window.supabaseClient;
-      if (!supabase) { document.getElementById('auth-loading').textContent = 'Configuration error. Please refresh.'; return; }
+      if (!supabase) { document.body.innerHTML = '<p style="color:red;padding:2rem">Supabase client not loaded. Please refresh.</p>'; return; }
 
+      var initiated = false;
+      supabase.auth.onAuthStateChange(function(event, session) {
+        if (initiated) return;
+        if (session && session.user) {
+          initiated = true;
+          if (window.CL_SETTINGS_LOGIC) {
+            window.CL_SETTINGS_LOGIC.init();
+          }
+        } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+          if (!session) {
+            window.location.href = '/login.html';
+          }
+        }
+      });
+
+      // Fallback: also try getUser in case onAuthStateChange fires before script runs
       supabase.auth.getUser().then(function(resp) {
+        if (initiated) return;
         if (!resp.data || !resp.data.user) {
-          window.location.href = '/index.html';
+          // Give onAuthStateChange a moment to fire first
+          setTimeout(function() {
+            if (!initiated) {
+              window.location.href = '/login.html';
+            }
+          }, 1500);
           return;
         }
-        document.getElementById('auth-loading').style.display = 'none';
-        document.getElementById('page-wrap').style.display = 'block';
-        if (window.CL_SETTINGS_LOGIC) CL_SETTINGS_LOGIC.init();
+        initiated = true;
+        if (window.CL_SETTINGS_LOGIC) {
+          window.CL_SETTINGS_LOGIC.init();
+        }
       });
-
-      
-
-      var signoutBtn = document.getElementById('signout-btn');
-      if (signoutBtn) {
-        signoutBtn.addEventListener('click', function() {
-          supabase.auth.signOut().then(function() {
-            window.location.href = '/index.html';
-          });
-        });
-      }
     })();
-  
-    // Account dropdown toggle
-
-    // Tab switching
-    document.querySelectorAll('.stab').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
-        var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
-        if (panel) panel.classList.add('active');
-      });
-    });
   </script>
 
 </body>
