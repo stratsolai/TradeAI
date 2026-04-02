@@ -20,6 +20,16 @@ module.exports = async (req, res) => {
   }
   
   console.log('Detected provider:', provider);
+  // Override path-based provider with stateObj.provider if available
+  try {
+    var _rawState = (req.query && req.query.state) ? req.query.state : '';
+    if (_rawState) {
+      var _stateObj = JSON.parse(Buffer.from(_rawState, 'base64').toString('utf8'));
+      if (_stateObj && _stateObj.provider) { provider = _stateObj.provider; }
+    }
+  } catch(e) {}
+  console.log('Provider after state override:', provider);
+
   
   const { code, state, error, error_description } = req.query;
 
