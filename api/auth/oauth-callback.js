@@ -314,16 +314,18 @@ module.exports = async (req, res) => {
     }
 
     // Store tokens in database
-    const userId = (function() { try { return JSON.parse(Buffer.from(state, 'base64').toString('utf8')).userId; } catch(e) { return state; } })();
+    const stateObj = (function() { try { return JSON.parse(Buffer.from(state, 'base64').toString('utf8')); } catch(e) { return {}; } })();
+    const userId = stateObj.userId || state;
+    const stateFlow = stateObj.flow || req.query.flow || '';
     const supabaseUrl = process.env.SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
     console.log('Saving to database for user:', userId);
 
     // CL flow — handles business email/drive connections for Content Library
-    if (req.query && req.query.flow === 'cl') {
+    if (stateFlow === 'cl') {
       try {
-        const clProvider = req.query.provider || provider;
+        const clProvider = stateObj.provider || req.query.provider || provider;
         const clUpdateData = {};
 
         if (clProvider === 'gmail' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
