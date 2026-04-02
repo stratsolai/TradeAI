@@ -337,13 +337,10 @@ window.CL_SETTINGS_LOGIC = {
 
   handleOAuthConnect: function(provider, supabase) {
     var self = this;
-    if (!self._userId) return;
-    var btnId = provider === 'microsoft' ? 'add-outlook-btn' : provider === 'google-drive' ? 'add-drive-btn' : 'add-gmail-btn';
-    var btn = document.getElementById(btnId);
-    if (!btn) return;
-    btn.onclick = null;
+    var btn = document.getElementById('add-' + provider + '-btn');
+    if (!btn || !self._userId) return;
     btn.addEventListener('click', function() {
-      window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId + '&flow=cl';
+      window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId;
     });
   },
 
@@ -363,8 +360,7 @@ window.CL_SETTINGS_LOGIC = {
     });
   } else {
     list.innerHTML = '';
-    var driveBtn = document.getElementById('add-drive-btn');
-    if (driveBtn) { driveBtn.onclick = null; driveBtn.addEventListener('click', function() { self.handleOAuthConnect('google-drive', supabase); }); }
+    self.handleOAuthConnect('google', supabase);
   }
 },
 
