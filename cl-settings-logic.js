@@ -337,11 +337,8 @@ window.CL_SETTINGS_LOGIC = {
 
   handleOAuthConnect: function(provider, supabase) {
     var self = this;
-    var btn = document.getElementById('add-' + provider + '-btn');
-    if (!btn || !self._userId) return;
-    btn.addEventListener('click', function() {
-      window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId;
-    });
+    if (!self._userId) return;
+    window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId;
   },
 
   renderDriveList: function(connected, supabase, userId) {
@@ -360,7 +357,8 @@ window.CL_SETTINGS_LOGIC = {
     });
   } else {
     list.innerHTML = '';
-    self.handleOAuthConnect('google', supabase);
+    var driveBtn = document.getElementById('add-drive-btn');
+    if (driveBtn) { driveBtn.onclick = null; driveBtn.addEventListener('click', function() { self.handleOAuthConnect('google-drive', supabase); }); }
   }
 },
 
