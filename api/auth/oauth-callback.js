@@ -40,7 +40,7 @@ module.exports = async (req, res) => {
   if (provider === 'meta') {
     try {
       const https = require('https');
-      const APP_BASE_URL = 'https://trade-ai-seven-blue.vercel.app';
+      const APP_BASE_URL = 'https://staxai.com.au';
       const REDIRECT_URI = `${APP_BASE_URL}/api/auth/meta/callback`;
       const GRAPH = 'v19.0';
       const userId = (function() { try { return JSON.parse(Buffer.from(state, 'base64').toString('utf8')).userId; } catch(e) { return state; } })();
@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
       throw new Error(`${provider} credentials not configured`);
     }
 
-    const redirectUri = `${req.headers.origin || 'https://trade-ai-seven-blue.vercel.app'}/api/auth/${provider === 'google-drive' ? 'google-drive' : provider}/callback`;
+    const redirectUri = `${req.headers.origin || 'https://staxai.com.au'}/api/auth/${provider === 'google-drive' ? 'google-drive' : provider}/callback`;
     console.log('Redirect URI:', redirectUri);
 
     // Exchange code for tokens
