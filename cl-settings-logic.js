@@ -331,9 +331,11 @@ window.CL_SETTINGS_LOGIC = {
 },
 
   disconnectEmail: function(email, emails, supabase, userId, self) {
+  var s = self._supabase || supabase;
+  var uid = self._userId || userId;
   var updated = emails.filter(function(e) { return (e && typeof e === 'object' ? e.email : e) !== email; });
-  supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', userId)
-    .then(function() { renderEmailList(updated, supabase, userId, self); });
+  s.from('profiles').update({ cl_connected_emails: updated }).eq('id', uid)
+    .then(function() { self.renderEmailList(updated, s, uid, self); });
 },
 
   handleOAuthConnect: function(provider, supabase) {
