@@ -196,7 +196,7 @@ module.exports = async (req, res) => {
       throw new Error(`${provider} credentials not configured`);
     }
 
-    const redirectUri = `${req.headers.origin || 'https://staxai.com.au'}/api/auth/${provider === 'google-drive' ? 'google-drive' : provider}/callback`;
+    const redirectUri = `${'https://staxai.com.au'}/api/auth/${provider === 'google-drive' ? 'google-drive' : provider}/callback`;
     console.log('Redirect URI:', redirectUri);
 
     // Exchange code for tokens
