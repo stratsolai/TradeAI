@@ -1,7 +1,7 @@
 module.exports = async (req, res) => {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { provider, userId } = req.query;
+  const { provider, userId, flow } = req.query;
   if (!provider || !userId) return res.status(400).json({ error: 'Missing provider or userId' });
 
   const APP_BASE_URL = 'https://trade-ai-seven-blue.vercel.app';
@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
   const config = PROVIDERS[provider];
   if (!config) return res.status(400).json({ error: 'Unknown provider: ' + provider });
 
-  const state = Buffer.from(JSON.stringify({ userId, provider })).toString('base64');
+  const state = Buffer.from(JSON.stringify({ userId, provider, flow: flow || '' })).toString('base64');
 
   const params = new URLSearchParams({
     client_id: config.clientId,
@@ -44,7 +44,7 @@ module.exports = async (req, res) => {
     response_type: 'code',
     scope: config.scopes,
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: provider === 'microsoft' ? 'select_account' : 'consent',
     state
   });
 
