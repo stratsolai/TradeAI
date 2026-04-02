@@ -326,7 +326,7 @@ module.exports = async (req, res) => {
         const clProvider = req.query.provider || provider;
         const clUpdateData = {};
 
-        if (clProvider === 'gmail' || clProvider === 'outlook' || clProvider === 'drive') {
+        if (clProvider === 'gmail' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
           // Read existing cl_connected_emails array
           const existingRes = await fetch(
             `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails,cl_drive_connected`,
@@ -340,7 +340,7 @@ module.exports = async (req, res) => {
           const existingData = await existingRes.json();
           const existing = existingData[0] || {};
 
-          if (clProvider === 'drive') {
+          if (clProvider === 'drive' || clProvider === 'google-drive') {
             clUpdateData.cl_drive_connected = true;
           } else {
             const currentEmails = existing.cl_connected_emails || [];
@@ -428,7 +428,11 @@ module.exports = async (req, res) => {
     if (provider === 'google-drive') {
       res.redirect('/content-library.html?gdrive_connected=true');
     } else {
+      if (provider === 'microsoft') {
+      res.redirect('/cl-settings.html?connected=microsoft');
+    } else {
       res.redirect('/chatbot-settings.html?email_connected=' + provider);
+    }
 
     if (provider === 'gmail') {
       const supabaseUrl = process.env.SUPABASE_URL;
