@@ -315,9 +315,10 @@ window.CL_SETTINGS_LOGIC = {
     return;
   }
   var html = '';
-  emails.forEach(function(email) {
+  emails.forEach(function(email) {    var eStr = (email && typeof email === 'object') ? email.email : email;
+
     html += '<div class="connection-item">' +
-      '<span class="connection-item-email">' + email + '</span>' +
+      '<span class="connection-item-email">' + eStr + '</span>' +
       '<button type="button" class="btn-disconnect" data-email="' + email + '">Disconnect</button>' +
       '</div>';
   });
@@ -330,7 +331,7 @@ window.CL_SETTINGS_LOGIC = {
 },
 
   disconnectEmail: function(email, emails, supabase, userId) {
-  var updated = emails.filter(function(e) { return e !== email; });
+  var updated = emails.filter(function(e) { return (e && typeof e === 'object' ? e.email : e) !== email; });
   supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', userId)
     .then(function() { renderEmailList(updated, supabase, userId); });
 },
