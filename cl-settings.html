@@ -481,38 +481,21 @@
       var supabase = window.supabaseClient;
       if (!supabase) { document.body.innerHTML = '<p style="color:red;padding:2rem">Supabase client not loaded. Please refresh.</p>'; return; }
 
-      var initiated = false;
-      supabase.auth.onAuthStateChange(function(event, session) {
-        if (initiated) return;
-        if (session && session.user) {
-          initiated = true;
-          if (window.CL_SETTINGS_LOGIC) {
-            window.CL_SETTINGS_LOGIC.init();
-          }
-        } else if (event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
-          if (!session) {
+      function tryInit(attemptsLeft) {
+        supabase.auth.getUser().then(function(resp) {
+          if (resp.data && resp.data.user) {
+            if (window.CL_SETTINGS_LOGIC) {
+              window.CL_SETTINGS_LOGIC.init();
+            }
+          } else if (attemptsLeft > 0) {
+            setTimeout(function() { tryInit(attemptsLeft - 1); }, 800);
+          } else {
             window.location.href = '/login.html';
           }
-        }
-      });
+        });
+      }
 
-      // Fallback: also try getUser in case onAuthStateChange fires before script runs
-      supabase.auth.getUser().then(function(resp) {
-        if (initiated) return;
-        if (!resp.data || !resp.data.user) {
-          // Give onAuthStateChange a moment to fire first
-          setTimeout(function() {
-            if (!initiated) {
-              window.location.href = '/login.html';
-            }
-          }, 1500);
-          return;
-        }
-        initiated = true;
-        if (window.CL_SETTINGS_LOGIC) {
-          window.CL_SETTINGS_LOGIC.init();
-        }
-      });
+      tryInit(3);
     })();
   </script>
 
