@@ -334,8 +334,8 @@ module.exports = async (req, res) => {
             `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails,cl_drive_connected`,
             {
               headers: {
-                'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
-                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`
               }
             }
           );
@@ -359,8 +359,8 @@ module.exports = async (req, res) => {
             {
               method: 'PATCH',
               headers: {
-                'apikey': process.env.SUPABASE_SERVICE_ROLE_KEY,
-                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY}`,
+                'apikey': process.env.SUPABASE_SERVICE_KEY,
+                'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
                 'Content-Type': 'application/json',
                 'Prefer': 'return=minimal'
               },
