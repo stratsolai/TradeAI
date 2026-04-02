@@ -338,7 +338,7 @@ window.CL_SETTINGS_LOGIC = {
   handleOAuthConnect: function(provider, supabase) {
     var self = this;
     if (!self._userId) return;
-    window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId;
+    window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + self._userId + '&flow=cl';
   },
 
   renderDriveList: function(connected, supabase, userId) {
