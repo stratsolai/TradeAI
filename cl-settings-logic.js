@@ -325,15 +325,15 @@ window.CL_SETTINGS_LOGIC = {
   emailList.innerHTML = html;
   emailList.querySelectorAll('.btn-disconnect').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      self.disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId);
+      self.disconnectEmail(btn.getAttribute('data-email'), emails, supabase, userId, self);
     });
   });
 },
 
-  disconnectEmail: function(email, emails, supabase, userId) {
+  disconnectEmail: function(email, emails, supabase, userId, self) {
   var updated = emails.filter(function(e) { return (e && typeof e === 'object' ? e.email : e) !== email; });
   supabase.from('profiles').update({ cl_connected_emails: updated }).eq('id', userId)
-    .then(function() { renderEmailList(updated, supabase, userId); });
+    .then(function() { renderEmailList(updated, supabase, userId, self); });
 },
 
   handleOAuthConnect: function(provider, supabase) {
