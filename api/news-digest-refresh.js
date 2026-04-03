@@ -18,7 +18,7 @@ function httpsGet(url) {
     https.get({
       hostname: parsed.hostname,
       path: parsed.pathname + parsed.search,
-      headers: { 'User-Agent': 'TradeAI/1.0 (industry news aggregator)' }
+      headers: { 'User-Agent': 'StaxAI/1.0 (industry news aggregator)' }
     }, (res) => {
       let data = '';
       res.on('data', c => data += c);
@@ -49,67 +49,6 @@ function httpsPost(hostname, apiPath, headers, body) {
     req.end();
   });
 }
-
-// ─── TRADE-SPECIFIC SOURCE MAP ────────────────────────────────────────────────
-// Maps trade types to relevant industry bodies and news sources
-const TRADE_SOURCES = {
-  plumbing: {
-    queries: [
-      'Master Plumbers Australia news', 'plumbing regulations Australia',
-      'Australian plumbing industry news', 'plumbing licensing changes Australia'
-    ],
-    bodies: ['Master Plumbers Australia', 'MPAQ', 'Plumbing Products Industry Group']
-  },
-  electrical: {
-    queries: [
-      'Master Electricians Australia news', 'electrical licensing regulations',
-      'AS/NZS electrical standards update', 'NECA electrical industry news'
-    ],
-    bodies: ['Master Electricians Australia', 'NECA', 'Clean Energy Council']
-  },
-  building: {
-    queries: [
-      'HIA housing industry news', 'Master Builders Australia news',
-      'NCC building code update Australia', 'QBCC building industry news'
-    ],
-    bodies: ['HIA', 'Master Builders Australia', 'QBCC', 'ABCB']
-  },
-  hvac: {
-    queries: [
-      'AIRAH HVAC news Australia', 'refrigeration air conditioning regulations',
-      'ARC tick licence update', 'HVAC industry news Australia'
-    ],
-    bodies: ['AIRAH', 'ARC', 'AREMA']
-  },
-  landscaping: {
-    queries: [
-      'Landscape Australia news', 'TALA landscaping industry',
-      'irrigation regulations Australia', 'horticulture industry news'
-    ],
-    bodies: ['Landscape Australia', 'TALA', 'Nursery & Garden Industry Australia']
-  },
-  painting: {
-    queries: [
-      'Master Painters Australia news', 'painting industry regulations Australia',
-      'Lead paint compliance update', 'coating industry news'
-    ],
-    bodies: ['Master Painters Australia', 'MPAWA', 'Dulux trade news']
-  },
-  carpentry: {
-    queries: [
-      'HIA carpentry news', 'timber building industry Australia',
-      'WHS carpentry regulations', 'joinery industry news Australia'
-    ],
-    bodies: ['HIA', 'Master Builders', 'Australian Timber Building Association']
-  },
-  default: {
-    queries: [
-      'Australian small business industry news', 'small business news Australia',
-      'WHS workplace safety update Australia', 'Fair Work construction update'
-    ],
-    bodies: ['Fair Work Commission', 'Safe Work Australia', 'AISC']
-  }
-};
 
 function buildSearchQueries(industry, location, categories) {
   const queries = [];
@@ -205,7 +144,7 @@ async function searchWeb(queries) {
 }
 
 // ─── EMAIL NEWS ITEMS ────────────────────────────────────────────────────────
-async async function getEmailNewsItems(userId, supabase) {
+async function getEmailNewsItems(userId, supabase) {
   try {
     const { data, error } = await supabase
       .from("content_library")
