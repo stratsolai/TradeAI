@@ -509,4 +509,59 @@ CSS (when editing files with CSS):
 
 JavaScript:
 - No inline onclick handlers
-- Apostrophes in JS strings handled correc
+- Apostrophes in JS strings handled correctly
+- JS syntax valid — confirmed with node
+- No force push
+
+File integrity:
+- DOCTYPE present, closing tags present
+- File not truncated, not empty
+
+Industry-agnostic (when editing AI prompts or data models):
+- Confirmed works correctly for a non-trade industry such
+  as accounting or consulting
+
+---
+
+## Important Platform Facts
+
+- Stripe LIVE MODE — never use test keys or create test
+  transactions. Webhook logic in api/stripe-webhook.js —
+  never duplicate payment activation logic elsewhere.
+- New tools needing Stripe payment: create a new Stripe
+  product and document the price ID in the Tool
+  Specification Guide before building.
+- Supabase anon key in supabase-client.js is intentional —
+  RLS is enabled.
+- widget.js is an embeddable chatbot for customers' own
+  websites — not an internal platform file.
+- Content Library available to all paying customers
+  automatically — no separate activation.
+- Email Assistant (per-user personal inbox) and CL business
+  email connection are two entirely separate systems.
+  Never conflate them in UI or code.
+
+---
+
+## Document Reference
+
+| Document                        | Purpose                             |
+|---------------------------------|-------------------------------------|
+| CLAUDE.md (this file)           | Current state and active tasks      |
+| Rules & Instructions v2.9       | All rules — read applicable         |
+|                                 | sections every session              |
+| Project Brief v12.23            | Platform reference and architecture |
+| Outstanding Tasks v1.2          | All outstanding tasks and known     |
+|                                 | build issues by tool                |
+| Tool Specification Guide v2.3   | All 13 tool specifications          |
+| Panel Rebuild Spec v3.4         | Panel page — steps 4b/4c pending    |
+| Dashboard & CL Spec v1.2        | Dashboard & CL governing doc        |
+| Dashboard Spec v3.2             | Dashboard rebuild — blocked         |
+| Auth Panel & Activate Spec v1.4 | Panel auth — step 5 pending         |
+| Auth CSS Spec v1.0              | Stylesheet spec — note: stylesheet  |
+|                                 | is source of truth, not this doc    |
+| CL New Features Spec v1.3       | Reference only — not governing.     |
+|                                 | Current state determined by repo.   |
+| Multi-User Account Spec v1.0    | Multi-user — approved, awaiting     |
+|                                 | build                               |
+| Tool ID Audit v1.0              | Canonical tool ID register          |
