@@ -344,6 +344,10 @@ module.exports = async (req, res) => {
 
           if (clProvider === 'drive' || clProvider === 'google-drive') {
             clUpdateData.cl_drive_connected = true;
+            clUpdateData.cl_drive_access_token = tokenData.access_token;
+            if (tokenData.refresh_token) {
+              clUpdateData.cl_drive_refresh_token = tokenData.refresh_token;
+            }
           } else {
             const currentEmails = existing.cl_connected_emails || [];
             const alreadyConnected = currentEmails.some(function(e) { return e.email === userEmail && e.provider === clProvider; });
