@@ -118,56 +118,84 @@ Completed April 2026. staxai-auth.css updated — renamed
 → .account-dropdown. Stylesheet dropdown styles now active
 across all pages. Commit: c5eb85a
 
-staxai-auth.css defines .topbar-account-btn and
-.topbar-account-dropdown but every page in the codebase uses
-.account-btn and .account-dropdown. The stylesheet dropdown
-styles are currently unused by every page.
+### ✅ Task 5 — Create topbar.js (complete)
 
-Fix: Update staxai-auth.css to use .account-btn and
-.account-dropdown (matching all existing pages) rather than
-renaming every page.
+Completed April 2026. topbar.js created in repo root.
+Replicates exact account dropdown behaviour from cl-logic.js:
+dropdown toggle, click-outside-to-close, sign-out to /login.
+Commit: 38cd7b5
 
-Before making any changes:
-1. Read staxai-auth.css in full
-2. Identify every instance of .topbar-account-btn and
-   .topbar-account-dropdown
-3. Report the full list of changes needed to the owner
-4. Owner will confirm before any changes are committed
+Note: Page rollout (adding topbar.js to all authenticated
+pages) happens as part of the stylesheet rollout — Pre-Launch
+Step 4. Not a separate task.
 
-### Task 5 — Create topbar.js (shared file)
+### Task 6 — Fix CL Settings OAuth / CL Upload (in progress)
 
-⚠️ Do not begin until Task 4 is complete.
-⚠️ Requires approved spec before any work begins. Owner will
-provide spec via Chat before this task starts.
+⚠️ Do not begin next round until owner confirms previous
+round is working correctly in the browser.
 
-topbar.js will be a new shared JS file containing the standard
-account dropdown behaviour for all authenticated pages:
-- Populate account-email-short with the user's email prefix
-- Populate account-dropdown-email with the user's full email
-- Wire dropdown toggle (open/close on button click,
-  close on outside click)
-- Wire sign-out button to /login consistently
+Investigation complete. Gmail and Outlook OAuth connections
+are working. Issues found and fixes agreed. cl-upload.js
+Round 1 complete.
 
-This file will be loaded by every authenticated page as part
-of the stylesheet rollout. It eliminates the duplicated
-dropdown JS currently copy-pasted across 10+ files.
+Commits made so far:
+- 0bdbd33 — cl-upload.js: fix _loadConnectionStatus to read
+  from cl_connected_emails array
+- 798563a — cl-upload.js: removed Browse Files button, wired
+  tile click to trigger file input
+- 6e9bf87 — cl-upload.js: image file validation with Dismiss
+  button
+- 210b3da — cl-upload.js: document file input accept changed
+  to .pdf,.doc,.docx,.txt
+- 6b494e2 — cl-upload.js: error message Dismiss button,
+  no auto-dismiss
+- 46756bf — cl-upload.js: both upload handlers now convert
+  to base64 and call api/process-file.js
 
-### Task 6 — Fix CL Settings OAuth (current build blocker)
+⚠️ Owner action required before Round 3 begins:
+Create cl_drive_folders column in Supabase:
+- Table: profiles
+- Type: jsonb
+- Default: null
+SQL: ALTER TABLE profiles ADD COLUMN cl_drive_folders jsonb DEFAULT null;
 
-⚠️ Do not begin until Task 5 is complete.
+Remaining rounds:
 
-Files: cl-settings.html, cl-settings-logic.js
+Round 2 — oauth-callback.js:
+- Save Drive access and refresh tokens to profiles during
+  the CL flow (currently discarded)
 
-The OAuth connections for Gmail, Outlook, and Google Drive in
-CL Settings are broken. The exact current state is unknown —
-this has been fixed and broken multiple times.
+Round 3 — CL Settings folder picker
+(cl-settings.html + cl-settings-logic.js):
+- After OAuth returns ?connected=google-drive, fetch folder
+  list via api/drive-import.js list-folders action
+- Show folder picker UI — user selects folders to connect
+- Save selected folder IDs and names to cl_drive_folders
+- Display connected folders in CL Settings with disconnect
+  per folder
 
-Before making any changes:
-1. Read cl-settings.html and cl-settings-logic.js in full
-2. Report your full understanding of the current OAuth
-   implementation to the owner via Chat
-3. Owner will agree a fix approach with Chat
-4. Only then begin any changes
+Round 4 — cl-upload.js Drive scan:
+- Read cl_drive_folders and display connected folders in
+  Upload & Import tab
+- Wire Scan Now for Drive to call api/drive-import.js with
+  selected folder IDs
+
+Round 5 — api/scrape-website.js targeted fix:
+- Fix JSON parsing regex — match array not single object
+- Update insertion code to expect flat array matching
+  current prompt schema
+- Confirm column names match other April 1 files
+- Add redirect following to HTTP fetch
+- Update User-Agent from TradeAI/1.0 to StaxAI/1.0
+- Add user-facing feedback in cl-upload.js after scan
+
+Round 6 — CL Settings remaining fixes
+(cl-settings-logic.js + cl-settings.html):
+- Save button → "Saved" after saving, resets on change
+- Fix sign-out ID mismatch (signout-btn → sign-out-btn)
+
+Round 7 — oauth-callback.js cleanup:
+- Remove broken non-CL fallback code (lines 379–483)
 
 ---
 
@@ -206,10 +234,6 @@ The sequence for each tool rebuild is:
 
 ### Stylesheet — Known Issues
 
-- staxai-auth.css defines .topbar-account-btn and
-  .topbar-account-dropdown but every page uses .account-btn
-  and .account-dropdown — stylesheet dropdown styles are
-  currently unused. Fix is Task 4 above.
 - content-library.html loads staxai-auth.css but also has
   its own inline CSS block overriding some dropdown styles —
   to be cleaned up during CL stylesheet rollout.
@@ -225,7 +249,8 @@ Across all authenticated pages the dropdown is inconsistent:
 - Chatbot — email display works, sign-out goes to /login
 - Email Assistant — sign-out goes to index.html (wrong)
 
-All of these are resolved by topbar.js (Task 5).
+All of these are resolved when topbar.js is rolled out to
+each page during the stylesheet rollout (Pre-Launch Step 4).
 
 ### Dead UI in content-library.html
 
@@ -448,10 +473,6 @@ Easy to miss — have caused bugs before:
   .stax-stack, .stax-card, .stax-card-screenshot,
   .stax-card-info, .stax-tagline, .stax-tagline-pre,
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
-- staxai-auth.css dropdown class names will be fixed in
-  Task 4 to match .account-btn / .account-dropdown as used
-  across all pages. Do not use .topbar-account-btn naming
-  in any new code before Task 4 is complete.
 - cl-settings.html does not load staxai-auth.css — it has
   its own inline CSS. This is a known issue to be fixed
   during the stylesheet rollout (Pre-Launch Step 3).
@@ -560,3 +581,4 @@ Industry-agnostic (when editing AI prompts or data models):
 | Multi-User Account Spec v1.0    | Multi-user — approved, awaiting     |
 |                                 | build                               |
 | Tool ID Audit v1.0              | Canonical tool ID register          |
+| Topbar JS Spec v1.0             | Spec for topbar.js — complete       |
