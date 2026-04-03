@@ -30,29 +30,77 @@ async function refreshGoogleToken(refreshToken) {
   return data.access_token;
 }
 
-// Fetch text content from a Drive file via export API
+// Binary MIME types that need Claude document API for text extraction
+const BINARY_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+];
+
+// Google Workspace export MIME mappings
+const EXPORT_MIME_MAP = {
+  'application/vnd.google-apps.document': 'text/plain',
+  'application/vnd.google-apps.spreadsheet': 'text/csv',
+  'application/vnd.google-apps.presentation': 'text/plain',
+};
+
+// Fetch text content from a Drive file — uses export API for Google Workspace
+// and text files, Claude document API for binary formats (PDF, Word, etc.)
 async function fetchDriveFileText(fileId, mimeType, accessToken) {
-  let exportMime = null;
-  if (mimeType === 'application/vnd.google-apps.document') exportMime = 'text/plain';
-  else if (mimeType === 'application/vnd.google-apps.spreadsheet') exportMime = 'text/csv';
-  else if (mimeType === 'application/vnd.google-apps.presentation') exportMime = 'text/plain';
-  else if (mimeType === 'application/pdf') exportMime = 'text/plain';
-  else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') exportMime = 'text/plain';
-  else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') exportMime = 'text/csv';
-  else if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') exportMime = 'text/plain';
-  else if (mimeType === 'text/plain') exportMime = 'text/plain';
+  // Binary files — download as base64 and extract via Claude
+  if (BINARY_MIME_TYPES.includes(mimeType)) {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!res.ok) return null;
+    const arrayBuffer = await res.arrayBuffer();
+    const base64 = Buffer.from(arrayBuffer).toString('base64');
+    return extractBinaryFileText(base64, mimeType);
+  }
 
-  if (!exportMime) return null;
+  // Google Workspace native formats — use export API
+  const exportMime = EXPORT_MIME_MAP[mimeType];
+  if (exportMime) {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent(exportMime)}`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!res.ok) return null;
+    const text = await res.text();
+    return text.substring(0, 8000);
+  }
 
-  const isGoogleDoc = mimeType.startsWith('application/vnd.google-apps.');
-  const url = isGoogleDoc
-    ? `https://www.googleapis.com/drive/v3/files/${fileId}/export?mimeType=${encodeURIComponent(exportMime)}`
-    : `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+  // Plain text — download directly
+  if (mimeType === 'text/plain') {
+    const url = `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
+    const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
+    if (!res.ok) return null;
+    const text = await res.text();
+    return text.substring(0, 8000);
+  }
 
-  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
-  if (!res.ok) return null;
-  const text = await res.text();
-  return text.substring(0, 8000);
+  return null;
+}
+
+// Extract text from a binary file (PDF, Word, etc.) via Claude document API
+async function extractBinaryFileText(base64Data, mimeType) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
+      messages: [{ role: 'user', content: [
+        { type: 'document', source: { type: 'base64', media_type: mimeType, data: base64Data } },
+        { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
+      ]}],
+    }),
+  });
+  const data = await response.json();
+  if (data.content && data.content[0]) return data.content[0].text;
+  return null;
 }
 
 // Run unified CL extraction prompt against content
@@ -162,10 +210,6 @@ export default async function handler(req, res) {
       const filesData = await filesRes.json();
       const files = filesData.files || [];
 
-      console.log('[drive-import] Folder:', folderName, '| folderId:', folderId);
-      console.log('[drive-import] Files found:', files.length);
-      console.log('[drive-import] File list:', files.map(f => f.name + ' (' + f.mimeType + ')').join(', '));
-
       let imported = 0;
       for (const file of files) {
         const isImage = file.mimeType.startsWith('image/');
@@ -180,18 +224,12 @@ export default async function handler(req, res) {
           'text/plain',
         ].includes(file.mimeType);
 
-        if (!isImage && !isDoc) {
-          console.log('[drive-import] SKIP (unsupported type):', file.name, file.mimeType);
-          continue;
-        }
-
-        console.log('[drive-import] Processing:', file.name, '| type:', file.mimeType, '| isImage:', isImage, '| isDoc:', isDoc);
+        if (!isImage && !isDoc) continue;
 
         let textContent = null;
         if (isDoc) {
           textContent = await fetchDriveFileText(file.id, file.mimeType, accessToken);
-          console.log('[drive-import] Text extracted for', file.name, '| length:', textContent ? textContent.length : 0, '| preview:', textContent ? textContent.substring(0, 100) : '(null)');
-          if (!textContent) { console.log('[drive-import] SKIP (no text extracted):', file.name); continue; }
+          if (!textContent) continue;
         }
 
         const items = await runExtractionPrompt(
@@ -203,8 +241,6 @@ export default async function handler(req, res) {
           categoryList,
           toolIdList
         );
-
-        console.log('[drive-import] Extraction result for', file.name, '| items:', items.length);
 
         for (const item of items) {
           const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
