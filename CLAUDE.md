@@ -194,16 +194,13 @@ monthly subscriptions. No technical skills required.
 
 ## File Inventory
 
-⚠️ Placeholder — to be completed by Task 1 repo inventory.
-Do not assume any file exists — confirm from the repo.
+Refer to StaxAI Project Brief v12.23
 
 ---
 
 ## Supabase Schema
 
-⚠️ Placeholder — to be completed by Task 1 schema inventory.
-Do not assume any table or column exists — confirm from
-the codebase.
+Refer to StaxAI Project Brief v12.23
 
 ---
 
@@ -213,7 +210,7 @@ The shared authenticated pages stylesheet is the single source
 of truth for all colours, typography, spacing, and component
 styles across all authenticated pages.
 
-⚠️ Filename: TO BE CONFIRMED in Task 1. Do not assume.
+Filename: staxai-auth.css
 
 - content-library.html is the look-and-feel bible for all
   authenticated pages. The stylesheet is aligned to CL.
