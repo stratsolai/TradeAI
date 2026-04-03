@@ -11,6 +11,8 @@ because they are the most important.
 
 **Never force push — no exceptions, ever.**
 **One file per commit — never batch multiple files.**
+**Push to GitHub immediately after every commit — never leave
+commits unpushed at the end of a session.**
 **Only change what you were asked to change.** Do not refactor,
 restructure, or tidy code you were not explicitly asked to touch.
 **Read the entire file before editing anything.** Never make a
@@ -89,49 +91,29 @@ Completed April 2026. Findings reviewed with owner via Chat.
 Full findings and agreed decisions documented below in the
 Structural Analysis Findings & Agreed Decisions section.
 
-### Task 3 — Category 2 Quick Wins (no spec required)
+### ✅ Task 3 — Category 2 Quick Wins (complete)
 
-Fix the following items one file at a time. One commit per
-file. No other changes to any file — surgical edits only.
-
-1. Old brand name references — 7 instances:
-   - admin.html lines 6, 205
-   - forgot-password.html line 9
-   - offline.html line 10
-   - reset-password.html lines 9, 147
-   - pwa.js lines 65, 129
-   Replace all instances of 'TradeAI Pro' with 'StaxAI'.
-
-2. Hardcoded industry/trade assumptions — 6 instances:
-   - index.html line 6 — meta tag
-   - api/news-digest-refresh.js line 107
-   - pwa.js line 129
-   - terms-of-service.html line 117
-   - cl-profile.js line 135 — placeholder text only
-   - chatbot-settings.html line 319 — placeholder text only
-   Fix each to be industry-agnostic. For api/news-digest-
-   refresh.js read the full file first and report the current
-   implementation to the owner before changing — this is a
-   live API endpoint.
-
-3. 'We' language — 2 instances:
-   - chatbot-settings.html line 319
-   - content-library.html line 1312
-   Replace with 'you'/'your' language.
-
-4. Exclamation marks in UI copy — 2 instances:
-   - content-library.html line 1286
-   - cl-logic.js line 81
-   Remove exclamation marks.
-
-5. Duplicate CSS rules — tools.html
-   Remove duplicate CSS rule blocks.
-
-Report to owner after each file is committed.
+Completed April 2026. 14 commits, all pushed to GitHub.
+- admin.html — TradeAI Pro → StaxAI (2 instances) — b7177ca
+- forgot-password.html — TradeAI Pro → StaxAI — 089532c
+- offline.html — TradeAI Pro → StaxAI — 13ec1bd
+- reset-password.html — TradeAI Pro → StaxAI (2 instances) — f3fd22c
+- pwa.js — TradeAI → StaxAI (2 instances) — 063e91f
+- index.html — meta: trade businesses → small businesses — e10907a
+- api/news-digest-refresh.js — industry assumption fix — 6458b43
+- terms-of-service.html — industry assumption fix — 8f58ff0
+- cl-profile.js — placeholder fix — 3170d54
+- chatbot-settings.html — we language fix — 59c6dc9
+- content-library.html — our → your + exclamation mark — 216d57f
+- cl-logic.js — exclamation mark removed — f3f8dc0
+- tools.html — duplicate CSS removed — f3a7f43
+- api/news-digest-refresh.js — async async bug fixed, dead
+  TRADE_SOURCES map removed, User-Agent updated to
+  StaxAI/1.0 — 626907c
 
 ### Task 4 — Stylesheet Class Name Fix
 
-⚠️ Do not begin until Task 3 is complete.
+⚠️ Do not begin until instructed by owner via Chat.
 
 staxai-auth.css defines .topbar-account-btn and
 .topbar-account-dropdown but every page in the codebase uses
@@ -195,8 +177,9 @@ the build approach going forward.
 
 Pre-login files (index.html, tools.html, panel.html,
 panel-auth.html, industry-select.html, pricing-page.html)
-are complete and not to be touched except for Category 2
-quick wins above.
+are complete and not to be touched except for the specific
+Category 2 fixes in Task 3 which are now done. No further
+changes to pre-login files unless explicitly instructed.
 
 All post-login authenticated pages are to be rebuilt to the
 correct standard as part of the stylesheet rollout sequence.
@@ -411,6 +394,7 @@ working summary only.
 ### Commit Discipline
 - One file per commit — never batch
 - Never force push — no exceptions ever
+- Push to GitHub immediately after every commit
 - Clear descriptive commit messages
 
 ### Code Standards
@@ -428,6 +412,13 @@ working summary only.
 - Apostrophes in single-quoted JS strings must be escaped
   with \' or use double-quoted outer strings. For HTML
   attributes in JS strings use &apos; or &#39;.
+
+### Pre-Login Files
+- Pre-login files (index.html, tools.html, panel.html,
+  panel-auth.html, industry-select.html, pricing-page.html)
+  are not to be touched unless explicitly instructed.
+- The Category 2 fixes in Task 3 are the only changes that
+  were authorised for these files. That work is complete.
 
 ### Split Architecture (Rules v2.9 Section 12)
 No monolithic files for new work. Full detail in Rules v2.9.
@@ -454,9 +445,10 @@ Easy to miss — have caused bugs before:
   .stax-stack, .stax-card, .stax-card-screenshot,
   .stax-card-info, .stax-tagline, .stax-tagline-pre,
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
-- staxai-auth.css dropdown class names were fixed in Task 4
-  to match .account-btn / .account-dropdown as used across
-  all pages. Do not revert to .topbar-account-btn naming.
+- staxai-auth.css dropdown class names will be fixed in
+  Task 4 to match .account-btn / .account-dropdown as used
+  across all pages. Do not use .topbar-account-btn naming
+  in any new code before Task 4 is complete.
 - cl-settings.html does not load staxai-auth.css — it has
   its own inline CSS. This is a known issue to be fixed
   during the stylesheet rollout (Pre-Launch Step 3).
