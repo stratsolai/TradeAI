@@ -55,6 +55,7 @@ async function fetchDriveFileText(fileId, mimeType, accessToken) {
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
+    console.log('[drive-import] Binary download for', fileId, '| base64 length:', base64.length);
     return extractBinaryFileText(base64, mimeType);
   }
 
@@ -99,8 +100,9 @@ async function extractBinaryFileText(base64Data, mimeType) {
     }),
   });
   const data = await response.json();
-  if (data.content && data.content[0]) return data.content[0].text;
-  return null;
+  const extracted = (data.content && data.content[0]) ? data.content[0].text : null;
+  console.log('[drive-import] Claude extraction result | length:', extracted ? extracted.length : 0, '| preview:', extracted ? extracted.substring(0, 120) : '(null)');
+  return extracted;
 }
 
 // Run unified CL extraction prompt against content
@@ -209,6 +211,8 @@ export default async function handler(req, res) {
       );
       const filesData = await filesRes.json();
       const files = filesData.files || [];
+      console.log('[drive-import] Folder:', folderName, '| Files found:', files.length);
+      console.log('[drive-import] Files:', files.map(function(f) { return f.name + ' (' + f.mimeType + ')'; }).join(', '));
 
       let imported = 0;
       for (const file of files) {
@@ -241,6 +245,8 @@ export default async function handler(req, res) {
           categoryList,
           toolIdList
         );
+
+        console.log('[drive-import] Content extraction for', file.name, '| items returned:', items.length);
 
         for (const item of items) {
           const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
