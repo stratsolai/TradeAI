@@ -83,6 +83,7 @@ async function fetchDriveFileText(fileId, mimeType, accessToken) {
 
 // Extract text from a binary file (PDF, Word, etc.) via Claude document API
 async function extractBinaryFileText(base64Data, mimeType) {
+  console.log('[drive-import] Claude document API request | media_type:', mimeType, '| base64 data length:', base64Data.length);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -99,7 +100,14 @@ async function extractBinaryFileText(base64Data, mimeType) {
       ]}],
     }),
   });
+  console.log('[drive-import] Claude API HTTP status:', response.status);
   const data = await response.json();
+  if (data.error) {
+    console.error('[drive-import] Claude API error:', JSON.stringify(data.error));
+  }
+  if (data.type) {
+    console.log('[drive-import] Claude API response type:', data.type, '| stop_reason:', data.stop_reason || 'n/a', '| model:', data.model || 'n/a');
+  }
   const extracted = (data.content && data.content[0]) ? data.content[0].text : null;
   console.log('[drive-import] Claude extraction result | length:', extracted ? extracted.length : 0, '| preview:', extracted ? extracted.substring(0, 120) : '(null)');
   return extracted;
