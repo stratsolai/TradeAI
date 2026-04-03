@@ -1,3 +1,5 @@
+export const config = { maxDuration: 300 };
+
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -256,6 +258,7 @@ export default async function handler(req, res) {
 
         console.log('[drive-import] Content extraction for', file.name, '| items returned:', items.length);
 
+        console.log('[drive-import] Upserting', items.length, 'items for', file.name);
         for (const item of items) {
           const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
           const row = {
@@ -279,8 +282,14 @@ export default async function handler(req, res) {
             }),
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
-          if (!error) imported++;
+          if (error) {
+            console.error('[drive-import] Upsert FAILED for', item.title, '| error:', JSON.stringify(error));
+          } else {
+            console.log('[drive-import] Upsert OK for', item.title);
+            imported++;
+          }
         }
+        console.log('[drive-import] Finished upserting for', file.name, '| running total imported:', imported);
       }
 
       return res.status(200).json({ success: true, imported, total: files.length });
