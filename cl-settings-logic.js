@@ -10,35 +10,28 @@ window.CL_SETTINGS_LOGIC = {
   init: function () {
     var self = this;
     self._supabase = window.supabaseClient;
-    self._userId = window._currentUserId || null;
 
-    // Account dropdown
-    var _ab = document.getElementById('account-btn');
-    if (_ab) _ab.addEventListener('click', function (e) {
-      e.stopPropagation();
-      document.getElementById('account-dropdown').classList.toggle('open');
+    self._supabase.auth.getUser().then(function (res) {
+      if (!res || !res.data || !res.data.user) return;
+      self._userId = res.data.user.id;
+
+      // Account dropdown
+      var _ab = document.getElementById('account-btn');
+      if (_ab) _ab.addEventListener('click', function (e) {
+        e.stopPropagation();
+        document.getElementById('account-dropdown').classList.toggle('open');
+      });
+      document.addEventListener('click', function () {
+        var dd = document.getElementById('account-dropdown');
+        if (dd) dd.classList.remove('open');
+      });
+
+      self._bindEventDelegation();
+      self._bindScanSave();
+      self._bindCategorySave();
+      self._bindWebsiteButtons();
+      self._loadAll();
     });
-    document.addEventListener('click', function () {
-      var dd = document.getElementById('account-dropdown');
-      if (dd) dd.classList.remove('open');
-    });
-
-    // Sign out
-    var _sb = document.getElementById('sign-out-btn');
-    if (_sb) _sb.addEventListener('click', async function () {
-      await window.supabaseClient.auth.signOut();
-      window.location.href = '/login';
-    });
-
-    // Account email display
-    var emailEl = document.getElementById('account-email-short');
-    if (emailEl && window._currentUserEmail) emailEl.textContent = window._currentUserEmail;
-
-    self._bindEventDelegation();
-    self._bindScanSave();
-    self._bindCategorySave();
-    self._bindWebsiteButtons();
-    self._loadAll();
   },
 
   _loadAll: async function () {
