@@ -27,8 +27,7 @@ window.CL_UPLOAD = {
         "<div class=\"upload-primary-btn upload-drop-zone\" id=\"cl-doc-drop\">",
           "<span class=\"upload-btn-icon\">📄</span>",
           "<span class=\"upload-btn-label\">Upload Document or File</span>",
-          "<span class=\"upload-btn-sub\">PDF, Word, PPT, Excel, images — drag and drop or browse</span>",
-          "<button class=\"btn-browse\" id=\"cl-doc-browse-btn\">Browse Files</button>",
+          "<span class=\"upload-btn-sub\">PDF, Word, PPT, Excel, images — drag and drop or tap to browse</span>",
         "</div>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
@@ -63,18 +62,15 @@ window.CL_UPLOAD = {
         photoInput.value = "";
       });
     }
-    var docBrowseBtn = document.getElementById("cl-doc-browse-btn");
     var docInput = document.getElementById("cl-doc-input");
-    if (docBrowseBtn && docInput) {
-      docBrowseBtn.addEventListener("click", function(e) { e.stopPropagation(); docInput.click(); });
+    var dropZone = document.getElementById("cl-doc-drop");
+    if (dropZone && docInput) {
+      dropZone.addEventListener("click", function() { docInput.click(); });
       docInput.addEventListener("change", function(e) {
         var files = Array.from(e.target.files || []);
         if (files.length) self._handleDocUpload(files);
         docInput.value = "";
       });
-    }
-    var dropZone = document.getElementById("cl-doc-drop");
-    if (dropZone) {
       dropZone.addEventListener("dragover", function(e) { e.preventDefault(); dropZone.classList.add("drag-over"); });
       dropZone.addEventListener("dragleave", function() { dropZone.classList.remove("drag-over"); });
       dropZone.addEventListener("drop", function(e) {
