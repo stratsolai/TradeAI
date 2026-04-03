@@ -162,6 +162,10 @@ export default async function handler(req, res) {
       const filesData = await filesRes.json();
       const files = filesData.files || [];
 
+      console.log('[drive-import] Folder:', folderName, '| folderId:', folderId);
+      console.log('[drive-import] Files found:', files.length);
+      console.log('[drive-import] File list:', files.map(f => f.name + ' (' + f.mimeType + ')').join(', '));
+
       let imported = 0;
       for (const file of files) {
         const isImage = file.mimeType.startsWith('image/');
@@ -176,12 +180,18 @@ export default async function handler(req, res) {
           'text/plain',
         ].includes(file.mimeType);
 
-        if (!isImage && !isDoc) continue;
+        if (!isImage && !isDoc) {
+          console.log('[drive-import] SKIP (unsupported type):', file.name, file.mimeType);
+          continue;
+        }
+
+        console.log('[drive-import] Processing:', file.name, '| type:', file.mimeType, '| isImage:', isImage, '| isDoc:', isDoc);
 
         let textContent = null;
         if (isDoc) {
           textContent = await fetchDriveFileText(file.id, file.mimeType, accessToken);
-          if (!textContent) continue;
+          console.log('[drive-import] Text extracted for', file.name, '| length:', textContent ? textContent.length : 0, '| preview:', textContent ? textContent.substring(0, 100) : '(null)');
+          if (!textContent) { console.log('[drive-import] SKIP (no text extracted):', file.name); continue; }
         }
 
         const items = await runExtractionPrompt(
@@ -193,6 +203,8 @@ export default async function handler(req, res) {
           categoryList,
           toolIdList
         );
+
+        console.log('[drive-import] Extraction result for', file.name, '| items:', items.length);
 
         for (const item of items) {
           const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
