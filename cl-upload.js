@@ -38,7 +38,8 @@ window.CL_UPLOAD = {
       "</div>",
       "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none\">",
         "<span id=\"cl-upload-confirm-msg\"></span>",
-        "<a href=\"#\" id=\"cl-goto-review\" class=\"btn-link\">Go to Review tab</a>",
+        "<a href=\"#\" id=\"cl-goto-review\" class=\"btn-link\" style=\"display:none\">Go to Review tab</a>",
+        "<button id=\"cl-upload-dismiss\" class=\"btn-dismiss\" style=\"display:none\">Dismiss</button>",
       "</div>",
       "<div class=\"upload-section\">",
         "<div class=\"upload-section-title\">Sources</div>",
@@ -239,11 +240,15 @@ window.CL_UPLOAD = {
   _showUploadConfirmation: function(count) {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
+    var reviewLink = document.getElementById("cl-goto-review");
+    var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
     confirmDiv.style.borderColor = "#28a745";
     confirmDiv.style.background = "#edfaf1";
     msgSpan.style.color = "#28a745";
     msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
+    if (reviewLink) reviewLink.style.display = "";
+    if (dismissBtn) dismissBtn.style.display = "none";
     confirmDiv.style.display = "flex";
     setTimeout(function() { confirmDiv.style.display = "none"; }, 8000);
   },
@@ -251,13 +256,19 @@ window.CL_UPLOAD = {
   _showUploadError: function(msg) {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
+    var reviewLink = document.getElementById("cl-goto-review");
+    var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
     confirmDiv.style.borderColor = "#dc3545";
     confirmDiv.style.background = "#fef2f2";
     msgSpan.style.color = "#dc3545";
     msgSpan.textContent = msg;
+    if (reviewLink) reviewLink.style.display = "none";
+    if (dismissBtn) {
+      dismissBtn.style.display = "";
+      dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
+    }
     confirmDiv.style.display = "flex";
-    setTimeout(function() { confirmDiv.style.display = "none"; }, 8000);
   }
 
 };
