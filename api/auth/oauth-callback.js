@@ -355,6 +355,17 @@ module.exports = async (req, res) => {
               currentEmails.push({ provider: clProvider, email: userEmail, connected_at: new Date().toISOString() });
             }
             clUpdateData.cl_connected_emails = currentEmails;
+            if (clProvider === 'gmail' || clProvider === 'google') {
+              clUpdateData.gmail_access_token = tokenData.access_token;
+              if (tokenData.refresh_token) {
+                clUpdateData.gmail_refresh_token = tokenData.refresh_token;
+              }
+            } else if (clProvider === 'microsoft' || clProvider === 'outlook') {
+              clUpdateData.outlook_access_token = tokenData.access_token;
+              if (tokenData.refresh_token) {
+                clUpdateData.outlook_refresh_token = tokenData.refresh_token;
+              }
+            }
           }
 
           const qs = querystring.stringify({ id: `eq.${userId}` });
