@@ -264,22 +264,12 @@ export default async function handler(req, res) {
           const row = {
             user_id: userId,
             title: String(item.title || file.name).substring(0, 200),
-            body: String(item.body || ''),
+            content_text: String(item.body || ''),
             category: item.category || activeFromProfile[0] || 'general',
             tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
             status: 'pending',
             source: 'google-drive',
-            tool_source: 'drive-import',
             source_ref: sourceRef,
-            metadata: JSON.stringify({
-              driveFileId: file.id,
-              mimeType: file.mimeType,
-              folderName: folderName,
-              size: file.size,
-              createdTime: file.createdTime,
-              fileUrl: isImage ? (file.webContentLink || null) : null,
-              thumbnailUrl: isImage ? (file.thumbnailLink || null) : null,
-            }),
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
           if (error) {
