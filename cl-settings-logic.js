@@ -335,12 +335,14 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     try {
       self._driveConnected = false;
+      self._driveFolders = [];
       var res = await self._supabase
         .from('profiles')
-        .update({ cl_drive_connected: false })
+        .update({ cl_drive_connected: false, cl_drive_folders: null })
         .eq('id', self._userId);
       if (res.error) { console.error('_disconnectDrive error:', res.error); await self._loadConnections(); return; }
       self._renderDriveList();
+      self._renderDriveFolders();
     } catch (e) { console.error('_disconnectDrive exception:', e); }
   },
 
