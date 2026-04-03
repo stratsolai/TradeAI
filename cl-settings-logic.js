@@ -5,6 +5,7 @@ window.CL_SETTINGS_LOGIC = {
   _settings: { email_scan_frequency: 'manual', drive_scan_frequency: 'manual', website_scan_frequency: 'manual' },
   _emails: [],
   _driveConnected: false,
+  _driveFolders: [],
   _websiteUrls: [],
 
   init: function () {
@@ -31,6 +32,15 @@ window.CL_SETTINGS_LOGIC = {
       self._bindCategorySave();
       self._bindWebsiteButtons();
       self._loadAll();
+      self._checkDriveOAuthReturn();
+
+      var pickerSaveBtn = document.getElementById('drive-folder-picker-save');
+      if (pickerSaveBtn) pickerSaveBtn.addEventListener('click', function () { self._saveDriveFolders(); });
+      var pickerCancelBtn = document.getElementById('drive-folder-picker-cancel');
+      if (pickerCancelBtn) pickerCancelBtn.addEventListener('click', function () {
+        var picker = document.getElementById('drive-folder-picker');
+        if (picker) picker.style.display = 'none';
+      });
     });
   },
 
@@ -48,16 +58,18 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var res = await self._supabase
         .from('profiles')
-        .select('cl_connected_emails, cl_drive_connected, website_urls')
+        .select('cl_connected_emails, cl_drive_connected, cl_drive_folders, website_urls')
         .eq('id', self._userId)
         .maybeSingle();
       if (res.error) { console.error('_loadConnections error:', res.error); return; }
       var data = res.data || {};
       self._emails = data.cl_connected_emails || [];
       self._driveConnected = data.cl_drive_connected || false;
+      self._driveFolders = data.cl_drive_folders || [];
       self._websiteUrls = data.website_urls || [];
       self._renderEmailList();
       self._renderDriveList();
+      self._renderDriveFolders();
       self._renderWebsiteList();
     } catch (e) { console.error('_loadConnections exception:', e); }
   },
@@ -219,6 +231,9 @@ window.CL_SETTINGS_LOGIC = {
           if (email) self._disconnectEmail(email);
         } else if (type === 'drive') {
           self._disconnectDrive();
+        } else if (type === 'drive-folder') {
+          var folderId = disconnectBtn.getAttribute('data-folder-id');
+          if (folderId) self._disconnectDriveFolder(folderId);
         }
         return;
       }
@@ -404,6 +419,96 @@ window.CL_SETTINGS_LOGIC = {
     if (!grid) return;
     var btn = grid.querySelector('[data-cat-remove="' + val + '"]');
     if (btn && btn.closest('.cat-row')) btn.closest('.cat-row').remove();
+  },
+
+  _checkDriveOAuthReturn: async function () {
+    var self = this;
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('connected') !== 'google-drive') return;
+    window.history.replaceState({}, '', window.location.pathname);
+    var picker = document.getElementById('drive-folder-picker');
+    var pickerList = document.getElementById('drive-folder-picker-list');
+    var pickerMsg = document.getElementById('drive-folder-picker-msg');
+    if (!picker || !pickerList) return;
+    picker.style.display = 'block';
+    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
+    try {
+      var resp = await fetch('/api/drive-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: self._userId, action: 'list-folders' })
+      });
+      var data = await resp.json();
+      var folders = data.folders || [];
+      if (folders.length === 0) {
+        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in your Google Drive.</div>';
+        return;
+      }
+      var existingIds = self._driveFolders.map(function (f) { return f.id; });
+      pickerList.innerHTML = folders.map(function (f) {
+        var already = existingIds.indexOf(f.id) !== -1;
+        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
+          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + f.name + '"' + (already ? ' checked disabled' : '') + '>' +
+          '<span class="connection-item-email">' + f.name + (already ? ' (already connected)' : '') + '</span>' +
+          '</label>';
+      }).join('');
+    } catch (err) {
+      console.error('Drive folder list error:', err);
+      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
+    }
+  },
+
+  _saveDriveFolders: async function () {
+    var self = this;
+    var checkboxes = document.querySelectorAll('.drive-folder-checkbox:checked:not(:disabled)');
+    var newFolders = [];
+    checkboxes.forEach(function (cb) {
+      newFolders.push({ id: cb.getAttribute('data-folder-id'), name: cb.getAttribute('data-folder-name') });
+    });
+    if (newFolders.length === 0) return;
+    var merged = self._driveFolders.concat(newFolders);
+    try {
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_drive_folders: merged })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_saveDriveFolders error:', res.error); return; }
+      self._driveFolders = merged;
+      self._renderDriveFolders();
+      var picker = document.getElementById('drive-folder-picker');
+      if (picker) picker.style.display = 'none';
+      var pickerMsg = document.getElementById('drive-folder-picker-msg');
+      if (pickerMsg) { pickerMsg.textContent = ''; pickerMsg.style.display = 'none'; }
+    } catch (e) { console.error('_saveDriveFolders exception:', e); }
+  },
+
+  _renderDriveFolders: function () {
+    var self = this;
+    var list = document.getElementById('drive-folders-list');
+    if (!list) return;
+    if (!self._driveFolders || self._driveFolders.length === 0) {
+      list.innerHTML = '';
+      return;
+    }
+    list.innerHTML = self._driveFolders.map(function (f) {
+      return '<div class="connection-item">' +
+        '<span class="connection-item-email">' + f.name + '</span>' +
+        '<button class="btn-disconnect" data-type="drive-folder" data-folder-id="' + f.id + '">Disconnect</button>' +
+        '</div>';
+    }).join('');
+  },
+
+  _disconnectDriveFolder: async function (folderId) {
+    var self = this;
+    try {
+      self._driveFolders = self._driveFolders.filter(function (f) { return f.id !== folderId; });
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_drive_folders: self._driveFolders })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_disconnectDriveFolder error:', res.error); await self._loadConnections(); return; }
+      self._renderDriveFolders();
+    } catch (e) { console.error('_disconnectDriveFolder exception:', e); }
   }
 
 };
