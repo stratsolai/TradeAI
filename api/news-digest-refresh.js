@@ -104,7 +104,7 @@ const TRADE_SOURCES = {
   },
   default: {
     queries: [
-      'Australian trades industry news', 'small business news Australia',
+      'Australian small business industry news', 'small business news Australia',
       'WHS workplace safety update Australia', 'Fair Work construction update'
     ],
     bodies: ['Fair Work Commission', 'Safe Work Australia', 'AISC']
