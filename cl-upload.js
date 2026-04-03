@@ -192,6 +192,23 @@ window.CL_UPLOAD = {
       })();
     },
 
+  _fileToBase64: function(file) {
+    return new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result.split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  },
+
+  _getDocFileType: function(fileName) {
+    var ext = fileName.toLowerCase().split(".").pop();
+    if (ext === "pdf") return "pdf";
+    if (ext === "txt") return "text";
+    if (ext === "doc" || ext === "docx") return "word";
+    return "text";
+  },
+
   _handlePhotoUpload: async function(files) {
     var imageFiles = [];
     var rejected = [];
@@ -206,35 +223,98 @@ window.CL_UPLOAD = {
       this._showUploadError("Only image files are accepted. Skipped: " + rejected.join(", "));
     }
     if (imageFiles.length === 0) return;
+    var self = this;
     var supabase = this._supabase;
+    this._showProcessing();
     try {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
-      if (!user) return;
-      var count = 0;
+      if (!user) { self._hideProcessing(); return; }
+      var totalInserted = 0;
       for (var j = 0; j < imageFiles.length; j++) {
         var file = imageFiles[j];
-        var result = await supabase.from("content_library").insert({ user_id: user.id, title: file.name.replace(/\.[^.]+$/, ""), body: "", type: "photo", source: "photo", status: "pending", tool_tags: [] });
-        if (!result.error) count++;
+        var fileData = await self._fileToBase64(file);
+        var resp = await fetch("/api/process-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData })
+        });
+        var result = await resp.json();
+        if (result.success && result.itemsCount) {
+          totalInserted += result.itemsCount;
+        } else if (result.error) {
+          console.error("Photo processing error:", result.error);
+        }
       }
-      if (count > 0) this._showUploadConfirmation(count);
-    } catch (err) { console.error("Photo upload error:", err); }
+      self._hideProcessing();
+      if (totalInserted > 0) {
+        self._showUploadConfirmation(totalInserted);
+      } else {
+        self._showUploadError("No content could be extracted from the selected images.");
+      }
+    } catch (err) {
+      console.error("Photo upload error:", err);
+      self._hideProcessing();
+      self._showUploadError("An error occurred while processing the images. Please try again.");
+    }
   },
 
   _handleDocUpload: async function(files) {
+    var self = this;
     var supabase = this._supabase;
+    this._showProcessing();
     try {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
-      if (!user) return;
-      var count = 0;
+      if (!user) { self._hideProcessing(); return; }
+      var totalInserted = 0;
       for (var i = 0; i < files.length; i++) {
         var file = files[i];
-        var result = await supabase.from("content_library").insert({ user_id: user.id, title: file.name.replace(/\.[^.]+$/, ""), body: "", type: "document", source: "document", status: "pending", tool_tags: [] });
-        if (!result.error) count++;
+        var fileData = await self._fileToBase64(file);
+        var fileType = self._getDocFileType(file.name);
+        var resp = await fetch("/api/process-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: fileType, fileData: fileData })
+        });
+        var result = await resp.json();
+        if (result.success && result.itemsCount) {
+          totalInserted += result.itemsCount;
+        } else if (result.error) {
+          console.error("Document processing error:", result.error);
+        }
       }
-      if (count > 0) this._showUploadConfirmation(count);
-    } catch (err) { console.error("Document upload error:", err); }
+      self._hideProcessing();
+      if (totalInserted > 0) {
+        self._showUploadConfirmation(totalInserted);
+      } else {
+        self._showUploadError("No content could be extracted from the selected documents.");
+      }
+    } catch (err) {
+      console.error("Document upload error:", err);
+      self._hideProcessing();
+      self._showUploadError("An error occurred while processing the documents. Please try again.");
+    }
+  },
+
+  _showProcessing: function() {
+    var confirmDiv = document.getElementById("cl-upload-confirm");
+    var msgSpan = document.getElementById("cl-upload-confirm-msg");
+    var reviewLink = document.getElementById("cl-goto-review");
+    var dismissBtn = document.getElementById("cl-upload-dismiss");
+    if (!confirmDiv || !msgSpan) return;
+    confirmDiv.style.borderColor = "#4A6D8C";
+    confirmDiv.style.background = "#e8f4fd";
+    msgSpan.style.color = "#4A6D8C";
+    msgSpan.textContent = "Processing...";
+    if (reviewLink) reviewLink.style.display = "none";
+    if (dismissBtn) dismissBtn.style.display = "none";
+    confirmDiv.style.display = "flex";
+  },
+
+  _hideProcessing: function() {
+    var confirmDiv = document.getElementById("cl-upload-confirm");
+    if (confirmDiv) confirmDiv.style.display = "none";
   },
 
   _showUploadConfirmation: function(count) {
