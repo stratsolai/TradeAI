@@ -111,9 +111,12 @@ Completed April 2026. 14 commits, all pushed to GitHub.
   TRADE_SOURCES map removed, User-Agent updated to
   StaxAI/1.0 — 626907c
 
-### Task 4 — Stylesheet Class Name Fix
+### ✅ Task 4 — Stylesheet Class Name Fix (complete)
 
-⚠️ Do not begin until instructed by owner via Chat.
+Completed April 2026. staxai-auth.css updated — renamed
+.topbar-account-btn → .account-btn and .topbar-account-dropdown
+→ .account-dropdown. Stylesheet dropdown styles now active
+across all pages. Commit: c5eb85a
 
 staxai-auth.css defines .topbar-account-btn and
 .topbar-account-dropdown but every page in the codebase uses
