@@ -100,18 +100,22 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("cl_drive_connected, business_email_gmail, business_email_outlook, website_urls").eq("id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_connected_emails, website_urls").eq("id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
-      if (profile.business_email_gmail) {
-        tiles.push({ id: "gmail", icon: "📧", name: profile.business_email_gmail, desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true });
+      var connectedEmails = profile.cl_connected_emails || [];
+      var gmailEntry = connectedEmails.filter(function(e) { return e && (e.provider === "gmail" || e.provider === "google"); })[0];
+      var outlookEntry = connectedEmails.filter(function(e) { return e && (e.provider === "microsoft" || e.provider === "outlook"); })[0];
+
+      if (gmailEntry) {
+        tiles.push({ id: "gmail", icon: "📧", name: gmailEntry.email, desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true });
       } else {
         tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false });
       }
 
-      if (profile.business_email_outlook) {
-        tiles.push({ id: "outlook", icon: "📧", name: profile.business_email_outlook, desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true });
+      if (outlookEntry) {
+        tiles.push({ id: "outlook", icon: "📧", name: outlookEntry.email, desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true });
       } else {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false });
       }
