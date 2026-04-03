@@ -132,7 +132,7 @@ window.CL_PROFILE = {
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
       this._field2('Business Structure', this._select('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industry / Profession', this._input('prof-industry', 'text', this._v('industry'), 'e.g. Plumbing, Accounting, Landscaping')) +
+      this._field('Industry / Profession', this._input('prof-industry', 'text', this._v('industry'), 'e.g. Accounting, Retail, Construction')) +
       this._field('Business Logo', logoHtml) +
     '</div>';
     document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save', '_saveIdentity');
