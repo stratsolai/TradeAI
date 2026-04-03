@@ -73,39 +73,103 @@ READ IN FULL — applies to Claude Code:
 Complete in order. Do not begin the next task until the current
 one is finished and findings reviewed with the owner via Chat.
 
-### Task 1 — Repo & Schema Inventory (report only — no commits)
+### ✅ Task 1 — Repo & Schema Inventory (complete)
 
-Report all findings to the owner via Chat before any changes
-are made to any file.
+Completed April 2026. Findings reviewed with owner via Chat.
+- Every file listed and documented
+- Stylesheet filename confirmed: staxai-auth.css
+- 'Your Trade. Your Stax.' — not found anywhere in codebase
+- 21 Supabase tables documented
+- Project Brief updated to v12.23 with full file inventory
+  and schema
 
-1. List every file in the repo with its purpose
-2. Confirm the correct stylesheet filename
-3. Search the entire repo for the string 'Your Trade. Your Stax.'
-   and report every file and line where it appears
-4. Confirm the full Supabase schema from the codebase — every
-   table and column referenced across all files
-5. Findings feed into Project Brief Sections 7 and 8, which
-   Chat will update after review
+### ✅ Task 2 — Structural Analysis (complete)
 
-### Task 2 — Structural Analysis (report only — no commits)
+Completed April 2026. Findings reviewed with owner via Chat.
+Full findings and agreed decisions documented below in the
+Structural Analysis Findings & Agreed Decisions section.
 
-Report all findings to the owner via Chat. No changes committed
-until findings reviewed and a plan agreed.
+### Task 3 — Category 2 Quick Wins (no spec required)
 
-Review the entire codebase for:
-- Compliance with split architecture (Rules v2.9 Section 12)
-  — identify any monolithic files that violate this pattern
-- Code quality — redundant code, dead code, duplicated logic,
-  inconsistent or poorly structured blocks
-- Best practice software development standards — files that
-  are hard to maintain or incorrectly wired together
-- Any other violations of development standards in Rules v2.9
-  Section 13
+Fix the following items one file at a time. One commit per
+file. No other changes to any file — surgical edits only.
 
-### Task 3 — Fix CL Settings OAuth (current build blocker)
+1. Old brand name references — 7 instances:
+   - admin.html lines 6, 205
+   - forgot-password.html line 9
+   - offline.html line 10
+   - reset-password.html lines 9, 147
+   - pwa.js lines 65, 129
+   Replace all instances of 'TradeAI Pro' with 'StaxAI'.
 
-⚠️ Do not begin until Tasks 1 and 2 are complete and findings
-reviewed with the owner via Chat.
+2. Hardcoded industry/trade assumptions — 6 instances:
+   - index.html line 6 — meta tag
+   - api/news-digest-refresh.js line 107
+   - pwa.js line 129
+   - terms-of-service.html line 117
+   - cl-profile.js line 135 — placeholder text only
+   - chatbot-settings.html line 319 — placeholder text only
+   Fix each to be industry-agnostic. For api/news-digest-
+   refresh.js read the full file first and report the current
+   implementation to the owner before changing — this is a
+   live API endpoint.
+
+3. 'We' language — 2 instances:
+   - chatbot-settings.html line 319
+   - content-library.html line 1312
+   Replace with 'you'/'your' language.
+
+4. Exclamation marks in UI copy — 2 instances:
+   - content-library.html line 1286
+   - cl-logic.js line 81
+   Remove exclamation marks.
+
+5. Duplicate CSS rules — tools.html
+   Remove duplicate CSS rule blocks.
+
+Report to owner after each file is committed.
+
+### Task 4 — Stylesheet Class Name Fix
+
+⚠️ Do not begin until Task 3 is complete.
+
+staxai-auth.css defines .topbar-account-btn and
+.topbar-account-dropdown but every page in the codebase uses
+.account-btn and .account-dropdown. The stylesheet dropdown
+styles are currently unused by every page.
+
+Fix: Update staxai-auth.css to use .account-btn and
+.account-dropdown (matching all existing pages) rather than
+renaming every page.
+
+Before making any changes:
+1. Read staxai-auth.css in full
+2. Identify every instance of .topbar-account-btn and
+   .topbar-account-dropdown
+3. Report the full list of changes needed to the owner
+4. Owner will confirm before any changes are committed
+
+### Task 5 — Create topbar.js (shared file)
+
+⚠️ Do not begin until Task 4 is complete.
+⚠️ Requires approved spec before any work begins. Owner will
+provide spec via Chat before this task starts.
+
+topbar.js will be a new shared JS file containing the standard
+account dropdown behaviour for all authenticated pages:
+- Populate account-email-short with the user's email prefix
+- Populate account-dropdown-email with the user's full email
+- Wire dropdown toggle (open/close on button click,
+  close on outside click)
+- Wire sign-out button to /login consistently
+
+This file will be loaded by every authenticated page as part
+of the stylesheet rollout. It eliminates the duplicated
+dropdown JS currently copy-pasted across 10+ files.
+
+### Task 6 — Fix CL Settings OAuth (current build blocker)
+
+⚠️ Do not begin until Task 5 is complete.
 
 Files: cl-settings.html, cl-settings-logic.js
 
@@ -119,6 +183,99 @@ Before making any changes:
    implementation to the owner via Chat
 3. Owner will agree a fix approach with Chat
 4. Only then begin any changes
+
+---
+
+## Structural Analysis Findings & Agreed Decisions
+
+Completed April 2026 — Tasks 1 and 2. These findings inform
+the build approach going forward.
+
+### Post-Login Rebuild Strategy
+
+Pre-login files (index.html, tools.html, panel.html,
+panel-auth.html, industry-select.html, pricing-page.html)
+are complete and not to be touched except for Category 2
+quick wins above.
+
+All post-login authenticated pages are to be rebuilt to the
+correct standard as part of the stylesheet rollout sequence.
+The structural analysis findings on these files reflect known
+problems that will be resolved during the rebuild — they are
+not a separate fix list.
+
+The reference implementation for all authenticated pages is:
+- content-library.html — look-and-feel bible
+- cl-settings.html — settings page pattern
+- staxai-auth.css — single source of truth for all UI values
+
+The sequence for each tool rebuild is:
+1. Structural analysis specific to that tool (report only)
+2. Rebuild to match the CL/stylesheet standard
+3. Load staxai-auth.css and topbar.js
+4. Remove all inline dropdown CSS and JS
+5. Replace inline onclick handlers with addEventListener
+6. Replace hardcoded CSS values with CSS variables
+7. Test and confirm before moving to next tool
+
+### Stylesheet — Known Issues
+
+- staxai-auth.css defines .topbar-account-btn and
+  .topbar-account-dropdown but every page uses .account-btn
+  and .account-dropdown — stylesheet dropdown styles are
+  currently unused. Fix is Task 4 above.
+- content-library.html loads staxai-auth.css but also has
+  its own inline CSS block overriding some dropdown styles —
+  to be cleaned up during CL stylesheet rollout.
+- cl-settings.html does not load staxai-auth.css at all —
+  has its own complete inline CSS. To be fixed during
+  CL Settings stylesheet rollout.
+
+### Dropdown — Known Issues
+
+Across all authenticated pages the dropdown is inconsistent:
+- CL — no email display, sign-out goes to /login
+- CL Settings — no sign-out wiring at all (broken)
+- Chatbot — email display works, sign-out goes to /login
+- Email Assistant — sign-out goes to index.html (wrong)
+
+All of these are resolved by topbar.js (Task 5).
+
+### Dead UI in content-library.html
+
+Five modals exist in content-library.html (modal-website,
+modal-drive, modal-schedule, modal-reject, modal-detail) with
+onclick handlers calling functions that do not exist anywhere
+in the codebase (closeModal, scrapeWebsite, confirmApprove,
+confirmReject). These are dead UI — the modals cannot be
+opened and the buttons do nothing.
+
+Decision: Leave as-is for now. These will be addressed when
+the CL rebuild reaches those features.
+
+### window.CL_LOGIC
+
+cl-logic.js does not define window.CL_LOGIC. The call to
+window.CL_LOGIC.init() in content-library.html silently
+fails. The page works anyway because cl-logic.js runs its
+code on script load rather than waiting for init().
+
+This is a structural violation but not a functional bug.
+To be addressed when CL files are next touched as part of
+the rebuild.
+
+### Deferred — Address During Tool Rebuilds
+
+The following findings from Task 2 are not separate tasks.
+They will be resolved naturally as each tool is rebuilt
+during the stylesheet rollout sequence:
+- 60+ inline onclick handlers across post-login pages
+- 450+ hardcoded CSS values across post-login pages
+- Duplicated auth check pattern across 10+ files
+- Duplicated escapeHtml() across 5 files
+- Duplicated account dropdown JS across 10+ files
+- panel.html / panel-auth.html shared renderPanel() duplication
+- Logic files not following window.*_LOGIC + init() pattern
 
 ---
 
@@ -227,7 +384,7 @@ is complete and confirmed working.
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
 | 1    | Fix CL Settings OAuth (Gmail, Outlook, Google Drive)       |
-|      | — CURRENT BLOCKER                                          |
+|      | — current blocker (Task 6 above)                           |
 | 2    | Complete stylesheet rollout across CL files                |
 | 3    | Complete stylesheet rollout across cl-settings.html        |
 | 4    | Roll stylesheet out to all remaining authenticated pages   |
@@ -297,6 +454,16 @@ Easy to miss — have caused bugs before:
   .stax-stack, .stax-card, .stax-card-screenshot,
   .stax-card-info, .stax-tagline, .stax-tagline-pre,
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
+- staxai-auth.css dropdown class names were fixed in Task 4
+  to match .account-btn / .account-dropdown as used across
+  all pages. Do not revert to .topbar-account-btn naming.
+- cl-settings.html does not load staxai-auth.css — it has
+  its own inline CSS. This is a known issue to be fixed
+  during the stylesheet rollout (Pre-Launch Step 3).
+- content-library.html has 5 dead modals (modal-website,
+  modal-drive, modal-schedule, modal-reject, modal-detail)
+  with onclick handlers calling undefined functions. Do not
+  attempt to wire these up — they are unbuilt features.
 
 ### Stylesheet & CSS
 - All CSS variables defined in the shared stylesheet — never
@@ -342,59 +509,4 @@ CSS (when editing files with CSS):
 
 JavaScript:
 - No inline onclick handlers
-- Apostrophes in JS strings handled correctly
-- JS syntax valid — confirmed with node
-- No force push
-
-File integrity:
-- DOCTYPE present, closing tags present
-- File not truncated, not empty
-
-Industry-agnostic (when editing AI prompts or data models):
-- Confirmed works correctly for a non-trade industry such
-  as accounting or consulting
-
----
-
-## Important Platform Facts
-
-- Stripe LIVE MODE — never use test keys or create test
-  transactions. Webhook logic in api/stripe-webhook.js —
-  never duplicate payment activation logic elsewhere.
-- New tools needing Stripe payment: create a new Stripe
-  product and document the price ID in the Tool
-  Specification Guide before building.
-- Supabase anon key in supabase-client.js is intentional —
-  RLS is enabled.
-- widget.js is an embeddable chatbot for customers' own
-  websites — not an internal platform file.
-- Content Library available to all paying customers
-  automatically — no separate activation.
-- Email Assistant (per-user personal inbox) and CL business
-  email connection are two entirely separate systems.
-  Never conflate them in UI or code.
-
----
-
-## Document Reference
-
-| Document                        | Purpose                             |
-|---------------------------------|-------------------------------------|
-| CLAUDE.md (this file)           | Current state and active tasks      |
-| Rules & Instructions v2.9       | All rules — read applicable         |
-|                                 | sections every session              |
-| Project Brief v12.22            | Platform reference and architecture |
-| Outstanding Tasks v1.2          | All outstanding tasks and known     |
-|                                 | build issues by tool                |
-| Tool Specification Guide v2.3   | All 13 tool specifications          |
-| Panel Rebuild Spec v3.4         | Panel page — steps 4b/4c pending    |
-| Dashboard & CL Spec v1.2        | Dashboard & CL governing doc        |
-| Dashboard Spec v3.2             | Dashboard rebuild — blocked         |
-| Auth Panel & Activate Spec v1.4 | Panel auth — step 5 pending         |
-| Auth CSS Spec v1.0              | Stylesheet spec — note: stylesheet  |
-|                                 | is source of truth, not this doc    |
-| CL New Features Spec v1.3       | Reference only — not governing.     |
-|                                 | Current state determined by repo.   |
-| Multi-User Account Spec v1.0    | Multi-user — approved, awaiting     |
-|                                 | build                               |
-| Tool ID Audit v1.0              | Canonical tool ID register          |
+- Apostrophes in JS strings handled correc
