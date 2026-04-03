@@ -78,7 +78,7 @@ setTimeout(() => {
   // Check for OAuth callbacks
   const params = new URLSearchParams(window.location.search);
   if (params.get('gdrive_connected') === 'true') {
-    alert('✅ Google Drive connected!');
+    alert('✅ Google Drive connected');
     loadConnectionStatus();
     window.history.replaceState({}, '', window.location.pathname);
   }
