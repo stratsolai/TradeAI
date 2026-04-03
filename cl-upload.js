@@ -192,14 +192,27 @@ window.CL_UPLOAD = {
     },
 
   _handlePhotoUpload: async function(files) {
+    var imageFiles = [];
+    var rejected = [];
+    for (var i = 0; i < files.length; i++) {
+      if (files[i].type && files[i].type.indexOf("image/") === 0) {
+        imageFiles.push(files[i]);
+      } else {
+        rejected.push(files[i].name);
+      }
+    }
+    if (rejected.length > 0) {
+      this._showUploadError("Only image files are accepted. Skipped: " + rejected.join(", "));
+    }
+    if (imageFiles.length === 0) return;
     var supabase = this._supabase;
     try {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
       var count = 0;
-      for (var i = 0; i < files.length; i++) {
-        var file = files[i];
+      for (var j = 0; j < imageFiles.length; j++) {
+        var file = imageFiles[j];
         var result = await supabase.from("content_library").insert({ user_id: user.id, title: file.name.replace(/\.[^.]+$/, ""), body: "", type: "photo", source: "photo", status: "pending", tool_tags: [] });
         if (!result.error) count++;
       }
@@ -227,7 +240,22 @@ window.CL_UPLOAD = {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
     if (!confirmDiv || !msgSpan) return;
+    confirmDiv.style.borderColor = "#28a745";
+    confirmDiv.style.background = "#edfaf1";
+    msgSpan.style.color = "#28a745";
     msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
+    confirmDiv.style.display = "flex";
+    setTimeout(function() { confirmDiv.style.display = "none"; }, 8000);
+  },
+
+  _showUploadError: function(msg) {
+    var confirmDiv = document.getElementById("cl-upload-confirm");
+    var msgSpan = document.getElementById("cl-upload-confirm-msg");
+    if (!confirmDiv || !msgSpan) return;
+    confirmDiv.style.borderColor = "#dc3545";
+    confirmDiv.style.background = "#fef2f2";
+    msgSpan.style.color = "#dc3545";
+    msgSpan.textContent = msg;
     confirmDiv.style.display = "flex";
     setTimeout(function() { confirmDiv.style.display = "none"; }, 8000);
   }
