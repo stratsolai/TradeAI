@@ -62,7 +62,7 @@ function showInstallBanner() {
       <div style="font-size: 36px; flex-shrink:0;">📱</div>
       <div style="flex: 1;">
         <div style="font-weight: 700; font-size: 15px; color: #1a5490; margin-bottom: 3px;">
-          Add TradeAI to your phone
+          Add StaxAI to your phone
         </div>
         <div style="font-size: 13px; color: #666; line-height: 1.4;">
           Get quick access to your tools, email summary and job photos from your home screen.
@@ -126,7 +126,7 @@ window.addEventListener('load', () => {
           animation: slideUp 0.3s ease;
         ">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-            <div style="font-weight: 700; font-size: 15px; color: #1a5490;">📱 Add TradeAI to your home screen</div>
+            <div style="font-weight: 700; font-size: 15px; color: #1a5490;">📱 Add StaxAI to your home screen</div>
             <button onclick="this.closest('#pwa-install-banner').remove(); localStorage.setItem('ios-install-dismissed','1')"
               style="background:none;border:none;font-size:20px;color:#999;cursor:pointer;padding:0 0 0 10px;">×</button>
           </div>
