@@ -161,7 +161,34 @@ window.CL_UPLOAD = {
           var ud = await self._supabase.auth.getUser();
           var user = ud && ud.data ? ud.data.user : null;
           if (!user) throw new Error("Not authenticated");
-          if (source === "website") {
+          if (source === "gdrive") {
+            var profileResp = await self._supabase.from("profiles").select("cl_drive_folders").eq("id", user.id).single();
+            var folders = (profileResp.data && profileResp.data.cl_drive_folders) || [];
+            if (folders.length === 0) throw new Error("No Drive folders connected. Add folders in Settings.");
+            var totalImported = 0;
+            for (var fi = 0; fi < folders.length; fi++) {
+              var resp = await fetch("/api/drive-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id, action: "import-all", folderId: folders[fi].id })
+              });
+              var result = await resp.json();
+              if (result.success && result.imported) {
+                totalImported += result.imported;
+              } else if (result.error) {
+                console.error("Drive import error for folder " + folders[fi].name + ":", result.error);
+              }
+            }
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (totalImported > 0) {
+              self._showUploadConfirmation(totalImported);
+            } else {
+              self._showUploadError("No new content found in your connected Drive folders.");
+            }
+            if (typeof loadStats === "function") loadStats();
+            return;
+          } else if (source === "website") {
             var tile = btn.closest(".source-tile");
             var cbs = tile ? tile.querySelectorAll(".source-url-checkbox") : [];
             var urls = [];
@@ -185,6 +212,7 @@ window.CL_UPLOAD = {
           }
         } catch (err) {
           console.error("Scan error:", err.message);
+          self._showUploadError(err.message);
         } finally {
           btn.textContent = originalText;
           btn.disabled = false;
