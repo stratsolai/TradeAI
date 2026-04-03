@@ -172,7 +172,7 @@ a:hover { opacity: 0.85; }
   position: relative;
 }
 
-.topbar-account-btn {
+.account-btn {
   background: none;
   border: none;
   color: rgba(255,255,255,0.75);
@@ -187,11 +187,11 @@ a:hover { opacity: 0.85; }
   transition: color 0.15s;
 }
 
-.topbar-account-btn:hover {
+.account-btn:hover {
   color: #ffffff;
 }
 
-.topbar-account-dropdown {
+.account-dropdown {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
@@ -205,12 +205,12 @@ a:hover { opacity: 0.85; }
   z-index: 200;
 }
 
-.topbar-account-dropdown.open {
+.account-dropdown.open {
   display: block;
 }
 
-.topbar-account-dropdown a,
-.topbar-account-dropdown button,
+.account-dropdown a,
+.account-dropdown button,
 .sign-out-btn {
   display: block;
   width: 100%;
@@ -226,8 +226,8 @@ a:hover { opacity: 0.85; }
   transition: background 0.15s, color 0.15s;
 }
 
-.topbar-account-dropdown a:hover,
-.topbar-account-dropdown button:hover,
+.account-dropdown a:hover,
+.account-dropdown button:hover,
 .sign-out-btn:hover {
   background: var(--blue);
   color: #ffffff;
