@@ -102,16 +102,16 @@ export default async function handler(req, res) {
     if (action === 'list-folders') {
       const { data: profile } = await supabase
         .from('profiles')
-        .select('gmail_access_token, gmail_refresh_token')
+        .select('cl_drive_access_token, cl_drive_refresh_token')
         .eq('id', userId)
         .single();
 
-      if (!profile?.gmail_access_token) throw new Error('Google account not connected');
+      if (!profile?.cl_drive_access_token) throw new Error('Google Drive not connected');
 
-      let accessToken = profile.gmail_access_token;
+      let accessToken = profile.cl_drive_access_token;
       try {
-        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
-        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+        accessToken = await refreshGoogleToken(profile.cl_drive_refresh_token);
+        await supabase.from('profiles').update({ cl_drive_access_token: accessToken }).eq('id', userId);
       } catch (e) {}
 
       const driveRes = await fetch(
@@ -128,16 +128,16 @@ export default async function handler(req, res) {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories')
+        .select('cl_drive_access_token, cl_drive_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories')
         .eq('id', userId)
         .single();
 
-      if (!profile?.gmail_access_token) throw new Error('Google account not connected');
+      if (!profile?.cl_drive_access_token) throw new Error('Google Drive not connected');
 
-      let accessToken = profile.gmail_access_token;
+      let accessToken = profile.cl_drive_access_token;
       try {
-        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
-        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+        accessToken = await refreshGoogleToken(profile.cl_drive_refresh_token);
+        await supabase.from('profiles').update({ cl_drive_access_token: accessToken }).eq('id', userId);
       } catch (e) {}
 
       const businessName = profile.business_name || 'this business';
