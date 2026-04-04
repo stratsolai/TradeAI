@@ -93,8 +93,6 @@ export default async function handler(req, res) {
       .eq('id', userId)
       .single();
 
-    console.log('OUTLOOK SCAN — profile loaded, has access_token:', !!profile?.outlook_access_token, 'has refresh_token:', !!profile?.outlook_refresh_token);
-
     if (!profile?.outlook_access_token) {
       return res.status(400).json({ error: 'Outlook not connected' });
     }
@@ -102,11 +100,8 @@ export default async function handler(req, res) {
     let accessToken = profile.outlook_access_token;
     try {
       accessToken = await refreshOutlookToken(profile.outlook_refresh_token);
-      console.log('OUTLOOK SCAN — token refresh succeeded');
       await supabase.from('profiles').update({ outlook_access_token: accessToken }).eq('id', userId);
-    } catch (e) {
-      console.error('OUTLOOK SCAN — token refresh failed:', e.message, '— falling back to stored token');
-    }
+    } catch (e) {}
 
     const businessName = profile.business_name || 'this business';
     const industry = profile.industry || 'general';
@@ -126,20 +121,16 @@ export default async function handler(req, res) {
 
     // Fetch messages from Outlook inbox received after the cutoff date
     const filter = encodeURIComponent("receivedDateTime ge " + afterDate);
-    console.log('OUTLOOK SCAN — fetching messages after:', afterDate);
     const listRes = await fetch(
       'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=' + filter + '&$top=50&$select=id,subject,from,receivedDateTime,body&$orderby=receivedDateTime desc',
       { headers: { 'Authorization': 'Bearer ' + accessToken, 'Accept': 'application/json' } }
     );
-    console.log('OUTLOOK SCAN — Graph API status:', listRes.status, 'ok:', listRes.ok);
     if (!listRes.ok) {
       const errBody = await listRes.json().catch(() => ({}));
       const errMsg = (errBody.error && errBody.error.message) || ('Graph API returned ' + listRes.status);
-      console.error('OUTLOOK SCAN — Graph API error:', listRes.status, JSON.stringify(errBody));
       return res.status(502).json({ error: 'Outlook API error: ' + errMsg });
     }
     const listData = await listRes.json();
-    console.log('OUTLOOK SCAN — messages found:', (listData.value || []).length);
     const messages = listData.value || [];
 
     let imported = 0;
@@ -150,12 +141,10 @@ export default async function handler(req, res) {
       const sender = (msg.from && msg.from.emailAddress) ? (msg.from.emailAddress.name ? msg.from.emailAddress.name + ' <' + msg.from.emailAddress.address + '>' : msg.from.emailAddress.address) : '';
       const emailBody = extractOutlookBody(msg);
 
-      console.log('OUTLOOK SCAN — msg:', msg.id, 'subject:', subject, 'bodyLength:', emailBody.length);
-      if (!emailBody || emailBody.trim().length < 50) { console.log('OUTLOOK SCAN — skipped, body too short'); skipped++; continue; }
+      if (!emailBody || emailBody.trim().length < 50) { skipped++; continue; }
 
       const items = await runExtractionPrompt(emailBody, subject, businessName, industry, categoryList, toolIdList);
-      console.log('OUTLOOK SCAN — Claude returned', Array.isArray(items) ? items.length : 'non-array', 'items');
-      if (!items || items.length === 0) { console.log('OUTLOOK SCAN — skipped, no items from Claude'); skipped++; continue; }
+      if (!items || items.length === 0) { skipped++; continue; }
 
       for (const item of items) {
         const sourceRef = 'outlook-email:' + msg.id + ':' + djb2(String(item.title));
@@ -177,8 +166,6 @@ export default async function handler(req, res) {
           source_detail: { sender: sender, subject: subject },
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
-        if (error) { console.error('OUTLOOK SCAN — insert error:', error.message, 'code:', error.code, 'details:', error.details); }
-        else { console.log('OUTLOOK SCAN — inserted:', row.title.substring(0, 50)); }
         if (!error) imported++;
       }
     }
