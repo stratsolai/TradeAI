@@ -30,7 +30,7 @@ const handler = async (req, res) => {
       .eq('id', userId)
       .single();
 
-    const defaultCategories = ['service', 'about', 'portfolio', 'testimonial', 'offer', 'team', 'tip', 'faq', 'news', 'compliance'];
+    const defaultCategories = ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const activeCategories = (profile && profile.cl_active_categories && profile.cl_active_categories.length > 0)
       ? profile.cl_active_categories : defaultCategories;
     const customCategories = (profile && profile.cl_custom_categories) ? profile.cl_custom_categories : [];
@@ -87,7 +87,7 @@ const handler = async (req, res) => {
     }
 
     // 3. BUILD AI PROMPT
-    const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, must be from the category list), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
+    const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, MANDATORY — must exactly match one value from the category list, every item must have a category), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
 
     const categoryList = allCategories.join(', ');
     const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
@@ -123,6 +123,15 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: 'AI returned no items', raw: responseText.substring(0, 200) });
     }
 
+    // 5b. NORMALISE CATEGORIES — case-insensitive match against canonical list
+    const categoryLookup = {};
+    allCategories.forEach(function(c) { categoryLookup[c.toLowerCase()] = c; });
+    function normaliseCategory(raw) {
+      if (!raw) return allCategories[0] || 'general';
+      const match = categoryLookup[String(raw).toLowerCase()];
+      return match || allCategories[0] || 'general';
+    }
+
     // 6. INSERT EACH ITEM AS PENDING
     let insertedCount = 0;
     const insertedItems = [];
@@ -134,7 +143,7 @@ const handler = async (req, res) => {
         user_id: userId,
         title: String(item.title).substring(0, 200),
         content_text: String(item.body),
-        category: item.category || allCategories[0] || 'general',
+        category: normaliseCategory(item.category),
         tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
         status: 'pending',
         source: sourceValue,
