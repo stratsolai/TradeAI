@@ -30,7 +30,7 @@ module.exports = async (req, res) => {
       .select('industry, business_name, cl_active_categories, cl_custom_categories')
       .eq('id', userId)
       .single();
-    const defaultCategories = ['Services & Pricing','Projects & Portfolio','Team & Culture','Products & Equipment','Promotions & Offers','Customer Testimonials','Tips & How-To','Industry News','Company Updates','Seasonal Content'];
+    const defaultCategories = ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const activeFromProfile = profile && profile.cl_active_categories && profile.cl_active_categories.length > 0 ? profile.cl_active_categories : defaultCategories;
     const customFromProfile = profile && profile.cl_custom_categories ? profile.cl_custom_categories : [];
     const activeCategories = activeFromProfile.concat(customFromProfile).join(', ');
@@ -38,34 +38,38 @@ module.exports = async (req, res) => {
     const businessName = (profile && profile.business_name) || 'your business';
     const industry = (profile && profile.industry) || 'your industry';
 
-    // Fetch the website HTML
-    const websiteHtml = await new Promise((resolve, reject) => {
-      const urlObj = new URL(url);
-      
-      const options = {
-        hostname: urlObj.hostname,
-        path: urlObj.pathname + urlObj.search,
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; TradeAI/1.0)'
-        }
-      };
-
-      const protocol = urlObj.protocol === 'https:' ? https : require('http');
-
-      const webReq = protocol.request(options, (webRes) => {
-        let data = '';
-        webRes.on('data', (chunk) => { data += chunk; });
-        webRes.on('end', () => resolve(data));
+    // Fetch the website HTML with redirect following
+    const websiteHtml = await (function fetchWithRedirects(fetchUrl, maxRedirects) {
+      return new Promise((resolve, reject) => {
+        if (maxRedirects <= 0) { reject(new Error('Too many redirects')); return; }
+        const urlObj = new URL(fetchUrl);
+        const options = {
+          hostname: urlObj.hostname,
+          path: urlObj.pathname + urlObj.search,
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (compatible; StaxAI/1.0)',
+            'Accept': 'text/html'
+          }
+        };
+        const protocol = urlObj.protocol === 'https:' ? https : require('http');
+        const webReq = protocol.request(options, (webRes) => {
+          if (webRes.statusCode >= 300 && webRes.statusCode < 400 && webRes.headers.location) {
+            resolve(fetchWithRedirects(webRes.headers.location, maxRedirects - 1));
+            return;
+          }
+          let data = '';
+          webRes.on('data', (chunk) => { data += chunk; });
+          webRes.on('end', () => resolve(data));
+        });
+        webReq.on('error', reject);
+        webReq.setTimeout(10000, () => {
+          webReq.destroy();
+          reject(new Error('Request timeout'));
+        });
+        webReq.end();
       });
-
-      webReq.on('error', reject);
-      webReq.setTimeout(10000, () => {
-        webReq.destroy();
-        reject(new Error('Request timeout'));
-      });
-      webReq.end();
-    });
+    })(url, 5);
 
     console.log('Website HTML fetched, analyzing with Claude...');
 
@@ -126,27 +130,18 @@ ${websiteHtml.substring(0, 50000)}`;
 
     const aiResponse = claudeResponse.content[0].text;
 
-    // Parse the JSON response
-    let extractedData;
+    // Parse the JSON response — expect a flat array
+    let items = [];
     try {
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+      const clean = aiResponse.replace(/```json|```/g, '').trim();
+      const jsonMatch = clean.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        extractedData = JSON.parse(jsonMatch[0]);
-      } else {
-        throw new Error('No JSON found in response');
+        items = JSON.parse(jsonMatch[0]);
       }
     } catch (e) {
       console.error('Failed to parse Claude response:', e);
-      extractedData = {
-        services: [],
-        projects: [],
-        testimonials: [],
-        company: {},
-        images: []
-      };
     }
-
-    console.log('Extracted data:', extractedData);
+    if (!Array.isArray(items)) items = [];
 
     // Save source document record
     await new Promise((resolve, reject) => {
@@ -182,57 +177,48 @@ ${websiteHtml.substring(0, 50000)}`;
       supabaseReq.end();
     });
 
-    // Insert extracted content
+    // Normalise categories — case-insensitive match against canonical list
+    const allCategories = activeFromProfile.concat(customFromProfile);
+    const categoryLookup = {};
+    allCategories.forEach(function(c) { categoryLookup[c.toLowerCase()] = c; });
+    function normaliseCategory(raw) {
+      if (!raw) return allCategories[0] || 'general';
+      const match = categoryLookup[String(raw).toLowerCase()];
+      return match || allCategories[0] || 'general';
+    }
+
+    // Insert extracted content into content_library
     let itemsCount = 0;
 
-    // Insert services
-    for (const service of extractedData.services || []) {
-      if (await insertContent(userId, 'text', 'website', {
-        title: service.name,
-        description: service.description,
-        content_text: `${service.description}\n\n${service.benefits || ''}`,
-        status: 'pending',
-        source: 'website'
-      }, supabaseUrl, supabaseKey)) itemsCount++;
-    }
+    for (const item of items) {
+      if (!item.title || !item.body) continue;
 
-    // Insert projects
-    for (const project of extractedData.projects || []) {
-      if (await insertContent(userId, 'project', 'website', {
-        title: project.title,
-        description: project.description,
-        content_text: project.description,
-        status: 'pending',
-        source: 'website'
-      }, supabaseUrl, supabaseKey)) itemsCount++;
-    }
+      const sourceRef = 'web:' + url + ':' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500));
 
-    // Insert testimonials
-    for (const testimonial of extractedData.testimonials || []) {
-      if (await insertContent(userId, 'testimonial', 'website', {
-        title: `Testimonial from ${testimonial.author || 'Customer'}`,
-        content_text: testimonial.quote,
+      const row = {
+        user_id: userId,
+        title: String(item.title).substring(0, 200),
+        content_text: String(item.body),
+        category: normaliseCategory(item.category),
+        tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
         status: 'pending',
-        source: 'website'
-      }, supabaseUrl, supabaseKey)) itemsCount++;
-    }
+        source: 'website',
+        tool_source: 'scrape-website',
+        source_detail: { url: url },
+        source_item_id: url,
+        source_ref: sourceRef,
+        created_at: new Date().toISOString()
+      };
 
-    // Insert company info
-    if (extractedData.company && extractedData.company.about) {
-      if (await insertContent(userId, 'text', 'website', {
-        title: 'About Us',
-        content_text: extractedData.company.about,
-        status: 'pending',
-        source: 'website'
-      }, supabaseUrl, supabaseKey)) itemsCount++;
+      const { error } = await supabaseAdmin.from('content_library').upsert(row, { onConflict: 'source_ref' });
+      if (!error) itemsCount++;
+      else console.error('Insert error:', error.message);
     }
-
-    console.log(`Inserted ${itemsCount} items into content library`);
 
     return res.status(200).json({
       success: true,
-      itemsCount: itemsCount,
-      message: `Extracted ${itemsCount} items from website`
+      count: itemsCount,
+      message: itemsCount + ' item' + (itemsCount !== 1 ? 's' : '') + ' extracted from website'
     });
 
   } catch (error) {
@@ -244,46 +230,3 @@ ${websiteHtml.substring(0, 50000)}`;
   }
 };
 
-// Helper function to insert content
-async function insertContent(userId, contentType, sourceType, data, supabaseUrl, supabaseKey) {
-  const https = require('https');
-  return new Promise((resolve, reject) => {
-    const insertData = JSON.stringify({
-      user_id: userId,
-      content_type: contentType,
-      source_type: sourceType,
-      ...data,
-        source_ref: 'web:' + (data.source_url || '') + ':' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(data.title||'')+String(data.source_url||''))
-    });
-    const urlObj = new URL(`${supabaseUrl}/rest/v1/content_library`);
-    const options = {
-      hostname: urlObj.hostname,
-      path: urlObj.pathname,
-      method: "POST",
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`,
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
-      }
-    };
-    const req = https.request(options, (res) => {
-      let body = "";
-      res.on("data", (chunk) => { body += chunk; });
-      res.on("end", () => {
-        if (res.statusCode === 201) {
-          resolve(true);
-        } else {
-          console.error("Supabase insert failed:", res.statusCode, body);
-          resolve(false);
-        }
-      });
-    });
-    req.on("error", (err) => {
-      console.error("Insert request error:", err.message);
-      resolve(false);
-    });
-    req.write(insertData);
-    req.end();
-  });
-}
