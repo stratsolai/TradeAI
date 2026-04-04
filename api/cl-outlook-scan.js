@@ -133,6 +133,7 @@ export default async function handler(req, res) {
 
     for (const msg of messages) {
       const subject = msg.subject || '(no subject)';
+      const sender = (msg.from && msg.from.emailAddress) ? (msg.from.emailAddress.name ? msg.from.emailAddress.name + ' <' + msg.from.emailAddress.address + '>' : msg.from.emailAddress.address) : '';
       const emailBody = extractOutlookBody(msg);
 
       if (!emailBody || emailBody.trim().length < 50) { skipped++; continue; }
@@ -152,11 +153,8 @@ export default async function handler(req, res) {
           source: 'email',
           tool_source: 'cl-outlook-scan',
           source_ref: sourceRef,
-          metadata: JSON.stringify({
-            messageId: msg.id,
-            subject: subject,
-            scannedAt: new Date().toISOString(),
-          }),
+          source_item_id: msg.id,
+          source_detail: { sender: sender, subject: subject },
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
         if (!error) imported++;
