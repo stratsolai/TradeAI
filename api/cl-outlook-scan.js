@@ -51,7 +51,7 @@ function extractOutlookBody(message) {
 
 // Run unified CL extraction prompt against email content
 async function runExtractionPrompt(emailBody, subject, businessName, industry, categoryList, toolIdList) {
-  const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, must be from the category list), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
+  const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, MANDATORY — must exactly match one value from the category list, every item must have a category), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
 
   const userContent = 'Business: ' + businessName + ' (' + industry + ').\nActive categories: ' + categoryList + '\nActive tool IDs: ' + toolIdList + '\n\nSOURCE CONTENT (Email: ' + subject + '):\n' + emailBody.substring(0, 6000) + '\n\nExtract all logical sections as separate items. Include the email subject in every item title for context. Preserve bullet points intact where no prose exists. Summarise only what is explicitly present — do not infer or fabricate. JSON array only.';
 
@@ -143,11 +143,15 @@ export default async function handler(req, res) {
 
       for (const item of items) {
         const sourceRef = 'outlook-email:' + msg.id + ':' + djb2(String(item.title));
+        // Normalise category — case-insensitive match against canonical list
+        const catLookup = {};
+        activeFromProfile.concat(customFromProfile).forEach(function(c) { catLookup[c.toLowerCase()] = c; });
+        const normCat = item.category ? (catLookup[String(item.category).toLowerCase()] || activeFromProfile[0] || 'general') : (activeFromProfile[0] || 'general');
         const row = {
           user_id: userId,
           title: String(item.title || subject).substring(0, 200),
           body: String(item.body || ''),
-          category: item.category || activeFromProfile[0] || 'general',
+          category: normCat,
           tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
           status: 'pending',
           source: 'email',
