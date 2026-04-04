@@ -188,6 +188,24 @@ window.CL_UPLOAD = {
             }
             if (typeof loadStats === "function") loadStats();
             return;
+          } else if (source === "gmail") {
+            var gmailResp = await fetch("/api/cl-email-scan", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user.id })
+            });
+            var gmailResult = await gmailResp.json();
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (gmailResult.error) {
+              self._showUploadError(gmailResult.error);
+            } else if (gmailResult.success && gmailResult.imported > 0) {
+              self._showUploadConfirmation(gmailResult.imported);
+            } else {
+              self._showUploadError("No new content found in your Gmail inbox.");
+            }
+            if (typeof loadStats === "function") loadStats();
+            return;
           } else if (source === "website") {
             var tile = btn.closest(".source-tile");
             var cbs = tile ? tile.querySelectorAll(".source-url-checkbox") : [];
