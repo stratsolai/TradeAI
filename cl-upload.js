@@ -238,17 +238,32 @@ window.CL_UPLOAD = {
               if (nm && nm.textContent) urls.push(nm.textContent.trim());
             }
             if (urls.length === 0) throw new Error("No URLs selected to scan");
+            var totalWebImported = 0;
             for (var j = 0; j < urls.length; j++) {
               var raw = urls[j].trim();
               if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
-              await fetch("/api/scrape-website", {
+              var webResp = await fetch("/api/scrape-website", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: user.id, url: raw })
               });
+              var webResult = await webResp.json();
+              if (webResult.error) {
+                console.error("Website scan error for " + raw + ":", webResult.error);
+              } else if (webResult.count) {
+                totalWebImported += webResult.count;
+              }
+            }
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (totalWebImported > 0) {
+              self._showUploadConfirmation(totalWebImported);
+            } else {
+              self._showUploadError("No new content found on your website.");
             }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
+            return;
           }
         } catch (err) {
           console.error("Scan error:", err.message);
