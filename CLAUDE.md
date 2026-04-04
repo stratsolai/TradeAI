@@ -1,5 +1,5 @@
 # CLAUDE.md
-# StaxAI — Claude Code Session Reference 59d30cc
+# StaxAI — Claude Code Session Reference
 # Updated: April 2026
 
 ---
@@ -81,6 +81,8 @@ one is finished and findings reviewed with the owner via Chat.
 round is working correctly in the browser.
 
 Rounds 2–4 complete. Drive scanning working end to end.
+Extraction prompts updated and column fixes applied across
+all four endpoints.
 
 Commits made so far:
 - 0bdbd33 — cl-upload.js: fix _loadConnectionStatus
@@ -98,14 +100,34 @@ Commits made so far:
 - f1a272d — drive-import.js: read cl_drive_* token columns
 - f7ced6b — cl-upload.js: Scan Now wired for Drive
 - [multiple] — drive-import.js: binary file handling, column
-  fixes, timeout, logging
-- [multiple] — extraction prompt updated across all four
-  endpoints: drive-import.js, process-file.js,
-  cl-email-scan.js, cl-outlook-scan.js
+  fixes, timeout fix, logging added and removed
+- [extraction prompt commits] — drive-import.js,
+  cl-email-scan.js, cl-outlook-scan.js: unified extraction
+  prompt applied
+- c62538a — process-file.js: duplicate business line removed,
+  body → content_text, source_detail and source_item_id
+  removed from insert
+- 7864100 — cl-email-scan.js: email subject prompt fix
+- 8fd0ee9 — cl-outlook-scan.js: email subject prompt fix
 
-Remaining rounds:
+Remaining work — complete in this order:
 
-Round 5 — api/scrape-website.js:
+Round 5 — Test file upload (process-file.js):
+- Upload a photo and a document via Upload & Import tab
+- Confirm items appear in Review tab
+- Fix any issues before proceeding
+
+Round 6 — Wire and test Gmail scanning:
+- Wire Gmail Scan Now button in cl-upload.js to call
+  api/cl-email-scan.js
+- Test end to end — confirm items appear in Review tab
+
+Round 7 — Wire and test Outlook scanning:
+- Wire Outlook Scan Now button in cl-upload.js to call
+  api/cl-outlook-scan.js
+- Test end to end — confirm items appear in Review tab
+
+Round 8 — api/scrape-website.js:
 - Fix JSON parsing regex — match array not single object
 - Update insertion code to expect flat array
 - Confirm column names match content_library schema
@@ -113,17 +135,12 @@ Round 5 — api/scrape-website.js:
 - Update User-Agent to StaxAI/1.0
 - Add user-facing feedback in cl-upload.js after scan
 
-Round 6 — cl-settings-logic.js + cl-settings.html:
+Round 9 — cl-settings-logic.js + cl-settings.html:
 - Save button → "Saved" after saving, resets on change
 - Fix sign-out ID mismatch (signout-btn → sign-out-btn)
 
-Round 7 — oauth-callback.js:
+Round 10 — oauth-callback.js:
 - Remove broken non-CL fallback code (lines 379–483)
-
-After Rounds 5–7:
-- Wire and test Gmail Scan Now button in cl-upload.js
-- Wire and test Outlook Scan Now button in cl-upload.js
-- Verify Drive scan extraction quality after prompt update
 
 ---
 
@@ -132,13 +149,11 @@ After Rounds 5–7:
 - CL email tokens (Gmail/Outlook) were being discarded before
   commit bd39d8b. Users who connected business email before
   this fix will need to reconnect in CL Settings.
-- cl-outlook-scan.js is built but Scan Now in cl-upload.js
-  is not yet wired to it.
 - content_type column in content_library is effectively dead
   — never read by UI. Made nullable April 2026. Consider
   removing in a future cleanup pass.
-- drive-import.js extraction prompt updated April 2026 —
-  verify quality by rescanning test Drive folder and checking
+- Drive scan extraction prompt updated April 2026 — verify
+  quality by rescanning test Drive folder and checking
   Review tab output at start of next session.
 
 ---
