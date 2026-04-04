@@ -85,7 +85,6 @@ module.exports = async (req, res) => {
     const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
     const userPrompt = (businessContext ? 'BUSINESS PROFILE:\n' + businessContext + '\n\n' : '') +
-      'Business: ' + (profile ? profile.business_name || 'this business' : 'this business') + ' (' + (profile ? profile.industry || 'general' : 'general') + ').\n' +
       'Active categories: ' + categoryList + '\n' +
       'Active tool IDs: ' + toolIdList + '\n\n' +
       'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000) +
@@ -126,21 +125,14 @@ module.exports = async (req, res) => {
       const row = {
         user_id: userId,
         title: String(item.title).substring(0, 200),
-        body: String(item.body),
+        content_text: String(item.body),
         category: item.category || allCategories[0] || 'general',
         tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
         status: 'pending',
         source: sourceValue,
-        source_detail: {
-          file_name: sourceLabel,
-          file_type: fileType,
-          extracted_at: new Date().toISOString()
-        },
         created_at: new Date().toISOString(),
         source_ref: 'manual:' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500))
       };
-
-      if (source_item_id) { row.source_item_id = source_item_id; }
 
       const { data, error } = await supabase
         .from('content_library')
