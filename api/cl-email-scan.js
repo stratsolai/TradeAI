@@ -186,15 +186,18 @@ export default async function handler(req, res) {
         continue;
       }
       const msgData = await msgRes.json();
+      console.log('MSG FETCH — id:', msg.id, 'status:', msgRes.status, 'has payload:', !!msgData.payload, 'mimeType:', msgData.payload && msgData.payload.mimeType);
 
       const headers = msgData.payload && msgData.payload.headers ? msgData.payload.headers : [];
       const subject = (headers.find(h => h.name === 'Subject') || {}).value || '(no subject)';
       const emailBody = extractEmailBody(msgData.payload);
+      console.log('BODY EXTRACT — subject:', subject, 'bodyLength:', emailBody.length, 'first100:', emailBody.substring(0, 100));
 
-      if (!emailBody || emailBody.trim().length < 50) { skipped++; continue; }
+      if (!emailBody || emailBody.trim().length < 50) { console.log('SKIPPED — body too short:', emailBody.length); skipped++; continue; }
 
       const items = await runExtractionPrompt(emailBody, subject, businessName, industry, categoryList, toolIdList);
-      if (!items || items.length === 0) { skipped++; continue; }
+      console.log('CLAUDE RESPONSE — items:', Array.isArray(items) ? items.length : 'not array', 'raw:', JSON.stringify(items).substring(0, 500));
+      if (!items || items.length === 0) { console.log('SKIPPED — no items from Claude'); skipped++; continue; }
 
       for (const item of items) {
         const sourceRef = 'email:' + msg.id + ':' + djb2(String(item.title));
@@ -215,6 +218,8 @@ export default async function handler(req, res) {
           }),
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
+        if (error) { console.error('SUPABASE INSERT ERROR —', error.message, 'code:', error.code, 'details:', error.details); }
+        else { console.log('INSERTED — title:', row.title, 'sourceRef:', sourceRef); }
         if (!error) imported++;
       }
     }
