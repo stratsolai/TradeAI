@@ -65,7 +65,14 @@ const handler = async (req, res) => {
     } else if (fileType === 'text' && fileData) {
       sourceText = Buffer.from(fileData, 'base64').toString('utf-8');
       sourceValue = 'document';
-    } else if (['word', 'powerpoint', 'excel'].includes(fileType) && fileData) {
+    } else if (fileType === 'word' && fileData) {
+      var docExt = (fileName || '').toLowerCase().split('.').pop();
+      var docMediaType = docExt === 'doc'
+        ? 'application/msword'
+        : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      sourceText = await extractDocText(fileData, docMediaType, claudeApiKey);
+      sourceValue = 'document';
+    } else if (['powerpoint', 'excel'].includes(fileType) && fileData) {
       sourceText = Buffer.from(fileData, 'base64').toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
       if (sourceText.length < 50) {
         sourceText = 'File: ' + fileName + '. Office document uploaded. Filename suggests this contains business content.';
@@ -198,6 +205,20 @@ async function extractPDFText(fileData, apiKey) {
     messages: [{ role: 'user', content: [
       { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: fileData } },
       { type: 'text', text: 'Extract all text content from this PDF. Return only the raw text, preserving structure. No commentary.' }
+    ]}]
+  });
+  const response = await callClaude(body, apiKey);
+  return (response.content && response.content[0]) ? response.content[0].text : '';
+}
+
+// WORD DOCUMENT TEXT EXTRACTOR
+async function extractDocText(fileData, mediaType, apiKey) {
+  const body = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 2000,
+    messages: [{ role: 'user', content: [
+      { type: 'document', source: { type: 'base64', media_type: mediaType, data: fileData } },
+      { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
     ]}]
   });
   const response = await callClaude(body, apiKey);
