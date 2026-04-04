@@ -1,10 +1,10 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 2026
+# Updated: April 4 2026
 
 ---
 
-## ⚠️ CRITICAL — READ BEFORE TOUCHING ANYTHING
+## CRITICAL — READ BEFORE TOUCHING ANYTHING
 
 These rules have caused real damage when missed. They are first
 because they are the most important.
@@ -31,7 +31,7 @@ without an approved spec document in Project Knowledge.**
 
 ---
 
-## ⚠️ Rules & Instructions v2.9 — What Applies to Claude Code
+## Rules & Instructions v2.9 — What Applies to Claude Code
 
 Read StaxAI-Rules-and-Instructions-v2.9.docx every session.
 Large parts were written for a browser-based workflow that is
@@ -59,14 +59,49 @@ READ IN FULL — applies to Claude Code:
 - Section 6 — Document Maintenance
 - Section 7 — Technical Rules (except Vercel tab navigation)
 - Section 9 — Vercel Deployment
-- Section 10 — Rules 10, 11, 12, 13, 14 (content migration,
-  tools.html, index.html, hero CSS classes)
+- Section 10 — Rules 10, 11, 12, 13, 14
 - Section 12 — Split File Architecture
 - Section 13 — Development Standards
 - Section 16 — Industry-Agnostic Platform
 - Section 18 — Activity-Specific Rules (check every session)
-- Pre-Commit Checklist Sections 3–6, 8 (adapted — see
-  Pre-Commit Checks below)
+- Pre-Commit Checklist Sections 3–6, 8
+
+---
+
+## Working Model
+
+This project is built by a non-technical owner working with
+Claude Chat and Claude Code together. Chat handles planning,
+decisions, and document writing. Claude Code handles all repo
+work.
+
+The owner requires guidance at every step:
+- Always explain what you are about to do and why before doing it
+- Flag clearly anything the owner needs to action themselves
+- Never assume technical knowledge on the owner's part
+- When in doubt about scope or approach — stop and report
+  to the owner so they can discuss with Chat
+
+Claude Code should work autonomously without asking permission
+at each step. Report back only when all work is complete or if
+something unexpected is found.
+
+---
+
+## Stylesheet Rollout Process
+
+The agreed process for the CSS variable rollout across all
+authenticated pages:
+
+1. Code reads the next CSS block in the target file AND the
+   stylesheet, compares them, and reports any missing or
+   incorrect values in the stylesheet
+2. Chat and owner review findings and decide what is correct
+3. Code makes both changes together — updates stylesheet first,
+   then swaps hardcoded values in the file — two separate
+   commits, one per file
+4. Owner checks browser to confirm nothing changed visually
+5. Repeat for next block
 
 ---
 
@@ -77,52 +112,56 @@ one is finished and findings reviewed with the owner via Chat.
 
 ### Task 6 — Fix CL Settings OAuth / CL Upload (in progress)
 
-⚠️ Do not begin next round until owner confirms previous
+Do not begin next round until owner confirms previous
 round is working correctly in the browser.
 
-Rounds 2–4 complete. Drive scanning working end to end.
-Extraction prompts updated and column fixes applied across
-all four endpoints.
+Rounds 2–5 complete. Round 6 in progress — Gmail scanning
+working but four fixes still required before Round 6 is done.
 
-Commits made so far:
-- 0bdbd33 — cl-upload.js: fix _loadConnectionStatus
-- 798563a — cl-upload.js: tile click triggers file input
-- 6e9bf87 — cl-upload.js: image file validation
-- 210b3da — cl-upload.js: document file input accept types
-- 6b494e2 — cl-upload.js: error Dismiss button
-- 46756bf — cl-upload.js: both handlers call process-file.js
-- 5a8dff9 — oauth-callback.js: save Drive tokens to profiles
-- bd39d8b — oauth-callback.js: save Gmail/Outlook tokens
-- 3a4ae11 — api/cl-outlook-scan.js: new Outlook scan endpoint
-- ceaaf2c — cl-settings-logic.js: Drive folder picker logic
-- e21f348 — cl-settings.html: folder picker HTML structure
-- 54de96e — cl-settings-logic.js: disconnect clears folders
-- f1a272d — drive-import.js: read cl_drive_* token columns
-- f7ced6b — cl-upload.js: Scan Now wired for Drive
-- [multiple] — drive-import.js: binary file handling, column
-  fixes, timeout fix, logging added and removed
-- [extraction prompt commits] — drive-import.js,
-  cl-email-scan.js, cl-outlook-scan.js: unified extraction
-  prompt applied
-- c62538a — process-file.js: duplicate business line removed,
-  body → content_text, source_detail and source_item_id
-  removed from insert
-- 7864100 — cl-email-scan.js: email subject prompt fix
-- 8fd0ee9 — cl-outlook-scan.js: email subject prompt fix
+Key commits this session (April 4 2026):
+- 6eb58cc — process-file.js: maxDuration + critical syntax fix
+- fca52d9 — process-file.js: image media type fix
+- b5d7c52 — process-file.js: Word document handling fix
+- c260968 — cl-upload.js: Gmail Scan Now wired to cl-email-scan
+- 61ff3af — cl-email-scan.js: token error surfaced, 90-day
+  lookback, timestamp fix
+- 0cb2acf — cl-email-scan.js: HTML email handling, content_text
+  fix, message fetch check
+- c3df2de — cl-email-scan.js: source_detail and source_item_id
+  replacing metadata
+- ce3187d — cl-outlook-scan.js: same source_detail fix
+- 296972e — content-library.html: tools-data.js script tag added
+- eb6cb17 — cl-review.js: content formatting, canonical
+  categories, Source button wiring, Tagged Tools fix
 
-Remaining work — complete in this order:
+Schema changes made this session (Supabase SQL — already applied):
+- content_library: added source_detail (jsonb), source_item_id
+  (text), tool_tags (jsonb), tool_source (text), category_tags
+  (jsonb)
 
-Round 5 — Test file upload (process-file.js):
-- Upload a photo and a document via Upload & Import tab
-- Confirm items appear in Review tab
-- Fix any issues before proceeding
+Round 6 — remaining work before Round 6 is complete:
 
-Round 6 — Wire and test Gmail scanning:
-- Wire Gmail Scan Now button in cl-upload.js to call
-  api/cl-email-scan.js
-- Test end to end — confirm items appear in Review tab
+- Fix activated tools not showing in Review tab and Account
+  Management — window._activatedTools not being populated.
+  Was working recently. Investigate and fix.
+- Fix category not assigned for some extracted items — the AI
+  extraction prompt across process-file.js, cl-email-scan.js,
+  and cl-outlook-scan.js must enforce mandatory category
+  assignment for every extracted item. No item should be
+  inserted without a category value.
+- Fix process-file.js to populate source_detail and
+  source_item_id — PDF and image uploads currently show empty
+  source in the Review tab. source_detail should include
+  filename and any other relevant metadata. source_item_id
+  should be populated with a meaningful reference.
+- Fix Review tab not refreshing after scan — after a Gmail,
+  Outlook, Drive, or file upload scan completes, new items
+  should appear in the Review tab immediately without the
+  user needing to click away and back to Pending.
 
 Round 7 — Wire and test Outlook scanning:
+- Fix cl-outlook-scan.js: body column -> content_text (same
+  fix as cl-email-scan.js commit 0cb2acf)
 - Wire Outlook Scan Now button in cl-upload.js to call
   api/cl-outlook-scan.js
 - Test end to end — confirm items appear in Review tab
@@ -136,25 +175,66 @@ Round 8 — api/scrape-website.js:
 - Add user-facing feedback in cl-upload.js after scan
 
 Round 9 — cl-settings-logic.js + cl-settings.html:
-- Save button → "Saved" after saving, resets on change
-- Fix sign-out ID mismatch (signout-btn → sign-out-btn)
+- Save button -> "Saved" after saving, resets on change
+- Fix sign-out ID mismatch (signout-btn -> sign-out-btn)
 
 Round 10 — oauth-callback.js:
 - Remove broken non-CL fallback code (lines 379–483)
 
 ---
 
+## Standalone Tasks — Complete After Task 6
+
+These tasks are not part of the OAuth/upload fix sequence but
+must be completed before the stylesheet rollout begins.
+
+### Task A — Content Library cleanup
+
+- Remove content_type column from content_library — column is
+  dead, never read by UI. Confirm nothing references it before
+  removing.
+
+### Task B — Fix category filter inconsistency
+
+- cl-review.js filter at line 228 checks item.category only,
+  not category_tags. Items manually re-tagged with additional
+  categories via pills will not appear when filtering by those
+  additional categories. Fix filter to check both category and
+  category_tags.
+
+### Task C — Extraction prompt quality tuning
+
+- Items are splitting too much or too little across all three
+  extraction endpoints: process-file.js, cl-email-scan.js,
+  cl-outlook-scan.js. Review and tune the extraction prompts
+  across all three files in a dedicated session. Goal:
+  consistent, appropriately-sized discrete items.
+
+---
+
 ## Known Issues & Notes
 
-- CL email tokens (Gmail/Outlook) were being discarded before
-  commit bd39d8b. Users who connected business email before
-  this fix will need to reconnect in CL Settings.
-- content_type column in content_library is effectively dead
-  — never read by UI. Made nullable April 2026. Consider
-  removing in a future cleanup pass.
-- Drive scan extraction prompt updated April 2026 — verify
-  quality by rescanning test Drive folder and checking
-  Review tab output at start of next session.
+- Multi-account email token storage — cl_connected_emails
+  array supports multiple Gmail accounts in the UI but token
+  storage is single-column on profiles (last connected wins).
+  Connecting a second Gmail account silently overwrites the
+  first account's tokens. Needs schema redesign: store tokens
+  per entry in cl_connected_emails. Requires updates to
+  oauth-callback.js, cl-email-scan.js, cl-outlook-scan.js,
+  and cl-settings-logic.js. Schema change required — spec
+  needed before build.
+- Google OAuth consent screen in Testing mode — currently only
+  designated test users can connect Gmail accounts. Must be
+  published to In production before real users can connect.
+  May trigger Google's verification process for the
+  gmail.readonly scope. Must be resolved before launch.
+- Full source document storage never built — original intention
+  from CL New Features Spec v1.3 Step 9 was to store source
+  documents in Supabase Storage cl-assets and create
+  cl_source_items rows. This was never implemented.
+  source_item_id currently stores Gmail/Outlook message IDs
+  but nothing in the system retrieves them. The Source button
+  shows metadata only. Needs a spec before build.
 
 ---
 
@@ -165,14 +245,15 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | Fix CL Settings OAuth / CL Upload — Task 6 above          |
-| 2    | Complete stylesheet rollout across CL files                |
-| 3    | Complete stylesheet rollout across cl-settings.html        |
-| 4    | Roll stylesheet out to all remaining authenticated pages   |
-| 5    | Integration tests — all 5 tools                            |
-| 6    | Functional reviews — all 5 tools (real data, end-to-end)  |
-| 7    | Improvements per tool based on functional review findings  |
-| 8    | Dashboard rebuild                                          |
+| 1    | Complete Task 6 — CL Settings OAuth / CL Upload all rounds|
+| 2    | Complete Standalone Tasks A, B, C                          |
+| 3    | Complete stylesheet rollout across CL files                |
+| 4    | Complete stylesheet rollout across cl-settings.html        |
+| 5    | Roll stylesheet out to all remaining authenticated pages   |
+| 6    | Integration tests — all 5 tools                            |
+| 7    | Functional reviews — all 5 tools (real data, end-to-end)  |
+| 8    | Improvements per tool based on functional review findings  |
+| 9    | Dashboard rebuild                                          |
 
 ---
 
@@ -213,22 +294,6 @@ rebuilt during the stylesheet rollout:
 
 ---
 
-## Working Model
-
-This project is built by a non-technical owner working with
-Claude Chat and Claude Code together. Chat handles planning,
-decisions, and document writing. Claude Code handles all repo
-work.
-
-The owner requires guidance at every step:
-- Always explain what you are about to do and why before doing it
-- Flag clearly anything the owner needs to action themselves
-- Never assume technical knowledge on the owner's part
-- When in doubt about scope or approach — stop and report
-  to the owner so they can discuss with Chat
-
----
-
 ## Platform Overview
 
 StaxAI is an AI-powered SaaS platform for Australian SME
@@ -238,7 +303,7 @@ monthly subscriptions. No technical skills required.
 - Live URL: https://staxai.com.au
 - GitHub repo: https://github.com/stratsolai/TradeAI (public)
 - Brand: StaxAI (formerly TradeAI Pro — never use the old name)
-- Tagline: YOUR STAX │ YOUR WAY
+- Tagline: YOUR STAX | YOUR WAY
 - Target users: Australian SME businesses across all industries
 
 ---
@@ -276,8 +341,10 @@ Notable changes made April 2026:
   cl_drive_access_token (text), cl_drive_refresh_token (text),
   cl_outlook_last_scanned_at (timestamptz)
 - content_library: UNIQUE constraint added on source_ref
-- content_library: NOT NULL constraint removed from
-  content_type (column is effectively dead — never read by UI)
+- content_library: NOT NULL constraint removed from content_type
+- content_library: added source_detail (jsonb), source_item_id
+  (text), tool_tags (jsonb), tool_source (text), category_tags
+  (jsonb)
 
 ---
 
@@ -359,7 +426,7 @@ No monolithic files for new work. Full detail in Rules v2.9.
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
 - cl-settings.html does not load staxai-auth.css — known
   issue to be fixed during stylesheet rollout (Pre-Launch
-  Step 3).
+  Step 4).
 - content-library.html has 5 dead modals with onclick
   handlers calling undefined functions. Do not attempt to
   wire these up — unbuilt features.
@@ -389,7 +456,7 @@ No monolithic files for new work. Full detail in Rules v2.9.
   spec in Project Knowledge — no exceptions
 
 ### Pre-Commit Checks
-⚠️ You must explicitly confirm every item on this checklist
+You must explicitly confirm every item on this checklist
 before every commit and state that all checks have passed.
 If any item fails — stop and tell the owner before committing.
 
