@@ -111,7 +111,7 @@ export default async function handler(req, res) {
     const categoryList = activeFromProfile.concat(customFromProfile).join(', ');
     const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
-    const days = parseInt(daysBack) || 30;
+    const days = parseInt(daysBack) || 90;
     let afterDate;
     if (profile.cl_outlook_last_scanned_at) {
       afterDate = new Date(profile.cl_outlook_last_scanned_at).toISOString();
