@@ -58,7 +58,9 @@ const handler = async (req, res) => {
       sourceText = await extractPDFText(fileData, claudeApiKey);
       sourceValue = 'document';
     } else if (fileType === 'image' && fileData) {
-      sourceText = await describeImage(fileData, businessContext, claudeApiKey);
+      var imgExt = (fileName || '').toLowerCase().split('.').pop();
+      var imgMediaType = ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt] || 'image/jpeg';
+      sourceText = await describeImage(fileData, businessContext, claudeApiKey, imgMediaType);
       sourceValue = 'photo';
     } else if (fileType === 'text' && fileData) {
       sourceText = Buffer.from(fileData, 'base64').toString('utf-8');
@@ -203,12 +205,12 @@ async function extractPDFText(fileData, apiKey) {
 }
 
 // IMAGE DESCRIBER
-async function describeImage(fileData, businessContext, apiKey) {
+async function describeImage(fileData, businessContext, apiKey, mediaType) {
   const body = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1000,
     messages: [{ role: 'user', content: [
-      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: fileData } },
+      { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: fileData } },
       { type: 'text', text: 'Describe this business image in detail for a content library. Include: what is shown, any visible text, the apparent business context, and what marketing use it could serve.' + (businessContext ? '\n\nBusiness context:\n' + businessContext : '') }
     ]}]
   });
