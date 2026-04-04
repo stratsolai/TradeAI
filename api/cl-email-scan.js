@@ -169,6 +169,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Gmail API error: ' + errMsg });
     }
     const listData = await listRes.json();
+    console.log('Gmail list response — status:', listRes.status, 'body:', JSON.stringify(listData));
     const messages = listData.messages || [];
 
     let imported = 0;
