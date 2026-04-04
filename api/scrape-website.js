@@ -143,40 +143,6 @@ ${websiteHtml.substring(0, 50000)}`;
     }
     if (!Array.isArray(items)) items = [];
 
-    // Save source document record
-    await new Promise((resolve, reject) => {
-      const dbUrl = new URL(`${supabaseUrl}/rest/v1/source_documents`);
-
-      const docData = JSON.stringify({
-        user_id: userId,
-        doc_type: 'website',
-        url: url,
-        status: 'complete'
-      });
-
-      const options = {
-        hostname: dbUrl.hostname,
-        path: dbUrl.pathname,
-        method: 'POST',
-        headers: {
-          'apikey': supabaseKey,
-          'Authorization': `Bearer ${supabaseKey}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates,return=representation'
-        }
-      };
-
-      const supabaseReq = https.request(options, (supabaseRes) => {
-        let sdBody = '';
-      supabaseRes.on('data', (chunk) => { sdBody += chunk; });
-        supabaseRes.on('end', () => { if (supabaseRes.statusCode === 201) { resolve(); } else { console.error('source_documents insert failed:', supabaseRes.statusCode, sdBody); resolve(); } });
-      });
-
-      supabaseReq.on('error', reject);
-      supabaseReq.write(docData);
-      supabaseReq.end();
-    });
-
     // Normalise categories — case-insensitive match against canonical list
     const allCategories = activeFromProfile.concat(customFromProfile);
     const categoryLookup = {};
