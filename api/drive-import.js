@@ -57,7 +57,6 @@ async function fetchDriveFileText(fileId, mimeType, accessToken) {
     if (!res.ok) return null;
     const arrayBuffer = await res.arrayBuffer();
     const base64 = Buffer.from(arrayBuffer).toString('base64');
-    console.log('[drive-import] Binary download for', fileId, '| base64 length:', base64.length);
     return extractBinaryFileText(base64, mimeType);
   }
 
@@ -85,7 +84,6 @@ async function fetchDriveFileText(fileId, mimeType, accessToken) {
 
 // Extract text from a binary file (PDF, Word, etc.) via Claude document API
 async function extractBinaryFileText(base64Data, mimeType) {
-  console.log('[drive-import] Claude document API request | media_type:', mimeType, '| base64 data length:', base64Data.length);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -102,17 +100,9 @@ async function extractBinaryFileText(base64Data, mimeType) {
       ]}],
     }),
   });
-  console.log('[drive-import] Claude API HTTP status:', response.status);
   const data = await response.json();
-  if (data.error) {
-    console.error('[drive-import] Claude API error:', JSON.stringify(data.error));
-  }
-  if (data.type) {
-    console.log('[drive-import] Claude API response type:', data.type, '| stop_reason:', data.stop_reason || 'n/a', '| model:', data.model || 'n/a');
-  }
-  const extracted = (data.content && data.content[0]) ? data.content[0].text : null;
-  console.log('[drive-import] Claude extraction result | length:', extracted ? extracted.length : 0, '| preview:', extracted ? extracted.substring(0, 120) : '(null)');
-  return extracted;
+  if (data.content && data.content[0]) return data.content[0].text;
+  return null;
 }
 
 // Run unified CL extraction prompt against content
@@ -221,9 +211,6 @@ export default async function handler(req, res) {
       );
       const filesData = await filesRes.json();
       const files = filesData.files || [];
-      console.log('[drive-import] Folder:', folderName, '| Files found:', files.length);
-      console.log('[drive-import] Files:', files.map(function(f) { return f.name + ' (' + f.mimeType + ')'; }).join(', '));
-
       let imported = 0;
       for (const file of files) {
         const isImage = file.mimeType.startsWith('image/');
@@ -256,9 +243,6 @@ export default async function handler(req, res) {
           toolIdList
         );
 
-        console.log('[drive-import] Content extraction for', file.name, '| items returned:', items.length);
-
-        console.log('[drive-import] Upserting', items.length, 'items for', file.name);
         for (const item of items) {
           const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
           const row = {
@@ -272,14 +256,8 @@ export default async function handler(req, res) {
             source_ref: sourceRef,
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
-          if (error) {
-            console.error('[drive-import] Upsert FAILED for', item.title, '| error:', JSON.stringify(error));
-          } else {
-            console.log('[drive-import] Upsert OK for', item.title);
-            imported++;
-          }
+          if (!error) imported++;
         }
-        console.log('[drive-import] Finished upserting for', file.name, '| running total imported:', imported);
       }
 
       return res.status(200).json({ success: true, imported, total: files.length });
