@@ -190,6 +190,7 @@ export default async function handler(req, res) {
 
       const headers = msgData.payload && msgData.payload.headers ? msgData.payload.headers : [];
       const subject = (headers.find(h => h.name === 'Subject') || {}).value || '(no subject)';
+      const sender = (headers.find(h => h.name === 'From') || {}).value || '';
       const emailBody = extractEmailBody(msgData.payload);
       console.log('BODY EXTRACT — subject:', subject, 'bodyLength:', emailBody.length, 'first100:', emailBody.substring(0, 100));
 
@@ -211,11 +212,8 @@ export default async function handler(req, res) {
           source: 'email',
           tool_source: 'cl-email-scan',
           source_ref: sourceRef,
-          metadata: JSON.stringify({
-            messageId: msg.id,
-            subject: subject,
-            scannedAt: new Date().toISOString(),
-          }),
+          source_item_id: msg.id,
+          source_detail: { sender: sender, subject: subject },
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
         if (error) { console.error('SUPABASE INSERT ERROR —', error.message, 'code:', error.code, 'details:', error.details); }
