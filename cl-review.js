@@ -262,9 +262,7 @@ window.CL_REVIEW = {
       else if (d.url) sourceParts.push(d.url);
     }
     const sourceLabel = escHtml(sourceParts.join(' — '));
-    const body = escHtml(item.content_text || '');
-    const bodyRaw = (item.content_text || '').replace(/\n/g, ' ');
-    const bodyPreview = escHtml(bodyRaw);
+    const bodyPreview = escHtml(item.content_text || '');
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -277,7 +275,7 @@ window.CL_REVIEW = {
       }
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
     }).join('');
-    const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['photo','service','testimonial','offer','team','company','compliance','tip','portfolio'];
+    const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
@@ -307,7 +305,7 @@ window.CL_REVIEW = {
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
-      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" title="View source document">&#128196; Source</button>
+      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
     </div>
@@ -338,20 +336,16 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        const span = document.getElementById('review-preview-' + btn.dataset.id);
-        if (!span) return;
-        const expanded = span.dataset.expanded === '1';
-        if (expanded) {
-          span.style.whiteSpace = 'nowrap';
-          span.style.overflow = 'hidden';
-          span.dataset.expanded = '0';
-          btn.innerHTML = '&#9654;';
-        } else {
-          span.style.whiteSpace = 'normal';
-          span.style.overflow = 'visible';
-          span.dataset.expanded = '1';
-          btn.innerHTML = '&#9660;';
+        const card = btn.closest('.review-card');
+        if (!card) return;
+        const isExpanded = card.classList.contains('review-body-expanded');
+        card.classList.toggle('review-body-expanded', !isExpanded);
+        var span = document.getElementById('review-preview-' + btn.dataset.id);
+        if (span) {
+          span.style.whiteSpace = isExpanded ? '' : 'pre-wrap';
+          span.style.overflow = isExpanded ? '' : 'visible';
         }
+        btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
     document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
@@ -360,7 +354,7 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
     });
-    document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn').forEach(function(btn) {
+    document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
