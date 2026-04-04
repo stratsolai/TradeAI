@@ -1,5 +1,5 @@
 # CLAUDE.md
-# StaxAI — Claude Code Session Reference
+# StaxAI — Claude Code Session Reference 59d30cc
 # Updated: April 2026
 
 ---
@@ -75,148 +75,100 @@ READ IN FULL — applies to Claude Code:
 Complete in order. Do not begin the next task until the current
 one is finished and findings reviewed with the owner via Chat.
 
-### ✅ Task 1 — Repo & Schema Inventory (complete)
-
-Completed April 2026. Findings reviewed with owner via Chat.
-- Every file listed and documented
-- Stylesheet filename confirmed: staxai-auth.css
-- 'Your Trade. Your Stax.' — not found anywhere in codebase
-- 21 Supabase tables documented
-- Project Brief updated to v12.23 with full file inventory
-  and schema
-
-### ✅ Task 2 — Structural Analysis (complete)
-
-Completed April 2026. Findings reviewed with owner via Chat.
-Full findings and agreed decisions documented below in the
-Structural Analysis Findings & Agreed Decisions section.
-
-### ✅ Task 3 — Category 2 Quick Wins (complete)
-
-Completed April 2026. 14 commits, all pushed to GitHub.
-- admin.html — TradeAI Pro → StaxAI (2 instances) — b7177ca
-- forgot-password.html — TradeAI Pro → StaxAI — 089532c
-- offline.html — TradeAI Pro → StaxAI — 13ec1bd
-- reset-password.html — TradeAI Pro → StaxAI (2 instances) — f3fd22c
-- pwa.js — TradeAI → StaxAI (2 instances) — 063e91f
-- index.html — meta: trade businesses → small businesses — e10907a
-- api/news-digest-refresh.js — industry assumption fix — 6458b43
-- terms-of-service.html — industry assumption fix — 8f58ff0
-- cl-profile.js — placeholder fix — 3170d54
-- chatbot-settings.html — we language fix — 59c6dc9
-- content-library.html — our → your + exclamation mark — 216d57f
-- cl-logic.js — exclamation mark removed — f3f8dc0
-- tools.html — duplicate CSS removed — f3a7f43
-- api/news-digest-refresh.js — async async bug fixed, dead
-  TRADE_SOURCES map removed, User-Agent updated to
-  StaxAI/1.0 — 626907c
-
-### ✅ Task 4 — Stylesheet Class Name Fix (complete)
-
-Completed April 2026. staxai-auth.css updated — renamed
-.topbar-account-btn → .account-btn and .topbar-account-dropdown
-→ .account-dropdown. Stylesheet dropdown styles now active
-across all pages. Commit: c5eb85a
-
-### ✅ Task 5 — Create topbar.js (complete)
-
-Completed April 2026. topbar.js created in repo root.
-Replicates exact account dropdown behaviour from cl-logic.js:
-dropdown toggle, click-outside-to-close, sign-out to /login.
-Commit: 38cd7b5
-
-Note: Page rollout (adding topbar.js to all authenticated
-pages) happens as part of the stylesheet rollout — Pre-Launch
-Step 4. Not a separate task.
-
 ### Task 6 — Fix CL Settings OAuth / CL Upload (in progress)
 
 ⚠️ Do not begin next round until owner confirms previous
 round is working correctly in the browser.
 
-Investigation complete. Gmail and Outlook OAuth connections
-are working. Issues found and fixes agreed. cl-upload.js
-Round 1 complete.
+Rounds 2–4 complete. Drive scanning working end to end.
 
 Commits made so far:
-- 0bdbd33 — cl-upload.js: fix _loadConnectionStatus to read
-  from cl_connected_emails array
-- 798563a — cl-upload.js: removed Browse Files button, wired
-  tile click to trigger file input
-- 6e9bf87 — cl-upload.js: image file validation with Dismiss
-  button
-- 210b3da — cl-upload.js: document file input accept changed
-  to .pdf,.doc,.docx,.txt
-- 6b494e2 — cl-upload.js: error message Dismiss button,
-  no auto-dismiss
-- 46756bf — cl-upload.js: both upload handlers now convert
-  to base64 and call api/process-file.js
-
-⚠️ Owner action required before Round 3 begins:
-Create cl_drive_folders column in Supabase:
-- Table: profiles
-- Type: jsonb
-- Default: null
-SQL: ALTER TABLE profiles ADD COLUMN cl_drive_folders jsonb DEFAULT null;
+- 0bdbd33 — cl-upload.js: fix _loadConnectionStatus
+- 798563a — cl-upload.js: tile click triggers file input
+- 6e9bf87 — cl-upload.js: image file validation
+- 210b3da — cl-upload.js: document file input accept types
+- 6b494e2 — cl-upload.js: error Dismiss button
+- 46756bf — cl-upload.js: both handlers call process-file.js
+- 5a8dff9 — oauth-callback.js: save Drive tokens to profiles
+- bd39d8b — oauth-callback.js: save Gmail/Outlook tokens
+- 3a4ae11 — api/cl-outlook-scan.js: new Outlook scan endpoint
+- ceaaf2c — cl-settings-logic.js: Drive folder picker logic
+- e21f348 — cl-settings.html: folder picker HTML structure
+- 54de96e — cl-settings-logic.js: disconnect clears folders
+- f1a272d — drive-import.js: read cl_drive_* token columns
+- f7ced6b — cl-upload.js: Scan Now wired for Drive
+- [multiple] — drive-import.js: binary file handling, column
+  fixes, timeout, logging
+- [multiple] — extraction prompt updated across all four
+  endpoints: drive-import.js, process-file.js,
+  cl-email-scan.js, cl-outlook-scan.js
 
 Remaining rounds:
 
-Round 2 — oauth-callback.js:
-- Save Drive access and refresh tokens to profiles during
-  the CL flow (currently discarded)
-
-Round 3 — CL Settings folder picker
-(cl-settings.html + cl-settings-logic.js):
-- After OAuth returns ?connected=google-drive, fetch folder
-  list via api/drive-import.js list-folders action
-- Show folder picker UI — user selects folders to connect
-- Save selected folder IDs and names to cl_drive_folders
-- Display connected folders in CL Settings with disconnect
-  per folder
-
-Round 4 — cl-upload.js Drive scan:
-- Read cl_drive_folders and display connected folders in
-  Upload & Import tab
-- Wire Scan Now for Drive to call api/drive-import.js with
-  selected folder IDs
-
-Round 5 — api/scrape-website.js targeted fix:
+Round 5 — api/scrape-website.js:
 - Fix JSON parsing regex — match array not single object
-- Update insertion code to expect flat array matching
-  current prompt schema
-- Confirm column names match other April 1 files
+- Update insertion code to expect flat array
+- Confirm column names match content_library schema
 - Add redirect following to HTTP fetch
-- Update User-Agent from TradeAI/1.0 to StaxAI/1.0
+- Update User-Agent to StaxAI/1.0
 - Add user-facing feedback in cl-upload.js after scan
 
-Round 6 — CL Settings remaining fixes
-(cl-settings-logic.js + cl-settings.html):
+Round 6 — cl-settings-logic.js + cl-settings.html:
 - Save button → "Saved" after saving, resets on change
 - Fix sign-out ID mismatch (signout-btn → sign-out-btn)
 
-Round 7 — oauth-callback.js cleanup:
+Round 7 — oauth-callback.js:
 - Remove broken non-CL fallback code (lines 379–483)
+
+After Rounds 5–7:
+- Wire and test Gmail Scan Now button in cl-upload.js
+- Wire and test Outlook Scan Now button in cl-upload.js
+- Verify Drive scan extraction quality after prompt update
+
+---
+
+## Known Issues & Notes
+
+- CL email tokens (Gmail/Outlook) were being discarded before
+  commit bd39d8b. Users who connected business email before
+  this fix will need to reconnect in CL Settings.
+- cl-outlook-scan.js is built but Scan Now in cl-upload.js
+  is not yet wired to it.
+- content_type column in content_library is effectively dead
+  — never read by UI. Made nullable April 2026. Consider
+  removing in a future cleanup pass.
+- drive-import.js extraction prompt updated April 2026 —
+  verify quality by rescanning test Drive folder and checking
+  Review tab output at start of next session.
+
+---
+
+## Pre-Launch Build Order
+
+Mandatory sequence. No step begins until the previous step
+is complete and confirmed working.
+
+| Step | Task                                                       |
+|------|------------------------------------------------------------|
+| 1    | Fix CL Settings OAuth / CL Upload — Task 6 above          |
+| 2    | Complete stylesheet rollout across CL files                |
+| 3    | Complete stylesheet rollout across cl-settings.html        |
+| 4    | Roll stylesheet out to all remaining authenticated pages   |
+| 5    | Integration tests — all 5 tools                            |
+| 6    | Functional reviews — all 5 tools (real data, end-to-end)  |
+| 7    | Improvements per tool based on functional review findings  |
+| 8    | Dashboard rebuild                                          |
 
 ---
 
 ## Structural Analysis Findings & Agreed Decisions
 
-Completed April 2026 — Tasks 1 and 2. These findings inform
-the build approach going forward.
-
 ### Post-Login Rebuild Strategy
 
-Pre-login files (index.html, tools.html, panel.html,
-panel-auth.html, industry-select.html, pricing-page.html)
-are complete and not to be touched except for the specific
-Category 2 fixes in Task 3 which are now done. No further
-changes to pre-login files unless explicitly instructed.
-
-All post-login authenticated pages are to be rebuilt to the
-correct standard as part of the stylesheet rollout sequence.
-The structural analysis findings on these files reflect known
-problems that will be resolved during the rebuild — they are
-not a separate fix list.
+Pre-login files are complete and not to be touched except for
+explicitly instructed changes. All post-login authenticated
+pages are to be rebuilt to the correct standard as part of
+the stylesheet rollout sequence.
 
 The reference implementation for all authenticated pages is:
 - content-library.html — look-and-feel bible
@@ -232,54 +184,10 @@ The sequence for each tool rebuild is:
 6. Replace hardcoded CSS values with CSS variables
 7. Test and confirm before moving to next tool
 
-### Stylesheet — Known Issues
-
-- content-library.html loads staxai-auth.css but also has
-  its own inline CSS block overriding some dropdown styles —
-  to be cleaned up during CL stylesheet rollout.
-- cl-settings.html does not load staxai-auth.css at all —
-  has its own complete inline CSS. To be fixed during
-  CL Settings stylesheet rollout.
-
-### Dropdown — Known Issues
-
-Across all authenticated pages the dropdown is inconsistent:
-- CL — no email display, sign-out goes to /login
-- CL Settings — no sign-out wiring at all (broken)
-- Chatbot — email display works, sign-out goes to /login
-- Email Assistant — sign-out goes to index.html (wrong)
-
-All of these are resolved when topbar.js is rolled out to
-each page during the stylesheet rollout (Pre-Launch Step 4).
-
-### Dead UI in content-library.html
-
-Five modals exist in content-library.html (modal-website,
-modal-drive, modal-schedule, modal-reject, modal-detail) with
-onclick handlers calling functions that do not exist anywhere
-in the codebase (closeModal, scrapeWebsite, confirmApprove,
-confirmReject). These are dead UI — the modals cannot be
-opened and the buttons do nothing.
-
-Decision: Leave as-is for now. These will be addressed when
-the CL rebuild reaches those features.
-
-### window.CL_LOGIC
-
-cl-logic.js does not define window.CL_LOGIC. The call to
-window.CL_LOGIC.init() in content-library.html silently
-fails. The page works anyway because cl-logic.js runs its
-code on script load rather than waiting for init().
-
-This is a structural violation but not a functional bug.
-To be addressed when CL files are next touched as part of
-the rebuild.
-
 ### Deferred — Address During Tool Rebuilds
 
-The following findings from Task 2 are not separate tasks.
-They will be resolved naturally as each tool is rebuilt
-during the stylesheet rollout sequence:
+The following will be resolved naturally as each tool is
+rebuilt during the stylesheet rollout:
 - 60+ inline onclick handlers across post-login pages
 - 450+ hardcoded CSS values across post-login pages
 - Duplicated auth check pattern across 10+ files
@@ -287,28 +195,6 @@ during the stylesheet rollout sequence:
 - Duplicated account dropdown JS across 10+ files
 - panel.html / panel-auth.html shared renderPanel() duplication
 - Logic files not following window.*_LOGIC + init() pattern
-
----
-
-## End of Session — Mandatory
-
-At the end of every session, before closing, produce a summary
-in this exact format for the owner to bring to Chat:
-
-COMPLETED THIS SESSION:
-- [list every task completed with file names and commit refs]
-
-CURRENT HEAD SHA: [sha]
-
-NEXT SESSION SHOULD START WITH:
-- [exact task and any specific instructions]
-
-ANYTHING CHAT NEEDS TO KNOW:
-- [decisions needed, blockers found, spec gaps, anything unusual]
-
-This summary is how CLAUDE.md gets updated. The owner brings it
-to Chat, we update this file together, then the owner starts a
-new Code session with the updated CLAUDE.md.
 
 ---
 
@@ -370,6 +256,14 @@ Refer to StaxAI Project Brief v12.23
 
 Refer to StaxAI Project Brief v12.23
 
+Notable changes made April 2026:
+- profiles: added cl_drive_folders (jsonb),
+  cl_drive_access_token (text), cl_drive_refresh_token (text),
+  cl_outlook_last_scanned_at (timestamptz)
+- content_library: UNIQUE constraint added on source_ref
+- content_library: NOT NULL constraint removed from
+  content_type (column is effectively dead — never read by UI)
+
 ---
 
 ## Stylesheet
@@ -384,25 +278,6 @@ Filename: staxai-auth.css
   authenticated pages. The stylesheet is aligned to CL.
 - All new and edited files must use CSS variables throughout.
   Never use hardcoded values. Never approximate or substitute.
-
----
-
-## Pre-Launch Build Order
-
-Mandatory sequence. No step begins until the previous step
-is complete and confirmed working.
-
-| Step | Task                                                       |
-|------|------------------------------------------------------------|
-| 1    | Fix CL Settings OAuth (Gmail, Outlook, Google Drive)       |
-|      | — current blocker (Task 6 above)                           |
-| 2    | Complete stylesheet rollout across CL files                |
-| 3    | Complete stylesheet rollout across cl-settings.html        |
-| 4    | Roll stylesheet out to all remaining authenticated pages   |
-| 5    | Integration tests — all 5 tools                            |
-| 6    | Functional reviews — all 5 tools (real data, end-to-end)  |
-| 7    | Improvements per tool based on functional review findings  |
-| 8    | Dashboard rebuild                                          |
 
 ---
 
@@ -442,11 +317,8 @@ working summary only.
   attributes in JS strings use &apos; or &#39;.
 
 ### Pre-Login Files
-- Pre-login files (index.html, tools.html, panel.html,
-  panel-auth.html, industry-select.html, pricing-page.html)
-  are not to be touched unless explicitly instructed.
-- The Category 2 fixes in Task 3 are the only changes that
-  were authorised for these files. That work is complete.
+- Pre-login files are not to be touched unless explicitly
+  instructed.
 
 ### Split Architecture (Rules v2.9 Section 12)
 No monolithic files for new work. Full detail in Rules v2.9.
@@ -460,26 +332,22 @@ No monolithic files for new work. Full detail in Rules v2.9.
 - No shell file should exceed ~60,000 chars.
 
 ### Codebase Quirks
-Easy to miss — have caused bugs before:
-
-- tools.html has its own hardcoded copy of all tool data in
-  its own script block, separate from tools-data.js. When
-  changing any tool ID or property, update BOTH files.
-- index.html has its own HERO_TOOLS array, separate from
-  tools-data.js. When adding a tool or changing a toolId,
-  update index.html HERO_TOOLS as well as tools-data.js
-  and tools.html.
+- tools.html has its own hardcoded copy of all tool data
+  separate from tools-data.js. Update BOTH when changing
+  any tool ID or property.
+- index.html has its own HERO_TOOLS array separate from
+  tools-data.js. Update index.html as well as tools-data.js
+  and tools.html when adding or changing a tool.
 - index.html hero CSS classes must never be removed:
   .stax-stack, .stax-card, .stax-card-screenshot,
   .stax-card-info, .stax-tagline, .stax-tagline-pre,
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
-- cl-settings.html does not load staxai-auth.css — it has
-  its own inline CSS. This is a known issue to be fixed
-  during the stylesheet rollout (Pre-Launch Step 3).
-- content-library.html has 5 dead modals (modal-website,
-  modal-drive, modal-schedule, modal-reject, modal-detail)
-  with onclick handlers calling undefined functions. Do not
-  attempt to wire these up — they are unbuilt features.
+- cl-settings.html does not load staxai-auth.css — known
+  issue to be fixed during stylesheet rollout (Pre-Launch
+  Step 3).
+- content-library.html has 5 dead modals with onclick
+  handlers calling undefined functions. Do not attempt to
+  wire these up — unbuilt features.
 
 ### Stylesheet & CSS
 - All CSS variables defined in the shared stylesheet — never
