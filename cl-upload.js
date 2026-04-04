@@ -208,6 +208,25 @@ window.CL_UPLOAD = {
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
+          } else if (source === "outlook") {
+            var outlookResp = await fetch("/api/cl-outlook-scan", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId: user.id })
+            });
+            var outlookResult = await outlookResp.json();
+            btn.textContent = originalText;
+            btn.disabled = false;
+            if (outlookResult.error) {
+              self._showUploadError(outlookResult.error);
+            } else if (outlookResult.success && outlookResult.imported > 0) {
+              self._showUploadConfirmation(outlookResult.imported);
+            } else {
+              self._showUploadError("No new content found in your Outlook inbox.");
+            }
+            if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            return;
           } else if (source === "website") {
             var tile = btn.closest(".source-tile");
             var cbs = tile ? tile.querySelectorAll(".source-url-checkbox") : [];
