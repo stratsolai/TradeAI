@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 4 2026
+# Updated: April 5 2026
 
 ---
 
@@ -115,58 +115,30 @@ one is finished and findings reviewed with the owner via Chat.
 Do not begin next round until owner confirms previous
 round is working correctly in the browser.
 
-Rounds 2–5 complete. Round 6 in progress — Gmail scanning
-working but four fixes still required before Round 6 is done.
+Rounds 2–7 complete.
 
-Key commits this session (April 4 2026):
-- 6eb58cc — process-file.js: maxDuration + critical syntax fix
-- fca52d9 — process-file.js: image media type fix
-- b5d7c52 — process-file.js: Word document handling fix
-- c260968 — cl-upload.js: Gmail Scan Now wired to cl-email-scan
-- 61ff3af — cl-email-scan.js: token error surfaced, 90-day
-  lookback, timestamp fix
-- 0cb2acf — cl-email-scan.js: HTML email handling, content_text
-  fix, message fetch check
-- c3df2de — cl-email-scan.js: source_detail and source_item_id
-  replacing metadata
-- ce3187d — cl-outlook-scan.js: same source_detail fix
-- 296972e — content-library.html: tools-data.js script tag added
-- eb6cb17 — cl-review.js: content formatting, canonical
-  categories, Source button wiring, Tagged Tools fix
+Key commits this session (April 5 2026):
+- 5f24ddc — cl-review.js: tool.name to tool.title for pill
+  labels
+- adcecc2 — account-logic.js: tool lookup t.toolId to t.id
+- eb20d1f — process-file.js: category normalisation and
+  mandatory prompt
+- 321a482 — cl-email-scan.js: category normalisation and
+  mandatory prompt
+- 17fad80 — cl-outlook-scan.js: category normalisation and
+  mandatory prompt
+- b411af8 — process-file.js: source_detail, source_item_id,
+  tool_source
+- 1aad237 — cl-upload.js: Review tab refresh after scan
+  completes
+- ab3d072 — cl-outlook-scan.js: body to content_text
+- 2fe2a70 — cl-upload.js: Outlook Scan Now button wired
+- 4a70e5c — cl-outlook-scan.js: default lookback 30 days to
+  90 days
+- 3409209 — cl-outlook-scan.js: diagnostic logging added
+- cd3b4c4 — cl-upload.js: diagnostic logging added
 
-Schema changes made this session (Supabase SQL — already applied):
-- content_library: added source_detail (jsonb), source_item_id
-  (text), tool_tags (jsonb), tool_source (text), category_tags
-  (jsonb)
-
-Round 6 — remaining work before Round 6 is complete:
-
-- Fix activated tools not showing in Review tab and Account
-  Management — window._activatedTools not being populated.
-  Was working recently. Investigate and fix.
-- Fix category not assigned for some extracted items — the AI
-  extraction prompt across process-file.js, cl-email-scan.js,
-  and cl-outlook-scan.js must enforce mandatory category
-  assignment for every extracted item. No item should be
-  inserted without a category value.
-- Fix process-file.js to populate source_detail and
-  source_item_id — PDF and image uploads currently show empty
-  source in the Review tab. source_detail should include
-  filename and any other relevant metadata. source_item_id
-  should be populated with a meaningful reference.
-- Fix Review tab not refreshing after scan — after a Gmail,
-  Outlook, Drive, or file upload scan completes, new items
-  should appear in the Review tab immediately without the
-  user needing to click away and back to Pending.
-
-Round 7 — Wire and test Outlook scanning:
-- Fix cl-outlook-scan.js: body column -> content_text (same
-  fix as cl-email-scan.js commit 0cb2acf)
-- Wire Outlook Scan Now button in cl-upload.js to call
-  api/cl-outlook-scan.js
-- Test end to end — confirm items appear in Review tab
-
-Round 8 — api/scrape-website.js:
+Round 8 (current) — api/scrape-website.js:
 - Fix JSON parsing regex — match array not single object
 - Update insertion code to expect flat array
 - Confirm column names match content_library schema
@@ -180,6 +152,9 @@ Round 9 — cl-settings-logic.js + cl-settings.html:
 
 Round 10 — oauth-callback.js:
 - Remove broken non-CL fallback code (lines 379–483)
+- Fix DEP0169 deprecation warning in
+  api/auth/microsoft/callback — replace url.parse() with
+  the WHATWG URL API equivalent
 
 ---
 
@@ -204,11 +179,15 @@ must be completed before the stylesheet rollout begins.
 
 ### Task C — Extraction prompt quality tuning
 
-- Items are splitting too much or too little across all three
-  extraction endpoints: process-file.js, cl-email-scan.js,
-  cl-outlook-scan.js. Review and tune the extraction prompts
-  across all three files in a dedicated session. Goal:
-  consistent, appropriately-sized discrete items.
+- Review and tune extraction prompts across process-file.js,
+  cl-email-scan.js, and cl-outlook-scan.js in a dedicated
+  session. Scope includes: platform and tool context injected
+  into the prompt so the AI understands what StaxAI does and
+  what each tool is for, meaningful item splitting based on
+  that context, correct tool tag suggestions, category
+  assignment quality, and a discard option allowing the AI to
+  flag content as not relevant to the platform rather than
+  forcing it into an item.
 
 ---
 
