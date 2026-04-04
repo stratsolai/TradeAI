@@ -85,9 +85,9 @@ window.ACCOUNT_LOGIC = {
     activatedTools.forEach(function(toolId) {
       var tool = null;
       if (window.CORE_TOOLS) {
-        tool = window.CORE_TOOLS.find(function(t) { return t.toolId === toolId; });
+        tool = window.CORE_TOOLS.find(function(t) { return t.id === toolId; });
       }
-      var name = tool ? tool.name : toolId;
+      var name = tool ? (Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || toolId)) : toolId;
       var icon = tool ? (tool.icon || '') : '';
       var price = tool ? (tool.price || '') : '';
       html += '<div class="al-sub-row">';
