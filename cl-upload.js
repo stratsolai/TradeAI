@@ -187,6 +187,7 @@ window.CL_UPLOAD = {
               self._showUploadError("No new content found in your connected Drive folders.");
             }
             if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "gmail") {
             var gmailResp = await fetch("/api/cl-email-scan", {
@@ -205,6 +206,7 @@ window.CL_UPLOAD = {
               self._showUploadError("No new content found in your Gmail inbox.");
             }
             if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "website") {
             var tile = btn.closest(".source-tile");
@@ -227,6 +229,7 @@ window.CL_UPLOAD = {
               });
             }
             if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
           }
         } catch (err) {
           console.error("Scan error:", err.message);
@@ -298,6 +301,8 @@ window.CL_UPLOAD = {
       } else {
         self._showUploadError("No content could be extracted from the selected images.");
       }
+      if (typeof loadStats === "function") loadStats();
+      if (window.CL_REVIEW) window.CL_REVIEW._load();
     } catch (err) {
       console.error("Photo upload error:", err);
       self._hideProcessing();
@@ -336,6 +341,8 @@ window.CL_UPLOAD = {
       } else {
         self._showUploadError("No content could be extracted from the selected documents.");
       }
+      if (typeof loadStats === "function") loadStats();
+      if (window.CL_REVIEW) window.CL_REVIEW._load();
     } catch (err) {
       console.error("Document upload error:", err);
       self._hideProcessing();
