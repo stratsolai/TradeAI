@@ -147,6 +147,9 @@ const handler = async (req, res) => {
         tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
         status: 'pending',
         source: sourceValue,
+        tool_source: 'process-file',
+        source_detail: { filename: fileName || 'Unknown', file_type: fileType },
+        source_item_id: source_item_id || fileName || null,
         created_at: new Date().toISOString(),
         source_ref: 'manual:' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500))
       };
