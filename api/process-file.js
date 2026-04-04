@@ -8,7 +8,7 @@ function getSupabase() {
   );
 }
 
-module.exports = async (req, res) => {
+const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -43,8 +43,7 @@ module.exports = async (req, res) => {
       profile.products ? 'Products: ' + profile.products : null,
       profile.marketing_theme ? 'Marketing theme: ' + profile.marketing_theme : null,
       (profile.suburb || profile.state) ? 'Location: ' + [profile.suburb, profile.state].filter(Boolean).join(', ') : null
-    ].filter(Boolean).join('
-') : '';
+    ].filter(Boolean).join('\n') : '';
 
     // 2. EXTRACT RAW CONTENT FROM SOURCE
     let sourceText = '';
@@ -246,3 +245,6 @@ function callClaude(requestBody, apiKey) {
     req.end();
   });
 }
+
+module.exports = handler;
+module.exports.config = { maxDuration: 300 };
