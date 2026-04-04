@@ -199,7 +199,8 @@ window.CL_REVIEW = {
     const relevantTools = tools;
     toolPillsEl.innerHTML = relevantTools.map(function(tool) {
       const isActive = self._toolFilters.indexOf(tool.id) > -1;
-      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
+      var toolLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
+      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(toolLabel) + '</button>';
     }).join('');
 
     catPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
@@ -271,9 +272,11 @@ window.CL_REVIEW = {
       const isTagged = toolTags.indexOf(tool.id) > -1;
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
-        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Add to your Stax to use this data">' + escHtml(tool.name) + ' <span class="tool-pill-add-stax">+ Add to Stax</span></a>';
+        var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Add to your Stax to use this data">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Add to Stax</span></a>';
       }
-      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tool.name) + '</button>';
+      var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
+      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
     }).join('');
     const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
