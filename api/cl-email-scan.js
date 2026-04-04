@@ -43,23 +43,42 @@ function decodeBase64Url(str) {
   }
 }
 
-// Extract plain text body from Gmail message payload
-function extractEmailBody(payload) {
-  if (!payload) return '';
-  if (payload.mimeType === 'text/plain' && payload.body && payload.body.data) {
-    return decodeBase64Url(payload.body.data);
+// Strip HTML tags and decode common entities to produce clean text
+function stripHtml(html) {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(?:p|div|tr|li|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#39;/g, "'").replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+}
+
+// Find a part by MIME type, searching recursively through nested parts
+function findPart(payload, mimeType) {
+  if (!payload) return null;
+  if (payload.mimeType === mimeType && payload.body && payload.body.data) {
+    return payload;
   }
   if (payload.parts) {
     for (const part of payload.parts) {
-      if (part.mimeType === 'text/plain' && part.body && part.body.data) {
-        return decodeBase64Url(part.body.data);
-      }
-    }
-    for (const part of payload.parts) {
-      const nested = extractEmailBody(part);
-      if (nested) return nested;
+      const found = findPart(part, mimeType);
+      if (found) return found;
     }
   }
+  return null;
+}
+
+// Extract text body from Gmail message payload — prefers text/plain, falls back to text/html
+function extractEmailBody(payload) {
+  if (!payload) return '';
+  const plainPart = findPart(payload, 'text/plain');
+  if (plainPart) return decodeBase64Url(plainPart.body.data);
+  const htmlPart = findPart(payload, 'text/html');
+  if (htmlPart) return stripHtml(decodeBase64Url(htmlPart.body.data));
   return '';
 }
 
@@ -160,6 +179,11 @@ export default async function handler(req, res) {
         'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + msg.id + '?format=full',
         { headers: { Authorization: 'Bearer ' + accessToken } }
       );
+      if (!msgRes.ok) {
+        console.error('Gmail message fetch failed:', msg.id, msgRes.status);
+        skipped++;
+        continue;
+      }
       const msgData = await msgRes.json();
 
       const headers = msgData.payload && msgData.payload.headers ? msgData.payload.headers : [];
@@ -176,7 +200,7 @@ export default async function handler(req, res) {
         const row = {
           user_id: userId,
           title: String(item.title || subject).substring(0, 200),
-          body: String(item.body || ''),
+          content_text: String(item.body || ''),
           category: item.category || activeFromProfile[0] || 'general',
           tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
           status: 'pending',
@@ -194,7 +218,7 @@ export default async function handler(req, res) {
       }
     }
 
-    if (messages.length > 0) {
+    if (imported > 0) {
       await supabase.from('profiles').update({ cl_email_last_scanned_at: new Date().toISOString() }).eq('id', userId);
     }
 
