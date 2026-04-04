@@ -137,6 +137,9 @@ Key commits this session (April 5 2026):
   90 days
 - 3409209 — cl-outlook-scan.js: diagnostic logging added
 - cd3b4c4 — cl-upload.js: diagnostic logging added
+- 421dec8 — cl-outlook-scan.js: diagnostic logging removed
+- 2624dad — cl-upload.js: diagnostic logging removed,
+  reverted to simple .json()
 
 Round 8 (current) — api/scrape-website.js:
 - Fix JSON parsing regex — match array not single object
