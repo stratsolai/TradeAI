@@ -150,7 +150,7 @@ export default async function handler(req, res) {
         const row = {
           user_id: userId,
           title: String(item.title || subject).substring(0, 200),
-          body: String(item.body || ''),
+          content_text: String(item.body || ''),
           category: normCat,
           tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
           status: 'pending',
