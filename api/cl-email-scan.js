@@ -1,3 +1,5 @@
+export const config = { maxDuration: 300 };
+
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -110,10 +112,15 @@ export default async function handler(req, res) {
     }
 
     let accessToken = profile.gmail_access_token;
-    try {
-      accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
-      await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
-    } catch (e) {}
+    if (profile.gmail_refresh_token) {
+      try {
+        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
+        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+      } catch (e) {
+        console.error('Gmail token refresh failed:', e.message);
+        return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
+      }
+    }
 
     const businessName = profile.business_name || 'this business';
     const industry = profile.industry || 'general';
@@ -123,7 +130,7 @@ export default async function handler(req, res) {
     const categoryList = activeFromProfile.concat(customFromProfile).join(', ');
     const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
-    const days = parseInt(daysBack) || 30;
+    const days = parseInt(daysBack) || 90;
     let afterTimestamp;
     if (profile.cl_email_last_scanned_at) {
       afterTimestamp = Math.floor(new Date(profile.cl_email_last_scanned_at).getTime() / 1000);
@@ -136,6 +143,12 @@ export default async function handler(req, res) {
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' + encodeURIComponent(query) + '&maxResults=50',
       { headers: { Authorization: 'Bearer ' + accessToken } }
     );
+    if (!listRes.ok) {
+      const errBody = await listRes.json().catch(() => ({}));
+      const errMsg = (errBody.error && errBody.error.message) || ('Gmail API returned ' + listRes.status);
+      console.error('Gmail list error:', listRes.status, errMsg);
+      return res.status(502).json({ error: 'Gmail API error: ' + errMsg });
+    }
     const listData = await listRes.json();
     const messages = listData.messages || [];
 
@@ -181,7 +194,9 @@ export default async function handler(req, res) {
       }
     }
 
-    await supabase.from('profiles').update({ cl_email_last_scanned_at: new Date().toISOString() }).eq('id', userId);
+    if (messages.length > 0) {
+      await supabase.from('profiles').update({ cl_email_last_scanned_at: new Date().toISOString() }).eq('id', userId);
+    }
 
     return res.status(200).json({ success: true, imported, skipped, total: messages.length });
 
