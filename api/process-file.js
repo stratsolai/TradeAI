@@ -79,32 +79,17 @@ module.exports = async (req, res) => {
     }
 
     // 3. BUILD AI PROMPT
-    const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Return only a valid JSON array. No preamble, no explanation, no markdown code fences.';
+    const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, must be from the category list), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
 
     const categoryList = allCategories.join(', ');
     const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
 
-    const instructions = [
-      'Extract all discrete pieces of business information from the content above.',
-      '',
-      'For each piece:',
-      '- Write a short descriptive title (max 10 words)',
-      '- Write the body as clean plain text, preserving factual detail',
-      '- Assign a category from this list (choose the most relevant one): ' + categoryList,
-      '- Assign tool_tags as an array of tool IDs that would benefit from this content. Use only: ' + toolIdList,
-      '',
-      'Return a JSON array of objects. Each object must have:',
-      '  title (string)',
-      '  body (string)',
-      '  category (string - must be from the category list above)',
-      '  tool_tags (array of strings - must be from the tool IDs above)',
-      '',
-      'Return only the JSON array. No preamble, no explanation, no markdown.'
-    ].join('\n');
-
     const userPrompt = (businessContext ? 'BUSINESS PROFILE:\n' + businessContext + '\n\n' : '') +
+      'Business: ' + (profile ? profile.business_name || 'this business' : 'this business') + ' (' + (profile ? profile.industry || 'general' : 'general') + ').\n' +
+      'Active categories: ' + categoryList + '\n' +
+      'Active tool IDs: ' + toolIdList + '\n\n' +
       'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000) +
-      '\n\nEXTRACTION INSTRUCTIONS:\n' + instructions;
+      '\n\nExtract all logical sections as separate items. Include the document title in every item title for context. Preserve bullet points intact where no prose exists. Summarise only what is explicitly present — do not infer or fabricate. JSON array only.';
 
     // 4. CALL CLAUDE HAIKU
     const requestBody = JSON.stringify({
