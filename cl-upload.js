@@ -209,12 +209,21 @@ window.CL_UPLOAD = {
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "outlook") {
+            console.log("OUTLOOK SCAN — starting fetch for userId:", user.id);
             var outlookResp = await fetch("/api/cl-outlook-scan", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ userId: user.id })
             });
-            var outlookResult = await outlookResp.json();
+            console.log("OUTLOOK SCAN — response status:", outlookResp.status, "ok:", outlookResp.ok);
+            var outlookRaw = await outlookResp.text();
+            console.log("OUTLOOK SCAN — raw response body:", outlookRaw.substring(0, 500));
+            var outlookResult;
+            try { outlookResult = JSON.parse(outlookRaw); } catch (parseErr) {
+              console.error("OUTLOOK SCAN — JSON parse failed:", parseErr.message, "raw:", outlookRaw.substring(0, 200));
+              throw new Error("Outlook scan returned invalid response (HTTP " + outlookResp.status + ")");
+            }
+            console.log("OUTLOOK SCAN — parsed result:", JSON.stringify(outlookResult));
             btn.textContent = originalText;
             btn.disabled = false;
             if (outlookResult.error) {
