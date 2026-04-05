@@ -380,9 +380,9 @@ window.CL_SETTINGS_LOGIC = {
         .update({ website_urls: urls })
         .eq('id', self._userId);
       if (res.error) { console.error('_saveWebsiteUrls error:', res.error); return; }
+      self._renderWebsiteList();
       var btn = document.getElementById('website-save-btn');
       if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
-      self._renderWebsiteList();
     } catch (e) { console.error('_saveWebsiteUrls exception:', e); }
   },
 
