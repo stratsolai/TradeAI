@@ -2,8 +2,20 @@ window.CL_OUTPUTS = {
   _supabase: null,
   _selectedTool: null,
 
-  init: function(supabase) {
+  init: async function(supabase) {
     this._supabase = supabase;
+    try {
+      var authResp = await supabase.auth.getUser();
+      var user = authResp.data ? authResp.data.user : null;
+      if (user) {
+        var profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+        this._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
+      } else {
+        this._activatedTools = [];
+      }
+    } catch (e) {
+      this._activatedTools = [];
+    }
     this._render();
   },
 
@@ -13,7 +25,7 @@ window.CL_OUTPUTS = {
 
     var self = this;
     var coreTools = window.CORE_TOOLS || [];
-    var activated = window._activatedTools || [];
+    var activated = this._activatedTools || [];
 
     // Split into active (subscribed) and coming soon
     var activeTools = [];
