@@ -26,8 +26,10 @@ window.CL_REVIEW = {
     this._searchTerm = '';
     this._selected = new Set();
     if (typeof window.switchPTab === 'function') window.switchPTab('review');
+    var sClr = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea' };
     document.querySelectorAll('.review-status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
+      b.style.background = b.dataset.status === status ? (sClr[status] || '') : '';
     });
     if (document.getElementById('review-search')) {
       document.getElementById('review-search').value = '';
@@ -86,16 +88,21 @@ window.CL_REVIEW = {
 
   _bindControls: function() {
     const self = this;
+    var statusColors = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea' };
     document.querySelectorAll('.review-status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.review-status-btn').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.review-status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
         btn.classList.add('active');
+        btn.style.background = statusColors[btn.dataset.status] || '';
         self._status = btn.dataset.status;
         self._categoryFilter = [];
         self._toolFilters = [];
         self._selected = new Set();
         self._load();
       });
+      btn.addEventListener('mouseenter', function() { btn.style.background = statusColors[btn.dataset.status] || ''; });
+      btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('active')) btn.style.background = ''; });
+      if (btn.classList.contains('active')) btn.style.background = statusColors[btn.dataset.status] || '';
     });
     document.getElementById('review-search').addEventListener('input', function() {
       self._searchTerm = this.value.toLowerCase();
@@ -223,7 +230,7 @@ window.CL_REVIEW = {
     catPillsEl.innerHTML = cats.map(function(cat) {
       const isActive = self._categoryFilter.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
+      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '" style="border-color:var(--blue);color:var(--blue);' + (isActive ? 'background:#e8f4fd;' : '') + '">' + escHtml(label) + '</button>';
     }).join('');
 
     const tools = window.CORE_TOOLS || [];
@@ -242,6 +249,8 @@ window.CL_REVIEW = {
         self._renderFilterRow();
         self._renderList();
       });
+      pill.addEventListener('mouseenter', function() { pill.style.background = '#e8f4fd'; });
+      pill.addEventListener('mouseleave', function() { if (!pill.classList.contains('active')) pill.style.background = ''; });
     });
     toolPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
@@ -339,9 +348,9 @@ window.CL_REVIEW = {
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
-      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
-          <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="${this._status === 'rejected' ? 'border-color:#8B2500;color:#8B2500;' : ''}">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
+      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document" style="border-left-color:#0d9488;">&#128196; Source</button>
+          <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="${this._status === 'rejected' ? 'border-color:#8B2500;color:#8B2500;' : 'border-color:#dc3545;color:#dc3545;'}">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
     </div>
       </div>
   
@@ -391,14 +400,29 @@ window.CL_REVIEW = {
       });
     });
     document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
+      var sectionBg = btn.dataset.section === 'source' ? '#e0f2f1' : '#e8f4fd';
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
           var isOpen = el.style.display !== 'none';
           el.style.display = isOpen ? 'none' : '';
-          btn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+          btn.style.background = isOpen ? '' : sectionBg;
         }
       });
+      btn.addEventListener('mouseenter', function() { btn.style.background = sectionBg; });
+      btn.addEventListener('mouseleave', function() {
+        var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
+        if (el && el.style.display !== 'none') return;
+        btn.style.background = '';
+      });
+    });
+    document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
+      btn.addEventListener('mouseenter', function() { btn.style.background = '#edfaf1'; });
+      btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
+    });
+    document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
+      btn.addEventListener('mouseenter', function() { btn.style.background = '#fef2f2'; });
+      btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
     });
     document.querySelectorAll('.review-card-title[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'title', el.innerText.trim()); });
