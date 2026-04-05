@@ -2,22 +2,6 @@ window.CL_OUTPUTS = {
   _supabase: null,
   _selectedTool: null,
 
-  _tools: [
-    { id: 'social',        name: 'Marketing & Social Media Manager', state: 'active' },
-    { id: 'chatbot',       name: 'AI Website Chatbot',               state: 'active' },
-    { id: 'email',         name: 'AI Email Assistant',               state: 'active' },
-    { id: 'bi',            name: 'Business Intelligence Dashboard',  state: 'active' },
-    { id: 'news-digest',   name: 'Industry News & Updates Digest',   state: 'active' },
-    { id: 'strategic-plan',name: 'Strategic Plan & Operations',      state: 'active' },
-    { id: 'tender',        name: 'Tender Response Generator',        state: 'coming-soon' },
-    { id: 'quote-enhancer',name: 'Quote Enhancer',                   state: 'coming-soon' },
-    { id: 'swms',          name: 'SWMS & Safety Docs',               state: 'coming-soon' },
-    { id: 'customer-updates', name: 'Customer Progress Updates',     state: 'coming-soon' },
-    { id: 'handover-docs', name: 'Handover Documentation',           state: 'coming-soon' },
-    { id: 'review-booster',name: 'Review & Referral Booster',        state: 'coming-soon' },
-    { id: 'design-viz',    name: 'Design Visualiser',                state: 'coming-soon' }
-  ],
-
   init: function(supabase) {
     this._supabase = supabase;
     this._render();
@@ -28,47 +12,73 @@ window.CL_OUTPUTS = {
     if (!container) return;
 
     var self = this;
+    var coreTools = window.CORE_TOOLS || [];
+    var activated = window._activatedTools || [];
+
+    // Split into active (subscribed) and coming soon
+    var activeTools = [];
+    var comingTools = [];
+    coreTools.forEach(function(tool) {
+      var name = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
+      var entry = { id: tool.id, name: name, icon: tool.icon || '' };
+      if (activated.indexOf(tool.id) > -1) {
+        activeTools.push(entry);
+      } else {
+        comingTools.push(entry);
+      }
+    });
+
+    // Default selection — first active tool
+    if (!this._selectedTool && activeTools.length > 0) {
+      this._selectedTool = activeTools[0].id;
+    }
+
     var html = "<div class=\"outputs-layout\">";
 
-    // Left sidebar - tool list
+    // Left sidebar
     html += "<div class=\"outputs-sidebar\">";
     html += "<div class=\"outputs-sidebar-title\">AI Tool Outputs</div>";
-    var dividerAdded = false;
-    this._tools.forEach(function(tool) {
-      var cls = "tool-row";
-      if (tool.state === "coming-soon") {
-        cls += " tool-row-coming";
-        if (!dividerAdded) { html += "<hr class=\"outputs-sidebar-divider\">"; dividerAdded = true; }
-      }
-      if (self._selectedTool === tool.id) cls += " active";
-      var badge = tool.state === "coming-soon" ? " <span class=\"tool-coming-badge\">Coming Soon</span>" : "";
-      html += "<div class=\"" + cls + "\" data-tool-id=\"" + tool.id + "\">" + tool.name + badge + "</div>";
+
+    activeTools.forEach(function(tool) {
+      var cls = "tool-row" + (self._selectedTool === tool.id ? " active" : "");
+      html += "<div class=\"" + cls + "\" data-tool-id=\"" + tool.id + "\">" +
+        "<span class=\"tool-row-icon\">" + tool.icon + "</span>" +
+        "<span class=\"tool-row-name\">" + tool.name + "</span>" +
+        "</div>";
     });
-    html += "</div>";
 
-    // Right panel - outputs
-    html += "<div class=\"outputs-panel\" id=\"outputs-panel\">";
-    if (!this._selectedTool) {
-      html += "<div class=\"outputs-empty\">Select a tool from the list to view its outputs.</div>";
+    if (comingTools.length > 0) {
+      html += "<hr class=\"outputs-sidebar-divider\">";
+      comingTools.forEach(function(tool) {
+        html += "<div class=\"tool-row-coming\" data-tool-id=\"" + tool.id + "\">" +
+          "<span class=\"tool-row-icon\">" + tool.icon + "</span>" +
+          "<span class=\"tool-row-name\">" + tool.name + "</span>" +
+          "<span class=\"tool-coming-badge\">Coming Soon</span>" +
+          "</div>";
+      });
     }
+
     html += "</div>";
 
+    // Right panel
+    html += "<div class=\"outputs-panel\" id=\"outputs-panel\"></div>";
     html += "</div>";
     container.innerHTML = html;
 
-    // Wire up tool row clicks
-    var rows = container.querySelectorAll(".tool-row:not(.tool-row-coming)");
-    rows.forEach(function(row) {
+    // Wire up active tool row clicks
+    container.querySelectorAll(".tool-row:not(.tool-row-coming)").forEach(function(row) {
       row.addEventListener("click", function() {
         self._selectedTool = row.getAttribute("data-tool-id");
-        // Update active state
-        container.querySelectorAll(".tool-row").forEach(function(r) {
-          r.classList.remove("active");
-        });
+        container.querySelectorAll(".tool-row").forEach(function(r) { r.classList.remove("active"); });
         row.classList.add("active");
         self._loadOutputs(self._selectedTool);
       });
     });
+
+    // Auto-load first selected tool
+    if (this._selectedTool) {
+      this._loadOutputs(this._selectedTool);
+    }
   },
 
   _loadOutputs: async function(toolId) {
