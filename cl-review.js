@@ -351,7 +351,7 @@ window.CL_REVIEW = {
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve">&#10003; Approve</button>
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="Reject">&#10007; Reject</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="${this._status === 'rejected' ? 'border-color:#8B2500;color:#8B2500;' : ''}">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
     </div>
       </div>
   
@@ -396,7 +396,9 @@ window.CL_REVIEW = {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'approved'); });
     });
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'rejected'); });
+      btn.addEventListener('click', function() {
+        if (self._status === 'rejected') { self._deleteItem(btn.dataset.id); } else { self._changeStatus(btn.dataset.id, 'rejected'); }
+      });
     });
     document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -427,6 +429,16 @@ window.CL_REVIEW = {
     await this._supabase.from('content_library').update({ status: newStatus }).eq('id', id);
     this._items = this._items.filter(function(i) { return i.id !== id; });
     const card = document.querySelector('.review-card[data-id="' + id + '"]');
+    if (card) card.remove();
+    this._selected.delete(id);
+    this._updateBulkBar();
+    this._updateStatTiles();
+  },
+
+  _deleteItem: async function(id) {
+    await this._supabase.from('content_library').delete().eq('id', id);
+    this._items = this._items.filter(function(i) { return i.id !== id; });
+    var card = document.querySelector('.review-card[data-id="' + id + '"]');
     if (card) card.remove();
     this._selected.delete(id);
     this._updateBulkBar();
