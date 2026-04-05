@@ -74,9 +74,9 @@ window.CL_REVIEW = {
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
-          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn">&#10003; Approve All Selected</button>
-          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn">&#10007; Reject All Selected</button>
-          <button class="btn-outline" id="review-deselect-btn">Deselect All</button>
+          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All Selected</button>
+          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn" style="border-color:#dc3545;color:#dc3545;">&#10007; Reject All Selected</button>
+          <button class="btn-outline" id="review-deselect-btn" style="border-color:#4A6D8C;color:#4A6D8C;">Deselect All</button>
         </div>
         <div id="review-list" class="review-list"></div>
       </div>
@@ -110,6 +110,18 @@ window.CL_REVIEW = {
     });
     document.getElementById('review-approve-all-btn').addEventListener('click', function() { self._bulkActionAll('approved'); });
     document.getElementById('review-reject-all-btn').addEventListener('click', function() { self._bulkActionAll('rejected'); });
+    self._bindBtnHover('review-approve-all-btn', '#edfaf1');
+    self._bindBtnHover('review-reject-all-btn', '#fef2f2');
+    self._bindBtnHover('review-bulk-approve-btn', '#edfaf1');
+    self._bindBtnHover('review-bulk-reject-btn', '#fef2f2');
+    self._bindBtnHover('review-deselect-btn', '#e8f4fd');
+  },
+
+  _bindBtnHover: function(id, hoverBg) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('mouseenter', function() { btn.style.background = hoverBg; });
+    btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
   },
 
   _load: async function() {
