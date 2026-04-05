@@ -1,13 +1,15 @@
 document.addEventListener("DOMContentLoaded", function() {
   var _ab = document.getElementById("account-btn");
-  if (_ab) _ab.addEventListener("click", function(e) {
-    e.stopPropagation();
-    document.getElementById("account-dropdown").classList.toggle("open");
-  });
-
-  document.addEventListener("click", function() {
-    document.getElementById("account-dropdown").classList.remove("open");
-  });
+  var _dd = document.getElementById("account-dropdown");
+  if (_ab && _dd) {
+    _ab.addEventListener("click", function(e) {
+      e.stopPropagation();
+      _dd.classList.toggle("open");
+    });
+    document.addEventListener("click", function() {
+      _dd.classList.remove("open");
+    });
+  }
 
   var _sb = document.getElementById("sign-out-btn");
   if (_sb) _sb.addEventListener("click", async function() {
