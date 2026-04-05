@@ -102,14 +102,18 @@ window.CL_REVIEW = {
       self._renderList();
     });
     document.getElementById('review-bulk-approve-btn').addEventListener('click', function() { self._bulkAction('approved'); });
-    document.getElementById('review-bulk-reject-btn').addEventListener('click', function() { self._bulkAction('rejected'); });
+    document.getElementById('review-bulk-reject-btn').addEventListener('click', function() {
+      if (self._status === 'rejected') { self._bulkDelete(); } else { self._bulkAction('rejected'); }
+    });
     document.getElementById('review-deselect-btn').addEventListener('click', function() {
       self._selected = new Set();
       self._updateBulkBar();
       document.querySelectorAll('.review-checkbox').forEach(function(cb) { cb.checked = false; });
     });
     document.getElementById('review-approve-all-btn').addEventListener('click', function() { self._bulkActionAll('approved'); });
-    document.getElementById('review-reject-all-btn').addEventListener('click', function() { self._bulkActionAll('rejected'); });
+    document.getElementById('review-reject-all-btn').addEventListener('click', function() {
+      if (self._status === 'rejected') { self._bulkDeleteAll(); } else { self._bulkActionAll('rejected'); }
+    });
     self._bindBtnHover('review-approve-all-btn', '#edfaf1');
     self._bindBtnHover('review-reject-all-btn', '#fef2f2');
     self._bindBtnHover('review-bulk-approve-btn', '#edfaf1');
@@ -122,6 +126,22 @@ window.CL_REVIEW = {
     if (!btn) return;
     btn.addEventListener('mouseenter', function() { btn.style.background = hoverBg; });
     btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
+  },
+
+  _updateRejectButtons: function() {
+    var isRejected = this._status === 'rejected';
+    var allBtn = document.getElementById('review-reject-all-btn');
+    var selBtn = document.getElementById('review-bulk-reject-btn');
+    if (allBtn) {
+      allBtn.innerHTML = isRejected ? '&#10007; Delete All' : '&#10007; Reject All';
+      allBtn.style.borderColor = isRejected ? '#8B2500' : '#dc3545';
+      allBtn.style.color = isRejected ? '#8B2500' : '#dc3545';
+    }
+    if (selBtn) {
+      selBtn.innerHTML = isRejected ? '&#10007; Delete All Selected' : '&#10007; Reject All Selected';
+      selBtn.style.borderColor = isRejected ? '#8B2500' : '#dc3545';
+      selBtn.style.color = isRejected ? '#8B2500' : '#dc3545';
+    }
   },
 
   _load: async function() {
@@ -141,6 +161,7 @@ window.CL_REVIEW = {
     this._updateBulkBar();
     this._renderFilterRow();
     this._renderList();
+    this._updateRejectButtons();
     const self2 = this;
     const filterToolsBtn = document.querySelector('.review-filter-tools-btn');
     const filterCatBtn = document.querySelector('.review-filter-cat-btn');
@@ -293,7 +314,7 @@ window.CL_REVIEW = {
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
         var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Add to your Stax to use this data">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Add to Stax</span></a>';
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
       }
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
@@ -430,6 +451,31 @@ window.CL_REVIEW = {
     var ids = filtered.map(function(i) { return i.id; });
     var self = this;
     await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
+    this._selected = new Set();
+    this._updateBulkBar();
+    this._renderList();
+    this._updateStatTiles();
+  },
+
+  _bulkDelete: async function() {
+    var self = this;
+    var ids = Array.from(this._selected);
+    if (ids.length === 0) return;
+    await this._supabase.from('content_library').delete().in('id', ids);
+    this._items = this._items.filter(function(i) { return !self._selected.has(i.id); });
+    this._selected = new Set();
+    this._updateBulkBar();
+    this._renderList();
+    this._updateStatTiles();
+  },
+
+  _bulkDeleteAll: async function() {
+    var filtered = this._filteredItems();
+    if (filtered.length === 0) return;
+    var ids = filtered.map(function(i) { return i.id; });
+    var self = this;
+    await this._supabase.from('content_library').delete().in('id', ids);
     this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
     this._selected = new Set();
     this._updateBulkBar();
