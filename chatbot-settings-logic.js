@@ -372,12 +372,6 @@ window.CHAT_SETTINGS_LOGIC = {
         if (panel) panel.classList.add("active");
       });
     });
-    // Handle hash navigation e.g. chatbot-settings.html#faq
-    const hash = window.location.hash.replace("#", "");
-    if (hash) {
-      const target = document.querySelector(".settings-tab[data-tab='" + hash + "']");
-      if (target) target.click();
-    }
   },
 
     wireSaveButtons: function () {
