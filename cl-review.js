@@ -230,7 +230,7 @@ window.CL_REVIEW = {
     catPillsEl.innerHTML = cats.map(function(cat) {
       const isActive = self._categoryFilter.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '" style="border-color:var(--blue);color:var(--blue);' + (isActive ? 'background:#e8f4fd;' : '') + '">' + escHtml(label) + '</button>';
+      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
 
     const tools = window.CORE_TOOLS || [];
@@ -249,8 +249,6 @@ window.CL_REVIEW = {
         self._renderFilterRow();
         self._renderList();
       });
-      pill.addEventListener('mouseenter', function() { pill.style.background = '#e8f4fd'; });
-      pill.addEventListener('mouseleave', function() { if (!pill.classList.contains('active')) pill.style.background = ''; });
     });
     toolPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
@@ -399,10 +397,11 @@ window.CL_REVIEW = {
         if (self._status === 'rejected') { self._deleteItem(btn.dataset.id); } else { self._changeStatus(btn.dataset.id, 'rejected'); }
       });
     });
-    document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
+    var listEl = document.getElementById('review-list');
+    if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
       var sectionBg = btn.dataset.section === 'source' ? '#e0f2f1' : '#e8f4fd';
       btn.addEventListener('click', function() {
-        const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
+        var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
           var isOpen = el.style.display !== 'none';
           el.style.display = isOpen ? 'none' : '';
