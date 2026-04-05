@@ -107,29 +107,23 @@ authenticated pages:
 
 ## Active Tasks
 
-Task 6 (CL Settings OAuth / CL Upload) is complete — all
-10 rounds done.
-
 ### CL Functional Improvements (in progress)
 
 Complete in order. Do not begin the next task until the current
 one is finished and confirmed working in the browser.
 
-1. Header tiles clickable — Pending/Approved/Rejected jump
-   to correct tab
-2. Approve All for entire tab without manual ticking — across
-   all three tabs
-3. Remove Close button on Source section
-4. Active/shaded state on Source, Tagged Categories, Tagged
-   Tools buttons when open — across all three tabs
-5. Deselect All styled to match Approve All / Reject All —
-   across all three tabs
-6. URL field validation in CL Settings — check for existing
-   code before writing new, auto-correct, block malformed
-   entries
-7. Items display — review and adjust once 1–5 are in place
-8. Tool Outputs left column styling
-9. Multiple connected accounts in Upload & Import — spec
+1. URL field validation in CL Settings — no existing code,
+   build fresh. Auto-correct missing protocol, block
+   malformed URLs like https:///, show inline error, do not
+   save invalid URLs. Note: cl-upload.js line 244 has a
+   protocol prepend at scan time but nothing exists in
+   cl-settings-logic.js — build needed there.
+2. Individual item card Reject button changes to Delete in
+   Rejected tab — rusty red, permanent delete from database,
+   matching the bulk Delete All button already in place.
+3. Items display — review and adjust once 1 and 2 are done
+4. Tool Outputs left column styling
+5. Multiple connected accounts in Upload & Import — spec
    then implement
 
 ---
