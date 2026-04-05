@@ -16,17 +16,6 @@ window.CL_SETTINGS_LOGIC = {
       if (!res || !res.data || !res.data.user) return;
       self._userId = res.data.user.id;
 
-      // Account dropdown
-      var _ab = document.getElementById('account-btn');
-      if (_ab) _ab.addEventListener('click', function (e) {
-        e.stopPropagation();
-        document.getElementById('account-dropdown').classList.toggle('open');
-      });
-      document.addEventListener('click', function () {
-        var dd = document.getElementById('account-dropdown');
-        if (dd) dd.classList.remove('open');
-      });
-
       self._bindEventDelegation();
       self._bindScanSave();
       self._bindCategorySave();
