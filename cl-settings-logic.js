@@ -219,6 +219,11 @@ window.CL_SETTINGS_LOGIC = {
     grid.innerHTML = html;
   },
 
+  _resetSaveBtn: function (id, label) {
+    var btn = document.getElementById(id);
+    if (btn) { btn.textContent = label; btn.disabled = false; }
+  },
+
   _bindEventDelegation: function () {
     var self = this;
     document.addEventListener('click', function (e) {
@@ -243,6 +248,7 @@ window.CL_SETTINGS_LOGIC = {
         var url = removeUrlBtn.getAttribute('data-url');
         self._websiteUrls = self._websiteUrls.filter(function (u) { return u !== url; });
         self._renderWebsiteList();
+        self._resetSaveBtn('website-save-btn', 'Save');
         return;
       }
 
@@ -250,6 +256,7 @@ window.CL_SETTINGS_LOGIC = {
       if (removeCatBtn) {
         var cat = removeCatBtn.getAttribute('data-cat-remove');
         self._removeCustomCategory(cat);
+        self._resetSaveBtn('save-categories-btn', 'Save');
         return;
       }
 
@@ -259,6 +266,7 @@ window.CL_SETTINGS_LOGIC = {
         if (row) {
           row.querySelectorAll('.freq-btn[data-cat]').forEach(function (b) { b.classList.remove('active'); });
           freqBtn.classList.add('active');
+          self._resetSaveBtn('save-categories-btn', 'Save');
         }
         return;
       }
@@ -272,6 +280,7 @@ window.CL_SETTINGS_LOGIC = {
             : 'website_scan_frequency';
           self._settings[field] = scanBtn.getAttribute('data-value');
           self._setFreqButtons(container.id, self._settings[field]);
+          self._resetSaveBtn('save-settings-btn', 'Save');
         }
         return;
       }
@@ -283,6 +292,12 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var saveBtn = document.getElementById('save-settings-btn');
     if (saveBtn) saveBtn.addEventListener('click', function () { self._saveScanSettings(); });
+    var signOutBtn = document.getElementById('sign-out-btn');
+    if (signOutBtn) signOutBtn.addEventListener('click', function () {
+      self._supabase.auth.signOut().then(function () {
+        window.location.href = '/index.html';
+      });
+    });
   },
 
   _bindCategorySave: function () {
@@ -295,6 +310,7 @@ window.CL_SETTINGS_LOGIC = {
         if (input && input.value.trim()) {
           self._addCustomCategory(input.value.trim());
           input.value = '';
+          self._resetSaveBtn('save-categories-btn', 'Save');
         }
       });
     }
@@ -308,6 +324,7 @@ window.CL_SETTINGS_LOGIC = {
     if (addBtn) addBtn.addEventListener('click', function () {
       self._websiteUrls.push('');
       self._renderWebsiteList();
+      self._resetSaveBtn('website-save-btn', 'Save');
     });
     if (saveBtn) saveBtn.addEventListener('click', function () { self._saveWebsiteUrls(); });
   },
@@ -358,6 +375,8 @@ window.CL_SETTINGS_LOGIC = {
         .update({ website_urls: urls })
         .eq('id', self._userId);
       if (res.error) { console.error('_saveWebsiteUrls error:', res.error); return; }
+      var btn = document.getElementById('website-save-btn');
+      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
       self._renderWebsiteList();
     } catch (e) { console.error('_saveWebsiteUrls exception:', e); }
   },
@@ -375,8 +394,8 @@ window.CL_SETTINGS_LOGIC = {
           updated_at: new Date().toISOString()
         }, { onConflict: 'user_id' });
       if (res.error) { console.error('_saveScanSettings error:', res.error); return; }
-      var msg = document.getElementById('save-scan-msg');
-      if (msg) { msg.style.display = 'block'; setTimeout(function () { msg.style.display = 'none'; }, 2000); }
+      var btn = document.getElementById('save-settings-btn');
+      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
     } catch (e) { console.error('_saveScanSettings exception:', e); }
   },
 
@@ -396,8 +415,8 @@ window.CL_SETTINGS_LOGIC = {
         .update({ cl_active_categories: active, cl_custom_categories: custom })
         .eq('id', self._userId);
       if (res.error) { console.error('_saveCategories error:', res.error); return; }
-      var msg = document.getElementById('save-categories-msg');
-      if (msg) { msg.style.display = 'block'; setTimeout(function () { msg.style.display = 'none'; }, 2000); }
+      var btn = document.getElementById('save-categories-btn');
+      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
     } catch (e) { console.error('_saveCategories exception:', e); }
   },
 
