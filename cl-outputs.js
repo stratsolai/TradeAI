@@ -65,7 +65,7 @@ window.CL_OUTPUTS = {
         html += "<div class=\"tool-row-coming\" data-tool-id=\"" + tool.id + "\">" +
           "<span class=\"tool-row-icon\">" + tool.icon + "</span>" +
           "<span class=\"tool-row-name\">" + tool.name + "</span>" +
-          "<span class=\"tool-coming-badge\">Coming Soon</span>" +
+          "<span class=\"tool-coming-badge\">+ Learn More</span>" +
           "</div>";
       });
     }
@@ -84,6 +84,13 @@ window.CL_OUTPUTS = {
         container.querySelectorAll(".tool-row").forEach(function(r) { r.classList.remove("active"); });
         row.classList.add("active");
         self._loadOutputs(self._selectedTool);
+      });
+    });
+
+    // Wire up inactive tool row clicks — navigate to learn more
+    container.querySelectorAll(".tool-row-coming").forEach(function(row) {
+      row.addEventListener("click", function() {
+        window.location.href = "/panel-auth?tool=" + row.getAttribute("data-tool-id");
       });
     });
 
