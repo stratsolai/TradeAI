@@ -226,6 +226,11 @@ window.CL_SETTINGS_LOGIC = {
 
   _bindEventDelegation: function () {
     var self = this;
+    document.addEventListener('input', function (e) {
+      if (e.target.closest('.website-url-input')) {
+        self._resetSaveBtn('website-save-btn', 'Save');
+      }
+    });
     document.addEventListener('click', function (e) {
 
       var disconnectBtn = e.target.closest('.btn-disconnect');
