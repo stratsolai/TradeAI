@@ -25,8 +25,7 @@ window.CL_REVIEW = {
     this._toolFilters = [];
     this._searchTerm = '';
     this._selected = new Set();
-    const tab = document.querySelector('[data-tab="tab-review"]');
-    if (tab) tab.click();
+    if (typeof window.switchPTab === 'function') window.switchPTab('review');
     document.querySelectorAll('.review-status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
     });
