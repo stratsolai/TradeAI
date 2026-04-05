@@ -107,57 +107,30 @@ authenticated pages:
 
 ## Active Tasks
 
+Task 6 (CL Settings OAuth / CL Upload) is complete — all
+10 rounds done.
+
+### CL Functional Improvements (in progress)
+
 Complete in order. Do not begin the next task until the current
-one is finished and findings reviewed with the owner via Chat.
+one is finished and confirmed working in the browser.
 
-### Task 6 — Fix CL Settings OAuth / CL Upload (in progress)
-
-Do not begin next round until owner confirms previous
-round is working correctly in the browser.
-
-Rounds 2–7 complete.
-
-Key commits this session (April 5 2026):
-- 5f24ddc — cl-review.js: tool.name to tool.title for pill
-  labels
-- adcecc2 — account-logic.js: tool lookup t.toolId to t.id
-- eb20d1f — process-file.js: category normalisation and
-  mandatory prompt
-- 321a482 — cl-email-scan.js: category normalisation and
-  mandatory prompt
-- 17fad80 — cl-outlook-scan.js: category normalisation and
-  mandatory prompt
-- b411af8 — process-file.js: source_detail, source_item_id,
-  tool_source
-- 1aad237 — cl-upload.js: Review tab refresh after scan
-  completes
-- ab3d072 — cl-outlook-scan.js: body to content_text
-- 2fe2a70 — cl-upload.js: Outlook Scan Now button wired
-- 4a70e5c — cl-outlook-scan.js: default lookback 30 days to
-  90 days
-- 3409209 — cl-outlook-scan.js: diagnostic logging added
-- cd3b4c4 — cl-upload.js: diagnostic logging added
-- 421dec8 — cl-outlook-scan.js: diagnostic logging removed
-- 2624dad — cl-upload.js: diagnostic logging removed,
-  reverted to simple .json()
-
-Round 8 (current) — api/scrape-website.js:
-- Fix JSON parsing regex — match array not single object
-- Update insertion code to expect flat array
-- Confirm column names match content_library schema
-- Add redirect following to HTTP fetch
-- Update User-Agent to StaxAI/1.0
-- Add user-facing feedback in cl-upload.js after scan
-
-Round 9 — cl-settings-logic.js + cl-settings.html:
-- Save button -> "Saved" after saving, resets on change
-- Fix sign-out ID mismatch (signout-btn -> sign-out-btn)
-
-Round 10 — oauth-callback.js:
-- Remove broken non-CL fallback code (lines 379–483)
-- Fix DEP0169 deprecation warning in
-  api/auth/microsoft/callback — replace url.parse() with
-  the WHATWG URL API equivalent
+1. Header tiles clickable — Pending/Approved/Rejected jump
+   to correct tab
+2. Approve All for entire tab without manual ticking — across
+   all three tabs
+3. Remove Close button on Source section
+4. Active/shaded state on Source, Tagged Categories, Tagged
+   Tools buttons when open — across all three tabs
+5. Deselect All styled to match Approve All / Reject All —
+   across all three tabs
+6. URL field validation in CL Settings — check for existing
+   code before writing new, auto-correct, block malformed
+   entries
+7. Items display — review and adjust once 1–5 are in place
+8. Tool Outputs left column styling
+9. Multiple connected accounts in Upload & Import — spec
+   then implement
 
 ---
 
@@ -227,15 +200,16 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | Complete Task 6 — CL Settings OAuth / CL Upload all rounds|
-| 2    | Complete Standalone Tasks A, B, C                          |
-| 3    | Complete stylesheet rollout across CL files                |
-| 4    | Complete stylesheet rollout across cl-settings.html        |
-| 5    | Roll stylesheet out to all remaining authenticated pages   |
-| 6    | Integration tests — all 5 tools                            |
-| 7    | Functional reviews — all 5 tools (real data, end-to-end)  |
-| 8    | Improvements per tool based on functional review findings  |
-| 9    | Dashboard rebuild                                          |
+| 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
+| 2    | Complete CL Functional Improvements                        |
+| 3    | Complete Standalone Tasks A, B, C                          |
+| 4    | Complete stylesheet rollout across CL files                |
+| 5    | Complete stylesheet rollout across cl-settings.html        |
+| 6    | Roll stylesheet out to all remaining authenticated pages   |
+| 7    | Integration tests — all 5 tools                            |
+| 8    | Functional reviews — all 5 tools (real data, end-to-end)  |
+| 9    | Improvements per tool based on functional review findings  |
+| 10   | Dashboard rebuild                                          |
 
 ---
 
