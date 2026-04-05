@@ -161,7 +161,10 @@ window.CL_SETTINGS_LOGIC = {
     if (!list) return;
     list.innerHTML = self._websiteUrls.map(function (url) {
       return '<div class="website-url-item">' +
-        '<input class="website-url-input" type="text" value="' + url + '" />' +
+        '<div style="flex:1;min-width:0;">' +
+          '<input class="website-url-input" type="text" value="' + url + '" />' +
+          '<div class="website-url-error" style="display:none;font-size:12px;color:#dc3545;margin-top:3px;"></div>' +
+        '</div>' +
         '<button class="btn-remove-url" data-url="' + url + '">Remove</button>' +
         '</div>';
     }).join('');
@@ -368,12 +371,51 @@ window.CL_SETTINGS_LOGIC = {
     } catch (e) { console.error('_disconnectDrive exception:', e); }
   },
 
+  _validateUrl: function (raw) {
+    if (!raw) return { valid: false, url: '', error: 'Please enter a URL' };
+    var url = raw.trim();
+    // Auto-correct missing protocol
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+    // Block obviously malformed URLs
+    try {
+      var parsed = new URL(url);
+      if (!parsed.hostname || parsed.hostname.indexOf('.') === -1) {
+        return { valid: false, url: url, error: 'Enter a valid website address (e.g. www.example.com.au)' };
+      }
+      if (parsed.pathname === '///' || parsed.hostname === '') {
+        return { valid: false, url: url, error: 'This URL is not valid. Check for extra slashes or missing domain.' };
+      }
+    } catch (e) {
+      return { valid: false, url: url, error: 'This URL is not valid. Check the format and try again.' };
+    }
+    return { valid: true, url: url, error: '' };
+  },
+
   _saveWebsiteUrls: async function () {
     var self = this;
     try {
       var inputs = document.querySelectorAll('.website-url-input');
+      var errors = document.querySelectorAll('.website-url-error');
       var urls = [];
-      inputs.forEach(function (input) { var v = input.value.trim(); if (v) urls.push(v); });
+      var hasError = false;
+      // Clear previous errors
+      errors.forEach(function (el) { el.style.display = 'none'; el.textContent = ''; });
+      inputs.forEach(function (input, idx) {
+        var raw = input.value.trim();
+        if (!raw) return;
+        var result = self._validateUrl(raw);
+        if (!result.valid) {
+          hasError = true;
+          var errEl = errors[idx];
+          if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
+          input.style.borderColor = '#dc3545';
+        } else {
+          input.value = result.url;
+          input.style.borderColor = '';
+          urls.push(result.url);
+        }
+      });
+      if (hasError) return;
       self._websiteUrls = urls;
       var res = await self._supabase
         .from('profiles')
