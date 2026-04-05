@@ -61,16 +61,16 @@ window.CL_REVIEW = {
           <input type="text" id="review-search" class="review-search-input" placeholder="Search items...">
         </div>
         <div class="review-filter-btns-row">
-          <button class="review-filter-tools-btn">&#9783; Filter by Tools</button>
-          <button class="review-filter-cat-btn">&#9776; Filter by Category</button>
+          <button class="review-filter-tools-btn">&#9783; Filter By Tools</button>
+          <button class="review-filter-cat-btn">&#9776; Filter By Category</button>
           <button class="review-clear-filters-btn">&#10005; Clear All Filters</button>
           <span style="flex:1"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All</button>
           <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#dc3545;color:#dc3545;">&#10007; Reject All</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
-          <div id="review-cat-pills" class="review-pill-row"></div>
-          <div id="review-tool-pills" class="review-pill-row"></div>
+          <div id="review-tool-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
+          <div id="review-cat-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
@@ -169,10 +169,10 @@ window.CL_REVIEW = {
       var filterRow = document.getElementById('review-filter-row');
       var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
       var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
-      var toolPills = document.getElementById('review-tool-pills');
-      var catPills = document.getElementById('review-cat-pills');
-      if (toolPills) toolPills.style.display = toolsOpen ? 'flex' : 'none';
-      if (catPills) catPills.style.display = catsOpen ? 'flex' : 'none';
+      var toolWrap = document.getElementById('review-tool-pills-wrap');
+      var catWrap = document.getElementById('review-cat-pills-wrap');
+      if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
+      if (catWrap) catWrap.style.display = catsOpen ? '' : 'none';
       if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
     }
     if (filterToolsBtn) {
