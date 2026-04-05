@@ -109,20 +109,9 @@ authenticated pages:
 
 ### CL Functional Improvements (in progress)
 
-Complete in order. Do not begin the next task until the current
-one is finished and confirmed working in the browser.
+Tasks 1–4 complete (URL validation, Reject/Delete on Rejected
+tab, items display adjustments, Tool Outputs sidebar styling).
 
-1. URL field validation in CL Settings — no existing code,
-   build fresh. Auto-correct missing protocol, block
-   malformed URLs like https:///, show inline error, do not
-   save invalid URLs. Note: cl-upload.js line 244 has a
-   protocol prepend at scan time but nothing exists in
-   cl-settings-logic.js — build needed there.
-2. Individual item card Reject button changes to Delete in
-   Rejected tab — rusty red, permanent delete from database,
-   matching the bulk Delete All button already in place.
-3. Items display — review and adjust once 1 and 2 are done
-4. Tool Outputs left column styling
 5. Multiple connected accounts in Upload & Import — spec
    then implement
 
@@ -159,6 +148,14 @@ must be completed before the stylesheet rollout begins.
   flag content as not relevant to the platform rather than
   forcing it into an item.
 
+### Task D — Account dropdown rollout
+
+- When topbar.js is rolled out to remaining authenticated
+  pages during the stylesheet rollout, the existing inline
+  dropdown wiring must be removed from each page's logic
+  file at the same time. This is mandatory to avoid the
+  duplicate toggle bug fixed in commits cfbb8f3 and 4756821.
+
 ---
 
 ## Known Issues & Notes
@@ -184,6 +181,10 @@ must be completed before the stylesheet rollout begins.
   source_item_id currently stores Gmail/Outlook message IDs
   but nothing in the system retrieves them. The Source button
   shows metadata only. Needs a spec before build.
+- staxai-auth.css loads after the inline </style> block in
+  content-library.html — stylesheet always wins the cascade
+  for any class defined in both. Known issue to resolve
+  during stylesheet rollout.
 
 ---
 
@@ -230,6 +231,19 @@ The sequence for each tool rebuild is:
 6. Replace hardcoded CSS values with CSS variables
 7. Test and confirm before moving to next tool
 
+### Agreed Design Decisions
+
+- .filter-pill border-radius is 8px in staxai-auth.css —
+  platform standard for all filter pills
+- Tool Outputs sidebar: selected tool = grey shaded,
+  unselected active = white, inactive tools show + Learn
+  More badge and navigate to /panel-auth?tool=[toolid].
+  Selected tool font stays black — shading indicates
+  selection.
+- When topbar.js is rolled out to a page, duplicate
+  dropdown wiring must be removed from that page's logic
+  file at the same time to avoid the double-toggle bug.
+
 ### Deferred — Address During Tool Rebuilds
 
 The following will be resolved naturally as each tool is
@@ -241,6 +255,11 @@ rebuilt during the stylesheet rollout:
 - Duplicated account dropdown JS across 10+ files
 - panel.html / panel-auth.html shared renderPanel() duplication
 - Logic files not following window.*_LOGIC + init() pattern
+- Full CL page uniformity audit — fonts, colours, consistency
+  across all tabs — dedicated session after standalone tasks
+  A, B, C are complete
+- Tool Outputs — tool order and which tools actually belong
+  in the list to be revisited once real outputs are visible
 
 ---
 
