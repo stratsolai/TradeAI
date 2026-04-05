@@ -485,7 +485,7 @@ a:hover { opacity: 0.85; }
   text-decoration: none;
 }
 
-.filter-pill:hover { opacity: 0.85; }
+.filter-pill:hover { background: var(--blue-light); }
 
 .filter-pill.active {
   background: var(--blue);
