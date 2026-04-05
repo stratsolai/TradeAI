@@ -165,42 +165,32 @@ window.CL_REVIEW = {
     const self2 = this;
     const filterToolsBtn = document.querySelector('.review-filter-tools-btn');
     const filterCatBtn = document.querySelector('.review-filter-cat-btn');
+    function updateFilterRow() {
+      var filterRow = document.getElementById('review-filter-row');
+      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
+      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
+      var toolPills = document.getElementById('review-tool-pills');
+      var catPills = document.getElementById('review-cat-pills');
+      if (toolPills) toolPills.style.display = toolsOpen ? 'flex' : 'none';
+      if (catPills) catPills.style.display = catsOpen ? 'flex' : 'none';
+      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
+    }
     if (filterToolsBtn) {
       filterToolsBtn.addEventListener('click', function() {
-        const filterRow = document.getElementById('review-filter-row');
-        const toolPills = document.getElementById('review-tool-pills');
-        const catPills = document.getElementById('review-cat-pills');
-        const isOpen = filterToolsBtn.classList.contains('active');
-        if (isOpen) {
-          filterToolsBtn.classList.remove('active');
-          if (filterRow) filterRow.style.display = 'none';
-        } else {
-          filterToolsBtn.classList.add('active');
-          if (filterCatBtn) filterCatBtn.classList.remove('active');
-          if (catPills) catPills.style.display = 'none';
-          if (toolPills) toolPills.style.display = 'flex';
-          self2._renderFilterRow();
-          if (filterRow) filterRow.style.display = 'block';
-        }
+        var isOpen = filterToolsBtn.classList.contains('active');
+        filterToolsBtn.classList.toggle('active', !isOpen);
+        filterToolsBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        if (!isOpen) self2._renderFilterRow();
+        updateFilterRow();
       });
     }
     if (filterCatBtn) {
       filterCatBtn.addEventListener('click', function() {
-        const filterRow = document.getElementById('review-filter-row');
-        const toolPills = document.getElementById('review-tool-pills');
-        const catPills = document.getElementById('review-cat-pills');
-        const isOpen = filterCatBtn.classList.contains('active');
-        if (isOpen) {
-          filterCatBtn.classList.remove('active');
-          if (filterRow) filterRow.style.display = 'none';
-        } else {
-          filterCatBtn.classList.add('active');
-          if (filterToolsBtn) filterToolsBtn.classList.remove('active');
-          if (toolPills) toolPills.style.display = 'none';
-          if (catPills) catPills.style.display = 'flex';
-          self2._renderFilterRow();
-          if (filterRow) filterRow.style.display = 'block';
-        }
+        var isOpen = filterCatBtn.classList.contains('active');
+        filterCatBtn.classList.toggle('active', !isOpen);
+        filterCatBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        if (!isOpen) self2._renderFilterRow();
+        updateFilterRow();
       });
     }
     const clearBtn = document.querySelector('.review-clear-filters-btn');
@@ -208,9 +198,9 @@ window.CL_REVIEW = {
       clearBtn.addEventListener('click', function() {
         self2._toolFilters = [];
         self2._categoryFilter = [];
-        if (filterToolsBtn) filterToolsBtn.classList.remove('active');
-        if (filterCatBtn) filterCatBtn.classList.remove('active');
-        if (filterRow) filterRow.style.display = 'none';
+        if (filterToolsBtn) { filterToolsBtn.classList.remove('active'); filterToolsBtn.style.background = ''; }
+        if (filterCatBtn) { filterCatBtn.classList.remove('active'); filterCatBtn.style.background = ''; }
+        updateFilterRow();
         self2._renderFilterRow();
         self2._renderList();
       });
