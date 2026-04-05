@@ -1,8 +1,13 @@
 (function() {
+  console.log("topbar.js: IIFE started");
   var _ab = document.getElementById("account-btn");
+  console.log("topbar.js: _ab =", _ab);
   var _dd = document.getElementById("account-dropdown");
+  console.log("topbar.js: _dd =", _dd);
   if (_ab && _dd) {
+    console.log("topbar.js: wiring dropdown");
     _ab.addEventListener("click", function(e) {
+      console.log("topbar.js: account-btn clicked");
       e.stopPropagation();
       _dd.classList.toggle("open");
     });
