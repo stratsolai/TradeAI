@@ -122,7 +122,7 @@ export default async function handler(req, res) {
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, cl_email_last_scanned_at')
+      .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, cl_email_last_scanned_at, cl_connected_emails')
       .eq('id', userId)
       .single();
 
@@ -140,6 +140,10 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
       }
     }
+
+    const connectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
+    const gmailEntry = connectedEmails.find(function(e) { return e && (e.provider === 'gmail' || e.provider === 'google'); });
+    const accountEmail = gmailEntry ? gmailEntry.email : null;
 
     const businessName = profile.business_name || 'this business';
     const industry = profile.industry || 'general';
@@ -217,7 +221,7 @@ export default async function handler(req, res) {
           tool_source: 'cl-email-scan',
           source_ref: sourceRef,
           source_item_id: msg.id,
-          source_detail: { sender: sender, subject: subject },
+          source_detail: { sender: sender, subject: subject, account_email: accountEmail },
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
         if (error) { console.error('SUPABASE INSERT ERROR —', error.message, 'code:', error.code, 'details:', error.details); }
