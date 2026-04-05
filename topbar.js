@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+(function() {
   var _ab = document.getElementById("account-btn");
   var _dd = document.getElementById("account-dropdown");
   if (_ab && _dd) {
@@ -108,4 +108,4 @@ document.addEventListener("DOMContentLoaded", function() {
       });
     }
   })();
-});
+})();
