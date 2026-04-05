@@ -899,16 +899,16 @@
     .badge-purple { background: #e8d5f5; color: #6a1b9a; }
 
     /* ─── OUTPUTS TAB ─── */
-    .outputs-layout { display: grid; grid-template-columns: 240px 1fr; gap: 24px; min-height: 400px; align-items: start; }
+    .outputs-layout { display: grid; grid-template-columns: 300px 1fr; gap: 24px; min-height: 400px; align-items: start; }
     @media (max-width: 640px) { .outputs-layout { grid-template-columns: 1fr; } }
     .outputs-sidebar { background: var(--white); border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 16px; }
     .outputs-sidebar-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .tool-row { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; border-left: 4px solid var(--orange); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text); background: var(--white); transition: all 0.15s; margin-bottom: 4px; height: 44px; overflow: hidden; }
+    .tool-row { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; border-left: 4px solid var(--orange); cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text); background: var(--white); transition: all 0.15s; margin-bottom: 4px; height: 88px; overflow: hidden; }
     .tool-row:hover { background: rgba(74,109,140,0.06); border-left-color: var(--blue); }
     .tool-row.active { background: var(--bg); border-left: 4px solid var(--blue); color: var(--blue); font-weight: 700; }
     .tool-row-icon { font-size: 16px; flex-shrink: 0; }
-    .tool-row-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tool-row-coming { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; border-left: 4px solid var(--orange); cursor: default; font-size: 14px; font-weight: 600; color: var(--text); background: var(--white); margin-bottom: 4px; height: 44px; overflow: hidden; }
+    .tool-row-name { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .tool-row-coming { display: flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 8px; border-left: 4px solid var(--orange); cursor: default; font-size: 14px; font-weight: 600; color: var(--text); background: var(--white); margin-bottom: 4px; height: 88px; overflow: hidden; }
     .outputs-sidebar-divider { border: none; border-top: 1px solid var(--border); margin: 8px 0; }
     .tool-coming-badge { font-size: 10px; background: var(--border); color: var(--text-muted); padding: 2px 8px; border-radius: 8px; margin-left: auto; flex-shrink: 0; white-space: nowrap; }
     .outputs-panel { min-height: 200px; }
