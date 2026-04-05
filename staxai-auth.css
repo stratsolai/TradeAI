@@ -472,7 +472,7 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .filter-pill {
   padding: 6px 16px;
-  border-radius: 20px;
+  border-radius: 8px;
   border: 1px solid var(--border-blue);
   background: var(--white);
   font-size: 13px;
