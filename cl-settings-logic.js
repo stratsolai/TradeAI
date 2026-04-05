@@ -389,15 +389,24 @@ window.CL_SETTINGS_LOGIC = {
   _saveScanSettings: async function () {
     var self = this;
     try {
-      var res = await self._supabase
+      var existing = await self._supabase
         .from('cl_settings')
-        .upsert({
-          user_id: self._userId,
-          email_scan_frequency: self._settings.email_scan_frequency,
-          drive_scan_frequency: self._settings.drive_scan_frequency,
-          website_scan_frequency: self._settings.website_scan_frequency,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'user_id' });
+        .select('user_id')
+        .eq('user_id', self._userId)
+        .maybeSingle();
+      var payload = {
+        email_scan_frequency: self._settings.email_scan_frequency,
+        drive_scan_frequency: self._settings.drive_scan_frequency,
+        website_scan_frequency: self._settings.website_scan_frequency,
+        updated_at: new Date().toISOString()
+      };
+      var res;
+      if (existing.data) {
+        res = await self._supabase.from('cl_settings').update(payload).eq('user_id', self._userId);
+      } else {
+        payload.user_id = self._userId;
+        res = await self._supabase.from('cl_settings').insert(payload);
+      }
       if (res.error) { console.error('_saveScanSettings error:', res.error); return; }
       var btn = document.getElementById('save-settings-btn');
       if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
