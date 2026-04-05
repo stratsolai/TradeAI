@@ -504,17 +504,6 @@
         document.getElementById('page-wrap').style.display = 'block';
         if (window.CL_SETTINGS_LOGIC) CL_SETTINGS_LOGIC.init();
       });
-
-      
-
-      var signoutBtn = document.getElementById('sign-out-btn');
-      if (signoutBtn) {
-        signoutBtn.addEventListener('click', function() {
-          supabase.auth.signOut().then(function() {
-            window.location.href = '/index.html';
-          });
-        });
-      }
     })();
   
     // Account dropdown toggle
