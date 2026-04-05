@@ -38,10 +38,14 @@ window.CL_REVIEW = {
 
   _bindStatTiles: function() {
     const self = this;
-    document.querySelectorAll('[data-status]').forEach(function(tile) {
+    document.querySelectorAll('.stat-card[data-status]').forEach(function(tile) {
+      var status = tile.dataset.status;
+      if (status === 'all') {
+        tile.style.cursor = 'default';
+        return;
+      }
       tile.addEventListener('click', function() {
-        const status = tile.dataset.status;
-        self.setStatus(status === 'all' ? 'pending' : status);
+        self.setStatus(status);
       });
     });
   },
