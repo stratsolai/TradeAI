@@ -64,6 +64,9 @@ window.CL_REVIEW = {
           <button class="review-filter-tools-btn">&#9783; Filter by Tools</button>
           <button class="review-filter-cat-btn">&#9776; Filter by Category</button>
           <button class="review-clear-filters-btn">&#10005; Clear All Filters</button>
+          <span style="flex:1"></span>
+          <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All</button>
+          <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#dc3545;color:#dc3545;">&#10007; Reject All</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
           <div id="review-cat-pills" class="review-pill-row"></div>
@@ -71,9 +74,9 @@ window.CL_REVIEW = {
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
-          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn">&#10003; Approve All</button>
-          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn">&#10007; Reject All</button>
-          <button class="btn-link" id="review-deselect-btn">Deselect All</button>
+          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn">&#10003; Approve All Selected</button>
+          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn">&#10007; Reject All Selected</button>
+          <button class="btn-outline" id="review-deselect-btn">Deselect All</button>
         </div>
         <div id="review-list" class="review-list"></div>
       </div>
@@ -105,6 +108,8 @@ window.CL_REVIEW = {
       self._updateBulkBar();
       document.querySelectorAll('.review-checkbox').forEach(function(cb) { cb.checked = false; });
     });
+    document.getElementById('review-approve-all-btn').addEventListener('click', function() { self._bulkActionAll('approved'); });
+    document.getElementById('review-reject-all-btn').addEventListener('click', function() { self._bulkActionAll('rejected'); });
   },
 
   _load: async function() {
@@ -326,7 +331,7 @@ window.CL_REVIEW = {
     <div class="review-tool-pills">${catPillsHtml}</div>
   </div>
   <div class="review-section" id="review-source-${id}" style="display:none">
-    <div class="review-section-head"><span>Source</span><button class="btn-link review-close" data-id="${id}" data-section="source">Close</button></div>
+    <div class="review-section-head"><span>Source</span></div>
     <div class="review-source-detail">${sourceDetailHtml}</div>
   </div>
 </div>`;
@@ -363,13 +368,11 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-toggle, .review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
-        if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
-      });
-    });
-    document.querySelectorAll('.review-close').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        const el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
-        if (el) el.style.display = 'none';
+        if (el) {
+          var isOpen = el.style.display !== 'none';
+          el.style.display = isOpen ? 'none' : '';
+          btn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        }
       });
     });
     document.querySelectorAll('.review-card-title[contenteditable]').forEach(function(el) {
@@ -403,6 +406,19 @@ window.CL_REVIEW = {
     if (ids.length === 0) return;
     await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
     this._items = this._items.filter(function(i) { return !self._selected.has(i.id); });
+    this._selected = new Set();
+    this._updateBulkBar();
+    this._renderList();
+    this._updateStatTiles();
+  },
+
+  _bulkActionAll: async function(newStatus) {
+    var filtered = this._filteredItems();
+    if (filtered.length === 0) return;
+    var ids = filtered.map(function(i) { return i.id; });
+    var self = this;
+    await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
     this._selected = new Set();
     this._updateBulkBar();
     this._renderList();
