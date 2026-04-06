@@ -8,12 +8,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 
-// djb2 hash for source_ref dedup
-function djb2(s) {
-  var h = 5381;
-  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h) ^ s.charCodeAt(i); h = h >>> 0; }
-  return h.toString(36);
-}
+
 
 // Refresh Google OAuth token
 async function refreshGoogleToken(refreshToken) {
@@ -243,8 +238,9 @@ export default async function handler(req, res) {
           toolIdList
         );
 
-        for (const item of items) {
-          const sourceRef = 'gdrive:' + file.id + ':' + djb2(String(item.title));
+        for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+          const item = items[itemIdx];
+          const sourceRef = 'gdrive:' + file.id + ':' + itemIdx;
           const row = {
             user_id: userId,
             title: String(item.title || file.name).substring(0, 200),
@@ -255,7 +251,7 @@ export default async function handler(req, res) {
             source: 'google-drive',
             source_ref: sourceRef,
           };
-          const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
+          const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
           if (!error) imported++;
         }
       }
