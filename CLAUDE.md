@@ -109,12 +109,9 @@ authenticated pages:
 
 ### CL Functional Improvements (in progress)
 
-Tasks 1–4 complete (URL validation, Reject/Delete on Rejected
-tab, items display adjustments, Tool Outputs sidebar styling).
-
-5. Multiple connected accounts in Upload & Import — spec
-   complete (StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1).
-   Ready to build. See spec for full build sequence.
+Tasks 1–5 complete (URL validation, Reject/Delete on Rejected
+tab, items display adjustments, Tool Outputs sidebar styling,
+multiple connected accounts in Upload & Import).
 
 ---
 
@@ -148,6 +145,11 @@ must be completed before the stylesheet rollout begins.
   assignment quality, and a discard option allowing the AI to
   flag content as not relevant to the platform rather than
   forcing it into an item.
+- Email attachments are not currently processed by Gmail or
+  Outlook scan endpoints — text body only. Attachment
+  processing must be added.
+- Drive images are recorded by filename only — no visual
+  analysis. Image processing must be added.
 
 ### Task D — Account dropdown rollout
 
@@ -161,13 +163,10 @@ must be completed before the stylesheet rollout begins.
 
 ## Known Issues & Notes
 
-- Multi-account email token storage — cl_connected_emails
-  array supports multiple Gmail accounts in the UI but token
-  storage is single-column on profiles (last connected wins).
-  Connecting a second Gmail account silently overwrites the
-  first account's tokens. Spec complete and approved
-  (StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1). Build is
-  the next scheduled task (CL Functional Improvements Task 5).
+- Multi-account email token storage — RESOLVED. Tokens now
+  stored per entry in cl_connected_emails array. Built in
+  CL Functional Improvements Task 5 per
+  StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -184,6 +183,11 @@ must be completed before the stylesheet rollout begins.
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
   during stylesheet rollout.
+- btn-outline class in staxai-auth.css applies a 2px border
+  that overrides inline styles. When styling buttons to match
+  platform patterns, check for btn-outline interactions and
+  use explicit border values rather than relying on class
+  inheritance.
 
 ---
 
@@ -197,13 +201,15 @@ is complete and confirmed working.
 | 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
 | 2    | Complete CL Functional Improvements                        |
 | 3    | Complete Standalone Tasks A, B, C                          |
-| 4    | Complete stylesheet rollout across CL files                |
-| 5    | Complete stylesheet rollout across cl-settings.html        |
-| 6    | Roll stylesheet out to all remaining authenticated pages   |
-| 7    | Integration tests — all 5 tools                            |
-| 8    | Functional reviews — all 5 tools (real data, end-to-end)  |
-| 9    | Improvements per tool based on functional review findings  |
-| 10   | Dashboard rebuild                                          |
+| 4    | Complete CL Connections (OneDrive, Dropbox, SharePoint)    |
+| 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
+| 6    | Complete stylesheet rollout across CL files                |
+| 7    | Complete stylesheet rollout across cl-settings.html        |
+| 8    | Roll stylesheet out to all remaining authenticated pages   |
+| 9    | Integration tests — all 5 tools                            |
+| 10   | Functional reviews — all 5 tools (real data, end-to-end)  |
+| 11   | Improvements per tool based on functional review findings  |
+| 12   | Dashboard rebuild                                          |
 
 ---
 
@@ -500,3 +506,9 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | build                               |
 | Tool ID Audit v1.0              | Canonical tool ID register          |
 | Topbar JS Spec v1.0             | Spec for topbar.js — complete       |
+| CL Connections Spec v1.0        | OneDrive, Dropbox, SharePoint       |
+|                                 | connections architecture             |
+| CL Items Spec v1.0              | Manual Add Item and Editable        |
+|                                 | Pending Items                        |
+| Image Processing Spec v1.0      | Visual content ingestion across     |
+|                                 | all sources including photo upload   |
