@@ -1,4 +1,5 @@
 const https = require('https');
+const zlib = require('zlib');
 const { createClient } = require('@supabase/supabase-js');
 
 function getSupabase() {
@@ -251,20 +252,82 @@ async function extractPDFText(fileData, apiKey) {
   return (response.content && response.content[0]) ? response.content[0].text : '';
 }
 
-// WORD DOCUMENT TEXT EXTRACTOR — plain text extraction, no document block
+// DOCX ZIP EXTRACTION — unpack archive and read word/document.xml
+function extractDocxXml(buf) {
+  // Find End of Central Directory record (scans backwards from end)
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+      eocdOffset = i;
+      break;
+    }
+  }
+  if (eocdOffset === -1) return null;
+
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+
+  // Walk central directory to find word/document.xml
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fileName = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+
+    if (fileName === 'word/document.xml') {
+      var lfhFileNameLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExtraLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFileNameLen + lfhExtraLen;
+      var compressedData = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText;
+      if (compressionMethod === 0) {
+        xmlText = compressedData.toString('utf-8');
+      } else if (compressionMethod === 8) {
+        xmlText = zlib.inflateRawSync(compressedData).toString('utf-8');
+      } else {
+        return null;
+      }
+      return xmlText
+        .replace(/<\/w:p>/g, '\n')
+        .replace(/<w:tab\/>/g, '\t')
+        .replace(/<w:br[^/]*\/>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  return null;
+}
+
+// WORD DOCUMENT TEXT EXTRACTOR — DOCX via ZIP, DOC via binary text extraction
 async function extractDocText(fileData, mediaType, apiKey) {
-  var rawText = Buffer.from(fileData, 'base64').toString('utf-8')
-    .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (rawText.length < 50) return null;
-  const body = JSON.stringify({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 2000,
-    messages: [{ role: 'user', content: 'Extract all readable text content from this document data. Return only the clean text, preserving structure and meaning. Ignore any XML tags, binary artefacts, or formatting codes. No commentary.\n\n' + rawText.substring(0, 8000) }]
-  });
-  const response = await callClaude(body, apiKey);
-  return (response.content && response.content[0]) ? response.content[0].text : '';
+  var buf = Buffer.from(fileData, 'base64');
+  var text = null;
+
+  // DOCX — unpack ZIP archive and read document XML
+  if (mediaType !== 'application/msword') {
+    try { text = extractDocxXml(buf); } catch (e) { console.error('DOCX extraction error:', e.message); }
+  }
+
+  // DOC (legacy) or failed DOCX — extract readable text runs from binary
+  if (!text || text.length < 50) {
+    text = buf.toString('utf-8')
+      .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  if (!text || text.length < 50) return null;
+  return text.substring(0, 8000);
 }
 
 // IMAGE DESCRIBER
