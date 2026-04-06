@@ -222,6 +222,7 @@ window.CL_REVIEW = {
 
   _updateRejectButtons: function() {
     var isRejected = this._status === 'rejected';
+    var isApproved = this._status === 'approved';
     var allBtn = document.getElementById('review-reject-all-btn');
     var selBtn = document.getElementById('review-bulk-reject-btn');
     if (allBtn) {
@@ -230,6 +231,10 @@ window.CL_REVIEW = {
     if (selBtn) {
       selBtn.innerHTML = isRejected ? '&#10007; Delete All Selected' : '&#10007; Reject All Selected';
     }
+    var approveAllBtn = document.getElementById('review-approve-all-btn');
+    var bulkApproveBtn = document.getElementById('review-bulk-approve-btn');
+    if (approveAllBtn) approveAllBtn.style.display = isApproved ? 'none' : '';
+    if (bulkApproveBtn) bulkApproveBtn.style.display = isApproved ? 'none' : '';
   },
 
   _load: async function() {
@@ -392,7 +397,7 @@ window.CL_REVIEW = {
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
-          <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>
+          ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>' : ''}
       <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
     </div>
       </div>
