@@ -350,22 +350,18 @@ module.exports = async (req, res) => {
             }
           } else {
             const currentEmails = existing.cl_connected_emails || [];
-            const alreadyConnected = currentEmails.some(function(e) { return e.email === userEmail && e.provider === clProvider; });
-            if (!alreadyConnected) {
-              currentEmails.push({ provider: clProvider, email: userEmail, connected_at: new Date().toISOString() });
+            const existingIdx = currentEmails.findIndex(function(e) { return e.email === userEmail && e.provider === clProvider; });
+            if (existingIdx > -1) {
+              currentEmails[existingIdx].access_token = tokenData.access_token;
+              if (tokenData.refresh_token) {
+                currentEmails[existingIdx].refresh_token = tokenData.refresh_token;
+              }
+            } else {
+              var entry = { provider: clProvider, email: userEmail, connected_at: new Date().toISOString(), access_token: tokenData.access_token };
+              if (tokenData.refresh_token) entry.refresh_token = tokenData.refresh_token;
+              currentEmails.push(entry);
             }
             clUpdateData.cl_connected_emails = currentEmails;
-            if (clProvider === 'gmail' || clProvider === 'google') {
-              clUpdateData.gmail_access_token = tokenData.access_token;
-              if (tokenData.refresh_token) {
-                clUpdateData.gmail_refresh_token = tokenData.refresh_token;
-              }
-            } else if (clProvider === 'microsoft' || clProvider === 'outlook') {
-              clUpdateData.outlook_access_token = tokenData.access_token;
-              if (tokenData.refresh_token) {
-                clUpdateData.outlook_refresh_token = tokenData.refresh_token;
-              }
-            }
           }
 
           const qs = querystring.stringify({ id: `eq.${userId}` });
