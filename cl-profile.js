@@ -30,17 +30,23 @@ window.CL_PROFILE = {
 
   _bindTabs: function() {
     var wrap = document.getElementById('cl-tab-profile');
+    var bgMap = { identity: '#e8f4fd', location: '#fff3ee', details: '#edfaf1', marketing: '#F3EEF9' };
     wrap.querySelectorAll('.profile-nav-chip').forEach(function(btn) {
       btn.addEventListener('click', function() {
         wrap.querySelectorAll('.profile-nav-chip').forEach(function(b) {
           b.classList.remove('active');
+          b.style.background = '';
         });
         btn.classList.add('active');
+        btn.style.background = bgMap[btn.dataset.ptab] || '';
         wrap.querySelectorAll('.profile-panel').forEach(function(p) {
           p.style.display = 'none';
         });
         document.getElementById('prof-panel-' + btn.dataset.ptab).style.display = '';
       });
+      btn.addEventListener('mouseenter', function() { btn.style.background = bgMap[btn.dataset.ptab] || ''; });
+      btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('active')) btn.style.background = ''; });
+      if (btn.classList.contains('active')) btn.style.background = bgMap[btn.dataset.ptab] || '';
     });
   },
 
@@ -233,7 +239,7 @@ window.CL_PROFILE = {
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
       '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button>' +
-      '<div class="profile-section-card" style="margin-top:0;border-left-color:'+_clOrange+';">' +
+      '<div class="profile-location-block" style="margin-top:0;">' +
         '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
