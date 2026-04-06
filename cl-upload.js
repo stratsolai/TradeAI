@@ -431,9 +431,9 @@ window.CL_UPLOAD = {
     var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "#4A6D8C";
-    confirmDiv.style.background = "#e8f4fd";
-    msgSpan.style.color = "#4A6D8C";
+    confirmDiv.style.borderColor = "";
+    confirmDiv.style.background = "";
+    msgSpan.style.color = "";
     msgSpan.textContent = "Processing...";
     if (reviewLink) reviewLink.style.display = "none";
     if (dismissBtn) dismissBtn.style.display = "none";
@@ -451,9 +451,9 @@ window.CL_UPLOAD = {
     var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "#28a745";
-    confirmDiv.style.background = "#edfaf1";
-    msgSpan.style.color = "#28a745";
+    confirmDiv.style.borderColor = "";
+    confirmDiv.style.background = "";
+    msgSpan.style.color = "";
     msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
     if (reviewLink) reviewLink.style.display = "";
     if (dismissBtn) {
@@ -469,9 +469,9 @@ window.CL_UPLOAD = {
     var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "#dc3545";
-    confirmDiv.style.background = "#fef2f2";
-    msgSpan.style.color = "#dc3545";
+    confirmDiv.style.borderColor = "";
+    confirmDiv.style.background = "";
+    msgSpan.style.color = "";
     msgSpan.textContent = msg;
     if (reviewLink) reviewLink.style.display = "none";
     if (dismissBtn) {
