@@ -386,7 +386,7 @@ window.CL_REVIEW = {
     }
     const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="review-empty-detail">No source detail available.</div>';
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
-      ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:10px;background:#fdecea;color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
+      ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:8px;background:#fdecea;color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
       : '';
     return `<div class="review-card" data-id="${id}">
   <div class="review-card-header">
