@@ -302,7 +302,12 @@ window.CL_REVIEW = {
   _filteredItems: function() {
     const self = this;
     return this._items.filter(function(item) {
-      if (self._categoryFilter.length > 0 && self._categoryFilter.indexOf(item.category) === -1) return false;
+      if (self._categoryFilter.length > 0) {
+        var catTags = Array.isArray(item.category_tags) ? item.category_tags : [];
+        var matchesCat = self._categoryFilter.indexOf(item.category) > -1;
+        var matchesCatTags = self._categoryFilter.some(function(f) { return catTags.indexOf(f) > -1; });
+        if (!matchesCat && !matchesCatTags) return false;
+      }
       if (self._toolFilters.length > 0) {
         const tags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
         if (!self._toolFilters.some(function(f) { return tags.indexOf(f) > -1; })) return false;
