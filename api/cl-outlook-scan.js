@@ -6,12 +6,6 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
 const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 
-// djb2 hash for source_ref dedup
-function djb2(s) {
-  var h = 5381;
-  for (var i = 0; i < s.length; i++) { h = ((h << 5) + h) ^ s.charCodeAt(i); h = h >>> 0; }
-  return h.toString(36);
-}
 
 async function refreshOutlookToken(refreshToken) {
   const params = new URLSearchParams({
@@ -152,8 +146,9 @@ export default async function handler(req, res) {
       const items = await runExtractionPrompt(emailBody, subject, businessName, industry, categoryList, toolIdList);
       if (!items || items.length === 0) { skipped++; continue; }
 
-      for (const item of items) {
-        const sourceRef = 'outlook-email:' + msg.id + ':' + djb2(String(item.title));
+      for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+        const item = items[itemIdx];
+        const sourceRef = 'outlook-email:' + msg.id + ':' + itemIdx;
         // Normalise category — case-insensitive match against canonical list
         const catLookup = {};
         activeFromProfile.concat(customFromProfile).forEach(function(c) { catLookup[c.toLowerCase()] = c; });
@@ -171,7 +166,7 @@ export default async function handler(req, res) {
           source_item_id: msg.id,
           source_detail: { sender: sender, subject: subject, account_email: accountEmail },
         };
-        const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref' });
+        const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
         if (!error) imported++;
       }
     }
