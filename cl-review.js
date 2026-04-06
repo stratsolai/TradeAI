@@ -158,7 +158,7 @@ window.CL_REVIEW = {
       filterToolsBtn.addEventListener('click', function() {
         var isOpen = filterToolsBtn.classList.contains('active');
         filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        filterToolsBtn.style.background = isOpen ? '' : '#e8f4fd';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
       });
@@ -167,7 +167,7 @@ window.CL_REVIEW = {
       filterCatBtn.addEventListener('click', function() {
         var isOpen = filterCatBtn.classList.contains('active');
         filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        filterCatBtn.style.background = isOpen ? '' : '#e8f4fd';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
       });
