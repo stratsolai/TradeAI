@@ -117,11 +117,11 @@ window.CL_UPLOAD = {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, accounts: [] });
       }
 
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.cl_drive_connected });
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders. Previously scanned files are skipped — use Manual Add Item for changes.", connected: !!profile.cl_drive_connected });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
       var websiteUrl = websiteUrls[0] || null;
-      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl, urls: websiteUrls });
+      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content. Rescanning reproduces all content as new Pending items — use Manual Add Item for small changes." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl, urls: websiteUrls });
 
       grid.innerHTML = tiles.map(function(t) {
         var accountPillsHtml = "";
