@@ -345,10 +345,13 @@ window.CL_UPLOAD = {
       for (var j = 0; j < imageFiles.length; j++) {
         var file = imageFiles[j];
         var fileData = await self._fileToBase64(file);
+        var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        var storagePath = user.id + '/upload/' + Date.now() + '_' + safeName;
+        try { await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false }); } catch (e) { console.error('cl-assets upload error:', e.message); storagePath = null; }
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData })
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath })
         });
         var result = await resp.json();
         if (result.success && result.itemsCount) {
@@ -385,10 +388,13 @@ window.CL_UPLOAD = {
         var file = files[i];
         var fileData = await self._fileToBase64(file);
         var fileType = self._getDocFileType(file.name);
+        var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        var storagePath = user.id + '/upload/' + Date.now() + '_' + safeName;
+        try { await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false }); } catch (e) { console.error('cl-assets upload error:', e.message); storagePath = null; }
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: fileType, fileData: fileData })
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: fileType, fileData: fileData, storagePath: storagePath })
         });
         var result = await resp.json();
         if (result.success && result.itemsCount) {
