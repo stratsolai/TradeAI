@@ -1028,6 +1028,12 @@
 .review-status-btn.active[data-status="rejected"] {
   background:#EEF3F9; color:inherit; font-weight:700;
 }
+.review-status-btn[data-status="archived"] {
+  border-left-color:#78909C;
+}
+.review-status-btn.active[data-status="archived"] {
+  background:#ECEFF1; color:inherit; font-weight:700;
+}
 .review-status-btn:hover { opacity:0.85; }
 
 /* Filter pills — category and tool */
@@ -1239,6 +1245,7 @@
     <div class="stat-card orange" data-status="pending" style="cursor:pointer"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
     <div class="stat-card green" data-status="approved" style="cursor:pointer"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
     <div class="stat-card teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
+    <div class="stat-card grey" data-status="archived" style="cursor:pointer"><div class="stat-value" id="stat-archived">0</div><div class="stat-label">Archived</div></div>
   </div>
 
 <div class="tab-nav">
