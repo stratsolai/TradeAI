@@ -285,6 +285,9 @@ a:hover { opacity: 0.85; }
 .stat-card.red,
 .stat-tile.red    { border-left-color: var(--red); }
 
+.stat-card.grey,
+.stat-tile.grey   { border-left-color: var(--grey); }
+
 .stat-tile .stat-value,
 .stat-card .stat-value {
   font-family: var(--body-font);
