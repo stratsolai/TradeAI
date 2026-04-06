@@ -386,12 +386,14 @@ window.CL_REVIEW = {
     }
     const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="review-empty-detail">No source detail available.</div>';
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
-      ? '<span class="review-ai-rejected-pill" style="display:inline-block;margin-left:8px;padding:2px 10px;border:1px solid var(--red);border-radius:10px;color:var(--red);font-size:11px;font-weight:600;vertical-align:middle;">AI Rejected Item</span>'
+      ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:10px;background:#fdecea;color:var(--red);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
       : '';
     return `<div class="review-card" data-id="${id}">
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
-    <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>${aiRejectedPill}
+    <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit" style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}
+    </span>
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
