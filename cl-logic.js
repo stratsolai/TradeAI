@@ -11,11 +11,14 @@
   const total = items.length;
   const pending = items.filter(i => i.status === 'pending').length;
   const approved = items.filter(i => i.status === 'approved').length;
+  const archived = items.filter(i => i.status === 'archived').length;
 
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-approved').textContent = approved;
   document.getElementById('stat-rejected').textContent = publishedResult.count || 0;
+  var archivedEl = document.getElementById('stat-archived');
+  if (archivedEl) archivedEl.textContent = archived;
 }
 
   // Shared utilities - exposed on window for tab JS files
