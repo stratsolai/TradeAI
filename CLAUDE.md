@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 5 2026
+# Updated: April 6 2026
 
 ---
 
@@ -120,36 +120,13 @@ multiple connected accounts in Upload & Import).
 These tasks must be completed before the stylesheet rollout
 begins.
 
-### Task 6 — Content Library cleanup
+### Task 8 — CL Intake Architecture
 
-- Remove content_type column from content_library — column is
-  dead, never read by UI. Confirm nothing references it before
-  removing.
-
-### Task 7 — Fix category filter inconsistency
-
-- cl-review.js filter at line 228 checks item.category only,
-  not category_tags. Items manually re-tagged with additional
-  categories via pills will not appear when filtering by those
-  additional categories. Fix filter to check both category and
-  category_tags.
-
-### Task 8 — Extraction prompt quality tuning
-
-- Review and tune extraction prompts across process-file.js,
-  cl-email-scan.js, and cl-outlook-scan.js in a dedicated
-  session. Scope includes: platform and tool context injected
-  into the prompt so the AI understands what StaxAI does and
-  what each tool is for, meaningful item splitting based on
-  that context, correct tool tag suggestions, category
-  assignment quality, and a discard option allowing the AI to
-  flag content as not relevant to the platform rather than
-  forcing it into an item.
-- Email attachments are not currently processed by Gmail or
-  Outlook scan endpoints — text body only. Attachment
-  processing must be added.
-- Drive images are recorded by filename only — no visual
-  analysis. Image processing must be added.
+- Governed by StaxAI-CL-Intake-Architecture-Spec-v1.1.
+  Category descriptions and tool descriptions must be agreed
+  before build begins — both are placeholders in the spec.
+  Email attachment processing and Drive image processing are
+  in scope. Build sequence is in Section 9 of the spec.
 
 ### Task 9 — Account dropdown rollout
 
@@ -178,6 +155,16 @@ begins.
   images and visual content. Includes photo upload capability.
   Requires Image Processing Spec v1.0 to be written and
   approved before build begins.
+
+### Task 13 — Accounting Platform Integration
+
+- Connect MYOB, Xero, QuickBooks, and Reckon as CL data
+  sources. Requires dedicated spec before build begins.
+
+### Task 14 — Remove Approve button from Approved tab
+
+- Remove Approve button from the Approved tab in Source
+  Review. Standalone task, no spec required.
 
 ---
 
