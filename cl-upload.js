@@ -18,7 +18,6 @@ window.CL_UPLOAD = {
     if (!container) return;
     container.innerHTML = [
       "<div class=\"upload-tab-inner\">",
-      "<div class=\"upload-subheading\">Your centralised hub - source material for AI tools</div>",
       "<div class=\"upload-primary-actions\">",
         "<button id=\"cl-photo-btn\" class=\"upload-primary-btn\">",
           "<span class=\"upload-btn-icon\">📷</span>",
