@@ -34,7 +34,21 @@ window.CL_REVIEW = {
     if (document.getElementById('review-search')) {
       document.getElementById('review-search').value = '';
     }
+    this._closeFilterDropdowns();
     this._load();
+  },
+
+  _closeFilterDropdowns: function() {
+    var ftb = document.querySelector('.review-filter-tools-btn');
+    var fcb = document.querySelector('.review-filter-cat-btn');
+    if (ftb) { ftb.classList.remove('active'); ftb.style.background = ''; }
+    if (fcb) { fcb.classList.remove('active'); fcb.style.background = ''; }
+    var filterRow = document.getElementById('review-filter-row');
+    var toolWrap = document.getElementById('review-tool-pills-wrap');
+    var catWrap = document.getElementById('review-cat-pills-wrap');
+    if (toolWrap) toolWrap.style.display = 'none';
+    if (catWrap) catWrap.style.display = 'none';
+    if (filterRow) filterRow.style.display = 'none';
   },
 
   _bindStatTiles: function() {
@@ -98,6 +112,7 @@ window.CL_REVIEW = {
         self._categoryFilter = [];
         self._toolFilters = [];
         self._selected = new Set();
+        self._closeFilterDropdowns();
         self._load();
       });
       btn.addEventListener('mouseenter', function() { btn.style.background = statusColors[btn.dataset.status] || ''; });
@@ -313,14 +328,14 @@ window.CL_REVIEW = {
         return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
       }
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
+      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '" style="border-color:#0097A7;' + (isTagged ? 'background:#E0F7FA;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(tLabel) + '</button>';
     }).join('');
     const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
+      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '" style="border-color:#7B5EA7;' + (isTagged ? 'background:#F3EEF9;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(label) + '</button>';
     }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
@@ -429,11 +444,15 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-body-text[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'body', el.innerText.trim()); });
     });
-    document.querySelectorAll('.tool-pill[data-item-id]').forEach(function(pill) {
+    document.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
+      pill.addEventListener('mouseenter', function() { pill.style.background = '#E0F7FA'; });
+      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? '#E0F7FA' : '#fff'; });
     });
     document.querySelectorAll('.tool-pill[data-cat-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
+      pill.addEventListener('mouseenter', function() { pill.style.background = '#F3EEF9'; });
+      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? '#F3EEF9' : '#fff'; });
     });
   },
 
@@ -521,7 +540,9 @@ window.CL_REVIEW = {
     if (idx > -1) { tags.splice(idx, 1); } else { tags.push(toolId); }
     item.tool_tags = tags;
     await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
-    pill.classList.toggle('tool-pill-tagged', tags.indexOf(toolId) > -1);
+    var isNowTagged = tags.indexOf(toolId) > -1;
+    pill.classList.toggle('tool-pill-tagged', isNowTagged);
+    pill.style.background = isNowTagged ? '#E0F7FA' : '#fff';
   },
 
   _toggleCategoryTag: async function(itemId, catId, pill) {
@@ -532,7 +553,9 @@ window.CL_REVIEW = {
     if (idx > -1) { tags.splice(idx, 1); } else { tags.push(catId); }
     item.category_tags = tags;
     await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
-    pill.classList.toggle('tool-pill-tagged', tags.indexOf(catId) > -1);
+    var isNowTagged = tags.indexOf(catId) > -1;
+    pill.classList.toggle('tool-pill-tagged', isNowTagged);
+    pill.style.background = isNowTagged ? '#F3EEF9' : '#fff';
   },
 
   _updateBulkBar: function() {
