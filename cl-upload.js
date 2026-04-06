@@ -347,7 +347,8 @@ window.CL_UPLOAD = {
         var fileData = await self._fileToBase64(file);
         var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         var storagePath = user.id + '/upload/' + Date.now() + '_' + safeName;
-        try { await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false }); } catch (e) { console.error('cl-assets upload error:', e.message); storagePath = null; }
+        var uploadResult = await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false });
+        if (uploadResult.error) { console.error('cl-assets upload error:', uploadResult.error.message); storagePath = null; }
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -390,7 +391,8 @@ window.CL_UPLOAD = {
         var fileType = self._getDocFileType(file.name);
         var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         var storagePath = user.id + '/upload/' + Date.now() + '_' + safeName;
-        try { await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false }); } catch (e) { console.error('cl-assets upload error:', e.message); storagePath = null; }
+        var uploadResult = await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false });
+        if (uploadResult.error) { console.error('cl-assets upload error:', uploadResult.error.message); storagePath = null; }
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
