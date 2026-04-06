@@ -37,8 +37,7 @@ window.CL_UPLOAD = {
         "<button class=\"btn-dismiss\" id=\"cl-offline-dismiss\">Dismiss</button>",
       "</div>",
       "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none\">",
-        "<span id=\"cl-upload-confirm-msg\"></span>",
-        "<a href=\"#\" id=\"cl-goto-review\" class=\"btn-link\" style=\"display:none\">Go to Review tab</a>",
+        "<span id=\"cl-upload-confirm-msg\" class=\"upload-confirm-pill\"></span>",
         "<button id=\"cl-upload-dismiss\" class=\"btn-dismiss\" style=\"display:none\">Dismiss</button>",
       "</div>",
       "<div class=\"upload-section\">",
@@ -82,8 +81,6 @@ window.CL_UPLOAD = {
     }
     var dismissBtn = document.getElementById("cl-offline-dismiss");
     if (dismissBtn) { dismissBtn.addEventListener("click", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "none"; }); }
-    var reviewLink = document.getElementById("cl-goto-review");
-    if (reviewLink) { reviewLink.addEventListener("click", function(e) { e.preventDefault(); if (typeof window.switchPTab === "function") window.switchPTab("review"); }); }
     if (!navigator.onLine) { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "flex"; }
     window.addEventListener("offline", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "flex"; });
     window.addEventListener("online", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "none"; });
@@ -428,14 +425,9 @@ window.CL_UPLOAD = {
   _showProcessing: function() {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "";
-    confirmDiv.style.background = "";
-    msgSpan.style.color = "";
     msgSpan.textContent = "Processing...";
-    if (reviewLink) reviewLink.style.display = "none";
     if (dismissBtn) dismissBtn.style.display = "none";
     confirmDiv.style.display = "flex";
   },
@@ -448,14 +440,9 @@ window.CL_UPLOAD = {
   _showUploadConfirmation: function(count) {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "";
-    confirmDiv.style.background = "";
-    msgSpan.style.color = "";
     msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
-    if (reviewLink) reviewLink.style.display = "";
     if (dismissBtn) {
       dismissBtn.style.display = "";
       dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
@@ -466,14 +453,9 @@ window.CL_UPLOAD = {
   _showUploadError: function(msg) {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var reviewLink = document.getElementById("cl-goto-review");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    confirmDiv.style.borderColor = "";
-    confirmDiv.style.background = "";
-    msgSpan.style.color = "";
     msgSpan.textContent = msg;
-    if (reviewLink) reviewLink.style.display = "none";
     if (dismissBtn) {
       dismissBtn.style.display = "";
       dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
