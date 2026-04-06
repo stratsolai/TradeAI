@@ -155,11 +155,13 @@ ${websiteHtml.substring(0, 50000)}`;
 
     // Insert extracted content into content_library
     let itemsCount = 0;
+    const scanTs = Date.now();
 
-    for (const item of items) {
+    for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+      const item = items[itemIdx];
       if (!item.title || !item.body) continue;
 
-      const sourceRef = 'web:' + url + ':' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500));
+      const sourceRef = 'web:' + url + ':' + scanTs + ':' + itemIdx;
 
       const row = {
         user_id: userId,
@@ -176,7 +178,7 @@ ${websiteHtml.substring(0, 50000)}`;
         created_at: new Date().toISOString()
       };
 
-      const { error } = await supabaseAdmin.from('content_library').upsert(row, { onConflict: 'source_ref' });
+      const { error } = await supabaseAdmin.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
       if (!error) itemsCount++;
       else console.error('Insert error:', error.message);
     }
