@@ -86,6 +86,39 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: 'Could not extract content from source' });
     }
 
+    // 2b. SAVE SOURCE TO CL-ASSETS AND CREATE CL_SOURCE_ITEMS ROW
+    var sourceItemId = null;
+    var clSourceType = fileType === 'image' ? 'photo' : (fileType === 'website' ? 'website' : 'document');
+    var safeFileName = (fileName || 'unnamed').replace(/[^a-zA-Z0-9._-]/g, '_');
+    var storagePath = userId + '/upload/' + Date.now() + '_' + safeFileName;
+    try {
+      var uploadContentType = 'application/octet-stream';
+      if (fileType === 'website' || fileType === 'text') uploadContentType = 'text/plain';
+      else if (fileType === 'pdf') uploadContentType = 'application/pdf';
+      else if (fileType === 'image') {
+        var imgExt = (fileName || '').toLowerCase().split('.').pop();
+        uploadContentType = ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt] || 'image/jpeg';
+      }
+      var uploadData = (fileType === 'website') ? Buffer.from(sourceText, 'utf-8') : Buffer.from(fileData, 'base64');
+      await supabase.storage.from('cl-assets').upload(storagePath, uploadData, { contentType: uploadContentType, upsert: false });
+      var siResult = await supabase
+        .from('cl_source_items')
+        .insert({
+          user_id: userId,
+          source_type: clSourceType,
+          filename: fileName || null,
+          file_url: storagePath,
+          source_url: fileType === 'website' ? websiteUrl : null,
+          source_detail: { file_type: fileType, original_filename: fileName || null },
+          item_count: 0,
+        })
+        .select('id')
+        .single();
+      if (siResult.data) sourceItemId = siResult.data.id;
+    } catch (e) {
+      console.error('cl-assets/cl_source_items save error:', e.message);
+    }
+
     // 3. BUILD AI PROMPT
     const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, MANDATORY — must exactly match one value from the category list, every item must have a category), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
 
@@ -149,7 +182,7 @@ const handler = async (req, res) => {
         source: sourceValue,
         tool_source: 'process-file',
         source_detail: { filename: fileName || 'Unknown', file_type: fileType },
-        source_item_id: source_item_id || fileName || null,
+        source_item_id: sourceItemId,
         created_at: new Date().toISOString(),
         source_ref: 'manual:' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500))
       };
@@ -166,6 +199,11 @@ const handler = async (req, res) => {
       } else if (error) {
         console.error('Insert error:', error.message);
       }
+    }
+
+    // Update cl_source_items item_count
+    if (sourceItemId && insertedCount > 0) {
+      await supabase.from('cl_source_items').update({ item_count: insertedCount }).eq('id', sourceItemId);
     }
 
     return res.status(200).json({
