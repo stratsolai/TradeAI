@@ -6,7 +6,7 @@ window.CL_REVIEW = {
   _searchTerm: '',
   _items: [],
   _selected: new Set(),
-  _filterState: { pending: { tools: [], cats: [] }, approved: { tools: [], cats: [] }, rejected: { tools: [], cats: [] } },
+  _filterState: { pending: { tools: [], cats: [] }, approved: { tools: [], cats: [] }, rejected: { tools: [], cats: [] }, archived: { tools: [], cats: [] } },
 
   init: async function(supabase) {
     this._supabase = supabase;
@@ -28,7 +28,7 @@ window.CL_REVIEW = {
     this._searchTerm = '';
     this._selected = new Set();
     if (typeof window.switchPTab === 'function') window.switchPTab('review');
-    var sClr = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea' };
+    var sClr = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
     document.querySelectorAll('.review-status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
       b.style.background = b.dataset.status === status ? (sClr[status] || '') : '';
@@ -98,6 +98,7 @@ window.CL_REVIEW = {
           <button class="review-status-btn active" data-status="pending">Pending</button>
           <button class="review-status-btn" data-status="approved">Approved</button>
           <button class="review-status-btn" data-status="rejected">Rejected</button>
+          <button class="review-status-btn" data-status="archived">Archived</button>
           <input type="text" id="review-search" class="review-search-input" placeholder="Search items...">
         </div>
         <div class="review-filter-btns-row">
@@ -126,7 +127,7 @@ window.CL_REVIEW = {
 
   _bindControls: function() {
     const self = this;
-    var statusColors = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea' };
+    var statusColors = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
     document.querySelectorAll('.review-status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.review-status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
