@@ -456,9 +456,11 @@ window.CL_UPLOAD = {
     msgSpan.style.color = "#28a745";
     msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
     if (reviewLink) reviewLink.style.display = "";
-    if (dismissBtn) dismissBtn.style.display = "none";
+    if (dismissBtn) {
+      dismissBtn.style.display = "";
+      dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
+    }
     confirmDiv.style.display = "flex";
-    setTimeout(function() { confirmDiv.style.display = "none"; }, 8000);
   },
 
   _showUploadError: function(msg) {
