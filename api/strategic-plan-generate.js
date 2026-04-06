@@ -733,7 +733,6 @@ module.exports = async (req, res) => {
       await supabase.from('content_library').insert({
         user_id: userId,
         title,
-        content_type: type,
         file_url: url,
         tool_source: 'strategic-plan-generator',
         status: 'approved'
