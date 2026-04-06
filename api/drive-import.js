@@ -185,6 +185,18 @@ export default async function handler(req, res) {
         await supabase.from('profiles').update({ cl_drive_access_token: accessToken }).eq('id', userId);
       } catch (e) {}
 
+      // Fetch Google account email for source detail
+      let driveAccountEmail = null;
+      try {
+        const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: 'Bearer ' + accessToken }
+        });
+        if (userInfoRes.ok) {
+          const userInfo = await userInfoRes.json();
+          driveAccountEmail = userInfo.email || null;
+        }
+      } catch (e) {}
+
       const businessName = profile.business_name || 'this business';
       const industry = profile.industry || 'general';
       const defaultCats = ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
@@ -264,7 +276,7 @@ export default async function handler(req, res) {
             tool_source: 'drive-import',
             source_ref: sourceRef,
             source_item_id: file.id,
-            source_detail: { filename: file.name, folder_name: folderName, mime_type: file.mimeType },
+            source_detail: { filename: file.name, folder_name: folderName, mime_type: file.mimeType, account_email: driveAccountEmail },
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
           if (!error) imported++;
