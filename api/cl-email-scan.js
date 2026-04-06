@@ -116,34 +116,34 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  const { userId, daysBack } = req.body;
+  const { userId, daysBack, accountEmail } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
+  if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
 
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('gmail_access_token, gmail_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, cl_email_last_scanned_at, cl_connected_emails')
+      .select('industry, business_name, cl_active_categories, cl_custom_categories, cl_connected_emails')
       .eq('id', userId)
       .single();
 
-    if (!profile?.gmail_access_token) {
-      return res.status(400).json({ error: 'Gmail not connected' });
+    const connectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
+    const gmailEntry = connectedEmails.find(function(e) { return e && (e.provider === 'gmail' || e.provider === 'google') && e.email === accountEmail; });
+    if (!gmailEntry || !gmailEntry.access_token) {
+      return res.status(400).json({ error: 'Account not connected' });
     }
 
-    let accessToken = profile.gmail_access_token;
-    if (profile.gmail_refresh_token) {
+    let accessToken = gmailEntry.access_token;
+    if (gmailEntry.refresh_token) {
       try {
-        accessToken = await refreshGoogleToken(profile.gmail_refresh_token);
-        await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', userId);
+        accessToken = await refreshGoogleToken(gmailEntry.refresh_token);
+        gmailEntry.access_token = accessToken;
+        await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
       } catch (e) {
         console.error('Gmail token refresh failed:', e.message);
         return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
       }
     }
-
-    const connectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
-    const gmailEntry = connectedEmails.find(function(e) { return e && (e.provider === 'gmail' || e.provider === 'google'); });
-    const accountEmail = gmailEntry ? gmailEntry.email : null;
 
     const businessName = profile.business_name || 'this business';
     const industry = profile.industry || 'general';
@@ -155,8 +155,8 @@ export default async function handler(req, res) {
 
     const days = parseInt(daysBack) || 90;
     let afterTimestamp;
-    if (profile.cl_email_last_scanned_at) {
-      afterTimestamp = Math.floor(new Date(profile.cl_email_last_scanned_at).getTime() / 1000);
+    if (gmailEntry.last_scanned_at) {
+      afterTimestamp = Math.floor(new Date(gmailEntry.last_scanned_at).getTime() / 1000);
     } else {
       afterTimestamp = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
     }
@@ -231,7 +231,8 @@ export default async function handler(req, res) {
     }
 
     if (imported > 0) {
-      await supabase.from('profiles').update({ cl_email_last_scanned_at: new Date().toISOString() }).eq('id', userId);
+      gmailEntry.last_scanned_at = new Date().toISOString();
+      await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
     }
 
     return res.status(200).json({ success: true, imported, skipped, total: messages.length });
