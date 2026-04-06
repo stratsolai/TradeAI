@@ -251,15 +251,17 @@ async function extractPDFText(fileData, apiKey) {
   return (response.content && response.content[0]) ? response.content[0].text : '';
 }
 
-// WORD DOCUMENT TEXT EXTRACTOR
+// WORD DOCUMENT TEXT EXTRACTOR — plain text extraction, no document block
 async function extractDocText(fileData, mediaType, apiKey) {
+  var rawText = Buffer.from(fileData, 'base64').toString('utf-8')
+    .replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (rawText.length < 50) return null;
   const body = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2000,
-    messages: [{ role: 'user', content: [
-      { type: 'document', source: { type: 'base64', media_type: mediaType, data: fileData } },
-      { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
-    ]}]
+    messages: [{ role: 'user', content: 'Extract all readable text content from this document data. Return only the clean text, preserving structure and meaning. Ignore any XML tags, binary artefacts, or formatting codes. No commentary.\n\n' + rawText.substring(0, 8000) }]
   });
   const response = await callClaude(body, apiKey);
   return (response.content && response.content[0]) ? response.content[0].text : '';
