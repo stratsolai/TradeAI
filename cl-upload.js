@@ -102,19 +102,19 @@ window.CL_UPLOAD = {
       var tiles = [];
 
       var connectedEmails = profile.cl_connected_emails || [];
-      var gmailEntry = connectedEmails.filter(function(e) { return e && (e.provider === "gmail" || e.provider === "google"); })[0];
-      var outlookEntry = connectedEmails.filter(function(e) { return e && (e.provider === "microsoft" || e.provider === "outlook"); })[0];
+      var gmailAccounts = connectedEmails.filter(function(e) { return e && (e.provider === "gmail" || e.provider === "google"); });
+      var outlookAccounts = connectedEmails.filter(function(e) { return e && (e.provider === "microsoft" || e.provider === "outlook"); });
 
-      if (gmailEntry) {
-        tiles.push({ id: "gmail", icon: "📧", name: gmailEntry.email, desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true });
+      if (gmailAccounts.length > 0) {
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true, accounts: gmailAccounts });
       } else {
-        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false });
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false, accounts: [] });
       }
 
-      if (outlookEntry) {
-        tiles.push({ id: "outlook", icon: "📧", name: outlookEntry.email, desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true });
+      if (outlookAccounts.length > 0) {
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true, accounts: outlookAccounts });
       } else {
-        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false });
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, accounts: [] });
       }
 
       tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders.", connected: !!profile.cl_drive_connected });
@@ -124,6 +124,13 @@ window.CL_UPLOAD = {
       tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl, urls: websiteUrls });
 
       grid.innerHTML = tiles.map(function(t) {
+        var accountPillsHtml = "";
+        if (t.accounts && t.accounts.length > 0) {
+          accountPillsHtml = "<div class=\"source-select-pills\">" + t.accounts.map(function(a) {
+            return "<button class=\"source-select-pill selected\" data-email=\"" + a.email + "\">" + a.email + "</button>";
+          }).join("") + "</div>";
+        }
+        var scanEmail = t.accounts && t.accounts.length === 1 ? t.accounts[0].email : "";
         return [
           "<div class=\"source-tile\">",
             "<div class=\"source-tile-top\">",
@@ -133,17 +140,35 @@ window.CL_UPLOAD = {
                 "<div class=\"source-tile-desc\">" + t.desc + "</div>",
               "</div>",
             "</div>",
+            accountPillsHtml,
             (t.id === "website" && t.urls && t.urls.length > 1 ? "<div class=\"source-tile-urls\">" + t.urls.map(function(u) { return "<label class=\"source-url-item\"><input type=\"checkbox\" class=\"source-url-checkbox\" data-url=\"" + u + "\" checked=\"checked\"><span class=\"source-url-label\">" + u + "</span></label>"; }).join("") + "</div>" : "") + "<div class=\"source-tile-actions\">",
-              "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
-              "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn" + (!t.connected ? "" : " source-btn-disabled") + "\"" + (t.connected ? " tabindex=\"-1\" aria-disabled=\"true\"" : "") + ">Connect Now</a>",
+              "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (scanEmail ? " data-email=\"" + scanEmail + "\"" : "") + (t.connected ? "" : " disabled") + ">Scan Now</button>",
+              "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
             "</div>",
           "</div>"
         ].join("\n");
       }).join("\n");
 
       var self = this;
+      grid.querySelectorAll(".source-select-pill").forEach(function(pill) {
+        pill.addEventListener("click", function() {
+          pill.classList.toggle("selected");
+        });
+      });
       grid.querySelectorAll(".source-scan-btn:not(.source-btn-disabled)").forEach(function(btn) {
-        btn.addEventListener("click", function() { self._handleScanNow(btn.getAttribute("data-source"), btn); });
+        btn.addEventListener("click", function() {
+          var tile = btn.closest(".source-tile");
+          var pills = tile ? tile.querySelectorAll(".source-select-pill.selected") : [];
+          var emails = [];
+          pills.forEach(function(p) { emails.push(p.getAttribute("data-email")); });
+          if (pills.length > 0) {
+            self._handleScanNow(btn.getAttribute("data-source"), btn, emails);
+          } else if (btn.getAttribute("data-email")) {
+            self._handleScanNow(btn.getAttribute("data-source"), btn, [btn.getAttribute("data-email")]);
+          } else {
+            self._handleScanNow(btn.getAttribute("data-source"), btn, []);
+          }
+        });
       });
 
     } catch (err) {
@@ -151,7 +176,7 @@ window.CL_UPLOAD = {
     }
   },
 
-  _handleScanNow: function(source, btn) {
+  _handleScanNow: function(source, btn, emails) {
       var self = this;
       var originalText = btn.textContent;
       btn.textContent = "Scanning...";
@@ -190,18 +215,26 @@ window.CL_UPLOAD = {
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "gmail") {
-            var gmailResp = await fetch("/api/cl-email-scan", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: user.id })
-            });
-            var gmailResult = await gmailResp.json();
+            var gmailEmails = emails || [];
+            if (gmailEmails.length === 0) throw new Error("No Gmail accounts selected to scan");
+            var totalGmailImported = 0;
+            for (var gi = 0; gi < gmailEmails.length; gi++) {
+              var gmailResp = await fetch("/api/cl-email-scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id, accountEmail: gmailEmails[gi] })
+              });
+              var gmailResult = await gmailResp.json();
+              if (gmailResult.error) {
+                console.error("Gmail scan error for " + gmailEmails[gi] + ":", gmailResult.error);
+              } else if (gmailResult.success && gmailResult.imported) {
+                totalGmailImported += gmailResult.imported;
+              }
+            }
             btn.textContent = originalText;
             btn.disabled = false;
-            if (gmailResult.error) {
-              self._showUploadError(gmailResult.error);
-            } else if (gmailResult.success && gmailResult.imported > 0) {
-              self._showUploadConfirmation(gmailResult.imported);
+            if (totalGmailImported > 0) {
+              self._showUploadConfirmation(totalGmailImported);
             } else {
               self._showUploadError("No new content found in your Gmail inbox.");
             }
@@ -209,18 +242,26 @@ window.CL_UPLOAD = {
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "outlook") {
-            var outlookResp = await fetch("/api/cl-outlook-scan", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ userId: user.id })
-            });
-            var outlookResult = await outlookResp.json();
+            var outlookEmails = emails || [];
+            if (outlookEmails.length === 0) throw new Error("No Outlook accounts selected to scan");
+            var totalOutlookImported = 0;
+            for (var oi = 0; oi < outlookEmails.length; oi++) {
+              var outlookResp = await fetch("/api/cl-outlook-scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ userId: user.id, accountEmail: outlookEmails[oi] })
+              });
+              var outlookResult = await outlookResp.json();
+              if (outlookResult.error) {
+                console.error("Outlook scan error for " + outlookEmails[oi] + ":", outlookResult.error);
+              } else if (outlookResult.success && outlookResult.imported) {
+                totalOutlookImported += outlookResult.imported;
+              }
+            }
             btn.textContent = originalText;
             btn.disabled = false;
-            if (outlookResult.error) {
-              self._showUploadError(outlookResult.error);
-            } else if (outlookResult.success && outlookResult.imported > 0) {
-              self._showUploadConfirmation(outlookResult.imported);
+            if (totalOutlookImported > 0) {
+              self._showUploadConfirmation(totalOutlookImported);
             } else {
               self._showUploadError("No new content found in your Outlook inbox.");
             }
