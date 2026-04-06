@@ -144,7 +144,7 @@ window.CL_UPLOAD = {
             noteHtml,
             "<div class=\"source-tile-actions\">",
               "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
-              "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scanning</button>",
+              "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scan</button>",
               "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
             "</div>",
           "</div>"
@@ -166,6 +166,9 @@ window.CL_UPLOAD = {
           self._handleScanNow(btn.getAttribute("data-source"), btn, values);
         });
       });
+      grid.querySelectorAll(".source-stop-btn").forEach(function(btn) {
+        btn.addEventListener("click", function() { self._scanCancelled = true; });
+      });
 
     } catch (err) {
       if (grid) grid.innerHTML = "<div class=\"source-tile-error\">Unable to load connection status. Please refresh the page.</div>";
@@ -180,16 +183,9 @@ window.CL_UPLOAD = {
       var originalText = btn.textContent;
       btn.textContent = "Scanning...";
       btn.disabled = true;
-      var tile = btn.closest(".source-tile");
-      var stopBtn = tile ? tile.querySelector(".source-stop-btn") : null;
-      if (stopBtn) {
-        stopBtn.style.display = "";
-        stopBtn.onclick = function() { self._scanCancelled = true; stopBtn.style.display = "none"; };
-      }
       function finishScan() {
         btn.textContent = originalText;
         btn.disabled = false;
-        if (stopBtn) stopBtn.style.display = "none";
       }
       (async function() {
         try {
