@@ -115,18 +115,18 @@ multiple connected accounts in Upload & Import).
 
 ---
 
-## Standalone Tasks — Complete After Task 6
+## Active Tasks — Continued
 
-These tasks are not part of the OAuth/upload fix sequence but
-must be completed before the stylesheet rollout begins.
+These tasks must be completed before the stylesheet rollout
+begins.
 
-### Task A — Content Library cleanup
+### Task 6 — Content Library cleanup
 
 - Remove content_type column from content_library — column is
   dead, never read by UI. Confirm nothing references it before
   removing.
 
-### Task B — Fix category filter inconsistency
+### Task 7 — Fix category filter inconsistency
 
 - cl-review.js filter at line 228 checks item.category only,
   not category_tags. Items manually re-tagged with additional
@@ -134,7 +134,7 @@ must be completed before the stylesheet rollout begins.
   additional categories. Fix filter to check both category and
   category_tags.
 
-### Task C — Extraction prompt quality tuning
+### Task 8 — Extraction prompt quality tuning
 
 - Review and tune extraction prompts across process-file.js,
   cl-email-scan.js, and cl-outlook-scan.js in a dedicated
@@ -151,13 +151,33 @@ must be completed before the stylesheet rollout begins.
 - Drive images are recorded by filename only — no visual
   analysis. Image processing must be added.
 
-### Task D — Account dropdown rollout
+### Task 9 — Account dropdown rollout
 
 - When topbar.js is rolled out to remaining authenticated
   pages during the stylesheet rollout, the existing inline
   dropdown wiring must be removed from each page's logic
   file at the same time. This is mandatory to avoid the
   duplicate toggle bug fixed in commits cfbb8f3 and 4756821.
+
+### Task 10 — CL Connections
+
+- Build OneDrive, Dropbox, and SharePoint connections into
+  the Content Library following the same pattern as Google
+  Drive. Requires CL Connections Spec v1.0 to be written
+  and approved before build begins.
+
+### Task 11 — CL Items
+
+- Build Manual Add Item and Editable Pending Items in the
+  Content Library. Requires CL Items Spec v1.0 to be written
+  and approved before build begins.
+
+### Task 12 — Image Processing
+
+- Extend all scan endpoints and the upload tab to handle
+  images and visual content. Includes photo upload capability.
+  Requires Image Processing Spec v1.0 to be written and
+  approved before build begins.
 
 ---
 
