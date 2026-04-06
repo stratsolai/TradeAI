@@ -14,8 +14,11 @@ window.CL_REVIEW = {
     this._bindStatTiles();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+      const profResult = await supabase.from('profiles').select('activated_tools, cl_active_categories, cl_custom_categories').eq('id', user.id).single();
       window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
+      var activeC = (profResult.data && Array.isArray(profResult.data.cl_active_categories)) ? profResult.data.cl_active_categories : [];
+      var customC = (profResult.data && Array.isArray(profResult.data.cl_custom_categories)) ? profResult.data.cl_custom_categories : [];
+      window._clCategories = activeC.concat(customC);
     }
     this._load();
   },
@@ -260,8 +263,8 @@ window.CL_REVIEW = {
     filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
     const self = this;
 
-    const cats = (window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0)
-      ? window.CL_CATEGORIES
+    const cats = (window._clCategories && window._clCategories.length > 0)
+      ? window._clCategories
       : [...new Set(this._items.map(function(i) { return i.category; }).filter(Boolean))];
     catPillsEl.innerHTML = cats.map(function(cat) {
       const isActive = self._categoryFilter.indexOf(cat) > -1;
@@ -359,7 +362,7 @@ window.CL_REVIEW = {
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '" style="border-color:#0097A7;' + (isTagged ? 'background:#E0F7FA;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(tLabel) + '</button>';
     }).join('');
-    const DEFAULT_CATEGORIES = window.CL_CATEGORIES && window.CL_CATEGORIES.length > 0 ? window.CL_CATEGORIES : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
+    const DEFAULT_CATEGORIES = (window._clCategories && window._clCategories.length > 0) ? window._clCategories : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
