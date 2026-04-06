@@ -143,6 +143,30 @@ export default async function handler(req, res) {
 
       if (!emailBody || emailBody.trim().length < 50) { skipped++; continue; }
 
+      // Save source to cl-assets and create cl_source_items row
+      var sourceItemId = null;
+      var msgItemCount = 0;
+      try {
+        var emailStoragePath = userId + '/email/outlook_' + msg.id.substring(0, 40) + '.txt';
+        await supabase.storage.from('cl-assets').upload(emailStoragePath, Buffer.from(emailBody, 'utf-8'), { contentType: 'text/plain', upsert: false });
+        var siResult = await supabase
+          .from('cl_source_items')
+          .insert({
+            user_id: userId,
+            source_type: 'email',
+            filename: subject,
+            file_url: emailStoragePath,
+            source_url: null,
+            source_detail: { sender: sender, subject: subject, account_email: accountEmail, outlook_message_id: msg.id },
+            item_count: 0,
+          })
+          .select('id')
+          .single();
+        if (siResult.data) sourceItemId = siResult.data.id;
+      } catch (e) {
+        console.error('cl-assets/cl_source_items save error:', e.message);
+      }
+
       const items = await runExtractionPrompt(emailBody, subject, businessName, industry, categoryList, toolIdList);
       if (!items || items.length === 0) { skipped++; continue; }
 
@@ -163,11 +187,16 @@ export default async function handler(req, res) {
           source: 'email',
           tool_source: 'cl-outlook-scan',
           source_ref: sourceRef,
-          source_item_id: msg.id,
+          source_item_id: sourceItemId,
           source_detail: { sender: sender, subject: subject, account_email: accountEmail },
         };
         const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
-        if (!error) imported++;
+        if (!error) { imported++; msgItemCount++; }
+      }
+
+      // Update cl_source_items item_count
+      if (sourceItemId && msgItemCount > 0) {
+        await supabase.from('cl_source_items').update({ item_count: msgItemCount }).eq('id', sourceItemId);
       }
     }
 
