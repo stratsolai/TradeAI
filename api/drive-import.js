@@ -219,15 +219,17 @@ export default async function handler(req, res) {
       const filesData = await filesRes.json();
       const allFiles = filesData.files || [];
 
-      // Pre-check: find which file IDs already have items in content_library
-      const allFileIds = allFiles.map(function(f) { return f.id; });
-      const { data: existingRows } = await supabase
-        .from('content_library')
-        .select('source_item_id')
+      // Pre-check: find which Drive file IDs already have cl_source_items rows
+      const { data: existingSourceItems } = await supabase
+        .from('cl_source_items')
+        .select('source_detail')
         .eq('user_id', userId)
-        .eq('source', 'google-drive')
-        .in('source_item_id', allFileIds);
-      const scannedFileIds = new Set((existingRows || []).map(function(r) { return r.source_item_id; }));
+        .eq('source_type', 'drive');
+      const scannedFileIds = new Set(
+        (existingSourceItems || [])
+          .map(function(r) { return r.source_detail && r.source_detail.drive_file_id; })
+          .filter(Boolean)
+      );
       const files = allFiles.filter(function(f) { return !scannedFileIds.has(f.id); });
 
       let imported = 0;
@@ -250,6 +252,39 @@ export default async function handler(req, res) {
         if (isDoc) {
           textContent = await fetchDriveFileText(file.id, file.mimeType, accessToken);
           if (!textContent) continue;
+        }
+
+        // Save source to cl-assets and create cl_source_items row
+        var sourceItemId = null;
+        var fileItemCount = 0;
+        try {
+          var safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+          var driveStoragePath = userId + '/drive/' + file.id + '_' + safeFileName;
+          if (isImage) {
+            var imgDlRes = await fetch('https://www.googleapis.com/drive/v3/files/' + file.id + '?alt=media', { headers: { Authorization: 'Bearer ' + accessToken } });
+            if (imgDlRes.ok) {
+              var imgBuffer = Buffer.from(await imgDlRes.arrayBuffer());
+              await supabase.storage.from('cl-assets').upload(driveStoragePath, imgBuffer, { contentType: file.mimeType, upsert: false });
+            }
+          } else {
+            await supabase.storage.from('cl-assets').upload(driveStoragePath, Buffer.from(textContent, 'utf-8'), { contentType: 'text/plain', upsert: false });
+          }
+          var siResult = await supabase
+            .from('cl_source_items')
+            .insert({
+              user_id: userId,
+              source_type: 'drive',
+              filename: file.name,
+              file_url: driveStoragePath,
+              source_url: null,
+              source_detail: { drive_file_id: file.id, folder_name: folderName, mime_type: file.mimeType, account_email: driveAccountEmail },
+              item_count: 0,
+            })
+            .select('id')
+            .single();
+          if (siResult.data) sourceItemId = siResult.data.id;
+        } catch (e) {
+          console.error('cl-assets/cl_source_items save error:', e.message);
         }
 
         const items = await runExtractionPrompt(
@@ -275,11 +310,16 @@ export default async function handler(req, res) {
             source: 'google-drive',
             tool_source: 'drive-import',
             source_ref: sourceRef,
-            source_item_id: file.id,
+            source_item_id: sourceItemId,
             source_detail: { filename: file.name, folder_name: folderName, mime_type: file.mimeType, account_email: driveAccountEmail },
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
-          if (!error) imported++;
+          if (!error) { imported++; fileItemCount++; }
+        }
+
+        // Update cl_source_items item_count
+        if (sourceItemId && fileItemCount > 0) {
+          await supabase.from('cl_source_items').update({ item_count: fileItemCount }).eq('id', sourceItemId);
         }
       }
 
