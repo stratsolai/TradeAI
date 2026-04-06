@@ -205,7 +205,19 @@ export default async function handler(req, res) {
         { headers: { Authorization: 'Bearer ' + accessToken } }
       );
       const filesData = await filesRes.json();
-      const files = filesData.files || [];
+      const allFiles = filesData.files || [];
+
+      // Pre-check: find which file IDs already have items in content_library
+      const allFileIds = allFiles.map(function(f) { return f.id; });
+      const { data: existingRows } = await supabase
+        .from('content_library')
+        .select('source_item_id')
+        .eq('user_id', userId)
+        .eq('source', 'google-drive')
+        .in('source_item_id', allFileIds);
+      const scannedFileIds = new Set((existingRows || []).map(function(r) { return r.source_item_id; }));
+      const files = allFiles.filter(function(f) { return !scannedFileIds.has(f.id); });
+
       let imported = 0;
       for (const file of files) {
         const isImage = file.mimeType.startsWith('image/');
@@ -249,7 +261,10 @@ export default async function handler(req, res) {
             tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
             status: 'pending',
             source: 'google-drive',
+            tool_source: 'drive-import',
             source_ref: sourceRef,
+            source_item_id: file.id,
+            source_detail: { filename: file.name, folder_name: folderName, mime_type: file.mimeType },
           };
           const { error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
           if (!error) imported++;
