@@ -18,6 +18,7 @@ window.CL_UPLOAD = {
     if (!container) return;
     container.innerHTML = [
       "<div class=\"upload-tab-inner\">",
+      "<div class=\"upload-subheading\">Your centralised hub - source material for AI tools</div>",
       "<div class=\"upload-primary-actions\">",
         "<button id=\"cl-photo-btn\" class=\"upload-primary-btn\">",
           "<span class=\"upload-btn-icon\">📷</span>",
@@ -27,7 +28,7 @@ window.CL_UPLOAD = {
         "<div class=\"upload-primary-btn upload-drop-zone\" id=\"cl-doc-drop\">",
           "<span class=\"upload-btn-icon\">📄</span>",
           "<span class=\"upload-btn-label\">Upload Document or File</span>",
-          "<span class=\"upload-btn-sub\">PDF, Word, TXT — drag and drop or tap to browse</span>",
+          "<span class=\"upload-btn-sub\">Drag and drop or tap to browse</span>",
         "</div>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
@@ -42,6 +43,7 @@ window.CL_UPLOAD = {
       "</div>",
       "<div class=\"upload-section\">",
         "<div class=\"upload-section-title\">Sources</div>",
+        "<div class=\"upload-section-note\">Navigating away from this page will cancel any scan in progress.</div>",
         "<div class=\"sources-tiles\" id=\"cl-sources-grid\">",
           "<div class=\"source-tile source-tile-loading\"><span>Checking connections...</span></div>",
         "</div>",
@@ -94,7 +96,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_connected_emails, website_urls").eq("id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_drive_folders, cl_connected_emails, website_urls").eq("id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
@@ -103,31 +105,32 @@ window.CL_UPLOAD = {
       var outlookAccounts = connectedEmails.filter(function(e) { return e && (e.provider === "microsoft" || e.provider === "outlook"); });
 
       if (gmailAccounts.length > 0) {
-        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Business Gmail inbox — scans for supplier updates, industry news and business content.", connected: true, accounts: gmailAccounts });
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Business Gmail Inbox - scans all emails and extracts relevant content.", connected: true, pills: gmailAccounts.map(function(a) { return { label: a.email, value: a.email }; }) });
       } else {
-        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false, accounts: [] });
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
 
       if (outlookAccounts.length > 0) {
-        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Business Outlook inbox — scans for supplier updates, industry news and business content.", connected: true, accounts: outlookAccounts });
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Business Outlook Inbox - scans all emails and extracts relevant content.", connected: true, pills: outlookAccounts.map(function(a) { return { label: a.email, value: a.email }; }) });
       } else {
-        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, accounts: [] });
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
 
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports photos and documents from your Drive folders. Previously scanned files are skipped — use Manual Add Item for changes.", connected: !!profile.cl_drive_connected });
+      var driveFolders = Array.isArray(profile.cl_drive_folders) ? profile.cl_drive_folders : [];
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: !!profile.cl_drive_connected, pills: driveFolders.map(function(f) { return { label: f.name, value: f.id }; }), note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
-      var websiteUrl = websiteUrls[0] || null;
-      tiles.push({ id: "website", icon: "🌐", name: websiteUrl || "Website", desc: websiteUrl ? "Scans your website for service descriptions, team info and other business content. Rescanning reproduces all content as new Pending items — use Manual Add Item for small changes." : "Add your website URL in CL Settings to scan for business content.", connected: !!websiteUrl, urls: websiteUrls });
+      tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
 
       grid.innerHTML = tiles.map(function(t) {
-        var accountPillsHtml = "";
-        if (t.accounts && t.accounts.length > 0) {
-          accountPillsHtml = "<div class=\"source-select-pills\">" + t.accounts.map(function(a) {
-            return "<button class=\"source-select-pill selected\" data-email=\"" + a.email + "\">" + a.email + "</button>";
-          }).join("") + "</div>";
+        var pillsHtml = "";
+        if (t.pills && t.pills.length > 0) {
+          pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "gdrive" ? "folders" : t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
+            "<div class=\"source-select-pills\">" + t.pills.map(function(p) {
+              return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
+            }).join("") + "</div>";
         }
-        var scanEmail = t.accounts && t.accounts.length === 1 ? t.accounts[0].email : "";
+        var noteHtml = t.note ? "<div class=\"source-tile-note\">" + t.note + "</div>" : "";
         return [
           "<div class=\"source-tile\">",
             "<div class=\"source-tile-top\">",
@@ -137,9 +140,11 @@ window.CL_UPLOAD = {
                 "<div class=\"source-tile-desc\">" + t.desc + "</div>",
               "</div>",
             "</div>",
-            accountPillsHtml,
-            (t.id === "website" && t.urls && t.urls.length > 1 ? "<div class=\"source-tile-urls\">" + t.urls.map(function(u) { return "<label class=\"source-url-item\"><input type=\"checkbox\" class=\"source-url-checkbox\" data-url=\"" + u + "\" checked=\"checked\"><span class=\"source-url-label\">" + u + "</span></label>"; }).join("") + "</div>" : "") + "<div class=\"source-tile-actions\">",
-              "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (scanEmail ? " data-email=\"" + scanEmail + "\"" : "") + (t.connected ? "" : " disabled") + ">Scan Now</button>",
+            pillsHtml,
+            noteHtml,
+            "<div class=\"source-tile-actions\">",
+              "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
+              "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scanning</button>",
               "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
             "</div>",
           "</div>"
@@ -156,15 +161,9 @@ window.CL_UPLOAD = {
         btn.addEventListener("click", function() {
           var tile = btn.closest(".source-tile");
           var pills = tile ? tile.querySelectorAll(".source-select-pill.selected") : [];
-          var emails = [];
-          pills.forEach(function(p) { emails.push(p.getAttribute("data-email")); });
-          if (pills.length > 0) {
-            self._handleScanNow(btn.getAttribute("data-source"), btn, emails);
-          } else if (btn.getAttribute("data-email")) {
-            self._handleScanNow(btn.getAttribute("data-source"), btn, [btn.getAttribute("data-email")]);
-          } else {
-            self._handleScanNow(btn.getAttribute("data-source"), btn, []);
-          }
+          var values = [];
+          pills.forEach(function(p) { values.push(p.getAttribute("data-value")); });
+          self._handleScanNow(btn.getAttribute("data-source"), btn, values);
         });
       });
 
@@ -173,49 +172,61 @@ window.CL_UPLOAD = {
     }
   },
 
-  _handleScanNow: function(source, btn, emails) {
+  _scanCancelled: false,
+
+  _handleScanNow: function(source, btn, values) {
       var self = this;
+      self._scanCancelled = false;
       var originalText = btn.textContent;
       btn.textContent = "Scanning...";
       btn.disabled = true;
+      var tile = btn.closest(".source-tile");
+      var stopBtn = tile ? tile.querySelector(".source-stop-btn") : null;
+      if (stopBtn) {
+        stopBtn.style.display = "";
+        stopBtn.onclick = function() { self._scanCancelled = true; stopBtn.style.display = "none"; };
+      }
+      function finishScan() {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        if (stopBtn) stopBtn.style.display = "none";
+      }
       (async function() {
         try {
           var ud = await self._supabase.auth.getUser();
           var user = ud && ud.data ? ud.data.user : null;
           if (!user) throw new Error("Not authenticated");
           if (source === "gdrive") {
-            var profileResp = await self._supabase.from("profiles").select("cl_drive_folders").eq("id", user.id).single();
-            var folders = (profileResp.data && profileResp.data.cl_drive_folders) || [];
-            if (folders.length === 0) throw new Error("No Drive folders connected. Add folders in Settings.");
+            var folderIds = values || [];
+            if (folderIds.length === 0) throw new Error("No Drive folders selected to scan");
             var totalImported = 0;
-            for (var fi = 0; fi < folders.length; fi++) {
+            for (var fi = 0; fi < folderIds.length; fi++) {
+              if (self._scanCancelled) break;
               var resp = await fetch("/api/drive-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id, action: "import-all", folderId: folders[fi].id })
+                body: JSON.stringify({ userId: user.id, action: "import-all", folderId: folderIds[fi] })
               });
               var result = await resp.json();
               if (result.success && result.imported) {
                 totalImported += result.imported;
               } else if (result.error) {
-                console.error("Drive import error for folder " + folders[fi].name + ":", result.error);
+                console.error("Drive import error for folder " + folderIds[fi] + ":", result.error);
               }
             }
-            btn.textContent = originalText;
-            btn.disabled = false;
-            if (totalImported > 0) {
-              self._showUploadConfirmation(totalImported);
-            } else {
-              self._showUploadError("No new content found in your connected Drive folders.");
-            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (totalImported > 0) { self._showUploadConfirmation(totalImported); }
+            else { self._showUploadError("No new content found in your connected Drive folders."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "gmail") {
-            var gmailEmails = emails || [];
+            var gmailEmails = values || [];
             if (gmailEmails.length === 0) throw new Error("No Gmail accounts selected to scan");
             var totalGmailImported = 0;
             for (var gi = 0; gi < gmailEmails.length; gi++) {
+              if (self._scanCancelled) break;
               var gmailResp = await fetch("/api/cl-email-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -228,21 +239,19 @@ window.CL_UPLOAD = {
                 totalGmailImported += gmailResult.imported;
               }
             }
-            btn.textContent = originalText;
-            btn.disabled = false;
-            if (totalGmailImported > 0) {
-              self._showUploadConfirmation(totalGmailImported);
-            } else {
-              self._showUploadError("No new content found in your Gmail inbox.");
-            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (totalGmailImported > 0) { self._showUploadConfirmation(totalGmailImported); }
+            else { self._showUploadError("No new content found in your Gmail inbox."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "outlook") {
-            var outlookEmails = emails || [];
+            var outlookEmails = values || [];
             if (outlookEmails.length === 0) throw new Error("No Outlook accounts selected to scan");
             var totalOutlookImported = 0;
             for (var oi = 0; oi < outlookEmails.length; oi++) {
+              if (self._scanCancelled) break;
               var outlookResp = await fetch("/api/cl-outlook-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -255,29 +264,19 @@ window.CL_UPLOAD = {
                 totalOutlookImported += outlookResult.imported;
               }
             }
-            btn.textContent = originalText;
-            btn.disabled = false;
-            if (totalOutlookImported > 0) {
-              self._showUploadConfirmation(totalOutlookImported);
-            } else {
-              self._showUploadError("No new content found in your Outlook inbox.");
-            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (totalOutlookImported > 0) { self._showUploadConfirmation(totalOutlookImported); }
+            else { self._showUploadError("No new content found in your Outlook inbox."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "website") {
-            var tile = btn.closest(".source-tile");
-            var cbs = tile ? tile.querySelectorAll(".source-url-checkbox") : [];
-            var urls = [];
-            if (cbs.length > 0) {
-              cbs.forEach(function(cb) { if (cb.checked) urls.push(cb.getAttribute("data-url")); });
-            } else {
-              var nm = tile ? tile.querySelector(".source-tile-name") : null;
-              if (nm && nm.textContent) urls.push(nm.textContent.trim());
-            }
+            var urls = values || [];
             if (urls.length === 0) throw new Error("No URLs selected to scan");
             var totalWebImported = 0;
             for (var j = 0; j < urls.length; j++) {
+              if (self._scanCancelled) break;
               var raw = urls[j].trim();
               if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
               var webResp = await fetch("/api/scrape-website", {
@@ -292,13 +291,10 @@ window.CL_UPLOAD = {
                 totalWebImported += webResult.count;
               }
             }
-            btn.textContent = originalText;
-            btn.disabled = false;
-            if (totalWebImported > 0) {
-              self._showUploadConfirmation(totalWebImported);
-            } else {
-              self._showUploadError("No new content found on your website.");
-            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (totalWebImported > 0) { self._showUploadConfirmation(totalWebImported); }
+            else { self._showUploadError("No new content found on your website."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
@@ -307,8 +303,7 @@ window.CL_UPLOAD = {
           console.error("Scan error:", err.message);
           self._showUploadError(err.message);
         } finally {
-          btn.textContent = originalText;
-          btn.disabled = false;
+          finishScan();
         }
       })();
     },
