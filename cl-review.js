@@ -126,6 +126,48 @@ window.CL_REVIEW = {
     self._bindBtnHover('review-bulk-approve-btn', '#edfaf1');
     self._bindBtnHover('review-bulk-reject-btn', '#fef2f2');
     self._bindBtnHover('review-deselect-btn', '#e8f4fd');
+    var filterToolsBtn = document.querySelector('.review-filter-tools-btn');
+    var filterCatBtn = document.querySelector('.review-filter-cat-btn');
+    var clearBtn = document.querySelector('.review-clear-filters-btn');
+    function updateFilterRow() {
+      var filterRow = document.getElementById('review-filter-row');
+      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
+      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
+      var toolWrap = document.getElementById('review-tool-pills-wrap');
+      var catWrap = document.getElementById('review-cat-pills-wrap');
+      if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
+      if (catWrap) catWrap.style.display = catsOpen ? '' : 'none';
+      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
+    }
+    if (filterToolsBtn) {
+      filterToolsBtn.addEventListener('click', function() {
+        var isOpen = filterToolsBtn.classList.contains('active');
+        filterToolsBtn.classList.toggle('active', !isOpen);
+        filterToolsBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        if (!isOpen) self._renderFilterRow();
+        updateFilterRow();
+      });
+    }
+    if (filterCatBtn) {
+      filterCatBtn.addEventListener('click', function() {
+        var isOpen = filterCatBtn.classList.contains('active');
+        filterCatBtn.classList.toggle('active', !isOpen);
+        filterCatBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
+        if (!isOpen) self._renderFilterRow();
+        updateFilterRow();
+      });
+    }
+    if (clearBtn) {
+      clearBtn.addEventListener('click', function() {
+        self._toolFilters = [];
+        self._categoryFilter = [];
+        if (filterToolsBtn) { filterToolsBtn.classList.remove('active'); filterToolsBtn.style.background = ''; }
+        if (filterCatBtn) { filterCatBtn.classList.remove('active'); filterCatBtn.style.background = ''; }
+        updateFilterRow();
+        self._renderFilterRow();
+        self._renderList();
+      });
+    }
   },
 
   _bindBtnHover: function(id, hoverBg) {
@@ -169,49 +211,6 @@ window.CL_REVIEW = {
     this._renderFilterRow();
     this._renderList();
     this._updateRejectButtons();
-    const self2 = this;
-    const filterToolsBtn = document.querySelector('.review-filter-tools-btn');
-    const filterCatBtn = document.querySelector('.review-filter-cat-btn');
-    function updateFilterRow() {
-      var filterRow = document.getElementById('review-filter-row');
-      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
-      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
-      var toolWrap = document.getElementById('review-tool-pills-wrap');
-      var catWrap = document.getElementById('review-cat-pills-wrap');
-      if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
-      if (catWrap) catWrap.style.display = catsOpen ? '' : 'none';
-      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
-    }
-    if (filterToolsBtn) {
-      filterToolsBtn.addEventListener('click', function() {
-        var isOpen = filterToolsBtn.classList.contains('active');
-        filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
-        if (!isOpen) self2._renderFilterRow();
-        updateFilterRow();
-      });
-    }
-    if (filterCatBtn) {
-      filterCatBtn.addEventListener('click', function() {
-        var isOpen = filterCatBtn.classList.contains('active');
-        filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = isOpen ? '' : 'rgba(74,109,140,0.08)';
-        if (!isOpen) self2._renderFilterRow();
-        updateFilterRow();
-      });
-    }
-    const clearBtn = document.querySelector('.review-clear-filters-btn');
-    if (clearBtn) {
-      clearBtn.addEventListener('click', function() {
-        self2._toolFilters = [];
-        self2._categoryFilter = [];
-        if (filterToolsBtn) { filterToolsBtn.classList.remove('active'); filterToolsBtn.style.background = ''; }
-        if (filterCatBtn) { filterCatBtn.classList.remove('active'); filterCatBtn.style.background = ''; }
-        updateFilterRow();
-        self2._renderFilterRow();
-        self2._renderList();
-      });
-    }
   },
 
   _renderFilterRow: function() {
@@ -346,7 +345,7 @@ window.CL_REVIEW = {
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
-      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document" style="border-left-color:#0d9488;">&#128196; Source</button>
+      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>
       <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="${this._status === 'rejected' ? 'border-color:#8B2500;color:#8B2500;' : 'border-color:#dc3545;color:#dc3545;'}">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
     </div>
@@ -399,7 +398,7 @@ window.CL_REVIEW = {
     });
     var listEl = document.getElementById('review-list');
     if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
-      var sectionBg = btn.dataset.section === 'source' ? '#e0f2f1' : '#e8f4fd';
+      var sectionBg = btn.classList.contains('review-source-btn') ? '#fff3ee' : btn.classList.contains('review-cats-btn') ? '#F3EEF9' : '#E0F7FA';
       btn.addEventListener('click', function() {
         var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
