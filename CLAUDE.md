@@ -113,7 +113,8 @@ Tasks 1–4 complete (URL validation, Reject/Delete on Rejected
 tab, items display adjustments, Tool Outputs sidebar styling).
 
 5. Multiple connected accounts in Upload & Import — spec
-   then implement
+   complete (StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1).
+   Ready to build. See spec for full build sequence.
 
 ---
 
@@ -164,11 +165,9 @@ must be completed before the stylesheet rollout begins.
   array supports multiple Gmail accounts in the UI but token
   storage is single-column on profiles (last connected wins).
   Connecting a second Gmail account silently overwrites the
-  first account's tokens. Needs schema redesign: store tokens
-  per entry in cl_connected_emails. Requires updates to
-  oauth-callback.js, cl-email-scan.js, cl-outlook-scan.js,
-  and cl-settings-logic.js. Schema change required — spec
-  needed before build.
+  first account's tokens. Spec complete and approved
+  (StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1). Build is
+  the next scheduled task (CL Functional Improvements Task 5).
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
