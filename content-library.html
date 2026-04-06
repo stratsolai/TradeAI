@@ -845,7 +845,8 @@
     /* ─── UPLOAD TAB ─── */
     .upload-tab-inner { padding: 8px 0; }
     .upload-section { margin-bottom: 28px; }
-    .upload-section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .upload-section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .upload-section-note { font-size: 12px; color: #888; margin-bottom: 12px; }
     .photo-upload-actions { display: flex; gap: 12px; flex-wrap: wrap; }
     .btn-photo-primary, .btn-photo-secondary {
       display: inline-flex; align-items: center; gap: 8px;
@@ -925,6 +926,7 @@
 
     /* ── Upload & Import tab ──────────────────────────────────────────── */
     .upload-tab-inner { padding: 24px 0; }
+    .upload-subheading { font-size: 14px; color: #888; margin-bottom: 20px; }
     .upload-primary-actions { display: flex; gap: 16px; margin-bottom: 24px; }
     .upload-primary-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 28px 20px; background: #fff; border: 2px dashed #4A6D8C; border-radius: 12px; cursor: pointer; transition: background 0.15s, border-color 0.15s; text-align: center; }
     .upload-primary-btn:hover { background: #e8f0fb; border-color: #4A6D8C; }
@@ -974,10 +976,13 @@
     .source-tile-name { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 4px; word-break: break-all; }
     .source-tile-desc { font-size: 13px; color: #888; line-height: 1.5; }
     .source-tile-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .source-action-btn { flex: 1; min-width: 100px; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.15s; }
-    .source-scan-btn { background: #4A6D8C; color: #fff; }
-    .source-scan-btn:hover:not(.source-btn-disabled) { background: #164070; }
-    .source-connect-btn { background: #c4622a; color: #fff; }
+    .source-action-btn { display:flex; align-items:center; justify-content:center; min-width:100px; border:2px solid var(--blue); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--blue); background:#fff; cursor:pointer; font-family:"DM Sans",sans-serif; transition:opacity 0.15s; text-decoration:none; }
+    .source-scan-btn { border-color:var(--blue); color:var(--blue); }
+    .source-scan-btn:hover:not(.source-btn-disabled) { background:var(--blue-light); }
+    .source-connect-btn { border-color:var(--orange); color:var(--orange); }
+    .source-connect-btn:hover:not(.source-btn-disabled) { background:var(--orange-light); }
+    .source-stop-btn { border-color:#8B2500; color:#8B2500; display:none; }
+    .source-stop-btn:hover { background:#fef2f2; }
     .source-tile-urls { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
     .source-url-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #888; }
     .source-url-item input[type="checkbox"] { width: 15px; height: 15px; accent-color: var(--blue); cursor: pointer; flex-shrink: 0; }
@@ -985,8 +990,9 @@
     .source-select-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .source-select-pill { padding: 4px 12px; border-radius: 8px; border: 1px solid var(--blue); background: transparent; color: #333; font-size: 13px; font-family: inherit; cursor: pointer; transition: background 0.15s; }
     .source-select-pill.selected { background: var(--blue-light); }
-    .source-connect-btn:hover:not(.source-btn-disabled) { background: #a8521f; }
-    .source-btn-disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; pointer-events: none; }
+    .source-pill-instruction { font-size: 12px; color: #888; margin-bottom: 6px; }
+    .source-tile-note { font-size: 12px; color: #888; font-style: italic; margin-top: 8px; }
+    .source-btn-disabled { border-color: #e5e5e5; color: #aaa; background: #fff; cursor: not-allowed; pointer-events: none; }
     .source-tile-loading { grid-column: 1 / -1; padding: 24px; color: #888; font-size: 14px; }
     .source-tile-error { grid-column: 1 / -1; padding: 16px; color: #dc3545; font-size: 14px; background: #fff5f5; border-radius: 8px; }
     @media (max-width: 640px) { .sources-tiles { grid-template-columns: 1fr; } }
