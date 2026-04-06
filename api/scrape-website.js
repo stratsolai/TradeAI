@@ -73,6 +73,31 @@ module.exports = async (req, res) => {
 
     console.log('Website HTML fetched, analyzing with Claude...');
 
+    // Save source to cl-assets and create cl_source_items row
+    var sourceItemId = null;
+    try {
+      var hostname = '';
+      try { hostname = new URL(url).hostname.replace(/[^a-zA-Z0-9.-]/g, '_'); } catch (e) { hostname = 'unknown'; }
+      var storagePath = userId + '/website/' + Date.now() + '_' + hostname + '.html';
+      await supabaseAdmin.storage.from('cl-assets').upload(storagePath, Buffer.from(websiteHtml, 'utf-8'), { contentType: 'text/html', upsert: false });
+      var siResult = await supabaseAdmin
+        .from('cl_source_items')
+        .insert({
+          user_id: userId,
+          source_type: 'website',
+          filename: hostname + '.html',
+          file_url: storagePath,
+          source_url: url,
+          source_detail: { url: url },
+          item_count: 0,
+        })
+        .select('id')
+        .single();
+      if (siResult.data) sourceItemId = siResult.data.id;
+    } catch (e) {
+      console.error('cl-assets/cl_source_items save error:', e.message);
+    }
+
     // Use Claude to analyze the website
     const analysisPrompt = `You are analysing a business website for ${businessName} (${industry}). Extract discrete pieces of marketing-relevant content.
 
@@ -173,7 +198,7 @@ ${websiteHtml.substring(0, 50000)}`;
         source: 'website',
         tool_source: 'scrape-website',
         source_detail: { url: url },
-        source_item_id: url,
+        source_item_id: sourceItemId,
         source_ref: sourceRef,
         created_at: new Date().toISOString()
       };
@@ -181,6 +206,11 @@ ${websiteHtml.substring(0, 50000)}`;
       const { error } = await supabaseAdmin.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
       if (!error) itemsCount++;
       else console.error('Insert error:', error.message);
+    }
+
+    // Update cl_source_items item_count
+    if (sourceItemId && itemsCount > 0) {
+      await supabaseAdmin.from('cl_source_items').update({ item_count: itemsCount }).eq('id', sourceItemId);
     }
 
     return res.status(200).json({
