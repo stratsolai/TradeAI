@@ -385,10 +385,13 @@ window.CL_REVIEW = {
       sourceDetailParts.push('<div><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
     }
     const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="review-empty-detail">No source detail available.</div>';
+    const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
+      ? '<span class="review-ai-rejected-pill" style="display:inline-block;margin-left:8px;padding:2px 10px;border:1px solid var(--red);border-radius:10px;color:var(--red);font-size:11px;font-weight:600;vertical-align:middle;">AI Rejected Item</span>'
+      : '';
     return `<div class="review-card" data-id="${id}">
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
-    <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>
+    <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit">${title}</span>${aiRejectedPill}
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
