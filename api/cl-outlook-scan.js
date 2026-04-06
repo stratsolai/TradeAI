@@ -83,29 +83,31 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  const { userId, daysBack } = req.body;
+  const { userId, daysBack, accountEmail } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
+  if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
 
   try {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('outlook_access_token, outlook_refresh_token, industry, business_name, cl_active_categories, cl_custom_categories, cl_outlook_last_scanned_at, cl_connected_emails')
+      .select('industry, business_name, cl_active_categories, cl_custom_categories, cl_connected_emails')
       .eq('id', userId)
       .single();
 
-    if (!profile?.outlook_access_token) {
-      return res.status(400).json({ error: 'Outlook not connected' });
+    const connectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
+    const outlookEntry = connectedEmails.find(function(e) { return e && (e.provider === 'microsoft' || e.provider === 'outlook') && e.email === accountEmail; });
+    if (!outlookEntry || !outlookEntry.access_token) {
+      return res.status(400).json({ error: 'Account not connected' });
     }
 
-    let accessToken = profile.outlook_access_token;
-    try {
-      accessToken = await refreshOutlookToken(profile.outlook_refresh_token);
-      await supabase.from('profiles').update({ outlook_access_token: accessToken }).eq('id', userId);
-    } catch (e) {}
-
-    const connectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
-    const outlookEntry = connectedEmails.find(function(e) { return e && (e.provider === 'microsoft' || e.provider === 'outlook'); });
-    const accountEmail = outlookEntry ? outlookEntry.email : null;
+    let accessToken = outlookEntry.access_token;
+    if (outlookEntry.refresh_token) {
+      try {
+        accessToken = await refreshOutlookToken(outlookEntry.refresh_token);
+        outlookEntry.access_token = accessToken;
+        await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
+      } catch (e) {}
+    }
 
     const businessName = profile.business_name || 'this business';
     const industry = profile.industry || 'general';
@@ -117,8 +119,8 @@ export default async function handler(req, res) {
 
     const days = parseInt(daysBack) || 90;
     let afterDate;
-    if (profile.cl_outlook_last_scanned_at) {
-      afterDate = new Date(profile.cl_outlook_last_scanned_at).toISOString();
+    if (outlookEntry.last_scanned_at) {
+      afterDate = new Date(outlookEntry.last_scanned_at).toISOString();
     } else {
       afterDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
     }
@@ -174,7 +176,8 @@ export default async function handler(req, res) {
       }
     }
 
-    await supabase.from('profiles').update({ cl_outlook_last_scanned_at: new Date().toISOString() }).eq('id', userId);
+    outlookEntry.last_scanned_at = new Date().toISOString();
+    await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
 
     return res.status(200).json({ success: true, imported, skipped, total: messages.length });
 
