@@ -105,7 +105,7 @@ window.CL_REVIEW = {
           <button class="review-clear-filters-btn">&#10005; Clear All Filters</button>
           <span style="flex:1"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All</button>
-          <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#dc3545;color:#dc3545;">&#10007; Reject All</button>
+          <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Reject All</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
           <div id="review-tool-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
@@ -114,7 +114,7 @@ window.CL_REVIEW = {
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
           <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All Selected</button>
-          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn" style="border-color:#dc3545;color:#dc3545;">&#10007; Reject All Selected</button>
+          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Reject All Selected</button>
           <button class="btn-outline" id="review-deselect-btn" style="border-color:#4A6D8C;color:#4A6D8C;">Deselect All</button>
         </div>
         <div id="review-list" class="review-list"></div>
@@ -224,13 +224,9 @@ window.CL_REVIEW = {
     var selBtn = document.getElementById('review-bulk-reject-btn');
     if (allBtn) {
       allBtn.innerHTML = isRejected ? '&#10007; Delete All' : '&#10007; Reject All';
-      allBtn.style.borderColor = isRejected ? '#8B2500' : '#dc3545';
-      allBtn.style.color = isRejected ? '#8B2500' : '#dc3545';
     }
     if (selBtn) {
       selBtn.innerHTML = isRejected ? '&#10007; Delete All Selected' : '&#10007; Reject All Selected';
-      selBtn.style.borderColor = isRejected ? '#8B2500' : '#dc3545';
-      selBtn.style.color = isRejected ? '#8B2500' : '#dc3545';
     }
   },
 
@@ -390,7 +386,7 @@ window.CL_REVIEW = {
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           <button class="btn-outline review-approve-btn" data-id="${id}" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="${this._status === 'rejected' ? 'border-color:#8B2500;color:#8B2500;' : 'border-color:#dc3545;color:#dc3545;'}">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
     </div>
       </div>
   
