@@ -86,21 +86,11 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: 'Could not extract content from source' });
     }
 
-    // 2b. SAVE SOURCE TO CL-ASSETS AND CREATE CL_SOURCE_ITEMS ROW
+    // 2b. CREATE CL_SOURCE_ITEMS ROW (file uploaded to cl-assets by browser)
     var sourceItemId = null;
     var clSourceType = fileType === 'image' ? 'photo' : (fileType === 'website' ? 'website' : 'document');
-    var safeFileName = (fileName || 'unnamed').replace(/[^a-zA-Z0-9._-]/g, '_');
-    var storagePath = userId + '/upload/' + Date.now() + '_' + safeFileName;
+    var storagePath = req.body.storagePath || null;
     try {
-      var uploadContentType = 'application/octet-stream';
-      if (fileType === 'website' || fileType === 'text') uploadContentType = 'text/plain';
-      else if (fileType === 'pdf') uploadContentType = 'application/pdf';
-      else if (fileType === 'image') {
-        var imgExt = (fileName || '').toLowerCase().split('.').pop();
-        uploadContentType = ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt] || 'image/jpeg';
-      }
-      var uploadData = (fileType === 'website') ? Buffer.from(sourceText, 'utf-8') : Buffer.from(fileData, 'base64');
-      await supabase.storage.from('cl-assets').upload(storagePath, uploadData, { contentType: uploadContentType, upsert: false });
       var siResult = await supabase
         .from('cl_source_items')
         .insert({
@@ -116,7 +106,7 @@ const handler = async (req, res) => {
         .single();
       if (siResult.data) sourceItemId = siResult.data.id;
     } catch (e) {
-      console.error('cl-assets/cl_source_items save error:', e.message);
+      console.error('cl_source_items save error:', e.message);
     }
 
     // 3. BUILD AI PROMPT
