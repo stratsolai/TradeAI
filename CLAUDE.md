@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 6 2026
+# Updated: April 7 2026
 
 ---
 
@@ -112,6 +112,7 @@ authenticated pages:
 Tasks 1–5 complete (URL validation, Reject/Delete on Rejected
 tab, items display adjustments, Tool Outputs sidebar styling,
 multiple connected accounts in Upload & Import).
+Task 14 complete (Remove Approve button from Approved tab).
 
 ---
 
@@ -120,13 +121,41 @@ multiple connected accounts in Upload & Import).
 These tasks must be completed before the stylesheet rollout
 begins.
 
-### Task 8 — CL Intake Architecture
+### Task 8 — CL Intake Architecture (in progress)
 
 - Governed by StaxAI-CL-Intake-Architecture-Spec-v1.1.
-  Category descriptions and tool descriptions must be agreed
-  before build begins — both are placeholders in the spec.
-  Email attachment processing and Drive image processing are
-  in scope. Build sequence is in Section 9 of the spec.
+
+Steps complete:
+- Step 1 — original file storage across all five intake
+  endpoints. Files stored in cl-assets. cl_source_items rows
+  created. Direct browser-to-Supabase upload implemented in
+  cl-upload.js.
+- Step 2 — Archived tab added to Source Review. Matches
+  Pending tab layout exactly.
+- Step 3 — Approve button removed from Approved tab.
+- Step 5 — Category descriptions agreed and documented.
+  StaxAI-CL-Category-Descriptions-v1.0 in Project Knowledge.
+  Note: Promotions & Offers description updated to clarify
+  business-own offers only.
+- Step 6 — Tool descriptions agreed and documented.
+  StaxAI-CL-Tool-Descriptions-v1.0 in Project Knowledge.
+- Step 7 — Extraction prompt redesign complete across
+  api/process-file.js, api/cl-email-scan.js,
+  api/cl-outlook-scan.js. Fixed 18-category list.
+  Auto-rejection with rejection_source = 'auto' in
+  source_detail. Business profile context injection removed.
+  Max tokens aligned to 4000.
+
+Steps remaining:
+- Step 4 — Rejected tab visual distinction for auto-rejected
+  items (now unblocked)
+- Step 8 — versioning rules
+- Step 9 — remove CL Settings category functionality
+- Step 10 — full end-to-end test
+
+Outstanding display fix: cl-review.js is not displaying
+category or tool_tags on item cards. Data is correct in the
+database — display only.
 
 ### Task 9 — Account dropdown rollout
 
@@ -161,10 +190,7 @@ begins.
 - Connect MYOB, Xero, QuickBooks, and Reckon as CL data
   sources. Requires dedicated spec before build begins.
 
-### Task 14 — Remove Approve button from Approved tab
-
-- Remove Approve button from the Approved tab in Source
-  Review. Standalone task, no spec required.
+### ~~Task 14 — Remove Approve button from Approved tab~~  DONE
 
 ---
 
@@ -179,13 +205,12 @@ begins.
   published to In production before real users can connect.
   May trigger Google's verification process for the
   gmail.readonly scope. Must be resolved before launch.
-- Full source document storage never built — original intention
-  from CL New Features Spec v1.3 Step 9 was to store source
-  documents in Supabase Storage cl-assets and create
-  cl_source_items rows. This was never implemented.
-  source_item_id currently stores Gmail/Outlook message IDs
-  but nothing in the system retrieves them. The Source button
-  shows metadata only. Needs a spec before build.
+- Full source document storage — RESOLVED. cl-assets bucket
+  and cl_source_items table now in use. All five intake
+  endpoints store original source files and create
+  cl_source_items rows. Built in Task 8 Step 1.
+  source_item_id on content_library now stores
+  cl_source_items UUIDs.
 - staxai-auth.css loads after the inline </style> block in
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
@@ -195,6 +220,10 @@ begins.
   platform patterns, check for btn-outline interactions and
   use explicit border values rather than relying on class
   inheritance.
+- cl_outlook_last_scanned_at column on profiles table is a
+  dead column — no endpoint reads or writes it. Outlook scan
+  uses outlookEntry.last_scanned_at inside cl_connected_emails
+  jsonb array. To be removed during stylesheet rollout.
 
 ---
 
@@ -519,3 +548,9 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | Pending Items                        |
 | Image Processing Spec v1.0      | Visual content ingestion across     |
 |                                 | all sources including photo upload   |
+| CL Category Descriptions v1.0  | Agreed category descriptions for    |
+|                                 | CL intake. Approved April 2026.     |
+| CL Tool Descriptions v1.0      | Agreed tool descriptions for CL     |
+|                                 | intake auto-tagging. April 2026.    |
+| Manual Add Item Spec v1.0      | Manual Add Item spec. Approved      |
+|                                 | April 2026, awaiting build.         |
