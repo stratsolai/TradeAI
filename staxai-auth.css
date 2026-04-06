@@ -490,7 +490,7 @@ a:hover { opacity: 0.85; }
 .filter-pill.active {
   background: var(--blue-light);
   border-color: var(--blue);
-  color: var(--blue);
+  color: #333;
 }
 
 /* ------------------------------------------------------------
