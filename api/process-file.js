@@ -9,6 +9,64 @@ function getSupabase() {
   );
 }
 
+var DISCARD_CATEGORIES = ['Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'];
+var ALLOWED_TOOL_IDS = ['strategic-plan', 'news-digest', 'chatbot', 'social', 'bi', 'tender', 'quote-enhancer'];
+var ALL_CATEGORIES = [
+  'Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos',
+  'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News',
+  'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates',
+  'Safety & SWMS', 'Supplier Communications', 'Manual Upload',
+  'Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'
+];
+var CATEGORY_LOOKUP = {};
+ALL_CATEGORIES.forEach(function(c) { CATEGORY_LOOKUP[c.toLowerCase()] = c; });
+
+var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Extract discrete content items from the source material provided.\n\n" +
+  "For each item, return a JSON object with these fields:\n" +
+  "- \"title\": string, max 10 words, must reference the source document for context\n" +
+  "- \"body\": string, faithful plain text summary — preserve the source content accurately, keep bullet points intact, never add interpretation or context not present in the source\n" +
+  "- \"category\": string, must exactly match one category name from the CATEGORIES section\n" +
+  "- \"disposition\": string, \"keep\" or \"discard\" — must match the disposition listed for the assigned category\n" +
+  "- \"confidence\": string, \"confident\" or \"uncertain\" — confident when the category is clear, uncertain when the content could fit multiple categories\n" +
+  "- \"tool_tags\": array of tool ID strings from the TOOLS section — only tag tools whose description matches the content\n\n" +
+  "CATEGORIES:\n\nKeep:\n" +
+  "- Products & Services: Descriptions of what the business offers, sells, or delivers. Includes service descriptions, product information, and equipment or materials the business supplies to customers. Does not include pricing, promotions, or the business's own owned assets.\n" +
+  "- Pricing: What the business charges for its products and services. Includes rate cards, price lists, package pricing, and hourly or project rates. Does not include promotional or limited-time offers.\n" +
+  "- Company Information: Information that describes what the business is. Includes About Us content, business history, ownership, locations, team bios, staff profiles, culture, values, and business-owned assets such as equipment and vehicles. Does not include what the business offers or charges.\n" +
+  "- Jobs, Portfolio & Photos: Records of work the business has completed or is currently delivering. Includes job photos, project descriptions, before-and-after content, and case studies. Does not include general promotional content or testimonials.\n" +
+  "- Promotions & Offers: Time-limited or special pricing and deals. Includes seasonal promotions, discount offers, referral incentives, and limited-time packages. Does not include standard pricing or general service descriptions.\n" +
+  "- Customer Testimonials: Feedback and reviews provided by customers about their experience with the business. Includes written reviews, star ratings with comments, and case study quotes. Does not include general marketing copy written by the business itself.\n" +
+  "- Tips & How-To: Useful information the business shares to educate or help its customers. Includes how-to guides, maintenance tips, advice articles, and explainer content. Does not include promotional content or service descriptions.\n" +
+  "- Industry News: News, trends, and developments relevant to the business's industry or market. Includes trade publications, supplier announcements, regulatory changes, and market updates. Does not include content created by the business itself.\n" +
+  "- Tender & Proposal Documents: Formal documents prepared by the business to win work. Includes tender submissions, project proposals, scope of works, and quotes prepared for specific jobs. Does not include standard pricing or general service descriptions.\n" +
+  "- Financial Documents: Internal financial records and reporting. Includes invoices, statements, tax documents, profit and loss reports, and bank records. Does not include pricing guides or supplier quotes.\n" +
+  "- Compliance & Certificates: Licences, registrations, and certifications held by the business or its staff. Includes trade licences, insurance certificates, accreditations, and regulatory compliance documents. Does not include safety plans or method statements.\n" +
+  "- Safety & SWMS: Safety documentation for work activities. Includes Safe Work Method Statements, risk assessments, safety plans, and site-specific safety requirements. Does not include compliance certificates or licences.\n" +
+  "- Supplier Communications: Correspondence and documents received from suppliers and vendors. Includes supplier price lists, product catalogues, delivery notifications, and trade account correspondence. Does not include supplier statements or invoices (Financial Documents). Does not include industry news or market updates.\n" +
+  "- Manual Upload: Content manually added by the business owner that does not fit other categories.\n\n" +
+  "Discard:\n" +
+  "- Legal: Legal correspondence, contracts, agreements, and notices.\n" +
+  "- IT: Technology and systems correspondence. Includes software licences, hosting invoices, IT support tickets.\n" +
+  "- Spam: Unsolicited or irrelevant content with no business value.\n" +
+  "- Customer Enquiries: Inbound messages from prospective or existing customers asking about services, availability, or pricing.\n" +
+  "- Complaints: Negative feedback or dispute correspondence from customers.\n\n" +
+  "TOOLS (only tag tools whose description matches the content):\n" +
+  "- strategic-plan: Helps create a strategic business plan and 90-day action plan. Needs content describing what the business does, charges, its market position, team, finances, and goals.\n" +
+  "- news-digest: Summarises industry news and regulatory changes. Needs content reporting on regulatory changes, market conditions, technology, and industry developments.\n" +
+  "- chatbot: Answers customer questions on the business website. Needs content about services, pricing, processes, and team.\n" +
+  "- social: Creates social posts and marketing content. Needs content about completed jobs, promotions, testimonials, tips, and material to promote.\n" +
+  "- bi: Provides AI business insights from business data and market context. Needs broad business content to identify patterns, opportunities, and risks.\n" +
+  "- tender: Generates tender and proposal documents. Needs content about capabilities, past work, team, certifications, and pricing.\n" +
+  "- quote-enhancer: Enhances quotes into professional branded documents. Needs company information, past jobs, testimonials, licences, and safety information.\n\n" +
+  "RULES:\n" +
+  "1. Group content by logical sections, headings, or themes. Do not split individual bullet points into separate items.\n" +
+  "2. Body must faithfully represent the source content. Never add interpretation, reformatting, or context not present in the source.\n" +
+  "3. Category must exactly match one name from the categories list.\n" +
+  "4. Disposition must match the category's listed disposition.\n" +
+  "5. Only tag tools whose description specifically matches the content.\n" +
+  "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
+  "7. If no content can be extracted, return an empty array [].";
+
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -24,29 +82,7 @@ const handler = async (req, res) => {
     const supabase = getSupabase();
     const claudeApiKey = process.env.CLAUDE_API_KEY;
 
-    // 1. LOAD USER PROFILE
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('industry, business_name, services, products, marketing_theme, suburb, state, cl_active_categories, cl_custom_categories')
-      .eq('id', userId)
-      .single();
-
-    const defaultCategories = ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
-    const activeCategories = (profile && profile.cl_active_categories && profile.cl_active_categories.length > 0)
-      ? profile.cl_active_categories : defaultCategories;
-    const customCategories = (profile && profile.cl_custom_categories) ? profile.cl_custom_categories : [];
-    const allCategories = [...new Set([...activeCategories, ...customCategories])];
-
-    const businessContext = profile ? [
-      profile.industry ? 'Industry: ' + profile.industry : null,
-      profile.business_name ? 'Business: ' + profile.business_name : null,
-      profile.services ? 'Services: ' + profile.services : null,
-      profile.products ? 'Products: ' + profile.products : null,
-      profile.marketing_theme ? 'Marketing theme: ' + profile.marketing_theme : null,
-      (profile.suburb || profile.state) ? 'Location: ' + [profile.suburb, profile.state].filter(Boolean).join(', ') : null
-    ].filter(Boolean).join('\n') : '';
-
-    // 2. EXTRACT RAW CONTENT FROM SOURCE
+    // 1. EXTRACT RAW CONTENT FROM SOURCE
     let sourceText = '';
     let sourceLabel = fileName || websiteUrl || 'Unknown source';
     let sourceValue = 'document';
@@ -61,7 +97,7 @@ const handler = async (req, res) => {
     } else if (fileType === 'image' && fileData) {
       var imgExt = (fileName || '').toLowerCase().split('.').pop();
       var imgMediaType = ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt] || 'image/jpeg';
-      sourceText = await describeImage(fileData, businessContext, claudeApiKey, imgMediaType);
+      sourceText = await describeImage(fileData, claudeApiKey, imgMediaType);
       sourceValue = 'photo';
     } else if (fileType === 'text' && fileData) {
       sourceText = Buffer.from(fileData, 'base64').toString('utf-8');
@@ -111,22 +147,13 @@ const handler = async (req, res) => {
     }
 
     // 3. BUILD AI PROMPT
-    const systemPrompt = 'You are a content extraction assistant for a business content library. Extract discrete pieces of business information from the provided source material. Group content by logical sections — headings, themes, or structural divisions such as quadrants or chapters. Do not split individual bullet points into separate items. Return only a valid JSON array. Each element must have: title (string, max 10 words, must include the document title as context), body (string, clean plain text — summarise prose content in your own words, or preserve bullet points intact if no prose is present — never add context, explanations or detail not present in the source), category (string, MANDATORY — must exactly match one value from the category list, every item must have a category), tool_tags (array of tool IDs from the tool ID list). No preamble, no explanation, no markdown fences. Empty array if nothing relevant found.';
-
-    const categoryList = allCategories.join(', ');
-    const toolIdList = 'chatbot, social, email, strategic-plan, news-digest, bi, tender, quote-enhancer, swms, customer-updates, handover-docs, review-booster, design-viz';
-
-    const userPrompt = (businessContext ? 'BUSINESS PROFILE:\n' + businessContext + '\n\n' : '') +
-      'Active categories: ' + categoryList + '\n' +
-      'Active tool IDs: ' + toolIdList + '\n\n' +
-      'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000) +
-      '\n\nExtract all logical sections as separate items. Include the document title in every item title for context. Preserve bullet points intact where no prose exists. Summarise only what is explicitly present — do not infer or fabricate. JSON array only.';
+    var userPrompt = 'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000);
 
     // 4. CALL CLAUDE HAIKU
     const requestBody = JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 4000,
-      system: systemPrompt,
+      system: EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }]
     });
 
@@ -139,7 +166,7 @@ const handler = async (req, res) => {
       const jsonMatch = responseText.match(/\[[\s\S]*\]/);
       if (jsonMatch) { items = JSON.parse(jsonMatch[0]); }
     } catch (e) {
-      console.error('JSON parse error:', e.message);
+      console.error('JSON parse error:', e.message, 'raw:', responseText.substring(0, 500));
       return res.status(400).json({ error: 'AI returned unparseable response', raw: responseText.substring(0, 200) });
     }
 
@@ -147,35 +174,34 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: 'AI returned no items', raw: responseText.substring(0, 200) });
     }
 
-    // 5b. NORMALISE CATEGORIES — case-insensitive match against canonical list
-    const categoryLookup = {};
-    allCategories.forEach(function(c) { categoryLookup[c.toLowerCase()] = c; });
-    function normaliseCategory(raw) {
-      if (!raw) return allCategories[0] || 'general';
-      const match = categoryLookup[String(raw).toLowerCase()];
-      return match || allCategories[0] || 'general';
-    }
-
-    // 6. INSERT EACH ITEM AS PENDING
+    // 6. NORMALISE AND INSERT ITEMS
     let insertedCount = 0;
     const insertedItems = [];
 
-    for (const item of items) {
+    for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+      var item = items[itemIdx];
       if (!item.title || !item.body) continue;
+
+      var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Manual Upload') : 'Manual Upload';
+      var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
+      var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
+      var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+      var itemSourceDetail = { filename: fileName || 'Unknown', file_type: fileType };
+      if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
       const row = {
         user_id: userId,
         title: String(item.title).substring(0, 200),
         content_text: String(item.body),
-        category: normaliseCategory(item.category),
-        tool_tags: Array.isArray(item.tool_tags) ? item.tool_tags : [],
-        status: 'pending',
+        category: normCat,
+        tool_tags: toolTags,
+        status: status,
         source: sourceValue,
         tool_source: 'process-file',
-        source_detail: { filename: fileName || 'Unknown', file_type: fileType },
+        source_detail: itemSourceDetail,
         source_item_id: sourceItemId,
         created_at: new Date().toISOString(),
-        source_ref: 'manual:' + (function(s){var h=5381;for(var i=0;i<s.length;i++){h=((h<<5)+h)^s.charCodeAt(i);h=h>>>0;}return h.toString(36);})(String(item.title)+String(item.body).substring(0,500))
+        source_ref: 'upload:' + (sourceItemId || Date.now()) + ':' + itemIdx
       };
 
       const { data, error } = await supabase
@@ -331,13 +357,13 @@ async function extractDocText(fileData, mediaType, apiKey) {
 }
 
 // IMAGE DESCRIBER
-async function describeImage(fileData, businessContext, apiKey, mediaType) {
+async function describeImage(fileData, apiKey, mediaType) {
   const body = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 1000,
     messages: [{ role: 'user', content: [
       { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: fileData } },
-      { type: 'text', text: 'Describe this business image in detail for a content library. Include: what is shown, any visible text, the apparent business context, and what marketing use it could serve.' + (businessContext ? '\n\nBusiness context:\n' + businessContext : '') }
+      { type: 'text', text: 'Describe this business image in detail for a content library. Include: what is shown, any visible text, the apparent business context, and what marketing use it could serve.' }
     ]}]
   });
   const response = await callClaude(body, apiKey);
