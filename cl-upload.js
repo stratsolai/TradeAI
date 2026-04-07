@@ -95,7 +95,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_drive_folders, cl_connected_emails, website_urls").eq("id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_drive_folders, cl_connected_emails, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts").eq("id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
@@ -117,6 +117,42 @@ window.CL_UPLOAD = {
 
       var driveFolders = Array.isArray(profile.cl_drive_folders) ? profile.cl_drive_folders : [];
       tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: !!profile.cl_drive_connected, pills: driveFolders.map(function(f) { return { label: f.name, value: f.id }; }), note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+
+      var onedriveAccounts = Array.isArray(profile.cl_onedrive_accounts) ? profile.cl_onedrive_accounts : [];
+      var onedrivePills = [];
+      onedriveAccounts.forEach(function(a) {
+        if (!a || !a.account_email) return;
+        var folders = Array.isArray(a.folders) ? a.folders : [];
+        folders.forEach(function(f) {
+          if (!f || !f.id) return;
+          onedrivePills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
+        });
+      });
+      tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedrivePills.length > 0, pills: onedrivePills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+
+      var sharepointAccounts = Array.isArray(profile.cl_sharepoint_accounts) ? profile.cl_sharepoint_accounts : [];
+      var sharepointPills = [];
+      sharepointAccounts.forEach(function(a) {
+        if (!a || !a.account_email) return;
+        var libraries = Array.isArray(a.libraries) ? a.libraries : [];
+        libraries.forEach(function(lib) {
+          if (!lib || !lib.id) return;
+          sharepointPills.push({ label: a.account_email + " — " + (lib.name || lib.id), value: a.account_email + "|" + lib.id });
+        });
+      });
+      tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointPills.length > 0, pills: sharepointPills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+
+      var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
+      var dropboxPills = [];
+      dropboxAccounts.forEach(function(a) {
+        if (!a || !a.account_email) return;
+        var folders = Array.isArray(a.folders) ? a.folders : [];
+        folders.forEach(function(f) {
+          if (!f || !f.id) return;
+          dropboxPills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
+        });
+      });
+      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxPills.length > 0, pills: dropboxPills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
       tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
@@ -213,6 +249,102 @@ window.CL_UPLOAD = {
             if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
             else if (totalImported > 0) { self._showUploadConfirmation(totalImported); }
             else { self._showUploadError("No new content found in your connected Drive folders."); }
+            if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            return;
+          } else if (source === "onedrive") {
+            var odPairs = values || [];
+            if (odPairs.length === 0) throw new Error("No OneDrive folders selected to scan");
+            var odSession = await self._supabase.auth.getSession();
+            var odToken = odSession && odSession.data && odSession.data.session ? odSession.data.session.access_token : null;
+            if (!odToken) throw new Error("Not authenticated");
+            var odTotalImported = 0;
+            for (var odi = 0; odi < odPairs.length; odi++) {
+              if (self._scanCancelled) break;
+              var odSep = odPairs[odi].indexOf("|");
+              if (odSep === -1) { console.error("OneDrive scan: malformed pill value", odPairs[odi]); continue; }
+              var odAcct = odPairs[odi].substring(0, odSep);
+              var odFolder = odPairs[odi].substring(odSep + 1);
+              var odResp = await fetch("/api/onedrive-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + odToken },
+                body: JSON.stringify({ action: "import-all", accountEmail: odAcct, folderId: odFolder })
+              });
+              var odResult = await odResp.json();
+              if (odResult.success && odResult.imported) {
+                odTotalImported += odResult.imported;
+              } else if (odResult.error) {
+                console.error("OneDrive import error for " + odPairs[odi] + ":", odResult.error);
+              }
+            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (odTotalImported > 0) { self._showUploadConfirmation(odTotalImported); }
+            else { self._showUploadError("No new content found in your connected OneDrive folders."); }
+            if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            return;
+          } else if (source === "sharepoint") {
+            var spPairs = values || [];
+            if (spPairs.length === 0) throw new Error("No SharePoint libraries selected to scan");
+            var spSession = await self._supabase.auth.getSession();
+            var spToken = spSession && spSession.data && spSession.data.session ? spSession.data.session.access_token : null;
+            if (!spToken) throw new Error("Not authenticated");
+            var spTotalImported = 0;
+            for (var spi = 0; spi < spPairs.length; spi++) {
+              if (self._scanCancelled) break;
+              var spSep = spPairs[spi].indexOf("|");
+              if (spSep === -1) { console.error("SharePoint scan: malformed pill value", spPairs[spi]); continue; }
+              var spAcct = spPairs[spi].substring(0, spSep);
+              var spLibrary = spPairs[spi].substring(spSep + 1);
+              var spResp = await fetch("/api/sharepoint-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + spToken },
+                body: JSON.stringify({ action: "import-all", accountEmail: spAcct, libraryId: spLibrary })
+              });
+              var spResult = await spResp.json();
+              if (spResult.success && spResult.imported) {
+                spTotalImported += spResult.imported;
+              } else if (spResult.error) {
+                console.error("SharePoint import error for " + spPairs[spi] + ":", spResult.error);
+              }
+            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (spTotalImported > 0) { self._showUploadConfirmation(spTotalImported); }
+            else { self._showUploadError("No new content found in your connected SharePoint libraries."); }
+            if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            return;
+          } else if (source === "dropbox") {
+            var dbPairs = values || [];
+            if (dbPairs.length === 0) throw new Error("No Dropbox folders selected to scan");
+            var dbSession = await self._supabase.auth.getSession();
+            var dbToken = dbSession && dbSession.data && dbSession.data.session ? dbSession.data.session.access_token : null;
+            if (!dbToken) throw new Error("Not authenticated");
+            var dbTotalImported = 0;
+            for (var dbi = 0; dbi < dbPairs.length; dbi++) {
+              if (self._scanCancelled) break;
+              var dbSep = dbPairs[dbi].indexOf("|");
+              if (dbSep === -1) { console.error("Dropbox scan: malformed pill value", dbPairs[dbi]); continue; }
+              var dbAcct = dbPairs[dbi].substring(0, dbSep);
+              var dbFolderPath = dbPairs[dbi].substring(dbSep + 1);
+              var dbResp = await fetch("/api/dropbox-import", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + dbToken },
+                body: JSON.stringify({ action: "import-all", accountEmail: dbAcct, folderPath: dbFolderPath })
+              });
+              var dbResult = await dbResp.json();
+              if (dbResult.success && dbResult.imported) {
+                dbTotalImported += dbResult.imported;
+              } else if (dbResult.error) {
+                console.error("Dropbox import error for " + dbPairs[dbi] + ":", dbResult.error);
+              }
+            }
+            finishScan();
+            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
+            else if (dbTotalImported > 0) { self._showUploadConfirmation(dbTotalImported); }
+            else { self._showUploadError("No new content found in your connected Dropbox folders."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
