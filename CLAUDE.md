@@ -146,13 +146,6 @@ Steps complete:
   source_detail. Business profile context injection removed.
   Max tokens aligned to 4000.
 
-Steps remaining:
-- Step 4 — Rejected tab visual distinction for auto-rejected
-  items (now unblocked)
-- Step 8 — versioning rules
-- Step 9 — remove CL Settings category functionality
-- Step 10 — full end-to-end test
-
 Outstanding display fix: cl-review.js is not displaying
 category or tool_tags on item cards. Data is correct in the
 database — display only.
@@ -189,8 +182,6 @@ database — display only.
 
 - Connect MYOB, Xero, QuickBooks, and Reckon as CL data
   sources. Requires dedicated spec before build begins.
-
-### ~~Task 14 — Remove Approve button from Approved tab~~  DONE
 
 ---
 
@@ -350,11 +341,14 @@ Notable changes made April 2026:
 - profiles: added cl_drive_folders (jsonb),
   cl_drive_access_token (text), cl_drive_refresh_token (text),
   cl_outlook_last_scanned_at (timestamptz)
+- profiles: removed cl_active_categories, cl_custom_categories
 - content_library: UNIQUE constraint added on source_ref
 - content_library: NOT NULL constraint removed from content_type
 - content_library: added source_detail (jsonb), source_item_id
   (text), tool_tags (jsonb), tool_source (text), category_tags
   (jsonb)
+- content_library: added version_pair_id (uuid),
+  version_archived_by (uuid)
 
 ---
 
