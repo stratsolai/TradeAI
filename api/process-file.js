@@ -1,5 +1,6 @@
 const https = require('https');
 const zlib = require('zlib');
+const { randomUUID } = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
 function getSupabase() {
@@ -20,6 +21,21 @@ var ALL_CATEGORIES = [
 ];
 var CATEGORY_LOOKUP = {};
 ALL_CATEGORIES.forEach(function(c) { CATEGORY_LOOKUP[c.toLowerCase()] = c; });
+
+var AUTO_ARCHIVE_CATEGORIES = [
+  'Products & Services', 'Pricing', 'Company Information', 'Promotions & Offers',
+  'Supplier Communications', 'Compliance & Certificates', 'Safety & SWMS'
+];
+
+var VERSION_MATCH_RULES = {
+  'Products & Services': 'Match on similarity of title and subject matter. The new item replaces the existing item only if it covers the same specific product or service.',
+  'Pricing': 'Match on similarity of title and subject matter. The new item replaces the existing item only if it covers the same specific pricing scope.',
+  'Company Information': 'Match by subject. For bios, match on the person name. For announcements, match on the policy or subject. A new person or new announcement is additive — return null if the new item describes a different person or different announcement.',
+  'Promotions & Offers': 'Match on promotion name or subject. A new promotion is additive — return null unless the new item is clearly an update to an existing promotion.',
+  'Supplier Communications': 'Match on supplier name and subject. A new communication is additive — return null unless the new item is clearly an update to an existing communication.',
+  'Compliance & Certificates': 'Match on document type and the licence or registration number. Return null if the document types or numbers differ.',
+  'Safety & SWMS': 'Match on document type and the job or activity type. Return null if the activity types differ.'
+};
 
 var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Extract discrete content items from the source material provided.\n\n" +
   "For each item, return a JSON object with these fields:\n" +
@@ -189,6 +205,32 @@ const handler = async (req, res) => {
       var itemSourceDetail = { filename: fileName || 'Unknown', file_type: fileType };
       if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
+      // Versioning — Financial Documents always go to pending, paired with any existing approved
+      var versionPairId = null;
+      if (normCat === 'Financial Documents') {
+        status = 'pending';
+        var existingFinResult = await supabase
+          .from('content_library')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('status', 'approved')
+          .eq('category', 'Financial Documents')
+          .limit(1);
+        if (existingFinResult.data && existingFinResult.data.length > 0) {
+          versionPairId = randomUUID();
+          await supabase
+            .from('content_library')
+            .update({ status: 'pending', version_pair_id: versionPairId })
+            .eq('id', existingFinResult.data[0].id);
+        }
+      }
+
+      // Versioning — auto-archive match check (only approved items in archive categories)
+      var versionMatchedId = null;
+      if (status === 'approved' && AUTO_ARCHIVE_CATEGORIES.indexOf(normCat) > -1) {
+        versionMatchedId = await findVersionMatch(supabase, userId, item.title, item.body, normCat, claudeApiKey);
+      }
+
       const row = {
         user_id: userId,
         title: String(item.title).substring(0, 200),
@@ -203,6 +245,7 @@ const handler = async (req, res) => {
         created_at: new Date().toISOString(),
         source_ref: 'upload:' + (sourceItemId || Date.now()) + ':' + itemIdx
       };
+      if (versionPairId) row.version_pair_id = versionPairId;
 
       const { data, error } = await supabase
         .from('content_library')
@@ -213,6 +256,14 @@ const handler = async (req, res) => {
       if (!error && data) {
         insertedCount++;
         insertedItems.push({ id: data.id, title: row.title, category: row.category });
+        // Versioning — apply auto-archive on match
+        if (versionMatchedId) {
+          var archResult = await supabase
+            .from('content_library')
+            .update({ status: 'archived', version_archived_by: data.id })
+            .eq('id', versionMatchedId);
+          if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
+        }
       } else if (error) {
         console.error('Insert error:', error.message);
       }
@@ -235,6 +286,38 @@ const handler = async (req, res) => {
     return res.status(500).json({ success: false, error: error.message });
   }
 };
+
+// VERSIONING — find existing approved item the new one should archive
+async function findVersionMatch(supabase, userId, newTitle, newBody, category, apiKey) {
+  if (!VERSION_MATCH_RULES[category]) return null;
+  var existing = await supabase
+    .from('content_library')
+    .select('id, title')
+    .eq('user_id', userId)
+    .eq('status', 'approved')
+    .eq('category', category);
+  if (!existing.data || existing.data.length === 0) return null;
+  var candidates = existing.data.map(function(e, i) { return (i + 1) + '. ID: ' + e.id + ' — Title: ' + e.title; }).join('\n');
+  var systemPrompt = 'You are a versioning matcher for a business content library. Given a new item and existing approved items in the same category, determine if the new item is a replacement of an existing item or is additive (should coexist). Return JSON only.';
+  var userContent = 'CATEGORY: ' + category + '\nMATCH RULE: ' + VERSION_MATCH_RULES[category] + '\n\nNEW ITEM:\nTitle: ' + newTitle + '\nBody: ' + String(newBody || '').substring(0, 1000) + '\n\nEXISTING APPROVED ITEMS:\n' + candidates + '\n\nReturn JSON only: { "matched_id": "<existing item ID or null>" }';
+  try {
+    var body = JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 200,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userContent }]
+    });
+    var response = await callClaude(body, apiKey);
+    var raw = response.content && response.content[0] ? response.content[0].text : '';
+    var jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    var parsed = JSON.parse(jsonMatch[0]);
+    return parsed.matched_id && parsed.matched_id !== 'null' ? parsed.matched_id : null;
+  } catch (e) {
+    console.error('Version match error:', e.message);
+    return null;
+  }
+}
 
 // WEBSITE SCRAPER
 async function scrapeWebsite(url) {
