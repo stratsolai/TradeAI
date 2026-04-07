@@ -14,7 +14,7 @@ window.CL_REVIEW = {
     this._bindStatTiles();
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      const profResult = await supabase.from('profiles').select('activated_tools, cl_active_categories').eq('id', user.id).single();
+      const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
       window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
       window._clCategories = (profResult.data && Array.isArray(profResult.data.cl_active_categories)) ? profResult.data.cl_active_categories : [];
     }
