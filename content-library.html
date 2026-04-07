@@ -957,13 +957,13 @@
 
     /* ── Sources grid ─────────────────────────────────────────────────────────── */
     .sources-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
-    .source-tile { display: flex; flex-direction: column; gap: 16px; background: #fff; border-radius: 12px; border-left: 4px solid #4A6D8C; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 24px 28px; align-items: center; }
-    .source-tile-top { display: grid; grid-template-columns: 32px 1fr; align-items: flex-start; justify-items: start; gap: 14px; align-self: stretch; padding-left: 20px; }
+    .source-tile { display: flex; flex-direction: column; gap: 16px; background: #fff; border-radius: 12px; border-left: 4px solid #4A6D8C; box-shadow: 0 2px 8px rgba(0,0,0,0.07); padding: 24px 28px; align-items: center; min-height: 280px; }
+    .source-tile-top { display: grid; grid-template-columns: 32px 1fr; align-items: flex-start; justify-items: start; gap: 14px; align-self: stretch; padding-left: 28px; }
     .source-tile-icon { font-size: 26px; flex-shrink: 0; margin-top: 2px; }
     .source-tile-body { flex: 1; min-width: 0; }
     .source-tile-name { font-size: 14px; font-weight: 700; color: #333; margin-bottom: 4px; word-break: break-all; }
     .source-tile-desc { font-size: 13px; color: #888; line-height: 1.5; }
-    .source-tile-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .source-tile-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; }
     .source-action-btn { display:flex; align-items:center; justify-content:center; min-width:100px; border:2px solid var(--blue); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--blue); background:#fff; cursor:pointer; font-family:"DM Sans",sans-serif; transition:opacity 0.15s; text-decoration:none; }
     .source-scan-btn { border-color:var(--blue); color:var(--blue); }
     .source-scan-btn:hover:not(.source-btn-disabled) { background:var(--blue-light); }
