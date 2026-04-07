@@ -241,7 +241,7 @@ const handler = async (req, res) => {
 
       if (!error && data) {
         insertedCount++;
-        insertedItems.push({ id: data.id, title: row.title, category: row.category });
+        insertedItems.push({ id: data.id, title: row.title, category: row.category, status: row.status });
 
         // Versioning — Financial Documents pair check (after insert)
         if (normCat === 'Financial Documents') {
