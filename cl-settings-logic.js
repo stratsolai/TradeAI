@@ -18,7 +18,6 @@ window.CL_SETTINGS_LOGIC = {
 
       self._bindEventDelegation();
       self._bindScanSave();
-      self._bindCategorySave();
       self._bindWebsiteButtons();
       self._loadAll();
       self._checkDriveOAuthReturn();
@@ -37,8 +36,7 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     await Promise.all([
       self._loadConnections(),
-      self._loadScanSettings(),
-      self._loadCategories()
+      self._loadScanSettings()
     ]);
   },
 
@@ -79,20 +77,6 @@ window.CL_SETTINGS_LOGIC = {
       }
       self._renderScanSettings();
     } catch (e) { console.error('_loadScanSettings exception:', e); }
-  },
-
-  _loadCategories: async function () {
-    var self = this;
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .select('cl_active_categories, cl_custom_categories')
-        .eq('id', self._userId)
-        .maybeSingle();
-      if (res.error) { console.error('_loadCategories error:', res.error); return; }
-      var data = res.data || {};
-      self._renderCategories(data.cl_active_categories || [], data.cl_custom_categories || []);
-    } catch (e) { console.error('_loadCategories exception:', e); }
   },
 
   _renderEmailList: function () {
@@ -174,43 +158,6 @@ window.CL_SETTINGS_LOGIC = {
     });
   },
 
-  _renderCategories: function (active, custom) {
-    var self = this;
-    var grid = document.getElementById('category-grid');
-    if (!grid) return;
-
-    var defaults = [
-      'Services & Pricing', 'Projects & Portfolio', 'Team & Culture',
-      'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials',
-      'Tips & How-To', 'Industry News', 'Company Updates', 'Seasonal Content'
-    ];
-
-    var html = defaults.map(function (cat) {
-      var isOn = active.indexOf(cat) !== -1;
-      return '<div class="settings-row cat-row">' +
-        '<div><div class="settings-row-label">' + cat + '</div></div>' +
-        '<div class="settings-row-control">' +
-          '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="on">On</button>' +
-          '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="off">Off</button>' +
-        '</div>' +
-      '</div>';
-    }).join('');
-
-    custom.forEach(function (cat) {
-      var isOn = active.indexOf(cat) !== -1;
-      html += '<div class="settings-row cat-row">' +
-        '<div><div class="settings-row-label">' + cat + '</div></div>' +
-        '<div class="settings-row-control">' +
-          '<button type="button" class="btn-remove-url" data-cat-remove="' + cat + '">Remove</button>' +
-          '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="on">On</button>' +
-          '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + cat + '" data-val="off">Off</button>' +
-        '</div>' +
-      '</div>';
-    });
-
-    grid.innerHTML = html;
-  },
-
   _resetSaveBtn: function (id, label) {
     var btn = document.getElementById(id);
     if (btn) { btn.textContent = label; btn.disabled = false; }
@@ -249,25 +196,6 @@ window.CL_SETTINGS_LOGIC = {
         return;
       }
 
-      var removeCatBtn = e.target.closest('[data-cat-remove]');
-      if (removeCatBtn) {
-        var cat = removeCatBtn.getAttribute('data-cat-remove');
-        self._removeCustomCategory(cat);
-        self._resetSaveBtn('save-categories-btn', 'Save');
-        return;
-      }
-
-      var freqBtn = e.target.closest('.freq-btn[data-cat]');
-      if (freqBtn) {
-        var row = freqBtn.closest('.cat-row');
-        if (row) {
-          row.querySelectorAll('.freq-btn[data-cat]').forEach(function (b) { b.classList.remove('active'); });
-          freqBtn.classList.add('active');
-          self._resetSaveBtn('save-categories-btn', 'Save');
-        }
-        return;
-      }
-
       var scanBtn = e.target.closest('.freq-btn[data-value]');
       if (scanBtn) {
         var container = scanBtn.closest('[id$="-freq-ctrl"]');
@@ -295,23 +223,6 @@ window.CL_SETTINGS_LOGIC = {
         window.location.href = '/index.html';
       });
     });
-  },
-
-  _bindCategorySave: function () {
-    var self = this;
-    var addBtn = document.getElementById('add-category-btn');
-    var saveBtn = document.getElementById('save-categories-btn');
-    if (addBtn) {
-      addBtn.addEventListener('click', function () {
-        var input = document.getElementById('category-custom-input');
-        if (input && input.value.trim()) {
-          self._addCustomCategory(input.value.trim());
-          input.value = '';
-          self._resetSaveBtn('save-categories-btn', 'Save');
-        }
-      });
-    }
-    if (saveBtn) saveBtn.addEventListener('click', function () { self._saveCategories(); });
   },
 
   _bindWebsiteButtons: function () {
@@ -442,49 +353,6 @@ window.CL_SETTINGS_LOGIC = {
       var btn = document.getElementById('save-settings-btn');
       if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
     } catch (e) { console.error('_saveScanSettings exception:', e); }
-  },
-
-  _saveCategories: async function () {
-    var self = this;
-    try {
-      var active = [];
-      document.querySelectorAll('.cat-row .freq-btn.active[data-val="on"]').forEach(function (btn) {
-        active.push(btn.getAttribute('data-cat'));
-      });
-      var custom = [];
-      document.querySelectorAll('[data-cat-remove]').forEach(function (btn) {
-        custom.push(btn.getAttribute('data-cat-remove'));
-      });
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_active_categories: active, cl_custom_categories: custom })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveCategories error:', res.error); return; }
-      var btn = document.getElementById('save-categories-btn');
-      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
-    } catch (e) { console.error('_saveCategories exception:', e); }
-  },
-
-  _addCustomCategory: function (val) {
-    var self = this;
-    var grid = document.getElementById('category-grid');
-    if (!grid) return;
-    var div = document.createElement('div');
-    div.className = 'settings-row cat-row';
-    div.innerHTML = '<div><div class="settings-row-label">' + val + '</div></div>' +
-      '<div class="settings-row-control">' +
-        '<button type="button" class="btn-remove-url" data-cat-remove="' + val + '">Remove</button>' +
-        '<button type="button" class="freq-btn active" data-cat="' + val + '" data-val="on">On</button>' +
-        '<button type="button" class="freq-btn" data-cat="' + val + '" data-val="off">Off</button>' +
-      '</div>';
-    grid.appendChild(div);
-  },
-
-  _removeCustomCategory: function (val) {
-    var grid = document.getElementById('category-grid');
-    if (!grid) return;
-    var btn = grid.querySelector('[data-cat-remove="' + val + '"]');
-    if (btn && btn.closest('.cat-row')) btn.closest('.cat-row').remove();
   },
 
   _checkDriveOAuthReturn: async function () {
