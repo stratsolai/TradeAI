@@ -31,7 +31,8 @@ var VERSION_MATCH_RULES = {
   'Promotions & Offers': 'Match on promotion name or subject. A new promotion is additive — return null unless the new item is clearly an update to an existing promotion.',
   'Supplier Communications': 'Match on supplier name and subject. A new communication is additive — return null unless the new item is clearly an update to an existing communication.',
   'Compliance & Certificates': 'Match on document type and the licence or registration number. Return null if the document types or numbers differ.',
-  'Safety & SWMS': 'Match on document type and the job or activity type. Return null if the activity types differ.'
+  'Safety & SWMS': 'Match on document type and the job or activity type. Return null if the activity types differ.',
+  'Financial Documents': 'Match if both documents are the same type of financial record covering the same scope — for example, both are invoices from the same supplier, both are tax statements for the same period, both are profit and loss reports for the same period, both are bank statements for the same account. Return null if the document types differ, the periods differ, or the parties differ.'
 };
 
 var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
@@ -285,27 +286,9 @@ export default async function handler(req, res) {
         var itemSourceDetail = { sender: sender, subject: subject, account_email: accountEmail };
         if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
-        // Versioning — Financial Documents always go to pending, paired with any existing approved
-        var versionPairId = null;
+        // Versioning — Financial Documents always go to pending. Pair check happens after insert.
         if (normCat === 'Financial Documents') {
           status = 'pending';
-          var existingFinResult = await supabase
-            .from('content_library')
-            .select('id, category, status')
-            .eq('user_id', userId)
-            .eq('status', 'approved')
-            .eq('category', 'Financial Documents')
-            .limit(1);
-          console.log('[Versioning] Financial Documents query — found:', (existingFinResult.data || []).length, 'error:', existingFinResult.error && existingFinResult.error.message);
-          if (existingFinResult.data && existingFinResult.data.length > 0) {
-            versionPairId = randomUUID();
-            var existingId = existingFinResult.data[0].id;
-            var pairUpdate = await supabase
-              .from('content_library')
-              .update({ status: 'pending', version_pair_id: versionPairId })
-              .eq('id', existingId);
-            console.log('[Versioning] Paired existing item', existingId, 'with new pair_id', versionPairId, 'update error:', pairUpdate.error && pairUpdate.error.message);
-          }
         }
 
         // Versioning — auto-archive match check (only approved items in archive categories)
@@ -327,10 +310,28 @@ export default async function handler(req, res) {
           source_item_id: sourceItemId,
           source_detail: itemSourceDetail,
         };
-        if (versionPairId) row.version_pair_id = versionPairId;
 
         const { data: insertedRow, error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
         if (!error) { imported++; msgItemCount++; }
+
+        // Versioning — Financial Documents pair check (after insert)
+        if (!error && insertedRow && normCat === 'Financial Documents') {
+          var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
+          if (pairMatchId) {
+            var pairId = randomUUID();
+            var existingPairUpdate = await supabase
+              .from('content_library')
+              .update({ status: 'pending', version_pair_id: pairId })
+              .eq('id', pairMatchId);
+            var newPairUpdate = await supabase
+              .from('content_library')
+              .update({ version_pair_id: pairId })
+              .eq('id', insertedRow.id);
+            console.log('[Versioning] Financial Documents paired — pair_id:', pairId, 'existing:', pairMatchId, 'new:', insertedRow.id, 'errors:', existingPairUpdate.error && existingPairUpdate.error.message, newPairUpdate.error && newPairUpdate.error.message);
+          } else {
+            console.log('[Versioning] Financial Documents — no matching approved item found, new item sits alone');
+          }
+        }
 
         // Versioning — apply auto-archive on match
         if (!error && insertedRow && versionMatchedId) {
