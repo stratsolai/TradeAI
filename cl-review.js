@@ -251,6 +251,22 @@ window.CL_REVIEW = {
     }
     this._items = result.data || [];
     this._selected = new Set();
+    // Approved tab: load archived items linking back via version_archived_by
+    this._archivedLinks = {};
+    if (this._status === 'approved' && this._items.length > 0) {
+      var ids = this._items.map(function(i) { return i.id; });
+      var linkResult = await this._supabase
+        .from('content_library')
+        .select('id, version_archived_by')
+        .eq('status', 'archived')
+        .in('version_archived_by', ids);
+      if (linkResult.data) {
+        var self = this;
+        linkResult.data.forEach(function(r) {
+          if (r.version_archived_by) self._archivedLinks[r.version_archived_by] = r.id;
+        });
+      }
+    }
     this._updateBulkBar();
     this._renderFilterRow();
     this._renderList();
@@ -329,7 +345,30 @@ window.CL_REVIEW = {
   _renderList: function() {
     const list = document.getElementById('review-list');
     if (!list) return;
-    const items = this._filteredItems();
+    var items = this._filteredItems();
+    // Pending tab: reorder so version-paired items sit adjacent to each other
+    if (this._status === 'pending') {
+      var pairMap = {};
+      items.forEach(function(it) {
+        if (it.version_pair_id) {
+          if (!pairMap[it.version_pair_id]) pairMap[it.version_pair_id] = [];
+          pairMap[it.version_pair_id].push(it);
+        }
+      });
+      var seen = {};
+      var ordered = [];
+      items.forEach(function(it) {
+        if (seen[it.id]) return;
+        ordered.push(it);
+        seen[it.id] = true;
+        if (it.version_pair_id && pairMap[it.version_pair_id]) {
+          pairMap[it.version_pair_id].forEach(function(partner) {
+            if (!seen[partner.id]) { ordered.push(partner); seen[partner.id] = true; }
+          });
+        }
+      });
+      items = ordered;
+    }
     if (items.length === 0) {
       list.innerHTML = '<div class="review-empty">No items found.</div>';
       return;
@@ -337,6 +376,16 @@ window.CL_REVIEW = {
     const self = this;
     list.innerHTML = items.map(function(item) { return self._cardHtml(item); }).join('');
     this._bindCardEvents();
+    // Scroll to a specific item if requested by an Archived Item Link click
+    if (this._scrollToId) {
+      var target = document.querySelector('.review-card[data-id="' + this._scrollToId + '"]');
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.style.outline = '2px solid var(--blue)';
+        setTimeout(function() { target.style.outline = ''; }, 2000);
+      }
+      this._scrollToId = null;
+    }
   },
 
   _cardHtml: function(item) {
@@ -388,11 +437,18 @@ window.CL_REVIEW = {
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
       ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:8px;background:#fdecea;color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
       : '';
-    return `<div class="review-card" data-id="${id}">
+    const archivedLinkId = (this._status === 'approved' && this._archivedLinks && this._archivedLinks[item.id]) ? this._archivedLinks[item.id] : null;
+    const archivedLinkPill = archivedLinkId
+      ? '<a href="#" class="review-archived-link-pill" data-archived-id="' + escHtml(archivedLinkId) + '" style="display:inline-block;padding:2px 10px;border:1px solid var(--blue);border-radius:8px;background:var(--blue-light);color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;text-decoration:none;cursor:pointer;">Archived Item Link</a>'
+      : '';
+    const pairCardStyle = (this._status === 'pending' && item.version_pair_id)
+      ? ' style="border-left:6px solid var(--blue);background:var(--blue-light);"'
+      : '';
+    return `<div class="review-card" data-id="${id}"${pairCardStyle}>
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
     <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit" style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}
+      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit" style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
@@ -450,6 +506,13 @@ window.CL_REVIEW = {
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         if (self._status === 'rejected') { self._deleteItem(btn.dataset.id); } else { self._changeStatus(btn.dataset.id, 'rejected'); }
+      });
+    });
+    document.querySelectorAll('.review-archived-link-pill').forEach(function(pill) {
+      pill.addEventListener('click', function(e) {
+        e.preventDefault();
+        self._scrollToId = pill.dataset.archivedId;
+        self.setStatus('archived');
       });
     });
     var listEl = document.getElementById('review-list');
