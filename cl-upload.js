@@ -31,7 +31,7 @@ window.CL_UPLOAD = {
         "</div>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
-      "<input type=\"file\" id=\"cl-doc-input\" accept=\".pdf,.doc,.docx,.txt\" style=\"display:none\" multiple>",
+      "<input type=\"file\" id=\"cl-doc-input\" accept=\".pdf,.doc,.docx,.txt,.xlsx,.xls\" style=\"display:none\" multiple>",
       "<div id=\"cl-offline-banner\" class=\"offline-banner\" style=\"display:none\">",
         "<span>You appear to be offline. Files will be queued and uploaded when you reconnect.</span>",
         "<button class=\"btn-dismiss\" id=\"cl-offline-dismiss\">&#10007; Dismiss</button>",
@@ -317,6 +317,7 @@ window.CL_UPLOAD = {
     if (ext === "pdf") return "pdf";
     if (ext === "txt") return "text";
     if (ext === "doc" || ext === "docx") return "word";
+    if (ext === "xlsx" || ext === "xls") return "excel";
     return "text";
   },
 
@@ -341,7 +342,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) { self._hideProcessing(); return; }
-      var totalInserted = 0;
+      var allItems = [];
       for (var j = 0; j < imageFiles.length; j++) {
         var file = imageFiles[j];
         var fileData = await self._fileToBase64(file);
@@ -355,15 +356,15 @@ window.CL_UPLOAD = {
           body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath })
         });
         var result = await resp.json();
-        if (result.success && result.itemsCount) {
-          totalInserted += result.itemsCount;
+        if (result.success && Array.isArray(result.items)) {
+          allItems = allItems.concat(result.items);
         } else if (result.error) {
           console.error("Photo processing error:", result.error);
         }
       }
       self._hideProcessing();
-      if (totalInserted > 0) {
-        self._showUploadConfirmation(totalInserted);
+      if (allItems.length > 0) {
+        self._showUploadConfirmation(allItems);
       } else {
         self._showUploadError("No content could be extracted from the selected images.");
       }
@@ -384,7 +385,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) { self._hideProcessing(); return; }
-      var totalInserted = 0;
+      var allItems = [];
       for (var i = 0; i < files.length; i++) {
         var file = files[i];
         var fileData = await self._fileToBase64(file);
@@ -399,15 +400,15 @@ window.CL_UPLOAD = {
           body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: fileType, fileData: fileData, storagePath: storagePath })
         });
         var result = await resp.json();
-        if (result.success && result.itemsCount) {
-          totalInserted += result.itemsCount;
+        if (result.success && Array.isArray(result.items)) {
+          allItems = allItems.concat(result.items);
         } else if (result.error) {
           console.error("Document processing error:", result.error);
         }
       }
       self._hideProcessing();
-      if (totalInserted > 0) {
-        self._showUploadConfirmation(totalInserted);
+      if (allItems.length > 0) {
+        self._showUploadConfirmation(allItems);
       } else {
         self._showUploadError("No content could be extracted from the selected documents.");
       }
@@ -435,12 +436,28 @@ window.CL_UPLOAD = {
     if (confirmDiv) confirmDiv.style.display = "none";
   },
 
-  _showUploadConfirmation: function(count) {
+  _showUploadConfirmation: function(itemsOrCount) {
     var confirmDiv = document.getElementById("cl-upload-confirm");
     var msgSpan = document.getElementById("cl-upload-confirm-msg");
     var dismissBtn = document.getElementById("cl-upload-dismiss");
     if (!confirmDiv || !msgSpan) return;
-    msgSpan.textContent = count + (count === 1 ? " item" : " items") + " added to Review.";
+    var msg;
+    if (Array.isArray(itemsOrCount)) {
+      var pendingCount = 0;
+      var approvedCount = 0;
+      itemsOrCount.forEach(function(it) {
+        if (it.status === 'pending') pendingCount++;
+        else if (it.status === 'approved') approvedCount++;
+      });
+      var parts = [];
+      if (approvedCount > 0) parts.push(approvedCount + (approvedCount === 1 ? " Item" : " Items") + " Approved");
+      if (pendingCount > 0) parts.push(pendingCount + (pendingCount === 1 ? " Item" : " Items") + " Added to Review");
+      if (parts.length === 0) return;
+      msg = parts.join(", ");
+    } else {
+      msg = itemsOrCount + (itemsOrCount === 1 ? " item" : " items") + " added to Review.";
+    }
+    msgSpan.textContent = msg;
     if (dismissBtn) {
       dismissBtn.style.display = "";
       dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
