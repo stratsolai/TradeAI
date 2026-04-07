@@ -127,9 +127,19 @@ const handler = async (req, res) => {
       sourceText = await extractDocText(fileData, docMediaType, claudeApiKey);
       sourceValue = 'document';
     } else if (['powerpoint', 'excel'].includes(fileType) && fileData) {
-      sourceText = Buffer.from(fileData, 'base64').toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (sourceText.length < 50) {
-        sourceText = 'File: ' + fileName + '. Office document uploaded. Filename suggests this contains business content.';
+      var officeBuf = Buffer.from(fileData, 'base64');
+      var extractedXlsx = null;
+      // XLSX files are ZIP archives starting with PK\x03\x04 — use proper extraction
+      if (fileType === 'excel' && officeBuf.length >= 4 && officeBuf[0] === 0x50 && officeBuf[1] === 0x4B && officeBuf[2] === 0x03 && officeBuf[3] === 0x04) {
+        try { extractedXlsx = extractXlsxText(officeBuf); } catch (xerr) { console.error('XLSX extraction error:', xerr.message); }
+      }
+      if (extractedXlsx && extractedXlsx.length >= 50) {
+        sourceText = extractedXlsx.substring(0, 8000);
+      } else {
+        sourceText = officeBuf.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (sourceText.length < 50) {
+          sourceText = 'File: ' + fileName + '. Office document uploaded. Filename suggests this contains business content.';
+        }
       }
       sourceValue = 'document';
     } else {
@@ -421,6 +431,115 @@ function extractDocxXml(buf) {
     pos += 46 + fileNameLen + extraLen + commentLen;
   }
   return null;
+}
+
+// XLSX ZIP EXTRACTION — unpack archive, read shared strings and worksheet cells
+function extractXlsxText(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+      eocdOffset = i;
+      break;
+    }
+  }
+  if (eocdOffset === -1) return null;
+
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+
+  var sharedStringsXml = null;
+  var sheetXmls = [];
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fileName = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+
+    var isSharedStrings = (fileName === 'xl/sharedStrings.xml');
+    var isSheet = /^xl\/worksheets\/sheet\d+\.xml$/.test(fileName);
+
+    if (isSharedStrings || isSheet) {
+      var lfhFileNameLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExtraLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFileNameLen + lfhExtraLen;
+      var compressedData = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText = null;
+      try {
+        if (compressionMethod === 0) {
+          xmlText = compressedData.toString('utf-8');
+        } else if (compressionMethod === 8) {
+          xmlText = zlib.inflateRawSync(compressedData).toString('utf-8');
+        }
+      } catch (zerr) {
+        xmlText = null;
+      }
+      if (xmlText) {
+        if (isSharedStrings) sharedStringsXml = xmlText;
+        else if (isSheet) sheetXmls.push(xmlText);
+      }
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+
+  // Parse shared strings into an array
+  var sharedStrings = [];
+  if (sharedStringsXml) {
+    var siRegex = /<si[^>]*>([\s\S]*?)<\/si>/g;
+    var siMatch;
+    while ((siMatch = siRegex.exec(sharedStringsXml)) !== null) {
+      var combined = '';
+      var tRegex = /<t[^>]*>([\s\S]*?)<\/t>/g;
+      var tMatch;
+      while ((tMatch = tRegex.exec(siMatch[1])) !== null) {
+        combined += tMatch[1];
+      }
+      combined = combined.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+      sharedStrings.push(combined);
+    }
+  }
+
+  if (sheetXmls.length === 0) return null;
+  var allRows = [];
+  sheetXmls.forEach(function(sheetXml) {
+    var rowRegex = /<row[^>]*>([\s\S]*?)<\/row>/g;
+    var rowMatch;
+    while ((rowMatch = rowRegex.exec(sheetXml)) !== null) {
+      var cells = [];
+      var cellRegex = /<c\b([^>]*)>([\s\S]*?)<\/c>/g;
+      var cellMatch;
+      while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
+        var cellAttrs = cellMatch[1];
+        var cellContent = cellMatch[2];
+        var typeMatch = cellAttrs.match(/\bt="([^"]*)"/);
+        var cellType = typeMatch ? typeMatch[1] : null;
+        var value = '';
+        if (cellType === 'inlineStr') {
+          var iMatch = cellContent.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+          value = iMatch ? iMatch[1] : '';
+        } else {
+          var vMatch = cellContent.match(/<v[^>]*>([\s\S]*?)<\/v>/);
+          if (vMatch) {
+            value = vMatch[1];
+            if (cellType === 's') {
+              var idx = parseInt(value, 10);
+              if (!isNaN(idx) && sharedStrings[idx] !== undefined) value = sharedStrings[idx];
+            }
+          }
+        }
+        value = value.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        if (value !== '') cells.push(value);
+      }
+      if (cells.length > 0) allRows.push(cells.join(' | '));
+    }
+  });
+
+  return allRows.length > 0 ? allRows.join('\n') : null;
 }
 
 // WORD DOCUMENT TEXT EXTRACTOR — DOCX via ZIP, DOC via binary text extraction
