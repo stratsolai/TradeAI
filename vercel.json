@@ -15,6 +15,12 @@
       "maxDuration": 60
     }
   },
+  "crons": [
+    {
+      "path": "/api/archive-old-tenders",
+      "schedule": "0 2 * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/auth/google/callback",
