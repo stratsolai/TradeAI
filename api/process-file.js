@@ -37,11 +37,11 @@ var VERSION_MATCH_RULES = {
   'Safety & SWMS': 'Match on document type and the job or activity type. Return null if the activity types differ.'
 };
 
-var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Extract discrete content items from the source material provided.\n\n" +
-  "For each item, return a JSON object with these fields:\n" +
-  "- \"title\": string, max 10 words, must reference the source document for context\n" +
-  "- \"body\": string, faithful plain text summary — preserve the source content accurately, keep bullet points intact, never add interpretation or context not present in the source\n" +
-  "- \"category\": string, must exactly match one category name from the CATEGORIES section\n" +
+var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
+  "Return a JSON array containing exactly ONE object (or zero objects if no meaningful content can be extracted) with these fields:\n" +
+  "- \"title\": string, max 10 words, descriptive of the whole document\n" +
+  "- \"body\": string, concise plain text summary of the whole document in your own words — capture the key facts, main points, and important details. Do NOT reproduce the source content verbatim. Do NOT include long passages of original text. Do NOT include bullet point lists copied from the source. Summarise the document as a whole.\n" +
+  "- \"category\": string, must exactly match one category name from the CATEGORIES section — copy the name exactly including punctuation, capitalisation, and the trailing 's' on plural names\n" +
   "- \"disposition\": string, \"keep\" or \"discard\" — must match the disposition listed for the assigned category\n" +
   "- \"confidence\": string, \"confident\" or \"uncertain\" — confident when the category is clear, uncertain when the content could fit multiple categories\n" +
   "- \"tool_tags\": array of tool ID strings from the TOOLS section — only tag tools whose description matches the content\n\n" +
@@ -75,13 +75,13 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "- tender: Generates tender and proposal documents. Needs content about capabilities, past work, team, certifications, and pricing.\n" +
   "- quote-enhancer: Enhances quotes into professional branded documents. Needs company information, past jobs, testimonials, licences, and safety information.\n\n" +
   "RULES:\n" +
-  "1. Group content by logical sections, headings, or themes. Do not split individual bullet points into separate items.\n" +
-  "2. Body must faithfully represent the source content. Never add interpretation, reformatting, or context not present in the source.\n" +
-  "3. Category must exactly match one name from the categories list.\n" +
+  "1. Treat the entire source as ONE item. Return a JSON array with exactly one element representing the whole source. Do NOT split the source into multiple items by section, heading, theme, or paragraph.\n" +
+  "2. Body must be a concise summary in your own words — capture the document's purpose and key facts without reproducing the source content. Never copy long passages or bullet lists from the source.\n" +
+  "3. Category must exactly match one name from the categories list — copy it character-for-character.\n" +
   "4. Disposition must match the category's listed disposition.\n" +
   "5. Only tag tools whose description specifically matches the content.\n" +
   "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
-  "7. If no content can be extracted, return an empty array [].";
+  "7. If no meaningful content can be extracted, return an empty array [].";
 
 const handler = async (req, res) => {
   if (req.method !== 'POST') {
@@ -199,6 +199,7 @@ const handler = async (req, res) => {
       if (!item.title || !item.body) continue;
 
       var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Manual Upload') : 'Manual Upload';
+      console.log('[Versioning] Item category — raw:', JSON.stringify(item.category), 'normalised:', normCat);
       var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
       var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
       var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
@@ -211,17 +212,20 @@ const handler = async (req, res) => {
         status = 'pending';
         var existingFinResult = await supabase
           .from('content_library')
-          .select('id')
+          .select('id, category, status')
           .eq('user_id', userId)
           .eq('status', 'approved')
           .eq('category', 'Financial Documents')
           .limit(1);
+        console.log('[Versioning] Financial Documents query — found:', (existingFinResult.data || []).length, 'error:', existingFinResult.error && existingFinResult.error.message);
         if (existingFinResult.data && existingFinResult.data.length > 0) {
           versionPairId = randomUUID();
-          await supabase
+          var existingId = existingFinResult.data[0].id;
+          var pairUpdate = await supabase
             .from('content_library')
             .update({ status: 'pending', version_pair_id: versionPairId })
-            .eq('id', existingFinResult.data[0].id);
+            .eq('id', existingId);
+          console.log('[Versioning] Paired existing item', existingId, 'with new pair_id', versionPairId, 'update error:', pairUpdate.error && pairUpdate.error.message);
         }
       }
 
