@@ -27,14 +27,14 @@ var AUTO_ARCHIVE_CATEGORIES = [
 ];
 
 var VERSION_MATCH_RULES = {
-  'Products & Services': 'Match on similarity of title and subject matter. The new item replaces the existing item only if it covers the same specific product or service.',
-  'Pricing': 'Match on similarity of title and subject matter. The new item replaces the existing item only if it covers the same specific pricing scope.',
-  'Company Information': 'Match by subject. For bios, match on the person name. For announcements, match on the policy or subject. A new person or new announcement is additive — return null if the new item describes a different person or different announcement.',
-  'Promotions & Offers': 'Match on promotion name or subject. A new promotion is additive — return null unless the new item is clearly an update to an existing promotion.',
-  'Supplier Communications': 'Match on supplier name and subject. A new communication is additive — return null unless the new item is clearly an update to an existing communication.',
-  'Compliance & Certificates': 'Match on document type and the licence or registration number. Return null if the document types or numbers differ.',
-  'Safety & SWMS': 'Match on document type and the job or activity type. Return null if the activity types differ.',
-  'Financial Documents': 'Match if both documents are the same type of financial record covering the same scope — for example, both are invoices from the same supplier, both are tax statements for the same period, both are profit and loss reports for the same period, both are bank statements for the same account. Return null if the document types differ, the periods differ, or the parties differ.'
+  'Products & Services': 'Match on similarity of title and subject matter.',
+  'Pricing': 'Match on similarity of title and subject matter.',
+  'Company Information': 'Match on subject — person name for bios, policy or subject for announcements. New person or new announcement is additive.',
+  'Promotions & Offers': 'Match on promotion name or subject — new promotion is additive.',
+  'Supplier Communications': 'Match on supplier name and subject — new communication is additive.',
+  'Compliance & Certificates': 'Match on title and subject — same licence or certificate type supersedes previous. Different licence types are additive.',
+  'Safety & SWMS': 'Match on title and subject — same work activity supersedes previous. Different activities are additive.',
+  'Financial Documents': 'Periodic documents (Profit & Loss Statement, Balance Sheet, Cash Flow Statement, Tax Return, BAS/GST Return, Payroll Summary) — match on document type and period. Transactional documents (Invoice, Receipt, Purchase Order, Bank Statement, Supplier Statement) — always additive, never supersede.'
 };
 
 var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
