@@ -451,7 +451,7 @@ window.CL_REVIEW = {
       if (partnerCount > 1) hasPairPartner = true;
     }
     const pairCardStyle = hasPairPartner
-      ? ' style="border-left:6px solid var(--blue);background:var(--blue-light);"'
+      ? ' style="border-left:4px solid var(--blue);background:var(--blue-light);"'
       : '';
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
   <div class="review-card-header">
