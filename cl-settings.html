@@ -383,6 +383,87 @@
         </div>
 
         <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">OneDrive</div>
+            <div class="settings-row-desc">Connect your OneDrive accounts to import documents automatically.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="onedrive-connections-list" class="connection-list"></div>
+            <button id="add-onedrive-btn" class="btn-add-connection">+ Add OneDrive</button>
+          </div>
+        </div>
+
+        <div id="onedrive-folder-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left-color:var(--green);">
+          <div class="settings-card-header">
+            <div class="settings-card-title">Select OneDrive Folders</div>
+            <div class="settings-card-hint">Choose which OneDrive folders to connect for content scanning.</div>
+          </div>
+          <div id="onedrive-folder-picker-list" class="settings-rows" style="max-height:300px;overflow-y:auto;"></div>
+          <div class="settings-footer">
+            <button id="onedrive-folder-picker-save" class="btn-save">Save</button>
+            <button id="onedrive-folder-picker-cancel" class="btn-add-connection">Cancel</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">SharePoint</div>
+            <div class="settings-row-desc">Connect your SharePoint sites to import documents from selected document libraries.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="sharepoint-connections-list" class="connection-list"></div>
+            <button id="add-sharepoint-btn" class="btn-add-connection">+ Add SharePoint</button>
+          </div>
+        </div>
+
+        <div id="sharepoint-site-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left-color:var(--green);">
+          <div class="settings-card-header">
+            <div class="settings-card-title">Select SharePoint Site</div>
+            <div class="settings-card-hint">Choose a SharePoint site. After selecting, you will choose document libraries to scan.</div>
+          </div>
+          <div id="sharepoint-site-picker-list" class="settings-rows" style="max-height:300px;overflow-y:auto;"></div>
+          <div class="settings-footer">
+            <button id="sharepoint-site-picker-save" class="btn-save">Save</button>
+            <button id="sharepoint-site-picker-cancel" class="btn-add-connection">Cancel</button>
+          </div>
+        </div>
+
+        <div id="sharepoint-library-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left-color:var(--green);">
+          <div class="settings-card-header">
+            <div class="settings-card-title">Select Document Libraries</div>
+            <div class="settings-card-hint">Choose which document libraries on the selected site to scan for content.</div>
+          </div>
+          <div id="sharepoint-library-picker-list" class="settings-rows" style="max-height:300px;overflow-y:auto;"></div>
+          <div class="settings-footer">
+            <button id="sharepoint-library-picker-save" class="btn-save">Save</button>
+            <button id="sharepoint-library-picker-cancel" class="btn-add-connection">Cancel</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
+          <div>
+            <div class="settings-row-label">Dropbox</div>
+            <div class="settings-row-desc">Connect your Dropbox accounts to import documents automatically.</div>
+          </div>
+          <div class="connection-row-control">
+            <div id="dropbox-connections-list" class="connection-list"></div>
+            <button id="add-dropbox-btn" class="btn-add-connection">+ Add Dropbox</button>
+          </div>
+        </div>
+
+        <div id="dropbox-folder-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left-color:var(--green);">
+          <div class="settings-card-header">
+            <div class="settings-card-title">Select Dropbox Folders</div>
+            <div class="settings-card-hint">Choose which Dropbox folders to connect for content scanning. Mounted shared folders are included alongside personal folders.</div>
+          </div>
+          <div id="dropbox-folder-picker-list" class="settings-rows" style="max-height:300px;overflow-y:auto;"></div>
+          <div class="settings-footer">
+            <button id="dropbox-folder-picker-save" class="btn-save">Save</button>
+            <button id="dropbox-folder-picker-cancel" class="btn-add-connection">Cancel</button>
+          </div>
+        </div>
+
+        <div class="settings-row" style="align-items:flex-start;">
           <div style="flex:1;">
             <div class="settings-row-label">Website</div>
             <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
@@ -428,6 +509,42 @@
             <button class="freq-btn" data-field="drive_scan_frequency" data-value="daily">Daily</button>
             <button class="freq-btn active" data-field="drive_scan_frequency" data-value="weekly">Weekly</button>
             <button class="freq-btn" data-field="drive_scan_frequency" data-value="manual">Manual only</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">OneDrive</div>
+            <div class="settings-row-desc">Scans your connected OneDrive folders for new documents.</div>
+          </div>
+          <div class="settings-row-control" id="onedrive-freq-ctrl">
+            <button class="freq-btn" data-field="onedrive_scan_frequency" data-value="daily">Daily</button>
+            <button class="freq-btn active" data-field="onedrive_scan_frequency" data-value="weekly">Weekly</button>
+            <button class="freq-btn" data-field="onedrive_scan_frequency" data-value="manual">Manual only</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">SharePoint</div>
+            <div class="settings-row-desc">Scans your connected SharePoint document libraries for new content.</div>
+          </div>
+          <div class="settings-row-control" id="sharepoint-freq-ctrl">
+            <button class="freq-btn" data-field="sharepoint_scan_frequency" data-value="daily">Daily</button>
+            <button class="freq-btn active" data-field="sharepoint_scan_frequency" data-value="weekly">Weekly</button>
+            <button class="freq-btn" data-field="sharepoint_scan_frequency" data-value="manual">Manual only</button>
+          </div>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Dropbox</div>
+            <div class="settings-row-desc">Scans your connected Dropbox folders for new documents.</div>
+          </div>
+          <div class="settings-row-control" id="dropbox-freq-ctrl">
+            <button class="freq-btn" data-field="dropbox_scan_frequency" data-value="daily">Daily</button>
+            <button class="freq-btn active" data-field="dropbox_scan_frequency" data-value="weekly">Weekly</button>
+            <button class="freq-btn" data-field="dropbox_scan_frequency" data-value="manual">Manual only</button>
           </div>
         </div>
 
