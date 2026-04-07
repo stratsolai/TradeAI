@@ -410,12 +410,13 @@ window.CL_REVIEW = {
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
         var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
+        var inactiveStyle = isTagged ? ' style="background:#E0F7FA;border-color:#0097A7;color:#000;"' : '';
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive' + (isTagged ? ' tool-pill-tagged' : '') + '" title="Learn more about this tool"' + inactiveStyle + '>' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
       }
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '" style="border-color:#0097A7;' + (isTagged ? 'background:#E0F7FA;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(tLabel) + '</button>';
     }).join('');
-    const DEFAULT_CATEGORIES = (window._clCategories && window._clCategories.length > 0) ? window._clCategories : ['Services', 'Products & Equipment', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Company News', 'Team & Culture', 'Community & Events'];
+    const DEFAULT_CATEGORIES = (window._clCategories && window._clCategories.length > 0) ? window._clCategories : ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications', 'Manual Upload'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
