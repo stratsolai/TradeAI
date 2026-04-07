@@ -441,7 +441,16 @@ window.CL_REVIEW = {
     const archivedLinkPill = archivedLinkId
       ? '<a href="#" class="review-archived-link-pill" data-archived-id="' + escHtml(archivedLinkId) + '" style="display:inline-block;padding:2px 10px;border:1px solid var(--blue);border-radius:8px;background:var(--blue-light);color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;text-decoration:none;cursor:pointer;">Archived Item Link</a>'
       : '';
-    const pairCardStyle = (this._status === 'pending' && item.version_pair_id)
+    var hasPairPartner = false;
+    if (this._status === 'pending' && item.version_pair_id && item.category === 'Financial Documents') {
+      var pairId = item.version_pair_id;
+      var partnerCount = 0;
+      for (var ix = 0; ix < this._items.length; ix++) {
+        if (this._items[ix].version_pair_id === pairId) partnerCount++;
+      }
+      if (partnerCount > 1) hasPairPartner = true;
+    }
+    const pairCardStyle = hasPairPartner
       ? ' style="border-left:6px solid var(--blue);background:var(--blue-light);"'
       : '';
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
