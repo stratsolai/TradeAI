@@ -107,12 +107,9 @@ authenticated pages:
 
 ## Active Tasks
 
-### CL Functional Improvements (in progress)
+### CL Functional Improvements
 
-Tasks 1–5 complete (URL validation, Reject/Delete on Rejected
-tab, items display adjustments, Tool Outputs sidebar styling,
-multiple connected accounts in Upload & Import).
-Task 14 complete (Remove Approve button from Approved tab).
+Tasks 1–5 and Task 14 — CL Functional Improvements complete.
 
 ---
 
@@ -121,49 +118,39 @@ Task 14 complete (Remove Approve button from Approved tab).
 These tasks must be completed before the stylesheet rollout
 begins.
 
-### Task 8 — CL Intake Architecture (in progress)
+### Task 8 — CL Intake Architecture
 
-- Governed by StaxAI-CL-Intake-Architecture-Spec-v1.1.
-
-Steps complete:
-- Step 1 — original file storage across all five intake
-  endpoints. Files stored in cl-assets. cl_source_items rows
-  created. Direct browser-to-Supabase upload implemented in
-  cl-upload.js.
-- Step 2 — Archived tab added to Source Review. Matches
-  Pending tab layout exactly.
-- Step 3 — Approve button removed from Approved tab.
-- Step 5 — Category descriptions agreed and documented.
-  StaxAI-CL-Category-Descriptions-v1.0 in Project Knowledge.
-  Note: Promotions & Offers description updated to clarify
-  business-own offers only.
-- Step 6 — Tool descriptions agreed and documented.
-  StaxAI-CL-Tool-Descriptions-v1.0 in Project Knowledge.
-- Step 7 — Extraction prompt redesign complete across
-  api/process-file.js, api/cl-email-scan.js,
-  api/cl-outlook-scan.js. Fixed 18-category list.
-  Auto-rejection with rejection_source = 'auto' in
-  source_detail. Business profile context injection removed.
-  Max tokens aligned to 4000.
-
-Outstanding display fix: cl-review.js is not displaying
-category or tool_tags on item cards. Data is correct in the
-database — display only.
-
-### Task 9 — Account dropdown rollout
-
-- When topbar.js is rolled out to remaining authenticated
-  pages during the stylesheet rollout, the existing inline
-  dropdown wiring must be removed from each page's logic
-  file at the same time. This is mandatory to avoid the
-  duplicate toggle bug fixed in commits cfbb8f3 and 4756821.
+Task 8 — CL Intake Architecture complete.
 
 ### Task 10 — CL Connections
 
-- Build OneDrive, Dropbox, and SharePoint connections into
-  the Content Library following the same pattern as Google
-  Drive. Requires CL Connections Spec v1.0 to be written
-  and approved before build begins.
+Task 10 — CL Connections (OneDrive, SharePoint, Dropbox) —
+build complete, integration test pending.
+
+New files: api/cl-oauth-initiate.js,
+api/cl-onedrive-callback.js, api/onedrive-import.js,
+api/cl-sharepoint-callback.js, api/sharepoint-import.js,
+api/cl-dropbox-callback.js, api/dropbox-import.js.
+
+Updated files: cl-settings-logic.js, cl-settings.html,
+cl-upload.js.
+
+Integration test checklist:
+- Connect OneDrive — OAuth completes, folder picker shows
+  folders, folders saved, Scan Now imports files, items
+  appear in Source Material Review
+- Connect SharePoint — OAuth completes, site picker shows
+  sites, library picker shows libraries, Scan Now imports
+  files, items appear in Source Material Review
+- Connect Dropbox — OAuth completes, folder picker shows
+  folders, folders saved, Scan Now imports files, items
+  appear in Source Material Review
+- All three sources show correct source_detail on items in
+  Source Review
+- Rescan is idempotent — already scanned files are skipped
+- Connect Another adds a second account without overwriting
+  the first
+- Disconnect removes the account and its folders correctly
 
 ### Task 11 — CL Items
 
@@ -187,21 +174,11 @@ database — display only.
 
 ## Known Issues & Notes
 
-- Multi-account email token storage — RESOLVED. Tokens now
-  stored per entry in cl_connected_emails array. Built in
-  CL Functional Improvements Task 5 per
-  StaxAI-CL-MultiAccount-SourcePill-Spec-v1.1.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
   May trigger Google's verification process for the
   gmail.readonly scope. Must be resolved before launch.
-- Full source document storage — RESOLVED. cl-assets bucket
-  and cl_source_items table now in use. All five intake
-  endpoints store original source files and create
-  cl_source_items rows. Built in Task 8 Step 1.
-  source_item_id on content_library now stores
-  cl_source_items UUIDs.
 - staxai-auth.css loads after the inline </style> block in
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
@@ -215,6 +192,37 @@ database — display only.
   dead column — no endpoint reads or writes it. Outlook scan
   uses outlookEntry.last_scanned_at inside cl_connected_emails
   jsonb array. To be removed during stylesheet rollout.
+- Google Drive flat columns (cl_drive_connected,
+  cl_drive_access_token, cl_drive_refresh_token,
+  cl_drive_folders) are superseded by cl_drive_accounts but
+  still exist in profiles. drive-import.js and
+  api/auth/oauth-callback.js still read and write the flat
+  columns. Must be migrated to cl_drive_accounts before
+  launch.
+- drive-import.js uses the legacy extraction prompt and
+  references the dropped cl_active_categories column. Must
+  be updated to match the modern standard used in the new
+  import endpoints before launch.
+- connection-subitem CSS class in cl-settings-logic.js is
+  unstyled. Pick up during stylesheet rollout.
+- .btn-sm has two conflicting definitions in
+  content-library.html. Consolidate during stylesheet
+  rollout.
+- OAuth consolidation — api/cl-oauth-initiate.js and the
+  three standalone callback files should be consolidated
+  into api/auth/initiate.js and api/auth/oauth-callback.js
+  in a dedicated session. Redirect URIs in Azure and Dropbox
+  will need updating at that time.
+- Extraction prompt duplicated across onedrive-import.js,
+  sharepoint-import.js, dropbox-import.js, cl-email-scan.js,
+  cl-outlook-scan.js, process-file.js. Consolidate into a
+  shared module during stylesheet rollout cleanup pass.
+- Pagination fixed at 200 items for OneDrive/SharePoint
+  folder listings and SharePoint sites. Add pagination
+  support if needed.
+- Pill width in cl-upload.js may need CSS adjustment for
+  long email addresses with multi-account connections. Pick
+  up during stylesheet rollout.
 
 ---
 
@@ -226,7 +234,7 @@ is complete and confirmed working.
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
 | 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
-| 2    | Complete CL Functional Improvements                        |
+| 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | Complete Standalone Tasks A, B, C                          |
 | 4    | Complete CL Connections (OneDrive, Dropbox, SharePoint)    |
 | 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
@@ -272,9 +280,10 @@ The sequence for each tool rebuild is:
   More badge and navigate to /panel-auth?tool=[toolid].
   Selected tool font stays black — shading indicates
   selection.
-- When topbar.js is rolled out to a page, duplicate
-  dropdown wiring must be removed from that page's logic
-  file at the same time to avoid the double-toggle bug.
+- When topbar.js is rolled out to each page, remove
+  existing inline dropdown wiring from that page's logic
+  file at the same time to avoid the duplicate toggle bug
+  fixed in commits cfbb8f3 and 4756821.
 
 ### Deferred — Address During Tool Rebuilds
 
@@ -342,6 +351,18 @@ Notable changes made April 2026:
   cl_drive_access_token (text), cl_drive_refresh_token (text),
   cl_outlook_last_scanned_at (timestamptz)
 - profiles: removed cl_active_categories, cl_custom_categories
+- profiles: added cl_drive_accounts (jsonb),
+  cl_onedrive_accounts (jsonb), cl_sharepoint_accounts (jsonb),
+  cl_dropbox_accounts (jsonb)
+- profiles: dropped cl_onedrive_connected,
+  cl_onedrive_access_token, cl_onedrive_refresh_token,
+  cl_onedrive_folders, cl_sharepoint_connected,
+  cl_sharepoint_access_token, cl_sharepoint_refresh_token,
+  cl_sharepoint_site, cl_sharepoint_libraries,
+  cl_dropbox_connected, cl_dropbox_access_token,
+  cl_dropbox_refresh_token, cl_dropbox_folders
+- cl_settings: added onedrive_scan_frequency,
+  sharepoint_scan_frequency, dropbox_scan_frequency
 - content_library: UNIQUE constraint added on source_ref
 - content_library: NOT NULL constraint removed from content_type
 - content_library: added source_detail (jsonb), source_item_id
@@ -538,6 +559,9 @@ Industry-agnostic (when editing AI prompts or data models):
 | Topbar JS Spec v1.0             | Spec for topbar.js — complete       |
 | CL Connections Spec v1.0        | OneDrive, Dropbox, SharePoint       |
 |                                 | connections architecture             |
+| CL Connections Spec v1.2        | CL Connections spec. Approved.      |
+|                                 | Build complete, integration test    |
+|                                 | pending.                            |
 | CL Items Spec v1.0              | Manual Add Item and Editable        |
 |                                 | Pending Items                        |
 | Image Processing Spec v1.0      | Visual content ingestion across     |
