@@ -262,12 +262,16 @@
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
     .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
     .btn-disconnect::before { content: "\2717"; font-size: 14px; }
-    .btn-disconnect:hover { background: #8B2500; color: #fff; }
+    .btn-disconnect:hover { background: #fef2f2; color: #8B2500; }
 
     /* Remove — same red-outline style as Disconnect, smaller. Used inside folder/library/URL rows. */
     .btn-remove-folder, .btn-remove-url { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s, color 0.15s; }
     .btn-remove-folder::before, .btn-remove-url::before { content: "\2717"; font-size: 12px; }
-    .btn-remove-folder:hover, .btn-remove-url:hover { background: #8B2500; color: #fff; }
+    .btn-remove-folder:hover, .btn-remove-url:hover { background: #fef2f2; color: #8B2500; }
+
+    /* Add — blue-outline counterpart to btn-remove-folder, same dimensions. Used in the Drive folder picker. */
+    .btn-add-folder { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .btn-add-folder:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Add buttons — blue outline */
     .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
@@ -403,14 +407,13 @@
           </div>
         </div>
 
-        <div id="drive-folder-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left-color:var(--green);">
+        <div id="drive-folder-picker" class="settings-card" style="display:none;margin:0 24px 16px;border-left:1px solid var(--border);">
           <div class="settings-card-header">
             <div class="settings-card-title">Select Drive Folders</div>
             <div class="settings-card-hint">Choose which Google Drive folders to connect for content scanning.</div>
           </div>
           <div id="drive-folder-picker-list" class="settings-rows" style="max-height:300px;overflow-y:auto;"></div>
           <div class="settings-footer">
-            <button id="drive-folder-picker-save" class="btn-save">Save</button>
             <button id="drive-folder-picker-cancel" class="btn-add-connection">Cancel</button>
           </div>
         </div>
