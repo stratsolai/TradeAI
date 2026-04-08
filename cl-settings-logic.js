@@ -152,7 +152,7 @@ window.CL_SETTINGS_LOGIC = {
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
         '<span class="connection-item-lookback">Lookback: ' + lookbackHtml + '</span>' +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">Choose Folders</button>' +
+        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
@@ -600,7 +600,7 @@ window.CL_SETTINGS_LOGIC = {
       }).join('');
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">Choose Folders</button>' +
+        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="onedrive">Disconnect</button>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
@@ -948,7 +948,7 @@ window.CL_SETTINGS_LOGIC = {
       }).join('');
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">Choose Folders</button>' +
+        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="dropbox">Disconnect</button>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
