@@ -28,10 +28,25 @@ window.CL_SETTINGS_LOGIC = {
       self._checkDropboxOAuthReturn();
 
       self._bindCLPicker('drive-folder-picker', function () { self._saveDriveFolders(); });
-      self._bindCLPicker('onedrive-folder-picker', function () { self._saveOnedriveFolders(); });
-      self._bindCLPicker('sharepoint-site-picker', function () { self._saveSharepointSite(); });
-      self._bindCLPicker('sharepoint-library-picker', function () { self._saveSharepointLibraries(); });
-      self._bindCLPicker('dropbox-folder-picker', function () { self._saveDropboxFolders(); });
+      self._bindCLPicker('onedrive-folder-picker', function () {});
+      self._bindCLPicker('sharepoint-site-picker', function () {});
+      self._bindCLPicker('sharepoint-library-picker', function () {});
+      self._bindCLPicker('dropbox-folder-picker', function () {});
+
+      // SharePoint site picker — convert to immediate-save pattern.
+      // Hide the legacy Save button, restyle Cancel as Close, and suppress
+      // the inherited ✗ glyph from .btn-disconnect::before via an injected
+      // stylesheet rule (no HTML changes available in this scope).
+      var spsSaveBtn = document.getElementById('sharepoint-site-picker-save');
+      if (spsSaveBtn) spsSaveBtn.style.display = 'none';
+      var spsCancelBtn = document.getElementById('sharepoint-site-picker-cancel');
+      if (spsCancelBtn) {
+        spsCancelBtn.className = 'btn-disconnect';
+        spsCancelBtn.textContent = 'Close';
+      }
+      var spsStyleEl = document.createElement('style');
+      spsStyleEl.textContent = '#sharepoint-site-picker-cancel::before { content: none; }';
+      document.head.appendChild(spsStyleEl);
     });
   },
 
@@ -802,36 +817,6 @@ window.CL_SETTINGS_LOGIC = {
     }
   },
 
-  _saveOnedriveFolders: async function () {
-    var self = this;
-    var picker = document.getElementById('onedrive-folder-picker');
-    if (!picker) return;
-    var accountEmail = picker.getAttribute('data-account');
-    if (!accountEmail) return;
-    var entryIdx = self._onedriveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-    if (entryIdx === -1) return;
-    var checkboxes = document.querySelectorAll('.onedrive-folder-checkbox:checked:not(:disabled)');
-    var newFolders = [];
-    checkboxes.forEach(function (cb) {
-      newFolders.push({ id: cb.getAttribute('data-folder-id'), name: cb.getAttribute('data-folder-name') });
-    });
-    if (newFolders.length === 0) {
-      picker.style.display = 'none';
-      return;
-    }
-    var existing = Array.isArray(self._onedriveAccounts[entryIdx].folders) ? self._onedriveAccounts[entryIdx].folders : [];
-    self._onedriveAccounts[entryIdx].folders = existing.concat(newFolders);
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_onedrive_accounts: self._onedriveAccounts })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveOnedriveFolders error:', res.error); return; }
-      self._renderOnedriveList();
-      picker.style.display = 'none';
-    } catch (e) { console.error('_saveOnedriveFolders exception:', e); }
-  },
-
   _disconnectOnedriveAccount: async function (accountEmail) {
     var self = this;
     try {
@@ -914,6 +899,17 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('sharepoint-site-picker');
     var pickerList = document.getElementById('sharepoint-site-picker-list');
     if (!picker || !pickerList) return;
+    // Relocate the picker inside the SharePoint settings-row so it sits above
+    // the row's bottom divider, anchored to the SharePoint section.
+    var addBtn = document.getElementById('add-sharepoint-btn');
+    var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
+    if (parentRow && picker.parentElement !== parentRow) {
+      parentRow.appendChild(picker);
+      parentRow.style.flexWrap = 'wrap';
+      picker.style.flexBasis = '100%';
+      picker.style.width = '100%';
+      picker.style.margin = '12px 0 0 0';
+    }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading sites...</div>';
@@ -933,54 +929,58 @@ window.CL_SETTINGS_LOGIC = {
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
       var currentSiteId = entry && entry.site ? entry.site.id : null;
+      // Each row is a label wrapping a radio + readonly input box. The input
+      // has pointer-events:none so clicks on the row pass through to the
+      // label, which selects the radio and fires the change event below.
       pickerList.innerHTML = sites.map(function (s) {
         var checked = currentSiteId === s.id ? ' checked' : '';
-        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
+        return '<label class="connection-folder-row" style="padding:6px 0;cursor:pointer;">' +
           '<input type="radio" name="sharepoint-site" class="sharepoint-site-radio" data-site-id="' + s.id + '" data-site-name="' + (s.displayName || '') + '" data-site-weburl="' + (s.webUrl || '') + '"' + checked + '>' +
-          '<span class="connection-item-email">' + (s.displayName || '') + '</span>' +
+          '<input type="text" class="website-url-input" value="' + (s.displayName || '') + '" readonly style="cursor:pointer;pointer-events:none;">' +
           '</label>';
       }).join('');
+      pickerList.onchange = async function (e) {
+        var radio = e.target && e.target.closest ? e.target.closest('.sharepoint-site-radio') : null;
+        if (!radio || !radio.checked) return;
+        var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (entryIdx === -1) return;
+        var site = {
+          id: radio.getAttribute('data-site-id'),
+          displayName: radio.getAttribute('data-site-name'),
+          webUrl: radio.getAttribute('data-site-weburl')
+        };
+        // Reset libraries when switching to a different site — the previously
+        // chosen libraries no longer make sense.
+        var prev = self._sharepointAccounts[entryIdx].site;
+        if (!prev || prev.id !== site.id) {
+          self._sharepointAccounts[entryIdx].libraries = [];
+        }
+        self._sharepointAccounts[entryIdx].site = site;
+        var radios = pickerList.querySelectorAll('.sharepoint-site-radio');
+        radios.forEach(function (r) { r.disabled = true; });
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ cl_sharepoint_accounts: self._sharepointAccounts })
+            .eq('id', self._userId);
+          if (res.error) {
+            console.error('SharePoint site picker save error:', res.error);
+            radios.forEach(function (r) { r.disabled = false; });
+            return;
+          }
+          self._renderSharepointList();
+          picker.style.display = 'none';
+          // Auto-open the library picker so the user completes the two-step flow.
+          self._openSharepointLibraryPicker(accountEmail);
+        } catch (saveErr) {
+          console.error('SharePoint site picker save exception:', saveErr);
+          radios.forEach(function (r) { r.disabled = false; });
+        }
+      };
     } catch (err) {
       console.error('SharePoint site picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load sites. Please try again.</div>';
     }
-  },
-
-  _saveSharepointSite: async function () {
-    var self = this;
-    var picker = document.getElementById('sharepoint-site-picker');
-    if (!picker) return;
-    var accountEmail = picker.getAttribute('data-account');
-    if (!accountEmail) return;
-    var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-    if (entryIdx === -1) return;
-    var radio = document.querySelector('.sharepoint-site-radio:checked');
-    if (!radio) {
-      picker.style.display = 'none';
-      return;
-    }
-    var site = {
-      id: radio.getAttribute('data-site-id'),
-      displayName: radio.getAttribute('data-site-name'),
-      webUrl: radio.getAttribute('data-site-weburl'),
-    };
-    // Reset libraries when switching to a different site — the previously
-    // chosen libraries no longer make sense.
-    if (!self._sharepointAccounts[entryIdx].site || self._sharepointAccounts[entryIdx].site.id !== site.id) {
-      self._sharepointAccounts[entryIdx].libraries = [];
-    }
-    self._sharepointAccounts[entryIdx].site = site;
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_sharepoint_accounts: self._sharepointAccounts })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveSharepointSite error:', res.error); return; }
-      self._renderSharepointList();
-      picker.style.display = 'none';
-      // Auto-open the library picker so the user completes the two-step flow.
-      self._openSharepointLibraryPicker(accountEmail);
-    } catch (e) { console.error('_saveSharepointSite exception:', e); }
   },
 
   _openSharepointLibraryPicker: async function (accountEmail) {
@@ -1073,36 +1073,6 @@ window.CL_SETTINGS_LOGIC = {
       console.error('SharePoint library picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load libraries. Please try again.</div>';
     }
-  },
-
-  _saveSharepointLibraries: async function () {
-    var self = this;
-    var picker = document.getElementById('sharepoint-library-picker');
-    if (!picker) return;
-    var accountEmail = picker.getAttribute('data-account');
-    if (!accountEmail) return;
-    var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-    if (entryIdx === -1) return;
-    var checkboxes = document.querySelectorAll('.sharepoint-library-checkbox:checked:not(:disabled)');
-    var newLibraries = [];
-    checkboxes.forEach(function (cb) {
-      newLibraries.push({ id: cb.getAttribute('data-library-id'), name: cb.getAttribute('data-library-name') });
-    });
-    if (newLibraries.length === 0) {
-      picker.style.display = 'none';
-      return;
-    }
-    var existing = Array.isArray(self._sharepointAccounts[entryIdx].libraries) ? self._sharepointAccounts[entryIdx].libraries : [];
-    self._sharepointAccounts[entryIdx].libraries = existing.concat(newLibraries);
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_sharepoint_accounts: self._sharepointAccounts })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveSharepointLibraries error:', res.error); return; }
-      self._renderSharepointList();
-      picker.style.display = 'none';
-    } catch (e) { console.error('_saveSharepointLibraries exception:', e); }
   },
 
   _disconnectSharepointAccount: async function (accountEmail) {
@@ -1268,36 +1238,6 @@ window.CL_SETTINGS_LOGIC = {
       console.error('Dropbox folder picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
     }
-  },
-
-  _saveDropboxFolders: async function () {
-    var self = this;
-    var picker = document.getElementById('dropbox-folder-picker');
-    if (!picker) return;
-    var accountEmail = picker.getAttribute('data-account');
-    if (!accountEmail) return;
-    var entryIdx = self._dropboxAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-    if (entryIdx === -1) return;
-    var checkboxes = document.querySelectorAll('.dropbox-folder-checkbox:checked:not(:disabled)');
-    var newFolders = [];
-    checkboxes.forEach(function (cb) {
-      newFolders.push({ id: cb.getAttribute('data-folder-id'), name: cb.getAttribute('data-folder-name') });
-    });
-    if (newFolders.length === 0) {
-      picker.style.display = 'none';
-      return;
-    }
-    var existing = Array.isArray(self._dropboxAccounts[entryIdx].folders) ? self._dropboxAccounts[entryIdx].folders : [];
-    self._dropboxAccounts[entryIdx].folders = existing.concat(newFolders);
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_dropbox_accounts: self._dropboxAccounts })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveDropboxFolders error:', res.error); return; }
-      self._renderDropboxList();
-      picker.style.display = 'none';
-    } catch (e) { console.error('_saveDropboxFolders exception:', e); }
   },
 
   _disconnectDropboxAccount: async function (accountEmail) {
