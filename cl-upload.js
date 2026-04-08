@@ -200,7 +200,16 @@ window.CL_UPLOAD = {
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
       tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
 
-      grid.innerHTML = tiles.map(function(t) {
+      grid.innerHTML = tiles.map(function(t, idx) {
+        // When the last tile would otherwise sit alone in the left column
+        // of the 2-column grid (odd tile count), span it across both grid
+        // columns and centre it inside that span. The tile keeps its
+        // normal one-column width via the calc() that mirrors the grid's
+        // 1fr minus half the 16px gap.
+        var tileStyle = '';
+        if (idx === tiles.length - 1 && tiles.length % 2 === 1) {
+          tileStyle = ' style="grid-column:1 / -1;justify-self:center;width:calc((100% - 16px) / 2);"';
+        }
         var pillsHtml = "";
         if (t.groups && t.groups.length > 0) {
           pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the folders to scan:</div>" +
@@ -220,7 +229,7 @@ window.CL_UPLOAD = {
         }
         var noteHtml = t.note ? "<div class=\"source-tile-note\">" + t.note + "</div>" : "";
         return [
-          "<div class=\"source-tile\">",
+          "<div class=\"source-tile\"" + tileStyle + ">",
             "<div class=\"source-tile-top\">",
               "<span class=\"source-tile-icon\">" + t.icon + "</span>",
               "<div class=\"source-tile-body\">",
