@@ -34,9 +34,9 @@ window.CL_SETTINGS_LOGIC = {
       self._bindCLPicker('dropbox-folder-picker', function () {});
 
       // SharePoint site picker — convert to immediate-save pattern.
-      // Hide the legacy Save button, restyle Cancel as Close, and suppress
-      // the inherited ✗ glyph from .btn-disconnect::before via an injected
-      // stylesheet rule (no HTML changes available in this scope).
+      // Hide the legacy Save button and restyle Cancel as Close. The
+      // ::before glyph suppression lives with the other picker Close
+      // button rules in cl-settings.html.
       var spsSaveBtn = document.getElementById('sharepoint-site-picker-save');
       if (spsSaveBtn) spsSaveBtn.style.display = 'none';
       var spsCancelBtn = document.getElementById('sharepoint-site-picker-cancel');
@@ -44,9 +44,6 @@ window.CL_SETTINGS_LOGIC = {
         spsCancelBtn.className = 'btn-disconnect';
         spsCancelBtn.textContent = 'Close';
       }
-      var spsStyleEl = document.createElement('style');
-      spsStyleEl.textContent = '#sharepoint-site-picker-cancel::before { content: none; }';
-      document.head.appendChild(spsStyleEl);
     });
   },
 
