@@ -1,23 +1,27 @@
 // api/sharepoint-import.js — Task 10 Step 4
 // Action-dispatch import endpoint for SharePoint sources. JWT required.
 //
-// Multi-account: tokens, site, and selected libraries are read from
+// Multi-account / multi-site: tokens and selected sites are read from
 // profiles.cl_sharepoint_accounts (jsonb array). Each entry shape:
 //   { account_email, access_token, refresh_token, connected_at,
-//     site: { id, displayName, webUrl } | null,
-//     libraries: [{ id, name }, ...],
+//     sites: [
+//       { id, displayName, webUrl, libraries: [{ id, name }, ...] },
+//       ...
+//     ],
 //     last_scanned_at? }
 //
+// Legacy entries shaped { site: {...}, libraries: [...] } are upgraded
+// in-memory by upgradeSharepointEntry on read and persisted on the next
+// write (token refresh, last_scanned_at update).
+//
 // Actions:
-//   list-sites     { accountEmail }              → sites the user can access
-//   list-libraries { accountEmail }              → document libraries on entry.site
-//                                                  (entry.site must be set first
-//                                                  by the picker UI)
-//   import-all     { accountEmail, libraryId }   → scan one library, full pipeline
+//   list-sites     { accountEmail }                          → sites the user can access
+//   list-libraries { accountEmail, siteId }                  → document libraries on the named site
+//   import-all     { accountEmail, siteId, libraryId }       → scan one library, full pipeline
 //
 // Mirrors onedrive-import.js for the multi-account, refresh, extraction,
-// versioning, and source-item plumbing. Site is always read from the entry,
-// never from the request body, per Task 10 Step 4 spec.
+// versioning, and source-item plumbing. The chosen site is identified by
+// siteId in the request body and looked up inside entry.sites.
 
 export const config = { maxDuration: 300 };
 
@@ -110,6 +114,29 @@ const SHAREPOINT_BINARY_DOC_MIME = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 ];
+
+// Lazy-upgrade a SharePoint account entry from the legacy single-site
+// shape ({ site, libraries }) to the multi-site shape ({ sites: [...] }).
+// Idempotent — safe to call on already-upgraded entries.
+function upgradeSharepointEntry(entry) {
+  if (!entry) return;
+  if (entry.site && entry.site.id) {
+    if (!Array.isArray(entry.sites)) entry.sites = [];
+    var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
+    if (!siteAlreadyIn) {
+      entry.sites.push({
+        id: entry.site.id,
+        displayName: entry.site.displayName,
+        webUrl: entry.site.webUrl,
+        libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
+      });
+    }
+    delete entry.site;
+    delete entry.libraries;
+  } else if (!Array.isArray(entry.sites)) {
+    entry.sites = [];
+  }
+}
 
 // Refresh a Microsoft OAuth token for SharePoint scopes.
 async function refreshMicrosoftToken(refreshToken) {
@@ -267,6 +294,7 @@ export default async function handler(req, res) {
   const action = body.action;
   const accountEmail = body.accountEmail;
   const libraryId = body.libraryId;
+  const siteIdParam = body.siteId;
 
   if (!action) return res.status(400).json({ error: 'action required' });
   if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
@@ -285,6 +313,7 @@ export default async function handler(req, res) {
     const accounts = Array.isArray(profileRes.data && profileRes.data.cl_sharepoint_accounts)
       ? profileRes.data.cl_sharepoint_accounts
       : [];
+    accounts.forEach(upgradeSharepointEntry);
     const entryIdx = accounts.findIndex(function(a) { return a && a.account_email === accountEmail; });
     if (entryIdx === -1) {
       return res.status(400).json({ error: 'SharePoint account not connected' });
@@ -331,10 +360,16 @@ export default async function handler(req, res) {
     }
 
     // ── ACTION: list-libraries ─────────────────────────────────────────
-    // Reads entry.site (NOT a body parameter). The picker UI must write
-    // the chosen site into entry.site before calling this action.
+    // Picker UI passes siteId for the site whose libraries it wants to list.
+    // The site must already be in entry.sites (added via the site picker).
     if (action === 'list-libraries') {
-      const site = entry.site;
+      var sitesArr = Array.isArray(entry.sites) ? entry.sites : [];
+      var site = null;
+      if (siteIdParam) {
+        site = sitesArr.find(function (s) { return s && s.id === siteIdParam; }) || null;
+      } else if (sitesArr.length > 0) {
+        site = sitesArr[0];
+      }
       if (!site || !site.id) {
         return res.status(400).json({ error: 'site_not_set' });
       }
@@ -356,10 +391,17 @@ export default async function handler(req, res) {
     }
 
     // ── ACTION: import-all ─────────────────────────────────────────────
-    // Reads entry.site (NOT a body parameter). libraryId comes from the body.
+    // The body identifies which site (siteId) and which library (libraryId)
+    // to scan. The site must already be in entry.sites.
     if (action === 'import-all') {
       if (!libraryId) return res.status(400).json({ error: 'libraryId required' });
-      const site = entry.site;
+      var sitesArrImp = Array.isArray(entry.sites) ? entry.sites : [];
+      var site = null;
+      if (siteIdParam) {
+        site = sitesArrImp.find(function (s) { return s && s.id === siteIdParam; }) || null;
+      } else if (sitesArrImp.length > 0) {
+        site = sitesArrImp[0];
+      }
       if (!site || !site.id) {
         return res.status(400).json({ error: 'site_not_set' });
       }
