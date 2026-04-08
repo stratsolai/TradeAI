@@ -241,20 +241,24 @@
     .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
     .topbar-nav-link:hover { color: #fff; }
 
-    /* Connection multi-account list — single flex row: email | lookback | Choose Folders | Disconnect */
+    /* Connection multi-account list — two-row grid:
+       row 1 = email + Disconnect, row 2 = lookback + Choose Folders (or SharePoint site + pickers) */
     .connection-list { width: 100%; }
-    .connection-item { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .connection-item { display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; row-gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
-    /* Account email — styled box matching folder/URL boxes, shrinks to fit so the right cluster always fits on the same row */
-    .connection-item-email { flex: 1 1 0; min-width: 80px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Account email — fixed-width styled box on row 1, column 1 */
+    .connection-item-email { grid-column: 1; grid-row: 1; width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .connection-item-site { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-    /* Hide the literal "Lookback:" label text — keep the select visible */
-    .connection-item-lookback { font-size: 0; display: inline-flex; align-items: center; flex-shrink: 0; }
-    .connection-item-lookback select { font-size: 12px; }
-    /* Push the picker / disconnect cluster hard to the right edge of the row */
+    /* Disconnect — row 1, far right */
+    .connection-item > .btn-disconnect { grid-column: 3; grid-row: 1; justify-self: end; }
+    /* Row 2 — lookback / SharePoint site label / pickers all flow into the second row */
+    .connection-item > .connection-item-lookback,
+    .connection-item > .connection-item-site,
     .connection-item > .btn-pick-folders,
-    .connection-item > .btn-pick-site { margin-left: auto; }
+    .connection-item > .btn-pick-site,
+    .connection-item > .btn-pick-libraries { grid-row: 2; justify-self: start; }
+    .connection-item-lookback { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
     .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
@@ -284,9 +288,9 @@
     .drive-lookback-select:hover { background-color: var(--blue-light); }
     .drive-lookback-select:focus { outline: none; }
 
-    /* Website multi-URL list — same flex pattern as folder rows */
+    /* Website multi-URL list — input boxes hardcoded to the same width as the account email box */
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .website-url-input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); box-sizing: border-box; }
+    .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
 
     .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background 0.15s; }
