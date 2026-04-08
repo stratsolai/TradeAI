@@ -251,11 +251,6 @@ window.CL_SETTINGS_LOGIC = {
 
   _bindEventDelegation: function () {
     var self = this;
-    document.addEventListener('input', function (e) {
-      if (e.target.closest('.website-url-input')) {
-        self._resetSaveBtn('website-save-btn', 'Save');
-      }
-    });
     document.addEventListener('change', function (e) {
       var lookbackSel = e.target.closest('.drive-lookback-select');
       if (lookbackSel) {
