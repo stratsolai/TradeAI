@@ -3,9 +3,10 @@
 // Redirect URI registered in Azure: https://staxai.com.au/api/cl-sharepoint-callback
 //
 // Multi-account: pushes onto profiles.cl_sharepoint_accounts (jsonb array).
-// Each entry: { account_email, access_token, refresh_token, connected_at, site: null, libraries: [] }
+// Each entry: { account_email, access_token, refresh_token, connected_at,
+//               sites: [{ id, displayName, webUrl, libraries: [{ id, name }, ...] }, ...] }
 // Reconnecting an existing account_email updates tokens in place and
-// preserves connected_at, site, and libraries.
+// preserves connected_at and sites.
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -117,15 +118,16 @@ export default async function handler(req, res) {
       if (tokenData.refresh_token) {
         currentAccounts[existingIdx].refresh_token = tokenData.refresh_token;
       }
-      // connected_at, site, and libraries preserved as-is
+      // connected_at and sites preserved as-is. Legacy entries with
+      // {site, libraries} are upgraded by the readers in sharepoint-import.js
+      // and cl-settings-logic.js.
     } else {
       var entry = {
         account_email: accountEmail,
         access_token: tokenData.access_token,
         refresh_token: tokenData.refresh_token || null,
         connected_at: new Date().toISOString(),
-        site: null,
-        libraries: [],
+        sites: [],
       };
       currentAccounts.push(entry);
     }
