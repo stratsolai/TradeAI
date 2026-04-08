@@ -243,16 +243,21 @@
 
     /* Connection multi-account list — single flex row: email | lookback | Choose Folders | Disconnect */
     .connection-list { width: 100%; }
-    .connection-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .connection-item { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
-    /* Account email — styled box matching folder/URL boxes, expands to fill remaining space */
-    .connection-item-email { flex: 1 1 220px; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); }
+    /* Account email — styled box matching folder/URL boxes, shrinks to fit so the right cluster always fits on the same row */
+    .connection-item-email { flex: 1 1 0; min-width: 80px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .connection-item-site { font-size: 12px; color: var(--text-muted); }
-    .connection-item-lookback { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+    .connection-item-site { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    /* Hide the literal "Lookback:" label text — keep the select visible */
+    .connection-item-lookback { font-size: 0; display: inline-flex; align-items: center; flex-shrink: 0; }
+    .connection-item-lookback select { font-size: 12px; }
+    /* Push the picker / disconnect cluster hard to the right edge of the row */
+    .connection-item > .btn-pick-folders,
+    .connection-item > .btn-pick-site { margin-left: auto; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
-    .btn-disconnect { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s, color 0.15s; }
+    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
     .btn-disconnect::before { content: "\2717"; font-size: 14px; }
     .btn-disconnect:hover { background: #8B2500; color: #fff; }
 
@@ -266,7 +271,7 @@
     .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Choose Folders / Choose Site / Choose Libraries — same look as the add button */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s; }
+    .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background 0.15s; white-space: nowrap; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles */
@@ -274,9 +279,10 @@
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
     .connection-folder-name { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; }
 
-    /* Lookback dropdown — custom platform style with chevron */
-    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 12px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 30px 6px 12px; font-size: 12px; font-family: var(--body-font); color: var(--text); cursor: pointer; }
-    .drive-lookback-select:focus { outline: none; border-color: var(--blue); }
+    /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
+    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
+    .drive-lookback-select:hover { background-color: var(--blue-light); }
+    .drive-lookback-select:focus { outline: none; }
 
     /* Website multi-URL list — same flex pattern as folder rows */
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -287,10 +293,10 @@
     .btn-save-urls:hover { background: #154070; }
 
     /* Connection row control — Add buttons align right; lists fill width */
-    .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; min-width: 460px; }
+    .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; flex: 1 1 auto; min-width: 0; }
 
     /* Uniform description column width across all connection rows */
-    #connections-rows .settings-row > div:first-child { flex: 0 0 360px; max-width: 360px; }
+    #connections-rows .settings-row > div:first-child { flex: 0 0 300px; max-width: 300px; }
 
     .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
     .topbar-account-btn:hover { text-decoration: none; color: #fff; }
