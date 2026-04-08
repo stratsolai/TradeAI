@@ -159,19 +159,28 @@
     }
     /* Frequency pills — match the .filter-btn tool filter pills in CL */
     .freq-btn {
-      padding: 7px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 7px 16px;
       border: 1.5px solid var(--border);
-      background: var(--white);
+      background-color: var(--white);
+      background-image: none;
       border-radius: 20px;
       cursor: pointer;
       font-size: 12px;
       font-weight: 600;
       color: #555;
       font-family: var(--body-font);
-      transition: all 0.2s;
+      line-height: 1.2;
+      white-space: nowrap;
+      appearance: none;
+      -webkit-appearance: none;
+      transition: background-color 0.2s, color 0.2s, border-color 0.2s;
     }
-    .freq-btn:hover { border-color: var(--blue); color: var(--blue); }
-    .freq-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .freq-btn:hover { border-color: var(--blue); color: var(--blue); background-color: var(--white); }
+    .freq-btn.active,
+    .freq-btn.active:hover { background-color: var(--blue); color: #fff; border-color: var(--blue); }
 
     /* ── SAVE FOOTER ── */
     .settings-footer {
@@ -232,24 +241,15 @@
     .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
     .topbar-nav-link:hover { color: #fff; }
 
-    /* Connection multi-account list */
+    /* Connection multi-account list — single flex row: email | lookback | Choose Folders | Disconnect */
     .connection-list { width: 100%; }
-    /* Two-row grid: row 1 = email + Disconnect, row 2 = lookback + Choose Folders (or SharePoint site + pickers) */
-    .connection-item { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; row-gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .connection-item { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
-    /* Account email — styled box matching folder/URL boxes, fills row 1 col 1 */
-    .connection-item-email { grid-column: 1; grid-row: 1; min-width: 0; width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); }
+    /* Account email — styled box matching folder/URL boxes, expands to fill remaining space */
+    .connection-item-email { flex: 1 1 220px; min-width: 0; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .connection-item-site { font-size: 12px; color: var(--text-muted); }
     .connection-item-lookback { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
-    /* Row 1: Disconnect on the right */
-    .connection-item > .btn-disconnect { grid-column: 2; grid-row: 1; }
-    /* Row 2: lookback / pickers / SharePoint site flow into the second row */
-    .connection-item > .connection-item-lookback,
-    .connection-item > .connection-item-site,
-    .connection-item > .btn-pick-folders,
-    .connection-item > .btn-pick-site,
-    .connection-item > .btn-pick-libraries { grid-row: 2; justify-self: start; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
     .btn-disconnect { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s, color 0.15s; }
@@ -261,12 +261,12 @@
     .btn-remove-folder::before, .btn-remove-url::before { content: "\2717"; font-size: 12px; }
     .btn-remove-folder:hover, .btn-remove-url:hover { background: #8B2500; color: #fff; }
 
-    /* Add buttons — match the Business Profile "+ Add Phone" button (blue outline + orange left border) */
-    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-left-color: var(--orange); border-left-width: 4px; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
+    /* Add buttons — blue outline */
+    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
     .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Choose Folders / Choose Site / Choose Libraries — same look as the add button */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-left-color: var(--orange); border-left-width: 4px; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s; }
+    .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles */
