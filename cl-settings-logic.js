@@ -75,6 +75,30 @@ window.CL_SETTINGS_LOGIC = {
     ]);
   },
 
+  // Lazy-upgrade a SharePoint entry from the legacy single-site shape
+  // ({ site, libraries }) into the multi-site shape ({ sites: [...] }).
+  // Idempotent — safe to call repeatedly. Mirrors the helper in
+  // api/sharepoint-import.js.
+  _upgradeSharepointEntry: function (entry) {
+    if (!entry) return;
+    if (entry.site && entry.site.id) {
+      if (!Array.isArray(entry.sites)) entry.sites = [];
+      var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
+      if (!siteAlreadyIn) {
+        entry.sites.push({
+          id: entry.site.id,
+          displayName: entry.site.displayName,
+          webUrl: entry.site.webUrl,
+          libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
+        });
+      }
+      delete entry.site;
+      delete entry.libraries;
+    } else if (!Array.isArray(entry.sites)) {
+      entry.sites = [];
+    }
+  },
+
   _loadConnections: async function () {
     var self = this;
     try {
@@ -90,6 +114,7 @@ window.CL_SETTINGS_LOGIC = {
       self._websiteUrls = data.website_urls || [];
       self._onedriveAccounts = Array.isArray(data.cl_onedrive_accounts) ? data.cl_onedrive_accounts : [];
       self._sharepointAccounts = Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : [];
+      self._sharepointAccounts.forEach(function (a) { self._upgradeSharepointEntry(a); });
       self._dropboxAccounts = Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : [];
       self._renderEmailList();
       self._renderDriveList();
@@ -272,10 +297,15 @@ window.CL_SETTINGS_LOGIC = {
           var odfA = disconnectBtn.getAttribute('data-account');
           var odfId = disconnectBtn.getAttribute('data-folder-id');
           if (odfA && odfId) self._disconnectOnedriveFolder(odfA, odfId);
+        } else if (type === 'sharepoint-site') {
+          var spsA = disconnectBtn.getAttribute('data-account');
+          var spsId = disconnectBtn.getAttribute('data-site-id');
+          if (spsA && spsId) self._disconnectSharepointSite(spsA, spsId);
         } else if (type === 'sharepoint-library') {
           var splA = disconnectBtn.getAttribute('data-account');
+          var splS = disconnectBtn.getAttribute('data-site-id');
           var splId = disconnectBtn.getAttribute('data-library-id');
-          if (splA && splId) self._disconnectSharepointLibrary(splA, splId);
+          if (splA && splS && splId) self._disconnectSharepointLibrary(splA, splS, splId);
         } else if (type === 'dropbox-folder') {
           var dbfA = disconnectBtn.getAttribute('data-account');
           var dbfId = disconnectBtn.getAttribute('data-folder-id');
@@ -293,16 +323,17 @@ window.CL_SETTINGS_LOGIC = {
         else if (pfType === 'drive' && pfAcct) self._openDriveFolderPicker(pfAcct);
         return;
       }
-      var pickSiteBtn = e.target.closest('.btn-pick-site');
-      if (pickSiteBtn) {
-        var psAcct = pickSiteBtn.getAttribute('data-account');
+      var pickSitesBtn = e.target.closest('.btn-pick-sites');
+      if (pickSitesBtn) {
+        var psAcct = pickSitesBtn.getAttribute('data-account');
         if (psAcct) self._openSharepointSitePicker(psAcct);
         return;
       }
       var pickLibrariesBtn = e.target.closest('.btn-pick-libraries');
       if (pickLibrariesBtn) {
         var plAcct = pickLibrariesBtn.getAttribute('data-account');
-        if (plAcct) self._openSharepointLibraryPicker(plAcct);
+        var plSiteId = pickLibrariesBtn.getAttribute('data-site-id');
+        if (plAcct && plSiteId) self._openSharepointLibraryPicker(plAcct, plSiteId);
         return;
       }
 
@@ -882,28 +913,37 @@ window.CL_SETTINGS_LOGIC = {
     var list = document.getElementById('sharepoint-connections-list');
     if (!list) return;
     list.innerHTML = self._sharepointAccounts.map(function (a) {
-      var siteName = (a.site && (a.site.displayName || a.site.name)) || 'No site selected';
-      var libraries = Array.isArray(a.libraries) ? a.libraries : [];
-      var libraryHtml = libraries.map(function (lib) {
+      self._upgradeSharepointEntry(a);
+      var sites = Array.isArray(a.sites) ? a.sites : [];
+      var sitesHtml = sites.map(function (s) {
+        var libraries = Array.isArray(s.libraries) ? s.libraries : [];
+        var libraryHtml = libraries.map(function (lib) {
+          return '<div class="connection-folder-row" style="justify-content:space-between;padding-left:24px;">' +
+            '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
+            '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
+            '</div>';
+        }).join('');
+        var siteName = s.displayName || s.name || s.id || '';
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
-          '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
-          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
-          '</div>';
+          '<div class="connection-folder-name">' + siteName + '</div>' +
+          '<div style="display:flex;gap:6px;align-items:center;">' +
+            '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '">Choose Libraries</button>' +
+            '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
+          '</div>' +
+          '</div>' +
+          libraryHtml;
       }).join('');
-      var librariesDisabled = !a.site || !a.site.id;
       return '<div class="connection-item">' +
         '<div class="connection-item-row1">' +
           '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
           '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="sharepoint">Disconnect</button>' +
         '</div>' +
         '<div class="connection-item-row2">' +
-          '<span class="connection-item-site">Site: ' + siteName + '</span>' +
           self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
-          '<button class="btn-pick-site" data-account="' + (a.account_email || '') + '">Choose Site</button>' +
-          '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '"' + (librariesDisabled ? ' disabled' : '') + '>Choose Libraries</button>' +
+          '<button class="btn-pick-sites" data-account="' + (a.account_email || '') + '">Choose Sites</button>' +
         '</div>' +
         '</div>' +
-        (libraries.length > 0 ? '<div class="connection-folders-list">' + libraryHtml + '</div>' : '');
+        (sites.length > 0 ? '<div class="connection-folders-list">' + sitesHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-sharepoint-btn');
     if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('sharepoint'); }; }
@@ -961,15 +1001,15 @@ window.CL_SETTINGS_LOGIC = {
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
-      var currentSiteId = entry && entry.site ? entry.site.id : null;
-      // Each row mirrors the folder/library picker pattern: a readonly input
-      // box for the site name and an Add/Remove button. SharePoint sites are
-      // single-select per account — the currently chosen site renders with
-      // the Remove style; all others render with the Add style.
+      if (entry) self._upgradeSharepointEntry(entry);
+      var existingIds = (entry && Array.isArray(entry.sites)) ? entry.sites.map(function (s) { return s.id; }) : [];
+      // Multi-select pattern matching the OneDrive folder picker. Each row
+      // toggles a site in or out of entry.sites[]. Removing a site here also
+      // removes its libraries; the user picks libraries per site afterwards.
       pickerList.innerHTML = sites.map(function (s) {
-        var isCurrent = currentSiteId === s.id;
-        var btnClass = isCurrent ? 'btn-remove-folder' : 'btn-add-folder';
-        var btnLabel = isCurrent ? 'Remove' : '+ Add';
+        var already = existingIds.indexOf(s.id) !== -1;
+        var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = already ? 'Remove' : '+ Add';
         return '<div class="connection-folder-row" style="padding:6px 0;">' +
           '<input type="text" class="website-url-input" value="' + (s.displayName || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-site-id="' + s.id + '" data-site-name="' + (s.displayName || '') + '" data-site-weburl="' + (s.webUrl || '') + '">' + btnLabel + '</button>' +
@@ -983,22 +1023,14 @@ window.CL_SETTINGS_LOGIC = {
         var siteWebUrl = btn.getAttribute('data-site-weburl');
         var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
         if (entryIdx === -1) return;
-        var prev = self._sharepointAccounts[entryIdx].site;
-        var prevLibraries = self._sharepointAccounts[entryIdx].libraries;
-        var isRemove = prev && prev.id === siteId;
-        var allBtns = pickerList.querySelectorAll('.folder-picker-toggle');
-        allBtns.forEach(function (b) { b.disabled = true; });
-        if (isRemove) {
-          self._sharepointAccounts[entryIdx].site = null;
-          self._sharepointAccounts[entryIdx].libraries = [];
-        } else {
-          // Reset libraries when switching to a different site — the
-          // previously chosen libraries no longer make sense.
-          if (!prev || prev.id !== siteId) {
-            self._sharepointAccounts[entryIdx].libraries = [];
-          }
-          self._sharepointAccounts[entryIdx].site = { id: siteId, displayName: siteName, webUrl: siteWebUrl };
-        }
+        self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+        var current = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
+        var isAdded = current.some(function (s) { return s.id === siteId; });
+        var next = isAdded
+          ? current.filter(function (s) { return s.id !== siteId; })
+          : current.concat([{ id: siteId, displayName: siteName, webUrl: siteWebUrl, libraries: [] }]);
+        btn.disabled = true;
+        self._sharepointAccounts[entryIdx].sites = next;
         try {
           var res = await self._supabase
             .from('profiles')
@@ -1006,34 +1038,25 @@ window.CL_SETTINGS_LOGIC = {
             .eq('id', self._userId);
           if (res.error) {
             console.error('SharePoint site picker save error:', res.error);
-            self._sharepointAccounts[entryIdx].site = prev;
-            self._sharepointAccounts[entryIdx].libraries = prevLibraries;
-            allBtns.forEach(function (b) { b.disabled = false; });
+            self._sharepointAccounts[entryIdx].sites = current;
+            btn.disabled = false;
             return;
           }
-          self._renderSharepointList();
-          if (isRemove) {
-            // Site cleared — picker stays open. All buttons revert to Add.
-            allBtns.forEach(function (b) {
-              b.classList.remove('btn-remove-folder');
-              b.classList.add('btn-add-folder');
-              b.textContent = '+ Add';
-              b.disabled = false;
-            });
+          if (isAdded) {
+            btn.classList.remove('btn-remove-folder');
+            btn.classList.add('btn-add-folder');
+            btn.textContent = '+ Add';
           } else {
-            // Site selected — close picker and chain to the library picker
-            // so the two-step flow continues unchanged.
-            picker.style.display = 'none';
-            if (picker.parentElement && picker.parentElement.classList && picker.parentElement.classList.contains('settings-row')) {
-              picker.parentElement.style.flexWrap = '';
-            }
-            self._openSharepointLibraryPicker(accountEmail);
+            btn.classList.remove('btn-add-folder');
+            btn.classList.add('btn-remove-folder');
+            btn.textContent = 'Remove';
           }
+          self._renderSharepointList();
+          btn.disabled = false;
         } catch (saveErr) {
           console.error('SharePoint site picker save exception:', saveErr);
-          self._sharepointAccounts[entryIdx].site = prev;
-          self._sharepointAccounts[entryIdx].libraries = prevLibraries;
-          allBtns.forEach(function (b) { b.disabled = false; });
+          self._sharepointAccounts[entryIdx].sites = current;
+          btn.disabled = false;
         }
       };
     } catch (err) {
@@ -1042,7 +1065,7 @@ window.CL_SETTINGS_LOGIC = {
     }
   },
 
-  _openSharepointLibraryPicker: async function (accountEmail) {
+  _openSharepointLibraryPicker: async function (accountEmail, siteId) {
     var self = this;
     var picker = document.getElementById('sharepoint-library-picker');
     var pickerList = document.getElementById('sharepoint-library-picker-list');
@@ -1063,6 +1086,7 @@ window.CL_SETTINGS_LOGIC = {
       parentRow.style.flexWrap = 'wrap';
     }
     picker.setAttribute('data-account', accountEmail);
+    picker.setAttribute('data-site-id', siteId || '');
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading libraries...</div>';
     try {
@@ -1070,7 +1094,7 @@ window.CL_SETTINGS_LOGIC = {
       var resp = await fetch('/api/sharepoint-import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: JSON.stringify({ action: 'list-libraries', accountEmail: accountEmail })
+        body: JSON.stringify({ action: 'list-libraries', accountEmail: accountEmail, siteId: siteId })
       });
       var data = await resp.json();
       if (!data.success) { throw new Error(data.error || 'Could not list document libraries'); }
@@ -1080,7 +1104,10 @@ window.CL_SETTINGS_LOGIC = {
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
-      var existingIds = (entry && Array.isArray(entry.libraries)) ? entry.libraries.map(function (lib) { return lib.id; }) : [];
+      if (entry) self._upgradeSharepointEntry(entry);
+      var sitesArr = entry && Array.isArray(entry.sites) ? entry.sites : [];
+      var site = sitesArr.find(function (s) { return s && s.id === siteId; });
+      var existingIds = (site && Array.isArray(site.libraries)) ? site.libraries.map(function (lib) { return lib.id; }) : [];
       pickerList.innerHTML = libraries.map(function (lib) {
         var already = existingIds.indexOf(lib.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
@@ -1097,13 +1124,18 @@ window.CL_SETTINGS_LOGIC = {
         var libraryName = btn.getAttribute('data-library-name');
         var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
         if (entryIdx === -1) return;
-        var current = Array.isArray(self._sharepointAccounts[entryIdx].libraries) ? self._sharepointAccounts[entryIdx].libraries : [];
+        self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+        var sitesArr2 = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
+        var siteIdx = sitesArr2.findIndex(function (s) { return s && s.id === siteId; });
+        if (siteIdx === -1) return;
+        var current = Array.isArray(sitesArr2[siteIdx].libraries) ? sitesArr2[siteIdx].libraries : [];
         var isAdded = current.some(function (lib) { return lib.id === libraryId; });
         var next = isAdded
           ? current.filter(function (lib) { return lib.id !== libraryId; })
           : current.concat([{ id: libraryId, name: libraryName }]);
         btn.disabled = true;
-        self._sharepointAccounts[entryIdx].libraries = next;
+        sitesArr2[siteIdx].libraries = next;
+        self._sharepointAccounts[entryIdx].sites = sitesArr2;
         try {
           var res = await self._supabase
             .from('profiles')
@@ -1111,7 +1143,8 @@ window.CL_SETTINGS_LOGIC = {
             .eq('id', self._userId);
           if (res.error) {
             console.error('SharePoint library picker save error:', res.error);
-            self._sharepointAccounts[entryIdx].libraries = current;
+            sitesArr2[siteIdx].libraries = current;
+            self._sharepointAccounts[entryIdx].sites = sitesArr2;
             btn.disabled = false;
             return;
           }
@@ -1128,7 +1161,8 @@ window.CL_SETTINGS_LOGIC = {
           btn.disabled = false;
         } catch (saveErr) {
           console.error('SharePoint library picker save exception:', saveErr);
-          self._sharepointAccounts[entryIdx].libraries = current;
+          sitesArr2[siteIdx].libraries = current;
+          self._sharepointAccounts[entryIdx].sites = sitesArr2;
           btn.disabled = false;
         }
       };
@@ -1151,13 +1185,35 @@ window.CL_SETTINGS_LOGIC = {
     } catch (e) { console.error('_disconnectSharepointAccount exception:', e); }
   },
 
-  _disconnectSharepointLibrary: async function (accountEmail, libraryId) {
+  _disconnectSharepointSite: async function (accountEmail, siteId) {
     var self = this;
     try {
       var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
       if (entryIdx === -1) return;
-      var libraries = Array.isArray(self._sharepointAccounts[entryIdx].libraries) ? self._sharepointAccounts[entryIdx].libraries : [];
-      self._sharepointAccounts[entryIdx].libraries = libraries.filter(function (lib) { return lib.id !== libraryId; });
+      self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+      var sites = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
+      self._sharepointAccounts[entryIdx].sites = sites.filter(function (s) { return s && s.id !== siteId; });
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_sharepoint_accounts: self._sharepointAccounts })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_disconnectSharepointSite error:', res.error); await self._loadConnections(); return; }
+      self._renderSharepointList();
+    } catch (e) { console.error('_disconnectSharepointSite exception:', e); }
+  },
+
+  _disconnectSharepointLibrary: async function (accountEmail, siteId, libraryId) {
+    var self = this;
+    try {
+      var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+      if (entryIdx === -1) return;
+      self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+      var sites = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
+      var siteIdx = sites.findIndex(function (s) { return s && s.id === siteId; });
+      if (siteIdx === -1) return;
+      var libraries = Array.isArray(sites[siteIdx].libraries) ? sites[siteIdx].libraries : [];
+      sites[siteIdx].libraries = libraries.filter(function (lib) { return lib.id !== libraryId; });
+      self._sharepointAccounts[entryIdx].sites = sites;
       var res = await self._supabase
         .from('profiles')
         .update({ cl_sharepoint_accounts: self._sharepointAccounts })
