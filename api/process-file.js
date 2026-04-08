@@ -89,7 +89,7 @@ const handler = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { userId, fileName, fileType, fileData, websiteUrl, source_item_id } = req.body;
+  const { userId, fileName, fileType, fileData, websiteUrl, source_item_id, mediaType } = req.body;
 
   if (!userId || (!fileData && !websiteUrl) || !fileType) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -113,10 +113,21 @@ const handler = async (req, res) => {
       sourceValue = 'document';
     } else if (fileType === 'image' && fileData) {
       var imgExt = (fileName || '').toLowerCase().split('.').pop();
-      var imgMediaType = ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt] || 'image/jpeg';
+      // Honour the browser-detected MIME from the caller if provided —
+      // this is what unblocks HEIC and other modern image formats that
+      // would otherwise fall through to the image/jpeg default below
+      // and be sent to Claude vision falsely tagged as JPEG. The
+      // extension lookup is the fallback for legacy callers.
+      var imgMediaType = mediaType
+        || ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt]
+        || 'image/jpeg';
       sourceText = await describeImage(fileData, claudeApiKey, imgMediaType);
       sourceValue = 'photo';
-    } else if (fileType === 'text' && fileData) {
+    } else if ((fileType === 'text' || fileType === 'html') && fileData) {
+      // Both 'text' and 'html' are routed through the same UTF-8
+      // decode path. HTML markup is left as-is for the LLM rather
+      // than stripped — Claude handles tags well and the extraction
+      // prompt only sees the first 8000 characters anyway.
       sourceText = Buffer.from(fileData, 'base64').toString('utf-8');
       sourceValue = 'document';
     } else if (fileType === 'word' && fileData) {
