@@ -739,6 +739,12 @@ window.CL_SETTINGS_LOGIC = {
     var list = document.getElementById('onedrive-connections-list');
     if (!list) return;
     list.innerHTML = self._onedriveAccounts.map(function (a) {
+      // Skip null or otherwise falsy entries — a corrupted jsonb row
+      // would otherwise crash the map with "Cannot read properties of
+      // null (reading 'folders')" and abort the rest of _loadConnections,
+      // which is what was leaving the Add OneDrive / SharePoint / Dropbox
+      // buttons unbound.
+      if (!a) return '';
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
