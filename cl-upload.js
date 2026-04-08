@@ -160,7 +160,7 @@ window.CL_UPLOAD = {
           pillsHtml = "<div class=\"source-pill-instruction\">Select the folders to scan:</div>" +
             t.groups.map(function(g) {
               return "<div class=\"source-pill-group\" style=\"margin-bottom:8px;\">" +
-                "<div class=\"source-pill-account\" style=\"font-size:12px;font-weight:600;color:#555;margin-bottom:4px;\">" + g.account + "</div>" +
+                "<div class=\"source-pill-account\" style=\"font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-align:center;\">" + g.account + "</div>" +
                 "<div class=\"source-select-pills\">" + g.items.map(function(p) {
                   return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
                 }).join("") + "</div>" +
