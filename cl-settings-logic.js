@@ -502,6 +502,18 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('drive-folder-picker');
     var pickerList = document.getElementById('drive-folder-picker-list');
     if (!picker || !pickerList) return;
+    // Relocate the picker inside the Google Drive settings-row so it sits
+    // above the row's bottom divider, anchored to the Drive section instead
+    // of bleeding visually into the OneDrive section below.
+    var driveAddBtn = document.getElementById('add-drive-btn');
+    var driveRow = driveAddBtn ? driveAddBtn.closest('.settings-row') : null;
+    if (driveRow && picker.parentElement !== driveRow) {
+      driveRow.appendChild(picker);
+      driveRow.style.flexWrap = 'wrap';
+      picker.style.flexBasis = '100%';
+      picker.style.width = '100%';
+      picker.style.margin = '12px 0 0 0';
+    }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
