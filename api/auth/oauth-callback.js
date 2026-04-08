@@ -7,9 +7,7 @@ module.exports = async (req, res) => {
   const path = req.url || '';
   let provider = 'unknown';
   
-  if (path.includes('/google-drive/')) {
-    provider = 'google-drive';
-  } else if (path.includes('/google/')) {
+  if (path.includes('/google/')) {
     provider = 'google';
   } else if (path.includes('/gmail/')) {
     provider = 'gmail';
@@ -196,7 +194,7 @@ module.exports = async (req, res) => {
       throw new Error(`${provider} credentials not configured`);
     }
 
-    const redirectUri = `${'https://staxai.com.au'}/api/auth/${provider === 'google-drive' ? 'google-drive' : provider}/callback`;
+    const redirectUri = `${'https://staxai.com.au'}/api/auth/${provider}/callback`;
     console.log('Redirect URI:', redirectUri);
 
     // Exchange code for tokens
@@ -328,10 +326,10 @@ module.exports = async (req, res) => {
         const clProvider = stateObj.provider || req.query.provider;
         const clUpdateData = {};
 
-        if (clProvider === 'gmail' || clProvider === 'google' || clProvider === 'outlook' || clProvider === 'microsoft' || clProvider === 'google-drive' || clProvider === 'drive') {
+        if (clProvider === 'gmail' || clProvider === 'google' || clProvider === 'outlook' || clProvider === 'microsoft') {
           // Read existing cl_connected_emails array
           const existingRes = await fetch(
-            `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails,cl_drive_connected`,
+            `${process.env.SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}&select=cl_connected_emails`,
             {
               headers: {
                 'apikey': process.env.SUPABASE_SERVICE_KEY,
@@ -342,27 +340,19 @@ module.exports = async (req, res) => {
           const existingData = await existingRes.json();
           const existing = existingData[0] || {};
 
-          if (clProvider === 'drive' || clProvider === 'google-drive') {
-            clUpdateData.cl_drive_connected = true;
-            clUpdateData.cl_drive_access_token = tokenData.access_token;
+          const currentEmails = existing.cl_connected_emails || [];
+          const existingIdx = currentEmails.findIndex(function(e) { return e.email === userEmail && e.provider === clProvider; });
+          if (existingIdx > -1) {
+            currentEmails[existingIdx].access_token = tokenData.access_token;
             if (tokenData.refresh_token) {
-              clUpdateData.cl_drive_refresh_token = tokenData.refresh_token;
+              currentEmails[existingIdx].refresh_token = tokenData.refresh_token;
             }
           } else {
-            const currentEmails = existing.cl_connected_emails || [];
-            const existingIdx = currentEmails.findIndex(function(e) { return e.email === userEmail && e.provider === clProvider; });
-            if (existingIdx > -1) {
-              currentEmails[existingIdx].access_token = tokenData.access_token;
-              if (tokenData.refresh_token) {
-                currentEmails[existingIdx].refresh_token = tokenData.refresh_token;
-              }
-            } else {
-              var entry = { provider: clProvider, email: userEmail, connected_at: new Date().toISOString(), access_token: tokenData.access_token };
-              if (tokenData.refresh_token) entry.refresh_token = tokenData.refresh_token;
-              currentEmails.push(entry);
-            }
-            clUpdateData.cl_connected_emails = currentEmails;
+            var entry = { provider: clProvider, email: userEmail, connected_at: new Date().toISOString(), access_token: tokenData.access_token };
+            if (tokenData.refresh_token) entry.refresh_token = tokenData.refresh_token;
+            currentEmails.push(entry);
           }
+          clUpdateData.cl_connected_emails = currentEmails;
 
           const qs = querystring.stringify({ id: `eq.${userId}` });
           await fetch(
@@ -393,7 +383,7 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error(`${provider} OAuth error:`, error);
-    const redirectPage = provider === 'google-drive' ? 'content-library' : provider === 'gmail' ? 'email-assistant' : 'chatbot-settings';
+    const redirectPage = provider === 'gmail' ? 'email-assistant' : 'chatbot-settings';
     res.redirect(`/${redirectPage}.html?error=oauth_failed&details=${encodeURIComponent(error.message)}`);
   }
 };
