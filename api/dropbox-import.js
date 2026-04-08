@@ -111,12 +111,21 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
   "7. If no meaningful content can be extracted, return an empty array [].";
 
-// MIME types we can extract text from via Claude document API
+// MIME types we can extract text from via Claude document API. The
+// modern Office Open XML formats (docx/xlsx/pptx) and PDF are the
+// reliable cases. Legacy Office (msword/ms-excel/ms-powerpoint) is
+// included so .doc/.xls/.ppt files in Dropbox stop being silently
+// dropped at the format gate — Claude's document API may not always
+// extract them cleanly, but a logged failed extraction is strictly
+// better than the previous silent skip with no record at all.
 const DROPBOX_BINARY_DOC_MIME = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
 ];
 
 // Infer a MIME type from a filename extension. Returns '' for unknown types
@@ -129,7 +138,11 @@ function inferMimeFromExtension(fileName) {
   if (ext === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
   if (ext === 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
   if (ext === 'pptx') return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  if (ext === 'doc') return 'application/msword';
+  if (ext === 'xls') return 'application/vnd.ms-excel';
+  if (ext === 'ppt') return 'application/vnd.ms-powerpoint';
   if (ext === 'txt' || ext === 'md' || ext === 'csv') return 'text/plain';
+  if (ext === 'html' || ext === 'htm') return 'text/html';
   if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
   if (ext === 'png') return 'image/png';
   if (ext === 'gif') return 'image/gif';
