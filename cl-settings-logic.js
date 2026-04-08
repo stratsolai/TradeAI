@@ -524,7 +524,7 @@ window.CL_SETTINGS_LOGIC = {
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
-        var btnLabel = already ? 'Remove' : 'Add';
+        var btnLabel = already ? 'Remove' : '+ Add';
         return '<div class="connection-folder-row" style="padding:6px 0;">' +
           '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
@@ -558,7 +558,7 @@ window.CL_SETTINGS_LOGIC = {
           if (isAdded) {
             btn.classList.remove('btn-remove-folder');
             btn.classList.add('btn-add-folder');
-            btn.textContent = 'Add';
+            btn.textContent = '+ Add';
           } else {
             btn.classList.remove('btn-add-folder');
             btn.classList.add('btn-remove-folder');
