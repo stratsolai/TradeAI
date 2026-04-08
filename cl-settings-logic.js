@@ -126,14 +126,6 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var list = document.getElementById('drive-connections-list');
     if (!list) return;
-    var lookbackOptions = [
-      { value: '', label: 'All time' },
-      { value: '1', label: '1 month' },
-      { value: '3', label: '3 months' },
-      { value: '6', label: '6 months' },
-      { value: '12', label: '12 months' },
-      { value: '24', label: '24 months' }
-    ];
     list.innerHTML = self._driveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
@@ -142,16 +134,9 @@ window.CL_SETTINGS_LOGIC = {
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
       }).join('');
-      var currentLookback = (a.lookback_months == null) ? '12' : String(a.lookback_months);
-      var lookbackHtml = '<select class="drive-lookback-select" data-account="' + (a.account_email || '') + '">' +
-        lookbackOptions.map(function (opt) {
-          var selected = opt.value === currentLookback ? ' selected' : '';
-          return '<option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>';
-        }).join('') +
-        '</select>';
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        '<span class="connection-item-lookback">Lookback: ' + lookbackHtml + '</span>' +
+        self._buildLookbackHtml('drive', a.account_email, a.lookback_months) +
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
         '</div>' +
@@ -209,8 +194,9 @@ window.CL_SETTINGS_LOGIC = {
     document.addEventListener('change', function (e) {
       var lookbackSel = e.target.closest('.drive-lookback-select');
       if (lookbackSel) {
+        var provider = lookbackSel.getAttribute('data-provider') || 'drive';
         var acct = lookbackSel.getAttribute('data-account');
-        if (acct) self._changeDriveLookback(acct, lookbackSel.value);
+        if (acct) self._changeLookback(provider, acct, lookbackSel.value);
       }
     });
     document.addEventListener('click', function (e) {
@@ -376,19 +362,30 @@ window.CL_SETTINGS_LOGIC = {
     } catch (e) { console.error('_disconnectDriveFolder exception:', e); }
   },
 
-  _changeDriveLookback: async function (accountEmail, value) {
+  _changeLookback: async function (provider, accountEmail, value) {
     var self = this;
+    var fieldMap = {
+      drive:      { state: '_driveAccounts',      column: 'cl_drive_accounts' },
+      onedrive:   { state: '_onedriveAccounts',   column: 'cl_onedrive_accounts' },
+      sharepoint: { state: '_sharepointAccounts', column: 'cl_sharepoint_accounts' },
+      dropbox:    { state: '_dropboxAccounts',    column: 'cl_dropbox_accounts' }
+    };
+    var conf = fieldMap[provider];
+    if (!conf) return;
     try {
-      var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+      var arr = self[conf.state];
+      var entryIdx = arr.findIndex(function (a) { return a && a.account_email === accountEmail; });
       if (entryIdx === -1) return;
       var months = value === '' ? null : parseInt(value, 10);
-      self._driveAccounts[entryIdx].lookback_months = months;
+      arr[entryIdx].lookback_months = months;
+      var update = {};
+      update[conf.column] = arr;
       var res = await self._supabase
         .from('profiles')
-        .update({ cl_drive_accounts: self._driveAccounts })
+        .update(update)
         .eq('id', self._userId);
-      if (res.error) { console.error('_changeDriveLookback error:', res.error); await self._loadConnections(); return; }
-    } catch (e) { console.error('_changeDriveLookback exception:', e); }
+      if (res.error) { console.error('_changeLookback error:', res.error); await self._loadConnections(); return; }
+    } catch (e) { console.error('_changeLookback exception:', e); }
   },
 
   _validateUrl: function (raw) {
@@ -584,6 +581,27 @@ window.CL_SETTINGS_LOGIC = {
     window.location.href = '/api/cl-oauth-initiate?provider=' + provider + '&userId=' + this._userId;
   },
 
+  // Lookback dropdown — rendered identically on all four file storage providers.
+  // provider: 'drive' | 'onedrive' | 'sharepoint' | 'dropbox'
+  _buildLookbackHtml: function (provider, accountEmail, currentMonths) {
+    var current = (currentMonths == null) ? '12' : String(currentMonths);
+    var opts = [
+      { v: '',   l: 'All time' },
+      { v: '1',  l: '1 month' },
+      { v: '3',  l: '3 months' },
+      { v: '6',  l: '6 months' },
+      { v: '12', l: '12 months' },
+      { v: '24', l: '24 months' }
+    ];
+    return '<span class="connection-item-lookback">Lookback: ' +
+      '<select class="drive-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
+      opts.map(function (o) {
+        var s = o.v === current ? ' selected' : '';
+        return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
+      }).join('') +
+      '</select></span>';
+  },
+
   // ── OneDrive ───────────────────────────────────────────────────────────
 
   _renderOnedriveList: function () {
@@ -600,6 +618,7 @@ window.CL_SETTINGS_LOGIC = {
       }).join('');
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+        self._buildLookbackHtml('onedrive', a.account_email, a.lookback_months) +
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="onedrive">Disconnect</button>' +
         '</div>' +
@@ -738,6 +757,7 @@ window.CL_SETTINGS_LOGIC = {
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
         '<span class="connection-item-site">Site: ' + siteName + '</span>' +
+        self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
         '<button class="btn-pick-site" data-account="' + (a.account_email || '') + '">Choose Site</button>' +
         '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '"' + (librariesDisabled ? ' disabled' : '') + '>Choose Libraries</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="sharepoint">Disconnect</button>' +
@@ -948,6 +968,7 @@ window.CL_SETTINGS_LOGIC = {
       }).join('');
       return '<div class="connection-item">' +
         '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+        self._buildLookbackHtml('dropbox', a.account_email, a.lookback_months) +
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">📁 Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="dropbox">Disconnect</button>' +
         '</div>' +
