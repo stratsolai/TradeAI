@@ -259,7 +259,22 @@ window.CL_UPLOAD = {
               return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
             }).join("") + "</div>";
         }
-        var noteHtml = t.note ? "<div class=\"source-tile-note\">" + t.note + "</div>" : "";
+        // Pin the note to just above the action buttons regardless of how
+        // much pill content sits above it. The .source-tile container is a
+        // flex column where .source-tile-actions is normally pushed to the
+        // bottom by margin-top:auto. With short pill content (e.g. Dropbox
+        // showing only the root pill) the unmargined note floats up near
+        // the description and a large gap opens between the note and the
+        // actions. Giving the note its own margin-top:auto absorbs that
+        // free space ahead of the actions, so the note sits flush above
+        // the buttons across every tile. Actions has its CSS margin-top
+        // overridden to 0 in this case so the two do not compete for the
+        // auto space. Tiles without a note (e.g. Gmail/Outlook/Website
+        // before any account is connected) keep the original behaviour —
+        // .source-tile-actions retains its CSS margin-top:auto and pins
+        // itself to the bottom on its own.
+        var noteHtml = t.note ? "<div class=\"source-tile-note\" style=\"margin-top:auto;\">" + t.note + "</div>" : "";
+        var actionsStyle = t.note ? " style=\"margin-top:0;\"" : "";
         return [
           "<div class=\"source-tile\"" + tileStyle + ">",
             "<div class=\"source-tile-top\">",
@@ -271,7 +286,7 @@ window.CL_UPLOAD = {
             "</div>",
             pillsHtml,
             noteHtml,
-            "<div class=\"source-tile-actions\">",
+            "<div class=\"source-tile-actions\"" + actionsStyle + ">",
               "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
               "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scan</button>",
               "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
