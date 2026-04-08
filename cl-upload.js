@@ -203,18 +203,18 @@ window.CL_UPLOAD = {
       grid.innerHTML = tiles.map(function(t) {
         var pillsHtml = "";
         if (t.groups && t.groups.length > 0) {
-          pillsHtml = "<div class=\"source-pill-instruction\">Select the folders to scan:</div>" +
+          pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the folders to scan:</div>" +
             t.groups.map(function(g) {
-              return "<div class=\"source-pill-group\" style=\"margin-bottom:8px;\">" +
+              return "<div class=\"source-pill-group\" style=\"display:flex;flex-direction:column;align-items:center;margin-bottom:8px;\">" +
                 "<div class=\"source-pill-account\" style=\"font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-align:center;\">" + g.account + "</div>" +
-                "<div class=\"source-select-pills\">" + g.items.map(function(p) {
+                "<div class=\"source-select-pills\" style=\"justify-content:center;\">" + g.items.map(function(p) {
                   return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
                 }).join("") + "</div>" +
                 "</div>";
             }).join("");
         } else if (t.pills && t.pills.length > 0) {
-          pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
-            "<div class=\"source-select-pills\">" + t.pills.map(function(p) {
+          pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
+            "<div class=\"source-select-pills\" style=\"justify-content:center;\">" + t.pills.map(function(p) {
               return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
             }).join("") + "</div>";
         }
