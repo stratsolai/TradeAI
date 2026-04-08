@@ -104,15 +104,19 @@ window.CL_SETTINGS_LOGIC = {
 
     gmailList.innerHTML = gmails.map(function (e) {
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (e.email || '') + '</span>' +
-        '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (e.email || '') + '</span>' +
+          '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
+        '</div>' +
         '</div>';
     }).join('');
 
     outlookList.innerHTML = outlooks.map(function (e) {
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (e.email || '') + '</span>' +
-        '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (e.email || '') + '</span>' +
+          '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
+        '</div>' +
         '</div>';
     }).join('');
 
