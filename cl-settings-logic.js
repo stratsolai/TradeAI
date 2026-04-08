@@ -715,6 +715,17 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('onedrive-folder-picker');
     var pickerList = document.getElementById('onedrive-folder-picker-list');
     if (!picker || !pickerList) return;
+    // Relocate the picker inside the OneDrive settings-row so it sits above
+    // the row's bottom divider, anchored to the OneDrive section.
+    var addBtn = document.getElementById('add-onedrive-btn');
+    var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
+    if (parentRow && picker.parentElement !== parentRow) {
+      parentRow.appendChild(picker);
+      parentRow.style.flexWrap = 'wrap';
+      picker.style.flexBasis = '100%';
+      picker.style.width = '100%';
+      picker.style.margin = '12px 0 0 0';
+    }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
@@ -736,11 +747,55 @@ window.CL_SETTINGS_LOGIC = {
       var existingIds = (entry && Array.isArray(entry.folders)) ? entry.folders.map(function (f) { return f.id; }) : [];
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
-        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
-          '<input type="checkbox" class="onedrive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + '>' +
-          '<span class="connection-item-email">' + (f.name || '') + (already ? ' (already connected)' : '') + '</span>' +
-          '</label>';
+        var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = already ? 'Remove' : '+ Add';
+        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+          '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
+          '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
+          '</div>';
       }).join('');
+      pickerList.onclick = async function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
+        if (!btn || btn.disabled) return;
+        var folderId = btn.getAttribute('data-folder-id');
+        var folderName = btn.getAttribute('data-folder-name');
+        var entryIdx = self._onedriveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (entryIdx === -1) return;
+        var current = Array.isArray(self._onedriveAccounts[entryIdx].folders) ? self._onedriveAccounts[entryIdx].folders : [];
+        var isAdded = current.some(function (f) { return f.id === folderId; });
+        var next = isAdded
+          ? current.filter(function (f) { return f.id !== folderId; })
+          : current.concat([{ id: folderId, name: folderName }]);
+        btn.disabled = true;
+        self._onedriveAccounts[entryIdx].folders = next;
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ cl_onedrive_accounts: self._onedriveAccounts })
+            .eq('id', self._userId);
+          if (res.error) {
+            console.error('OneDrive folder picker save error:', res.error);
+            self._onedriveAccounts[entryIdx].folders = current;
+            btn.disabled = false;
+            return;
+          }
+          if (isAdded) {
+            btn.classList.remove('btn-remove-folder');
+            btn.classList.add('btn-add-folder');
+            btn.textContent = '+ Add';
+          } else {
+            btn.classList.remove('btn-add-folder');
+            btn.classList.add('btn-remove-folder');
+            btn.textContent = 'Remove';
+          }
+          self._renderOnedriveList();
+          btn.disabled = false;
+        } catch (saveErr) {
+          console.error('OneDrive folder picker save exception:', saveErr);
+          self._onedriveAccounts[entryIdx].folders = current;
+          btn.disabled = false;
+        }
+      };
     } catch (err) {
       console.error('OneDrive folder picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
@@ -933,6 +988,17 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('sharepoint-library-picker');
     var pickerList = document.getElementById('sharepoint-library-picker-list');
     if (!picker || !pickerList) return;
+    // Relocate the picker inside the SharePoint settings-row so it sits above
+    // the row's bottom divider, anchored to the SharePoint section.
+    var addBtn = document.getElementById('add-sharepoint-btn');
+    var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
+    if (parentRow && picker.parentElement !== parentRow) {
+      parentRow.appendChild(picker);
+      parentRow.style.flexWrap = 'wrap';
+      picker.style.flexBasis = '100%';
+      picker.style.width = '100%';
+      picker.style.margin = '12px 0 0 0';
+    }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading libraries...</div>';
@@ -954,11 +1020,55 @@ window.CL_SETTINGS_LOGIC = {
       var existingIds = (entry && Array.isArray(entry.libraries)) ? entry.libraries.map(function (lib) { return lib.id; }) : [];
       pickerList.innerHTML = libraries.map(function (lib) {
         var already = existingIds.indexOf(lib.id) !== -1;
-        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
-          '<input type="checkbox" class="sharepoint-library-checkbox" data-library-id="' + lib.id + '" data-library-name="' + (lib.name || '') + '"' + (already ? ' checked disabled' : '') + '>' +
-          '<span class="connection-item-email">' + (lib.name || '') + (already ? ' (already connected)' : '') + '</span>' +
-          '</label>';
+        var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = already ? 'Remove' : '+ Add';
+        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+          '<input type="text" class="website-url-input" value="' + (lib.name || '') + '" readonly>' +
+          '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-library-id="' + lib.id + '" data-library-name="' + (lib.name || '') + '">' + btnLabel + '</button>' +
+          '</div>';
       }).join('');
+      pickerList.onclick = async function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
+        if (!btn || btn.disabled) return;
+        var libraryId = btn.getAttribute('data-library-id');
+        var libraryName = btn.getAttribute('data-library-name');
+        var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (entryIdx === -1) return;
+        var current = Array.isArray(self._sharepointAccounts[entryIdx].libraries) ? self._sharepointAccounts[entryIdx].libraries : [];
+        var isAdded = current.some(function (lib) { return lib.id === libraryId; });
+        var next = isAdded
+          ? current.filter(function (lib) { return lib.id !== libraryId; })
+          : current.concat([{ id: libraryId, name: libraryName }]);
+        btn.disabled = true;
+        self._sharepointAccounts[entryIdx].libraries = next;
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ cl_sharepoint_accounts: self._sharepointAccounts })
+            .eq('id', self._userId);
+          if (res.error) {
+            console.error('SharePoint library picker save error:', res.error);
+            self._sharepointAccounts[entryIdx].libraries = current;
+            btn.disabled = false;
+            return;
+          }
+          if (isAdded) {
+            btn.classList.remove('btn-remove-folder');
+            btn.classList.add('btn-add-folder');
+            btn.textContent = '+ Add';
+          } else {
+            btn.classList.remove('btn-add-folder');
+            btn.classList.add('btn-remove-folder');
+            btn.textContent = 'Remove';
+          }
+          self._renderSharepointList();
+          btn.disabled = false;
+        } catch (saveErr) {
+          console.error('SharePoint library picker save exception:', saveErr);
+          self._sharepointAccounts[entryIdx].libraries = current;
+          btn.disabled = false;
+        }
+      };
     } catch (err) {
       console.error('SharePoint library picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load libraries. Please try again.</div>';
@@ -1073,6 +1183,17 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('dropbox-folder-picker');
     var pickerList = document.getElementById('dropbox-folder-picker-list');
     if (!picker || !pickerList) return;
+    // Relocate the picker inside the Dropbox settings-row so it sits above
+    // the row's bottom divider, anchored to the Dropbox section.
+    var addBtn = document.getElementById('add-dropbox-btn');
+    var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
+    if (parentRow && picker.parentElement !== parentRow) {
+      parentRow.appendChild(picker);
+      parentRow.style.flexWrap = 'wrap';
+      picker.style.flexBasis = '100%';
+      picker.style.width = '100%';
+      picker.style.margin = '12px 0 0 0';
+    }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
@@ -1094,11 +1215,55 @@ window.CL_SETTINGS_LOGIC = {
       var existingIds = (entry && Array.isArray(entry.folders)) ? entry.folders.map(function (f) { return f.id; }) : [];
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
-        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
-          '<input type="checkbox" class="dropbox-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + '>' +
-          '<span class="connection-item-email">' + (f.name || '') + (already ? ' (already connected)' : '') + '</span>' +
-          '</label>';
+        var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = already ? 'Remove' : '+ Add';
+        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+          '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
+          '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
+          '</div>';
       }).join('');
+      pickerList.onclick = async function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
+        if (!btn || btn.disabled) return;
+        var folderId = btn.getAttribute('data-folder-id');
+        var folderName = btn.getAttribute('data-folder-name');
+        var entryIdx = self._dropboxAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (entryIdx === -1) return;
+        var current = Array.isArray(self._dropboxAccounts[entryIdx].folders) ? self._dropboxAccounts[entryIdx].folders : [];
+        var isAdded = current.some(function (f) { return f.id === folderId; });
+        var next = isAdded
+          ? current.filter(function (f) { return f.id !== folderId; })
+          : current.concat([{ id: folderId, name: folderName }]);
+        btn.disabled = true;
+        self._dropboxAccounts[entryIdx].folders = next;
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ cl_dropbox_accounts: self._dropboxAccounts })
+            .eq('id', self._userId);
+          if (res.error) {
+            console.error('Dropbox folder picker save error:', res.error);
+            self._dropboxAccounts[entryIdx].folders = current;
+            btn.disabled = false;
+            return;
+          }
+          if (isAdded) {
+            btn.classList.remove('btn-remove-folder');
+            btn.classList.add('btn-add-folder');
+            btn.textContent = '+ Add';
+          } else {
+            btn.classList.remove('btn-add-folder');
+            btn.classList.add('btn-remove-folder');
+            btn.textContent = 'Remove';
+          }
+          self._renderDropboxList();
+          btn.disabled = false;
+        } catch (saveErr) {
+          console.error('Dropbox folder picker save exception:', saveErr);
+          self._dropboxAccounts[entryIdx].folders = current;
+          btn.disabled = false;
+        }
+      };
     } catch (err) {
       console.error('Dropbox folder picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
