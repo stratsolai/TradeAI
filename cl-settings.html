@@ -153,7 +153,10 @@
     }
     .settings-row-control {
       display: flex;
-      gap: 8px;
+      gap: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
       flex-shrink: 0;
       margin-left: 16px;
     }
@@ -240,24 +243,20 @@
     .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
     .topbar-nav-link:hover { color: #fff; }
 
-    /* Connection multi-account list — two-row grid:
-       row 1 = email + Disconnect, row 2 = lookback + Choose Folders (or SharePoint site + pickers) */
+    /* Connection multi-account list — two-row layout via JS-rendered wrappers:
+       row 1 = email + Disconnect, row 2 = lookback + Choose Folders (right-aligned) */
     .connection-list { width: 100%; }
-    .connection-item { display: grid; grid-template-columns: auto 1fr auto; column-gap: 8px; row-gap: 8px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .connection-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
-    /* Account email — fixed-width styled box on row 1, column 1 */
-    .connection-item-email { grid-column: 1; grid-row: 1; width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .connection-item-row1 { display: flex; align-items: center; gap: 8px; }
+    .connection-item-row2 { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    /* Account email — fixed-width styled box, same width as folder/URL boxes */
+    .connection-item-email { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .connection-item-site { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-    /* Disconnect — row 1, far right */
-    .connection-item > .btn-disconnect { grid-column: 3; grid-row: 1; justify-self: end; }
-    /* Row 2 — lookback / SharePoint site label / pickers all flow into the second row */
-    .connection-item > .connection-item-lookback,
-    .connection-item > .connection-item-site,
-    .connection-item > .btn-pick-folders,
-    .connection-item > .btn-pick-site,
-    .connection-item > .btn-pick-libraries { grid-row: 2; justify-self: start; }
-    .connection-item-lookback { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    /* Disconnect pushed to the right edge of row 1 */
+    .connection-item-row1 > .btn-disconnect { margin-left: auto; }
+    .connection-item-lookback { display: inline-flex; align-items: center; flex-shrink: 0; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
     .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
@@ -280,7 +279,7 @@
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles */
     .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; }
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
-    .connection-folder-name { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; }
+    .connection-folder-name { width: 360px; flex: 0 0 360px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
     .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
