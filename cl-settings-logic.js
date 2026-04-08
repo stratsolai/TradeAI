@@ -959,35 +959,43 @@ window.CL_SETTINGS_LOGIC = {
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
       var currentSiteId = entry && entry.site ? entry.site.id : null;
-      // Each row is a label wrapping a radio + readonly input box. The input
-      // has pointer-events:none so clicks on the row pass through to the
-      // label, which selects the radio and fires the change event below.
+      // Each row mirrors the folder/library picker pattern: a readonly input
+      // box for the site name and an Add/Remove button. SharePoint sites are
+      // single-select per account — the currently chosen site renders with
+      // the Remove style; all others render with the Add style.
       pickerList.innerHTML = sites.map(function (s) {
-        var checked = currentSiteId === s.id ? ' checked' : '';
-        return '<label class="connection-folder-row" style="padding:6px 0;cursor:pointer;">' +
-          '<input type="radio" name="sharepoint-site" class="sharepoint-site-radio" data-site-id="' + s.id + '" data-site-name="' + (s.displayName || '') + '" data-site-weburl="' + (s.webUrl || '') + '"' + checked + '>' +
-          '<input type="text" class="website-url-input" value="' + (s.displayName || '') + '" readonly style="cursor:pointer;pointer-events:none;">' +
-          '</label>';
+        var isCurrent = currentSiteId === s.id;
+        var btnClass = isCurrent ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = isCurrent ? 'Remove' : '+ Add';
+        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+          '<input type="text" class="website-url-input" value="' + (s.displayName || '') + '" readonly>' +
+          '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-site-id="' + s.id + '" data-site-name="' + (s.displayName || '') + '" data-site-weburl="' + (s.webUrl || '') + '">' + btnLabel + '</button>' +
+          '</div>';
       }).join('');
-      pickerList.onchange = async function (e) {
-        var radio = e.target && e.target.closest ? e.target.closest('.sharepoint-site-radio') : null;
-        if (!radio || !radio.checked) return;
+      pickerList.onclick = async function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
+        if (!btn || btn.disabled) return;
+        var siteId = btn.getAttribute('data-site-id');
+        var siteName = btn.getAttribute('data-site-name');
+        var siteWebUrl = btn.getAttribute('data-site-weburl');
         var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
         if (entryIdx === -1) return;
-        var site = {
-          id: radio.getAttribute('data-site-id'),
-          displayName: radio.getAttribute('data-site-name'),
-          webUrl: radio.getAttribute('data-site-weburl')
-        };
-        // Reset libraries when switching to a different site — the previously
-        // chosen libraries no longer make sense.
         var prev = self._sharepointAccounts[entryIdx].site;
-        if (!prev || prev.id !== site.id) {
+        var prevLibraries = self._sharepointAccounts[entryIdx].libraries;
+        var isRemove = prev && prev.id === siteId;
+        var allBtns = pickerList.querySelectorAll('.folder-picker-toggle');
+        allBtns.forEach(function (b) { b.disabled = true; });
+        if (isRemove) {
+          self._sharepointAccounts[entryIdx].site = null;
           self._sharepointAccounts[entryIdx].libraries = [];
+        } else {
+          // Reset libraries when switching to a different site — the
+          // previously chosen libraries no longer make sense.
+          if (!prev || prev.id !== siteId) {
+            self._sharepointAccounts[entryIdx].libraries = [];
+          }
+          self._sharepointAccounts[entryIdx].site = { id: siteId, displayName: siteName, webUrl: siteWebUrl };
         }
-        self._sharepointAccounts[entryIdx].site = site;
-        var radios = pickerList.querySelectorAll('.sharepoint-site-radio');
-        radios.forEach(function (r) { r.disabled = true; });
         try {
           var res = await self._supabase
             .from('profiles')
@@ -995,16 +1003,34 @@ window.CL_SETTINGS_LOGIC = {
             .eq('id', self._userId);
           if (res.error) {
             console.error('SharePoint site picker save error:', res.error);
-            radios.forEach(function (r) { r.disabled = false; });
+            self._sharepointAccounts[entryIdx].site = prev;
+            self._sharepointAccounts[entryIdx].libraries = prevLibraries;
+            allBtns.forEach(function (b) { b.disabled = false; });
             return;
           }
           self._renderSharepointList();
-          picker.style.display = 'none';
-          // Auto-open the library picker so the user completes the two-step flow.
-          self._openSharepointLibraryPicker(accountEmail);
+          if (isRemove) {
+            // Site cleared — picker stays open. All buttons revert to Add.
+            allBtns.forEach(function (b) {
+              b.classList.remove('btn-remove-folder');
+              b.classList.add('btn-add-folder');
+              b.textContent = '+ Add';
+              b.disabled = false;
+            });
+          } else {
+            // Site selected — close picker and chain to the library picker
+            // so the two-step flow continues unchanged.
+            picker.style.display = 'none';
+            if (picker.parentElement && picker.parentElement.classList && picker.parentElement.classList.contains('settings-row')) {
+              picker.parentElement.style.flexWrap = '';
+            }
+            self._openSharepointLibraryPicker(accountEmail);
+          }
         } catch (saveErr) {
           console.error('SharePoint site picker save exception:', saveErr);
-          radios.forEach(function (r) { r.disabled = false; });
+          self._sharepointAccounts[entryIdx].site = prev;
+          self._sharepointAccounts[entryIdx].libraries = prevLibraries;
+          allBtns.forEach(function (b) { b.disabled = false; });
         }
       };
     } catch (err) {
