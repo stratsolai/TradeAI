@@ -4,8 +4,7 @@ window.CL_SETTINGS_LOGIC = {
   _userId: null,
   _settings: { email_scan_frequency: 'manual', drive_scan_frequency: 'manual', website_scan_frequency: 'manual', onedrive_scan_frequency: 'manual', sharepoint_scan_frequency: 'manual', dropbox_scan_frequency: 'manual' },
   _emails: [],
-  _driveConnected: false,
-  _driveFolders: [],
+  _driveAccounts: [],
   _websiteUrls: [],
   _onedriveAccounts: [],
   _sharepointAccounts: [],
@@ -28,14 +27,7 @@ window.CL_SETTINGS_LOGIC = {
       self._checkSharepointOAuthReturn();
       self._checkDropboxOAuthReturn();
 
-      var pickerSaveBtn = document.getElementById('drive-folder-picker-save');
-      if (pickerSaveBtn) pickerSaveBtn.addEventListener('click', function () { self._saveDriveFolders(); });
-      var pickerCancelBtn = document.getElementById('drive-folder-picker-cancel');
-      if (pickerCancelBtn) pickerCancelBtn.addEventListener('click', function () {
-        var picker = document.getElementById('drive-folder-picker');
-        if (picker) picker.style.display = 'none';
-      });
-
+      self._bindCLPicker('drive-folder-picker', function () { self._saveDriveFolders(); });
       self._bindCLPicker('onedrive-folder-picker', function () { self._saveOnedriveFolders(); });
       self._bindCLPicker('sharepoint-site-picker', function () { self._saveSharepointSite(); });
       self._bindCLPicker('sharepoint-library-picker', function () { self._saveSharepointLibraries(); });
@@ -56,21 +48,19 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var res = await self._supabase
         .from('profiles')
-        .select('cl_connected_emails, cl_drive_connected, cl_drive_folders, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts')
+        .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts')
         .eq('id', self._userId)
         .maybeSingle();
       if (res.error) { console.error('_loadConnections error:', res.error); return; }
       var data = res.data || {};
       self._emails = data.cl_connected_emails || [];
-      self._driveConnected = data.cl_drive_connected || false;
-      self._driveFolders = data.cl_drive_folders || [];
+      self._driveAccounts = Array.isArray(data.cl_drive_accounts) ? data.cl_drive_accounts : [];
       self._websiteUrls = data.website_urls || [];
       self._onedriveAccounts = Array.isArray(data.cl_onedrive_accounts) ? data.cl_onedrive_accounts : [];
       self._sharepointAccounts = Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : [];
       self._dropboxAccounts = Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : [];
       self._renderEmailList();
       self._renderDriveList();
-      self._renderDriveFolders();
       self._renderWebsiteList();
       self._renderOnedriveList();
       self._renderSharepointList();
@@ -136,16 +126,39 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var list = document.getElementById('drive-connections-list');
     if (!list) return;
-    if (self._driveConnected) {
-      list.innerHTML = '<div class="connection-item">' +
-        '<span class="connection-status connected">Connected</span>' +
-        '<button class="btn-disconnect" data-type="drive">Disconnect</button>' +
-        '</div>';
-    } else {
-      list.innerHTML = '';
-    }
+    var lookbackOptions = [
+      { value: '', label: 'All time' },
+      { value: '1', label: '1 month' },
+      { value: '3', label: '3 months' },
+      { value: '6', label: '6 months' },
+      { value: '12', label: '12 months' },
+      { value: '24', label: '24 months' }
+    ];
+    list.innerHTML = self._driveAccounts.map(function (a) {
+      var folders = Array.isArray(a.folders) ? a.folders : [];
+      var folderHtml = folders.map(function (f) {
+        return '<div class="connection-subitem">' +
+          '<span>' + (f.name || f.id || '') + '</span>' +
+          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
+          '</div>';
+      }).join('');
+      var currentLookback = (a.lookback_months == null) ? '12' : String(a.lookback_months);
+      var lookbackHtml = '<select class="drive-lookback-select" data-account="' + (a.account_email || '') + '">' +
+        lookbackOptions.map(function (opt) {
+          var selected = opt.value === currentLookback ? ' selected' : '';
+          return '<option value="' + opt.value + '"' + selected + '>' + opt.label + '</option>';
+        }).join('') +
+        '</select>';
+      return '<div class="connection-item">' +
+        '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+        '<span class="connection-item-lookback">Lookback: ' + lookbackHtml + '</span>' +
+        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">Choose Folders</button>' +
+        '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
+        '</div>' +
+        (folders.length > 0 ? '<div class="connection-folders">' + folderHtml + '</div>' : '');
+    }).join('');
     var driveBtn = document.getElementById('add-drive-btn');
-    if (driveBtn) { driveBtn.onclick = function () { self._startOAuth('google-drive'); }; }
+    if (driveBtn) { driveBtn.onclick = function () { self._startCLOAuth('google-drive'); }; }
   },
 
   _renderWebsiteList: function () {
@@ -193,6 +206,13 @@ window.CL_SETTINGS_LOGIC = {
         self._resetSaveBtn('website-save-btn', 'Save');
       }
     });
+    document.addEventListener('change', function (e) {
+      var lookbackSel = e.target.closest('.drive-lookback-select');
+      if (lookbackSel) {
+        var acct = lookbackSel.getAttribute('data-account');
+        if (acct) self._changeDriveLookback(acct, lookbackSel.value);
+      }
+    });
     document.addEventListener('click', function (e) {
 
       var disconnectBtn = e.target.closest('.btn-disconnect');
@@ -202,10 +222,12 @@ window.CL_SETTINGS_LOGIC = {
           var email = disconnectBtn.getAttribute('data-email');
           if (email) self._disconnectEmail(email);
         } else if (type === 'drive') {
-          self._disconnectDrive();
+          var drvAcct = disconnectBtn.getAttribute('data-account');
+          if (drvAcct) self._disconnectDriveAccount(drvAcct);
         } else if (type === 'drive-folder') {
-          var folderId = disconnectBtn.getAttribute('data-folder-id');
-          if (folderId) self._disconnectDriveFolder(folderId);
+          var drvfA = disconnectBtn.getAttribute('data-account');
+          var drvfId = disconnectBtn.getAttribute('data-folder-id');
+          if (drvfA && drvfId) self._disconnectDriveFolder(drvfA, drvfId);
         } else if (type === 'onedrive') {
           var odAcct = disconnectBtn.getAttribute('data-account');
           if (odAcct) self._disconnectOnedriveAccount(odAcct);
@@ -237,6 +259,7 @@ window.CL_SETTINGS_LOGIC = {
         var pfAcct = pickFoldersBtn.getAttribute('data-account');
         if (pfType === 'onedrive' && pfAcct) self._openOnedriveFolderPicker(pfAcct);
         else if (pfType === 'dropbox' && pfAcct) self._openDropboxFolderPicker(pfAcct);
+        else if (pfType === 'drive' && pfAcct) self._openDriveFolderPicker(pfAcct);
         return;
       }
       var pickSiteBtn = e.target.closest('.btn-pick-site');
@@ -324,19 +347,48 @@ window.CL_SETTINGS_LOGIC = {
     } catch (e) { console.error('_disconnectEmail exception:', e); }
   },
 
-  _disconnectDrive: async function () {
+  _disconnectDriveAccount: async function (accountEmail) {
     var self = this;
     try {
-      self._driveConnected = false;
-      self._driveFolders = [];
+      self._driveAccounts = self._driveAccounts.filter(function (a) { return a && a.account_email !== accountEmail; });
       var res = await self._supabase
         .from('profiles')
-        .update({ cl_drive_connected: false, cl_drive_folders: null })
+        .update({ cl_drive_accounts: self._driveAccounts })
         .eq('id', self._userId);
-      if (res.error) { console.error('_disconnectDrive error:', res.error); await self._loadConnections(); return; }
+      if (res.error) { console.error('_disconnectDriveAccount error:', res.error); await self._loadConnections(); return; }
       self._renderDriveList();
-      self._renderDriveFolders();
-    } catch (e) { console.error('_disconnectDrive exception:', e); }
+    } catch (e) { console.error('_disconnectDriveAccount exception:', e); }
+  },
+
+  _disconnectDriveFolder: async function (accountEmail, folderId) {
+    var self = this;
+    try {
+      var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+      if (entryIdx === -1) return;
+      var folders = Array.isArray(self._driveAccounts[entryIdx].folders) ? self._driveAccounts[entryIdx].folders : [];
+      self._driveAccounts[entryIdx].folders = folders.filter(function (f) { return f.id !== folderId; });
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_drive_accounts: self._driveAccounts })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_disconnectDriveFolder error:', res.error); await self._loadConnections(); return; }
+      self._renderDriveList();
+    } catch (e) { console.error('_disconnectDriveFolder exception:', e); }
+  },
+
+  _changeDriveLookback: async function (accountEmail, value) {
+    var self = this;
+    try {
+      var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+      if (entryIdx === -1) return;
+      var months = value === '' ? null : parseInt(value, 10);
+      self._driveAccounts[entryIdx].lookback_months = months;
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_drive_accounts: self._driveAccounts })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_changeDriveLookback error:', res.error); await self._loadConnections(); return; }
+    } catch (e) { console.error('_changeDriveLookback exception:', e); }
   },
 
   _validateUrl: function (raw) {
@@ -431,89 +483,80 @@ window.CL_SETTINGS_LOGIC = {
     var params = new URLSearchParams(window.location.search);
     if (params.get('connected') !== 'google-drive') return;
     window.history.replaceState({}, '', window.location.pathname);
+    await self._loadConnections();
+    if (self._driveAccounts.length > 0) {
+      var lastAcct = self._driveAccounts[self._driveAccounts.length - 1];
+      if (lastAcct && lastAcct.account_email) {
+        self._openDriveFolderPicker(lastAcct.account_email);
+      }
+    }
+  },
+
+  _openDriveFolderPicker: async function (accountEmail) {
+    var self = this;
     var picker = document.getElementById('drive-folder-picker');
     var pickerList = document.getElementById('drive-folder-picker-list');
-    var pickerMsg = document.getElementById('drive-folder-picker-msg');
     if (!picker || !pickerList) return;
+    picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
     try {
+      var token = await self._getAccessToken();
       var resp = await fetch('/api/drive-import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: self._userId, action: 'list-folders' })
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ action: 'list-folders', accountEmail: accountEmail })
       });
       var data = await resp.json();
+      if (!data.success) { throw new Error(data.error || 'Could not list Google Drive folders'); }
       var folders = data.folders || [];
       if (folders.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in your Google Drive.</div>';
+        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in this Google Drive account.</div>';
         return;
       }
-      var existingIds = self._driveFolders.map(function (f) { return f.id; });
+      var entry = self._driveAccounts.find(function (a) { return a && a.account_email === accountEmail; });
+      var existingIds = (entry && Array.isArray(entry.folders)) ? entry.folders.map(function (f) { return f.id; }) : [];
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
         return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
-          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + f.name + '"' + (already ? ' checked disabled' : '') + '>' +
-          '<span class="connection-item-email">' + f.name + (already ? ' (already connected)' : '') + '</span>' +
+          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + '>' +
+          '<span class="connection-item-email">' + (f.name || '') + (already ? ' (already connected)' : '') + '</span>' +
           '</label>';
       }).join('');
     } catch (err) {
-      console.error('Drive folder list error:', err);
+      console.error('Drive folder picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
     }
   },
 
   _saveDriveFolders: async function () {
     var self = this;
+    var picker = document.getElementById('drive-folder-picker');
+    if (!picker) return;
+    var accountEmail = picker.getAttribute('data-account');
+    if (!accountEmail) return;
+    var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+    if (entryIdx === -1) return;
     var checkboxes = document.querySelectorAll('.drive-folder-checkbox:checked:not(:disabled)');
     var newFolders = [];
     checkboxes.forEach(function (cb) {
       newFolders.push({ id: cb.getAttribute('data-folder-id'), name: cb.getAttribute('data-folder-name') });
     });
-    if (newFolders.length === 0) return;
-    var merged = self._driveFolders.concat(newFolders);
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_drive_folders: merged })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveDriveFolders error:', res.error); return; }
-      self._driveFolders = merged;
-      self._renderDriveFolders();
-      var picker = document.getElementById('drive-folder-picker');
-      if (picker) picker.style.display = 'none';
-      var pickerMsg = document.getElementById('drive-folder-picker-msg');
-      if (pickerMsg) { pickerMsg.textContent = ''; pickerMsg.style.display = 'none'; }
-    } catch (e) { console.error('_saveDriveFolders exception:', e); }
-  },
-
-  _renderDriveFolders: function () {
-    var self = this;
-    var list = document.getElementById('drive-folders-list');
-    if (!list) return;
-    if (!self._driveFolders || self._driveFolders.length === 0) {
-      list.innerHTML = '';
+    if (newFolders.length === 0) {
+      picker.style.display = 'none';
       return;
     }
-    list.innerHTML = self._driveFolders.map(function (f) {
-      return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + f.name + '</span>' +
-        '<button class="btn-disconnect" data-type="drive-folder" data-folder-id="' + f.id + '">Disconnect</button>' +
-        '</div>';
-    }).join('');
-  },
-
-  _disconnectDriveFolder: async function (folderId) {
-    var self = this;
+    var existing = Array.isArray(self._driveAccounts[entryIdx].folders) ? self._driveAccounts[entryIdx].folders : [];
+    self._driveAccounts[entryIdx].folders = existing.concat(newFolders);
     try {
-      self._driveFolders = self._driveFolders.filter(function (f) { return f.id !== folderId; });
       var res = await self._supabase
         .from('profiles')
-        .update({ cl_drive_folders: self._driveFolders })
+        .update({ cl_drive_accounts: self._driveAccounts })
         .eq('id', self._userId);
-      if (res.error) { console.error('_disconnectDriveFolder error:', res.error); await self._loadConnections(); return; }
-      self._renderDriveFolders();
-    } catch (e) { console.error('_disconnectDriveFolder exception:', e); }
+      if (res.error) { console.error('_saveDriveFolders error:', res.error); return; }
+      self._renderDriveList();
+      picker.style.display = 'none';
+    } catch (e) { console.error('_saveDriveFolders exception:', e); }
   },
 
   // ── Task 10 CL Connections — OneDrive, SharePoint, Dropbox ─────────────
