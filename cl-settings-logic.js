@@ -910,28 +910,29 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._sharepointAccounts.map(function (a) {
       self._upgradeSharepointEntry(a);
       var sites = Array.isArray(a.sites) ? a.sites : [];
-      // Each site renders as a section: site row, then its libraries
-      // indented below, then a Choose Libraries — <Site Name> button on
-      // its own row at the bottom of the section. Multiple sites stack
+      // Each site renders as a section: site row, then a Choose Libraries —
+      // <Site Name> button on its own row, then the libraries belonging to
+      // that site. The button and library rows align flush-left with the
+      // site name row above (no extra indentation). Multiple sites stack
       // one section after another.
       var sitesHtml = sites.map(function (s) {
         var libraries = Array.isArray(s.libraries) ? s.libraries : [];
         var libraryHtml = libraries.map(function (lib) {
-          return '<div class="connection-folder-row" style="justify-content:space-between;padding-left:24px;">' +
+          return '<div class="connection-folder-row" style="justify-content:space-between;">' +
             '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
             '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
             '</div>';
         }).join('');
         var siteName = s.displayName || s.name || s.id || '';
-        var pickLibsHtml = '<div class="connection-folder-row" style="padding-left:24px;">' +
+        var pickLibsHtml = '<div class="connection-folder-row">' +
           '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">Choose Libraries — ' + siteName + '</button>' +
           '</div>';
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + siteName + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
           '</div>' +
-          libraryHtml +
-          pickLibsHtml;
+          pickLibsHtml +
+          libraryHtml;
       }).join('');
       return '<div class="connection-item">' +
         '<div class="connection-item-row1">' +
