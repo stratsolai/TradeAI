@@ -107,68 +107,75 @@ authenticated pages:
 
 ## Active Tasks
 
-### CL Functional Improvements
+### Google Drive Migration — build complete, integration test pending
 
-Tasks 1–5 and Task 14 — CL Functional Improvements complete.
+Steps 1–6 and Step 9 complete. Steps 7 and 8 pending.
 
----
+Step 7 — Integration test per the Google Drive Migration
+Spec v1.0 Section 7 checklist. Run after cl-settings.html
+and cl-settings-logic.js styling work is confirmed complete.
 
-## Active Tasks — Continued
+Step 8 — Update CLAUDE.md once integration test passes.
 
-These tasks must be completed before the stylesheet rollout
-begins.
+### cl-settings.html and cl-settings-logic.js — styling in progress
 
-### Task 8 — CL Intake Architecture
+The following items are outstanding and must be completed
+before the Google Drive integration test runs:
 
-Task 8 — CL Intake Architecture complete.
+- Disconnect button on the same row as the email box on all
+  file storage connection tiles
+- Choose Folders button and Lookback dropdown on the row
+  below the email, right-aligned
+- Remove the "Lookback:" label text from all file storage
+  connection tiles
+- All email input boxes same width as the Google Drive email
+  box
+- All folder input boxes same width as the Google Drive
+  folder boxes
+- All website URL input boxes same width as the Google Drive
+  folder boxes
+- Scan Settings frequency buttons — revert to pre-session
+  state. Current state is broken. Check git log and restore
+  correct pre-session CSS exactly.
+- Remove dead code from api/auth/oauth-callback.js — Drive
+  branch is now dead code following Google Drive migration
+  to standalone callback. Remove the google-drive branch.
+- Remove dead code from api/auth/initiate.js — google-drive
+  entry is now dead code. Remove it.
+- Remove the legacy /api/auth/google-drive/callback rewrite
+  from vercel.json.
+- Remove old Vercel preview URIs from Google Cloud console
+  — trade-ai-seven-blue.vercel.app URIs. Owner to action
+  this in Google Cloud console directly.
 
-### Task 10 — CL Connections
+### Task 10 — CL Connections integration test pending
 
-Task 10 — CL Connections (OneDrive, SharePoint, Dropbox) —
-build complete, integration test pending.
-
-New files: api/cl-oauth-initiate.js,
-api/cl-onedrive-callback.js, api/onedrive-import.js,
-api/cl-sharepoint-callback.js, api/sharepoint-import.js,
-api/cl-dropbox-callback.js, api/dropbox-import.js.
-
-Updated files: cl-settings-logic.js, cl-settings.html,
-cl-upload.js.
-
-Integration test checklist:
-- Connect OneDrive — OAuth completes, folder picker shows
-  folders, folders saved, Scan Now imports files, items
-  appear in Source Material Review
-- Connect SharePoint — OAuth completes, site picker shows
-  sites, library picker shows libraries, Scan Now imports
-  files, items appear in Source Material Review
-- Connect Dropbox — OAuth completes, folder picker shows
-  folders, folders saved, Scan Now imports files, items
-  appear in Source Material Review
-- All three sources show correct source_detail on items in
-  Source Review
-- Rescan is idempotent — already scanned files are skipped
-- Connect Another adds a second account without overwriting
-  the first
-- Disconnect removes the account and its folders correctly
+Full integration test for OneDrive, SharePoint, and Dropbox
+per CL Connections Spec v1.2 checklist. Runs after Google
+Drive integration test is complete.
 
 ### Task 11 — CL Items
 
-- Build Manual Add Item and Editable Pending Items in the
-  Content Library. Requires CL Items Spec v1.0 to be written
-  and approved before build begins.
+Build Manual Add Item and Editable Pending Items. Spec:
+Manual Add Item Spec v1.0. Awaiting build.
 
 ### Task 12 — Image Processing
 
-- Extend all scan endpoints and the upload tab to handle
-  images and visual content. Includes photo upload capability.
-  Requires Image Processing Spec v1.0 to be written and
-  approved before build begins.
+Extend all scan endpoints and upload tab to handle images.
+Spec required before build begins.
 
 ### Task 13 — Accounting Platform Integration
 
-- Connect MYOB, Xero, QuickBooks, and Reckon as CL data
-  sources. Requires dedicated spec before build begins.
+Connect MYOB, Xero, QuickBooks, Reckon as CL data sources.
+Spec required before build begins.
+
+### Lookback Controls — Appendix A
+
+Build user-controlled import lookback for all CL connections
+per CL Connections Spec v1.2 Appendix A. Covers Gmail,
+Outlook, OneDrive, SharePoint, Dropbox. Google Drive
+lookback already built as part of Google Drive Migration.
+Runs after Task 10 integration test.
 
 ---
 
@@ -192,17 +199,11 @@ Integration test checklist:
   dead column — no endpoint reads or writes it. Outlook scan
   uses outlookEntry.last_scanned_at inside cl_connected_emails
   jsonb array. To be removed during stylesheet rollout.
-- Google Drive flat columns (cl_drive_connected,
-  cl_drive_access_token, cl_drive_refresh_token,
-  cl_drive_folders) are superseded by cl_drive_accounts but
-  still exist in profiles. drive-import.js and
-  api/auth/oauth-callback.js still read and write the flat
-  columns. Must be migrated to cl_drive_accounts before
-  launch.
-- drive-import.js uses the legacy extraction prompt and
-  references the dropped cl_active_categories column. Must
-  be updated to match the modern standard used in the new
-  import endpoints before launch.
+- Lookback controls for OneDrive, SharePoint, and Dropbox
+  are wired in cl-settings-logic.js (lookback_months
+  persisted to jsonb) but the import endpoints do not yet
+  read the value. Wire up per CL Connections Spec v1.2
+  Appendix A build sequence.
 - connection-subitem CSS class in cl-settings-logic.js is
   unstyled. Pick up during stylesheet rollout.
 - .btn-sm has two conflicting definitions in
@@ -236,7 +237,10 @@ is complete and confirmed working.
 | 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | Complete Standalone Tasks A, B, C                          |
-| 4    | Complete CL Connections (OneDrive, Dropbox, SharePoint)    |
+| 4    | Complete CL Connections — in progress (build done,         |
+|      | integration test pending)                                  |
+| 4a   | Complete lookback controls (CL Connections Spec v1.2       |
+|      | Appendix A)                                                |
 | 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
 | 6    | Complete stylesheet rollout across CL files                |
 | 7    | Complete stylesheet rollout across cl-settings.html        |
@@ -572,3 +576,8 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | intake auto-tagging. April 2026.    |
 | Manual Add Item Spec v1.0      | Manual Add Item spec. Approved      |
 |                                 | April 2026, awaiting build.         |
+| Google Drive Migration Spec v1.0 | Google Drive migration to multi-  |
+|                                 | account pattern. Build complete,    |
+|                                 | integration test pending.           |
+| CL Connections Spec v1.2 App. A | Import lookback controls for all    |
+|                                 | CL connections. Awaiting build.     |
