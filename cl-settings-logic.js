@@ -523,11 +523,22 @@ window.CL_SETTINGS_LOGIC = {
       var existingIds = (entry && Array.isArray(entry.folders)) ? entry.folders.map(function (f) { return f.id; }) : [];
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
-        return '<label class="connection-item" style="cursor:pointer;gap:10px;">' +
-          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + '>' +
-          '<span class="connection-item-email">' + (f.name || '') + (already ? ' (already connected)' : '') + '</span>' +
-          '</label>';
+        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+          '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
+          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + ' style="display:none;">' +
+          '<button type="button" class="btn-remove-folder folder-picker-toggle"' + (already ? ' disabled' : '') + '>' + (already ? 'Remove' : 'Add') + '</button>' +
+          '</div>';
       }).join('');
+      pickerList.onclick = function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
+        if (!btn || btn.disabled) return;
+        var row = btn.closest('.connection-folder-row');
+        if (!row) return;
+        var cb = row.querySelector('.drive-folder-checkbox');
+        if (!cb) return;
+        cb.checked = !cb.checked;
+        btn.textContent = cb.checked ? 'Remove' : 'Add';
+      };
     } catch (err) {
       console.error('Drive folder picker error:', err);
       pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
