@@ -910,21 +910,21 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._sharepointAccounts.map(function (a) {
       self._upgradeSharepointEntry(a);
       var sites = Array.isArray(a.sites) ? a.sites : [];
-      // Each site renders as a section: site row, then a Choose Libraries —
-      // <Site Name> button on its own row, then the libraries belonging to
-      // that site. The button and library rows align flush-left with the
-      // site name row above (no extra indentation). Multiple sites stack
-      // one section after another.
+      // Each site renders as a section: site name row (flush-left), then a
+      // Choose Libraries — <Site Name> button on its own row indented to
+      // sit visually under the site, then the libraries for that site
+      // also indented so they read as children of the site above.
+      // Multiple sites stack one section after another.
       var sitesHtml = sites.map(function (s) {
         var libraries = Array.isArray(s.libraries) ? s.libraries : [];
         var libraryHtml = libraries.map(function (lib) {
-          return '<div class="connection-folder-row" style="justify-content:space-between;">' +
+          return '<div class="connection-folder-row" style="justify-content:space-between;padding-left:24px;">' +
             '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
             '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
             '</div>';
         }).join('');
         var siteName = s.displayName || s.name || s.id || '';
-        var pickLibsHtml = '<div class="connection-folder-row">' +
+        var pickLibsHtml = '<div class="connection-folder-row" style="padding-left:24px;">' +
           '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">Choose Libraries — ' + siteName + '</button>' +
           '</div>';
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
