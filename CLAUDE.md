@@ -141,6 +141,55 @@ Spec required before build begins.
 Connect MYOB, Xero, QuickBooks, Reckon as CL data sources.
 Spec required before build begins.
 
+### Task 14 — Email Attachment Scanning (Gmail + Outlook)
+
+Extend cl-email-scan.js and cl-outlook-scan.js to read message
+attachments in addition to the email body. Currently both
+endpoints only call extractEmailBody / extractOutlookBody and
+ignore every attachment on every message — invoices, supplier
+statements, quotes, brochures, certificates, and price lists
+that arrive as PDF/DOCX/XLSX attachments are silently invisible
+to the platform. For SMBs this is the largest single ingestion
+gap because business email value lives in the attachments, not
+the cover message.
+
+Spec required before build begins. Spec must cover at minimum:
+
+- Attachment discovery — Gmail's payload.parts walk for parts
+  with Content-Disposition: attachment, Outlook's
+  /messages/{id}/attachments endpoint.
+- Per-attachment download via the relevant provider API
+  (Gmail users.messages.attachments.get, Outlook
+  /messages/{id}/attachments/{attachmentId}/$value).
+- Reuse the canonical CL intake pipeline once the attachment
+  bytes are in hand — same EXTRACTION_SYSTEM_PROMPT, same
+  disposition / confidence / Financial Documents / auto-archive
+  logic, same cl_source_items + content_library shape used by
+  the file connectors. The shared extraction prompt is already
+  duplicated across the connectors and is on the consolidation
+  list — worth deciding before this build whether to extract
+  the prompt to a shared module first or duplicate it once more.
+- File format coverage — at minimum the same set the cloud
+  connectors accept (PDF, DOCX, XLSX, PPTX, legacy Office,
+  text/*, images). Gate at the same place the other connectors
+  do.
+- Dedupe key — message-id alone is no longer enough since one
+  message can carry many attachments. Suggest a composite key
+  of gmail_message_id / outlook_message_id + attachment_id (or
+  attachment filename hash) on cl_source_items.source_detail.
+- Size and rate limits — Claude document API caps documents
+  around 32MB base64; Gmail attachments can exceed that. Spec
+  must say what happens for oversized attachments (skip with
+  explicit log? attempt anyway? offer manual fallback?).
+- last_scanned_at semantics — currently the email scanners
+  stamp last_scanned_at after a successful body scan. With
+  attachments, decide whether the timestamp should advance on
+  body-only success or only when attachments are also processed,
+  so a partial failure does not skip everything on rescan.
+- Lookback interaction — Task 14 should respect the per-account
+  lookback_months value once Lookback Controls Appendix A is
+  built.
+
 ### Lookback Controls — Appendix A
 
 Build user-controlled import lookback for all CL connections
