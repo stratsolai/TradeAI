@@ -153,8 +153,13 @@ window.CL_SETTINGS_LOGIC = {
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
       }).join('');
-      return '<div class="connection-item">' +
-        '<div class="connection-item-row1">' +
+      // Inline width:100% defends against a flex-basis side effect from the
+      // picker-relocation logic in _openDriveFolderPicker, which leaves the
+      // Drive .settings-row with flex-wrap:wrap permanently and can otherwise
+      // cause the email box to render offset from where the other provider
+      // tiles render it.
+      return '<div class="connection-item" style="width:100%;">' +
+        '<div class="connection-item-row1" style="width:100%;display:flex;align-items:center;gap:8px;">' +
           '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
           '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
         '</div>' +
