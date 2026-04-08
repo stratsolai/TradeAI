@@ -31,7 +31,7 @@ window.CL_UPLOAD = {
         "</button>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
-      "<input type=\"file\" id=\"cl-doc-input\" accept=\".pdf,.doc,.docx,.txt,.xlsx,.xls\" style=\"display:none\" multiple>",
+      "<input type=\"file\" id=\"cl-doc-input\" accept=\".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.html,.htm\" style=\"display:none\" multiple>",
       "<div id=\"cl-offline-banner\" class=\"offline-banner\" style=\"display:none\">",
         "<span>You appear to be offline. Files will be queued and uploaded when you reconnect.</span>",
         "<button class=\"btn-dismiss\" id=\"cl-offline-dismiss\">&#10007; Dismiss</button>",
@@ -581,6 +581,8 @@ window.CL_UPLOAD = {
     if (ext === "txt") return "text";
     if (ext === "doc" || ext === "docx") return "word";
     if (ext === "xlsx" || ext === "xls") return "excel";
+    if (ext === "ppt" || ext === "pptx") return "powerpoint";
+    if (ext === "html" || ext === "htm") return "html";
     return "text";
   },
 
@@ -616,7 +618,12 @@ window.CL_UPLOAD = {
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath })
+          // Pass the browser-detected MIME type as mediaType so the
+          // endpoint does not need to guess from filename extension.
+          // This is what unblocks HEIC and other modern image formats —
+          // process-file.js honours mediaType when present and falls
+          // back to its extension lookup when it is not.
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath, mediaType: file.type || null })
         });
         var result = await resp.json();
         if (result.success && Array.isArray(result.items)) {
