@@ -245,34 +245,52 @@
 
     /* Connection multi-account list */
     .connection-list { width: 100%; }
-    .connection-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .connection-item { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
-    .connection-item-email { font-size: 14px; color: var(--text); font-family: var(--body-font); }
+    /* Account email — styled box matching folder/URL boxes */
+    .connection-item-email { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); width: 360px; min-width: 0; box-sizing: border-box; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .btn-disconnect { background: none; border: 1px solid var(--red); color: var(--red); border-radius: 6px; padding: 5px 12px; font-size: 13px; cursor: pointer; font-family: var(--body-font); }
-    .btn-disconnect:hover { background: var(--red); color: var(--white); }
+    .connection-item-site { font-size: 12px; color: var(--text-muted); }
+    .connection-item-lookback { font-size: 12px; color: var(--text-muted); display: inline-flex; align-items: center; gap: 6px; }
+
+    /* Disconnect — matches the CL Reject button (red left border accent), text "Disconnect" */
+    .btn-disconnect { display: inline-flex; align-items: center; border-width: 1px 1px 1px 4px; border-style: solid; border-color: rgba(0,0,0,0.10); border-left-color: var(--red); border-radius: 10px; padding: 10px 16px; font-size: 13px; font-weight: 600; color: #555555; background: #fff; cursor: pointer; font-family: var(--body-font); transition: background 0.15s; }
+    .btn-disconnect:hover { background: #FDECEA; }
+
+    /* Remove — same style as Disconnect, smaller. Used inside folder/library/URL rows. */
+    .btn-remove-folder, .btn-remove-url { display: inline-flex; align-items: center; border-width: 1px 1px 1px 4px; border-style: solid; border-color: rgba(0,0,0,0.10); border-left-color: var(--red); border-radius: 8px; padding: 5px 11px; font-size: 12px; font-weight: 600; color: #555555; background: #fff; cursor: pointer; font-family: var(--body-font); transition: background 0.15s; }
+    .btn-remove-folder:hover, .btn-remove-url:hover { background: #FDECEA; color: #555555; }
+
+    /* Add buttons — match the Business Profile "+ Add Phone" button (blue outline + orange left border) */
+    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-left-color: var(--orange); border-left-width: 4px; border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
+    .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
+
+    /* Choose Folders / Choose Site / Choose Libraries — same look as the add button */
+    .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-left-color: var(--orange); border-left-width: 4px; border-radius: 8px; padding: 7px 14px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; transition: background 0.15s; }
+    .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
+
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles */
-    .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 8px; }
+    .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; }
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
-    .connection-folder-name { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); flex: 1; min-width: 0; background: var(--white); }
-    .btn-remove-folder { background: none; border: 1px solid rgba(74,109,140,0.4); color: rgba(74,109,140,0.8); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; transition: all 0.2s; font-family: var(--body-font); }
-    .btn-remove-folder:hover { border-color: #e05c5c; color: #e05c5c; }
-    .btn-add-connection { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 10px; min-width: 160px; text-align: center; }
-    .btn-add-connection:hover { background: var(--blue); color: var(--white); }
+    .connection-folder-name { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 360px; min-width: 0; background: var(--white); box-sizing: border-box; }
+
+    /* Lookback dropdown — custom platform style with chevron */
+    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 10px center; background-size: 12px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 30px 6px 12px; font-size: 12px; font-family: var(--body-font); color: var(--text); cursor: pointer; }
+    .drive-lookback-select:focus { outline: none; border-color: var(--blue); }
+
     /* Website multi-URL list */
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .website-url-input { border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 14px; font-family: var(--body-font); color: var(--text); flex: 1; 
-    min-width: 360px;}
+    .website-url-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 360px; min-width: 0; box-sizing: border-box; }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
-    .btn-remove-url { background: none; border: 1px solid rgba(74,109,140,0.4); color: rgba(74,109,140,0.8); cursor: pointer; padding: 4px 10px; border-radius: 4px; font-size: 12px; transition: all 0.2s; }
-    .btn-remove-url:hover { border-color: #e05c5c; color: #e05c5c; }
-    .btn-remove-url:hover { color: var(--red); }
-    .btn-add-website { background: none; border: 1px solid var(--blue); color: var(--blue); border-radius: 6px; padding: 7px 14px; font-size: 13px; cursor: pointer; font-family: var(--body-font); margin-top: 4px; }
-    .btn-add-website:hover { background: var(--blue); color: var(--white); }
+
     .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background 0.15s; }
     .btn-save-urls:hover { background: #154070; }
-    /* Connection row control — override for non-toggle rows */
-    .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; min-width: 400px; }
+
+    /* Connection row control — left-aligned column so all input boxes share the same left edge */
+    .connection-row-control { display: flex; flex-direction: column; align-items: flex-start; min-width: 460px; }
+
+    /* Uniform description column width across all connection rows */
+    #connections-rows .settings-row > div:first-child { flex: 0 0 360px; max-width: 360px; }
 
     .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
     .topbar-account-btn:hover { text-decoration: none; color: #fff; }
@@ -468,7 +486,7 @@
         </div>
 
         <div class="settings-row" style="align-items:flex-start;">
-          <div style="flex:1;">
+          <div>
             <div class="settings-row-label">Website</div>
             <div class="settings-row-desc">Enter your website URLs for automatic content scanning.</div>
           </div>
