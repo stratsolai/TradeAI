@@ -523,21 +523,54 @@ window.CL_SETTINGS_LOGIC = {
       var existingIds = (entry && Array.isArray(entry.folders)) ? entry.folders.map(function (f) { return f.id; }) : [];
       pickerList.innerHTML = folders.map(function (f) {
         var already = existingIds.indexOf(f.id) !== -1;
+        var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
+        var btnLabel = already ? 'Remove' : 'Add';
         return '<div class="connection-folder-row" style="padding:6px 0;">' +
           '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
-          '<input type="checkbox" class="drive-folder-checkbox" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '"' + (already ? ' checked disabled' : '') + ' style="display:none;">' +
-          '<button type="button" class="btn-remove-folder folder-picker-toggle"' + (already ? ' disabled' : '') + '>' + (already ? 'Remove' : 'Add') + '</button>' +
+          '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
           '</div>';
       }).join('');
-      pickerList.onclick = function (e) {
+      pickerList.onclick = async function (e) {
         var btn = e.target && e.target.closest ? e.target.closest('.folder-picker-toggle') : null;
         if (!btn || btn.disabled) return;
-        var row = btn.closest('.connection-folder-row');
-        if (!row) return;
-        var cb = row.querySelector('.drive-folder-checkbox');
-        if (!cb) return;
-        cb.checked = !cb.checked;
-        btn.textContent = cb.checked ? 'Remove' : 'Add';
+        var folderId = btn.getAttribute('data-folder-id');
+        var folderName = btn.getAttribute('data-folder-name');
+        var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (entryIdx === -1) return;
+        var current = Array.isArray(self._driveAccounts[entryIdx].folders) ? self._driveAccounts[entryIdx].folders : [];
+        var isAdded = current.some(function (f) { return f.id === folderId; });
+        var next = isAdded
+          ? current.filter(function (f) { return f.id !== folderId; })
+          : current.concat([{ id: folderId, name: folderName }]);
+        btn.disabled = true;
+        self._driveAccounts[entryIdx].folders = next;
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ cl_drive_accounts: self._driveAccounts })
+            .eq('id', self._userId);
+          if (res.error) {
+            console.error('Drive folder picker save error:', res.error);
+            self._driveAccounts[entryIdx].folders = current;
+            btn.disabled = false;
+            return;
+          }
+          if (isAdded) {
+            btn.classList.remove('btn-remove-folder');
+            btn.classList.add('btn-add-folder');
+            btn.textContent = 'Add';
+          } else {
+            btn.classList.remove('btn-add-folder');
+            btn.classList.add('btn-remove-folder');
+            btn.textContent = 'Remove';
+          }
+          self._renderDriveList();
+          btn.disabled = false;
+        } catch (saveErr) {
+          console.error('Drive folder picker save exception:', saveErr);
+          self._driveAccounts[entryIdx].folders = current;
+          btn.disabled = false;
+        }
       };
     } catch (err) {
       console.error('Drive folder picker error:', err);
