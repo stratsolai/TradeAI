@@ -135,10 +135,14 @@ window.CL_SETTINGS_LOGIC = {
           '</div>';
       }).join('');
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        self._buildLookbackHtml('drive', a.account_email, a.lookback_months) +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">📁 Choose Folders</button>' +
-        '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
+        '</div>' +
+        '<div class="connection-item-row2">' +
+          self._buildLookbackHtml('drive', a.account_email, a.lookback_months) +
+          '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">📁 Choose Folders</button>' +
+        '</div>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
@@ -593,7 +597,7 @@ window.CL_SETTINGS_LOGIC = {
       { v: '12', l: '12 months' },
       { v: '24', l: '24 months' }
     ];
-    return '<span class="connection-item-lookback">Lookback: ' +
+    return '<span class="connection-item-lookback">' +
       '<select class="drive-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
       opts.map(function (o) {
         var s = o.v === current ? ' selected' : '';
@@ -617,10 +621,14 @@ window.CL_SETTINGS_LOGIC = {
           '</div>';
       }).join('');
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        self._buildLookbackHtml('onedrive', a.account_email, a.lookback_months) +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">📁 Choose Folders</button>' +
-        '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="onedrive">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="onedrive">Disconnect</button>' +
+        '</div>' +
+        '<div class="connection-item-row2">' +
+          self._buildLookbackHtml('onedrive', a.account_email, a.lookback_months) +
+          '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">📁 Choose Folders</button>' +
+        '</div>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
@@ -755,12 +763,16 @@ window.CL_SETTINGS_LOGIC = {
       }).join('');
       var librariesDisabled = !a.site || !a.site.id;
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        '<span class="connection-item-site">Site: ' + siteName + '</span>' +
-        self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
-        '<button class="btn-pick-site" data-account="' + (a.account_email || '') + '">Choose Site</button>' +
-        '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '"' + (librariesDisabled ? ' disabled' : '') + '>Choose Libraries</button>' +
-        '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="sharepoint">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="sharepoint">Disconnect</button>' +
+        '</div>' +
+        '<div class="connection-item-row2">' +
+          '<span class="connection-item-site">Site: ' + siteName + '</span>' +
+          self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
+          '<button class="btn-pick-site" data-account="' + (a.account_email || '') + '">Choose Site</button>' +
+          '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '"' + (librariesDisabled ? ' disabled' : '') + '>Choose Libraries</button>' +
+        '</div>' +
         '</div>' +
         (libraries.length > 0 ? '<div class="connection-folders-list">' + libraryHtml + '</div>' : '');
     }).join('');
@@ -967,10 +979,14 @@ window.CL_SETTINGS_LOGIC = {
           '</div>';
       }).join('');
       return '<div class="connection-item">' +
-        '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
-        self._buildLookbackHtml('dropbox', a.account_email, a.lookback_months) +
-        '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">📁 Choose Folders</button>' +
-        '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="dropbox">Disconnect</button>' +
+        '<div class="connection-item-row1">' +
+          '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
+          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="dropbox">Disconnect</button>' +
+        '</div>' +
+        '<div class="connection-item-row2">' +
+          self._buildLookbackHtml('dropbox', a.account_email, a.lookback_months) +
+          '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">📁 Choose Folders</button>' +
+        '</div>' +
         '</div>' +
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
