@@ -44,6 +44,20 @@ window.CL_SETTINGS_LOGIC = {
         spsCancelBtn.className = 'btn-disconnect';
         spsCancelBtn.textContent = 'Close';
       }
+
+      // When the Drive folder picker closes, clear the flex-wrap that the
+      // picker-relocation logic in _openDriveFolderPicker sets on the Drive
+      // .settings-row. Leaving flex-wrap:wrap on permanently shifts the
+      // email tile horizontally even with the picker hidden.
+      var driveCancelBtn = document.getElementById('drive-folder-picker-cancel');
+      if (driveCancelBtn) {
+        driveCancelBtn.addEventListener('click', function () {
+          var dfp = document.getElementById('drive-folder-picker');
+          if (dfp && dfp.parentElement && dfp.parentElement.classList && dfp.parentElement.classList.contains('settings-row')) {
+            dfp.parentElement.style.flexWrap = '';
+          }
+        });
+      }
     });
   },
 
@@ -150,13 +164,8 @@ window.CL_SETTINGS_LOGIC = {
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
       }).join('');
-      // Inline width:100% defends against a flex-basis side effect from the
-      // picker-relocation logic in _openDriveFolderPicker, which leaves the
-      // Drive .settings-row with flex-wrap:wrap permanently and can otherwise
-      // cause the email box to render offset from where the other provider
-      // tiles render it.
-      return '<div class="connection-item" style="width:100%;">' +
-        '<div class="connection-item-row1" style="width:100%;display:flex;align-items:center;gap:8px;">' +
+      return '<div class="connection-item">' +
+        '<div class="connection-item-row1">' +
           '<span class="connection-item-email">' + (a.account_email || '') + '</span>' +
           '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
         '</div>' +
@@ -521,15 +530,20 @@ window.CL_SETTINGS_LOGIC = {
     if (!picker || !pickerList) return;
     // Relocate the picker inside the Google Drive settings-row so it sits
     // above the row's bottom divider, anchored to the Drive section instead
-    // of bleeding visually into the OneDrive section below.
+    // of bleeding visually into the OneDrive section below. flex-wrap is
+    // re-applied on every open and cleared by the cancel-button listener
+    // in init() — leaving it permanently set would shift the email tile
+    // horizontally even after the picker is hidden.
     var driveAddBtn = document.getElementById('add-drive-btn');
     var driveRow = driveAddBtn ? driveAddBtn.closest('.settings-row') : null;
-    if (driveRow && picker.parentElement !== driveRow) {
-      driveRow.appendChild(picker);
+    if (driveRow) {
+      if (picker.parentElement !== driveRow) {
+        driveRow.appendChild(picker);
+        picker.style.flexBasis = '100%';
+        picker.style.width = '100%';
+        picker.style.margin = '12px 0 0 0';
+      }
       driveRow.style.flexWrap = 'wrap';
-      picker.style.flexBasis = '100%';
-      picker.style.width = '100%';
-      picker.style.margin = '12px 0 0 0';
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
