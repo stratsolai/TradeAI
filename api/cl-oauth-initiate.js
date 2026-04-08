@@ -48,6 +48,13 @@ module.exports = async (req, res) => {
       redirectUri: APP_BASE_URL + '/api/cl-dropbox-callback',
       flavour: 'dropbox',
     },
+    'google-drive': {
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
+      scopes: 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email',
+      redirectUri: APP_BASE_URL + '/api/cl-drive-callback',
+      flavour: 'google',
+    },
   };
 
   const config = PROVIDERS[provider];
@@ -71,6 +78,14 @@ module.exports = async (req, res) => {
     // the first.
     params.set('response_mode', 'query');
     params.set('prompt', 'select_account');
+  }
+
+  if (config.flavour === 'google') {
+    // Required for Google to reliably issue a refresh token. access_type=offline
+    // requests a refresh token, and prompt=consent forces the consent screen so
+    // a refresh token is returned even on reconnects.
+    params.set('access_type', 'offline');
+    params.set('prompt', 'consent');
   }
 
   if (config.flavour === 'dropbox') {
