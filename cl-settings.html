@@ -276,8 +276,10 @@
     .btn-pick-folders, .btn-pick-site, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background 0.15s; white-space: nowrap; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
-    /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles */
-    .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; }
+    /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles.
+       align-items: flex-end so each folder row shrinks to content width and the
+       input+Remove cluster right-aligns, matching the website URL row layout. */
+    .connection-folders-list { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: 8px 0 4px 0; }
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
     .connection-folder-name { width: 360px; flex: 0 0 360px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
