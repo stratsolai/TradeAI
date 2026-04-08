@@ -137,9 +137,9 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._driveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-subitem">' +
-          '<span>' + (f.name || f.id || '') + '</span>' +
-          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
+        return '<div class="connection-folder-row">' +
+          '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
+          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
       }).join('');
       var currentLookback = (a.lookback_months == null) ? '12' : String(a.lookback_months);
@@ -155,7 +155,7 @@ window.CL_SETTINGS_LOGIC = {
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="drive">Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="drive">Disconnect</button>' +
         '</div>' +
-        (folders.length > 0 ? '<div class="connection-folders">' + folderHtml + '</div>' : '');
+        (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var driveBtn = document.getElementById('add-drive-btn');
     if (driveBtn) { driveBtn.onclick = function () { self._startCLOAuth('google-drive'); }; }
@@ -215,7 +215,7 @@ window.CL_SETTINGS_LOGIC = {
     });
     document.addEventListener('click', function (e) {
 
-      var disconnectBtn = e.target.closest('.btn-disconnect');
+      var disconnectBtn = e.target.closest('.btn-disconnect, .btn-remove-folder');
       if (disconnectBtn) {
         var type = disconnectBtn.getAttribute('data-type');
         if (type === 'email') {
@@ -593,9 +593,9 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._onedriveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-subitem">' +
-          '<span>' + (f.name || f.id || '') + '</span>' +
-          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="onedrive-folder">Remove</button>' +
+        return '<div class="connection-folder-row">' +
+          '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
+          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="onedrive-folder">Remove</button>' +
           '</div>';
       }).join('');
       return '<div class="connection-item">' +
@@ -603,7 +603,7 @@ window.CL_SETTINGS_LOGIC = {
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="onedrive">Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="onedrive">Disconnect</button>' +
         '</div>' +
-        (folders.length > 0 ? '<div class="connection-folders">' + folderHtml + '</div>' : '');
+        (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-onedrive-btn');
     if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('onedrive'); }; }
@@ -729,9 +729,9 @@ window.CL_SETTINGS_LOGIC = {
       var siteName = (a.site && (a.site.displayName || a.site.name)) || 'No site selected';
       var libraries = Array.isArray(a.libraries) ? a.libraries : [];
       var libraryHtml = libraries.map(function (lib) {
-        return '<div class="connection-subitem">' +
-          '<span>' + (lib.name || lib.id || '') + '</span>' +
-          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
+        return '<div class="connection-folder-row">' +
+          '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
+          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
           '</div>';
       }).join('');
       var librariesDisabled = !a.site || !a.site.id;
@@ -742,7 +742,7 @@ window.CL_SETTINGS_LOGIC = {
         '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '"' + (librariesDisabled ? ' disabled' : '') + '>Choose Libraries</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="sharepoint">Disconnect</button>' +
         '</div>' +
-        (libraries.length > 0 ? '<div class="connection-folders">' + libraryHtml + '</div>' : '');
+        (libraries.length > 0 ? '<div class="connection-folders-list">' + libraryHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-sharepoint-btn');
     if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('sharepoint'); }; }
@@ -941,9 +941,9 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._dropboxAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-subitem">' +
-          '<span>' + (f.name || f.id || '') + '</span>' +
-          '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="dropbox-folder">Remove</button>' +
+        return '<div class="connection-folder-row">' +
+          '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
+          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="dropbox-folder">Remove</button>' +
           '</div>';
       }).join('');
       return '<div class="connection-item">' +
@@ -951,7 +951,7 @@ window.CL_SETTINGS_LOGIC = {
         '<button class="btn-pick-folders" data-account="' + (a.account_email || '') + '" data-type="dropbox">Choose Folders</button>' +
         '<button class="btn-disconnect" data-account="' + (a.account_email || '') + '" data-type="dropbox">Disconnect</button>' +
         '</div>' +
-        (folders.length > 0 ? '<div class="connection-folders">' + folderHtml + '</div>' : '');
+        (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-dropbox-btn');
     if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('dropbox'); }; }
