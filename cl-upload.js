@@ -195,7 +195,11 @@ window.CL_UPLOAD = {
 
       var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
       var dropboxGroups = buildAccountGroups(dropboxAccounts, "folders");
-      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxGroups.length > 0, pills: flattenGroups(dropboxGroups), groups: dropboxGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      // Connected state reflects whether a Dropbox account is authenticated,
+      // not whether the user has picked any subfolders. Root-level files are
+      // included automatically on every scan, so an account with no
+      // subfolder selections is still a valid scannable connection.
+      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxAccounts.length > 0, pills: flattenGroups(dropboxGroups), groups: dropboxGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
       tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
