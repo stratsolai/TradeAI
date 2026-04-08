@@ -193,6 +193,41 @@ async function extractBinaryFileText(base64Data, mimeType) {
   return null;
 }
 
+// Recursively list every file in a SharePoint document library by walking
+// folders depth-first from root. Folders contribute their children but are
+// not themselves returned — only items with a .file facet end up in the
+// result. Mirrors the $top=200 cap used elsewhere in this file (pagination
+// of @odata.nextLink is a known limitation tracked in CLAUDE.md).
+async function listAllSharePointLibraryFiles(siteId, libraryId, accessToken) {
+  var collected = [];
+  var toVisit = [
+    'https://graph.microsoft.com/v1.0/sites/' + siteId + '/drives/' + libraryId + '/root/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+  ];
+  while (toVisit.length > 0) {
+    var url = toVisit.shift();
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    if (!res.ok) {
+      var errBody = await res.json().catch(function () { return {}; });
+      var errMsg = (errBody.error && errBody.error.message) || ('Microsoft Graph returned ' + res.status);
+      throw new Error(errMsg);
+    }
+    var data = await res.json();
+    var items = (data && data.value) || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (!it) continue;
+      if (it.file) {
+        collected.push(it);
+      } else if (it.folder && it.id) {
+        toVisit.push(
+          'https://graph.microsoft.com/v1.0/sites/' + siteId + '/drives/' + libraryId + '/items/' + it.id + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+        );
+      }
+    }
+  }
+  return collected;
+}
+
 // Resolve a SharePoint file to plain-text body suitable for the extraction prompt.
 async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, accessToken) {
   const buffer = await fetchSharePointFileBuffer(siteId, libraryId, itemId, accessToken);
@@ -423,19 +458,16 @@ export default async function handler(req, res) {
         console.error('SharePoint library name lookup failed:', e.message);
       }
 
-      // List children of the library root
-      const filesRes = await fetch(
-        'https://graph.microsoft.com/v1.0/sites/' + siteId + '/drives/' + libraryId + '/root/children?$top=200&$select=id,name,file,folder,size,createdDateTime',
-        { headers: { 'Authorization': 'Bearer ' + accessToken } }
-      );
-      if (!filesRes.ok) {
-        const errBody = await filesRes.json().catch(function() { return {}; });
-        const errMsg = (errBody.error && errBody.error.message) || ('Microsoft Graph returned ' + filesRes.status);
-        console.error('SharePoint list-children error:', errMsg);
-        return res.status(502).json({ error: 'SharePoint API error: ' + errMsg });
+      // Recursively list every file in the library by walking folders from
+      // root. Files inside subfolders must be scanned, not just root-level
+      // children.
+      let allFiles = [];
+      try {
+        allFiles = await listAllSharePointLibraryFiles(siteId, libraryId, accessToken);
+      } catch (e) {
+        console.error('SharePoint list-children error:', e.message);
+        return res.status(502).json({ error: 'SharePoint API error: ' + e.message });
       }
-      const filesData = await filesRes.json();
-      const allFiles = (filesData.value || []).filter(function(it) { return it && it.file; });
 
       // Skip files that already have a cl_source_items row from a prior scan
       const existingSI = await supabase
@@ -594,9 +626,22 @@ export default async function handler(req, res) {
         }
       }
 
-      // Stamp last_scanned_at on the account entry
+      // Stamp last_scanned_at on the individual site entry inside
+      // entry.sites — not on the account itself. Each site within a
+      // SharePoint account is scanned independently and needs its own
+      // timestamp so that scanning one site does not mark every other
+      // site on the same account as recently scanned. Any stale
+      // account-level last_scanned_at field from earlier builds is
+      // removed at the same time.
       if (imported > 0) {
-        accounts[entryIdx].last_scanned_at = new Date().toISOString();
+        var sitesArrSave = Array.isArray(accounts[entryIdx].sites) ? accounts[entryIdx].sites : [];
+        var siteSaveIdx = sitesArrSave.findIndex(function (s) { return s && s.id === siteId; });
+        if (siteSaveIdx > -1) {
+          accounts[entryIdx].sites[siteSaveIdx].last_scanned_at = new Date().toISOString();
+        }
+        if (accounts[entryIdx].last_scanned_at) {
+          delete accounts[entryIdx].last_scanned_at;
+        }
         await supabase.from('profiles').update({ cl_sharepoint_accounts: accounts }).eq('id', userId);
       }
 
