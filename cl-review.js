@@ -425,6 +425,25 @@ window.CL_REVIEW = {
     }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
+    // Connection type — derived from item.source (top-level column on
+    // content_library). The 'email' value is shared by Gmail and Outlook
+    // imports, so item.tool_source is used to distinguish them.
+    var connectionLabel = '';
+    var srcVal = item.source || '';
+    if (srcVal === 'google-drive') connectionLabel = 'Google Drive';
+    else if (srcVal === 'onedrive') connectionLabel = 'OneDrive';
+    else if (srcVal === 'sharepoint') connectionLabel = 'SharePoint';
+    else if (srcVal === 'dropbox') connectionLabel = 'Dropbox';
+    else if (srcVal === 'website') connectionLabel = 'Website';
+    else if (srcVal === 'email') {
+      var toolSrc = item.tool_source || '';
+      if (toolSrc === 'cl-outlook-scan') connectionLabel = 'Outlook';
+      else if (toolSrc === 'cl-email-scan') connectionLabel = 'Gmail';
+      else connectionLabel = 'Email';
+    } else if (srcVal) {
+      connectionLabel = srcVal.charAt(0).toUpperCase() + srcVal.slice(1);
+    }
+    if (connectionLabel) sourceDetailParts.push('<div><span class="source-detail-label">Connection:</span> ' + escHtml(connectionLabel) + '</div>');
     if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span> ' + escHtml(detail.filename) + '</div>');
     if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email account:</span> ' + escHtml(detail.account_email) + '</div>');
     if (detail.sender) sourceDetailParts.push('<div><span class="source-detail-label">From:</span> ' + escHtml(detail.sender) + '</div>');
