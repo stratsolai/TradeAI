@@ -63,10 +63,10 @@ var VERSION_MATCH_RULES = {
   'Financial Documents': 'Periodic documents (Profit & Loss Statement, Balance Sheet, Cash Flow Statement, Tax Return, BAS/GST Return, Payroll Summary) — match on document type and period. Transactional documents (Invoice, Receipt, Purchase Order, Bank Statement, Supplier Statement) — always additive, never supersede.'
 };
 
-var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
-  "Return a JSON array containing exactly ONE object (or zero objects if no meaningful content can be extracted) with these fields:\n" +
+var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. The source material is a webpage. Identify each distinct meaningful content block on the page and produce one summary per block.\n\n" +
+  "Return a JSON array with one object per distinct content block found (or an empty array if no meaningful content is present), each object containing these fields:\n" +
   "- \"title\": string, max 10 words, descriptive of the whole document\n" +
-  "- \"body\": string, concise plain text summary of the whole document in your own words — capture the key facts, main points, and important details. Do NOT reproduce the source content verbatim. Do NOT include long passages of original text. Do NOT include bullet point lists copied from the source. Summarise the document as a whole.\n" +
+  "- \"body\": string, concise plain text summary of the block in your own words — capture the key facts, main points, and important details. Do NOT reproduce the source content verbatim. Do NOT include long passages of original text. Do NOT include bullet point lists copied from the source. Summarise the block.\n" +
   "- \"category\": string, must exactly match one category name from the CATEGORIES section — copy the name exactly including punctuation, capitalisation, and the trailing 's' on plural names\n" +
   "- \"disposition\": string, \"keep\" or \"discard\" — must match the disposition listed for the assigned category\n" +
   "- \"confidence\": string, \"confident\" or \"uncertain\" — confident when the category is clear, uncertain when the content could fit multiple categories\n" +
@@ -101,8 +101,8 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "- tender: Generates tender and proposal documents. Needs content about capabilities, past work, team, certifications, and pricing.\n" +
   "- quote-enhancer: Enhances quotes into professional branded documents. Needs company information, past jobs, testimonials, licences, and safety information.\n\n" +
   "RULES:\n" +
-  "1. Treat the entire source as ONE item. Return a JSON array with exactly one element representing the whole source. Do NOT split the source into multiple items by section, heading, theme, or paragraph.\n" +
-  "2. Body must be a concise summary in your own words — capture the document's purpose and key facts without reproducing the source content. Never copy long passages or bullet lists from the source.\n" +
+  "1. Identify each distinct meaningful content block on the page and return ONE object per block. A meaningful block is a discrete piece of business-relevant content — for example, a service description, a pricing entry, a testimonial, a team or culture statement, a promotional offer, a news item, or a tip or how-to. Ignore navigation menus, headers, footers, cookie notices, contact forms, and generic page furniture.\n" +
+  "2. Body must be a concise summary in your own words — capture the block's purpose and key facts without reproducing the source content. Never copy long passages or bullet lists from the source.\n" +
   "3. Category must exactly match one name from the categories list — copy it character-for-character.\n" +
   "4. Disposition must match the category's listed disposition.\n" +
   "5. Only tag tools whose description specifically matches the content.\n" +
