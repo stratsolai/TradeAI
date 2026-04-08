@@ -143,8 +143,54 @@ window.CL_UPLOAD = {
       var onedriveGroups = buildAccountGroups(onedriveAccounts, "folders");
       tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedriveGroups.length > 0, pills: flattenGroups(onedriveGroups), groups: onedriveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
+      // SharePoint accounts hold a `sites` array; each site has its own
+      // `libraries` array. Lazy-upgrade legacy { site, libraries } entries
+      // in-memory so the rest of this code can assume the new shape.
+      function upgradeSharepointEntry(entry) {
+        if (!entry) return;
+        if (entry.site && entry.site.id) {
+          if (!Array.isArray(entry.sites)) entry.sites = [];
+          var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
+          if (!siteAlreadyIn) {
+            entry.sites.push({
+              id: entry.site.id,
+              displayName: entry.site.displayName,
+              webUrl: entry.site.webUrl,
+              libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
+            });
+          }
+          delete entry.site;
+          delete entry.libraries;
+        } else if (!Array.isArray(entry.sites)) {
+          entry.sites = [];
+        }
+      }
+      // For SharePoint, each pill group represents one site under one
+      // account; the pill value encodes accountEmail|siteId|libraryId so
+      // the scan handler can address the right library on the right site.
+      function buildSharepointGroups(accounts) {
+        var groups = [];
+        (accounts || []).forEach(function (a) {
+          if (!a || !a.account_email) return;
+          upgradeSharepointEntry(a);
+          var sites = Array.isArray(a.sites) ? a.sites : [];
+          sites.forEach(function (s) {
+            if (!s || !s.id) return;
+            var libraries = Array.isArray(s.libraries) ? s.libraries : [];
+            var groupPills = [];
+            libraries.forEach(function (lib) {
+              if (!lib || !lib.id) return;
+              groupPills.push({ label: lib.name || lib.id, value: a.account_email + "|" + s.id + "|" + lib.id });
+            });
+            if (groupPills.length > 0) {
+              groups.push({ account: a.account_email + " — " + (s.displayName || s.name || s.id), items: groupPills });
+            }
+          });
+        });
+        return groups;
+      }
       var sharepointAccounts = Array.isArray(profile.cl_sharepoint_accounts) ? profile.cl_sharepoint_accounts : [];
-      var sharepointGroups = buildAccountGroups(sharepointAccounts, "libraries");
+      var sharepointGroups = buildSharepointGroups(sharepointAccounts);
       tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointGroups.length > 0, pills: flattenGroups(sharepointGroups), groups: sharepointGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
@@ -307,14 +353,15 @@ window.CL_UPLOAD = {
             var spTotalImported = 0;
             for (var spi = 0; spi < spPairs.length; spi++) {
               if (self._scanCancelled) break;
-              var spSep = spPairs[spi].indexOf("|");
-              if (spSep === -1) { console.error("SharePoint scan: malformed pill value", spPairs[spi]); continue; }
-              var spAcct = spPairs[spi].substring(0, spSep);
-              var spLibrary = spPairs[spi].substring(spSep + 1);
+              var spParts = spPairs[spi].split("|");
+              if (spParts.length !== 3) { console.error("SharePoint scan: malformed pill value", spPairs[spi]); continue; }
+              var spAcct = spParts[0];
+              var spSiteId = spParts[1];
+              var spLibrary = spParts[2];
               var spResp = await fetch("/api/sharepoint-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + spToken },
-                body: JSON.stringify({ action: "import-all", accountEmail: spAcct, libraryId: spLibrary })
+                body: JSON.stringify({ action: "import-all", accountEmail: spAcct, siteId: spSiteId, libraryId: spLibrary })
               });
               var spResult = await spResp.json();
               if (spResult.success && spResult.imported) {
