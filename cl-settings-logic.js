@@ -910,6 +910,16 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._sharepointAccounts.map(function (a) {
       self._upgradeSharepointEntry(a);
       var sites = Array.isArray(a.sites) ? a.sites : [];
+      // Choose Libraries buttons for row2 — one per chosen site. When the
+      // account has multiple sites, the site name is appended so each
+      // button is distinguishable; with one site the label stays compact.
+      var libraryButtonsHtml = sites.map(function (s) {
+        var siteName = s.displayName || s.name || s.id || '';
+        var btnText = sites.length > 1 ? 'Choose Libraries — ' + siteName : 'Choose Libraries';
+        return '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">' + btnText + '</button>';
+      }).join('');
+      // Per-site rows mirror OneDrive folder rows: just name + Remove. The
+      // Choose Libraries button now lives in row2 above.
       var sitesHtml = sites.map(function (s) {
         var libraries = Array.isArray(s.libraries) ? s.libraries : [];
         var libraryHtml = libraries.map(function (lib) {
@@ -921,10 +931,7 @@ window.CL_SETTINGS_LOGIC = {
         var siteName = s.displayName || s.name || s.id || '';
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + siteName + '</div>' +
-          '<div style="display:flex;gap:6px;align-items:center;">' +
-            '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '">Choose Libraries</button>' +
-            '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
-          '</div>' +
+          '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
           '</div>' +
           libraryHtml;
       }).join('');
@@ -936,6 +943,7 @@ window.CL_SETTINGS_LOGIC = {
         '<div class="connection-item-row2">' +
           self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
           '<button class="btn-pick-sites" data-account="' + (a.account_email || '') + '">Choose Sites</button>' +
+          libraryButtonsHtml +
         '</div>' +
         '</div>' +
         (sites.length > 0 ? '<div class="connection-folders-list">' + sitesHtml + '</div>' : '');
@@ -963,21 +971,10 @@ window.CL_SETTINGS_LOGIC = {
     var picker = document.getElementById('sharepoint-site-picker');
     var pickerList = document.getElementById('sharepoint-site-picker-list');
     if (!picker || !pickerList) return;
-    // Relocate the picker inside the SharePoint settings-row so it sits above
-    // the row's bottom divider, anchored to the SharePoint section. flex-wrap
-    // is re-applied on every open and cleared by the cancel-button listener
-    // in init() — leaving it permanently set would shift the email tile.
-    var addBtn = document.getElementById('add-sharepoint-btn');
-    var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
-    if (parentRow) {
-      if (picker.parentElement !== parentRow) {
-        parentRow.appendChild(picker);
-        picker.style.flexBasis = '100%';
-        picker.style.width = '100%';
-        picker.style.margin = '12px 0 0 0';
-      }
-      parentRow.style.flexWrap = 'wrap';
-    }
+    // The site picker stays in its static DOM position (a sibling of the
+    // SharePoint settings-row inside #connections-rows). It is intentionally
+    // NOT relocated into the .settings-row — relocating + setting flex-wrap
+    // on the row caused the tile above the picker to rearrange on open.
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
     pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading sites...</div>';
