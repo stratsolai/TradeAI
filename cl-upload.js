@@ -95,7 +95,7 @@ window.CL_UPLOAD = {
       var userResp = await supabase.auth.getUser();
       var user = userResp.data && userResp.data.user;
       if (!user) return;
-      var resp = await supabase.from("profiles").select("cl_drive_connected, cl_drive_folders, cl_connected_emails, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts").eq("id", user.id).single();
+      var resp = await supabase.from("profiles").select("cl_drive_accounts, cl_connected_emails, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts").eq("id", user.id).single();
       var profile = resp.data || {};
       var tiles = [];
 
@@ -115,8 +115,17 @@ window.CL_UPLOAD = {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
 
-      var driveFolders = Array.isArray(profile.cl_drive_folders) ? profile.cl_drive_folders : [];
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: !!profile.cl_drive_connected, pills: driveFolders.map(function(f) { return { label: f.name, value: f.id }; }), note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      var driveAccounts = Array.isArray(profile.cl_drive_accounts) ? profile.cl_drive_accounts : [];
+      var drivePills = [];
+      driveAccounts.forEach(function(a) {
+        if (!a || !a.account_email) return;
+        var folders = Array.isArray(a.folders) ? a.folders : [];
+        folders.forEach(function(f) {
+          if (!f || !f.id) return;
+          drivePills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
+        });
+      });
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: drivePills.length > 0, pills: drivePills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var onedriveAccounts = Array.isArray(profile.cl_onedrive_accounts) ? profile.cl_onedrive_accounts : [];
       var onedrivePills = [];
@@ -160,7 +169,7 @@ window.CL_UPLOAD = {
       grid.innerHTML = tiles.map(function(t) {
         var pillsHtml = "";
         if (t.pills && t.pills.length > 0) {
-          pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "gdrive" ? "folders" : t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
+          pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
             "<div class=\"source-select-pills\">" + t.pills.map(function(p) {
               return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
             }).join("") + "</div>";
@@ -228,26 +237,33 @@ window.CL_UPLOAD = {
           var user = ud && ud.data ? ud.data.user : null;
           if (!user) throw new Error("Not authenticated");
           if (source === "gdrive") {
-            var folderIds = values || [];
-            if (folderIds.length === 0) throw new Error("No Drive folders selected to scan");
-            var totalImported = 0;
-            for (var fi = 0; fi < folderIds.length; fi++) {
+            var gdPairs = values || [];
+            if (gdPairs.length === 0) throw new Error("No Drive folders selected to scan");
+            var gdSession = await self._supabase.auth.getSession();
+            var gdToken = gdSession && gdSession.data && gdSession.data.session ? gdSession.data.session.access_token : null;
+            if (!gdToken) throw new Error("Not authenticated");
+            var gdTotalImported = 0;
+            for (var gdi = 0; gdi < gdPairs.length; gdi++) {
               if (self._scanCancelled) break;
-              var resp = await fetch("/api/drive-import", {
+              var gdSep = gdPairs[gdi].indexOf("|");
+              if (gdSep === -1) { console.error("Drive scan: malformed pill value", gdPairs[gdi]); continue; }
+              var gdAcct = gdPairs[gdi].substring(0, gdSep);
+              var gdFolder = gdPairs[gdi].substring(gdSep + 1);
+              var gdResp = await fetch("/api/drive-import", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id, action: "import-all", folderId: folderIds[fi] })
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + gdToken },
+                body: JSON.stringify({ action: "import-all", accountEmail: gdAcct, folderId: gdFolder })
               });
-              var result = await resp.json();
-              if (result.success && result.imported) {
-                totalImported += result.imported;
-              } else if (result.error) {
-                console.error("Drive import error for folder " + folderIds[fi] + ":", result.error);
+              var gdResult = await gdResp.json();
+              if (gdResult.success && gdResult.imported) {
+                gdTotalImported += gdResult.imported;
+              } else if (gdResult.error) {
+                console.error("Drive import error for " + gdPairs[gdi] + ":", gdResult.error);
               }
             }
             finishScan();
             if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (totalImported > 0) { self._showUploadConfirmation(totalImported); }
+            else if (gdTotalImported > 0) { self._showUploadConfirmation(gdTotalImported); }
             else { self._showUploadError("No new content found in your connected Drive folders."); }
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
