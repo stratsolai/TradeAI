@@ -388,12 +388,35 @@ window.CL_REVIEW = {
     }
   },
 
+  // Friendly connection-type label derived from item.source (top-level
+  // column on content_library). The 'email' value is shared by Gmail and
+  // Outlook imports, so item.tool_source is used to distinguish them.
+  // Returns '' for items with no source set so callers can choose their
+  // own fallback.
+  _connectionLabel: function(item) {
+    if (!item) return '';
+    var srcVal = item.source || '';
+    if (srcVal === 'google-drive') return 'Google Drive';
+    if (srcVal === 'onedrive') return 'OneDrive';
+    if (srcVal === 'sharepoint') return 'SharePoint';
+    if (srcVal === 'dropbox') return 'Dropbox';
+    if (srcVal === 'website') return 'Website';
+    if (srcVal === 'email') {
+      var toolSrc = item.tool_source || '';
+      if (toolSrc === 'cl-outlook-scan') return 'Outlook';
+      if (toolSrc === 'cl-email-scan') return 'Gmail';
+      return 'Email';
+    }
+    if (srcVal) return srcVal.charAt(0).toUpperCase() + srcVal.slice(1);
+    return '';
+  },
+
   _cardHtml: function(item) {
     const id = escHtml(item.id);
     const title = escHtml(item.title || 'Untitled');
     const typeLabel = item.category ? item.category.charAt(0).toUpperCase() + item.category.slice(1) : 'Unknown';
     const uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-AU') : '';
-    const sourceParts = [(item.source || 'unknown').slice(0,1).toUpperCase() + (item.source || 'unknown').slice(1)];
+    const sourceParts = [this._connectionLabel(item) || 'Unknown'];
     if (item.source_detail) {
       const d = typeof item.source_detail === 'string' ? JSON.parse(item.source_detail) : item.source_detail;
       if (d.filename) sourceParts.push(d.filename);
@@ -425,24 +448,7 @@ window.CL_REVIEW = {
     }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
-    // Connection type — derived from item.source (top-level column on
-    // content_library). The 'email' value is shared by Gmail and Outlook
-    // imports, so item.tool_source is used to distinguish them.
-    var connectionLabel = '';
-    var srcVal = item.source || '';
-    if (srcVal === 'google-drive') connectionLabel = 'Google Drive';
-    else if (srcVal === 'onedrive') connectionLabel = 'OneDrive';
-    else if (srcVal === 'sharepoint') connectionLabel = 'SharePoint';
-    else if (srcVal === 'dropbox') connectionLabel = 'Dropbox';
-    else if (srcVal === 'website') connectionLabel = 'Website';
-    else if (srcVal === 'email') {
-      var toolSrc = item.tool_source || '';
-      if (toolSrc === 'cl-outlook-scan') connectionLabel = 'Outlook';
-      else if (toolSrc === 'cl-email-scan') connectionLabel = 'Gmail';
-      else connectionLabel = 'Email';
-    } else if (srcVal) {
-      connectionLabel = srcVal.charAt(0).toUpperCase() + srcVal.slice(1);
-    }
+    var connectionLabel = this._connectionLabel(item);
     if (connectionLabel) sourceDetailParts.push('<div><span class="source-detail-label">Connection:</span> ' + escHtml(connectionLabel) + '</div>');
     if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span> ' + escHtml(detail.filename) + '</div>');
     if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email account:</span> ' + escHtml(detail.account_email) + '</div>');
