@@ -45,19 +45,25 @@ window.CL_SETTINGS_LOGIC = {
         spsCancelBtn.textContent = 'Close';
       }
 
-      // When the Drive folder picker closes, clear the flex-wrap that the
-      // picker-relocation logic in _openDriveFolderPicker sets on the Drive
+      // When a folder picker closes, clear the flex-wrap that the picker-
+      // relocation logic in _openXxxFolderPicker sets on the picker's host
       // .settings-row. Leaving flex-wrap:wrap on permanently shifts the
       // email tile horizontally even with the picker hidden.
-      var driveCancelBtn = document.getElementById('drive-folder-picker-cancel');
-      if (driveCancelBtn) {
-        driveCancelBtn.addEventListener('click', function () {
-          var dfp = document.getElementById('drive-folder-picker');
-          if (dfp && dfp.parentElement && dfp.parentElement.classList && dfp.parentElement.classList.contains('settings-row')) {
-            dfp.parentElement.style.flexWrap = '';
+      function bindPickerFlexWrapReset(cancelBtnId, pickerId) {
+        var btn = document.getElementById(cancelBtnId);
+        if (!btn) return;
+        btn.addEventListener('click', function () {
+          var p = document.getElementById(pickerId);
+          if (p && p.parentElement && p.parentElement.classList && p.parentElement.classList.contains('settings-row')) {
+            p.parentElement.style.flexWrap = '';
           }
         });
       }
+      bindPickerFlexWrapReset('drive-folder-picker-cancel', 'drive-folder-picker');
+      bindPickerFlexWrapReset('onedrive-folder-picker-cancel', 'onedrive-folder-picker');
+      bindPickerFlexWrapReset('sharepoint-site-picker-cancel', 'sharepoint-site-picker');
+      bindPickerFlexWrapReset('sharepoint-library-picker-cancel', 'sharepoint-library-picker');
+      bindPickerFlexWrapReset('dropbox-folder-picker-cancel', 'dropbox-folder-picker');
     });
   },
 
@@ -747,15 +753,19 @@ window.CL_SETTINGS_LOGIC = {
     var pickerList = document.getElementById('onedrive-folder-picker-list');
     if (!picker || !pickerList) return;
     // Relocate the picker inside the OneDrive settings-row so it sits above
-    // the row's bottom divider, anchored to the OneDrive section.
+    // the row's bottom divider, anchored to the OneDrive section. flex-wrap
+    // is re-applied on every open and cleared by the cancel-button listener
+    // in init() — leaving it permanently set would shift the email tile.
     var addBtn = document.getElementById('add-onedrive-btn');
     var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
-    if (parentRow && picker.parentElement !== parentRow) {
-      parentRow.appendChild(picker);
+    if (parentRow) {
+      if (picker.parentElement !== parentRow) {
+        parentRow.appendChild(picker);
+        picker.style.flexBasis = '100%';
+        picker.style.width = '100%';
+        picker.style.margin = '12px 0 0 0';
+      }
       parentRow.style.flexWrap = 'wrap';
-      picker.style.flexBasis = '100%';
-      picker.style.width = '100%';
-      picker.style.margin = '12px 0 0 0';
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
@@ -916,15 +926,19 @@ window.CL_SETTINGS_LOGIC = {
     var pickerList = document.getElementById('sharepoint-site-picker-list');
     if (!picker || !pickerList) return;
     // Relocate the picker inside the SharePoint settings-row so it sits above
-    // the row's bottom divider, anchored to the SharePoint section.
+    // the row's bottom divider, anchored to the SharePoint section. flex-wrap
+    // is re-applied on every open and cleared by the cancel-button listener
+    // in init() — leaving it permanently set would shift the email tile.
     var addBtn = document.getElementById('add-sharepoint-btn');
     var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
-    if (parentRow && picker.parentElement !== parentRow) {
-      parentRow.appendChild(picker);
+    if (parentRow) {
+      if (picker.parentElement !== parentRow) {
+        parentRow.appendChild(picker);
+        picker.style.flexBasis = '100%';
+        picker.style.width = '100%';
+        picker.style.margin = '12px 0 0 0';
+      }
       parentRow.style.flexWrap = 'wrap';
-      picker.style.flexBasis = '100%';
-      picker.style.width = '100%';
-      picker.style.margin = '12px 0 0 0';
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
@@ -1005,15 +1019,19 @@ window.CL_SETTINGS_LOGIC = {
     var pickerList = document.getElementById('sharepoint-library-picker-list');
     if (!picker || !pickerList) return;
     // Relocate the picker inside the SharePoint settings-row so it sits above
-    // the row's bottom divider, anchored to the SharePoint section.
+    // the row's bottom divider, anchored to the SharePoint section. flex-wrap
+    // is re-applied on every open and cleared by the cancel-button listener
+    // in init() — leaving it permanently set would shift the email tile.
     var addBtn = document.getElementById('add-sharepoint-btn');
     var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
-    if (parentRow && picker.parentElement !== parentRow) {
-      parentRow.appendChild(picker);
+    if (parentRow) {
+      if (picker.parentElement !== parentRow) {
+        parentRow.appendChild(picker);
+        picker.style.flexBasis = '100%';
+        picker.style.width = '100%';
+        picker.style.margin = '12px 0 0 0';
+      }
       parentRow.style.flexWrap = 'wrap';
-      picker.style.flexBasis = '100%';
-      picker.style.width = '100%';
-      picker.style.margin = '12px 0 0 0';
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
@@ -1170,15 +1188,19 @@ window.CL_SETTINGS_LOGIC = {
     var pickerList = document.getElementById('dropbox-folder-picker-list');
     if (!picker || !pickerList) return;
     // Relocate the picker inside the Dropbox settings-row so it sits above
-    // the row's bottom divider, anchored to the Dropbox section.
+    // the row's bottom divider, anchored to the Dropbox section. flex-wrap
+    // is re-applied on every open and cleared by the cancel-button listener
+    // in init() — leaving it permanently set would shift the email tile.
     var addBtn = document.getElementById('add-dropbox-btn');
     var parentRow = addBtn ? addBtn.closest('.settings-row') : null;
-    if (parentRow && picker.parentElement !== parentRow) {
-      parentRow.appendChild(picker);
+    if (parentRow) {
+      if (picker.parentElement !== parentRow) {
+        parentRow.appendChild(picker);
+        picker.style.flexBasis = '100%';
+        picker.style.width = '100%';
+        picker.style.margin = '12px 0 0 0';
+      }
       parentRow.style.flexWrap = 'wrap';
-      picker.style.flexBasis = '100%';
-      picker.style.width = '100%';
-      picker.style.margin = '12px 0 0 0';
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
