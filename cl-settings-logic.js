@@ -910,16 +910,10 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._sharepointAccounts.map(function (a) {
       self._upgradeSharepointEntry(a);
       var sites = Array.isArray(a.sites) ? a.sites : [];
-      // Choose Libraries buttons for row2 — one per chosen site. When the
-      // account has multiple sites, the site name is appended so each
-      // button is distinguishable; with one site the label stays compact.
-      var libraryButtonsHtml = sites.map(function (s) {
-        var siteName = s.displayName || s.name || s.id || '';
-        var btnText = sites.length > 1 ? 'Choose Libraries — ' + siteName : 'Choose Libraries';
-        return '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">' + btnText + '</button>';
-      }).join('');
-      // Per-site rows mirror OneDrive folder rows: just name + Remove. The
-      // Choose Libraries button now lives in row2 above.
+      // Each site renders as a section: site row, then its libraries
+      // indented below, then a Choose Libraries — <Site Name> button on
+      // its own row at the bottom of the section. Multiple sites stack
+      // one section after another.
       var sitesHtml = sites.map(function (s) {
         var libraries = Array.isArray(s.libraries) ? s.libraries : [];
         var libraryHtml = libraries.map(function (lib) {
@@ -929,11 +923,15 @@ window.CL_SETTINGS_LOGIC = {
             '</div>';
         }).join('');
         var siteName = s.displayName || s.name || s.id || '';
+        var pickLibsHtml = '<div class="connection-folder-row" style="padding-left:24px;">' +
+          '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">Choose Libraries — ' + siteName + '</button>' +
+          '</div>';
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + siteName + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
           '</div>' +
-          libraryHtml;
+          libraryHtml +
+          pickLibsHtml;
       }).join('');
       return '<div class="connection-item">' +
         '<div class="connection-item-row1">' +
@@ -943,7 +941,6 @@ window.CL_SETTINGS_LOGIC = {
         '<div class="connection-item-row2">' +
           self._buildLookbackHtml('sharepoint', a.account_email, a.lookback_months) +
           '<button class="btn-pick-sites" data-account="' + (a.account_email || '') + '">Choose Sites</button>' +
-          libraryButtonsHtml +
         '</div>' +
         '</div>' +
         (sites.length > 0 ? '<div class="connection-folders-list">' + sitesHtml + '</div>' : '');
