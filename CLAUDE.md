@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 7 2026
+# Updated: April 8 2026
 
 ---
 
@@ -107,52 +107,18 @@ authenticated pages:
 
 ## Active Tasks
 
-### Google Drive Migration — build complete, integration test pending
-
-Steps 1–6 and Step 9 complete. Steps 7 and 8 pending.
-
-Step 7 — Integration test per the Google Drive Migration
-Spec v1.0 Section 7 checklist. Run after cl-settings.html
-and cl-settings-logic.js styling work is confirmed complete.
-
-Step 8 — Update CLAUDE.md once integration test passes.
-
-### cl-settings.html and cl-settings-logic.js — styling in progress
-
-The following items are outstanding and must be completed
-before the Google Drive integration test runs:
-
-- Disconnect button on the same row as the email box on all
-  file storage connection tiles
-- Choose Folders button and Lookback dropdown on the row
-  below the email, right-aligned
-- Remove the "Lookback:" label text from all file storage
-  connection tiles
-- All email input boxes same width as the Google Drive email
-  box
-- All folder input boxes same width as the Google Drive
-  folder boxes
-- All website URL input boxes same width as the Google Drive
-  folder boxes
-- Scan Settings frequency buttons — revert to pre-session
-  state. Current state is broken. Check git log and restore
-  correct pre-session CSS exactly.
-- Remove dead code from api/auth/oauth-callback.js — Drive
-  branch is now dead code following Google Drive migration
-  to standalone callback. Remove the google-drive branch.
-- Remove dead code from api/auth/initiate.js — google-drive
-  entry is now dead code. Remove it.
-- Remove the legacy /api/auth/google-drive/callback rewrite
-  from vercel.json.
-- Remove old Vercel preview URIs from Google Cloud console
-  — trade-ai-seven-blue.vercel.app URIs. Owner to action
-  this in Google Cloud console directly.
-
-### Task 10 — CL Connections integration test pending
+### Task 10 — CL Connections integration test in progress
 
 Full integration test for OneDrive, SharePoint, and Dropbox
-per CL Connections Spec v1.2 checklist. Runs after Google
-Drive integration test is complete.
+per CL Connections Spec v1.2 checklist. OneDrive scanning
+confirmed working. SharePoint and Dropbox testing in progress.
+
+Outstanding before sign-off:
+- SharePoint scan returning no files — under investigation
+- Dropbox root-level files not supported — fix pending
+- SharePoint per-site last_scanned_at — fix pending
+- Lookback controls wiring — import endpoints do not yet read
+  lookback_months. Build pending after integration test.
 
 ### Task 11 — CL Items
 
@@ -224,6 +190,17 @@ Runs after Task 10 integration test.
 - Pill width in cl-upload.js may need CSS adjustment for
   long email addresses with multi-account connections. Pick
   up during stylesheet rollout.
+- _upgradeSharepointEntry helper duplicated across
+  cl-settings-logic.js, api/sharepoint-import.js, and
+  cl-upload.js intentionally — each file independently
+  upgrades legacy { site, libraries } entries to the
+  multi-site { sites: [...] } shape on read. Consolidate
+  into a shared module during stylesheet rollout cleanup
+  pass.
+- _saveDriveFolders in cl-settings-logic.js is unused dead
+  code following the Drive folder picker rewrite to
+  immediate-save Add/Remove buttons. Remove during
+  stylesheet rollout cleanup pass.
 
 ---
 
