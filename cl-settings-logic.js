@@ -377,9 +377,18 @@ window.CL_SETTINGS_LOGIC = {
     var self = this;
     var addBtn = document.getElementById('add-website-btn');
     if (addBtn) addBtn.addEventListener('click', function () {
+      // Add an empty row to the in-memory list and re-render so a
+      // fresh input box appears for the user to type into. Do NOT
+      // call _saveWebsiteUrls here — its validation loop strips
+      // empty inputs at line 491, then overwrites _websiteUrls with
+      // the filtered list, which would immediately delete the row
+      // we just added and the new input field would vanish before
+      // the user could type in it. The blur/change event delegated
+      // at line 263 already triggers _saveWebsiteUrls once the user
+      // has typed something, so the immediate-save behaviour is
+      // preserved without the disappearing-row bug.
       self._websiteUrls.push('');
       self._renderWebsiteList();
-      self._saveWebsiteUrls();
     });
   },
 
