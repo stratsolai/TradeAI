@@ -115,60 +115,58 @@ window.CL_UPLOAD = {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
 
-      var driveAccounts = Array.isArray(profile.cl_drive_accounts) ? profile.cl_drive_accounts : [];
-      var drivePills = [];
-      driveAccounts.forEach(function(a) {
-        if (!a || !a.account_email) return;
-        var folders = Array.isArray(a.folders) ? a.folders : [];
-        folders.forEach(function(f) {
-          if (!f || !f.id) return;
-          drivePills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
+      function buildAccountGroups(accounts, itemsKey) {
+        var groups = [];
+        (accounts || []).forEach(function(a) {
+          if (!a || !a.account_email) return;
+          var items = Array.isArray(a[itemsKey]) ? a[itemsKey] : [];
+          var groupPills = [];
+          items.forEach(function(it) {
+            if (!it || !it.id) return;
+            groupPills.push({ label: it.name || it.id, value: a.account_email + "|" + it.id });
+          });
+          if (groupPills.length > 0) groups.push({ account: a.account_email, items: groupPills });
         });
-      });
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: drivePills.length > 0, pills: drivePills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+        return groups;
+      }
+      function flattenGroups(groups) {
+        var flat = [];
+        groups.forEach(function(g) { g.items.forEach(function(p) { flat.push(p); }); });
+        return flat;
+      }
+
+      var driveAccounts = Array.isArray(profile.cl_drive_accounts) ? profile.cl_drive_accounts : [];
+      var driveGroups = buildAccountGroups(driveAccounts, "folders");
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: driveGroups.length > 0, pills: flattenGroups(driveGroups), groups: driveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var onedriveAccounts = Array.isArray(profile.cl_onedrive_accounts) ? profile.cl_onedrive_accounts : [];
-      var onedrivePills = [];
-      onedriveAccounts.forEach(function(a) {
-        if (!a || !a.account_email) return;
-        var folders = Array.isArray(a.folders) ? a.folders : [];
-        folders.forEach(function(f) {
-          if (!f || !f.id) return;
-          onedrivePills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
-        });
-      });
-      tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedrivePills.length > 0, pills: onedrivePills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      var onedriveGroups = buildAccountGroups(onedriveAccounts, "folders");
+      tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedriveGroups.length > 0, pills: flattenGroups(onedriveGroups), groups: onedriveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var sharepointAccounts = Array.isArray(profile.cl_sharepoint_accounts) ? profile.cl_sharepoint_accounts : [];
-      var sharepointPills = [];
-      sharepointAccounts.forEach(function(a) {
-        if (!a || !a.account_email) return;
-        var libraries = Array.isArray(a.libraries) ? a.libraries : [];
-        libraries.forEach(function(lib) {
-          if (!lib || !lib.id) return;
-          sharepointPills.push({ label: a.account_email + " — " + (lib.name || lib.id), value: a.account_email + "|" + lib.id });
-        });
-      });
-      tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointPills.length > 0, pills: sharepointPills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      var sharepointGroups = buildAccountGroups(sharepointAccounts, "libraries");
+      tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointGroups.length > 0, pills: flattenGroups(sharepointGroups), groups: sharepointGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
-      var dropboxPills = [];
-      dropboxAccounts.forEach(function(a) {
-        if (!a || !a.account_email) return;
-        var folders = Array.isArray(a.folders) ? a.folders : [];
-        folders.forEach(function(f) {
-          if (!f || !f.id) return;
-          dropboxPills.push({ label: a.account_email + " — " + (f.name || f.id), value: a.account_email + "|" + f.id });
-        });
-      });
-      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxPills.length > 0, pills: dropboxPills, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      var dropboxGroups = buildAccountGroups(dropboxAccounts, "folders");
+      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxGroups.length > 0, pills: flattenGroups(dropboxGroups), groups: dropboxGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
       tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
 
       grid.innerHTML = tiles.map(function(t) {
         var pillsHtml = "";
-        if (t.pills && t.pills.length > 0) {
+        if (t.groups && t.groups.length > 0) {
+          pillsHtml = "<div class=\"source-pill-instruction\">Select the folders to scan:</div>" +
+            t.groups.map(function(g) {
+              return "<div class=\"source-pill-group\" style=\"margin-bottom:8px;\">" +
+                "<div class=\"source-pill-account\" style=\"font-size:12px;font-weight:600;color:#555;margin-bottom:4px;\">" + g.account + "</div>" +
+                "<div class=\"source-select-pills\">" + g.items.map(function(p) {
+                  return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
+                }).join("") + "</div>" +
+                "</div>";
+            }).join("");
+        } else if (t.pills && t.pills.length > 0) {
           pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
             "<div class=\"source-select-pills\">" + t.pills.map(function(p) {
               return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
