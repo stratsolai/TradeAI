@@ -116,7 +116,13 @@ confirmed working. SharePoint and Dropbox testing in progress.
 Outstanding before sign-off:
 - SharePoint scan returning no files — under investigation
 - Dropbox root-level files not supported — fix pending
-- SharePoint per-site last_scanned_at — fix pending
+- SharePoint last_scanned_at is currently recorded at
+  account level in cl_sharepoint_accounts. It needs to be
+  recorded per site instead, so each site entry within the
+  array has its own last_scanned_at timestamp. This prevents
+  incorrect file-skipping when multiple sites are connected
+  and only one is scanned. Fix pending in
+  api/sharepoint-import.js and cl-settings-logic.js.
 - Lookback controls wiring — import endpoints do not yet read
   lookback_months. Build pending after integration test.
 
