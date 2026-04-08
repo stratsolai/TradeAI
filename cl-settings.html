@@ -156,7 +156,7 @@
       gap: 0;
       border-radius: 8px;
       overflow: hidden;
-      border: 1px solid var(--border);
+      border: 1px solid var(--blue);
       flex-shrink: 0;
       margin-left: 16px;
     }
@@ -250,7 +250,7 @@
     .connection-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
     .connection-item:last-child { border-bottom: none; }
     .connection-item-row1 { display: flex; align-items: center; gap: 8px; }
-    .connection-item-row2 { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+    .connection-item-row2 { display: flex; align-items: center; justify-content: flex-start; gap: 8px; }
     /* Account email — fixed-width styled box, same width as folder/URL boxes */
     .connection-item-email { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -278,9 +278,8 @@
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles.
-       align-items: flex-end so each folder row shrinks to content width and the
-       input+Remove cluster right-aligns, matching the website URL row layout. */
-    .connection-folders-list { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin: 8px 0 4px 0; }
+       Full-width rows so folder boxes left-align with the email box above. */
+    .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; width: 100%; }
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
     .connection-folder-name { width: 360px; flex: 0 0 360px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -290,6 +289,7 @@
     .drive-lookback-select:focus { outline: none; }
 
     /* Website multi-URL list — input boxes hardcoded to the same width as the account email box */
+    #website-urls-list { width: 100%; }
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
     .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
