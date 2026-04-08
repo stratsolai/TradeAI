@@ -237,6 +237,11 @@ window.CL_SETTINGS_LOGIC = {
         var provider = lookbackSel.getAttribute('data-provider') || 'drive';
         var acct = lookbackSel.getAttribute('data-account');
         if (acct) self._changeLookback(provider, acct, lookbackSel.value);
+        return;
+      }
+      var websiteInput = e.target.closest && e.target.closest('#website-urls-list .website-url-input');
+      if (websiteInput) {
+        self._saveWebsiteUrls();
       }
     });
     document.addEventListener('click', function (e) {
@@ -306,7 +311,7 @@ window.CL_SETTINGS_LOGIC = {
         var url = removeUrlBtn.getAttribute('data-url');
         self._websiteUrls = self._websiteUrls.filter(function (u) { return u !== url; });
         self._renderWebsiteList();
-        self._resetSaveBtn('website-save-btn', 'Save');
+        self._saveWebsiteUrls();
         return;
       }
 
@@ -345,13 +350,11 @@ window.CL_SETTINGS_LOGIC = {
   _bindWebsiteButtons: function () {
     var self = this;
     var addBtn = document.getElementById('add-website-btn');
-    var saveBtn = document.getElementById('website-save-btn');
     if (addBtn) addBtn.addEventListener('click', function () {
       self._websiteUrls.push('');
       self._renderWebsiteList();
-      self._resetSaveBtn('website-save-btn', 'Save');
+      self._saveWebsiteUrls();
     });
-    if (saveBtn) saveBtn.addEventListener('click', function () { self._saveWebsiteUrls(); });
   },
 
   _startOAuth: function (provider) {
@@ -451,8 +454,8 @@ window.CL_SETTINGS_LOGIC = {
   _saveWebsiteUrls: async function () {
     var self = this;
     try {
-      var inputs = document.querySelectorAll('.website-url-input');
-      var errors = document.querySelectorAll('.website-url-error');
+      var inputs = document.querySelectorAll('#website-urls-list .website-url-input');
+      var errors = document.querySelectorAll('#website-urls-list .website-url-error');
       var urls = [];
       var hasError = false;
       // Clear previous errors
