@@ -31,10 +31,6 @@
       "destination": "/api/auth/oauth-callback.js"
     },
     {
-      "source": "/api/auth/google-drive/callback",
-      "destination": "/api/auth/oauth-callback.js"
-    },
-    {
       "source": "/tools",
       "destination": "/tools.html"
     },
