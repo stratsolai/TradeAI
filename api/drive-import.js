@@ -98,12 +98,21 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
   "7. If no meaningful content can be extracted, return an empty array [].";
 
-// Binary MIME types that need Claude document API for text extraction
+// Binary MIME types that need Claude document API for text extraction.
+// Modern Office Open XML formats (docx/xlsx/pptx) and PDF are the
+// reliable cases. Legacy Office (msword/ms-excel/ms-powerpoint) is
+// included so .doc/.xls/.ppt files in Google Drive stop being
+// silently dropped at the format gate — Claude's document API may
+// not always extract them cleanly, but a logged failed extraction
+// is strictly better than the previous silent skip.
 const BINARY_MIME_TYPES = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
   'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
 ];
 
 // Google Workspace export MIME mappings
@@ -154,8 +163,11 @@ async function fetchDriveFileText(fileId, mimeType, accessToken) {
     return text.substring(0, 8000);
   }
 
-  // Plain text — download directly
-  if (mimeType === 'text/plain') {
+  // Any text/* type — download directly. This covers text/plain,
+  // text/csv, text/html, text/markdown, text/xml, etc. The previous
+  // implementation only handled text/plain, which silently dropped
+  // CSV exports (text/csv), HTML files, and markdown notes.
+  if (mimeType && mimeType.indexOf('text/') === 0) {
     const url = 'https://www.googleapis.com/drive/v3/files/' + fileId + '?alt=media';
     const res = await fetch(url, { headers: { Authorization: 'Bearer ' + accessToken } });
     if (!res.ok) return null;
@@ -407,7 +419,15 @@ export default async function handler(req, res) {
       for (const file of files) {
         const mimeType = file.mimeType || '';
         const isImage = mimeType.indexOf('image/') === 0;
-        const isDoc = [
+        // Accept any text/* MIME (text/plain, text/csv, text/html,
+        // text/markdown, text/xml, etc.) so CSV exports, HTML files,
+        // and markdown notes stop being silently dropped — this
+        // matches OneDrive and SharePoint, which already use the
+        // text/* prefix match. The explicit allow-list below covers
+        // Google Workspace native formats, modern Office Open XML,
+        // PDF, and legacy Office binary formats (.doc/.xls/.ppt).
+        const isText = mimeType.indexOf('text/') === 0;
+        const isDoc = isText || [
           'application/vnd.google-apps.document',
           'application/vnd.google-apps.spreadsheet',
           'application/vnd.google-apps.presentation',
@@ -415,7 +435,9 @@ export default async function handler(req, res) {
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
           'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
           'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-          'text/plain',
+          'application/msword',
+          'application/vnd.ms-excel',
+          'application/vnd.ms-powerpoint',
         ].indexOf(mimeType) > -1;
 
         if (!isImage && !isDoc) { skipped++; continue; }
