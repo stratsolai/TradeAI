@@ -153,36 +153,25 @@
     }
     .settings-row-control {
       display: flex;
-      gap: 0;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid var(--border);
+      gap: 8px;
       flex-shrink: 0;
       margin-left: 16px;
     }
+    /* Frequency pills — match the .filter-btn tool filter pills in CL */
     .freq-btn {
+      padding: 7px 14px;
+      border: 1.5px solid var(--border);
       background: var(--white);
-      color: var(--text-muted);
-      border: none;
-      font-family: var(--body-font);
-      font-size: 13px;
-      font-weight: 500;
-      padding: 8px 14px;
+      border-radius: 20px;
       cursor: pointer;
-      transition: background 0.12s, color 0.12s;
-      border-right: 1px solid var(--border);
-      min-width: 90px;
-      text-align: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      font-family: var(--body-font);
+      transition: all 0.2s;
     }
-    .freq-btn:last-child { border-right: none; }
-    .freq-btn:hover {
-      background: var(--bg);
-      color: #fff;
-    }
-    .freq-btn.active {
-      background: var(--blue);
-      color: #fff;
-    }
+    .freq-btn:hover { border-color: var(--blue); color: var(--blue); }
+    .freq-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
 
     /* ── SAVE FOOTER ── */
     .settings-footer {
