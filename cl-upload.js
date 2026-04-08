@@ -135,6 +135,30 @@ window.CL_UPLOAD = {
         return flat;
       }
 
+      // Dropbox-specific group builder. Unlike buildAccountGroups, this
+      // always emits one group per connected account regardless of
+      // subfolder selection, and prepends a synthetic "Dropbox root
+      // files" pill so the user can always see and select the account's
+      // root. The pill value uses the same accountEmail|<id> shape as
+      // the other source tiles, with an empty id so the scan handler
+      // reads folderPath as "" — which the dropbox-import endpoint
+      // accepts as a root scan. The root pill is unselected by default
+      // to match every other tile.
+      function buildDropboxGroups(accounts) {
+        var groups = [];
+        (accounts || []).forEach(function (a) {
+          if (!a || !a.account_email) return;
+          var groupPills = [{ label: "Dropbox root files", value: a.account_email + "|" }];
+          var folders = Array.isArray(a.folders) ? a.folders : [];
+          folders.forEach(function (it) {
+            if (!it || !it.id) return;
+            groupPills.push({ label: it.name || it.id, value: a.account_email + "|" + it.id });
+          });
+          groups.push({ account: a.account_email, items: groupPills });
+        });
+        return groups;
+      }
+
       var driveAccounts = Array.isArray(profile.cl_drive_accounts) ? profile.cl_drive_accounts : [];
       var driveGroups = buildAccountGroups(driveAccounts, "folders");
       tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: driveGroups.length > 0, pills: flattenGroups(driveGroups), groups: driveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
@@ -194,7 +218,11 @@ window.CL_UPLOAD = {
       tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointGroups.length > 0, pills: flattenGroups(sharepointGroups), groups: sharepointGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
 
       var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
-      var dropboxGroups = buildAccountGroups(dropboxAccounts, "folders");
+      // Stash the accounts list on the instance so _handleScanNow can fall
+      // back to scanning every account's root when the user clicks Scan
+      // Now without selecting any pills, without re-fetching the profile.
+      this._dropboxAccounts = dropboxAccounts;
+      var dropboxGroups = buildDropboxGroups(dropboxAccounts);
       // Connected state reflects whether a Dropbox account is authenticated,
       // not whether the user has picked any subfolders. Root-level files are
       // included automatically on every scan, so an account with no
@@ -392,7 +420,21 @@ window.CL_UPLOAD = {
             return;
           } else if (source === "dropbox") {
             var dbPairs = values || [];
-            if (dbPairs.length === 0) throw new Error("No Dropbox folders selected to scan");
+            // If the user clicked Scan Now without selecting any pills,
+            // fall back to scanning the root of every connected Dropbox
+            // account. The dropbox-import endpoint includes root-level
+            // files automatically on every scan, so a single root call
+            // per account is enough to pick them up. Each fallback pair
+            // uses accountEmail|<empty> so the existing pair-splitting
+            // logic below produces an empty folderPath that the import
+            // endpoint accepts as a root scan.
+            if (dbPairs.length === 0) {
+              var dbFallbackAccounts = Array.isArray(self._dropboxAccounts) ? self._dropboxAccounts : [];
+              dbFallbackAccounts.forEach(function (a) {
+                if (a && a.account_email) dbPairs.push(a.account_email + "|");
+              });
+              if (dbPairs.length === 0) throw new Error("No Dropbox account connected to scan");
+            }
             var dbSession = await self._supabase.auth.getSession();
             var dbToken = dbSession && dbSession.data && dbSession.data.session ? dbSession.data.session.access_token : null;
             if (!dbToken) throw new Error("Not authenticated");
