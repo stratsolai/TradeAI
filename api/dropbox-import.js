@@ -405,7 +405,30 @@ export default async function handler(req, res) {
         return res.status(502).json({ error: 'Dropbox API error: ' + e.message });
       }
       const folderName = folderPath === '' ? 'Dropbox' : folderPath.split('/').filter(Boolean).pop() || folderPath;
-      const allFiles = (filesListData.entries || []).filter(function(it) { return it && it['.tag'] === 'file'; });
+      const folderFiles = (filesListData.entries || []).filter(function(it) { return it && it['.tag'] === 'file'; });
+      // Tag each file with the folder context it came from so root-level
+      // files mixed in below carry their own folder attribution rather
+      // than inheriting the selected subfolder's name.
+      folderFiles.forEach(function (f) { f._folderPath = folderPath; f._folderName = folderName; });
+
+      // Always include root-level files in every import scan, regardless
+      // of which folder the user selected. The user does not need to
+      // explicitly pick "root" for these to be picked up. Skipped when
+      // the target folder is already root, to avoid listing it twice.
+      // Dedupe via dropbox_file_id in cl_source_items prevents repeated
+      // imports of the same root files across multiple subfolder scans.
+      let rootFiles = [];
+      if (folderPath !== '') {
+        try {
+          const rootListData = await dropboxListFolder('', accessToken);
+          rootFiles = (rootListData.entries || []).filter(function(it) { return it && it['.tag'] === 'file'; });
+          rootFiles.forEach(function (f) { f._folderPath = ''; f._folderName = 'Dropbox'; });
+        } catch (e) {
+          // Non-fatal — proceed with the selected folder's files only.
+          console.error('Dropbox root-files list error:', e.message);
+        }
+      }
+      const allFiles = folderFiles.concat(rootFiles);
 
       // Skip files already recorded for this user from a prior scan.
       // Idempotency key: source_detail.dropbox_file_id (Dropbox stable id like
@@ -429,6 +452,11 @@ export default async function handler(req, res) {
       for (const file of files) {
         const fileName = file.name || '';
         const filePath = file.path_display || file.path_lower || '';
+        // Folder context attached when allFiles was assembled — falls back
+        // to the request-level values for safety, though in practice every
+        // file is tagged before this loop runs.
+        const fileFolderPath = file._folderPath != null ? file._folderPath : folderPath;
+        const fileFolderName = file._folderName != null ? file._folderName : folderName;
         const mimeType = inferMimeFromExtension(fileName);
         const isImage = mimeType.indexOf('image/') === 0;
         const isText = mimeType.indexOf('text/') === 0;
@@ -470,7 +498,7 @@ export default async function handler(req, res) {
               filename: fileName,
               file_url: storagePath,
               source_url: null,
-              source_detail: { dropbox_file_id: file.id, dropbox_path: filePath, folder_path: folderPath, folder_name: folderName, mime_type: mimeType, account_email: accountEmail },
+              source_detail: { dropbox_file_id: file.id, dropbox_path: filePath, folder_path: fileFolderPath, folder_name: fileFolderName, mime_type: mimeType, account_email: accountEmail },
               item_count: 0,
             })
             .select('id')
@@ -494,7 +522,7 @@ export default async function handler(req, res) {
             tool_source: 'dropbox-import',
             source_ref: sourceRef,
             source_item_id: sourceItemId,
-            source_detail: { filename: fileName, folder_name: folderName, mime_type: mimeType, account_email: accountEmail },
+            source_detail: { filename: fileName, folder_name: fileFolderName, mime_type: mimeType, account_email: accountEmail },
           };
           const insertRes = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
           if (!insertRes.error) { imported++; fileItemCount++; }
@@ -515,7 +543,7 @@ export default async function handler(req, res) {
           var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
           var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
           var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
-          var itemSourceDetail = { filename: fileName, folder_name: folderName, mime_type: mimeType, account_email: accountEmail };
+          var itemSourceDetail = { filename: fileName, folder_name: fileFolderName, mime_type: mimeType, account_email: accountEmail };
           if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
           if (normCat === 'Financial Documents') status = 'pending';
