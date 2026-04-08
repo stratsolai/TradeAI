@@ -133,7 +133,7 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._driveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row">' +
+        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
@@ -619,7 +619,7 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._onedriveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row">' +
+        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="onedrive-folder">Remove</button>' +
           '</div>';
@@ -760,7 +760,7 @@ window.CL_SETTINGS_LOGIC = {
       var siteName = (a.site && (a.site.displayName || a.site.name)) || 'No site selected';
       var libraries = Array.isArray(a.libraries) ? a.libraries : [];
       var libraryHtml = libraries.map(function (lib) {
-        return '<div class="connection-folder-row">' +
+        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
           '</div>';
@@ -977,7 +977,7 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._dropboxAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row">' +
+        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="dropbox-folder">Remove</button>' +
           '</div>';
