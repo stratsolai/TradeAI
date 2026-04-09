@@ -110,12 +110,24 @@ window.CL_SETTINGS_LOGIC = {
       if (res.error) { console.error('_loadConnections error:', res.error); return; }
       var data = res.data || {};
       self._emails = data.cl_connected_emails || [];
-      self._driveAccounts = Array.isArray(data.cl_drive_accounts) ? data.cl_drive_accounts : [];
+      // Defensive normalisation on read: filter out any null / falsy
+      // elements from each cloud accounts array. No current write path
+      // in cl-onedrive-callback.js, cl-sharepoint-callback.js,
+      // cl-dropbox-callback.js, cl-drive-callback.js, or any of the
+      // import endpoints pushes a null — every write site either
+      // pushes a complete entry object or modifies an existing entry
+      // in place. But historical data from earlier-version bugs has
+      // been observed (a null entry in cl_onedrive_accounts caused
+      // _renderOnedriveList to crash earlier today), so scrubbing
+      // nulls at the read boundary makes the renders permanently
+      // safe regardless of what got into the database before.
+      function nonNull(arr) { return arr.filter(function (a) { return a; }); }
+      self._driveAccounts = nonNull(Array.isArray(data.cl_drive_accounts) ? data.cl_drive_accounts : []);
       self._websiteUrls = data.website_urls || [];
-      self._onedriveAccounts = Array.isArray(data.cl_onedrive_accounts) ? data.cl_onedrive_accounts : [];
-      self._sharepointAccounts = Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : [];
+      self._onedriveAccounts = nonNull(Array.isArray(data.cl_onedrive_accounts) ? data.cl_onedrive_accounts : []);
+      self._sharepointAccounts = nonNull(Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : []);
       self._sharepointAccounts.forEach(function (a) { self._upgradeSharepointEntry(a); });
-      self._dropboxAccounts = Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : [];
+      self._dropboxAccounts = nonNull(Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : []);
       self._renderEmailList();
       self._renderDriveList();
       self._renderWebsiteList();
@@ -1235,6 +1247,12 @@ window.CL_SETTINGS_LOGIC = {
     var list = document.getElementById('dropbox-connections-list');
     if (!list) return;
     list.innerHTML = self._dropboxAccounts.map(function (a) {
+      // Skip null or otherwise falsy entries — same vulnerability
+      // and same fix as _renderOnedriveList. The defensive null
+      // filter in _loadConnections should have already scrubbed
+      // these, but the in-render guard is kept for any code path
+      // that mutates _dropboxAccounts after load.
+      if (!a) return '';
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
         return '<div class="connection-folder-row" style="justify-content:space-between;">' +
