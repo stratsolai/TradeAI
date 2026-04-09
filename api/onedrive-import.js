@@ -421,6 +421,9 @@ export default async function handler(req, res) {
 
       let imported = 0;
       let skipped = 0;
+      let approved = 0;
+      let pending = 0;
+      let rejected = 0;
 
       for (const file of files) {
         const mimeType = (file.file && file.file.mimeType) || '';
@@ -488,7 +491,11 @@ export default async function handler(req, res) {
             source_detail: { filename: file.name, folder_name: folderName, mime_type: mimeType, account_email: accountEmail },
           };
           const insertRes = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
-          if (!insertRes.error) { imported++; fileItemCount++; }
+          if (!insertRes.error) {
+            imported++;
+            fileItemCount++;
+            pending++;
+          }
           if (sourceItemId && fileItemCount > 0) {
             await supabase.from('cl_source_items').update({ item_count: fileItemCount }).eq('id', sourceItemId);
           }
@@ -539,6 +546,9 @@ export default async function handler(req, res) {
           }
           imported++;
           fileItemCount++;
+          if (status === 'approved') approved++;
+          else if (status === 'rejected') rejected++;
+          else pending++;
           const insertedRow = upsertRes.data;
 
           // Versioning — Financial Documents pair check (after insert)
@@ -572,7 +582,7 @@ export default async function handler(req, res) {
         await supabase.from('profiles').update({ cl_onedrive_accounts: accounts }).eq('id', userId);
       }
 
-      return res.status(200).json({ success: true, imported: imported, skipped: skipped, total: files.length });
+      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length });
     }
 
     return res.status(400).json({ error: 'Unknown action: ' + action });
