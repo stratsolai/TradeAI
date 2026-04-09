@@ -424,6 +424,7 @@ window.CL_REVIEW = {
     }
     const sourceLabel = escHtml(sourceParts.join(' — '));
     const bodyPreview = escHtml(item.content_text || '');
+    const isUsed = !!item.first_used_at;
     const checked = this._selected.has(item.id) ? ' checked' : '';
     const tools = window.CORE_TOOLS || [];
     const activatedTools = window._activatedTools || [];
@@ -479,22 +480,30 @@ window.CL_REVIEW = {
     const pairCardStyle = hasPairPartner
       ? ' style="border-left:4px solid var(--blue);background:var(--blue-light);"'
       : '';
+    var usedNoticeHtml = '';
+    if (isUsed) {
+      if (item.source === 'manual') {
+        usedNoticeHtml = '<div class="review-used-notice" style="margin:6px 0;padding:6px 10px;background:#FFF8E1;border:1px solid #FFC107;border-radius:6px;font-size:12px;color:#333;">This item has been used by a tool and cannot be edited. <button class="review-copy-btn" data-id="' + id + '" style="margin-left:8px;padding:2px 10px;border:1px solid var(--blue);border-radius:6px;background:var(--blue-light);color:var(--text);font-size:11px;cursor:pointer;">Copy to New Manual Item</button></div>';
+      } else {
+        usedNoticeHtml = '<div class="review-used-notice" style="margin:6px 0;padding:6px 10px;background:#FFF8E1;border:1px solid #FFC107;border-radius:6px;font-size:12px;color:#333;">This item has been used by a tool and cannot be edited. You can archive it and re-import or create a new Manual Item.</div>';
+      }
+    }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
     <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span class="review-card-title" contenteditable="true" data-id="${id}" title="Click to edit" style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
+      <span class="review-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
-    </div>
+    </div>${usedNoticeHtml}
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="review-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>' : ''}
-      <button class="btn-outline review-reject-btn" data-id="${id}" title="${this._status === 'rejected' ? 'Delete' : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? 'Delete' : 'Reject'}</button>
+      <button class="btn-outline review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
     </div>
       </div>
   
@@ -540,7 +549,9 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (self._status === 'rejected') { self._deleteItem(btn.dataset.id); } else { self._changeStatus(btn.dataset.id, 'rejected'); }
+        if (self._status === 'rejected') {
+          if (btn.dataset.used === '1') { self._changeStatus(btn.dataset.id, 'archived'); } else { self._deleteItem(btn.dataset.id); }
+        } else { self._changeStatus(btn.dataset.id, 'rejected'); }
       });
     });
     document.querySelectorAll('.review-archived-link-pill').forEach(function(pill) {
@@ -548,6 +559,16 @@ window.CL_REVIEW = {
         e.preventDefault();
         self._scrollToId = pill.dataset.archivedId;
         self.setStatus('archived');
+      });
+    });
+    document.querySelectorAll('.review-copy-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var item = self._items.find(function(i) { return i.id === btn.dataset.id; });
+        if (item && window.CL_UPLOAD) {
+          window.CL_UPLOAD.openManualAdd({ title: item.title || '', description: item.content_text || '', tool_tags: item.tool_tags || [] });
+          var uploadTab = document.querySelector('[data-tab="upload"]');
+          if (uploadTab) uploadTab.click();
+        }
       });
     });
     var listEl = document.getElementById('review-list');
