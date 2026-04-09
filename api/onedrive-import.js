@@ -173,6 +173,44 @@ async function extractBinaryFileText(base64Data, mimeType) {
   return null;
 }
 
+// Recursively list every file under a OneDrive folder by walking
+// children depth-first from the selected folder root. Folders
+// contribute their children but are not themselves returned — only
+// items with a .file facet end up in the result. Mirrors the
+// listAllSharePointLibraryFiles helper in sharepoint-import.js,
+// adapted to OneDrive's /me/drive/items/{itemId}/children URL.
+// $top=200 cap is consistent with the rest of this file (pagination
+// of @odata.nextLink is a known limitation tracked in CLAUDE.md).
+async function listAllOneDriveFolderFiles(folderId, accessToken) {
+  var collected = [];
+  var toVisit = [
+    'https://graph.microsoft.com/v1.0/me/drive/items/' + folderId + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+  ];
+  while (toVisit.length > 0) {
+    var url = toVisit.shift();
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + accessToken } });
+    if (!res.ok) {
+      var errBody = await res.json().catch(function () { return {}; });
+      var errMsg = (errBody.error && errBody.error.message) || ('Microsoft Graph returned ' + res.status);
+      throw new Error(errMsg);
+    }
+    var data = await res.json();
+    var items = (data && data.value) || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (!it) continue;
+      if (it.file) {
+        collected.push(it);
+      } else if (it.folder && it.id) {
+        toVisit.push(
+          'https://graph.microsoft.com/v1.0/me/drive/items/' + it.id + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+        );
+      }
+    }
+  }
+  return collected;
+}
+
 // Resolve a OneDrive file to a plain-text body suitable for the extraction prompt.
 // Returns null if the type is unsupported or extraction fails.
 async function fetchOneDriveFileText(itemId, mimeType, accessToken) {
@@ -356,19 +394,17 @@ export default async function handler(req, res) {
         console.error('OneDrive folder name lookup failed:', e.message);
       }
 
-      // List children of the folder
-      const filesRes = await fetch(
-        'https://graph.microsoft.com/v1.0/me/drive/items/' + folderId + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime',
-        { headers: { 'Authorization': 'Bearer ' + accessToken } }
-      );
-      if (!filesRes.ok) {
-        const errBody = await filesRes.json().catch(function() { return {}; });
-        const errMsg = (errBody.error && errBody.error.message) || ('Microsoft Graph returned ' + filesRes.status);
-        console.error('OneDrive list-children error:', errMsg);
-        return res.status(502).json({ error: 'OneDrive API error: ' + errMsg });
+      // Recursively list every file in the selected folder by walking
+      // its subfolders from root. Files inside subfolders must be
+      // scanned, not just the immediate children of the selected
+      // folder — same fix that landed in sharepoint-import.js earlier.
+      let allFiles = [];
+      try {
+        allFiles = await listAllOneDriveFolderFiles(folderId, accessToken);
+      } catch (e) {
+        console.error('OneDrive list-children error:', e.message);
+        return res.status(502).json({ error: 'OneDrive API error: ' + e.message });
       }
-      const filesData = await filesRes.json();
-      const allFiles = (filesData.value || []).filter(function(it) { return it && it.file; });
 
       // Skip files that already have a cl_source_items row from a prior scan
       const existingSI = await supabase
