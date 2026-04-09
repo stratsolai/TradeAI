@@ -827,7 +827,7 @@ export default async function handler(req, res) {
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
           const item = items[itemIdx];
           const sourceRef = 'sharepoint:' + file.id + ':' + itemIdx;
-          var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Manual Upload') : 'Manual Upload';
+          var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Company Information') : 'Company Information';
           var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
           var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
           var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
