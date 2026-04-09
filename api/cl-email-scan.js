@@ -256,31 +256,31 @@ export default async function handler(req, res) {
       }
     }
 
-    const days = parseInt(daysBack) || 90;
-    let afterTimestamp;
-    if (gmailEntry.last_scanned_at) {
-      afterTimestamp = Math.floor(new Date(gmailEntry.last_scanned_at).getTime() / 1000);
-      console.log('[Gmail] Date filter — using last_scanned_at:', gmailEntry.last_scanned_at, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString());
-    } else {
-      afterTimestamp = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
-      console.log('[Gmail] Date filter — no last_scanned_at, using daysBack:', days, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString());
-    }
+    // Lookback window — always scan from today minus the user's lookback
+    // setting. Deduplication is handled by the source_ref UNIQUE constraint.
+    const lookbackDays = parseInt(gmailEntry.lookback_days) || 90;
+    const afterTimestamp = Math.floor((Date.now() - lookbackDays * 24 * 60 * 60 * 1000) / 1000);
     const query = 'after:' + afterTimestamp;
-    console.log('[Gmail] Query:', query, 'accountEmail:', accountEmail);
+    console.log('[Gmail] Date filter — lookbackDays:', lookbackDays, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString(), 'accountEmail:', accountEmail);
 
-    const listRes = await fetch(
-      'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' + encodeURIComponent(query) + '&maxResults=50',
-      { headers: { Authorization: 'Bearer ' + accessToken } }
-    );
-    if (!listRes.ok) {
-      const errBody = await listRes.json().catch(() => ({}));
-      const errMsg = (errBody.error && errBody.error.message) || ('Gmail API returned ' + listRes.status);
-      console.error('Gmail list error:', listRes.status, errMsg);
-      return res.status(502).json({ error: 'Gmail API error: ' + errMsg });
-    }
-    const listData = await listRes.json();
-    console.log('[Gmail] List response — status:', listRes.status, 'messageCount:', (listData.messages || []).length, 'hasNextPageToken:', !!listData.nextPageToken, 'resultSizeEstimate:', listData.resultSizeEstimate);
-    const messages = listData.messages || [];
+    // Fetch all matching messages, following pagination
+    var messages = [];
+    var pageToken = null;
+    do {
+      var listUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' + encodeURIComponent(query) + '&maxResults=50';
+      if (pageToken) listUrl += '&pageToken=' + encodeURIComponent(pageToken);
+      var listRes = await fetch(listUrl, { headers: { Authorization: 'Bearer ' + accessToken } });
+      if (!listRes.ok) {
+        var errBody = await listRes.json().catch(function () { return {}; });
+        var errMsg = (errBody.error && errBody.error.message) || ('Gmail API returned ' + listRes.status);
+        console.error('Gmail list error:', listRes.status, errMsg);
+        return res.status(502).json({ error: 'Gmail API error: ' + errMsg });
+      }
+      var listData = await listRes.json();
+      if (listData.messages) messages = messages.concat(listData.messages);
+      pageToken = listData.nextPageToken || null;
+      console.log('[Gmail] Page fetched — count:', (listData.messages || []).length, 'totalSoFar:', messages.length, 'hasNextPage:', !!pageToken);
+    } while (pageToken);
 
     let imported = 0;
     let skipped = 0;
@@ -424,6 +424,10 @@ export default async function handler(req, res) {
       }
     }
 
+    // last_scanned_at is no longer used for query filtering — the lookback
+    // window is the sole date bound and dedup is handled by source_ref.
+    // Stamp is kept for informational purposes (when was this account last
+    // scanned) but does not affect query logic.
     if (imported > 0) {
       gmailEntry.last_scanned_at = new Date().toISOString();
       await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
