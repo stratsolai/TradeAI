@@ -81,7 +81,8 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "4. Disposition must match the category's listed disposition.\n" +
   "5. Only tag tools whose description specifically matches the content.\n" +
   "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
-  "7. If no meaningful content can be extracted, return an empty array [].";
+  "7. If no meaningful content can be extracted, return an empty array [].\n" +
+  "8. Promotions & Offers is ONLY for promotions the user's own business is offering to its own customers. If the source is an inbound message, supplier email, vendor newsletter, or third-party promotional content advertising someone else's offer, do NOT classify it as Promotions & Offers. Inbound supplier promotional content belongs in Supplier Communications. Broader market or trade promotional news belongs in Industry News. Never put a received supplier or third-party promotion in Promotions & Offers, even when it uses promotional language like 'sale', 'discount', or 'limited time'. The email From header is included in the source content for this reason — use it to tell self-sent campaigns from received messages.";
 
 async function refreshGoogleToken(refreshToken) {
   const res = await fetch('https://oauth2.googleapis.com/token', {
@@ -150,9 +151,13 @@ function extractEmailBody(payload) {
   return '';
 }
 
-// Run CL extraction prompt against email content
-async function runExtractionPrompt(emailBody, subject) {
-  var userContent = 'SOURCE CONTENT (Email: ' + subject + '):\n' + emailBody.substring(0, 6000);
+// Run CL extraction prompt against email content. The sender is
+// included in the source content header so RULE 8 (Promotions &
+// Offers vs supplier promotions) can be applied — without it the
+// model has no way to tell a self-sent campaign from a received
+// supplier promotional email.
+async function runExtractionPrompt(emailBody, subject, sender) {
+  var userContent = 'SOURCE CONTENT (Email from ' + (sender || 'unknown sender') + ', subject: ' + subject + '):\n' + emailBody.substring(0, 6000);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -326,7 +331,7 @@ export default async function handler(req, res) {
         console.error('cl-assets/cl_source_items save error:', e.message);
       }
 
-      const items = await runExtractionPrompt(emailBody, subject);
+      const items = await runExtractionPrompt(emailBody, subject, sender);
       console.log('CLAUDE RESPONSE — items:', Array.isArray(items) ? items.length : 'not array', 'raw:', JSON.stringify(items).substring(0, 500));
       if (!items || items.length === 0) { console.log('SKIPPED — no items from Claude'); skipped++; continue; }
 
