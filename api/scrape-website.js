@@ -240,7 +240,7 @@ export default async function handler(req, res) {
     // Strip HTML to plain text for the extraction prompt
     var pageText = htmlToText(websiteHtml);
     if (!pageText || pageText.length < 50) {
-      return res.status(200).json({ success: true, count: 0, message: 'No readable content found on the page' });
+      return res.status(200).json({ success: true, count: 0, approved: 0, pending: 0, rejected: 0, message: 'No readable content found on the page' });
     }
 
     // Save source HTML to cl-assets and create cl_source_items row.
@@ -271,15 +271,19 @@ export default async function handler(req, res) {
       console.error('cl-assets/cl_source_items save error:', e.message);
     }
 
-    // Run the canonical extraction prompt — returns at most one item
-    // representing the page as a whole, per the prompt's RULES section.
+    // Run the canonical extraction prompt — returns one object per
+    // distinct content block found on the page, per the prompt's
+    // RULES section after the block-extraction rewrite.
     const items = await runExtractionPrompt(pageText, hostname);
     if (!items || items.length === 0) {
-      return res.status(200).json({ success: true, count: 0, message: 'No content extracted from the page' });
+      return res.status(200).json({ success: true, count: 0, approved: 0, pending: 0, rejected: 0, message: 'No content extracted from the page' });
     }
 
     const scanTs = Date.now();
     let itemsCount = 0;
+    let approved = 0;
+    let pending = 0;
+    let rejected = 0;
 
     for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
       const item = items[itemIdx];
@@ -321,6 +325,9 @@ export default async function handler(req, res) {
       }
       itemsCount++;
       pageItemCount++;
+      if (status === 'approved') approved++;
+      else if (status === 'rejected') rejected++;
+      else pending++;
       const insertedRow = upsertRes.data;
 
       // Versioning — Financial Documents pair check (after insert)
@@ -351,6 +358,9 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       count: itemsCount,
+      approved: approved,
+      pending: pending,
+      rejected: rejected,
       message: itemsCount + ' item' + (itemsCount !== 1 ? 's' : '') + ' extracted from website'
     });
 
