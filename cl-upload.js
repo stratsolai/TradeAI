@@ -351,10 +351,26 @@ window.CL_UPLOAD = {
         }
         return value;
       }
-      // Build a "<label> — X approved, Y pending, Z rejected" line
-      // from the per-status counts the endpoint returns. Zero
+      // Display name for each scan source. Used by formatCountsLine
+      // and the per-branch error paths so every stacking message
+      // leads with the tile name (Gmail, OneDrive, etc.) — without
+      // this prefix two scans of folders that share a name look
+      // identical in the message stack.
+      var SOURCE_NAMES = {
+        gdrive: "Google Drive",
+        onedrive: "OneDrive",
+        sharepoint: "SharePoint",
+        dropbox: "Dropbox",
+        gmail: "Gmail",
+        outlook: "Outlook",
+        website: "Website"
+      };
+      // Build a "<Tile> — <label> — X approved, Y pending, Z rejected"
+      // line from the per-status counts the endpoint returns. Zero
       // counts are omitted to keep the message tidy. When all three
-      // are zero the message reads "<label> — no new content".
+      // are zero the message reads "<Tile> — <label> — no new content".
+      // Reads the tile name from SOURCE_NAMES via the closure-scoped
+      // source value.
       function formatCountsLine(label, result) {
         var a = (result && result.approved) || 0;
         var p = (result && result.pending) || 0;
@@ -363,7 +379,31 @@ window.CL_UPLOAD = {
         if (a > 0) parts.push(a + " approved");
         if (p > 0) parts.push(p + " pending");
         if (r > 0) parts.push(r + " rejected");
-        return label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+        var tileName = SOURCE_NAMES[source] || source;
+        return tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+      }
+      // Defensive JSON parse for scan endpoint responses. Vercel
+      // returns a plain-text gateway page when a serverless function
+      // exceeds maxDuration or crashes — its body starts with
+      // "An error occurred with this application." and is not JSON,
+      // so a bare await resp.json() throws an unhelpful SyntaxError.
+      // safeJson checks resp.ok first and on failure reads the body
+      // as text and returns an { error } object the existing branch
+      // logic already knows how to handle. The tileName argument is
+      // included in the error message so the user sees which scan
+      // source failed without having to read a stack trace.
+      async function safeJson(resp, tileName) {
+        if (!resp.ok) {
+          var rawText = "";
+          try { rawText = await resp.text(); } catch (e) {}
+          var snippet = rawText ? rawText.substring(0, 200) : "";
+          return { error: tileName + " server returned " + resp.status + (snippet ? " — " + snippet : "") };
+        }
+        try {
+          return await resp.json();
+        } catch (parseErr) {
+          return { error: tileName + " returned an invalid response: " + parseErr.message };
+        }
       }
       (async function() {
         try {
@@ -388,10 +428,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + gdToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: gdAcct, folderId: gdFolder })
               });
-              var gdResult = await gdResp.json();
+              var gdResult = await safeJson(gdResp, SOURCE_NAMES.gdrive);
               if (gdResult.error) {
                 console.error("Drive import error for " + gdPairs[gdi] + ":", gdResult.error);
-                self._appendUploadMessage(gdLabel + " — error: " + gdResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.gdrive + " — " + gdLabel + " — error: " + gdResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(gdLabel, gdResult), "success");
               }
@@ -419,10 +459,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + odToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: odAcct, folderId: odFolder })
               });
-              var odResult = await odResp.json();
+              var odResult = await safeJson(odResp, SOURCE_NAMES.onedrive);
               if (odResult.error) {
                 console.error("OneDrive import error for " + odPairs[odi] + ":", odResult.error);
-                self._appendUploadMessage(odLabel + " — error: " + odResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.onedrive + " — " + odLabel + " — error: " + odResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(odLabel, odResult), "success");
               }
@@ -451,12 +491,18 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + spToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: spAcct, siteId: spSiteId, libraryId: spLibrary })
               });
-              var spResult = await spResp.json();
+              var spResult = await safeJson(spResp, SOURCE_NAMES.sharepoint);
+              // SharePoint returns the resolved site_name in its
+              // response (api/sharepoint-import.js add). Prefix the
+              // pill label (which is just the library name) with the
+              // site name when present so two libraries with the
+              // same name on different sites can be told apart.
+              var spDisplayLabel = (spResult.site_name ? spResult.site_name + " / " : "") + spLabel;
               if (spResult.error) {
                 console.error("SharePoint import error for " + spPairs[spi] + ":", spResult.error);
-                self._appendUploadMessage(spLabel + " — error: " + spResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.sharepoint + " — " + spDisplayLabel + " — error: " + spResult.error, "error");
               } else {
-                self._appendUploadMessage(formatCountsLine(spLabel, spResult), "success");
+                self._appendUploadMessage(formatCountsLine(spDisplayLabel, spResult), "success");
               }
             }
             finishScan();
@@ -466,21 +512,7 @@ window.CL_UPLOAD = {
             return;
           } else if (source === "dropbox") {
             var dbPairs = values || [];
-            // If the user clicked Scan Now without selecting any pills,
-            // fall back to scanning the root of every connected Dropbox
-            // account. The dropbox-import endpoint includes root-level
-            // files automatically on every scan, so a single root call
-            // per account is enough to pick them up. Each fallback pair
-            // uses accountEmail|<empty> so the existing pair-splitting
-            // logic below produces an empty folderPath that the import
-            // endpoint accepts as a root scan.
-            if (dbPairs.length === 0) {
-              var dbFallbackAccounts = Array.isArray(self._dropboxAccounts) ? self._dropboxAccounts : [];
-              dbFallbackAccounts.forEach(function (a) {
-                if (a && a.account_email) dbPairs.push(a.account_email + "|");
-              });
-              if (dbPairs.length === 0) throw new Error("No Dropbox account connected to scan");
-            }
+            if (dbPairs.length === 0) throw new Error("No Dropbox folders selected to scan");
             var dbSession = await self._supabase.auth.getSession();
             var dbToken = dbSession && dbSession.data && dbSession.data.session ? dbSession.data.session.access_token : null;
             if (!dbToken) throw new Error("Not authenticated");
@@ -496,10 +528,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + dbToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: dbAcct, folderPath: dbFolderPath })
               });
-              var dbResult = await dbResp.json();
+              var dbResult = await safeJson(dbResp, SOURCE_NAMES.dropbox);
               if (dbResult.error) {
                 console.error("Dropbox import error for " + dbPairs[dbi] + ":", dbResult.error);
-                self._appendUploadMessage(dbLabel + " — error: " + dbResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.dropbox + " — " + dbLabel + " — error: " + dbResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(dbLabel, dbResult), "success");
               }
@@ -520,10 +552,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: user.id, accountEmail: gmailEmails[gi] })
               });
-              var gmailResult = await gmailResp.json();
+              var gmailResult = await safeJson(gmailResp, SOURCE_NAMES.gmail);
               if (gmailResult.error) {
                 console.error("Gmail scan error for " + gmailEmails[gi] + ":", gmailResult.error);
-                self._appendUploadMessage(gmailLabel + " — error: " + gmailResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.gmail + " — " + gmailLabel + " — error: " + gmailResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(gmailLabel, gmailResult), "success");
               }
@@ -544,10 +576,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: user.id, accountEmail: outlookEmails[oi] })
               });
-              var outlookResult = await outlookResp.json();
+              var outlookResult = await safeJson(outlookResp, SOURCE_NAMES.outlook);
               if (outlookResult.error) {
                 console.error("Outlook scan error for " + outlookEmails[oi] + ":", outlookResult.error);
-                self._appendUploadMessage(outlookLabel + " — error: " + outlookResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.outlook + " — " + outlookLabel + " — error: " + outlookResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(outlookLabel, outlookResult), "success");
               }
@@ -570,10 +602,10 @@ window.CL_UPLOAD = {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ userId: user.id, url: raw })
               });
-              var webResult = await webResp.json();
+              var webResult = await safeJson(webResp, SOURCE_NAMES.website);
               if (webResult.error) {
                 console.error("Website scan error for " + raw + ":", webResult.error);
-                self._appendUploadMessage(webLabel + " — error: " + webResult.error, "error");
+                self._appendUploadMessage(SOURCE_NAMES.website + " — " + webLabel + " — error: " + webResult.error, "error");
               } else {
                 self._appendUploadMessage(formatCountsLine(webLabel, webResult), "success");
               }
