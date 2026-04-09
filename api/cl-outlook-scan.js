@@ -248,13 +248,16 @@ export default async function handler(req, res) {
     let approved = 0;
     let pending = 0;
     let rejected = 0;
+    var skipped_reasons = {};
+    var auto_archived = 0;
+    var fin_docs_paired = 0;
 
     for (const msg of messages) {
       const subject = msg.subject || '(no subject)';
       const sender = (msg.from && msg.from.emailAddress) ? (msg.from.emailAddress.name ? msg.from.emailAddress.name + ' <' + msg.from.emailAddress.address + '>' : msg.from.emailAddress.address) : '';
       const emailBody = extractOutlookBody(msg);
 
-      if (!emailBody || emailBody.trim().length < 50) { skipped++; continue; }
+      if (!emailBody || emailBody.trim().length < 50) { skipped++; skipped_reasons.body_too_short = (skipped_reasons.body_too_short || 0) + 1; continue; }
 
       // Save source to cl-assets and create cl_source_items row
       var sourceItemId = null;
@@ -281,7 +284,7 @@ export default async function handler(req, res) {
       }
 
       const items = await runExtractionPrompt(emailBody, subject, sender);
-      if (!items || items.length === 0) { skipped++; continue; }
+      if (!items || items.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
 
       for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
         const item = items[itemIdx];
@@ -333,6 +336,7 @@ export default async function handler(req, res) {
           var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
           if (pairMatchId) {
             var pairId = randomUUID();
+            fin_docs_paired++;
             var existingPairUpdate = await supabase
               .from('content_library')
               .update({ status: 'pending', version_pair_id: pairId })
@@ -353,7 +357,8 @@ export default async function handler(req, res) {
             .from('content_library')
             .update({ status: 'archived', version_archived_by: insertedRow.id })
             .eq('id', versionMatchedId);
-          if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
+          if (!archResult.error) auto_archived++;
+          else console.error('Auto-archive error:', archResult.error.message);
         }
       }
 
@@ -366,7 +371,7 @@ export default async function handler(req, res) {
     outlookEntry.last_scanned_at = new Date().toISOString();
     await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
 
-    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, total: messages.length });
+    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: messages.length });
 
   } catch (err) {
     console.error('cl-outlook-scan error:', err.message);
