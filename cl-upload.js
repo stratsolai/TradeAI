@@ -36,10 +36,13 @@ window.CL_UPLOAD = {
         "<span>You appear to be offline. Files will be queued and uploaded when you reconnect.</span>",
         "<button class=\"btn-dismiss\" id=\"cl-offline-dismiss\">&#10007; Dismiss</button>",
       "</div>",
-      "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none\">",
-        "<span id=\"cl-upload-confirm-msg\" class=\"upload-confirm-pill\"></span>",
-        "<button id=\"cl-upload-dismiss\" class=\"btn-dismiss\" style=\"display:none\">&#10007; Dismiss</button>",
-      "</div>",
+      // Stacking message container — each completed scan appends its
+      // own dismissible row instead of overwriting a single shared
+      // message. The container is hidden when empty and revealed
+      // automatically by _appendUploadMessage. Existing code paths
+      // (_showProcessing, _showUploadConfirmation, _showUploadError)
+      // all flow through the same append helper now.
+      "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none;flex-direction:column;gap:8px;align-items:stretch;\"></div>",
       "<div class=\"upload-section\">",
         "<div class=\"upload-section-title\">Sources</div>",
         "<div class=\"upload-section-note\">Navigating away from this page will cancel any scan in progress.</div>",
@@ -307,7 +310,11 @@ window.CL_UPLOAD = {
           var pills = tile ? tile.querySelectorAll(".source-select-pill.selected") : [];
           var values = [];
           pills.forEach(function(p) { values.push(p.getAttribute("data-value")); });
-          self._handleScanNow(btn.getAttribute("data-source"), btn, values);
+          // tile is passed through so _handleScanNow can resolve
+          // each pill value back to its user-friendly text label
+          // (folder name, library name, account email, etc.) for
+          // the per-scan completion message.
+          self._handleScanNow(btn.getAttribute("data-source"), btn, values, tile);
         });
       });
       grid.querySelectorAll(".source-stop-btn").forEach(function(btn) {
@@ -321,7 +328,7 @@ window.CL_UPLOAD = {
 
   _scanCancelled: false,
 
-  _handleScanNow: function(source, btn, values) {
+  _handleScanNow: function(source, btn, values, tile) {
       var self = this;
       self._scanCancelled = false;
       var originalText = btn.textContent;
@@ -330,6 +337,33 @@ window.CL_UPLOAD = {
       function finishScan() {
         btn.textContent = originalText;
         btn.disabled = false;
+      }
+      // Resolve a pill data-value back to its user-friendly text
+      // (folder name, library name, account email). Falls back to
+      // the raw value when the pill is not found in the tile (e.g.
+      // for synthesised fallback pairs the Dropbox handler builds
+      // when the user clicks Scan Now without ticking any pill).
+      function pillLabel(value) {
+        if (!tile) return value;
+        var pills = tile.querySelectorAll(".source-select-pill");
+        for (var i = 0; i < pills.length; i++) {
+          if (pills[i].getAttribute("data-value") === value) return pills[i].textContent;
+        }
+        return value;
+      }
+      // Build a "<label> — X approved, Y pending, Z rejected" line
+      // from the per-status counts the endpoint returns. Zero
+      // counts are omitted to keep the message tidy. When all three
+      // are zero the message reads "<label> — no new content".
+      function formatCountsLine(label, result) {
+        var a = (result && result.approved) || 0;
+        var p = (result && result.pending) || 0;
+        var r = (result && result.rejected) || 0;
+        var parts = [];
+        if (a > 0) parts.push(a + " approved");
+        if (p > 0) parts.push(p + " pending");
+        if (r > 0) parts.push(r + " rejected");
+        return label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
       }
       (async function() {
         try {
@@ -342,29 +376,28 @@ window.CL_UPLOAD = {
             var gdSession = await self._supabase.auth.getSession();
             var gdToken = gdSession && gdSession.data && gdSession.data.session ? gdSession.data.session.access_token : null;
             if (!gdToken) throw new Error("Not authenticated");
-            var gdTotalImported = 0;
             for (var gdi = 0; gdi < gdPairs.length; gdi++) {
               if (self._scanCancelled) break;
               var gdSep = gdPairs[gdi].indexOf("|");
               if (gdSep === -1) { console.error("Drive scan: malformed pill value", gdPairs[gdi]); continue; }
               var gdAcct = gdPairs[gdi].substring(0, gdSep);
               var gdFolder = gdPairs[gdi].substring(gdSep + 1);
+              var gdLabel = pillLabel(gdPairs[gdi]);
               var gdResp = await fetch("/api/drive-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + gdToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: gdAcct, folderId: gdFolder })
               });
               var gdResult = await gdResp.json();
-              if (gdResult.success && gdResult.imported) {
-                gdTotalImported += gdResult.imported;
-              } else if (gdResult.error) {
+              if (gdResult.error) {
                 console.error("Drive import error for " + gdPairs[gdi] + ":", gdResult.error);
+                self._appendUploadMessage(gdLabel + " — error: " + gdResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(gdLabel, gdResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (gdTotalImported > 0) { self._showUploadConfirmation(gdTotalImported); }
-            else { self._showUploadError("No new content found in your connected Drive folders."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
@@ -374,29 +407,28 @@ window.CL_UPLOAD = {
             var odSession = await self._supabase.auth.getSession();
             var odToken = odSession && odSession.data && odSession.data.session ? odSession.data.session.access_token : null;
             if (!odToken) throw new Error("Not authenticated");
-            var odTotalImported = 0;
             for (var odi = 0; odi < odPairs.length; odi++) {
               if (self._scanCancelled) break;
               var odSep = odPairs[odi].indexOf("|");
               if (odSep === -1) { console.error("OneDrive scan: malformed pill value", odPairs[odi]); continue; }
               var odAcct = odPairs[odi].substring(0, odSep);
               var odFolder = odPairs[odi].substring(odSep + 1);
+              var odLabel = pillLabel(odPairs[odi]);
               var odResp = await fetch("/api/onedrive-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + odToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: odAcct, folderId: odFolder })
               });
               var odResult = await odResp.json();
-              if (odResult.success && odResult.imported) {
-                odTotalImported += odResult.imported;
-              } else if (odResult.error) {
+              if (odResult.error) {
                 console.error("OneDrive import error for " + odPairs[odi] + ":", odResult.error);
+                self._appendUploadMessage(odLabel + " — error: " + odResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(odLabel, odResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (odTotalImported > 0) { self._showUploadConfirmation(odTotalImported); }
-            else { self._showUploadError("No new content found in your connected OneDrive folders."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
@@ -406,7 +438,6 @@ window.CL_UPLOAD = {
             var spSession = await self._supabase.auth.getSession();
             var spToken = spSession && spSession.data && spSession.data.session ? spSession.data.session.access_token : null;
             if (!spToken) throw new Error("Not authenticated");
-            var spTotalImported = 0;
             for (var spi = 0; spi < spPairs.length; spi++) {
               if (self._scanCancelled) break;
               var spParts = spPairs[spi].split("|");
@@ -414,22 +445,22 @@ window.CL_UPLOAD = {
               var spAcct = spParts[0];
               var spSiteId = spParts[1];
               var spLibrary = spParts[2];
+              var spLabel = pillLabel(spPairs[spi]);
               var spResp = await fetch("/api/sharepoint-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + spToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: spAcct, siteId: spSiteId, libraryId: spLibrary })
               });
               var spResult = await spResp.json();
-              if (spResult.success && spResult.imported) {
-                spTotalImported += spResult.imported;
-              } else if (spResult.error) {
+              if (spResult.error) {
                 console.error("SharePoint import error for " + spPairs[spi] + ":", spResult.error);
+                self._appendUploadMessage(spLabel + " — error: " + spResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(spLabel, spResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (spTotalImported > 0) { self._showUploadConfirmation(spTotalImported); }
-            else { self._showUploadError("No new content found in your connected SharePoint libraries."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
@@ -453,38 +484,37 @@ window.CL_UPLOAD = {
             var dbSession = await self._supabase.auth.getSession();
             var dbToken = dbSession && dbSession.data && dbSession.data.session ? dbSession.data.session.access_token : null;
             if (!dbToken) throw new Error("Not authenticated");
-            var dbTotalImported = 0;
             for (var dbi = 0; dbi < dbPairs.length; dbi++) {
               if (self._scanCancelled) break;
               var dbSep = dbPairs[dbi].indexOf("|");
               if (dbSep === -1) { console.error("Dropbox scan: malformed pill value", dbPairs[dbi]); continue; }
               var dbAcct = dbPairs[dbi].substring(0, dbSep);
               var dbFolderPath = dbPairs[dbi].substring(dbSep + 1);
+              var dbLabel = pillLabel(dbPairs[dbi]);
               var dbResp = await fetch("/api/dropbox-import", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": "Bearer " + dbToken },
                 body: JSON.stringify({ action: "import-all", accountEmail: dbAcct, folderPath: dbFolderPath })
               });
               var dbResult = await dbResp.json();
-              if (dbResult.success && dbResult.imported) {
-                dbTotalImported += dbResult.imported;
-              } else if (dbResult.error) {
+              if (dbResult.error) {
                 console.error("Dropbox import error for " + dbPairs[dbi] + ":", dbResult.error);
+                self._appendUploadMessage(dbLabel + " — error: " + dbResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(dbLabel, dbResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (dbTotalImported > 0) { self._showUploadConfirmation(dbTotalImported); }
-            else { self._showUploadError("No new content found in your connected Dropbox folders."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "gmail") {
             var gmailEmails = values || [];
             if (gmailEmails.length === 0) throw new Error("No Gmail accounts selected to scan");
-            var totalGmailImported = 0;
             for (var gi = 0; gi < gmailEmails.length; gi++) {
               if (self._scanCancelled) break;
+              var gmailLabel = pillLabel(gmailEmails[gi]);
               var gmailResp = await fetch("/api/cl-email-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -493,23 +523,22 @@ window.CL_UPLOAD = {
               var gmailResult = await gmailResp.json();
               if (gmailResult.error) {
                 console.error("Gmail scan error for " + gmailEmails[gi] + ":", gmailResult.error);
-              } else if (gmailResult.success && gmailResult.imported) {
-                totalGmailImported += gmailResult.imported;
+                self._appendUploadMessage(gmailLabel + " — error: " + gmailResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(gmailLabel, gmailResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (totalGmailImported > 0) { self._showUploadConfirmation(totalGmailImported); }
-            else { self._showUploadError("No new content found in your Gmail inbox."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "outlook") {
             var outlookEmails = values || [];
             if (outlookEmails.length === 0) throw new Error("No Outlook accounts selected to scan");
-            var totalOutlookImported = 0;
             for (var oi = 0; oi < outlookEmails.length; oi++) {
               if (self._scanCancelled) break;
+              var outlookLabel = pillLabel(outlookEmails[oi]);
               var outlookResp = await fetch("/api/cl-outlook-scan", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -518,25 +547,24 @@ window.CL_UPLOAD = {
               var outlookResult = await outlookResp.json();
               if (outlookResult.error) {
                 console.error("Outlook scan error for " + outlookEmails[oi] + ":", outlookResult.error);
-              } else if (outlookResult.success && outlookResult.imported) {
-                totalOutlookImported += outlookResult.imported;
+                self._appendUploadMessage(outlookLabel + " — error: " + outlookResult.error, "error");
+              } else {
+                self._appendUploadMessage(formatCountsLine(outlookLabel, outlookResult), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (totalOutlookImported > 0) { self._showUploadConfirmation(totalOutlookImported); }
-            else { self._showUploadError("No new content found in your Outlook inbox."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           } else if (source === "website") {
             var urls = values || [];
             if (urls.length === 0) throw new Error("No URLs selected to scan");
-            var totalWebImported = 0;
             for (var j = 0; j < urls.length; j++) {
               if (self._scanCancelled) break;
               var raw = urls[j].trim();
               if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
+              var webLabel = pillLabel(urls[j]);
               var webResp = await fetch("/api/scrape-website", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -545,21 +573,31 @@ window.CL_UPLOAD = {
               var webResult = await webResp.json();
               if (webResult.error) {
                 console.error("Website scan error for " + raw + ":", webResult.error);
-              } else if (webResult.count) {
-                totalWebImported += webResult.count;
+                self._appendUploadMessage(webLabel + " — error: " + webResult.error, "error");
+              } else {
+                // scrape-website.js returns { count } not the per-status
+                // breakdown that the cloud connectors return. Show the
+                // count as pending since every website-extracted item
+                // currently lands as pending per the canonical pipeline
+                // (the Financial Documents pending override and the
+                // discard-category rejection paths can change this in
+                // edge cases, but the response shape does not yet
+                // expose them — extending scrape-website.js to return
+                // the same per-status counts as the other connectors
+                // is a follow-up).
+                var webCount = webResult.count || 0;
+                self._appendUploadMessage(webLabel + " — " + (webCount > 0 ? webCount + " pending" : "no new content"), "success");
               }
             }
             finishScan();
-            if (self._scanCancelled) { self._showUploadError("Scan stopped."); }
-            else if (totalWebImported > 0) { self._showUploadConfirmation(totalWebImported); }
-            else { self._showUploadError("No new content found on your website."); }
+            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
             if (typeof loadStats === "function") loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             return;
           }
         } catch (err) {
           console.error("Scan error:", err.message);
-          self._showUploadError(err.message);
+          self._appendUploadMessage(err.message, "error");
         } finally {
           finishScan();
         }
@@ -691,61 +729,99 @@ window.CL_UPLOAD = {
     }
   },
 
+  // Append a single dismissible message row to the stacking
+  // confirmation container. Each row has its own dismiss button so
+  // multiple completed scans can sit side-by-side without overwriting
+  // each other. The container is auto-shown when the first row is
+  // appended and auto-hidden when the last row is dismissed. The
+  // type argument controls the visual style hook on the row class
+  // ("success" / "error" / "processing") — the actual styling lives
+  // in content-library.html and will be tightened during the
+  // stylesheet rollout.
+  _appendUploadMessage: function(text, type) {
+    var container = document.getElementById("cl-upload-confirm");
+    if (!container) return null;
+    container.style.display = "flex";
+    var row = document.createElement("div");
+    row.className = "upload-message upload-message-" + (type || "info");
+    row.style.display = "flex";
+    row.style.alignItems = "center";
+    row.style.gap = "8px";
+    var span = document.createElement("span");
+    span.className = "upload-confirm-pill";
+    span.textContent = text;
+    var dismissBtn = document.createElement("button");
+    dismissBtn.className = "btn-dismiss";
+    dismissBtn.innerHTML = "&#10007; Dismiss";
+    dismissBtn.addEventListener("click", function () {
+      row.parentNode && row.parentNode.removeChild(row);
+      if (container.children.length === 0) container.style.display = "none";
+    });
+    row.appendChild(span);
+    row.appendChild(dismissBtn);
+    container.appendChild(row);
+    return row;
+  },
+
+  _clearUploadMessages: function() {
+    var container = document.getElementById("cl-upload-confirm");
+    if (container) {
+      container.innerHTML = "";
+      container.style.display = "none";
+    }
+  },
+
   _showProcessing: function() {
-    var confirmDiv = document.getElementById("cl-upload-confirm");
-    var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var dismissBtn = document.getElementById("cl-upload-dismiss");
-    if (!confirmDiv || !msgSpan) return;
-    msgSpan.textContent = "Processing...";
-    if (dismissBtn) dismissBtn.style.display = "none";
-    confirmDiv.style.display = "flex";
+    // Single-row processing indicator. Tagged with an id so
+    // _hideProcessing can find and remove it without disturbing any
+    // other stacked messages that may already be present (e.g. from
+    // a previous scan whose results the user has not yet dismissed).
+    var existing = document.getElementById("cl-upload-processing-row");
+    if (existing) return;
+    var row = this._appendUploadMessage("Processing...", "processing");
+    if (row) row.id = "cl-upload-processing-row";
   },
 
   _hideProcessing: function() {
-    var confirmDiv = document.getElementById("cl-upload-confirm");
-    if (confirmDiv) confirmDiv.style.display = "none";
+    var row = document.getElementById("cl-upload-processing-row");
+    if (!row) return;
+    row.parentNode && row.parentNode.removeChild(row);
+    var container = document.getElementById("cl-upload-confirm");
+    if (container && container.children.length === 0) container.style.display = "none";
   },
 
+  // Photo and document uploads still flow through this helper. The
+  // array form (used by _handlePhotoUpload and _handleDocUpload, which
+  // receive a list of items from /api/process-file) is split into
+  // approved/pending/rejected counts. The numeric form is preserved
+  // for any caller that passes a count instead of an items array.
+  // Both shapes append a new stacking row instead of overwriting a
+  // single shared message.
   _showUploadConfirmation: function(itemsOrCount) {
-    var confirmDiv = document.getElementById("cl-upload-confirm");
-    var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var dismissBtn = document.getElementById("cl-upload-dismiss");
-    if (!confirmDiv || !msgSpan) return;
     var msg;
     if (Array.isArray(itemsOrCount)) {
       var pendingCount = 0;
       var approvedCount = 0;
+      var rejectedCount = 0;
       itemsOrCount.forEach(function(it) {
         if (it.status === 'pending') pendingCount++;
         else if (it.status === 'approved') approvedCount++;
+        else if (it.status === 'rejected') rejectedCount++;
       });
       var parts = [];
-      if (approvedCount > 0) parts.push(approvedCount + (approvedCount === 1 ? " Item" : " Items") + " Approved");
-      if (pendingCount > 0) parts.push(pendingCount + (pendingCount === 1 ? " Item" : " Items") + " Added to Review");
+      if (approvedCount > 0) parts.push(approvedCount + " approved");
+      if (pendingCount > 0) parts.push(pendingCount + " pending");
+      if (rejectedCount > 0) parts.push(rejectedCount + " rejected");
       if (parts.length === 0) return;
-      msg = parts.join(", ");
+      msg = "Upload — " + parts.join(", ");
     } else {
-      msg = itemsOrCount + (itemsOrCount === 1 ? " item" : " items") + " added to Review.";
+      msg = "Upload — " + itemsOrCount + (itemsOrCount === 1 ? " item" : " items") + " imported";
     }
-    msgSpan.textContent = msg;
-    if (dismissBtn) {
-      dismissBtn.style.display = "";
-      dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
-    }
-    confirmDiv.style.display = "flex";
+    this._appendUploadMessage(msg, "success");
   },
 
   _showUploadError: function(msg) {
-    var confirmDiv = document.getElementById("cl-upload-confirm");
-    var msgSpan = document.getElementById("cl-upload-confirm-msg");
-    var dismissBtn = document.getElementById("cl-upload-dismiss");
-    if (!confirmDiv || !msgSpan) return;
-    msgSpan.textContent = msg;
-    if (dismissBtn) {
-      dismissBtn.style.display = "";
-      dismissBtn.onclick = function() { confirmDiv.style.display = "none"; };
-    }
-    confirmDiv.style.display = "flex";
+    this._appendUploadMessage(msg, "error");
   }
 
 };
