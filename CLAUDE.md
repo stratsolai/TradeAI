@@ -147,14 +147,44 @@ Fixed during integration test:
   in cl-upload.js. Vercel timeouts now produce a clear error
   message identifying the source instead of an unhelpful
   "Unexpected token A..." JSON parse error.
+- Google Drive scan — confirmed working end to end.
 
 Outstanding before sign-off:
-- SharePoint missing one DOCX from scan — under investigation
-- Dropbox missing one PDF from scan — under investigation
-- Outlook returning fewer emails than expected — to be
-  addressed in Lookback Controls (Appendix A) build
-- Lookback controls wiring — import endpoints do not yet read
-  lookback_months. Build pending after integration test.
+- SharePoint — Investment Proposal v1.docx (DOCX)
+  consistently not imported across multiple clean test
+  runs — diagnosis pending.
+- Dropbox — two of three PDFs consistently missed across
+  multiple clean test runs — diagnosis pending.
+- Gmail — returning 1 of 4 emails on a clean database —
+  diagnosis pending.
+- OneDrive — timing out on Vercel's 300-second limit due
+  to the recursive walker on large folder trees — blocked
+  on Task 15 (background scanning).
+- Outlook — returning fewer emails than expected due to
+  last_scanned_at semantics — blocked on Lookback Controls
+  (Appendix A).
+- Website — single page only, subpages not crawled —
+  blocked on Task 16.
+
+### Task 10a — Manual Upload category leaking into AI extraction
+
+Discrete fix task. Must be fixed before Task 10 can be
+signed off.
+
+The Manual Upload category is reserved for the manual
+upload flow only and must never be assigned by the AI
+extraction pipeline. It is currently appearing as an
+AI-assigned category on Dropbox scan results. The fix is
+to remove Manual Upload from the category list available
+to the AI in EXTRACTION_SYSTEM_PROMPT across all eight
+prompt-bearing files (cl-email-scan.js, cl-outlook-scan.js,
+onedrive-import.js, sharepoint-import.js, dropbox-import.js,
+drive-import.js, scrape-website.js, process-file.js). The
+category must remain in the canonical CATEGORY_LOOKUP and
+ALL_CATEGORIES lists in those files so manual-upload rows
+already in content_library still validate, but it must not
+appear in the prompt's CATEGORIES section that the model
+chooses from.
 
 ### Task 11 — CL Items
 
@@ -443,8 +473,10 @@ is complete and confirmed working.
 | 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | Complete Standalone Tasks A, B, C                          |
-| 4    | Complete CL Connections — in progress (build done,         |
-|      | integration test pending)                                  |
+| 4    | Complete CL Connections — build complete, integration     |
+|      | test in progress. Confirmed working: Google Drive.         |
+|      | Partial: Dropbox, SharePoint, Gmail. Outstanding: see      |
+|      | Task 10 outstanding items above.                           |
 | 4a   | Complete lookback controls (CL Connections Spec v1.2       |
 |      | Appendix A)                                                |
 | 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
