@@ -714,6 +714,15 @@ export default async function handler(req, res) {
         return res.status(502).json({ error: 'SharePoint API error: ' + e.message });
       }
 
+      // Lookback filter — only process files created within the user's
+      // lookback window. Default 12 months. null means all time (no filter).
+      var lookbackMonths = entry.lookback_months === undefined ? 12 : entry.lookback_months;
+      if (lookbackMonths != null) {
+        var cutoffDate = new Date(Date.now() - lookbackMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
+        allFiles = allFiles.filter(function(f) { return f.createdDateTime && f.createdDateTime >= cutoffDate; });
+        console.log('[SharePoint] Lookback filter — months:', lookbackMonths, 'cutoff:', cutoffDate, 'filesAfterFilter:', allFiles.length);
+      }
+
       // Skip files that already have a cl_source_items row from a prior scan
       const existingSI = await supabase
         .from('cl_source_items')
