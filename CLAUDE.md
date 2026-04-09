@@ -107,84 +107,18 @@ authenticated pages:
 
 ## Active Tasks
 
-### Task 10 — CL Connections integration test in progress
+### Task 10 — CL Connections integration test
 
-Full integration test for OneDrive, SharePoint, and Dropbox
-per CL Connections Spec v1.2 checklist. OneDrive scanning
-confirmed working. SharePoint and Dropbox testing in progress.
-
-Fixed during integration test:
-- SharePoint scan returning no files — recursive walker added
-  in api/sharepoint-import.js so files in subfolders are found
-  at all depths
-- OneDrive scan returning no files in nested folders — same
-  recursive walker pattern applied to api/onedrive-import.js
-- Dropbox root-level files now scanned automatically on every
-  import-all call
-- SharePoint last_scanned_at moved from account level to per
-  site inside cl_sharepoint_accounts.sites
-- File format coverage extended — PowerPoint, HEIC, HTML,
-  CSV on Drive, legacy Office on every cloud connector
-- Per-status counts (approved / pending / rejected) returned
-  by every scan endpoint and surfaced in the upload tab
-- Scan completion messages — stacking, per-status,
-  dismissible, source-identified. Every message leads with
-  the tile name (Gmail, Outlook, Google Drive, OneDrive,
-  SharePoint, Dropbox, Website). SharePoint messages include
-  the site name as well as the library name.
-- Promotions & Offers rule promoted from category description
-  to RULES section as RULE 8 in every prompt-bearing file.
-  Sender added to email prompts (cl-email-scan.js and
-  cl-outlook-scan.js) so the model can apply the rule to
-  inbound supplier promotional emails.
-- Website character cap raised from 8,000 to 40,000 and
-  max_tokens raised from 4,000 to 8,000 in scrape-website.js
-- Dropbox pill consistency — Scan Now now requires pill
-  selection (consistent with all other tiles). The synthetic
-  "Dropbox root files" pill is still rendered so users can
-  scan root by ticking it.
-- Defensive error handling added to all seven scan branches
-  in cl-upload.js. Vercel timeouts now produce a clear error
-  message identifying the source instead of an unhelpful
-  "Unexpected token A..." JSON parse error.
-- Google Drive scan — confirmed working end to end.
+Google Drive, Dropbox, SharePoint, and Gmail confirmed
+working end to end.
 
 Outstanding before sign-off:
-- SharePoint — Investment Proposal v1.docx (DOCX)
-  consistently not imported across multiple clean test
-  runs — diagnosis pending.
-- Dropbox — two of three PDFs consistently missed across
-  multiple clean test runs — diagnosis pending.
-- Gmail — returning 1 of 4 emails on a clean database —
-  diagnosis pending.
 - OneDrive — timing out on Vercel's 300-second limit due
   to the recursive walker on large folder trees — blocked
   on Task 15 (background scanning).
-- Outlook — returning fewer emails than expected due to
-  last_scanned_at semantics — blocked on Lookback Controls
-  (Appendix A).
+- Outlook — blocked on Appendix A (lookback controls).
 - Website — single page only, subpages not crawled —
   blocked on Task 16.
-
-### Task 10a — Manual Upload category leaking into AI extraction
-
-Discrete fix task. Must be fixed before Task 10 can be
-signed off.
-
-The Manual Upload category is reserved for the manual
-upload flow only and must never be assigned by the AI
-extraction pipeline. It is currently appearing as an
-AI-assigned category on Dropbox scan results. The fix is
-to remove Manual Upload from the category list available
-to the AI in EXTRACTION_SYSTEM_PROMPT across all eight
-prompt-bearing files (cl-email-scan.js, cl-outlook-scan.js,
-onedrive-import.js, sharepoint-import.js, dropbox-import.js,
-drive-import.js, scrape-website.js, process-file.js). The
-category must remain in the canonical CATEGORY_LOOKUP and
-ALL_CATEGORIES lists in those files so manual-upload rows
-already in content_library still validate, but it must not
-appear in the prompt's CATEGORIES section that the model
-chooses from.
 
 ### Task 11 — CL Items
 
@@ -368,26 +302,6 @@ Spec must cover at minimum:
   should land after Task 15's spec to take advantage of
   the queue.
 
-### Lookback Controls — Appendix A
-
-Build user-controlled import lookback for all CL connections
-per CL Connections Spec v1.2 Appendix A. Covers Gmail,
-Outlook, OneDrive, SharePoint, Dropbox. Google Drive
-lookback already built as part of Google Drive Migration.
-Runs after Task 10 integration test.
-
-Note: the current last_scanned_at behaviour in
-cl-email-scan.js and cl-outlook-scan.js causes subsequent
-scans to miss historical emails — once a scan completes
-last_scanned_at advances to "now" and the next scan only
-fetches messages received after that timestamp, narrowing
-the window further on every run. The Appendix A build
-must address this. Scans should use the user's lookback
-window as the lower bound on every scan, not
-last_scanned_at. last_scanned_at can still be used for
-optimisation (e.g. an upper bound on what has already been
-processed) but must not be the only filter.
-
 ---
 
 ## Known Issues & Notes
@@ -460,6 +374,22 @@ processed) but must not be the only filter.
   code following the Drive folder picker rewrite to
   immediate-save Add/Remove buttons. Remove during
   stylesheet rollout cleanup pass.
+- DOCX, XLSX, and PPTX local text extraction applied to
+  sharepoint-import.js, onedrive-import.js,
+  dropbox-import.js, and drive-import.js. Only PDF files
+  go through Claude's document API.
+- All seven scan endpoints now return deduped count,
+  skipped_reasons breakdown, auto_archived, and
+  fin_docs_paired counts. cl-upload.js surfaces this
+  detail in scan completion messages.
+- When tips are built, include guidance explaining why
+  files or emails may be skipped — covering unsupported
+  formats, short or unreadable content, no extractable
+  business content, and deduplication.
+- last_scanned_at is still stamped in cl-email-scan.js
+  after a successful scan for informational purposes
+  only. Not used in any query logic. Review in a future
+  session.
 
 ---
 
@@ -472,13 +402,8 @@ is complete and confirmed working.
 |------|------------------------------------------------------------|
 | 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
-| 3    | Complete Standalone Tasks A, B, C                          |
-| 4    | Complete CL Connections — build complete, integration     |
-|      | test in progress. Confirmed working: Google Drive.         |
-|      | Partial: Dropbox, SharePoint, Gmail. Outstanding: see      |
-|      | Task 10 outstanding items above.                           |
-| 4a   | Complete lookback controls (CL Connections Spec v1.2       |
-|      | Appendix A)                                                |
+| 3    | ~~Complete Standalone Tasks A, B, C~~  DONE                |
+| 4    | ~~Complete CL Connections + lookback controls~~  DONE      |
 | 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
 | 6    | Complete stylesheet rollout across CL files                |
 | 7    | Complete stylesheet rollout across cl-settings.html        |
