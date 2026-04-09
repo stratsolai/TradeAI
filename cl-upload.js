@@ -37,9 +37,9 @@ window.CL_UPLOAD = {
       "</div>",
       "<div id=\"cl-manual-flow\" class=\"manual-add-flow\" style=\"display:none\">",
         "<div class=\"manual-add-title\">Add Manual Item</div>",
-        "<label class=\"manual-add-label\">Title <span style=\"color:#c00\">*</span></label>",
+        "<label class=\"manual-add-label\" style=\"margin-top:12px\">Title <span style=\"color:#c00\">*</span></label>",
         "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
-        "<label class=\"manual-add-label\">Description</label>",
+        "<label class=\"manual-add-label\" style=\"margin-top:12px\">Description</label>",
         "<textarea id=\"cl-manual-desc\" class=\"manual-add-textarea\" rows=\"4\" placeholder=\"Enter a description (optional)\"></textarea>",
         "<label class=\"manual-add-label\">Tagged Tools <span style=\"color:#c00\">*</span></label>",
         "<div id=\"cl-manual-tools\" class=\"manual-add-pills\" style=\"display:flex;flex-wrap:wrap;gap:8px;\"></div>",
@@ -62,7 +62,7 @@ window.CL_UPLOAD = {
       // (_showProcessing, _showUploadConfirmation, _showUploadError)
       // all flow through the same append helper now.
       "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none;flex-direction:column;gap:8px;align-items:stretch;\"></div>",
-      "<div class=\"upload-section\">",
+      "<div class=\"upload-section\" style=\"margin-top:16px\">",
         "<div class=\"upload-section-title\">Sources</div>",
         "<div class=\"upload-section-note\">Navigating away from this page will cancel any scan in progress.</div>",
         "<div class=\"sources-tiles\" id=\"cl-sources-grid\">",
