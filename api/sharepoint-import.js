@@ -184,7 +184,9 @@ async function fetchSharePointFileBuffer(siteId, libraryId, itemId, accessToken)
 }
 
 // Extract text from a binary document via Claude document API.
-async function extractBinaryFileText(base64Data, mimeType) {
+async function extractBinaryFileText(base64Data, mimeType, fileName) {
+  var base64Len = base64Data ? base64Data.length : 0;
+  console.log('[extractBinaryFileText] START — file:', fileName, 'mimeType:', mimeType, 'base64Length:', base64Len);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -201,8 +203,13 @@ async function extractBinaryFileText(base64Data, mimeType) {
       ]}],
     }),
   });
+  console.log('[extractBinaryFileText] Claude API response status:', response.status, 'file:', fileName);
   const data = await response.json();
-  if (data.content && data.content[0]) return data.content[0].text;
+  if (data.content && data.content[0]) {
+    console.log('[extractBinaryFileText] SUCCESS — file:', fileName, 'extractedTextLength:', data.content[0].text.length);
+    return data.content[0].text;
+  }
+  console.error('[extractBinaryFileText] FAILED — file:', fileName, 'Claude returned no content. type:', data.type, 'error:', JSON.stringify(data.error || null), 'stop_reason:', data.stop_reason);
   return null;
 }
 
@@ -242,15 +249,26 @@ async function listAllSharePointLibraryFiles(siteId, libraryId, accessToken) {
 }
 
 // Resolve a SharePoint file to plain-text body suitable for the extraction prompt.
-async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, accessToken) {
+async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, accessToken, fileName) {
   const buffer = await fetchSharePointFileBuffer(siteId, libraryId, itemId, accessToken);
-  if (!buffer) return null;
+  if (!buffer) {
+    console.error('[fetchSharePointFileText] SKIP — file:', fileName, 'reason: buffer download returned null (download failed)');
+    return null;
+  }
+  console.log('[fetchSharePointFileText] Downloaded — file:', fileName, 'bufferSize:', buffer.length, 'mimeType:', mimeType);
   if (SHAREPOINT_BINARY_DOC_MIME.indexOf(mimeType) > -1) {
-    return await extractBinaryFileText(buffer.toString('base64'), mimeType);
+    var extracted = await extractBinaryFileText(buffer.toString('base64'), mimeType, fileName);
+    if (!extracted) {
+      console.error('[fetchSharePointFileText] SKIP — file:', fileName, 'reason: Claude document API returned no text');
+    }
+    return extracted;
   }
   if (mimeType && mimeType.indexOf('text/') === 0) {
+    var textLen = buffer.toString('utf-8').length;
+    console.log('[fetchSharePointFileText] Text file — file:', fileName, 'textLength:', textLen);
     return buffer.toString('utf-8').substring(0, 8000);
   }
+  console.error('[fetchSharePointFileText] SKIP — file:', fileName, 'reason: mimeType not in binary doc list and not text/*. mimeType:', mimeType);
   return null;
 }
 
@@ -494,6 +512,12 @@ export default async function handler(req, res) {
           .filter(Boolean)
       );
       const files = allFiles.filter(function(f) { return !scannedItemIds.has(f.id); });
+      console.log('[import-all] File listing — totalFromGraph:', allFiles.length, 'alreadyScanned:', scannedItemIds.size, 'toProcess:', files.length);
+      allFiles.forEach(function(f) {
+        var mime = (f.file && f.file.mimeType) || 'unknown';
+        var dedupSkip = scannedItemIds.has(f.id);
+        console.log('[import-all] FILE — name:', f.name, 'id:', f.id, 'mime:', mime, 'size:', f.size, 'deduped:', dedupSkip);
+      });
 
       let imported = 0;
       let skipped = 0;
@@ -507,7 +531,7 @@ export default async function handler(req, res) {
         const isText = mimeType.indexOf('text/') === 0;
         const isBinaryDoc = SHAREPOINT_BINARY_DOC_MIME.indexOf(mimeType) > -1;
 
-        if (!isImage && !isText && !isBinaryDoc) { skipped++; continue; }
+        if (!isImage && !isText && !isBinaryDoc) { console.log('[import-all] SKIPPED — file:', file.name, 'id:', file.id, 'reason: unsupported mimeType:', mimeType); skipped++; continue; }
 
         let textContent = null;
         let imageBuffer = null;
@@ -516,8 +540,8 @@ export default async function handler(req, res) {
           imageBuffer = await fetchSharePointFileBuffer(siteId, libraryId, file.id, accessToken);
           if (!imageBuffer) { skipped++; continue; }
         } else {
-          textContent = await fetchSharePointFileText(siteId, libraryId, file.id, mimeType, accessToken);
-          if (!textContent) { skipped++; continue; }
+          textContent = await fetchSharePointFileText(siteId, libraryId, file.id, mimeType, accessToken, file.name);
+          if (!textContent) { console.log('[import-all] SKIPPED — file:', file.name, 'id:', file.id, 'reason: text extraction returned null'); skipped++; continue; }
         }
 
         // Save source bytes to cl-assets and create cl_source_items row
@@ -578,8 +602,9 @@ export default async function handler(req, res) {
         }
 
         // Text/document: run extraction prompt and insert one row per returned item
+        console.log('[import-all] EXTRACTING — file:', file.name, 'id:', file.id, 'textContentLength:', textContent.length);
         const items = await runExtractionPrompt(textContent, file.name);
-        if (!items || items.length === 0) { skipped++; continue; }
+        if (!items || items.length === 0) { console.log('[import-all] SKIPPED — file:', file.name, 'id:', file.id, 'reason: extraction prompt returned no items'); skipped++; continue; }
 
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
           const item = items[itemIdx];
