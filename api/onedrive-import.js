@@ -397,7 +397,7 @@ async function extractBinaryFileText(buffer, mimeType) {
 async function listAllOneDriveFolderFiles(folderId, accessToken) {
   var collected = [];
   var toVisit = [
-    'https://graph.microsoft.com/v1.0/me/drive/items/' + folderId + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+    'https://graph.microsoft.com/v1.0/me/drive/items/' + folderId + '/children?$top=200&$select=id,name,file,folder,size,lastModifiedDateTime'
   ];
   while (toVisit.length > 0) {
     var url = toVisit.shift();
@@ -416,7 +416,7 @@ async function listAllOneDriveFolderFiles(folderId, accessToken) {
         collected.push(it);
       } else if (it.folder && it.id) {
         toVisit.push(
-          'https://graph.microsoft.com/v1.0/me/drive/items/' + it.id + '/children?$top=200&$select=id,name,file,folder,size,createdDateTime'
+          'https://graph.microsoft.com/v1.0/me/drive/items/' + it.id + '/children?$top=200&$select=id,name,file,folder,size,lastModifiedDateTime'
         );
       }
     }
@@ -624,7 +624,7 @@ export default async function handler(req, res) {
       var lookbackMonths = entry.lookback_months === undefined ? 12 : entry.lookback_months;
       if (lookbackMonths != null) {
         var cutoffDate = new Date(Date.now() - lookbackMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
-        allFiles = allFiles.filter(function(f) { return f.createdDateTime && f.createdDateTime >= cutoffDate; });
+        allFiles = allFiles.filter(function(f) { return f.lastModifiedDateTime && f.lastModifiedDateTime >= cutoffDate; });
         console.log('[OneDrive] Lookback filter — months:', lookbackMonths, 'cutoff:', cutoffDate, 'filesAfterFilter:', allFiles.length);
       }
 
