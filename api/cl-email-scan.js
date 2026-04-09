@@ -288,6 +288,9 @@ export default async function handler(req, res) {
     let approved = 0;
     let pending = 0;
     let rejected = 0;
+    var skipped_reasons = {};
+    var auto_archived = 0;
+    var fin_docs_paired = 0;
 
     for (const msg of messages) {
       const msgRes = await fetch(
@@ -308,7 +311,7 @@ export default async function handler(req, res) {
       const emailBody = extractEmailBody(msgData.payload);
       console.log('BODY EXTRACT — subject:', subject, 'bodyLength:', emailBody.length, 'first100:', emailBody.substring(0, 100));
 
-      if (!emailBody || emailBody.trim().length < 50) { console.log('SKIPPED — body too short:', emailBody.length); skipped++; continue; }
+      if (!emailBody || emailBody.trim().length < 50) { console.log('SKIPPED — body too short:', emailBody.length); skipped++; skipped_reasons.body_too_short = (skipped_reasons.body_too_short || 0) + 1; continue; }
 
       // Save source to cl-assets and create cl_source_items row
       var sourceItemId = null;
@@ -336,7 +339,7 @@ export default async function handler(req, res) {
 
       const items = await runExtractionPrompt(emailBody, subject, sender);
       console.log('CLAUDE RESPONSE — items:', Array.isArray(items) ? items.length : 'not array', 'raw:', JSON.stringify(items).substring(0, 500));
-      if (!items || items.length === 0) { console.log('SKIPPED — no items from Claude'); skipped++; continue; }
+      if (!items || items.length === 0) { console.log('SKIPPED — no items from Claude'); skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
 
       for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
         const item = items[itemIdx];
@@ -390,6 +393,7 @@ export default async function handler(req, res) {
           var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
           if (pairMatchId) {
             var pairId = randomUUID();
+            fin_docs_paired++;
             var existingPairUpdate = await supabase
               .from('content_library')
               .update({ status: 'pending', version_pair_id: pairId })
@@ -410,7 +414,8 @@ export default async function handler(req, res) {
             .from('content_library')
             .update({ status: 'archived', version_archived_by: insertedRow.id })
             .eq('id', versionMatchedId);
-          if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
+          if (!archResult.error) auto_archived++;
+          else console.error('Auto-archive error:', archResult.error.message);
         }
       }
 
@@ -425,7 +430,7 @@ export default async function handler(req, res) {
       await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
     }
 
-    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, total: messages.length });
+    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: messages.length });
 
   } catch (err) {
     console.error('cl-email-scan error:', err.message);
