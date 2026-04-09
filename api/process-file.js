@@ -220,7 +220,7 @@ const handler = async (req, res) => {
       var item = items[itemIdx];
       if (!item.title || !item.body) continue;
 
-      var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Manual Upload') : 'Manual Upload';
+      var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Company Information') : 'Company Information';
       console.log('[Versioning] Item category — raw:', JSON.stringify(item.category), 'normalised:', normCat);
       var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
       var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
