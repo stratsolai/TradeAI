@@ -380,7 +380,26 @@ window.CL_UPLOAD = {
         if (p > 0) parts.push(p + " pending");
         if (r > 0) parts.push(r + " rejected");
         var tileName = SOURCE_NAMES[source] || source;
-        return tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+        var line = tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+        // Deduped (already up to date)
+        var ded = (result && result.deduped) || 0;
+        if (ded > 0) line += " | " + ded + " already up to date";
+        // Skip reasons breakdown
+        var sr = result && result.skipped_reasons;
+        if (sr) {
+          var skipParts = [];
+          if (sr.unsupported_format) skipParts.push(sr.unsupported_format + " unsupported format");
+          if (sr.extraction_failed) skipParts.push(sr.extraction_failed + " could not be read");
+          if (sr.no_content) skipParts.push(sr.no_content + " no content extracted");
+          if (sr.body_too_short) skipParts.push(sr.body_too_short + " body too short");
+          if (skipParts.length > 0) line += " | Skipped: " + skipParts.join(", ");
+        }
+        // Auto-archive and Financial Documents pairing
+        var arch = (result && result.auto_archived) || 0;
+        var paired = (result && result.fin_docs_paired) || 0;
+        if (arch > 0) line += " | " + arch + " older version" + (arch !== 1 ? "s" : "") + " archived";
+        if (paired > 0) line += " | " + paired + " financial document" + (paired !== 1 ? "s" : "") + " paired for review";
+        return line;
       }
       // Defensive JSON parse for scan endpoint responses. Vercel
       // returns a plain-text gateway page when a serverless function
