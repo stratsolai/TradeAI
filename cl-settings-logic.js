@@ -177,6 +177,9 @@ window.CL_SETTINGS_LOGIC = {
           '<span class="connection-item-email">' + (e.email || '') + '</span>' +
           '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
         '</div>' +
+        '<div class="connection-item-row2">' +
+          self._buildEmailLookbackHtml('gmail', e.email, e.lookback_days) +
+        '</div>' +
         '</div>';
     }).join('');
 
@@ -185,6 +188,9 @@ window.CL_SETTINGS_LOGIC = {
         '<div class="connection-item-row1">' +
           '<span class="connection-item-email">' + (e.email || '') + '</span>' +
           '<button class="btn-disconnect" data-email="' + (e.email || '') + '" data-type="email">Disconnect</button>' +
+        '</div>' +
+        '<div class="connection-item-row2">' +
+          self._buildEmailLookbackHtml('outlook', e.email, e.lookback_days) +
         '</div>' +
         '</div>';
     }).join('');
@@ -269,6 +275,13 @@ window.CL_SETTINGS_LOGIC = {
         var provider = lookbackSel.getAttribute('data-provider') || 'drive';
         var acct = lookbackSel.getAttribute('data-account');
         if (acct) self._changeLookback(provider, acct, lookbackSel.value);
+        return;
+      }
+      var emailLookbackSel = e.target.closest('.email-lookback-select');
+      if (emailLookbackSel) {
+        var eprovider = emailLookbackSel.getAttribute('data-provider') || 'gmail';
+        var eacct = emailLookbackSel.getAttribute('data-account');
+        if (eacct) self._changeEmailLookback(eprovider, eacct, emailLookbackSel.value);
         return;
       }
       var websiteInput = e.target.closest && e.target.closest('#website-urls-list .website-url-input');
@@ -751,6 +764,42 @@ window.CL_SETTINGS_LOGIC = {
         return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
       }).join('') +
       '</select></span>';
+  },
+
+  // Lookback dropdown for email providers (Gmail / Outlook).
+  // Uses days instead of months — email lookback windows are shorter.
+  // provider: 'gmail' | 'outlook'
+  _buildEmailLookbackHtml: function (provider, accountEmail, currentDays) {
+    var current = (currentDays == null) ? '90' : String(currentDays);
+    var opts = [
+      { v: '30',  l: '30 days' },
+      { v: '60',  l: '60 days' },
+      { v: '90',  l: '90 days' },
+      { v: '180', l: '6 months' },
+      { v: '365', l: '12 months' }
+    ];
+    return '<span class="connection-item-lookback">' +
+      '<select class="email-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
+      opts.map(function (o) {
+        var s = o.v === current ? ' selected' : '';
+        return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
+      }).join('') +
+      '</select></span>';
+  },
+
+  _changeEmailLookback: async function (provider, accountEmail, value) {
+    var self = this;
+    try {
+      var arr = self._emails;
+      var entryIdx = arr.findIndex(function (a) { return a && a.email === accountEmail; });
+      if (entryIdx === -1) return;
+      arr[entryIdx].lookback_days = parseInt(value, 10) || 90;
+      var res = await self._supabase
+        .from('profiles')
+        .update({ cl_connected_emails: arr })
+        .eq('id', self._userId);
+      if (res.error) { console.error('_changeEmailLookback error:', res.error); await self._loadConnections(); return; }
+    } catch (e) { console.error('_changeEmailLookback exception:', e); }
   },
 
   // ── OneDrive ───────────────────────────────────────────────────────────
