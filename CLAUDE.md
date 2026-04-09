@@ -113,16 +113,46 @@ Full integration test for OneDrive, SharePoint, and Dropbox
 per CL Connections Spec v1.2 checklist. OneDrive scanning
 confirmed working. SharePoint and Dropbox testing in progress.
 
+Fixed during integration test:
+- SharePoint scan returning no files — recursive walker added
+  in api/sharepoint-import.js so files in subfolders are found
+  at all depths
+- OneDrive scan returning no files in nested folders — same
+  recursive walker pattern applied to api/onedrive-import.js
+- Dropbox root-level files now scanned automatically on every
+  import-all call
+- SharePoint last_scanned_at moved from account level to per
+  site inside cl_sharepoint_accounts.sites
+- File format coverage extended — PowerPoint, HEIC, HTML,
+  CSV on Drive, legacy Office on every cloud connector
+- Per-status counts (approved / pending / rejected) returned
+  by every scan endpoint and surfaced in the upload tab
+- Scan completion messages — stacking, per-status,
+  dismissible, source-identified. Every message leads with
+  the tile name (Gmail, Outlook, Google Drive, OneDrive,
+  SharePoint, Dropbox, Website). SharePoint messages include
+  the site name as well as the library name.
+- Promotions & Offers rule promoted from category description
+  to RULES section as RULE 8 in every prompt-bearing file.
+  Sender added to email prompts (cl-email-scan.js and
+  cl-outlook-scan.js) so the model can apply the rule to
+  inbound supplier promotional emails.
+- Website character cap raised from 8,000 to 40,000 and
+  max_tokens raised from 4,000 to 8,000 in scrape-website.js
+- Dropbox pill consistency — Scan Now now requires pill
+  selection (consistent with all other tiles). The synthetic
+  "Dropbox root files" pill is still rendered so users can
+  scan root by ticking it.
+- Defensive error handling added to all seven scan branches
+  in cl-upload.js. Vercel timeouts now produce a clear error
+  message identifying the source instead of an unhelpful
+  "Unexpected token A..." JSON parse error.
+
 Outstanding before sign-off:
-- SharePoint scan returning no files — under investigation
-- Dropbox root-level files not supported — fix pending
-- SharePoint last_scanned_at is currently recorded at
-  account level in cl_sharepoint_accounts. It needs to be
-  recorded per site instead, so each site entry within the
-  array has its own last_scanned_at timestamp. This prevents
-  incorrect file-skipping when multiple sites are connected
-  and only one is scanned. Fix pending in
-  api/sharepoint-import.js and cl-settings-logic.js.
+- SharePoint missing one DOCX from scan — under investigation
+- Dropbox missing one PDF from scan — under investigation
+- Outlook returning fewer emails than expected — to be
+  addressed in Lookback Controls (Appendix A) build
 - Lookback controls wiring — import endpoints do not yet read
   lookback_months. Build pending after integration test.
 
@@ -190,6 +220,124 @@ Spec required before build begins. Spec must cover at minimum:
   lookback_months value once Lookback Controls Appendix A is
   built.
 
+### Task 15 — Background Scan Processing
+
+Move scan execution off the synchronous Vercel serverless
+request path and onto a queue + worker model so scans are
+not bound by the 300-second function timeout, do not lose
+their state when the user navigates away, and do not block
+the upload tab while running. Architecture is **Option B —
+Supabase queue + Vercel Cron worker**. Spec required before
+build begins.
+
+Key design requirements for the spec:
+
+- cl_scan_jobs table schema — at minimum: id, user_id,
+  source_type, source_account, source_path / source_id,
+  status (queued / running / completed / failed),
+  approved / pending / rejected counters, error text,
+  created_at, started_at, completed_at, last_heartbeat_at,
+  retry_count.
+- Queue endpoint — POST /api/scan-queue inserts a row and
+  returns immediately with the job id. cl-upload.js calls
+  this in place of the current direct /api/<source>-import
+  fetches and shows a "scan queued" state on the tile.
+- Worker endpoint — /api/scan-worker picks up queued jobs
+  (FIFO with optional prioritisation), runs the existing
+  import-all logic for that source against the job's
+  account / folder, and updates the job row with counts and
+  status. Existing import endpoint logic is reused so the
+  canonical CL intake pipeline does not get duplicated.
+- Vercel Cron wiring — scan-worker invoked on a Vercel Cron
+  schedule (per the Pro plan minimum interval). Each cron
+  invocation processes a small batch of queued jobs and
+  exits well before the 300-second cap, then the next cron
+  tick picks up the next batch.
+- UI changes — cl-upload.js shows a queued state on each
+  tile after Scan Now, polls /api/scan-jobs?user_id= for
+  status updates (or subscribes via Supabase Realtime if
+  the latency is too high), and renders the existing
+  stacking dismissible messages when each job completes.
+- Concurrency limits — cap the number of jobs the worker
+  processes in parallel within a single cron invocation,
+  and cap the number of in-flight Claude API calls across
+  all running jobs. Stays well under the Anthropic per-key
+  rate limit even at peak.
+- Claude API rate limit handling — on a 429 from
+  api.anthropic.com, the worker should requeue the current
+  job with a backoff delay rather than failing it. Track
+  retries on the job row and only mark failed after a
+  configurable number of retries.
+- Job prioritisation — manual scans (user clicked Scan Now)
+  take priority over scheduled scans (frequency setting).
+  Spec needs to define how this is expressed in the queue
+  ordering.
+- Timeout recovery — jobs stuck in running state after 10
+  minutes (i.e. last_heartbeat_at older than 10 minutes)
+  are reset to queued by a watchdog so a Vercel function
+  death does not strand the job. The worker writes
+  last_heartbeat_at periodically while running.
+- Designed for scale from the start — the schema, the
+  queue ordering, and the concurrency caps must work for
+  hundreds of users with multiple connected accounts each
+  scanning daily, not just for the current handful of
+  test users. Decisions baked in at spec time so we do
+  not have to re-architect when usage grows.
+
+When the admin dashboard is built it must include scan
+queue monitoring — job counts by status, average and 95th
+percentile processing times by source, failure rates, queue
+depth, oldest queued job age. If scan performance degrades
+under load — queue depth growing faster than the worker
+can drain it, processing times climbing into the cron
+interval, retry counts spiking — the architecture should
+be migrated from Option B to Inngest before users are
+affected. Inngest's durable execution model handles queue
+overflow, concurrency control, and retries natively
+without the cron-interval latency floor; the migration
+target is documented up front so the admin dashboard
+metrics can be set against thresholds that trigger the
+migration.
+
+### Task 16 — Website Subpage Crawling
+
+Each website scan currently processes one URL only — only
+the page at the configured URL is fetched and extracted.
+Subpages (Services, About, Pricing, Team, Testimonials,
+blog posts, project case studies) are invisible regardless
+of how content-rich they are. For most marketing sites the
+bulk of valuable content lives on subpages that the
+homepage just links to. Spec required before build begins.
+
+Spec must cover at minimum:
+
+- Link following — extract internal links from the fetched
+  page, follow them up to a configurable per-domain depth
+  and per-domain page count. Same-domain only by default.
+- robots.txt compliance — fetch and respect robots.txt
+  before crawling. User-Agent set to a stable identifier
+  so site owners can block the scanner if they choose.
+- sitemap.xml support — when present, prefer the sitemap
+  over link-following because it gives a complete page
+  list without the domain-walking overhead.
+- Per-page token budgets — each page goes through the
+  existing runExtractionPrompt with the existing 40,000
+  character cap and 8,000 max_tokens, but the total
+  crawl needs an overall page count cap to keep cost and
+  runtime predictable.
+- Dedupe — the same URL fetched twice within one scan
+  should not produce two cl_source_items rows. The
+  source_ref shape web:<url>:<scanTs>:<idx> already
+  handles per-URL dedupe but the scan-level dedupe set
+  needs to remember which URLs the current crawl has
+  already visited.
+- Background scan integration — subpage crawling will
+  produce many more per-page extraction calls and is a
+  natural candidate for the Task 15 background scan
+  worker, not the synchronous endpoint. Spec for Task 16
+  should land after Task 15's spec to take advantage of
+  the queue.
+
 ### Lookback Controls — Appendix A
 
 Build user-controlled import lookback for all CL connections
@@ -198,10 +346,36 @@ Outlook, OneDrive, SharePoint, Dropbox. Google Drive
 lookback already built as part of Google Drive Migration.
 Runs after Task 10 integration test.
 
+Note: the current last_scanned_at behaviour in
+cl-email-scan.js and cl-outlook-scan.js causes subsequent
+scans to miss historical emails — once a scan completes
+last_scanned_at advances to "now" and the next scan only
+fetches messages received after that timestamp, narrowing
+the window further on every run. The Appendix A build
+must address this. Scans should use the user's lookback
+window as the lower bound on every scan, not
+last_scanned_at. last_scanned_at can still be used for
+optimisation (e.g. an upper bound on what has already been
+processed) but must not be the only filter.
+
 ---
 
 ## Known Issues & Notes
 
+- OneDrive scans on large folder trees may hit Vercel's
+  300-second function timeout. The recursive walker added
+  to api/onedrive-import.js processes every subfolder
+  depth-first and each file is run through Claude's
+  document API and the canonical extraction prompt
+  synchronously, so a deeply nested folder with hundreds
+  of documents can exceed the cap. Vercel returns its
+  plain-text gateway page on timeout, which cl-upload.js
+  now surfaces as a clear "OneDrive server returned 504"
+  error rather than the previous "Unexpected token A..."
+  parse error. Will be resolved by Task 15 background
+  scan processing — once scans run on a queue + worker
+  model, the per-invocation timeout no longer caps the
+  total scan duration.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
