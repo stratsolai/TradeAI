@@ -277,6 +277,9 @@ export default async function handler(req, res) {
 
     let imported = 0;
     let skipped = 0;
+    let approved = 0;
+    let pending = 0;
+    let rejected = 0;
 
     for (const msg of messages) {
       const msgRes = await fetch(
@@ -366,7 +369,13 @@ export default async function handler(req, res) {
         const { data: insertedRow, error } = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
         if (error) { console.error('SUPABASE INSERT ERROR —', error.message, 'code:', error.code, 'details:', error.details); }
         else { console.log('INSERTED — title:', row.title, 'sourceRef:', sourceRef); }
-        if (!error) { imported++; msgItemCount++; }
+        if (!error) {
+          imported++;
+          msgItemCount++;
+          if (status === 'approved') approved++;
+          else if (status === 'rejected') rejected++;
+          else pending++;
+        }
 
         // Versioning — Financial Documents pair check (after insert)
         if (!error && insertedRow && normCat === 'Financial Documents') {
@@ -408,7 +417,7 @@ export default async function handler(req, res) {
       await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
     }
 
-    return res.status(200).json({ success: true, imported, skipped, total: messages.length });
+    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, total: messages.length });
 
   } catch (err) {
     console.error('cl-email-scan error:', err.message);
