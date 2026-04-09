@@ -1195,6 +1195,18 @@
 .profile-toggle-row { display: flex; gap: 8px; margin-top: 8px; }
 .profile-location-block { background: #F8FAFC; border-radius: 8px; border: 1px solid #E0E0E0; padding: 16px; margin-bottom: 12px; }
 .profile-location-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+
+    @media (max-width: 768px) {
+      .topbar-nav { margin-left: 16px; gap: 12px; }
+      .topbar-right { gap: 12px; }
+      .account-dropdown { max-width: 200px; }
+      .tool-outputs-layout { grid-template-columns: 1fr; }
+      .connection-tiles { grid-template-columns: 1fr; }
+      .profile-fields { grid-template-columns: 1fr; }
+      .profile-address-row { grid-template-columns: 1fr; }
+      input[type="text"], input[type="url"], input[type="date"],
+      textarea, select { font-size: 16px; }
+    }
 </style>
   <link rel="stylesheet" href="/staxai-auth.css">
 </head>
@@ -1204,7 +1216,7 @@
       <a href="/" class="topbar-logo">
     <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
   </a>
-      <div class="topbar-nav" style="margin-left:64px"><a href="/dashboard">Dashboard</a></div>
+      <div class="topbar-nav"><a href="/dashboard">Dashboard</a></div>
       <div class="topbar-spacer"></div>
       <div class="topbar-right">
         <a href="/library/settings" class="topbar-nav-link">Settings</a>
