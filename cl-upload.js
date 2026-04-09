@@ -36,7 +36,7 @@ window.CL_UPLOAD = {
         "</button>",
       "</div>",
       "<div id=\"cl-manual-flow\" class=\"manual-add-flow\" style=\"display:none\">",
-        "<div class=\"manual-add-title\">Add Manual Item</div>",
+        "<div class=\"manual-add-title\" style=\"font-size:15px;font-weight:600;color:#333;\">Add Manual Item</div>",
         "<label class=\"manual-add-label\" style=\"margin-top:12px\">Title <span style=\"color:#c00\">*</span></label>",
         "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
         "<label class=\"manual-add-label\" style=\"margin-top:12px\">Description</label>",
