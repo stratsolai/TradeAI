@@ -575,18 +575,7 @@ window.CL_UPLOAD = {
                 console.error("Website scan error for " + raw + ":", webResult.error);
                 self._appendUploadMessage(webLabel + " — error: " + webResult.error, "error");
               } else {
-                // scrape-website.js returns { count } not the per-status
-                // breakdown that the cloud connectors return. Show the
-                // count as pending since every website-extracted item
-                // currently lands as pending per the canonical pipeline
-                // (the Financial Documents pending override and the
-                // discard-category rejection paths can change this in
-                // edge cases, but the response shape does not yet
-                // expose them — extending scrape-website.js to return
-                // the same per-status counts as the other connectors
-                // is a follow-up).
-                var webCount = webResult.count || 0;
-                self._appendUploadMessage(webLabel + " — " + (webCount > 0 ? webCount + " pending" : "no new content"), "success");
+                self._appendUploadMessage(formatCountsLine(webLabel, webResult), "success");
               }
             }
             finishScan();
