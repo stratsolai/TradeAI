@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#1a5490">
+  <meta name="theme-color" content="#4A6D8C">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <script src="/pwa.js" defer></script>
   <title>Offline — StaxAI</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'DM Sans', -apple-system, sans-serif;
+      font-family: 'DM Sans', sans-serif;
       background: #f5f7fa;
+      color: #333333;
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -24,39 +24,47 @@
       max-width: 400px;
     }
     .icon { font-size: 64px; margin-bottom: 24px; }
-    h1 { font-size: 28px; color: #1a5490; margin-bottom: 12px; }
-    p { color: #666; font-size: 16px; line-height: 1.6; margin-bottom: 24px; }
+    h1 { font-family: 'Barlow Condensed', sans-serif; font-size: 28px; color: #4A6D8C; margin-bottom: 12px; }
+    p { color: #888888; font-size: 15px; line-height: 1.6; margin-bottom: 24px; }
     .btn {
       display: inline-block;
-      padding: 14px 28px;
-      background: #1a5490;
+      padding: 10px 18px;
+      background: #4A6D8C;
       color: white;
       border: none;
-      border-radius: 10px;
-      font-size: 16px;
+      border-radius: 8px;
+      font-size: 13px;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
-      text-decoration: none;
     }
     .note {
       margin-top: 24px;
-      padding: 16px;
-      background: #fff3cd;
-      border-radius: 10px;
-      font-size: 14px;
-      color: #856404;
+      padding: 14px 16px;
+      background: #e8f4fd;
+      border-left: 4px solid #4A6D8C;
+      border-radius: 8px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333333;
+      text-align: left;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="icon">📵</div>
-    <h1>You're Offline</h1>
-    <p>No internet connection detected. Some features require connectivity but your queued photos will upload automatically when you're back online.</p>
-    <button class="btn" onclick="window.location.reload()">Try Again</button>
+    <h1>You are Offline</h1>
+    <p>No internet connection detected. Please check your connection and try again.</p>
+    <button class="btn" id="retry-btn">Try Again</button>
     <div class="note">
-      💡 <strong>Tip:</strong> Any photos you took while offline have been saved and will upload automatically when your connection is restored.
+      <strong>Tip:</strong> Most features require an active internet connection to work.
     </div>
   </div>
+  <script>
+    document.getElementById('retry-btn').addEventListener('click', function () {
+      window.location.reload();
+    });
+  </script>
 </body>
 </html>
