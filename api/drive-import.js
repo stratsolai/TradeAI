@@ -628,12 +628,16 @@ export default async function handler(req, res) {
           .filter(Boolean)
       );
       const files = allFiles.filter(function(f) { return !scannedFileIds.has(f.id); });
+      var deduped = allFiles.length - files.length;
 
       let imported = 0;
       let skipped = 0;
       let approved = 0;
       let pending = 0;
       let rejected = 0;
+      var skipped_reasons = {};
+      var auto_archived = 0;
+      var fin_docs_paired = 0;
 
       for (const file of files) {
         const mimeType = file.mimeType || '';
@@ -659,17 +663,17 @@ export default async function handler(req, res) {
           'application/vnd.ms-powerpoint',
         ].indexOf(mimeType) > -1;
 
-        if (!isImage && !isDoc) { skipped++; continue; }
+        if (!isImage && !isDoc) { skipped++; skipped_reasons.unsupported_format = (skipped_reasons.unsupported_format || 0) + 1; continue; }
 
         let textContent = null;
         let imageBuffer = null;
 
         if (isImage) {
           imageBuffer = await fetchDriveFileBuffer(file.id, accessToken);
-          if (!imageBuffer) { skipped++; continue; }
+          if (!imageBuffer) { skipped++; skipped_reasons.extraction_failed = (skipped_reasons.extraction_failed || 0) + 1; continue; }
         } else {
           textContent = await fetchDriveFileText(file.id, mimeType, accessToken);
-          if (!textContent) { skipped++; continue; }
+          if (!textContent) { skipped++; skipped_reasons.extraction_failed = (skipped_reasons.extraction_failed || 0) + 1; continue; }
         }
 
         // Save source bytes to cl-assets and create cl_source_items row
@@ -732,7 +736,7 @@ export default async function handler(req, res) {
 
         // Text/document: run extraction prompt and insert one row per returned item
         const items = await runExtractionPrompt(textContent, file.name);
-        if (!items || items.length === 0) { skipped++; continue; }
+        if (!items || items.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
 
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
           const item = items[itemIdx];
@@ -784,6 +788,7 @@ export default async function handler(req, res) {
             var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
             if (pairMatchId) {
               var pairId = randomUUID();
+              fin_docs_paired++;
               await supabase.from('content_library').update({ status: 'pending', version_pair_id: pairId }).eq('id', pairMatchId);
               await supabase.from('content_library').update({ version_pair_id: pairId }).eq('id', insertedRow.id);
             }
@@ -795,6 +800,7 @@ export default async function handler(req, res) {
               .from('content_library')
               .update({ status: 'archived', version_archived_by: insertedRow.id })
               .eq('id', versionMatchedId);
+            if (!archResult.error) auto_archived++;
             if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
           }
         }
@@ -810,7 +816,7 @@ export default async function handler(req, res) {
         await supabase.from('profiles').update({ cl_drive_accounts: accounts }).eq('id', userId);
       }
 
-      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length });
+      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length, deduped: deduped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired });
     }
 
     return res.status(400).json({ error: 'Unknown action: ' + action });
