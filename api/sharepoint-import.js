@@ -106,7 +106,8 @@ var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a bus
   "4. Disposition must match the category's listed disposition.\n" +
   "5. Only tag tools whose description specifically matches the content.\n" +
   "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
-  "7. If no meaningful content can be extracted, return an empty array [].";
+  "7. If no meaningful content can be extracted, return an empty array [].\n" +
+  "8. Promotions & Offers is ONLY for promotions the user's own business is offering to its own customers. If the source is an inbound message, supplier email, vendor newsletter, or third-party promotional content advertising someone else's offer, do NOT classify it as Promotions & Offers. Inbound supplier promotional content belongs in Supplier Communications. Broader market or trade promotional news belongs in Industry News. Never put a received supplier or third-party promotion in Promotions & Offers, even when it uses promotional language like 'sale', 'discount', or 'limited time'.";
 
 // MIME types we can extract text from via Claude document API. The
 // modern Office Open XML formats (docx/xlsx/pptx) and PDF are the
@@ -667,7 +668,7 @@ export default async function handler(req, res) {
         await supabase.from('profiles').update({ cl_sharepoint_accounts: accounts }).eq('id', userId);
       }
 
-      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length });
+      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length, site_name: siteName, library_name: libraryName });
     }
 
     return res.status(400).json({ error: 'Unknown action: ' + action });
