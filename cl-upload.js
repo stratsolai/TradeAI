@@ -30,7 +30,7 @@ window.CL_UPLOAD = {
           "<span class=\"upload-btn-sub\">Drag and drop or tap to browse</span>",
         "</button>",
         "<button class=\"upload-primary-btn\" id=\"cl-manual-btn\">",
-          "<span class=\"upload-btn-icon\">✏️</span>",
+          "<span class=\"upload-btn-icon\" style=\"font-size:inherit\">✏️</span>",
           "<span class=\"upload-btn-label\">Add Manual Item</span>",
           "<span class=\"upload-btn-sub\">Add content directly to your library</span>",
         "</button>",
@@ -41,11 +41,11 @@ window.CL_UPLOAD = {
         "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
         "<label class=\"manual-add-label\">Description</label>",
         "<textarea id=\"cl-manual-desc\" class=\"manual-add-textarea\" rows=\"4\" placeholder=\"Enter a description (optional)\"></textarea>",
-        "<label class=\"manual-add-label\">Tag to tools <span style=\"color:#c00\">*</span></label>",
-        "<div id=\"cl-manual-tools\" class=\"manual-add-pills\"></div>",
+        "<label class=\"manual-add-label\">Tagged Tools <span style=\"color:#c00\">*</span></label>",
+        "<div id=\"cl-manual-tools\" class=\"manual-add-pills\" style=\"display:flex;flex-wrap:wrap;gap:8px;\"></div>",
         "<div id=\"cl-manual-error\" class=\"manual-add-error\" style=\"display:none\"></div>",
-        "<div class=\"manual-add-actions\">",
-          "<button id=\"cl-manual-submit\" class=\"upload-primary-btn\" style=\"max-width:200px\">Add Item</button>",
+        "<div class=\"manual-add-actions\" style=\"display:flex;gap:12px;margin-top:12px;\">",
+          "<button id=\"cl-manual-submit\" class=\"btn-dismiss\" style=\"border-color:var(--blue);color:var(--blue);\">Add</button>",
           "<button id=\"cl-manual-cancel\" class=\"btn-dismiss\">Cancel</button>",
         "</div>",
       "</div>",
@@ -919,7 +919,7 @@ window.CL_UPLOAD = {
       console.error("Manual add error:", err);
       if (errEl) { errEl.textContent = "An error occurred. Please try again."; errEl.style.display = "block"; }
     }
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Add Item"; }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Add"; }
   },
 
   // Append a single dismissible message row to the stacking
