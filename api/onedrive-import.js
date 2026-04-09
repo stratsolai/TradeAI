@@ -19,6 +19,7 @@ export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import zlib from 'zlib';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -151,26 +152,238 @@ async function fetchOneDriveFileBuffer(itemId, accessToken) {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Extract text from a binary document (PDF/Word/Excel/PowerPoint) via Claude.
-async function extractBinaryFileText(base64Data, mimeType) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2000,
-      messages: [{ role: 'user', content: [
-        { type: 'document', source: { type: 'base64', media_type: mimeType, data: base64Data } },
-        { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
-      ]}],
-    }),
+// DOCX ZIP EXTRACTION — parse DOCX archive, find word/document.xml, decompress, strip XML
+function extractDocxXml(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fn = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    if (fn === 'word/document.xml') {
+      var lfhFnLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFnLen + lfhExLen;
+      var compressed = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText;
+      if (compressionMethod === 0) { xmlText = compressed.toString('utf-8'); }
+      else if (compressionMethod === 8) { xmlText = zlib.inflateRawSync(compressed).toString('utf-8'); }
+      else { return null; }
+      return xmlText
+        .replace(/<\/w:p>/g, '\n').replace(/<w:tab\/>/g, '\t').replace(/<w:br[^/]*\/>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+        .replace(/\n{3,}/g, '\n\n').replace(/[ \t]+/g, ' ').trim();
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  return null;
+}
+
+// XLSX ZIP EXTRACTION — unpack archive, read shared strings and worksheet cells
+function extractXlsxText(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var sharedStringsXml = null;
+  var sheetXmls = [];
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fn = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    var isSharedStrings = (fn === 'xl/sharedStrings.xml');
+    var isSheet = /^xl\/worksheets\/sheet\d+\.xml$/.test(fn);
+    if (isSharedStrings || isSheet) {
+      var lfhFnLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFnLen + lfhExLen;
+      var compressed = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText = null;
+      try {
+        if (compressionMethod === 0) { xmlText = compressed.toString('utf-8'); }
+        else if (compressionMethod === 8) { xmlText = zlib.inflateRawSync(compressed).toString('utf-8'); }
+      } catch (zerr) { xmlText = null; }
+      if (xmlText) {
+        if (isSharedStrings) sharedStringsXml = xmlText;
+        else if (isSheet) sheetXmls.push(xmlText);
+      }
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  var sharedStrings = [];
+  if (sharedStringsXml) {
+    var siRegex = /<si[^>]*>([\s\S]*?)<\/si>/g;
+    var siMatch;
+    while ((siMatch = siRegex.exec(sharedStringsXml)) !== null) {
+      var combined = '';
+      var tRegex = /<t[^>]*>([\s\S]*?)<\/t>/g;
+      var tMatch;
+      while ((tMatch = tRegex.exec(siMatch[1])) !== null) { combined += tMatch[1]; }
+      combined = combined.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+      sharedStrings.push(combined);
+    }
+  }
+  if (sheetXmls.length === 0) return null;
+  var allRows = [];
+  sheetXmls.forEach(function(sheetXml) {
+    var rowRegex = /<row[^>]*>([\s\S]*?)<\/row>/g;
+    var rowMatch;
+    while ((rowMatch = rowRegex.exec(sheetXml)) !== null) {
+      var cells = [];
+      var cellRegex = /<c\b([^>]*)>([\s\S]*?)<\/c>/g;
+      var cellMatch;
+      while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
+        var cellAttrs = cellMatch[1];
+        var cellContent = cellMatch[2];
+        var typeMatch = cellAttrs.match(/\bt="([^"]*)"/);
+        var cellType = typeMatch ? typeMatch[1] : null;
+        var value = '';
+        if (cellType === 'inlineStr') {
+          var iMatch = cellContent.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+          value = iMatch ? iMatch[1] : '';
+        } else {
+          var vMatch = cellContent.match(/<v[^>]*>([\s\S]*?)<\/v>/);
+          if (vMatch) {
+            value = vMatch[1];
+            if (cellType === 's') {
+              var idx = parseInt(value, 10);
+              if (!isNaN(idx) && sharedStrings[idx] !== undefined) value = sharedStrings[idx];
+            }
+          }
+        }
+        value = value.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        if (value !== '') cells.push(value);
+      }
+      if (cells.length > 0) allRows.push(cells.join(' | '));
+    }
   });
-  const data = await response.json();
-  if (data.content && data.content[0]) return data.content[0].text;
+  return allRows.length > 0 ? allRows.join('\n') : null;
+}
+
+// PPTX ZIP EXTRACTION — unpack archive, read text from slide XML files
+function extractPptxText(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var slideXmls = [];
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fn = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    if (/^ppt\/slides\/slide\d+\.xml$/.test(fn)) {
+      var lfhFnLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFnLen + lfhExLen;
+      var compressed = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText = null;
+      try {
+        if (compressionMethod === 0) { xmlText = compressed.toString('utf-8'); }
+        else if (compressionMethod === 8) { xmlText = zlib.inflateRawSync(compressed).toString('utf-8'); }
+      } catch (zerr) { xmlText = null; }
+      if (xmlText) slideXmls.push(xmlText);
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  if (slideXmls.length === 0) return null;
+  var allText = [];
+  slideXmls.forEach(function(slideXml) {
+    var tRegex = /<a:t>([\s\S]*?)<\/a:t>/g;
+    var tMatch;
+    var slideTexts = [];
+    while ((tMatch = tRegex.exec(slideXml)) !== null) {
+      var val = tMatch[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+      if (val.trim()) slideTexts.push(val);
+    }
+    if (slideTexts.length > 0) allText.push(slideTexts.join(' '));
+  });
+  return allText.length > 0 ? allText.join('\n') : null;
+}
+
+// Extract text from a binary document. PDF goes to Claude document API.
+// DOCX, XLSX, PPTX are extracted locally from their ZIP archives.
+// Legacy Office formats use binary text extraction as a fallback.
+async function extractBinaryFileText(buffer, mimeType) {
+  // PDF: Claude document API (the only binary format it reliably accepts)
+  if (mimeType === 'application/pdf') {
+    var base64Data = buffer.toString('base64');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } },
+          { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
+        ]}],
+      }),
+    });
+    const data = await response.json();
+    if (data.content && data.content[0]) return data.content[0].text;
+    return null;
+  }
+
+  // DOCX: local ZIP extraction
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    try { var text = extractDocxXml(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('DOCX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+
+  // XLSX: local ZIP extraction
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    try { var text = extractXlsxText(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('XLSX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+
+  // PPTX: local ZIP extraction
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+    try { var text = extractPptxText(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('PPTX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+
+  // Legacy Office (DOC/XLS/PPT): binary text extraction fallback
+  var legacyText = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (legacyText.length >= 50) return legacyText.substring(0, 8000);
   return null;
 }
 
@@ -218,7 +431,7 @@ async function fetchOneDriveFileText(itemId, mimeType, accessToken) {
   const buffer = await fetchOneDriveFileBuffer(itemId, accessToken);
   if (!buffer) return null;
   if (ONEDRIVE_BINARY_DOC_MIME.indexOf(mimeType) > -1) {
-    return await extractBinaryFileText(buffer.toString('base64'), mimeType);
+    return await extractBinaryFileText(buffer, mimeType);
   }
   if (mimeType && mimeType.indexOf('text/') === 0) {
     return buffer.toString('utf-8').substring(0, 8000);
