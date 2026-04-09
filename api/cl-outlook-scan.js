@@ -220,27 +220,27 @@ export default async function handler(req, res) {
       } catch (e) {}
     }
 
-    const days = parseInt(daysBack) || 90;
-    let afterDate;
-    if (outlookEntry.last_scanned_at) {
-      afterDate = new Date(outlookEntry.last_scanned_at).toISOString();
-    } else {
-      afterDate = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    }
+    // Lookback window — always scan from today minus the user's lookback
+    // setting. Deduplication is handled by the source_ref UNIQUE constraint.
+    var lookbackDays = parseInt(outlookEntry.lookback_days) || 90;
+    var afterDate = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000).toISOString();
+    console.log('[Outlook] Date filter — lookbackDays:', lookbackDays, 'afterDate:', afterDate, 'accountEmail:', accountEmail);
 
-    // Fetch messages from Outlook inbox received after the cutoff date
-    const filter = encodeURIComponent("receivedDateTime ge " + afterDate);
-    const listRes = await fetch(
-      'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=' + filter + '&$top=50&$select=id,subject,from,receivedDateTime,body&$orderby=receivedDateTime desc',
-      { headers: { 'Authorization': 'Bearer ' + accessToken, 'Accept': 'application/json' } }
-    );
-    if (!listRes.ok) {
-      const errBody = await listRes.json().catch(() => ({}));
-      const errMsg = (errBody.error && errBody.error.message) || ('Graph API returned ' + listRes.status);
-      return res.status(502).json({ error: 'Outlook API error: ' + errMsg });
+    // Fetch all matching messages, following pagination
+    var messages = [];
+    var nextLink = 'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$filter=' + encodeURIComponent('receivedDateTime ge ' + afterDate) + '&$top=50&$select=id,subject,from,receivedDateTime,body&$orderby=receivedDateTime desc';
+    while (nextLink) {
+      var listRes = await fetch(nextLink, { headers: { 'Authorization': 'Bearer ' + accessToken, 'Accept': 'application/json' } });
+      if (!listRes.ok) {
+        var errBody = await listRes.json().catch(function () { return {}; });
+        var errMsg = (errBody.error && errBody.error.message) || ('Graph API returned ' + listRes.status);
+        return res.status(502).json({ error: 'Outlook API error: ' + errMsg });
+      }
+      var listData = await listRes.json();
+      if (listData.value) messages = messages.concat(listData.value);
+      nextLink = listData['@odata.nextLink'] || null;
+      console.log('[Outlook] Page fetched — count:', (listData.value || []).length, 'totalSoFar:', messages.length, 'hasNextPage:', !!nextLink);
     }
-    const listData = await listRes.json();
-    const messages = listData.value || [];
 
     let imported = 0;
     let skipped = 0;
@@ -367,8 +367,13 @@ export default async function handler(req, res) {
       }
     }
 
-    outlookEntry.last_scanned_at = new Date().toISOString();
-    await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
+    // last_scanned_at is no longer used for query filtering — the lookback
+    // window is the sole date bound and dedup is handled by source_ref.
+    // Stamp is kept for informational purposes only.
+    if (imported > 0) {
+      outlookEntry.last_scanned_at = new Date().toISOString();
+      await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
+    }
 
     return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: messages.length });
 
