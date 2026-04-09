@@ -336,6 +336,19 @@
     .stab-panel { display:none; }
     .stab-panel.active { display:block; width:100%; box-sizing:border-box; }
 
+    @media (max-width: 768px) {
+      .topbar-nav { margin-left: 16px; gap: 12px; }
+      .topbar-right { gap: 12px; }
+      .account-dropdown { max-width: 200px; }
+      .connection-item-email,
+      .connection-folder-name,
+      .website-url-input { width: 100%; flex: 1 1 auto; }
+      .settings-row-control { flex-wrap: wrap; }
+      .settings-text-input,
+      .website-url-input,
+      .drive-lookback-select,
+      select { font-size: 16px; }
+    }
 </style>
 </head>
 <body>
@@ -345,7 +358,7 @@
     <a href="/dashboard.html" class="topbar-logo">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;">
     </a>
-    <div class="topbar-nav" style="margin-left:64px">
+    <div class="topbar-nav">
       <a href="/dashboard.html">Dashboard</a>
     </div>
     <div class="topbar-spacer"></div>
