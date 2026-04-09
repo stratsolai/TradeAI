@@ -120,11 +120,6 @@ Outstanding before sign-off:
 - Website — single page only, subpages not crawled —
   blocked on Task 16.
 
-### Task 11 — CL Items
-
-Build Manual Add Item and Editable Pending Items. Spec:
-Manual Add Item Spec v1.0. Awaiting build.
-
 ### Task 12 — Image Processing
 
 Extend all scan endpoints and upload tab to handle images.
@@ -374,6 +369,27 @@ Spec must cover at minimum:
   code following the Drive folder picker rewrite to
   immediate-save Add/Remove buttons. Remove during
   stylesheet rollout cleanup pass.
+- Every future tool build must stamp first_used_at on
+  content_library rows when content is used in a generated
+  output. This controls edit and delete restrictions in
+  Source Review.
+- Email body stored as .txt in cl-assets. Website content
+  stored as .html in cl-assets. Tools must retrieve
+  original content from cl-assets via
+  cl_source_items.file_url — not from
+  content_library.content_text which contains the AI
+  summary only.
+- Tip needed when tips are built: editing item titles and
+  descriptions is safe — tools always retrieve original
+  content from storage, not the summary shown in the
+  library.
+- Tip needed when tips are built: structured reference
+  data such as price lists, team lists, and contact
+  details is well suited to Manual Add Items.
+- Tip needed when tips are built: include guidance
+  explaining why files or emails may be skipped — covering
+  unsupported formats, short or unreadable content, no
+  extractable business content, and deduplication.
 - DOCX, XLSX, and PPTX local text extraction applied to
   sharepoint-import.js, onedrive-import.js,
   dropbox-import.js, and drive-import.js. Only PDF files
@@ -382,10 +398,6 @@ Spec must cover at minimum:
   skipped_reasons breakdown, auto_archived, and
   fin_docs_paired counts. cl-upload.js surfaces this
   detail in scan completion messages.
-- When tips are built, include guidance explaining why
-  files or emails may be skipped — covering unsupported
-  formats, short or unreadable content, no extractable
-  business content, and deduplication.
 - last_scanned_at is still stamped in cl-email-scan.js
   after a successful scan for informational purposes
   only. Not used in any query logic. Review in a future
@@ -404,7 +416,7 @@ is complete and confirmed working.
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | ~~Complete Standalone Tasks A, B, C~~  DONE                |
 | 4    | ~~Complete CL Connections + lookback controls~~  DONE      |
-| 5    | Complete CL Items (Manual Add Item, Editable Pending)      |
+| 5    | ~~Complete CL Items (Manual Add Item, Editable Pending)~~  DONE |
 | 6    | Complete stylesheet rollout across CL files                |
 | 7    | Complete stylesheet rollout across cl-settings.html        |
 | 8    | Roll stylesheet out to all remaining authenticated pages   |
