@@ -29,6 +29,25 @@ window.CL_UPLOAD = {
           "<span class=\"upload-btn-label\">Upload Document or File</span>",
           "<span class=\"upload-btn-sub\">Drag and drop or tap to browse</span>",
         "</button>",
+        "<button class=\"upload-primary-btn\" id=\"cl-manual-btn\">",
+          "<span class=\"upload-btn-icon\">✏️</span>",
+          "<span class=\"upload-btn-label\">Add Manual Item</span>",
+          "<span class=\"upload-btn-sub\">Add content directly to your library</span>",
+        "</button>",
+      "</div>",
+      "<div id=\"cl-manual-flow\" class=\"manual-add-flow\" style=\"display:none\">",
+        "<div class=\"manual-add-title\">Add Manual Item</div>",
+        "<label class=\"manual-add-label\">Title <span style=\"color:#c00\">*</span></label>",
+        "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
+        "<label class=\"manual-add-label\">Description</label>",
+        "<textarea id=\"cl-manual-desc\" class=\"manual-add-textarea\" rows=\"4\" placeholder=\"Enter a description (optional)\"></textarea>",
+        "<label class=\"manual-add-label\">Tag to tools <span style=\"color:#c00\">*</span></label>",
+        "<div id=\"cl-manual-tools\" class=\"manual-add-pills\"></div>",
+        "<div id=\"cl-manual-error\" class=\"manual-add-error\" style=\"display:none\"></div>",
+        "<div class=\"manual-add-actions\">",
+          "<button id=\"cl-manual-submit\" class=\"upload-primary-btn\" style=\"max-width:200px\">Add Item</button>",
+          "<button id=\"cl-manual-cancel\" class=\"btn-dismiss\">Cancel</button>",
+        "</div>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
       "<input type=\"file\" id=\"cl-doc-input\" accept=\".pdf,.doc,.docx,.txt,.xlsx,.xls,.ppt,.pptx,.html,.htm\" style=\"display:none\" multiple>",
@@ -83,6 +102,16 @@ window.CL_UPLOAD = {
         if (files.length) self._handleDocUpload(files);
       });
     }
+    // Manual Add Item tile, flow, and submit
+    var manualBtn = document.getElementById("cl-manual-btn");
+    var manualFlow = document.getElementById("cl-manual-flow");
+    if (manualBtn && manualFlow) {
+      manualBtn.addEventListener("click", function() { self._openManualAdd(); });
+      var cancelBtn = document.getElementById("cl-manual-cancel");
+      if (cancelBtn) cancelBtn.addEventListener("click", function() { manualFlow.style.display = "none"; });
+      var submitBtn = document.getElementById("cl-manual-submit");
+      if (submitBtn) submitBtn.addEventListener("click", function() { self._handleManualAdd(); });
+    }
     var dismissBtn = document.getElementById("cl-offline-dismiss");
     if (dismissBtn) { dismissBtn.addEventListener("click", function() { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "none"; }); }
     if (!navigator.onLine) { var b = document.getElementById("cl-offline-banner"); if (b) b.style.display = "flex"; }
@@ -107,13 +136,13 @@ window.CL_UPLOAD = {
       var outlookAccounts = connectedEmails.filter(function(e) { return e && (e.provider === "microsoft" || e.provider === "outlook"); });
 
       if (gmailAccounts.length > 0) {
-        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Business Gmail Inbox - scans all emails and extracts relevant content.", connected: true, pills: gmailAccounts.map(function(a) { return { label: a.email, value: a.email }; }) });
+        tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Business Gmail Inbox - scans all emails and extracts relevant content.", connected: true, pills: gmailAccounts.map(function(a) { return { label: a.email, value: a.email }; }), note: "Previously scanned emails are skipped on rescan." });
       } else {
         tiles.push({ id: "gmail", icon: "📧", name: "Business Email (Gmail)", desc: "Connect your business Gmail inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
 
       if (outlookAccounts.length > 0) {
-        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Business Outlook Inbox - scans all emails and extracts relevant content.", connected: true, pills: outlookAccounts.map(function(a) { return { label: a.email, value: a.email }; }) });
+        tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Business Outlook Inbox - scans all emails and extracts relevant content.", connected: true, pills: outlookAccounts.map(function(a) { return { label: a.email, value: a.email }; }), note: "Previously scanned emails are skipped on rescan." });
       } else {
         tiles.push({ id: "outlook", icon: "📧", name: "Business Email (Outlook)", desc: "Connect your business Outlook inbox to scan for supplier updates and business content.", connected: false, pills: [] });
       }
@@ -164,11 +193,11 @@ window.CL_UPLOAD = {
 
       var driveAccounts = Array.isArray(profile.cl_drive_accounts) ? profile.cl_drive_accounts : [];
       var driveGroups = buildAccountGroups(driveAccounts, "folders");
-      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: driveGroups.length > 0, pills: flattenGroups(driveGroups), groups: driveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      tiles.push({ id: "gdrive", icon: "📂", name: "Google Drive", desc: "Imports and scans documents and files from your connected Drive folders.", connected: driveGroups.length > 0, pills: flattenGroups(driveGroups), groups: driveGroups, note: "Previously scanned files are skipped on rescan." });
 
       var onedriveAccounts = Array.isArray(profile.cl_onedrive_accounts) ? profile.cl_onedrive_accounts : [];
       var onedriveGroups = buildAccountGroups(onedriveAccounts, "folders");
-      tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedriveGroups.length > 0, pills: flattenGroups(onedriveGroups), groups: onedriveGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      tiles.push({ id: "onedrive", icon: "☁️", name: "OneDrive", desc: "Imports and scans documents and files from your connected OneDrive folders.", connected: onedriveGroups.length > 0, pills: flattenGroups(onedriveGroups), groups: onedriveGroups, note: "Previously scanned files are skipped on rescan." });
 
       // SharePoint accounts hold a `sites` array; each site has its own
       // `libraries` array. Lazy-upgrade legacy { site, libraries } entries
@@ -218,7 +247,7 @@ window.CL_UPLOAD = {
       }
       var sharepointAccounts = Array.isArray(profile.cl_sharepoint_accounts) ? profile.cl_sharepoint_accounts : [];
       var sharepointGroups = buildSharepointGroups(sharepointAccounts);
-      tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointGroups.length > 0, pills: flattenGroups(sharepointGroups), groups: sharepointGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      tiles.push({ id: "sharepoint", icon: "🗂️", name: "SharePoint", desc: "Imports and scans documents from your connected SharePoint document libraries.", connected: sharepointGroups.length > 0, pills: flattenGroups(sharepointGroups), groups: sharepointGroups, note: "Previously scanned files are skipped on rescan." });
 
       var dropboxAccounts = Array.isArray(profile.cl_dropbox_accounts) ? profile.cl_dropbox_accounts : [];
       // Stash the accounts list on the instance so _handleScanNow can fall
@@ -230,10 +259,10 @@ window.CL_UPLOAD = {
       // not whether the user has picked any subfolders. Root-level files are
       // included automatically on every scan, so an account with no
       // subfolder selections is still a valid scannable connection.
-      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxAccounts.length > 0, pills: flattenGroups(dropboxGroups), groups: dropboxGroups, note: "Previously scanned files are skipped on rescan. Use Manual Add Item for changes." });
+      tiles.push({ id: "dropbox", icon: "📦", name: "Dropbox", desc: "Imports and scans documents and files from your connected Dropbox folders.", connected: dropboxAccounts.length > 0, pills: flattenGroups(dropboxGroups), groups: dropboxGroups, note: "Previously scanned files are skipped on rescan." });
 
       var websiteUrls = (profile.website_urls && profile.website_urls.length > 0) ? profile.website_urls.filter(Boolean) : [];
-      tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Pending items. Use Manual Add Item for small changes." : "" });
+      tiles.push({ id: "website", icon: "🌐", name: "Website", desc: websiteUrls.length > 0 ? "Scans your website for service descriptions, team info and other business content." : "Add your website URL in CL Settings to scan for business content.", connected: websiteUrls.length > 0, pills: websiteUrls.map(function(u) { return { label: u, value: u }; }), note: websiteUrls.length > 0 ? "Rescanning reproduces all content as new Items." : "" });
 
       grid.innerHTML = tiles.map(function(t, idx) {
         // When the last tile would otherwise sit alone in the left column
@@ -767,6 +796,130 @@ window.CL_UPLOAD = {
       self._hideProcessing();
       self._showUploadError("An error occurred while processing the documents. Please try again.");
     }
+  },
+
+  // ── Manual Add Item ───────────────────────────────────────────────
+
+  // The 10 tagging-eligible tool IDs. Matches the tools described in
+  // the extraction prompt plus swms, customer-updates, handover-docs.
+  _MANUAL_TOOL_IDS: [
+    'strategic-plan', 'news-digest', 'chatbot', 'social', 'bi',
+    'tender', 'quote-enhancer', 'swms', 'customer-updates', 'handover-docs'
+  ],
+
+  // Open the manual add flow, optionally pre-filled (used by Copy in cl-review.js).
+  openManualAdd: function(prefill) {
+    this._openManualAdd(prefill);
+  },
+
+  _openManualAdd: function(prefill) {
+    var flow = document.getElementById("cl-manual-flow");
+    var titleInput = document.getElementById("cl-manual-title");
+    var descInput = document.getElementById("cl-manual-desc");
+    var errEl = document.getElementById("cl-manual-error");
+    if (!flow || !titleInput || !descInput) return;
+    titleInput.value = (prefill && prefill.title) || "";
+    descInput.value = (prefill && prefill.description) || "";
+    if (errEl) errEl.style.display = "none";
+    // Render tool pills
+    var toolsEl = document.getElementById("cl-manual-tools");
+    if (toolsEl) {
+      var coreTools = window.CORE_TOOLS || [];
+      var ids = this._MANUAL_TOOL_IDS;
+      toolsEl.innerHTML = ids.map(function(tid) {
+        var tool = coreTools.find(function(t) { return t.id === tid; });
+        var label = tool ? (Array.isArray(tool.title) ? tool.title.join(" ") : (tool.title || tid)) : tid;
+        return "<button type=\"button\" class=\"filter-pill manual-tool-pill\" data-tool-id=\"" + tid + "\">" + label + "</button>";
+      }).join("");
+      toolsEl.querySelectorAll(".manual-tool-pill").forEach(function(pill) {
+        pill.addEventListener("click", function() { pill.classList.toggle("active"); });
+      });
+      // Pre-select tools if prefill provided
+      if (prefill && Array.isArray(prefill.tool_tags)) {
+        prefill.tool_tags.forEach(function(tid) {
+          var p = toolsEl.querySelector("[data-tool-id=\"" + tid + "\"]");
+          if (p) p.classList.add("active");
+        });
+      }
+    }
+    flow.style.display = "block";
+    titleInput.focus();
+  },
+
+  _handleManualAdd: async function() {
+    var self = this;
+    var supabase = this._supabase;
+    var titleInput = document.getElementById("cl-manual-title");
+    var descInput = document.getElementById("cl-manual-desc");
+    var errEl = document.getElementById("cl-manual-error");
+    var submitBtn = document.getElementById("cl-manual-submit");
+    var title = (titleInput && titleInput.value || "").trim();
+    var desc = (descInput && descInput.value || "").trim();
+    // Collect selected tool IDs
+    var selectedTools = [];
+    document.querySelectorAll("#cl-manual-tools .manual-tool-pill.active").forEach(function(p) {
+      selectedTools.push(p.dataset.toolId);
+    });
+    // Validate
+    if (!title) { if (errEl) { errEl.textContent = "Title is required."; errEl.style.display = "block"; } return; }
+    if (selectedTools.length === 0) { if (errEl) { errEl.textContent = "Select at least one tool."; errEl.style.display = "block"; } return; }
+    if (errEl) errEl.style.display = "none";
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Adding..."; }
+    try {
+      var userResp = await supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
+      if (!user) throw new Error("Not signed in");
+      // 1. Save .txt to cl-assets
+      var safeTitle = title.replace(/[^a-zA-Z0-9._-]/g, "_").substring(0, 80);
+      var storagePath = user.id + "/manual/" + Date.now() + "_" + safeTitle + ".txt";
+      var textContent = "Title: " + title + "\n\n" + desc;
+      await supabase.storage.from("cl-assets").upload(storagePath, new Blob([textContent], { type: "text/plain" }), { upsert: false });
+      // 2. Call process-file for AI category extraction
+      var fileData = btoa(unescape(encodeURIComponent(textContent)));
+      var resp = await fetch("/api/process-file", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user.id, fileName: title, fileType: "text", fileData: fileData, storagePath: storagePath })
+      });
+      var result = await resp.json();
+      // 3. Update inserted rows: override tool_tags, status, source
+      if (result.success && Array.isArray(result.items) && result.items.length > 0) {
+        for (var i = 0; i < result.items.length; i++) {
+          await supabase.from("content_library").update({
+            tool_tags: selectedTools,
+            status: "approved",
+            source: "manual",
+            tool_source: "manual-add"
+          }).eq("id", result.items[i].id);
+        }
+        self._appendUploadMessage("Manual item added: " + title, "success");
+      } else {
+        self._appendUploadMessage("Manual item added: " + title + " (category could not be determined)", "success");
+        // Insert directly if extraction failed
+        await supabase.from("content_library").insert({
+          user_id: user.id,
+          title: title.substring(0, 200),
+          content_text: desc,
+          category: "Company Information",
+          tool_tags: selectedTools,
+          status: "approved",
+          source: "manual",
+          tool_source: "manual-add",
+          source_ref: "manual:" + Date.now() + ":0"
+        });
+      }
+      // Reset flow
+      var flow = document.getElementById("cl-manual-flow");
+      if (flow) flow.style.display = "none";
+      if (titleInput) titleInput.value = "";
+      if (descInput) descInput.value = "";
+      if (typeof loadStats === "function") loadStats();
+      if (window.CL_REVIEW) window.CL_REVIEW._load();
+    } catch (err) {
+      console.error("Manual add error:", err);
+      if (errEl) { errEl.textContent = "An error occurred. Please try again."; errEl.style.display = "block"; }
+    }
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Add Item"; }
   },
 
   // Append a single dismissible message row to the stacking
