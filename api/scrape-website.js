@@ -131,8 +131,14 @@ function htmlToText(html) {
 }
 
 // Run the fixed-18-category extraction prompt against text content.
+// Website pages are content-rich relative to documents and emails —
+// the input cap is 40,000 characters (raised from 8,000) so a real
+// homepage's services / pricing / team / testimonials / FAQ blocks
+// all reach the model, and max_tokens is 8,000 (raised from 4,000)
+// so the response can carry the full block-level extraction without
+// being truncated mid-array.
 async function runExtractionPrompt(content, sourceLabel) {
-  const userContent = 'SOURCE CONTENT (' + sourceLabel + '):\n' + (content || '').substring(0, 8000);
+  const userContent = 'SOURCE CONTENT (' + sourceLabel + '):\n' + (content || '').substring(0, 40000);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -142,7 +148,7 @@ async function runExtractionPrompt(content, sourceLabel) {
     },
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
+      max_tokens: 8000,
       system: EXTRACTION_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userContent }],
     }),
