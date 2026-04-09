@@ -261,10 +261,13 @@ export default async function handler(req, res) {
     let afterTimestamp;
     if (gmailEntry.last_scanned_at) {
       afterTimestamp = Math.floor(new Date(gmailEntry.last_scanned_at).getTime() / 1000);
+      console.log('[Gmail] Date filter — using last_scanned_at:', gmailEntry.last_scanned_at, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString());
     } else {
       afterTimestamp = Math.floor((Date.now() - days * 24 * 60 * 60 * 1000) / 1000);
+      console.log('[Gmail] Date filter — no last_scanned_at, using daysBack:', days, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString());
     }
     const query = 'after:' + afterTimestamp;
+    console.log('[Gmail] Query:', query, 'accountEmail:', accountEmail);
 
     const listRes = await fetch(
       'https://gmail.googleapis.com/gmail/v1/users/me/messages?q=' + encodeURIComponent(query) + '&maxResults=50',
@@ -277,7 +280,7 @@ export default async function handler(req, res) {
       return res.status(502).json({ error: 'Gmail API error: ' + errMsg });
     }
     const listData = await listRes.json();
-    console.log('Gmail list response — status:', listRes.status, 'body:', JSON.stringify(listData));
+    console.log('[Gmail] List response — status:', listRes.status, 'messageCount:', (listData.messages || []).length, 'hasNextPageToken:', !!listData.nextPageToken, 'resultSizeEstimate:', listData.resultSizeEstimate);
     const messages = listData.messages || [];
 
     let imported = 0;
