@@ -9,6 +9,9 @@ window.CL_SETTINGS_LOGIC = {
   _onedriveAccounts: [],
   _sharepointAccounts: [],
   _dropboxAccounts: [],
+  _xeroAccounts: [],
+  _quickbooksAccounts: [],
+  _servicem8Accounts: [],
 
   init: function () {
     var self = this;
@@ -26,6 +29,8 @@ window.CL_SETTINGS_LOGIC = {
       self._checkOnedriveOAuthReturn();
       self._checkSharepointOAuthReturn();
       self._checkDropboxOAuthReturn();
+      self._checkToolOAuthReturn();
+      self._bindPermissionModal();
 
       self._bindCLPicker('drive-folder-picker', function () { self._saveDriveFolders(); });
       self._bindCLPicker('onedrive-folder-picker', function () {});
@@ -104,7 +109,7 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var res = await self._supabase
         .from('profiles')
-        .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts')
+        .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts, cl_xero_accounts, cl_quickbooks_accounts, cl_servicem8_accounts')
         .eq('id', self._userId)
         .maybeSingle();
       if (res.error) { console.error('_loadConnections error:', res.error); return; }
@@ -128,12 +133,16 @@ window.CL_SETTINGS_LOGIC = {
       self._sharepointAccounts = nonNull(Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : []);
       self._sharepointAccounts.forEach(function (a) { self._upgradeSharepointEntry(a); });
       self._dropboxAccounts = nonNull(Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : []);
+      self._xeroAccounts = nonNull(Array.isArray(data.cl_xero_accounts) ? data.cl_xero_accounts : []);
+      self._quickbooksAccounts = nonNull(Array.isArray(data.cl_quickbooks_accounts) ? data.cl_quickbooks_accounts : []);
+      self._servicem8Accounts = nonNull(Array.isArray(data.cl_servicem8_accounts) ? data.cl_servicem8_accounts : []);
       self._renderEmailList();
       self._renderDriveList();
       self._renderWebsiteList();
       self._renderOnedriveList();
       self._renderSharepointList();
       self._renderDropboxList();
+      self._renderToolConnections();
     } catch (e) { console.error('_loadConnections exception:', e); }
   },
 
@@ -330,6 +339,15 @@ window.CL_SETTINGS_LOGIC = {
           var dbfA = disconnectBtn.getAttribute('data-account');
           var dbfId = disconnectBtn.getAttribute('data-folder-id');
           if (dbfA && dbfId) self._disconnectDropboxFolder(dbfA, dbfId);
+        } else if (type === 'xero') {
+          var xAcct = disconnectBtn.getAttribute('data-account');
+          if (xAcct) self._disconnectToolAccount('xero', xAcct);
+        } else if (type === 'quickbooks') {
+          var qbAcct = disconnectBtn.getAttribute('data-account');
+          if (qbAcct) self._disconnectToolAccount('quickbooks', qbAcct);
+        } else if (type === 'servicem8') {
+          var smAcct = disconnectBtn.getAttribute('data-account');
+          if (smAcct) self._disconnectToolAccount('servicem8', smAcct);
         }
         return;
       }
@@ -1462,6 +1480,247 @@ window.CL_SETTINGS_LOGIC = {
       if (res.error) { console.error('_disconnectDropboxFolder error:', res.error); await self._loadConnections(); return; }
       self._renderDropboxList();
     } catch (e) { console.error('_disconnectDropboxFolder exception:', e); }
+  },
+
+  // ── Task 13 — Tool Connections (Xero, QuickBooks, ServiceM8) ──────────
+  // These connections store OAuth credentials so tools can pull live data
+  // on demand. No import pipeline, no scan behaviour.
+
+  _toolPlatforms: [
+    {
+      key: 'xero',
+      label: 'Xero',
+      stateField: '_xeroAccounts',
+      column: 'cl_xero_accounts',
+      accountKey: 'account_name',
+      idKey: 'tenant_id',
+      desc: 'Connect your Xero account so your tools can access invoices, contacts, financial summaries, and more.',
+      permTitle: 'Connect Xero',
+      permBody: 'StaxAI will be able to read your invoices, bills, contacts, quotes, price list, jobs, and financial summaries. It cannot make payments, create or edit records, or change anything in your Xero account.',
+      comingSoon: false
+    },
+    {
+      key: 'myob',
+      label: 'MYOB',
+      stateField: '_myobAccounts',
+      column: 'cl_myob_accounts',
+      accountKey: 'account_name',
+      idKey: 'company_file_id',
+      desc: 'Coming Soon — MYOB integration is in progress.',
+      permTitle: '',
+      permBody: '',
+      comingSoon: true
+    },
+    {
+      key: 'quickbooks',
+      label: 'QuickBooks',
+      stateField: '_quickbooksAccounts',
+      column: 'cl_quickbooks_accounts',
+      accountKey: 'account_name',
+      idKey: 'realm_id',
+      desc: 'Connect your QuickBooks Online account so your tools can access invoices, contacts, financial summaries, and more.',
+      permTitle: 'Connect QuickBooks',
+      permBody: 'StaxAI will be able to read your invoices, bills, contacts, estimates, price list, projects, and financial summaries. It cannot make payments, create or edit records, or change anything in your QuickBooks account.',
+      comingSoon: false
+    },
+    {
+      key: 'servicem8',
+      label: 'ServiceM8',
+      stateField: '_servicem8Accounts',
+      column: 'cl_servicem8_accounts',
+      accountKey: 'account_email',
+      idKey: 'account_email',
+      desc: 'Connect your ServiceM8 account so your tools can access jobs, clients, invoices, quotes, and more.',
+      permTitle: 'Connect ServiceM8',
+      permBody: 'StaxAI will be able to read your jobs, clients, invoices, quotes, staff, materials, and job forms. It cannot create or edit jobs, send messages, or change anything in your ServiceM8 account.',
+      comingSoon: false
+    },
+    {
+      key: 'buildxact',
+      label: 'Buildxact',
+      stateField: '_buildxactAccounts',
+      column: 'cl_buildxact_accounts',
+      accountKey: 'account_name',
+      idKey: 'account_id',
+      desc: 'Coming Soon — Buildxact integration is in progress.',
+      permTitle: '',
+      permBody: '',
+      comingSoon: true
+    }
+  ],
+
+  _renderToolConnections: function () {
+    var self = this;
+    var container = document.getElementById('tool-connections-rows');
+    if (!container) return;
+
+    var html = self._toolPlatforms.map(function (p) {
+      if (p.comingSoon) {
+        return '<div class="tool-conn-tile">' +
+          '<div class="tool-conn-info">' +
+            '<div class="tool-conn-label">' + p.label + ' <span class="tool-conn-coming-soon">Coming Soon</span></div>' +
+            '<div class="tool-conn-desc">' + p.desc + '</div>' +
+          '</div>' +
+          '<div class="tool-conn-control"></div>' +
+        '</div>';
+      }
+
+      var accounts = self[p.stateField] || [];
+      var accountsHtml = accounts.map(function (a) {
+        if (!a) return '';
+        var name = a[p.accountKey] || 'Connected';
+        var date = a.connected_at ? new Date(a.connected_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
+        return '<div class="tool-conn-account">' +
+          '<span class="tool-conn-account-name">' + self._escapeHtml(name) + '</span>' +
+          (date ? '<span class="tool-conn-account-date">Connected ' + date + '</span>' : '') +
+          '<button class="btn-disconnect" data-account="' + self._escapeHtml(a[p.idKey] || '') + '" data-type="' + p.key + '">Disconnect</button>' +
+        '</div>';
+      }).join('');
+
+      var msgHtml = '<div class="tool-conn-msg" id="tool-msg-' + p.key + '"></div>';
+
+      return '<div class="tool-conn-tile">' +
+        '<div class="tool-conn-info">' +
+          '<div class="tool-conn-label">' + p.label + '</div>' +
+          '<div class="tool-conn-desc">' + p.desc + '</div>' +
+        '</div>' +
+        '<div class="tool-conn-control">' +
+          accountsHtml +
+          msgHtml +
+          '<button class="btn-add-connection tool-conn-btn" data-platform="' + p.key + '">' +
+            (accounts.length > 0 ? '+ Connect Another' : '+ Connect ' + p.label) +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    container.innerHTML = html;
+
+    // Bind connect buttons
+    container.querySelectorAll('.tool-conn-btn[data-platform]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var platform = btn.getAttribute('data-platform');
+        self._startToolConnect(platform);
+      });
+    });
+  },
+
+  _escapeHtml: function (str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  },
+
+  _startToolConnect: function (platform) {
+    var self = this;
+    var p = self._toolPlatforms.find(function (pl) { return pl.key === platform; });
+    if (!p || p.comingSoon) return;
+
+    // Show permission modal
+    var titleEl = document.getElementById('perm-modal-title');
+    var bodyEl = document.getElementById('perm-modal-body');
+    var overlay = document.getElementById('perm-modal-overlay');
+    if (!titleEl || !bodyEl || !overlay) return;
+
+    titleEl.textContent = p.permTitle;
+    bodyEl.textContent = p.permBody;
+    overlay.classList.add('open');
+    self._pendingToolPlatform = platform;
+  },
+
+  _bindPermissionModal: function () {
+    var self = this;
+    var overlay = document.getElementById('perm-modal-overlay');
+    var cancelBtn = document.getElementById('perm-modal-cancel');
+    var continueBtn = document.getElementById('perm-modal-continue');
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', function () {
+        if (overlay) overlay.classList.remove('open');
+        self._pendingToolPlatform = null;
+      });
+    }
+    if (continueBtn) {
+      continueBtn.addEventListener('click', function () {
+        if (overlay) overlay.classList.remove('open');
+        if (self._pendingToolPlatform) {
+          self._startCLOAuth(self._pendingToolPlatform);
+          self._pendingToolPlatform = null;
+        }
+      });
+    }
+    // Close on overlay click (outside modal)
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('open');
+          self._pendingToolPlatform = null;
+        }
+      });
+    }
+  },
+
+  _disconnectToolAccount: async function (platform, accountId) {
+    var self = this;
+    var p = self._toolPlatforms.find(function (pl) { return pl.key === platform; });
+    if (!p) return;
+    try {
+      var arr = self[p.stateField] || [];
+      arr = arr.filter(function (a) { return a && a[p.idKey] !== accountId; });
+      self[p.stateField] = arr;
+      var update = {};
+      update[p.column] = arr;
+      var res = await self._supabase
+        .from('profiles')
+        .update(update)
+        .eq('id', self._userId);
+      if (res.error) { console.error('_disconnectToolAccount error:', res.error); await self._loadConnections(); return; }
+      self._renderToolConnections();
+    } catch (e) { console.error('_disconnectToolAccount exception:', e); }
+  },
+
+  _checkToolOAuthReturn: function () {
+    var self = this;
+    var params = new URLSearchParams(window.location.search);
+    var connected = params.get('connected');
+    var error = params.get('error');
+    var tab = params.get('tab');
+
+    // Only handle tool connection platforms
+    var toolKeys = ['xero', 'quickbooks', 'servicem8'];
+    var isToolPlatform = false;
+    if (connected && toolKeys.indexOf(connected) !== -1) isToolPlatform = true;
+    if (error && toolKeys.some(function (k) { return error.indexOf(k) !== -1; })) isToolPlatform = true;
+    if (tab === 'tool-connections') isToolPlatform = true;
+    if (!isToolPlatform) return;
+
+    // Clean URL
+    window.history.replaceState({}, '', window.location.pathname);
+
+    // Show success/error message after connections load
+    if (connected && toolKeys.indexOf(connected) !== -1) {
+      // Wait for _loadAll to finish, then show message
+      var check = function () {
+        var msgEl = document.getElementById('tool-msg-' + connected);
+        if (msgEl) {
+          msgEl.className = 'tool-conn-msg success';
+          msgEl.textContent = connected.charAt(0).toUpperCase() + connected.slice(1) + ' connected successfully.';
+        }
+      };
+      setTimeout(check, 500);
+    }
+    if (error) {
+      var platform = toolKeys.find(function (k) { return error.indexOf(k) !== -1; });
+      if (platform) {
+        var check2 = function () {
+          var msgEl = document.getElementById('tool-msg-' + platform);
+          if (msgEl) {
+            msgEl.className = 'tool-conn-msg error';
+            msgEl.textContent = 'Connection failed. Please try again.';
+          }
+        };
+        setTimeout(check2, 500);
+      }
+    }
   }
 
 };
