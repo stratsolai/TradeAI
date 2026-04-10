@@ -103,6 +103,7 @@ const handler = async (req, res) => {
     let sourceText = '';
     let sourceLabel = fileName || websiteUrl || 'Unknown source';
     let sourceValue = 'document';
+    var imageExtractionResponse = null;
 
     if (fileType === 'website' && websiteUrl) {
       sourceText = await scrapeWebsite(websiteUrl);
@@ -121,7 +122,11 @@ const handler = async (req, res) => {
       var imgMediaType = mediaType
         || ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', jpg: 'image/jpeg', jpeg: 'image/jpeg' })[imgExt]
         || 'image/jpeg';
-      sourceText = await describeImage(fileData, claudeApiKey, imgMediaType);
+      // Images use a single combined call — extraction prompt + vision
+      // in one request — so sourceText is set to a placeholder and the
+      // real extraction response is captured in imageExtractionResponse.
+      imageExtractionResponse = await extractImage(fileData, claudeApiKey, imgMediaType);
+      sourceText = '[image processed directly]';
       sourceValue = 'photo';
     } else if ((fileType === 'text' || fileType === 'html') && fileData) {
       // Both 'text' and 'html' are routed through the same UTF-8
@@ -184,19 +189,23 @@ const handler = async (req, res) => {
       console.error('cl_source_items save error:', e.message);
     }
 
-    // 3. BUILD AI PROMPT
-    var userPrompt = 'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000);
-
-    // 4. CALL CLAUDE HAIKU
-    const requestBody = JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userPrompt }]
-    });
-
-    const claudeResponse = await callClaude(requestBody, claudeApiKey);
-    const responseText = (claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text) ? claudeResponse.content[0].text : '';
+    // 3. BUILD AI PROMPT AND CALL CLAUDE
+    var responseText = '';
+    if (imageExtractionResponse) {
+      // Image path — single combined call already completed
+      responseText = (imageExtractionResponse.content && imageExtractionResponse.content[0] && imageExtractionResponse.content[0].text) ? imageExtractionResponse.content[0].text : '';
+    } else {
+      // All other file types — text extraction then haiku classification
+      var userPrompt = 'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000);
+      const requestBody = JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 4000,
+        system: EXTRACTION_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userPrompt }]
+      });
+      var claudeResponse = await callClaude(requestBody, claudeApiKey);
+      responseText = (claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text) ? claudeResponse.content[0].text : '';
+    }
 
     // 5. PARSE RESPONSE
     let items = [];
@@ -575,18 +584,18 @@ async function extractDocText(fileData, mediaType, apiKey) {
   return text.substring(0, 8000);
 }
 
-// IMAGE DESCRIBER
-async function describeImage(fileData, apiKey, mediaType) {
+// IMAGE EXTRACTOR — single combined vision + extraction call
+async function extractImage(fileData, apiKey, mediaType) {
   const body = JSON.stringify({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1000,
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4000,
+    system: EXTRACTION_SYSTEM_PROMPT,
     messages: [{ role: 'user', content: [
       { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: fileData } },
-      { type: 'text', text: 'Describe this business image in detail for a content library. Include: what is shown, any visible text, the apparent business context, and what marketing use it could serve.' }
+      { type: 'text', text: 'This is an image file. First determine whether this is a photo (scene, people, objects, work) or a document/screenshot (contains text that should be read).\n\nFor photos: write a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen.\n\nFor documents or screenshots: extract all visible text accurately. Treat the extracted text as the content.\n\nThen apply the standard extraction instructions: classify into a CL category, generate a short descriptive title (maximum 10 words), assign tool tags, and make a confidence decision. Return the result in the same JSON format as all other file types.' }
     ]}]
   });
-  const response = await callClaude(body, apiKey);
-  return (response.content && response.content[0]) ? response.content[0].text : '';
+  return await callClaude(body, apiKey);
 }
 
 // CLAUDE API CALLER
