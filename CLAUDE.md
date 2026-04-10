@@ -139,8 +139,10 @@ clarification on whether developer program subscription is
 required for production use before registering. Buildxact
 deferred — Coming Soon placeholder in UI. Third-party
 registration with Buildxact support required before build
-can begin. Integration test in progress — Xero OAuth issue
-under investigation.
+can begin. Integration test complete — Xero, QuickBooks,
+and ServiceM8 all connected successfully. Disconnect not
+yet verified. Fetch endpoint data pull testing deferred to
+each tool's integration test.
 
 ### Task 14 — Email Attachment Scanning (Gmail + Outlook)
 
@@ -525,6 +527,21 @@ source-of-truth pages for the stylesheet.
 - Buildxact registration outstanding — contact Buildxact
   support to initiate third-party integration registration.
   Required before Buildxact connection can be built.
+- Xero OAuth scopes for new apps (created after 2 March
+  2026) must use the new granular scope names. Correct
+  scope string confirmed from official documentation:
+  openid profile email accounting.invoices.read
+  accounting.contacts.read accounting.settings.read
+  accounting.reports.profitandloss.read
+  accounting.reports.balancesheet.read projects.read
+  offline_access
+- ServiceM8 OAuth scopes — correct scope string confirmed:
+  read_jobs read_customers read_staff read_job_materials
+  read_job_contacts read_forms
+- Claude Code must never run any Vercel CLI commands under
+  any circumstances. Vercel log access is via the Vercel
+  dashboard only. This applies even when investigating
+  errors.
 
 ---
 
