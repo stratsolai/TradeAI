@@ -270,9 +270,11 @@ window.CL_REVIEW = {
     // Load image thumbnail URLs for photo items
     this._imageUrls = {};
     var photoItemIds = this._items
-      .filter(function(i) { return i.content_type === 'image' && i.source_item_id; })
+      .filter(function(i) {
+        var sd = i.source_detail || {};
+        return sd.file_type === 'image' && i.source_item_id;
+      })
       .map(function(i) { return i.source_item_id; });
-    console.log('[Thumb Debug] Image items found:', photoItemIds.length, 'source_item_ids:', photoItemIds);
     if (photoItemIds.length > 0) {
       var siResult = await this._supabase
         .from('cl_source_items')
@@ -288,7 +290,6 @@ window.CL_REVIEW = {
         });
       }
     }
-    console.log('[Thumb Debug] _imageUrls map:', JSON.parse(JSON.stringify(this._imageUrls)));
     this._updateBulkBar();
     this._renderFilterRow();
     this._renderList();
@@ -511,8 +512,8 @@ window.CL_REVIEW = {
       }
     }
     var thumbHtml = '';
-    console.log('[Thumb Debug] Card:', item.title, '| content_type:', item.content_type, '| source_item_id:', item.source_item_id, '| url found:', !!(item.source_item_id && this._imageUrls[item.source_item_id]));
-    if (item.content_type === 'image' && item.source_item_id && this._imageUrls[item.source_item_id]) {
+    var itemSd = item.source_detail || {};
+    if (itemSd.file_type === 'image' && item.source_item_id && this._imageUrls[item.source_item_id]) {
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
