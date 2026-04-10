@@ -76,16 +76,31 @@ export default async function handler(req, res) {
       return redirectError(res, tokenData.error_description || tokenData.error || 'token_exchange_failed');
     }
 
-    // 2. Fetch Xero connections to get tenant name and tenant_id
+    // 2. Fetch Xero connections to get tenant name and tenant_id.
+    // The Xero connections endpoint requires Content-Type: application/json
+    // even for GET requests — without it the API may return an error page
+    // or an unexpected response shape.
     let tenantId = null;
     let accountName = null;
     try {
       const connRes = await fetch('https://api.xero.com/connections', {
-        headers: { 'Authorization': 'Bearer ' + tokenData.access_token },
+        headers: {
+          'Authorization': 'Bearer ' + tokenData.access_token,
+          'Content-Type': 'application/json',
+        },
       });
+      if (!connRes.ok) {
+        console.error('Xero connections API returned HTTP', connRes.status, connRes.statusText);
+        const errBody = await connRes.text();
+        console.error('Xero connections response body:', errBody.substring(0, 500));
+        return redirectError(res, 'connections_api_' + connRes.status);
+      }
       const connections = await connRes.json();
-      // Use the first organisation connection (tenantType === 'ORGANISATION')
-      if (Array.isArray(connections) && connections.length > 0) {
+      if (!Array.isArray(connections)) {
+        console.error('Xero connections response is not an array:', JSON.stringify(connections).substring(0, 500));
+        return redirectError(res, 'connections_unexpected_shape');
+      }
+      if (connections.length > 0) {
         var org = connections.find(function (c) { return c.tenantType === 'ORGANISATION'; }) || connections[0];
         tenantId = org.tenantId || null;
         accountName = org.tenantName || null;
