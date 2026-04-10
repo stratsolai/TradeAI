@@ -2,6 +2,7 @@ export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import zlib from 'zlib';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -20,6 +21,38 @@ var ALL_CATEGORIES = [
 ];
 var CATEGORY_LOOKUP = {};
 ALL_CATEGORIES.forEach(function(c) { CATEGORY_LOOKUP[c.toLowerCase()] = c; });
+
+var BINARY_MIME_TYPES = [
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/msword',
+  'application/vnd.ms-excel',
+  'application/vnd.ms-powerpoint',
+];
+
+var MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024; // 20 MB
+
+function inferMimeFromFilename(fileName) {
+  if (!fileName) return '';
+  var ext = fileName.toLowerCase().split('.').pop();
+  if (ext === 'pdf') return 'application/pdf';
+  if (ext === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  if (ext === 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+  if (ext === 'pptx') return 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  if (ext === 'doc') return 'application/msword';
+  if (ext === 'xls') return 'application/vnd.ms-excel';
+  if (ext === 'ppt') return 'application/vnd.ms-powerpoint';
+  if (ext === 'txt' || ext === 'md' || ext === 'csv') return 'text/plain';
+  if (ext === 'html' || ext === 'htm') return 'text/html';
+  if (ext === 'jpg' || ext === 'jpeg') return 'image/jpeg';
+  if (ext === 'png') return 'image/png';
+  if (ext === 'gif') return 'image/gif';
+  if (ext === 'webp') return 'image/webp';
+  if (ext === 'heic') return 'image/heic';
+  return '';
+}
 
 var AUTO_ARCHIVE_CATEGORIES = [
   'Products & Services', 'Pricing', 'Company Information', 'Promotions & Offers',
@@ -223,6 +256,320 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
   }
 }
 
+// DOCX ZIP EXTRACTION — unpack archive and read word/document.xml
+function extractDocxXml(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) {
+      eocdOffset = i;
+      break;
+    }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fileName = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    if (fileName === 'word/document.xml') {
+      var lfhFileNameLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExtraLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFileNameLen + lfhExtraLen;
+      var compressedData = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText;
+      if (compressionMethod === 0) {
+        xmlText = compressedData.toString('utf-8');
+      } else if (compressionMethod === 8) {
+        xmlText = zlib.inflateRawSync(compressedData).toString('utf-8');
+      } else {
+        return null;
+      }
+      return xmlText
+        .replace(/<\/w:p>/g, '\n')
+        .replace(/<w:tab\/>/g, '\t')
+        .replace(/<w:br[^/]*\/>/g, '\n')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'")
+        .replace(/\n{3,}/g, '\n\n')
+        .replace(/[ \t]+/g, ' ')
+        .trim();
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  return null;
+}
+
+// XLSX ZIP EXTRACTION — unpack archive, read shared strings and sheet data
+function extractXlsxText(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var entries = {};
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fn = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    if (fn === 'xl/sharedStrings.xml' || /^xl\/worksheets\/sheet\d+\.xml$/.test(fn)) {
+      var lfhFnLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFnLen + lfhExLen;
+      var compressed = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText = null;
+      try {
+        if (compressionMethod === 0) { xmlText = compressed.toString('utf-8'); }
+        else if (compressionMethod === 8) { xmlText = zlib.inflateRawSync(compressed).toString('utf-8'); }
+      } catch (zerr) { xmlText = null; }
+      if (xmlText) entries[fn] = xmlText;
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  var sharedStrings = [];
+  if (entries['xl/sharedStrings.xml']) {
+    var siRegex = /<si[^>]*>([\s\S]*?)<\/si>/g;
+    var siMatch;
+    while ((siMatch = siRegex.exec(entries['xl/sharedStrings.xml'])) !== null) {
+      var tRegex = /<t[^>]*>([\s\S]*?)<\/t>/g;
+      var tMatch;
+      var parts = [];
+      while ((tMatch = tRegex.exec(siMatch[1])) !== null) { parts.push(tMatch[1]); }
+      sharedStrings.push(parts.join(''));
+    }
+  }
+  var allRows = [];
+  var sheetKeys = Object.keys(entries).filter(function(k) { return /^xl\/worksheets\/sheet\d+\.xml$/.test(k); }).sort();
+  sheetKeys.forEach(function(key) {
+    var sheetXml = entries[key];
+    var rowRegex = /<row[^>]*>([\s\S]*?)<\/row>/g;
+    var rowMatch;
+    while ((rowMatch = rowRegex.exec(sheetXml)) !== null) {
+      var cells = [];
+      var cellRegex = /<c\b([^>]*)>([\s\S]*?)<\/c>/g;
+      var cellMatch;
+      while ((cellMatch = cellRegex.exec(rowMatch[1])) !== null) {
+        var cellAttrs = cellMatch[1];
+        var cellContent = cellMatch[2];
+        var typeMatch = cellAttrs.match(/\bt="([^"]*)"/);
+        var cellType = typeMatch ? typeMatch[1] : null;
+        var value = '';
+        if (cellType === 'inlineStr') {
+          var iMatch = cellContent.match(/<t[^>]*>([\s\S]*?)<\/t>/);
+          value = iMatch ? iMatch[1] : '';
+        } else {
+          var vMatch = cellContent.match(/<v[^>]*>([\s\S]*?)<\/v>/);
+          if (vMatch) {
+            value = vMatch[1];
+            if (cellType === 's') {
+              var idx = parseInt(value, 10);
+              if (!isNaN(idx) && sharedStrings[idx] !== undefined) value = sharedStrings[idx];
+            }
+          }
+        }
+        value = value.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+        if (value !== '') cells.push(value);
+      }
+      if (cells.length > 0) allRows.push(cells.join(' | '));
+    }
+  });
+  return allRows.length > 0 ? allRows.join('\n') : null;
+}
+
+// PPTX ZIP EXTRACTION — unpack archive, read text from slide XML files
+function extractPptxText(buf) {
+  var eocdOffset = -1;
+  for (var i = buf.length - 22; i >= 0; i--) {
+    if (buf[i] === 0x50 && buf[i + 1] === 0x4B && buf[i + 2] === 0x05 && buf[i + 3] === 0x06) { eocdOffset = i; break; }
+  }
+  if (eocdOffset === -1) return null;
+  var cdOffset = buf.readUInt32LE(eocdOffset + 16);
+  var numEntries = buf.readUInt16LE(eocdOffset + 10);
+  var slideXmls = [];
+  var pos = cdOffset;
+  for (var e = 0; e < numEntries; e++) {
+    if (pos + 46 > buf.length) break;
+    if (buf[pos] !== 0x50 || buf[pos + 1] !== 0x4B || buf[pos + 2] !== 0x01 || buf[pos + 3] !== 0x02) break;
+    var compressionMethod = buf.readUInt16LE(pos + 10);
+    var compressedSize = buf.readUInt32LE(pos + 20);
+    var fileNameLen = buf.readUInt16LE(pos + 28);
+    var extraLen = buf.readUInt16LE(pos + 30);
+    var commentLen = buf.readUInt16LE(pos + 32);
+    var localHeaderOffset = buf.readUInt32LE(pos + 42);
+    var fn = buf.toString('utf-8', pos + 46, pos + 46 + fileNameLen);
+    if (/^ppt\/slides\/slide\d+\.xml$/.test(fn)) {
+      var lfhFnLen = buf.readUInt16LE(localHeaderOffset + 26);
+      var lfhExLen = buf.readUInt16LE(localHeaderOffset + 28);
+      var dataStart = localHeaderOffset + 30 + lfhFnLen + lfhExLen;
+      var compressed = buf.slice(dataStart, dataStart + compressedSize);
+      var xmlText = null;
+      try {
+        if (compressionMethod === 0) { xmlText = compressed.toString('utf-8'); }
+        else if (compressionMethod === 8) { xmlText = zlib.inflateRawSync(compressed).toString('utf-8'); }
+      } catch (zerr) { xmlText = null; }
+      if (xmlText) slideXmls.push(xmlText);
+    }
+    pos += 46 + fileNameLen + extraLen + commentLen;
+  }
+  if (slideXmls.length === 0) return null;
+  var allText = [];
+  slideXmls.forEach(function(slideXml) {
+    var tRegex = /<a:t>([\s\S]*?)<\/a:t>/g;
+    var tMatch;
+    var slideTexts = [];
+    while ((tMatch = tRegex.exec(slideXml)) !== null) {
+      var val = tMatch[1].replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+      if (val.trim()) slideTexts.push(val);
+    }
+    if (slideTexts.length > 0) allText.push(slideTexts.join(' '));
+  });
+  return allText.length > 0 ? allText.join('\n') : null;
+}
+
+// Extract text from a binary document. PDF goes to Claude document API.
+// DOCX, XLSX, PPTX are extracted locally from their ZIP archives.
+// Legacy Office formats use binary text extraction as a fallback.
+async function extractBinaryFileText(buffer, mimeType) {
+  if (mimeType === 'application/pdf') {
+    var base64Data = buffer.toString('base64');
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2000,
+        messages: [{ role: 'user', content: [
+          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } },
+          { type: 'text', text: 'Extract all text content from this document. Return only the raw text, preserving structure. No commentary.' }
+        ]}],
+      }),
+    });
+    const data = await response.json();
+    if (data.content && data.content[0]) return data.content[0].text;
+    return null;
+  }
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+    try { var text = extractDocxXml(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('DOCX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+    try { var text = extractXlsxText(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('XLSX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+  if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
+    try { var text = extractPptxText(buffer); if (text && text.length >= 50) return text.substring(0, 8000); } catch (e) { console.error('PPTX extraction error:', e.message); }
+    var fb = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (fb.length >= 50) return fb.substring(0, 8000);
+    return null;
+  }
+  var legacyText = buffer.toString('utf-8').replace(/[^\x20-\x7E\n\r\t]/g, ' ').replace(/\s+/g, ' ').trim();
+  if (legacyText.length >= 50) return legacyText.substring(0, 8000);
+  return null;
+}
+
+// Run extraction prompt for attachment text content (same as file connectors)
+async function runAttachmentExtractionPrompt(content, fileName) {
+  var userContent = 'SOURCE CONTENT (' + fileName + '):\n' + (content || '').substring(0, 8000);
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      system: EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userContent }],
+    }),
+  });
+  const data = await response.json();
+  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Attachment extraction JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
+    return [];
+  }
+}
+
+// Run image extraction via Claude Sonnet vision — single combined call.
+async function runImageExtraction(base64Data, mediaType) {
+  var IMAGE_PROMPT = 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.';
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system: EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: base64Data } },
+        { type: 'text', text: IMAGE_PROMPT }
+      ]}],
+    }),
+  });
+  const data = await response.json();
+  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Image extraction JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
+    return [];
+  }
+}
+
+// Discover attachment parts in Gmail message payload
+function discoverAttachments(payload) {
+  var attachments = [];
+  function walk(part) {
+    if (!part) return;
+    if (part.filename && part.filename.length > 0 && part.body) {
+      attachments.push({
+        partId: part.partId || '',
+        filename: part.filename,
+        mimeType: part.mimeType || '',
+        size: part.body.size || 0,
+        attachmentId: part.body.attachmentId || '',
+      });
+    }
+    if (part.parts) {
+      for (var i = 0; i < part.parts.length; i++) { walk(part.parts[i]); }
+    }
+  }
+  walk(payload);
+  return attachments;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -421,6 +768,186 @@ export default async function handler(req, res) {
       // Update cl_source_items item_count
       if (sourceItemId && msgItemCount > 0) {
         await supabase.from('cl_source_items').update({ item_count: msgItemCount }).eq('id', sourceItemId);
+      }
+
+      // --- ATTACHMENT PROCESSING ---
+      var attachmentParts = discoverAttachments(msgData.payload);
+      for (var attIdx = 0; attIdx < attachmentParts.length; attIdx++) {
+        var att = attachmentParts[attIdx];
+        console.log('[Gmail Attachment]', att.filename, 'mimeType:', att.mimeType, 'size:', att.size, 'attachmentId:', att.attachmentId ? att.attachmentId.substring(0, 20) + '...' : 'none');
+
+        // Size gate — skip attachments over 20 MB
+        if (att.size > MAX_ATTACHMENT_BYTES) {
+          console.log('[Gmail Attachment] SKIPPED — oversized:', att.size);
+          skipped++;
+          skipped_reasons.attachment_oversized = (skipped_reasons.attachment_oversized || 0) + 1;
+          continue;
+        }
+
+        // Determine MIME type — prefer Gmail-reported, fall back to filename inference
+        var attMime = att.mimeType || inferMimeFromFilename(att.filename);
+        var isImage = attMime.indexOf('image/') === 0;
+        var isText = attMime.indexOf('text/') === 0;
+        var isBinaryDoc = BINARY_MIME_TYPES.indexOf(attMime) > -1;
+        if (!isImage && !isText && !isBinaryDoc) {
+          console.log('[Gmail Attachment] SKIPPED — unsupported format:', attMime, att.filename);
+          skipped++;
+          skipped_reasons.attachment_unsupported_format = (skipped_reasons.attachment_unsupported_format || 0) + 1;
+          continue;
+        }
+
+        // Download attachment data from Gmail API
+        if (!att.attachmentId) {
+          console.log('[Gmail Attachment] SKIPPED — no attachmentId for:', att.filename);
+          skipped++;
+          skipped_reasons.attachment_no_id = (skipped_reasons.attachment_no_id || 0) + 1;
+          continue;
+        }
+        var attDataRes = await fetch(
+          'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + msg.id + '/attachments/' + att.attachmentId,
+          { headers: { Authorization: 'Bearer ' + accessToken } }
+        );
+        if (!attDataRes.ok) {
+          console.error('[Gmail Attachment] Download failed:', att.filename, attDataRes.status);
+          skipped++;
+          skipped_reasons.attachment_download_failed = (skipped_reasons.attachment_download_failed || 0) + 1;
+          continue;
+        }
+        var attDataJson = await attDataRes.json();
+        var attBase64Url = attDataJson.data;
+        if (!attBase64Url) {
+          console.log('[Gmail Attachment] SKIPPED — no data returned for:', att.filename);
+          skipped++;
+          skipped_reasons.attachment_download_failed = (skipped_reasons.attachment_download_failed || 0) + 1;
+          continue;
+        }
+
+        // Convert Gmail base64url to standard base64
+        var attBase64 = attBase64Url.replace(/-/g, '+').replace(/_/g, '/');
+        var attBuffer = Buffer.from(attBase64, 'base64');
+
+        // Create cl_source_items row for this attachment
+        var attSourceItemId = null;
+        var attItemCount = 0;
+        var attStorageExt = att.filename.split('.').pop().toLowerCase() || 'bin';
+        var attStoragePath = userId + '/email-attachment/' + msg.id + '_' + attIdx + '.' + attStorageExt;
+        try {
+          await supabase.storage.from('cl-assets').upload(attStoragePath, attBuffer, { contentType: attMime, upsert: false });
+          var attSiResult = await supabase
+            .from('cl_source_items')
+            .insert({
+              user_id: userId,
+              source_type: 'email-attachment',
+              filename: att.filename,
+              file_url: attStoragePath,
+              source_url: null,
+              source_detail: { sender: sender, subject: subject, account_email: accountEmail, gmail_message_id: msg.id, attachment_id: att.attachmentId, attachment_filename: att.filename, attachment_mime: attMime, attachment_size: att.size },
+              item_count: 0,
+            })
+            .select('id')
+            .single();
+          if (attSiResult.data) attSourceItemId = attSiResult.data.id;
+        } catch (attSaveErr) {
+          console.error('[Gmail Attachment] cl-assets/cl_source_items save error:', attSaveErr.message);
+        }
+
+        // Extract content based on file type
+        var attItems = [];
+        try {
+          if (isImage) {
+            attItems = await runImageExtraction(attBase64, attMime);
+          } else if (isText) {
+            var textContent = attBuffer.toString('utf-8');
+            if (textContent && textContent.trim().length >= 50) {
+              attItems = await runAttachmentExtractionPrompt(textContent, att.filename);
+            }
+          } else if (isBinaryDoc) {
+            var extractedText = await extractBinaryFileText(attBuffer, attMime);
+            if (extractedText && extractedText.trim().length >= 50) {
+              attItems = await runAttachmentExtractionPrompt(extractedText, att.filename);
+            }
+          }
+        } catch (extractErr) {
+          console.error('[Gmail Attachment] Extraction error:', att.filename, extractErr.message);
+        }
+
+        if (!attItems || attItems.length === 0) {
+          console.log('[Gmail Attachment] SKIPPED — no extractable content:', att.filename);
+          skipped++;
+          skipped_reasons.attachment_no_content = (skipped_reasons.attachment_no_content || 0) + 1;
+          continue;
+        }
+
+        // Insert extracted items into content_library
+        for (var attItemIdx = 0; attItemIdx < attItems.length; attItemIdx++) {
+          var attItem = attItems[attItemIdx];
+          var attSourceRef = 'email-attachment:' + msg.id + ':' + att.attachmentId + ':' + attItemIdx;
+          var attNormCat = attItem.category ? (CATEGORY_LOOKUP[String(attItem.category).toLowerCase()] || 'Company Information') : 'Company Information';
+          var attIsDiscard = DISCARD_CATEGORIES.indexOf(attNormCat) > -1;
+          var attStatus = attIsDiscard ? 'rejected' : (attItem.confidence === 'confident' ? 'approved' : 'pending');
+          var attToolTags = Array.isArray(attItem.tool_tags) ? attItem.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+          var attItemSourceDetail = { sender: sender, subject: subject, account_email: accountEmail, attachment_filename: att.filename, attachment_mime: attMime };
+          if (attIsDiscard) attItemSourceDetail.rejection_source = 'auto';
+
+          if (attNormCat === 'Financial Documents') {
+            attStatus = 'pending';
+          }
+
+          var attVersionMatchedId = null;
+          if (attStatus === 'approved' && AUTO_ARCHIVE_CATEGORIES.indexOf(attNormCat) > -1) {
+            attVersionMatchedId = await findVersionMatch(supabase, userId, attItem.title, attItem.body, attNormCat);
+          }
+
+          var attRow = {
+            user_id: userId,
+            title: String(attItem.title || att.filename).substring(0, 200),
+            content_text: String(attItem.body || ''),
+            category: attNormCat,
+            tool_tags: attToolTags,
+            status: attStatus,
+            source: 'email-attachment',
+            tool_source: 'cl-email-scan',
+            source_ref: attSourceRef,
+            source_item_id: attSourceItemId,
+            source_detail: attItemSourceDetail,
+          };
+
+          var attInsertResult = await supabase.from('content_library').upsert(attRow, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
+          if (attInsertResult.error) {
+            console.error('[Gmail Attachment] INSERT ERROR —', attInsertResult.error.message);
+          } else {
+            console.log('[Gmail Attachment] INSERTED — title:', attRow.title, 'sourceRef:', attSourceRef);
+            imported++;
+            attItemCount++;
+            if (attStatus === 'approved') approved++;
+            else if (attStatus === 'rejected') rejected++;
+            else pending++;
+          }
+
+          // Versioning — Financial Documents pair check
+          if (!attInsertResult.error && attInsertResult.data && attNormCat === 'Financial Documents') {
+            var attPairMatchId = await findVersionMatch(supabase, userId, attItem.title, attItem.body, 'Financial Documents');
+            if (attPairMatchId) {
+              var attPairId = randomUUID();
+              fin_docs_paired++;
+              await supabase.from('content_library').update({ status: 'pending', version_pair_id: attPairId }).eq('id', attPairMatchId);
+              await supabase.from('content_library').update({ version_pair_id: attPairId }).eq('id', attInsertResult.data.id);
+              console.log('[Gmail Attachment] Financial Documents paired — pair_id:', attPairId);
+            }
+          }
+
+          // Versioning — apply auto-archive on match
+          if (!attInsertResult.error && attInsertResult.data && attVersionMatchedId) {
+            var attArchResult = await supabase.from('content_library').update({ status: 'archived', version_archived_by: attInsertResult.data.id }).eq('id', attVersionMatchedId);
+            if (!attArchResult.error) auto_archived++;
+            else console.error('[Gmail Attachment] Auto-archive error:', attArchResult.error.message);
+          }
+        }
+
+        // Update attachment cl_source_items item_count
+        if (attSourceItemId && attItemCount > 0) {
+          await supabase.from('cl_source_items').update({ item_count: attItemCount }).eq('id', attSourceItemId);
+        }
       }
     }
 
