@@ -671,12 +671,8 @@ export default async function handler(req, res) {
           .map(function(r) { return r.source_detail && r.source_detail.onedrive_item_id; })
           .filter(Boolean)
       );
-      console.log('[Image Debug] scannedItemIds set size:', scannedItemIds.size, 'values:', JSON.stringify([...scannedItemIds]).substring(0, 500));
-      allFiles.forEach(function(f) { console.log('[Image Debug] Dedup check:', f.name, '| id:', f.id, '| inScannedSet:', scannedItemIds.has(f.id)); });
       const files = allFiles.filter(function(f) { return !scannedItemIds.has(f.id); });
       var deduped = allFiles.length - files.length;
-      console.log('[Image Debug] allFiles:', allFiles.length, 'deduped:', deduped, 'filesToProcess:', files.length);
-      files.forEach(function(f) { console.log('[Image Debug] File:', f.name, 'mimeType:', (f.file && f.file.mimeType) || 'none', 'id:', f.id); });
 
       let imported = 0;
       let skipped = 0;
@@ -693,7 +689,6 @@ export default async function handler(req, res) {
         const isText = mimeType.indexOf('text/') === 0;
         const isBinaryDoc = ONEDRIVE_BINARY_DOC_MIME.indexOf(mimeType) > -1;
 
-        console.log('[Image Debug] Gate check:', file.name, '| mimeType:', mimeType, '| isImage:', isImage, '| isText:', isText, '| isBinaryDoc:', isBinaryDoc);
         if (!isImage && !isText && !isBinaryDoc) { skipped++; skipped_reasons.unsupported_format = (skipped_reasons.unsupported_format || 0) + 1; continue; }
 
         let textContent = null;
@@ -739,9 +734,7 @@ export default async function handler(req, res) {
         // Images: run vision extraction via Claude Sonnet
         if (isImage) {
           var base64Data = imageBuffer.toString('base64');
-          console.log('[Image Debug] Calling runImageExtraction for:', file.name, '| base64 length:', base64Data.length, '| mimeType:', mimeType);
           var imgItems = await runImageExtraction(base64Data, mimeType);
-          console.log('[Image Debug] runImageExtraction result for:', file.name, '| items:', JSON.stringify(imgItems).substring(0, 500));
           if (!imgItems || imgItems.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
           for (var imgIdx = 0; imgIdx < imgItems.length; imgIdx++) {
             var imgItem = imgItems[imgIdx];
