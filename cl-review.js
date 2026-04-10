@@ -280,8 +280,7 @@ window.CL_REVIEW = {
         .from('cl_source_items')
         .select('id, file_url')
         .in('id', photoItemIds);
-      if (siResult.data && siResult.data.length > 0) {
-        console.log('[Thumb Debug] Raw file_url from first image row:', siResult.data[0].file_url);
+      if (siResult.data) {
         for (var si_idx = 0; si_idx < siResult.data.length; si_idx++) {
           var si = siResult.data[si_idx];
           if (si.file_url) {
