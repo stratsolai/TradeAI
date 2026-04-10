@@ -660,6 +660,7 @@ export default async function handler(req, res) {
       );
       const files = allFiles.filter(function(f) { return !scannedFileIds.has(f.id); });
       var deduped = allFiles.length - files.length;
+      console.log('[Image Debug] allFiles:', allFiles.length, 'deduped:', deduped, 'filesToProcess:', files.length);
 
       let imported = 0;
       let skipped = 0;
@@ -694,6 +695,7 @@ export default async function handler(req, res) {
           'application/vnd.ms-powerpoint',
         ].indexOf(mimeType) > -1;
 
+        console.log('[Image Debug] Gate:', file.name, '| mimeType:', mimeType, '| isImage:', isImage, '| isDoc:', isDoc);
         if (!isImage && !isDoc) { skipped++; skipped_reasons.unsupported_format = (skipped_reasons.unsupported_format || 0) + 1; continue; }
 
         let textContent = null;
@@ -739,6 +741,7 @@ export default async function handler(req, res) {
         // Images: run vision extraction via Claude Sonnet
         if (isImage) {
           var base64Data = imageBuffer.toString('base64');
+          console.log('[Image Debug] Calling runImageExtraction for:', file.name, '| base64 length:', base64Data.length);
           var imgItems = await runImageExtraction(base64Data, mimeType);
           if (!imgItems || imgItems.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
           for (var imgIdx = 0; imgIdx < imgItems.length; imgIdx++) {
