@@ -270,7 +270,7 @@ window.CL_REVIEW = {
     // Load image thumbnail URLs for photo items
     this._imageUrls = {};
     var photoItemIds = this._items
-      .filter(function(i) { return i.source === 'photo' && i.source_item_id; })
+      .filter(function(i) { return i.content_type === 'image' && i.source_item_id; })
       .map(function(i) { return i.source_item_id; });
     if (photoItemIds.length > 0) {
       var siResult = await this._supabase
@@ -509,7 +509,7 @@ window.CL_REVIEW = {
       }
     }
     var thumbHtml = '';
-    if (item.source === 'photo' && item.source_item_id && this._imageUrls[item.source_item_id]) {
+    if (item.content_type === 'image' && item.source_item_id && this._imageUrls[item.source_item_id]) {
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
