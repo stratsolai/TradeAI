@@ -267,6 +267,26 @@ window.CL_REVIEW = {
         });
       }
     }
+    // Load image thumbnail URLs for photo items
+    this._imageUrls = {};
+    var photoItemIds = this._items
+      .filter(function(i) { return i.source === 'photo' && i.source_item_id; })
+      .map(function(i) { return i.source_item_id; });
+    if (photoItemIds.length > 0) {
+      var siResult = await this._supabase
+        .from('cl_source_items')
+        .select('id, file_url')
+        .in('id', photoItemIds);
+      if (siResult.data) {
+        var selfImg = this;
+        siResult.data.forEach(function(si) {
+          if (si.file_url) {
+            var pubUrl = selfImg._supabase.storage.from('cl-assets').getPublicUrl(si.file_url);
+            if (pubUrl.data && pubUrl.data.publicUrl) selfImg._imageUrls[si.id] = pubUrl.data.publicUrl;
+          }
+        });
+      }
+    }
     this._updateBulkBar();
     this._renderFilterRow();
     this._renderList();
@@ -488,11 +508,15 @@ window.CL_REVIEW = {
         usedNoticeHtml = '<div class="review-used-notice" style="margin:6px 0;padding:6px 10px;background:#FFF8E1;border:1px solid #FFC107;border-radius:6px;font-size:12px;color:#333;">This item has been used by a tool and cannot be edited. You can archive it and re-import or create a new Manual Item.</div>';
       }
     }
+    var thumbHtml = '';
+    if (item.source === 'photo' && item.source_item_id && this._imageUrls[item.source_item_id]) {
+      thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
+    }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
   <div class="review-card-header">
     <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
     <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span class="review-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
+      ${thumbHtml}<span class="review-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
     <div class="review-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
