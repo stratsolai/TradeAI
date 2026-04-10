@@ -58,7 +58,7 @@ module.exports = async (req, res) => {
     xero: {
       clientId: process.env.XERO_CLIENT_ID,
       authUrl: 'https://login.xero.com/identity/connect/authorize',
-      scopes: 'openid profile email offline_access',
+      scopes: 'openid profile email accounting.transactions.read accounting.contacts.read accounting.settings.read offline_access',
       redirectUri: APP_BASE_URL + '/api/cl-xero-callback',
       flavour: 'xero',
     },
