@@ -130,7 +130,7 @@ Outstanding before sign-off:
 
 Spec complete — StaxAI-Image-Processing-Spec-v1.1. Awaiting
 build. Prerequisite: PWA & Mobile Spec v1.1 — build complete,
-integration test pending.
+integration test complete.
 
 ### Task 13 — Accounting Platform Integration
 
@@ -494,7 +494,7 @@ is complete and confirmed working.
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | ~~Complete Standalone Tasks A, B, C~~  DONE                |
 | 4    | ~~Complete CL Connections + lookback controls~~  DONE      |
-| 4b   | ~~Complete PWA & Mobile build~~  DONE                      |
+| 4b   | ~~Complete PWA & Mobile build — integration test complete~~  DONE |
 | 5    | ~~Complete CL Items (Manual Add Item, Editable Pending)~~  DONE |
 | 6    | Complete stylesheet rollout across CL files — includes mobile layout fixes for CL per April 2026 audit findings (already partially applied) |
 | 7    | Complete stylesheet rollout across cl-settings.html        |
@@ -838,7 +838,7 @@ Industry-agnostic (when editing AI prompts or data models):
 | PWA & Mobile Spec v1.1          | PWA infrastructure, install prompt, |
 |                                 | mobile layout standard, camera      |
 |                                 | access pattern. Build complete,     |
-|                                 | integration test pending.           |
+|                                 | integration test complete.          |
 |                                 | Prerequisite for Task 12.           |
 | Image Processing Spec v1.1      | Image ingestion across all CL       |
 |                                 | sources, on-site photo capture,     |
