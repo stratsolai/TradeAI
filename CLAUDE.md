@@ -122,21 +122,11 @@ Outstanding before sign-off:
 - OneDrive — timing out on Vercel's 300-second limit due
   to the recursive walker on large folder trees — blocked
   on Task 15 (background scanning).
-- Outlook — blocked on Appendix A (lookback controls).
+- Outlook — blocked on Task 15 (background scanning) for
+  the same reason as OneDrive — times out on Vercel's
+  300-second limit.
 - Website — single page only, subpages not crawled —
   blocked on Task 16.
-
-### Task 12 — Image Processing
-
-Spec complete — StaxAI-Image-Processing-Spec-v1.1. Build
-complete, integration test in progress. Prerequisite: PWA &
-Mobile Spec v1.1 — build complete, integration test complete.
-
-Known issue: folder scan connectors processed images as stub
-rows before this build — pre-existing stub rows in
-cl_source_items will block reprocessing via dedup. These need
-to be cleared before those files can be reprocessed with
-vision extraction.
 
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
