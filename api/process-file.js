@@ -95,6 +95,11 @@ const handler = async (req, res) => {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  // Guard against oversized payloads that would hit Vercel's 4.5MB limit
+  if (fileData && fileData.length > 3500000) {
+    return res.status(400).json({ error: 'Image too large — please use a smaller image', skip_reason: 'oversized' });
+  }
+
   try {
     const supabase = getSupabase();
     const claudeApiKey = process.env.CLAUDE_API_KEY;
