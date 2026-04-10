@@ -130,46 +130,17 @@ Outstanding before sign-off:
 
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
-Connect Xero, MYOB, QuickBooks, Reckon, ServiceM8, and
-Buildxact as connectable accounts in CL Settings. Spec
-required before build begins.
-
-Agreed architecture:
-
-- Connections live in CL Settings, same pattern as existing
-  connectors (Drive, Gmail, Outlook etc)
-- No scan behaviour, no Scan Now button, no autonomous CL
-  import
-- Credentials stored centrally in the same way as existing
-  connectors
-- Tools pull data on demand at runtime from connected accounts
-- Data only enters the Content Library when a tool deliberately
-  saves it through a workflow
-- Per-tool usage is covered in each tool's own spec, not in
-  Task 13
-- Buildxact requires third-party application registration with
-  Buildxact support before build can begin — lead time needed
-- Review and Referral Booster trigger design (job completion
-  vs final invoice paid) is an open design question — resolve
-  during that tool's spec
-
-Per-tool breakdown of which systems serve which tools:
-
-- Marketing and Social Media Manager — no integration needed
-- AI Email Assistant — no integration needed
-- AI Website Chatbot — no integration needed
-- Industry News Digest — no integration needed
-- Business Intelligence Dashboard — Xero, MYOB, QuickBooks,
-  Reckon, ServiceM8
-- Strategic Plan — Xero, MYOB, QuickBooks, Reckon
-- Tender Response Generator — ServiceM8, Buildxact
-- Quote Enhancer — ServiceM8, Buildxact
-- SWMS and Safety Docs — ServiceM8
-- Customer Progress Updates — ServiceM8
-- Handover Documentation — ServiceM8
-- Review and Referral Booster — ServiceM8 (trigger only —
-  open design question)
-- Design Visualiser — no integration needed
+Spec complete — StaxAI-External-Platform-Connections-Spec-v1_0.
+Pre-build steps complete — Xero, QuickBooks, and ServiceM8
+registered and credentials in Vercel. Supabase columns added.
+Build complete — all 9 code steps done and committed. MYOB
+deferred — Coming Soon placeholder in UI. Awaiting
+clarification on whether developer program subscription is
+required for production use before registering. Buildxact
+deferred — Coming Soon placeholder in UI. Third-party
+registration with Buildxact support required before build
+can begin. Integration test in progress — Xero OAuth issue
+under investigation.
 
 ### Task 14 — Email Attachment Scanning (Gmail + Outlook)
 
@@ -547,6 +518,13 @@ source-of-truth pages for the stylesheet.
   before any build work begins. Do not implement per-tool
   upload on any page until this decision is formally
   confirmed.
+- MYOB deferred pending clarification on whether an ongoing
+  developer program subscription ($110/month) is required to
+  keep API keys active in production. Contact MYOB to confirm
+  before registering.
+- Buildxact registration outstanding — contact Buildxact
+  support to initiate third-party integration registration.
+  Required before Buildxact connection can be built.
 
 ---
 
@@ -557,7 +535,7 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | Complete Task 12 — Image Processing integration test sign-off |
+| 1    | ~~Complete Task 12 — Image Processing integration test sign-off~~ **COMPLETE** |
 | 2    | Complete Task 13 — External Platform Connections spec and build |
 | 3    | Complete Task 14 — Email Attachment Scanning spec and build |
 | 4    | Complete Task 15 — Background Scan Processing spec and build |
@@ -695,6 +673,9 @@ Notable changes made April 2026:
   (jsonb)
 - content_library: added version_pair_id (uuid),
   version_archived_by (uuid)
+- profiles: added cl_xero_accounts (jsonb),
+  cl_myob_accounts (jsonb), cl_quickbooks_accounts (jsonb),
+  cl_servicem8_accounts (jsonb)
 
 ---
 
@@ -910,5 +891,11 @@ Industry-agnostic (when editing AI prompts or data models):
 | Image Processing Spec v1.1      | Image ingestion across all CL       |
 |                                 | sources, on-site photo capture,     |
 |                                 | tool camera reuse pattern. Build    |
+|                                 | complete, integration test in       |
+|                                 | progress.                           |
+| StaxAI-External-Platform-       | External platform connections        |
+| Connections-Spec-v1_0           | (Xero, QuickBooks, ServiceM8,       |
+|                                 | MYOB deferred, Buildxact deferred). |
+|                                 | Spec approved April 2026. Build     |
 |                                 | complete, integration test in       |
 |                                 | progress.                           |
