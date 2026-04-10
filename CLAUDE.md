@@ -128,14 +128,58 @@ Outstanding before sign-off:
 
 ### Task 12 — Image Processing
 
-Spec complete — StaxAI-Image-Processing-Spec-v1.1. Awaiting
-build. Prerequisite: PWA & Mobile Spec v1.1 — build complete,
-integration test complete.
+Spec complete — StaxAI-Image-Processing-Spec-v1.1. Build
+complete, integration test in progress. Prerequisite: PWA &
+Mobile Spec v1.1 — build complete, integration test complete.
 
-### Task 13 — Accounting Platform Integration
+Known issue: folder scan connectors processed images as stub
+rows before this build — pre-existing stub rows in
+cl_source_items will block reprocessing via dedup. These need
+to be cleared before those files can be reprocessed with
+vision extraction.
 
-Connect MYOB, Xero, QuickBooks, Reckon as CL data sources.
-Spec required before build begins.
+### Task 13 — External Platform Connections (Accounting and Job Management)
+
+Connect Xero, MYOB, QuickBooks, Reckon, ServiceM8, and
+Buildxact as connectable accounts in CL Settings. Spec
+required before build begins.
+
+Agreed architecture:
+
+- Connections live in CL Settings, same pattern as existing
+  connectors (Drive, Gmail, Outlook etc)
+- No scan behaviour, no Scan Now button, no autonomous CL
+  import
+- Credentials stored centrally in the same way as existing
+  connectors
+- Tools pull data on demand at runtime from connected accounts
+- Data only enters the Content Library when a tool deliberately
+  saves it through a workflow
+- Per-tool usage is covered in each tool's own spec, not in
+  Task 13
+- Buildxact requires third-party application registration with
+  Buildxact support before build can begin — lead time needed
+- Review and Referral Booster trigger design (job completion
+  vs final invoice paid) is an open design question — resolve
+  during that tool's spec
+
+Per-tool breakdown of which systems serve which tools:
+
+- Marketing and Social Media Manager — no integration needed
+- AI Email Assistant — no integration needed
+- AI Website Chatbot — no integration needed
+- Industry News Digest — no integration needed
+- Business Intelligence Dashboard — Xero, MYOB, QuickBooks,
+  Reckon, ServiceM8
+- Strategic Plan — Xero, MYOB, QuickBooks, Reckon
+- Tender Response Generator — ServiceM8, Buildxact
+- Quote Enhancer — ServiceM8, Buildxact
+- SWMS and Safety Docs — ServiceM8
+- Customer Progress Updates — ServiceM8
+- Handover Documentation — ServiceM8
+- Review and Referral Booster — ServiceM8 (trigger only —
+  open design question)
+- Design Visualiser — no integration needed
 
 ### Task 14 — Email Attachment Scanning (Gmail + Outlook)
 
@@ -480,6 +524,24 @@ source-of-truth pages for the stylesheet.
   automatically saved to the Content Library when the
   workflow completes successfully. If the user abandons the
   workflow before completion, the photo is not saved.
+- Supabase Storage cl-assets bucket had no SELECT policy —
+  fixed April 2026. Policy "Users can read their own files"
+  added, restricts each user to their own folder using
+  auth.uid()::text = (storage.foldername(name))[1].
+- Existing image rows in content_library uploaded before
+  April 2026 have content_type null — thumbnail detection
+  falls back to source_detail.file_type for these rows. New
+  image rows have content_type: 'image' set correctly going
+  forward.
+- Folder scan connectors processed images as stub rows before
+  the Task 12 build — pre-existing stub rows in
+  cl_source_items will block reprocessing via dedup. Clear
+  these rows before rescanning folders that contain images
+  previously scanned as stubs.
+- Add Photo button label updated from "Take Photo / Add
+  Photo" to "Add Photo" and description updated to remove
+  camera reference — camera capture belongs in individual
+  tools, not the Content Library.
 - Per-tool file upload — decision pending: The blanket rule
   that no tool has its own upload function is under review.
   The agreed direction is that tools which benefit from
@@ -505,19 +567,19 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | ~~Complete Task 6 — CL Settings OAuth / CL Upload~~  DONE |
-| 2    | ~~Complete CL Functional Improvements~~  DONE              |
-| 3    | ~~Complete Standalone Tasks A, B, C~~  DONE                |
-| 4    | ~~Complete CL Connections + lookback controls~~  DONE      |
-| 4b   | ~~Complete PWA & Mobile build — integration test complete~~  DONE |
-| 5    | ~~Complete CL Items (Manual Add Item, Editable Pending)~~  DONE |
-| 6    | Complete stylesheet rollout across CL files — includes mobile layout fixes for CL per April 2026 audit findings (already partially applied) |
-| 7    | Complete stylesheet rollout across cl-settings.html        |
-| 8    | Roll stylesheet out to all remaining authenticated pages   |
-| 9    | Integration tests — all 5 tools                            |
-| 10   | Functional reviews — all 5 tools (real data, end-to-end)  |
+| 1    | Complete Task 12 — Image Processing integration test sign-off |
+| 2    | Complete Task 13 — External Platform Connections spec and build |
+| 3    | Complete Task 14 — Email Attachment Scanning spec and build |
+| 4    | Complete Task 15 — Background Scan Processing spec and build |
+| 5    | Complete Task 16 — Website Subpage Crawling spec and build |
+| 6    | Complete Task 17 — Desktop-only message for non-mobile pages |
+| 7    | Complete stylesheet rollout across CL files                |
+| 8    | Complete stylesheet rollout across cl-settings.html        |
+| 9    | Roll stylesheet out to all remaining authenticated pages   |
+| 10   | Functional reviews — all 5 built tools                     |
 | 11   | Improvements per tool based on functional review findings  |
-| 12   | Dashboard rebuild                                          |
+| 12   | Integration tests — all 5 built tools                      |
+| 13   | Dashboard rebuild                                          |
 
 ---
 
@@ -857,5 +919,6 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | Prerequisite for Task 12.           |
 | Image Processing Spec v1.1      | Image ingestion across all CL       |
 |                                 | sources, on-site photo capture,     |
-|                                 | tool camera reuse pattern.          |
-|                                 | Awaiting build.                     |
+|                                 | tool camera reuse pattern. Build    |
+|                                 | complete, integration test in       |
+|                                 | progress.                           |
