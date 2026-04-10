@@ -1693,13 +1693,13 @@ window.CL_SETTINGS_LOGIC = {
     if (tab === 'tool-connections') isToolPlatform = true;
     if (!isToolPlatform) return;
 
-    // Defensively switch to the Tool Connections sub-tab so the user
-    // lands on the correct tab regardless of whether the inline script
-    // in cl-settings.html has already handled the ?tab= parameter.
-    document.querySelectorAll('.conn-tab').forEach(function (b) { b.classList.remove('active'); });
-    document.querySelectorAll('.conn-panel').forEach(function (p) { p.classList.remove('active'); });
-    var toolTab = document.querySelector('.conn-tab[data-conntab="tool"]');
-    var toolPanel = document.getElementById('conn-tool');
+    // Switch to the Tool Connections tab so the user lands on the
+    // correct tab regardless of whether the inline script in
+    // cl-settings.html has already handled the ?tab= parameter.
+    document.querySelectorAll('.stab').forEach(function (b) { b.classList.remove('active'); });
+    document.querySelectorAll('.stab-panel').forEach(function (p) { p.classList.remove('active'); });
+    var toolTab = document.querySelector('.stab[data-tab="tool"]');
+    var toolPanel = document.getElementById('tab-tool');
     if (toolTab) toolTab.classList.add('active');
     if (toolPanel) toolPanel.classList.add('active');
 
