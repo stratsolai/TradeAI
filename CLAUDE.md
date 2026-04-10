@@ -480,6 +480,21 @@ source-of-truth pages for the stylesheet.
   automatically saved to the Content Library when the
   workflow completes successfully. If the user abandons the
   workflow before completion, the photo is not saved.
+- Per-tool file upload — decision pending: The blanket rule
+  that no tool has its own upload function is under review.
+  The agreed direction is that tools which benefit from
+  direct file upload (e.g. Marketing & Social, Customer
+  Progress Updates, Design Visualiser) may include their own
+  upload and camera capture UI. Files uploaded through a tool
+  are saved to the Content Library in the background,
+  automatically tagged to the originating tool and any other
+  relevant tools. This improves data quality because content
+  arrives with context — the platform knows exactly what it
+  is and why it was uploaded. Full decision and implementation
+  approach to be confirmed at the start of the next session
+  before any build work begins. Do not implement per-tool
+  upload on any page until this decision is formally
+  confirmed.
 
 ---
 
