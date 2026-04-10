@@ -72,7 +72,7 @@ module.exports = async (req, res) => {
     servicem8: {
       clientId: process.env.SERVICEM8_CLIENT_ID,
       authUrl: 'https://go.servicem8.com/oauth/authorize',
-      scopes: 'read_jobs read_clients read_invoices read_staff read_job_materials read_quotes read_forms',
+      scopes: 'read_jobs read_customers read_staff read_job_materials read_job_contacts read_forms',
       redirectUri: APP_BASE_URL + '/api/cl-servicem8-callback',
       flavour: 'servicem8',
     },
