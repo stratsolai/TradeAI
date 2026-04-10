@@ -272,7 +272,8 @@ window.CL_REVIEW = {
     var photoItemIds = this._items
       .filter(function(i) {
         var sd = i.source_detail || {};
-        return sd.file_type === 'image' && i.source_item_id;
+        var isImg = i.content_type === 'image' || sd.file_type === 'image' || (sd.mime_type && sd.mime_type.indexOf('image/') === 0);
+        return isImg && i.source_item_id;
       })
       .map(function(i) { return i.source_item_id; });
     if (photoItemIds.length > 0) {
@@ -513,7 +514,8 @@ window.CL_REVIEW = {
     }
     var thumbHtml = '';
     var itemSd = item.source_detail || {};
-    if (itemSd.file_type === 'image' && item.source_item_id && this._imageUrls[item.source_item_id]) {
+    var isImgItem = item.content_type === 'image' || itemSd.file_type === 'image' || (itemSd.mime_type && itemSd.mime_type.indexOf('image/') === 0);
+    if (isImgItem && item.source_item_id && this._imageUrls[item.source_item_id]) {
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
