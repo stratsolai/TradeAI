@@ -89,17 +89,27 @@ export default async function handler(req, res) {
           'Content-Type': 'application/json',
         },
       });
+      // TEMPORARY DIAGNOSTIC — log the full connections response so we
+      // can see exactly what Xero returns. Remove once Xero OAuth is
+      // confirmed working end to end.
+      const connBody = await connRes.text();
+      console.log('Xero connections API HTTP', connRes.status, connRes.statusText);
+      console.log('Xero connections response body:', connBody.substring(0, 500));
       if (!connRes.ok) {
-        console.error('Xero connections API returned HTTP', connRes.status, connRes.statusText);
-        const errBody = await connRes.text();
-        console.error('Xero connections response body:', errBody.substring(0, 500));
         return redirectError(res, 'connections_api_' + connRes.status);
       }
-      const connections = await connRes.json();
+      let connections;
+      try {
+        connections = JSON.parse(connBody);
+      } catch (parseErr) {
+        console.error('Xero connections JSON parse failed:', parseErr.message);
+        return redirectError(res, 'connections_parse_error');
+      }
       if (!Array.isArray(connections)) {
-        console.error('Xero connections response is not an array:', JSON.stringify(connections).substring(0, 500));
+        console.error('Xero connections response is not an array:', typeof connections);
         return redirectError(res, 'connections_unexpected_shape');
       }
+      console.log('Xero connections count:', connections.length);
       if (connections.length > 0) {
         var org = connections.find(function (c) { return c.tenantType === 'ORGANISATION'; }) || connections[0];
         tenantId = org.tenantId || null;
