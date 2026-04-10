@@ -682,6 +682,30 @@ window.CL_UPLOAD = {
     });
   },
 
+  _compressImage: function(file) {
+    var MAX_DIM = 1200;
+    var QUALITY = 0.85;
+    return new Promise(function(resolve, reject) {
+      var img = new Image();
+      img.onload = function() {
+        var w = img.width;
+        var h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+          else { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+        }
+        var canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        var dataUrl = canvas.toDataURL('image/jpeg', QUALITY);
+        resolve(dataUrl.split(',')[1]);
+      };
+      img.onerror = function() { reject(new Error('Failed to load image for compression')); };
+      img.src = URL.createObjectURL(file);
+    });
+  },
+
   _getDocFileType: function(fileName) {
     var ext = fileName.toLowerCase().split(".").pop();
     if (ext === "pdf") return "pdf";
@@ -717,7 +741,7 @@ window.CL_UPLOAD = {
       var allItems = [];
       for (var j = 0; j < imageFiles.length; j++) {
         var file = imageFiles[j];
-        var fileData = await self._fileToBase64(file);
+        var fileData = await self._compressImage(file);
         var safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         var storagePath = user.id + '/upload/' + Date.now() + '_' + safeName;
         var uploadResult = await supabase.storage.from('cl-assets').upload(storagePath, file, { upsert: false });
@@ -725,12 +749,10 @@ window.CL_UPLOAD = {
         var resp = await fetch("/api/process-file", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          // Pass the browser-detected MIME type as mediaType so the
-          // endpoint does not need to guess from filename extension.
-          // This is what unblocks HEIC and other modern image formats —
-          // process-file.js honours mediaType when present and falls
-          // back to its extension lookup when it is not.
-          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath, mediaType: file.type || null })
+          // Images are compressed to JPEG via canvas before sending.
+          // mediaType is always image/jpeg after compression regardless
+          // of the original format.
+          body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath, mediaType: "image/jpeg" })
         });
         var result = await resp.json();
         if (result.success && Array.isArray(result.items)) {
