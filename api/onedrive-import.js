@@ -671,6 +671,8 @@ export default async function handler(req, res) {
           .map(function(r) { return r.source_detail && r.source_detail.onedrive_item_id; })
           .filter(Boolean)
       );
+      console.log('[Image Debug] scannedItemIds set size:', scannedItemIds.size, 'values:', JSON.stringify([...scannedItemIds]).substring(0, 500));
+      allFiles.forEach(function(f) { console.log('[Image Debug] Dedup check:', f.name, '| id:', f.id, '| inScannedSet:', scannedItemIds.has(f.id)); });
       const files = allFiles.filter(function(f) { return !scannedItemIds.has(f.id); });
       var deduped = allFiles.length - files.length;
       console.log('[Image Debug] allFiles:', allFiles.length, 'deduped:', deduped, 'filesToProcess:', files.length);
