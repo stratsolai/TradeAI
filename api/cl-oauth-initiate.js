@@ -110,10 +110,11 @@ module.exports = async (req, res) => {
   }
 
   if (config.flavour === 'xero') {
-    // Xero OpenID Connect — prompt=login forces re-authentication,
-    // select_account forces the organisation picker so the user
-    // chooses which Xero organisation to connect.
-    params.set('prompt', 'login select_account');
+    // Xero OpenID Connect — prompt=consent forces re-authorisation
+    // including the organisation picker so the user chooses which
+    // Xero organisation to grant access to. Xero does not support
+    // select_account — only login and consent are valid values.
+    params.set('prompt', 'consent');
   }
 
   if (config.flavour === 'dropbox') {
