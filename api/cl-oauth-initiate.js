@@ -110,10 +110,10 @@ module.exports = async (req, res) => {
   }
 
   if (config.flavour === 'xero') {
-    // Xero OpenID Connect — prompt=login forces the account picker so a
-    // user can connect a second organisation without being silently signed
-    // into the first.
-    params.set('prompt', 'login');
+    // Xero OpenID Connect — prompt=login forces re-authentication,
+    // select_account forces the organisation picker so the user
+    // chooses which Xero organisation to connect.
+    params.set('prompt', 'login select_account');
   }
 
   if (config.flavour === 'dropbox') {
