@@ -130,14 +130,7 @@ const handler = async (req, res) => {
       // Images use a single combined call — extraction prompt + vision
       // in one request — so sourceText is set to a placeholder and the
       // real extraction response is captured in imageExtractionResponse.
-      console.log('[Image Debug] Starting image extraction — mediaType:', imgMediaType, 'fileData length:', fileData ? fileData.length : 0);
-      try {
-        imageExtractionResponse = await extractImage(fileData, claudeApiKey, imgMediaType);
-        console.log('[Image Debug] extractImage response:', JSON.stringify(imageExtractionResponse).substring(0, 1000));
-      } catch (imgErr) {
-        console.error('[Image Debug] extractImage FAILED:', imgErr.message, imgErr.stack);
-        throw imgErr;
-      }
+      imageExtractionResponse = await extractImage(fileData, claudeApiKey, imgMediaType);
       sourceText = '[image processed directly]';
       sourceValue = 'photo';
     } else if ((fileType === 'text' || fileType === 'html') && fileData) {
@@ -206,7 +199,6 @@ const handler = async (req, res) => {
     if (imageExtractionResponse) {
       // Image path — single combined call already completed
       responseText = (imageExtractionResponse.content && imageExtractionResponse.content[0] && imageExtractionResponse.content[0].text) ? imageExtractionResponse.content[0].text : '';
-      console.log('[Image Debug] Extracted responseText (' + responseText.length + ' chars):', responseText.substring(0, 500));
     } else {
       // All other file types — text extraction then haiku classification
       var userPrompt = 'SOURCE CONTENT (' + sourceLabel + '):\n' + sourceText.substring(0, 8000);
