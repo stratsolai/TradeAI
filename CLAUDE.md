@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 8 2026
+# Updated: April 10 2026
 
 ---
 
@@ -86,6 +86,12 @@ Claude Code should work autonomously without asking permission
 at each step. Report back only when all work is complete or if
 something unexpected is found.
 
+The agreed working style is: go slowly, explain things in plain
+language before acting, check in before decisions that have
+consequences, never tell Code how to do its job technically —
+only what to do and why. The owner will push back when needed
+and should be encouraged to do so.
+
 ---
 
 ## Stylesheet Rollout Process
@@ -122,8 +128,9 @@ Outstanding before sign-off:
 
 ### Task 12 — Image Processing
 
-Extend all scan endpoints and upload tab to handle images.
-Spec required before build begins.
+Spec complete — StaxAI-Image-Processing-Spec-v1.1. Awaiting
+build. Prerequisite: PWA & Mobile Spec v1.1 — build complete,
+integration test pending.
 
 ### Task 13 — Accounting Platform Integration
 
@@ -297,6 +304,47 @@ Spec must cover at minimum:
   should land after Task 15's spec to take advantage of
   the queue.
 
+### Task 17 — Desktop-Only Message for Non-Mobile Pages
+
+Several authenticated pages are designated desktop-only and
+must show a friendly message when accessed from a mobile
+device in PWA standalone mode. The message should say the
+page is designed for desktop and include a Back to Dashboard
+button. Detection: check for standalone PWA mode using
+window.matchMedia('(display-mode: standalone)') combined
+with a mobile screen width check.
+
+Pages requiring this message (existing pages only — future
+tool pages get it when built):
+
+- content-library.html
+- cl-settings.html
+- strategic-plan.html
+- chatbot.html
+- chatbot-settings.html
+- email-assistant-settings.html
+- news-digest-settings.html
+- panel-auth.html
+
+No spec required for this task — instructions above are
+sufficient. Can be built in a single session.
+
+### Task 18 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
+
+A mobile layout audit was completed in April 2026 as part of
+the PWA build. The audit found layout issues across all
+authenticated pages. These fixes were deliberately deferred —
+they belong in the stylesheet rollout, not as piecemeal inline
+fixes. When the stylesheet rollout reaches each page, a fresh
+mobile audit should be run on that page and fixes applied at
+the same time as the stylesheet variables are rolled out. Do
+not attempt to fix mobile layout issues on any page outside of
+the stylesheet rollout sequence.
+
+Exception: content-library.html and cl-settings.html already
+have mobile fixes applied (April 2026) as these are the
+source-of-truth pages for the stylesheet.
+
 ---
 
 ## Known Issues & Notes
@@ -402,6 +450,36 @@ Spec must cover at minimum:
   after a successful scan for informational purposes
   only. Not used in any query logic. Review in a future
   session.
+- dashboard.html install banner: the PWA install prompt
+  banner was added to dashboard.html during the PWA build
+  (April 2026). The banner markup and logic must be
+  properly reviewed and integrated during the Dashboard
+  rebuild — it should not be treated as final.
+- Mobile vs desktop page split agreed April 2026. The
+  following pages are confirmed mobile-capable (full access
+  in PWA): dashboard.html, account.html, login.html,
+  forgot-password.html, reset-password.html, social.html,
+  email-assistant.html, news-digest.html,
+  customer-updates.html (when built), design-viz.html
+  (when built). All other authenticated pages are
+  desktop-only and will show the Task 17 message on
+  mobile. When new tool pages are built, confirm mobile or
+  desktop designation before build begins.
+- Dashboard as PWA launchpad: the Dashboard is the primary
+  home screen of the PWA. Tool tiles on the Dashboard are
+  intended as quick-action entry points for on-site
+  workflows. A tradie should be able to tap a tool tile,
+  take a photo, and complete a workflow without navigating
+  away. The specific implementation is designed during each
+  tool's functional review. The Dashboard rebuild spec must
+  account for this mobile-first tile design.
+- Camera pattern: all tools that support photo capture must
+  reuse the camera input pattern from PWA & Mobile Spec
+  v1.1 Section 9. No tool builds its own camera access
+  separately. Photos taken through a tool workflow are
+  automatically saved to the Content Library when the
+  workflow completes successfully. If the user abandons the
+  workflow before completion, the photo is not saved.
 
 ---
 
@@ -416,8 +494,9 @@ is complete and confirmed working.
 | 2    | ~~Complete CL Functional Improvements~~  DONE              |
 | 3    | ~~Complete Standalone Tasks A, B, C~~  DONE                |
 | 4    | ~~Complete CL Connections + lookback controls~~  DONE      |
+| 4b   | ~~Complete PWA & Mobile build~~  DONE                      |
 | 5    | ~~Complete CL Items (Manual Add Item, Editable Pending)~~  DONE |
-| 6    | Complete stylesheet rollout across CL files                |
+| 6    | Complete stylesheet rollout across CL files — includes mobile layout fixes for CL per April 2026 audit findings (already partially applied) |
 | 7    | Complete stylesheet rollout across cl-settings.html        |
 | 8    | Roll stylesheet out to all remaining authenticated pages   |
 | 9    | Integration tests — all 5 tools                            |
@@ -756,3 +835,12 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | integration test pending.           |
 | CL Connections Spec v1.2 App. A | Import lookback controls for all    |
 |                                 | CL connections. Awaiting build.     |
+| PWA & Mobile Spec v1.1          | PWA infrastructure, install prompt, |
+|                                 | mobile layout standard, camera      |
+|                                 | access pattern. Build complete,     |
+|                                 | integration test pending.           |
+|                                 | Prerequisite for Task 12.           |
+| Image Processing Spec v1.1      | Image ingestion across all CL       |
+|                                 | sources, on-site photo capture,     |
+|                                 | tool camera reuse pattern.          |
+|                                 | Awaiting build.                     |
