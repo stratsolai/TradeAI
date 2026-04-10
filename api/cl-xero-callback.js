@@ -109,24 +109,9 @@ export default async function handler(req, res) {
       console.error('Xero connections lookup failed:', connErr && connErr.message);
     }
 
-    // If the connections array is empty (no organisation connected to
-    // the Xero account yet), save the connection with a placeholder
-    // tenant_id derived from the id_token sub claim. A real tenant_id
-    // will be available once an organisation is connected in Xero.
     if (!tenantId) {
-      var sub = null;
-      if (tokenData.id_token) {
-        try {
-          var payload = tokenData.id_token.split('.')[1];
-          var decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf8'));
-          sub = decoded.sub || null;
-        } catch (decodeErr) {
-          console.error('Xero id_token decode failed:', decodeErr && decodeErr.message);
-        }
-      }
-      tenantId = sub || ('xero-pending-' + Date.now());
-      accountName = 'Xero Account';
-      console.log('Xero callback: no tenants found, using placeholder tenant_id:', tenantId);
+      console.error('Xero callback: could not determine tenant from /connections');
+      return redirectError(res, 'no_tenant');
     }
 
     // 3. Read existing cl_xero_accounts array
