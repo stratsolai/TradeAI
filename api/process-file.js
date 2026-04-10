@@ -257,6 +257,7 @@ const handler = async (req, res) => {
         user_id: userId,
         title: String(item.title).substring(0, 200),
         content_text: String(item.body),
+        content_type: fileType === 'image' ? 'image' : null,
         category: normCat,
         tool_tags: toolTags,
         status: status,
