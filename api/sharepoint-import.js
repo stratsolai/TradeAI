@@ -515,6 +515,38 @@ async function runExtractionPrompt(content, fileName) {
   }
 }
 
+// Run image extraction via Claude Sonnet vision — single combined call.
+async function runImageExtraction(base64Data, mediaType) {
+  var IMAGE_PROMPT = 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.';
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4000,
+      system: EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: [
+        { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: base64Data } },
+        { type: 'text', text: IMAGE_PROMPT }
+      ]}],
+    }),
+  });
+  const data = await response.json();
+  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
+  try {
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.error('Image extraction JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
+    return [];
+  }
+}
+
 // VERSIONING — find an existing approved item the new one should auto-archive.
 async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
   if (!VERSION_MATCH_RULES[category]) return null;
@@ -800,27 +832,59 @@ export default async function handler(req, res) {
           console.error('cl-assets/cl_source_items save error:', e.message);
         }
 
-        // Images: stub row for manual categorisation. Full image vision is Task 12.
+        // Images: run vision extraction via Claude Sonnet
         if (isImage) {
-          const sourceRef = 'sharepoint:' + file.id + ':0';
-          const row = {
-            user_id: userId,
-            title: String(file.name).substring(0, 200),
-            content_text: 'Image asset: ' + file.name,
-            category: 'Manual Upload',
-            tool_tags: [],
-            status: 'pending',
-            source: 'sharepoint',
-            tool_source: 'sharepoint-import',
-            source_ref: sourceRef,
-            source_item_id: sourceItemId,
-            source_detail: { filename: file.name, site_name: siteName, library_name: libraryName, mime_type: mimeType, account_email: accountEmail },
-          };
-          const insertRes = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
-          if (!insertRes.error) {
-            imported++;
-            fileItemCount++;
-            pending++;
+          var base64Data = imageBuffer.toString('base64');
+          var imgItems = await runImageExtraction(base64Data, mimeType);
+          if (!imgItems || imgItems.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
+          for (var imgIdx = 0; imgIdx < imgItems.length; imgIdx++) {
+            var imgItem = imgItems[imgIdx];
+            var imgSourceRef = 'sharepoint:' + file.id + ':' + imgIdx;
+            var imgNormCat = imgItem.category ? (CATEGORY_LOOKUP[String(imgItem.category).toLowerCase()] || 'Jobs, Portfolio & Photos') : 'Jobs, Portfolio & Photos';
+            var imgIsDiscard = DISCARD_CATEGORIES.indexOf(imgNormCat) > -1;
+            var imgStatus = imgIsDiscard ? 'rejected' : (imgItem.confidence === 'confident' ? 'approved' : 'pending');
+            var imgToolTags = Array.isArray(imgItem.tool_tags) ? imgItem.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+            var imgSourceDetail = { filename: file.name, site_name: siteName, library_name: libraryName, mime_type: mimeType, account_email: accountEmail };
+            if (imgIsDiscard) imgSourceDetail.rejection_source = 'auto';
+            if (imgNormCat === 'Financial Documents') imgStatus = 'pending';
+            var imgVersionMatchedId = null;
+            if (imgStatus === 'approved' && AUTO_ARCHIVE_CATEGORIES.indexOf(imgNormCat) > -1) {
+              imgVersionMatchedId = await findVersionMatch(supabase, userId, imgItem.title, imgItem.body, imgNormCat);
+            }
+            var imgRow = {
+              user_id: userId,
+              title: String(imgItem.title || file.name).substring(0, 200),
+              content_text: String(imgItem.body || ''),
+              content_type: 'image',
+              category: imgNormCat,
+              tool_tags: imgToolTags,
+              status: imgStatus,
+              source: 'sharepoint',
+              tool_source: 'sharepoint-import',
+              source_ref: imgSourceRef,
+              source_item_id: sourceItemId,
+              source_detail: imgSourceDetail,
+            };
+            var imgUpsertRes = await supabase.from('content_library').upsert(imgRow, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
+            if (imgUpsertRes.error) { console.error('content_library insert error:', imgUpsertRes.error.message); continue; }
+            imported++; fileItemCount++;
+            if (imgStatus === 'approved') approved++;
+            else if (imgStatus === 'rejected') rejected++;
+            else pending++;
+            var imgInsertedRow = imgUpsertRes.data;
+            if (imgInsertedRow && imgNormCat === 'Financial Documents') {
+              var imgPairMatchId = await findVersionMatch(supabase, userId, imgItem.title, imgItem.body, 'Financial Documents');
+              if (imgPairMatchId) {
+                var imgPairId = randomUUID();
+                fin_docs_paired++;
+                await supabase.from('content_library').update({ status: 'pending', version_pair_id: imgPairId }).eq('id', imgPairMatchId);
+                await supabase.from('content_library').update({ version_pair_id: imgPairId }).eq('id', imgInsertedRow.id);
+              }
+            }
+            if (imgInsertedRow && imgVersionMatchedId) {
+              var imgArchResult = await supabase.from('content_library').update({ status: 'archived', version_archived_by: imgInsertedRow.id }).eq('id', imgVersionMatchedId);
+              if (!imgArchResult.error) auto_archived++;
+            }
           }
           if (sourceItemId && fileItemCount > 0) {
             await supabase.from('cl_source_items').update({ item_count: fileItemCount }).eq('id', sourceItemId);
