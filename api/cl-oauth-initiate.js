@@ -55,6 +55,27 @@ module.exports = async (req, res) => {
       redirectUri: APP_BASE_URL + '/api/cl-drive-callback',
       flavour: 'google',
     },
+    xero: {
+      clientId: process.env.XERO_CLIENT_ID,
+      authUrl: 'https://login.xero.com/identity/connect/authorize',
+      scopes: 'openid profile email accounting.transactions.read accounting.contacts.read accounting.settings.read projects.read offline_access',
+      redirectUri: APP_BASE_URL + '/api/cl-xero-callback',
+      flavour: 'xero',
+    },
+    quickbooks: {
+      clientId: process.env.QUICKBOOKS_CLIENT_ID,
+      authUrl: 'https://appcenter.intuit.com/connect/oauth2',
+      scopes: 'com.intuit.quickbooks.accounting',
+      redirectUri: APP_BASE_URL + '/api/cl-quickbooks-callback',
+      flavour: 'quickbooks',
+    },
+    servicem8: {
+      clientId: process.env.SERVICEM8_CLIENT_ID,
+      authUrl: 'https://go.servicem8.com/oauth/authorize',
+      scopes: 'read_jobs read_clients read_invoices read_staff read_job_materials read_quotes read_forms',
+      redirectUri: APP_BASE_URL + '/api/cl-servicem8-callback',
+      flavour: 'servicem8',
+    },
   };
 
   const config = PROVIDERS[provider];
@@ -86,6 +107,13 @@ module.exports = async (req, res) => {
     // a refresh token is returned even on reconnects.
     params.set('access_type', 'offline');
     params.set('prompt', 'consent');
+  }
+
+  if (config.flavour === 'xero') {
+    // Xero OpenID Connect — prompt=login forces the account picker so a
+    // user can connect a second organisation without being silently signed
+    // into the first.
+    params.set('prompt', 'login');
   }
 
   if (config.flavour === 'dropbox') {
