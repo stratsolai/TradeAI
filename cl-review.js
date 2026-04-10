@@ -280,17 +280,15 @@ window.CL_REVIEW = {
         .from('cl_source_items')
         .select('id, file_url')
         .in('id', photoItemIds);
-      console.log('[Thumb Debug] cl_source_items rows:', JSON.stringify(siResult.data), 'error:', siResult.error);
       if (siResult.data) {
-        var selfImg = this;
-        siResult.data.forEach(function(si) {
+        for (var si_idx = 0; si_idx < siResult.data.length; si_idx++) {
+          var si = siResult.data[si_idx];
           if (si.file_url) {
-            var pubUrl = selfImg._supabase.storage.from('cl-assets').getPublicUrl(si.file_url);
-            if (pubUrl.data && pubUrl.data.publicUrl) selfImg._imageUrls[si.id] = pubUrl.data.publicUrl;
+            var signedResult = await this._supabase.storage.from('cl-assets').createSignedUrl(si.file_url, 3600);
+            if (signedResult.data && signedResult.data.signedUrl) this._imageUrls[si.id] = signedResult.data.signedUrl;
           }
-        });
+        }
       }
-      console.log('[Thumb Debug] _imageUrls map:', JSON.stringify(this._imageUrls));
     }
     this._updateBulkBar();
     this._renderFilterRow();
@@ -516,7 +514,6 @@ window.CL_REVIEW = {
     var thumbHtml = '';
     var itemSd = item.source_detail || {};
     if (itemSd.file_type === 'image' && item.source_item_id && this._imageUrls[item.source_item_id]) {
-      console.log('[Thumb Debug] Card image:', item.title, '| source_item_id:', item.source_item_id, '| url:', this._imageUrls[item.source_item_id]);
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
     return `<div class="review-card" data-id="${id}"${pairCardStyle}>
