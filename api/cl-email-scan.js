@@ -554,13 +554,30 @@ function discoverAttachments(payload) {
   function walk(part) {
     if (!part) return;
     if (part.filename && part.filename.length > 0 && part.body) {
-      attachments.push({
-        partId: part.partId || '',
-        filename: part.filename,
-        mimeType: part.mimeType || '',
-        size: part.body.size || 0,
-        attachmentId: part.body.attachmentId || '',
-      });
+      // Skip inline images (email signature logos, embedded banners) —
+      // check for Content-Disposition: inline or presence of Content-ID
+      var partHeaders = part.headers || [];
+      var isInline = false;
+      for (var h = 0; h < partHeaders.length; h++) {
+        var hName = (partHeaders[h].name || '').toLowerCase();
+        if (hName === 'content-disposition' && (partHeaders[h].value || '').toLowerCase().indexOf('inline') === 0) {
+          isInline = true;
+          break;
+        }
+        if (hName === 'content-id') {
+          isInline = true;
+          break;
+        }
+      }
+      if (!isInline) {
+        attachments.push({
+          partId: part.partId || '',
+          filename: part.filename,
+          mimeType: part.mimeType || '',
+          size: part.body.size || 0,
+          attachmentId: part.body.attachmentId || '',
+        });
+      }
     }
     if (part.parts) {
       for (var i = 0; i < part.parts.length; i++) { walk(part.parts[i]); }
