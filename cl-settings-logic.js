@@ -32,7 +32,7 @@ window.CL_SETTINGS_LOGIC = {
       self._checkToolOAuthReturn();
       self._bindPermissionModal();
 
-      self._bindCLPicker('drive-folder-picker', function () { self._saveDriveFolders(); });
+      self._bindCLPicker('drive-folder-picker', function () {});
       self._bindCLPicker('onedrive-folder-picker', function () {});
       self._bindCLPicker('sharepoint-site-picker', function () {});
       self._bindCLPicker('sharepoint-library-picker', function () {});
@@ -708,35 +708,6 @@ window.CL_SETTINGS_LOGIC = {
     }
   },
 
-  _saveDriveFolders: async function () {
-    var self = this;
-    var picker = document.getElementById('drive-folder-picker');
-    if (!picker) return;
-    var accountEmail = picker.getAttribute('data-account');
-    if (!accountEmail) return;
-    var entryIdx = self._driveAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-    if (entryIdx === -1) return;
-    var checkboxes = document.querySelectorAll('.drive-folder-checkbox:checked:not(:disabled)');
-    var newFolders = [];
-    checkboxes.forEach(function (cb) {
-      newFolders.push({ id: cb.getAttribute('data-folder-id'), name: cb.getAttribute('data-folder-name') });
-    });
-    if (newFolders.length === 0) {
-      picker.style.display = 'none';
-      return;
-    }
-    var existing = Array.isArray(self._driveAccounts[entryIdx].folders) ? self._driveAccounts[entryIdx].folders : [];
-    self._driveAccounts[entryIdx].folders = existing.concat(newFolders);
-    try {
-      var res = await self._supabase
-        .from('profiles')
-        .update({ cl_drive_accounts: self._driveAccounts })
-        .eq('id', self._userId);
-      if (res.error) { console.error('_saveDriveFolders error:', res.error); return; }
-      self._renderDriveList();
-      picker.style.display = 'none';
-    } catch (e) { console.error('_saveDriveFolders exception:', e); }
-  },
 
   // ── Task 10 CL Connections — OneDrive, SharePoint, Dropbox ─────────────
   // All three follow the Gmail/Outlook multi-account pattern: tokens are
