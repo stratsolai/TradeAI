@@ -72,6 +72,8 @@
     .toggle-row { display: flex; align-items: center; gap: 12px; }
     .toggle-label { font-size: 14px; font-weight: 600; }
     .save-row { display: flex; gap: 12px; margin-top: 8px; }
+    .email-account-actions { display: flex; align-items: center; gap: 12px; }
+    #add-category-btn { margin-top: 8px; }
   </style>
 </head>
 <body>
@@ -120,14 +122,14 @@
       <div class="card-body">
         <div class="email-account-row">
           <span class="email-account-label">Gmail</span>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div class="email-account-actions">
             <span class="connection-status disconnected" id="gmail-status">Not connected</span>
             <button class="btn-connect" id="connect-gmail-btn">Connect Gmail</button>
           </div>
         </div>
         <div class="email-account-row">
           <span class="email-account-label">Outlook</span>
-          <div style="display:flex;align-items:center;gap:12px;">
+          <div class="email-account-actions">
             <span class="connection-status disconnected" id="outlook-status">Not connected</span>
             <button class="btn-connect" id="connect-outlook-btn">Connect Outlook</button>
           </div>
@@ -138,7 +140,7 @@
       <div class="card-header"><h2>Categories</h2><p>Toggle categories on or off and rename them to suit your business.</p></div>
       <div class="card-body">
         <div id="categories-list"></div>
-        <button class="btn-sm btn-add-category" id="add-category-btn" style="margin-top:8px;">Add Category</button>
+        <button class="btn-sm btn-add-category" id="add-category-btn">Add Category</button>
       </div>
     </div>
     <div class="settings-card">
