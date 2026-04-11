@@ -102,7 +102,7 @@
     }
     .btn-save {
       background: var(--blue);
-      color: #fff;
+      color: var(--white);
       border: none;
       font-family: var(--body-font);
       font-size: 14px;
@@ -112,7 +112,7 @@
       cursor: pointer;
       transition: background 0.15s;
     }
-    .btn-save:hover { background: #154070; }
+    .btn-save:hover { background: var(--blue-dark); }
     .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
     .save-msg {
       font-size: 13px;
@@ -124,7 +124,7 @@
     .connection-status:empty { display: none; }
     .connection-status.connected { color: var(--green); font-weight: 600; }
     .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); transition: background 0.15s; }
-    .btn-connect:hover { background: #154070; }
+    .btn-connect:hover { background: var(--blue-dark); }
     .btn-connect.disconnect { background: var(--red); }
     .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
     .settings-text-input { border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
@@ -152,17 +152,17 @@
     .connection-item-lookback { display: inline-flex; align-items: center; flex-shrink: 0; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
-    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
+    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: 8px; padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background 0.15s, color 0.15s; }
     .btn-disconnect::before { content: "\2717"; font-size: 14px; }
-    .btn-disconnect:hover { background: #fef2f2; color: #8B2500; }
+    .btn-disconnect:hover { background: var(--red-hover-bg); color: var(--red-dark); }
 
     /* Remove — same red-outline style as Disconnect, smaller. Used inside folder/library/URL rows. */
-    .btn-remove-folder, .btn-remove-url { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: #fff; color: #8B2500; border: 2px solid #8B2500; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background 0.15s, color 0.15s; }
+    .btn-remove-folder, .btn-remove-url { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background 0.15s, color 0.15s; }
     .btn-remove-folder::before, .btn-remove-url::before { content: "\2717"; font-size: 12px; }
-    .btn-remove-folder:hover, .btn-remove-url:hover { background: #fef2f2; color: #8B2500; }
+    .btn-remove-folder:hover, .btn-remove-url:hover { background: var(--red-hover-bg); color: var(--red-dark); }
 
     /* Add — blue-outline counterpart to btn-remove-folder, same dimensions. Used in the Drive folder picker. */
-    .btn-add-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background 0.15s, color 0.15s; }
+    .btn-add-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background 0.15s, color 0.15s; }
     .btn-add-folder:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Folder picker Close buttons — red-outline style without the ✗ icon */
@@ -173,11 +173,11 @@
     #dropbox-folder-picker-cancel::before { content: none; }
 
     /* Add buttons — blue outline */
-    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
+    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background 0.15s; }
     .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Choose Folders / Choose Site / Choose Sites / Choose Libraries — same look as the add button */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: #fff; color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background 0.15s; white-space: nowrap; }
+    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background 0.15s; white-space: nowrap; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-sites:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles.
@@ -187,7 +187,7 @@
     .connection-folder-name { width: 360px; flex: 0 0 360px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
-    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: #fff; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
+    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
     .drive-lookback-select:hover { background-color: var(--blue-light); }
     .drive-lookback-select:focus { outline: none; }
 
@@ -198,7 +198,7 @@
     .website-url-input:focus { outline: none; border-color: var(--blue); }
 
     .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background 0.15s; }
-    .btn-save-urls:hover { background: #154070; }
+    .btn-save-urls:hover { background: var(--blue-dark); }
 
     /* Connection row control — Add buttons align right; lists fill width */
     .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; flex: 1 1 auto; min-width: 0; }
@@ -207,10 +207,10 @@
     #connections-rows .settings-row > div:first-child { flex: 0 0 300px; max-width: 300px; }
 
     /* ── TABS ── */
-    .stab-bar { display:flex; gap:0; border-bottom:2px solid #e5e5e5; margin-bottom:28px; }
-    .stab { padding:13px 24px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:#888888; cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
-    .stab:hover { color:#333333; }
-    .stab.active { color:#4A6D8C; border-bottom-color:#4A6D8C; font-weight:600; }
+    .stab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:28px; }
+    .stab { padding:13px 24px; font-family:var(--body-font); font-size:14px; font-weight:500; color:var(--text-muted); cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
+    .stab:hover { color:var(--text); }
+    .stab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
     .stab-panel { display:none; }
     .stab-panel.active { display:block; width:100%; box-sizing:border-box; }
 
@@ -247,7 +247,7 @@
     .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:8px; padding:10px 22px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--body-font); transition:background 0.15s; }
     .perm-modal-cancel:hover { background:var(--bg); }
     .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:8px; padding:10px 22px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--body-font); transition:background 0.15s; }
-    .perm-modal-continue:hover { background:#154070; }
+    .perm-modal-continue:hover { background:var(--blue-dark); }
 
     @media (max-width: 768px) {
       .connection-item-email,
