@@ -67,7 +67,6 @@
     .btn-grey:hover { background: #e0e0e0; }
     .btn-outline { background: white; color: var(--blue); border: 2px solid var(--blue); }
     .btn-outline:hover { background: var(--blue-light); }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
     .btn-full { width: 100%; justify-content: center; }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -251,18 +250,6 @@
     .filter-btn:hover { border-color: var(--blue); color: var(--blue); }
     .filter-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
 
-    .search-input {
-      flex: 1;
-      min-width: 200px;
-      padding: 8px 14px;
-      border: 1.5px solid var(--border);
-      border-radius: 20px;
-      font-size: 13px;
-      font-family: inherit;
-    }
-
-    .search-input:focus { outline: none; border-color: var(--blue); }
-
     /* Secondary tabs (Pending/Approved/Rejected) */
     .secondary-tabs {
       display: flex;
@@ -313,8 +300,6 @@
       gap: 14px;
       cursor: pointer;
     }
-
-    .review-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
 
     .review-item-thumb {
       width: 60px; height: 60px;
@@ -567,22 +552,6 @@
       margin-bottom: 10px;
     }
 
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .status-badge.pending { background: var(--orange-light); color: var(--orange); }
-    .status-badge.approved { background: var(--green-light); color: var(--green); }
-    .status-badge.rejected { background: #fef2f2; color: var(--red); }
-    .status-badge.scheduled { background: var(--blue-light); color: var(--blue); }
-    .status-badge.posted { background: #f0f0f0; color: #666; }
-
     .platform-chip {
       display: inline-flex;
       align-items: center;
@@ -682,7 +651,6 @@
     }
   
     .topbar-logo { height: 38px; display: block; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
     .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
     .topbar-link:hover { text-decoration: underline; }
     .topbar-account { position: relative; }
@@ -698,7 +666,6 @@
     .topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;cursor:pointer;}
 
     /* ─── UPLOAD TAB ─── */
-    .upload-tab-inner { padding: 8px 0; }
     .upload-section { margin-bottom: 28px; }
     .upload-section-title { font-size: 15px; font-weight: 700; color: #333; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
     .upload-section-note { font-size: 13px; color: #888; margin-bottom: 12px; }
@@ -713,14 +680,11 @@
     .btn-photo-secondary { background: #fff; color: var(--blue, #4A6D8C); border-color: var(--blue, #4A6D8C); }
     .btn-photo-secondary:hover { background: #f0f5fb; }
     .btn-icon { font-size: 18px; }
-    .offline-banner { background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; padding: 10px 16px; font-size: 14px; color: #856404; margin-bottom: 16px; }
     .drop-zone { border: 2px dashed #c8d6e5; border-radius: 12px; background: #f8fafc; padding: 36px 24px; text-align: center; cursor: pointer; transition: all 0.2s; }
     .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue, #4A6D8C); background: #edf3fb; }
     .drop-zone-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .drop-icon { font-size: 36px; }
     .drop-label { font-size: 15px; color: #555; }
-    .btn-browse { background: var(--blue, #4A6D8C); color: #fff; border: none; border-radius: 6px; padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-browse:hover { background: #1a4070; }
     .drop-hint { font-size: 12px; color: #999; }
     .upload-progress { margin-top: 12px; font-size: 14px; color: #555; }
     .website-import-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -749,7 +713,6 @@
     .review-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
     .review-search { width: 100%; padding: 10px 14px; border: 1px solid #dde3ea; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; }
     .review-search:focus { border-color: var(--blue, #4A6D8C); }
-    .review-list { display: flex; flex-direction: column; gap: 12px; }
     .badge-green { background: #d4edda; color: #155724; }
     .badge-orange { background: #fff3cd; color: #856404; }
     .badge-purple { background: #e8d5f5; color: #6a1b9a; }
