@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 10 2026
+# Updated: April 11 2026
 
 ---
 
@@ -142,135 +142,37 @@ registration with Buildxact support required before build
 can begin. Integration test complete — Xero, QuickBooks,
 and ServiceM8 all connected successfully. Disconnect not
 yet verified. Fetch endpoint data pull testing deferred to
-each tool's integration test.
+each tool's integration test. Fergus — developer platform
+registration email sent April 2026, awaiting response. API
+confirmed available (OAS 3.1, 100 requests per minute rate
+limit). Build deferred pending registration approval.
+Tradify — enquiry email sent April 2026, awaiting
+confirmation of whether a public API is available. Build
+deferred pending response.
 
 ### Task 14 — Email Attachment Scanning (Gmail + Outlook)
 
-Extend cl-email-scan.js and cl-outlook-scan.js to read message
-attachments in addition to the email body. Currently both
-endpoints only call extractEmailBody / extractOutlookBody and
-ignore every attachment on every message — invoices, supplier
-statements, quotes, brochures, certificates, and price lists
-that arrive as PDF/DOCX/XLSX attachments are silently invisible
-to the platform. For SMBs this is the largest single ingestion
-gap because business email value lives in the attachments, not
-the cover message.
-
-Spec required before build begins. Spec must cover at minimum:
-
-- Attachment discovery — Gmail's payload.parts walk for parts
-  with Content-Disposition: attachment, Outlook's
-  /messages/{id}/attachments endpoint.
-- Per-attachment download via the relevant provider API
-  (Gmail users.messages.attachments.get, Outlook
-  /messages/{id}/attachments/{attachmentId}/$value).
-- Reuse the canonical CL intake pipeline once the attachment
-  bytes are in hand — same EXTRACTION_SYSTEM_PROMPT, same
-  disposition / confidence / Financial Documents / auto-archive
-  logic, same cl_source_items + content_library shape used by
-  the file connectors. The shared extraction prompt is already
-  duplicated across the connectors and is on the consolidation
-  list — worth deciding before this build whether to extract
-  the prompt to a shared module first or duplicate it once more.
-- File format coverage — at minimum the same set the cloud
-  connectors accept (PDF, DOCX, XLSX, PPTX, legacy Office,
-  text/*, images). Gate at the same place the other connectors
-  do.
-- Dedupe key — message-id alone is no longer enough since one
-  message can carry many attachments. Suggest a composite key
-  of gmail_message_id / outlook_message_id + attachment_id (or
-  attachment filename hash) on cl_source_items.source_detail.
-- Size and rate limits — Claude document API caps documents
-  around 32MB base64; Gmail attachments can exceed that. Spec
-  must say what happens for oversized attachments (skip with
-  explicit log? attempt anyway? offer manual fallback?).
-- last_scanned_at semantics — currently the email scanners
-  stamp last_scanned_at after a successful body scan. With
-  attachments, decide whether the timestamp should advance on
-  body-only success or only when attachments are also processed,
-  so a partial failure does not skip everything on rescan.
-- Lookback interaction — Task 14 should respect the per-account
-  lookback_months value once Lookback Controls Appendix A is
-  built.
+Gmail attachment scanning complete and integration tested —
+signed off. Inline image filter added — Content-Disposition:
+inline and Content-ID header check prevents signature logos
+appearing in Source Review. Note: source_ref for Outlook
+attachments uses outlook-email-attachment: prefix as built —
+treat as canonical, not the outlook-attachment: prefix in
+the spec. Outlook attachment scanning build complete —
+integration test deferred until Task 15 complete and Outlook
+timeout resolved.
 
 ### Task 15 — Background Scan Processing
 
-Move scan execution off the synchronous Vercel serverless
-request path and onto a queue + worker model so scans are
-not bound by the 300-second function timeout, do not lose
-their state when the user navigates away, and do not block
-the upload tab while running. Architecture is **Option B —
-Supabase queue + Vercel Cron worker**. Spec required before
-build begins.
-
-Key design requirements for the spec:
-
-- cl_scan_jobs table schema — at minimum: id, user_id,
-  source_type, source_account, source_path / source_id,
-  status (queued / running / completed / failed),
-  approved / pending / rejected counters, error text,
-  created_at, started_at, completed_at, last_heartbeat_at,
-  retry_count.
-- Queue endpoint — POST /api/scan-queue inserts a row and
-  returns immediately with the job id. cl-upload.js calls
-  this in place of the current direct /api/<source>-import
-  fetches and shows a "scan queued" state on the tile.
-- Worker endpoint — /api/scan-worker picks up queued jobs
-  (FIFO with optional prioritisation), runs the existing
-  import-all logic for that source against the job's
-  account / folder, and updates the job row with counts and
-  status. Existing import endpoint logic is reused so the
-  canonical CL intake pipeline does not get duplicated.
-- Vercel Cron wiring — scan-worker invoked on a Vercel Cron
-  schedule (per the Pro plan minimum interval). Each cron
-  invocation processes a small batch of queued jobs and
-  exits well before the 300-second cap, then the next cron
-  tick picks up the next batch.
-- UI changes — cl-upload.js shows a queued state on each
-  tile after Scan Now, polls /api/scan-jobs?user_id= for
-  status updates (or subscribes via Supabase Realtime if
-  the latency is too high), and renders the existing
-  stacking dismissible messages when each job completes.
-- Concurrency limits — cap the number of jobs the worker
-  processes in parallel within a single cron invocation,
-  and cap the number of in-flight Claude API calls across
-  all running jobs. Stays well under the Anthropic per-key
-  rate limit even at peak.
-- Claude API rate limit handling — on a 429 from
-  api.anthropic.com, the worker should requeue the current
-  job with a backoff delay rather than failing it. Track
-  retries on the job row and only mark failed after a
-  configurable number of retries.
-- Job prioritisation — manual scans (user clicked Scan Now)
-  take priority over scheduled scans (frequency setting).
-  Spec needs to define how this is expressed in the queue
-  ordering.
-- Timeout recovery — jobs stuck in running state after 10
-  minutes (i.e. last_heartbeat_at older than 10 minutes)
-  are reset to queued by a watchdog so a Vercel function
-  death does not strand the job. The worker writes
-  last_heartbeat_at periodically while running.
-- Designed for scale from the start — the schema, the
-  queue ordering, and the concurrency caps must work for
-  hundreds of users with multiple connected accounts each
-  scanning daily, not just for the current handful of
-  test users. Decisions baked in at spec time so we do
-  not have to re-architect when usage grows.
-
-When the admin dashboard is built it must include scan
-queue monitoring — job counts by status, average and 95th
-percentile processing times by source, failure rates, queue
-depth, oldest queued job age. If scan performance degrades
-under load — queue depth growing faster than the worker
-can drain it, processing times climbing into the cron
-interval, retry counts spiking — the architecture should
-be migrated from Option B to Inngest before users are
-affected. Inngest's durable execution model handles queue
-overflow, concurrency control, and retries natively
-without the cron-interval latency floor; the migration
-target is documented up front so the admin dashboard
-metrics can be set against thresholds that trigger the
-migration.
+Build complete. Integration test in progress. Stop Scan
+button wired to queue model — queued jobs deleted, running
+jobs set to cancelled. Supabase Realtime drives tile state
+updates. cl-upload.js updated with unified queue loop
+replacing all direct scan endpoint calls. Issues resolved
+during build: Vercel cron GET/POST method fix, VERCEL_URL
+deployment protection bypass via direct module imports
+replacing HTTP fetch calls, scan-queue.js maxDuration: 300
+added.
 
 ### Task 16 — Website Subpage Crawling
 
