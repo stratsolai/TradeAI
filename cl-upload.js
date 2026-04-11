@@ -45,7 +45,7 @@ window.CL_UPLOAD = {
           "<span class=\"upload-btn-sub\">Drag and drop or tap to browse</span>",
         "</button>",
         "<button class=\"upload-primary-btn\" id=\"cl-manual-btn\">",
-          "<span class=\"upload-btn-icon\" style=\"font-size:inherit\">✏️</span>",
+          "<span class=\"upload-btn-icon\">✏️</span>",
           "<span class=\"upload-btn-label\">Add Manual Item</span>",
           "<span class=\"upload-btn-sub\">Add content directly to your library</span>",
         "</button>",
