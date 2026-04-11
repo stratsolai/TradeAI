@@ -3,25 +3,6 @@ window._initSettings = async function () {
   if (!session) { window.location.href = "/login"; return; }
   const user = session.user;
 
-  const elShort = document.getElementById("account-email-short");
-  const elFull = document.getElementById("account-dropdown-email");
-  if (elShort) elShort.textContent = "Account";
-  if (elFull) elFull.textContent = user.email || "";
-
-  const accountBtn = document.getElementById("account-btn");
-  const accountDropdown = document.getElementById("account-dropdown");
-  if (accountBtn && accountDropdown) {
-    accountBtn.addEventListener("click", function (e) { e.stopPropagation(); accountDropdown.classList.toggle("open"); });
-    document.addEventListener("click", function () { accountDropdown.classList.remove("open"); });
-  }
-  const signOutBtn = document.getElementById("sign-out-btn");
-  if (signOutBtn) {
-    signOutBtn.addEventListener("click", async function () {
-      await window.supabaseClient.auth.signOut();
-      window.location.href = "/login";
-    });
-  }
-
   let settings = {};
   try {
     const { data } = await window.supabaseClient
