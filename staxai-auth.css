@@ -44,6 +44,7 @@
   --bg-subtle:          #f8fafc;
   --border-light:       #F0F0F0;
   --blue-accent-hover:  #2e5070;
+  --grey-accent:        #78909C;
 
   /* Badge-specific colours (separate from core vars) */
   --badge-green-bg:     #d4edda;
