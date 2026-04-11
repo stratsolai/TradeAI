@@ -84,6 +84,7 @@
     // ptab onclick system (content-library)
     function initHashTabsPtab(tabs) {
       function getTabName(tab) {
+        if (tab.dataset && tab.dataset.tab) return tab.dataset.tab;
         var onclick = tab.getAttribute('onclick') || '';
         var match = onclick.match(/switchPTab\(['"]([^'"]+)['"]\)/);
         return match ? match[1] : null;
