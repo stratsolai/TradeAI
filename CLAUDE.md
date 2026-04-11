@@ -96,18 +96,22 @@ and should be encouraged to do so.
 
 ## Stylesheet Rollout Process
 
-The agreed process for the CSS variable rollout across all
+The agreed process for the stylesheet rollout across all
 authenticated pages:
 
-1. Code reads the next CSS block in the target file AND the
-   stylesheet, compares them, and reports any missing or
-   incorrect values in the stylesheet
-2. Chat and owner review findings and decide what is correct
-3. Code makes both changes together — updates stylesheet first,
-   then swaps hardcoded values in the file — two separate
-   commits, one per file
-4. Owner checks browser to confirm nothing changed visually
-5. Repeat for next block
+1. Structural analysis of the page — report only, no changes
+2. Review findings together and plan the cleanup
+3. Structural cleanup — one commit per change, browser check
+   after each
+4. CSS analysis of the cleaned page against staxai-auth.css —
+   report only
+5. Review findings together and agree what goes into the
+   stylesheet
+6. Update staxai-auth.css — one commit
+7. Roll CSS variables out to the page — one commit
+8. Browser check — confirm nothing changed visually
+9. Mobile audit and fixes
+10. Browser check
 
 ---
 
@@ -143,7 +147,11 @@ confirmation of whether public API is available.
 
 Build complete April 2026. Final test of output content
 and tile counts blocked until tools send data to the
-Content Library.
+Content Library. content-library.html structural cleanup
+complete April 2026 — dead CSS removed, dead modals
+removed, inline onclick handlers moved to logic file,
+inline styles moved to CSS block. File reduced from
+1,171 to approximately 510 lines.
 
 ### Task 19 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
 
@@ -380,13 +388,14 @@ is complete and confirmed working.
 | 4    | ~~Complete Task 15 — Background Scan Processing spec and build~~ **COMPLETE** |
 | 5    | ~~Complete Task 16 — Website Subpage Crawling spec and build~~ **COMPLETE** |
 | 6    | ~~Complete Task 17 — Desktop-only message for non-mobile pages~~ **COMPLETE** |
-| 7    | Complete stylesheet rollout across CL files                |
-| 8    | Complete stylesheet rollout across cl-settings.html        |
-| 9    | Roll stylesheet out to all remaining authenticated pages   |
-| 10   | Functional reviews — all 5 built tools                     |
-| 11   | Improvements per tool based on functional review findings  |
-| 12   | Integration tests — all 5 built tools                      |
-| 13   | Dashboard rebuild                                          |
+| 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
+| 8    | Stylesheet rollout — content-library.html CSS analysis and variable rollout |
+| 9    | Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout |
+| 10   | Stylesheet rollout — all remaining authenticated pages     |
+| 11   | Functional reviews — all 5 built tools                     |
+| 12   | Improvements per tool based on functional review findings  |
+| 13   | Integration tests — all 5 built tools                      |
+| 14   | Dashboard rebuild                                          |
 
 ---
 
