@@ -184,9 +184,9 @@
     .connection-folder-name { width: 360px; flex: 0 0 360px; border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
-    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
-    .drive-lookback-select:hover { background-color: var(--blue-light); }
-    .drive-lookback-select:focus { outline: none; }
+    .drive-lookback-select, .email-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: 8px; padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
+    .drive-lookback-select:hover, .email-lookback-select:hover { background-color: var(--blue-light); }
+    .drive-lookback-select:focus, .email-lookback-select:focus { outline: none; }
 
     /* Website multi-URL list — input boxes hardcoded to the same width as the account email box */
     #website-urls-list { width: 100%; }
@@ -254,6 +254,7 @@
       .settings-text-input,
       .website-url-input,
       .drive-lookback-select,
+      .email-lookback-select,
       select { font-size: 16px; }
     }
 </style>
