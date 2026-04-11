@@ -6,11 +6,24 @@ window.CL_UPLOAD = {
 
   _supabase: null,
 
+  // Display names for each scan source tile. Used by completion
+  // messages and the job restore logic on page load.
+  _SOURCE_NAMES: {
+    gdrive: "Google Drive",
+    onedrive: "OneDrive",
+    sharepoint: "SharePoint",
+    dropbox: "Dropbox",
+    gmail: "Gmail",
+    outlook: "Outlook",
+    website: "Website"
+  },
+
   init: function(supabase) {
     this._supabase = supabase;
     this._render();
     this._bindEvents();
     this._loadConnectionStatus();
+    this._restoreActiveJobs();
   },
 
   _render: function() {
@@ -576,6 +589,115 @@ window.CL_UPLOAD = {
     if (!this._activeJobs[source]) return;
     this._activeJobs[source] = this._activeJobs[source].filter(function(j) { return j.jobId !== jobId; });
     if (this._activeJobs[source].length === 0) delete this._activeJobs[source];
+  },
+
+  // Subscribe to a cl_scan_jobs row for a source tile that was already
+  // in progress when the page loaded. Mirrors the watchJob() closure
+  // inside _handleScanNow but operates standalone — finds the tile
+  // button from the DOM, sets its text, and subscribes to Realtime.
+  _watchJobForSource: function(source, jobId, currentStatus, label) {
+    var self = this;
+    var grid = document.getElementById("cl-sources-grid");
+    if (!grid) return;
+    var btn = grid.querySelector(".source-scan-btn[data-source=\"" + source + "\"]");
+    if (!btn) return;
+
+    // Set initial button state
+    if (currentStatus === "running") {
+      btn.textContent = "Scanning...";
+      btn.disabled = true;
+    } else if (currentStatus === "queued") {
+      btn.textContent = "Scan Queued...";
+      btn.disabled = true;
+    }
+
+    // Track as active job
+    if (!self._activeJobs[source]) self._activeJobs[source] = [];
+    self._activeJobs[source].push({ jobId: jobId, status: currentStatus });
+
+    var channel = self._supabase
+      .channel("scan-job-" + jobId)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "cl_scan_jobs", filter: "id=eq." + jobId },
+        function(payload) {
+          var row = payload.new;
+          if (!row) return;
+          var tracked = (self._activeJobs[source] || []).find(function(j) { return j.jobId === jobId; });
+          if (tracked) tracked.status = row.status;
+
+          if (row.status === "running") {
+            btn.textContent = "Scanning...";
+          } else if (row.status === "completed") {
+            var imp = row.imported_count || 0;
+            var pend = row.pending_count || 0;
+            var sk = row.skipped_count || 0;
+            var parts = [];
+            if (imp > 0) parts.push(imp + " imported");
+            if (pend > 0) parts.push(pend + " pending");
+            if (sk > 0) parts.push(sk + " skipped");
+            var tileName = self._SOURCE_NAMES[source] || source;
+            self._appendUploadMessage(tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content"), "success");
+            btn.textContent = "Scan Now";
+            btn.disabled = false;
+            if (typeof loadStats === "function") loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          } else if (row.status === "failed") {
+            var tileName2 = self._SOURCE_NAMES[source] || source;
+            self._appendUploadMessage(tileName2 + " — " + label + " — error: " + (row.error_text || "Scan failed"), "error");
+            btn.textContent = "Scan Now";
+            btn.disabled = false;
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          } else if (row.status === "cancelled") {
+            var tileName3 = self._SOURCE_NAMES[source] || source;
+            self._appendUploadMessage(tileName3 + " — " + label + " — scan stopped", "error");
+            btn.textContent = "Scan Now";
+            btn.disabled = false;
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          }
+        }
+      )
+      .subscribe();
+    self._jobSubscriptions[jobId] = channel;
+  },
+
+  // On page load, check for any in-progress scan jobs belonging to the
+  // current user and restore their tile state + Realtime subscriptions.
+  _restoreActiveJobs: async function() {
+    var self = this;
+    try {
+      var userResp = await self._supabase.auth.getUser();
+      var user = userResp.data && userResp.data.user;
+      if (!user) return;
+
+      var jobsResp = await self._supabase
+        .from("cl_scan_jobs")
+        .select("id, source_type, source_account, status")
+        .eq("user_id", user.id)
+        .in("status", ["queued", "running"])
+        .order("created_at", { ascending: true });
+
+      var jobs = (jobsResp.data || []);
+      if (jobs.length === 0) return;
+
+      console.log("[cl-upload] Restoring", jobs.length, "active job(s) on page load");
+
+      for (var i = 0; i < jobs.length; i++) {
+        var job = jobs[i];
+        // Use source_account as the label (email address, URL, or account)
+        var label = job.source_account || job.source_type;
+        self._watchJobForSource(job.source_type, job.id, job.status, label);
+      }
+    } catch (err) {
+      console.error("[cl-upload] Restore active jobs error:", err.message);
+    }
   },
 
   _handleStopScan: function(source) {
