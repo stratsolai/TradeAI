@@ -88,7 +88,7 @@ export default async function handler(req, res) {
 
     fetch(workerUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (process.env.CRON_SECRET || '') },
       body: JSON.stringify({ triggerSource: 'scan-queue', jobId: jobId }),
     }).catch(function(err) {
       // Fire-and-forget — log but do not fail the queue response
