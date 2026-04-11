@@ -42,7 +42,7 @@
       margin-right: auto;
       display: flex;
       align-items: center;
-      gap: 28px;
+      gap: 24px;
     }
     .topbar-nav a {
       color: rgba(255,255,255,0.75);
@@ -51,7 +51,7 @@
       text-decoration: none;
     }
     .topbar-nav a:hover { color: #fff; }
-    nav.topbar-right {
+    .topbar-right {
       display: flex;
       align-items: center;
       gap: 16px;
@@ -296,26 +296,25 @@
 </head>
 <body>
 
-  <!-- Topbar — matches /library exactly -->
-  <div class="topbar">
+  <nav class="topbar">
     <a href="/" class="topbar-logo">
-      <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
     <div class="topbar-nav">
       <a href="/dashboard">Dashboard</a>
     </div>
-    <nav class="topbar-right">
- <a class="topbar-nav-link" href="/email/settings">Settings</a>
-      <button class="account-btn" id="account-btn">
-        Account &#9660;
-      </button>
-      <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-email" id="account-dropdown-email"></div>
-        <a href="/account" class="account-dropdown-item">Account Management</a>
-        <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a class="topbar-nav-link" href="/email/settings">Settings</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+        </div>
       </div>
-    </nav>
-  </div>
+    </div>
+  </nav>
 
   <!-- Main page -->
   <div class="ea-page">
