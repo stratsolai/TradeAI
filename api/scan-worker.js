@@ -231,6 +231,11 @@ async function processJob(supabase, job, baseUrl, deadline) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  // ── TEMPORARY DEBUG — remove after confirming auth works ───────────
+  var _csSet = !!process.env.CRON_SECRET;
+  var _csPrefix = _csSet ? process.env.CRON_SECRET.substring(0, 4) : 'n/a';
+  console.log('[scan-worker DEBUG] CRON_SECRET set:', _csSet, '| prefix:', _csPrefix, '| Authorization header:', req.headers['authorization'] || '(none)');
+
   // ── CRON_SECRET auth ─────────────────────────────────────────────────
   var cronSecret = process.env.CRON_SECRET;
   var authHeader = req.headers['authorization'] || '';
