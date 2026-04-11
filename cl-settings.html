@@ -8,75 +8,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/staxai-auth.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
   <style>
-    :root {
-    --blue: #4A6D8C;
-    --blue-light: #e8f4fd;
-    --orange: #c4622a;
-    --orange-light: #fff3ee;
-    --green: #28a745;
-    --green-light: #edfaf1;
-    --red: #dc3545;
-    --grey: #6c757d;
-    --bg: #f5f7fa;
-    --white: #ffffff;
-    --border: #e5e5e5;
-    --text: #333333;
-    --text-muted: #888888;
-    --heading-font: 'Barlow Condensed', sans-serif;
-    --body-font: 'DM Sans', sans-serif;
-  }
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: var(--body-font);
-      background: var(--bg); color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── TOPBAR ── */
-    .topbar {
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      height: 68px;
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .topbar-logo {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      text-decoration: none;
-      color: #fff;
-      flex-shrink: 0;
-      margin-right: 20px;
-    }
-    .topbar-logo img { height: 38px; width: auto; display: block; }
-    .topbar-nav {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-      margin-left: 64px;
-    }
-    .topbar-nav a {
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-      font-size: 16px;
-      font-weight: 600;
-      transition: color 0.15s;
-    }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
     /* ── PAGE ── */
     .page-wrap {
       max-width: 960px;
@@ -200,9 +136,6 @@
     .settings-row-label { font-weight: 600; color: var(--text); font-size: 14px; font-family: var(--body-font); }
     .settings-row-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; font-family: var(--body-font); }
 
-    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-nav-link:hover { color: #fff; }
-
     /* Connection multi-account list — two-row layout via JS-rendered wrappers:
        row 1 = email + Disconnect, row 2 = lookback + Choose Folders (right-aligned) */
     .connection-list { width: 100%; }
@@ -273,18 +206,6 @@
     /* Uniform description column width across all connection rows */
     #connections-rows .settings-row > div:first-child { flex: 0 0 300px; max-width: 300px; }
 
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; overflow: hidden; }
-    .account-dropdown.open { display: block; }
-    
-    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
-    .account-dropdown-item:hover { background: #4A6D8C; color: #fff; }
-
-    .topbar-account-wrap { position: relative; }
-    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
-    .account-btn:hover { color: #fff; }
-
     /* ── TABS ── */
     .stab-bar { display:flex; gap:0; border-bottom:2px solid #e5e5e5; margin-bottom:28px; }
     .stab { padding:13px 24px; font-family:'DM Sans',sans-serif; font-size:14px; font-weight:500; color:#888888; cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
@@ -329,9 +250,6 @@
     .perm-modal-continue:hover { background:#154070; }
 
     @media (max-width: 768px) {
-      .topbar-nav { margin-left: 16px; gap: 12px; }
-      .topbar-right { gap: 12px; }
-      .account-dropdown { max-width: 200px; }
       .connection-item-email,
       .connection-folder-name,
       .website-url-input { width: 100%; flex: 1 1 auto; }
