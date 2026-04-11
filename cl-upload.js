@@ -22,8 +22,10 @@ window.CL_UPLOAD = {
     this._supabase = supabase;
     this._render();
     this._bindEvents();
-    this._loadConnectionStatus();
-    this._restoreActiveJobs();
+    var self = this;
+    this._loadConnectionStatus().then(function() {
+      self._restoreActiveJobs();
+    });
   },
 
   _render: function() {
