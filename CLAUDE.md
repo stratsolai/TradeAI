@@ -119,21 +119,14 @@ Google Drive, Dropbox, SharePoint, and Gmail confirmed
 working end to end.
 
 Outstanding before sign-off:
-- OneDrive — integration test complete, signed off
-  April 2026.
 - Outlook — integration test in progress, scan running
   successfully on large inbox via Task 15 background
   processing. Sign-off pending scan completion.
-- Website — single page only resolved by Task 16,
-  now signed off.
 
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
 Spec complete — StaxAI-External-Platform-Connections-Spec-v1_0.
-Pre-build steps complete — Xero, QuickBooks, and ServiceM8
-registered and credentials in Vercel. Supabase columns added.
-Build complete — all 9 code steps done and committed. MYOB
-deferred — Coming Soon placeholder in UI. Awaiting
+MYOB deferred — Coming Soon placeholder in UI. Awaiting
 clarification on whether developer program subscription is
 required for production use before registering. Buildxact
 deferred — Coming Soon placeholder in UI. Third-party
@@ -141,46 +134,10 @@ registration with Buildxact support required before build
 can begin. Integration test complete — Xero, QuickBooks,
 and ServiceM8 all connected successfully. Disconnect not
 yet verified. Fetch endpoint data pull testing deferred to
-each tool's integration test. Fergus — developer platform registration email sent
-April 2026, awaiting response. API confirmed available
-(OAS 3.1, 100 requests per minute). Build deferred
-pending registration. Tradify — enquiry email sent
-April 2026, awaiting confirmation of whether public API
-is available. Build deferred pending response.
-
-### Task 14 — Email Attachment Scanning (Gmail + Outlook)
-
-Build complete. Gmail integration tested and signed off
-April 2026. Inline image filter confirmed working —
-Content-Disposition: inline and Content-ID header check
-prevents signature logos appearing in Source Review.
-Note: Outlook attachment source_ref uses
-outlook-email-attachment: prefix as built — treat as
-canonical. Outlook attachment integration test deferred
-until Outlook timeout confirmed resolved via Task 15.
-
-### Task 15 — Background Scan Processing
-
-Build complete April 2026. Integration test in progress —
-Outlook large inbox scan running successfully. OneDrive
-signed off. Issues resolved during build: Vercel cron
-GET/POST method fix, VERCEL_URL deployment protection
-bypass via direct module imports, scan-queue.js maxDuration
-added, full scan completion message counts restored
-(approved, rejected, auto_archived, fin_docs_paired,
-deduped, pages_crawled, pages_skipped). cl_scan_jobs table
-gained 7 additional count columns April 2026. cl-upload.js
-restores in-progress tile state on page reload via
-_restoreActiveJobs().
-
-### Task 16 — Website Subpage Crawling
-
-Build complete April 2026. Integration test passed —
-subpage crawling confirmed working, multiple pages
-appearing in Source Review from a single scan. Constants:
-MAX_CRAWL_DEPTH = 2, MAX_PAGES_PER_CRAWL = 20,
-MAX_TOTAL_CHARS = 500,000. Sitemap preference, robots.txt
-compliance, within-crawl dedup all confirmed working.
+each tool's integration test. Fergus — developer platform
+registration email sent April 2026, awaiting response.
+Tradify — enquiry email sent April 2026, awaiting
+confirmation of whether public API is available.
 
 ### Task 17 — Desktop-Only Message for Non-Mobile Pages
 
