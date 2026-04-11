@@ -11,19 +11,6 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bg:           #0d1628;
-      --bg2:          #172035;
-      --bg3:          #1e2d47;
-      --bg4:          #253554;
-      --card-border:  rgba(255,255,255,0.07);
-      --blue:         #1A5490;
-      --orange:       #c4622a;
-      --orange-light: #d4844a;
-      --muted:        rgba(255,255,255,0.70);
-      --topbar-auth:  #4A6D8C;
-    }
-
     body {
       font-family: 'DM Sans', sans-serif;
       background: #f5f7fa;
@@ -70,18 +57,6 @@
       gap: 16px;
       position: relative;
     }
-    #settings-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      padding: 0;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    #settings-btn:hover { color: #fff; }
     .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
     .topbar-nav-link:hover { color: #fff; }
         .account-btn {
@@ -307,142 +282,6 @@
     }
     .ea-handled-btn:hover { border-color: #94a3b8; color: #1a3a5c; }
     .ea-open-hint { font-size: 12px; color: var(--orange); }
-    /* -----------------------------------------------------------------------
-       Settings modal
-    ----------------------------------------------------------------------- */
-    #ea-settings-modal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.60);
-      z-index: 200;
-      align-items: flex-start;
-      justify-content: flex-end;
-      padding: 68px 0 0;
-    }
-    #ea-settings-modal.open { display: flex; }
-    .ea-settings-panel {
-      background: #fff;
-      border-left: 1px solid #e2e8f0;
-      width: 100%;
-      max-width: 420px;
-      height: calc(100vh - 68px);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
-    .ea-settings-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 24px;
-      border-bottom: 1px solid #e2e8f0;
-      position: sticky;
-      top: 0;
-      background: #fff;
-      z-index: 1;
-    }
-    .ea-settings-title { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; color: #1a3a5c; }
-    #ea-settings-close { background: none; border: none; color: #94a3b8; font-size: 22px; cursor: pointer; line-height: 1; }
-    #ea-settings-close:hover { color: #1a3a5c; }
-    #ea-settings-body { padding: 24px; flex: 1; }
-    .ea-settings-section { margin-bottom: 28px; }
-    .ea-settings-heading {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 16px;
-      font-weight: 700;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 14px;
-    }
-    .ea-setting-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-    .ea-text-input {
-      flex: 1;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      color: #1a3a5c;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      padding: 8px 12px;
-    }
-    .ea-text-input:focus { outline: none; border-color: var(--orange); }
-    .ea-select {
-      width: 100%;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 6px;
-      color: #1a3a5c;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      padding: 8px 12px;
-    }
-    .ea-select:focus { outline: none; border-color: var(--orange); }
-    .ea-toggle-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; color: #475569; }
-    .ea-toggle { position: relative; display: inline-block; width: 40px; height: 22px; }
-    .ea-toggle input { opacity: 0; width: 0; height: 0; }
-    .ea-toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: #cbd5e1;
-      border-radius: 22px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .ea-toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      left: 3px;
-      top: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: transform 0.2s;
-    }
-    .ea-toggle input:checked + .ea-toggle-slider { background: var(--orange); }
-    .ea-toggle input:checked + .ea-toggle-slider::before { transform: translateX(18px); }
-    .ea-connect-buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .ea-btn-connect {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      color: #475569;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 6px;
-      text-decoration: none;
-      display: inline-block;
-    }
-    .ea-btn-connect:hover { border-color: #94a3b8; color: #1a3a5c; }
-    .ea-btn-primary {
-      background: #4A6D8C;
-      color: #fff;
-      border: none;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 10px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .ea-btn-primary:hover { background: #3d5c78; }
-    .ea-btn-secondary {
-      background: #f8fafc;
-      color: #475569;
-      border: 1px solid #e2e8f0;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 10px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .ea-btn-secondary:hover { border-color: #94a3b8; color: #1a3a5c; }
-    .ea-settings-actions { display: flex; gap: 10px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
-    .ea-connection-detail { margin-bottom: 12px; }
 
     /* -----------------------------------------------------------------------
        Responsive
@@ -491,17 +330,6 @@
     <div id="ea-category-tabs"></div>
     <div id="ea-email-feed">
       <div class="ea-empty">Connect your email and tap Scan Now to get started.</div>
-    </div>
-  </div>
-
-  <!-- Settings modal -->
-  <div id="ea-settings-modal">
-    <div class="ea-settings-panel">
-      <div class="ea-settings-header">
-        <span class="ea-settings-title">Settings</span>
-        <button id="ea-settings-close">&times;</button>
-      </div>
-      <div id="ea-settings-body"></div>
     </div>
   </div>
 
