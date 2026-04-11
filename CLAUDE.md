@@ -372,6 +372,11 @@ source-of-truth pages for the stylesheet.
   Material items and controls which tab they appear in.
   Without this value the item will not appear in the Tool
   Outputs tab.
+- cl-settings.html Library Connections tab — lookback
+  dropdown styling on Business Email (Gmail) and Business
+  Email (Outlook) connection tiles is unstyled. To be
+  fixed during the Email Assistant stylesheet rollout
+  session.
 
 ---
 
@@ -390,8 +395,8 @@ is complete and confirmed working.
 | 6    | ~~Complete Task 17 — Desktop-only message for non-mobile pages~~ **COMPLETE** |
 | 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
 | 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
-| 9    | Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout |
-| 10   | Stylesheet rollout — all remaining authenticated pages     |
+| 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
+| 10   | Stylesheet rollout — remaining authenticated pages. Start with email-assistant.html. |
 | 11   | Functional reviews — all 5 built tools                     |
 | 12   | Improvements per tool based on functional review findings  |
 | 13   | Integration tests — all 5 built tools                      |
