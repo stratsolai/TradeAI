@@ -365,7 +365,7 @@ window.CL_UPLOAD = {
       var self = this;
       self._scanCancelled = false;
       var originalText = btn.textContent;
-      btn.textContent = "Scan queued...";
+      btn.textContent = "Scan Queued...";
       btn.disabled = true;
       function finishScan() {
         btn.textContent = originalText;
