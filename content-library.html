@@ -12,6 +12,8 @@
     /* ─── MAIN LAYOUT ─── */
     .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
 
+    .stat-card[data-status] { cursor: pointer; }
+
     .page-header { margin-bottom: 28px; }
     .page-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .page-subtitle { color: var(--text-muted); font-size: 15px; }
@@ -441,7 +443,7 @@
 
 <nav class="topbar">
       <a href="/" class="topbar-logo">
-    <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
+    <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
   </a>
       <div class="topbar-nav"><a href="/dashboard">Dashboard</a></div>
       <div class="topbar-spacer"></div>
@@ -465,11 +467,11 @@
   </div>
 
 <div class="stats-bar">
-    <div class="stat-card" data-status="all" style="cursor:pointer"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
-    <div class="stat-card orange" data-status="pending" style="cursor:pointer"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
-    <div class="stat-card green" data-status="approved" style="cursor:pointer"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
-    <div class="stat-card teal" data-status="rejected" style="cursor:pointer"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
-    <div class="stat-card grey" data-status="archived" style="cursor:pointer"><div class="stat-value" id="stat-archived">0</div><div class="stat-label">Archived</div></div>
+    <div class="stat-card" data-status="all"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Items</div></div>
+    <div class="stat-card orange" data-status="pending"><div class="stat-value" id="stat-pending">0</div><div class="stat-label">Pending Review</div></div>
+    <div class="stat-card green" data-status="approved"><div class="stat-value" id="stat-approved">0</div><div class="stat-label">Approved</div></div>
+    <div class="stat-card teal" data-status="rejected"><div class="stat-value" id="stat-rejected">0</div><div class="stat-label">Rejected</div></div>
+    <div class="stat-card grey" data-status="archived"><div class="stat-value" id="stat-archived">0</div><div class="stat-label">Archived</div></div>
   </div>
 
 <div class="tab-nav">
