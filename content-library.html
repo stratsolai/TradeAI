@@ -89,21 +89,6 @@
     @media (max-width: 768px) {
       .container { padding: 20px 16px; }
     }
-  
-    .topbar-logo { height: 38px; display: block; }
-    .topbar-link { color: #fff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
-    .topbar-link:hover { text-decoration: underline; }
-    .topbar-account { position: relative; }
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
-    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .topbar-nav a:hover{color:#fff;}
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; overflow: hidden; }
-    .account-dropdown.open { display: block; }
-    
-    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
-    .account-dropdown-item:hover { background: #4A6D8C; color: #fff; }
-    .topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}
-    .topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;cursor:pointer;}
 
     /* ─── UPLOAD TAB ─── */
     .upload-section { margin-bottom: 28px; }
@@ -171,13 +156,6 @@
        Remove buttons (class="btn btn-outline btn-sm"). Cascade winner over
        line 69. Preserved here pending consolidation during stylesheet rollout. */
     .btn-sm { padding: 6px 14px; font-size: 13px; }
-
-    .topbar-right { display: flex; align-items: center; gap: 16px; position: relative; }
-    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-nav-link:hover { color: #fff; }
-    .topbar-account-wrap { position: relative; }
-    .account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; cursor: pointer; padding: 0; font-family: "DM Sans", sans-serif; }
-    .account-btn:hover { color: #fff; }
 
     /* ── Sources grid ─────────────────────────────────────────────────────────── */
     .sources-tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -408,9 +386,6 @@
 .profile-location-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 
     @media (max-width: 768px) {
-      .topbar-nav { margin-left: 16px; gap: 12px; }
-      .topbar-right { gap: 12px; }
-      .account-dropdown { max-width: 200px; }
       .connection-tiles { grid-template-columns: 1fr; }
       .profile-fields { grid-template-columns: 1fr; }
       .profile-address-row { grid-template-columns: 1fr; }
