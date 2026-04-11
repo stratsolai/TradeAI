@@ -389,7 +389,7 @@ is complete and confirmed working.
 | 5    | ~~Complete Task 16 — Website Subpage Crawling spec and build~~ **COMPLETE** |
 | 6    | ~~Complete Task 17 — Desktop-only message for non-mobile pages~~ **COMPLETE** |
 | 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
-| 8    | Stylesheet rollout — content-library.html CSS analysis and variable rollout |
+| 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
 | 9    | Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout |
 | 10   | Stylesheet rollout — all remaining authenticated pages     |
 | 11   | Functional reviews — all 5 built tools                     |
