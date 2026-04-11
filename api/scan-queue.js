@@ -75,25 +75,29 @@ export default async function handler(req, res) {
     var jobId = insertResult.data.id;
     console.log('[scan-queue] Job queued — id:', jobId, 'sourceType:', sourceType, 'sourceAccount:', sourceAccount, 'sourcePath:', sourcePath);
 
-    // ── Fire-and-forget call to scan-worker ────────────────────────────
-    // Trigger the worker immediately so manual scans start without
-    // waiting for the next cron tick. The call is non-blocking — we do
-    // not await the response. Uses VERCEL_URL (auto-set by Vercel on
-    // every deployment) with HTTPS. Falls back to the request host
-    // header if VERCEL_URL is not available.
+    // ── Trigger scan-worker before returning ─────────────────────────
+    // The fetch must be awaited so the HTTP request is fully dispatched
+    // before Vercel freezes this function's runtime. Without the await,
+    // the runtime is torn down after res.json() and the fetch is
+    // silently dropped — jobs then sit in queued state until the next
+    // cron tick. We do not wait for the scan itself to finish — just for
+    // the worker to accept the request.
     var workerHost = process.env.VERCEL_URL
       ? 'https://' + process.env.VERCEL_URL
       : 'https://' + (req.headers['host'] || 'staxai.com.au');
     var workerUrl = workerHost + '/api/scan-worker';
 
-    fetch(workerUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (process.env.CRON_SECRET || '') },
-      body: JSON.stringify({ triggerSource: 'scan-queue', jobId: jobId }),
-    }).catch(function(err) {
-      // Fire-and-forget — log but do not fail the queue response
-      console.error('[scan-queue] Worker trigger failed:', err.message);
-    });
+    try {
+      await fetch(workerUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (process.env.CRON_SECRET || '') },
+        body: JSON.stringify({ triggerSource: 'scan-queue', jobId: jobId }),
+      });
+    } catch (triggerErr) {
+      // Worker trigger failed — job will be picked up by the next cron
+      // tick. Log but do not fail the queue response.
+      console.error('[scan-queue] Worker trigger failed:', triggerErr.message);
+    }
 
     return res.status(200).json({ success: true, jobId: jobId });
 
