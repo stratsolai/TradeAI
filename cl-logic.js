@@ -1,22 +1,23 @@
   async function loadStats() {
   const { data: { user } } = await supabaseClient.auth.getUser();
 
-  const [libResult, queueResult, publishedResult] = await Promise.all([
-    supabaseClient.from('content_library').select('status', { count: 'exact' }).eq('user_id', user.id).neq('source', 'tool'),
-    supabaseClient.from('publishing_queue').select('status', { count: 'exact' }).eq('user_id', user.id).in('status', ['pending_approval','approved','scheduled']),
-    supabaseClient.from('publishing_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'posted')
-  ]);
+  var libResult = await supabaseClient
+    .from('content_library')
+    .select('status', { count: 'exact' })
+    .eq('user_id', user.id)
+    .neq('source', 'tool');
 
   const items = libResult.data || [];
   const total = items.length;
   const pending = items.filter(i => i.status === 'pending').length;
   const approved = items.filter(i => i.status === 'approved').length;
+  const rejected = items.filter(i => i.status === 'rejected').length;
   const archived = items.filter(i => i.status === 'archived').length;
 
   document.getElementById('stat-total').textContent = total;
   document.getElementById('stat-pending').textContent = pending;
   document.getElementById('stat-approved').textContent = approved;
-  document.getElementById('stat-rejected').textContent = publishedResult.count || 0;
+  document.getElementById('stat-rejected').textContent = rejected;
   var archivedEl = document.getElementById('stat-archived');
   if (archivedEl) archivedEl.textContent = archived;
 }
