@@ -33,7 +33,6 @@
     body {
       font-family: var(--body-font);
       background: var(--bg); color: var(--text);
-      color: #fff;
       min-height: 100vh;
     }
 
@@ -77,15 +76,6 @@
       align-items: center;
       gap: 16px;
     }
-    .topbar-cl-link {
-      color: rgba(255,255,255,0.85);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: color 0.15s;
-    }
-    .topbar-cl-link:hover { color: #fff; }
-
     /* ── PAGE ── */
     .page-wrap {
       max-width: 960px;
@@ -120,17 +110,6 @@
       padding: 20px 24px 16px;
       border-bottom: 1px solid var(--border);
     }
-    .settings-card-title {
-      font-family: var(--heading-font);
-      font-size: 20px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .settings-card-hint {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
     .settings-rows {
       padding: 0;
     }
@@ -142,16 +121,6 @@
       border-bottom: 1px solid var(--border);
     }
     .settings-row:last-child { border-bottom: none; }
-    .settings-row-label {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--text);
-      margin-bottom: 2px;
-    }
-    .settings-row-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
     .settings-row-control {
       display: flex;
       gap: 0;
@@ -212,8 +181,6 @@
       font-size: 13px;
       display: none;
     }
-    .save-msg-ok { color: #4ade80; }
-    .save-msg-error { color: #f87171; }
 
     /* ── AUTH GATE ── */
     .auth-loading {
@@ -317,7 +284,6 @@
 
     .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; }
     .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .topbar-nav a:hover{color:#fff;}
     .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; overflow: hidden; }
     .account-dropdown.open { display: block; }
     
