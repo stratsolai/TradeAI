@@ -1,17 +1,15 @@
-// api/scrape-website.js — Task 10 CL Connections
-// Endpoint for the Website source. Rewritten to use the canonical CL
-// intake pipeline shared by every other connector
-// (sharepoint-import, dropbox-import, onedrive-import, drive-import,
-// cl-email-scan, cl-outlook-scan).
+// api/scrape-website.js — Task 10 CL Connections + Task 16 Subpage Crawling
+// Endpoint for the Website source. Crawls the provided URL and its
+// subpages, running each page through the canonical CL intake pipeline
+// shared by every other connector.
 //
 // Behaviour:
-//   POST { userId, url } → fetches the page, strips HTML to plain text,
-//   runs the fixed-18-category extraction prompt, applies disposition /
-//   confidence / Financial Documents / auto-archive logic, and inserts
-//   the resulting row into content_library with the same shape every
-//   other connector uses. Per the canonical prompt the whole page is
-//   treated as one item, so a scan produces at most one content_library
-//   row per URL.
+//   POST { userId, url } → fetches robots.txt and sitemap.xml from the
+//   root domain. If a valid sitemap exists, uses its page list (up to
+//   MAX_PAGES_PER_CRAWL). Otherwise follows internal same-domain links
+//   breadth-first up to MAX_CRAWL_DEPTH. Each page is stripped to plain
+//   text, run through the extraction prompt, and inserted into
+//   content_library with the same shape every other connector uses.
 //
 // Auth: userId is taken from the request body to preserve compatibility
 // with cl-upload.js, which posts to this endpoint without a JWT header
@@ -20,11 +18,10 @@
 // Re-scan semantics: source_ref includes a timestamp so each scan
 // produces fresh rows rather than being deduped away by the source_ref
 // unique constraint. This matches the source-tile note in cl-upload.js:
-// "Rescanning reproduces all content as new Pending items".
+// "Rescanning reproduces all content as new Items".
 //
-// Response: { success: true, count: <imported>, message: ... }. The
-// `count` field is preserved as the primary import counter so the
-// existing cl-upload.js caller continues to work unchanged.
+// Response: { success: true, count, imported, approved, pending,
+// rejected, pages_crawled, pages_skipped, skipped_reasons, ... }.
 
 export const config = { maxDuration: 300 };
 
@@ -34,6 +31,22 @@ import { randomUUID } from 'crypto';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+
+// Crawl limits
+var MAX_CRAWL_DEPTH = 2;
+var MAX_PAGES_PER_CRAWL = 20;
+var MAX_TOTAL_CHARS = 500000;
+var PAGE_FETCH_TIMEOUT_MS = 15000;
+var CRAWL_USER_AGENT = 'StaxAI/1.0 (+https://staxai.com.au)';
+
+// File extensions that are never HTML pages — skip these links
+var NON_HTML_EXTENSIONS = [
+  'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx',
+  'zip', 'rar', 'gz', 'tar', '7z',
+  'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'ico', 'bmp',
+  'mp3', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'wav',
+  'css', 'js', 'json', 'xml', 'csv', 'txt',
+];
 
 var DISCARD_CATEGORIES = ['Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'];
 var ALLOWED_TOOL_IDS = ['strategic-plan', 'news-digest', 'chatbot', 'social', 'bi', 'tender', 'quote-enhancer'];
@@ -129,6 +142,150 @@ function htmlToText(html) {
     .trim();
 }
 
+// ── Crawl helpers ──────────────────────────────────────────────────────
+
+// Normalise a URL for dedup comparison: lowercase hostname, strip
+// trailing slash, strip query string and fragment.
+function normaliseUrl(rawUrl) {
+  try {
+    var u = new URL(rawUrl);
+    u.hostname = u.hostname.toLowerCase();
+    u.search = '';
+    u.hash = '';
+    var s = u.toString();
+    if (s.endsWith('/')) s = s.slice(0, -1);
+    return s;
+  } catch (e) {
+    return rawUrl;
+  }
+}
+
+// Fetch and parse robots.txt from the root domain. Returns an array of
+// disallowed path prefixes for the * user-agent (or our specific agent).
+// A missing or unparseable robots.txt returns an empty array — it does
+// not block the crawl.
+async function fetchRobotsTxt(origin) {
+  try {
+    var robotsRes = await fetch(origin + '/robots.txt', {
+      headers: { 'User-Agent': CRAWL_USER_AGENT },
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow',
+    });
+    if (!robotsRes.ok) return [];
+    var text = await robotsRes.text();
+    var lines = text.split('\n');
+    var disallowed = [];
+    var inRelevantAgent = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.toLowerCase().indexOf('user-agent:') === 0) {
+        var agent = line.substring(11).trim().toLowerCase();
+        inRelevantAgent = (agent === '*' || agent === 'staxai');
+      } else if (inRelevantAgent && line.toLowerCase().indexOf('disallow:') === 0) {
+        var path = line.substring(9).trim();
+        if (path) disallowed.push(path);
+      }
+    }
+    return disallowed;
+  } catch (e) {
+    console.log('[scrape-website] robots.txt fetch failed — proceeding:', e.message);
+    return [];
+  }
+}
+
+// Check whether a URL path is disallowed by robots.txt rules.
+function isDisallowedByRobots(urlString, disallowedPaths) {
+  if (!disallowedPaths || disallowedPaths.length === 0) return false;
+  try {
+    var pathname = new URL(urlString).pathname;
+    for (var i = 0; i < disallowedPaths.length; i++) {
+      if (pathname.indexOf(disallowedPaths[i]) === 0) return true;
+    }
+  } catch (e) {}
+  return false;
+}
+
+// Fetch and parse sitemap.xml from the root domain. Returns an array
+// of page URLs on the same domain, or an empty array if the sitemap is
+// missing, unparseable, or contains no same-domain URLs.
+async function fetchSitemapUrls(origin, targetHostname) {
+  try {
+    var smRes = await fetch(origin + '/sitemap.xml', {
+      headers: { 'User-Agent': CRAWL_USER_AGENT },
+      signal: AbortSignal.timeout(5000),
+      redirect: 'follow',
+    });
+    if (!smRes.ok) return [];
+    var xml = await smRes.text();
+    // Simple regex extraction of <loc> values — sufficient for standard sitemaps
+    var locRegex = /<loc>\s*(.*?)\s*<\/loc>/gi;
+    var match;
+    var urls = [];
+    while ((match = locRegex.exec(xml)) !== null) {
+      var locUrl = match[1].trim();
+      try {
+        var parsed = new URL(locUrl);
+        if (parsed.hostname.toLowerCase() === targetHostname) {
+          urls.push(locUrl);
+        }
+      } catch (e) {}
+    }
+    return urls;
+  } catch (e) {
+    console.log('[scrape-website] sitemap.xml fetch failed — falling back to link discovery:', e.message);
+    return [];
+  }
+}
+
+// Extract internal same-domain links from an HTML string.
+function extractLinks(html, pageUrl, targetHostname) {
+  var links = [];
+  var hrefRegex = /href\s*=\s*["']([^"']+)["']/gi;
+  var match;
+  while ((match = hrefRegex.exec(html)) !== null) {
+    var href = match[1].trim();
+    // Skip non-page links
+    if (!href || href.indexOf('mailto:') === 0 || href.indexOf('tel:') === 0 || href.indexOf('javascript:') === 0) continue;
+    if (href.indexOf('#') === 0) continue;
+    // Resolve relative URLs
+    var resolved;
+    try { resolved = new URL(href, pageUrl).toString(); } catch (e) { continue; }
+    // Same-domain check
+    try {
+      var rp = new URL(resolved);
+      if (rp.hostname.toLowerCase() !== targetHostname) continue;
+      // Skip non-HTML file extensions
+      var ext = rp.pathname.split('.').pop().toLowerCase();
+      if (NON_HTML_EXTENSIONS.indexOf(ext) > -1) continue;
+    } catch (e) { continue; }
+    links.push(resolved);
+  }
+  return links;
+}
+
+// Fetch a single page with timeout and User-Agent. Returns { html, error }.
+async function fetchPage(pageUrl) {
+  try {
+    var pageRes = await fetch(pageUrl, {
+      redirect: 'follow',
+      headers: {
+        'User-Agent': CRAWL_USER_AGENT,
+        'Accept': 'text/html,application/xhtml+xml',
+      },
+      signal: AbortSignal.timeout(PAGE_FETCH_TIMEOUT_MS),
+    });
+    if (!pageRes.ok) return { html: null, error: 'HTTP ' + pageRes.status };
+    var contentType = pageRes.headers.get('content-type') || '';
+    if (contentType.indexOf('text/html') === -1 && contentType.indexOf('application/xhtml') === -1) {
+      return { html: null, error: 'Not HTML: ' + contentType };
+    }
+    var html = await pageRes.text();
+    return { html: html, error: null };
+  } catch (e) {
+    return { html: null, error: e.message || 'Fetch failed' };
+  }
+}
+
 // Run the fixed-18-category extraction prompt against text content.
 // Website pages are content-rich relative to documents and emails —
 // the input cap is 40,000 characters (raised from 8,000) so a real
@@ -204,6 +361,126 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
   }
 }
 
+// Process a single page through the full CL intake pipeline: strip HTML,
+// save to cl-assets, create cl_source_items, run extraction prompt,
+// insert content_library rows with versioning. Returns counts object.
+// This is the existing single-page pipeline extracted into a function
+// so it can be called once per page during a crawl.
+async function processPage(supabase, userId, pageUrl, websiteHtml, hostname, safeHostname, scanTs) {
+  var result = { itemsCount: 0, approved: 0, pending: 0, rejected: 0, auto_archived: 0, fin_docs_paired: 0, skipped: false, skipReason: null };
+
+  var pageText = htmlToText(websiteHtml);
+  if (!pageText || pageText.length < 50) {
+    result.skipped = true;
+    result.skipReason = 'no_extractable_content';
+    return result;
+  }
+
+  // Save source HTML to cl-assets and create cl_source_items row
+  var sourceItemId = null;
+  var pageItemCount = 0;
+  try {
+    var pagePath = '';
+    try { pagePath = new URL(pageUrl).pathname.replace(/[^a-zA-Z0-9._/-]/g, '_'); } catch (e) {}
+    var storagePath = userId + '/website/' + scanTs + '_' + safeHostname + (pagePath || '') + '.html';
+    // Ensure no double slashes in storage path
+    storagePath = storagePath.replace(/\/\//g, '/');
+    await supabase.storage.from('cl-assets').upload(storagePath, Buffer.from(websiteHtml, 'utf-8'), { contentType: 'text/html', upsert: false });
+    var siResult = await supabase
+      .from('cl_source_items')
+      .insert({
+        user_id: userId,
+        source_type: 'website',
+        filename: safeHostname + (pagePath || '/') + '.html',
+        file_url: storagePath,
+        source_url: pageUrl,
+        source_detail: { url: pageUrl, hostname: hostname },
+        item_count: 0,
+      })
+      .select('id')
+      .single();
+    if (siResult.data) sourceItemId = siResult.data.id;
+  } catch (e) {
+    console.error('cl-assets/cl_source_items save error:', e.message);
+  }
+
+  var items = await runExtractionPrompt(pageText, hostname);
+  if (!items || items.length === 0) {
+    result.skipped = true;
+    result.skipReason = 'no_extractable_content';
+    return result;
+  }
+
+  for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
+    var item = items[itemIdx];
+    var sourceRef = 'web:' + pageUrl + ':' + scanTs + ':' + itemIdx;
+    var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Company Information') : 'Company Information';
+    var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
+    var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
+    var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+    var itemSourceDetail = { url: pageUrl, hostname: hostname };
+    if (isDiscard) itemSourceDetail.rejection_source = 'auto';
+
+    if (normCat === 'Financial Documents') status = 'pending';
+
+    var versionMatchedId = null;
+    if (status === 'approved' && AUTO_ARCHIVE_CATEGORIES.indexOf(normCat) > -1) {
+      versionMatchedId = await findVersionMatch(supabase, userId, item.title, item.body, normCat);
+    }
+
+    var row = {
+      user_id: userId,
+      title: String(item.title || hostname).substring(0, 200),
+      content_text: String(item.body || ''),
+      category: normCat,
+      tool_tags: toolTags,
+      status: status,
+      source: 'website',
+      tool_source: 'scrape-website',
+      source_ref: sourceRef,
+      source_item_id: sourceItemId,
+      source_detail: itemSourceDetail,
+    };
+
+    var upsertRes = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
+    if (upsertRes.error) {
+      console.error('content_library insert error:', upsertRes.error.message);
+      continue;
+    }
+    result.itemsCount++;
+    pageItemCount++;
+    if (status === 'approved') result.approved++;
+    else if (status === 'rejected') result.rejected++;
+    else result.pending++;
+    var insertedRow = upsertRes.data;
+
+    if (insertedRow && normCat === 'Financial Documents') {
+      var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
+      if (pairMatchId) {
+        var pairId = randomUUID();
+        result.fin_docs_paired++;
+        await supabase.from('content_library').update({ status: 'pending', version_pair_id: pairId }).eq('id', pairMatchId);
+        await supabase.from('content_library').update({ version_pair_id: pairId }).eq('id', insertedRow.id);
+      }
+    }
+
+    if (insertedRow && versionMatchedId) {
+      var archResult = await supabase
+        .from('content_library')
+        .update({ status: 'archived', version_archived_by: insertedRow.id })
+        .eq('id', versionMatchedId);
+      if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
+      else result.auto_archived++;
+    }
+  }
+
+  if (sourceItemId && pageItemCount > 0) {
+    await supabase.from('cl_source_items').update({ item_count: pageItemCount }).eq('id', sourceItemId);
+  }
+
+  return result;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -213,166 +490,155 @@ export default async function handler(req, res) {
   if (!url) return res.status(400).json({ error: 'url required' });
 
   try {
-    // Resolve hostname for filename and source_detail
     var hostname = '';
-    try { hostname = new URL(url).hostname; } catch (e) { hostname = 'unknown'; }
+    try { hostname = new URL(url).hostname.toLowerCase(); } catch (e) { hostname = 'unknown'; }
     var safeHostname = hostname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    var origin = '';
+    try { origin = new URL(url).origin; } catch (e) {}
 
-    // Fetch the page HTML. fetch() with redirect: follow handles 3xx
-    // chains automatically. AbortSignal.timeout caps slow or hung
-    // user-supplied sites at 15 seconds so a single bad URL cannot eat
-    // the whole 300s function budget. The other connectors talk to
-    // known cloud APIs and do not need this guard; arbitrary websites do.
-    let websiteHtml = '';
-    try {
-      const pageRes = await fetch(url, {
-        redirect: 'follow',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; StaxAI/1.0)',
-          'Accept': 'text/html,application/xhtml+xml',
-        },
-        signal: AbortSignal.timeout(15000),
-      });
-      if (!pageRes.ok) {
-        return res.status(502).json({ success: false, error: 'Website returned ' + pageRes.status });
+    var scanTs = Date.now();
+    var visited = new Set();
+    var totalChars = 0;
+    var totalItemsCount = 0;
+    var totalApproved = 0;
+    var totalPending = 0;
+    var totalRejected = 0;
+    var totalAutoArchived = 0;
+    var totalFinDocsPaired = 0;
+    var pagesCrawled = 0;
+    var pagesSkipped = 0;
+    var skipped_reasons = {};
+
+    function addSkipReason(reason) {
+      skipped_reasons[reason] = (skipped_reasons[reason] || 0) + 1;
+      pagesSkipped++;
+    }
+
+    // ── Fetch robots.txt ──────────────────────────────────────────────
+    var disallowedPaths = [];
+    if (origin) {
+      disallowedPaths = await fetchRobotsTxt(origin);
+      if (disallowedPaths.length > 0) {
+        console.log('[scrape-website] robots.txt loaded —', disallowedPaths.length, 'disallow rules');
       }
-      websiteHtml = await pageRes.text();
-    } catch (e) {
-      console.error('Website fetch failed:', e && e.message ? e.message : e);
-      return res.status(502).json({ success: false, error: 'Website fetch failed: ' + ((e && e.message) || 'unknown') });
     }
 
-    // Strip HTML to plain text for the extraction prompt
-    var pageText = htmlToText(websiteHtml);
-    if (!pageText || pageText.length < 50) {
-      return res.status(200).json({ success: true, count: 0, approved: 0, pending: 0, rejected: 0, message: 'No readable content found on the page' });
-    }
+    // ── Build page queue ──────────────────────────────────────────────
+    // Try sitemap first, fall back to link-following from the start URL.
+    // The queue is a list of { url, depth } entries. Breadth-first.
+    var queue = [];
+    var usedSitemap = false;
 
-    // Save source HTML to cl-assets and create cl_source_items row.
-    // Each scan creates a fresh source-items row — websites are not
-    // de-duplicated across scans because page content changes over time
-    // and the spec is "Rescanning reproduces all content as new Pending
-    // items" (cl-upload.js source tile note for the website source).
-    var sourceItemId = null;
-    var pageItemCount = 0;
-    try {
-      var storagePath = userId + '/website/' + Date.now() + '_' + safeHostname + '.html';
-      await supabase.storage.from('cl-assets').upload(storagePath, Buffer.from(websiteHtml, 'utf-8'), { contentType: 'text/html', upsert: false });
-      var siResult = await supabase
-        .from('cl_source_items')
-        .insert({
-          user_id: userId,
-          source_type: 'website',
-          filename: safeHostname + '.html',
-          file_url: storagePath,
-          source_url: url,
-          source_detail: { url: url, hostname: hostname },
-          item_count: 0,
-        })
-        .select('id')
-        .single();
-      if (siResult.data) sourceItemId = siResult.data.id;
-    } catch (e) {
-      console.error('cl-assets/cl_source_items save error:', e.message);
-    }
-
-    // Run the canonical extraction prompt — returns one object per
-    // distinct content block found on the page, per the prompt's
-    // RULES section after the block-extraction rewrite.
-    const items = await runExtractionPrompt(pageText, hostname);
-    if (!items || items.length === 0) {
-      return res.status(200).json({ success: true, count: 0, approved: 0, pending: 0, rejected: 0, message: 'No content extracted from the page' });
-    }
-
-    const scanTs = Date.now();
-    let itemsCount = 0;
-    let approved = 0;
-    let pending = 0;
-    let rejected = 0;
-    var auto_archived = 0;
-    var fin_docs_paired = 0;
-
-    for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {
-      const item = items[itemIdx];
-      const sourceRef = 'web:' + url + ':' + scanTs + ':' + itemIdx;
-      var normCat = item.category ? (CATEGORY_LOOKUP[String(item.category).toLowerCase()] || 'Company Information') : 'Company Information';
-      var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
-      var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
-      var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
-      var itemSourceDetail = { url: url, hostname: hostname };
-      if (isDiscard) itemSourceDetail.rejection_source = 'auto';
-
-      // Versioning — Financial Documents always go to pending. Pair check happens after insert.
-      if (normCat === 'Financial Documents') status = 'pending';
-
-      // Versioning — auto-archive match check (only approved items in archive categories)
-      var versionMatchedId = null;
-      if (status === 'approved' && AUTO_ARCHIVE_CATEGORIES.indexOf(normCat) > -1) {
-        versionMatchedId = await findVersionMatch(supabase, userId, item.title, item.body, normCat);
-      }
-
-      const row = {
-        user_id: userId,
-        title: String(item.title || hostname).substring(0, 200),
-        content_text: String(item.body || ''),
-        category: normCat,
-        tool_tags: toolTags,
-        status: status,
-        source: 'website',
-        tool_source: 'scrape-website',
-        source_ref: sourceRef,
-        source_item_id: sourceItemId,
-        source_detail: itemSourceDetail,
-      };
-
-      const upsertRes = await supabase.from('content_library').upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true }).select('id').maybeSingle();
-      if (upsertRes.error) {
-        console.error('content_library insert error:', upsertRes.error.message);
-        continue;
-      }
-      itemsCount++;
-      pageItemCount++;
-      if (status === 'approved') approved++;
-      else if (status === 'rejected') rejected++;
-      else pending++;
-      const insertedRow = upsertRes.data;
-
-      // Versioning — Financial Documents pair check (after insert)
-      if (insertedRow && normCat === 'Financial Documents') {
-        var pairMatchId = await findVersionMatch(supabase, userId, item.title, item.body, 'Financial Documents');
-        if (pairMatchId) {
-          var pairId = randomUUID();
-          fin_docs_paired++;
-          await supabase.from('content_library').update({ status: 'pending', version_pair_id: pairId }).eq('id', pairMatchId);
-          await supabase.from('content_library').update({ version_pair_id: pairId }).eq('id', insertedRow.id);
+    if (origin) {
+      var sitemapUrls = await fetchSitemapUrls(origin, hostname);
+      if (sitemapUrls.length > 0) {
+        usedSitemap = true;
+        console.log('[scrape-website] sitemap.xml found —', sitemapUrls.length, 'URLs');
+        // Add sitemap URLs up to MAX_PAGES_PER_CRAWL, filtering robots
+        for (var si = 0; si < sitemapUrls.length && queue.length < MAX_PAGES_PER_CRAWL; si++) {
+          var smNorm = normaliseUrl(sitemapUrls[si]);
+          if (visited.has(smNorm)) continue;
+          if (isDisallowedByRobots(sitemapUrls[si], disallowedPaths)) {
+            addSkipReason('robots_txt_disallowed');
+            continue;
+          }
+          visited.add(smNorm);
+          queue.push({ url: sitemapUrls[si], depth: 0 });
         }
       }
+    }
 
-      // Versioning — apply auto-archive on match
-      if (insertedRow && versionMatchedId) {
-        var archResult = await supabase
-          .from('content_library')
-          .update({ status: 'archived', version_archived_by: insertedRow.id })
-          .eq('id', versionMatchedId);
-        if (archResult.error) console.error('Auto-archive error:', archResult.error.message);
-        else auto_archived++;
+    // If no sitemap URLs were found, start with the provided URL
+    if (queue.length === 0) {
+      var startNorm = normaliseUrl(url);
+      if (isDisallowedByRobots(url, disallowedPaths)) {
+        return res.status(200).json({
+          success: true, count: 0, approved: 0, pending: 0, rejected: 0,
+          pages_crawled: 0, pages_skipped: 1,
+          skipped_reasons: { robots_txt_disallowed: 1 },
+          message: 'Start URL blocked by robots.txt'
+        });
+      }
+      visited.add(startNorm);
+      queue.push({ url: url, depth: 0 });
+    }
+
+    console.log('[scrape-website] Crawl starting — queue:', queue.length, 'usedSitemap:', usedSitemap, 'hostname:', hostname);
+
+    // ── Process pages sequentially ────────────────────────────────────
+    var queueIdx = 0;
+    while (queueIdx < queue.length) {
+      var entry = queue[queueIdx];
+      queueIdx++;
+
+      console.log('[scrape-website] Fetching page', pagesCrawled + 1, '/', queue.length, '—', entry.url);
+
+      // Fetch the page
+      var fetchResult = await fetchPage(entry.url);
+      if (!fetchResult.html) {
+        console.log('[scrape-website] Fetch failed:', entry.url, fetchResult.error);
+        addSkipReason('fetch_failed');
+        continue;
+      }
+
+      var websiteHtml = fetchResult.html;
+      var pageText = htmlToText(websiteHtml);
+      var pageCharCount = pageText ? pageText.length : 0;
+
+      // Character cap check
+      if (totalChars + pageCharCount > MAX_TOTAL_CHARS) {
+        console.log('[scrape-website] Character cap reached — totalChars:', totalChars, 'pageChars:', pageCharCount);
+        addSkipReason('character_cap_reached');
+        continue;
+      }
+      totalChars += pageCharCount;
+
+      // Process this page through the full CL intake pipeline
+      var pageResult = await processPage(supabase, userId, entry.url, websiteHtml, hostname, safeHostname, scanTs);
+      pagesCrawled++;
+
+      if (pageResult.skipped) {
+        addSkipReason(pageResult.skipReason || 'no_extractable_content');
+      } else {
+        totalItemsCount += pageResult.itemsCount;
+        totalApproved += pageResult.approved;
+        totalPending += pageResult.pending;
+        totalRejected += pageResult.rejected;
+        totalAutoArchived += pageResult.auto_archived;
+        totalFinDocsPaired += pageResult.fin_docs_paired;
+      }
+
+      // Discover links for subpage crawling (only when not using sitemap)
+      if (!usedSitemap && entry.depth < MAX_CRAWL_DEPTH) {
+        var discoveredLinks = extractLinks(websiteHtml, entry.url, hostname);
+        for (var li = 0; li < discoveredLinks.length && queue.length < MAX_PAGES_PER_CRAWL; li++) {
+          var linkNorm = normaliseUrl(discoveredLinks[li]);
+          if (visited.has(linkNorm)) continue;
+          visited.add(linkNorm);
+          if (isDisallowedByRobots(discoveredLinks[li], disallowedPaths)) {
+            addSkipReason('robots_txt_disallowed');
+            continue;
+          }
+          queue.push({ url: discoveredLinks[li], depth: entry.depth + 1 });
+        }
       }
     }
 
-    // Update cl_source_items item_count
-    if (sourceItemId && pageItemCount > 0) {
-      await supabase.from('cl_source_items').update({ item_count: pageItemCount }).eq('id', sourceItemId);
-    }
+    console.log('[scrape-website] Crawl complete — pages:', pagesCrawled, 'items:', totalItemsCount, 'skipped:', pagesSkipped);
 
     return res.status(200).json({
       success: true,
-      count: itemsCount,
-      approved: approved,
-      pending: pending,
-      rejected: rejected,
-      auto_archived: auto_archived,
-      fin_docs_paired: fin_docs_paired,
-      message: itemsCount + ' item' + (itemsCount !== 1 ? 's' : '') + ' extracted from website'
+      count: totalItemsCount,
+      imported: totalItemsCount,
+      approved: totalApproved,
+      pending: totalPending,
+      rejected: totalRejected,
+      auto_archived: totalAutoArchived,
+      fin_docs_paired: totalFinDocsPaired,
+      pages_crawled: pagesCrawled,
+      pages_skipped: pagesSkipped,
+      skipped_reasons: skipped_reasons,
+      message: totalItemsCount + ' item' + (totalItemsCount !== 1 ? 's' : '') + ' extracted from ' + pagesCrawled + ' page' + (pagesCrawled !== 1 ? 's' : '')
     });
 
   } catch (err) {
