@@ -26,7 +26,6 @@ window.EA_LOGIC = (function () {
       return;
     }
     _session = session;
-    _renderAccountDropdown();
 
     await _loadSettings();
     _buildCategoryTabs();
@@ -407,36 +406,6 @@ window.EA_LOGIC = (function () {
     _settings.scan_cadence = document.getElementById('ea-scan-cadence').value;
     _settings.show_handled = document.getElementById('ea-show-handled').checked;
   }
-  // -------------------------------------------------------------------------
-  // Account dropdown
-  // -------------------------------------------------------------------------
-  function _renderAccountDropdown() {
-    const email = _session.user.email || '';
-    const short = email.split('@')[0];
-    const shortEl    = document.getElementById('account-email-short');
-    const dropEmail  = document.getElementById('account-dropdown-email');
-    if (shortEl)   shortEl.textContent   = short;
-    if (dropEmail) dropEmail.textContent = email;
-
-    const signOutBtn = document.getElementById('sign-out-btn');
-    if (signOutBtn) {
-      signOutBtn.addEventListener('click', async () => {
-        await window.supabaseClient.auth.signOut();
-        window.location.href = 'index.html';
-      });
-    }
-
-    const accountBtn      = document.getElementById('account-btn');
-    const accountDropdown = document.getElementById('account-dropdown');
-    if (accountBtn && accountDropdown) {
-      accountBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        accountDropdown.classList.toggle('open');
-      });
-      document.addEventListener('click', () => accountDropdown.classList.remove('open'));
-    }
-  }
-
   // -------------------------------------------------------------------------
   // Wire global events
   // -------------------------------------------------------------------------
