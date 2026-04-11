@@ -83,12 +83,26 @@ async function processJob(supabase, job, baseUrl, deadline) {
     last_heartbeat_at: now,
   }).eq('id', job.id);
 
+  // Track whether this job has been cancelled by the user
+  var jobCancelled = false;
+  var cancelCheckId = null;
+
   // Heartbeat — write last_heartbeat_at every 30 seconds so the
-  // watchdog knows this job is still alive
+  // watchdog knows this job is still alive. On each tick, re-read the
+  // job status — if it has been set to cancelled, flag it so the
+  // processing loop can abandon the job cleanly.
   var heartbeatId = setInterval(function() {
-    supabase.from('cl_scan_jobs').update({
-      last_heartbeat_at: new Date().toISOString(),
-    }).eq('id', job.id).then(function() {}).catch(function() {});
+    supabase.from('cl_scan_jobs').select('status').eq('id', job.id).single()
+      .then(function(result) {
+        if (result.data && result.data.status === 'cancelled') {
+          jobCancelled = true;
+          return;
+        }
+        return supabase.from('cl_scan_jobs').update({
+          last_heartbeat_at: new Date().toISOString(),
+        }).eq('id', job.id);
+      })
+      .then(function() {}).catch(function() {});
   }, HEARTBEAT_INTERVAL_MS);
 
   try {
@@ -113,6 +127,11 @@ async function processJob(supabase, job, baseUrl, deadline) {
     var controller = new AbortController();
     var abortTimeoutId = setTimeout(function() { controller.abort(); }, remaining);
 
+    // Also abort if the job is cancelled — check on a short interval
+    cancelCheckId = setInterval(function() {
+      if (jobCancelled) controller.abort();
+    }, 5000);
+
     console.log('[scan-worker] Dispatching job', job.id, '— source:', job.source_type, 'account:', job.source_account, 'path:', job.source_path);
 
     var resp = await fetch(scanReq.url, {
@@ -125,6 +144,13 @@ async function processJob(supabase, job, baseUrl, deadline) {
       signal: controller.signal,
     });
     clearTimeout(abortTimeoutId);
+    clearInterval(cancelCheckId);
+
+    // Check cancellation before processing the response
+    if (jobCancelled) {
+      console.log('[scan-worker] Job', job.id, 'cancelled by user during scan');
+      return { jobId: job.id, outcome: 'cancelled' };
+    }
 
     // Parse the response — handle Vercel gateway timeouts that return
     // plain text instead of JSON
@@ -156,10 +182,15 @@ async function processJob(supabase, job, baseUrl, deadline) {
     return { jobId: job.id, outcome: 'completed' };
 
   } catch (err) {
-    // AbortError means the worker deadline was reached while the scan
-    // endpoint was still running. Reset to queued without incrementing
-    // retry_count — the job did not fail, it was abandoned.
+    // AbortError — either user cancelled or worker deadline reached.
+    // Cancellation: the job row is already set to cancelled by the
+    // client — leave it as-is, do not increment retry_count.
+    // Timeout: reset to queued without incrementing retry_count.
     if (err.name === 'AbortError') {
+      if (jobCancelled) {
+        console.log('[scan-worker] Job', job.id, 'cancelled by user during scan');
+        return { jobId: job.id, outcome: 'cancelled' };
+      }
       await supabase.from('cl_scan_jobs').update({
         status: 'queued',
         error_text: 'Worker timeout — job will be retried on next invocation',
@@ -193,6 +224,7 @@ async function processJob(supabase, job, baseUrl, deadline) {
     }
   } finally {
     clearInterval(heartbeatId);
+    if (cancelCheckId) clearInterval(cancelCheckId);
   }
 }
 
