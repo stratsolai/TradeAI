@@ -209,19 +209,25 @@ async function processJob(supabase, job, deadline) {
       throw new Error(errorText);
     }
 
-    // Success — write completion data. Response shapes vary by endpoint:
-    //   gmail/outlook:                imported, pending, skipped
-    //   drive/onedrive/sharepoint/dropbox: imported, pending, skipped
-    //   website:                      count (alias for imported), pending
+    // Success — write all available counts from the scan result.
+    // Each endpoint returns a slightly different set of fields but
+    // all share the core shape. Missing fields fall back to 0.
     await supabase.from('cl_scan_jobs').update({
       status: 'completed',
       completed_at: new Date().toISOString(),
       imported_count: result.imported || result.count || 0,
+      approved_count: result.approved || 0,
       pending_count: result.pending || 0,
+      rejected_count: result.rejected || 0,
       skipped_count: result.skipped || 0,
+      auto_archived_count: result.auto_archived || 0,
+      fin_docs_paired_count: result.fin_docs_paired || 0,
+      deduped_count: result.deduped || 0,
+      pages_crawled: result.pages_crawled || 0,
+      pages_skipped: result.pages_skipped || 0,
     }).eq('id', job.id);
 
-    console.log('[scan-worker] Job', job.id, 'completed — imported:', result.imported || result.count || 0);
+    console.log('[scan-worker] Job', job.id, 'completed — imported:', result.imported || result.count || 0, 'approved:', result.approved || 0);
     return { jobId: job.id, outcome: 'completed' };
 
   } catch (err) {
