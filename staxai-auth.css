@@ -26,6 +26,9 @@
   --border-blue:        #c8d6e5;
   --text:               #333333;
   --text-muted:         #888888;
+  --text-secondary:     #555555;
+  --green-dark:         #2e7d32;
+  --red-dark:           #8B2500;
 
   /* Badge-specific colours (separate from core vars) */
   --badge-green-bg:     #d4edda;
