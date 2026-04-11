@@ -119,14 +119,13 @@ Google Drive, Dropbox, SharePoint, and Gmail confirmed
 working end to end.
 
 Outstanding before sign-off:
-- OneDrive — timing out on Vercel's 300-second limit due
-  to the recursive walker on large folder trees — blocked
-  on Task 15 (background scanning).
-- Outlook — blocked on Task 15 (background scanning) for
-  the same reason as OneDrive — times out on Vercel's
-  300-second limit.
-- Website — single page only, subpages not crawled —
-  blocked on Task 16.
+- OneDrive — integration test complete, signed off
+  April 2026.
+- Outlook — integration test in progress, scan running
+  successfully on large inbox via Task 15 background
+  processing. Sign-off pending scan completion.
+- Website — single page only resolved by Task 16,
+  now signed off.
 
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
@@ -142,76 +141,46 @@ registration with Buildxact support required before build
 can begin. Integration test complete — Xero, QuickBooks,
 and ServiceM8 all connected successfully. Disconnect not
 yet verified. Fetch endpoint data pull testing deferred to
-each tool's integration test. Fergus — developer platform
-registration email sent April 2026, awaiting response. API
-confirmed available (OAS 3.1, 100 requests per minute rate
-limit). Build deferred pending registration approval.
-Tradify — enquiry email sent April 2026, awaiting
-confirmation of whether a public API is available. Build
-deferred pending response.
+each tool's integration test. Fergus — developer platform registration email sent
+April 2026, awaiting response. API confirmed available
+(OAS 3.1, 100 requests per minute). Build deferred
+pending registration. Tradify — enquiry email sent
+April 2026, awaiting confirmation of whether public API
+is available. Build deferred pending response.
 
 ### Task 14 — Email Attachment Scanning (Gmail + Outlook)
 
-Gmail attachment scanning complete and integration tested —
-signed off. Inline image filter added — Content-Disposition:
-inline and Content-ID header check prevents signature logos
-appearing in Source Review. Note: source_ref for Outlook
-attachments uses outlook-email-attachment: prefix as built —
-treat as canonical, not the outlook-attachment: prefix in
-the spec. Outlook attachment scanning build complete —
-integration test deferred until Task 15 complete and Outlook
-timeout resolved.
+Build complete. Gmail integration tested and signed off
+April 2026. Inline image filter confirmed working —
+Content-Disposition: inline and Content-ID header check
+prevents signature logos appearing in Source Review.
+Note: Outlook attachment source_ref uses
+outlook-email-attachment: prefix as built — treat as
+canonical. Outlook attachment integration test deferred
+until Outlook timeout confirmed resolved via Task 15.
 
 ### Task 15 — Background Scan Processing
 
-Build complete. Integration test in progress. Stop Scan
-button wired to queue model — queued jobs deleted, running
-jobs set to cancelled. Supabase Realtime drives tile state
-updates. cl-upload.js updated with unified queue loop
-replacing all direct scan endpoint calls. Issues resolved
-during build: Vercel cron GET/POST method fix, VERCEL_URL
-deployment protection bypass via direct module imports
-replacing HTTP fetch calls, scan-queue.js maxDuration: 300
-added.
+Build complete April 2026. Integration test in progress —
+Outlook large inbox scan running successfully. OneDrive
+signed off. Issues resolved during build: Vercel cron
+GET/POST method fix, VERCEL_URL deployment protection
+bypass via direct module imports, scan-queue.js maxDuration
+added, full scan completion message counts restored
+(approved, rejected, auto_archived, fin_docs_paired,
+deduped, pages_crawled, pages_skipped). cl_scan_jobs table
+gained 7 additional count columns April 2026. cl-upload.js
+restores in-progress tile state on page reload via
+_restoreActiveJobs().
 
 ### Task 16 — Website Subpage Crawling
 
-Each website scan currently processes one URL only — only
-the page at the configured URL is fetched and extracted.
-Subpages (Services, About, Pricing, Team, Testimonials,
-blog posts, project case studies) are invisible regardless
-of how content-rich they are. For most marketing sites the
-bulk of valuable content lives on subpages that the
-homepage just links to. Spec required before build begins.
-
-Spec must cover at minimum:
-
-- Link following — extract internal links from the fetched
-  page, follow them up to a configurable per-domain depth
-  and per-domain page count. Same-domain only by default.
-- robots.txt compliance — fetch and respect robots.txt
-  before crawling. User-Agent set to a stable identifier
-  so site owners can block the scanner if they choose.
-- sitemap.xml support — when present, prefer the sitemap
-  over link-following because it gives a complete page
-  list without the domain-walking overhead.
-- Per-page token budgets — each page goes through the
-  existing runExtractionPrompt with the existing 40,000
-  character cap and 8,000 max_tokens, but the total
-  crawl needs an overall page count cap to keep cost and
-  runtime predictable.
-- Dedupe — the same URL fetched twice within one scan
-  should not produce two cl_source_items rows. The
-  source_ref shape web:<url>:<scanTs>:<idx> already
-  handles per-URL dedupe but the scan-level dedupe set
-  needs to remember which URLs the current crawl has
-  already visited.
-- Background scan integration — subpage crawling will
-  produce many more per-page extraction calls and is a
-  natural candidate for the Task 15 background scan
-  worker, not the synchronous endpoint. Spec for Task 16
-  should land after Task 15's spec to take advantage of
-  the queue.
+Build complete April 2026. Integration test passed —
+subpage crawling confirmed working, multiple pages
+appearing in Source Review from a single scan. Constants:
+MAX_CRAWL_DEPTH = 2, MAX_PAGES_PER_CRAWL = 20,
+MAX_TOTAL_CHARS = 500,000. Sitemap preference, robots.txt
+compliance, within-crawl dedup all confirmed working.
 
 ### Task 17 — Desktop-Only Message for Non-Mobile Pages
 
@@ -440,15 +409,13 @@ source-of-truth pages for the stylesheet.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
+- cl-upload.js tile loses in-progress scan state on hard
+  refresh — fixed April 2026 via _restoreActiveJobs() on
+  page load.
 - scan-worker.js calls all scan endpoint handlers via direct
   module imports rather than HTTP fetch to avoid Vercel
-  deployment protection on internal calls. This means all
-  scan logic runs within the worker's 300-second budget.
-  Task 15 background processing resolves the per-scan
-  timeout issue but the worker itself is still subject to
-  the 300-second limit per invocation. With
-  MAX_CONCURRENT_JOBS = 3 this is acceptable at current
-  user numbers.
+  deployment protection on internal calls. All scan logic
+  runs within the worker's 300-second budget per invocation.
 - Claude Code must never run any Vercel CLI commands under
   any circumstances. Vercel log access is via the Vercel
   dashboard only. This applies even when investigating
@@ -465,9 +432,9 @@ is complete and confirmed working.
 |------|------------------------------------------------------------|
 | 1    | ~~Complete Task 12 — Image Processing integration test sign-off~~ **COMPLETE** |
 | 2    | Complete Task 13 — External Platform Connections spec and build |
-| 3    | Complete Task 14 — Email Attachment Scanning spec and build — **IN PROGRESS** |
-| 4    | Complete Task 15 — Background Scan Processing spec and build — **IN PROGRESS** |
-| 5    | Complete Task 16 — Website Subpage Crawling spec and build |
+| 3    | ~~Complete Task 14 — Email Attachment Scanning spec and build~~ **COMPLETE** |
+| 4    | ~~Complete Task 15 — Background Scan Processing spec and build~~ **COMPLETE** |
+| 5    | ~~Complete Task 16 — Website Subpage Crawling spec and build~~ **COMPLETE** |
 | 6    | Complete Task 17 — Desktop-only message for non-mobile pages |
 | 7    | Complete stylesheet rollout across CL files                |
 | 8    | Complete stylesheet rollout across cl-settings.html        |
@@ -606,6 +573,10 @@ Notable changes made April 2026:
   cl_servicem8_accounts (jsonb)
 - cl_scan_jobs table added April 2026 — scan job queue
   with RLS enabled. Realtime enabled.
+- cl_scan_jobs: added approved_count, rejected_count,
+  auto_archived_count, fin_docs_paired_count,
+  deduped_count, pages_crawled, pages_skipped (all
+  integer, default 0) — April 2026
 
 ---
 
@@ -837,3 +808,9 @@ Industry-agnostic (when editing AI prompts or data models):
 | StaxAI-Background-Scan-         | Background scan queue and worker    |
 | Processing-Spec-v1.0            | infrastructure. Build complete.     |
 |                                 | Integration test in progress.       |
+| StaxAI-Website-Subpage-         | Website subpage crawling. Build     |
+| Crawling-Spec-v1.0              | complete, integration test passed.  |
+| StaxAI-New-Tool-Ideas-v1.0     | Six new tool ideas for future       |
+|                                 | consideration. Not approved for     |
+|                                 | build. Each requires a full spec    |
+|                                 | before build begins.                |
