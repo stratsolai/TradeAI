@@ -336,7 +336,7 @@ window.CL_UPLOAD = {
             "<div class=\"source-tile-actions\"" + actionsStyle + ">",
               "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
               "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scan</button>",
-              "<a href=\"/library/settings\" class=\"source-action-btn source-connect-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
+              "<a href=\"/library/settings\" class=\"source-action-btn source-scan-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
             "</div>",
           "</div>"
         ].join("\n");
