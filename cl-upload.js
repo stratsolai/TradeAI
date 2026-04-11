@@ -418,20 +418,8 @@ window.CL_UPLOAD = {
         outlook: "Outlook",
         website: "Website"
       };
-      // Build a "<Tile> — <label> — X imported, Y pending, Z skipped"
-      // line from the job row counts. Zero counts are omitted to keep
-      // the message tidy. When all are zero the message reads
-      // "<Tile> — <label> — no new content".
       function formatJobCountsLine(label, job) {
-        var imp = (job && job.imported_count) || 0;
-        var pend = (job && job.pending_count) || 0;
-        var sk = (job && job.skipped_count) || 0;
-        var parts = [];
-        if (imp > 0) parts.push(imp + " imported");
-        if (pend > 0) parts.push(pend + " pending");
-        if (sk > 0) parts.push(sk + " skipped");
-        var tileName = SOURCE_NAMES[source] || source;
-        return tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+        return self._formatJobMessage(source, label, job);
       }
       // Map a source tile id + pill value to the { sourceType,
       // sourceAccount, sourcePath } shape that scan-queue expects.
@@ -585,6 +573,40 @@ window.CL_UPLOAD = {
       })();
     },
 
+  // Build a completion message line from the full set of counts on a
+  // cl_scan_jobs row. Shows approved, pending, rejected, skipped as
+  // the primary counts. Appends deduped, auto_archived, fin_docs_paired
+  // when non-zero. For website scans, appends pages_crawled and
+  // pages_skipped. Returns "no new content" when all primary counts
+  // are zero.
+  _formatJobMessage: function(source, label, row) {
+    var a = (row && row.approved_count) || 0;
+    var p = (row && row.pending_count) || 0;
+    var r = (row && row.rejected_count) || 0;
+    var sk = (row && row.skipped_count) || 0;
+    var parts = [];
+    if (a > 0) parts.push(a + " approved");
+    if (p > 0) parts.push(p + " pending");
+    if (r > 0) parts.push(r + " rejected");
+    var tileName = this._SOURCE_NAMES[source] || source;
+    var line = tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
+    var ded = (row && row.deduped_count) || 0;
+    if (ded > 0) line += " | " + ded + " already up to date";
+    if (sk > 0) line += " | " + sk + " skipped";
+    var arch = (row && row.auto_archived_count) || 0;
+    var paired = (row && row.fin_docs_paired_count) || 0;
+    if (arch > 0) line += " | " + arch + " older version" + (arch !== 1 ? "s" : "") + " archived";
+    if (paired > 0) line += " | " + paired + " financial document" + (paired !== 1 ? "s" : "") + " paired for review";
+    // Website-specific crawl stats
+    if (source === "website") {
+      var pc = (row && row.pages_crawled) || 0;
+      var ps = (row && row.pages_skipped) || 0;
+      if (pc > 0) line += " | " + pc + " page" + (pc !== 1 ? "s" : "") + " crawled";
+      if (ps > 0) line += " | " + ps + " page" + (ps !== 1 ? "s" : "") + " skipped";
+    }
+    return line;
+  },
+
   _removeActiveJob: function(source, jobId) {
     if (!this._activeJobs[source]) return;
     this._activeJobs[source] = this._activeJobs[source].filter(function(j) { return j.jobId !== jobId; });
@@ -629,15 +651,7 @@ window.CL_UPLOAD = {
           if (row.status === "running") {
             btn.textContent = "Scanning...";
           } else if (row.status === "completed") {
-            var imp = row.imported_count || 0;
-            var pend = row.pending_count || 0;
-            var sk = row.skipped_count || 0;
-            var parts = [];
-            if (imp > 0) parts.push(imp + " imported");
-            if (pend > 0) parts.push(pend + " pending");
-            if (sk > 0) parts.push(sk + " skipped");
-            var tileName = self._SOURCE_NAMES[source] || source;
-            self._appendUploadMessage(tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content"), "success");
+            self._appendUploadMessage(self._formatJobMessage(source, label, row), "success");
             btn.textContent = "Scan Now";
             btn.disabled = false;
             if (typeof loadStats === "function") loadStats();
