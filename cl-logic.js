@@ -2,7 +2,7 @@
   const { data: { user } } = await supabaseClient.auth.getUser();
 
   const [libResult, queueResult, publishedResult] = await Promise.all([
-    supabaseClient.from('content_library').select('status', { count: 'exact' }).eq('user_id', user.id),
+    supabaseClient.from('content_library').select('status', { count: 'exact' }).eq('user_id', user.id).neq('source', 'tool'),
     supabaseClient.from('publishing_queue').select('status', { count: 'exact' }).eq('user_id', user.id).in('status', ['pending_approval','approved','scheduled']),
     supabaseClient.from('publishing_queue').select('id', { count: 'exact' }).eq('user_id', user.id).eq('status', 'posted')
   ]);
