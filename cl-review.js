@@ -244,6 +244,7 @@ window.CL_REVIEW = {
       .from('content_library')
       .select('*')
       .eq('status', this._status)
+      .neq('source', 'tool')
       .order('created_at', { ascending: false });
     if (result.error) {
       if (list) list.innerHTML = '<div class="review-empty">Could not load items.</div>';
