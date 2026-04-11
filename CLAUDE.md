@@ -145,6 +145,22 @@ Build complete April 2026. Final test of output content
 and tile counts blocked until tools send data to the
 Content Library.
 
+### Task 19 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
+
+A mobile layout audit was completed in April 2026 as part of
+the PWA build. The audit found layout issues across all
+authenticated pages. These fixes were deliberately deferred —
+they belong in the stylesheet rollout, not as piecemeal inline
+fixes. When the stylesheet rollout reaches each page, a fresh
+mobile audit should be run on that page and fixes applied at
+the same time as the stylesheet variables are rolled out. Do
+not attempt to fix mobile layout issues on any page outside of
+the stylesheet rollout sequence.
+
+Exception: content-library.html and cl-settings.html already
+have mobile fixes applied (April 2026) as these are the
+source-of-truth pages for the stylesheet.
+
 ---
 
 ## Known Issues & Notes
