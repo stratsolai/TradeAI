@@ -15,6 +15,8 @@
 //
 // Response: { success: true, jobId: <uuid> }
 
+export const config = { maxDuration: 300 };
+
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
