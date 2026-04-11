@@ -29,7 +29,7 @@
     // Detect which tab system is present
     var stabTabs = document.querySelectorAll('.stab[data-tab]');
     var settingsTabs = document.querySelectorAll('.settings-tab[data-tab]');
-    var ptabTabs = document.querySelectorAll('.ptab[onclick]');
+    var ptabTabs = document.querySelectorAll('.ptab[data-tab]');
 
     if (stabTabs.length > 0) {
       hasTabs = true;
