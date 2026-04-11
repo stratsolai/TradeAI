@@ -291,8 +291,8 @@ a:hover { opacity: 0.85; }
 .stat-tile .stat-value,
 .stat-card .stat-value {
   font-family: var(--body-font);
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 600;
   color: var(--text);
   line-height: 1;
   margin-bottom: 4px;
