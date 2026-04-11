@@ -229,7 +229,8 @@ async function processJob(supabase, job, baseUrl, deadline) {
 }
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // Accept both GET (Vercel Cron) and POST (scan-queue trigger)
+  if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   // ── TEMPORARY DEBUG — remove after confirming auth works ───────────
   var _csSet = !!process.env.CRON_SECRET;
