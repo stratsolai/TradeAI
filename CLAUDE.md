@@ -139,31 +139,6 @@ registration email sent April 2026, awaiting response.
 Tradify — enquiry email sent April 2026, awaiting
 confirmation of whether public API is available.
 
-### Task 17 — Desktop-Only Message for Non-Mobile Pages
-
-Several authenticated pages are designated desktop-only and
-must show a friendly message when accessed from a mobile
-device in PWA standalone mode. The message should say the
-page is designed for desktop and include a Back to Dashboard
-button. Detection: check for standalone PWA mode using
-window.matchMedia('(display-mode: standalone)') combined
-with a mobile screen width check.
-
-Pages requiring this message (existing pages only — future
-tool pages get it when built):
-
-- content-library.html
-- cl-settings.html
-- strategic-plan.html
-- chatbot.html
-- chatbot-settings.html
-- email-assistant-settings.html
-- news-digest-settings.html
-- panel-auth.html
-
-No spec required for this task — instructions above are
-sufficient. Can be built in a single session.
-
 ### Task 18 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
 
 A mobile layout audit was completed in April 2026 as part of
@@ -392,7 +367,7 @@ is complete and confirmed working.
 | 3    | ~~Complete Task 14 — Email Attachment Scanning spec and build~~ **COMPLETE** |
 | 4    | ~~Complete Task 15 — Background Scan Processing spec and build~~ **COMPLETE** |
 | 5    | ~~Complete Task 16 — Website Subpage Crawling spec and build~~ **COMPLETE** |
-| 6    | Complete Task 17 — Desktop-only message for non-mobile pages |
+| 6    | ~~Complete Task 17 — Desktop-only message for non-mobile pages~~ **COMPLETE** |
 | 7    | Complete stylesheet rollout across CL files                |
 | 8    | Complete stylesheet rollout across cl-settings.html        |
 | 9    | Roll stylesheet out to all remaining authenticated pages   |
