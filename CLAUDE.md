@@ -139,21 +139,11 @@ registration email sent April 2026, awaiting response.
 Tradify — enquiry email sent April 2026, awaiting
 confirmation of whether public API is available.
 
-### Task 18 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
+### Task 18 — CL Tool Outputs Tab
 
-A mobile layout audit was completed in April 2026 as part of
-the PWA build. The audit found layout issues across all
-authenticated pages. These fixes were deliberately deferred —
-they belong in the stylesheet rollout, not as piecemeal inline
-fixes. When the stylesheet rollout reaches each page, a fresh
-mobile audit should be run on that page and fixes applied at
-the same time as the stylesheet variables are rolled out. Do
-not attempt to fix mobile layout issues on any page outside of
-the stylesheet rollout sequence.
-
-Exception: content-library.html and cl-settings.html already
-have mobile fixes applied (April 2026) as these are the
-source-of-truth pages for the stylesheet.
+Build complete April 2026. Final test of output content
+and tile counts blocked until tools send data to the
+Content Library.
 
 ---
 
@@ -352,6 +342,12 @@ source-of-truth pages for the stylesheet.
   any circumstances. Vercel log access is via the Vercel
   dashboard only. This applies even when investigating
   errors.
+- Every tool that writes outputs to the Content Library
+  must set source = 'tool' on the content_library row.
+  This is what separates Tool Output items from Source
+  Material items and controls which tab they appear in.
+  Without this value the item will not appear in the Tool
+  Outputs tab.
 
 ---
 
