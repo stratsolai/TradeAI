@@ -17,8 +17,8 @@
   --green:              #28a745;
   --green-light:        #edfaf1;
   --red:                #dc3545;
-  --purple:             #7b2d8b;
-  --teal:               #0d9488;
+  --purple:             #7B5EA7;
+  --teal:               #0097A7;
   --grey:               #6c757d;
   --bg:                 #f5f7fa;
   --white:              #ffffff;
@@ -29,6 +29,21 @@
   --text-secondary:     #555555;
   --green-dark:         #2e7d32;
   --red-dark:           #8B2500;
+  --blue-dark:          #1a4070;
+  --orange-dark:        #c74408;
+  --text-disabled:      #aaa;
+  --text-hint:          #999;
+  --text-dark:          #222;
+  --text-mid:           #666;
+  --blue-hover-bg:      #e8f0fb;
+  --blue-tint:          #EEF2F7;
+  --active-bg:          #EEF3F9;
+  --green-hover-bg:     #EAF4EB;
+  --red-hover-bg:       #fef2f2;
+  --red-light:          #fff5f5;
+  --bg-subtle:          #f8fafc;
+  --border-light:       #F0F0F0;
+  --blue-accent-hover:  #2e5070;
 
   /* Badge-specific colours (separate from core vars) */
   --badge-green-bg:     #d4edda;
@@ -37,6 +52,8 @@
   --badge-orange-text:  #856404;
   --badge-purple-bg:    #e8d5f5;
   --badge-purple-text:  #6a1b9a;
+  --badge-red-bg:       #f8d7da;
+  --badge-red-text:     #721c24;
 
   /* Typography */
   --heading-font:       'Barlow Condensed', sans-serif;
