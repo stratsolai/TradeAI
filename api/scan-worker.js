@@ -2,34 +2,31 @@
 // Worker endpoint for background scan processing. Invoked by Vercel Cron
 // on a schedule and by api/scan-queue.js immediately after a manual scan
 // is queued. Picks up queued jobs from cl_scan_jobs and dispatches each
-// to the appropriate existing scan endpoint via internal HTTP call.
+// to the appropriate scan endpoint handler via direct module import.
 //
 // Auth: CRON_SECRET required in Authorization: Bearer header (Vercel Cron
-// sends this automatically). scan-queue.js fire-and-forget must also pass
-// it — needs updating to include the Authorization header.
+// sends this automatically; scan-queue.js also passes it).
 //
 // Processing flow:
 //   1. Watchdog — reset stuck jobs (running > 10 min without heartbeat)
 //   2. Select up to MAX_CONCURRENT_JOBS queued jobs (priority ASC, created_at ASC)
-//   3. Process each job in parallel — call existing scan endpoint, track heartbeat
+//   3. Process each job in parallel — call handler directly with mock req/res
 //   4. Update job row with result counts or error on completion/failure
 //
-// No scan logic lives in this file — it delegates to the existing endpoints:
-//   gmail      → /api/cl-email-scan       (userId in body, no JWT)
-//   outlook    → /api/cl-outlook-scan      (userId in body, no JWT)
-//   website    → /api/scrape-website       (userId in body, no JWT)
-//   gdrive     → /api/drive-import         (JWT required — needs x-cron-secret update)
-//   onedrive   → /api/onedrive-import      (JWT required — needs x-cron-secret update)
-//   sharepoint → /api/sharepoint-import    (JWT required — needs x-cron-secret update)
-//   dropbox    → /api/dropbox-import       (JWT required — needs x-cron-secret update)
-//
-// The four JWT-auth endpoints (drive, onedrive, sharepoint, dropbox) will
-// return 401 until they are updated to accept x-cron-secret as alternative
-// auth for worker invocations. The worker handles these as retryable failures.
+// Handlers are imported directly as modules and called with constructed
+// req/res objects. This bypasses the network layer entirely — no HTTP
+// round-trip, no Vercel deployment protection, no edge auth issues.
 
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import gmailHandler from './cl-email-scan.js';
+import outlookHandler from './cl-outlook-scan.js';
+import driveHandler from './drive-import.js';
+import onedriveHandler from './onedrive-import.js';
+import sharepointHandler from './sharepoint-import.js';
+import dropboxHandler from './dropbox-import.js';
+import websiteHandler from './scrape-website.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -41,30 +38,68 @@ var HEARTBEAT_INTERVAL_MS = 30000;
 var WATCHDOG_STALE_MINUTES = 10;
 var JOB_TIMEOUT_MS = 240000;
 
-// Build the endpoint URL and request body for a given job's source type.
-// The worker passes userId in the body of every call so that JWT-auth
-// endpoints can use it once they accept x-cron-secret as alternative auth.
-function buildScanRequest(job, baseUrl) {
+// Build a mock req object for calling a scan endpoint handler directly.
+// The JWT-auth endpoints (drive, onedrive, sharepoint, dropbox) check
+// req.headers['x-cron-secret'] as alternative auth, so the mock includes
+// it. The body-auth endpoints (gmail, outlook, website) just read userId
+// from req.body.
+function buildMockReq(body) {
+  return {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-cron-secret': process.env.CRON_SECRET || '',
+    },
+    body: body,
+  };
+}
+
+// Build a mock res object that captures the handler's JSON response.
+// Returns a promise that resolves with { statusCode, data } when the
+// handler calls res.status(code).json(data). Only the first call to
+// json() resolves the promise — subsequent calls are ignored so that
+// cancellation checks and handler completion do not conflict.
+function buildMockRes() {
+  var statusCode = 200;
+  var resolved = false;
+  var resolve;
+  var promise = new Promise(function(r) { resolve = r; });
+  var res = {
+    status: function(code) {
+      statusCode = code;
+      return res;
+    },
+    json: function(data) {
+      if (resolved) return;
+      resolved = true;
+      resolve({ statusCode: statusCode, data: data });
+    },
+  };
+  return { res: res, promise: promise };
+}
+
+// Map a job's source_type to { handler, body } for direct invocation.
+function buildDispatch(job) {
   var userId = job.user_id;
   var account = job.source_account;
   var path = job.source_path;
 
   switch (job.source_type) {
     case 'gmail':
-      return { url: baseUrl + '/api/cl-email-scan', body: { userId: userId, accountEmail: account } };
+      return { handler: gmailHandler, body: { userId: userId, accountEmail: account } };
     case 'outlook':
-      return { url: baseUrl + '/api/cl-outlook-scan', body: { userId: userId, accountEmail: account } };
+      return { handler: outlookHandler, body: { userId: userId, accountEmail: account } };
     case 'website':
-      return { url: baseUrl + '/api/scrape-website', body: { userId: userId, url: account } };
+      return { handler: websiteHandler, body: { userId: userId, url: account } };
     case 'gdrive':
-      return { url: baseUrl + '/api/drive-import', body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
+      return { handler: driveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
     case 'onedrive':
-      return { url: baseUrl + '/api/onedrive-import', body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
+      return { handler: onedriveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
     case 'sharepoint':
       var spParts = (path || '').split('|');
-      return { url: baseUrl + '/api/sharepoint-import', body: { action: 'import-all', accountEmail: account, siteId: spParts[0] || '', libraryId: spParts[1] || '', userId: userId } };
+      return { handler: sharepointHandler, body: { action: 'import-all', accountEmail: account, siteId: spParts[0] || '', libraryId: spParts[1] || '', userId: userId } };
     case 'dropbox':
-      return { url: baseUrl + '/api/dropbox-import', body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId } };
+      return { handler: dropboxHandler, body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId } };
     default:
       return null;
   }
@@ -73,7 +108,7 @@ function buildScanRequest(job, baseUrl) {
 // Process a single scan job. Called in parallel for up to MAX_CONCURRENT_JOBS
 // jobs per worker invocation. Each call updates the job row through its
 // lifecycle: queued → running → completed/failed/requeued.
-async function processJob(supabase, job, baseUrl, deadline) {
+async function processJob(supabase, job, deadline) {
   var now = new Date().toISOString();
 
   // Transition to running with initial heartbeat
@@ -85,7 +120,6 @@ async function processJob(supabase, job, baseUrl, deadline) {
 
   // Track whether this job has been cancelled by the user
   var jobCancelled = false;
-  var cancelCheckId = null;
 
   // Heartbeat — write last_heartbeat_at every 30 seconds so the
   // watchdog knows this job is still alive. On each tick, re-read the
@@ -106,15 +140,14 @@ async function processJob(supabase, job, baseUrl, deadline) {
   }, HEARTBEAT_INTERVAL_MS);
 
   try {
-    var scanReq = buildScanRequest(job, baseUrl);
-    if (!scanReq) {
+    var dispatch = buildDispatch(job);
+    if (!dispatch) {
       throw new Error('Unknown source_type: ' + job.source_type);
     }
 
     // Check remaining time before the 240s worker deadline
     var remaining = deadline - Date.now();
     if (remaining <= 0) {
-      // Reset to queued without incrementing retry — timeout is not a failure
       await supabase.from('cl_scan_jobs').update({
         status: 'queued',
         error_text: 'Worker timeout — job will be retried on next invocation',
@@ -123,46 +156,56 @@ async function processJob(supabase, job, baseUrl, deadline) {
       return { jobId: job.id, outcome: 'timeout' };
     }
 
-    // Abort the fetch if the worker deadline is reached while waiting
-    var controller = new AbortController();
-    var abortTimeoutId = setTimeout(function() { controller.abort(); }, remaining);
-
-    // Also abort if the job is cancelled — check on a short interval
-    cancelCheckId = setInterval(function() {
-      if (jobCancelled) controller.abort();
-    }, 5000);
-
     console.log('[scan-worker] Dispatching job', job.id, '— source:', job.source_type, 'account:', job.source_account, 'path:', job.source_path);
 
-    var resp = await fetch(scanReq.url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-cron-secret': process.env.CRON_SECRET || '',
-      },
-      body: JSON.stringify(scanReq.body),
-      signal: controller.signal,
+    // Call the handler directly with mock req/res. The handler runs
+    // asynchronously and calls mock.res.json() when done, which resolves
+    // mock.promise. Race against the worker deadline and cancellation.
+    var mockReq = buildMockReq(dispatch.body);
+    var mock = buildMockRes();
+
+    // Start the handler — do not await it, let it resolve via mock.res
+    dispatch.handler(mockReq, mock.res).catch(function(handlerErr) {
+      // If the handler throws before calling res.json(), resolve the
+      // mock with an error so the race does not hang forever
+      mock.res.status(500).json({ error: handlerErr.message || 'Handler threw an unhandled error' });
     });
-    clearTimeout(abortTimeoutId);
+
+    var timeoutPromise = new Promise(function(resolve) {
+      setTimeout(function() { resolve({ timedOut: true }); }, remaining);
+    });
+
+    // Check cancellation periodically during the handler call
+    var cancelCheckId = setInterval(function() {
+      if (jobCancelled) {
+        mock.res.status(499).json({ _cancelled: true });
+      }
+    }, 5000);
+
+    var outcome = await Promise.race([mock.promise, timeoutPromise]);
     clearInterval(cancelCheckId);
 
-    // Check cancellation before processing the response
-    if (jobCancelled) {
+    // Handle cancellation
+    if (jobCancelled || (outcome.data && outcome.data._cancelled)) {
       console.log('[scan-worker] Job', job.id, 'cancelled by user during scan');
       return { jobId: job.id, outcome: 'cancelled' };
     }
 
-    // Parse the response — handle Vercel gateway timeouts that return
-    // plain text instead of JSON
-    var result;
-    try {
-      result = await resp.json();
-    } catch (parseErr) {
-      throw new Error('Endpoint returned non-JSON response (status ' + resp.status + ')');
+    // Handle timeout
+    if (outcome.timedOut) {
+      await supabase.from('cl_scan_jobs').update({
+        status: 'queued',
+        error_text: 'Worker timeout — job will be retried on next invocation',
+      }).eq('id', job.id);
+      console.log('[scan-worker] Job', job.id, 'abandoned — worker deadline reached during scan');
+      return { jobId: job.id, outcome: 'timeout' };
     }
 
-    if (!resp.ok || result.error) {
-      var errorText = result.error || ('Endpoint returned ' + resp.status);
+    var result = outcome.data;
+    var statusCode = outcome.statusCode;
+
+    if (statusCode >= 400 || (result && result.error)) {
+      var errorText = (result && result.error) || ('Handler returned ' + statusCode);
       throw new Error(errorText);
     }
 
@@ -182,23 +225,6 @@ async function processJob(supabase, job, baseUrl, deadline) {
     return { jobId: job.id, outcome: 'completed' };
 
   } catch (err) {
-    // AbortError — either user cancelled or worker deadline reached.
-    // Cancellation: the job row is already set to cancelled by the
-    // client — leave it as-is, do not increment retry_count.
-    // Timeout: reset to queued without incrementing retry_count.
-    if (err.name === 'AbortError') {
-      if (jobCancelled) {
-        console.log('[scan-worker] Job', job.id, 'cancelled by user during scan');
-        return { jobId: job.id, outcome: 'cancelled' };
-      }
-      await supabase.from('cl_scan_jobs').update({
-        status: 'queued',
-        error_text: 'Worker timeout — job will be retried on next invocation',
-      }).eq('id', job.id);
-      console.log('[scan-worker] Job', job.id, 'abandoned — worker deadline reached during scan');
-      return { jobId: job.id, outcome: 'timeout' };
-    }
-
     // Check for Claude API 429 (rate limit) in the error text so it
     // is tagged clearly in error_text. Treated as retryable.
     var errorMsg = err.message || '';
@@ -224,18 +250,12 @@ async function processJob(supabase, job, baseUrl, deadline) {
     }
   } finally {
     clearInterval(heartbeatId);
-    if (cancelCheckId) clearInterval(cancelCheckId);
   }
 }
 
 export default async function handler(req, res) {
   // Accept both GET (Vercel Cron) and POST (scan-queue trigger)
   if (req.method !== 'POST' && req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
-  // ── TEMPORARY DEBUG — remove after confirming auth works ───────────
-  var _csSet = !!process.env.CRON_SECRET;
-  var _csPrefix = _csSet ? process.env.CRON_SECRET.substring(0, 4) : 'n/a';
-  console.log('[scan-worker DEBUG] CRON_SECRET set:', _csSet, '| prefix:', _csPrefix, '| Authorization header:', req.headers['authorization'] || '(none)');
 
   // ── CRON_SECRET auth ─────────────────────────────────────────────────
   var cronSecret = process.env.CRON_SECRET;
@@ -247,11 +267,6 @@ export default async function handler(req, res) {
   var supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   var workerStartTime = Date.now();
   var deadline = workerStartTime + JOB_TIMEOUT_MS;
-
-  // ── Resolve base URL for internal endpoint calls ────────────────────
-  var baseUrl = process.env.VERCEL_URL
-    ? 'https://' + process.env.VERCEL_URL
-    : 'https://' + (req.headers['host'] || 'staxai.com.au');
 
   try {
     // ── Watchdog — reset stuck jobs ────────────────────────────────────
@@ -293,7 +308,7 @@ export default async function handler(req, res) {
 
     // ── Process jobs in parallel ───────────────────────────────────────
     var results = await Promise.allSettled(
-      jobs.map(function(job) { return processJob(supabase, job, baseUrl, deadline); })
+      jobs.map(function(job) { return processJob(supabase, job, deadline); })
     );
 
     var summary = results.map(function(r, i) {
