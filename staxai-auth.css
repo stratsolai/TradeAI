@@ -292,7 +292,7 @@ a:hover { opacity: 0.85; }
 .stat-card .stat-value {
   font-family: var(--body-font);
   font-size: 22px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text);
   line-height: 1;
   margin-bottom: 4px;
