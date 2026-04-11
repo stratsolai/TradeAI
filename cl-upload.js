@@ -347,7 +347,10 @@ window.CL_UPLOAD = {
         });
       });
       grid.querySelectorAll(".source-stop-btn").forEach(function(btn) {
-        btn.addEventListener("click", function() { self._scanCancelled = true; });
+        btn.addEventListener("click", function() {
+          var stopSource = btn.getAttribute("data-source");
+          self._handleStopScan(stopSource);
+        });
       });
 
     } catch (err) {
@@ -358,8 +361,12 @@ window.CL_UPLOAD = {
   _scanCancelled: false,
 
   // Active Realtime subscriptions keyed by job id — unsubscribed when
-  // the job reaches a terminal state (completed / failed).
+  // the job reaches a terminal state (completed / failed / cancelled).
   _jobSubscriptions: {},
+
+  // Active job IDs keyed by source tile id — used by the Stop Scan
+  // button to delete queued jobs or cancel running jobs.
+  _activeJobs: {},
 
   _handleScanNow: function(source, btn, values, tile) {
       var self = this;
@@ -447,8 +454,14 @@ window.CL_UPLOAD = {
       }
       // Subscribe to a single cl_scan_jobs row via Supabase Realtime.
       // Updates the button text as the job transitions through states
-      // and appends a stacking message on completion or failure.
+      // and appends a stacking message on completion, failure, or
+      // cancellation. Cleans up subscription and active job tracking
+      // on any terminal state.
       function watchJob(jobId, label) {
+        // Track this job as active for the current source tile
+        if (!self._activeJobs[source]) self._activeJobs[source] = [];
+        self._activeJobs[source].push({ jobId: jobId, status: "queued" });
+
         var channel = self._supabase
           .channel("scan-job-" + jobId)
           .on(
@@ -457,6 +470,10 @@ window.CL_UPLOAD = {
             function(payload) {
               var row = payload.new;
               if (!row) return;
+              // Update tracked status
+              var tracked = (self._activeJobs[source] || []).find(function(j) { return j.jobId === jobId; });
+              if (tracked) tracked.status = row.status;
+
               if (row.status === "running") {
                 btn.textContent = "Scanning...";
               } else if (row.status === "completed") {
@@ -464,17 +481,25 @@ window.CL_UPLOAD = {
                 finishScan();
                 if (typeof loadStats === "function") loadStats();
                 if (window.CL_REVIEW) window.CL_REVIEW._load();
-                // Unsubscribe — terminal state
+                // Unsubscribe and remove from active jobs — terminal state
                 self._supabase.removeChannel(channel);
                 delete self._jobSubscriptions[jobId];
+                self._removeActiveJob(source, jobId);
               } else if (row.status === "failed") {
                 var errText = row.error_text || "Scan failed";
                 var tileName = SOURCE_NAMES[source] || source;
                 self._appendUploadMessage(tileName + " — " + label + " — error: " + errText, "error");
                 finishScan();
-                // Unsubscribe — terminal state
                 self._supabase.removeChannel(channel);
                 delete self._jobSubscriptions[jobId];
+                self._removeActiveJob(source, jobId);
+              } else if (row.status === "cancelled") {
+                var cancelTileName = SOURCE_NAMES[source] || source;
+                self._appendUploadMessage(cancelTileName + " — " + label + " — scan stopped", "error");
+                finishScan();
+                self._supabase.removeChannel(channel);
+                delete self._jobSubscriptions[jobId];
+                self._removeActiveJob(source, jobId);
               }
               // queued status after a retry — button stays in queued state
             }
@@ -546,6 +571,57 @@ window.CL_UPLOAD = {
         }
       })();
     },
+
+  _removeActiveJob: function(source, jobId) {
+    if (!this._activeJobs[source]) return;
+    this._activeJobs[source] = this._activeJobs[source].filter(function(j) { return j.jobId !== jobId; });
+    if (this._activeJobs[source].length === 0) delete this._activeJobs[source];
+  },
+
+  _handleStopScan: function(source) {
+    var self = this;
+    var jobs = self._activeJobs[source];
+    if (!jobs || jobs.length === 0) return;
+
+    // Set the legacy flag so the queueing loop in _handleScanNow
+    // stops enqueuing further pills
+    self._scanCancelled = true;
+
+    // Process each active job for this source tile
+    var jobsCopy = jobs.slice();
+    jobsCopy.forEach(function(entry) {
+      if (entry.status === "queued") {
+        // Job hasn't started — delete it from the queue
+        self._supabase.from("cl_scan_jobs").delete().eq("id", entry.jobId)
+          .then(function() {
+            console.log("[cl-upload] Deleted queued job:", entry.jobId);
+          });
+      } else if (entry.status === "running") {
+        // Job is in progress — set to cancelled so the worker abandons it
+        self._supabase.from("cl_scan_jobs").update({ status: "cancelled" }).eq("id", entry.jobId)
+          .then(function() {
+            console.log("[cl-upload] Cancelled running job:", entry.jobId);
+          });
+      }
+      // Clean up the Realtime subscription
+      var channel = self._jobSubscriptions[entry.jobId];
+      if (channel) {
+        self._supabase.removeChannel(channel);
+        delete self._jobSubscriptions[entry.jobId];
+      }
+      self._removeActiveJob(source, entry.jobId);
+    });
+
+    // Restore the Scan Now button on this tile
+    var grid = document.getElementById("cl-sources-grid");
+    if (grid) {
+      var scanBtn = grid.querySelector(".source-scan-btn[data-source=\"" + source + "\"]");
+      if (scanBtn) {
+        scanBtn.textContent = "Scan Now";
+        scanBtn.disabled = false;
+      }
+    }
+  },
 
   _fileToBase64: function(file) {
     return new Promise(function(resolve, reject) {
