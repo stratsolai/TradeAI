@@ -140,11 +140,17 @@ function switchPTab(tab) {
   var panel = document.getElementById('cl-tab-' + tab);
   if (panel) panel.classList.add('active');
   document.querySelectorAll('.ptab').forEach(function(el) {
-    if (el.getAttribute('onclick') && el.getAttribute('onclick').includes("'" + tab + "'")) {
+    if (el.dataset.tab === tab) {
       el.classList.add('active');
     }
   });
 }
+
+document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    switchPTab(btn.dataset.tab);
+  });
+});
 
 window.addEventListener('pageshow', function(e) {
   if (!e.persisted) return;
