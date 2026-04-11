@@ -64,7 +64,7 @@ window.CL_UPLOAD = {
       "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none;flex-direction:column;gap:8px;align-items:stretch;\"></div>",
       "<div class=\"upload-section\" style=\"margin-top:16px\">",
         "<div class=\"upload-section-title\">Sources</div>",
-        "<div class=\"upload-section-note\">Navigating away from this page will cancel any scan in progress.</div>",
+        "<div class=\"upload-section-note\">Scans run in the background. You can navigate away safely.</div>",
         "<div class=\"sources-tiles\" id=\"cl-sources-grid\">",
           "<div class=\"source-tile source-tile-loading\"><span>Checking connections...</span></div>",
         "</div>",
@@ -357,11 +357,15 @@ window.CL_UPLOAD = {
 
   _scanCancelled: false,
 
+  // Active Realtime subscriptions keyed by job id — unsubscribed when
+  // the job reaches a terminal state (completed / failed).
+  _jobSubscriptions: {},
+
   _handleScanNow: function(source, btn, values, tile) {
       var self = this;
       self._scanCancelled = false;
       var originalText = btn.textContent;
-      btn.textContent = "Scanning...";
+      btn.textContent = "Scan queued...";
       btn.disabled = true;
       function finishScan() {
         btn.textContent = originalText;
@@ -394,280 +398,150 @@ window.CL_UPLOAD = {
         outlook: "Outlook",
         website: "Website"
       };
-      // Build a "<Tile> — <label> — X approved, Y pending, Z rejected"
-      // line from the per-status counts the endpoint returns. Zero
-      // counts are omitted to keep the message tidy. When all three
-      // are zero the message reads "<Tile> — <label> — no new content".
-      // Reads the tile name from SOURCE_NAMES via the closure-scoped
-      // source value.
-      function formatCountsLine(label, result) {
-        var a = (result && result.approved) || 0;
-        var p = (result && result.pending) || 0;
-        var r = (result && result.rejected) || 0;
+      // Build a "<Tile> — <label> — X imported, Y pending, Z skipped"
+      // line from the job row counts. Zero counts are omitted to keep
+      // the message tidy. When all are zero the message reads
+      // "<Tile> — <label> — no new content".
+      function formatJobCountsLine(label, job) {
+        var imp = (job && job.imported_count) || 0;
+        var pend = (job && job.pending_count) || 0;
+        var sk = (job && job.skipped_count) || 0;
         var parts = [];
-        if (a > 0) parts.push(a + " approved");
-        if (p > 0) parts.push(p + " pending");
-        if (r > 0) parts.push(r + " rejected");
+        if (imp > 0) parts.push(imp + " imported");
+        if (pend > 0) parts.push(pend + " pending");
+        if (sk > 0) parts.push(sk + " skipped");
         var tileName = SOURCE_NAMES[source] || source;
-        var line = tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
-        // Deduped (already up to date)
-        var ded = (result && result.deduped) || 0;
-        if (ded > 0) line += " | " + ded + " already up to date";
-        // Skip reasons breakdown
-        var sr = result && result.skipped_reasons;
-        if (sr) {
-          var skipParts = [];
-          if (sr.unsupported_format) skipParts.push(sr.unsupported_format + " unsupported format");
-          if (sr.extraction_failed) skipParts.push(sr.extraction_failed + " could not be read");
-          if (sr.no_content) skipParts.push(sr.no_content + " no content extracted");
-          if (sr.body_too_short) skipParts.push(sr.body_too_short + " body too short");
-          if (skipParts.length > 0) line += " | Skipped: " + skipParts.join(", ");
-        }
-        // Auto-archive and Financial Documents pairing
-        var arch = (result && result.auto_archived) || 0;
-        var paired = (result && result.fin_docs_paired) || 0;
-        if (arch > 0) line += " | " + arch + " older version" + (arch !== 1 ? "s" : "") + " archived";
-        if (paired > 0) line += " | " + paired + " financial document" + (paired !== 1 ? "s" : "") + " paired for review";
-        return line;
+        return tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
       }
-      // Defensive JSON parse for scan endpoint responses. Vercel
-      // returns a plain-text gateway page when a serverless function
-      // exceeds maxDuration or crashes — its body starts with
-      // "An error occurred with this application." and is not JSON,
-      // so a bare await resp.json() throws an unhelpful SyntaxError.
-      // safeJson checks resp.ok first and on failure reads the body
-      // as text and returns an { error } object the existing branch
-      // logic already knows how to handle. The tileName argument is
-      // included in the error message so the user sees which scan
-      // source failed without having to read a stack trace.
-      async function safeJson(resp, tileName) {
-        if (!resp.ok) {
-          var rawText = "";
-          try { rawText = await resp.text(); } catch (e) {}
-          var snippet = rawText ? rawText.substring(0, 200) : "";
-          return { error: tileName + " server returned " + resp.status + (snippet ? " — " + snippet : "") };
+      // Map a source tile id + pill value to the { sourceType,
+      // sourceAccount, sourcePath } shape that scan-queue expects.
+      function buildQueueParams(source, pillValue) {
+        if (source === "gmail" || source === "outlook") {
+          return { sourceType: source, sourceAccount: pillValue, sourcePath: null };
         }
-        try {
-          return await resp.json();
-        } catch (parseErr) {
-          return { error: tileName + " returned an invalid response: " + parseErr.message };
+        if (source === "website") {
+          var url = pillValue.trim();
+          if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+          return { sourceType: "website", sourceAccount: url, sourcePath: null };
         }
+        // All folder/library sources encode accountEmail|path in the pill value
+        if (source === "gdrive" || source === "onedrive" || source === "dropbox") {
+          var sep = pillValue.indexOf("|");
+          if (sep === -1) return null;
+          return {
+            sourceType: source === "gdrive" ? "gdrive" : source,
+            sourceAccount: pillValue.substring(0, sep),
+            sourcePath: pillValue.substring(sep + 1)
+          };
+        }
+        if (source === "sharepoint") {
+          var spParts = pillValue.split("|");
+          if (spParts.length !== 3) return null;
+          return {
+            sourceType: "sharepoint",
+            sourceAccount: spParts[0],
+            sourcePath: spParts[1] + "|" + spParts[2]
+          };
+        }
+        return null;
+      }
+      // Subscribe to a single cl_scan_jobs row via Supabase Realtime.
+      // Updates the button text as the job transitions through states
+      // and appends a stacking message on completion or failure.
+      function watchJob(jobId, label) {
+        var channel = self._supabase
+          .channel("scan-job-" + jobId)
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "cl_scan_jobs", filter: "id=eq." + jobId },
+            function(payload) {
+              var row = payload.new;
+              if (!row) return;
+              if (row.status === "running") {
+                btn.textContent = "Scanning...";
+              } else if (row.status === "completed") {
+                self._appendUploadMessage(formatJobCountsLine(label, row), "success");
+                finishScan();
+                if (typeof loadStats === "function") loadStats();
+                if (window.CL_REVIEW) window.CL_REVIEW._load();
+                // Unsubscribe — terminal state
+                self._supabase.removeChannel(channel);
+                delete self._jobSubscriptions[jobId];
+              } else if (row.status === "failed") {
+                var errText = row.error_text || "Scan failed";
+                var tileName = SOURCE_NAMES[source] || source;
+                self._appendUploadMessage(tileName + " — " + label + " — error: " + errText, "error");
+                finishScan();
+                // Unsubscribe — terminal state
+                self._supabase.removeChannel(channel);
+                delete self._jobSubscriptions[jobId];
+              }
+              // queued status after a retry — button stays in queued state
+            }
+          )
+          .subscribe();
+        self._jobSubscriptions[jobId] = channel;
       }
       (async function() {
         try {
-          var ud = await self._supabase.auth.getUser();
-          var user = ud && ud.data ? ud.data.user : null;
-          if (!user) throw new Error("Not authenticated");
-          if (source === "gdrive") {
-            var gdPairs = values || [];
-            if (gdPairs.length === 0) throw new Error("No Drive folders selected to scan");
-            var gdSession = await self._supabase.auth.getSession();
-            var gdToken = gdSession && gdSession.data && gdSession.data.session ? gdSession.data.session.access_token : null;
-            if (!gdToken) throw new Error("Not authenticated");
-            for (var gdi = 0; gdi < gdPairs.length; gdi++) {
-              if (self._scanCancelled) break;
-              var gdSep = gdPairs[gdi].indexOf("|");
-              if (gdSep === -1) { console.error("Drive scan: malformed pill value", gdPairs[gdi]); continue; }
-              var gdAcct = gdPairs[gdi].substring(0, gdSep);
-              var gdFolder = gdPairs[gdi].substring(gdSep + 1);
-              var gdLabel = pillLabel(gdPairs[gdi]);
-              var gdResp = await fetch("/api/drive-import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + gdToken },
-                body: JSON.stringify({ action: "import-all", accountEmail: gdAcct, folderId: gdFolder })
-              });
-              var gdResult = await safeJson(gdResp, SOURCE_NAMES.gdrive);
-              if (gdResult.error) {
-                console.error("Drive import error for " + gdPairs[gdi] + ":", gdResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.gdrive + " — " + gdLabel + " — error: " + gdResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(gdLabel, gdResult), "success");
-              }
+          var session = await self._supabase.auth.getSession();
+          var token = session && session.data && session.data.session ? session.data.session.access_token : null;
+          if (!token) throw new Error("Not authenticated");
+
+          // Build the list of queue parameters from the selected pills
+          var REQUIRED_PILLS = {
+            gdrive: "No Drive folders selected to scan",
+            onedrive: "No OneDrive folders selected to scan",
+            sharepoint: "No SharePoint libraries selected to scan",
+            dropbox: "No Dropbox folders selected to scan",
+            gmail: "No Gmail accounts selected to scan",
+            outlook: "No Outlook accounts selected to scan",
+            website: "No URLs selected to scan"
+          };
+          var pills = values || [];
+          if (pills.length === 0) throw new Error(REQUIRED_PILLS[source] || "No items selected to scan");
+
+          // Queue each selected pill as a separate scan job
+          var queuedCount = 0;
+          for (var i = 0; i < pills.length; i++) {
+            if (self._scanCancelled) break;
+            var params = buildQueueParams(source, pills[i]);
+            if (!params) {
+              console.error("Malformed pill value for " + source + ":", pills[i]);
+              continue;
             }
-            finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "onedrive") {
-            var odPairs = values || [];
-            if (odPairs.length === 0) throw new Error("No OneDrive folders selected to scan");
-            var odSession = await self._supabase.auth.getSession();
-            var odToken = odSession && odSession.data && odSession.data.session ? odSession.data.session.access_token : null;
-            if (!odToken) throw new Error("Not authenticated");
-            for (var odi = 0; odi < odPairs.length; odi++) {
-              if (self._scanCancelled) break;
-              var odSep = odPairs[odi].indexOf("|");
-              if (odSep === -1) { console.error("OneDrive scan: malformed pill value", odPairs[odi]); continue; }
-              var odAcct = odPairs[odi].substring(0, odSep);
-              var odFolder = odPairs[odi].substring(odSep + 1);
-              var odLabel = pillLabel(odPairs[odi]);
-              var odResp = await fetch("/api/onedrive-import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + odToken },
-                body: JSON.stringify({ action: "import-all", accountEmail: odAcct, folderId: odFolder })
-              });
-              var odResult = await safeJson(odResp, SOURCE_NAMES.onedrive);
-              if (odResult.error) {
-                console.error("OneDrive import error for " + odPairs[odi] + ":", odResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.onedrive + " — " + odLabel + " — error: " + odResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(odLabel, odResult), "success");
-              }
+            var label = pillLabel(pills[i]);
+            var resp = await fetch("/api/scan-queue", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+              body: JSON.stringify({
+                sourceType: params.sourceType,
+                sourceAccount: params.sourceAccount,
+                sourcePath: params.sourcePath
+              })
+            });
+            var result;
+            try { result = await resp.json(); } catch (e) { result = { error: "Server returned an invalid response" }; }
+            if (!resp.ok || result.error) {
+              var tileName = SOURCE_NAMES[source] || source;
+              self._appendUploadMessage(tileName + " — " + label + " — error: " + (result.error || "Queue failed"), "error");
+              continue;
             }
+            queuedCount++;
+            // Subscribe to Realtime updates for this job
+            watchJob(result.jobId, label);
+          }
+
+          if (queuedCount === 0) {
             finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "sharepoint") {
-            var spPairs = values || [];
-            if (spPairs.length === 0) throw new Error("No SharePoint libraries selected to scan");
-            var spSession = await self._supabase.auth.getSession();
-            var spToken = spSession && spSession.data && spSession.data.session ? spSession.data.session.access_token : null;
-            if (!spToken) throw new Error("Not authenticated");
-            for (var spi = 0; spi < spPairs.length; spi++) {
-              if (self._scanCancelled) break;
-              var spParts = spPairs[spi].split("|");
-              if (spParts.length !== 3) { console.error("SharePoint scan: malformed pill value", spPairs[spi]); continue; }
-              var spAcct = spParts[0];
-              var spSiteId = spParts[1];
-              var spLibrary = spParts[2];
-              var spLabel = pillLabel(spPairs[spi]);
-              var spResp = await fetch("/api/sharepoint-import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + spToken },
-                body: JSON.stringify({ action: "import-all", accountEmail: spAcct, siteId: spSiteId, libraryId: spLibrary })
-              });
-              var spResult = await safeJson(spResp, SOURCE_NAMES.sharepoint);
-              // SharePoint returns the resolved site_name in its
-              // response (api/sharepoint-import.js add). Prefix the
-              // pill label (which is just the library name) with the
-              // site name when present so two libraries with the
-              // same name on different sites can be told apart.
-              var spDisplayLabel = (spResult.site_name ? spResult.site_name + " / " : "") + spLabel;
-              if (spResult.error) {
-                console.error("SharePoint import error for " + spPairs[spi] + ":", spResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.sharepoint + " — " + spDisplayLabel + " — error: " + spResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(spDisplayLabel, spResult), "success");
-              }
-            }
+          }
+          if (self._scanCancelled) {
+            self._appendUploadMessage("Scan stopped.", "error");
             finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "dropbox") {
-            var dbPairs = values || [];
-            if (dbPairs.length === 0) throw new Error("No Dropbox folders selected to scan");
-            var dbSession = await self._supabase.auth.getSession();
-            var dbToken = dbSession && dbSession.data && dbSession.data.session ? dbSession.data.session.access_token : null;
-            if (!dbToken) throw new Error("Not authenticated");
-            for (var dbi = 0; dbi < dbPairs.length; dbi++) {
-              if (self._scanCancelled) break;
-              var dbSep = dbPairs[dbi].indexOf("|");
-              if (dbSep === -1) { console.error("Dropbox scan: malformed pill value", dbPairs[dbi]); continue; }
-              var dbAcct = dbPairs[dbi].substring(0, dbSep);
-              var dbFolderPath = dbPairs[dbi].substring(dbSep + 1);
-              var dbLabel = pillLabel(dbPairs[dbi]);
-              var dbResp = await fetch("/api/dropbox-import", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + dbToken },
-                body: JSON.stringify({ action: "import-all", accountEmail: dbAcct, folderPath: dbFolderPath })
-              });
-              var dbResult = await safeJson(dbResp, SOURCE_NAMES.dropbox);
-              if (dbResult.error) {
-                console.error("Dropbox import error for " + dbPairs[dbi] + ":", dbResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.dropbox + " — " + dbLabel + " — error: " + dbResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(dbLabel, dbResult), "success");
-              }
-            }
-            finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "gmail") {
-            var gmailEmails = values || [];
-            if (gmailEmails.length === 0) throw new Error("No Gmail accounts selected to scan");
-            for (var gi = 0; gi < gmailEmails.length; gi++) {
-              if (self._scanCancelled) break;
-              var gmailLabel = pillLabel(gmailEmails[gi]);
-              var gmailResp = await fetch("/api/cl-email-scan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id, accountEmail: gmailEmails[gi] })
-              });
-              var gmailResult = await safeJson(gmailResp, SOURCE_NAMES.gmail);
-              if (gmailResult.error) {
-                console.error("Gmail scan error for " + gmailEmails[gi] + ":", gmailResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.gmail + " — " + gmailLabel + " — error: " + gmailResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(gmailLabel, gmailResult), "success");
-              }
-            }
-            finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "outlook") {
-            var outlookEmails = values || [];
-            if (outlookEmails.length === 0) throw new Error("No Outlook accounts selected to scan");
-            for (var oi = 0; oi < outlookEmails.length; oi++) {
-              if (self._scanCancelled) break;
-              var outlookLabel = pillLabel(outlookEmails[oi]);
-              var outlookResp = await fetch("/api/cl-outlook-scan", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id, accountEmail: outlookEmails[oi] })
-              });
-              var outlookResult = await safeJson(outlookResp, SOURCE_NAMES.outlook);
-              if (outlookResult.error) {
-                console.error("Outlook scan error for " + outlookEmails[oi] + ":", outlookResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.outlook + " — " + outlookLabel + " — error: " + outlookResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(outlookLabel, outlookResult), "success");
-              }
-            }
-            finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
-          } else if (source === "website") {
-            var urls = values || [];
-            if (urls.length === 0) throw new Error("No URLs selected to scan");
-            for (var j = 0; j < urls.length; j++) {
-              if (self._scanCancelled) break;
-              var raw = urls[j].trim();
-              if (!/^https?:\/\//i.test(raw)) raw = "https://" + raw;
-              var webLabel = pillLabel(urls[j]);
-              var webResp = await fetch("/api/scrape-website", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ userId: user.id, url: raw })
-              });
-              var webResult = await safeJson(webResp, SOURCE_NAMES.website);
-              if (webResult.error) {
-                console.error("Website scan error for " + raw + ":", webResult.error);
-                self._appendUploadMessage(SOURCE_NAMES.website + " — " + webLabel + " — error: " + webResult.error, "error");
-              } else {
-                self._appendUploadMessage(formatCountsLine(webLabel, webResult), "success");
-              }
-            }
-            finishScan();
-            if (self._scanCancelled) self._appendUploadMessage("Scan stopped.", "error");
-            if (typeof loadStats === "function") loadStats();
-            if (window.CL_REVIEW) window.CL_REVIEW._load();
-            return;
           }
         } catch (err) {
           console.error("Scan error:", err.message);
           self._appendUploadMessage(err.message, "error");
-        } finally {
           finishScan();
         }
       })();
