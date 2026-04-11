@@ -590,17 +590,23 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // ── JWT auth (required) ──────────────────────────────────────────────
-  const authHeader = req.headers['authorization'] || '';
-  const token = authHeader.replace('Bearer ', '').trim();
-  if (!token) return res.status(401).json({ error: 'Unauthorised' });
-
+  // ── Auth — x-cron-secret (worker) or JWT Bearer (browser) ──────────
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  const authRes = await supabase.auth.getUser(token);
-  if (authRes.error || !authRes.data || !authRes.data.user) {
-    return res.status(401).json({ error: 'Unauthorised' });
+  var userId;
+  var cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret && process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) {
+    userId = (req.body || {}).userId;
+    if (!userId) return res.status(400).json({ error: 'userId required for worker calls' });
+  } else {
+    const authHeader = req.headers['authorization'] || '';
+    const token = authHeader.replace('Bearer ', '').trim();
+    if (!token) return res.status(401).json({ error: 'Unauthorised' });
+    const authRes = await supabase.auth.getUser(token);
+    if (authRes.error || !authRes.data || !authRes.data.user) {
+      return res.status(401).json({ error: 'Unauthorised' });
+    }
+    userId = authRes.data.user.id;
   }
-  const userId = authRes.data.user.id;
 
   const body = req.body || {};
   const action = body.action;
