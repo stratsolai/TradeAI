@@ -16,6 +16,8 @@ window.CL_SETTINGS_LOGIC = {
   init: function () {
     var self = this;
     self._supabase = window.supabaseClient;
+    self._bindTabs();
+    self._checkTabQueryParam();
 
     self._supabase.auth.getUser().then(function (res) {
       if (!res || !res.data || !res.data.user) return;
@@ -70,6 +72,30 @@ window.CL_SETTINGS_LOGIC = {
       bindPickerFlexWrapReset('sharepoint-library-picker-cancel', 'sharepoint-library-picker');
       bindPickerFlexWrapReset('dropbox-folder-picker-cancel', 'dropbox-folder-picker');
     });
+  },
+
+  _bindTabs: function () {
+    document.querySelectorAll('.stab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
+        if (panel) panel.classList.add('active');
+      });
+    });
+  },
+
+  _checkTabQueryParam: function () {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'tool-connections') {
+      document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
+      document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
+      var toolTab = document.querySelector('.stab[data-tab="tool"]');
+      var toolPanel = document.getElementById('tab-tool');
+      if (toolTab) toolTab.classList.add('active');
+      if (toolPanel) toolPanel.classList.add('active');
+    }
   },
 
   _loadAll: async function () {
