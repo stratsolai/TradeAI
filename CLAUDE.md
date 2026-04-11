@@ -440,6 +440,15 @@ source-of-truth pages for the stylesheet.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
+- scan-worker.js calls all scan endpoint handlers via direct
+  module imports rather than HTTP fetch to avoid Vercel
+  deployment protection on internal calls. This means all
+  scan logic runs within the worker's 300-second budget.
+  Task 15 background processing resolves the per-scan
+  timeout issue but the worker itself is still subject to
+  the 300-second limit per invocation. With
+  MAX_CONCURRENT_JOBS = 3 this is acceptable at current
+  user numbers.
 - Claude Code must never run any Vercel CLI commands under
   any circumstances. Vercel log access is via the Vercel
   dashboard only. This applies even when investigating
@@ -456,8 +465,8 @@ is complete and confirmed working.
 |------|------------------------------------------------------------|
 | 1    | ~~Complete Task 12 — Image Processing integration test sign-off~~ **COMPLETE** |
 | 2    | Complete Task 13 — External Platform Connections spec and build |
-| 3    | Complete Task 14 — Email Attachment Scanning spec and build |
-| 4    | Complete Task 15 — Background Scan Processing spec and build |
+| 3    | Complete Task 14 — Email Attachment Scanning spec and build — **IN PROGRESS** |
+| 4    | Complete Task 15 — Background Scan Processing spec and build — **IN PROGRESS** |
 | 5    | Complete Task 16 — Website Subpage Crawling spec and build |
 | 6    | Complete Task 17 — Desktop-only message for non-mobile pages |
 | 7    | Complete stylesheet rollout across CL files                |
@@ -595,6 +604,8 @@ Notable changes made April 2026:
 - profiles: added cl_xero_accounts (jsonb),
   cl_myob_accounts (jsonb), cl_quickbooks_accounts (jsonb),
   cl_servicem8_accounts (jsonb)
+- cl_scan_jobs table added April 2026 — scan job queue
+  with RLS enabled. Realtime enabled.
 
 ---
 
@@ -818,3 +829,11 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | Spec approved April 2026. Build     |
 |                                 | complete, integration test in       |
 |                                 | progress.                           |
+| StaxAI-Email-Attachment-        | Email attachment scanning for       |
+| Scanning-Spec-v1.0              | Gmail and Outlook. Build complete.  |
+|                                 | Gmail integration tested and        |
+|                                 | signed off. Outlook integration     |
+|                                 | test pending Task 15 completion.    |
+| StaxAI-Background-Scan-         | Background scan queue and worker    |
+| Processing-Spec-v1.0            | infrastructure. Build complete.     |
+|                                 | Integration test in progress.       |
