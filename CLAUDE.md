@@ -250,10 +250,6 @@ spec is written.
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
   during stylesheet rollout.
-- cl_outlook_last_scanned_at column on profiles table is a
-  dead column — no endpoint reads or writes it. Outlook scan
-  uses outlookEntry.last_scanned_at inside cl_connected_emails
-  jsonb array. To be removed during stylesheet rollout.
 - OAuth consolidation — api/cl-oauth-initiate.js and the
   three standalone callback files should be consolidated
   into api/auth/initiate.js and api/auth/oauth-callback.js
@@ -348,6 +344,15 @@ spec is written.
   Material items and controls which tab they appear in.
   Without this value the item will not appear in the Tool
   Outputs tab.
+- OneDrive, SharePoint, and Dropbox import endpoints have
+  the same fetch-all-then-process architecture as the email
+  scan endpoints before the cursor fix. Large folder trees
+  will hit the Vercel timeout. Governed by Task 26.
+- upgradeSharepointEntry function exists in two places —
+  upgrade-sharepoint.js (canonical, browser) and
+  api/sharepoint-import.js (API copy, intentional — Vercel
+  esbuild cannot resolve CJS modules from ES module API
+  files at build time). Not a bug.
 
 ---
 
