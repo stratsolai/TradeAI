@@ -153,6 +153,9 @@ window.EA_LOGIC = (function () {
   // -------------------------------------------------------------------------
   // Scan
   // -------------------------------------------------------------------------
+  var _pendingJobs = 0;
+  var _jobChannels = {};
+
   async function _scan() {
     const btn = document.getElementById('ea-scan-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
@@ -161,48 +164,98 @@ window.EA_LOGIC = (function () {
 
     try {
       var token = _session.access_token;
-      var queued = 0;
+      _pendingJobs = 0;
 
-      // Queue a scan job for each connected account
       var gmailAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
       var outlookAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
 
+      // Queue and watch Gmail accounts
       for (var gi = 0; gi < gmailAccounts.length; gi++) {
-        var gRes = await fetch('/api/scan-queue', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ sourceType: 'ea-gmail', sourceAccount: gmailAccounts[gi].email })
-        });
-        if (gRes.ok) queued++;
+        await _queueAndWatch('ea-gmail', gmailAccounts[gi].email, token);
       }
 
+      // Queue and watch Outlook accounts
       for (var oi = 0; oi < outlookAccounts.length; oi++) {
-        var oRes = await fetch('/api/scan-queue', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-          body: JSON.stringify({ sourceType: 'ea-outlook', sourceAccount: outlookAccounts[oi].email })
-        });
-        if (oRes.ok) queued++;
+        await _queueAndWatch('ea-outlook', outlookAccounts[oi].email, token);
       }
 
-      if (queued === 0) {
+      if (_pendingJobs === 0) {
         _showFeedMessage('No email accounts connected. Connect Gmail or Outlook in Settings.');
-        return;
+        _finishScan();
       }
-
-      // Wait for background processing then reload
-      _showFeedMessage('Scan queued. Processing ' + queued + ' account' + (queued > 1 ? 's' : '') + '...');
-      setTimeout(async function() {
-        await _loadStoredEmails();
-        if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
-      }, 10000);
-      return;
 
     } catch (e) {
       _showFeedMessage('Scan failed. Please try again.');
-    } finally {
-      if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
+      _finishScan();
     }
+  }
+
+  async function _queueAndWatch(sourceType, accountEmail, token) {
+    try {
+      var resp = await fetch('/api/scan-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ sourceType: sourceType, sourceAccount: accountEmail })
+      });
+      var result;
+      try { result = await resp.json(); } catch (e) { result = { error: 'Server returned an invalid response' }; }
+      if (!resp.ok || result.error) {
+        console.error('[EA] Queue error for', accountEmail, ':', result.error || resp.status);
+        return;
+      }
+      _pendingJobs++;
+      _watchJob(result.jobId, accountEmail);
+    } catch (e) {
+      console.error('[EA] Queue exception for', accountEmail, ':', e.message);
+    }
+  }
+
+  function _watchJob(jobId, label) {
+    var channel = window.supabaseClient
+      .channel('ea-scan-job-' + jobId)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'cl_scan_jobs', filter: 'id=eq.' + jobId },
+        function(payload) {
+          var row = payload.new;
+          if (!row) return;
+
+          if (row.status === 'running') {
+            _showFeedMessage('Scanning ' + label + '...');
+          } else if (row.status === 'completed') {
+            var msg = label + ' — ' + (row.imported_count || 0) + ' email' + ((row.imported_count || 0) !== 1 ? 's' : '') + ' imported';
+            if (row.skipped_count) msg += ', ' + row.skipped_count + ' skipped';
+            _showFeedMessage(msg);
+            _cleanupJob(jobId);
+          } else if (row.status === 'failed') {
+            _showFeedMessage(label + ' — scan failed: ' + (row.error_text || 'Unknown error'));
+            _cleanupJob(jobId);
+          } else if (row.status === 'cancelled') {
+            _showFeedMessage(label + ' — scan cancelled');
+            _cleanupJob(jobId);
+          }
+        }
+      )
+      .subscribe();
+    _jobChannels[jobId] = channel;
+  }
+
+  function _cleanupJob(jobId) {
+    if (_jobChannels[jobId]) {
+      window.supabaseClient.removeChannel(_jobChannels[jobId]);
+      delete _jobChannels[jobId];
+    }
+    _pendingJobs--;
+    if (_pendingJobs <= 0) {
+      _pendingJobs = 0;
+      _loadStoredEmails();
+      _finishScan();
+    }
+  }
+
+  function _finishScan() {
+    var btn = document.getElementById('ea-scan-btn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
   }
 
   async function _checkAutoScan() {
