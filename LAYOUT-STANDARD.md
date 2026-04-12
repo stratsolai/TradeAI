@@ -495,6 +495,9 @@ Container CSS (inline in content-library.html):
 .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
 ```
 
+`max-width: 1400px` is the platform standard for all tool pages. No
+tool page may use a narrower max-width.
+
 Page header CSS (inline in content-library.html — identical to settings
 pages):
 
