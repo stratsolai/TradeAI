@@ -195,13 +195,17 @@ module.exports = async (req, res) => {
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('gmail_connected, gmail_access_token, gmail_refresh_token, outlook_connected, outlook_access_token, outlook_refresh_token, business_name, industry')
+    .select('ea_connected_emails, business_name, industry')
     .eq('id', user.id)
     .single();
 
   if (profileError) return res.status(500).json({ error: 'Could not load profile' });
 
-  if (!profile.gmail_connected && !profile.outlook_connected) {
+  const eaEmails = Array.isArray(profile.ea_connected_emails) ? profile.ea_connected_emails : [];
+  const gmailEntry = eaEmails.find(function(e) { return (e.provider === 'gmail' || e.provider === 'google') && e.access_token; });
+  const outlookEntry = eaEmails.find(function(e) { return (e.provider === 'microsoft' || e.provider === 'outlook') && e.access_token; });
+
+  if (!gmailEntry && !outlookEntry) {
     return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
   }
 
@@ -214,16 +218,17 @@ module.exports = async (req, res) => {
   const industry     = profile.industry       || 'general business';
   let   allEmails    = [];
 
-  if (profile.gmail_connected && profile.gmail_access_token) {
+  if (gmailEntry) {
     try {
-      let accessToken = profile.gmail_access_token;
+      let accessToken = gmailEntry.access_token;
       try {
         const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
         allEmails = allEmails.concat(gmailEmails);
       } catch (fetchErr) {
-        if (profile.gmail_refresh_token) {
-          accessToken = await refreshGmailToken(profile.gmail_refresh_token);
-          await supabase.from('profiles').update({ gmail_access_token: accessToken }).eq('id', user.id);
+        if (gmailEntry.refresh_token) {
+          accessToken = await refreshGmailToken(gmailEntry.refresh_token);
+          gmailEntry.access_token = accessToken;
+          await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
           const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
           allEmails = allEmails.concat(gmailEmails);
         }
@@ -233,16 +238,17 @@ module.exports = async (req, res) => {
     }
   }
 
-  if (profile.outlook_connected && profile.outlook_access_token) {
+  if (outlookEntry) {
     try {
-      let accessToken = profile.outlook_access_token;
+      let accessToken = outlookEntry.access_token;
       try {
         const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
         allEmails = allEmails.concat(outlookEmails);
       } catch (fetchErr) {
-        if (profile.outlook_refresh_token) {
-          accessToken = await refreshOutlookToken(profile.outlook_refresh_token);
-          await supabase.from('profiles').update({ outlook_access_token: accessToken }).eq('id', user.id);
+        if (outlookEntry.refresh_token) {
+          accessToken = await refreshOutlookToken(outlookEntry.refresh_token);
+          outlookEntry.access_token = accessToken;
+          await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
           const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
           allEmails = allEmails.concat(outlookEmails);
         }
