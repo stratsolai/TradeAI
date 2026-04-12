@@ -189,6 +189,93 @@
     .ea-open-hint { font-size: 12px; color: var(--orange); }
 
     /* -----------------------------------------------------------------------
+       Email detail view
+    ----------------------------------------------------------------------- */
+    .ea-detail {
+      background: var(--white);
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 24px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .ea-detail-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+    .ea-detail-back-btn {
+      background: none;
+      border: 1px solid #cbd5e1;
+      color: var(--text);
+      font-family: var(--body-font);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .ea-detail-back-btn:hover { border-color: #94a3b8; }
+    .ea-detail-open-btn {
+      display: inline-block;
+      background: var(--blue);
+      color: var(--white);
+      font-family: var(--body-font);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 16px;
+      border-radius: 6px;
+      text-decoration: none;
+    }
+    .ea-detail-open-btn:hover { background: #3d5c78; }
+    .ea-detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .ea-detail-subject {
+      font-weight: 700;
+      font-size: 18px;
+      color: #1a3a5c;
+      margin-bottom: 12px;
+    }
+    .ea-detail-summary {
+      font-size: 14px;
+      color: #475569;
+      line-height: 1.55;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .ea-detail-body {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 16px;
+      background: #fafbfc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      max-height: 500px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+    }
+    .ea-detail-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* -----------------------------------------------------------------------
        Responsive
     ----------------------------------------------------------------------- */
     @media (max-width: 600px) {
