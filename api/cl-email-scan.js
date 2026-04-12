@@ -590,6 +590,11 @@ function discoverAttachments(payload) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
+  var internalSecret = process.env.INTERNAL_API_SECRET;
+  if (!internalSecret || (req.headers['x-internal-secret'] || '') !== internalSecret) {
+    return res.status(401).json({ error: 'Unauthorised — missing or invalid internal secret' });
+  }
+
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   const { userId, daysBack, accountEmail } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
