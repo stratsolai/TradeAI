@@ -26,8 +26,12 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import { createRequire } from 'module';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
+
+const require = createRequire(import.meta.url);
+const { upgradeSharepointEntry } = require('../upgrade-sharepoint.js');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -128,28 +132,7 @@ const SHAREPOINT_BINARY_DOC_MIME = [
   'application/vnd.ms-powerpoint',
 ];
 
-// Lazy-upgrade a SharePoint account entry from the legacy single-site
-// shape ({ site, libraries }) to the multi-site shape ({ sites: [...] }).
-// Idempotent — safe to call on already-upgraded entries.
-function upgradeSharepointEntry(entry) {
-  if (!entry) return;
-  if (entry.site && entry.site.id) {
-    if (!Array.isArray(entry.sites)) entry.sites = [];
-    var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
-    if (!siteAlreadyIn) {
-      entry.sites.push({
-        id: entry.site.id,
-        displayName: entry.site.displayName,
-        webUrl: entry.site.webUrl,
-        libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
-      });
-    }
-    delete entry.site;
-    delete entry.libraries;
-  } else if (!Array.isArray(entry.sites)) {
-    entry.sites = [];
-  }
-}
+// upgradeSharepointEntry imported from ../upgrade-sharepoint.js (shared module).
 
 // Refresh a Microsoft OAuth token for SharePoint scopes.
 async function refreshMicrosoftToken(refreshToken) {
