@@ -378,6 +378,18 @@ export default async function handler(req, res) {
       var rawCat = analysis.category || '';
       var normCat = catLookup[rawCat.toLowerCase()] || rawCat || categories[0].id;
 
+      // Save email body to cl-assets as .txt (mirrors cl-email-scan.js pattern)
+      var bodyUrl = null;
+      if (email.body) {
+        try {
+          var emailStoragePath = userId + '/ea-email/' + email.id.substring(0, 80) + '.txt';
+          await supabase.storage.from('cl-assets').upload(emailStoragePath, Buffer.from(email.body, 'utf-8'), { contentType: 'text/plain', upsert: false });
+          bodyUrl = emailStoragePath;
+        } catch (uploadErr) {
+          console.error('[EA] cl-assets upload error:', uploadErr.message, 'emailId:', email.id);
+        }
+      }
+
       var row = {
         user_id: userId,
         message_id: email.id,
@@ -389,7 +401,8 @@ export default async function handler(req, res) {
         summary: analysis.summary || '',
         category: normCat,
         message_url: email.message_url,
-        handled: false
+        handled: false,
+        body_url: bodyUrl
       };
 
       var storeRes = await supabase
