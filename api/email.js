@@ -18,19 +18,18 @@ const { createClient } = require('@supabase/supabase-js');
 // ---------------------------------------------------------------------------
 
 async function refreshGmailToken(refreshToken) {
-  var params = new URLSearchParams({
-    client_id:     process.env.GOOGLE_CLIENT_ID,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    refresh_token: refreshToken,
-    grant_type:    'refresh_token'
-  });
   var res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString()
+    body: new URLSearchParams({
+      client_id:     process.env.GOOGLE_CLIENT_ID,
+      client_secret: process.env.GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type:    'refresh_token'
+    })
   });
   var data = await res.json();
-  if (!data.access_token) throw new Error('Gmail token refresh failed');
+  if (!data.access_token) throw new Error('Token refresh failed: ' + JSON.stringify(data));
   return data.access_token;
 }
 
@@ -41,14 +40,17 @@ async function refreshOutlookToken(refreshToken) {
     refresh_token: refreshToken,
     grant_type:    'refresh_token',
     scope:         'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
-  });
+  }).toString();
   var res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: params.toString()
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(params).toString()
+    },
+    body: params
   });
   var data = await res.json();
-  if (!data.access_token) throw new Error('Outlook token refresh failed');
+  if (!data.access_token) throw new Error('Outlook token refresh failed: ' + JSON.stringify(data));
   return data.access_token;
 }
 
