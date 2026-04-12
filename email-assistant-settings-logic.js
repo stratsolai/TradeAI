@@ -67,13 +67,13 @@ window.EA_SETTINGS = {
     } catch (e) {}
 
     self._categories = Array.isArray(self._settings.categories) ? self._settings.categories : [
-      { label: 'Urgent', enabled: true },
-      { label: 'Leads', enabled: true },
-      { label: 'Enquiries', enabled: true },
-      { label: 'Jobs', enabled: true },
-      { label: 'Invoices', enabled: true },
-      { label: 'Suppliers', enabled: true },
-      { label: 'Low Priority', enabled: true }
+      { id: 'urgent', label: 'Urgent', enabled: true },
+      { id: 'leads', label: 'Leads', enabled: true },
+      { id: 'enquiries', label: 'Enquiries', enabled: true },
+      { id: 'jobs', label: 'Jobs', enabled: true },
+      { id: 'invoices', label: 'Invoices', enabled: true },
+      { id: 'suppliers', label: 'Suppliers', enabled: true },
+      { id: 'low', label: 'Low Priority', enabled: true }
     ];
 
     self._renderScanFrequency();
@@ -231,7 +231,9 @@ window.EA_SETTINGS = {
       addBtn.addEventListener('click', function () {
         var input = document.getElementById('category-custom-input');
         if (input && input.value.trim()) {
-          self._categories.push({ label: input.value.trim(), enabled: true });
+          var customLabel = input.value.trim();
+          var customId = customLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+          self._categories.push({ id: customId, label: customLabel, enabled: true });
           input.value = '';
           self._renderCategories();
         }
