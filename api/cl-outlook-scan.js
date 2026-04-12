@@ -175,6 +175,10 @@ async function runExtractionPrompt(emailBody, subject, sender) {
     }),
   });
   const data = await response.json();
+  if (data.error) {
+    console.error('[CL Outlook] Claude API error in extraction prompt:', JSON.stringify(data.error));
+    return [];
+  }
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -214,6 +218,10 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
+    if (data.error) {
+      console.error('[CL Outlook] Claude API error in version match:', JSON.stringify(data.error));
+      return null;
+    }
     var raw = data.content && data.content[0] ? data.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
@@ -430,6 +438,10 @@ async function extractBinaryFileText(buffer, mimeType) {
       }),
     });
     const data = await response.json();
+    if (data.error) {
+      console.error('[CL Outlook] Claude API error in PDF extraction:', JSON.stringify(data.error));
+      return null;
+    }
     if (data.content && data.content[0]) return data.content[0].text;
     return null;
   }
@@ -474,6 +486,10 @@ async function runAttachmentExtractionPrompt(content, fileName) {
     }),
   });
   const data = await response.json();
+  if (data.error) {
+    console.error('[CL Outlook] Claude API error in attachment extraction:', JSON.stringify(data.error));
+    return [];
+  }
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -506,6 +522,10 @@ async function runImageExtraction(base64Data, mediaType) {
     }),
   });
   const data = await response.json();
+  if (data.error) {
+    console.error('[CL Outlook] Claude API error in image extraction:', JSON.stringify(data.error));
+    return [];
+  }
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
