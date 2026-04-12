@@ -42,13 +42,15 @@ var JOB_TIMEOUT_MS = 240000;
 // The JWT-auth endpoints (drive, onedrive, sharepoint, dropbox) check
 // req.headers['x-cron-secret'] as alternative auth, so the mock includes
 // it. The body-auth endpoints (gmail, outlook, website) just read userId
-// from req.body.
+// from req.body. x-internal-secret is the shared secret for
+// service-to-service auth on cl-email-scan and cl-outlook-scan (Task 23).
 function buildMockReq(body) {
   return {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
       'x-cron-secret': process.env.CRON_SECRET || '',
+      'x-internal-secret': process.env.INTERNAL_API_SECRET || '',
     },
     body: body,
   };
