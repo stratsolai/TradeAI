@@ -471,8 +471,341 @@ Row with Remove option (user-added items):
 
 ## 7. Tool Pages
 
-*To be documented after Email Assistant tool page functional review —
-April 2026.*
+Reference: content-library.html (look-and-feel bible) and staxai-auth.css.
+
+### 7a. Page Container and Header
+
+Tool pages use a `.container` wrapper with a `.page-header` containing a
+title and subtitle. The same `.page-header` / `.page-title` /
+`.page-subtitle` classes are used on both tool pages and settings pages.
+
+```html
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">[Page Title]</h1>
+    <p class="page-subtitle">[Brief description.]</p>
+  </div>
+  <!-- stats bar, tab bar, tab panels -->
+</div>
+```
+
+Container CSS (inline in content-library.html):
+
+```css
+.container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
+```
+
+Page header CSS (inline in content-library.html — identical to settings
+pages):
+
+```css
+.page-header { margin-bottom: 28px; }
+.page-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.page-subtitle { color: var(--text-muted); font-size: 15px; }
+```
+
+### 7b. Primary Tab Bar
+
+The primary tab bar uses `.tab-nav` as the container and `.ptab` buttons
+for each tab. CSS is defined in staxai-auth.css Section 8. Each tab has a
+`data-tab` attribute matching a content panel ID. Tabs can include emoji
+prefixes.
+
+```html
+<div class="tab-nav">
+  <button class="ptab active" data-tab="upload">Upload & Import</button>
+  <button class="ptab" data-tab="review">Source Material Review</button>
+  <button class="ptab" data-tab="outputs">Tool Outputs</button>
+  <button class="ptab" data-tab="profile">Business Profile</button>
+</div>
+
+<div id="cl-tab-upload" class="ptab-content active"></div>
+<div id="cl-tab-review" class="ptab-content"></div>
+<div id="cl-tab-outputs" class="ptab-content"></div>
+<div id="cl-tab-profile" class="ptab-content"></div>
+```
+
+Panel IDs follow the pattern `cl-tab-[data-tab value]`. The first tab and
+its panel both have `.active` on page load.
+
+Tab CSS (staxai-auth.css):
+
+```css
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 28px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ptab {
+  padding: 13px 24px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--body-font);
+  text-decoration: none;
+}
+.ptab:hover { opacity: 0.85; }
+.ptab.active { border-bottom-color: var(--orange); }
+.ptab-content { display: none; }
+.ptab-content.active { display: block; }
+```
+
+Active tab underline is `var(--orange)` on tool pages. Settings pages
+override this with `var(--blue)` via the `.settings-active` class —
+see staxai-auth.css.
+
+Tab switching is wired in the logic file via addEventListener on `.ptab`
+buttons — never inline onclick. The logic file function `switchPTab(tab)`
+removes `.active` from all `.ptab` and `.ptab-content` elements, then
+adds `.active` to the matching button and panel:
+
+```javascript
+function switchPTab(tab) {
+  document.querySelectorAll('.ptab-content').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.ptab').forEach(function(el) { el.classList.remove('active'); });
+  var panel = document.getElementById('cl-tab-' + tab);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.ptab').forEach(function(el) {
+    if (el.dataset.tab === tab) el.classList.add('active');
+  });
+}
+
+document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    switchPTab(btn.dataset.tab);
+  });
+});
+```
+
+### 7c. Filter Pill Row (Source Material Review)
+
+The review tab has a status pill row for filtering by item status, plus
+secondary filter rows for category, tool, and source filters.
+
+#### Status pills
+
+```html
+<div class="review-status-row">
+  <button class="review-status-btn active" data-status="pending">Pending</button>
+  <button class="review-status-btn" data-status="approved">Approved</button>
+  <button class="review-status-btn" data-status="rejected">Rejected</button>
+  <button class="review-status-btn" data-status="archived">Archived</button>
+</div>
+```
+
+Status pill CSS (inline in content-library.html):
+
+```css
+.review-status-row { display:flex; gap:8px; padding:16px 0; align-items:center; }
+.review-status-btn {
+  display:flex; align-items:center; padding:10px 16px;
+  border:1px solid rgba(0,0,0,0.10); border-left-width:4px;
+  border-radius:10px; background:var(--white); color:var(--text-secondary);
+  font-size:13px; font-family:inherit; font-weight:600;
+  cursor:pointer; transition:opacity 0.15s;
+}
+.review-status-btn[data-status="pending"]  { border-left-color:var(--blue); }
+.review-status-btn[data-status="approved"] { border-left-color:var(--green-dark); }
+.review-status-btn[data-status="rejected"] { border-left-color:var(--red); }
+.review-status-btn[data-status="archived"] { border-left-color:var(--grey-accent); }
+.review-status-btn.active {
+  background:var(--active-bg); color:inherit; font-weight:700;
+}
+.review-status-btn:hover { opacity:0.85; }
+```
+
+Each status pill has a 4px coloured left border matching its status. The
+active pill gets `background:var(--active-bg)` and `font-weight:700`.
+The `.active` style is the same for all statuses — only the left border
+colour varies.
+
+#### Secondary filter pills
+
+Below the status row, secondary filter buttons allow filtering by
+category, tool tag, and source. These are rendered by the logic file
+into `.review-filter-row` and `.review-pill-row` containers.
+
+```css
+.review-filter-row { margin-bottom:12px; }
+.review-pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+.review-filter-btns-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; }
+```
+
+Category pills (`.review-cats-btn`) have a purple left border. Tool
+pills (`.review-tools-btn`) have a teal left border. Source pills
+(`.review-source-btn`) have an orange left border. A clear-filters
+button (`.review-clear-filters-btn`) sits at the end with
+`margin-left:auto`. All share the same base structure:
+
+```css
+/* Example — category pill */
+.review-cats-btn {
+  border-width:1px 1px 1px 4px; border-style:solid;
+  border-color:rgba(0,0,0,0.10); border-left-color:var(--purple);
+  border-radius:10px; padding:10px 10px;
+  font-size:13px; font-weight:600; color:var(--text-secondary);
+  background:var(--white); cursor:pointer; font-family:var(--body-font);
+  transition:opacity 0.15s; display:flex; align-items:center;
+}
+```
+
+A search input (`.review-search-input`) sits in its own row:
+
+```css
+.review-search-row { margin-bottom:16px; }
+.review-search-input {
+  width:240px; max-width:240px; margin-left:auto; padding:10px 14px;
+  border:1px solid var(--border); border-radius:8px; font-size:14px;
+  font-family:inherit; box-sizing:border-box;
+  background:var(--white); color:var(--text);
+}
+.review-search-input:focus { outline:none; border-color:var(--blue); }
+```
+
+### 7d. Content Card (Source Material Review)
+
+Each content item is rendered as a `.review-card`. The card has a blue
+left border accent, a header row with checkbox, editable title, badges,
+and action buttons, a collapsible body preview, and expandable detail
+sections.
+
+```css
+.review-list { display:flex; flex-direction:column; gap:12px; }
+
+.review-card {
+  background:var(--white); border-radius:12px;
+  border-left:4px solid var(--blue);
+  box-shadow:0 2px 8px rgba(0,0,0,0.07);
+  overflow:hidden;
+}
+```
+
+#### Card header
+
+```css
+.review-card-header {
+  display:flex; align-items:center; gap:10px;
+  padding:14px 16px; flex-wrap:wrap;
+}
+.review-checkbox { width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+.review-card-title {
+  flex:1; min-width:140px; font-size:15px; font-weight:600;
+  color:var(--text); outline:none; cursor:text;
+  border-bottom:1px solid transparent;
+}
+.review-card-title:focus { border-bottom-color:var(--blue); }
+```
+
+The header contains, in order:
+1. `.review-checkbox` — bulk select checkbox
+2. `.review-card-title` — editable title (contenteditable in the logic
+   file, with transparent bottom border that turns blue on focus)
+3. `.review-type-badge` — content type label (e.g. "document", "image")
+4. `.review-source-badge` — source label (e.g. "Gmail", "OneDrive")
+5. `.review-upload-date` — relative or absolute date
+6. `.review-card-btns` — action buttons (Approve, Reject)
+
+Badge CSS:
+
+```css
+.review-type-badge {
+  padding:3px 10px; border-radius:20px; font-size:12px;
+  background:var(--blue-tint); color:var(--blue);
+  white-space:nowrap; font-weight:500;
+}
+.review-source-badge {
+  padding:3px 10px; border-radius:20px; font-size:12px;
+  background:var(--bg); color:var(--text-muted); white-space:nowrap;
+}
+```
+
+#### Action buttons
+
+Approve and Reject buttons use the coloured left border pill pattern:
+
+```css
+.review-approve-btn {
+  display:flex; align-items:center;
+  border-width:1px 1px 1px 4px; border-style:solid;
+  border-color:rgba(0,0,0,0.10); border-left-color:var(--green-dark);
+  border-radius:10px; padding:10px 16px;
+  font-size:13px; font-weight:600; color:var(--text-secondary);
+  background:var(--white); cursor:pointer; font-family:var(--body-font);
+  transition:opacity 0.15s;
+}
+.review-approve-btn:hover { background:var(--green-hover-bg); }
+
+.review-reject-btn {
+  display:flex; align-items:center;
+  border-width:1px 1px 1px 4px; border-style:solid;
+  border-color:rgba(0,0,0,0.10); border-left-color:var(--red);
+  border-radius:10px; padding:10px 16px;
+  font-size:13px; font-weight:600; color:var(--text-secondary);
+  background:var(--white); cursor:pointer; font-family:var(--body-font);
+  transition:opacity 0.15s;
+}
+.review-reject-btn:hover { background:var(--red-hover-bg); }
+```
+
+#### Body preview and expandable sections
+
+Below the header, a preview row shows a truncated body with an expand
+toggle:
+
+```css
+.review-card-preview-row {
+  display:flex; align-items:center; gap:8px;
+  padding:4px 16px 8px 16px; flex-basis:100%; min-width:0;
+}
+.review-expand-btn {
+  background:none; border:none; cursor:pointer;
+  color:var(--blue); font-size:12px; padding:0; flex-shrink:0;
+}
+.review-body-preview {
+  font-size:13px; color:var(--text-muted);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  min-width:0; flex:1;
+}
+```
+
+Expanded sections use `.review-section` with a top border separator:
+
+```css
+.review-section { padding:14px 16px; border-top:1px solid var(--border-light); }
+.review-section-head {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:10px;
+}
+.review-section-head span {
+  font-size:12px; font-weight:700; color:var(--text-muted);
+  text-transform:uppercase; letter-spacing:0.05em;
+}
+.review-body-text {
+  font-size:14px; color:var(--text); line-height:1.6;
+  outline:none; border:1px solid var(--border); border-radius:6px;
+  padding:10px; min-height:60px; background:var(--bg-subtle);
+}
+.review-body-text:focus { border-color:var(--blue); background:var(--white); }
+```
+
+#### Empty and loading states
+
+```css
+.review-loading { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+.review-empty { text-align:center; padding:40px; color:var(--text-disabled); font-size:14px; }
+```
 
 ---
 
