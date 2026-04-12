@@ -241,10 +241,10 @@ findings are reviewed.
   plain-text gateway page on timeout, which cl-upload.js
   now surfaces as a clear "OneDrive server returned 504"
   error rather than the previous "Unexpected token A..."
-  parse error. Will be resolved by Task 15 background
-  scan processing — once scans run on a queue + worker
-  model, the per-invocation timeout no longer caps the
-  total scan duration.
+  parse error. Cursor-based batch processing now exists
+  for email scans. OneDrive, SharePoint, and Dropbox
+  import endpoints still need the same treatment — to be
+  addressed as a separate task.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -254,25 +254,10 @@ findings are reviewed.
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
   during stylesheet rollout.
-- btn-outline class in staxai-auth.css applies a 2px border
-  that overrides inline styles. When styling buttons to match
-  platform patterns, check for btn-outline interactions and
-  use explicit border values rather than relying on class
-  inheritance.
 - cl_outlook_last_scanned_at column on profiles table is a
   dead column — no endpoint reads or writes it. Outlook scan
   uses outlookEntry.last_scanned_at inside cl_connected_emails
   jsonb array. To be removed during stylesheet rollout.
-- Lookback controls for OneDrive, SharePoint, and Dropbox
-  are wired in cl-settings-logic.js (lookback_months
-  persisted to jsonb) but the import endpoints do not yet
-  read the value. Wire up per CL Connections Spec v1.2
-  Appendix A build sequence.
-- connection-subitem CSS class in cl-settings-logic.js is
-  unstyled. Pick up during stylesheet rollout.
-- .btn-sm has two conflicting definitions in
-  content-library.html. Consolidate during stylesheet
-  rollout.
 - OAuth consolidation — api/cl-oauth-initiate.js and the
   three standalone callback files should be consolidated
   into api/auth/initiate.js and api/auth/oauth-callback.js
@@ -285,20 +270,6 @@ findings are reviewed.
 - Pagination fixed at 200 items for OneDrive/SharePoint
   folder listings and SharePoint sites. Add pagination
   support if needed.
-- Pill width in cl-upload.js may need CSS adjustment for
-  long email addresses with multi-account connections. Pick
-  up during stylesheet rollout.
-- _upgradeSharepointEntry helper duplicated across
-  cl-settings-logic.js, api/sharepoint-import.js, and
-  cl-upload.js intentionally — each file independently
-  upgrades legacy { site, libraries } entries to the
-  multi-site { sites: [...] } shape on read. Consolidate
-  into a shared module during stylesheet rollout cleanup
-  pass.
-- _saveDriveFolders in cl-settings-logic.js is unused dead
-  code following the Drive folder picker rewrite to
-  immediate-save Add/Remove buttons. Remove during
-  stylesheet rollout cleanup pass.
 - Every future tool build must stamp first_used_at on
   content_library rows when content is used in a generated
   output. This controls edit and delete restrictions in
@@ -320,18 +291,6 @@ findings are reviewed.
   explaining why files or emails may be skipped — covering
   unsupported formats, short or unreadable content, no
   extractable business content, and deduplication.
-- DOCX, XLSX, and PPTX local text extraction applied to
-  sharepoint-import.js, onedrive-import.js,
-  dropbox-import.js, and drive-import.js. Only PDF files
-  go through Claude's document API.
-- All seven scan endpoints now return deduped count,
-  skipped_reasons breakdown, auto_archived, and
-  fin_docs_paired counts. cl-upload.js surfaces this
-  detail in scan completion messages.
-- last_scanned_at is still stamped in cl-email-scan.js
-  after a successful scan for informational purposes
-  only. Not used in any query logic. Review in a future
-  session.
 - dashboard.html install banner: the PWA install prompt
   banner was added to dashboard.html during the PWA build
   (April 2026). The banner markup and logic must be
@@ -362,10 +321,6 @@ findings are reviewed.
   automatically saved to the Content Library when the
   workflow completes successfully. If the user abandons the
   workflow before completion, the photo is not saved.
-- Supabase Storage cl-assets bucket had no SELECT policy —
-  fixed April 2026. Policy "Users can read their own files"
-  added, restricts each user to their own folder using
-  auth.uid()::text = (storage.foldername(name))[1].
 - Existing image rows in content_library uploaded before
   April 2026 have content_type null — thumbnail detection
   falls back to source_detail.file_type for these rows. New
@@ -376,32 +331,6 @@ findings are reviewed.
   cl_source_items will block reprocessing via dedup. Clear
   these rows before rescanning folders that contain images
   previously scanned as stubs.
-- Add Photo button label updated from "Take Photo / Add
-  Photo" to "Add Photo" and description updated to remove
-  camera reference — camera capture belongs in individual
-  tools, not the Content Library.
-- Per-tool file upload — decision pending: The blanket rule
-  that no tool has its own upload function is under review.
-  The agreed direction is that tools which benefit from
-  direct file upload (e.g. Marketing & Social, Customer
-  Progress Updates, Design Visualiser) may include their own
-  upload and camera capture UI. Files uploaded through a tool
-  are saved to the Content Library in the background,
-  automatically tagged to the originating tool and any other
-  relevant tools. This improves data quality because content
-  arrives with context — the platform knows exactly what it
-  is and why it was uploaded. Full decision and implementation
-  approach to be confirmed at the start of the next session
-  before any build work begins. Do not implement per-tool
-  upload on any page until this decision is formally
-  confirmed.
-- MYOB deferred pending clarification on whether an ongoing
-  developer program subscription ($110/month) is required to
-  keep API keys active in production. Contact MYOB to confirm
-  before registering.
-- Buildxact registration outstanding — contact Buildxact
-  support to initiate third-party integration registration.
-  Required before Buildxact connection can be built.
 - Xero OAuth scopes for new apps (created after 2 March
   2026) must use the new granular scope names. Correct
   scope string confirmed from official documentation:
@@ -413,13 +342,6 @@ findings are reviewed.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
-- cl-upload.js tile loses in-progress scan state on hard
-  refresh — fixed April 2026 via _restoreActiveJobs() on
-  page load.
-- scan-worker.js calls all scan endpoint handlers via direct
-  module imports rather than HTTP fetch to avoid Vercel
-  deployment protection on internal calls. All scan logic
-  runs within the worker's 300-second budget per invocation.
 - Claude Code must never run any Vercel CLI commands under
   any circumstances. Vercel log access is via the Vercel
   dashboard only. This applies even when investigating
@@ -430,11 +352,6 @@ findings are reviewed.
   Material items and controls which tab they appear in.
   Without this value the item will not appear in the Tool
   Outputs tab.
-- cl-settings.html Library Connections tab — lookback
-  dropdown styling on Business Email (Gmail) and Business
-  Email (Outlook) connection tiles is unstyled. To be
-  fixed during the Email Assistant stylesheet rollout
-  session.
 
 ---
 
