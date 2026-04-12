@@ -377,8 +377,60 @@ module.exports = async (req, res) => {
       }
     }
 
-    // Non-CL OAuth flows are no longer supported — redirect to dashboard
-    console.log('Non-CL OAuth flow reached — redirecting to dashboard');
+    // EA flow — handles personal inbox connections for Email Assistant
+    if (stateFlow === 'ea') {
+      try {
+        const eaProvider = stateObj.provider || req.query.provider;
+
+        const existingRes = await fetch(
+          `${supabaseUrl}/rest/v1/profiles?id=eq.${userId}&select=ea_connected_emails`,
+          {
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`
+            }
+          }
+        );
+        const existingData = await existingRes.json();
+        const existing = existingData[0] || {};
+
+        const currentEmails = existing.ea_connected_emails || [];
+        const existingIdx = currentEmails.findIndex(function(e) { return e.email === userEmail && e.provider === eaProvider; });
+        if (existingIdx > -1) {
+          currentEmails[existingIdx].access_token = tokenData.access_token;
+          if (tokenData.refresh_token) {
+            currentEmails[existingIdx].refresh_token = tokenData.refresh_token;
+          }
+        } else {
+          var entry = { provider: eaProvider, email: userEmail, connected_at: new Date().toISOString(), access_token: tokenData.access_token };
+          if (tokenData.refresh_token) entry.refresh_token = tokenData.refresh_token;
+          currentEmails.push(entry);
+        }
+
+        const qs = querystring.stringify({ id: `eq.${userId}` });
+        await fetch(
+          `${supabaseUrl}/rest/v1/profiles?${qs}`,
+          {
+            method: 'PATCH',
+            headers: {
+              'apikey': supabaseKey,
+              'Authorization': `Bearer ${supabaseKey}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=minimal'
+            },
+            body: JSON.stringify({ ea_connected_emails: currentEmails })
+          }
+        );
+
+        return res.redirect(`/email/settings?connected=${eaProvider}`);
+      } catch (eaErr) {
+        console.error('EA OAuth callback error:', eaErr);
+        return res.redirect('/email/settings?error=connection_failed');
+      }
+    }
+
+    // Non-CL/EA OAuth flows are no longer supported — redirect to dashboard
+    console.log('Non-CL/EA OAuth flow reached — redirecting to dashboard');
     return res.redirect('/dashboard.html');
 
   } catch (error) {
