@@ -27,6 +27,7 @@ import onedriveHandler from './onedrive-import.js';
 import sharepointHandler from './sharepoint-import.js';
 import dropboxHandler from './dropbox-import.js';
 import websiteHandler from './scrape-website.js';
+import eaEmailHandler from './email.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -102,6 +103,10 @@ function buildDispatch(job) {
       return { handler: sharepointHandler, body: { action: 'import-all', accountEmail: account, siteId: spParts[0] || '', libraryId: spParts[1] || '', userId: userId } };
     case 'dropbox':
       return { handler: dropboxHandler, body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId } };
+    case 'ea-gmail':
+      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'gmail' } };
+    case 'ea-outlook':
+      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'outlook' } };
     default:
       return null;
   }
