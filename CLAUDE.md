@@ -217,6 +217,16 @@ correct intervals. Affects both CL and EA. Wire saved
 frequency preferences to the background scan worker
 queue for both CL and EA.
 
+### Task 25 — Supabase Schema Audit
+
+Not started. Code reads every API endpoint and logic
+file, maps every table and column reference, and compares
+against what actually exists in the database. Reports all
+mismatches — missing columns, dead columns, type
+mismatches, missing constraints, missing RLS policies —
+before any fixes are made. No build work begins until
+findings are reviewed.
+
 ---
 
 ## Known Issues & Notes
@@ -450,13 +460,15 @@ is complete and confirmed working.
 | 13   | ~~Task 23 — Internal API security shared secret model.~~ **COMPLETE** |
 | 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
 | 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
-| 16   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 17   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 18   | Stylesheet rollout — all remaining authenticated pages     |
-| 19   | Functional reviews — all 5 built tools                     |
-| 20   | Improvements per tool based on functional review findings  |
-| 21   | Integration tests — all 5 built tools                      |
-| 22   | Dashboard rebuild                                          |
+| 16   | ~~EA email body storage and in-platform detail view~~ **COMPLETE** |
+| 17   | Task 25 — Supabase schema audit across all tables.         |
+| 18   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 19   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 20   | Stylesheet rollout — all remaining authenticated pages     |
+| 21   | Functional reviews — all 5 built tools                     |
+| 22   | Improvements per tool based on functional review findings  |
+| 23   | Integration tests — all 5 built tools                      |
+| 24   | Dashboard rebuild                                          |
 
 ---
 
