@@ -96,12 +96,13 @@ window.EA_LOGIC = (function () {
   async function _renderConnectionStatus() {
     const { data: profile } = await window.supabaseClient
       .from('profiles')
-      .select('gmail_connected, outlook_connected')
+      .select('ea_connected_emails')
       .eq('id', _session.user.id)
       .single();
 
-    const gmailConnected   = profile && profile.gmail_connected;
-    const outlookConnected = profile && profile.outlook_connected;
+    const eaEmails = (profile && Array.isArray(profile.ea_connected_emails)) ? profile.ea_connected_emails : [];
+    const gmailConnected = eaEmails.some(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
+    const outlookConnected = eaEmails.some(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
 
     const el = document.getElementById('ea-connection-status');
     if (!el) return;
