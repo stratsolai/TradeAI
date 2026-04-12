@@ -7,89 +7,81 @@
  * Supports Gmail and Outlook (Microsoft Graph).
  * Categories are passed dynamically from the client — never hardcoded.
  * message_url is stored at scan time for deep-link on email card tap.
+ *
+ * Uses fetch() for all HTTP calls — matches cl-email-scan.js pattern.
  */
 
-const https = require('https');
 const { createClient } = require('@supabase/supabase-js');
 
 // ---------------------------------------------------------------------------
-// Helpers
+// Token refresh
 // ---------------------------------------------------------------------------
 
-function httpsRequest(method, hostname, path, headers, body) {
-  return new Promise((resolve, reject) => {
-    const options = { method, hostname, path, headers };
-    const req = https.request(options, (res) => {
-      let data = '';
-      res.on('data', chunk => { data += chunk; });
-      res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-        catch { resolve({ status: res.statusCode, body: data }); }
-      });
-    });
-    req.on('error', reject);
-    if (body) req.write(typeof body === 'string' ? body : JSON.stringify(body));
-    req.end();
-  });
-}
-
 async function refreshGmailToken(refreshToken) {
-  const params = new URLSearchParams({
+  var params = new URLSearchParams({
     client_id:     process.env.GOOGLE_CLIENT_ID,
     client_secret: process.env.GOOGLE_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type:    'refresh_token'
-  }).toString();
-  const res = await httpsRequest(
-    'POST', 'oauth2.googleapis.com', '/token',
-    { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params) },
-    params
-  );
-  if (!res.body.access_token) throw new Error('Gmail token refresh failed');
-  return res.body.access_token;
+  });
+  var res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  });
+  var data = await res.json();
+  if (!data.access_token) throw new Error('Gmail token refresh failed');
+  return data.access_token;
 }
 
 async function refreshOutlookToken(refreshToken) {
-  const params = new URLSearchParams({
+  var params = new URLSearchParams({
     client_id:     process.env.MICROSOFT_CLIENT_ID,
     client_secret: process.env.MICROSOFT_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type:    'refresh_token',
     scope:         'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
-  }).toString();
-  const res = await httpsRequest(
-    'POST', 'login.microsoftonline.com', '/common/oauth2/v2.0/token',
-    { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(params) },
-    params
-  );
-  if (!res.body.access_token) throw new Error('Outlook token refresh failed');
-  return res.body.access_token;
+  });
+  var res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString()
+  });
+  var data = await res.json();
+  if (!data.access_token) throw new Error('Outlook token refresh failed');
+  return data.access_token;
 }
+
 // ---------------------------------------------------------------------------
 // Email fetchers
 // ---------------------------------------------------------------------------
 
 async function fetchGmailMessages(accessToken, maxResults) {
-  const listRes = await httpsRequest(
-    'GET', 'gmail.googleapis.com',
-    `/gmail/v1/users/me/messages?maxResults=${maxResults}&q=in:inbox`,
-    { 'Authorization': `Bearer ${accessToken}` }
+  var listRes = await fetch(
+    'https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=' + maxResults + '&q=in:inbox',
+    { headers: { 'Authorization': 'Bearer ' + accessToken } }
   );
-  if (!listRes.body.messages) return [];
+  if (!listRes.ok) {
+    var errBody = await listRes.json().catch(function () { return {}; });
+    throw new Error('Gmail API returned ' + listRes.status + ': ' + ((errBody.error && errBody.error.message) || ''));
+  }
+  var listData = await listRes.json();
+  if (!listData.messages) return [];
 
-  const emails = [];
-  for (const msg of listRes.body.messages.slice(0, maxResults)) {
-    const detailRes = await httpsRequest(
-      'GET', 'gmail.googleapis.com',
-      `/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date`,
-      { 'Authorization': `Bearer ${accessToken}` }
+  var emails = [];
+  for (var i = 0; i < listData.messages.length && i < maxResults; i++) {
+    var msg = listData.messages[i];
+    var detailRes = await fetch(
+      'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + msg.id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date',
+      { headers: { 'Authorization': 'Bearer ' + accessToken } }
     );
-    const m = detailRes.body;
+    if (!detailRes.ok) continue;
+    var m = await detailRes.json();
     if (!m || !m.payload) continue;
-    const headers = m.payload.headers || [];
-    const getHeader = (name) => (headers.find(h => h.name === name) || {}).value || '';
-    const fromRaw = getHeader('From');
-    const fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/) || [];
+    var headers = m.payload.headers || [];
+    function getHeader(name) { return (headers.find(function (h) { return h.name === name; }) || {}).value || ''; }
+    var fromRaw = getHeader('From');
+    var fromMatch = fromRaw.match(/^(.*?)\s*<(.+?)>$/) || [];
     emails.push({
       id:          m.id,
       provider:    'gmail',
@@ -98,31 +90,38 @@ async function fetchGmailMessages(accessToken, maxResults) {
       subject:     getHeader('Subject') || '(no subject)',
       date:        getHeader('Date'),
       snippet:     m.snippet || '',
-      message_url: `https://mail.google.com/mail/u/0/#inbox/${m.id}`
+      message_url: 'https://mail.google.com/mail/u/0/#inbox/' + m.id
     });
   }
   return emails;
 }
 
 async function fetchOutlookMessages(accessToken, maxResults) {
-  const listRes = await httpsRequest(
-    'GET', 'graph.microsoft.com',
-    `/v1.0/me/mailFolders/inbox/messages?$top=${maxResults}&$select=id,subject,from,receivedDateTime,bodyPreview,webLink`,
-    { 'Authorization': `Bearer ${accessToken}`, 'Accept': 'application/json' }
+  var listRes = await fetch(
+    'https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages?$top=' + maxResults + '&$select=id,subject,from,receivedDateTime,bodyPreview,webLink',
+    { headers: { 'Authorization': 'Bearer ' + accessToken, 'Accept': 'application/json' } }
   );
-  if (!listRes.body.value) return [];
+  if (!listRes.ok) {
+    var errBody = await listRes.json().catch(function () { return {}; });
+    throw new Error('Outlook API returned ' + listRes.status + ': ' + (errBody.error && errBody.error.message || ''));
+  }
+  var listData = await listRes.json();
+  if (!listData.value) return [];
 
-  return listRes.body.value.map(m => ({
-    id:          m.id,
-    provider:    'outlook',
-    sender:      (m.from && m.from.emailAddress && m.from.emailAddress.name)  || '',
-    email:       (m.from && m.from.emailAddress && m.from.emailAddress.address) || '',
-    subject:     m.subject || '(no subject)',
-    date:        m.receivedDateTime,
-    snippet:     m.bodyPreview || '',
-    message_url: m.webLink || null
-  }));
+  return listData.value.map(function (m) {
+    return {
+      id:          m.id,
+      provider:    'outlook',
+      sender:      (m.from && m.from.emailAddress && m.from.emailAddress.name) || '',
+      email:       (m.from && m.from.emailAddress && m.from.emailAddress.address) || '',
+      subject:     m.subject || '(no subject)',
+      date:        m.receivedDateTime,
+      snippet:     m.bodyPreview || '',
+      message_url: m.webLink || null
+    };
+  });
 }
+
 // ---------------------------------------------------------------------------
 // Claude categorisation
 // ---------------------------------------------------------------------------
@@ -130,41 +129,42 @@ async function fetchOutlookMessages(accessToken, maxResults) {
 async function categoriseEmails(emails, categories, businessName, industry) {
   if (!emails.length) return [];
 
-  const categoryList = categories
-    .filter(c => c.enabled)
-    .map(c => c.id + ': ' + c.label)
+  var categoryList = categories
+    .filter(function (c) { return c.enabled; })
+    .map(function (c) { return c.id + ': ' + c.label; })
     .join(', ');
 
-  const emailList = emails.map((e, i) =>
-    `[${i}] From: ${e.sender} <${e.email}>\nSubject: ${e.subject}\nPreview: ${e.snippet.substring(0, 150)}`
-  ).join('\n\n');
+  var emailList = emails.map(function (e, i) {
+    return '[' + i + '] From: ' + e.sender + ' <' + e.email + '>\nSubject: ' + e.subject + '\nPreview: ' + (e.snippet || '').substring(0, 150);
+  }).join('\n\n');
 
-  const prompt = `You are an email assistant for a ${industry} business called ${businessName}.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ${categoryList}\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n${emailList}`;
-
-  const res = await httpsRequest(
-    'POST', 'api.anthropic.com', '/v1/messages',
-    {
-      'Content-Type':      'application/json',
-      'x-api-key':         process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    {
-      model:    'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
-      messages: [{ role: 'user', content: prompt }]
-    }
-  );
-
-  const text = res.body && res.body.content && res.body.content[0]
-    ? res.body.content[0].text : '[]';
+  var prompt = 'You are an email assistant for a ' + industry + ' business called ' + businessName + '.\n\nAnalyse the following emails and for each one return a JSON array. Each item must have:\n- index: the email index number\n- summary: a 2-3 sentence plain-English summary of the email\n- category: one of these category IDs: ' + categoryList + '\n\nReturn ONLY a valid JSON array with no additional text, markdown, or explanation.\n\nEmails:\n' + emailList;
 
   try {
-    const clean = text.replace(/```json|```/g, '').trim();
+    var res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    var data = await res.json();
+    var text = data && data.content && data.content[0] ? data.content[0].text : '[]';
+    var clean = text.replace(/```json|```/g, '').trim();
     return JSON.parse(clean);
-  } catch {
+  } catch (e) {
+    console.error('Categorisation error:', e.message);
     return [];
   }
 }
+
 // ---------------------------------------------------------------------------
 // Main handler
 // ---------------------------------------------------------------------------
@@ -176,131 +176,143 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const authHeader = req.headers['authorization'] || '';
-  const token = authHeader.replace('Bearer ', '').trim();
+  var authHeader = req.headers['authorization'] || '';
+  var token = authHeader.replace('Bearer ', '').trim();
   if (!token) return res.status(401).json({ error: 'Unauthorised' });
 
-  const supabase = createClient(
+  var supabase = createClient(
     process.env.SUPABASE_URL,
     process.env.SUPABASE_SERVICE_KEY
   );
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) return res.status(401).json({ error: 'Unauthorised' });
+  try {
+    var authRes = await supabase.auth.getUser(token);
+    if (authRes.error || !authRes.data || !authRes.data.user) {
+      return res.status(401).json({ error: 'Unauthorised' });
+    }
+    var user = authRes.data.user;
 
-  const body       = req.body || {};
-  const { action } = body;
+    var body = req.body || {};
+    if (body.action !== 'scan') return res.status(400).json({ error: 'Invalid action' });
 
-  if (action !== 'scan') return res.status(400).json({ error: 'Invalid action' });
+    var profileRes = await supabase
+      .from('profiles')
+      .select('ea_connected_emails, business_name, industry')
+      .eq('id', user.id)
+      .single();
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('ea_connected_emails, business_name, industry')
-    .eq('id', user.id)
-    .single();
+    if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
+    var profile = profileRes.data;
 
-  if (profileError) return res.status(500).json({ error: 'Could not load profile' });
+    var eaEmails = Array.isArray(profile.ea_connected_emails) ? profile.ea_connected_emails : [];
+    var gmailEntry = eaEmails.find(function (e) { return (e.provider === 'gmail' || e.provider === 'google') && e.access_token; });
+    var outlookEntry = eaEmails.find(function (e) { return (e.provider === 'microsoft' || e.provider === 'outlook') && e.access_token; });
 
-  const eaEmails = Array.isArray(profile.ea_connected_emails) ? profile.ea_connected_emails : [];
-  const gmailEntry = eaEmails.find(function(e) { return (e.provider === 'gmail' || e.provider === 'google') && e.access_token; });
-  const outlookEntry = eaEmails.find(function(e) { return (e.provider === 'microsoft' || e.provider === 'outlook') && e.access_token; });
+    if (!gmailEntry && !outlookEntry) {
+      return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
+    }
 
-  if (!gmailEntry && !outlookEntry) {
-    return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
-  }
+    var categories = Array.isArray(body.categories) && body.categories.length > 0
+      ? body.categories
+      : [{ id: 'general', label: 'General', enabled: true }];
 
-  const categories   = Array.isArray(body.categories) && body.categories.length > 0
-    ? body.categories
-    : [{ id: 'general', label: 'General', enabled: true }];
+    var maxResults = 20;
+    var businessName = profile.business_name || 'your business';
+    var industry = profile.industry || 'general business';
+    var allEmails = [];
 
-  const maxResults   = 20;
-  const businessName = profile.business_name || 'your business';
-  const industry     = profile.industry       || 'general business';
-  let   allEmails    = [];
-
-  if (gmailEntry) {
-    try {
-      let accessToken = gmailEntry.access_token;
+    if (gmailEntry) {
+      var gmailToken = gmailEntry.access_token;
       if (gmailEntry.refresh_token) {
         try {
-          accessToken = await refreshGmailToken(gmailEntry.refresh_token);
-          gmailEntry.access_token = accessToken;
+          gmailToken = await refreshGmailToken(gmailEntry.refresh_token);
+          gmailEntry.access_token = gmailToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
         } catch (refreshErr) {
           console.error('Gmail token refresh failed:', refreshErr.message);
           return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
         }
       }
-      const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
-      allEmails = allEmails.concat(gmailEmails);
-    } catch (err) {
-      console.error('Gmail fetch error:', err.message);
+      try {
+        var gmailEmails = await fetchGmailMessages(gmailToken, maxResults);
+        allEmails = allEmails.concat(gmailEmails);
+      } catch (fetchErr) {
+        console.error('Gmail fetch error:', fetchErr.message);
+        return res.status(502).json({ error: 'Gmail API error: ' + fetchErr.message });
+      }
     }
-  }
 
-  if (outlookEntry) {
-    try {
-      let accessToken = outlookEntry.access_token;
+    if (outlookEntry) {
+      var outlookToken = outlookEntry.access_token;
       if (outlookEntry.refresh_token) {
         try {
-          accessToken = await refreshOutlookToken(outlookEntry.refresh_token);
-          outlookEntry.access_token = accessToken;
+          outlookToken = await refreshOutlookToken(outlookEntry.refresh_token);
+          outlookEntry.access_token = outlookToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
         } catch (refreshErr) {
           console.error('Outlook token refresh failed:', refreshErr.message);
           return res.status(401).json({ error: 'Outlook token expired. Please reconnect Outlook in Settings.' });
         }
       }
-      const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
-      allEmails = allEmails.concat(outlookEmails);
-    } catch (err) {
-      console.error('Outlook fetch error:', err.message);
+      try {
+        var outlookEmails = await fetchOutlookMessages(outlookToken, maxResults);
+        allEmails = allEmails.concat(outlookEmails);
+      } catch (fetchErr) {
+        console.error('Outlook fetch error:', fetchErr.message);
+        return res.status(502).json({ error: 'Outlook API error: ' + fetchErr.message });
+      }
     }
+
+    if (!allEmails.length) {
+      return res.status(200).json({ emails: [] });
+    }
+
+    var categorised = await categoriseEmails(allEmails, categories, businessName, industry);
+
+    var results = allEmails.map(function (email, i) {
+      var analysis = categorised.find(function (c) { return c.index === i; }) || {};
+      return {
+        id:          email.id,
+        provider:    email.provider,
+        sender:      email.sender,
+        email:       email.email,
+        subject:     email.subject,
+        date:        email.date,
+        summary:     analysis.summary || '',
+        category:    analysis.category || 'general',
+        message_url: email.message_url || null,
+        handled:     false
+      };
+    });
+
+    var rows = results.map(function (r) {
+      return {
+        user_id:      user.id,
+        message_id:   r.id,
+        provider:     r.provider,
+        sender:       r.sender,
+        sender_email: r.email,
+        subject:      r.subject,
+        received_at:  r.date,
+        summary:      r.summary,
+        category:     r.category,
+        message_url:  r.message_url,
+        handled:      false
+      };
+    });
+
+    var storeRes = await supabase
+      .from('email_summaries')
+      .upsert(rows, { onConflict: 'user_id,message_id' });
+
+    if (storeRes.error) {
+      console.error('Store error:', storeRes.error.message);
+    }
+
+    return res.status(200).json({ emails: results });
+
+  } catch (err) {
+    console.error('EA scan error:', err.message || err);
+    return res.status(500).json({ error: 'Scan failed: ' + (err.message || 'Unknown error') });
   }
-
-  if (!allEmails.length) {
-    return res.status(200).json({ emails: [] });
-  }
-
-  const categorised = await categoriseEmails(allEmails, categories, businessName, industry);
-
-  const results = allEmails.map((email, i) => {
-    const analysis = categorised.find(c => c.index === i) || {};
-    return {
-      id:          email.id,
-      provider:    email.provider,
-      sender:      email.sender,
-      email:       email.email,
-      subject:     email.subject,
-      date:        email.date,
-      summary:     analysis.summary || '',
-      category:    analysis.category || 'general',
-      message_url: email.message_url || null,
-      handled:     false
-    };
-  });
-
-  const rows = results.map(r => ({
-    user_id:      user.id,
-    message_id:   r.id,
-    provider:     r.provider,
-    sender:       r.sender,
-    sender_email: r.email,
-    subject:      r.subject,
-    received_at:  r.date,
-    summary:      r.summary,
-    category:     r.category,
-    message_url:  r.message_url,
-    handled:      false
-  }));
-
-  const { error: storeError } = await supabase
-    .from('email_summaries')
-    .upsert(rows, { onConflict: 'user_id,message_id' });
-
-  if (storeError) {
-    console.error('Store error:', storeError.message);
-  }
-
-  return res.status(200).json({ emails: results });
 };
