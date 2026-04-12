@@ -40,6 +40,37 @@ topbar.js itself and in CLAUDE.md.
 
 ## 3. Settings Pages
 
+### 3.0. Page Heading
+
+Reference: cl-settings.html
+
+Every settings page has a page heading above the tab bar — a title and a
+one-line description.
+
+```html
+<div class="page-header">
+  <h1 class="page-title">[Page Title]</h1>
+  <p class="page-subtitle">[Brief description of what this settings page controls.]</p>
+</div>
+```
+
+Page heading CSS (inline in the settings page file):
+
+```css
+.page-header { margin-bottom: 32px; }
+.page-title {
+  font-family: var(--heading-font);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.page-subtitle {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+```
+
 ### 3a. Tab Bar and Tab Panel Structure
 
 Reference: cl-settings.html
