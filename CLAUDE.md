@@ -189,18 +189,21 @@ source-of-truth pages for the stylesheet.
 
 ### Task 20 — Email Assistant Functional Review and Build
 
-In progress April 2026.
+In progress April 2026. EA scan functionality is blocked
+pending Task 22. Account switcher build is also blocked
+pending Task 22. Current session work completed:
+email-assistant-settings.html fully rebuilt to
+LAYOUT-STANDARD.md standard, OAuth connection fixed and
+confirmed working for Gmail and Outlook.
 
 Outstanding before sign-off:
-- Fix EA scan bugs — token refresh, error handling, and
-  data storage must mirror cl-email-scan.js patterns
-  exactly. Fix in progress.
 - Rebuild email-assistant.html with per-account tab
   switcher — one tab per connected account
   (Gmail/Outlook), each tab showing its own category
-  filter pills and email list
+  filter pills and email list. Blocked pending Task 22.
 - Build Flag/Handled/Days-back features per
-  StaxAI-Email-Assistant-Flag-Handled-Spec-v1_0
+  StaxAI-Email-Assistant-Flag-Handled-Spec-v1_0.
+  Blocked pending Task 22.
 - Confirm integration test end-to-end with real Gmail
   and Outlook accounts
 - Stylesheet rollout for email-assistant.html — CSS
@@ -213,8 +216,59 @@ Not started. The Scan Frequency UI exists on
 cl-settings.html and email-assistant-settings.html and
 saves a preference to Supabase, but no scheduler or cron
 trigger reads that preference and queues scans at the
-correct intervals. Affects both CL and EA. Needs a
-discrete build task before launch.
+correct intervals. Affects both CL and EA. Wire saved
+frequency preferences to the background scan worker
+queue for both CL and EA.
+
+### Task 22 — EA Scan Infrastructure Rebuild
+
+Not started. Full rebuild of EA scan to match CL
+architecture exactly:
+- Convert api/email.js and api/email-assistant-settings.js
+  from CommonJS to ES module syntax
+- Add maxDuration: 300 Vercel config to api/email.js
+- Remove api/email-assistant-settings.js server-side
+  endpoint — replace with direct client-side Supabase SDK
+  calls matching the CL settings pattern. No API endpoint
+  needed
+- Route EA scans through the background scan worker —
+  remove direct browser fetch call from
+  email-assistant-logic.js and add EA source_type mapping
+  to scan-worker.js buildDispatch function
+- Fix account selection — accept and use specific named
+  account email passed in request, not first account found
+- Fetch full email body using full MIME extraction
+  matching cl-email-scan.js — remove snippet-only approach
+- Add proper system prompt to Claude categorisation call
+- Add category normalisation logic appropriate for
+  user-defined EA categories
+- Add last_scanned_at update after successful scan
+- Improve error logging to match CL per-step pattern
+- Fix silent Claude error swallowing
+
+### Task 23 — Internal API Security — Shared Secret Model
+
+Not started. Implement shared secret security for all
+internal service-to-service calls:
+- Generate a strong shared secret and store as a Vercel
+  environment variable
+- Update scan-worker.js to pass the secret in a header
+  when calling all CL scan endpoints
+- Update api/cl-email-scan.js and api/cl-outlook-scan.js
+  to validate the shared secret on every request
+- Apply the same pattern to api/email.js once it is
+  routed through the worker via Task 22
+
+### Task 24 — Fix Silent Claude Error Handling in CL Scan Endpoints
+
+Not started. Both api/cl-email-scan.js and
+api/cl-outlook-scan.js silently swallow Claude API error
+responses — when Claude returns an error object instead
+of a content response, the code falls through to an empty
+array with no logging and no error returned to the caller.
+Fix both files to detect Claude API error responses, log
+the full raw response, and return a clear error rather
+than silently returning empty results.
 
 ---
 
@@ -444,14 +498,17 @@ is complete and confirmed working.
 | 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
 | 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
 | 10   | Stylesheet rollout — email-assistant.html and email-assistant-settings.html. In progress April 2026. |
-| 11   | Email Assistant functional review, scan fixes, account switcher, Flag/Handled/Days-back build — Task 20. In progress April 2026. |
-| 12   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 13   | Scan frequency scheduling — Task 21.                       |
-| 14   | Stylesheet rollout — all remaining authenticated pages     |
-| 15   | Functional reviews — all 5 built tools                     |
-| 16   | Improvements per tool based on functional review findings  |
-| 17   | Integration tests — all 5 built tools                      |
-| 18   | Dashboard rebuild                                          |
+| 11   | Task 20 — Email Assistant functional review, account switcher, Flag/Handled/Days-back build. Blocked pending Task 22. |
+| 12   | Task 22 — EA scan infrastructure rebuild.                  |
+| 13   | Task 23 — Internal API security shared secret model.       |
+| 14   | Task 24 — Fix silent Claude error handling in CL scan endpoints. |
+| 15   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 16   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 17   | Stylesheet rollout — all remaining authenticated pages     |
+| 18   | Functional reviews — all 5 built tools                     |
+| 19   | Improvements per tool based on functional review findings  |
+| 20   | Integration tests — all 5 built tools                      |
+| 21   | Dashboard rebuild                                          |
 
 ---
 
@@ -828,3 +885,4 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | archive with unmark, days-back      |
 |                                 | scan coverage control. Approved     |
 |                                 | April 2026, awaiting build.         |
+|                                 | Blocked pending Task 22.            |
