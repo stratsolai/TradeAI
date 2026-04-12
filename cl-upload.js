@@ -217,25 +217,7 @@ window.CL_UPLOAD = {
       // SharePoint accounts hold a `sites` array; each site has its own
       // `libraries` array. Lazy-upgrade legacy { site, libraries } entries
       // in-memory so the rest of this code can assume the new shape.
-      function upgradeSharepointEntry(entry) {
-        if (!entry) return;
-        if (entry.site && entry.site.id) {
-          if (!Array.isArray(entry.sites)) entry.sites = [];
-          var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
-          if (!siteAlreadyIn) {
-            entry.sites.push({
-              id: entry.site.id,
-              displayName: entry.site.displayName,
-              webUrl: entry.site.webUrl,
-              libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
-            });
-          }
-          delete entry.site;
-          delete entry.libraries;
-        } else if (!Array.isArray(entry.sites)) {
-          entry.sites = [];
-        }
-      }
+      // upgradeSharepointEntry loaded from /upgrade-sharepoint.js (window global).
       // For SharePoint, each pill group represents one site under one
       // account; the pill value encodes accountEmail|siteId|libraryId so
       // the scan handler can address the right library on the right site.
@@ -243,7 +225,7 @@ window.CL_UPLOAD = {
         var groups = [];
         (accounts || []).forEach(function (a) {
           if (!a || !a.account_email) return;
-          upgradeSharepointEntry(a);
+          window.upgradeSharepointEntry(a);
           var sites = Array.isArray(a.sites) ? a.sites : [];
           sites.forEach(function (s) {
             if (!s || !s.id) return;
