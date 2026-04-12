@@ -128,7 +128,7 @@ window.EA_LOGIC = (function () {
       .limit(100);
 
     if (!_settings.show_handled) {
-      query.eq('is_handled', false);
+      query.eq('handled', false);
     }
 
     const { data, error } = await query;
