@@ -13,31 +13,38 @@ window._initSettings = async function () {
     if (data) settings = data;
   } catch (e) {}
 
-  let profile = {};
+  let eaEmails = [];
   try {
     const { data } = await window.supabaseClient
       .from("profiles")
-      .select("gmail_connected, outlook_connected")
-      .eq("user_id", user.id)
+      .select("ea_connected_emails")
+      .eq("id", user.id)
       .single();
-    if (data) profile = data;
+    if (data && Array.isArray(data.ea_connected_emails)) eaEmails = data.ea_connected_emails;
   } catch (e) {}
+
+  var gmailEntry = eaEmails.find(function(e) { return e.provider === "gmail" || e.provider === "google"; });
+  var outlookEntry = eaEmails.find(function(e) { return e.provider === "microsoft" || e.provider === "outlook"; });
 
   const gmailStatus = document.getElementById("gmail-status");
   const outlookStatus = document.getElementById("outlook-status");
   const connectGmailBtn = document.getElementById("connect-gmail-btn");
   const connectOutlookBtn = document.getElementById("connect-outlook-btn");
 
-  if (gmailStatus) gmailStatus.textContent = profile.gmail_connected ? "Connected" : "Not connected";
-  if (gmailStatus) gmailStatus.className = "connection-status " + (profile.gmail_connected ? "connected" : "disconnected");
-  if (outlookStatus) outlookStatus.textContent = profile.outlook_connected ? "Connected" : "Not connected";
-  if (outlookStatus) outlookStatus.className = "connection-status " + (profile.outlook_connected ? "connected" : "disconnected");
+  if (gmailStatus) gmailStatus.textContent = gmailEntry ? "Connected" : "Not connected";
+  if (gmailStatus) gmailStatus.className = "connection-status " + (gmailEntry ? "connected" : "disconnected");
+  if (outlookStatus) outlookStatus.textContent = outlookEntry ? "Connected" : "Not connected";
+  if (outlookStatus) outlookStatus.className = "connection-status " + (outlookEntry ? "connected" : "disconnected");
 
   if (connectGmailBtn) {
-    connectGmailBtn.addEventListener("click", function () { window.location.href = "/api/auth/gmail"; });
+    connectGmailBtn.addEventListener("click", function () {
+      window.location.href = "/api/auth/initiate?provider=gmail&userId=" + user.id + "&flow=ea";
+    });
   }
   if (connectOutlookBtn) {
-    connectOutlookBtn.addEventListener("click", function () { window.location.href = "/api/auth/outlook"; });
+    connectOutlookBtn.addEventListener("click", function () {
+      window.location.href = "/api/auth/initiate?provider=microsoft&userId=" + user.id + "&flow=ea";
+    });
   }
 
   let categories = Array.isArray(settings.categories) ? settings.categories : [
