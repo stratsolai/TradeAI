@@ -169,6 +169,35 @@ Exception: content-library.html and cl-settings.html already
 have mobile fixes applied (April 2026) as these are the
 source-of-truth pages for the stylesheet.
 
+### Task 20 — Email Assistant Functional Review and Build
+
+In progress April 2026.
+
+Outstanding before sign-off:
+- Fix EA scan bugs — token refresh, error handling, and
+  data storage must mirror cl-email-scan.js patterns
+  exactly. Fix in progress.
+- Rebuild email-assistant.html with per-account tab
+  switcher — one tab per connected account
+  (Gmail/Outlook), each tab showing its own category
+  filter pills and email list
+- Build Flag/Handled/Days-back features per
+  StaxAI-Email-Assistant-Flag-Handled-Spec-v1_0
+- Confirm integration test end-to-end with real Gmail
+  and Outlook accounts
+- Stylesheet rollout for email-assistant.html — CSS
+  variable rollout partially done, structural cleanup
+  complete, topbar.js added
+
+### Task 21 — Scan Frequency Scheduling
+
+Not started. The Scan Frequency UI exists on
+cl-settings.html and email-assistant-settings.html and
+saves a preference to Supabase, but no scheduler or cron
+trigger reads that preference and queues scans at the
+correct intervals. Affects both CL and EA. Needs a
+discrete build task before launch.
+
 ---
 
 ## Known Issues & Notes
@@ -396,11 +425,15 @@ is complete and confirmed working.
 | 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
 | 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
 | 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
-| 10   | Stylesheet rollout — remaining authenticated pages. Start with email-assistant.html. |
-| 11   | Functional reviews — all 5 built tools                     |
-| 12   | Improvements per tool based on functional review findings  |
-| 13   | Integration tests — all 5 built tools                      |
-| 14   | Dashboard rebuild                                          |
+| 10   | Stylesheet rollout — email-assistant.html and email-assistant-settings.html. In progress April 2026. |
+| 11   | Email Assistant functional review, scan fixes, account switcher, Flag/Handled/Days-back build — Task 20. In progress April 2026. |
+| 12   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 13   | Scan frequency scheduling — Task 21.                       |
+| 14   | Stylesheet rollout — all remaining authenticated pages     |
+| 15   | Functional reviews — all 5 built tools                     |
+| 16   | Improvements per tool based on functional review findings  |
+| 17   | Integration tests — all 5 built tools                      |
+| 18   | Dashboard rebuild                                          |
 
 ---
 
@@ -772,3 +805,8 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | consideration. Not approved for     |
 |                                 | build. Each requires a full spec    |
 |                                 | before build begins.                |
+| StaxAI-Email-Assistant-Flag-   | Email flagging with Gmail/Outlook   |
+| Handled-Spec-v1_0              | write-back, handled items soft      |
+|                                 | archive with unmark, days-back      |
+|                                 | scan coverage control. Approved     |
+|                                 | April 2026, awaiting build.         |
