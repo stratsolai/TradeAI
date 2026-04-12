@@ -616,7 +616,7 @@ export default async function handler(req, res) {
   }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  const { userId, daysBack, accountEmail } = req.body;
+  const { userId, daysBack, accountEmail, jobId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
   if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
 
@@ -671,6 +671,25 @@ export default async function handler(req, res) {
       console.log('[Gmail] Page fetched — count:', (listData.messages || []).length, 'totalSoFar:', messages.length, 'hasNextPage:', !!pageToken);
     } while (pageToken);
 
+    // ── Cursor — resume from previous batch if cursor exists ──────────
+    var BATCH_SIZE = 50;
+    var cursorData = null;
+    var processedIds = [];
+    if (jobId) {
+      var cursorRes = await supabase.from('cl_scan_cursors').select('*').eq('job_id', jobId).maybeSingle();
+      if (cursorRes.data) {
+        cursorData = cursorRes.data;
+        processedIds = Array.isArray(cursorData.processed_ids) ? cursorData.processed_ids : [];
+      }
+    }
+
+    // Filter out already-processed messages and take the next batch
+    var allMessageIds = messages.map(function(m) { return m.id; });
+    var remaining = messages.filter(function(m) { return processedIds.indexOf(m.id) === -1; });
+    var batch = remaining.slice(0, BATCH_SIZE);
+    var moreAfterBatch = remaining.length > BATCH_SIZE;
+    console.log('[Gmail] Cursor — total:', messages.length, 'alreadyProcessed:', processedIds.length, 'remaining:', remaining.length, 'batch:', batch.length, 'morePending:', moreAfterBatch);
+
     let imported = 0;
     let skipped = 0;
     let approved = 0;
@@ -680,7 +699,7 @@ export default async function handler(req, res) {
     var auto_archived = 0;
     var fin_docs_paired = 0;
 
-    for (const msg of messages) {
+    for (const msg of batch) {
       const msgRes = await fetch(
         'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + msg.id + '?format=full',
         { headers: { Authorization: 'Bearer ' + accessToken } }
@@ -993,16 +1012,49 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Cursor — save or clean up ──────────────────────────────────────
+    var batchProcessedIds = processedIds.concat(batch.map(function(m) { return m.id; }));
+
+    if (moreAfterBatch && jobId) {
+      // More messages remain — save cursor and return morePending
+      var cursorRow = {
+        job_id: jobId,
+        user_id: userId,
+        processed_ids: batchProcessedIds,
+        imported: imported,
+        approved: approved,
+        pending: pending,
+        rejected: rejected,
+        skipped: skipped,
+        auto_archived: auto_archived,
+        fin_docs_paired: fin_docs_paired,
+        deduped: 0,
+        updated_at: new Date().toISOString()
+      };
+      if (cursorData) {
+        await supabase.from('cl_scan_cursors').update(cursorRow).eq('id', cursorData.id);
+      } else {
+        cursorRow.created_at = new Date().toISOString();
+        await supabase.from('cl_scan_cursors').insert(cursorRow);
+      }
+      console.log('[Gmail] Batch complete — morePending. Processed so far:', batchProcessedIds.length, 'of', messages.length);
+      return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: batch.length, morePending: true });
+    }
+
+    // All messages processed — clean up cursor and write last_scanned_at
+    if (jobId) {
+      await supabase.from('cl_scan_cursors').delete().eq('job_id', jobId);
+    }
+
     // last_scanned_at is no longer used for query filtering — the lookback
     // window is the sole date bound and dedup is handled by source_ref.
-    // Stamp is kept for informational purposes (when was this account last
-    // scanned) but does not affect query logic.
+    // Stamp is kept for informational purposes only.
     if (imported > 0) {
       gmailEntry.last_scanned_at = new Date().toISOString();
       await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
     }
 
-    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: messages.length });
+    return res.status(200).json({ success: true, imported, approved, pending, rejected, skipped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, total: messages.length, morePending: false });
 
   } catch (err) {
     console.error('cl-email-scan error:', err.message);
