@@ -106,29 +106,7 @@ window.CL_SETTINGS_LOGIC = {
     ]);
   },
 
-  // Lazy-upgrade a SharePoint entry from the legacy single-site shape
-  // ({ site, libraries }) into the multi-site shape ({ sites: [...] }).
-  // Idempotent — safe to call repeatedly. Mirrors the helper in
-  // api/sharepoint-import.js.
-  _upgradeSharepointEntry: function (entry) {
-    if (!entry) return;
-    if (entry.site && entry.site.id) {
-      if (!Array.isArray(entry.sites)) entry.sites = [];
-      var siteAlreadyIn = entry.sites.some(function (s) { return s && s.id === entry.site.id; });
-      if (!siteAlreadyIn) {
-        entry.sites.push({
-          id: entry.site.id,
-          displayName: entry.site.displayName,
-          webUrl: entry.site.webUrl,
-          libraries: Array.isArray(entry.libraries) ? entry.libraries : [],
-        });
-      }
-      delete entry.site;
-      delete entry.libraries;
-    } else if (!Array.isArray(entry.sites)) {
-      entry.sites = [];
-    }
-  },
+  // upgradeSharepointEntry loaded from /upgrade-sharepoint.js (window global).
 
   _loadConnections: async function () {
     var self = this;
@@ -157,7 +135,7 @@ window.CL_SETTINGS_LOGIC = {
       self._websiteUrls = data.website_urls || [];
       self._onedriveAccounts = nonNull(Array.isArray(data.cl_onedrive_accounts) ? data.cl_onedrive_accounts : []);
       self._sharepointAccounts = nonNull(Array.isArray(data.cl_sharepoint_accounts) ? data.cl_sharepoint_accounts : []);
-      self._sharepointAccounts.forEach(function (a) { self._upgradeSharepointEntry(a); });
+      self._sharepointAccounts.forEach(function (a) { window.upgradeSharepointEntry(a); });
       self._dropboxAccounts = nonNull(Array.isArray(data.cl_dropbox_accounts) ? data.cl_dropbox_accounts : []);
       self._xeroAccounts = nonNull(Array.isArray(data.cl_xero_accounts) ? data.cl_xero_accounts : []);
       self._quickbooksAccounts = nonNull(Array.isArray(data.cl_quickbooks_accounts) ? data.cl_quickbooks_accounts : []);
@@ -999,7 +977,7 @@ window.CL_SETTINGS_LOGIC = {
     var list = document.getElementById('sharepoint-connections-list');
     if (!list) return;
     list.innerHTML = self._sharepointAccounts.map(function (a) {
-      self._upgradeSharepointEntry(a);
+      window.upgradeSharepointEntry(a);
       var sites = Array.isArray(a.sites) ? a.sites : [];
       // Each site renders as a section: site name row (flush-left), then a
       // Choose Libraries — <Site Name> button on its own row indented to
@@ -1082,7 +1060,7 @@ window.CL_SETTINGS_LOGIC = {
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
-      if (entry) self._upgradeSharepointEntry(entry);
+      if (entry) window.upgradeSharepointEntry(entry);
       var existingIds = (entry && Array.isArray(entry.sites)) ? entry.sites.map(function (s) { return s.id; }) : [];
       // Multi-select pattern matching the OneDrive folder picker. Each row
       // toggles a site in or out of entry.sites[]. Removing a site here also
@@ -1104,7 +1082,7 @@ window.CL_SETTINGS_LOGIC = {
         var siteWebUrl = btn.getAttribute('data-site-weburl');
         var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
         if (entryIdx === -1) return;
-        self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+        window.upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
         var current = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
         var isAdded = current.some(function (s) { return s.id === siteId; });
         var next = isAdded
@@ -1185,7 +1163,7 @@ window.CL_SETTINGS_LOGIC = {
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
-      if (entry) self._upgradeSharepointEntry(entry);
+      if (entry) window.upgradeSharepointEntry(entry);
       var sitesArr = entry && Array.isArray(entry.sites) ? entry.sites : [];
       var site = sitesArr.find(function (s) { return s && s.id === siteId; });
       var existingIds = (site && Array.isArray(site.libraries)) ? site.libraries.map(function (lib) { return lib.id; }) : [];
@@ -1205,7 +1183,7 @@ window.CL_SETTINGS_LOGIC = {
         var libraryName = btn.getAttribute('data-library-name');
         var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
         if (entryIdx === -1) return;
-        self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+        window.upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
         var sitesArr2 = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
         var siteIdx = sitesArr2.findIndex(function (s) { return s && s.id === siteId; });
         if (siteIdx === -1) return;
@@ -1271,7 +1249,7 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
       if (entryIdx === -1) return;
-      self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+      window.upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
       var sites = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
       self._sharepointAccounts[entryIdx].sites = sites.filter(function (s) { return s && s.id !== siteId; });
       var res = await self._supabase
@@ -1288,7 +1266,7 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var entryIdx = self._sharepointAccounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
       if (entryIdx === -1) return;
-      self._upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
+      window.upgradeSharepointEntry(self._sharepointAccounts[entryIdx]);
       var sites = Array.isArray(self._sharepointAccounts[entryIdx].sites) ? self._sharepointAccounts[entryIdx].sites : [];
       var siteIdx = sites.findIndex(function (s) { return s && s.id === siteId; });
       if (siteIdx === -1) return;
