@@ -188,35 +188,45 @@ module.exports = async (req, res) => {
   );
 
   try {
+    console.log('[EA] Step 1: Auth check');
     var authRes = await supabase.auth.getUser(token);
     if (authRes.error || !authRes.data || !authRes.data.user) {
+      console.log('[EA] Auth failed:', authRes.error);
       return res.status(401).json({ error: 'Unauthorised' });
     }
     var user = authRes.data.user;
+    console.log('[EA] Step 2: Authenticated as', user.id);
 
     var body = req.body || {};
     if (body.action !== 'scan') return res.status(400).json({ error: 'Invalid action' });
 
+    console.log('[EA] Step 3: Loading profile');
     var profileRes = await supabase
       .from('profiles')
       .select('ea_connected_emails, business_name, industry')
       .eq('id', user.id)
       .single();
 
-    if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
+    if (profileRes.error) {
+      console.log('[EA] Profile load error:', profileRes.error);
+      return res.status(500).json({ error: 'Could not load profile' });
+    }
     var profile = profileRes.data;
 
     var eaEmails = Array.isArray(profile.ea_connected_emails) ? profile.ea_connected_emails : [];
     var gmailEntry = eaEmails.find(function (e) { return (e.provider === 'gmail' || e.provider === 'google') && e.access_token; });
     var outlookEntry = eaEmails.find(function (e) { return (e.provider === 'microsoft' || e.provider === 'outlook') && e.access_token; });
+    console.log('[EA] Step 4: Gmail entry:', !!gmailEntry, 'Outlook entry:', !!outlookEntry, 'Total ea_connected_emails:', eaEmails.length);
 
     if (!gmailEntry && !outlookEntry) {
+      console.log('[EA] No accounts connected — returning 400');
       return res.status(400).json({ error: 'No email account connected. Connect Gmail or Outlook from Settings to begin scanning.' });
     }
 
     var categories = Array.isArray(body.categories) && body.categories.length > 0
       ? body.categories
       : [{ id: 'general', label: 'General', enabled: true }];
+    console.log('[EA] Step 5: Categories count:', categories.length);
 
     var maxResults = 20;
     var businessName = profile.business_name || 'your business';
@@ -224,52 +234,67 @@ module.exports = async (req, res) => {
     var allEmails = [];
 
     if (gmailEntry) {
+      console.log('[EA] Step 6a: Gmail — has refresh_token:', !!gmailEntry.refresh_token);
       var gmailToken = gmailEntry.access_token;
       if (gmailEntry.refresh_token) {
         try {
+          console.log('[EA] Step 6b: Refreshing Gmail token');
           gmailToken = await refreshGmailToken(gmailEntry.refresh_token);
           gmailEntry.access_token = gmailToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
+          console.log('[EA] Step 6c: Gmail token refreshed and saved');
         } catch (refreshErr) {
-          console.error('Gmail token refresh failed:', refreshErr.message);
+          console.error('[EA] Gmail token refresh failed:', refreshErr.message);
           return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
         }
       }
       try {
+        console.log('[EA] Step 6d: Fetching Gmail messages');
         var gmailEmails = await fetchGmailMessages(gmailToken, maxResults);
+        console.log('[EA] Step 6e: Gmail returned', gmailEmails.length, 'emails');
         allEmails = allEmails.concat(gmailEmails);
       } catch (fetchErr) {
-        console.error('Gmail fetch error:', fetchErr.message);
+        console.error('[EA] Gmail fetch error:', fetchErr.message);
         return res.status(502).json({ error: 'Gmail API error: ' + fetchErr.message });
       }
     }
 
     if (outlookEntry) {
+      console.log('[EA] Step 7a: Outlook — has refresh_token:', !!outlookEntry.refresh_token);
       var outlookToken = outlookEntry.access_token;
       if (outlookEntry.refresh_token) {
         try {
+          console.log('[EA] Step 7b: Refreshing Outlook token');
           outlookToken = await refreshOutlookToken(outlookEntry.refresh_token);
           outlookEntry.access_token = outlookToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
+          console.log('[EA] Step 7c: Outlook token refreshed and saved');
         } catch (refreshErr) {
-          console.error('Outlook token refresh failed:', refreshErr.message);
+          console.error('[EA] Outlook token refresh failed:', refreshErr.message);
           return res.status(401).json({ error: 'Outlook token expired. Please reconnect Outlook in Settings.' });
         }
       }
       try {
+        console.log('[EA] Step 7d: Fetching Outlook messages');
         var outlookEmails = await fetchOutlookMessages(outlookToken, maxResults);
+        console.log('[EA] Step 7e: Outlook returned', outlookEmails.length, 'emails');
         allEmails = allEmails.concat(outlookEmails);
       } catch (fetchErr) {
-        console.error('Outlook fetch error:', fetchErr.message);
+        console.error('[EA] Outlook fetch error:', fetchErr.message);
         return res.status(502).json({ error: 'Outlook API error: ' + fetchErr.message });
       }
     }
 
+    console.log('[EA] Step 8: Total emails fetched:', allEmails.length);
+
     if (!allEmails.length) {
+      console.log('[EA] No emails — returning empty');
       return res.status(200).json({ emails: [] });
     }
 
+    console.log('[EA] Step 9: Starting Claude categorisation');
     var categorised = await categoriseEmails(allEmails, categories, businessName, industry);
+    console.log('[EA] Step 10: Categorisation complete —', categorised.length, 'results');
 
     var results = allEmails.map(function (email, i) {
       var analysis = categorised.find(function (c) { return c.index === i; }) || {};
@@ -303,18 +328,21 @@ module.exports = async (req, res) => {
       };
     });
 
+    console.log('[EA] Step 11: Storing', rows.length, 'rows to email_summaries');
     var storeRes = await supabase
       .from('email_summaries')
       .upsert(rows, { onConflict: 'user_id,message_id' });
 
     if (storeRes.error) {
-      console.error('Store error:', storeRes.error.message);
+      console.error('[EA] Store error:', storeRes.error.message);
     }
+    console.log('[EA] Step 12: Store complete — error:', !!storeRes.error);
 
+    console.log('[EA] Step 13: Returning', results.length, 'results');
     return res.status(200).json({ emails: results });
 
   } catch (err) {
-    console.error('EA scan error:', err.message || err);
+    console.error('[EA] Top-level error:', err.message || err);
     return res.status(500).json({ error: 'Scan failed: ' + (err.message || 'Unknown error') });
   }
 };
