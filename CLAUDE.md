@@ -227,24 +227,20 @@ mismatches, missing constraints, missing RLS policies —
 before any fixes are made. No build work begins until
 findings are reviewed.
 
+### Task 26 — Folder Import Cursor Batch Processing
+
+Not started. Apply cursor-based batch processing to
+api/onedrive-import.js, api/sharepoint-import.js, and
+api/dropbox-import.js, matching the pattern built for
+email scans. These endpoints currently process all files
+in a single invocation and can hit the 300-second Vercel
+timeout on large folder trees. No build begins until a
+spec is written.
+
 ---
 
 ## Known Issues & Notes
 
-- OneDrive scans on large folder trees may hit Vercel's
-  300-second function timeout. The recursive walker added
-  to api/onedrive-import.js processes every subfolder
-  depth-first and each file is run through Claude's
-  document API and the canonical extraction prompt
-  synchronously, so a deeply nested folder with hundreds
-  of documents can exceed the cap. Vercel returns its
-  plain-text gateway page on timeout, which cl-upload.js
-  now surfaces as a clear "OneDrive server returned 504"
-  error rather than the previous "Unexpected token A..."
-  parse error. Cursor-based batch processing now exists
-  for email scans. OneDrive, SharePoint, and Dropbox
-  import endpoints still need the same treatment — to be
-  addressed as a separate task.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -379,13 +375,14 @@ is complete and confirmed working.
 | 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
 | 16   | ~~EA email body storage and in-platform detail view~~ **COMPLETE** |
 | 17   | Task 25 — Supabase schema audit across all tables.         |
-| 18   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 19   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 20   | Stylesheet rollout — all remaining authenticated pages     |
-| 21   | Functional reviews — all 5 built tools                     |
-| 22   | Improvements per tool based on functional review findings  |
-| 23   | Integration tests — all 5 built tools                      |
-| 24   | Dashboard rebuild                                          |
+| 18   | Task 26 — Folder import cursor batch processing.           |
+| 19   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 20   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 21   | Stylesheet rollout — all remaining authenticated pages     |
+| 22   | Functional reviews — all 5 built tools                     |
+| 23   | Improvements per tool based on functional review findings  |
+| 24   | Integration tests — all 5 built tools                      |
+| 25   | Dashboard rebuild                                          |
 
 ---
 
