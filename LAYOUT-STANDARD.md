@@ -1097,6 +1097,232 @@ document.getElementById('review-reject-all-btn').addEventListener('click', funct
 });
 ```
 
+### 7i. Stats Bar
+
+Reference: content-library.html (HTML), staxai-auth.css Section 6
+(CSS), cl-logic.js `loadStats` (data), cl-review.js `_bindStatTiles`
+and `_updateStatTiles` (click behaviour and refresh).
+
+#### Position on the page
+
+The stats bar sits between the page header and the primary tab bar:
+
+```
+.page-header
+.stats-bar        : ← stat tiles
+.tab-nav          : ← primary tab bar
+.ptab-content     : ← tab panels
+```
+
+#### HTML structure
+
+Each stat tile is a `.stat-card` div inside a `.stats-bar` grid
+container. Every tile has a `data-status` attribute and contains a
+`.stat-value` (the count) and a `.stat-label` (the description).
+All counts initialise to `0` in the HTML.
+
+```html
+<div class="stats-bar">
+  <div class="stat-card" data-status="all">
+    <div class="stat-value" id="stat-total">0</div>
+    <div class="stat-label">Total Items</div>
+  </div>
+  <div class="stat-card orange" data-status="pending">
+    <div class="stat-value" id="stat-pending">0</div>
+    <div class="stat-label">Pending Review</div>
+  </div>
+  <div class="stat-card green" data-status="approved">
+    <div class="stat-value" id="stat-approved">0</div>
+    <div class="stat-label">Approved</div>
+  </div>
+  <div class="stat-card teal" data-status="rejected">
+    <div class="stat-value" id="stat-rejected">0</div>
+    <div class="stat-label">Rejected</div>
+  </div>
+  <div class="stat-card grey" data-status="archived">
+    <div class="stat-value" id="stat-archived">0</div>
+    <div class="stat-label">Archived</div>
+  </div>
+</div>
+```
+
+#### Coloured left border pattern
+
+Each tile gets a 4px left border. The colour is controlled by a modifier
+class on the `.stat-card`:
+
+| Tile | Modifier class | Border colour variable |
+|------|---------------|----------------------|
+| Total Items | *(none — default)* | `var(--blue)` |
+| Pending Review | `.orange` | `var(--orange)` |
+| Approved | `.green` | `var(--green)` |
+| Rejected | `.teal` | `var(--teal)` |
+| Archived | `.grey` | `var(--grey)` |
+
+Additional modifier classes exist in the stylesheet but are not used on
+the CL stats bar: `.purple`, `.red`.
+
+#### CSS (staxai-auth.css Section 6)
+
+```css
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 28px;
+}
+
+.stat-card,
+.stat-tile {
+  background: var(--white);
+  padding: 18px 20px;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  border-left: 4px solid var(--blue);
+}
+
+.stat-card.orange,
+.stat-tile.orange { border-left-color: var(--orange); }
+
+.stat-card.green,
+.stat-tile.green  { border-left-color: var(--green); }
+
+.stat-card.purple,
+.stat-tile.purple { border-left-color: var(--purple); }
+
+.stat-card.teal,
+.stat-tile.teal   { border-left-color: var(--teal); }
+
+.stat-card.red,
+.stat-tile.red    { border-left-color: var(--red); }
+
+.stat-card.grey,
+.stat-tile.grey   { border-left-color: var(--grey); }
+
+.stat-tile .stat-value,
+.stat-card .stat-value {
+  font-family: var(--body-font);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-tile .stat-label,
+.stat-card .stat-label {
+  font-family: var(--body-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+```
+
+An additional inline rule in content-library.html sets the pointer
+cursor on all stat tiles with a `data-status` attribute:
+
+```css
+.stat-card[data-status] { cursor: pointer; }
+```
+
+#### How stat counts are calculated and updated
+
+The `loadStats` function in cl-logic.js fetches all content_library
+rows for the user (excluding tool outputs via `.neq('source', 'tool')`)
+and counts each status client-side:
+
+```javascript
+async function loadStats() {
+  const { data: { user } } = await supabaseClient.auth.getUser();
+
+  var libResult = await supabaseClient
+    .from('content_library')
+    .select('status', { count: 'exact' })
+    .eq('user_id', user.id)
+    .neq('source', 'tool');
+
+  const items = libResult.data || [];
+  const total = items.length;
+  const pending = items.filter(i => i.status === 'pending').length;
+  const approved = items.filter(i => i.status === 'approved').length;
+  const rejected = items.filter(i => i.status === 'rejected').length;
+  const archived = items.filter(i => i.status === 'archived').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-pending').textContent = pending;
+  document.getElementById('stat-approved').textContent = approved;
+  document.getElementById('stat-rejected').textContent = rejected;
+  var archivedEl = document.getElementById('stat-archived');
+  if (archivedEl) archivedEl.textContent = archived;
+}
+```
+
+`loadStats` is declared at the top level of cl-logic.js (global scope),
+making it accessible as `window.loadStats`.
+
+It is called at the following points:
+
+1. **On page load** — called inside a `setTimeout(() => { ... }, 400)`
+   in cl-logic.js init block
+2. **On bfcache restore** — called inside the `pageshow` handler when
+   `e.persisted` is true (cl-logic.js)
+3. **After any status change or bulk action** — cl-review.js calls
+   `this._updateStatTiles()` at the end of `_changeStatus`,
+   `_deleteItem`, `_bulkAction`, `_bulkActionAll`, `_bulkDelete`, and
+   `_bulkDeleteAll`. The function is:
+
+```javascript
+_updateStatTiles: function() {
+  if (window.loadStats) window.loadStats();
+}
+```
+
+This means stat tiles refresh automatically whenever any item is
+approved, rejected, archived, or deleted — either individually or in
+bulk.
+
+#### Click behaviour
+
+Stat tile clicks are bound in cl-review.js `_bindStatTiles`, called
+during `CL_REVIEW.init()`:
+
+```javascript
+_bindStatTiles: function() {
+  const self = this;
+  document.querySelectorAll('.stat-card[data-status]').forEach(function(tile) {
+    var status = tile.dataset.status;
+    if (status === 'all') {
+      tile.style.cursor = 'default';
+      return;
+    }
+    tile.addEventListener('click', function() {
+      self.setStatus(status);
+    });
+  });
+}
+```
+
+Clicking a stat tile calls `setStatus(status)` on the review module,
+which:
+1. Switches the primary tab bar to the Review tab (via
+   `window.switchPTab('review')`)
+2. Sets the active status filter to the clicked status
+3. Highlights the matching `.review-status-btn` pill
+4. Loads items for that status
+
+The "Total Items" tile (`data-status="all"`) is excluded — its cursor
+is set to `default` and no click handler is attached.
+
+#### Loading and empty states
+
+There is no loading state on the stats bar itself. The tiles render in
+the static HTML with all counts set to `0`. The `loadStats` function
+runs after a 400ms delay and overwrites the `0` values with real counts.
+If the Supabase query fails, the tiles remain at `0` — there is no
+error state or loading spinner on the stats bar.
+
 ---
 
 ## Change Log
@@ -1106,3 +1332,4 @@ document.getElementById('review-reject-all-btn').addEventListener('click', funct
 | v1.0 — April 2026 | Initial document. All patterns sourced from exact code read from cl-settings.html and cl-settings-logic.js (current HEAD) and commit f7f72e2. Topbar section intentionally minimal — topbar.js is the reference. Tool page section pending EA functional review. |
 | v1.1 — April 2026 | Section 7a–7d added — page container, tab bar, filter pills, content card patterns from content-library.html and staxai-auth.css. |
 | v1.2 — April 2026 | Section 7e–7h added — filter state persistence, checkbox bulk selection, bulk action bar, and Mark All behaviour from cl-review.js. |
+| v1.3 — April 2026 | Section 7i added — stats bar pattern from content-library.html, staxai-auth.css, cl-logic.js, and cl-review.js. |
