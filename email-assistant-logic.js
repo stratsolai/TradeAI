@@ -38,51 +38,60 @@ window.EA_LOGIC = (function () {
   }
 
   // -------------------------------------------------------------------------
-  // Settings
+  // Settings — direct Supabase SDK calls (no API endpoint)
   // -------------------------------------------------------------------------
+  var DEFAULT_CATEGORIES = [
+    { id: 'urgent',    label: 'Urgent',       enabled: true },
+    { id: 'leads',     label: 'Leads',        enabled: true },
+    { id: 'enquiries', label: 'Enquiries',    enabled: true },
+    { id: 'jobs',      label: 'Jobs',         enabled: true },
+    { id: 'invoices',  label: 'Invoices',     enabled: true },
+    { id: 'suppliers', label: 'Suppliers',    enabled: true },
+    { id: 'low',       label: 'Low Priority', enabled: true }
+  ];
+
   async function _loadSettings() {
     try {
-      const res = await fetch('/api/email-assistant-settings', {
-        headers: { 'Authorization': 'Bearer ' + _session.access_token }
-      });
-      if (res.ok) {
-        _settings = await res.json();
+      var res = await window.supabaseClient
+        .from('email_assistant_settings')
+        .select('*')
+        .eq('user_id', _session.user.id)
+        .maybeSingle();
+      if (res.data) {
+        _settings = {
+          id: res.data.id,
+          categories: (res.data.categories && res.data.categories.length > 0) ? res.data.categories : DEFAULT_CATEGORIES,
+          scan_cadence: res.data.scan_cadence || 'manual',
+          show_handled: res.data.show_handled || false
+        };
       }
     } catch (e) {
       console.error('Settings load error:', e);
     }
     if (!_settings) {
-      _settings = {
-        categories: [
-          { id: 'urgent',    label: 'Urgent',       enabled: true },
-          { id: 'leads',     label: 'Leads',        enabled: true },
-          { id: 'enquiries', label: 'Enquiries',    enabled: true },
-          { id: 'jobs',      label: 'Jobs',         enabled: true },
-          { id: 'invoices',  label: 'Invoices',     enabled: true },
-          { id: 'suppliers', label: 'Suppliers',    enabled: true },
-          { id: 'low',       label: 'Low Priority', enabled: true }
-        ],
-        scan_cadence: 'manual',
-        show_handled: false
-      };
+      _settings = { categories: DEFAULT_CATEGORIES, scan_cadence: 'manual', show_handled: false };
     }
   }
 
   async function _saveSettings() {
     try {
-      const res = await fetch('/api/email-assistant-settings', {
-        method:  'POST',
-        headers: {
-          'Authorization': 'Bearer ' + _session.access_token,
-          'Content-Type':  'application/json'
-        },
-        body: JSON.stringify(_settings)
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        _showError(data.error || 'Could not save settings');
-        return false;
+      var payload = {
+        user_id: _session.user.id,
+        categories: _settings.categories,
+        scan_cadence: _settings.scan_cadence,
+        show_handled: _settings.show_handled,
+        updated_at: new Date().toISOString()
+      };
+      var error;
+      if (_settings.id) {
+        ({ error } = await window.supabaseClient.from('email_assistant_settings').update(payload).eq('id', _settings.id));
+      } else {
+        payload.created_at = new Date().toISOString();
+        var res = await window.supabaseClient.from('email_assistant_settings').insert(payload).select().single();
+        if (res.data) _settings.id = res.data.id;
+        error = res.error;
       }
+      if (error) { _showError('Could not save settings'); return false; }
       return true;
     } catch (e) {
       _showError('Could not save settings');
@@ -93,6 +102,8 @@ window.EA_LOGIC = (function () {
   // -------------------------------------------------------------------------
   // Connection status
   // -------------------------------------------------------------------------
+  let _connectedAccounts = [];
+
   async function _renderConnectionStatus() {
     const { data: profile } = await window.supabaseClient
       .from('profiles')
@@ -101,18 +112,20 @@ window.EA_LOGIC = (function () {
       .single();
 
     const eaEmails = (profile && Array.isArray(profile.ea_connected_emails)) ? profile.ea_connected_emails : [];
-    const gmailConnected = eaEmails.some(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
-    const outlookConnected = eaEmails.some(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
+    _connectedAccounts = eaEmails;
+
+    const gmailAccounts = eaEmails.filter(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
+    const outlookAccounts = eaEmails.filter(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
 
     const el = document.getElementById('ea-connection-status');
     if (!el) return;
 
-    if (!gmailConnected && !outlookConnected) {
+    if (gmailAccounts.length === 0 && outlookAccounts.length === 0) {
       el.innerHTML = "<div class=\"ea-connect-prompt\">Connect your email to get started. Use the Settings panel to connect Gmail or Outlook.</div>";
     } else {
       const parts = [];
-      if (gmailConnected)   parts.push('Gmail');
-      if (outlookConnected) parts.push('Outlook');
+      if (gmailAccounts.length > 0)   parts.push('Gmail');
+      if (outlookAccounts.length > 0) parts.push('Outlook');
       el.innerHTML = "<div class=\"ea-connected-badge\">Connected: " + parts.join(', ') + "</div>";
     }
   }
@@ -147,24 +160,43 @@ window.EA_LOGIC = (function () {
     _showFeedMessage('Scanning your inbox...');
 
     try {
-      const activeCategories = _settings.categories.filter(c => c.enabled);
-      const res = await fetch('/api/email', {
-        method:  'POST',
-        headers: {
-          'Authorization': 'Bearer ' + _session.access_token,
-          'Content-Type':  'application/json'
-        },
-        body: JSON.stringify({ action: 'scan', categories: activeCategories })
-      });
+      var token = _session.access_token;
+      var queued = 0;
 
-      const data = await res.json();
+      // Queue a scan job for each connected account
+      var gmailAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
+      var outlookAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
 
-      if (!res.ok) {
-        _showFeedMessage(data.error || 'Scan failed. Check your email connection in Settings.');
+      for (var gi = 0; gi < gmailAccounts.length; gi++) {
+        var gRes = await fetch('/api/scan-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ sourceType: 'ea-gmail', sourceAccount: gmailAccounts[gi].email })
+        });
+        if (gRes.ok) queued++;
+      }
+
+      for (var oi = 0; oi < outlookAccounts.length; oi++) {
+        var oRes = await fetch('/api/scan-queue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ sourceType: 'ea-outlook', sourceAccount: outlookAccounts[oi].email })
+        });
+        if (oRes.ok) queued++;
+      }
+
+      if (queued === 0) {
+        _showFeedMessage('No email accounts connected. Connect Gmail or Outlook in Settings.');
         return;
       }
 
-      await _loadStoredEmails();
+      // Wait for background processing then reload
+      _showFeedMessage('Scan queued. Processing ' + queued + ' account' + (queued > 1 ? 's' : '') + '...');
+      setTimeout(async function() {
+        await _loadStoredEmails();
+        if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
+      }, 10000);
+      return;
 
     } catch (e) {
       _showFeedMessage('Scan failed. Please try again.');
