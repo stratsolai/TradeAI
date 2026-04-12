@@ -807,6 +807,296 @@ Expanded sections use `.review-section` with a top border separator:
 .review-empty { text-align:center; padding:40px; color:var(--text-disabled); font-size:14px; }
 ```
 
+### 7e. Filter and Tab State Persistence
+
+Reference: cl-review.js `_filterState`, `_saveFilterState`,
+`_restoreFilterState`, `setStatus`.
+
+Each status tab (Pending, Approved, Rejected, Archived) independently
+preserves its own tool and category filter selections. When the user
+switches between status tabs, the current filter state is saved and the
+target tab's saved state is restored.
+
+State is held in the `_filterState` object, initialised on the module:
+
+```javascript
+_filterState: {
+  pending:  { tools: [], cats: [] },
+  approved: { tools: [], cats: [] },
+  rejected: { tools: [], cats: [] },
+  archived: { tools: [], cats: [] }
+}
+```
+
+`_saveFilterState()` copies the current `_toolFilters` and
+`_categoryFilter` arrays into the slot for the current `_status`:
+
+```javascript
+_saveFilterState: function() {
+  this._filterState[this._status] = {
+    tools: this._toolFilters.slice(),
+    cats: this._categoryFilter.slice()
+  };
+}
+```
+
+`_restoreFilterState(status)` reads the saved slot back into the active
+filter arrays:
+
+```javascript
+_restoreFilterState: function(status) {
+  var s = this._filterState[status];
+  this._toolFilters = s ? s.tools.slice() : [];
+  this._categoryFilter = s ? s.cats.slice() : [];
+}
+```
+
+When a status pill is clicked (via `setStatus` or the `_bindControls`
+click handler), the sequence is:
+
+1. `_saveFilterState()` — persist current tab's filters
+2. Set `_status` to the new status
+3. `_restoreFilterState(status)` — load the new tab's saved filters
+4. Clear `_searchTerm` to empty string
+5. Clear `_selected` to a new empty `Set()`
+6. Reset the search input value to empty
+7. Close any open filter dropdowns via `_closeFilterDropdowns()`
+8. Call `_load()` to fetch items for the new status and re-render
+
+The primary tab bar (Upload / Review / Tool Outputs / Business Profile)
+does not persist state — `switchPTab` simply toggles `.active` classes.
+Each tab's content panel retains its DOM state while hidden (display:none)
+so scroll position and form inputs survive tab switches.
+
+### 7f. Checkbox Bulk Selection
+
+Reference: cl-review.js `_selected`, `_bindCardEvents`,
+`_updateBulkBar`.
+
+Selection state is held in a `Set` on the module:
+
+```javascript
+_selected: new Set()
+```
+
+Each card renders a checkbox in the card header:
+
+```javascript
+'<input type="checkbox" class="review-checkbox" data-id="' + id + '"' + checked + '>'
+```
+
+The `checked` attribute is set from the current `_selected` set so
+checkboxes survive re-renders:
+
+```javascript
+const checked = this._selected.has(item.id) ? ' checked' : '';
+```
+
+Checkbox change events are bound in `_bindCardEvents`:
+
+```javascript
+document.querySelectorAll('.review-checkbox').forEach(function(cb) {
+  cb.addEventListener('change', function() {
+    if (cb.checked) {
+      self._selected.add(cb.dataset.id);
+    } else {
+      self._selected.delete(cb.dataset.id);
+    }
+    self._updateBulkBar();
+  });
+});
+```
+
+There is no select-all checkbox on individual cards. Selection is
+per-item only. The `_selected` set is cleared (reset to `new Set()`)
+whenever:
+- A status tab is switched (`setStatus` and `_bindControls` click)
+- A bulk action completes (`_bulkAction`, `_bulkActionAll`,
+  `_bulkDelete`, `_bulkDeleteAll`)
+- Data is reloaded (`_load`)
+
+The Deselect All button in the bulk bar also clears the set and unchecks
+all visible checkboxes.
+
+### 7g. Bulk Action Bar
+
+Reference: cl-review.js `_render`, `_updateBulkBar`.
+
+The bulk action bar is rendered inside the review tab panel, positioned
+between the filter button row and the item list. It is hidden by default
+(`display:none`) and shown when one or more checkboxes are selected.
+
+HTML structure (rendered by `_render`):
+
+```html
+<div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
+  <span id="review-bulk-count" class="review-bulk-label"></span>
+  <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn">Approve All Selected</button>
+  <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn">Reject All Selected</button>
+  <button class="btn-outline" id="review-deselect-btn">Deselect All</button>
+</div>
+```
+
+CSS (inline in content-library.html):
+
+```css
+.review-bulk-bar {
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--bg); border:1px solid var(--border); border-radius:8px;
+  padding:10px 16px; margin-bottom:16px;
+}
+.review-bulk-label { font-size:13px; color:var(--text-secondary); }
+.review-bulk-approve-btn { border-color:var(--green-dark); color:var(--green-dark); }
+.review-bulk-approve-btn:hover { background:var(--green-dark); color:var(--white); }
+.review-bulk-reject-btn { border-color:var(--red); color:var(--red); }
+.review-bulk-reject-btn:hover { background:var(--red); color:var(--white); }
+```
+
+Visibility is controlled by `_updateBulkBar`:
+
+```javascript
+_updateBulkBar: function() {
+  const bar = document.getElementById('review-bulk-bar');
+  const count = document.getElementById('review-bulk-count');
+  if (!bar || !count) return;
+  const n = this._selected.size;
+  bar.style.display = n > 0 ? '' : 'none';
+  count.textContent = n + ' selected';
+}
+```
+
+The bar shows whenever `_selected.size > 0` and hides when it reaches 0.
+The count label updates to show "{n} selected".
+
+### 7h. Mark All / Bulk Action Behaviour
+
+Reference: cl-review.js `_bulkAction`, `_bulkActionAll`, `_bulkDelete`,
+`_bulkDeleteAll`, `_bindControls`.
+
+There are two tiers of bulk action: selected items only (via the bulk
+bar) and all visible items (via the Mark All buttons in the filter
+button row).
+
+#### Mark All buttons (filter button row)
+
+The Approve All and Reject All buttons sit in the `.review-filter-btns-row`,
+right-aligned via a `flex:1` spacer:
+
+```html
+<button class="btn-outline review-approve-all-btn" id="review-approve-all-btn">Approve All</button>
+<button class="btn-outline review-reject-all-btn" id="review-reject-all-btn">Reject All</button>
+```
+
+These buttons act on **all currently filtered items** — not just checked
+items. They are always visible regardless of checkbox selection.
+
+The button labels change contextually based on the active status tab.
+`_updateRejectButtons` runs after each load:
+
+- On the Rejected tab: "Reject All" becomes "Delete All" and
+  "Reject All Selected" becomes "Delete All Selected"
+- On the Approved tab: the Approve All and bulk Approve buttons are
+  hidden (`display:none`)
+
+```javascript
+_updateRejectButtons: function() {
+  var isRejected = this._status === 'rejected';
+  var isApproved = this._status === 'approved';
+  var allBtn = document.getElementById('review-reject-all-btn');
+  var selBtn = document.getElementById('review-bulk-reject-btn');
+  if (allBtn) {
+    allBtn.innerHTML = isRejected ? '&#10007; Delete All' : '&#10007; Reject All';
+  }
+  if (selBtn) {
+    selBtn.innerHTML = isRejected ? '&#10007; Delete All Selected' : '&#10007; Reject All Selected';
+  }
+  var approveAllBtn = document.getElementById('review-approve-all-btn');
+  var bulkApproveBtn = document.getElementById('review-bulk-approve-btn');
+  if (approveAllBtn) approveAllBtn.style.display = isApproved ? 'none' : '';
+  if (bulkApproveBtn) bulkApproveBtn.style.display = isApproved ? 'none' : '';
+}
+```
+
+#### Bulk action functions
+
+Four functions handle the database operations:
+
+`_bulkAction(newStatus)` — acts on checked items only. Updates all IDs
+in `_selected` to the new status, removes them from `_items`, clears
+`_selected`, and re-renders:
+
+```javascript
+_bulkAction: async function(newStatus) {
+  const ids = Array.from(this._selected);
+  if (ids.length === 0) return;
+  await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+  this._items = this._items.filter(function(i) { return !self._selected.has(i.id); });
+  this._selected = new Set();
+  this._updateBulkBar();
+  this._renderList();
+  this._updateStatTiles();
+}
+```
+
+`_bulkActionAll(newStatus)` — acts on all filtered items (respects
+active category, tool, and search filters). Gets IDs from
+`_filteredItems()`, updates all to the new status:
+
+```javascript
+_bulkActionAll: async function(newStatus) {
+  var filtered = this._filteredItems();
+  if (filtered.length === 0) return;
+  var ids = filtered.map(function(i) { return i.id; });
+  await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+  this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
+  this._selected = new Set();
+  this._updateBulkBar();
+  this._renderList();
+  this._updateStatTiles();
+}
+```
+
+`_bulkDelete()` — same as `_bulkAction` but deletes instead of
+updating status. Used when the Reject button is clicked on the Rejected
+tab (items already rejected are permanently deleted).
+
+`_bulkDeleteAll()` — same as `_bulkActionAll` but deletes. Used when
+Reject All / Delete All is clicked on the Rejected tab.
+
+All four functions follow the same cleanup sequence after the database
+call: filter removed items from `_items`, clear `_selected`, update the
+bulk bar, re-render the list, and refresh the stat tiles via
+`_updateStatTiles` (which calls `window.loadStats()`).
+
+#### Wiring
+
+The bulk bar buttons and Mark All buttons are bound in `_bindControls`:
+
+```javascript
+// Bulk bar — acts on selected items
+document.getElementById('review-bulk-approve-btn').addEventListener('click', function() {
+  self._bulkAction('approved');
+});
+document.getElementById('review-bulk-reject-btn').addEventListener('click', function() {
+  if (self._status === 'rejected') { self._bulkDelete(); }
+  else { self._bulkAction('rejected'); }
+});
+document.getElementById('review-deselect-btn').addEventListener('click', function() {
+  self._selected = new Set();
+  self._updateBulkBar();
+  document.querySelectorAll('.review-checkbox').forEach(function(cb) { cb.checked = false; });
+});
+
+// Mark All — acts on all filtered items
+document.getElementById('review-approve-all-btn').addEventListener('click', function() {
+  self._bulkActionAll('approved');
+});
+document.getElementById('review-reject-all-btn').addEventListener('click', function() {
+  if (self._status === 'rejected') { self._bulkDeleteAll(); }
+  else { self._bulkActionAll('rejected'); }
+});
+```
+
 ---
 
 ## Change Log
@@ -814,3 +1104,5 @@ Expanded sections use `.review-section` with a top border separator:
 | Version | Changes |
 |---------|---------|
 | v1.0 — April 2026 | Initial document. All patterns sourced from exact code read from cl-settings.html and cl-settings-logic.js (current HEAD) and commit f7f72e2. Topbar section intentionally minimal — topbar.js is the reference. Tool page section pending EA functional review. |
+| v1.1 — April 2026 | Section 7a–7d added — page container, tab bar, filter pills, content card patterns from content-library.html and staxai-auth.css. |
+| v1.2 — April 2026 | Section 7e–7h added — filter state persistence, checkbox bulk selection, bulk action bar, and Mark All behaviour from cl-review.js. |
