@@ -89,9 +89,9 @@ function buildDispatch(job) {
 
   switch (job.source_type) {
     case 'gmail':
-      return { handler: gmailHandler, body: { userId: userId, accountEmail: account } };
+      return { handler: gmailHandler, body: { userId: userId, accountEmail: account, jobId: job.id } };
     case 'outlook':
-      return { handler: outlookHandler, body: { userId: userId, accountEmail: account } };
+      return { handler: outlookHandler, body: { userId: userId, accountEmail: account, jobId: job.id } };
     case 'website':
       return { handler: websiteHandler, body: { userId: userId, url: account } };
     case 'gdrive':
@@ -104,9 +104,9 @@ function buildDispatch(job) {
     case 'dropbox':
       return { handler: dropboxHandler, body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId } };
     case 'ea-gmail':
-      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'gmail' } };
+      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'gmail', jobId: job.id } };
     case 'ea-outlook':
-      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'outlook' } };
+      return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'outlook', jobId: job.id } };
     default:
       return null;
   }
@@ -216,25 +216,51 @@ async function processJob(supabase, job, deadline) {
       throw new Error(errorText);
     }
 
+    // Batch cursor support — when a handler returns morePending: true,
+    // the job is not complete. Accumulate batch counts onto the job row
+    // and requeue so the next worker invocation continues from the cursor.
+    if (result.morePending) {
+      // Read current counts from job row to accumulate
+      var currentJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count').eq('id', job.id).single();
+      var cur = currentJob.data || {};
+      await supabase.from('cl_scan_jobs').update({
+        status: 'queued',
+        imported_count: (cur.imported_count || 0) + (result.imported || 0),
+        approved_count: (cur.approved_count || 0) + (result.approved || 0),
+        pending_count: (cur.pending_count || 0) + (result.pending || 0),
+        rejected_count: (cur.rejected_count || 0) + (result.rejected || 0),
+        skipped_count: (cur.skipped_count || 0) + (result.skipped || 0),
+        auto_archived_count: (cur.auto_archived_count || 0) + (result.auto_archived || 0),
+        fin_docs_paired_count: (cur.fin_docs_paired_count || 0) + (result.fin_docs_paired || 0),
+        deduped_count: (cur.deduped_count || 0) + (result.deduped || 0),
+      }).eq('id', job.id);
+      console.log('[scan-worker] Job', job.id, 'batch complete — morePending, requeued. Batch imported:', result.imported || 0);
+      return { jobId: job.id, outcome: 'morePending' };
+    }
+
     // Success — write all available counts from the scan result.
     // Each endpoint returns a slightly different set of fields but
     // all share the core shape. Missing fields fall back to 0.
+    // For cursor-based scans the final batch counts are added to
+    // any previously accumulated counts already on the job row.
+    var finalJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count').eq('id', job.id).single();
+    var prev = finalJob.data || {};
     await supabase.from('cl_scan_jobs').update({
       status: 'completed',
       completed_at: new Date().toISOString(),
-      imported_count: result.imported || result.count || 0,
-      approved_count: result.approved || 0,
-      pending_count: result.pending || 0,
-      rejected_count: result.rejected || 0,
-      skipped_count: result.skipped || 0,
-      auto_archived_count: result.auto_archived || 0,
-      fin_docs_paired_count: result.fin_docs_paired || 0,
-      deduped_count: result.deduped || 0,
+      imported_count: (prev.imported_count || 0) + (result.imported || result.count || 0),
+      approved_count: (prev.approved_count || 0) + (result.approved || 0),
+      pending_count: (prev.pending_count || 0) + (result.pending || 0),
+      rejected_count: (prev.rejected_count || 0) + (result.rejected || 0),
+      skipped_count: (prev.skipped_count || 0) + (result.skipped || 0),
+      auto_archived_count: (prev.auto_archived_count || 0) + (result.auto_archived || 0),
+      fin_docs_paired_count: (prev.fin_docs_paired_count || 0) + (result.fin_docs_paired || 0),
+      deduped_count: (prev.deduped_count || 0) + (result.deduped || 0),
       pages_crawled: result.pages_crawled || 0,
       pages_skipped: result.pages_skipped || 0,
     }).eq('id', job.id);
 
-    console.log('[scan-worker] Job', job.id, 'completed — imported:', result.imported || result.count || 0, 'approved:', result.approved || 0);
+    console.log('[scan-worker] Job', job.id, 'completed — imported:', (prev.imported_count || 0) + (result.imported || result.count || 0), 'approved:', (prev.approved_count || 0) + (result.approved || 0));
     return { jobId: job.id, outcome: 'completed' };
 
   } catch (err) {
