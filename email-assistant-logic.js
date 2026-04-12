@@ -321,12 +321,12 @@ window.EA_LOGIC = (function () {
     container.innerHTML = filtered.map(email => _renderEmailCard(email)).join('');
 
     container.querySelectorAll('.ea-card').forEach(card => {
-      const messageUrl = card.dataset.messageUrl;
       const messageId  = card.dataset.id;
 
       card.addEventListener('click', (e) => {
         if (e.target.closest('.ea-handled-btn')) return;
-        if (messageUrl) window.open(messageUrl, '_blank');
+        var email = _emails.find(function(em) { return em.message_id === messageId; });
+        if (email) _showEmailDetail(email);
       });
 
       const handledBtn = card.querySelector('.ea-handled-btn');
@@ -361,10 +361,106 @@ window.EA_LOGIC = (function () {
       "<div class=\"ea-summary\">" + _esc(email.summary) + "</div>" +
       "<div class=\"ea-card-footer\">" +
         "<button class=\"ea-handled-btn\" title=\"Mark as handled\">&#x2713; Handled</button>" +
-        (hasLink ? "<span class=\"ea-open-hint\">Tap to open</span>" : "") +
+        "<span class=\"ea-open-hint\">Tap to view</span>" +
       "</div>" +
     "</div>";
   }
+  // -------------------------------------------------------------------------
+  // Email detail view — fetch body from cl-assets and display in-platform
+  // -------------------------------------------------------------------------
+  async function _showEmailDetail(email) {
+    var container = document.getElementById('ea-email-feed');
+    if (!container) return;
+
+    var catLabel = _getCategoryLabel(email.category);
+    var relTime = _relativeTime(email.received_at);
+    var providerLabel = email.provider === 'gmail' ? 'Gmail' : 'Outlook';
+
+    // Build the detail view immediately with summary while body loads
+    var openBtnHtml = email.message_url
+      ? '<a href="' + _esc(email.message_url) + '" target="_blank" class="ea-detail-open-btn">Open in ' + providerLabel + ' &rarr;</a>'
+      : '';
+
+    container.innerHTML =
+      '<div class="ea-detail">' +
+        '<div class="ea-detail-topbar">' +
+          '<button class="ea-detail-back-btn">&larr; Back</button>' +
+          openBtnHtml +
+        '</div>' +
+        '<div class="ea-detail-header">' +
+          '<div class="ea-sender">' +
+            '<span class="ea-sender-name">' + _esc(email.sender) + '</span>' +
+            '<span class="ea-sender-email">' + _esc(email.sender_email) + '</span>' +
+          '</div>' +
+          '<div class="ea-card-meta">' +
+            '<span class="ea-badge ea-badge-' + _esc(email.category) + '">' + _esc(catLabel) + '</span>' +
+            '<span class="ea-time">' + relTime + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ea-detail-subject">' + _esc(email.subject) + '</div>' +
+        '<div class="ea-detail-summary"><strong>Summary:</strong> ' + _esc(email.summary) + '</div>' +
+        '<div class="ea-detail-body" id="ea-detail-body">Loading email body...</div>' +
+        '<div class="ea-detail-footer">' +
+          '<button class="ea-handled-btn ea-detail-handled-btn" data-id="' + _esc(email.message_id) + '">&#x2713; Mark as Handled</button>' +
+          openBtnHtml +
+        '</div>' +
+      '</div>';
+
+    // Wire back button
+    container.querySelector('.ea-detail-back-btn').addEventListener('click', function() {
+      _renderEmailFeed();
+    });
+
+    // Wire handled button in detail view
+    var handledBtn = container.querySelector('.ea-detail-handled-btn');
+    if (handledBtn) {
+      handledBtn.addEventListener('click', function() {
+        _markHandledFromDetail(email.message_id);
+      });
+    }
+
+    // Fetch full body from cl-assets
+    var bodyEl = document.getElementById('ea-detail-body');
+    if (email.body_url) {
+      try {
+        var signedResult = await window.supabaseClient.storage
+          .from('cl-assets')
+          .createSignedUrl(email.body_url, 3600);
+        if (signedResult.data && signedResult.data.signedUrl) {
+          var bodyRes = await fetch(signedResult.data.signedUrl);
+          if (bodyRes.ok) {
+            var bodyText = await bodyRes.text();
+            bodyEl.textContent = bodyText;
+          } else {
+            bodyEl.textContent = 'Could not load email body.';
+          }
+        } else {
+          bodyEl.textContent = 'Could not load email body.';
+        }
+      } catch (fetchErr) {
+        console.error('[EA] Body fetch error:', fetchErr.message);
+        bodyEl.textContent = 'Could not load email body.';
+      }
+    } else {
+      bodyEl.textContent = 'Email body not available. This email was scanned before body storage was enabled.';
+    }
+  }
+
+  async function _markHandledFromDetail(messageId) {
+    var result = await window.supabaseClient
+      .from('email_summaries')
+      .update({ handled: true })
+      .eq('user_id', _session.user.id)
+      .eq('message_id', messageId);
+
+    if (!result.error) {
+      _emails = _emails.map(function(e) {
+        return e.message_id === messageId ? Object.assign({}, e, { handled: true }) : e;
+      });
+      _renderEmailFeed();
+    }
+  }
+
   // -------------------------------------------------------------------------
   // Mark as handled
   // -------------------------------------------------------------------------
