@@ -94,24 +94,42 @@ and should be encouraged to do so.
 
 ---
 
-## Stylesheet Rollout Process
+## Tool Rollout Process
 
-The agreed process for the stylesheet rollout across all
-authenticated pages:
+The agreed process for the stylesheet rollout, backend audit,
+and functional review for each tool page and its settings
+page. Follow in order. No step begins until the previous step
+is complete.
 
-1. Structural analysis of the page — report only, no changes
-2. Review findings together and plan the cleanup
-3. Structural cleanup — one commit per change, browser check
-   after each
-4. CSS analysis of the cleaned page against staxai-auth.css —
-   report only
-5. Review findings together and agree what goes into the
-   stylesheet
-6. Update staxai-auth.css — one commit
-7. Roll CSS variables out to the page — one commit
-8. Browser check — confirm nothing changed visually
-9. Mobile audit and fixes
-10. Browser check
+1. Structural analysis — read the tool's HTML and CSS files
+   in full. Report current state against the platform
+   standard. No changes.
+2. Backend audit — read all backend files associated with the
+   tool. Report any divergences from platform patterns and CL
+   reference implementations where applicable. No changes.
+3. Review findings together and plan all cleanup and fixes.
+4. Fix backend issues — one commit per fix.
+5. Structural cleanup — dead code removal, topbar structure,
+   inline styles moved to CSS block. One commit per change.
+6. Settings page rebuild — rebuild to LAYOUT-STANDARD.md
+   standard. Confirm connections, saves, and scan controls
+   working before proceeding.
+7. CSS analysis — compare cleaned page against staxai-auth.css
+   and content-library.html. Report which components match the
+   platform standard and which do not. No changes.
+8. Review CSS findings together and agree what goes into the
+   stylesheet and what stays page-specific.
+9. Update staxai-auth.css if new variables or shared components
+   are needed. One commit.
+10. Roll CSS variables out to the page. One commit.
+11. Functional review — use the tool end-to-end with real data
+    on a working page. Review layout, UX, and functionality.
+    Agree any structural or functional improvements.
+12. Build agreed improvements — one commit per change.
+13. Browser check — confirm nothing broken visually.
+14. Mobile audit and fixes.
+15. Browser check — confirm mobile fixes.
+16. Sign off.
 
 ---
 
