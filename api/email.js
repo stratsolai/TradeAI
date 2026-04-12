@@ -176,7 +176,7 @@ export default async function handler(req, res) {
   }
 
   var supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-  var { userId, accountEmail, provider } = req.body;
+  var { userId, accountEmail, provider, jobId } = req.body;
   if (!userId) return res.status(400).json({ error: 'userId required' });
   if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
   if (!provider) return res.status(400).json({ error: 'provider required' });
@@ -338,13 +338,32 @@ export default async function handler(req, res) {
 
     console.log('[EA] Total emails fetched:', allEmails.length);
 
-    if (!allEmails.length) {
-      return res.status(200).json({ imported: 0, skipped: 0, total: 0 });
+    // ── Cursor — resume from previous batch if cursor exists ──────────
+    var BATCH_SIZE = 50;
+    var cursorData = null;
+    var processedIds = [];
+    if (jobId) {
+      var cursorRes = await supabase.from('cl_scan_cursors').select('*').eq('job_id', jobId).maybeSingle();
+      if (cursorRes.data) {
+        cursorData = cursorRes.data;
+        processedIds = Array.isArray(cursorData.processed_ids) ? cursorData.processed_ids : [];
+      }
+    }
+
+    // Filter out already-processed emails and take the next batch
+    var remaining = allEmails.filter(function(e) { return processedIds.indexOf(e.id) === -1; });
+    var batch = remaining.slice(0, BATCH_SIZE);
+    var moreAfterBatch = remaining.length > BATCH_SIZE;
+    console.log('[EA] Cursor — total:', allEmails.length, 'alreadyProcessed:', processedIds.length, 'remaining:', remaining.length, 'batch:', batch.length, 'morePending:', moreAfterBatch);
+
+    if (!batch.length) {
+      if (jobId) await supabase.from('cl_scan_cursors').delete().eq('job_id', jobId);
+      return res.status(200).json({ imported: 0, skipped: 0, total: 0, morePending: false });
     }
 
     // Categorise
-    var categorised = await categoriseEmails(allEmails, categories, businessName, industry);
-    console.log('[EA] Categorised:', categorised.length, 'of', allEmails.length);
+    var categorised = await categoriseEmails(batch, categories, businessName, industry);
+    console.log('[EA] Categorised:', categorised.length, 'of', batch.length);
 
     // Build category ID lookup for normalisation
     var catLookup = {};
@@ -353,8 +372,8 @@ export default async function handler(req, res) {
     // Store results
     var imported = 0;
     var skipped = 0;
-    for (var ri = 0; ri < allEmails.length; ri++) {
-      var email = allEmails[ri];
+    for (var ri = 0; ri < batch.length; ri++) {
+      var email = batch[ri];
       var analysis = categorised.find(function(c) { return c.index === ri; }) || {};
       var rawCat = analysis.category || '';
       var normCat = catLookup[rawCat.toLowerCase()] || rawCat || categories[0].id;
@@ -384,13 +403,46 @@ export default async function handler(req, res) {
       }
     }
 
+    // ── Cursor — save or clean up ──────────────────────────────────────
+    var batchProcessedIds = processedIds.concat(batch.map(function(e) { return e.id; }));
+
+    if (moreAfterBatch && jobId) {
+      var cursorRow = {
+        job_id: jobId,
+        user_id: userId,
+        processed_ids: batchProcessedIds,
+        imported: imported,
+        approved: 0,
+        pending: 0,
+        rejected: 0,
+        skipped: skipped,
+        auto_archived: 0,
+        fin_docs_paired: 0,
+        deduped: 0,
+        updated_at: new Date().toISOString()
+      };
+      if (cursorData) {
+        await supabase.from('cl_scan_cursors').update(cursorRow).eq('id', cursorData.id);
+      } else {
+        cursorRow.created_at = new Date().toISOString();
+        await supabase.from('cl_scan_cursors').insert(cursorRow);
+      }
+      console.log('[EA] Batch complete — morePending. Processed so far:', batchProcessedIds.length, 'of', allEmails.length);
+      return res.status(200).json({ imported: imported, skipped: skipped, total: batch.length, morePending: true });
+    }
+
+    // All emails processed — clean up cursor and write last_scanned_at
+    if (jobId) {
+      await supabase.from('cl_scan_cursors').delete().eq('job_id', jobId);
+    }
+
     // Update last_scanned_at
     entry.last_scanned_at = new Date().toISOString();
     await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', userId);
     console.log('[EA] last_scanned_at updated for', accountEmail);
 
     console.log('[EA] Scan complete — imported:', imported, 'skipped:', skipped, 'total:', allEmails.length);
-    return res.status(200).json({ imported: imported, skipped: skipped, total: allEmails.length });
+    return res.status(200).json({ imported: imported, skipped: skipped, total: allEmails.length, morePending: false });
 
   } catch (err) {
     console.error('[EA] Scan error:', err.message || err);
