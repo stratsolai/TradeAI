@@ -221,18 +221,18 @@ module.exports = async (req, res) => {
   if (gmailEntry) {
     try {
       let accessToken = gmailEntry.access_token;
-      try {
-        const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
-        allEmails = allEmails.concat(gmailEmails);
-      } catch (fetchErr) {
-        if (gmailEntry.refresh_token) {
+      if (gmailEntry.refresh_token) {
+        try {
           accessToken = await refreshGmailToken(gmailEntry.refresh_token);
           gmailEntry.access_token = accessToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
-          const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
-          allEmails = allEmails.concat(gmailEmails);
+        } catch (refreshErr) {
+          console.error('Gmail token refresh failed:', refreshErr.message);
+          return res.status(401).json({ error: 'Gmail token expired. Please reconnect Gmail in Settings.' });
         }
       }
+      const gmailEmails = await fetchGmailMessages(accessToken, maxResults);
+      allEmails = allEmails.concat(gmailEmails);
     } catch (err) {
       console.error('Gmail fetch error:', err.message);
     }
@@ -241,18 +241,18 @@ module.exports = async (req, res) => {
   if (outlookEntry) {
     try {
       let accessToken = outlookEntry.access_token;
-      try {
-        const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
-        allEmails = allEmails.concat(outlookEmails);
-      } catch (fetchErr) {
-        if (outlookEntry.refresh_token) {
+      if (outlookEntry.refresh_token) {
+        try {
           accessToken = await refreshOutlookToken(outlookEntry.refresh_token);
           outlookEntry.access_token = accessToken;
           await supabase.from('profiles').update({ ea_connected_emails: eaEmails }).eq('id', user.id);
-          const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
-          allEmails = allEmails.concat(outlookEmails);
+        } catch (refreshErr) {
+          console.error('Outlook token refresh failed:', refreshErr.message);
+          return res.status(401).json({ error: 'Outlook token expired. Please reconnect Outlook in Settings.' });
         }
       }
+      const outlookEmails = await fetchOutlookMessages(accessToken, maxResults);
+      allEmails = allEmails.concat(outlookEmails);
     } catch (err) {
       console.error('Outlook fetch error:', err.message);
     }
