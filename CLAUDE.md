@@ -189,9 +189,7 @@ source-of-truth pages for the stylesheet.
 
 ### Task 20 — Email Assistant Functional Review and Build
 
-In progress April 2026. EA scan functionality is blocked
-pending Task 22. Account switcher build is also blocked
-pending Task 22. Current session work completed:
+In progress April 2026. Current session work completed:
 email-assistant-settings.html fully rebuilt to
 LAYOUT-STANDARD.md standard, OAuth connection fixed and
 confirmed working for Gmail and Outlook.
@@ -200,10 +198,9 @@ Outstanding before sign-off:
 - Rebuild email-assistant.html with per-account tab
   switcher — one tab per connected account
   (Gmail/Outlook), each tab showing its own category
-  filter pills and email list. Blocked pending Task 22.
+  filter pills and email list.
 - Build Flag/Handled/Days-back features per
   StaxAI-Email-Assistant-Flag-Handled-Spec-v1_0.
-  Blocked pending Task 22.
 - Confirm integration test end-to-end with real Gmail
   and Outlook accounts
 - Stylesheet rollout for email-assistant.html — CSS
@@ -219,17 +216,6 @@ trigger reads that preference and queues scans at the
 correct intervals. Affects both CL and EA. Wire saved
 frequency preferences to the background scan worker
 queue for both CL and EA.
-
-### Task 24 — Fix Silent Claude Error Handling in CL Scan Endpoints
-
-Not started. Both api/cl-email-scan.js and
-api/cl-outlook-scan.js silently swallow Claude API error
-responses — when Claude returns an error object instead
-of a content response, the code falls through to an empty
-array with no logging and no error returned to the caller.
-Fix both files to detect Claude API error responses, log
-the full raw response, and return a clear error rather
-than silently returning empty results.
 
 ---
 
@@ -462,14 +448,15 @@ is complete and confirmed working.
 | 11   | Task 20 — Email Assistant functional review, account switcher, Flag/Handled/Days-back build. Blocked pending Task 22. |
 | 12   | ~~Task 22 — EA scan infrastructure rebuild.~~ **COMPLETE**  |
 | 13   | ~~Task 23 — Internal API security shared secret model.~~ **COMPLETE** |
-| 14   | Task 24 — Fix silent Claude error handling in CL scan endpoints. |
-| 15   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 16   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 17   | Stylesheet rollout — all remaining authenticated pages     |
-| 18   | Functional reviews — all 5 built tools                     |
-| 19   | Improvements per tool based on functional review findings  |
-| 20   | Integration tests — all 5 built tools                      |
-| 21   | Dashboard rebuild                                          |
+| 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
+| 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
+| 16   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 17   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 18   | Stylesheet rollout — all remaining authenticated pages     |
+| 19   | Functional reviews — all 5 built tools                     |
+| 20   | Improvements per tool based on functional review findings  |
+| 21   | Integration tests — all 5 built tools                      |
+| 22   | Dashboard rebuild                                          |
 
 ---
 
@@ -846,4 +833,5 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | archive with unmark, days-back      |
 |                                 | scan coverage control. Approved     |
 |                                 | April 2026, awaiting build.         |
-|                                 | Blocked pending Task 22.            |
+| StaxAI-Email-Scan-Cursor-      | Email scan cursor batch processing  |
+| Spec-v1_0                      | spec. Build complete April 2026.    |
