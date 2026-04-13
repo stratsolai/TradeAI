@@ -82,18 +82,19 @@ window.EA_SETTINGS = {
       // Build cleaned list: defaults first (preserving saved enabled state), then any valid custom categories
       var savedById = {};
       self._settings.categories.forEach(function(c) { if (c && c.id) savedById[c.id] = c; });
+      // Rebuild defaults with saved enabled state preserved
       var cleaned = DEFAULT_CATS.map(function(def) {
         var saved = savedById[def.id];
         return { id: def.id, label: def.label, description: def.description, enabled: saved ? saved.enabled : def.enabled };
       });
-      // Discard any saved categories not in the default list
-      var removed = self._settings.categories.filter(function(c) { return c && c.id && defaultIds.indexOf(c.id) === -1; });
-      if (removed.length > 0) {
-        console.log('[EA Settings] Removed obsolete categories:', removed.map(function(c) { return c.id; }).join(', '));
-      }
+      // Append user-defined custom categories (IDs not in default list)
+      var custom = self._settings.categories.filter(function(c) {
+        return c && c.id && defaultIds.indexOf(c.id) === -1 && c.description;
+      });
+      cleaned = cleaned.concat(custom);
       self._categories = cleaned;
-      // Save cleaned list back to Supabase if any were removed
-      if (removed.length > 0) {
+      // Save if the list changed (e.g. old defaults without descriptions were cleaned up)
+      if (cleaned.length !== self._settings.categories.length) {
         self._settings.categories = cleaned;
         self._saveSettings();
       }
