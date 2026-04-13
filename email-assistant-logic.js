@@ -888,9 +888,17 @@ window.EA_LOGIC = {
 
   // ── Helpers ──────────────────────────────────────────��────
   _getCategoryLabel: function(id) {
-    if (!this._settings || !this._settings.categories) return id || 'Unknown';
-    var cat = this._settings.categories.find(function(c) { return c.id === id; });
-    return cat ? cat.label : (id || 'Unknown');
+    if (!id) return 'Unknown';
+    // Check user settings first
+    if (this._settings && this._settings.categories) {
+      var cat = this._settings.categories.find(function(c) { return c.id === id; });
+      if (cat) return cat.label;
+    }
+    // Fall back to defaults
+    var def = this.DEFAULT_CATEGORIES.find(function(c) { return c.id === id; });
+    if (def) return def.label;
+    // Unknown ID — title-case it
+    return id.charAt(0).toUpperCase() + id.slice(1);
   },
 
   _providerLabel: function(provider) {
