@@ -189,9 +189,8 @@ window.EA_LOGIC = {
         container.querySelectorAll('.ea-status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         self._selected = new Set();
-        // Close category filter expand if open
-        var catBtn = document.getElementById('ea-cat-btn');
-        if (catBtn) { catBtn.classList.remove('active'); catBtn.style.background = ''; }
+        self._renderFilterRow();
+        self._bindControls();
         self._renderExpandRow();
         self._updateFilterBtnIndicators();
         self._load();
@@ -203,8 +202,9 @@ window.EA_LOGIC = {
   _renderFilterRow: function() {
     var container = document.getElementById('ea-filter-btns-row');
     if (!container) return;
+    var showCatFilter = !this._showHandled && !this._showFlagged && this._activeCategory === 'all';
     container.innerHTML =
-      '<button class="ea-filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' +
+      (showCatFilter ? '<button class="ea-filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' : '') +
       '<button class="ea-filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
       '<button class="ea-filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
@@ -632,8 +632,6 @@ window.EA_LOGIC = {
         '<input type="checkbox" class="ea-checkbox" data-id="' + id + '"' + checked + '>' +
         '<button class="ea-flag-btn" data-id="' + id + '" data-flagged="' + (email.is_flagged ? '1' : '0') + '" title="' + flagTitle + '">' + flagIcon + '</button>' +
         '<span class="ea-sender-name">' + sender + '</span>' +
-        '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
-        '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
         '<div class="ea-card-preview-row">' +
           '<span class="ea-subject-inline">' + subject + '</span>' +
         '</div>' +
