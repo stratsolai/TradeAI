@@ -621,6 +621,12 @@ window.EA_LOGIC = {
       actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss</button>';
     }
 
+    var sourceDetailHtml =
+      '<div><span class="ea-source-detail-label">Connection:</span> ' + window.escHtml(providerLabel) + '</div>' +
+      '<div><span class="ea-source-detail-label">Account:</span> ' + window.escHtml(this._activeAccount || '') + '</div>' +
+      '<div><span class="ea-source-detail-label">From:</span> ' + sender + (email.sender_email ? ' &lt;' + window.escHtml(email.sender_email) + '&gt;' : '') + '</div>' +
+      '<div><span class="ea-source-detail-label">Subject:</span> ' + subject + '</div>';
+
     return '<div class="ea-card" data-id="' + id + '">' +
       '<div class="ea-card-header">' +
         '<input type="checkbox" class="ea-checkbox" data-id="' + id + '"' + checked + '>' +
@@ -629,10 +635,17 @@ window.EA_LOGIC = {
         '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
         '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
         '<span class="ea-date">' + dateStr + '</span>' +
-        '<div class="ea-card-btns">' + actionBtn + '</div>' +
+        '<div class="ea-card-btns">' +
+          '<button class="ea-source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>' +
+          actionBtn +
+        '</div>' +
       '</div>' +
       '<div class="ea-subject">' + subject + '</div>' +
       '<div class="ea-summary">' + summary + '</div>' +
+      '<div class="ea-section" id="ea-source-' + id + '" style="display:none">' +
+        '<div class="ea-section-head"><span>Source</span></div>' +
+        '<div class="ea-source-detail">' + sourceDetailHtml + '</div>' +
+      '</div>' +
     '</div>';
   },
 
@@ -661,10 +674,31 @@ window.EA_LOGIC = {
       });
     });
 
+    // Source button toggle — matches CL pattern
+    var listEl = document.getElementById('ea-email-list');
+    if (listEl) listEl.querySelectorAll('.ea-source-btn').forEach(function(btn) {
+      var sectionBg = 'var(--orange-light)';
+      btn.addEventListener('click', function() {
+        var el = document.getElementById('ea-' + btn.dataset.section + '-' + btn.dataset.id);
+        if (el) {
+          var isOpen = el.style.display !== 'none';
+          el.style.display = isOpen ? 'none' : '';
+          btn.style.background = isOpen ? '' : sectionBg;
+        }
+      });
+      btn.addEventListener('mouseenter', function() { btn.style.background = sectionBg; });
+      btn.addEventListener('mouseleave', function() {
+        var el = document.getElementById('ea-' + btn.dataset.section + '-' + btn.dataset.id);
+        if (el && el.style.display !== 'none') return;
+        btn.style.background = '';
+      });
+    });
+
     document.querySelectorAll('.ea-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
         if (e.target.closest('.ea-checkbox') || e.target.closest('.ea-flag-btn') ||
-            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn')) return;
+            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') ||
+            e.target.closest('.ea-source-btn')) return;
         var email = self._emails.find(function(em) { return (em.id || em.message_id) === card.dataset.id; });
         if (email) self._showDetail(email);
       });
