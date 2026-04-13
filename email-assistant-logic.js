@@ -12,6 +12,8 @@ window.EA_LOGIC = {
   _connectedAccounts: [],
   _activeAccount: null,
   _activeCategory: 'all',
+  _categoryFilter: '',
+  _showFlagged: false,
   _searchTerm: '',
   _emails: [],
   _selected: new Set(),
@@ -150,33 +152,48 @@ window.EA_LOGIC = {
     this._bindControls();
   },
 
-  // ── Category pills ────────────────────────────────────────
+  // ── Category pills (permanent: All, Urgent, Flagged, Dismissed) ──
   _renderCategoryPills: function() {
     var container = document.getElementById('ea-category-tabs');
     if (!container) return;
     var self = this;
-    var cats = [{ id: 'all', label: 'All' }]
-      .concat(this._settings.categories.filter(function(c) { return c.enabled; }))
-      .concat([{ id: 'handled', label: 'Dismissed' }]);
+    var pills = [
+      { id: 'all', label: 'All' },
+      { id: 'urgent', label: 'Urgent' },
+      { id: 'flagged', label: 'Flagged' },
+      { id: 'handled', label: 'Dismissed' }
+    ];
 
-    container.innerHTML = cats.map(function(cat) {
-      var isActive = (!self._showHandled && cat.id === self._activeCategory) || (self._showHandled && cat.id === 'handled');
-      return '<button class="ea-status-btn' + (isActive ? ' active' : '') + '" data-category="' + window.escHtml(cat.id) + '">' + window.escHtml(cat.label) + '</button>';
+    container.innerHTML = pills.map(function(p) {
+      var isActive = false;
+      if (p.id === 'handled') isActive = self._showHandled;
+      else if (p.id === 'flagged') isActive = self._showFlagged && !self._showHandled;
+      else isActive = !self._showHandled && !self._showFlagged && self._activeCategory === p.id;
+      return '<button class="ea-status-btn' + (isActive ? ' active' : '') + '" data-pill="' + p.id + '">' + window.escHtml(p.label) + '</button>';
     }).join('') +
     '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
     container.querySelectorAll('.ea-status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        if (btn.dataset.category === 'handled') {
+        self._showHandled = false;
+        self._showFlagged = false;
+        self._activeCategory = 'all';
+        self._categoryFilter = '';
+        if (btn.dataset.pill === 'handled') {
           self._showHandled = true;
-          self._activeCategory = 'all';
-        } else {
-          self._showHandled = false;
-          self._activeCategory = btn.dataset.category;
+        } else if (btn.dataset.pill === 'flagged') {
+          self._showFlagged = true;
+        } else if (btn.dataset.pill === 'urgent') {
+          self._activeCategory = 'urgent';
         }
         container.querySelectorAll('.ea-status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         self._selected = new Set();
+        // Close category filter expand if open
+        var catBtn = document.getElementById('ea-cat-btn');
+        if (catBtn) { catBtn.classList.remove('active'); catBtn.style.background = ''; }
+        self._renderExpandRow();
+        self._updateFilterBtnIndicators();
         self._load();
       });
     });
@@ -187,6 +204,7 @@ window.EA_LOGIC = {
     var container = document.getElementById('ea-filter-btns-row');
     if (!container) return;
     container.innerHTML =
+      '<button class="ea-filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' +
       '<button class="ea-filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
       '<button class="ea-filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
@@ -198,17 +216,46 @@ window.EA_LOGIC = {
   _renderExpandRow: function() {
     var container = document.getElementById('ea-filter-expand-row');
     if (!container) return;
+    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
+    var catOpen = catBtn && catBtn.classList.contains('active');
     var daysOpen = daysBtn && daysBtn.classList.contains('active');
     var rangeOpen = rangeBtn && rangeBtn.classList.contains('active');
 
-    if (!daysOpen && !rangeOpen) {
+    if (!catOpen && !daysOpen && !rangeOpen) {
       container.style.display = 'none';
       container.innerHTML = '';
       return;
     }
     container.style.display = 'block';
+
+    if (catOpen) {
+      var self = this;
+      var enabledCats = (this._settings.categories || this.DEFAULT_CATEGORIES)
+        .filter(function(c) { return c.enabled && c.id !== 'urgent'; });
+      container.innerHTML =
+        '<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Categories</div>' +
+        '<div class="ea-pill-row">' +
+        enabledCats.map(function(c) {
+          return '<button class="filter-pill' + (self._categoryFilter === c.id ? ' active' : '') + '" data-catfilter="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
+        }).join('') +
+        '</div>';
+      container.querySelectorAll('.filter-pill[data-catfilter]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          if (self._categoryFilter === pill.dataset.catfilter) {
+            self._categoryFilter = '';
+          } else {
+            self._categoryFilter = pill.dataset.catfilter;
+          }
+          self._selected = new Set();
+          self._renderExpandRow();
+          self._updateFilterBtnIndicators();
+          self._renderList();
+        });
+      });
+      return;
+    }
 
     if (daysOpen) {
       var self = this;
@@ -276,8 +323,12 @@ window.EA_LOGIC = {
   },
 
   _updateFilterBtnIndicators: function() {
+    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
+    if (catBtn && !catBtn.classList.contains('active')) {
+      catBtn.style.background = this._categoryFilter ? 'var(--blue-light)' : '';
+    }
     if (daysBtn && !daysBtn.classList.contains('active')) {
       daysBtn.style.background = this._dateQuick ? 'var(--blue-light)' : '';
     }
@@ -314,20 +365,33 @@ window.EA_LOGIC = {
     });
 
     // Filter button toggles — matches CL pattern
+    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
 
-    function updateExpandRow() {
-      self._renderExpandRow();
+    function closeOthers(except) {
+      [catBtn, daysBtn, rangeBtn].forEach(function(b) {
+        if (b && b !== except) { b.classList.remove('active'); }
+      });
     }
 
+    if (catBtn) {
+      catBtn.addEventListener('click', function() {
+        var isOpen = catBtn.classList.contains('active');
+        catBtn.classList.toggle('active', !isOpen);
+        catBtn.style.background = !isOpen ? 'var(--blue-light)' : '';
+        closeOthers(catBtn);
+        self._renderExpandRow();
+        self._updateFilterBtnIndicators();
+      });
+    }
     if (daysBtn) {
       daysBtn.addEventListener('click', function() {
         var isOpen = daysBtn.classList.contains('active');
         daysBtn.classList.toggle('active', !isOpen);
         daysBtn.style.background = !isOpen ? 'var(--blue-light)' : '';
-        if (rangeBtn) { rangeBtn.classList.remove('active'); rangeBtn.style.background = self._dateFrom && !self._dateQuick ? 'var(--blue-light)' : ''; }
-        updateExpandRow();
+        closeOthers(daysBtn);
+        self._renderExpandRow();
         self._updateFilterBtnIndicators();
       });
     }
@@ -336,8 +400,8 @@ window.EA_LOGIC = {
         var isOpen = rangeBtn.classList.contains('active');
         rangeBtn.classList.toggle('active', !isOpen);
         rangeBtn.style.background = !isOpen ? 'var(--blue-light)' : '';
-        if (daysBtn) { daysBtn.classList.remove('active'); daysBtn.style.background = self._dateQuick ? 'var(--blue-light)' : ''; }
-        updateExpandRow();
+        closeOthers(rangeBtn);
+        self._renderExpandRow();
         self._updateFilterBtnIndicators();
       });
     }
@@ -400,6 +464,8 @@ window.EA_LOGIC = {
     if (!this._activeAccount) return;
     this._filterState[this._activeAccount] = {
       category: this._activeCategory,
+      categoryFilter: this._categoryFilter,
+      showFlagged: this._showFlagged,
       search: this._searchTerm,
       dateQuick: this._dateQuick,
       dateFrom: this._dateFrom,
@@ -412,13 +478,17 @@ window.EA_LOGIC = {
     var s = this._filterState[this._activeAccount];
     if (s) {
       this._activeCategory = s.category || 'all';
+      this._categoryFilter = s.categoryFilter || '';
+      this._showFlagged = s.showFlagged || false;
       this._searchTerm = s.search || '';
-      this._dateQuick = s.dateQuick || '30';
+      this._dateQuick = s.dateQuick || '';
       this._dateFrom = s.dateFrom || null;
       this._dateTo = s.dateTo || null;
       this._showHandled = s.showHandled || false;
     } else {
       this._activeCategory = 'all';
+      this._categoryFilter = '';
+      this._showFlagged = false;
       this._searchTerm = '';
       this._initDateDefaults();
       this._showHandled = false;
@@ -430,12 +500,16 @@ window.EA_LOGIC = {
 
   _clearFilters: function() {
     this._activeCategory = 'all';
+    this._categoryFilter = '';
+    this._showFlagged = false;
     this._searchTerm = '';
     this._showHandled = false;
     this._initDateDefaults();
     this._selected = new Set();
+    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
+    if (catBtn) { catBtn.classList.remove('active'); catBtn.style.background = ''; }
     if (daysBtn) { daysBtn.classList.remove('active'); daysBtn.style.background = ''; }
     if (rangeBtn) { rangeBtn.classList.remove('active'); rangeBtn.style.background = ''; }
     var expandRow = document.getElementById('ea-filter-expand-row');
@@ -493,12 +567,19 @@ window.EA_LOGIC = {
   _filteredItems: function() {
     var self = this;
     return this._emails.filter(function(item) {
+      // Handled/dismissed filter
       if (self._showHandled) {
         if (!item.handled) return false;
       } else {
         if (item.handled) return false;
       }
+      // Flagged filter
+      if (self._showFlagged && !item.is_flagged) return false;
+      // Permanent pill category filter (urgent)
       if (self._activeCategory !== 'all' && item.category !== self._activeCategory) return false;
+      // Dropdown category filter
+      if (self._categoryFilter && item.category !== self._categoryFilter) return false;
+      // Search
       if (self._searchTerm) {
         var haystack = ((item.sender || '') + ' ' + (item.sender_email || '') + ' ' + (item.subject || '') + ' ' + (item.summary || '')).toLowerCase();
         if (haystack.indexOf(self._searchTerm) === -1) return false;
