@@ -187,20 +187,12 @@
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Scan Frequency</div>
-          <div class="settings-card-hint">How often your inbox is scanned for new emails. You can always trigger a manual scan from the Email Assistant page.</div>
+          <div class="settings-card-hint">How often each inbox is scanned for new emails. You can always trigger a manual scan from the Email Assistant page.</div>
         </div>
-        <div class="settings-rows">
-          <div class="settings-row">
-            <div>
-              <div class="settings-row-label">Personal Inbox</div>
-              <div class="settings-row-desc">Scans your connected Gmail or Outlook inbox for new emails.</div>
-            </div>
-            <div class="settings-row-control" id="scan-freq-ctrl">
-              <button class="freq-btn" data-field="scan_cadence" data-value="daily">Daily</button>
-              <button class="freq-btn" data-field="scan_cadence" data-value="weekly">Weekly</button>
-              <button class="freq-btn active" data-field="scan_cadence" data-value="manual">Manual only</button>
-            </div>
-          </div>
+        <div class="settings-rows" id="ea-scan-freq-rows"></div>
+        <div class="settings-footer">
+          <button type="button" class="btn-save" id="save-scan-btn">Save</button>
+          <span class="save-msg" id="save-scan-msg"></span>
         </div>
       </div>
     </div>
