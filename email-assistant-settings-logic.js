@@ -256,27 +256,65 @@ window.EA_SETTINGS = {
 
   // ── SCAN FREQUENCY ──
   _renderScanFrequency: function () {
-    var cadence = this._settings.scan_cadence || 'manual';
-    var ctrl = document.getElementById('scan-freq-ctrl');
-    if (!ctrl) return;
-    ctrl.querySelectorAll('.freq-btn').forEach(function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-value') === cadence);
-    });
+    var self = this;
+    var container = document.getElementById('ea-scan-freq-rows');
+    if (!container) return;
+
+    if (self._eaEmails.length === 0) {
+      container.innerHTML = '<div class="settings-row"><div><div class="settings-row-label" style="color:var(--text-muted);">No accounts connected.</div></div></div>';
+      return;
+    }
+
+    container.innerHTML = self._eaEmails.map(function (acct, idx) {
+      var cadence = acct.scan_cadence || 'manual';
+      var provLabel = (acct.provider === 'gmail' || acct.provider === 'google') ? 'Gmail' : 'Outlook';
+      return '<div class="settings-row">' +
+        '<div>' +
+          '<div class="settings-row-label">' + provLabel + '</div>' +
+          '<div class="settings-row-desc">' + (acct.email || '') + '</div>' +
+        '</div>' +
+        '<div class="settings-row-control" id="scan-freq-ctrl-' + idx + '">' +
+          '<button class="freq-btn' + (cadence === 'daily' ? ' active' : '') + '" data-acct="' + idx + '" data-value="daily">Daily</button>' +
+          '<button class="freq-btn' + (cadence === 'weekly' ? ' active' : '') + '" data-acct="' + idx + '" data-value="weekly">Weekly</button>' +
+          '<button class="freq-btn' + (cadence === 'manual' ? ' active' : '') + '" data-acct="' + idx + '" data-value="manual">Manual only</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
   },
 
   _bindScanSave: function () {
     var self = this;
-    var ctrl = document.getElementById('scan-freq-ctrl');
-    if (!ctrl) return;
-    ctrl.querySelectorAll('.freq-btn').forEach(function (btn) {
-      btn.addEventListener('click', async function () {
+    // Freq button clicks — update in-memory and toggle active state
+    document.addEventListener('click', function (e) {
+      var scanBtn = e.target.closest('.freq-btn[data-acct]');
+      if (!scanBtn) return;
+      var idx = parseInt(scanBtn.getAttribute('data-acct'), 10);
+      if (isNaN(idx) || !self._eaEmails[idx]) return;
+      self._eaEmails[idx].scan_cadence = scanBtn.getAttribute('data-value');
+      var ctrl = document.getElementById('scan-freq-ctrl-' + idx);
+      if (ctrl) {
         ctrl.querySelectorAll('.freq-btn').forEach(function (b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        var value = btn.getAttribute('data-value');
-        self._settings.scan_cadence = value;
-        await self._saveSettings();
-      });
+        scanBtn.classList.add('active');
+      }
+      var saveBtn = document.getElementById('save-scan-btn');
+      if (saveBtn) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; }
     });
+
+    // Save button
+    var saveBtn = document.getElementById('save-scan-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function () {
+        try {
+          var res = await self._supabase
+            .from('profiles')
+            .update({ ea_connected_emails: self._eaEmails })
+            .eq('id', self._userId);
+          if (res.error) { console.error('Save scan freq error:', res.error); return; }
+          saveBtn.textContent = 'Saved';
+          saveBtn.disabled = true;
+        } catch (e) { console.error('Save scan freq exception:', e); }
+      });
+    }
   },
 
   // ── CATEGORIES ──
