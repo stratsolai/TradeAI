@@ -2,44 +2,28 @@
  * email-assistant-logic.js
  * All logic for the AI Email Assistant tool.
  * Loaded by email-assistant.html shell.
- * Uses window.supabaseClient — never window._supabase.
+ * Follows CL platform patterns per LAYOUT-STANDARD.md.
  */
 
-window.EA_LOGIC = (function () {
+window.EA_LOGIC = {
+  _supabase: null,
+  _user: null,
+  _settings: null,
+  _connectedAccounts: [],
+  _activeAccount: null,
+  _activeCategory: 'all',
+  _searchTerm: '',
+  _emails: [],
+  _selected: new Set(),
+  _pendingJobs: 0,
+  _jobChannels: {},
+  _dateFrom: null,
+  _dateTo: null,
+  _dateQuick: '30',
+  _filterState: {},
+  _showHandled: false,
 
-  // -------------------------------------------------------------------------
-  // State
-  // -------------------------------------------------------------------------
-  let _session       = null;
-  let _settings      = null;
-  let _emails        = [];
-  let _activeCategory = 'all';
-
-  // -------------------------------------------------------------------------
-  // Init
-  // -------------------------------------------------------------------------
-  async function init() {
-    const { data: { session }, error } = await window.supabaseClient.auth.getSession();
-    if (error || !session) {
-      window.location.href = 'index.html';
-      return;
-    }
-    _session = session;
-
-    await _loadSettings();
-    _buildCategoryTabs();
-    _renderConnectionStatus();
-    _wireEvents();
-    if (_settings && _settings.scan_cadence !== 'manual') {
-      await _checkAutoScan();
-    }
-    await _loadStoredEmails();
-  }
-
-  // -------------------------------------------------------------------------
-  // Settings — direct Supabase SDK calls (no API endpoint)
-  // -------------------------------------------------------------------------
-  var DEFAULT_CATEGORIES = [
+  DEFAULT_CATEGORIES: [
     { id: 'urgent',    label: 'Urgent',       enabled: true },
     { id: 'leads',     label: 'Leads',        enabled: true },
     { id: 'enquiries', label: 'Enquiries',    enabled: true },
@@ -47,123 +31,638 @@ window.EA_LOGIC = (function () {
     { id: 'invoices',  label: 'Invoices',     enabled: true },
     { id: 'suppliers', label: 'Suppliers',    enabled: true },
     { id: 'low',       label: 'Low Priority', enabled: true }
-  ];
+  ],
 
-  async function _loadSettings() {
+  init: async function(supabase, user) {
+    this._supabase = supabase;
+    this._user = user;
+    await this._loadSettings();
+    await this._loadAccounts();
+    this._initDateDefaults();
+    this._buildAccountTabs();
+    this._bindStatTiles();
+    this._load();
+  },
+
+  // ── Settings ──────────────────────────────────────────────
+  _loadSettings: async function() {
     try {
-      var res = await window.supabaseClient
+      var res = await this._supabase
         .from('email_assistant_settings')
         .select('*')
-        .eq('user_id', _session.user.id)
+        .eq('user_id', this._user.id)
         .maybeSingle();
       if (res.data) {
-        _settings = {
+        this._settings = {
           id: res.data.id,
-          categories: (res.data.categories && res.data.categories.length > 0) ? res.data.categories : DEFAULT_CATEGORIES,
+          categories: (res.data.categories && res.data.categories.length > 0) ? res.data.categories : this.DEFAULT_CATEGORIES,
           scan_cadence: res.data.scan_cadence || 'manual',
           show_handled: res.data.show_handled || false
         };
       }
     } catch (e) {
-      console.error('Settings load error:', e);
+      console.error('[EA] Settings load error:', e);
     }
-    if (!_settings) {
-      _settings = { categories: DEFAULT_CATEGORIES, scan_cadence: 'manual', show_handled: false };
+    if (!this._settings) {
+      this._settings = { categories: this.DEFAULT_CATEGORIES, scan_cadence: 'manual', show_handled: false };
     }
-  }
+  },
 
-  // -------------------------------------------------------------------------
-  // Connection status
-  // -------------------------------------------------------------------------
-  let _connectedAccounts = [];
-
-  async function _renderConnectionStatus() {
-    const { data: profile } = await window.supabaseClient
+  // ── Accounts ───────────────────────────────────────��──────
+  _loadAccounts: async function() {
+    var result = await this._supabase
       .from('profiles')
       .select('ea_connected_emails')
-      .eq('id', _session.user.id)
+      .eq('id', this._user.id)
       .single();
-
-    const eaEmails = (profile && Array.isArray(profile.ea_connected_emails)) ? profile.ea_connected_emails : [];
-    _connectedAccounts = eaEmails;
-
-    const gmailAccounts = eaEmails.filter(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
-    const outlookAccounts = eaEmails.filter(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
-
-    const el = document.getElementById('ea-connection-status');
-    if (!el) return;
-
-    if (gmailAccounts.length === 0 && outlookAccounts.length === 0) {
-      el.innerHTML = "<div class=\"ea-connect-prompt\">Connect your email to get started. Use the Settings panel to connect Gmail or Outlook.</div>";
-    } else {
-      const parts = [];
-      if (gmailAccounts.length > 0)   parts.push('Gmail');
-      if (outlookAccounts.length > 0) parts.push('Outlook');
-      el.innerHTML = "<div class=\"ea-connected-badge\">Connected: " + parts.join(', ') + "</div>";
+    var emails = (result.data && Array.isArray(result.data.ea_connected_emails)) ? result.data.ea_connected_emails : [];
+    this._connectedAccounts = emails;
+    if (emails.length > 0 && !this._activeAccount) {
+      this._activeAccount = emails[0].email;
     }
-  }
-  // -------------------------------------------------------------------------
-  // Stored emails
-  // -------------------------------------------------------------------------
-  async function _loadStoredEmails() {
-    const query = window.supabaseClient
+    // Initialise filter state per account
+    var self = this;
+    emails.forEach(function(e) {
+      if (!self._filterState[e.email]) {
+        self._filterState[e.email] = { category: 'all', search: '', dateQuick: '30', dateFrom: null, dateTo: null };
+      }
+    });
+  },
+
+  // ── Date defaults ─────────────────────────────────────────
+  _initDateDefaults: function() {
+    this._dateQuick = '30';
+    var d = new Date();
+    d.setDate(d.getDate() - 30);
+    this._dateFrom = d.toISOString();
+    this._dateTo = null;
+  },
+
+  // ── Account tabs ──────────────────────────────────────────
+  _buildAccountTabs: function() {
+    var container = document.getElementById('ea-account-tabs');
+    var panelsEl = document.getElementById('ea-account-panels');
+    if (!container || !panelsEl) return;
+
+    var accounts = this._connectedAccounts;
+    if (accounts.length === 0) {
+      container.innerHTML = '';
+      panelsEl.innerHTML = '<div class="ea-empty">Connect your email to get started. Use the <a href="/email/settings">Settings</a> page to connect Gmail or Outlook.</div>';
+      return;
+    }
+
+    var self = this;
+    if (accounts.length === 1) {
+      var provLabel = this._providerLabel(accounts[0].provider);
+      container.innerHTML = '<span class="ptab active" style="cursor:default;">' + window.escHtml(provLabel + ' — ' + accounts[0].email) + '</span>';
+    } else {
+      container.innerHTML = accounts.map(function(acct) {
+        var label = self._providerLabel(acct.provider) + ' — ' + acct.email;
+        var isActive = acct.email === self._activeAccount;
+        return '<button class="ptab' + (isActive ? ' active' : '') + '" data-account="' + window.escHtml(acct.email) + '">' + window.escHtml(label) + '</button>';
+      }).join('');
+
+      container.querySelectorAll('.ptab[data-account]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          self._saveFilterState();
+          self._activeAccount = btn.dataset.account;
+          self._restoreFilterState();
+          container.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          self._selected = new Set();
+          self._load();
+        });
+      });
+    }
+
+    panelsEl.innerHTML =
+      '<div id="ea-category-tabs" class="ea-status-row"></div>' +
+      '<div id="ea-filter-row" class="ea-filter-row"></div>' +
+      '<div id="ea-date-row" class="ea-date-row"></div>' +
+      '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
+        '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
+        '<button class="ea-bulk-handle-btn" id="ea-bulk-handle-btn">&#10003; Handle All Selected</button>' +
+        '<button class="btn-outline" id="ea-deselect-btn" style="border-color:var(--blue);color:var(--blue);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);">Deselect All</button>' +
+      '</div>' +
+      '<div id="ea-email-list" class="ea-list"></div>';
+
+    this._renderCategoryPills();
+    this._renderFilterRow();
+    this._renderDateRow();
+    this._bindControls();
+  },
+
+  // ── Category pills ────────────────────────────────────────
+  _renderCategoryPills: function() {
+    var container = document.getElementById('ea-category-tabs');
+    if (!container) return;
+    var self = this;
+    var cats = [{ id: 'all', label: 'All' }]
+      .concat(this._settings.categories.filter(function(c) { return c.enabled; }))
+      .concat([{ id: 'handled', label: 'Handled' }]);
+
+    container.innerHTML = cats.map(function(cat) {
+      var isActive = (!self._showHandled && cat.id === self._activeCategory) || (self._showHandled && cat.id === 'handled');
+      return '<button class="ea-status-btn' + (isActive ? ' active' : '') + '" data-category="' + window.escHtml(cat.id) + '">' + window.escHtml(cat.label) + '</button>';
+    }).join('');
+
+    container.querySelectorAll('.ea-status-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        if (btn.dataset.category === 'handled') {
+          self._showHandled = true;
+          self._activeCategory = 'all';
+        } else {
+          self._showHandled = false;
+          self._activeCategory = btn.dataset.category;
+        }
+        container.querySelectorAll('.ea-status-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        self._selected = new Set();
+        self._load();
+      });
+    });
+  },
+
+  // ── Filter row ────────────────────────────────────────────
+  _renderFilterRow: function() {
+    var container = document.getElementById('ea-filter-row');
+    if (!container) return;
+    container.innerHTML =
+      '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear Filters</button>' +
+      '<span style="flex:1"></span>' +
+      '<button class="ea-scan-btn" id="ea-scan-btn">&#9654; Scan Now</button>' +
+      '<button class="ea-handle-all-btn" id="ea-handle-all-btn">&#10003; Handle All</button>' +
+      '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails...">';
+  },
+
+  // ── Date row ──────────────────────────────────────────────
+  _renderDateRow: function() {
+    var container = document.getElementById('ea-date-row');
+    if (!container) return;
+    var self = this;
+    var fromVal = this._dateFrom ? this._dateFrom.substring(0, 10) : '';
+    var toVal = this._dateTo ? this._dateTo.substring(0, 10) : '';
+    container.innerHTML =
+      '<button class="ea-date-quick-btn' + (this._dateQuick === '30' ? ' active' : '') + '" data-days="30">30 days</button>' +
+      '<button class="ea-date-quick-btn' + (this._dateQuick === '60' ? ' active' : '') + '" data-days="60">60 days</button>' +
+      '<button class="ea-date-quick-btn' + (this._dateQuick === '90' ? ' active' : '') + '" data-days="90">90 days</button>' +
+      '<span style="flex:1"></span>' +
+      '<span class="ea-date-label">From</span>' +
+      '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +
+      '<span class="ea-date-label">To</span>' +
+      '<input type="date" class="ea-date-input" id="ea-date-to" value="' + toVal + '">';
+
+    container.querySelectorAll('.ea-date-quick-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._dateQuick = btn.dataset.days;
+        var d = new Date();
+        d.setDate(d.getDate() - parseInt(btn.dataset.days, 10));
+        self._dateFrom = d.toISOString();
+        self._dateTo = null;
+        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        var fromEl = document.getElementById('ea-date-from');
+        var toEl = document.getElementById('ea-date-to');
+        if (fromEl) fromEl.value = self._dateFrom.substring(0, 10);
+        if (toEl) toEl.value = '';
+        self._selected = new Set();
+        self._load();
+      });
+    });
+
+    var dateFrom = document.getElementById('ea-date-from');
+    var dateTo = document.getElementById('ea-date-to');
+    if (dateFrom) {
+      dateFrom.addEventListener('change', function() {
+        self._dateQuick = '';
+        self._dateFrom = dateFrom.value ? new Date(dateFrom.value).toISOString() : null;
+        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+        self._selected = new Set();
+        self._load();
+      });
+    }
+    if (dateTo) {
+      dateTo.addEventListener('change', function() {
+        self._dateQuick = '';
+        self._dateTo = dateTo.value ? new Date(dateTo.value + 'T23:59:59').toISOString() : null;
+        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
+        self._selected = new Set();
+        self._load();
+      });
+    }
+  },
+
+  // ── Bind controls ─────────────────────────────────────────
+  _bindControls: function() {
+    var self = this;
+    var scanBtn = document.getElementById('ea-scan-btn');
+    var handleAllBtn = document.getElementById('ea-handle-all-btn');
+    var clearBtn = document.getElementById('ea-clear-filters-btn');
+    var searchEl = document.getElementById('ea-search');
+    var bulkHandleBtn = document.getElementById('ea-bulk-handle-btn');
+    var deselectBtn = document.getElementById('ea-deselect-btn');
+
+    if (scanBtn) scanBtn.addEventListener('click', function() { self._scan(); });
+    if (handleAllBtn) handleAllBtn.addEventListener('click', function() { self._handleAll(); });
+    if (clearBtn) clearBtn.addEventListener('click', function() { self._clearFilters(); });
+    if (searchEl) searchEl.addEventListener('input', function() {
+      self._searchTerm = searchEl.value.toLowerCase();
+      self._renderList();
+    });
+    if (bulkHandleBtn) bulkHandleBtn.addEventListener('click', function() { self._bulkHandle(); });
+    if (deselectBtn) deselectBtn.addEventListener('click', function() {
+      self._selected = new Set();
+      self._updateBulkBar();
+      document.querySelectorAll('.ea-checkbox').forEach(function(cb) { cb.checked = false; });
+    });
+  },
+
+  // ── Stat tiles ────────────────────────────────────────────
+  _bindStatTiles: function() {
+    var self = this;
+    document.querySelectorAll('.stat-card[data-stat]').forEach(function(tile) {
+      var stat = tile.dataset.stat;
+      if (stat === 'total') {
+        tile.style.cursor = 'default';
+        return;
+      }
+      tile.addEventListener('click', function() {
+        if (stat === 'unhandled') {
+          self._showHandled = false;
+          self._activeCategory = 'all';
+        } else if (stat === 'urgent') {
+          self._showHandled = false;
+          self._activeCategory = 'urgent';
+        }
+        self._selected = new Set();
+        self._renderCategoryPills();
+        self._load();
+      });
+    });
+  },
+
+  _updateStats: function() {
+    var emails = this._emails;
+    var total = emails.length;
+    var unhandled = emails.filter(function(e) { return !e.handled; }).length;
+    var urgent = emails.filter(function(e) { return e.category === 'urgent' && !e.handled; }).length;
+    var totalEl = document.getElementById('stat-total');
+    var unhandledEl = document.getElementById('stat-unhandled');
+    var urgentEl = document.getElementById('stat-urgent');
+    if (totalEl) totalEl.textContent = total;
+    if (unhandledEl) unhandledEl.textContent = unhandled;
+    if (urgentEl) urgentEl.textContent = urgent;
+  },
+
+  // ── Filter state persistence ──────────────────────────────
+  _saveFilterState: function() {
+    if (!this._activeAccount) return;
+    this._filterState[this._activeAccount] = {
+      category: this._activeCategory,
+      search: this._searchTerm,
+      dateQuick: this._dateQuick,
+      dateFrom: this._dateFrom,
+      dateTo: this._dateTo,
+      showHandled: this._showHandled
+    };
+  },
+
+  _restoreFilterState: function() {
+    var s = this._filterState[this._activeAccount];
+    if (s) {
+      this._activeCategory = s.category || 'all';
+      this._searchTerm = s.search || '';
+      this._dateQuick = s.dateQuick || '30';
+      this._dateFrom = s.dateFrom || null;
+      this._dateTo = s.dateTo || null;
+      this._showHandled = s.showHandled || false;
+    } else {
+      this._activeCategory = 'all';
+      this._searchTerm = '';
+      this._initDateDefaults();
+      this._showHandled = false;
+    }
+    var searchEl = document.getElementById('ea-search');
+    if (searchEl) searchEl.value = this._searchTerm;
+    this._renderCategoryPills();
+    this._renderDateRow();
+  },
+
+  _clearFilters: function() {
+    this._activeCategory = 'all';
+    this._searchTerm = '';
+    this._showHandled = false;
+    this._initDateDefaults();
+    this._selected = new Set();
+    var searchEl = document.getElementById('ea-search');
+    if (searchEl) searchEl.value = '';
+    this._renderCategoryPills();
+    this._renderDateRow();
+    this._load();
+  },
+
+  // ── Load emails ───────────────────────────────────────────
+  _load: async function() {
+    var listEl = document.getElementById('ea-email-list');
+    if (listEl) listEl.innerHTML = '<div class="ea-loading">Loading...</div>';
+
+    var activeAcct = this._connectedAccounts.find(function(a) { return a.email === this._activeAccount; }.bind(this));
+    var providerVal = activeAcct ? (activeAcct.provider === 'gmail' || activeAcct.provider === 'google' ? 'gmail' : 'outlook') : null;
+
+    var query = this._supabase
       .from('email_summaries')
       .select('*')
-      .eq('user_id', _session.user.id)
+      .eq('user_id', this._user.id)
       .order('received_at', { ascending: false })
-      .limit(100);
+      .limit(200);
 
-    if (!_settings.show_handled) {
-      query.eq('handled', false);
+    if (this._activeAccount) {
+      query = query.eq('sender_email', this._activeAccount).or('user_id.eq.' + this._user.id);
+      // Filter by provider for account tab
+      if (providerVal) {
+        query = this._supabase
+          .from('email_summaries')
+          .select('*')
+          .eq('user_id', this._user.id)
+          .eq('provider', providerVal)
+          .order('received_at', { ascending: false })
+          .limit(200);
+      }
     }
 
-    const { data, error } = await query;
-    if (error) { console.error('Load emails error:', error); return; }
-    _emails = data || [];
-    _renderEmailFeed();
-  }
+    if (this._dateFrom) {
+      query = query.gte('received_at', this._dateFrom);
+    }
+    if (this._dateTo) {
+      query = query.lte('received_at', this._dateTo);
+    }
 
-  // -------------------------------------------------------------------------
-  // Scan
-  // -------------------------------------------------------------------------
-  var _pendingJobs = 0;
-  var _jobChannels = {};
+    var result = await query;
+    if (result.error) {
+      if (listEl) listEl.innerHTML = '<div class="ea-empty">Could not load emails.</div>';
+      return;
+    }
+    this._emails = result.data || [];
+    this._selected = new Set();
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+    this._updateHandleAllLabel();
+  },
 
-  async function _scan() {
-    const btn = document.getElementById('ea-scan-btn');
+  // ── Filtered items ────────────────────────────────────────
+  _filteredItems: function() {
+    var self = this;
+    return this._emails.filter(function(item) {
+      if (self._showHandled) {
+        if (!item.handled) return false;
+      } else {
+        if (item.handled) return false;
+      }
+      if (self._activeCategory !== 'all' && item.category !== self._activeCategory) return false;
+      if (self._searchTerm) {
+        var haystack = ((item.sender || '') + ' ' + (item.sender_email || '') + ' ' + (item.subject || '') + ' ' + (item.summary || '')).toLowerCase();
+        if (haystack.indexOf(self._searchTerm) === -1) return false;
+      }
+      return true;
+    });
+  },
+
+  // ── Render list ───────────────────────────────────────────
+  _renderList: function() {
+    var listEl = document.getElementById('ea-email-list');
+    if (!listEl) return;
+    var items = this._filteredItems();
+    if (items.length === 0) {
+      listEl.innerHTML = '<div class="ea-empty">No emails found.</div>';
+      return;
+    }
+    var self = this;
+    listEl.innerHTML = items.map(function(item) { return self._cardHtml(item); }).join('');
+    this._bindCardEvents();
+  },
+
+  _cardHtml: function(email) {
+    var id = window.escHtml(email.id || email.message_id);
+    var sender = window.escHtml(email.sender || email.sender_email || 'Unknown');
+    var subject = window.escHtml(email.subject || 'No subject');
+    var summary = window.escHtml(email.summary || '');
+    var providerLabel = email.provider === 'gmail' ? 'Gmail' : 'Outlook';
+    var catLabel = this._getCategoryLabel(email.category);
+    var dateStr = email.received_at ? new Date(email.received_at).toLocaleDateString('en-AU') : '';
+    var checked = this._selected.has(email.id || email.message_id) ? ' checked' : '';
+    var flagIcon = email.is_flagged ? '&#9733;' : '&#9734;';
+    var flagTitle = email.is_flagged ? 'Unflag' : 'Flag';
+
+    var actionBtn;
+    if (this._showHandled) {
+      actionBtn = '<button class="ea-unmark-btn" data-id="' + id + '">&#10007; Unmark</button>';
+    } else {
+      actionBtn = '<button class="ea-handled-btn" data-id="' + id + '">&#10003; Handled</button>';
+    }
+
+    return '<div class="ea-card" data-id="' + id + '">' +
+      '<div class="ea-card-header">' +
+        '<input type="checkbox" class="ea-checkbox" data-id="' + id + '"' + checked + '>' +
+        '<button class="ea-flag-btn" data-id="' + id + '" data-flagged="' + (email.is_flagged ? '1' : '0') + '" title="' + flagTitle + '">' + flagIcon + '</button>' +
+        '<span class="ea-sender-name">' + sender + '</span>' +
+        '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
+        '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
+        '<span class="ea-date">' + dateStr + '</span>' +
+        '<div class="ea-card-btns">' + actionBtn + '</div>' +
+      '</div>' +
+      '<div class="ea-subject">' + subject + '</div>' +
+      '<div class="ea-card-preview-row">' +
+        '<button class="ea-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>' +
+        '<span class="ea-body-preview" id="ea-preview-' + id + '">' + summary + '</span>' +
+      '</div>' +
+    '</div>';
+  },
+
+  _bindCardEvents: function() {
+    var self = this;
+
+    document.querySelectorAll('.ea-checkbox').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
+        self._updateBulkBar();
+      });
+    });
+
+    document.querySelectorAll('.ea-expand-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var previewEl = document.getElementById('ea-preview-' + btn.dataset.id);
+        if (!previewEl) return;
+        var isExpanded = previewEl.style.whiteSpace === 'pre-wrap';
+        previewEl.style.whiteSpace = isExpanded ? '' : 'pre-wrap';
+        previewEl.style.overflow = isExpanded ? '' : 'visible';
+        btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
+      });
+    });
+
+    document.querySelectorAll('.ea-handled-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { self._markHandled(btn.dataset.id); });
+    });
+
+    document.querySelectorAll('.ea-unmark-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { self._unmarkHandled(btn.dataset.id); });
+    });
+
+    document.querySelectorAll('.ea-flag-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var isFlagged = btn.dataset.flagged === '1';
+        self._toggleFlag(btn.dataset.id, !isFlagged, btn);
+      });
+    });
+
+    document.querySelectorAll('.ea-card').forEach(function(card) {
+      card.addEventListener('click', function(e) {
+        if (e.target.closest('.ea-checkbox') || e.target.closest('.ea-flag-btn') ||
+            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') ||
+            e.target.closest('.ea-expand-btn')) return;
+        var email = self._emails.find(function(em) { return (em.id || em.message_id) === card.dataset.id; });
+        if (email) self._showDetail(email);
+      });
+    });
+  },
+
+  // ── Bulk bar ──────────────────────────────────────────────
+  _updateBulkBar: function() {
+    var bar = document.getElementById('ea-bulk-bar');
+    var count = document.getElementById('ea-bulk-count');
+    if (!bar || !count) return;
+    var n = this._selected.size;
+    bar.style.display = n > 0 ? '' : 'none';
+    count.textContent = n + ' selected';
+  },
+
+  // ── Actions ───────────────────────────────────────────────
+  _markHandled: async function(id) {
+    await this._supabase.from('email_summaries').update({ handled: true }).eq('id', id);
+    this._emails = this._emails.map(function(e) {
+      return (e.id || e.message_id) === id ? Object.assign({}, e, { handled: true }) : e;
+    });
+    this._selected.delete(id);
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+  },
+
+  _unmarkHandled: async function(id) {
+    await this._supabase.from('email_summaries').update({ handled: false }).eq('id', id);
+    this._emails = this._emails.map(function(e) {
+      return (e.id || e.message_id) === id ? Object.assign({}, e, { handled: false }) : e;
+    });
+    this._selected.delete(id);
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+  },
+
+  _bulkHandle: async function() {
+    var ids = Array.from(this._selected);
+    if (ids.length === 0) return;
+    var newVal = !this._showHandled;
+    await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    var self = this;
+    this._emails = this._emails.map(function(e) {
+      return self._selected.has(e.id || e.message_id) ? Object.assign({}, e, { handled: newVal }) : e;
+    });
+    this._selected = new Set();
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+  },
+
+  _handleAll: async function() {
+    var filtered = this._filteredItems();
+    if (filtered.length === 0) return;
+    var ids = filtered.map(function(i) { return i.id || i.message_id; });
+    var newVal = !this._showHandled;
+    await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    this._emails = this._emails.map(function(e) {
+      return ids.indexOf(e.id || e.message_id) > -1 ? Object.assign({}, e, { handled: newVal }) : e;
+    });
+    this._selected = new Set();
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+  },
+
+  _updateHandleAllLabel: function() {
+    var btn = document.getElementById('ea-handle-all-btn');
+    if (!btn) return;
+    btn.innerHTML = this._showHandled ? '&#10007; Unmark All' : '&#10003; Handle All';
+
+    var bulkBtn = document.getElementById('ea-bulk-handle-btn');
+    if (bulkBtn) {
+      bulkBtn.innerHTML = this._showHandled ? '&#10007; Unmark All Selected' : '&#10003; Handle All Selected';
+    }
+  },
+
+  // ── Flag ──────────────────────────────────────────────────
+  _toggleFlag: async function(id, newState, btnEl) {
+    // Optimistic UI update
+    if (btnEl) {
+      btnEl.innerHTML = newState ? '&#9733;' : '&#9734;';
+      btnEl.dataset.flagged = newState ? '1' : '0';
+      btnEl.title = newState ? 'Unflag' : 'Flag';
+    }
+    this._emails = this._emails.map(function(e) {
+      return (e.id || e.message_id) === id ? Object.assign({}, e, { is_flagged: newState }) : e;
+    });
+
+    var email = this._emails.find(function(e) { return (e.id || e.message_id) === id; });
+    try {
+      var session = (await this._supabase.auth.getSession()).data.session;
+      await fetch('/api/ea-flag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({
+          messageId: id,
+          provider: email ? email.provider : 'gmail',
+          flagState: newState
+        })
+      });
+    } catch (e) {
+      console.error('[EA] Flag error:', e.message);
+    }
+  },
+
+  // ── Scan ──────────────────────────────────────────────────
+  _scan: async function() {
+    var btn = document.getElementById('ea-scan-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
 
-    _showFeedMessage('Scanning your inbox...');
+    var listEl = document.getElementById('ea-email-list');
+    if (listEl) listEl.innerHTML = '<div class="ea-loading">Scanning your inbox...</div>';
 
     try {
-      var token = _session.access_token;
-      _pendingJobs = 0;
+      var session = (await this._supabase.auth.getSession()).data.session;
+      var token = session.access_token;
+      this._pendingJobs = 0;
 
-      var gmailAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'gmail' || e.provider === 'google'; });
-      var outlookAccounts = _connectedAccounts.filter(function(e) { return e.provider === 'microsoft' || e.provider === 'outlook'; });
-
-      // Queue and watch Gmail accounts
-      for (var gi = 0; gi < gmailAccounts.length; gi++) {
-        await _queueAndWatch('ea-gmail', gmailAccounts[gi].email, token);
+      var activeAcct = this._connectedAccounts.find(function(a) { return a.email === this._activeAccount; }.bind(this));
+      if (!activeAcct) {
+        if (listEl) listEl.innerHTML = '<div class="ea-empty">No account selected.</div>';
+        this._finishScan();
+        return;
       }
 
-      // Queue and watch Outlook accounts
-      for (var oi = 0; oi < outlookAccounts.length; oi++) {
-        await _queueAndWatch('ea-outlook', outlookAccounts[oi].email, token);
-      }
+      var sourceType = (activeAcct.provider === 'gmail' || activeAcct.provider === 'google') ? 'ea-gmail' : 'ea-outlook';
+      await this._queueAndWatch(sourceType, activeAcct.email, token);
 
-      if (_pendingJobs === 0) {
-        _showFeedMessage('No email accounts connected. Connect Gmail or Outlook in Settings.');
-        _finishScan();
+      if (this._pendingJobs === 0) {
+        if (listEl) listEl.innerHTML = '<div class="ea-empty">Could not start scan.</div>';
+        this._finishScan();
       }
-
     } catch (e) {
-      _showFeedMessage('Scan failed. Please try again.');
-      _finishScan();
+      if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan failed. Please try again.</div>';
+      this._finishScan();
     }
-  }
+  },
 
-  async function _queueAndWatch(sourceType, accountEmail, token) {
+  _queueAndWatch: async function(sourceType, accountEmail, token) {
     try {
       var resp = await fetch('/api/scan-queue', {
         method: 'POST',
@@ -176,15 +675,16 @@ window.EA_LOGIC = (function () {
         console.error('[EA] Queue error for', accountEmail, ':', result.error || resp.status);
         return;
       }
-      _pendingJobs++;
-      _watchJob(result.jobId, accountEmail);
+      this._pendingJobs++;
+      this._watchJob(result.jobId, accountEmail);
     } catch (e) {
       console.error('[EA] Queue exception for', accountEmail, ':', e.message);
     }
-  }
+  },
 
-  function _watchJob(jobId, label) {
-    var channel = window.supabaseClient
+  _watchJob: function(jobId, label) {
+    var self = this;
+    var channel = this._supabase
       .channel('ea-scan-job-' + jobId)
       .on(
         'postgres_changes',
@@ -192,218 +692,104 @@ window.EA_LOGIC = (function () {
         function(payload) {
           var row = payload.new;
           if (!row) return;
-
+          var listEl = document.getElementById('ea-email-list');
           if (row.status === 'running') {
-            _showFeedMessage('Scanning ' + label + '...');
+            if (listEl) listEl.innerHTML = '<div class="ea-loading">Scanning ' + window.escHtml(label) + '...</div>';
           } else if (row.status === 'completed') {
-            var msg = label + ' — ' + (row.imported_count || 0) + ' email' + ((row.imported_count || 0) !== 1 ? 's' : '') + ' imported';
-            if (row.skipped_count) msg += ', ' + row.skipped_count + ' skipped';
-            _showFeedMessage(msg);
-            _cleanupJob(jobId);
+            self._cleanupJob(jobId);
           } else if (row.status === 'failed') {
-            _showFeedMessage(label + ' — scan failed: ' + (row.error_text || 'Unknown error'));
-            _cleanupJob(jobId);
+            if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan failed: ' + window.escHtml(row.error_text || 'Unknown error') + '</div>';
+            self._cleanupJob(jobId);
           } else if (row.status === 'cancelled') {
-            _showFeedMessage(label + ' — scan cancelled');
-            _cleanupJob(jobId);
+            if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan cancelled.</div>';
+            self._cleanupJob(jobId);
           }
         }
       )
       .subscribe();
-    _jobChannels[jobId] = channel;
-  }
+    this._jobChannels[jobId] = channel;
+  },
 
-  function _cleanupJob(jobId) {
-    if (_jobChannels[jobId]) {
-      window.supabaseClient.removeChannel(_jobChannels[jobId]);
-      delete _jobChannels[jobId];
+  _cleanupJob: function(jobId) {
+    if (this._jobChannels[jobId]) {
+      this._supabase.removeChannel(this._jobChannels[jobId]);
+      delete this._jobChannels[jobId];
     }
-    _pendingJobs--;
-    if (_pendingJobs <= 0) {
-      _pendingJobs = 0;
-      _loadStoredEmails();
-      _finishScan();
+    this._pendingJobs--;
+    if (this._pendingJobs <= 0) {
+      this._pendingJobs = 0;
+      this._load();
+      this._finishScan();
     }
-  }
+  },
 
-  function _finishScan() {
+  _finishScan: function() {
     var btn = document.getElementById('ea-scan-btn');
-    if (btn) { btn.disabled = false; btn.textContent = 'Scan Now'; }
-  }
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#9654; Scan Now'; }
+  },
 
-  async function _checkAutoScan() {
-    const { data } = await window.supabaseClient
-      .from('email_summaries')
-      .select('received_at')
-      .eq('user_id', _session.user.id)
-      .order('received_at', { ascending: false })
-      .limit(1);
+  // ── Detail view ───────────────────────────────────────────
+  _showDetail: async function(email) {
+    var listEl = document.getElementById('ea-email-list');
+    if (!listEl) return;
 
-    const lastScan = data && data[0] ? new Date(data[0].received_at) : null;
-    const now      = new Date();
-    let   doScan   = false;
-
-    if (!lastScan) {
-      doScan = true;
-    } else if (_settings.scan_cadence === 'daily') {
-      doScan = (now - lastScan) > 24 * 60 * 60 * 1000;
-    } else if (_settings.scan_cadence === 'weekly') {
-      doScan = (now - lastScan) > 7 * 24 * 60 * 60 * 1000;
-    }
-
-    if (doScan) await _scan();
-  }
-  // -------------------------------------------------------------------------
-  // Render email feed
-  // -------------------------------------------------------------------------
-  function _buildCategoryTabs() {
-    const container = document.getElementById('ea-category-tabs');
-    if (!container) return;
-
-    const tabs = [{ id: 'all', label: 'All' }]
-      .concat(_settings.categories.filter(c => c.enabled));
-
-    container.innerHTML = tabs.map(cat =>
-      "<button class=\"ea-tab" + (cat.id === _activeCategory ? ' active' : '') + "\" " +
-      "data-category=\"" + cat.id + "\">" + cat.label + "</button>"
-    ).join('');
-
-    container.querySelectorAll('.ea-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _activeCategory = btn.dataset.category;
-        container.querySelectorAll('.ea-tab').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        _renderEmailFeed();
-      });
-    });
-  }
-
-  function _renderEmailFeed() {
-    const container = document.getElementById('ea-email-feed');
-    if (!container) return;
-
-    const filtered = _activeCategory === 'all'
-      ? _emails
-      : _emails.filter(e => e.category === _activeCategory);
-
-    if (!filtered.length) {
-      container.innerHTML = "<div class=\"ea-empty\">No emails in this category.</div>";
-      return;
-    }
-
-    container.innerHTML = filtered.map(email => _renderEmailCard(email)).join('');
-
-    container.querySelectorAll('.ea-card').forEach(card => {
-      const messageId  = card.dataset.id;
-
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.ea-handled-btn')) return;
-        var email = _emails.find(function(em) { return em.message_id === messageId; });
-        if (email) _showEmailDetail(email);
-      });
-
-      const handledBtn = card.querySelector('.ea-handled-btn');
-      if (handledBtn) {
-        handledBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          _markHandled(messageId, card);
-        });
-      }
-    });
-  }
-
-  function _renderEmailCard(email) {
-    const relativeTime = _relativeTime(email.received_at);
-    const catLabel     = _getCategoryLabel(email.category);
-    const hasLink      = !!email.message_url;
-
-    return "<div class=\"ea-card" + (hasLink ? ' ea-card-linked' : '') + "\" " +
-      "data-id=\"" + email.message_id + "\" " +
-      "data-message-url=\"" + (email.message_url || '') + "\">" +
-      "<div class=\"ea-card-header\">" +
-        "<div class=\"ea-sender\">" +
-          "<span class=\"ea-sender-name\">" + _esc(email.sender) + "</span>" +
-          "<span class=\"ea-sender-email\">" + _esc(email.sender_email) + "</span>" +
-        "</div>" +
-        "<div class=\"ea-card-meta\">" +
-          "<span class=\"ea-badge ea-badge-" + _esc(email.category) + "\">" + _esc(catLabel) + "</span>" +
-          "<span class=\"ea-time\">" + relativeTime + "</span>" +
-        "</div>" +
-      "</div>" +
-      "<div class=\"ea-subject\">" + _esc(email.subject) + "</div>" +
-      "<div class=\"ea-summary\">" + _esc(email.summary) + "</div>" +
-      "<div class=\"ea-card-footer\">" +
-        "<button class=\"ea-handled-btn\" title=\"Mark as handled\">&#x2713; Handled</button>" +
-        "<span class=\"ea-open-hint\">Tap to view</span>" +
-      "</div>" +
-    "</div>";
-  }
-  // -------------------------------------------------------------------------
-  // Email detail view — fetch body from cl-assets and display in-platform
-  // -------------------------------------------------------------------------
-  async function _showEmailDetail(email) {
-    var container = document.getElementById('ea-email-feed');
-    if (!container) return;
-
-    var catLabel = _getCategoryLabel(email.category);
-    var relTime = _relativeTime(email.received_at);
+    var catLabel = this._getCategoryLabel(email.category);
+    var relTime = email.received_at ? new Date(email.received_at).toLocaleDateString('en-AU') : '';
     var providerLabel = email.provider === 'gmail' ? 'Gmail' : 'Outlook';
+    var self = this;
 
-    // Build the detail view immediately with summary while body loads
     var openBtnHtml = email.message_url
-      ? '<a href="' + _esc(email.message_url) + '" target="_blank" class="ea-detail-open-btn">Open in ' + providerLabel + ' &rarr;</a>'
+      ? '<a href="' + window.escHtml(email.message_url) + '" target="_blank" class="ea-detail-open-btn">Open in ' + providerLabel + ' &rarr;</a>'
       : '';
 
-    container.innerHTML =
+    var actionBtn = this._showHandled
+      ? '<button class="ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10007; Unmark</button>'
+      : '<button class="ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10003; Mark as Handled</button>';
+
+    listEl.innerHTML =
       '<div class="ea-detail">' +
         '<div class="ea-detail-topbar">' +
-          '<button class="ea-detail-back-btn">&larr; Back</button>' +
+          '<button class="ea-detail-back-btn" id="ea-detail-back">&larr; Back</button>' +
           openBtnHtml +
         '</div>' +
-        '<div class="ea-detail-header">' +
-          '<div class="ea-sender">' +
-            '<span class="ea-sender-name">' + _esc(email.sender) + '</span>' +
-            '<span class="ea-sender-email">' + _esc(email.sender_email) + '</span>' +
-          '</div>' +
-          '<div class="ea-card-meta">' +
-            '<span class="ea-badge ea-badge-' + _esc(email.category) + '">' + _esc(catLabel) + '</span>' +
-            '<span class="ea-time">' + relTime + '</span>' +
-          '</div>' +
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">' +
+          '<span class="ea-sender-name">' + window.escHtml(email.sender || email.sender_email || '') + '</span>' +
+          '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
+          '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
+          '<span class="ea-date">' + relTime + '</span>' +
         '</div>' +
-        '<div class="ea-detail-subject">' + _esc(email.subject) + '</div>' +
-        '<div class="ea-detail-summary"><strong>Summary:</strong> ' + _esc(email.summary) + '</div>' +
+        '<div class="ea-detail-subject">' + window.escHtml(email.subject || '') + '</div>' +
+        '<div class="ea-detail-summary"><strong>Summary:</strong> ' + window.escHtml(email.summary || '') + '</div>' +
         '<div class="ea-detail-body" id="ea-detail-body">Loading email body...</div>' +
-        '<div class="ea-detail-footer">' +
-          '<button class="ea-handled-btn ea-detail-handled-btn" data-id="' + _esc(email.message_id) + '">&#x2713; Mark as Handled</button>' +
-          openBtnHtml +
-        '</div>' +
+        '<div class="ea-detail-footer">' + actionBtn + openBtnHtml + '</div>' +
       '</div>';
 
-    // Wire back button
-    container.querySelector('.ea-detail-back-btn').addEventListener('click', function() {
-      _renderEmailFeed();
+    document.getElementById('ea-detail-back').addEventListener('click', function() {
+      self._renderList();
     });
 
-    // Wire handled button in detail view
-    var handledBtn = container.querySelector('.ea-detail-handled-btn');
-    if (handledBtn) {
-      handledBtn.addEventListener('click', function() {
-        _markHandledFromDetail(email.message_id);
+    var detailActionBtn = document.getElementById('ea-detail-action-btn');
+    if (detailActionBtn) {
+      detailActionBtn.addEventListener('click', function() {
+        if (self._showHandled) {
+          self._unmarkHandled(detailActionBtn.dataset.id);
+        } else {
+          self._markHandled(detailActionBtn.dataset.id);
+        }
       });
     }
 
-    // Fetch full body from cl-assets
+    // Fetch body from cl-assets
     var bodyEl = document.getElementById('ea-detail-body');
     if (email.body_url) {
       try {
-        var signedResult = await window.supabaseClient.storage
+        var signedResult = await this._supabase.storage
           .from('cl-assets')
           .createSignedUrl(email.body_url, 3600);
         if (signedResult.data && signedResult.data.signedUrl) {
           var bodyRes = await fetch(signedResult.data.signedUrl);
           if (bodyRes.ok) {
-            var bodyText = await bodyRes.text();
-            bodyEl.textContent = bodyText;
+            bodyEl.textContent = await bodyRes.text();
           } else {
             bodyEl.textContent = 'Could not load email body.';
           }
@@ -417,101 +803,44 @@ window.EA_LOGIC = (function () {
     } else {
       bodyEl.textContent = 'Email body not available. This email was scanned before body storage was enabled.';
     }
+  },
+
+  // ── Helpers ──────────────────────────────────────────��────
+  _getCategoryLabel: function(id) {
+    if (!this._settings || !this._settings.categories) return id || 'Unknown';
+    var cat = this._settings.categories.find(function(c) { return c.id === id; });
+    return cat ? cat.label : (id || 'Unknown');
+  },
+
+  _providerLabel: function(provider) {
+    if (provider === 'gmail' || provider === 'google') return 'Gmail';
+    if (provider === 'microsoft' || provider === 'outlook') return 'Outlook';
+    return provider || 'Email';
   }
+};
 
-  async function _markHandledFromDetail(messageId) {
-    var result = await window.supabaseClient
-      .from('email_summaries')
-      .update({ handled: true })
-      .eq('user_id', _session.user.id)
-      .eq('message_id', messageId);
-
-    if (!result.error) {
-      _emails = _emails.map(function(e) {
-        return e.message_id === messageId ? Object.assign({}, e, { handled: true }) : e;
-      });
-      _renderEmailFeed();
+// ── Bootstrap ─────────────────────────────────────────────
+(function() {
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) { window.location.href = '/login'; return; }
+    if (window.EA_LOGIC && window.EA_LOGIC.init) {
+      window.EA_LOGIC.init(supabase, session.user);
     }
-  }
-
-  // -------------------------------------------------------------------------
-  // Mark as handled
-  // -------------------------------------------------------------------------
-  async function _markHandled(messageId, cardEl) {
-    const { error } = await window.supabaseClient
-      .from('email_summaries')
-      .update({ handled: true })
-      .eq('user_id', _session.user.id)
-      .eq('message_id', messageId);
-
-    if (!error) {
-      _emails = _emails.map(e =>
-        e.message_id === messageId ? Object.assign({}, e, { handled: true }) : e
-      );
-      if (!_settings.show_handled) {
-        cardEl.remove();
-        const container = document.getElementById('ea-email-feed');
-        if (container && !container.querySelector('.ea-card')) {
-          container.innerHTML = "<div class=\"ea-empty\">No emails in this category.</div>";
-        }
-      }
-    }
-  }
-
-  // -------------------------------------------------------------------------
-  // Wire global events
-  // -------------------------------------------------------------------------
-  function _wireEvents() {
-    const scanBtn = document.getElementById('ea-scan-btn');
-    if (scanBtn) scanBtn.addEventListener('click', _scan);
-  }
-
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
-  function _getCategoryLabel(id) {
-    if (!_settings || !_settings.categories) return id;
-    const cat = _settings.categories.find(c => c.id === id);
-    return cat ? cat.label : id;
-  }
-
-  function _relativeTime(dateStr) {
-    if (!dateStr) return '';
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins  = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days  = Math.floor(diff / 86400000);
-    if (mins  < 1)   return 'Just now';
-    if (mins  < 60)  return mins  + ' minute'  + (mins  > 1 ? 's' : '') + ' ago';
-    if (hours < 24)  return hours + ' hour'   + (hours > 1 ? 's' : '') + ' ago';
-    return days + ' day' + (days > 1 ? 's' : '') + ' ago';
-  }
-
-  function _esc(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
-
-  function _showError(msg) {
-    const el = document.getElementById('ea-error-msg');
-    if (el) { el.textContent = msg; el.style.display = 'block'; }
-  }
-
-  function _showFeedMessage(msg) {
-    const container = document.getElementById('ea-email-feed');
-    if (container) container.innerHTML = "<div class=\"ea-empty\">" + _esc(msg) + "</div>";
-  }
-
-  // -------------------------------------------------------------------------
-  // Public API
-  // -------------------------------------------------------------------------
-  return { init };
-
+  });
 })();
 
-document.addEventListener('DOMContentLoaded', () => window.EA_LOGIC.init());
-window.addEventListener('pageshow', (e) => { if (e.persisted) window.EA_LOGIC.init(); });
+window.addEventListener('pageshow', function(e) {
+  if (!e.persisted) return;
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) return;
+    if (window.EA_LOGIC && window.EA_LOGIC.init) {
+      window.EA_LOGIC.init(supabase, session.user);
+    }
+  });
+});
