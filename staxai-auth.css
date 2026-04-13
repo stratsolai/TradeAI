@@ -146,8 +146,8 @@ body {
   font-family: var(--body-font);
   background: var(--bg);
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: var(--body-font-size);
+  line-height: var(--body-line-height);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -155,20 +155,20 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text);
 }
 
-h1 { font-weight: 700; font-size: 28px; }
-h2 { font-weight: 700; }
+h1 { font-weight: var(--modal-title-font-weight); font-size: var(--page-title-font-size); }
+h2 { font-weight: var(--modal-title-font-weight); }
 
 p { margin-bottom: 12px; }
 
 .page-title {
-  font-size: 28px;
-  font-weight: 700;
+  font-size: var(--page-title-font-size);
+  font-weight: var(--modal-title-font-weight);
   color: var(--text);
   margin-bottom: 6px;
 }
 
 .page-subtitle {
-  font-size: 15px;
+  font-size: var(--section-title-font-size);
   color: var(--text-muted);
 }
 
@@ -205,7 +205,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 9px;
   text-decoration: none;
-  color: #fff;
+  color: var(--white);
   flex-shrink: 0;
   margin-right: 20px;
 }
@@ -235,14 +235,14 @@ a:hover { opacity: 0.85; }
 .topbar-nav-link {
   color: rgba(255,255,255,0.75);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--btn-font-weight);
   text-decoration: none;
   transition: color var(--transition-btn);
 }
 
 .topbar-nav a:hover,
 .topbar-nav-link:hover {
-  color: #fff;
+  color: var(--white);
   opacity: 1;
 }
 
@@ -261,13 +261,13 @@ a:hover { opacity: 0.85; }
 .topbar-link {
   color: rgba(255,255,255,0.75);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--btn-font-weight);
   text-decoration: none;
   transition: color var(--transition-btn);
 }
 
 .topbar-link:hover {
-  color: #fff;
+  color: var(--white);
   opacity: 1;
 }
 
@@ -283,7 +283,7 @@ a:hover { opacity: 0.85; }
   color: rgba(255,255,255,0.75);
   font-family: var(--body-font);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--btn-font-weight);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -293,7 +293,7 @@ a:hover { opacity: 0.85; }
 }
 
 .account-btn:hover {
-  color: #ffffff;
+  color: var(--white);
 }
 
 .account-dropdown {
@@ -303,7 +303,7 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 10px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 20px var(--shadow-hover);
   min-width: 200px;
   overflow: hidden;
   display: none;
@@ -322,7 +322,7 @@ a:hover { opacity: 0.85; }
   padding: 11px 16px;
   text-align: left;
   font-family: var(--body-font);
-  font-size: 14px;
+  font-size: var(--btn-font-size);
   color: var(--text);
   background: none;
   border: none;
@@ -335,14 +335,14 @@ a:hover { opacity: 0.85; }
 .account-dropdown button:hover,
 .sign-out-btn:hover {
   background: var(--blue);
-  color: #ffffff;
+  color: var(--white);
   opacity: 1;
 }
 
 .account-dropdown-email {
   padding: 4px 16px 12px;
   color: #64748b;
-  font-size: 13px;
+  font-size: var(--label-font-size);
   border-bottom: 1px solid var(--border);
 }
 
@@ -363,7 +363,7 @@ a:hover { opacity: 0.85; }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 14px;
-  margin-bottom: 28px;
+  margin-bottom: var(--page-header-margin);
 }
 
 .stat-card,
@@ -371,7 +371,7 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   padding: 18px 20px;
   border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  box-shadow: 0 1px 4px var(--shadow-card);
   border-left: 4px solid var(--blue);
 }
 
@@ -396,7 +396,7 @@ a:hover { opacity: 0.85; }
 .stat-tile .stat-value,
 .stat-card .stat-value {
   font-family: var(--body-font);
-  font-size: 22px;
+  font-size: var(--stat-value-font-size);
   font-weight: 500;
   color: var(--text);
   line-height: 1;
@@ -420,7 +420,7 @@ a:hover { opacity: 0.85; }
 /* Primary blue — filled */
 .btn-primary {
   background: var(--blue);
-  color: white;
+  color: var(--white);
   border: none;
   border-radius: var(--radius-btn);
   padding: var(--btn-padding);
@@ -437,12 +437,12 @@ a:hover { opacity: 0.85; }
 
 .btn-primary:hover {
   opacity: 0.85;
-  color: white;
+  color: var(--white);
 }
 
 /* Outline blue */
 .btn-outline {
-  background: white;
+  background: var(--white);
   color: var(--blue);
   border: 2px solid var(--blue);
   border-radius: var(--radius-btn);
@@ -466,7 +466,7 @@ a:hover { opacity: 0.85; }
 
 /* Outline orange */
 .btn-orange {
-  background: white;
+  background: var(--white);
   color: var(--orange);
   border: 2px solid var(--orange);
   border-radius: var(--radius-btn);
@@ -494,7 +494,7 @@ a:hover { opacity: 0.85; }
   display: flex;
   gap: 0;
   border-bottom: 2px solid var(--border);
-  margin-bottom: 28px;
+  margin-bottom: var(--page-header-margin);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -506,8 +506,8 @@ a:hover { opacity: 0.85; }
   border: none;
   border-bottom: 3px solid transparent;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
   color: var(--text-muted);
   transition: all var(--transition-btn);
   white-space: nowrap;
@@ -546,9 +546,9 @@ a:hover { opacity: 0.85; }
   border-radius: var(--radius-btn);
   border: 1px solid var(--border-blue);
   background: var(--white);
-  font-size: 13px;
+  font-size: var(--label-font-size);
   font-weight: 500;
-  color: #555;
+  color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-btn);
   display: inline-flex;
@@ -561,7 +561,7 @@ a:hover { opacity: 0.85; }
 .filter-pill.active {
   background: var(--blue-light);
   border-color: var(--blue);
-  color: #333;
+  color: var(--text);
 }
 
 /* ------------------------------------------------------------
@@ -629,7 +629,7 @@ a:hover { opacity: 0.85; }
 .badge-green  { background: var(--badge-green-bg);    color: var(--badge-green-text); }
 .badge-orange { background: var(--badge-orange-bg);   color: var(--badge-orange-text); }
 .badge-red    { background: var(--badge-red-bg);       color: var(--red); }
-.badge-grey   { background: #f0f0f0;                  color: var(--grey); }
+.badge-grey   { background: var(--grey-light);         color: var(--grey); }
 .badge-purple { background: var(--badge-purple-bg);   color: var(--badge-purple-text); }
 
 /* ------------------------------------------------------------
