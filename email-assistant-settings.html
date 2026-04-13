@@ -81,6 +81,18 @@
     .btn-remove-url::before { content:"\2717"; font-size:12px; }
     .btn-remove-url:hover { background:var(--red-hover-bg); color:var(--red-dark); }
 
+    /* ── PERMISSION MODAL ── */
+    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:500; align-items:center; justify-content:center; }
+    .perm-modal-overlay.open { display:flex; }
+    .perm-modal { background:var(--white); border-radius:12px; max-width:480px; width:90%; padding:28px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+    .perm-modal-title { font-family:var(--heading-font); font-size:20px; font-weight:700; color:var(--text); margin-bottom:12px; }
+    .perm-modal-body { font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; }
+    .perm-modal-actions { display:flex; gap:12px; justify-content:flex-end; }
+    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:8px; padding:10px 22px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--body-font); transition:background 0.15s; }
+    .perm-modal-cancel:hover { background:var(--bg); }
+    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:8px; padding:10px 22px; font-size:14px; font-weight:600; cursor:pointer; font-family:var(--body-font); transition:background 0.15s; }
+    .perm-modal-continue:hover { background:var(--blue-dark); }
+
     @media (max-width: 768px) {
       .connection-item-email { width:100%; flex:1 1 auto; }
       .settings-row-control { flex-wrap:wrap; }
@@ -215,6 +227,18 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Permission modal — populated dynamically by email-assistant-settings-logic.js -->
+  <div class="perm-modal-overlay" id="perm-modal-overlay">
+    <div class="perm-modal">
+      <div class="perm-modal-title" id="perm-modal-title"></div>
+      <div class="perm-modal-body" id="perm-modal-body"></div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="perm-modal-cancel">Cancel</button>
+        <button class="perm-modal-continue" id="perm-modal-continue">Continue</button>
+      </div>
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
