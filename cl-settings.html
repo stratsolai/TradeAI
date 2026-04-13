@@ -23,7 +23,7 @@
     .settings-row-control {
       display: flex;
       gap: 0;
-      border-radius: var(--radius-btn);
+      border-radius: var(--btn-radius);
       overflow: hidden;
       border: 2px solid var(--blue);
       flex-shrink: 0;
@@ -58,13 +58,13 @@
     .connection-status { font-size: var(--status-font-size); color: var(--text-muted); display: inline-block; }
     .connection-status:empty { display: none; }
     .connection-status.connected { color: var(--green); font-weight: 600; }
-    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-btn); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); transition: background var(--transition-btn); }
+    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); transition: background var(--transition-btn); }
     .btn-connect:hover { background: var(--blue-dark); }
     .btn-connect.disconnect { background: var(--red); }
     .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
     .settings-text-input { border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
     .settings-text-input:focus { outline: none; border-color: var(--blue); }
-    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-btn); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--transition-btn); }
+    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--transition-btn); }
     .btn-save-inline:hover { background: var(--blue-dark); }
 
     /* Connection multi-account list — two-row layout via JS-rendered wrappers:
@@ -83,7 +83,7 @@
     .connection-item-lookback { display: inline-flex; align-items: center; flex-shrink: 0; }
 
     /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
-    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: var(--radius-btn); padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background var(--transition-btn), color var(--transition-btn); }
+    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: var(--btn-radius); padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background var(--transition-btn), color var(--transition-btn); }
     .btn-disconnect::before { content: "\2717"; font-size: 14px; }
     .btn-disconnect:hover { background: var(--red-hover-bg); color: var(--red-dark); }
 
@@ -104,11 +104,11 @@
     #dropbox-folder-picker-cancel::before { content: none; }
 
     /* Add buttons — blue outline */
-    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--radius-btn); padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background var(--transition-btn); }
+    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background var(--transition-btn); }
     .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Choose Folders / Choose Site / Choose Sites / Choose Libraries — same look as the add button */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--radius-btn); padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background var(--transition-btn); white-space: nowrap; }
+    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background var(--transition-btn); white-space: nowrap; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-sites:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles.
@@ -118,7 +118,7 @@
     .connection-folder-name { width: 360px; flex: 0 0 360px; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
-    .drive-lookback-select, .email-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: var(--radius-btn); padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
+    .drive-lookback-select, .email-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
     .drive-lookback-select:hover, .email-lookback-select:hover { background-color: var(--blue-light); }
     .drive-lookback-select:focus, .email-lookback-select:focus { outline: none; }
 
@@ -128,7 +128,7 @@
     .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
 
-    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--radius-btn); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--transition-btn); }
+    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--transition-btn); }
     .btn-save-urls:hover { background: var(--blue-dark); }
 
     /* Connection row control — Add buttons align right; lists fill width */
@@ -183,9 +183,9 @@
     .perm-modal-title { font-family:var(--heading-font); font-size:var(--modal-title-font-size); font-weight:var(--modal-title-font-weight); color:var(--text); margin-bottom:12px; }
     .perm-modal-body { font-size:var(--modal-body-font-size); color:var(--text); line-height:var(--modal-body-line-height); margin-bottom:24px; }
     .perm-modal-actions { display:flex; gap:var(--modal-actions-gap); justify-content:flex-end; }
-    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--radius-btn); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--transition-btn); }
+    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--transition-btn); }
     .perm-modal-cancel:hover { background:var(--bg); }
-    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--radius-btn); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--transition-btn); }
+    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--transition-btn); }
     .perm-modal-continue:hover { background:var(--blue-dark); }
 
     @media (max-width: 768px) {

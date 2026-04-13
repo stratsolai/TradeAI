@@ -74,7 +74,7 @@
   --focus-ring:         rgba(26,84,144,0.08); /* Focus ring glow. Subtle blue outline for keyboard focus states */
 
   /* Buttons */
-  --radius-btn:         8px;           /* Button border-radius. Also used for filter pills and inputs */
+  --btn-radius:         8px;           /* Button border-radius. Also used for filter pills and inputs */
   --transition-btn:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
   --btn-padding:        10px 20px;     /* Standard button padding */
   --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
@@ -422,7 +422,7 @@ a:hover { opacity: 0.85; }
   background: var(--blue);
   color: var(--white);
   border: none;
-  border-radius: var(--radius-btn);
+  border-radius: var(--btn-radius);
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
@@ -445,7 +445,7 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   color: var(--blue);
   border: 2px solid var(--blue);
-  border-radius: var(--radius-btn);
+  border-radius: var(--btn-radius);
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
@@ -469,7 +469,7 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   color: var(--orange);
   border: 2px solid var(--orange);
-  border-radius: var(--radius-btn);
+  border-radius: var(--btn-radius);
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
@@ -543,7 +543,7 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .filter-pill {
   padding: 6px 16px;
-  border-radius: var(--radius-btn);
+  border-radius: var(--btn-radius);
   border: 1px solid var(--border-blue);
   background: var(--white);
   font-size: var(--label-font-size);
@@ -741,7 +741,7 @@ a:hover { opacity: 0.85; }
   font-size: var(--btn-font-size);
   font-weight: var(--btn-font-weight);
   padding: 10px 22px;
-  border-radius: var(--radius-btn);
+  border-radius: var(--btn-radius);
   cursor: pointer;
   transition: background var(--transition-btn);
 }
