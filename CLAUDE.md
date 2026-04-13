@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 11 2026
+# Updated: April 13 2026
 
 ---
 
@@ -195,17 +195,11 @@ LAYOUT-STANDARD.md standard, OAuth connection fixed and
 confirmed working for Gmail and Outlook.
 
 Outstanding before sign-off:
-- Rebuild email-assistant.html with per-account tab
-  switcher — one tab per connected account
-  (Gmail/Outlook), each tab showing its own category
-  filter pills and email list.
-- Build Flag/Handled/Days-back features per
-  StaxAI-Email-Assistant-Flag-Handled-Spec-v1_0.
-- Confirm integration test end-to-end with real Gmail
-  and Outlook accounts
-- Stylesheet rollout for email-assistant.html — CSS
-  variable rollout partially done, structural cleanup
-  complete, topbar.js added
+- Stylesheet comparison pass — confirm no remaining
+  hardcoded values and nothing missed against
+  staxai-auth.css
+- Integration test end-to-end with real Gmail and
+  Outlook accounts
 
 ### Task 21 — Scan Frequency Scheduling
 
@@ -353,6 +347,11 @@ spec is written.
   api/sharepoint-import.js (API copy, intentional — Vercel
   esbuild cannot resolve CJS modules from ES module API
   files at build time). Not a bug.
+- shared-utils.js must be loaded before any logic file on
+  every authenticated page — currently only loaded on
+  email-assistant.html and content-library.html. All other
+  authenticated pages need it added during their stylesheet
+  rollout.
 
 ---
 
@@ -372,8 +371,8 @@ is complete and confirmed working.
 | 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
 | 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
 | 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
-| 10   | Stylesheet rollout — email-assistant.html and email-assistant-settings.html. In progress April 2026. |
-| 11   | Task 20 — Email Assistant functional review, account switcher, Flag/Handled/Days-back build. Blocked pending Task 22. |
+| 10   | ~~Stylesheet rollout — email-assistant.html and email-assistant-settings.html.~~ **COMPLETE** |
+| 11   | Task 20 — Email Assistant stylesheet comparison pass and integration test. |
 | 12   | ~~Task 22 — EA scan infrastructure rebuild.~~ **COMPLETE**  |
 | 13   | ~~Task 23 — Internal API security shared secret model.~~ **COMPLETE** |
 | 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
@@ -435,7 +434,6 @@ rebuilt during the stylesheet rollout:
 - 60+ inline onclick handlers across post-login pages
 - 450+ hardcoded CSS values across post-login pages
 - Duplicated auth check pattern across 10+ files
-- Duplicated escapeHtml() across 5 files
 - Duplicated account dropdown JS across 10+ files
 - panel.html / panel-auth.html shared renderPanel() duplication
 - Logic files not following window.*_LOGIC + init() pattern
@@ -760,9 +758,9 @@ Industry-agnostic (when editing AI prompts or data models):
 |                                 | build. Each requires a full spec    |
 |                                 | before build begins.                |
 | StaxAI-Email-Assistant-Flag-   | Email flagging with Gmail/Outlook   |
-| Handled-Spec-v1_0              | write-back, handled items soft      |
-|                                 | archive with unmark, days-back      |
-|                                 | scan coverage control. Approved     |
-|                                 | April 2026, awaiting build.         |
+| Handled-Spec-v1_1              | write-back, dismiss/restore,        |
+|                                 | days-back scan coverage control.    |
+|                                 | Approved April 2026. Build          |
+|                                 | complete.                           |
 | StaxAI-Email-Scan-Cursor-      | Email scan cursor batch processing  |
 | Spec-v1_0                      | spec. Build complete April 2026.    |
