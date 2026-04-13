@@ -1,334 +1,187 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="/manifest.json">
-  <title>Email Assistant &mdash; StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/staxai-auth.css">
-  <style>
-    /* -----------------------------------------------------------------------
-       Page layout
-    ----------------------------------------------------------------------- */
-    .ea-page {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 32px 24px 64px;
-    }
-    .ea-page-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .ea-page-title {
-      font-family: var(--heading-font);
-      font-size: 36px;
-      font-weight: 800;
-      color: #1a3a5c;
-    }
-    .ea-scan-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    #ea-scan-btn {
-      background: var(--blue);
-      color: var(--white);
-      border: none;
-      font-family: var(--body-font);
-      font-size: 15px;
-      font-weight: 700;
-      padding: 10px 24px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #ea-scan-btn:hover { background: #3d5c78; }
-    #ea-scan-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<title>Email Assistant &mdash; StaxAI</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* ─── MAIN LAYOUT ─── */
+    .container { max-width: 1400px; margin: 0 auto; padding: 32px 24px; }
 
-    /* -----------------------------------------------------------------------
-       Connection status
-    ----------------------------------------------------------------------- */
-    #ea-connection-status { margin-bottom: 20px; }
-    .ea-connect-prompt {
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      border-left: 3px solid var(--orange);
-      border-radius: 8px;
-      padding: 14px 18px;
-      color: #475569;
-      font-size: 14px;
-    }
-    .ea-connected-badge {
-      display: inline-block;
-      background: rgba(26,84,144,0.10);
-      border: 1px solid rgba(26,84,144,0.25);
-      border-radius: 20px;
-      padding: 5px 14px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1a3a5c;
-    }
+    .stat-card[data-stat] { cursor: pointer; }
 
-    /* -----------------------------------------------------------------------
-       Category tabs
-    ----------------------------------------------------------------------- */
-    #ea-category-tabs {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-bottom: 20px;
-    }
-    .ea-tab {
-      background: var(--white);
-      border-width: 1px 1px 1px 4px;
-      border-style: solid;
-      border-color: #e0e0e0 #e0e0e0 #e0e0e0 #1A5490;
-      border-radius: 10px;
-      color: var(--text);
-      font-family: var(--body-font);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 16px;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-      white-space: nowrap;
-    }
-    .ea-tab:hover { opacity: 0.85; }
-    .ea-tab.active { font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .ea-tab[data-category="all"]    { border-left-color: #1A5490; }
-    .ea-tab[data-category="urgent"]    { border-left-color: var(--orange); }
-    .ea-tab[data-category="leads"]     { border-left-color: var(--green); }
-    .ea-tab[data-category="enquiries"] { border-left-color: var(--purple); }
-    .ea-tab[data-category="jobs"]      { border-left-color: var(--teal); }
-    .ea-tab[data-category="invoices"]  { border-left-color: #e8500a; }
-    .ea-tab[data-category="suppliers"] { border-left-color: #1A5490; }
-    .ea-tab[data-category="low"]       { border-left-color: #64748b; }
+    .page-header { margin-bottom: 28px; }
+    .page-title { font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .page-subtitle { color: var(--text-muted); font-size: 15px; }
 
-    /* -----------------------------------------------------------------------
-       Error message
-    ----------------------------------------------------------------------- */
-    #ea-error-msg {
-      display: none;
-      background: rgba(196,98,42,0.15);
-      border: 1px solid rgba(196,98,42,0.35);
-      border-radius: 8px;
-      padding: 12px 16px;
-      color: rgba(255,255,255,0.85);
-      font-size: 14px;
-      margin-bottom: 16px;
+    /* ─── EA STATUS / CATEGORY PILLS ─── */
+    .ea-status-row { display:flex; gap:8px; padding:16px 0; align-items:center; }
+    .ea-status-btn {
+      display:flex; align-items:center; padding:10px 16px;
+      border:1px solid rgba(0,0,0,0.10); border-left-width:4px;
+      border-radius:10px; background:var(--white); color:var(--text-secondary);
+      font-size:13px; font-family:inherit; font-weight:600;
+      cursor:pointer; transition:opacity 0.15s;
     }
-    /* -----------------------------------------------------------------------
-       Email feed
-    ----------------------------------------------------------------------- */
-    #ea-email-feed { display: flex; flex-direction: column; gap: 12px; }
-    .ea-empty {
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 40px 24px;
-      text-align: center;
-      color: #64748b;
-      font-size: 15px;
+    .ea-status-btn:hover { opacity:0.85; }
+    .ea-status-btn.active { background:var(--active-bg); color:inherit; font-weight:700; }
+    .ea-status-btn[data-category="all"]       { border-left-color:var(--blue); }
+    .ea-status-btn[data-category="urgent"]    { border-left-color:var(--red); }
+    .ea-status-btn[data-category="leads"]     { border-left-color:var(--green); }
+    .ea-status-btn[data-category="enquiries"] { border-left-color:var(--purple); }
+    .ea-status-btn[data-category="jobs"]      { border-left-color:var(--teal); }
+    .ea-status-btn[data-category="invoices"]  { border-left-color:var(--orange); }
+    .ea-status-btn[data-category="suppliers"] { border-left-color:var(--blue-dark); }
+    .ea-status-btn[data-category="low"]       { border-left-color:var(--grey); }
+    .ea-status-btn[data-category="handled"]   { border-left-color:var(--grey-accent); }
+
+    /* ─── FILTER ROW ─── */
+    .ea-filter-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; flex-wrap:wrap; }
+    .ea-clear-filters-btn { border-width:1px; border-style:solid; border-color:rgba(0,0,0,0.10); border-radius:10px; padding:10px 10px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; display:flex; align-items:center; }
+    .ea-clear-filters-btn:hover { background:var(--red-hover-bg); }
+    .ea-scan-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--blue); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-scan-btn:hover { background:var(--blue-light); }
+    .ea-scan-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .ea-handle-all-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--green-dark); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-handle-all-btn:hover { background:var(--green-hover-bg); }
+    .ea-search-input {
+      width:240px; max-width:240px; padding:10px 14px; border:1px solid var(--border);
+      border-radius:8px; font-size:14px; font-family:inherit;
+      box-sizing:border-box; background:var(--white); color:var(--text);
     }
+    .ea-search-input:focus { outline:none; border-color:var(--blue); }
+
+    /* ─── DATE FILTER ─── */
+    .ea-date-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; flex-wrap:wrap; }
+    .ea-date-quick-btn { border-width:1px; border-style:solid; border-color:var(--border); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:all 0.15s; }
+    .ea-date-quick-btn:hover { background:var(--blue-light); }
+    .ea-date-quick-btn.active { background:var(--active-bg); border-color:var(--blue); color:var(--text); font-weight:700; }
+    .ea-date-input { width:140px; padding:8px 12px; border:1px solid var(--border); border-radius:8px; font-size:13px; font-family:inherit; background:var(--white); color:var(--text); box-sizing:border-box; }
+    .ea-date-input:focus { outline:none; border-color:var(--blue); }
+    .ea-date-label { font-size:12px; font-weight:600; color:var(--text-muted); }
+
+    /* ─── BULK BAR ─── */
+    .ea-bulk-bar {
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      background:var(--bg); border:1px solid var(--border); border-radius:8px;
+      padding:10px 16px; margin-bottom:16px;
+    }
+    .ea-bulk-label { font-size:13px; color:var(--text-secondary); }
+    .ea-bulk-handle-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--green-dark); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-bulk-handle-btn:hover { background:var(--green-hover-bg); }
+
+    /* ─── EMAIL LIST ─── */
+    .ea-list { display:flex; flex-direction:column; gap:12px; }
+
+    /* ─── EMAIL CARD ─── */
     .ea-card {
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 18px 20px;
-      transition: border-color 0.2s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background:var(--white); border-radius:12px;
+      border-left:4px solid var(--blue);
+      box-shadow:0 2px 8px rgba(0,0,0,0.07);
+      overflow:hidden;
     }
-    .ea-card-linked { cursor: pointer; }
-    .ea-card-linked:hover { border-color: rgba(196,98,42,0.50); box-shadow: 0 2px 8px rgba(196,98,42,0.12); }
     .ea-card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
+      display:flex; align-items:center; gap:10px;
+      padding:14px 16px; flex-wrap:wrap;
     }
-    .ea-sender { display: flex; flex-direction: column; gap: 2px; }
-    .ea-sender-name { font-weight: 700; font-size: 14px; color: #1a3a5c; }
-    .ea-sender-email { font-size: 12px; color: #64748b; }
-    .ea-card-meta { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .ea-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 12px;
-      background: #e8f0f8;
-      color: #1a3a5c;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+    .ea-checkbox { width:16px; height:16px; cursor:pointer; flex-shrink:0; }
+    .ea-flag-btn { background:none; border:none; cursor:pointer; font-size:16px; padding:0; flex-shrink:0; transition:opacity 0.15s; }
+    .ea-flag-btn:hover { opacity:0.7; }
+    .ea-sender-name { font-size:15px; font-weight:600; color:var(--text); flex:1; min-width:100px; }
+    .ea-source-badge {
+      padding:3px 10px; border-radius:20px; font-size:12px;
+      background:var(--bg); color:var(--text-muted); white-space:nowrap;
     }
-    .ea-badge-urgent { background: rgba(196,98,42,0.15); color: var(--orange); }
-    .ea-time { font-size: 12px; color: #64748b; }
-    .ea-subject { font-weight: 600; font-size: 15px; color: #1a3a5c; margin-bottom: 8px; }
-    .ea-summary { font-size: 14px; color: #475569; line-height: 1.55; margin-bottom: 12px; }
-    .ea-card-footer { display: flex; align-items: center; justify-content: space-between; }
-    .ea-handled-btn {
-      background: none;
-      border: 1px solid #cbd5e1;
-      color: #64748b;
-      font-family: var(--body-font);
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 12px;
-      border-radius: 6px;
-      cursor: pointer;
+    .ea-category-badge {
+      padding:3px 10px; border-radius:20px; font-size:12px;
+      background:var(--blue-tint); color:var(--blue); white-space:nowrap; font-weight:500;
     }
-    .ea-handled-btn:hover { border-color: #94a3b8; color: #1a3a5c; }
-    .ea-open-hint { font-size: 12px; color: var(--orange); }
+    .ea-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
+    .ea-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
+    .ea-handled-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--green-dark); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-handled-btn:hover { background:var(--green-hover-bg); }
+    .ea-unmark-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--grey-accent); border-radius:10px; padding:10px 16px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-unmark-btn:hover { background:var(--red-hover-bg); }
 
-    /* -----------------------------------------------------------------------
-       Email detail view
-    ----------------------------------------------------------------------- */
+    /* ─── EMAIL SUBJECT LINE ─── */
+    .ea-subject { font-size:15px; font-weight:600; color:var(--text); padding:0 16px; }
+
+    /* ─── PREVIEW / EXPAND ─── */
+    .ea-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
+    .ea-expand-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:12px; padding:0; flex-shrink:0; }
+    .ea-body-preview { font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+
+    /* ─── DETAIL VIEW ─── */
     .ea-detail {
-      background: var(--white);
-      border: 1px solid #e2e8f0;
-      border-radius: 10px;
-      padding: 24px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      background:var(--white); border:1px solid var(--border);
+      border-radius:12px; border-left:4px solid var(--blue);
+      padding:24px; box-shadow:0 2px 8px rgba(0,0,0,0.07);
     }
-    .ea-detail-topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 12px;
-    }
-    .ea-detail-back-btn {
-      background: none;
-      border: 1px solid #cbd5e1;
-      color: var(--text);
-      font-family: var(--body-font);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .ea-detail-back-btn:hover { border-color: #94a3b8; }
-    .ea-detail-open-btn {
-      display: inline-block;
-      background: var(--blue);
-      color: var(--white);
-      font-family: var(--body-font);
-      font-size: 13px;
-      font-weight: 600;
-      padding: 6px 16px;
-      border-radius: 6px;
-      text-decoration: none;
-    }
-    .ea-detail-open-btn:hover { background: #3d5c78; }
-    .ea-detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
-      margin-bottom: 14px;
-      flex-wrap: wrap;
-    }
-    .ea-detail-subject {
-      font-weight: 700;
-      font-size: 18px;
-      color: #1a3a5c;
-      margin-bottom: 12px;
-    }
-    .ea-detail-summary {
-      font-size: 14px;
-      color: #475569;
-      line-height: 1.55;
-      margin-bottom: 16px;
-      padding: 12px 14px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-    }
-    .ea-detail-body {
-      font-size: 14px;
-      color: var(--text);
-      line-height: 1.65;
-      white-space: pre-wrap;
-      word-break: break-word;
-      padding: 16px;
-      background: #fafbfc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      max-height: 500px;
-      overflow-y: auto;
-      margin-bottom: 16px;
-    }
-    .ea-detail-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
+    .ea-detail-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; }
+    .ea-detail-back-btn { display:flex; align-items:center; border:1px solid var(--border); border-radius:10px; padding:8px 14px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-detail-back-btn:hover { background:var(--bg); }
+    .ea-detail-open-btn { display:inline-block; background:var(--blue); color:var(--white); font-family:var(--body-font); font-size:13px; font-weight:600; padding:8px 16px; border-radius:10px; text-decoration:none; }
+    .ea-detail-open-btn:hover { opacity:0.85; }
+    .ea-detail-subject { font-weight:700; font-size:18px; color:var(--text); margin-bottom:12px; }
+    .ea-detail-summary { font-size:14px; color:var(--text-secondary); line-height:1.55; margin-bottom:16px; padding:12px 14px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:8px; }
+    .ea-detail-body { font-size:14px; color:var(--text); line-height:1.65; white-space:pre-wrap; word-break:break-word; padding:16px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:8px; max-height:500px; overflow-y:auto; margin-bottom:16px; }
+    .ea-detail-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 
-    /* -----------------------------------------------------------------------
-       Responsive
-    ----------------------------------------------------------------------- */
-    @media (max-width: 600px) {
-      .ea-page { padding: 20px 16px 48px; }
-      .ea-page-header { flex-direction: column; align-items: flex-start; }
+    /* ─── STATES ─── */
+    .ea-loading { text-align:center; padding:40px; color:var(--text-muted); font-size:14px; }
+    .ea-empty { text-align:center; padding:40px; color:var(--text-disabled); font-size:14px; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      .container { padding: 20px 16px; }
     }
-  </style>
+</style>
+<link rel="stylesheet" href="/staxai-auth.css">
 </head>
 <body>
 
-  <nav class="topbar">
-    <a href="/" class="topbar-logo">
-      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
-    </a>
-    <div class="topbar-nav">
-      <a href="/dashboard">Dashboard</a>
-    </div>
-    <div class="topbar-spacer"></div>
-    <div class="topbar-right">
-      <a class="topbar-nav-link" href="/email/settings">Settings</a>
-      <div class="topbar-account-wrap">
-        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
-        <div class="account-dropdown" id="account-dropdown">
-          <a href="/account" class="account-dropdown-item">Account Management</a>
-          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
-        </div>
+<nav class="topbar">
+  <a href="/" class="topbar-logo">
+    <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+  </a>
+  <div class="topbar-nav"><a href="/dashboard">Dashboard</a></div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-right">
+    <a href="/email/settings" class="topbar-nav-link">Settings</a>
+    <div class="topbar-account-wrap">
+      <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+      <div class="account-dropdown" id="account-dropdown">
+        <a href="/account" class="account-dropdown-item">Account Management</a>
+        <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
       </div>
-    </div>
-  </nav>
-
-  <!-- Main page -->
-  <div class="ea-page">
-    <div class="ea-page-header">
-      <h1 class="ea-page-title">Email Assistant</h1>
-      <div class="ea-scan-row">
-        <button id="ea-scan-btn">Scan Now</button>
-      </div>
-    </div>
-    <div id="ea-connection-status"></div>
-    <div id="ea-error-msg"></div>
-    <div id="ea-category-tabs"></div>
-    <div id="ea-email-feed">
-      <div class="ea-empty">Connect your email and tap Scan Now to get started.</div>
     </div>
   </div>
+</nav>
 
-  <!-- Scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabase-client.js"></script>
-  <script src="/auth.js"></script>
-  <script src="/topbar.js"></script>
-  <script src="/pwa.js"></script>
-  <script src="/email-assistant-logic.js?v=2"></script>
+<div class="container">
+  <div class="page-header">
+    <h1 class="page-title">Email Assistant</h1>
+    <p class="page-subtitle">Your Gmail and Outlook inbox &mdash; summarised and organised.</p>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-card" data-stat="total"><div class="stat-value" id="stat-total">0</div><div class="stat-label">Total Emails</div></div>
+    <div class="stat-card orange" data-stat="unhandled"><div class="stat-value" id="stat-unhandled">0</div><div class="stat-label">Unhandled</div></div>
+    <div class="stat-card red" data-stat="urgent"><div class="stat-value" id="stat-urgent">0</div><div class="stat-label">Urgent</div></div>
+  </div>
+
+  <div id="ea-account-tabs" class="tab-nav"></div>
+  <div id="ea-account-panels"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script src="/topbar.js"></script>
+<script src="/pwa.js"></script>
+<script src="/email-assistant-logic.js?v=3"></script>
 
 </body>
 </html>
