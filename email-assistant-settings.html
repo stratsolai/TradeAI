@@ -63,8 +63,8 @@
     .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay-bg); z-index:500; align-items:center; justify-content:center; }
     .perm-modal-overlay.open { display:flex; }
     .perm-modal { background:var(--white); border-radius:var(--card-radius); max-width:480px; width:90%; padding:28px 24px; box-shadow:var(--modal-shadow); }
-    .perm-modal-title { font-family:var(--heading-font); font-size:20px; font-weight:700; color:var(--text); margin-bottom:12px; }
-    .perm-modal-body { font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; }
+    .perm-modal-title { font-family:var(--heading-font); font-size:var(--heading-lg-size); font-weight:var(--heading-lg-weight); color:var(--text); margin-bottom:12px; }
+    .perm-modal-body { font-size:var(--btn-font-size); color:var(--text); line-height:1.6; margin-bottom:24px; }
     .perm-modal-actions { display:flex; gap:12px; justify-content:flex-end; }
     .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
     .perm-modal-cancel:hover { background:var(--bg); }
