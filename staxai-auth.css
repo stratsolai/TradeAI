@@ -73,28 +73,46 @@
   --modal-shadow:       0 8px 32px rgba(0,0,0,0.18); /* Modal drop shadow. Strong elevation for modal dialogs */
   --focus-ring:         rgba(26,84,144,0.08); /* Focus ring glow. Subtle blue outline for keyboard focus states */
 
+  /* Typography — fonts, sizes, weights, line-heights, letter-spacing */
+  --heading-font:       'Barlow Condensed', sans-serif; /* Heading typeface. All h1-h6, page titles, card titles */
+  --body-font:          'DM Sans', sans-serif; /* Body typeface. All body text, buttons, inputs, labels */
+  --body-font-size:     14px;          /* Body text font size. Base size for all content */
+  --body-line-height:   1.6;           /* Body text line height. Base line height for all content */
+  --page-title-font-size: 28px;        /* Page title and h1 font size */
+  --heading-lg-size:    20px;          /* Modal and settings card heading font size */
+  --heading-lg-weight:  700;           /* Modal and settings card heading font weight. Bold */
+  --section-title-font-size: 15px;     /* Section title font size within cards and panels */
+  --section-title-font-weight: 700;    /* Section title font weight. Bold */
+  --font-weight-semibold: 600;         /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
+  --label-font-weight:  600;           /* Form label font weight */
+  --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
+  --input-font-size:    14px;          /* Form input text size */
+  --label-font-size:    13px;          /* Form label font size */
+  --status-font-size:   13px;          /* Status text and search input font size */
+  --note-font-size:     13px;          /* Note and hint text font size */
+  --badge-font-size:    12px;          /* Badge text size. Also used for stat labels and section labels */
+  --stat-value-font-size: 22px;        /* Stat tile value font size */
+  --modal-body-font-size: 14px;        /* Modal body text font size */
+  --note-line-height:   1.5;           /* Line height for note and hint blocks */
+  --modal-body-line-height: 1.6;       /* Modal body line height */
+  --letter-spacing-label: 0.05em;      /* Letter spacing for uppercase section labels and stat labels */
+
   /* Buttons */
   --btn-radius:         8px;           /* Button border-radius. Also used for filter pills and inputs */
   --btn-transition:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
   --btn-padding:        10px 20px;     /* Standard button padding */
-  --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
-  --font-weight-semibold:    600;           /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
   --btn-gap:            6px;           /* Button icon-to-text gap */
 
   /* Inputs & Forms */
   --input-border-width: 1.5px;         /* Form input border thickness */
   --input-padding:      10px 14px;     /* Form input internal padding */
   --input-radius:       8px;           /* Form input border-radius */
-  --input-font-size:    14px;          /* Form input text size */
-  --label-font-size:    13px;          /* Form label font size */
-  --label-font-weight:  600;           /* Form label font weight */
   --label-margin-bottom: 6px;          /* Gap below form labels */
   --textarea-min-height: 80px;         /* Minimum height for textarea fields */
   --checkbox-size:      16px;          /* Checkbox width and height */
 
   /* Badges */
   --badge-radius:       20px;          /* Badge border-radius. Fully rounded pill shape */
-  --badge-font-size:    12px;          /* Badge text size. Also used for stat labels and section labels */
 
   /* Cards */
   --card-radius:        12px;          /* Card border-radius. Settings cards, main content cards */
@@ -107,30 +125,12 @@
   --page-padding-mobile: 20px 16px;    /* Page content padding on mobile viewports */
   --page-header-margin: 28px;          /* Bottom margin below page header block */
   --settings-page-padding: 40px 24px 80px; /* Settings page overall padding including bottom breathing room */
-  --letter-spacing-label: 0.05em;      /* Letter spacing for uppercase section labels and stat labels */
   --loading-padding:    40px;          /* Padding for loading spinner containers */
   --empty-padding:      40px;          /* Padding for empty-state placeholder blocks */
-  --status-font-size:   13px;          /* Status text and search input font size */
-  --note-font-size:     13px;          /* Note and hint text font size */
-  --note-line-height:   1.5;           /* Line height for note and hint blocks */
-  --section-title-font-size: 15px;     /* Section title font size within cards and panels */
-  --section-title-font-weight: 700;    /* Section title font weight. Bold */
-  --body-font-size:     14px;          /* Body text font size. Base size for all content */
-  --body-line-height:   1.6;           /* Body text line height. Base line height for all content */
-  --stat-value-font-size: 22px;        /* Stat tile value font size */
-  --page-title-font-size: 28px;        /* Page title and h1 font size */
 
   /* Modal */
   --modal-padding:      28px 24px;     /* Internal padding for modal dialogs */
-  --heading-lg-size: 20px;       /* Modal and settings card heading font size */
-  --heading-lg-weight: 700;      /* Modal and settings card heading font weight. Bold */
-  --modal-body-font-size: 14px;        /* Modal body text font size */
-  --modal-body-line-height: 1.6;       /* Modal body line height */
-  --actions-gap:  12px;          /* Gap between action buttons in modals and settings footers */
-
-  /* Typography */
-  --heading-font:       'Barlow Condensed', sans-serif; /* Heading typeface. All h1-h6, page titles, card titles */
-  --body-font:          'DM Sans', sans-serif; /* Body typeface. All body text, buttons, inputs, labels */
+  --actions-gap:        12px;          /* Gap between action buttons in modals and settings footers */
 }
 
 /* ------------------------------------------------------------
@@ -558,7 +558,7 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   11. FORM INPUTS & SEARCH FIELDS
+   10. FORM INPUTS & SEARCH FIELDS
    ------------------------------------------------------------ */
 .form-input {
   width: 100%;
@@ -594,7 +594,7 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   12. SECTION LABELS
+   11. SECTION LABELS
    ------------------------------------------------------------ */
 .section-label {
   font-family: var(--body-font);
@@ -607,7 +607,7 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   13. BADGES & STATUS LABELS (.badge)
+   12. BADGES & STATUS LABELS (.badge)
    ------------------------------------------------------------ */
 .badge {
   display: inline-block;
@@ -626,7 +626,7 @@ a:hover { opacity: 0.85; }
 .badge-purple { background: var(--badge-purple-bg);   color: var(--badge-purple-text); }
 
 /* ------------------------------------------------------------
-   14. EMPTY STATES
+   13. EMPTY STATES
    ------------------------------------------------------------ */
 .empty-state {
   text-align: center;
@@ -655,11 +655,10 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   15. SETTINGS CARD (.settings-card)
+   14. SETTINGS CARD (.settings-card)
    ------------------------------------------------------------ */
 .settings-card {
   width: 100%;
-  box-sizing: border-box;
   background: var(--white);
   border: 1px solid var(--border);
   border-left: 4px solid var(--blue);
