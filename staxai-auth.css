@@ -63,7 +63,7 @@
   --badge-orange-text:  #856404;       /* Orange badge text. Dark amber for contrast on badge-orange-bg */
   --badge-purple-bg:    #e8d5f5;       /* Purple badge background. Category-related badge fill */
   --badge-purple-text:  #6a1b9a;       /* Purple badge text. Dark purple for contrast on badge-purple-bg */
-  --badge-red-bg:       #f8d7da;       /* Red badge background. Error/rejection badge fill */
+  --badge-red-bg:       #fdecea;       /* Red badge background. Matches --rejected-bg for consistency */
   --badge-red-text:     #721c24;       /* Red badge text. Dark red for contrast on badge-red-bg */
 
   /* Effects */
@@ -628,7 +628,7 @@ a:hover { opacity: 0.85; }
 .badge-blue   { background: var(--blue-light);        color: var(--blue); }
 .badge-green  { background: var(--badge-green-bg);    color: var(--badge-green-text); }
 .badge-orange { background: var(--badge-orange-bg);   color: var(--badge-orange-text); }
-.badge-red    { background: #fdecea;                  color: var(--red); }
+.badge-red    { background: var(--badge-red-bg);       color: var(--red); }
 .badge-grey   { background: #f0f0f0;                  color: var(--grey); }
 .badge-purple { background: var(--badge-purple-bg);   color: var(--badge-purple-text); }
 
