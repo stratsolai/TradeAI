@@ -197,9 +197,12 @@
           <div class="settings-card-hint">Choose which categories are active. Emails are sorted into these categories by AI.</div>
         </div>
         <div class="settings-rows" id="categories-grid"></div>
-        <div class="settings-add-row" style="display:flex;align-items:center;gap:12px;padding:16px 24px 8px 24px;max-width:66%;">
-          <input type="text" id="category-custom-input" class="settings-text-input" style="flex:1;min-width:0" placeholder="Add a custom category...">
-          <button type="button" id="add-category-btn" class="btn-add-connection">+ Add</button>
+        <div class="settings-add-row" style="display:flex;flex-direction:column;gap:8px;padding:16px 24px 8px 24px;max-width:66%;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <input type="text" id="category-custom-input" class="settings-text-input" style="flex:1;min-width:0" placeholder="Category name...">
+            <button type="button" id="add-category-btn" class="btn-add-connection">+ Add</button>
+          </div>
+          <input type="text" id="category-custom-desc" class="settings-text-input" style="width:100%" placeholder="Description (required) — tells the AI what belongs in this category">
         </div>
         <div class="settings-footer">
           <button type="button" class="btn-save" id="save-categories-btn">Save</button>
