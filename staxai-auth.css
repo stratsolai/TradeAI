@@ -49,6 +49,12 @@
   --purple-light:       #f5eeff;
   --purple-hover-bg:    #F3EEF9;
   --teal-light:         #E0F7FA;
+  --archived-bg:        #ECEFF1;
+  --pill-text:          #000;
+  --rejected-bg:        #fdecea;
+  --warning:            #FFC107;
+  --warning-light:      #FFF8E1;
+  --grey-light:         #f0f0f0;
 
   /* Badge-specific colours (separate from core vars) */
   --badge-green-bg:     #d4edda;
@@ -92,6 +98,7 @@
 
   /* Cards */
   --card-radius:        12px;
+  --radius-thumbnail:   4px;
 
   /* Layout & Spacing */
   --page-padding:       32px 32px;
@@ -108,6 +115,10 @@
   --note-line-height:   1.5;
   --section-title-font-size: 15px;
   --section-title-font-weight: 700;
+  --body-font-size:     14px;
+  --body-line-height:   1.6;
+  --stat-value-font-size: 22px;
+  --page-title-font-size: 28px;
 
   /* Modal */
   --modal-padding:      28px 24px;
