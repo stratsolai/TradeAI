@@ -66,7 +66,7 @@ window.EA_SETTINGS = {
       if (res.data) self._settings = res.data;
     } catch (e) {}
 
-    self._categories = Array.isArray(self._settings.categories) ? self._settings.categories : [
+    var DEFAULT_CATS = [
       { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
       { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
       { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
@@ -79,6 +79,30 @@ window.EA_SETTINGS = {
       { id: 'personal', label: 'Personal', description: 'Personal emails not directly related to business operations', enabled: true },
       { id: 'other', label: 'Other', description: 'Emails that do not clearly fit any other category', enabled: true }
     ];
+    var defaultIds = DEFAULT_CATS.map(function(c) { return c.id; });
+
+    if (Array.isArray(self._settings.categories) && self._settings.categories.length > 0) {
+      // Build cleaned list: defaults first (preserving saved enabled state), then any valid custom categories
+      var savedById = {};
+      self._settings.categories.forEach(function(c) { if (c && c.id) savedById[c.id] = c; });
+      var cleaned = DEFAULT_CATS.map(function(def) {
+        var saved = savedById[def.id];
+        return { id: def.id, label: def.label, description: def.description, enabled: saved ? saved.enabled : def.enabled };
+      });
+      // Discard any saved categories not in the default list
+      var removed = self._settings.categories.filter(function(c) { return c && c.id && defaultIds.indexOf(c.id) === -1; });
+      if (removed.length > 0) {
+        console.log('[EA Settings] Removed obsolete categories:', removed.map(function(c) { return c.id; }).join(', '));
+      }
+      self._categories = cleaned;
+      // Save cleaned list back to Supabase if any were removed
+      if (removed.length > 0) {
+        self._settings.categories = cleaned;
+        self._saveSettings();
+      }
+    } else {
+      self._categories = DEFAULT_CATS;
+    }
 
     self._renderScanFrequency();
     self._renderCategories();
