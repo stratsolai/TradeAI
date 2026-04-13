@@ -634,14 +634,18 @@ window.EA_LOGIC = {
         '<span class="ea-sender-name">' + sender + '</span>' +
         '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
         '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
-        '<span class="ea-date">' + dateStr + '</span>' +
+        '<div class="ea-card-preview-row">' +
+          '<span class="ea-subject-inline">' + subject + '</span>' +
+        '</div>' +
+        '<div class="ea-card-preview-row">' +
+          '<span class="ea-body-preview">' + summary + '</span>' +
+        '</div>' +
         '<div class="ea-card-btns">' +
+          '<span class="ea-upload-date">' + dateStr + '</span>' +
           '<button class="ea-source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>' +
           actionBtn +
         '</div>' +
       '</div>' +
-      '<div class="ea-subject">' + subject + '</div>' +
-      '<div class="ea-summary">' + summary + '</div>' +
       '<div class="ea-section" id="ea-source-' + id + '" style="display:none">' +
         '<div class="ea-section-head"><span>Source</span></div>' +
         '<div class="ea-source-detail">' + sourceDetailHtml + '</div>' +
