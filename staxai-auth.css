@@ -339,13 +339,6 @@ a:hover { opacity: 0.85; }
   opacity: 1;
 }
 
-.account-dropdown-email {
-  padding: 4px 16px 12px;
-  color: #64748b;
-  font-size: var(--label-font-size);
-  border-bottom: 1px solid var(--border);
-}
-
 /* ------------------------------------------------------------
    5. CARDS
    ------------------------------------------------------------ */
