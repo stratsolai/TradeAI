@@ -210,8 +210,8 @@ window.CL_SETTINGS_LOGIC = {
 
     var gmailBtn = document.getElementById('add-gmail-btn');
     var outlookBtn = document.getElementById('add-outlook-btn');
-    if (gmailBtn) { gmailBtn.onclick = function () { self._startOAuth('gmail'); }; }
-    if (outlookBtn) { outlookBtn.onclick = function () { self._startOAuth('microsoft'); }; }
+    if (gmailBtn) { gmailBtn.onclick = function () { self._showCLConnPermModal('gmail'); }; }
+    if (outlookBtn) { outlookBtn.onclick = function () { self._showCLConnPermModal('microsoft'); }; }
   },
 
   _renderDriveList: function () {
@@ -239,7 +239,7 @@ window.CL_SETTINGS_LOGIC = {
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var driveBtn = document.getElementById('add-drive-btn');
-    if (driveBtn) { driveBtn.onclick = function () { self._startCLOAuth('google-drive'); }; }
+    if (driveBtn) { driveBtn.onclick = function () { self._showCLConnPermModal('google-drive'); }; }
   },
 
   _renderWebsiteList: function () {
@@ -828,7 +828,7 @@ window.CL_SETTINGS_LOGIC = {
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-onedrive-btn');
-    if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('onedrive'); }; }
+    if (addBtn) { addBtn.onclick = function () { self._showCLConnPermModal('onedrive'); }; }
   },
 
   _checkOnedriveOAuthReturn: async function () {
@@ -1016,7 +1016,7 @@ window.CL_SETTINGS_LOGIC = {
         (sites.length > 0 ? '<div class="connection-folders-list">' + sitesHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-sharepoint-btn');
-    if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('sharepoint'); }; }
+    if (addBtn) { addBtn.onclick = function () { self._showCLConnPermModal('sharepoint'); }; }
   },
 
   _checkSharepointOAuthReturn: async function () {
@@ -1315,7 +1315,7 @@ window.CL_SETTINGS_LOGIC = {
         (folders.length > 0 ? '<div class="connection-folders-list">' + folderHtml + '</div>' : '');
     }).join('');
     var addBtn = document.getElementById('add-dropbox-btn');
-    if (addBtn) { addBtn.onclick = function () { self._startCLOAuth('dropbox'); }; }
+    if (addBtn) { addBtn.onclick = function () { self._showCLConnPermModal('dropbox'); }; }
   },
 
   _checkDropboxOAuthReturn: async function () {
@@ -1602,6 +1602,54 @@ window.CL_SETTINGS_LOGIC = {
     self._pendingToolPlatform = platform;
   },
 
+  _clConnPermMessages: {
+    gmail: {
+      title: 'Connect Gmail',
+      body: 'StaxAI will be able to read your emails to scan for business content. StaxAI cannot send, delete, or modify your emails.',
+      oauth: 'startOAuth'
+    },
+    microsoft: {
+      title: 'Connect Outlook',
+      body: 'StaxAI will be able to read your emails to scan for business content. StaxAI cannot send, delete, or modify your emails.',
+      oauth: 'startOAuth'
+    },
+    'google-drive': {
+      title: 'Connect Google Drive',
+      body: 'StaxAI will be able to read files in the folders you select. StaxAI cannot create, edit, or delete any files in your Google Drive.',
+      oauth: 'startCLOAuth'
+    },
+    onedrive: {
+      title: 'Connect OneDrive',
+      body: 'StaxAI will be able to read files in the folders you select. StaxAI cannot create, edit, or delete any files in your OneDrive.',
+      oauth: 'startCLOAuth'
+    },
+    sharepoint: {
+      title: 'Connect SharePoint',
+      body: 'StaxAI will be able to read documents from the libraries you select. StaxAI cannot create, edit, or delete any files in your SharePoint site.',
+      oauth: 'startCLOAuth'
+    },
+    dropbox: {
+      title: 'Connect Dropbox',
+      body: 'StaxAI will be able to read files in the folders you select. StaxAI cannot create, edit, or delete any files in your Dropbox.',
+      oauth: 'startCLOAuth'
+    }
+  },
+
+  _pendingCLConnection: null,
+
+  _showCLConnPermModal: function (provider) {
+    var msg = this._clConnPermMessages[provider];
+    if (!msg) return;
+    var titleEl = document.getElementById('perm-modal-title');
+    var bodyEl = document.getElementById('perm-modal-body');
+    var overlay = document.getElementById('perm-modal-overlay');
+    if (!titleEl || !bodyEl || !overlay) return;
+    titleEl.textContent = msg.title;
+    bodyEl.textContent = msg.body;
+    overlay.classList.add('open');
+    this._pendingCLConnection = { provider: provider, oauth: msg.oauth };
+  },
+
   _bindPermissionModal: function () {
     var self = this;
     var overlay = document.getElementById('perm-modal-overlay');
@@ -1612,12 +1660,21 @@ window.CL_SETTINGS_LOGIC = {
       cancelBtn.addEventListener('click', function () {
         if (overlay) overlay.classList.remove('open');
         self._pendingToolPlatform = null;
+        self._pendingCLConnection = null;
       });
     }
     if (continueBtn) {
       continueBtn.addEventListener('click', function () {
         if (overlay) overlay.classList.remove('open');
-        if (self._pendingToolPlatform) {
+        if (self._pendingCLConnection) {
+          var conn = self._pendingCLConnection;
+          self._pendingCLConnection = null;
+          if (conn.oauth === 'startOAuth') {
+            self._startOAuth(conn.provider);
+          } else {
+            self._startCLOAuth(conn.provider);
+          }
+        } else if (self._pendingToolPlatform) {
           self._startCLOAuth(self._pendingToolPlatform);
           self._pendingToolPlatform = null;
         }
@@ -1629,6 +1686,7 @@ window.CL_SETTINGS_LOGIC = {
         if (e.target === overlay) {
           overlay.classList.remove('open');
           self._pendingToolPlatform = null;
+          self._pendingCLConnection = null;
         }
       });
     }
