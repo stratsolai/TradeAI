@@ -17,6 +17,10 @@ This document grows incrementally. Each page review adds new patterns.
 
 - Every authenticated page links staxai-auth.css in the head
 - Every authenticated page loads auth.js in the head
+- Every authenticated page loads shared-utils.js before any logic file.
+  shared-utils.js provides window.escHtml and any future shared
+  utilities. escHtml must never be duplicated in individual files —
+  always use window.escHtml from shared-utils.js.
 - Every authenticated page loads topbar.js before the closing body tag
 - topbar.js handles all account dropdown behaviour — no dropdown wiring
   in any logic file
@@ -1336,3 +1340,4 @@ error state or loading spinner on the stats bar.
 | v1.1 — April 2026 | Section 7a–7d added — page container, tab bar, filter pills, content card patterns from content-library.html and staxai-auth.css. |
 | v1.2 — April 2026 | Section 7e–7h added — filter state persistence, checkbox bulk selection, bulk action bar, and Mark All behaviour from cl-review.js. |
 | v1.3 — April 2026 | Section 7i added — stats bar pattern from content-library.html, staxai-auth.css, cl-logic.js, and cl-review.js. |
+| v1.4 — April 2026 | Section 1 — added shared-utils.js rule. escHtml must never be duplicated; all pages load shared-utils.js. |
