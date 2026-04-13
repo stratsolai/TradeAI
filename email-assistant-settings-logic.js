@@ -37,6 +37,7 @@ window.EA_SETTINGS = {
   _loadAll: async function () {
     var self = this;
     await Promise.all([self._loadConnections(), self._loadSettings()]);
+    self._renderScanFrequency();
   },
 
   _loadConnections: async function () {
@@ -103,7 +104,6 @@ window.EA_SETTINGS = {
       self._categories = DEFAULT_CATS;
     }
 
-    self._renderScanFrequency();
     self._renderCategories();
     self._bindScanSave();
     self._bindCategorySave();
