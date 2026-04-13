@@ -12,34 +12,13 @@
   <style>
     .page-wrap { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
     .page-header { margin-bottom: 32px; }
-    .page-title { font-family: var(--heading-font); font-size: 28px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
     .page-subtitle { font-size: 15px; color: var(--text-muted); }
 
-    /* ── TABS ── */
-    .stab-bar { display:flex; gap:0; border-bottom:2px solid var(--border); margin-bottom:28px; }
-    .stab { padding:13px 24px; font-family:var(--body-font); font-size:14px; font-weight:500; color:var(--text-muted); cursor:pointer; border:none; background:none; border-bottom:3px solid transparent; margin-bottom:-2px; transition:color 0.15s,border-color 0.15s; }
-    .stab:hover { color:var(--text); }
-    .stab.active { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; }
-    .stab-panel { display:none; }
-    .stab-panel.active { display:block; width:100%; box-sizing:border-box; }
-
-    /* ── SETTINGS CARD ── */
-    .settings-card { width:100%; box-sizing:border-box; background:var(--white); border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:12px; margin-bottom:24px; overflow:hidden; }
-    .settings-card-header { padding:20px 24px 16px; border-bottom:1px solid var(--border); }
-    .settings-card-title { font-family:var(--heading-font); font-size:20px; font-weight:700; color:var(--text); letter-spacing:0.3px; }
-    .settings-card-hint { font-size:13px; color:var(--text-muted); margin-top:4px; font-family:var(--body-font); }
-    .settings-rows { padding:0; }
-    .settings-row { display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); }
-    .settings-row:last-child { border-bottom:none; }
-    .settings-row-label { font-weight:600; color:var(--text); font-size:14px; font-family:var(--body-font); }
-    .settings-row-desc { font-size:13px; color:var(--text-muted); margin-top:2px; font-family:var(--body-font); }
-    .settings-footer { padding:16px 24px; border-top:1px solid var(--border); display:flex; align-items:center; gap:12px; }
-
-    /* ── BUTTONS ── */
-    .btn-save { background:var(--blue); color:var(--white); border:none; font-family:var(--body-font); font-size:14px; font-weight:600; padding:10px 22px; border-radius:8px; cursor:pointer; transition:background 0.15s; }
-    .btn-save:hover { background:var(--blue-dark); }
-    .btn-save:disabled { opacity:0.6; cursor:not-allowed; }
-    .save-msg { font-size:13px; display:none; }
+    /* ── CATEGORY ADD ROW ── */
+    .settings-add-row { display:flex; flex-direction:column; gap:8px; padding:16px 24px 8px 24px; max-width:66%; }
+    .settings-add-input-row { display:flex; align-items:center; gap:12px; }
+    .settings-add-input-flex { flex:1; min-width:0; }
+    .settings-add-input-full { width:100%; }
 
     /* ── CONNECTIONS ── */
     .settings-row-top { align-items:flex-start; }
@@ -63,7 +42,7 @@
     .ea-connection-note { font-size:13px; color:var(--text-mid); margin-top:16px; line-height:1.5; padding:0 24px 12px; }
 
     /* ── LOOKBACK ── */
-    .email-lookback-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--white); background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat:no-repeat; background-position:right 8px center; background-size:10px; border:2px solid var(--blue); border-radius:10px; padding:5px 24px 5px 10px; font-size:12px; font-weight:600; font-family:var(--body-font); color:var(--blue); cursor:pointer; flex-shrink:0; }
+    .email-lookback-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--white); background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat:no-repeat; background-position:right 8px center; background-size:10px; border:2px solid var(--blue); border-radius:8px; padding:5px 24px 5px 10px; font-size:12px; font-weight:600; font-family:var(--body-font); color:var(--blue); cursor:pointer; flex-shrink:0; }
     .email-lookback-select:hover { background-color:var(--blue-light); }
     .email-lookback-select:focus { outline:none; }
 
@@ -82,9 +61,9 @@
     .btn-remove-url:hover { background:var(--red-hover-bg); color:var(--red-dark); }
 
     /* ── PERMISSION MODAL ── */
-    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:500; align-items:center; justify-content:center; }
+    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay-bg); z-index:500; align-items:center; justify-content:center; }
     .perm-modal-overlay.open { display:flex; }
-    .perm-modal { background:var(--white); border-radius:12px; max-width:480px; width:90%; padding:28px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+    .perm-modal { background:var(--white); border-radius:12px; max-width:480px; width:90%; padding:28px 24px; box-shadow:var(--modal-shadow); }
     .perm-modal-title { font-family:var(--heading-font); font-size:20px; font-weight:700; color:var(--text); margin-bottom:12px; }
     .perm-modal-body { font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; }
     .perm-modal-actions { display:flex; gap:12px; justify-content:flex-end; }
@@ -143,14 +122,14 @@
       <p class="page-subtitle">Connect your personal inbox and configure how emails are organised.</p>
     </div>
 
-    <div class="stab-bar">
-      <button class="stab active" data-tab="connections">Connections</button>
-      <button class="stab" data-tab="scan">Scan Settings</button>
-      <button class="stab" data-tab="categories">Categories</button>
+    <div class="tab-nav">
+      <button class="ptab settings-active" data-tab="connections">Connections</button>
+      <button class="ptab" data-tab="scan">Scan Settings</button>
+      <button class="ptab" data-tab="categories">Categories</button>
     </div>
 
     <!-- ── CONNECTIONS TAB ── -->
-    <div class="stab-panel active" id="tab-connections">
+    <div class="ptab-content active" id="tab-connections">
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Email Connections</div>
@@ -183,7 +162,7 @@
     </div>
 
     <!-- ── SCAN SETTINGS TAB ── -->
-    <div class="stab-panel" id="tab-scan">
+    <div class="ptab-content" id="tab-scan">
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Scan Frequency</div>
@@ -198,19 +177,19 @@
     </div>
 
     <!-- ── CATEGORIES TAB ── -->
-    <div class="stab-panel" id="tab-categories">
+    <div class="ptab-content" id="tab-categories">
       <div class="settings-card" id="categories-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Email Categories</div>
           <div class="settings-card-hint">Choose which categories are active. Emails are sorted into these categories by AI.</div>
         </div>
         <div class="settings-rows" id="categories-grid"></div>
-        <div class="settings-add-row" style="display:flex;flex-direction:column;gap:8px;padding:16px 24px 8px 24px;max-width:66%;">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <input type="text" id="category-custom-input" class="settings-text-input" style="flex:1;min-width:0" placeholder="Category name...">
+        <div class="settings-add-row">
+          <div class="settings-add-input-row">
+            <input type="text" id="category-custom-input" class="settings-text-input settings-add-input-flex" placeholder="Category name...">
             <button type="button" id="add-category-btn" class="btn-add-connection">+ Add</button>
           </div>
-          <input type="text" id="category-custom-desc" class="settings-text-input" style="width:100%" placeholder="Description (required) — tells the AI what belongs in this category">
+          <input type="text" id="category-custom-desc" class="settings-text-input settings-add-input-full" placeholder="Description (required) — tells the AI what belongs in this category">
         </div>
         <div class="settings-footer">
           <button type="button" class="btn-save" id="save-categories-btn">Save</button>
