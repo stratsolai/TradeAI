@@ -62,7 +62,7 @@ window.CL_SETTINGS_LOGIC = {
         btn.addEventListener('click', function () {
           var p = document.getElementById(pickerId);
           if (p && p.parentElement && p.parentElement.classList && p.parentElement.classList.contains('settings-row')) {
-            p.parentElement.style.flexWrap = '';
+            p.parentElement.classList.remove('picker-row-wrap');
           }
         });
       }
@@ -75,11 +75,11 @@ window.CL_SETTINGS_LOGIC = {
   },
 
   _bindTabs: function () {
-    document.querySelectorAll('.stab').forEach(function(btn) {
+    document.querySelectorAll('.ptab').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
+        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('settings-active'); });
+        document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('settings-active');
         var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
         if (panel) panel.classList.add('active');
       });
@@ -89,11 +89,11 @@ window.CL_SETTINGS_LOGIC = {
   _checkTabQueryParam: function () {
     var params = new URLSearchParams(window.location.search);
     if (params.get('tab') === 'tool-connections') {
-      document.querySelectorAll('.stab').forEach(function(b) { b.classList.remove('active'); });
-      document.querySelectorAll('.stab-panel').forEach(function(p) { p.classList.remove('active'); });
-      var toolTab = document.querySelector('.stab[data-tab="tool"]');
+      document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('settings-active'); });
+      document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
+      var toolTab = document.querySelector('.ptab[data-tab="tool"]');
       var toolPanel = document.getElementById('tab-tool');
-      if (toolTab) toolTab.classList.add('active');
+      if (toolTab) toolTab.classList.add('settings-active');
       if (toolPanel) toolPanel.classList.add('active');
     }
   },
@@ -221,7 +221,7 @@ window.CL_SETTINGS_LOGIC = {
     list.innerHTML = self._driveAccounts.map(function (a) {
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
+        return '<div class="connection-folder-row picker-row-between">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="drive-folder">Remove</button>' +
           '</div>';
@@ -250,7 +250,7 @@ window.CL_SETTINGS_LOGIC = {
       return '<div class="website-url-item">' +
         '<div style="flex:1;min-width:0;">' +
           '<input class="website-url-input" type="text" value="' + url + '" />' +
-          '<div class="website-url-error" style="display:none;font-size:12px;color:#dc3545;margin-top:3px;"></div>' +
+          '<div class="website-url-error picker-error" style="display:none;margin-top:3px;font-size:12px;"></div>' +
         '</div>' +
         '<button class="btn-remove-url" data-url="' + url + '">Remove</button>' +
         '</div>';
@@ -550,10 +550,10 @@ window.CL_SETTINGS_LOGIC = {
           hasError = true;
           var errEl = errors[idx];
           if (errEl) { errEl.textContent = result.error; errEl.style.display = 'block'; }
-          input.style.borderColor = '#dc3545';
+          input.classList.add('input-error');
         } else {
           input.value = result.url;
-          input.style.borderColor = '';
+          input.classList.remove('input-error');
           urls.push(result.url);
         }
       });
@@ -630,15 +630,13 @@ window.CL_SETTINGS_LOGIC = {
     if (driveRow) {
       if (picker.parentElement !== driveRow) {
         driveRow.appendChild(picker);
-        picker.style.flexBasis = '100%';
-        picker.style.width = '100%';
-        picker.style.margin = '12px 0 0 0';
+        picker.classList.add('picker-inline');
       }
-      driveRow.style.flexWrap = 'wrap';
+      driveRow.classList.add('picker-row-wrap');
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
-    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
+    pickerList.innerHTML = '<div class="picker-loading">Loading folders...</div>';
     try {
       var token = await self._getAccessToken();
       var resp = await fetch('/api/drive-import', {
@@ -650,7 +648,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!data.success) { throw new Error(data.error || 'Could not list Google Drive folders'); }
       var folders = data.folders || [];
       if (folders.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in this Google Drive account.</div>';
+        pickerList.innerHTML = '<div class="picker-empty">No folders found in this Google Drive account.</div>';
         return;
       }
       var entry = self._driveAccounts.find(function (a) { return a && a.account_email === accountEmail; });
@@ -659,7 +657,7 @@ window.CL_SETTINGS_LOGIC = {
         var already = existingIds.indexOf(f.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
         var btnLabel = already ? 'Remove' : '+ Add';
-        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+        return '<div class="connection-folder-row picker-folder-row-pad">' +
           '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
           '</div>';
@@ -708,7 +706,7 @@ window.CL_SETTINGS_LOGIC = {
       };
     } catch (err) {
       console.error('Drive folder picker error:', err);
-      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
+      pickerList.innerHTML = '<div class="picker-error">Could not load folders. Please try again.</div>';
     }
   },
 
@@ -810,7 +808,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!a) return '';
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
+        return '<div class="connection-folder-row picker-row-between">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="onedrive-folder">Remove</button>' +
           '</div>';
@@ -859,15 +857,13 @@ window.CL_SETTINGS_LOGIC = {
     if (parentRow) {
       if (picker.parentElement !== parentRow) {
         parentRow.appendChild(picker);
-        picker.style.flexBasis = '100%';
-        picker.style.width = '100%';
-        picker.style.margin = '12px 0 0 0';
+        picker.classList.add('picker-inline');
       }
-      parentRow.style.flexWrap = 'wrap';
+      parentRow.classList.add('picker-row-wrap');
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
-    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
+    pickerList.innerHTML = '<div class="picker-loading">Loading folders...</div>';
     try {
       var token = await self._getAccessToken();
       var resp = await fetch('/api/onedrive-import', {
@@ -879,7 +875,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!data.success) { throw new Error(data.error || 'Could not list OneDrive folders'); }
       var folders = data.folders || [];
       if (folders.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in this OneDrive account.</div>';
+        pickerList.innerHTML = '<div class="picker-empty">No folders found in this OneDrive account.</div>';
         return;
       }
       var entry = self._onedriveAccounts.find(function (a) { return a && a.account_email === accountEmail; });
@@ -888,7 +884,7 @@ window.CL_SETTINGS_LOGIC = {
         var already = existingIds.indexOf(f.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
         var btnLabel = already ? 'Remove' : '+ Add';
-        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+        return '<div class="connection-folder-row picker-folder-row-pad">' +
           '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
           '</div>';
@@ -937,7 +933,7 @@ window.CL_SETTINGS_LOGIC = {
       };
     } catch (err) {
       console.error('OneDrive folder picker error:', err);
-      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
+      pickerList.innerHTML = '<div class="picker-error">Could not load folders. Please try again.</div>';
     }
   },
 
@@ -987,16 +983,16 @@ window.CL_SETTINGS_LOGIC = {
       var sitesHtml = sites.map(function (s) {
         var libraries = Array.isArray(s.libraries) ? s.libraries : [];
         var libraryHtml = libraries.map(function (lib) {
-          return '<div class="connection-folder-row" style="justify-content:space-between;padding-left:24px;">' +
+          return '<div class="connection-folder-row picker-row-between picker-row-indent">' +
             '<div class="connection-folder-name">' + (lib.name || lib.id || '') + '</div>' +
             '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-library-id="' + (lib.id || '') + '" data-type="sharepoint-library">Remove</button>' +
             '</div>';
         }).join('');
         var siteName = s.displayName || s.name || s.id || '';
-        var pickLibsHtml = '<div class="connection-folder-row" style="padding-left:24px;">' +
+        var pickLibsHtml = '<div class="connection-folder-row picker-row-indent">' +
           '<button class="btn-pick-libraries" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" title="' + siteName + '">Choose Libraries — ' + siteName + '</button>' +
           '</div>';
-        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
+        return '<div class="connection-folder-row picker-row-between">' +
           '<div class="connection-folder-name">' + siteName + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-site-id="' + (s.id || '') + '" data-type="sharepoint-site">Remove</button>' +
           '</div>' +
@@ -1044,7 +1040,7 @@ window.CL_SETTINGS_LOGIC = {
     // on the row caused the tile above the picker to rearrange on open.
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
-    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading sites...</div>';
+    pickerList.innerHTML = '<div class="picker-loading">Loading sites...</div>';
     try {
       var token = await self._getAccessToken();
       var resp = await fetch('/api/sharepoint-import', {
@@ -1056,7 +1052,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!data.success) { throw new Error(data.error || 'Could not list SharePoint sites'); }
       var sites = data.sites || [];
       if (sites.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No SharePoint sites found for this account.</div>';
+        pickerList.innerHTML = '<div class="picker-empty">No SharePoint sites found for this account.</div>';
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
@@ -1069,7 +1065,7 @@ window.CL_SETTINGS_LOGIC = {
         var already = existingIds.indexOf(s.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
         var btnLabel = already ? 'Remove' : '+ Add';
-        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+        return '<div class="connection-folder-row picker-folder-row-pad">' +
           '<input type="text" class="website-url-input" value="' + (s.displayName || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-site-id="' + s.id + '" data-site-name="' + (s.displayName || '') + '" data-site-weburl="' + (s.webUrl || '') + '">' + btnLabel + '</button>' +
           '</div>';
@@ -1120,7 +1116,7 @@ window.CL_SETTINGS_LOGIC = {
       };
     } catch (err) {
       console.error('SharePoint site picker error:', err);
-      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load sites. Please try again.</div>';
+      pickerList.innerHTML = '<div class="picker-error">Could not load sites. Please try again.</div>';
     }
   },
 
@@ -1138,16 +1134,14 @@ window.CL_SETTINGS_LOGIC = {
     if (parentRow) {
       if (picker.parentElement !== parentRow) {
         parentRow.appendChild(picker);
-        picker.style.flexBasis = '100%';
-        picker.style.width = '100%';
-        picker.style.margin = '12px 0 0 0';
+        picker.classList.add('picker-inline');
       }
-      parentRow.style.flexWrap = 'wrap';
+      parentRow.classList.add('picker-row-wrap');
     }
     picker.setAttribute('data-account', accountEmail);
     picker.setAttribute('data-site-id', siteId || '');
     picker.style.display = 'block';
-    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading libraries...</div>';
+    pickerList.innerHTML = '<div class="picker-loading">Loading libraries...</div>';
     try {
       var token = await self._getAccessToken();
       var resp = await fetch('/api/sharepoint-import', {
@@ -1159,7 +1153,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!data.success) { throw new Error(data.error || 'Could not list document libraries'); }
       var libraries = data.libraries || [];
       if (libraries.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No document libraries found on this site.</div>';
+        pickerList.innerHTML = '<div class="picker-empty">No document libraries found on this site.</div>';
         return;
       }
       var entry = self._sharepointAccounts.find(function (a) { return a && a.account_email === accountEmail; });
@@ -1171,7 +1165,7 @@ window.CL_SETTINGS_LOGIC = {
         var already = existingIds.indexOf(lib.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
         var btnLabel = already ? 'Remove' : '+ Add';
-        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+        return '<div class="connection-folder-row picker-folder-row-pad">' +
           '<input type="text" class="website-url-input" value="' + (lib.name || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-library-id="' + lib.id + '" data-library-name="' + (lib.name || '') + '">' + btnLabel + '</button>' +
           '</div>';
@@ -1227,7 +1221,7 @@ window.CL_SETTINGS_LOGIC = {
       };
     } catch (err) {
       console.error('SharePoint library picker error:', err);
-      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load libraries. Please try again.</div>';
+      pickerList.innerHTML = '<div class="picker-error">Could not load libraries. Please try again.</div>';
     }
   },
 
@@ -1297,7 +1291,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!a) return '';
       var folders = Array.isArray(a.folders) ? a.folders : [];
       var folderHtml = folders.map(function (f) {
-        return '<div class="connection-folder-row" style="justify-content:space-between;">' +
+        return '<div class="connection-folder-row picker-row-between">' +
           '<div class="connection-folder-name">' + (f.name || f.id || '') + '</div>' +
           '<button class="btn-remove-folder" data-account="' + (a.account_email || '') + '" data-folder-id="' + (f.id || '') + '" data-type="dropbox-folder">Remove</button>' +
           '</div>';
@@ -1346,15 +1340,13 @@ window.CL_SETTINGS_LOGIC = {
     if (parentRow) {
       if (picker.parentElement !== parentRow) {
         parentRow.appendChild(picker);
-        picker.style.flexBasis = '100%';
-        picker.style.width = '100%';
-        picker.style.margin = '12px 0 0 0';
+        picker.classList.add('picker-inline');
       }
-      parentRow.style.flexWrap = 'wrap';
+      parentRow.classList.add('picker-row-wrap');
     }
     picker.setAttribute('data-account', accountEmail);
     picker.style.display = 'block';
-    pickerList.innerHTML = '<div style="padding:12px;color:#888;">Loading folders...</div>';
+    pickerList.innerHTML = '<div class="picker-loading">Loading folders...</div>';
     try {
       var token = await self._getAccessToken();
       var resp = await fetch('/api/dropbox-import', {
@@ -1366,7 +1358,7 @@ window.CL_SETTINGS_LOGIC = {
       if (!data.success) { throw new Error(data.error || 'Could not list Dropbox folders'); }
       var folders = data.folders || [];
       if (folders.length === 0) {
-        pickerList.innerHTML = '<div style="padding:12px;color:#888;">No folders found in this Dropbox account.</div>';
+        pickerList.innerHTML = '<div class="picker-empty">No folders found in this Dropbox account.</div>';
         return;
       }
       var entry = self._dropboxAccounts.find(function (a) { return a && a.account_email === accountEmail; });
@@ -1375,7 +1367,7 @@ window.CL_SETTINGS_LOGIC = {
         var already = existingIds.indexOf(f.id) !== -1;
         var btnClass = already ? 'btn-remove-folder' : 'btn-add-folder';
         var btnLabel = already ? 'Remove' : '+ Add';
-        return '<div class="connection-folder-row" style="padding:6px 0;">' +
+        return '<div class="connection-folder-row picker-folder-row-pad">' +
           '<input type="text" class="website-url-input" value="' + (f.name || '') + '" readonly>' +
           '<button type="button" class="folder-picker-toggle ' + btnClass + '" data-folder-id="' + f.id + '" data-folder-name="' + (f.name || '') + '">' + btnLabel + '</button>' +
           '</div>';
@@ -1424,7 +1416,7 @@ window.CL_SETTINGS_LOGIC = {
       };
     } catch (err) {
       console.error('Dropbox folder picker error:', err);
-      pickerList.innerHTML = '<div style="padding:12px;color:#dc3545;">Could not load folders. Please try again.</div>';
+      pickerList.innerHTML = '<div class="picker-error">Could not load folders. Please try again.</div>';
     }
   },
 
@@ -1729,11 +1721,11 @@ window.CL_SETTINGS_LOGIC = {
     // Switch to the Tool Connections tab so the user lands on the
     // correct tab regardless of whether the inline script in
     // cl-settings.html has already handled the ?tab= parameter.
-    document.querySelectorAll('.stab').forEach(function (b) { b.classList.remove('active'); });
-    document.querySelectorAll('.stab-panel').forEach(function (p) { p.classList.remove('active'); });
-    var toolTab = document.querySelector('.stab[data-tab="tool"]');
+    document.querySelectorAll('.ptab').forEach(function (b) { b.classList.remove('settings-active'); });
+    document.querySelectorAll('.ptab-content').forEach(function (p) { p.classList.remove('active'); });
+    var toolTab = document.querySelector('.ptab[data-tab="tool"]');
     var toolPanel = document.getElementById('tab-tool');
-    if (toolTab) toolTab.classList.add('active');
+    if (toolTab) toolTab.classList.add('settings-active');
     if (toolPanel) toolPanel.classList.add('active');
 
     // Clean URL
