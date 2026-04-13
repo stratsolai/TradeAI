@@ -23,12 +23,6 @@
 }
 
   // Shared utilities - exposed on window for tab JS files
-  function escHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-  window.escHtml = escHtml;
-
   function getTypeIcon(type) {
   return { image:'📸', document:'📄', testimonial:'💬', project:'✅', text:'📝', word:'📝', pdf:'📑', powerpoint:'📊', excel:'📊' }[type] || '📦';
 }
