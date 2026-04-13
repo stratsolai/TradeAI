@@ -10,127 +10,127 @@
    ------------------------------------------------------------ */
 :root {
   /* Core colours */
-  --blue:               #4A6D8C;
-  --blue-light:         #e8f4fd;
-  --orange:             #c4622a;
-  --orange-light:       #fff3ee;
-  --green:              #28a745;
-  --green-light:        #edfaf1;
-  --red:                #dc3545;
-  --purple:             #7B5EA7;
-  --teal:               #0097A7;
-  --grey:               #6c757d;
-  --bg:                 #f5f7fa;
-  --white:              #ffffff;
-  --border:             #e5e5e5;
-  --border-blue:        #c8d6e5;
-  --border-subtle:      rgba(0,0,0,0.10);
-  --text:               #333333;
-  --text-muted:         #888888;
-  --text-secondary:     #555555;
-  --green-dark:         #2e7d32;
-  --red-dark:           #8B2500;
-  --blue-dark:          #1a4070;
-  --orange-dark:        #c74408;
-  --text-disabled:      #aaa;
-  --text-hint:          #999;
-  --text-dark:          #222;
-  --text-mid:           #666;
-  --blue-hover-bg:      #e8f0fb;
-  --blue-tint:          #EEF2F7;
-  --active-bg:          #EEF3F9;
-  --green-hover-bg:     #EAF4EB;
-  --red-hover-bg:       #fef2f2;
-  --red-light:          #fff5f5;
-  --bg-subtle:          #f8fafc;
-  --border-light:       #F0F0F0;
-  --blue-accent-hover:  #2e5070;
-  --grey-accent:        #78909C;
-  --purple-light:       #f5eeff;
-  --purple-hover-bg:    #F3EEF9;
-  --teal-light:         #E0F7FA;
-  --archived-bg:        #ECEFF1;
-  --pill-text:          #000;
-  --rejected-bg:        #fdecea;
-  --warning:            #FFC107;
-  --warning-light:      #FFF8E1;
-  --grey-light:         #f0f0f0;
+  --blue:               #4A6D8C;       /* Primary brand colour. Buttons, links, active borders, topbar */
+  --blue-light:         #e8f4fd;       /* Light blue tint. Hover backgrounds, active filter pills, info badges */
+  --orange:             #c4622a;       /* Secondary brand colour. Active tab underlines, outline-orange buttons */
+  --orange-light:       #fff3ee;       /* Light orange tint. Source section hover backgrounds */
+  --green:              #28a745;       /* Success/positive colour. Stat tile border, approve-related accents */
+  --green-light:        #edfaf1;       /* Light green tint. Approve button hover backgrounds */
+  --red:                #dc3545;       /* Error/danger colour. Badge text, validation errors */
+  --purple:             #7B5EA7;       /* Category pill accent. Stat tile border for category-related tiles */
+  --teal:               #0097A7;       /* Tool tag accent. Stat tile border, tool pill borders */
+  --grey:               #6c757d;       /* Neutral/disabled accent. Grey badge text, stat tile border */
+  --bg:                 #f5f7fa;       /* Page background. Body and full-page container fill */
+  --white:              #ffffff;       /* White. Card backgrounds, button backgrounds, form inputs */
+  --border:             #e5e5e5;       /* Default border. Card edges, setting row dividers, dropdown borders */
+  --border-blue:        #c8d6e5;       /* Blue-tinted border. Filter pill default border */
+  --border-subtle:      rgba(0,0,0,0.10); /* Subtle semi-transparent border. Delicate dividers */
+  --text:               #333333;       /* Primary text colour. Body copy, headings, labels */
+  --text-muted:         #888888;       /* Muted text. Subtitles, hints, stat labels, placeholder-weight copy */
+  --text-secondary:     #555555;       /* Secondary text. Slightly stronger than muted, weaker than primary */
+  --green-dark:         #2e7d32;       /* Dark green. Approve button border and text colour */
+  --red-dark:           #8B2500;       /* Dark red/brown. Reject and dismiss button border and text colour */
+  --blue-dark:          #1a4070;       /* Dark blue. Strong blue hover or emphasis accents */
+  --orange-dark:        #c74408;       /* Dark orange. Strong orange accent for hover or emphasis */
+  --text-disabled:      #aaa;          /* Disabled text. Greyed-out labels and inactive controls */
+  --text-hint:          #999;          /* Hint text. Lighter than muted, for placeholder or tertiary copy */
+  --text-dark:          #222;          /* Near-black text. Strongest text weight, headings or emphasis */
+  --text-mid:           #666;          /* Mid-grey text. Between muted and secondary */
+  --blue-hover-bg:      #e8f0fb;       /* Blue hover background. Slightly different from blue-light for hover states */
+  --blue-tint:          #EEF2F7;       /* Very faint blue wash. Subtle background differentiation */
+  --active-bg:          #EEF3F9;       /* Active/selected row or item background */
+  --green-hover-bg:     #EAF4EB;       /* Green hover background. Approve button mouseenter state */
+  --red-hover-bg:       #fef2f2;       /* Red hover background. Reject/dismiss button mouseenter state */
+  --red-light:          #fff5f5;       /* Light red tint. Softer than red-hover-bg for static red backgrounds */
+  --bg-subtle:          #f8fafc;       /* Subtle background. Slightly cooler than --bg for nested sections */
+  --border-light:       #F0F0F0;       /* Light border. Softer than --border for internal dividers */
+  --blue-accent-hover:  #2e5070;       /* Deep blue hover. Darker than --blue for strong hover emphasis */
+  --grey-accent:        #78909C;       /* Blue-grey accent. Decorative or secondary icon colour */
+  --purple-light:       #f5eeff;       /* Light purple tint. Softer purple background option */
+  --purple-hover-bg:    #F3EEF9;       /* Purple hover background. Category pill hover/active state */
+  --teal-light:         #E0F7FA;       /* Light teal tint. Tool pill tagged/active background */
+  --archived-bg:        #ECEFF1;       /* Archived tab status button background */
+  --pill-text:          #000;          /* Text colour on tagged tool/category pills */
+  --rejected-bg:        #fdecea;       /* Rejected status button and AI rejected pill background */
+  --warning:            #FFC107;       /* Amber/warning border. Used-notice and warning highlights */
+  --warning-light:      #FFF8E1;       /* Amber/warning background. Used-notice fill */
+  --grey-light:         #f0f0f0;       /* Light grey background. Grey badge fill, neutral backgrounds */
 
   /* Badge-specific colours (separate from core vars) */
-  --badge-green-bg:     #d4edda;
-  --badge-green-text:   #155724;
-  --badge-orange-bg:    #fff3cd;
-  --badge-orange-text:  #856404;
-  --badge-purple-bg:    #e8d5f5;
-  --badge-purple-text:  #6a1b9a;
-  --badge-red-bg:       #f8d7da;
-  --badge-red-text:     #721c24;
+  --badge-green-bg:     #d4edda;       /* Green badge background. Stronger than green-light for badge fill */
+  --badge-green-text:   #155724;       /* Green badge text. Dark green for contrast on badge-green-bg */
+  --badge-orange-bg:    #fff3cd;       /* Orange/amber badge background. Warning-level badge fill */
+  --badge-orange-text:  #856404;       /* Orange badge text. Dark amber for contrast on badge-orange-bg */
+  --badge-purple-bg:    #e8d5f5;       /* Purple badge background. Category-related badge fill */
+  --badge-purple-text:  #6a1b9a;       /* Purple badge text. Dark purple for contrast on badge-purple-bg */
+  --badge-red-bg:       #f8d7da;       /* Red badge background. Error/rejection badge fill */
+  --badge-red-text:     #721c24;       /* Red badge text. Dark red for contrast on badge-red-bg */
 
   /* Effects */
-  --shadow-card:        rgba(0,0,0,0.07);
-  --shadow-hover:       rgba(0,0,0,0.12);
-  --modal-overlay-bg:   rgba(0,0,0,0.4);
-  --modal-shadow:       0 8px 32px rgba(0,0,0,0.18);
-  --focus-ring:         rgba(26,84,144,0.08);
+  --shadow-card:        rgba(0,0,0,0.07);  /* Card resting shadow. Light elevation for cards and tiles */
+  --shadow-hover:       rgba(0,0,0,0.12);  /* Card hover shadow. Stronger elevation on interactive hover */
+  --modal-overlay-bg:   rgba(0,0,0,0.4);   /* Modal backdrop. Semi-transparent overlay behind modals */
+  --modal-shadow:       0 8px 32px rgba(0,0,0,0.18); /* Modal drop shadow. Strong elevation for modal dialogs */
+  --focus-ring:         rgba(26,84,144,0.08); /* Focus ring glow. Subtle blue outline for keyboard focus states */
 
   /* Buttons */
-  --radius-btn:         8px;
-  --transition-btn:     0.12s;
-  --btn-padding:        10px 20px;
-  --btn-font-size:      14px;
-  --btn-font-weight:    600;
-  --btn-gap:            6px;
+  --radius-btn:         8px;           /* Button border-radius. Also used for filter pills and inputs */
+  --transition-btn:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
+  --btn-padding:        10px 20px;     /* Standard button padding */
+  --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
+  --btn-font-weight:    600;           /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
+  --btn-gap:            6px;           /* Button icon-to-text gap */
 
   /* Inputs & Forms */
-  --input-border-width: 1.5px;
-  --input-padding:      10px 14px;
-  --input-radius:       8px;
-  --input-font-size:    14px;
-  --label-font-size:    13px;
-  --label-font-weight:  600;
-  --label-margin-bottom: 6px;
-  --textarea-min-height: 80px;
-  --checkbox-size:      16px;
+  --input-border-width: 1.5px;         /* Form input border thickness */
+  --input-padding:      10px 14px;     /* Form input internal padding */
+  --input-radius:       8px;           /* Form input border-radius */
+  --input-font-size:    14px;          /* Form input text size */
+  --label-font-size:    13px;          /* Form label font size */
+  --label-font-weight:  600;           /* Form label font weight */
+  --label-margin-bottom: 6px;          /* Gap below form labels */
+  --textarea-min-height: 80px;         /* Minimum height for textarea fields */
+  --checkbox-size:      16px;          /* Checkbox width and height */
 
   /* Badges */
-  --badge-radius:       20px;
-  --badge-font-size:    12px;
+  --badge-radius:       20px;          /* Badge border-radius. Fully rounded pill shape */
+  --badge-font-size:    12px;          /* Badge text size. Also used for stat labels and section labels */
 
   /* Cards */
-  --card-radius:        12px;
-  --radius-thumbnail:   4px;
+  --card-radius:        12px;          /* Card border-radius. Settings cards, main content cards */
+  --radius-thumbnail:   4px;           /* Thumbnail image corner radius */
 
   /* Layout & Spacing */
-  --page-padding:       32px 32px;
-  --page-max-width:     1400px;
-  --settings-max-width: 960px;
-  --page-padding-mobile: 20px 16px;
-  --page-header-margin: 28px;
-  --settings-page-padding: 40px 24px 80px;
-  --letter-spacing-label: 0.05em;
-  --loading-padding:    40px;
-  --empty-padding:      40px;
-  --status-font-size:   13px;
-  --note-font-size:     13px;
-  --note-line-height:   1.5;
-  --section-title-font-size: 15px;
-  --section-title-font-weight: 700;
-  --body-font-size:     14px;
-  --body-line-height:   1.6;
-  --stat-value-font-size: 22px;
-  --page-title-font-size: 28px;
+  --page-padding:       32px 32px;     /* Authenticated page content padding */
+  --page-max-width:     1400px;        /* Maximum content width for full-width pages */
+  --settings-max-width: 960px;         /* Maximum content width for settings and narrow pages */
+  --page-padding-mobile: 20px 16px;    /* Page content padding on mobile viewports */
+  --page-header-margin: 28px;          /* Bottom margin below page header block */
+  --settings-page-padding: 40px 24px 80px; /* Settings page overall padding including bottom breathing room */
+  --letter-spacing-label: 0.05em;      /* Letter spacing for uppercase section labels and stat labels */
+  --loading-padding:    40px;          /* Padding for loading spinner containers */
+  --empty-padding:      40px;          /* Padding for empty-state placeholder blocks */
+  --status-font-size:   13px;          /* Status text and search input font size */
+  --note-font-size:     13px;          /* Note and hint text font size */
+  --note-line-height:   1.5;           /* Line height for note and hint blocks */
+  --section-title-font-size: 15px;     /* Section title font size within cards and panels */
+  --section-title-font-weight: 700;    /* Section title font weight. Bold */
+  --body-font-size:     14px;          /* Body text font size. Base size for all content */
+  --body-line-height:   1.6;           /* Body text line height. Base line height for all content */
+  --stat-value-font-size: 22px;        /* Stat tile value font size */
+  --page-title-font-size: 28px;        /* Page title and h1 font size */
 
   /* Modal */
-  --modal-padding:      28px 24px;
-  --modal-title-font-size: 20px;
-  --modal-title-font-weight: 700;
-  --modal-body-font-size: 14px;
-  --modal-body-line-height: 1.6;
-  --modal-actions-gap:  12px;
+  --modal-padding:      28px 24px;     /* Internal padding for modal dialogs */
+  --modal-title-font-size: 20px;       /* Modal and settings card heading font size */
+  --modal-title-font-weight: 700;      /* Modal and settings card heading font weight. Bold */
+  --modal-body-font-size: 14px;        /* Modal body text font size */
+  --modal-body-line-height: 1.6;       /* Modal body line height */
+  --modal-actions-gap:  12px;          /* Gap between action buttons in modals and settings footers */
 
   /* Typography */
-  --heading-font:       'Barlow Condensed', sans-serif;
-  --body-font:          'DM Sans', sans-serif;
+  --heading-font:       'Barlow Condensed', sans-serif; /* Heading typeface. All h1-h6, page titles, card titles */
+  --body-font:          'DM Sans', sans-serif; /* Body typeface. All body text, buttons, inputs, labels */
 }
 
 /* ------------------------------------------------------------
