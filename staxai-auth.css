@@ -75,7 +75,7 @@
 
   /* Buttons */
   --btn-radius:         8px;           /* Button border-radius. Also used for filter pills and inputs */
-  --transition-btn:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
+  --btn-transition:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
   --btn-padding:        10px 20px;     /* Standard button padding */
   --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
   --btn-font-weight:    600;           /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
@@ -237,7 +237,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: var(--btn-font-weight);
   text-decoration: none;
-  transition: color var(--transition-btn);
+  transition: color var(--btn-transition);
 }
 
 .topbar-nav a:hover,
@@ -263,7 +263,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: var(--btn-font-weight);
   text-decoration: none;
-  transition: color var(--transition-btn);
+  transition: color var(--btn-transition);
 }
 
 .topbar-link:hover {
@@ -289,7 +289,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: color var(--transition-btn);
+  transition: color var(--btn-transition);
 }
 
 .account-btn:hover {
@@ -328,7 +328,7 @@ a:hover { opacity: 0.85; }
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background var(--transition-btn), color var(--transition-btn);
+  transition: background var(--btn-transition), color var(--btn-transition);
 }
 
 .account-dropdown a:hover,
@@ -432,7 +432,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: var(--btn-gap);
   text-decoration: none;
-  transition: opacity var(--transition-btn);
+  transition: opacity var(--btn-transition);
 }
 
 .btn-primary:hover {
@@ -455,7 +455,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: var(--btn-gap);
   text-decoration: none;
-  transition: background var(--transition-btn), color var(--transition-btn);
+  transition: background var(--btn-transition), color var(--btn-transition);
 }
 
 .btn-outline:hover {
@@ -479,7 +479,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: var(--btn-gap);
   text-decoration: none;
-  transition: opacity var(--transition-btn);
+  transition: opacity var(--btn-transition);
 }
 
 .btn-orange:hover {
@@ -509,7 +509,7 @@ a:hover { opacity: 0.85; }
   font-size: var(--btn-font-size);
   font-weight: var(--btn-font-weight);
   color: var(--text-muted);
-  transition: all var(--transition-btn);
+  transition: all var(--btn-transition);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -550,7 +550,7 @@ a:hover { opacity: 0.85; }
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all var(--transition-btn);
+  transition: all var(--btn-transition);
   display: inline-flex;
   align-items: center;
   text-decoration: none;
@@ -577,7 +577,7 @@ a:hover { opacity: 0.85; }
   color: var(--text);
   background: var(--white);
   outline: none;
-  transition: border-color var(--transition-btn);
+  transition: border-color var(--btn-transition);
 }
 
 .form-input:focus {
@@ -593,7 +593,7 @@ a:hover { opacity: 0.85; }
   font-size: var(--status-font-size);
   font-family: var(--body-font);
   outline: none;
-  transition: border-color var(--transition-btn);
+  transition: border-color var(--btn-transition);
 }
 
 .search-input:focus {
@@ -743,7 +743,7 @@ a:hover { opacity: 0.85; }
   padding: 10px 22px;
   border-radius: var(--btn-radius);
   cursor: pointer;
-  transition: background var(--transition-btn);
+  transition: background var(--btn-transition);
 }
 
 .btn-save:hover {
