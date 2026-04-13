@@ -92,6 +92,17 @@
     .ea-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
     .ea-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 
+    /* ─── SOURCE BUTTON (matches CL .review-source-btn) ─── */
+    .ea-source-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--orange); border-radius:10px; padding:10px 10px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
+    .ea-source-btn:hover { background:var(--orange-light); }
+
+    /* ─── EXPANDABLE SECTION (matches CL .review-section) ─── */
+    .ea-section { padding:14px 16px; border-top:1px solid var(--border-light); }
+    .ea-section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    .ea-section-head span { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
+    .ea-source-detail { font-size:13px; color:var(--text-secondary); line-height:1.8; }
+    .ea-source-detail-label { font-weight:600; color:var(--text); }
+
     /* ─── EMAIL SUBJECT LINE ─── */
     .ea-subject { font-size:15px; font-weight:600; color:var(--text); padding:0 16px; }
 
