@@ -96,9 +96,7 @@ window.EA_LOGIC = {
   // ── Date defaults ─────────────────────────────────────────
   _initDateDefaults: function() {
     this._dateQuick = '';
-    var d = new Date();
-    d.setDate(d.getDate() - 90);
-    this._dateFrom = d.toISOString();
+    this._dateFrom = null;
     this._dateTo = null;
   },
 
@@ -227,11 +225,9 @@ window.EA_LOGIC = {
       container.querySelectorAll('.filter-pill[data-days]').forEach(function(pill) {
         pill.addEventListener('click', function() {
           if (self._dateQuick === pill.dataset.days) {
-            // Deselect — default to 90 days (full available range)
+            // Deselect — query defaults to 90 days silently in _load
             self._dateQuick = '';
-            var d90 = new Date();
-            d90.setDate(d90.getDate() - 90);
-            self._dateFrom = d90.toISOString();
+            self._dateFrom = null;
           } else {
             self._dateQuick = pill.dataset.days;
             var d = new Date();
@@ -473,6 +469,11 @@ window.EA_LOGIC = {
 
     if (this._dateFrom) {
       query = query.gte('received_at', this._dateFrom);
+    } else if (!this._dateQuick) {
+      // Default to 90 days when no filter is selected
+      var d90 = new Date();
+      d90.setDate(d90.getDate() - 90);
+      query = query.gte('received_at', d90.toISOString());
     }
     if (this._dateTo) {
       query = query.lte('received_at', this._dateTo);
