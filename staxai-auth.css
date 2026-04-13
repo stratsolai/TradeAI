@@ -126,7 +126,7 @@
   --heading-lg-weight: 700;      /* Modal and settings card heading font weight. Bold */
   --modal-body-font-size: 14px;        /* Modal body text font size */
   --modal-body-line-height: 1.6;       /* Modal body line height */
-  --modal-actions-gap:  12px;          /* Gap between action buttons in modals and settings footers */
+  --actions-gap:  12px;          /* Gap between action buttons in modals and settings footers */
 
   /* Typography */
   --heading-font:       'Barlow Condensed', sans-serif; /* Heading typeface. All h1-h6, page titles, card titles */
@@ -730,7 +730,7 @@ a:hover { opacity: 0.85; }
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: var(--modal-actions-gap);
+  gap: var(--actions-gap);
 }
 
 .btn-save {
