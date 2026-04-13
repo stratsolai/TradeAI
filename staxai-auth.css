@@ -736,7 +736,7 @@ a:hover { opacity: 0.85; }
 }
 
 .btn-save:hover {
-  opacity: 0.9;
+  background: var(--blue-dark);
 }
 
 .btn-save:disabled {
