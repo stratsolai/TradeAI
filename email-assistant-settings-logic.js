@@ -22,11 +22,11 @@ window.EA_SETTINGS = {
 
   // ── TABS ──
   _bindTabs: function () {
-    document.querySelectorAll('.stab').forEach(function (btn) {
+    document.querySelectorAll('.ptab').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        document.querySelectorAll('.stab').forEach(function (b) { b.classList.remove('active'); });
-        document.querySelectorAll('.stab-panel').forEach(function (p) { p.classList.remove('active'); });
-        btn.classList.add('active');
+        document.querySelectorAll('.ptab').forEach(function (b) { b.classList.remove('settings-active'); });
+        document.querySelectorAll('.ptab-content').forEach(function (p) { p.classList.remove('active'); });
+        btn.classList.add('settings-active');
         var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
         if (panel) panel.classList.add('active');
       });
