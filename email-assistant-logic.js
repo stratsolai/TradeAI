@@ -137,8 +137,7 @@ window.EA_LOGIC = {
 
     panelsEl.innerHTML =
       '<div id="ea-category-tabs" class="ea-status-row"></div>' +
-      '<div id="ea-filter-row" class="ea-filter-row"></div>' +
-      '<div id="ea-date-row" class="ea-date-row"></div>' +
+      '<div id="ea-filter-btns-row" class="ea-filter-btns-row"></div>' +
       '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
         '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
         '<button class="ea-bulk-handle-btn" id="ea-bulk-handle-btn">&#10003; Handle All Selected</button>' +
@@ -148,7 +147,6 @@ window.EA_LOGIC = {
 
     this._renderCategoryPills();
     this._renderFilterRow();
-    this._renderDateRow();
     this._bindControls();
   },
 
@@ -164,7 +162,8 @@ window.EA_LOGIC = {
     container.innerHTML = cats.map(function(cat) {
       var isActive = (!self._showHandled && cat.id === self._activeCategory) || (self._showHandled && cat.id === 'handled');
       return '<button class="ea-status-btn' + (isActive ? ' active' : '') + '" data-category="' + window.escHtml(cat.id) + '">' + window.escHtml(cat.label) + '</button>';
-    }).join('');
+    }).join('') +
+    '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
     container.querySelectorAll('.ea-status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -183,73 +182,36 @@ window.EA_LOGIC = {
     });
   },
 
-  // ── Filter row ────────────────────────────────────────────
+  // ── Filter row (matches CL .review-filter-btns-row layout) ────
   _renderFilterRow: function() {
-    var container = document.getElementById('ea-filter-row');
+    var container = document.getElementById('ea-filter-btns-row');
     if (!container) return;
-    container.innerHTML =
-      '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear Filters</button>' +
-      '<span style="flex:1"></span>' +
-      '<button class="ea-scan-btn" id="ea-scan-btn">&#9654; Scan Now</button>' +
-      '<button class="ea-handle-all-btn" id="ea-handle-all-btn">&#10003; Handle All</button>' +
-      '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails...">';
-  },
-
-  // ── Date row ──────────────────────────────────────────────
-  _renderDateRow: function() {
-    var container = document.getElementById('ea-date-row');
-    if (!container) return;
-    var self = this;
+    var daysLabel = this._dateQuick ? this._dateQuick + ' days' : 'Email Days';
     var fromVal = this._dateFrom ? this._dateFrom.substring(0, 10) : '';
     var toVal = this._dateTo ? this._dateTo.substring(0, 10) : '';
+    var rangeLabel = (fromVal && !this._dateQuick) ? fromVal + (toVal ? ' – ' + toVal : ' –') : 'Date Range';
     container.innerHTML =
-      '<button class="ea-date-quick-btn' + (this._dateQuick === '30' ? ' active' : '') + '" data-days="30">30 days</button>' +
-      '<button class="ea-date-quick-btn' + (this._dateQuick === '60' ? ' active' : '') + '" data-days="60">60 days</button>' +
-      '<button class="ea-date-quick-btn' + (this._dateQuick === '90' ? ' active' : '') + '" data-days="90">90 days</button>' +
+      '<div style="position:relative;display:inline-flex;">' +
+        '<button class="ea-filter-btn" id="ea-days-btn">' + window.escHtml(daysLabel) + '</button>' +
+        '<div class="ea-filter-dropdown" id="ea-days-dropdown">' +
+          '<button class="ea-dropdown-option' + (this._dateQuick === '30' ? ' active' : '') + '" data-days="30">30 days</button>' +
+          '<button class="ea-dropdown-option' + (this._dateQuick === '60' ? ' active' : '') + '" data-days="60">60 days</button>' +
+          '<button class="ea-dropdown-option' + (this._dateQuick === '90' ? ' active' : '') + '" data-days="90">90 days</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="position:relative;display:inline-flex;">' +
+        '<button class="ea-filter-btn" id="ea-range-btn">' + window.escHtml(rangeLabel) + '</button>' +
+        '<div class="ea-date-range-dropdown" id="ea-range-dropdown">' +
+          '<span class="ea-date-label">From</span>' +
+          '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +
+          '<span class="ea-date-label">To</span>' +
+          '<input type="date" class="ea-date-input" id="ea-date-to" value="' + toVal + '">' +
+        '</div>' +
+      '</div>' +
+      '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
-      '<span class="ea-date-label">From</span>' +
-      '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +
-      '<span class="ea-date-label">To</span>' +
-      '<input type="date" class="ea-date-input" id="ea-date-to" value="' + toVal + '">';
-
-    container.querySelectorAll('.ea-date-quick-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        self._dateQuick = btn.dataset.days;
-        var d = new Date();
-        d.setDate(d.getDate() - parseInt(btn.dataset.days, 10));
-        self._dateFrom = d.toISOString();
-        self._dateTo = null;
-        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        var fromEl = document.getElementById('ea-date-from');
-        var toEl = document.getElementById('ea-date-to');
-        if (fromEl) fromEl.value = self._dateFrom.substring(0, 10);
-        if (toEl) toEl.value = '';
-        self._selected = new Set();
-        self._load();
-      });
-    });
-
-    var dateFrom = document.getElementById('ea-date-from');
-    var dateTo = document.getElementById('ea-date-to');
-    if (dateFrom) {
-      dateFrom.addEventListener('change', function() {
-        self._dateQuick = '';
-        self._dateFrom = dateFrom.value ? new Date(dateFrom.value).toISOString() : null;
-        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
-        self._selected = new Set();
-        self._load();
-      });
-    }
-    if (dateTo) {
-      dateTo.addEventListener('change', function() {
-        self._dateQuick = '';
-        self._dateTo = dateTo.value ? new Date(dateTo.value + 'T23:59:59').toISOString() : null;
-        container.querySelectorAll('.ea-date-quick-btn').forEach(function(b) { b.classList.remove('active'); });
-        self._selected = new Set();
-        self._load();
-      });
-    }
+      '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
+      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:var(--green-dark);color:var(--green-dark);">&#10003; Handle All</button>';
   },
 
   // ── Bind controls ─────────────────────────────────────────
@@ -275,6 +237,75 @@ window.EA_LOGIC = {
       self._updateBulkBar();
       document.querySelectorAll('.ea-checkbox').forEach(function(cb) { cb.checked = false; });
     });
+
+    // Email Days dropdown toggle
+    var daysBtn = document.getElementById('ea-days-btn');
+    var daysDropdown = document.getElementById('ea-days-dropdown');
+    var rangeBtn = document.getElementById('ea-range-btn');
+    var rangeDropdown = document.getElementById('ea-range-dropdown');
+
+    if (daysBtn && daysDropdown) {
+      daysBtn.addEventListener('click', function() {
+        var isOpen = daysDropdown.classList.contains('open');
+        if (rangeDropdown) rangeDropdown.classList.remove('open');
+        daysDropdown.classList.toggle('open', !isOpen);
+        daysBtn.classList.toggle('active', !isOpen);
+      });
+      daysDropdown.querySelectorAll('.ea-dropdown-option').forEach(function(opt) {
+        opt.addEventListener('click', function() {
+          self._dateQuick = opt.dataset.days;
+          var d = new Date();
+          d.setDate(d.getDate() - parseInt(opt.dataset.days, 10));
+          self._dateFrom = d.toISOString();
+          self._dateTo = null;
+          self._selected = new Set();
+          daysDropdown.classList.remove('open');
+          daysBtn.classList.remove('active');
+          self._renderFilterRow();
+          self._bindFilterDropdowns();
+          self._load();
+        });
+      });
+    }
+
+    // Date Range dropdown toggle
+    if (rangeBtn && rangeDropdown) {
+      rangeBtn.addEventListener('click', function() {
+        var isOpen = rangeDropdown.classList.contains('open');
+        if (daysDropdown) daysDropdown.classList.remove('open');
+        if (daysBtn) daysBtn.classList.remove('active');
+        rangeDropdown.classList.toggle('open', !isOpen);
+        rangeBtn.classList.toggle('active', !isOpen);
+      });
+    }
+
+    this._bindFilterDropdowns();
+  },
+
+  _bindFilterDropdowns: function() {
+    var self = this;
+    var dateFrom = document.getElementById('ea-date-from');
+    var dateTo = document.getElementById('ea-date-to');
+    if (dateFrom) {
+      dateFrom.addEventListener('change', function() {
+        self._dateQuick = '';
+        self._dateFrom = dateFrom.value ? new Date(dateFrom.value).toISOString() : null;
+        self._selected = new Set();
+        self._renderFilterRow();
+        self._bindFilterDropdowns();
+        self._load();
+      });
+    }
+    if (dateTo) {
+      dateTo.addEventListener('change', function() {
+        self._dateQuick = '';
+        self._dateTo = dateTo.value ? new Date(dateTo.value + 'T23:59:59').toISOString() : null;
+        self._selected = new Set();
+        self._renderFilterRow();
+        self._bindFilterDropdowns();
+        self._load();
+      });
+    }
   },
 
   // ── Stat tiles ────────────────────────────────────────────
@@ -342,10 +373,9 @@ window.EA_LOGIC = {
       this._initDateDefaults();
       this._showHandled = false;
     }
-    var searchEl = document.getElementById('ea-search');
-    if (searchEl) searchEl.value = this._searchTerm;
     this._renderCategoryPills();
-    this._renderDateRow();
+    this._renderFilterRow();
+    this._bindControls();
   },
 
   _clearFilters: function() {
@@ -354,10 +384,9 @@ window.EA_LOGIC = {
     this._showHandled = false;
     this._initDateDefaults();
     this._selected = new Set();
-    var searchEl = document.getElementById('ea-search');
-    if (searchEl) searchEl.value = '';
     this._renderCategoryPills();
-    this._renderDateRow();
+    this._renderFilterRow();
+    this._bindControls();
     this._load();
   },
 
