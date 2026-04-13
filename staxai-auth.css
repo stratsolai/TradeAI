@@ -122,8 +122,8 @@
 
   /* Modal */
   --modal-padding:      28px 24px;     /* Internal padding for modal dialogs */
-  --modal-title-font-size: 20px;       /* Modal and settings card heading font size */
-  --modal-title-font-weight: 700;      /* Modal and settings card heading font weight. Bold */
+  --heading-lg-size: 20px;       /* Modal and settings card heading font size */
+  --heading-lg-weight: 700;      /* Modal and settings card heading font weight. Bold */
   --modal-body-font-size: 14px;        /* Modal body text font size */
   --modal-body-line-height: 1.6;       /* Modal body line height */
   --modal-actions-gap:  12px;          /* Gap between action buttons in modals and settings footers */
@@ -155,14 +155,14 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text);
 }
 
-h1 { font-weight: var(--modal-title-font-weight); font-size: var(--page-title-font-size); }
-h2 { font-weight: var(--modal-title-font-weight); }
+h1 { font-weight: var(--heading-lg-weight); font-size: var(--page-title-font-size); }
+h2 { font-weight: var(--heading-lg-weight); }
 
 p { margin-bottom: 12px; }
 
 .page-title {
   font-size: var(--page-title-font-size);
-  font-weight: var(--modal-title-font-weight);
+  font-weight: var(--heading-lg-weight);
   color: var(--text);
   margin-bottom: 6px;
 }
@@ -649,8 +649,8 @@ a:hover { opacity: 0.85; }
 
 .empty-state h3 {
   font-family: var(--heading-font);
-  font-size: var(--modal-title-font-size);
-  font-weight: var(--modal-title-font-weight);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
   margin-bottom: 8px;
   color: var(--text);
 }
@@ -682,8 +682,8 @@ a:hover { opacity: 0.85; }
 
 .settings-card-title {
   font-family: var(--heading-font);
-  font-size: var(--modal-title-font-size);
-  font-weight: var(--modal-title-font-weight);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
   color: var(--text);
   letter-spacing: 0.3px;
 }
