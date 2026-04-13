@@ -58,13 +58,13 @@
     .connection-status { font-size: var(--status-font-size); color: var(--text-muted); display: inline-block; }
     .connection-status:empty { display: none; }
     .connection-status.connected { color: var(--green); font-weight: 600; }
-    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); transition: background var(--btn-transition); }
+    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); transition: background var(--btn-transition); }
     .btn-connect:hover { background: var(--blue-dark); }
     .btn-connect.disconnect { background: var(--red); }
     .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
     .settings-text-input { border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
     .settings-text-input:focus { outline: none; border-color: var(--blue); }
-    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--btn-transition); }
+    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--btn-transition); }
     .btn-save-inline:hover { background: var(--blue-dark); }
 
     /* Connection multi-account list — two-row layout via JS-rendered wrappers:
@@ -128,7 +128,7 @@
     .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
 
-    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--btn-font-weight); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--btn-transition); }
+    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--btn-transition); }
     .btn-save-urls:hover { background: var(--blue-dark); }
 
     /* Connection row control — Add buttons align right; lists fill width */
@@ -142,13 +142,13 @@
     .tool-conn-tile { display:flex; align-items:flex-start; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); }
     .tool-conn-tile:last-child { border-bottom:none; }
     .tool-conn-info { flex:0 0 300px; max-width:300px; }
-    .tool-conn-label { font-weight:var(--btn-font-weight); color:var(--text); font-size:var(--btn-font-size); font-family:var(--body-font); display:flex; align-items:center; gap:8px; }
+    .tool-conn-label { font-weight:var(--font-weight-semibold); color:var(--text); font-size:var(--btn-font-size); font-family:var(--body-font); display:flex; align-items:center; gap:8px; }
     .tool-conn-desc { font-size:var(--note-font-size); color:var(--text-muted); margin-top:2px; font-family:var(--body-font); }
     .tool-conn-control { display:flex; flex-direction:column; align-items:flex-end; flex:1 1 auto; min-width:0; }
     .tool-conn-account { display:flex; align-items:center; gap:8px; padding:8px 0; }
     .tool-conn-account-name { border:var(--input-border-width) solid var(--border); border-radius:6px; padding:6px 12px; font-size:13px; font-family:var(--body-font); color:var(--text); background:var(--white); max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tool-conn-account-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; }
-    .tool-conn-coming-soon { display:inline-block; background:var(--blue-light); color:var(--blue); font-size:var(--badge-font-size); font-weight:var(--btn-font-weight); padding:3px 10px; border-radius:6px; }
+    .tool-conn-coming-soon { display:inline-block; background:var(--blue-light); color:var(--blue); font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); padding:3px 10px; border-radius:6px; }
     .tool-conn-msg { font-size:var(--note-font-size); padding:8px 0; display:none; }
     .tool-conn-msg.success { color:var(--green); display:block; }
     .tool-conn-msg.error { color:var(--red); display:block; }
@@ -183,9 +183,9 @@
     .perm-modal-title { font-family:var(--heading-font); font-size:var(--heading-lg-size); font-weight:var(--heading-lg-weight); color:var(--text); margin-bottom:12px; }
     .perm-modal-body { font-size:var(--modal-body-font-size); color:var(--text); line-height:var(--modal-body-line-height); margin-bottom:24px; }
     .perm-modal-actions { display:flex; gap:var(--modal-actions-gap); justify-content:flex-end; }
-    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
+    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
     .perm-modal-cancel:hover { background:var(--bg); }
-    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--btn-font-weight); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
+    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
     .perm-modal-continue:hover { background:var(--blue-dark); }
 
     @media (max-width: 768px) {

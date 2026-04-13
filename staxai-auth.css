@@ -78,7 +78,7 @@
   --btn-transition:     0.12s;         /* Button transition duration. Shared across all interactive transitions */
   --btn-padding:        10px 20px;     /* Standard button padding */
   --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
-  --btn-font-weight:    600;           /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
+  --font-weight-semibold:    600;           /* Semibold font weight. Buttons, labels, badges, stat labels, tabs */
   --btn-gap:            6px;           /* Button icon-to-text gap */
 
   /* Inputs & Forms */
@@ -235,7 +235,7 @@ a:hover { opacity: 0.85; }
 .topbar-nav-link {
   color: rgba(255,255,255,0.75);
   font-size: 16px;
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
   transition: color var(--btn-transition);
 }
@@ -261,7 +261,7 @@ a:hover { opacity: 0.85; }
 .topbar-link {
   color: rgba(255,255,255,0.75);
   font-size: 16px;
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
   transition: color var(--btn-transition);
 }
@@ -283,7 +283,7 @@ a:hover { opacity: 0.85; }
   color: rgba(255,255,255,0.75);
   font-family: var(--body-font);
   font-size: 16px;
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -407,7 +407,7 @@ a:hover { opacity: 0.85; }
 .stat-card .stat-label {
   font-family: var(--body-font);
   font-size: var(--badge-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-label);
@@ -426,7 +426,7 @@ a:hover { opacity: 0.85; }
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -449,7 +449,7 @@ a:hover { opacity: 0.85; }
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -473,7 +473,7 @@ a:hover { opacity: 0.85; }
   padding: var(--btn-padding);
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -507,7 +507,7 @@ a:hover { opacity: 0.85; }
   border-bottom: 3px solid transparent;
   cursor: pointer;
   font-size: var(--btn-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-muted);
   transition: all var(--btn-transition);
   white-space: nowrap;
@@ -606,7 +606,7 @@ a:hover { opacity: 0.85; }
 .section-label {
   font-family: var(--body-font);
   font-size: var(--badge-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-label);
@@ -622,7 +622,7 @@ a:hover { opacity: 0.85; }
   border-radius: var(--badge-radius);
   font-family: var(--body-font);
   font-size: var(--badge-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
 }
 
 .badge-blue   { background: var(--blue-light);        color: var(--blue); }
@@ -712,7 +712,7 @@ a:hover { opacity: 0.85; }
 }
 
 .settings-row-label {
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   color: var(--text);
   font-size: var(--btn-font-size);
   font-family: var(--body-font);
@@ -739,7 +739,7 @@ a:hover { opacity: 0.85; }
   border: none;
   font-family: var(--body-font);
   font-size: var(--btn-font-size);
-  font-weight: var(--btn-font-weight);
+  font-weight: var(--font-weight-semibold);
   padding: 10px 22px;
   border-radius: var(--btn-radius);
   cursor: pointer;
