@@ -31,30 +31,6 @@
       color: var(--text-muted);
     }
 
-    /* ── SETTINGS CARD ── */
-    .settings-card {
-      width:100%; box-sizing:border-box;
-      background: var(--white);
-      border: 1px solid var(--border); border-left: 4px solid var(--blue);
-      border-radius: 12px;
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .settings-card-header {
-      padding: 20px 24px 16px;
-      border-bottom: 1px solid var(--border);
-    }
-    .settings-rows {
-      padding: 0;
-    }
-    .settings-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border);
-    }
-    .settings-row:last-child { border-bottom: none; }
     .settings-row-control {
       display: flex;
       gap: 0;
@@ -89,33 +65,6 @@
       color: var(--blue);
     }
 
-    /* ── SAVE FOOTER ── */
-    .settings-footer {
-      padding: 16px 24px;
-      border-top: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .btn-save {
-      background: var(--blue);
-      color: var(--white);
-      border: none;
-      font-family: var(--body-font);
-      font-size: 14px;
-      font-weight: 600;
-      padding: 10px 22px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .btn-save:hover { background: var(--blue-dark); }
-    .btn-save:disabled { opacity: 0.6; cursor: not-allowed; }
-    .save-msg {
-      font-size: 13px;
-      display: none;
-    }
-
     /* Connection UI */
     .connection-status { font-size: 13px; color: var(--text-muted); display: inline-block; }
     .connection-status:empty { display: none; }
@@ -128,10 +77,6 @@
     .settings-text-input:focus { outline: none; border-color: var(--blue); }
     .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: 8px; padding: 10px 22px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background 0.15s; }
     .btn-save-inline:hover { opacity: 0.9; }
-    .settings-card-title { font-family: var(--heading-font); font-size: 20px; font-weight: 700; color: var(--text); letter-spacing: 0.3px; }
-    .settings-card-hint { font-size: 13px; color: var(--text-muted); margin-top: 4px; font-family: var(--body-font); }
-    .settings-row-label { font-weight: 600; color: var(--text); font-size: 14px; font-family: var(--body-font); }
-    .settings-row-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; font-family: var(--body-font); }
 
     /* Connection multi-account list — two-row layout via JS-rendered wrappers:
        row 1 = email + Disconnect, row 2 = lookback + Choose Folders (right-aligned) */
@@ -235,9 +180,9 @@
     #add-website-btn { margin-top: 8px; }
 
     /* ── PERMISSION MODAL ── */
-    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:500; align-items:center; justify-content:center; }
+    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay-bg); z-index:500; align-items:center; justify-content:center; }
     .perm-modal-overlay.open { display:flex; }
-    .perm-modal { background:var(--white); border-radius:12px; max-width:480px; width:90%; padding:28px 24px; box-shadow:0 8px 32px rgba(0,0,0,0.18); }
+    .perm-modal { background:var(--white); border-radius:12px; max-width:480px; width:90%; padding:28px 24px; box-shadow:var(--modal-shadow); }
     .perm-modal-title { font-family:var(--heading-font); font-size:20px; font-weight:700; color:var(--text); margin-bottom:12px; }
     .perm-modal-body { font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; }
     .perm-modal-actions { display:flex; gap:12px; justify-content:flex-end; }
