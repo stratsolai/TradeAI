@@ -113,7 +113,7 @@ var EA_SYSTEM_PROMPT = 'You are an email categorisation assistant for a business
   'RULES:\n' +
   '1. Return ONLY a valid JSON array. No preamble, no explanation, no markdown fences.\n' +
   '2. category must exactly match one of the provided category IDs — copy it character-for-character.\n' +
-  '3. If an email does not fit any category well, use the first category in the list as a fallback.\n' +
+  '3. If an email does not fit any category well, use the "other" category as the fallback.\n' +
   '4. Summary should capture what the email is about and any action required.';
 
 async function categoriseEmails(emails, categories, businessName, industry) {
@@ -121,8 +121,12 @@ async function categoriseEmails(emails, categories, businessName, industry) {
 
   var categoryList = categories
     .filter(function(c) { return c.enabled; })
-    .map(function(c) { return c.id + ': ' + c.label; })
-    .join(', ');
+    .map(function(c) {
+      var entry = c.id + ': ' + c.label;
+      if (c.description) entry += ' — ' + c.description;
+      return entry;
+    })
+    .join('\n');
 
   var emailList = emails.map(function(e, i) {
     return '[' + i + '] From: ' + e.sender + ' <' + e.email + '>\nSubject: ' + e.subject + '\nBody: ' + (e.body || '').substring(0, 2000);
@@ -212,13 +216,17 @@ export default async function handler(req, res) {
     var categories = (settingsRes.data && Array.isArray(settingsRes.data.categories) && settingsRes.data.categories.length > 0)
       ? settingsRes.data.categories
       : [
-          { id: 'urgent', label: 'Urgent', enabled: true },
-          { id: 'leads', label: 'Leads', enabled: true },
-          { id: 'enquiries', label: 'Enquiries', enabled: true },
-          { id: 'jobs', label: 'Jobs', enabled: true },
-          { id: 'invoices', label: 'Invoices', enabled: true },
-          { id: 'suppliers', label: 'Suppliers', enabled: true },
-          { id: 'low', label: 'Low Priority', enabled: true }
+          { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
+          { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
+          { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
+          { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
+          { id: 'hr', label: 'HR / Staff', description: 'Emails relating to employees, contractors, rosters, payroll, and recruitment', enabled: true },
+          { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
+          { id: 'suppliers', label: 'Suppliers', description: 'Emails from suppliers, vendors, and trade accounts including quotes, orders, and deliveries', enabled: true },
+          { id: 'compliance', label: 'Compliance / Legal', description: 'Contracts, insurance, licences, council notices, and legal correspondence', enabled: true },
+          { id: 'newsletters', label: 'Newsletters / Marketing', description: 'Promotional emails, newsletters, industry updates, and marketing material', enabled: true },
+          { id: 'personal', label: 'Personal', description: 'Personal emails not directly related to business operations', enabled: true },
+          { id: 'other', label: 'Other', description: 'Emails that do not clearly fit any other category', enabled: true }
         ];
 
     var businessName = profile.business_name || 'your business';
