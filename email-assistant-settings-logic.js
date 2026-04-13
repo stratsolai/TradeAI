@@ -377,6 +377,7 @@ window.EA_SETTINGS = {
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
         self._renderCategories();
+        self._resetCatSaveBtn();
       });
     }
 
@@ -406,15 +407,14 @@ window.EA_SETTINGS = {
         }
         self._settings.categories = self._categories;
         await self._saveSettings();
-        var msg = document.getElementById('save-categories-msg');
-        if (msg) {
-          msg.textContent = 'Categories saved.';
-          msg.style.display = 'inline';
-          msg.style.color = 'var(--green-dark)';
-          setTimeout(function () { msg.style.display = 'none'; }, 3000);
-        }
+        if (saveBtn) { saveBtn.textContent = 'Saved'; saveBtn.disabled = true; }
       });
     }
+  },
+
+  _resetCatSaveBtn: function () {
+    var btn = document.getElementById('save-categories-btn');
+    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
   },
 
   _removeCategory: async function (idx) {
@@ -485,6 +485,7 @@ window.EA_SETTINGS = {
             row.querySelectorAll('.freq-btn').forEach(function (b) { b.classList.remove('active'); });
             catBtn.classList.add('active');
           }
+          self._resetCatSaveBtn();
         }
         return;
       }
