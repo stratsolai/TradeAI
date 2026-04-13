@@ -222,10 +222,18 @@ window.EA_LOGIC = {
         '</div>';
       container.querySelectorAll('.filter-pill[data-days]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          self._dateQuick = pill.dataset.days;
-          var d = new Date();
-          d.setDate(d.getDate() - parseInt(pill.dataset.days, 10));
-          self._dateFrom = d.toISOString();
+          if (self._dateQuick === pill.dataset.days) {
+            // Deselect — default to 90 days (full available range)
+            self._dateQuick = '';
+            var d90 = new Date();
+            d90.setDate(d90.getDate() - 90);
+            self._dateFrom = d90.toISOString();
+          } else {
+            self._dateQuick = pill.dataset.days;
+            var d = new Date();
+            d.setDate(d.getDate() - parseInt(pill.dataset.days, 10));
+            self._dateFrom = d.toISOString();
+          }
           self._dateTo = null;
           self._selected = new Set();
           self._renderExpandRow();
