@@ -71,12 +71,9 @@ window.EA_SETTINGS = {
       { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
       { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
       { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
-      { id: 'hr', label: 'HR / Staff', description: 'Emails relating to employees, contractors, rosters, payroll, and recruitment', enabled: true },
       { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
-      { id: 'suppliers', label: 'Suppliers', description: 'Emails from suppliers, vendors, and trade accounts including quotes, orders, and deliveries', enabled: true },
-      { id: 'compliance', label: 'Compliance / Legal', description: 'Contracts, insurance, licences, council notices, and legal correspondence', enabled: true },
+      { id: 'operations', label: 'Operations', description: 'Supplier, staff, compliance, and general business correspondence', enabled: true },
       { id: 'newsletters', label: 'Newsletters / Marketing', description: 'Promotional emails, newsletters, industry updates, and marketing material', enabled: true },
-      { id: 'personal', label: 'Personal', description: 'Personal emails not directly related to business operations', enabled: true },
       { id: 'other', label: 'Other', description: 'Emails that do not clearly fit any other category', enabled: true }
     ];
     var defaultIds = DEFAULT_CATS.map(function(c) { return c.id; });
@@ -229,7 +226,7 @@ window.EA_SETTINGS = {
     var grid = document.getElementById('categories-grid');
     if (!grid) return;
 
-    var DEFAULT_COUNT = 11;
+    var DEFAULT_COUNT = 8;
     var html = self._categories.map(function (cat, idx) {
       var isOn = cat.enabled;
       var isDefault = idx < DEFAULT_COUNT;
@@ -293,7 +290,7 @@ window.EA_SETTINGS = {
         });
         // Validate custom categories have descriptions
         var missing = false;
-        for (var i = 11; i < self._categories.length; i++) {
+        for (var i = 8; i < self._categories.length; i++) {
           if (!self._categories[i].description) { missing = true; break; }
         }
         if (missing) {
@@ -319,6 +316,43 @@ window.EA_SETTINGS = {
     }
   },
 
+  _removeCategory: async function (idx) {
+    var self = this;
+    var cat = self._categories[idx];
+    if (!cat) return;
+    var msg = document.getElementById('save-categories-msg');
+    try {
+      var result = await self._supabase
+        .from('email_summaries')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', self._userId)
+        .eq('category', cat.id);
+      var count = result.count || 0;
+      if (count > 0) {
+        if (msg) {
+          msg.textContent = 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.';
+          msg.style.display = 'inline';
+          msg.style.color = 'var(--red)';
+          setTimeout(function () { msg.style.display = 'none'; }, 5000);
+        }
+        return;
+      }
+    } catch (e) {
+      console.error('[EA Settings] Remove check error:', e);
+      return;
+    }
+    self._categories.splice(idx, 1);
+    self._settings.categories = self._categories;
+    await self._saveSettings();
+    self._renderCategories();
+    if (msg) {
+      msg.textContent = 'Category removed.';
+      msg.style.display = 'inline';
+      msg.style.color = 'var(--green-dark)';
+      setTimeout(function () { msg.style.display = 'none'; }, 3000);
+    }
+  },
+
   // ── EVENT DELEGATION ──
   _bindEventDelegation: function () {
     var self = this;
@@ -333,9 +367,8 @@ window.EA_SETTINGS = {
       var removeBtn = e.target.closest('[data-remove]');
       if (removeBtn) {
         var idx = parseInt(removeBtn.getAttribute('data-remove'), 10);
-        if (!isNaN(idx)) {
-          self._categories.splice(idx, 1);
-          self._renderCategories();
+        if (!isNaN(idx) && self._categories[idx]) {
+          self._removeCategory(idx);
         }
         return;
       }
