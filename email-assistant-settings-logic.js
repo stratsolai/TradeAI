@@ -16,6 +16,7 @@ window.EA_SETTINGS = {
       document.getElementById('page-wrap').style.display = 'block';
       self._loadAll();
       self._bindEventDelegation();
+      self._bindPermissionModal();
     });
   },
 
@@ -144,8 +145,8 @@ window.EA_SETTINGS = {
 
     var gmailBtn = document.getElementById('add-gmail-btn');
     var outlookBtn = document.getElementById('add-outlook-btn');
-    if (gmailBtn) { gmailBtn.onclick = function () { self._startOAuth('gmail'); }; }
-    if (outlookBtn) { outlookBtn.onclick = function () { self._startOAuth('microsoft'); }; }
+    if (gmailBtn) { gmailBtn.onclick = function () { self._showPermModal('gmail'); }; }
+    if (outlookBtn) { outlookBtn.onclick = function () { self._showPermModal('microsoft'); }; }
   },
 
   _buildLookbackHtml: function (provider, accountEmail, currentDays) {
@@ -167,6 +168,63 @@ window.EA_SETTINGS = {
   _startOAuth: function (provider) {
     if (!this._userId) return;
     window.location.href = '/api/auth/initiate?provider=' + provider + '&userId=' + this._userId + '&flow=ea';
+  },
+
+  _permMessages: {
+    gmail: {
+      title: 'Connect Gmail',
+      body: 'StaxAI will be able to read your emails and star and unstar messages on your behalf. This is used solely for the email flagging feature. StaxAI cannot send, delete, or modify your emails in any other way.'
+    },
+    microsoft: {
+      title: 'Connect Outlook',
+      body: 'StaxAI will be able to read your emails. StaxAI cannot send, delete, or modify your emails in any way.'
+    }
+  },
+
+  _pendingProvider: null,
+
+  _showPermModal: function (provider) {
+    var msg = this._permMessages[provider];
+    if (!msg) return;
+    var titleEl = document.getElementById('perm-modal-title');
+    var bodyEl = document.getElementById('perm-modal-body');
+    var overlay = document.getElementById('perm-modal-overlay');
+    if (!titleEl || !bodyEl || !overlay) return;
+    titleEl.textContent = msg.title;
+    bodyEl.textContent = msg.body;
+    overlay.classList.add('open');
+    this._pendingProvider = provider;
+  },
+
+  _bindPermissionModal: function () {
+    var self = this;
+    var overlay = document.getElementById('perm-modal-overlay');
+    var cancelBtn = document.getElementById('perm-modal-cancel');
+    var continueBtn = document.getElementById('perm-modal-continue');
+
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', function () {
+        if (overlay) overlay.classList.remove('open');
+        self._pendingProvider = null;
+      });
+    }
+    if (continueBtn) {
+      continueBtn.addEventListener('click', function () {
+        if (overlay) overlay.classList.remove('open');
+        if (self._pendingProvider) {
+          self._startOAuth(self._pendingProvider);
+          self._pendingProvider = null;
+        }
+      });
+    }
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) {
+          overlay.classList.remove('open');
+          self._pendingProvider = null;
+        }
+      });
+    }
   },
 
   _disconnectEmail: async function (email) {
