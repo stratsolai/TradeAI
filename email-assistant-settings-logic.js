@@ -123,13 +123,11 @@ window.EA_SETTINGS = {
   },
 
   _buildLookbackHtml: function (provider, accountEmail, currentDays) {
-    var current = (currentDays == null) ? '90' : String(currentDays);
+    var current = (currentDays == null) ? '30' : String(currentDays);
     var opts = [
       { v: '30',  l: '30 days' },
       { v: '60',  l: '60 days' },
-      { v: '90',  l: '90 days' },
-      { v: '180', l: '6 months' },
-      { v: '365', l: '12 months' }
+      { v: '90',  l: '90 days' }
     ];
     return '<span class="connection-item-lookback">' +
       '<select class="email-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
@@ -163,7 +161,7 @@ window.EA_SETTINGS = {
     try {
       var entryIdx = self._eaEmails.findIndex(function (a) { return a && a.email === accountEmail; });
       if (entryIdx === -1) return;
-      self._eaEmails[entryIdx].lookback_days = parseInt(value, 10) || 90;
+      self._eaEmails[entryIdx].lookback_days = parseInt(value, 10) || 30;
       var res = await self._supabase
         .from('profiles')
         .update({ ea_connected_emails: self._eaEmails })
