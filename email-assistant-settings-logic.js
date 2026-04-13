@@ -67,13 +67,17 @@ window.EA_SETTINGS = {
     } catch (e) {}
 
     self._categories = Array.isArray(self._settings.categories) ? self._settings.categories : [
-      { id: 'urgent', label: 'Urgent', enabled: true },
-      { id: 'leads', label: 'Leads', enabled: true },
-      { id: 'enquiries', label: 'Enquiries', enabled: true },
-      { id: 'jobs', label: 'Jobs', enabled: true },
-      { id: 'invoices', label: 'Invoices', enabled: true },
-      { id: 'suppliers', label: 'Suppliers', enabled: true },
-      { id: 'low', label: 'Low Priority', enabled: true }
+      { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
+      { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
+      { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
+      { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
+      { id: 'hr', label: 'HR / Staff', description: 'Emails relating to employees, contractors, rosters, payroll, and recruitment', enabled: true },
+      { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
+      { id: 'suppliers', label: 'Suppliers', description: 'Emails from suppliers, vendors, and trade accounts including quotes, orders, and deliveries', enabled: true },
+      { id: 'compliance', label: 'Compliance / Legal', description: 'Contracts, insurance, licences, council notices, and legal correspondence', enabled: true },
+      { id: 'newsletters', label: 'Newsletters / Marketing', description: 'Promotional emails, newsletters, industry updates, and marketing material', enabled: true },
+      { id: 'personal', label: 'Personal', description: 'Personal emails not directly related to business operations', enabled: true },
+      { id: 'other', label: 'Other', description: 'Emails that do not clearly fit any other category', enabled: true }
     ];
 
     self._renderScanFrequency();
@@ -201,12 +205,17 @@ window.EA_SETTINGS = {
     var grid = document.getElementById('categories-grid');
     if (!grid) return;
 
+    var DEFAULT_COUNT = 11;
     var html = self._categories.map(function (cat, idx) {
       var isOn = cat.enabled;
-      var isDefault = idx < 7;
+      var isDefault = idx < DEFAULT_COUNT;
       var label = (cat.label || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+      var desc = (cat.description || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+      var descHtml = isDefault
+        ? '<div class="settings-row-desc">' + desc + '</div>'
+        : '<div style="margin-top:4px;"><input type="text" class="settings-text-input ea-cat-desc-input" data-cat-desc="' + idx + '" value="' + desc + '" placeholder="Description (required)" style="width:100%"></div>';
       var row = '<div class="settings-row cat-row">' +
-        '<div><div class="settings-row-label">' + label + '</div></div>' +
+        '<div><div class="settings-row-label">' + label + '</div>' + descHtml + '</div>' +
         '<div class="settings-row-control">';
       if (!isDefault) {
         row += '<button type="button" class="btn-remove-url" data-remove="' + idx + '">Remove</button>';
@@ -227,19 +236,52 @@ window.EA_SETTINGS = {
 
     if (addBtn) {
       addBtn.addEventListener('click', function () {
-        var input = document.getElementById('category-custom-input');
-        if (input && input.value.trim()) {
-          var customLabel = input.value.trim();
-          var customId = customLabel.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-          self._categories.push({ id: customId, label: customLabel, enabled: true });
-          input.value = '';
-          self._renderCategories();
+        var nameInput = document.getElementById('category-custom-input');
+        var descInput = document.getElementById('category-custom-desc');
+        var nameVal = nameInput ? nameInput.value.trim() : '';
+        var descVal = descInput ? descInput.value.trim() : '';
+        if (!nameVal || !descVal) {
+          var msg = document.getElementById('save-categories-msg');
+          if (msg) {
+            msg.textContent = 'Both name and description are required.';
+            msg.style.display = 'inline';
+            msg.style.color = 'var(--red)';
+            setTimeout(function () { msg.style.display = 'none'; }, 3000);
+          }
+          return;
         }
+        var customId = nameVal.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        self._categories.push({ id: customId, label: nameVal, description: descVal, enabled: true });
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+        self._renderCategories();
       });
     }
 
     if (saveBtn) {
       saveBtn.addEventListener('click', async function () {
+        // Collect updated descriptions from editable inputs
+        document.querySelectorAll('.ea-cat-desc-input').forEach(function(input) {
+          var idx = parseInt(input.dataset.catDesc, 10);
+          if (!isNaN(idx) && self._categories[idx]) {
+            self._categories[idx].description = input.value.trim();
+          }
+        });
+        // Validate custom categories have descriptions
+        var missing = false;
+        for (var i = 11; i < self._categories.length; i++) {
+          if (!self._categories[i].description) { missing = true; break; }
+        }
+        if (missing) {
+          var msg = document.getElementById('save-categories-msg');
+          if (msg) {
+            msg.textContent = 'All custom categories require a description.';
+            msg.style.display = 'inline';
+            msg.style.color = 'var(--red)';
+            setTimeout(function () { msg.style.display = 'none'; }, 3000);
+          }
+          return;
+        }
         self._settings.categories = self._categories;
         await self._saveSettings();
         var msg = document.getElementById('save-categories-msg');
