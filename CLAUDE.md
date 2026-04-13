@@ -137,13 +137,8 @@ is complete.
 
 ### Task 10 — CL Connections integration test
 
-Google Drive, Dropbox, SharePoint, and Gmail confirmed
-working end to end.
-
-Outstanding before sign-off:
-- Outlook — integration test in progress, scan running
-  successfully on large inbox via Task 15 background
-  processing. Sign-off pending scan completion.
+**COMPLETE.** Google Drive, Dropbox, SharePoint, Gmail,
+and Outlook confirmed working end to end.
 
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
@@ -352,6 +347,10 @@ spec is written.
   email-assistant.html and content-library.html. All other
   authenticated pages need it added during their stylesheet
   rollout.
+- CL Library Connections tab now has pre-connection
+  confirmation modals for all six connections (Gmail,
+  Outlook, Google Drive, OneDrive, SharePoint, Dropbox)
+  added April 2026.
 
 ---
 
