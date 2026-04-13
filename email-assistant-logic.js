@@ -39,6 +39,13 @@ window.EA_LOGIC = {
   init: async function(supabase, user) {
     this._supabase = supabase;
     this._user = user;
+    var style = getComputedStyle(document.documentElement);
+    this._colors = {
+      redDark: style.getPropertyValue('--red-dark').trim(),
+      greenDark: style.getPropertyValue('--green-dark').trim(),
+      redHoverBg: style.getPropertyValue('--red-hover-bg').trim(),
+      blueLight: style.getPropertyValue('--blue-light').trim()
+    };
     await this._loadSettings();
     await this._loadAccounts();
     this._initDateDefaults();
@@ -142,7 +149,7 @@ window.EA_LOGIC = {
       '<div id="ea-filter-expand-row" class="ea-filter-expand-row" style="display:none"></div>' +
       '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
         '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
-        '<button class="btn-outline" id="ea-bulk-handle-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss All Selected</button>' +
+        '<button class="btn-outline" id="ea-bulk-handle-btn" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss All Selected</button>' +
         '<button class="btn-outline" id="ea-deselect-btn" style="border-color:var(--blue);color:var(--blue);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);">Deselect All</button>' +
       '</div>' +
       '<div id="ea-email-list" class="ea-list"></div>';
@@ -210,7 +217,7 @@ window.EA_LOGIC = {
       '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
-      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss All</button>';
+      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss All</button>';
   },
 
   _renderExpandRow: function() {
@@ -409,10 +416,10 @@ window.EA_LOGIC = {
     this._updateFilterBtnIndicators();
 
     // Hover bindings — matches CL _bindBtnHover pattern
-    self._bindBtnHover('ea-handle-all-btn', '#fef2f2');
-    self._bindBtnHover('ea-scan-btn', '#e8f4fd');
-    self._bindBtnHover('ea-bulk-handle-btn', '#fef2f2');
-    self._bindBtnHover('ea-deselect-btn', '#e8f4fd');
+    self._bindBtnHover('ea-handle-all-btn', self._colors.redHoverBg);
+    self._bindBtnHover('ea-scan-btn', self._colors.blueLight);
+    self._bindBtnHover('ea-bulk-handle-btn', self._colors.redHoverBg);
+    self._bindBtnHover('ea-deselect-btn', self._colors.blueLight);
   },
 
   _bindBtnHover: function(id, hoverBg) {
@@ -616,9 +623,9 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Restore</button>';
+      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:var(--green-dark);color:var(--green-dark);">&#10003; Restore</button>';
     } else {
-      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss</button>';
+      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss</button>';
     }
 
     var sourceDetailHtml =
@@ -775,12 +782,12 @@ window.EA_LOGIC = {
     if (btn) {
       if (this._showHandled) {
         btn.innerHTML = '&#10003; Restore All';
-        btn.style.borderColor = '#2e7d32';
-        btn.style.color = '#2e7d32';
+        btn.style.borderColor = this._colors.greenDark;
+        btn.style.color = this._colors.greenDark;
       } else {
         btn.innerHTML = '&#10007; Dismiss All';
-        btn.style.borderColor = '#8B2500';
-        btn.style.color = '#8B2500';
+        btn.style.borderColor = this._colors.redDark;
+        btn.style.color = this._colors.redDark;
       }
     }
 
@@ -788,12 +795,12 @@ window.EA_LOGIC = {
     if (bulkBtn) {
       if (this._showHandled) {
         bulkBtn.innerHTML = '&#10003; Restore All Selected';
-        bulkBtn.style.borderColor = '#2e7d32';
-        bulkBtn.style.color = '#2e7d32';
+        bulkBtn.style.borderColor = this._colors.greenDark;
+        bulkBtn.style.color = this._colors.greenDark;
       } else {
         bulkBtn.innerHTML = '&#10007; Dismiss All Selected';
-        bulkBtn.style.borderColor = '#8B2500';
-        bulkBtn.style.color = '#8B2500';
+        bulkBtn.style.borderColor = this._colors.redDark;
+        bulkBtn.style.color = this._colors.redDark;
       }
     }
   },
@@ -941,8 +948,8 @@ window.EA_LOGIC = {
       : '';
 
     var actionBtn = this._showHandled
-      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Restore</button>'
-      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss</button>';
+      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:var(--green-dark);color:var(--green-dark);">&#10003; Restore</button>'
+      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss</button>';
 
     listEl.innerHTML =
       '<div class="ea-detail">' +
