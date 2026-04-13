@@ -95,9 +95,9 @@ window.EA_LOGIC = {
 
   // ── Date defaults ─────────────────────────────────────────
   _initDateDefaults: function() {
-    this._dateQuick = '30';
+    this._dateQuick = '';
     var d = new Date();
-    d.setDate(d.getDate() - 30);
+    d.setDate(d.getDate() - 90);
     this._dateFrom = d.toISOString();
     this._dateTo = null;
   },
