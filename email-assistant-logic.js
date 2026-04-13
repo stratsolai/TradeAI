@@ -141,7 +141,7 @@ window.EA_LOGIC = {
       '<div id="ea-filter-expand-row" class="ea-filter-expand-row" style="display:none"></div>' +
       '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
         '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
-        '<button class="ea-bulk-handle-btn" id="ea-bulk-handle-btn">&#10003; Handle All Selected</button>' +
+        '<button class="btn-outline" id="ea-bulk-handle-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss All Selected</button>' +
         '<button class="btn-outline" id="ea-deselect-btn" style="border-color:var(--blue);color:var(--blue);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);">Deselect All</button>' +
       '</div>' +
       '<div id="ea-email-list" class="ea-list"></div>';
@@ -158,7 +158,7 @@ window.EA_LOGIC = {
     var self = this;
     var cats = [{ id: 'all', label: 'All' }]
       .concat(this._settings.categories.filter(function(c) { return c.enabled; }))
-      .concat([{ id: 'handled', label: 'Handled' }]);
+      .concat([{ id: 'handled', label: 'Dismissed' }]);
 
     container.innerHTML = cats.map(function(cat) {
       var isActive = (!self._showHandled && cat.id === self._activeCategory) || (self._showHandled && cat.id === 'handled');
@@ -193,7 +193,7 @@ window.EA_LOGIC = {
       '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
-      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Handle All</button>';
+      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss All</button>';
   },
 
   _renderExpandRow: function() {
@@ -340,9 +340,9 @@ window.EA_LOGIC = {
     this._updateFilterBtnIndicators();
 
     // Hover bindings — matches CL _bindBtnHover pattern
-    self._bindBtnHover('ea-handle-all-btn', '#edfaf1');
+    self._bindBtnHover('ea-handle-all-btn', '#fef2f2');
     self._bindBtnHover('ea-scan-btn', '#e8f4fd');
-    self._bindBtnHover('ea-bulk-handle-btn', '#edfaf1');
+    self._bindBtnHover('ea-bulk-handle-btn', '#fef2f2');
     self._bindBtnHover('ea-deselect-btn', '#e8f4fd');
   },
 
@@ -525,9 +525,9 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Unmark</button>';
+      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Restore</button>';
     } else {
-      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Handled</button>';
+      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss</button>';
     }
 
     return '<div class="ea-card" data-id="' + id + '">' +
@@ -645,12 +645,29 @@ window.EA_LOGIC = {
 
   _updateHandleAllLabel: function() {
     var btn = document.getElementById('ea-handle-all-btn');
-    if (!btn) return;
-    btn.innerHTML = this._showHandled ? '&#10007; Unmark All' : '&#10003; Handle All';
+    if (btn) {
+      if (this._showHandled) {
+        btn.innerHTML = '&#10003; Restore All';
+        btn.style.borderColor = '#2e7d32';
+        btn.style.color = '#2e7d32';
+      } else {
+        btn.innerHTML = '&#10007; Dismiss All';
+        btn.style.borderColor = '#8B2500';
+        btn.style.color = '#8B2500';
+      }
+    }
 
     var bulkBtn = document.getElementById('ea-bulk-handle-btn');
     if (bulkBtn) {
-      bulkBtn.innerHTML = this._showHandled ? '&#10007; Unmark All Selected' : '&#10003; Handle All Selected';
+      if (this._showHandled) {
+        bulkBtn.innerHTML = '&#10003; Restore All Selected';
+        bulkBtn.style.borderColor = '#2e7d32';
+        bulkBtn.style.color = '#2e7d32';
+      } else {
+        bulkBtn.innerHTML = '&#10007; Dismiss All Selected';
+        bulkBtn.style.borderColor = '#8B2500';
+        bulkBtn.style.color = '#8B2500';
+      }
     }
   },
 
@@ -797,8 +814,8 @@ window.EA_LOGIC = {
       : '';
 
     var actionBtn = this._showHandled
-      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Unmark</button>'
-      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Mark as Handled</button>';
+      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Restore</button>'
+      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Dismiss</button>';
 
     listEl.innerHTML =
       '<div class="ea-detail">' +
