@@ -236,15 +236,19 @@ window.EA_SETTINGS = {
       var descHtml = isDefault
         ? '<div class="settings-row-desc">' + desc + '</div>'
         : '<div style="margin-top:4px;"><input type="text" class="settings-text-input ea-cat-desc-input" data-cat-desc="' + idx + '" value="' + desc + '" placeholder="Description (required)" style="width:100%"></div>';
+      var removeHtml = !isDefault
+        ? '<button type="button" class="btn-remove-url" data-remove="' + idx + '">Remove</button>'
+        : '';
       var row = '<div class="settings-row cat-row">' +
         '<div><div class="settings-row-label">' + label + '</div>' + descHtml + '</div>' +
-        '<div class="settings-row-control">';
-      if (!isDefault) {
-        row += '<button type="button" class="btn-remove-url" data-remove="' + idx + '">Remove</button>';
-      }
-      row += '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="on">On</button>' +
-        '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="off">Off</button>' +
-        '</div></div>';
+        '<div style="display:flex;align-items:center;gap:12px;">' +
+          removeHtml +
+          '<div class="settings-row-control">' +
+            '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="on">On</button>' +
+            '<button type="button" class="freq-btn' + (!isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="off">Off</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
       return row;
     }).join('');
 
