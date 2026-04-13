@@ -220,12 +220,9 @@ export default async function handler(req, res) {
           { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
           { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
           { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
-          { id: 'hr', label: 'HR / Staff', description: 'Emails relating to employees, contractors, rosters, payroll, and recruitment', enabled: true },
           { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
-          { id: 'suppliers', label: 'Suppliers', description: 'Emails from suppliers, vendors, and trade accounts including quotes, orders, and deliveries', enabled: true },
-          { id: 'compliance', label: 'Compliance / Legal', description: 'Contracts, insurance, licences, council notices, and legal correspondence', enabled: true },
+          { id: 'operations', label: 'Operations', description: 'Supplier, staff, compliance, and general business correspondence', enabled: true },
           { id: 'newsletters', label: 'Newsletters / Marketing', description: 'Promotional emails, newsletters, industry updates, and marketing material', enabled: true },
-          { id: 'personal', label: 'Personal', description: 'Personal emails not directly related to business operations', enabled: true },
           { id: 'other', label: 'Other', description: 'Emails that do not clearly fit any other category', enabled: true }
         ];
 
