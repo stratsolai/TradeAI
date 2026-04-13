@@ -67,8 +67,53 @@
   --modal-shadow:       0 8px 32px rgba(0,0,0,0.18);
   --focus-ring:         rgba(26,84,144,0.08);
 
-  /* Spacing */
+  /* Buttons */
+  --radius-btn:         8px;
+  --transition-btn:     0.12s;
+  --btn-padding:        10px 20px;
+  --btn-font-size:      14px;
+  --btn-font-weight:    600;
+  --btn-gap:            6px;
+
+  /* Inputs & Forms */
+  --input-border-width: 1.5px;
+  --input-padding:      10px 14px;
+  --input-radius:       8px;
+  --input-font-size:    14px;
+  --label-font-size:    13px;
+  --label-font-weight:  600;
+  --label-margin-bottom: 6px;
+  --textarea-min-height: 80px;
+  --checkbox-size:      16px;
+
+  /* Badges */
+  --badge-radius:       20px;
+  --badge-font-size:    12px;
+
+  /* Cards */
+  --card-radius:        12px;
+
+  /* Layout & Spacing */
+  --page-padding:       32px 24px;
+  --page-padding-mobile: 20px 16px;
+  --page-header-margin: 28px;
+  --settings-page-padding: 40px 24px 80px;
   --letter-spacing-label: 0.05em;
+  --loading-padding:    40px;
+  --empty-padding:      40px;
+  --status-font-size:   13px;
+  --note-font-size:     13px;
+  --note-line-height:   1.5;
+  --section-title-font-size: 15px;
+  --section-title-font-weight: 700;
+
+  /* Modal */
+  --modal-padding:      28px 24px;
+  --modal-title-font-size: 20px;
+  --modal-title-font-weight: 700;
+  --modal-body-font-size: 14px;
+  --modal-body-line-height: 1.6;
+  --modal-actions-gap:  12px;
 
   /* Typography */
   --heading-font:       'Barlow Condensed', sans-serif;
@@ -123,7 +168,7 @@ a:hover { opacity: 0.85; }
 .page-wrap {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--page-padding);
 }
 
 /* ------------------------------------------------------------
@@ -179,7 +224,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--transition-btn);
 }
 
 .topbar-nav a:hover,
@@ -205,7 +250,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--transition-btn);
 }
 
 .topbar-link:hover {
@@ -231,7 +276,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: color 0.2s;
+  transition: color var(--transition-btn);
 }
 
 .account-btn:hover {
@@ -270,7 +315,7 @@ a:hover { opacity: 0.85; }
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--transition-btn), color var(--transition-btn);
 }
 
 .account-dropdown a:hover,
@@ -293,7 +338,7 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .card {
   background: var(--white);
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   box-shadow: 0 2px 8px var(--shadow-card);
   margin-bottom: 20px;
 }
@@ -348,8 +393,8 @@ a:hover { opacity: 0.85; }
 .stat-tile .stat-label,
 .stat-card .stat-label {
   font-family: var(--body-font);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--badge-font-size);
+  font-weight: var(--btn-font-weight);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-label);
@@ -364,17 +409,17 @@ a:hover { opacity: 0.85; }
   background: var(--blue);
   color: white;
   border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: var(--radius-btn);
+  padding: var(--btn-padding);
   font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--btn-gap);
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-btn);
 }
 
 .btn-primary:hover {
@@ -387,17 +432,17 @@ a:hover { opacity: 0.85; }
   background: white;
   color: var(--blue);
   border: 2px solid var(--blue);
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: var(--radius-btn);
+  padding: var(--btn-padding);
   font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--btn-gap);
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition: background var(--transition-btn), color var(--transition-btn);
 }
 
 .btn-outline:hover {
@@ -411,17 +456,17 @@ a:hover { opacity: 0.85; }
   background: white;
   color: var(--orange);
   border: 2px solid var(--orange);
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: var(--radius-btn);
+  padding: var(--btn-padding);
   font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--btn-gap);
   text-decoration: none;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-btn);
 }
 
 .btn-orange:hover {
@@ -451,7 +496,7 @@ a:hover { opacity: 0.85; }
   font-size: 14px;
   font-weight: 600;
   color: var(--text-muted);
-  transition: all 0.2s;
+  transition: all var(--transition-btn);
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -481,55 +526,18 @@ a:hover { opacity: 0.85; }
 }
 
 /* ------------------------------------------------------------
-   9. PILL TABS (.pill-tab)
-   ------------------------------------------------------------ */
-.pill-tab {
-  display: inline-flex;
-  align-items: center;
-  padding: 8px 16px;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--border);
-  border-radius: 8px;
-  font-family: var(--body-font);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  text-decoration: none;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
-}
-
-.pill-tab:hover { opacity: 0.85; }
-
-.pill-tab.active {
-  background: var(--blue-light);
-  color: var(--blue);
-  border-color: var(--blue);
-  border-left-color: var(--blue);
-  font-weight: 600;
-}
-
-.pill-tab.accent-blue   { border-left-color: var(--blue); }
-.pill-tab.accent-orange { border-left-color: var(--orange); }
-.pill-tab.accent-green  { border-left-color: var(--green); }
-.pill-tab.accent-purple { border-left-color: var(--purple); }
-.pill-tab.accent-teal   { border-left-color: var(--teal); }
-.pill-tab.accent-red    { border-left-color: var(--red); }
-
-/* ------------------------------------------------------------
-   10. FILTER PILLS (.filter-pill)
+   9. FILTER PILLS (.filter-pill)
    ------------------------------------------------------------ */
 .filter-pill {
   padding: 6px 16px;
-  border-radius: 10px;
+  border-radius: var(--radius-btn);
   border: 1px solid var(--border-blue);
   background: var(--white);
   font-size: 13px;
   font-weight: 500;
   color: #555;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-btn);
   display: inline-flex;
   align-items: center;
   text-decoration: none;
@@ -548,15 +556,15 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .form-input {
   width: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 14px;
+  border: var(--input-border-width) solid var(--border);
+  border-radius: var(--input-radius);
+  padding: var(--input-padding);
   font-family: var(--body-font);
-  font-size: 14px;
+  font-size: var(--input-font-size);
   color: var(--text);
   background: var(--white);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-btn);
 }
 
 .form-input:focus {
@@ -567,12 +575,12 @@ a:hover { opacity: 0.85; }
   flex: 1;
   min-width: 200px;
   padding: 8px 14px;
-  border: 1.5px solid var(--border);
+  border: var(--input-border-width) solid var(--border);
   border-radius: 20px;
-  font-size: 13px;
+  font-size: var(--status-font-size);
   font-family: var(--body-font);
   outline: none;
-  transition: border-color 0.2s;
+  transition: border-color var(--transition-btn);
 }
 
 .search-input:focus {
@@ -584,8 +592,8 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .section-label {
   font-family: var(--body-font);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--badge-font-size);
+  font-weight: var(--btn-font-weight);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-label);
@@ -598,10 +606,10 @@ a:hover { opacity: 0.85; }
 .badge {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: var(--badge-radius);
   font-family: var(--body-font);
-  font-size: 11px;
-  font-weight: 600;
+  font-size: var(--badge-font-size);
+  font-weight: var(--btn-font-weight);
 }
 
 .badge-blue   { background: var(--blue-light);        color: var(--blue); }
@@ -616,7 +624,7 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: var(--empty-padding) 20px;
   color: var(--text-muted);
 }
 
@@ -628,14 +636,14 @@ a:hover { opacity: 0.85; }
 
 .empty-state h3 {
   font-family: var(--heading-font);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--modal-title-font-size);
+  font-weight: var(--modal-title-font-weight);
   margin-bottom: 8px;
   color: var(--text);
 }
 
 .empty-state p {
-  font-size: 14px;
+  font-size: var(--btn-font-size);
   color: var(--text-muted);
   margin-bottom: 0;
 }
@@ -649,7 +657,7 @@ a:hover { opacity: 0.85; }
   background: var(--white);
   border: 1px solid var(--border);
   border-left: 4px solid var(--blue);
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   margin-bottom: 24px;
   overflow: hidden;
 }
@@ -661,14 +669,14 @@ a:hover { opacity: 0.85; }
 
 .settings-card-title {
   font-family: var(--heading-font);
-  font-size: 20px;
-  font-weight: 700;
+  font-size: var(--modal-title-font-size);
+  font-weight: var(--modal-title-font-weight);
   color: var(--text);
   letter-spacing: 0.3px;
 }
 
 .settings-card-hint {
-  font-size: 13px;
+  font-size: var(--note-font-size);
   color: var(--text-muted);
   margin-top: 4px;
   font-family: var(--body-font);
@@ -691,14 +699,14 @@ a:hover { opacity: 0.85; }
 }
 
 .settings-row-label {
-  font-weight: 600;
+  font-weight: var(--btn-font-weight);
   color: var(--text);
-  font-size: 14px;
+  font-size: var(--btn-font-size);
   font-family: var(--body-font);
 }
 
 .settings-row-desc {
-  font-size: 13px;
+  font-size: var(--note-font-size);
   color: var(--text-muted);
   margin-top: 2px;
   font-family: var(--body-font);
@@ -709,7 +717,7 @@ a:hover { opacity: 0.85; }
   border-top: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--modal-actions-gap);
 }
 
 .btn-save {
@@ -717,12 +725,12 @@ a:hover { opacity: 0.85; }
   color: var(--white);
   border: none;
   font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--btn-font-size);
+  font-weight: var(--btn-font-weight);
   padding: 10px 22px;
-  border-radius: 10px;
+  border-radius: var(--radius-btn);
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background var(--transition-btn);
 }
 
 .btn-save:hover {
@@ -735,6 +743,6 @@ a:hover { opacity: 0.85; }
 }
 
 .save-msg {
-  font-size: 13px;
+  font-size: var(--note-font-size);
   display: none;
 }
