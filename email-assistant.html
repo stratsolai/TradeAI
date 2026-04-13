@@ -89,8 +89,13 @@
       padding:3px 10px; border-radius:20px; font-size:12px;
       background:var(--blue-tint); color:var(--blue); white-space:nowrap; font-weight:500;
     }
-    .ea-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
     .ea-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
+
+    /* ─── PREVIEW ROW (matches CL .review-card-preview-row) ─── */
+    .ea-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
+    .ea-subject-inline { font-size:15px; font-weight:600; color:var(--text); min-width:0; flex:1; }
+    .ea-body-preview { font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+    .ea-upload-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
 
     /* ─── SOURCE BUTTON (matches CL .review-source-btn) ─── */
     .ea-source-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:rgba(0,0,0,0.10); border-left-color:var(--orange); border-radius:10px; padding:10px 10px; font-size:13px; font-weight:600; color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity 0.15s; }
@@ -102,12 +107,6 @@
     .ea-section-head span { font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; }
     .ea-source-detail { font-size:13px; color:var(--text-secondary); line-height:1.8; }
     .ea-source-detail-label { font-weight:600; color:var(--text); }
-
-    /* ─── EMAIL SUBJECT LINE ─── */
-    .ea-subject { font-size:15px; font-weight:600; color:var(--text); padding:0 16px; }
-
-    /* ─── SUMMARY ─── */
-    .ea-summary { font-size:13px; color:var(--text-muted); line-height:1.55; padding:4px 16px 12px; }
 
     /* ─── DETAIL VIEW ─── */
     .ea-detail {
