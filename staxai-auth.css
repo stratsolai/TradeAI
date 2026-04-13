@@ -62,8 +62,13 @@
 
   /* Effects */
   --shadow-card:        rgba(0,0,0,0.07);
+  --shadow-hover:       rgba(0,0,0,0.12);
   --modal-overlay-bg:   rgba(0,0,0,0.4);
   --modal-shadow:       0 8px 32px rgba(0,0,0,0.18);
+  --focus-ring:         rgba(26,84,144,0.08);
+
+  /* Spacing */
+  --letter-spacing-label: 0.05em;
 
   /* Typography */
   --heading-font:       'Barlow Condensed', sans-serif;
@@ -174,7 +179,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.2s;
 }
 
 .topbar-nav a:hover,
@@ -200,7 +205,7 @@ a:hover { opacity: 0.85; }
   font-size: 16px;
   font-weight: 600;
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.2s;
 }
 
 .topbar-link:hover {
@@ -226,7 +231,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.2s;
 }
 
 .account-btn:hover {
@@ -265,7 +270,7 @@ a:hover { opacity: 0.85; }
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .account-dropdown a:hover,
@@ -347,7 +352,7 @@ a:hover { opacity: 0.85; }
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--letter-spacing-label);
 }
 
 /* ------------------------------------------------------------
@@ -359,7 +364,7 @@ a:hover { opacity: 0.85; }
   background: var(--blue);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
@@ -369,7 +374,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: opacity 0.2s;
 }
 
 .btn-primary:hover {
@@ -382,7 +387,7 @@ a:hover { opacity: 0.85; }
   background: white;
   color: var(--blue);
   border: 2px solid var(--blue);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
@@ -392,7 +397,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.2s, color 0.2s;
 }
 
 .btn-outline:hover {
@@ -406,7 +411,7 @@ a:hover { opacity: 0.85; }
   background: white;
   color: var(--orange);
   border: 2px solid var(--orange);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 10px 20px;
   font-family: var(--body-font);
   font-size: 14px;
@@ -416,7 +421,7 @@ a:hover { opacity: 0.85; }
   align-items: center;
   gap: 6px;
   text-decoration: none;
-  transition: opacity 0.15s;
+  transition: opacity 0.2s;
 }
 
 .btn-orange:hover {
@@ -492,7 +497,7 @@ a:hover { opacity: 0.85; }
   color: var(--text-muted);
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .pill-tab:hover { opacity: 0.85; }
@@ -517,14 +522,14 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .filter-pill {
   padding: 6px 16px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: 1px solid var(--border-blue);
   background: var(--white);
   font-size: 13px;
   font-weight: 500;
   color: #555;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.2s;
   display: inline-flex;
   align-items: center;
   text-decoration: none;
@@ -543,7 +548,7 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .form-input {
   width: 100%;
-  border: 1px solid var(--border);
+  border: 1.5px solid var(--border);
   border-radius: 8px;
   padding: 10px 14px;
   font-family: var(--body-font);
@@ -551,7 +556,7 @@ a:hover { opacity: 0.85; }
   color: var(--text);
   background: var(--white);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s;
 }
 
 .form-input:focus {
@@ -567,7 +572,7 @@ a:hover { opacity: 0.85; }
   font-size: 13px;
   font-family: var(--body-font);
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.2s;
 }
 
 .search-input:focus {
@@ -583,7 +588,7 @@ a:hover { opacity: 0.85; }
   font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: var(--letter-spacing-label);
   margin-bottom: 12px;
 }
 
@@ -593,9 +598,9 @@ a:hover { opacity: 0.85; }
 .badge {
   display: inline-block;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: 12px;
   font-family: var(--body-font);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
 }
 
@@ -715,17 +720,17 @@ a:hover { opacity: 0.85; }
   font-size: 14px;
   font-weight: 600;
   padding: 10px 22px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.2s;
 }
 
 .btn-save:hover {
-  background: var(--blue-dark);
+  opacity: 0.9;
 }
 
 .btn-save:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
