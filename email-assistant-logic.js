@@ -192,7 +192,7 @@ window.EA_LOGIC = {
       '<button class="ea-filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
-      '<button class="btn-outline" id="ea-scan-btn" style="border-color:#2e7d32;color:#2e7d32;">Scan Now</button>' +
+      '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
       '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Handle All</button>';
   },
 
@@ -512,9 +512,9 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="ea-unmark-btn" data-id="' + id + '">&#10007; Unmark</button>';
+      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Unmark</button>';
     } else {
-      actionBtn = '<button class="ea-handled-btn" data-id="' + id + '">&#10003; Handled</button>';
+      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Handled</button>';
     }
 
     return '<div class="ea-card" data-id="' + id + '">' +
@@ -799,8 +799,8 @@ window.EA_LOGIC = {
       : '';
 
     var actionBtn = this._showHandled
-      ? '<button class="ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10007; Unmark</button>'
-      : '<button class="ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10003; Mark as Handled</button>';
+      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#8B2500;color:#8B2500;">&#10007; Unmark</button>'
+      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Mark as Handled</button>';
 
     listEl.innerHTML =
       '<div class="ea-detail">' +
