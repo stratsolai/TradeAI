@@ -338,6 +338,19 @@ window.EA_LOGIC = {
     }
 
     this._updateFilterBtnIndicators();
+
+    // Hover bindings — matches CL _bindBtnHover pattern
+    self._bindBtnHover('ea-handle-all-btn', '#edfaf1');
+    self._bindBtnHover('ea-scan-btn', '#e8f4fd');
+    self._bindBtnHover('ea-bulk-handle-btn', '#edfaf1');
+    self._bindBtnHover('ea-deselect-btn', '#e8f4fd');
+  },
+
+  _bindBtnHover: function(id, hoverBg) {
+    var btn = document.getElementById(id);
+    if (!btn) return;
+    btn.addEventListener('mouseenter', function() { btn.style.background = hoverBg; });
+    btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
   },
 
   // ── Stat tiles ────────────────────────────────────────────
@@ -528,10 +541,7 @@ window.EA_LOGIC = {
         '<div class="ea-card-btns">' + actionBtn + '</div>' +
       '</div>' +
       '<div class="ea-subject">' + subject + '</div>' +
-      '<div class="ea-card-preview-row">' +
-        '<button class="ea-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>' +
-        '<span class="ea-body-preview" id="ea-preview-' + id + '">' + summary + '</span>' +
-      '</div>' +
+      '<div class="ea-summary">' + summary + '</div>' +
     '</div>';
   },
 
@@ -542,17 +552,6 @@ window.EA_LOGIC = {
       cb.addEventListener('change', function() {
         if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
         self._updateBulkBar();
-      });
-    });
-
-    document.querySelectorAll('.ea-expand-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var previewEl = document.getElementById('ea-preview-' + btn.dataset.id);
-        if (!previewEl) return;
-        var isExpanded = previewEl.style.whiteSpace === 'pre-wrap';
-        previewEl.style.whiteSpace = isExpanded ? '' : 'pre-wrap';
-        previewEl.style.overflow = isExpanded ? '' : 'visible';
-        btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
 
@@ -574,8 +573,7 @@ window.EA_LOGIC = {
     document.querySelectorAll('.ea-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
         if (e.target.closest('.ea-checkbox') || e.target.closest('.ea-flag-btn') ||
-            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') ||
-            e.target.closest('.ea-expand-btn')) return;
+            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn')) return;
         var email = self._emails.find(function(em) { return (em.id || em.message_id) === card.dataset.id; });
         if (email) self._showDetail(email);
       });
