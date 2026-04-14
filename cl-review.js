@@ -10,18 +10,6 @@ window.CL_REVIEW = {
 
   init: async function(supabase) {
     this._supabase = supabase;
-    var style = getComputedStyle(document.documentElement);
-    this._colors = {
-      blueLight: style.getPropertyValue('--blue-light').trim(),
-      greenLight: style.getPropertyValue('--green-light').trim(),
-      redHoverBg: style.getPropertyValue('--red-hover-bg').trim(),
-      rejectedBg: style.getPropertyValue('--rejected-bg').trim(),
-      archivedBg: style.getPropertyValue('--archived-bg').trim(),
-      orangeLight: style.getPropertyValue('--orange-light').trim(),
-      purpleHoverBg: style.getPropertyValue('--purple-hover-bg').trim(),
-      tealLight: style.getPropertyValue('--teal-light').trim(),
-      white: style.getPropertyValue('--white').trim()
-    };
     this._render();
     this._bindStatTiles();
     try {
@@ -58,8 +46,8 @@ window.CL_REVIEW = {
   _closeFilterDropdowns: function() {
     var ftb = document.querySelector('.filter-tools-btn');
     var fcb = document.querySelector('.filter-cat-btn');
-    if (ftb) ftb.classList.remove('active');
-    if (fcb) fcb.classList.remove('active');
+    if (ftb) ftb.classList.remove('open');
+    if (fcb) fcb.classList.remove('open');
     var filterRow = document.getElementById('review-filter-row');
     var toolWrap = document.getElementById('review-tool-pills-wrap');
     var catWrap = document.getElementById('review-cat-pills-wrap');
@@ -82,11 +70,11 @@ window.CL_REVIEW = {
   _updateFilterBtnIndicators: function() {
     var ftb = document.querySelector('.filter-tools-btn');
     var fcb = document.querySelector('.filter-cat-btn');
-    if (ftb && !ftb.classList.contains('active')) {
-      ftb.style.background = this._toolFilters.length > 0 ? this._colors.blueLight : '';
+    if (ftb && !ftb.classList.contains('open')) {
+      ftb.classList.toggle('active', this._toolFilters.length > 0);
     }
-    if (fcb && !fcb.classList.contains('active')) {
-      fcb.style.background = this._categoryFilter.length > 0 ? this._colors.blueLight : '';
+    if (fcb && !fcb.classList.contains('open')) {
+      fcb.classList.toggle('active', this._categoryFilter.length > 0);
     }
   },
 
@@ -171,18 +159,13 @@ window.CL_REVIEW = {
     document.getElementById('review-reject-all-btn').addEventListener('click', function() {
       if (self._status === 'rejected') { self._bulkDeleteAll(); } else { self._bulkActionAll('rejected'); }
     });
-    self._bindBtnHover('review-approve-all-btn', self._colors.greenLight);
-    self._bindBtnHover('review-reject-all-btn', self._colors.redHoverBg);
-    self._bindBtnHover('review-bulk-approve-btn', self._colors.greenLight);
-    self._bindBtnHover('review-bulk-reject-btn', self._colors.redHoverBg);
-    self._bindBtnHover('review-deselect-btn', self._colors.blueLight);
     var filterToolsBtn = document.querySelector('.filter-tools-btn');
     var filterCatBtn = document.querySelector('.filter-cat-btn');
     var clearBtn = document.querySelector('.clear-filters-btn');
     function updateFilterRow() {
       var filterRow = document.getElementById('review-filter-row');
-      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
-      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
+      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('open');
+      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('open');
       var toolWrap = document.getElementById('review-tool-pills-wrap');
       var catWrap = document.getElementById('review-cat-pills-wrap');
       if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
@@ -191,9 +174,8 @@ window.CL_REVIEW = {
     }
     if (filterToolsBtn) {
       filterToolsBtn.addEventListener('click', function() {
-        var isOpen = filterToolsBtn.classList.contains('active');
-        filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = !isOpen ? self._colors.blueLight : '';
+        var isOpen = filterToolsBtn.classList.contains('open');
+        filterToolsBtn.classList.toggle('open', !isOpen);
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -201,9 +183,8 @@ window.CL_REVIEW = {
     }
     if (filterCatBtn) {
       filterCatBtn.addEventListener('click', function() {
-        var isOpen = filterCatBtn.classList.contains('active');
-        filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = !isOpen ? self._colors.blueLight : '';
+        var isOpen = filterCatBtn.classList.contains('open');
+        filterCatBtn.classList.toggle('open', !isOpen);
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -214,20 +195,13 @@ window.CL_REVIEW = {
         self._toolFilters = [];
         self._categoryFilter = [];
         self._saveFilterState();
-        if (filterToolsBtn) { filterToolsBtn.classList.remove('active'); filterToolsBtn.style.background = ''; }
-        if (filterCatBtn) { filterCatBtn.classList.remove('active'); filterCatBtn.style.background = ''; }
+        if (filterToolsBtn) { filterToolsBtn.classList.remove('open', 'active'); }
+        if (filterCatBtn) { filterCatBtn.classList.remove('open', 'active'); }
         updateFilterRow();
         self._renderFilterRow();
         self._renderList();
       });
     }
-  },
-
-  _bindBtnHover: function(id, hoverBg) {
-    var btn = document.getElementById(id);
-    if (!btn) return;
-    btn.addEventListener('mouseenter', function() { btn.style.background = hoverBg; });
-    btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
   },
 
   _updateRejectButtons: function() {
@@ -313,8 +287,8 @@ window.CL_REVIEW = {
     const catPillsEl = document.getElementById('review-cat-pills');
     const toolPillsEl = document.getElementById('review-tool-pills');
     if (!filterRow || !catPillsEl || !toolPillsEl) return;
-    var _toolsActive = document.querySelector('.filter-tools-btn.active');
-    var _catActive = document.querySelector('.filter-cat-btn.active');
+    var _toolsActive = document.querySelector('.filter-tools-btn.open');
+    var _catActive = document.querySelector('.filter-cat-btn.open');
     filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
     const self = this;
 
@@ -469,17 +443,17 @@ window.CL_REVIEW = {
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
         var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive tool-pill-teal' + (isTagged ? ' tool-pill-tagged' : '') + '" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive tool-pill-teal' + (isTagged ? ' tool-pill-tagged tagged' : '') + '" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
       }
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-      return '<button class="tool-pill tool-pill-teal' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
+      return '<button class="tool-pill tool-pill-teal' + (isTagged ? ' tool-pill-tagged tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
     }).join('');
     const DEFAULT_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      return '<button class="tool-pill tool-pill-purple' + (isTagged ? ' cat-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
+      return '<button class="cat-pill tool-pill tool-pill-purple' + (isTagged ? ' cat-pill-tagged tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
@@ -613,20 +587,13 @@ window.CL_REVIEW = {
     });
     var listEl = document.getElementById('review-list');
     if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .source-btn').forEach(function(btn) {
-      var sectionBg = btn.classList.contains('source-btn') ? self._colors.orangeLight : btn.classList.contains('review-cats-btn') ? self._colors.purpleHoverBg : self._colors.tealLight;
       btn.addEventListener('click', function() {
         var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
           var isOpen = el.style.display !== 'none';
           el.style.display = isOpen ? 'none' : '';
-          btn.style.background = isOpen ? '' : sectionBg;
+          btn.classList.toggle('open', !isOpen);
         }
-      });
-      btn.addEventListener('mouseenter', function() { btn.style.background = sectionBg; });
-      btn.addEventListener('mouseleave', function() {
-        var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
-        if (el && el.style.display !== 'none') return;
-        btn.style.background = '';
       });
     });
     document.querySelectorAll('.item-card-title[contenteditable]').forEach(function(el) {
@@ -638,13 +605,9 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
-      pill.addEventListener('mouseenter', function() { pill.style.background = self._colors.tealLight; });
-      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? self._colors.tealLight : self._colors.white; });
     });
-    document.querySelectorAll('.tool-pill[data-cat-id]').forEach(function(pill) {
+    document.querySelectorAll('.cat-pill[data-cat-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
-      pill.addEventListener('mouseenter', function() { pill.style.background = self._colors.purpleHoverBg; });
-      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('cat-pill-tagged') ? self._colors.purpleHoverBg : self._colors.white; });
     });
   },
 
@@ -734,7 +697,7 @@ window.CL_REVIEW = {
     await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(toolId) > -1;
     pill.classList.toggle('tool-pill-tagged', isNowTagged);
-    pill.style.background = isNowTagged ? this._colors.tealLight : this._colors.white;
+    pill.classList.toggle('tagged', isNowTagged);
   },
 
   _toggleCategoryTag: async function(itemId, catId, pill) {
@@ -747,7 +710,7 @@ window.CL_REVIEW = {
     await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(catId) > -1;
     pill.classList.toggle('cat-pill-tagged', isNowTagged);
-    pill.style.background = isNowTagged ? this._colors.purpleHoverBg : this._colors.white;
+    pill.classList.toggle('tagged', isNowTagged);
   },
 
   _updateBulkBar: function() {
