@@ -367,8 +367,9 @@ window.EA_SETTINGS = {
           if (msg) {
             msg.textContent = 'Both name and description are required.';
             msg.style.display = 'inline';
-            msg.style.color = 'var(--red)';
-            setTimeout(function () { msg.style.display = 'none'; }, 3000);
+            msg.classList.remove('msg-success');
+            msg.classList.add('msg-error');
+            setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
           }
           return;
         }
@@ -400,8 +401,9 @@ window.EA_SETTINGS = {
           if (msg) {
             msg.textContent = 'All custom categories require a description.';
             msg.style.display = 'inline';
-            msg.style.color = 'var(--red)';
-            setTimeout(function () { msg.style.display = 'none'; }, 3000);
+            msg.classList.remove('msg-success');
+            msg.classList.add('msg-error');
+            setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
           }
           return;
         }
@@ -434,8 +436,9 @@ window.EA_SETTINGS = {
         if (msg) {
           msg.textContent = 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.';
           msg.style.display = 'inline';
-          msg.style.color = 'var(--red)';
-          setTimeout(function () { msg.style.display = 'none'; }, 5000);
+          msg.classList.remove('msg-success');
+          msg.classList.add('msg-error');
+          setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 5000);
         }
         return;
       }
@@ -450,8 +453,9 @@ window.EA_SETTINGS = {
     if (msg) {
       msg.textContent = 'Category removed.';
       msg.style.display = 'inline';
-      msg.style.color = 'var(--green-dark)';
-      setTimeout(function () { msg.style.display = 'none'; }, 3000);
+      msg.classList.remove('msg-error');
+      msg.classList.add('msg-success');
+      setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-success'); }, 3000);
     }
   },
 
