@@ -836,6 +836,10 @@ a:hover { opacity: 0.85; }
 .connection-folder-row { display:flex; align-items:center; gap:8px; }
 .connection-folder-name { width:360px; flex:0 0 360px; border:var(--input-border-width) solid var(--border); border-radius:6px; padding:6px 12px; font-size:var(--label-font-size); font-family:var(--body-font); color:var(--text); background:var(--white); box-sizing:border-box; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
+/* Website URL list container */
+#website-urls-list { width:100%; }
+#add-website-btn { margin-top:8px; }
+
 /* Website URL list item — row containing URL input and remove button */
 .website-url-item { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
 
