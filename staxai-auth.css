@@ -949,3 +949,71 @@ a:hover { opacity: 0.85; }
 /* Clear filters button — subtle-border button to reset all active filters */
 .clear-filters-btn { margin-left:auto; border-width:1px; border-style:solid; border-color:var(--border-subtle); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
 .clear-filters-btn:hover { background:var(--red-hover-bg); }
+
+/* ------------------------------------------------------------
+   18. MISSING CLASS DEFINITIONS (formerly inline-styled)
+   ------------------------------------------------------------ */
+
+/* Approve All button — green outline, matches .review-bulk-approve-btn */
+.review-approve-all-btn { border-color:var(--green-dark); color:var(--green-dark); }
+.review-approve-all-btn:hover { background:var(--green-hover-bg); }
+
+/* Reject All button — red-dark outline, matches .review-bulk-reject-btn */
+.review-reject-all-btn { border-color:var(--red-dark); color:var(--red-dark); }
+.review-reject-all-btn:hover { background:var(--red-hover-bg); }
+
+/* Used-by-tool notice — amber warning box shown on items already consumed by a tool */
+.review-used-notice { margin:6px 0; padding:6px 10px; background:var(--warning-light); border:1px solid var(--warning); border-radius:6px; font-size:var(--badge-font-size); color:var(--text); }
+
+/* Copy to New Manual Item button — compact blue button inside used-notice */
+.review-copy-btn { margin-left:8px; padding:2px 10px; border:1px solid var(--blue); border-radius:6px; background:var(--blue-light); color:var(--text); font-size:11px; cursor:pointer; }
+
+/* AI Rejected pill — small indicator on auto-rejected items */
+.review-ai-rejected-pill { display:inline-block; padding:2px 10px; border:1px solid var(--red); border-radius:var(--btn-radius); background:var(--rejected-bg); color:var(--text); font-size:11px; font-weight:var(--font-weight-semibold); flex-shrink:0; }
+
+/* Archived Item Link pill — small link to the archived version of an approved item */
+.review-archived-link-pill { display:inline-block; padding:2px 10px; border:1px solid var(--blue); border-radius:var(--btn-radius); background:var(--blue-light); color:var(--text); font-size:11px; font-weight:var(--font-weight-semibold); flex-shrink:0; text-decoration:none; cursor:pointer; }
+
+/* Tool pill tagged state — teal active background for tagged tool pills */
+.tool-pill-tagged { background:var(--teal-light); border-color:var(--teal); color:var(--pill-text); }
+
+/* Category pill tagged state — purple active background for tagged category pills */
+.cat-pill-tagged { background:var(--purple-hover-bg); border-color:var(--purple); color:var(--pill-text); }
+
+/* Manual add flow — form components for the manual item entry form */
+.manual-add-title { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
+.manual-add-label { margin-top:12px; }
+.manual-add-pills { display:flex; flex-wrap:wrap; gap:8px; }
+.manual-add-error { display:none; }
+.manual-add-actions { display:flex; gap:var(--actions-gap); margin-top:12px; }
+
+/* Upload message row — stacking completion/error/processing messages */
+.upload-message { display:flex; align-items:center; gap:8px; }
+
+/* Source pill group — vertical layout for account-grouped folder pills */
+.source-pill-group { display:flex; flex-direction:column; align-items:center; margin-bottom:8px; }
+
+/* Source pill account label — small bold label above a group of folder pills */
+.source-pill-account { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); margin-bottom:4px; text-align:center; }
+
+/* EA handled/dismiss button — uses .btn-dismiss styling from stylesheet */
+.ea-handled-btn { border-color:var(--red-dark); color:var(--red-dark); }
+
+/* EA restore button — green outline for restoring dismissed emails */
+.ea-unmark-btn { border-color:var(--green-dark); color:var(--green-dark); }
+.ea-unmark-btn:hover { background:var(--green-hover-bg); }
+
+/* EA source badge — provider label on email detail view */
+.ea-source-badge { padding:3px 10px; border-radius:var(--badge-radius); font-size:var(--badge-font-size); background:var(--bg); color:var(--text-muted); white-space:nowrap; }
+
+/* EA category badge — category label on email detail view */
+.ea-category-badge { padding:3px 10px; border-radius:var(--badge-radius); font-size:var(--badge-font-size); background:var(--blue-light); color:var(--blue); white-space:nowrap; }
+
+/* EA date label — date on email detail view */
+.ea-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; }
+
+/* EA filter section label — heading above filter pill rows */
+.ea-filter-section-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); margin-bottom:var(--label-margin-bottom); }
+
+/* EA detail metadata row — flex row for sender/badge/date in detail view */
+.ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
