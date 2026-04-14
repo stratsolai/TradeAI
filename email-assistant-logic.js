@@ -964,7 +964,7 @@ window.EA_LOGIC = {
     var self = this;
 
     var openBtnHtml = email.message_url
-      ? '<a href="' + window.escHtml(email.message_url) + '" target="_blank" class="btn-outline">Open in ' + providerLabel + ' \u2192</a>'
+      ? '<a href="' + window.escHtml(email.message_url) + '" target="_blank" class="btn-outline">Open in ' + providerLabel + ' →</a>'
       : '';
 
     var actionBtn = this._showHandled
@@ -974,7 +974,7 @@ window.EA_LOGIC = {
     listEl.innerHTML =
       '<div class="ea-detail">' +
         '<div class="ea-detail-topbar">' +
-          '<button class="btn-back" id="ea-detail-back">\u2190 Back</button>' +
+          '<button class="btn-back" id="ea-detail-back">← Back</button>' +
           openBtnHtml +
         '</div>' +
         '<div class="ea-detail-meta">' +
