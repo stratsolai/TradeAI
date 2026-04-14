@@ -979,7 +979,7 @@ window.EA_LOGIC = {
         '</div>' +
         '<div class="ea-detail-meta">' +
           '<span class="ea-sender-name">' + window.escHtml(email.sender || email.sender_email || '') + '</span>' +
-          '<span class="ea-date">' + relTime + '</span>' +
+          '<span class="ea-date">Imported: ' + relTime + '</span>' +
         '</div>' +
         '<div class="ea-detail-subject">' + window.escHtml(email.subject || '') + '</div>' +
         '<div class="ea-detail-summary"><strong>Summary:</strong> ' + window.escHtml(email.summary || '') + '</div>' +
