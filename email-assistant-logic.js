@@ -41,8 +41,6 @@ window.EA_LOGIC = {
     this._user = user;
     var style = getComputedStyle(document.documentElement);
     this._colors = {
-      redDark: style.getPropertyValue('--red-dark').trim(),
-      greenDark: style.getPropertyValue('--green-dark').trim(),
       redHoverBg: style.getPropertyValue('--red-hover-bg').trim(),
       blueLight: style.getPropertyValue('--blue-light').trim()
     };

@@ -46,37 +46,6 @@
   return { pdf:'pdf',doc:'word',docx:'word',ppt:'powerpoint',pptx:'powerpoint',xls:'excel',xlsx:'excel',txt:'text',jpg:'image',jpeg:'image',png:'image',webp:'image',heic:'image' }[ext] || 'unknown';
 }
 
-function fileToBase64(file) {
-  return new Promise((res,rej) => {
-    const r = new FileReader();
-    r.onload = e => res(e.target.result.split(',')[1]);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
-
-function compressImage(file) {
-  return new Promise((res,rej) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let [w,h] = [img.width, img.height];
-        const max = 1920;
-        if (w > max || h > max) { if (w>h) { h=h/w*max; w=max; } else { w=w/h*max; h=max; } }
-        canvas.width=w; canvas.height=h;
-        canvas.getContext('2d').drawImage(img,0,0,w,h);
-        res(canvas.toDataURL('image/jpeg',0.8).split(',')[1]);
-      };
-      img.onerror = rej;
-      img.src = e.target.result;
-    };
-    reader.onerror = rej;
-    reader.readAsDataURL(file);
-  });
-}
-
 // ─── INIT ──────────────────────────────────────
 setTimeout(() => {
   loadStats();
@@ -94,15 +63,6 @@ setTimeout(() => {
   }
 }, 400);
 
-// ── ENHANCED PHOTO UPLOAD ─────────────────────────────────────────────────────
-
-let selectedPhotoFiles = [];
-let generatedPostText = '';
-
-['camera-input', 'photo-library-input'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('change', handlePhotoSelection);
-});
   window.getFileType = getFileType;
 
   const catBadge = (cat) => {
