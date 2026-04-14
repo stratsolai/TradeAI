@@ -554,6 +554,11 @@ Notable changes made April 2026:
   (integer), fin_docs_paired (integer), deduped (integer),
   created_at (timestamptz), updated_at (timestamptz).
   Rows are deleted when a scan job completes.
+- email_summaries: added body_url (text) — April 2026.
+  Stores the cl-assets storage path to the full email
+  body file (.txt). Written by api/email.js during EA
+  scans, read by email-assistant-logic.js for the
+  in-platform email detail view.
 
 ---
 
