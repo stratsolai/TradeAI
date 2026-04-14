@@ -223,12 +223,13 @@ spec is written.
 
 ### Task 27 — cl-settings-logic.js File Split
 
-Not started. cl-settings-logic.js is at 87K, exceeding
-the 60K file size limit from CLAUDE.md. Requires splitting
-into logical sub-files following the same pattern as the
-CL split (cl-review.js, cl-upload.js, cl-outputs.js,
-cl-profile.js). A spec must be written before any split
-work begins. No build action until spec is approved.
+Complete April 2026. cl-settings-logic.js split from 87K
+to 38K core file plus four sub-files:
+cl-settings-onedrive.js (9K), cl-settings-sharepoint.js
+(17K), cl-settings-dropbox.js (9K), cl-settings-tools.js
+(13K). All sub-files attach methods to
+window.CL_SETTINGS_LOGIC and are loaded after the core
+file in cl-settings.html.
 
 ### Task 28 — EA Categories Redesign
 
@@ -555,6 +556,17 @@ monthly subscriptions. No technical skills required.
 ## File Inventory
 
 Refer to StaxAI Project Brief v12.23
+
+Files added April 2026 (Task 27 — cl-settings-logic.js split):
+- cl-settings-onedrive.js — OneDrive connection management
+  (render, folder picker, disconnect, OAuth return)
+- cl-settings-sharepoint.js — SharePoint connection management
+  (render, site picker, library picker, disconnect, OAuth return)
+- cl-settings-dropbox.js — Dropbox connection management
+  (render, folder picker, disconnect, OAuth return)
+- cl-settings-tools.js — Tool Connections (Xero, QuickBooks,
+  ServiceM8, MYOB, Buildxact) management (render, connect,
+  disconnect, permission modal, OAuth return)
 
 ---
 
