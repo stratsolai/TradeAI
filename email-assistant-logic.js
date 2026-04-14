@@ -149,8 +149,8 @@ window.EA_LOGIC = {
       '<div id="ea-filter-expand-row" class="ea-filter-expand-row" style="display:none"></div>' +
       '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
         '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
-        '<button class="btn-outline" id="ea-bulk-handle-btn" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss All Selected</button>' +
-        '<button class="btn-outline" id="ea-deselect-btn" style="border-color:var(--blue);color:var(--blue);padding:10px 16px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--body-font);">Deselect All</button>' +
+        '<button class="btn-dismiss ea-handled-btn" id="ea-bulk-handle-btn">&#10007; Dismiss All Selected</button>' +
+        '<button class="btn-outline" id="ea-deselect-btn">Deselect All</button>' +
       '</div>' +
       '<div id="ea-email-list" class="ea-list"></div>';
 
@@ -216,8 +216,8 @@ window.EA_LOGIC = {
       '<button class="filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="clear-filters-btn" id="clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
-      '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
-      '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss All</button>';
+      '<button class="btn-outline" id="ea-scan-btn">Scan Now</button>' +
+      '<button class="btn-dismiss ea-handled-btn" id="ea-handle-all-btn">&#10007; Dismiss All</button>';
   },
 
   _renderExpandRow: function() {
@@ -242,7 +242,7 @@ window.EA_LOGIC = {
       var enabledCats = (this._settings.categories || this.DEFAULT_CATEGORIES)
         .filter(function(c) { return c.enabled && c.id !== 'urgent'; });
       container.innerHTML =
-        '<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Categories</div>' +
+        '<div class="ea-filter-section-label">Categories</div>' +
         '<div class="ea-pill-row">' +
         enabledCats.map(function(c) {
           return '<button class="filter-pill' + (self._categoryFilter === c.id ? ' active' : '') + '" data-catfilter="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
@@ -267,7 +267,7 @@ window.EA_LOGIC = {
     if (daysOpen) {
       var self = this;
       container.innerHTML =
-        '<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Lookback Days</div>' +
+        '<div class="ea-filter-section-label">Lookback Days</div>' +
         '<div class="ea-pill-row">' +
           '<button class="filter-pill' + (this._dateQuick === '30' ? ' active' : '') + '" data-days="30">30 days</button>' +
           '<button class="filter-pill' + (this._dateQuick === '60' ? ' active' : '') + '" data-days="60">60 days</button>' +
@@ -299,7 +299,7 @@ window.EA_LOGIC = {
       var fromVal = (this._dateFrom && !this._dateQuick) ? this._dateFrom.substring(0, 10) : '';
       var toVal = this._dateTo ? this._dateTo.substring(0, 10) : '';
       container.innerHTML =
-        '<div style="font-size:12px;font-weight:600;color:var(--text-muted);margin-bottom:6px;">Date Range</div>' +
+        '<div class="ea-filter-section-label">Date Range</div>' +
         '<div class="ea-pill-row" style="align-items:center;">' +
           '<span class="ea-date-label">From</span>' +
           '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +
@@ -623,9 +623,9 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '" style="border-color:var(--green-dark);color:var(--green-dark);">&#10003; Restore</button>';
+      actionBtn = '<button class="btn-dismiss ea-unmark-btn" data-id="' + id + '">&#10003; Restore</button>';
     } else {
-      actionBtn = '<button class="btn-outline ea-handled-btn" data-id="' + id + '" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss</button>';
+      actionBtn = '<button class="btn-dismiss ea-handled-btn" data-id="' + id + '">&#10007; Dismiss</button>';
     }
 
     var sourceDetailHtml =
@@ -782,12 +782,12 @@ window.EA_LOGIC = {
     if (btn) {
       if (this._showHandled) {
         btn.innerHTML = '&#10003; Restore All';
-        btn.style.borderColor = this._colors.greenDark;
-        btn.style.color = this._colors.greenDark;
+        btn.classList.remove('ea-handled-btn');
+        btn.classList.add('ea-unmark-btn');
       } else {
         btn.innerHTML = '&#10007; Dismiss All';
-        btn.style.borderColor = this._colors.redDark;
-        btn.style.color = this._colors.redDark;
+        btn.classList.remove('ea-unmark-btn');
+        btn.classList.add('ea-handled-btn');
       }
     }
 
@@ -795,12 +795,12 @@ window.EA_LOGIC = {
     if (bulkBtn) {
       if (this._showHandled) {
         bulkBtn.innerHTML = '&#10003; Restore All Selected';
-        bulkBtn.style.borderColor = this._colors.greenDark;
-        bulkBtn.style.color = this._colors.greenDark;
+        bulkBtn.classList.remove('ea-handled-btn');
+        bulkBtn.classList.add('ea-unmark-btn');
       } else {
         bulkBtn.innerHTML = '&#10007; Dismiss All Selected';
-        bulkBtn.style.borderColor = this._colors.redDark;
-        bulkBtn.style.color = this._colors.redDark;
+        bulkBtn.classList.remove('ea-unmark-btn');
+        bulkBtn.classList.add('ea-handled-btn');
       }
     }
   },
@@ -948,8 +948,8 @@ window.EA_LOGIC = {
       : '';
 
     var actionBtn = this._showHandled
-      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:var(--green-dark);color:var(--green-dark);">&#10003; Restore</button>'
-      : '<button class="btn-outline ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss</button>';
+      ? '<button class="btn-dismiss ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10003; Restore</button>'
+      : '<button class="btn-dismiss ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10007; Dismiss</button>';
 
     listEl.innerHTML =
       '<div class="ea-detail">' +
@@ -957,7 +957,7 @@ window.EA_LOGIC = {
           '<button class="ea-detail-back-btn" id="ea-detail-back">&larr; Back</button>' +
           openBtnHtml +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;">' +
+        '<div class="ea-detail-meta">' +
           '<span class="ea-sender-name">' + window.escHtml(email.sender || email.sender_email || '') + '</span>' +
           '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
           '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
