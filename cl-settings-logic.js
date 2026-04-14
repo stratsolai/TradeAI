@@ -1538,9 +1538,9 @@ window.CL_SETTINGS_LOGIC = {
         var name = a[p.accountKey] || 'Connected';
         var date = a.connected_at ? new Date(a.connected_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '';
         return '<div class="tool-conn-account">' +
-          '<span class="tool-conn-account-name">' + self._escapeHtml(name) + '</span>' +
+          '<span class="tool-conn-account-name">' + window.escHtml(name) + '</span>' +
           (date ? '<span class="tool-conn-account-date">Connected ' + date + '</span>' : '') +
-          '<button class="btn-disconnect" data-account="' + self._escapeHtml(a[p.idKey] || '') + '" data-type="' + p.key + '">Disconnect</button>' +
+          '<button class="btn-disconnect" data-account="' + window.escHtml(a[p.idKey] || '') + '" data-type="' + p.key + '">Disconnect</button>' +
         '</div>';
       }).join('');
 
@@ -1570,11 +1570,6 @@ window.CL_SETTINGS_LOGIC = {
         self._startToolConnect(platform);
       });
     });
-  },
-
-  _escapeHtml: function (str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   },
 
   _startToolConnect: function (platform) {

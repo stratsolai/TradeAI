@@ -327,8 +327,8 @@ window.EA_SETTINGS = {
     var html = self._categories.map(function (cat, idx) {
       var isOn = cat.enabled;
       var isDefault = idx < DEFAULT_COUNT;
-      var label = (cat.label || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
-      var desc = (cat.description || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+      var label = window.escHtml(cat.label || '');
+      var desc = window.escHtml(cat.description || '');
       var descHtml = isDefault
         ? '<div class="settings-row-desc">' + desc + '</div>'
         : '<div style="margin-top:4px;"><input type="text" class="settings-text-input ea-cat-desc-input" data-cat-desc="' + idx + '" value="' + desc + '" placeholder="Description (required)" style="width:100%"></div>';
