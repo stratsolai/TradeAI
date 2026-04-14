@@ -592,8 +592,23 @@ Notable changes made April 2026:
   auto_archived_count, fin_docs_paired_count,
   deduped_count, pages_crawled, pages_skipped (all
   integer, default 0) — April 2026
-- cl_scan_jobs: added scan_cursor (jsonb, nullable) —
-  April 2026
+- cl_scan_jobs: scan_cursor (jsonb, nullable) exists in
+  database but is not used by any code. All cursor state
+  is stored in the separate cl_scan_cursors table.
+- cl_scan_cursors table added April 2026 — cursor state
+  for batch-processed scans. RLS enabled. Policy: users
+  can manage their own cursor rows. Columns: id (uuid,
+  PK), job_id (uuid, FK to cl_scan_jobs.id, ON DELETE
+  CASCADE), user_id (uuid, FK to auth.users, ON DELETE
+  CASCADE), processed_ids (text array, default {}),
+  imported (integer, default 0), approved (integer,
+  default 0), pending (integer, default 0), rejected
+  (integer, default 0), skipped (integer, default 0),
+  auto_archived (integer, default 0), fin_docs_paired
+  (integer, default 0), deduped (integer, default 0),
+  created_at (timestamptz, default now()), updated_at
+  (timestamptz, default now()). Rows are deleted when a
+  scan job completes.
 - profiles: added ea_connected_emails (jsonb, default
   null) — April 2026
 - email_summaries: added body_url (text, nullable) —
