@@ -87,6 +87,7 @@
   --label-font-weight:  600;           /* Form label font weight */
   --btn-font-size:      14px;          /* Button font size. Also reused for settings row labels and form labels */
   --input-font-size:    14px;          /* Form input text size */
+  --input-font-size-mobile: 16px;     /* Form input text size on mobile — prevents iOS auto-zoom */
   --label-font-size:    13px;          /* Form label font size */
   --status-font-size:   13px;          /* Status text and search input font size */
   --note-font-size:     13px;          /* Note and hint text font size */
@@ -811,13 +812,16 @@ a:hover { opacity: 0.85; }
 .freq-btn.active,
 .freq-btn.active:hover { background:var(--blue-light); color:var(--blue); }
 
-/* Lookback dropdown — styled select with chevron icon. Used by email and drive import lookback controls. */
-.email-lookback-select,
-.drive-lookback-select { appearance:none; -webkit-appearance:none; -moz-appearance:none; background-color:var(--white); background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat:no-repeat; background-position:right 8px center; background-size:10px; border:2px solid var(--blue); border-radius:var(--btn-radius); padding:5px 24px 5px 10px; font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); color:var(--blue); cursor:pointer; flex-shrink:0; }
-.email-lookback-select:hover,
-.drive-lookback-select:hover { background-color:var(--blue-light); }
-.email-lookback-select:focus,
-.drive-lookback-select:focus { outline:none; }
+/* Lookback dropdown — custom dropdown matching .ea-cat-dropdown visual style. Used by email and drive/folder import lookback controls on settings pages. */
+.lookback-dropdown-wrap { position:relative; display:inline-block; }
+.lookback-dropdown { padding:8px 14px; border:2px solid var(--blue); border-radius:var(--btn-radius); font-size:var(--btn-font-size); font-family:var(--body-font); background:var(--white); color:var(--blue); cursor:pointer; white-space:nowrap; font-weight:var(--font-weight-semibold); }
+.lookback-dropdown:hover { background-color:var(--blue-light); }
+.lookback-dropdown.active { background-color:var(--blue-light); }
+.lookback-dropdown-menu { display:none; position:absolute; top:100%; left:0; margin-top:4px; min-width:140px; background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius); box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0; }
+.lookback-dropdown-menu.open { display:block; }
+.lookback-dropdown-item { display:block; width:100%; padding:8px 14px; border:none; background:none; font-size:var(--btn-font-size); font-family:var(--body-font); color:var(--text); text-align:left; cursor:pointer; }
+.lookback-dropdown-item:hover { background:var(--bg-subtle); }
+.lookback-dropdown-item.active { color:var(--blue); font-weight:var(--font-weight-semibold); }
 
 /* Remove folder button — compact red-dark outline with × prefix. Used in folder/library rows. */
 .btn-remove-folder { display:inline-flex; align-items:center; justify-content:center; gap:5px; background:var(--white); color:var(--red-dark); border:2px solid var(--red-dark); border-radius:6px; padding:5px 12px; font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); cursor:pointer; min-width:90px; transition:background var(--btn-transition), color var(--btn-transition); }
