@@ -242,7 +242,7 @@ window.EA_LOGIC = {
       var enabledCats = (this._settings.categories || this.DEFAULT_CATEGORIES)
         .filter(function(c) { return c.enabled && c.id !== 'urgent'; });
       container.innerHTML =
-        '<div class="ea-filter-section-label">Categories</div>' +
+        '<div class="filter-section-label">Categories</div>' +
         '<div class="ea-pill-row">' +
         enabledCats.map(function(c) {
           return '<button class="filter-pill' + (self._categoryFilter === c.id ? ' active' : '') + '" data-catfilter="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
@@ -267,7 +267,7 @@ window.EA_LOGIC = {
     if (daysOpen) {
       var self = this;
       container.innerHTML =
-        '<div class="ea-filter-section-label">Lookback Days</div>' +
+        '<div class="filter-section-label">Lookback Days</div>' +
         '<div class="ea-pill-row">' +
           '<button class="filter-pill' + (this._dateQuick === '30' ? ' active' : '') + '" data-days="30">30 days</button>' +
           '<button class="filter-pill' + (this._dateQuick === '60' ? ' active' : '') + '" data-days="60">60 days</button>' +
@@ -299,7 +299,7 @@ window.EA_LOGIC = {
       var fromVal = (this._dateFrom && !this._dateQuick) ? this._dateFrom.substring(0, 10) : '';
       var toVal = this._dateTo ? this._dateTo.substring(0, 10) : '';
       container.innerHTML =
-        '<div class="ea-filter-section-label">Date Range</div>' +
+        '<div class="filter-section-label">Date Range</div>' +
         '<div class="ea-pill-row" style="align-items:center;">' +
           '<span class="ea-date-label">From</span>' +
           '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +

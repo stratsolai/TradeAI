@@ -110,8 +110,8 @@ window.CL_REVIEW = {
           <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn">&#10007; Reject All</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
-          <div id="review-tool-pills-wrap" style="display:none"><div class="ea-filter-section-label">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
-          <div id="review-cat-pills-wrap" style="display:none"><div class="ea-filter-section-label">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
+          <div id="review-tool-pills-wrap" style="display:none"><div class="filter-section-label">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
+          <div id="review-cat-pills-wrap" style="display:none"><div class="filter-section-label">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>

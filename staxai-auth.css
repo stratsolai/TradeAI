@@ -1018,8 +1018,8 @@ a:hover { opacity: 0.85; }
 /* EA date label — date on email detail view */
 .ea-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; }
 
-/* EA filter section label — heading above filter pill rows */
-.ea-filter-section-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); margin-bottom:var(--label-margin-bottom); }
+/* Filter section label — heading above filter pill rows in all list views */
+.filter-section-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); margin-bottom:var(--label-margin-bottom); }
 
 /* EA detail metadata row — flex row for sender/badge/date in detail view */
 .ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
