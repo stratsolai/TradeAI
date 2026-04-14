@@ -1555,7 +1555,7 @@ window.CL_SETTINGS_LOGIC = {
           accountsHtml +
           msgHtml +
           '<button class="btn-add-connection tool-conn-btn" data-platform="' + p.key + '">' +
-            (accounts.length > 0 ? '+ Connect Another' : '+ Connect ' + p.label) +
+            (accounts.length > 0 ? '+ Connect' : '+ Connect ' + p.label) +
           '</button>' +
         '</div>' +
       '</div>';
