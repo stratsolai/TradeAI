@@ -4,6 +4,7 @@ window.EA_SETTINGS = {
   _eaEmails: [],
   _settings: {},
   _categories: [],
+  _categoryShortcuts: ['enquiries', 'projects'],
 
   init: function () {
     var self = this;
@@ -70,8 +71,8 @@ window.EA_SETTINGS = {
 
     var DEFAULT_CATS = [
       { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
-      { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
-      { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
+      { id: 'enquiries', label: 'Leads', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
+      { id: 'projects', label: 'Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
       { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
       { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
       { id: 'operations', label: 'Operations', description: 'Supplier, staff, compliance, and general business correspondence', enabled: true },
@@ -104,7 +105,15 @@ window.EA_SETTINGS = {
       self._categories = DEFAULT_CATS;
     }
 
+    // Load category shortcuts — default to Leads and Projects
+    if (Array.isArray(self._settings.category_shortcuts) && self._settings.category_shortcuts.length > 0) {
+      self._categoryShortcuts = self._settings.category_shortcuts;
+    } else {
+      self._categoryShortcuts = ['enquiries', 'projects'];
+    }
+
     self._renderCategories();
+    self._renderShortcuts();
     self._bindScanSave();
     self._bindCategorySave();
   },
@@ -325,6 +334,8 @@ window.EA_SETTINGS = {
 
     var DEFAULT_COUNT = 8;
     var html = self._categories.map(function (cat, idx) {
+      // Urgent is a status, not a toggleable category — skip it
+      if (cat.id === 'urgent') return '';
       var isOn = cat.enabled;
       var isDefault = idx < DEFAULT_COUNT;
       var label = window.escHtml(cat.label || '');
@@ -349,6 +360,89 @@ window.EA_SETTINGS = {
     }).join('');
 
     grid.innerHTML = html;
+  },
+
+  // ── CATEGORY SHORTCUTS ──
+  _renderShortcuts: function () {
+    var self = this;
+    var container = document.getElementById('shortcuts-card');
+    if (!container) return;
+
+    var activeCats = self._categories.filter(function (c) {
+      return c.enabled && c.id !== 'urgent';
+    });
+
+    var html = '<div class="settings-card-header">' +
+      '<div class="settings-card-title">Category Shortcuts</div>' +
+      '<div class="settings-card-hint">Choose up to 2 categories to show as shortcut pills on the Email Assistant inbox. The remaining categories appear in a dropdown.</div>' +
+    '</div>' +
+    '<div class="settings-rows" id="shortcuts-grid">' +
+    activeCats.map(function (cat) {
+      var isSelected = self._categoryShortcuts.indexOf(cat.id) > -1;
+      return '<div class="settings-row">' +
+        '<div><div class="settings-row-label">' + window.escHtml(cat.label) + '</div></div>' +
+        '<div class="settings-row-control">' +
+          '<button type="button" class="freq-btn' + (isSelected ? ' active' : '') + '" data-shortcut="' + window.escHtml(cat.id) + '">' +
+            (isSelected ? 'Selected' : 'Select') +
+          '</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') +
+    '</div>' +
+    '<div class="settings-footer">' +
+      '<button type="button" class="btn-save" id="save-shortcuts-btn">Save</button>' +
+      '<span class="save-msg" id="save-shortcuts-msg"></span>' +
+    '</div>';
+
+    container.innerHTML = html;
+    self._bindShortcutEvents();
+  },
+
+  _bindShortcutEvents: function () {
+    var self = this;
+    var grid = document.getElementById('shortcuts-grid');
+    if (!grid) return;
+
+    grid.querySelectorAll('.freq-btn[data-shortcut]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var catId = btn.dataset.shortcut;
+        var idx = self._categoryShortcuts.indexOf(catId);
+        if (idx > -1) {
+          // Deselect
+          self._categoryShortcuts.splice(idx, 1);
+          btn.classList.remove('active');
+          btn.textContent = 'Select';
+        } else {
+          // Enforce maximum 2
+          if (self._categoryShortcuts.length >= 2) {
+            var msg = document.getElementById('save-shortcuts-msg');
+            if (msg) {
+              msg.textContent = 'Maximum 2 shortcuts. Deselect one first.';
+              msg.style.display = 'inline';
+              msg.classList.remove('msg-success');
+              msg.classList.add('msg-error');
+              setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
+            }
+            return;
+          }
+          self._categoryShortcuts.push(catId);
+          btn.classList.add('active');
+          btn.textContent = 'Selected';
+        }
+        var saveBtn = document.getElementById('save-shortcuts-btn');
+        if (saveBtn) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; }
+      });
+    });
+
+    var saveBtn = document.getElementById('save-shortcuts-btn');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function () {
+        self._settings.category_shortcuts = self._categoryShortcuts;
+        await self._saveSettings();
+        saveBtn.textContent = 'Saved';
+        saveBtn.disabled = true;
+      });
+    }
   },
 
   _bindCategorySave: function () {
@@ -408,7 +502,13 @@ window.EA_SETTINGS = {
           return;
         }
         self._settings.categories = self._categories;
+        // Remove shortcuts for categories that were just disabled
+        self._categoryShortcuts = self._categoryShortcuts.filter(function (id) {
+          return self._categories.some(function (c) { return c.id === id && c.enabled; });
+        });
+        self._settings.category_shortcuts = self._categoryShortcuts;
         await self._saveSettings();
+        self._renderShortcuts();
         if (saveBtn) { saveBtn.textContent = 'Saved'; saveBtn.disabled = true; }
       });
     }
@@ -512,6 +612,7 @@ window.EA_SETTINGS = {
     var payload = {
       user_id: self._userId,
       categories: self._categories,
+      category_shortcuts: self._categoryShortcuts,
       scan_cadence: self._settings.scan_cadence || 'manual',
       updated_at: new Date().toISOString()
     };
