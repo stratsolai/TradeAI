@@ -944,7 +944,7 @@ window.EA_LOGIC = {
     var self = this;
 
     var openBtnHtml = email.message_url
-      ? '<a href="' + window.escHtml(email.message_url) + '" target="_blank" class="ea-detail-open-btn">Open in ' + providerLabel + ' &rarr;</a>'
+      ? '<a href="' + window.escHtml(email.message_url) + '" target="_blank" class="btn-open-external">Open in ' + providerLabel + ' \u2192</a>'
       : '';
 
     var actionBtn = this._showHandled
