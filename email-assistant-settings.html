@@ -17,9 +17,13 @@
     #ea-connections-rows .settings-row > div:first-child { flex:0 0 300px; max-width:300px; }
 
     @media (max-width: 768px) {
-      .connection-item-email { width:100%; flex:1 1 auto; }
-      .settings-row-control { flex-wrap:wrap; }
-      .email-lookback-select { font-size:16px; }
+      .page-wrap { padding: var(--page-padding-mobile); }
+      #ea-connections-rows .settings-row > div:first-child { flex: 1 1 auto; max-width: 100%; }
+      .connection-item-email { width: 100%; flex: 1 1 auto; }
+      .settings-row-control { flex-wrap: wrap; }
+      .settings-text-input,
+      .email-lookback-select,
+      select { font-size: 16px; }
     }
   </style>
 </head>
