@@ -621,7 +621,7 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="btn-outline ea-unmark-btn" data-id="' + id + '">&#10003; Restore</button>';
+      actionBtn = '<button class="ea-unmark-btn" data-id="' + id + '">&#10003; Restore</button>';
     } else {
       actionBtn = '<button class="btn-dismiss ea-handled-btn" data-id="' + id + '">&#10007; Dismiss</button>';
     }
@@ -785,10 +785,10 @@ window.EA_LOGIC = {
       if (this._showHandled) {
         btn.innerHTML = '&#10003; Restore All';
         btn.classList.remove('btn-dismiss', 'ea-handled-btn');
-        btn.classList.add('btn-outline', 'ea-unmark-btn');
+        btn.classList.add('ea-unmark-btn');
       } else {
         btn.innerHTML = '&#10007; Dismiss All';
-        btn.classList.remove('btn-outline', 'ea-unmark-btn');
+        btn.classList.remove('ea-unmark-btn');
         btn.classList.add('btn-dismiss', 'ea-handled-btn');
       }
     }
@@ -798,10 +798,10 @@ window.EA_LOGIC = {
       if (this._showHandled) {
         bulkBtn.innerHTML = '&#10003; Restore All Selected';
         bulkBtn.classList.remove('btn-dismiss', 'ea-handled-btn');
-        bulkBtn.classList.add('btn-outline', 'ea-unmark-btn');
+        bulkBtn.classList.add('ea-unmark-btn');
       } else {
         bulkBtn.innerHTML = '&#10007; Dismiss All Selected';
-        bulkBtn.classList.remove('btn-outline', 'ea-unmark-btn');
+        bulkBtn.classList.remove('ea-unmark-btn');
         bulkBtn.classList.add('btn-dismiss', 'ea-handled-btn');
       }
     }
@@ -968,7 +968,7 @@ window.EA_LOGIC = {
       : '';
 
     var actionBtn = this._showHandled
-      ? '<button class="btn-outline ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10003; Restore</button>'
+      ? '<button class="ea-unmark-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10003; Restore</button>'
       : '<button class="btn-dismiss ea-handled-btn" id="ea-detail-action-btn" data-id="' + window.escHtml(email.id || email.message_id) + '">&#10007; Dismiss</button>';
 
     listEl.innerHTML =
