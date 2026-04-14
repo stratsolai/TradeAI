@@ -979,8 +979,6 @@ window.EA_LOGIC = {
         '</div>' +
         '<div class="ea-detail-meta">' +
           '<span class="ea-sender-name">' + window.escHtml(email.sender || email.sender_email || '') + '</span>' +
-          '<span class="ea-source-badge">' + window.escHtml(providerLabel) + '</span>' +
-          '<span class="ea-category-badge">' + window.escHtml(catLabel) + '</span>' +
           '<span class="ea-date">' + relTime + '</span>' +
         '</div>' +
         '<div class="ea-detail-subject">' + window.escHtml(email.subject || '') + '</div>' +
