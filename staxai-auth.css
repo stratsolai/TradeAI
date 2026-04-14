@@ -977,6 +977,12 @@ a:hover { opacity: 0.85; }
 /* Tool pill tagged state — teal active background for tagged tool pills */
 .tool-pill-tagged { background:var(--teal-light); border-color:var(--teal); color:var(--pill-text); }
 
+/* Tool pill teal variant — overrides blue base to teal for tool tag pills */
+.tool-pill-teal { border-color:var(--teal); background:var(--white); color:var(--pill-text); }
+
+/* Category pill purple variant — overrides blue base to purple for category tag pills */
+.tool-pill-purple { border-color:var(--purple); background:var(--white); color:var(--pill-text); }
+
 /* Category pill tagged state — purple active background for tagged category pills */
 .cat-pill-tagged { background:var(--purple-hover-bg); border-color:var(--purple); color:var(--pill-text); }
 

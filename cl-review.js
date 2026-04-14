@@ -106,18 +106,18 @@ window.CL_REVIEW = {
           <button class="filter-btn filter-cat-btn">&#9776; Filter By Category</button>
           <button class="clear-filters-btn">&#10005; Clear All Filters</button>
           <span style="flex:1"></span>
-          <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All</button>
-          <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Reject All</button>
+          <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn">&#10003; Approve All</button>
+          <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn">&#10007; Reject All</button>
         </div>
         <div id="review-filter-row" class="review-filter-row" style="display:none">
-          <div id="review-tool-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
-          <div id="review-cat-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
+          <div id="review-tool-pills-wrap" style="display:none"><div class="ea-filter-section-label">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
+          <div id="review-cat-pills-wrap" style="display:none"><div class="ea-filter-section-label">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
-          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All Selected</button>
-          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Reject All Selected</button>
-          <button class="btn-outline" id="review-deselect-btn" style="border-color:#4A6D8C;color:#4A6D8C;">Deselect All</button>
+          <button class="btn-outline review-bulk-approve-btn" id="review-bulk-approve-btn">&#10003; Approve All Selected</button>
+          <button class="btn-outline review-bulk-reject-btn" id="review-bulk-reject-btn">&#10007; Reject All Selected</button>
+          <button class="btn-outline" id="review-deselect-btn">Deselect All</button>
         </div>
         <div id="review-list" class="review-list"></div>
       </div>
@@ -458,18 +458,17 @@ window.CL_REVIEW = {
       const isActivated = activatedTools.indexOf(tool.id) > -1;
       if (!isActivated) {
         var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-        var inactiveStyle = isTagged ? ' style="background:#E0F7FA;border-color:#0097A7;color:#000;"' : '';
-        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive' + (isTagged ? ' tool-pill-tagged' : '') + '" title="Learn more about this tool"' + inactiveStyle + '>' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive tool-pill-teal' + (isTagged ? ' tool-pill-tagged' : '') + '" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
       }
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
-      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '" style="border-color:#0097A7;' + (isTagged ? 'background:#E0F7FA;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(tLabel) + '</button>';
+      return '<button class="tool-pill tool-pill-teal' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
     }).join('');
     const DEFAULT_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
-      return '<button class="tool-pill' + (isTagged ? ' tool-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '" style="border-color:#7B5EA7;' + (isTagged ? 'background:#F3EEF9;color:#000;' : 'background:#fff;color:#000;') + '">' + escHtml(label) + '</button>';
+      return '<button class="tool-pill tool-pill-purple' + (isTagged ? ' cat-pill-tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
@@ -486,11 +485,11 @@ window.CL_REVIEW = {
     }
     const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="list-empty-detail">No source detail available.</div>';
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
-      ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:8px;background:#fdecea;color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
+      ? '<span class="review-ai-rejected-pill">AI Rejected Item</span>'
       : '';
     const archivedLinkId = (this._status === 'approved' && this._archivedLinks && this._archivedLinks[item.id]) ? this._archivedLinks[item.id] : null;
     const archivedLinkPill = archivedLinkId
-      ? '<a href="#" class="review-archived-link-pill" data-archived-id="' + escHtml(archivedLinkId) + '" style="display:inline-block;padding:2px 10px;border:1px solid var(--blue);border-radius:8px;background:var(--blue-light);color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;text-decoration:none;cursor:pointer;">Archived Item Link</a>'
+      ? '<a href="#" class="review-archived-link-pill" data-archived-id="' + escHtml(archivedLinkId) + '">Archived Item Link</a>'
       : '';
     var hasPairPartner = false;
     if (this._status === 'pending' && item.version_pair_id && item.category === 'Financial Documents') {
@@ -507,9 +506,9 @@ window.CL_REVIEW = {
     var usedNoticeHtml = '';
     if (isUsed) {
       if (item.source === 'manual') {
-        usedNoticeHtml = '<div class="review-used-notice" style="margin:6px 0;padding:6px 10px;background:#FFF8E1;border:1px solid #FFC107;border-radius:6px;font-size:12px;color:#333;">This item has been used by a tool and cannot be edited. <button class="review-copy-btn" data-id="' + id + '" style="margin-left:8px;padding:2px 10px;border:1px solid var(--blue);border-radius:6px;background:var(--blue-light);color:var(--text);font-size:11px;cursor:pointer;">Copy to New Manual Item</button></div>';
+        usedNoticeHtml = '<div class="review-used-notice">This item has been used by a tool and cannot be edited. <button class="review-copy-btn" data-id="' + id + '">Copy to New Manual Item</button></div>';
       } else {
-        usedNoticeHtml = '<div class="review-used-notice" style="margin:6px 0;padding:6px 10px;background:#FFF8E1;border:1px solid #FFC107;border-radius:6px;font-size:12px;color:#333;">This item has been used by a tool and cannot be edited. You can archive it and re-import or create a new Manual Item.</div>';
+        usedNoticeHtml = '<div class="review-used-notice">This item has been used by a tool and cannot be edited. You can archive it and re-import or create a new Manual Item.</div>';
       }
     }
     var thumbHtml = '';
@@ -532,8 +531,8 @@ window.CL_REVIEW = {
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="item-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
-          ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>' : ''}
-      <button class="btn-outline review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
+          ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve">&#10003; Approve</button>' : ''}
+      <button class="btn-outline review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" >&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
     </div>
       </div>
   
@@ -642,7 +641,7 @@ window.CL_REVIEW = {
     document.querySelectorAll('.tool-pill[data-cat-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
       pill.addEventListener('mouseenter', function() { pill.style.background = '#F3EEF9'; });
-      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? '#F3EEF9' : '#fff'; });
+      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('cat-pill-tagged') ? '#F3EEF9' : '#fff'; });
     });
   },
 
@@ -744,7 +743,7 @@ window.CL_REVIEW = {
     item.category_tags = tags;
     await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(catId) > -1;
-    pill.classList.toggle('tool-pill-tagged', isNowTagged);
+    pill.classList.toggle('cat-pill-tagged', isNowTagged);
     pill.style.background = isNowTagged ? '#F3EEF9' : '#fff';
   },
 
