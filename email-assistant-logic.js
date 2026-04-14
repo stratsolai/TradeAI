@@ -178,7 +178,6 @@ window.EA_LOGIC = {
     }).join('') +
     '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
-    var pillColors = { all: self._colors.blueLight, urgent: self._colors.redHoverBg, flagged: self._colors.blueLight, handled: self._colors.blueLight };
     container.querySelectorAll('.status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         self._showHandled = false;
@@ -192,9 +191,8 @@ window.EA_LOGIC = {
         } else if (btn.dataset.pill === 'urgent') {
           self._activeCategory = 'urgent';
         }
-        container.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+        container.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        btn.style.background = pillColors[btn.dataset.pill] || '';
         self._selected = new Set();
         self._renderFilterRow();
         self._bindControls();
@@ -202,9 +200,6 @@ window.EA_LOGIC = {
         self._updateFilterBtnIndicators();
         self._load();
       });
-      btn.addEventListener('mouseenter', function() { btn.style.background = pillColors[btn.dataset.pill] || ''; });
-      btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('active')) btn.style.background = ''; });
-      if (btn.classList.contains('active')) btn.style.background = pillColors[btn.dataset.pill] || '';
     });
   },
 
