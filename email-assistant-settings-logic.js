@@ -66,7 +66,7 @@ window.EA_SETTINGS = {
         .eq('user_id', self._userId)
         .single();
       if (res.data) self._settings = res.data;
-    } catch (e) {}
+    } catch (e) { console.error('[EA Settings] loadSettings error:', e.message); }
 
     var DEFAULT_CATS = [
       { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
@@ -428,6 +428,7 @@ window.EA_SETTINGS = {
         .select('id', { count: 'exact', head: true })
         .eq('user_id', self._userId)
         .eq('category', cat.id);
+      if (result.error) { console.error('[EA Settings] Remove check query error:', result.error); return; }
       var count = result.count || 0;
       if (count > 0) {
         if (msg) {

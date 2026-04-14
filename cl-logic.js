@@ -1,25 +1,33 @@
   async function loadStats() {
-  const { data: { user } } = await supabaseClient.auth.getUser();
+  try {
+    var authResp = await supabaseClient.auth.getUser();
+    var user = authResp.data && authResp.data.user;
+    if (!user) return;
 
-  var libResult = await supabaseClient
-    .from('content_library')
-    .select('status', { count: 'exact' })
-    .eq('user_id', user.id)
-    .neq('source', 'tool');
+    var libResult = await supabaseClient
+      .from('content_library')
+      .select('status', { count: 'exact' })
+      .eq('user_id', user.id)
+      .neq('source', 'tool');
 
-  const items = libResult.data || [];
-  const total = items.length;
-  const pending = items.filter(i => i.status === 'pending').length;
-  const approved = items.filter(i => i.status === 'approved').length;
-  const rejected = items.filter(i => i.status === 'rejected').length;
-  const archived = items.filter(i => i.status === 'archived').length;
+    if (libResult.error) { console.error('[CL] loadStats query error:', libResult.error); return; }
 
-  document.getElementById('stat-total').textContent = total;
-  document.getElementById('stat-pending').textContent = pending;
-  document.getElementById('stat-approved').textContent = approved;
-  document.getElementById('stat-rejected').textContent = rejected;
-  var archivedEl = document.getElementById('stat-archived');
-  if (archivedEl) archivedEl.textContent = archived;
+    const items = libResult.data || [];
+    const total = items.length;
+    const pending = items.filter(i => i.status === 'pending').length;
+    const approved = items.filter(i => i.status === 'approved').length;
+    const rejected = items.filter(i => i.status === 'rejected').length;
+    const archived = items.filter(i => i.status === 'archived').length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+    var archivedEl = document.getElementById('stat-archived');
+    if (archivedEl) archivedEl.textContent = archived;
+  } catch (e) {
+    console.error('[CL] loadStats error:', e.message);
+  }
 }
 
   // Shared utilities - exposed on window for tab JS files

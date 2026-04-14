@@ -726,7 +726,8 @@ window.EA_LOGIC = {
 
   // ── Actions ───────────────────────────────────────────────
   _markHandled: async function(id) {
-    await this._supabase.from('email_summaries').update({ handled: true }).eq('id', id);
+    var result = await this._supabase.from('email_summaries').update({ handled: true }).eq('id', id);
+    if (result.error) { console.error('[EA] markHandled error:', result.error); return; }
     this._emails = this._emails.map(function(e) {
       return (e.id || e.message_id) === id ? Object.assign({}, e, { handled: true }) : e;
     });
@@ -737,7 +738,8 @@ window.EA_LOGIC = {
   },
 
   _unmarkHandled: async function(id) {
-    await this._supabase.from('email_summaries').update({ handled: false }).eq('id', id);
+    var result = await this._supabase.from('email_summaries').update({ handled: false }).eq('id', id);
+    if (result.error) { console.error('[EA] unmarkHandled error:', result.error); return; }
     this._emails = this._emails.map(function(e) {
       return (e.id || e.message_id) === id ? Object.assign({}, e, { handled: false }) : e;
     });
@@ -751,7 +753,8 @@ window.EA_LOGIC = {
     var ids = Array.from(this._selected);
     if (ids.length === 0) return;
     var newVal = !this._showHandled;
-    await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    var result = await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    if (result.error) { console.error('[EA] bulkHandle error:', result.error); return; }
     var self = this;
     this._emails = this._emails.map(function(e) {
       return self._selected.has(e.id || e.message_id) ? Object.assign({}, e, { handled: newVal }) : e;
@@ -767,7 +770,8 @@ window.EA_LOGIC = {
     if (filtered.length === 0) return;
     var ids = filtered.map(function(i) { return i.id || i.message_id; });
     var newVal = !this._showHandled;
-    await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    var result = await this._supabase.from('email_summaries').update({ handled: newVal }).in('id', ids);
+    if (result.error) { console.error('[EA] handleAll error:', result.error); return; }
     this._emails = this._emails.map(function(e) {
       return ids.indexOf(e.id || e.message_id) > -1 ? Object.assign({}, e, { handled: newVal }) : e;
     });
@@ -807,6 +811,8 @@ window.EA_LOGIC = {
 
   // ── Flag ──────────────────────────────────────────────────
   _toggleFlag: async function(id, newState, btnEl) {
+    var oldState = !newState;
+    var self = this;
     // Optimistic UI update
     if (btnEl) {
       btnEl.innerHTML = newState ? '&#9733;' : '&#9734;';
@@ -817,10 +823,21 @@ window.EA_LOGIC = {
       return (e.id || e.message_id) === id ? Object.assign({}, e, { is_flagged: newState }) : e;
     });
 
+    function revertFlag() {
+      if (btnEl) {
+        btnEl.innerHTML = oldState ? '&#9733;' : '&#9734;';
+        btnEl.dataset.flagged = oldState ? '1' : '0';
+        btnEl.title = oldState ? 'Unflag' : 'Flag';
+      }
+      self._emails = self._emails.map(function(e) {
+        return (e.id || e.message_id) === id ? Object.assign({}, e, { is_flagged: oldState }) : e;
+      });
+    }
+
     var email = this._emails.find(function(e) { return (e.id || e.message_id) === id; });
     try {
       var session = (await this._supabase.auth.getSession()).data.session;
-      await fetch('/api/ea-flag', {
+      var resp = await fetch('/api/ea-flag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({
@@ -829,8 +846,13 @@ window.EA_LOGIC = {
           flagState: newState
         })
       });
+      if (!resp.ok) {
+        console.error('[EA] Flag API error:', resp.status);
+        revertFlag();
+      }
     } catch (e) {
       console.error('[EA] Flag error:', e.message);
+      revertFlag();
     }
   },
 
