@@ -97,12 +97,12 @@ function buildDispatch(job) {
     case 'gdrive':
       return { handler: driveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
     case 'onedrive':
-      return { handler: onedriveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
+      return { handler: onedriveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId, jobId: job.id } };
     case 'sharepoint':
       var spParts = (path || '').split('|');
-      return { handler: sharepointHandler, body: { action: 'import-all', accountEmail: account, siteId: spParts[0] || '', libraryId: spParts[1] || '', userId: userId } };
+      return { handler: sharepointHandler, body: { action: 'import-all', accountEmail: account, siteId: spParts[0] || '', libraryId: spParts[1] || '', userId: userId, jobId: job.id } };
     case 'dropbox':
-      return { handler: dropboxHandler, body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId } };
+      return { handler: dropboxHandler, body: { action: 'import-all', accountEmail: account, folderPath: path || '', userId: userId, jobId: job.id } };
     case 'ea-gmail':
       return { handler: eaEmailHandler, body: { userId: userId, accountEmail: account, provider: 'gmail', jobId: job.id } };
     case 'ea-outlook':
