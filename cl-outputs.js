@@ -11,9 +11,7 @@ window.CL_OUTPUTS = {
     this._supabase = supabase;
     var style = getComputedStyle(document.documentElement);
     this._colors = {
-      blueLight: style.getPropertyValue('--blue-light').trim(),
-      greenLight: style.getPropertyValue('--green-light').trim(),
-      archivedBg: style.getPropertyValue('--archived-bg').trim()
+      blueLight: style.getPropertyValue('--blue-light').trim()
     };
     this._render();
     var self = this;
@@ -58,14 +56,12 @@ window.CL_OUTPUTS = {
 
   _bindControls: function() {
     var self = this;
-    var statusColors = { approved: self._colors.greenLight, archived: self._colors.archivedBg };
     var container = document.getElementById('cl-tab-outputs');
     if (!container) return;
     container.querySelectorAll('.outputs-status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        container.querySelectorAll('.outputs-status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+        container.querySelectorAll('.outputs-status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        btn.style.background = statusColors[btn.dataset.status] || '';
         self._status = btn.dataset.status;
         self._toolFilters = [];
         self._categoryFilter = [];
@@ -75,9 +71,6 @@ window.CL_OUTPUTS = {
         self._closeFilterDropdowns();
         self._load();
       });
-      btn.addEventListener('mouseenter', function() { btn.style.background = statusColors[btn.dataset.status] || ''; });
-      btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('active')) btn.style.background = ''; });
-      if (btn.classList.contains('active')) btn.style.background = statusColors[btn.dataset.status] || '';
     });
     var searchEl = document.getElementById('outputs-search');
     if (searchEl) {
