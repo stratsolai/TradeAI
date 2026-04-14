@@ -614,6 +614,7 @@ export default async function handler(req, res) {
   const accountEmail = body.accountEmail;
   const libraryId = body.libraryId;
   const siteIdParam = body.siteId;
+  const jobId = body.jobId;
 
   if (!action) return res.status(400).json({ error: 'action required' });
   if (!accountEmail) return res.status(400).json({ error: 'accountEmail required' });
@@ -782,6 +783,22 @@ export default async function handler(req, res) {
         console.log('[import-all] FILE — name:', f.name, 'id:', f.id, 'mime:', mime, 'size:', f.size, 'deduped:', dedupSkip);
       });
 
+      // ── Cursor batch processing ────────────────────────────────────
+      var BATCH_SIZE = 50;
+      var cursorData = null;
+      var processedIds = [];
+      if (jobId) {
+        var cursorRes = await supabase.from('cl_scan_cursors').select('*').eq('job_id', jobId).maybeSingle();
+        if (cursorRes.data) {
+          cursorData = cursorRes.data;
+          processedIds = Array.isArray(cursorData.processed_ids) ? cursorData.processed_ids : [];
+        }
+      }
+      var remaining = files.filter(function(f) { return processedIds.indexOf(f.id) === -1; });
+      var batch = jobId ? remaining.slice(0, BATCH_SIZE) : remaining;
+      var moreAfterBatch = jobId ? remaining.length > BATCH_SIZE : false;
+      console.log('[SharePoint] Cursor — total:', files.length, 'alreadyProcessed:', processedIds.length, 'remaining:', remaining.length, 'batch:', batch.length, 'morePending:', moreAfterBatch);
+
       let imported = 0;
       let skipped = 0;
       let approved = 0;
@@ -791,7 +808,7 @@ export default async function handler(req, res) {
       var auto_archived = 0;
       var fin_docs_paired = 0;
 
-      for (const file of files) {
+      for (const file of batch) {
         const mimeType = (file.file && file.file.mimeType) || '';
         const isImage = mimeType.indexOf('image/') === 0;
         const isText = mimeType.indexOf('text/') === 0;
@@ -974,6 +991,38 @@ export default async function handler(req, res) {
         }
       }
 
+      // ── Cursor: save or cleanup ─────────────────────────────────────
+      var batchProcessedIds = processedIds.concat(batch.map(function(f) { return f.id; }));
+      if (moreAfterBatch && jobId) {
+        var cursorRow = {
+          job_id: jobId,
+          user_id: userId,
+          processed_ids: batchProcessedIds,
+          imported: imported,
+          approved: approved,
+          pending: pending,
+          rejected: rejected,
+          skipped: skipped,
+          auto_archived: auto_archived,
+          fin_docs_paired: fin_docs_paired,
+          deduped: 0,
+          updated_at: new Date().toISOString()
+        };
+        if (cursorData) {
+          await supabase.from('cl_scan_cursors').update(cursorRow).eq('id', cursorData.id);
+        } else {
+          cursorRow.created_at = new Date().toISOString();
+          await supabase.from('cl_scan_cursors').insert(cursorRow);
+        }
+        console.log('[SharePoint] Batch complete — morePending. Processed so far:', batchProcessedIds.length, 'of', files.length);
+        return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, deduped: 0, total: batch.length, site_name: siteName, library_name: libraryName, morePending: true });
+      }
+
+      // All files processed — clean up cursor
+      if (jobId) {
+        await supabase.from('cl_scan_cursors').delete().eq('job_id', jobId);
+      }
+
       // Stamp last_scanned_at on the individual site entry inside
       // entry.sites — not on the account itself. Each site within a
       // SharePoint account is scanned independently and needs its own
@@ -993,7 +1042,7 @@ export default async function handler(req, res) {
         await supabase.from('profiles').update({ cl_sharepoint_accounts: accounts }).eq('id', userId);
       }
 
-      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: files.length, site_name: siteName, library_name: libraryName, deduped: deduped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired });
+      return res.status(200).json({ success: true, imported: imported, approved: approved, pending: pending, rejected: rejected, skipped: skipped, total: batch.length, site_name: siteName, library_name: libraryName, deduped: deduped, skipped_reasons: skipped_reasons, auto_archived: auto_archived, fin_docs_paired: fin_docs_paired, morePending: false });
     }
 
     return res.status(400).json({ error: 'Unknown action: ' + action });
