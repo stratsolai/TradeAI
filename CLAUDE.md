@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 13 2026
+# Updated: April 14 2026
 
 ---
 
@@ -135,11 +135,6 @@ is complete.
 
 ## Active Tasks
 
-### Task 10 — CL Connections integration test
-
-**COMPLETE.** Google Drive, Dropbox, SharePoint, Gmail,
-and Outlook confirmed working end to end.
-
 ### Task 13 — External Platform Connections (Accounting and Job Management)
 
 Spec complete — StaxAI-External-Platform-Connections-Spec-v1_0.
@@ -225,6 +220,15 @@ email scans. These endpoints currently process all files
 in a single invocation and can hit the 300-second Vercel
 timeout on large folder trees. No build begins until a
 spec is written.
+
+### Task 27 — cl-settings-logic.js File Split
+
+Not started. cl-settings-logic.js is at 87K, exceeding
+the 60K file size limit from CLAUDE.md. Requires splitting
+into logical sub-files following the same pattern as the
+CL split (cl-review.js, cl-upload.js, cl-outputs.js,
+cl-profile.js). A spec must be written before any split
+work begins. No build action until spec is approved.
 
 ---
 
@@ -342,11 +346,6 @@ spec is written.
   api/sharepoint-import.js (API copy, intentional — Vercel
   esbuild cannot resolve CJS modules from ES module API
   files at build time). Not a bug.
-- shared-utils.js must be loaded before any logic file on
-  every authenticated page — currently only loaded on
-  email-assistant.html and content-library.html. All other
-  authenticated pages need it added during their stylesheet
-  rollout.
 - CL Library Connections tab now has pre-connection
   confirmation modals for all six connections (Gmail,
   Outlook, Google Drive, OneDrive, SharePoint, Dropbox)
@@ -371,7 +370,7 @@ is complete and confirmed working.
 | 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
 | 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
 | 10   | ~~Stylesheet rollout — email-assistant.html and email-assistant-settings.html.~~ **COMPLETE** |
-| 11   | Task 20 — Email Assistant stylesheet comparison pass and integration test. |
+| 11   | ~~Task 20 — Email Assistant stylesheet comparison pass.~~ **COMPLETE** Integration test outstanding. |
 | 12   | ~~Task 22 — EA scan infrastructure rebuild.~~ **COMPLETE**  |
 | 13   | ~~Task 23 — Internal API security shared secret model.~~ **COMPLETE** |
 | 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
@@ -598,9 +597,6 @@ No monolithic files for new work. Full detail in Rules v2.9.
   .stax-stack, .stax-card, .stax-card-screenshot,
   .stax-card-info, .stax-tagline, .stax-tagline-pre,
   .stax-tagline-stax, .stax-tagline-post, .hero-stax-way.
-- cl-settings.html does not load staxai-auth.css — known
-  issue to be fixed during stylesheet rollout (Pre-Launch
-  Step 4).
 - content-library.html has 5 dead modals with onclick
   handlers calling undefined functions. Do not attempt to
   wire these up — unbuilt features.
@@ -660,6 +656,68 @@ File integrity:
 Industry-agnostic (when editing AI prompts or data models):
 - Confirmed works correctly for a non-trade industry such
   as accounting or consulting
+
+### Authenticated Page Standards — Mandatory for All New and Rebuilt Pages
+
+Every new or rebuilt authenticated page must follow these
+standards without exception. These rules exist to prevent
+the technical debt accumulated in early builds from recurring.
+
+Stylesheet and CSS:
+- Every authenticated page must load staxai-auth.css before
+  any other stylesheet or logic file
+- Every authenticated page must load shared-utils.js before
+  any logic file
+- Every CSS value must use a stylesheet variable — no
+  hardcoded values ever
+- Every reusable CSS class belongs in staxai-auth.css — only
+  define classes in a page-level style block if they are
+  genuinely specific to that page's unique layout and will
+  never appear on any other page. When in doubt, put it in
+  the stylesheet.
+- Every colour applied via JS element.style must read the
+  value from the stylesheet at runtime using
+  getComputedStyle(document.documentElement).getPropertyValue
+  ('--variable-name') — never hardcode hex values in JS
+- No inline style= attributes in dynamically-built HTML
+  strings — always use named CSS classes defined in the
+  stylesheet or page style block
+
+Topbar:
+- Every authenticated page must load topbar.js
+- When topbar.js is rolled out to a page, all existing
+  inline dropdown CSS and JS must be removed from that page
+  in the same commit
+- No authenticated page may define its own topbar CSS —
+  topbar styling belongs in topbar.js or the topbar section
+  of staxai-auth.css only
+
+JavaScript:
+- Every class name referenced in JS must have a
+  corresponding CSS definition
+- Every async function must have error handling — try-catch
+  on auth calls, .error checks on all Supabase query
+  results, response.ok checks on all fetch calls
+- Never use a silent catch block — every catch must at
+  minimum log the error
+- No inline onclick handlers — all events via
+  addEventListener in the logic file
+- Logic files must follow the window.*_LOGIC = { init() }
+  pattern — all logic runs inside init(), nothing at module
+  scope except the bootstrap IIFE
+
+File size:
+- Monitor file sizes against the 60K limit defined in
+  CLAUDE.md
+- If a logic file approaches 60K during a build session,
+  stop and flag it before adding more code
+- Never allow a file to exceed 60K without a plan to split
+  it
+
+Error handling:
+- UI state must only update after a database or API
+  operation has confirmed success — never optimistically
+  update the UI before confirming the operation succeeded
 
 ---
 
