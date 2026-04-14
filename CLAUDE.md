@@ -952,3 +952,6 @@ Error handling:
 | Redesign-Spec-v1_0             | Build complete.                     |
 | StaxAI-EA-Newsletter-CL-      | EA Newsletter/Marketing push to     |
 | Push-Spec-v1_0                 | CL Tool Outputs. Build complete.    |
+| StaxAI-Lookback-Dropdown-     | Lookback dropdown custom component  |
+| Spec-v1_0                      | replacing native selects on CL and  |
+|                                 | EA settings pages. Build complete.  |
