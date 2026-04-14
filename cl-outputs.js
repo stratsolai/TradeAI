@@ -37,8 +37,8 @@ window.CL_OUTPUTS = {
       + '<button class="clear-filters-btn outputs-clear-btn">&#10005; Clear All Filters</button>'
       + '</div>'
       + '<div id="outputs-filter-row" class="review-filter-row" style="display:none">'
-      + '<div id="outputs-tool-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Tools</div><div id="outputs-tool-pills" class="review-pill-row"></div></div>'
-      + '<div id="outputs-cat-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Categories</div><div id="outputs-cat-pills" class="review-pill-row"></div></div>'
+      + '<div id="outputs-tool-pills-wrap" style="display:none"><div class="filter-section-label">Tools</div><div id="outputs-tool-pills" class="review-pill-row"></div></div>'
+      + '<div id="outputs-cat-pills-wrap" style="display:none"><div class="filter-section-label">Categories</div><div id="outputs-cat-pills" class="review-pill-row"></div></div>'
       + '</div>'
       + '<div id="outputs-list" class="review-list"></div>'
       + '</div>';
