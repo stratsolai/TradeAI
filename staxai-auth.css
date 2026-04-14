@@ -954,6 +954,10 @@ a:hover { opacity: 0.85; }
 .btn-back { display:flex; align-items:center; gap:var(--btn-gap); border:1.5px solid var(--text-secondary); border-radius:var(--btn-radius); padding:var(--btn-padding); font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
 .btn-back:hover { background:var(--bg); }
 
+/* Open external button — used for opening content in an external app (e.g. Gmail, Outlook) */
+.btn-open-external { display:inline-flex; align-items:center; gap:var(--btn-gap); border:1.5px solid var(--blue); border-radius:var(--btn-radius); padding:var(--btn-padding); font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); color:var(--blue); background:var(--white); cursor:pointer; font-family:var(--body-font); text-decoration:none; transition:opacity var(--btn-transition); }
+.btn-open-external:hover { opacity:0.8; }
+
 /* ------------------------------------------------------------
    18. MISSING CLASS DEFINITIONS (formerly inline-styled)
    ------------------------------------------------------------ */
