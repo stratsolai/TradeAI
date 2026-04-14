@@ -531,8 +531,8 @@ window.CL_REVIEW = {
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="item-card-btns">
       <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
-          ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve">&#10003; Approve</button>' : ''}
-      <button class="btn-outline review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" >&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
+          ${this._status !== 'approved' ? '<button class="review-approve-btn" data-id="' + id + '" title="Approve">&#10003; Approve</button>' : ''}
+      <button class="review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" >&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
     </div>
       </div>
   
