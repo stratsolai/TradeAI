@@ -250,7 +250,7 @@ window.CL_SETTINGS_LOGIC = {
       return '<div class="website-url-item">' +
         '<div style="flex:1;min-width:0;">' +
           '<input class="website-url-input" type="text" value="' + url + '" />' +
-          '<div class="website-url-error picker-error" style="display:none;margin-top:3px;font-size:12px;"></div>' +
+          '<div class="website-url-error picker-error" style="display:none;margin-top:3px;font-size:var(--badge-font-size);"></div>' +
         '</div>' +
         '<button class="btn-remove-url" data-url="' + url + '">Remove</button>' +
         '</div>';

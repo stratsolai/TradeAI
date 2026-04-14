@@ -41,16 +41,16 @@
     label {
       display: block;
       margin-bottom: 6px;
-      font-size: 13px;
-      font-weight: 600;
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
       color: var(--text);
     }
 
     input[type="text"], input[type="url"], input[type="date"],
     textarea, select {
       width: 100%;
-      padding: 10px 14px;
-      border: 1.5px solid var(--border);
+      padding: var(--input-padding);
+      border: var(--input-border-width) solid var(--border);
       border-radius: var(--input-radius);
       font-size: var(--input-font-size);
       font-family: var(--body-font);
@@ -234,11 +234,11 @@
 .profile-field-full { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 6px; }
 .profile-label { font-size: 13px; font-weight: 600; color: var(--text); font-family: var(--body-font); }
 .profile-optional { font-weight: 400; color: var(--text-muted); }
-.profile-input { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; transition: border-color var(--btn-transition); }
+.profile-input { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; transition: border-color var(--btn-transition); }
 .profile-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus-ring); }
-.profile-select { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; cursor: pointer; }
+.profile-select { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; cursor: pointer; }
 .profile-select:focus { outline: none; border-color: var(--blue); }
-.profile-textarea { width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 14px; color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; resize: vertical; }
+.profile-textarea { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; resize: vertical; }
 .profile-textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus-ring); }
 .profile-address-row { display: grid; grid-template-columns: 1fr 80px 100px; gap: 12px; }
 .profile-save-row { display: flex; align-items: center; gap: 16px; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-light); }

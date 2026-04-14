@@ -337,7 +337,7 @@ window.EA_SETTINGS = {
         : '';
       var row = '<div class="settings-row cat-row">' +
         '<div><div class="settings-row-label">' + label + '</div>' + descHtml + '</div>' +
-        '<div style="display:flex;align-items:center;gap:12px;">' +
+        '<div style="display:flex;align-items:center;gap:var(--actions-gap);">' +
           removeHtml +
           '<div class="settings-row-control">' +
             '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="on">On</button>' +

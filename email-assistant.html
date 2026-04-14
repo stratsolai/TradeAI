@@ -54,8 +54,8 @@
     /* ─── EMAIL CARD ─── */
     .ea-flag-btn { background:none; border:none; cursor:pointer; font-size:22px; padding:4px; flex-shrink:0; transition:opacity 0.15s; }
     .ea-flag-btn:hover { opacity:0.7; }
-    .ea-sender-name { font-size:15px; font-weight:var(--font-weight-semibold); color:var(--text); flex:1; min-width:100px; }
-    .ea-subject-inline { font-size:15px; font-weight:var(--font-weight-semibold); color:var(--text); min-width:0; flex:1; }
+    .ea-sender-name { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); flex:1; min-width:100px; }
+    .ea-subject-inline { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); min-width:0; flex:1; }
     .ea-body-preview { font-size:var(--label-font-size); color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
 
     /* ─── SOURCE BUTTON — uses shared .source-btn from stylesheet ─── */
@@ -69,7 +69,7 @@
       padding:24px; box-shadow:0 2px 8px var(--shadow-card);
     }
     .ea-detail-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; }
-    .ea-detail-subject { font-weight:700; font-size:18px; color:var(--text); margin-bottom:12px; }
+    .ea-detail-subject { font-weight:var(--heading-lg-weight); font-size:18px; color:var(--text); margin-bottom:12px; }
     .ea-detail-summary { font-size:var(--btn-font-size); color:var(--text-secondary); line-height:1.55; margin-bottom:16px; padding:12px 14px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); }
     .ea-detail-body { font-size:var(--btn-font-size); color:var(--text); line-height:1.65; white-space:pre-wrap; word-break:break-word; padding:16px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); max-height:500px; overflow-y:auto; margin-bottom:16px; }
     .ea-detail-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
