@@ -22,6 +22,30 @@
     .status-btn[data-pill="flagged"]   { border-left-color:var(--orange); }
     .status-btn[data-pill="handled"]   { border-left-color:var(--grey-accent); }
 
+    /* ─── CATEGORY DROPDOWN (in status row) ─── */
+    .ea-cat-dropdown {
+      position:relative; margin-left:4px;
+    }
+    .ea-cat-dropdown-btn {
+      padding:8px 14px; border:var(--input-border-width) solid var(--border);
+      border-radius:var(--btn-radius); font-size:var(--btn-font-size); font-family:var(--body-font);
+      background:var(--white); color:var(--text); cursor:pointer; white-space:nowrap;
+    }
+    .ea-cat-dropdown-btn.active { border-color:var(--blue); color:var(--blue); font-weight:var(--font-weight-semibold); }
+    .ea-cat-dropdown-menu {
+      display:none; position:absolute; top:100%; left:0; margin-top:4px; min-width:180px;
+      background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius);
+      box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0;
+    }
+    .ea-cat-dropdown-menu.open { display:block; }
+    .ea-cat-dropdown-item {
+      display:block; width:100%; padding:8px 14px; border:none; background:none;
+      font-size:var(--btn-font-size); font-family:var(--body-font); color:var(--text);
+      text-align:left; cursor:pointer;
+    }
+    .ea-cat-dropdown-item:hover { background:var(--bg-subtle); }
+    .ea-cat-dropdown-item.active { color:var(--blue); font-weight:var(--font-weight-semibold); }
+
     /* ─── FILTER BUTTONS ROW (matches CL .review-filter-btns-row) ─── */
     .filter-btns-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; }
 
@@ -88,6 +112,7 @@
       .ea-detail-topbar { flex-wrap: wrap; }
       .ea-sender-name { min-width: 0; }
       .ea-body-preview { font-size: 14px; }
+      .ea-cat-dropdown-btn { font-size: 16px; }
     }
 </style>
 <link rel="stylesheet" href="/staxai-auth.css">
