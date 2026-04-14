@@ -177,6 +177,12 @@ Exception: content-library.html and cl-settings.html already
 have mobile fixes applied (April 2026) as these are the
 source-of-truth pages for the stylesheet.
 
+email-assistant.html and email-assistant-settings.html mobile
+fixes complete April 2026 — flex-wrap on status/filter/detail
+rows, fluid inputs, 16px font-size overrides, page-padding
+mobile, label column stacking, detail body viewport-relative
+max-height.
+
 ### Task 20 — Email Assistant Functional Review and Build
 
 In progress April 2026. Current session work completed:
@@ -200,63 +206,6 @@ trigger reads that preference and queues scans at the
 correct intervals. Affects both CL and EA. Wire saved
 frequency preferences to the background scan worker
 queue for both CL and EA.
-
-### Task 25 — Supabase Schema Audit
-
-Not started. Code reads every API endpoint and logic
-file, maps every table and column reference, and compares
-against what actually exists in the database. Reports all
-mismatches — missing columns, dead columns, type
-mismatches, missing constraints, missing RLS policies —
-before any fixes are made. No build work begins until
-findings are reviewed.
-
-### Task 26 — Folder Import Cursor Batch Processing
-
-Not started. Apply cursor-based batch processing to
-api/onedrive-import.js, api/sharepoint-import.js, and
-api/dropbox-import.js, matching the pattern built for
-email scans. These endpoints currently process all files
-in a single invocation and can hit the 300-second Vercel
-timeout on large folder trees. No build begins until a
-spec is written.
-
-### Task 27 — cl-settings-logic.js File Split
-
-Complete April 2026. cl-settings-logic.js split from 87K
-to 38K core file plus four sub-files:
-cl-settings-onedrive.js (9K), cl-settings-sharepoint.js
-(17K), cl-settings-dropbox.js (9K), cl-settings-tools.js
-(13K). All sub-files attach methods to
-window.CL_SETTINGS_LOGIC and are loaded after the core
-file in cl-settings.html.
-
-### Task 28 — EA Categories Redesign
-
-Complete April 2026. Filter by Category button removed
-from EA inbox row 2. Replaced with up to 2 shortcut
-pills on the status row (after Dismissed) plus a
-category dropdown for remaining categories. Shortcut
-selection configurable in EA Settings Categories tab
-(max 2, saved to category_shortcuts on
-email_assistant_settings). Default shortcuts: Leads and
-Projects. Category labels shortened: Leads / Enquiries
-to Leads, Jobs / Projects to Projects. Urgent removed
-from the category on/off toggle list in settings (it is
-a status, not a toggleable category). Disabled categories
-automatically removed from shortcuts.
-
-### Task 29 — EA Newsletter/Marketing Content Push to CL Tool Outputs
-
-Not started. Requires spec before build. Emails categorised
-as Newsletter / Marketing in the EA inbox should be
-automatically pushed to the Content Library Tool Outputs
-section for use by other tools. The pushed content must set
-source = 'tool' on the content_library row and include the
-correct tool tags and CL category tags. The platform's
-existing review process will handle approval. Spec must
-cover the trigger, the data model, deduplication, and how
-the content appears in the Tool Outputs tab.
 
 ---
 
@@ -453,15 +402,13 @@ is complete and confirmed working.
 | 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
 | 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
 | 16   | ~~EA email body storage and in-platform detail view~~ **COMPLETE** |
-| 17   | Task 25 — Supabase schema audit across all tables.         |
-| 18   | Task 26 — Folder import cursor batch processing.           |
-| 19   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 20   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 21   | Stylesheet rollout — all remaining authenticated pages     |
-| 22   | Functional reviews — all 5 built tools                     |
-| 23   | Improvements per tool based on functional review findings  |
-| 24   | Integration tests — all 5 built tools                      |
-| 25   | Dashboard rebuild                                          |
+| 17   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 18   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 19   | Stylesheet rollout — all remaining authenticated pages     |
+| 20   | Functional reviews — all 5 built tools                     |
+| 21   | Improvements per tool based on functional review findings  |
+| 22   | Integration tests — all 5 built tools                      |
+| 23   | Dashboard rebuild                                          |
 
 ---
 
@@ -734,6 +681,40 @@ No monolithic files for new work. Full detail in Rules v2.9.
 - Supabase anon key in supabase-client.js is intentional —
   RLS must be enabled on any new table
 
+### Tool to CL Write-back Patterns
+
+All tools that write outputs to the Content Library must
+follow one of these two patterns. No other approach is
+permitted.
+
+Tool Output items are never pending and never rejected.
+Items with source = 'tool' appear only in the Tool Outputs
+tab, never in Source Review. The only valid statuses for
+tool output items are 'approved' and 'archived'.
+
+source = 'tool' must always be set on content_library rows
+written by a tool. Without this value the item will not
+appear in Tool Outputs and will incorrectly appear in
+Source Material instead.
+
+Pattern A — Scan-import (AI confidence-based status). Used
+when a tool is ingesting external content it did not create.
+The AI determines status based on confidence. Status is
+'approved' if the AI is confident the content has value,
+'archived' if the content should be discarded. Never
+'pending' or 'rejected'. Use upsert with onConflict:
+'source_ref', ignoreDuplicates: true. Required fields:
+source ('tool'), tool_source (tool ID), source_ref (unique
+dedup key), status, category, tool_tags, content_text,
+user_id.
+
+Pattern B — Tool-generated (always approved). Used when a
+tool has generated the content itself. Status is always
+forced to 'approved' regardless of AI confidence. Use
+upsert with onConflict: 'source_ref', ignoreDuplicates:
+true. Required fields: same as Pattern A with status
+always 'approved'.
+
 ### Spec First
 - No new feature, page, or schema change without an approved
   spec in Project Knowledge — no exceptions
@@ -755,6 +736,15 @@ CSS (when editing files with CSS):
 - No hardcoded values — CSS variables only
 - No duplicate CSS rules introduced
 - Topbar pattern matches platform standard
+- Before every commit that adds new CSS classes, explicitly
+  list every new class being added and confirm each one is
+  either: added to staxai-auth.css because it is reusable
+  across pages, or added to the page style block with a
+  specific written reason why it is genuinely unique to
+  that page and will never appear on any other page. This
+  confirmation must appear in the commit report. If no
+  clear reason exists for a page-level class, it belongs
+  in the stylesheet.
 
 JavaScript:
 - No inline onclick handlers
@@ -951,3 +941,14 @@ Error handling:
 |                                 | complete.                           |
 | StaxAI-Email-Scan-Cursor-      | Email scan cursor batch processing  |
 | Spec-v1_0                      | spec. Build complete April 2026.    |
+| StaxAI-Folder-Import-Cursor-   | Folder import cursor batch          |
+| Spec-v1_0                      | processing for OneDrive,            |
+|                                 | SharePoint, Dropbox, and Google     |
+|                                 | Drive. Build complete.              |
+| StaxAI-CL-Settings-Split-      | cl-settings-logic.js file split     |
+| Spec-v1_0                      | into core file plus four            |
+|                                 | sub-files. Build complete.          |
+| StaxAI-EA-Categories-          | EA inbox category redesign.         |
+| Redesign-Spec-v1_0             | Build complete.                     |
+| StaxAI-EA-Newsletter-CL-      | EA Newsletter/Marketing push to     |
+| Push-Spec-v1_0                 | CL Tool Outputs. Build complete.    |
