@@ -12,11 +12,16 @@ window.CL_REVIEW = {
     this._supabase = supabase;
     this._render();
     this._bindStatTiles();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
-      window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
-      window._clCategories = (profResult.data && Array.isArray(profResult.data.cl_active_categories)) ? profResult.data.cl_active_categories : [];
+    try {
+      var authResp = await supabase.auth.getUser();
+      var user = authResp.data && authResp.data.user;
+      if (user) {
+        const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+        window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
+        window._clCategories = (profResult.data && Array.isArray(profResult.data.cl_active_categories)) ? profResult.data.cl_active_categories : [];
+      }
+    } catch (e) {
+      console.error('[CL Review] init auth error:', e.message);
     }
     this._load();
   },
@@ -261,7 +266,7 @@ window.CL_REVIEW = {
         .select('id, version_archived_by')
         .eq('status', 'archived')
         .in('version_archived_by', ids);
-      if (linkResult.data) {
+      if (!linkResult.error && linkResult.data) {
         var self = this;
         linkResult.data.forEach(function(r) {
           if (r.version_archived_by) self._archivedLinks[r.version_archived_by] = r.id;
@@ -282,7 +287,7 @@ window.CL_REVIEW = {
         .from('cl_source_items')
         .select('id, file_url')
         .in('id', photoItemIds);
-      if (siResult.data) {
+      if (!siResult.error && siResult.data) {
         for (var si_idx = 0; si_idx < siResult.data.length; si_idx++) {
           var si = siResult.data[si_idx];
           if (si.file_url) {
@@ -442,7 +447,8 @@ window.CL_REVIEW = {
     const uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-AU') : '';
     const sourceParts = [this._connectionLabel(item) || 'Unknown'];
     if (item.source_detail) {
-      const d = typeof item.source_detail === 'string' ? JSON.parse(item.source_detail) : item.source_detail;
+      var d;
+      try { d = typeof item.source_detail === 'string' ? JSON.parse(item.source_detail) : item.source_detail; } catch (e) { d = {}; }
       if (d.filename) sourceParts.push(d.filename);
       else if (d.url) sourceParts.push(d.url);
     }

@@ -965,7 +965,8 @@ window.CL_UPLOAD = {
       var safeTitle = title.replace(/[^a-zA-Z0-9._-]/g, "_").substring(0, 80);
       var storagePath = user.id + "/manual/" + Date.now() + "_" + safeTitle + ".txt";
       var textContent = "Title: " + title + "\n\n" + desc;
-      await supabase.storage.from("cl-assets").upload(storagePath, new Blob([textContent], { type: "text/plain" }), { upsert: false });
+      var uploadResult = await supabase.storage.from("cl-assets").upload(storagePath, new Blob([textContent], { type: "text/plain" }), { upsert: false });
+      if (uploadResult.error) { console.error('cl-assets manual upload error:', uploadResult.error.message); storagePath = null; }
       // 2. Call process-file for AI category extraction
       var fileData = btoa(unescape(encodeURIComponent(textContent)));
       var resp = await fetch("/api/process-file", {

@@ -11,12 +11,17 @@ window.CL_OUTPUTS = {
     this._supabase = supabase;
     this._render();
     var self = this;
-    var authResp = await supabase.auth.getUser();
-    var user = authResp.data ? authResp.data.user : null;
-    if (user) {
-      var profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
-      this._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
-    } else {
+    try {
+      var authResp = await supabase.auth.getUser();
+      var user = authResp.data ? authResp.data.user : null;
+      if (user) {
+        var profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+        this._activatedTools = (profResult.data && !profResult.error && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
+      } else {
+        this._activatedTools = [];
+      }
+    } catch (e) {
+      console.error('[CL Outputs] init auth error:', e.message);
       this._activatedTools = [];
     }
     this._load();
@@ -156,7 +161,8 @@ window.CL_OUTPUTS = {
       if (list) list.innerHTML = '<div class="list-empty">Unable to load outputs. Please refresh the page.</div>';
       return;
     }
-    var authResp = await this._supabase.auth.getUser();
+    var authResp;
+    try { authResp = await this._supabase.auth.getUser(); } catch (e) { authResp = { data: null }; }
     var user = authResp.data ? authResp.data.user : null;
     if (!user) {
       if (list) list.innerHTML = '<div class="list-empty">Please sign in to view outputs.</div>';
