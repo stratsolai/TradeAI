@@ -402,13 +402,14 @@ is complete and confirmed working.
 | 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
 | 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
 | 16   | ~~EA email body storage and in-platform detail view~~ **COMPLETE** |
-| 17   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 18   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 19   | Stylesheet rollout — all remaining authenticated pages     |
-| 20   | Functional reviews — all 5 built tools                     |
-| 21   | Improvements per tool based on functional review findings  |
-| 22   | Integration tests — all 5 built tools                      |
-| 23   | Dashboard rebuild                                          |
+| 17   | ~~Task 29 — EA Newsletter/Marketing CL push.~~ **COMPLETE** |
+| 18   | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 19   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 20   | Stylesheet rollout — all remaining authenticated pages     |
+| 21   | Functional reviews — all 5 built tools                     |
+| 22   | Improvements per tool based on functional review findings  |
+| 23   | Integration tests — all 5 built tools                      |
+| 24   | Dashboard rebuild                                          |
 
 ---
 
