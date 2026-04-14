@@ -378,6 +378,55 @@ the content appears in the Tool Outputs tab.
   confirmation modals for all six connections (Gmail,
   Outlook, Google Drive, OneDrive, SharePoint, Dropbox)
   added April 2026.
+- This platform is not live. There is only one user and
+  all data is test data. Decisions about database changes
+  do not require data-loss analysis.
+- The active_tools column is a legacy column that still
+  exists in the database. All code references have been
+  updated to use activated_tools. The owner should drop
+  active_tools from the profiles table manually in
+  Supabase.
+
+### Task 25 — Deferred Findings for Rebuild Sessions
+
+- dashboard-widgets.js references content_library.body —
+  correct column is content_text. Fix during dashboard
+  rebuild.
+- dashboard-widgets.js references
+  news_digest_items.headline — correct column is title.
+  Fix during dashboard rebuild.
+- dashboard-widgets.js references
+  news_digest_items.source — confirm against
+  news-digest-refresh.js which writes source_name — one
+  of these is wrong. Resolve during dashboard and news
+  digest rebuilds.
+- dashboard-widgets.js references
+  email_summaries.urgency — column does not exist. Fix
+  during dashboard rebuild.
+- dashboard-widgets.js references
+  social_posts.scheduled_at — correct column is
+  scheduled_date. Fix during dashboard rebuild.
+- dashboard-widgets.js references chatbot_interactions
+  table — does not exist. Fix during dashboard rebuild.
+- dashboard-widgets.js references learned_faqs table —
+  confirmed exists in database.
+- strategic-plan-load-context.js and
+  news-digest-refresh.js reference content_library.body
+  — correct column is content_text. Fix during those
+  tools' rebuilds.
+- get-greeting.js reads profiles.chatbot_settings as a
+  column — confirmed the column exists as jsonb. However
+  all other chatbot files use the separate
+  chatbot_settings table. Resolve during chatbot rebuild.
+- The following tables exist in the database but have no
+  code references and require investigation during their
+  respective rebuilds: chat_conversations,
+  dashboard_metrics, gdrive_imported_files, graphic_usage,
+  ops_plan_actions, publishing_queue, source_documents,
+  tender_responses.
+- news-digest-refresh.js writes source_name to
+  news_digest_items — correct column is source. Fix
+  during news digest rebuild.
 
 ---
 
@@ -514,9 +563,6 @@ Refer to StaxAI Project Brief v12.23
 Refer to StaxAI Project Brief v12.23
 
 Notable changes made April 2026:
-- profiles: added cl_drive_folders (jsonb),
-  cl_drive_access_token (text), cl_drive_refresh_token (text),
-  cl_outlook_last_scanned_at (timestamptz)
 - profiles: removed cl_active_categories, cl_custom_categories
 - profiles: added cl_drive_accounts (jsonb),
   cl_onedrive_accounts (jsonb), cl_sharepoint_accounts (jsonb),
@@ -546,19 +592,19 @@ Notable changes made April 2026:
   auto_archived_count, fin_docs_paired_count,
   deduped_count, pages_crawled, pages_skipped (all
   integer, default 0) — April 2026
-- cl_scan_cursors table added April 2026 — cursor state
-  for batch-processed scans. Columns: id (uuid, PK),
-  job_id (uuid), user_id (uuid), processed_ids (jsonb),
-  imported (integer), approved (integer), pending (integer),
-  rejected (integer), skipped (integer), auto_archived
-  (integer), fin_docs_paired (integer), deduped (integer),
-  created_at (timestamptz), updated_at (timestamptz).
-  Rows are deleted when a scan job completes.
-- email_summaries: added body_url (text) — April 2026.
-  Stores the cl-assets storage path to the full email
-  body file (.txt). Written by api/email.js during EA
-  scans, read by email-assistant-logic.js for the
-  in-platform email detail view.
+- cl_scan_jobs: added scan_cursor (jsonb, nullable) —
+  April 2026
+- profiles: added ea_connected_emails (jsonb, default
+  null) — April 2026
+- email_summaries: added body_url (text, nullable) —
+  April 2026. Stores the cl-assets storage path to the
+  full email body file (.txt). Written by api/email.js
+  during EA scans, read by email-assistant-logic.js for
+  the in-platform email detail view.
+- email_summaries: added is_flagged (boolean, default
+  false) — April 2026
+- email_summaries: UNIQUE constraint on (user_id,
+  message_id) — April 2026
 
 ---
 
