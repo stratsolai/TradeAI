@@ -621,7 +621,8 @@ window.EA_LOGIC = {
 
     var actionBtn;
     if (this._showHandled) {
-      actionBtn = '<button class="ea-unmark-btn" data-id="' + id + '">&#10003; Restore</button>';
+      actionBtn = '<button class="ea-unmark-btn" data-id="' + id + '">&#10003; Restore</button>' +
+        '<button class="btn-dismiss ea-delete-btn" data-id="' + id + '">&#10007; Delete</button>';
     } else {
       actionBtn = '<button class="btn-dismiss ea-handled-btn" data-id="' + id + '">&#10007; Dismiss</button>';
     }
@@ -674,6 +675,10 @@ window.EA_LOGIC = {
       btn.addEventListener('click', function() { self._unmarkHandled(btn.dataset.id); });
     });
 
+    document.querySelectorAll('.ea-delete-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { self._deleteEmail(btn.dataset.id); });
+    });
+
     document.querySelectorAll('.ea-flag-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var isFlagged = btn.dataset.flagged === '1';
@@ -704,7 +709,7 @@ window.EA_LOGIC = {
     document.querySelectorAll('.item-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
         if (e.target.closest('.item-checkbox') || e.target.closest('.ea-flag-btn') ||
-            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') ||
+            e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') || e.target.closest('.ea-delete-btn') ||
             e.target.closest('.source-btn')) return;
         var email = self._emails.find(function(em) { return (em.id || em.message_id) === card.dataset.id; });
         if (email) self._showDetail(email);
@@ -774,6 +779,16 @@ window.EA_LOGIC = {
       return ids.indexOf(e.id || e.message_id) > -1 ? Object.assign({}, e, { handled: newVal }) : e;
     });
     this._selected = new Set();
+    this._updateStats();
+    this._updateBulkBar();
+    this._renderList();
+  },
+
+  _deleteEmail: async function(id) {
+    var result = await this._supabase.from('email_summaries').delete().eq('id', id);
+    if (result.error) { console.error('[EA] deleteEmail error:', result.error); return; }
+    this._emails = this._emails.filter(function(e) { return (e.id || e.message_id) !== id; });
+    this._selected.delete(id);
     this._updateStats();
     this._updateBulkBar();
     this._renderList();
