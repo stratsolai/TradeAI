@@ -217,8 +217,8 @@ export default async function handler(req, res) {
       ? settingsRes.data.categories
       : [
           { id: 'urgent', label: 'Urgent', description: 'Emails requiring immediate attention or a same-day response', enabled: true },
-          { id: 'enquiries', label: 'Leads / Enquiries', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
-          { id: 'projects', label: 'Jobs / Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
+          { id: 'enquiries', label: 'Leads', description: 'New enquiries and expressions of interest from potential customers', enabled: true },
+          { id: 'projects', label: 'Projects', description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
           { id: 'financial', label: 'Financial', description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
           { id: 'customers', label: 'Customers', description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
           { id: 'operations', label: 'Operations', description: 'Supplier, staff, compliance, and general business correspondence', enabled: true },
