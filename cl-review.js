@@ -45,10 +45,8 @@ window.CL_REVIEW = {
     this._searchTerm = '';
     this._selected = new Set();
     if (typeof window.switchPTab === 'function') window.switchPTab('review');
-    var sClr = { pending: self._colors.blueLight, approved: self._colors.greenLight, rejected: self._colors.rejectedBg, archived: self._colors.archivedBg };
     document.querySelectorAll('.status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
-      b.style.background = b.dataset.status === status ? (sClr[status] || '') : '';
     });
     if (document.getElementById('review-search')) {
       document.getElementById('review-search').value = '';
@@ -144,12 +142,10 @@ window.CL_REVIEW = {
 
   _bindControls: function() {
     const self = this;
-    var statusColors = { pending: self._colors.blueLight, approved: self._colors.greenLight, rejected: self._colors.rejectedBg, archived: self._colors.archivedBg };
     document.querySelectorAll('.status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+        document.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
-        btn.style.background = statusColors[btn.dataset.status] || '';
         self._saveFilterState();
         self._status = btn.dataset.status;
         self._restoreFilterState(btn.dataset.status);
@@ -157,9 +153,6 @@ window.CL_REVIEW = {
         self._closeFilterDropdowns();
         self._load();
       });
-      btn.addEventListener('mouseenter', function() { btn.style.background = statusColors[btn.dataset.status] || ''; });
-      btn.addEventListener('mouseleave', function() { if (!btn.classList.contains('active')) btn.style.background = ''; });
-      if (btn.classList.contains('active')) btn.style.background = statusColors[btn.dataset.status] || '';
     });
     document.getElementById('review-search').addEventListener('input', function() {
       self._searchTerm = this.value.toLowerCase();
