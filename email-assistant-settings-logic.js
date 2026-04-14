@@ -165,13 +165,19 @@ window.EA_SETTINGS = {
       { v: '60',  l: '60 days' },
       { v: '90',  l: '90 days' }
     ];
+    var currentLabel = '30 days';
+    opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
-      '<select class="email-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
-      opts.map(function (o) {
-        var s = o.v === current ? ' selected' : '';
-        return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
-      }).join('') +
-      '</select></span>';
+      '<span class="lookback-dropdown-wrap">' +
+        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="email">' + currentLabel + ' &#9662;</button>' +
+        '<div class="lookback-dropdown-menu">' +
+        opts.map(function (o) {
+          var cls = o.v === current ? ' active' : '';
+          return '<button type="button" class="lookback-dropdown-item' + cls + '" data-value="' + o.v + '">' + o.l + '</button>';
+        }).join('') +
+        '</div>' +
+      '</span>' +
+    '</span>';
   },
 
   _startOAuth: function (provider) {
@@ -562,7 +568,51 @@ window.EA_SETTINGS = {
   // ── EVENT DELEGATION ──
   _bindEventDelegation: function () {
     var self = this;
+
+    // Close lookback dropdowns on outside click
     document.addEventListener('click', function (e) {
+      if (!e.target.closest('.lookback-dropdown-wrap')) {
+        document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function (m) { m.classList.remove('open'); });
+        document.querySelectorAll('.lookback-dropdown.active').forEach(function (b) { b.classList.remove('active'); });
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+
+      // Lookback dropdown — toggle menu
+      var lbBtn = e.target.closest('.lookback-dropdown');
+      if (lbBtn) {
+        var wrap = lbBtn.closest('.lookback-dropdown-wrap');
+        var menu = wrap ? wrap.querySelector('.lookback-dropdown-menu') : null;
+        if (menu) {
+          document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function (m) { if (m !== menu) m.classList.remove('open'); });
+          document.querySelectorAll('.lookback-dropdown.active').forEach(function (b) { if (b !== lbBtn) b.classList.remove('active'); });
+          menu.classList.toggle('open');
+          lbBtn.classList.toggle('active');
+        }
+        return;
+      }
+
+      // Lookback dropdown — item selected
+      var lbItem = e.target.closest('.lookback-dropdown-item');
+      if (lbItem) {
+        var lbWrap = lbItem.closest('.lookback-dropdown-wrap');
+        var lbTrigger = lbWrap ? lbWrap.querySelector('.lookback-dropdown') : null;
+        var lbMenu = lbItem.closest('.lookback-dropdown-menu');
+        if (lbTrigger && lbMenu) {
+          var val = lbItem.getAttribute('data-value');
+          var provider = lbTrigger.getAttribute('data-provider');
+          var acct = lbTrigger.getAttribute('data-account');
+          lbTrigger.innerHTML = lbItem.textContent + ' &#9662;';
+          lbMenu.querySelectorAll('.lookback-dropdown-item').forEach(function (it) { it.classList.remove('active'); });
+          lbItem.classList.add('active');
+          lbMenu.classList.remove('open');
+          lbTrigger.classList.remove('active');
+          if (acct) self._changeLookback(provider, acct, val);
+        }
+        return;
+      }
+
       var disconnectBtn = e.target.closest('.btn-disconnect');
       if (disconnectBtn) {
         var email = disconnectBtn.getAttribute('data-email');
@@ -593,15 +643,6 @@ window.EA_SETTINGS = {
           self._resetCatSaveBtn();
         }
         return;
-      }
-    });
-
-    document.addEventListener('change', function (e) {
-      var lookback = e.target.closest('.email-lookback-select');
-      if (lookback) {
-        var provider = lookback.getAttribute('data-provider');
-        var acct = lookback.getAttribute('data-account');
-        if (acct) self._changeLookback(provider, acct, lookback.value);
       }
     });
   },
