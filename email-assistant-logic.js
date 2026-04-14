@@ -24,11 +24,12 @@ window.EA_LOGIC = {
   _dateQuick: '30',
   _filterState: {},
   _showHandled: false,
+  _categoryShortcuts: ['enquiries', 'projects'],
 
   DEFAULT_CATEGORIES: [
     { id: 'urgent',      label: 'Urgent',                  description: 'Emails requiring immediate attention or a same-day response', enabled: true },
-    { id: 'enquiries',   label: 'Leads / Enquiries',       description: 'New enquiries and expressions of interest from potential customers', enabled: true },
-    { id: 'projects',    label: 'Jobs / Projects',         description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
+    { id: 'enquiries',   label: 'Leads',                    description: 'New enquiries and expressions of interest from potential customers', enabled: true },
+    { id: 'projects',    label: 'Projects',                description: 'Emails related to active or upcoming work, projects, and jobs', enabled: true },
     { id: 'financial',   label: 'Financial',               description: 'Invoices, statements, receipts, payments, and financial correspondence', enabled: true },
     { id: 'customers',   label: 'Customers',               description: 'Correspondence from existing customers including service requests, follow-ups, and feedback', enabled: true },
     { id: 'operations',  label: 'Operations',              description: 'Supplier, staff, compliance, and general business correspondence', enabled: true },
@@ -62,6 +63,10 @@ window.EA_LOGIC = {
           scan_cadence: res.data.scan_cadence || 'manual',
           show_handled: res.data.show_handled || false
         };
+        // Load category shortcuts
+        if (Array.isArray(res.data.category_shortcuts) && res.data.category_shortcuts.length > 0) {
+          this._categoryShortcuts = res.data.category_shortcuts;
+        }
       }
     } catch (e) {
       console.error('[EA] Settings load error:', e);
@@ -69,6 +74,12 @@ window.EA_LOGIC = {
     if (!this._settings) {
       this._settings = { categories: this.DEFAULT_CATEGORIES, scan_cadence: 'manual', show_handled: false };
     }
+    // Filter out shortcuts for categories that are disabled
+    var cats = this._settings.categories;
+    this._categoryShortcuts = this._categoryShortcuts.filter(function(id) {
+      var cat = cats.find(function(c) { return c.id === id; });
+      return cat && cat.enabled;
+    });
   },
 
   // ── Accounts ───────────────────────────────────────��──────
@@ -152,7 +163,7 @@ window.EA_LOGIC = {
     this._bindControls();
   },
 
-  // ── Category pills (permanent: All, Urgent, Flagged, Dismissed) ──
+  // ── Category pills (permanent: All, Urgent, Flagged, Dismissed + shortcuts + dropdown) ──
   _renderCategoryPills: function() {
     var container = document.getElementById('ea-category-tabs');
     if (!container) return;
@@ -164,16 +175,55 @@ window.EA_LOGIC = {
       { id: 'handled', label: 'Dismissed' }
     ];
 
-    container.innerHTML = pills.map(function(p) {
+    // Build shortcut pills from settings
+    var enabledCats = (this._settings.categories || this.DEFAULT_CATEGORIES)
+      .filter(function(c) { return c.enabled && c.id !== 'urgent'; });
+    var shortcutCats = [];
+    this._categoryShortcuts.forEach(function(id) {
+      var cat = enabledCats.find(function(c) { return c.id === id; });
+      if (cat) shortcutCats.push(cat);
+    });
+    // Remaining categories for the dropdown (enabled, not urgent, not a shortcut)
+    var dropdownCats = enabledCats.filter(function(c) {
+      return self._categoryShortcuts.indexOf(c.id) === -1;
+    });
+
+    var html = pills.map(function(p) {
       var isActive = false;
       if (p.id === 'handled') isActive = self._showHandled;
       else if (p.id === 'flagged') isActive = self._showFlagged && !self._showHandled;
-      else isActive = !self._showHandled && !self._showFlagged && self._activeCategory === p.id;
+      else isActive = !self._showHandled && !self._showFlagged && self._activeCategory === p.id && !self._categoryFilter;
       return '<button class="status-btn' + (isActive ? ' active' : '') + '" data-pill="' + p.id + '">' + window.escHtml(p.label) + '</button>';
-    }).join('') +
-    '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
+    }).join('');
 
-    container.querySelectorAll('.status-btn').forEach(function(btn) {
+    // Shortcut pills
+    html += shortcutCats.map(function(c) {
+      var isActive = !self._showHandled && !self._showFlagged && self._categoryFilter === c.id;
+      return '<button class="status-btn' + (isActive ? ' active' : '') + '" data-shortcut="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
+    }).join('');
+
+    // Category dropdown (hidden if no remaining categories)
+    if (dropdownCats.length > 0) {
+      var dropdownActive = dropdownCats.some(function(c) { return self._categoryFilter === c.id; });
+      var dropdownLabel = dropdownActive
+        ? self._getCategoryLabel(self._categoryFilter)
+        : 'All Categories';
+      html += '<div class="ea-cat-dropdown" id="ea-cat-dropdown">' +
+        '<button class="ea-cat-dropdown-btn' + (dropdownActive ? ' active' : '') + '" id="ea-cat-dropdown-btn">' + window.escHtml(dropdownLabel) + ' &#9662;</button>' +
+        '<div class="ea-cat-dropdown-menu" id="ea-cat-dropdown-menu">' +
+        dropdownCats.map(function(c) {
+          var isActive = self._categoryFilter === c.id;
+          return '<button class="ea-cat-dropdown-item' + (isActive ? ' active' : '') + '" data-catdropdown="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
+        }).join('') +
+        '</div></div>';
+    }
+
+    html += '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
+
+    container.innerHTML = html;
+
+    // Bind status pills
+    container.querySelectorAll('.status-btn[data-pill]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         self._showHandled = false;
         self._showFlagged = false;
@@ -186,9 +236,8 @@ window.EA_LOGIC = {
         } else if (btn.dataset.pill === 'urgent') {
           self._activeCategory = 'urgent';
         }
-        container.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
         self._selected = new Set();
+        self._renderCategoryPills();
         self._renderFilterRow();
         self._bindControls();
         self._renderExpandRow();
@@ -196,15 +245,68 @@ window.EA_LOGIC = {
         self._load();
       });
     });
+
+    // Bind shortcut pills
+    container.querySelectorAll('.status-btn[data-shortcut]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._showHandled = false;
+        self._showFlagged = false;
+        self._activeCategory = 'all';
+        if (self._categoryFilter === btn.dataset.shortcut) {
+          self._categoryFilter = '';
+        } else {
+          self._categoryFilter = btn.dataset.shortcut;
+        }
+        self._selected = new Set();
+        self._renderCategoryPills();
+        self._renderFilterRow();
+        self._bindControls();
+        self._renderExpandRow();
+        self._updateFilterBtnIndicators();
+        self._load();
+      });
+    });
+
+    // Bind dropdown
+    var dropdownBtn = document.getElementById('ea-cat-dropdown-btn');
+    var dropdownMenu = document.getElementById('ea-cat-dropdown-menu');
+    if (dropdownBtn && dropdownMenu) {
+      dropdownBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdownMenu.classList.toggle('open');
+      });
+      dropdownMenu.querySelectorAll('.ea-cat-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function(e) {
+          e.stopPropagation();
+          self._showHandled = false;
+          self._showFlagged = false;
+          self._activeCategory = 'all';
+          if (self._categoryFilter === item.dataset.catdropdown) {
+            self._categoryFilter = '';
+          } else {
+            self._categoryFilter = item.dataset.catdropdown;
+          }
+          self._selected = new Set();
+          self._renderCategoryPills();
+          self._renderFilterRow();
+          self._bindControls();
+          self._renderExpandRow();
+          self._updateFilterBtnIndicators();
+          self._load();
+        });
+      });
+      // Close dropdown on outside click
+      document.addEventListener('click', function() {
+        dropdownMenu.classList.remove('open');
+      });
+    }
   },
 
   // ── Filter row (matches CL .review-filter-btns-row layout) ────
   _renderFilterRow: function() {
     var container = document.getElementById('filter-btns-row');
     if (!container) return;
-    var showCatFilter = !this._showHandled && !this._showFlagged && this._activeCategory === 'all';
     container.innerHTML =
-      (showCatFilter ? '<button class="filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' : '') +
       '<button class="filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
       '<button class="filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="clear-filters-btn" id="clear-filters-btn">&#10005; Clear All Filters</button>' +
@@ -216,46 +318,17 @@ window.EA_LOGIC = {
   _renderExpandRow: function() {
     var container = document.getElementById('ea-filter-expand-row');
     if (!container) return;
-    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
-    var catOpen = catBtn && catBtn.classList.contains('open');
     var daysOpen = daysBtn && daysBtn.classList.contains('open');
     var rangeOpen = rangeBtn && rangeBtn.classList.contains('open');
 
-    if (!catOpen && !daysOpen && !rangeOpen) {
+    if (!daysOpen && !rangeOpen) {
       container.style.display = 'none';
       container.innerHTML = '';
       return;
     }
     container.style.display = 'block';
-
-    if (catOpen) {
-      var self = this;
-      var enabledCats = (this._settings.categories || this.DEFAULT_CATEGORIES)
-        .filter(function(c) { return c.enabled && c.id !== 'urgent'; });
-      container.innerHTML =
-        '<div class="filter-section-label">Categories</div>' +
-        '<div class="ea-pill-row">' +
-        enabledCats.map(function(c) {
-          return '<button class="filter-pill' + (self._categoryFilter === c.id ? ' active' : '') + '" data-catfilter="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
-        }).join('') +
-        '</div>';
-      container.querySelectorAll('.filter-pill[data-catfilter]').forEach(function(pill) {
-        pill.addEventListener('click', function() {
-          if (self._categoryFilter === pill.dataset.catfilter) {
-            self._categoryFilter = '';
-          } else {
-            self._categoryFilter = pill.dataset.catfilter;
-          }
-          self._selected = new Set();
-          self._renderExpandRow();
-          self._updateFilterBtnIndicators();
-          self._renderList();
-        });
-      });
-      return;
-    }
 
     if (daysOpen) {
       var self = this;
@@ -323,12 +396,8 @@ window.EA_LOGIC = {
   },
 
   _updateFilterBtnIndicators: function() {
-    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
-    if (catBtn && !catBtn.classList.contains('open')) {
-      catBtn.classList.toggle('active', !!this._categoryFilter);
-    }
     if (daysBtn && !daysBtn.classList.contains('open')) {
       daysBtn.classList.toggle('active', !!this._dateQuick);
     }
@@ -365,25 +434,15 @@ window.EA_LOGIC = {
     });
 
     // Filter button toggles — matches CL pattern
-    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
 
     function closeOthers(except) {
-      [catBtn, daysBtn, rangeBtn].forEach(function(b) {
+      [daysBtn, rangeBtn].forEach(function(b) {
         if (b && b !== except) { b.classList.remove('open'); }
       });
     }
 
-    if (catBtn) {
-      catBtn.addEventListener('click', function() {
-        var isOpen = catBtn.classList.contains('open');
-        catBtn.classList.toggle('open', !isOpen);
-        closeOthers(catBtn);
-        self._renderExpandRow();
-        self._updateFilterBtnIndicators();
-      });
-    }
     if (daysBtn) {
       daysBtn.addEventListener('click', function() {
         var isOpen = daysBtn.classList.contains('open');
@@ -490,10 +549,8 @@ window.EA_LOGIC = {
     this._showHandled = false;
     this._initDateDefaults();
     this._selected = new Set();
-    var catBtn = document.getElementById('ea-cat-btn');
     var daysBtn = document.getElementById('ea-days-btn');
     var rangeBtn = document.getElementById('ea-range-btn');
-    if (catBtn) { catBtn.classList.remove('open', 'active'); }
     if (daysBtn) { daysBtn.classList.remove('open', 'active'); }
     if (rangeBtn) { rangeBtn.classList.remove('open', 'active'); }
     var expandRow = document.getElementById('ea-filter-expand-row');
