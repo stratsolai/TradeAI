@@ -33,8 +33,6 @@
 
     .btn-primary { background: var(--blue); color: var(--white); }
     .btn-primary:hover { background: var(--blue-dark); }
-    .btn-orange { background: var(--orange); color: var(--white); }
-    .btn-orange:hover { background: var(--orange-dark); }
     .btn-outline { background: var(--white); color: var(--blue); border: 2px solid var(--blue); }
     .btn-outline:hover { background: var(--blue-light); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -68,22 +66,6 @@
 
     textarea { resize: vertical; min-height: var(--textarea-min-height); }
 
-    .cat-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 10px;
-      border-radius: var(--badge-radius);
-      font-size: var(--badge-font-size);
-      font-weight: 600;
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-
-    .cat-badge.orange { background: var(--orange-light); color: var(--orange); }
-    .cat-badge.green { background: var(--green-light); color: var(--green); }
-    .cat-badge.purple { background: var(--purple-light); color: var(--purple); }
-
     @media (max-width: 768px) {
       .container { padding: var(--page-padding-mobile); }
     }
@@ -92,47 +74,8 @@
     .upload-section { margin-bottom: 28px; }
     .upload-section-title { font-size: var(--section-title-font-size); font-weight: var(--section-title-font-weight); color: var(--text); margin-bottom: 4px; text-transform: uppercase; letter-spacing: var(--letter-spacing-label); }
     .upload-section-note { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
-    .photo-upload-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn-photo-primary, .btn-photo-secondary {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 12px 24px; border-radius: var(--btn-radius); font-size: 15px; font-weight: var(--font-weight-semibold);
-      cursor: pointer; border: 2px solid transparent; transition: all var(--btn-transition);
-    }
-    .btn-photo-primary { background: var(--blue); color: var(--white); }
-    .btn-photo-primary:hover { background: var(--blue-dark); }
-    .btn-photo-secondary { background: var(--white); color: var(--blue); border-color: var(--blue); }
-    .btn-photo-secondary:hover { background: var(--blue-hover-bg); }
-    .btn-icon { font-size: 18px; }
-    .drop-zone { border: 2px dashed var(--border-blue); border-radius: var(--card-radius); background: var(--bg-subtle); padding: 36px 24px; text-align: center; cursor: pointer; transition: all var(--btn-transition); }
-    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: var(--blue-hover-bg); }
-    .drop-zone-inner { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .drop-icon { font-size: 36px; }
-    .drop-label { font-size: 15px; color: var(--text-secondary); }
-    .drop-hint { font-size: 12px; color: var(--text-hint); }
-    .upload-progress { margin-top: 12px; font-size: 14px; color: var(--text-secondary); }
-    .website-import-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .input-url { flex: 1; min-width: 200px; padding: 10px 14px; border: var(--input-border-width) solid var(--border-blue); border-radius: 8px; font-size: 14px; outline: none; }
-    .input-url:focus { border-color: var(--blue); }
-    .btn-scan { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 20px; font-size: 14px; font-weight: var(--font-weight-semibold); cursor: pointer; white-space: nowrap; }
-    .btn-scan:hover { background: var(--blue-dark); }
-    .scan-status { font-size: 13px; color: var(--text-muted); margin-top: 6px; }
-    .connection-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; margin-top: 8px; }
-    .connection-tile { background: var(--white); border: 1px solid var(--border-blue); border-radius: var(--card-radius); padding: 18px 20px; display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-    .connection-tile-icon { font-size: 28px; flex-shrink: 0; }
-    .connection-tile-info { flex: 1; min-width: 100px; }
-    .connection-tile-name { font-size: 15px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
-    .connection-status-label { font-size: 13px; color: var(--text-muted); margin-bottom: 8px; }
-    .connection-tile-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; width: 100%; margin-top: 4px; padding-left: 54px; }
-    .status-badge { display: inline-block; padding: 3px 10px; border-radius: var(--badge-radius); font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); }
-    .status-connected { background: var(--badge-green-bg); color: var(--badge-green-text); }
-    .status-disconnected { background: var(--badge-red-bg); color: var(--badge-red-text); }
-    .connection-manage-link { font-size: 13px; color: var(--blue); text-decoration: underline; cursor: pointer; }
-    .btn-scan-now { background: var(--blue); color: var(--white); border: none; border-radius: 6px; padding: 6px 14px; font-size: var(--status-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; }
-    .btn-scan-now:hover { background: var(--blue-dark); }
-
     /* ── Upload & Import tab ──────────────────────────────────────────── */
     .upload-tab-inner { padding: 24px 0; }
-    .upload-subheading { font-size: 14px; color: var(--text-muted); margin-bottom: 20px; }
     .upload-primary-actions { display: flex; gap: 16px; margin-bottom: 24px; }
     .upload-primary-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 28px 20px; background: var(--white); border: 2px dashed var(--blue); border-radius: var(--card-radius); cursor: pointer; transition: background var(--btn-transition), border-color var(--btn-transition); text-align: center; }
     .upload-primary-btn:hover { background: var(--blue-hover-bg); border-color: var(--blue); }
@@ -261,17 +204,11 @@
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:10px;
 }
-.review-body-text {
-  font-size:14px; color:var(--text); line-height:1.6;
-  outline:none; border:var(--input-border-width) solid var(--border); border-radius:6px;
-  padding:10px; min-height:60px; background:var(--bg-subtle);
-}
-.review-body-text:focus { border-color:var(--blue); background:var(--white); }
 .item-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
 .review-expand-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:12px; padding:0; flex-shrink:0; }
 .review-body-preview { font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
 .review-body-expanded { flex-basis:100%; padding:0 16px 8px 16px; }
-.review-body-expanded .review-body-text { white-space:pre-wrap; word-break:break-word; font-size:13px; color:var(--text-muted); line-height:1.6; border:none; background:none; outline:none; padding:0; width:100%; box-sizing:border-box; }
+
 
 /* Tool tag pills */
 .review-tool-pills { display:flex; flex-wrap:wrap; gap:8px; }
