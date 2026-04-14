@@ -485,9 +485,7 @@ window.CL_REVIEW = {
       }
       if (partnerCount > 1) hasPairPartner = true;
     }
-    const pairCardStyle = hasPairPartner
-      ? ' style="border-left:4px solid var(--blue);background:var(--blue-light);"'
-      : '';
+    const pairCardClass = hasPairPartner ? ' item-card-paired' : '';
     var usedNoticeHtml = '';
     if (isUsed) {
       if (item.source === 'manual') {
@@ -502,7 +500,7 @@ window.CL_REVIEW = {
     if (isImgItem && item.source_item_id && this._imageUrls[item.source_item_id]) {
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
-    return `<div class="item-card" data-id="${id}"${pairCardStyle}>
+    return `<div class="item-card${pairCardClass}" data-id="${id}">
   <div class="item-card-header">
     <input type="checkbox" class="item-checkbox" data-id="${id}"${checked}>
     <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
