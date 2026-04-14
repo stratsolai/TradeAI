@@ -546,6 +546,14 @@ Notable changes made April 2026:
   auto_archived_count, fin_docs_paired_count,
   deduped_count, pages_crawled, pages_skipped (all
   integer, default 0) — April 2026
+- cl_scan_cursors table added April 2026 — cursor state
+  for batch-processed scans. Columns: id (uuid, PK),
+  job_id (uuid), user_id (uuid), processed_ids (jsonb),
+  imported (integer), approved (integer), pending (integer),
+  rejected (integer), skipped (integer), auto_archived
+  (integer), fin_docs_paired (integer), deduped (integer),
+  created_at (timestamptz), updated_at (timestamptz).
+  Rows are deleted when a scan job completes.
 
 ---
 
