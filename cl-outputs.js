@@ -27,14 +27,14 @@ window.CL_OUTPUTS = {
     if (!el) return;
     el.innerHTML = '<div class="review-wrap">'
       + '<div class="review-status-row">'
-      + '<button class="review-status-btn outputs-status-btn active" data-status="approved">Approved</button>'
-      + '<button class="review-status-btn outputs-status-btn" data-status="archived">Archived</button>'
+      + '<button class="status-btn outputs-status-btn active" data-status="approved">Approved</button>'
+      + '<button class="status-btn outputs-status-btn" data-status="archived">Archived</button>'
       + '<input type="text" id="outputs-search" class="review-search-input" placeholder="Search outputs...">'
       + '</div>'
       + '<div class="review-filter-btns-row">'
-      + '<button class="review-filter-tools-btn outputs-filter-tools-btn">&#9783; Filter By Tools</button>'
-      + '<button class="review-filter-cat-btn outputs-filter-cat-btn">&#9776; Filter By Category</button>'
-      + '<button class="review-clear-filters-btn outputs-clear-btn">&#10005; Clear All Filters</button>'
+      + '<button class="filter-btn filter-tools-btn outputs-filter-tools-btn">&#9783; Filter By Tools</button>'
+      + '<button class="filter-btn filter-cat-btn outputs-filter-cat-btn">&#9776; Filter By Category</button>'
+      + '<button class="clear-filters-btn outputs-clear-btn">&#10005; Clear All Filters</button>'
       + '</div>'
       + '<div id="outputs-filter-row" class="review-filter-row" style="display:none">'
       + '<div id="outputs-tool-pills-wrap" style="display:none"><div style="font-size:12px;font-weight:600;color:#888;margin-bottom:6px;">Tools</div><div id="outputs-tool-pills" class="review-pill-row"></div></div>'
@@ -151,15 +151,15 @@ window.CL_OUTPUTS = {
 
   _load: async function() {
     var list = document.getElementById('outputs-list');
-    if (list) list.innerHTML = '<div class="review-loading">Loading...</div>';
+    if (list) list.innerHTML = '<div class="list-loading">Loading...</div>';
     if (!this._supabase) {
-      if (list) list.innerHTML = '<div class="review-empty">Unable to load outputs. Please refresh the page.</div>';
+      if (list) list.innerHTML = '<div class="list-empty">Unable to load outputs. Please refresh the page.</div>';
       return;
     }
     var authResp = await this._supabase.auth.getUser();
     var user = authResp.data ? authResp.data.user : null;
     if (!user) {
-      if (list) list.innerHTML = '<div class="review-empty">Please sign in to view outputs.</div>';
+      if (list) list.innerHTML = '<div class="list-empty">Please sign in to view outputs.</div>';
       return;
     }
     var result = await this._supabase
@@ -170,7 +170,7 @@ window.CL_OUTPUTS = {
       .eq('source', 'tool')
       .order('created_at', { ascending: false });
     if (result.error) {
-      if (list) list.innerHTML = '<div class="review-empty">Could not load outputs.</div>';
+      if (list) list.innerHTML = '<div class="list-empty">Could not load outputs.</div>';
       return;
     }
     this._items = result.data || [];
@@ -243,7 +243,7 @@ window.CL_OUTPUTS = {
     if (!list) return;
     var items = this._filteredItems();
     if (items.length === 0) {
-      list.innerHTML = '<div class="review-empty">No outputs found.</div>';
+      list.innerHTML = '<div class="list-empty">No outputs found.</div>';
       return;
     }
     var self = this;
@@ -267,17 +267,17 @@ window.CL_OUTPUTS = {
     var catBadges = catTags.map(function(cat) {
       return '<span class="review-source-badge">' + escHtml(cat) + '</span>';
     }).join('');
-    return '<div class="review-card" data-id="' + id + '">'
-      + '<div class="review-card-header">'
+    return '<div class="item-card" data-id="' + id + '">'
+      + '<div class="item-card-header">'
       + '<span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      + '<span class="review-card-title" style="flex:0 1 auto;min-width:0;">' + title + '</span>'
+      + '<span class="item-card-title" style="flex:0 1 auto;min-width:0;">' + title + '</span>'
       + toolBadges + catBadges
       + '</span>'
-      + '<div class="review-card-preview-row">'
+      + '<div class="item-card-preview-row">'
       + '<button class="review-expand-btn outputs-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>'
       + '<span class="review-body-preview" id="outputs-preview-' + id + '">' + bodyPreview + '</span>'
       + '</div>'
-      + '<div class="review-card-btns">'
+      + '<div class="item-card-btns">'
       + '<span class="review-upload-date">' + uploadDate + '</span>'
       + '</div>'
       + '</div>'
@@ -287,7 +287,7 @@ window.CL_OUTPUTS = {
   _bindCardEvents: function() {
     document.querySelectorAll('.outputs-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var card = btn.closest('.review-card');
+        var card = btn.closest('.item-card');
         if (!card) return;
         var isExpanded = card.classList.contains('review-body-expanded');
         card.classList.toggle('review-body-expanded', !isExpanded);
