@@ -14,57 +14,20 @@
     .page-wrap { max-width: 960px; margin: 0 auto; padding: var(--settings-page-padding); }
     .page-header { margin-bottom: var(--page-header-margin); }
 
-    /* ── CL-SPECIFIC CONNECTION UI ── */
+    /* ── CL-SPECIFIC ── */
     .connection-status { font-size: var(--status-font-size); color: var(--text-muted); display: inline-block; }
     .connection-status:empty { display: none; }
-    .connection-status.connected { color: var(--green); font-weight: 600; }
-    .btn-connect { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); transition: background var(--btn-transition); }
-    .btn-connect:hover { background: var(--blue-dark); }
-    .btn-connect.disconnect { background: var(--red); }
-    .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
-    .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--btn-transition); }
-    .btn-save-inline:hover { background: var(--blue-dark); }
-    .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .connection-item-site { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+    .connection-status.connected { color: var(--green); font-weight: var(--font-weight-semibold); }
 
-    /* Remove folder — same visual as .btn-remove-url (in stylesheet). CL-specific because combined with folder selector. */
-    .btn-remove-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: 6px; padding: 5px 12px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
-    .btn-remove-folder::before { content: "\2717"; font-size: var(--badge-font-size); }
-    .btn-remove-folder:hover { background: var(--red-hover-bg); color: var(--red-dark); }
-
-    /* Add folder — blue-outline counterpart to btn-remove-folder */
-    .btn-add-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
-    .btn-add-folder:hover { background: var(--blue-light); color: var(--blue); }
-
-    /* Folder picker Close buttons — red-outline style without the ✗ icon */
+    /* Folder picker Close buttons — suppress the × icon on cancel buttons */
     #drive-folder-picker-cancel::before,
     #onedrive-folder-picker-cancel::before,
     #sharepoint-site-picker-cancel::before,
     #sharepoint-library-picker-cancel::before,
     #dropbox-folder-picker-cancel::before { content: none; }
 
-    /* Choose Folders / Choose Site / Choose Sites / Choose Libraries */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 10px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background var(--btn-transition); white-space: nowrap; }
-    .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-sites:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
-
-    /* Connection account folder list */
-    .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; width: 100%; }
-    .connection-folder-row { display: flex; align-items: center; gap: 8px; }
-    .connection-folder-name { width: 360px; flex: 0 0 360px; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: var(--label-font-size); font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* Drive lookback — extends .email-lookback-select from stylesheet */
-    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 24px 5px 10px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
-    .drive-lookback-select:hover { background-color: var(--blue-light); }
-    .drive-lookback-select:focus { outline: none; }
-
-    /* Website multi-URL list */
     #website-urls-list { width: 100%; }
-    .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: var(--label-font-size); font-family: var(--body-font); color: var(--text); }
-    .website-url-input:focus { outline: none; border-color: var(--blue); }
-
-    .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--btn-transition); }
-    .btn-save-urls:hover { background: var(--blue-dark); }
+    #add-website-btn { margin-top: 8px; }
 
     /* Uniform description column width across all connection rows */
     #connections-rows .settings-row > div:first-child { flex: 0 0 300px; max-width: 300px; }
@@ -89,10 +52,6 @@
     .picker-card .settings-card-header { border-bottom: none; }
     .picker-card .settings-rows { max-height: 300px; overflow-y: auto; padding: 0 24px; }
     .picker-card .settings-footer { border-top: none; }
-    #add-website-btn { margin-top: 8px; }
-
-    /* ── INPUT VALIDATION ── */
-    .input-error { border-color: var(--red); }
 
     /* ── PICKER STATES ── */
     .picker-loading { padding: 12px; color: var(--text-muted); }
