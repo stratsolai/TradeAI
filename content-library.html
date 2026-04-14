@@ -223,7 +223,16 @@
 .profile-nav-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
 .profile-nav-chip { padding: 10px 16px; border-radius: var(--btn-radius); border: 1px solid var(--border); border-left: 4px solid var(--blue); background: var(--white); color: var(--text); font-size: var(--status-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; transition: all var(--btn-transition); box-shadow: 0 1px 4px var(--shadow-card); white-space: nowrap; }
 .profile-nav-chip:hover { box-shadow: 0 2px 8px var(--shadow-hover); }
-.profile-nav-chip.active { background: var(--blue-hover-bg); font-weight: 700; box-shadow: 0 2px 8px var(--shadow-hover); }
+.profile-nav-chip.active { font-weight: 700; box-shadow: 0 2px 8px var(--shadow-hover); }
+/* Profile nav chip hover and active backgrounds — per-section colour variant */
+.profile-nav-chip[data-ptab="identity"]:hover,
+.profile-nav-chip[data-ptab="identity"].active { background: var(--blue-light); }
+.profile-nav-chip[data-ptab="location"]:hover,
+.profile-nav-chip[data-ptab="location"].active { background: var(--orange-light); }
+.profile-nav-chip[data-ptab="details"]:hover,
+.profile-nav-chip[data-ptab="details"].active { background: var(--green-light); }
+.profile-nav-chip[data-ptab="marketing"]:hover,
+.profile-nav-chip[data-ptab="marketing"].active { background: var(--purple-hover-bg); }
 .profile-section-card { background: var(--white); border-radius: var(--card-radius); border: 1px solid var(--border); border-left: 4px solid var(--blue); padding: 32px; margin-bottom: 24px; }
 .profile-section-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
 .profile-section-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
