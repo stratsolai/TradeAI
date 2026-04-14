@@ -95,7 +95,7 @@ function buildDispatch(job) {
     case 'website':
       return { handler: websiteHandler, body: { userId: userId, url: account } };
     case 'gdrive':
-      return { handler: driveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId } };
+      return { handler: driveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId, jobId: job.id } };
     case 'onedrive':
       return { handler: onedriveHandler, body: { action: 'import-all', accountEmail: account, folderId: path, userId: userId, jobId: job.id } };
     case 'sharepoint':
