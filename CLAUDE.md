@@ -676,6 +676,18 @@ JavaScript:
 - Apostrophes in JS strings handled correctly
 - JS syntax valid — confirmed with node
 - No force push
+- No hardcoded hex colour values in JS — all colours applied
+  via element.style must use
+  getComputedStyle(document.documentElement).getPropertyValue
+  ('--variable-name') to read from the stylesheet at runtime
+- No inline style= attributes in dynamically-built HTML
+  strings — all styling via named CSS classes
+- Every new class name referenced in JS has a corresponding
+  CSS definition in the stylesheet or page style block
+- UI state only updates after confirmed database or API
+  success — never before
+- No silent catch blocks — every catch must at minimum log
+  the error
 
 File integrity:
 - DOCTYPE present, closing tags present
