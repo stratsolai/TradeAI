@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 14 2026
+# Updated: April 15 2026
 
 ---
 
@@ -28,43 +28,9 @@ keys to the browser under any circumstance.**
 no exceptions.**
 **No new feature, tool page, or schema change may be built
 without an approved spec document in Project Knowledge.**
-
----
-
-## Rules & Instructions v2.9 — What Applies to Claude Code
-
-Read StaxAI-Rules-and-Instructions-v2.9.docx every session.
-Large parts were written for a browser-based workflow that is
-no longer in use. The following sections are browser-only —
-skip them entirely:
-
-SKIP — does not apply to Claude Code:
-- Section 2 — GitHub Workflow (TI helper, PAT, blob/tree API)
-- Section 3 — Chrome Extension Content Blocking
-- Section 8 — Session Setup / GitHub API Tab
-- Section 10 — Rules 1–5, 7, 8 (window._file, TI.load, atob,
-  web_fetch, PAT, prompt())
-- Section 11 — Chrome Extension Crash Prevention
-- Section 15 — HEAD SHA via refs endpoint
-- Pre-Commit Checklist Section 1 — file editing via window._file
-- Pre-Commit Checklist Section 2 — btoa encoding rule only
-  (apostrophe rules in Section 2 DO apply)
-- Pre-Commit Checklist Section 7 — Git Data API method checks
-  (never force push still applies — see above)
-
-READ IN FULL — applies to Claude Code:
-- Section 1 — Chat Behaviour
-- Section 4 — Apostrophes & Special Characters
-- Section 5 — Design System
-- Section 6 — Document Maintenance
-- Section 7 — Technical Rules (except Vercel tab navigation)
-- Section 9 — Vercel Deployment
-- Section 10 — Rules 10, 11, 12, 13, 14
-- Section 12 — Split File Architecture
-- Section 13 — Development Standards
-- Section 16 — Industry-Agnostic Platform
-- Section 18 — Activity-Specific Rules (check every session)
-- Pre-Commit Checklist Sections 3–6, 8
+**Never run any Vercel CLI commands under any circumstances.**
+Vercel log access is via the Vercel dashboard only. This
+applies even when investigating errors.
 
 ---
 
@@ -127,7 +93,11 @@ is complete.
     Agree any structural or functional improvements.
 12. Build agreed improvements — one commit per change.
 13. Browser check — confirm nothing broken visually.
-14. Mobile audit and fixes.
+14. Mobile audit and fixes. Do not fix mobile layout issues
+    on any page outside of the stylesheet rollout sequence.
+    Exception: content-library.html, cl-settings.html,
+    email-assistant.html, and email-assistant-settings.html
+    already have mobile fixes applied.
 15. Browser check — confirm mobile fixes.
 16. Sign off.
 
@@ -150,52 +120,6 @@ each tool's integration test. Fergus — developer platform
 registration email sent April 2026, awaiting response.
 Tradify — enquiry email sent April 2026, awaiting
 confirmation of whether public API is available.
-
-### Task 18 — CL Tool Outputs Tab
-
-Build complete April 2026. Final test of output content
-and tile counts blocked until tools send data to the
-Content Library. content-library.html structural cleanup
-complete April 2026 — dead CSS removed, dead modals
-removed, inline onclick handlers moved to logic file,
-inline styles moved to CSS block. File reduced from
-1,171 to approximately 510 lines.
-
-### Task 19 — Mobile Layout Audit and Fixes (Stylesheet Rollout)
-
-A mobile layout audit was completed in April 2026 as part of
-the PWA build. The audit found layout issues across all
-authenticated pages. These fixes were deliberately deferred —
-they belong in the stylesheet rollout, not as piecemeal inline
-fixes. When the stylesheet rollout reaches each page, a fresh
-mobile audit should be run on that page and fixes applied at
-the same time as the stylesheet variables are rolled out. Do
-not attempt to fix mobile layout issues on any page outside of
-the stylesheet rollout sequence.
-
-Exception: content-library.html and cl-settings.html already
-have mobile fixes applied (April 2026) as these are the
-source-of-truth pages for the stylesheet.
-
-email-assistant.html and email-assistant-settings.html mobile
-fixes complete April 2026 — flex-wrap on status/filter/detail
-rows, fluid inputs, 16px font-size overrides, page-padding
-mobile, label column stacking, detail body viewport-relative
-max-height.
-
-### Task 20 — Email Assistant Functional Review and Build
-
-In progress April 2026. Current session work completed:
-email-assistant-settings.html fully rebuilt to
-LAYOUT-STANDARD.md standard, OAuth connection fixed and
-confirmed working for Gmail and Outlook.
-
-Outstanding before sign-off:
-- Stylesheet comparison pass — confirm no remaining
-  hardcoded values and nothing missed against
-  staxai-auth.css
-- Integration test end-to-end with real Gmail and
-  Outlook accounts
 
 ### Task 21 — Scan Frequency Scheduling
 
@@ -232,27 +156,12 @@ queue for both CL and EA.
 - Pagination fixed at 200 items for OneDrive/SharePoint
   folder listings and SharePoint sites. Add pagination
   support if needed.
-- Every future tool build must stamp first_used_at on
-  content_library rows when content is used in a generated
-  output. This controls edit and delete restrictions in
-  Source Review.
 - Email body stored as .txt in cl-assets. Website content
   stored as .html in cl-assets. Tools must retrieve
   original content from cl-assets via
   cl_source_items.file_url — not from
   content_library.content_text which contains the AI
   summary only.
-- Tip needed when tips are built: editing item titles and
-  descriptions is safe — tools always retrieve original
-  content from storage, not the summary shown in the
-  library.
-- Tip needed when tips are built: structured reference
-  data such as price lists, team lists, and contact
-  details is well suited to Manual Add Items.
-- Tip needed when tips are built: include guidance
-  explaining why files or emails may be skipped — covering
-  unsupported formats, short or unreadable content, no
-  extractable business content, and deduplication.
 - dashboard.html install banner: the PWA install prompt
   banner was added to dashboard.html during the PWA build
   (April 2026). The banner markup and logic must be
@@ -268,21 +177,6 @@ queue for both CL and EA.
   desktop-only and will show the Task 17 message on
   mobile. When new tool pages are built, confirm mobile or
   desktop designation before build begins.
-- Dashboard as PWA launchpad: the Dashboard is the primary
-  home screen of the PWA. Tool tiles on the Dashboard are
-  intended as quick-action entry points for on-site
-  workflows. A tradie should be able to tap a tool tile,
-  take a photo, and complete a workflow without navigating
-  away. The specific implementation is designed during each
-  tool's functional review. The Dashboard rebuild spec must
-  account for this mobile-first tile design.
-- Camera pattern: all tools that support photo capture must
-  reuse the camera input pattern from PWA & Mobile Spec
-  v1.1 Section 9. No tool builds its own camera access
-  separately. Photos taken through a tool workflow are
-  automatically saved to the Content Library when the
-  workflow completes successfully. If the user abandons the
-  workflow before completion, the photo is not saved.
 - Existing image rows in content_library uploaded before
   April 2026 have content_type null — thumbnail detection
   falls back to source_detail.file_type for these rows. New
@@ -304,78 +198,14 @@ queue for both CL and EA.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
-- Claude Code must never run any Vercel CLI commands under
-  any circumstances. Vercel log access is via the Vercel
-  dashboard only. This applies even when investigating
-  errors.
-- Every tool that writes outputs to the Content Library
-  must set source = 'tool' on the content_library row.
-  This is what separates Tool Output items from Source
-  Material items and controls which tab they appear in.
-  Without this value the item will not appear in the Tool
-  Outputs tab.
-- OneDrive, SharePoint, and Dropbox import endpoints have
-  the same fetch-all-then-process architecture as the email
-  scan endpoints before the cursor fix. Large folder trees
-  will hit the Vercel timeout. Governed by Task 26.
 - upgradeSharepointEntry function exists in two places —
   upgrade-sharepoint.js (canonical, browser) and
   api/sharepoint-import.js (API copy, intentional — Vercel
   esbuild cannot resolve CJS modules from ES module API
   files at build time). Not a bug.
-- CL Library Connections tab now has pre-connection
-  confirmation modals for all six connections (Gmail,
-  Outlook, Google Drive, OneDrive, SharePoint, Dropbox)
-  added April 2026.
 - This platform is not live. There is only one user and
   all data is test data. Decisions about database changes
   do not require data-loss analysis.
-- The active_tools column is a legacy column that still
-  exists in the database. All code references have been
-  updated to use activated_tools. The owner should drop
-  active_tools from the profiles table manually in
-  Supabase.
-
-### Task 25 — Deferred Findings for Rebuild Sessions
-
-- dashboard-widgets.js references content_library.body —
-  correct column is content_text. Fix during dashboard
-  rebuild.
-- dashboard-widgets.js references
-  news_digest_items.headline — correct column is title.
-  Fix during dashboard rebuild.
-- dashboard-widgets.js references
-  news_digest_items.source — confirm against
-  news-digest-refresh.js which writes source_name — one
-  of these is wrong. Resolve during dashboard and news
-  digest rebuilds.
-- dashboard-widgets.js references
-  email_summaries.urgency — column does not exist. Fix
-  during dashboard rebuild.
-- dashboard-widgets.js references
-  social_posts.scheduled_at — correct column is
-  scheduled_date. Fix during dashboard rebuild.
-- dashboard-widgets.js references chatbot_interactions
-  table — does not exist. Fix during dashboard rebuild.
-- dashboard-widgets.js references learned_faqs table —
-  confirmed exists in database.
-- strategic-plan-load-context.js and
-  news-digest-refresh.js reference content_library.body
-  — correct column is content_text. Fix during those
-  tools' rebuilds.
-- get-greeting.js reads profiles.chatbot_settings as a
-  column — confirmed the column exists as jsonb. However
-  all other chatbot files use the separate
-  chatbot_settings table. Resolve during chatbot rebuild.
-- The following tables exist in the database but have no
-  code references and require investigation during their
-  respective rebuilds: chat_conversations,
-  dashboard_metrics, gdrive_imported_files, graphic_usage,
-  ops_plan_actions, publishing_queue, source_documents,
-  tender_responses.
-- news-digest-refresh.js writes source_name to
-  news_digest_items — correct column is source. Fix
-  during news digest rebuild.
 
 ---
 
@@ -386,30 +216,13 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | ~~Complete Task 12 — Image Processing integration test sign-off~~ **COMPLETE** |
-| 2    | Complete Task 13 — External Platform Connections spec and build |
-| 3    | ~~Complete Task 14 — Email Attachment Scanning spec and build~~ **COMPLETE** |
-| 4    | ~~Complete Task 15 — Background Scan Processing spec and build~~ **COMPLETE** |
-| 5    | ~~Complete Task 16 — Website Subpage Crawling spec and build~~ **COMPLETE** |
-| 6    | ~~Complete Task 17 — Desktop-only message for non-mobile pages~~ **COMPLETE** |
-| 7    | Stylesheet rollout — content-library.html structural cleanup **COMPLETE** |
-| 8    | ~~Stylesheet rollout — content-library.html CSS analysis and variable rollout~~ **COMPLETE** |
-| 9    | ~~Stylesheet rollout — cl-settings.html structural analysis, cleanup, and CSS rollout~~ **COMPLETE** |
-| 10   | ~~Stylesheet rollout — email-assistant.html and email-assistant-settings.html.~~ **COMPLETE** |
-| 11   | ~~Task 20 — Email Assistant stylesheet comparison pass.~~ **COMPLETE** Integration test outstanding. |
-| 12   | ~~Task 22 — EA scan infrastructure rebuild.~~ **COMPLETE**  |
-| 13   | ~~Task 23 — Internal API security shared secret model.~~ **COMPLETE** |
-| 14   | ~~Task 24 — Fix silent Claude error handling in CL scan endpoints.~~ **COMPLETE** |
-| 15   | ~~Email scan cursor — batch processing for large inboxes across cl-email-scan.js, cl-outlook-scan.js, and api/email.js~~ **COMPLETE** |
-| 16   | ~~EA email body storage and in-platform detail view~~ **COMPLETE** |
-| 17   | ~~Task 29 — EA Newsletter/Marketing CL push.~~ **COMPLETE** |
-| 18   | Task 21 — Scan frequency scheduling for CL and EA.         |
-| 19   | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
-| 20   | Stylesheet rollout — all remaining authenticated pages     |
-| 21   | Functional reviews — all 5 built tools                     |
-| 22   | Improvements per tool based on functional review findings  |
-| 23   | Integration tests — all 5 built tools                      |
-| 24   | Dashboard rebuild                                          |
+| 1    | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 2    | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
+| 3    | Stylesheet rollout — all remaining authenticated pages     |
+| 4    | Functional reviews — all 5 built tools                     |
+| 5    | Improvements per tool based on functional review findings  |
+| 6    | Integration tests — all 5 built tools                      |
+| 7    | Dashboard rebuild                                          |
 
 ---
 
@@ -449,22 +262,6 @@ The sequence for each tool rebuild is:
   existing inline dropdown wiring from that page's logic
   file at the same time to avoid the duplicate toggle bug
   fixed in commits cfbb8f3 and 4756821.
-
-### Deferred — Address During Tool Rebuilds
-
-The following will be resolved naturally as each tool is
-rebuilt during the stylesheet rollout:
-- 60+ inline onclick handlers across post-login pages
-- 450+ hardcoded CSS values across post-login pages
-- Duplicated auth check pattern across 10+ files
-- Duplicated account dropdown JS across 10+ files
-- panel.html / panel-auth.html shared renderPanel() duplication
-- Logic files not following window.*_LOGIC + init() pattern
-- Full CL page uniformity audit — fonts, colours, consistency
-  across all tabs — dedicated session after standalone tasks
-  A, B, C are complete
-- Tool Outputs — tool order and which tools actually belong
-  in the list to be revisited once real outputs are visible
 
 ---
 
@@ -519,66 +316,7 @@ Files added April 2026 (Task 27 — cl-settings-logic.js split):
 
 ## Supabase Schema
 
-Refer to StaxAI Project Brief v12.23
-
-Notable changes made April 2026:
-- profiles: removed cl_active_categories, cl_custom_categories
-- profiles: added cl_drive_accounts (jsonb),
-  cl_onedrive_accounts (jsonb), cl_sharepoint_accounts (jsonb),
-  cl_dropbox_accounts (jsonb)
-- profiles: dropped cl_onedrive_connected,
-  cl_onedrive_access_token, cl_onedrive_refresh_token,
-  cl_onedrive_folders, cl_sharepoint_connected,
-  cl_sharepoint_access_token, cl_sharepoint_refresh_token,
-  cl_sharepoint_site, cl_sharepoint_libraries,
-  cl_dropbox_connected, cl_dropbox_access_token,
-  cl_dropbox_refresh_token, cl_dropbox_folders
-- cl_settings: added onedrive_scan_frequency,
-  sharepoint_scan_frequency, dropbox_scan_frequency
-- content_library: UNIQUE constraint added on source_ref
-- content_library: NOT NULL constraint removed from content_type
-- content_library: added source_detail (jsonb), source_item_id
-  (text), tool_tags (jsonb), tool_source (text), category_tags
-  (jsonb)
-- content_library: added version_pair_id (uuid),
-  version_archived_by (uuid)
-- profiles: added cl_xero_accounts (jsonb),
-  cl_myob_accounts (jsonb), cl_quickbooks_accounts (jsonb),
-  cl_servicem8_accounts (jsonb)
-- cl_scan_jobs table added April 2026 — scan job queue
-  with RLS enabled. Realtime enabled.
-- cl_scan_jobs: added approved_count, rejected_count,
-  auto_archived_count, fin_docs_paired_count,
-  deduped_count, pages_crawled, pages_skipped (all
-  integer, default 0) — April 2026
-- cl_scan_jobs: scan_cursor (jsonb, nullable) exists in
-  database but is not used by any code. All cursor state
-  is stored in the separate cl_scan_cursors table.
-- cl_scan_cursors table added April 2026 — cursor state
-  for batch-processed scans. RLS enabled. Policy: users
-  can manage their own cursor rows. Columns: id (uuid,
-  PK), job_id (uuid, FK to cl_scan_jobs.id, ON DELETE
-  CASCADE), user_id (uuid, FK to auth.users, ON DELETE
-  CASCADE), processed_ids (text array, default {}),
-  imported (integer, default 0), approved (integer,
-  default 0), pending (integer, default 0), rejected
-  (integer, default 0), skipped (integer, default 0),
-  auto_archived (integer, default 0), fin_docs_paired
-  (integer, default 0), deduped (integer, default 0),
-  created_at (timestamptz, default now()), updated_at
-  (timestamptz, default now()). Rows are deleted when a
-  scan job completes.
-- profiles: added ea_connected_emails (jsonb, default
-  null) — April 2026
-- email_summaries: added body_url (text, nullable) —
-  April 2026. Stores the cl-assets storage path to the
-  full email body file (.txt). Written by api/email.js
-  during EA scans, read by email-assistant-logic.js for
-  the in-platform email detail view.
-- email_summaries: added is_flagged (boolean, default
-  false) — April 2026
-- email_summaries: UNIQUE constraint on (user_id,
-  message_id) — April 2026
+This section is the source of truth for the database schema.
 
 ---
 
@@ -715,6 +453,21 @@ forced to 'approved' regardless of AI confidence. Use
 upsert with onConflict: 'source_ref', ignoreDuplicates:
 true. Required fields: same as Pattern A with status
 always 'approved'.
+
+Every future tool build must stamp first_used_at on
+content_library rows when content is used in a generated
+output. This controls edit and delete restrictions in
+Source Review.
+
+### Camera Pattern
+
+All tools that support photo capture must reuse the camera
+input pattern from PWA & Mobile Spec v1.1 Section 9. No
+tool builds its own camera access separately. Photos taken
+through a tool workflow are automatically saved to the
+Content Library when the workflow completes successfully.
+If the user abandons the workflow before completion, the
+photo is not saved.
 
 ### Spec First
 - No new feature, page, or schema change without an approved
@@ -877,10 +630,6 @@ Error handling:
 | Dashboard & CL Spec v1.2        | Dashboard & CL governing doc        |
 | Dashboard Spec v3.2             | Dashboard rebuild — blocked         |
 | Auth Panel & Activate Spec v1.4 | Panel auth — step 5 pending         |
-| Auth CSS Spec v1.0              | Stylesheet spec — note: stylesheet  |
-|                                 | is source of truth, not this doc    |
-| CL New Features Spec v1.3       | Reference only — not governing.     |
-|                                 | Current state determined by repo.   |
 | Multi-User Account Spec v1.0    | Multi-user — approved, awaiting     |
 |                                 | build                               |
 | Tool ID Audit v1.0              | Canonical tool ID register          |
@@ -921,16 +670,6 @@ Error handling:
 |                                 | Spec approved April 2026. Build     |
 |                                 | complete, integration test in       |
 |                                 | progress.                           |
-| StaxAI-Email-Attachment-        | Email attachment scanning for       |
-| Scanning-Spec-v1.0              | Gmail and Outlook. Build complete.  |
-|                                 | Gmail integration tested and        |
-|                                 | signed off. Outlook integration     |
-|                                 | test pending Task 15 completion.    |
-| StaxAI-Background-Scan-         | Background scan queue and worker    |
-| Processing-Spec-v1.0            | infrastructure. Build complete.     |
-|                                 | Integration test in progress.       |
-| StaxAI-Website-Subpage-         | Website subpage crawling. Build     |
-| Crawling-Spec-v1.0              | complete, integration test passed.  |
 | StaxAI-New-Tool-Ideas-v1.0     | Six new tool ideas for future       |
 |                                 | consideration. Not approved for     |
 |                                 | build. Each requires a full spec    |
@@ -940,19 +679,3 @@ Error handling:
 |                                 | days-back scan coverage control.    |
 |                                 | Approved April 2026. Build          |
 |                                 | complete.                           |
-| StaxAI-Email-Scan-Cursor-      | Email scan cursor batch processing  |
-| Spec-v1_0                      | spec. Build complete April 2026.    |
-| StaxAI-Folder-Import-Cursor-   | Folder import cursor batch          |
-| Spec-v1_0                      | processing for OneDrive,            |
-|                                 | SharePoint, Dropbox, and Google     |
-|                                 | Drive. Build complete.              |
-| StaxAI-CL-Settings-Split-      | cl-settings-logic.js file split     |
-| Spec-v1_0                      | into core file plus four            |
-|                                 | sub-files. Build complete.          |
-| StaxAI-EA-Categories-          | EA inbox category redesign.         |
-| Redesign-Spec-v1_0             | Build complete.                     |
-| StaxAI-EA-Newsletter-CL-      | EA Newsletter/Marketing push to     |
-| Push-Spec-v1_0                 | CL Tool Outputs. Build complete.    |
-| StaxAI-Lookback-Dropdown-     | Lookback dropdown custom component  |
-| Spec-v1_0                      | replacing native selects on CL and  |
-|                                 | EA settings pages. Build complete.  |
