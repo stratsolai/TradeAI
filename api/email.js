@@ -52,6 +52,99 @@ async function refreshOutlookToken(refreshToken) {
 }
 
 // ---------------------------------------------------------------------------
+// CL extraction constants — must match cl-email-scan.js / process-file.js
+// ---------------------------------------------------------------------------
+
+var CL_DISCARD_CATEGORIES = ['Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'];
+var CL_ALLOWED_TOOL_IDS = ['strategic-plan', 'news-digest', 'chatbot', 'social', 'bi', 'tender', 'quote-enhancer'];
+var CL_ALL_CATEGORIES = [
+  'Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos',
+  'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News',
+  'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates',
+  'Safety & SWMS', 'Supplier Communications', 'Manual Upload',
+  'Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'
+];
+var CL_CATEGORY_LOOKUP = {};
+CL_ALL_CATEGORIES.forEach(function(c) { CL_CATEGORY_LOOKUP[c.toLowerCase()] = c; });
+
+var CL_EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
+  "Return a JSON array containing exactly ONE object (or zero objects if no meaningful content can be extracted) with these fields:\n" +
+  "- \"title\": string, max 10 words, descriptive of the whole document\n" +
+  "- \"body\": string, concise plain text summary of the whole document in your own words — capture the key facts, main points, and important details. Do NOT reproduce the source content verbatim. Do NOT include long passages of original text. Do NOT include bullet point lists copied from the source. Summarise the document as a whole.\n" +
+  "- \"category\": string, must exactly match one category name from the CATEGORIES section — copy the name exactly including punctuation, capitalisation, and the trailing 's' on plural names\n" +
+  "- \"disposition\": string, \"keep\" or \"discard\" — must match the disposition listed for the assigned category\n" +
+  "- \"confidence\": string, \"confident\" or \"uncertain\" — confident when the category is clear, uncertain when the content could fit multiple categories\n" +
+  "- \"tool_tags\": array of tool ID strings from the TOOLS section — only tag tools whose description matches the content\n\n" +
+  "CATEGORIES:\n\nKeep:\n" +
+  "- Products & Services: Descriptions of what the business offers, sells, or delivers. Includes service descriptions, product information, and equipment or materials the business supplies to customers. Does not include pricing, promotions, or the business's own owned assets.\n" +
+  "- Pricing: What the business charges for its products and services. Includes rate cards, price lists, package pricing, and hourly or project rates. Does not include promotional or limited-time offers.\n" +
+  "- Company Information: Information that describes what the business is. Includes About Us content, business history, ownership, locations, team bios, staff profiles, culture, values, and business-owned assets such as equipment and vehicles. Does not include what the business offers or charges.\n" +
+  "- Jobs, Portfolio & Photos: Records of work the business has completed or is currently delivering. Includes job photos, project descriptions, before-and-after content, and case studies. Does not include general promotional content or testimonials.\n" +
+  "- Promotions & Offers: Time-limited or special pricing and deals created and offered by this business to its own customers. Includes seasonal promotions, discount offers, referral incentives, and limited-time packages the business is running. Does not include promotions or offers received from suppliers or third parties.\n" +
+  "- Customer Testimonials: Feedback and reviews provided by customers about their experience with the business. Includes written reviews, star ratings with comments, and case study quotes. Does not include general marketing copy written by the business itself.\n" +
+  "- Tips & How-To: Useful information the business shares to educate or help its customers. Includes how-to guides, maintenance tips, advice articles, and explainer content. Does not include promotional content or service descriptions.\n" +
+  "- Industry News: News, trends, and developments relevant to the business's industry or market. Includes trade publications, supplier announcements, regulatory changes, and market updates. Does not include content created by the business itself.\n" +
+  "- Tender & Proposal Documents: Formal documents prepared by the business to win work. Includes tender submissions, project proposals, scope of works, and quotes prepared for specific jobs. Does not include standard pricing or general service descriptions.\n" +
+  "- Financial Documents: Internal financial records and reporting. Includes invoices, statements, tax documents, profit and loss reports, and bank records. Does not include pricing guides or supplier quotes.\n" +
+  "- Compliance & Certificates: Licences, registrations, and certifications held by the business or its staff. Includes trade licences, insurance certificates, accreditations, and regulatory compliance documents. Does not include safety plans or method statements.\n" +
+  "- Safety & SWMS: Safety documentation for work activities. Includes Safe Work Method Statements, risk assessments, safety plans, and site-specific safety requirements. Does not include compliance certificates or licences.\n" +
+  "- Supplier Communications: Correspondence and documents received from suppliers and vendors. Includes supplier price lists, product catalogues, delivery notifications, and trade account correspondence. Does not include supplier statements or invoices (Financial Documents). Does not include industry news or market updates.\n\n" +
+  "Discard:\n" +
+  "- Legal: Legal correspondence, contracts, agreements, and notices.\n" +
+  "- IT: Technology and systems correspondence. Includes software licences, hosting invoices, IT support tickets.\n" +
+  "- Spam: Unsolicited or irrelevant content with no business value.\n" +
+  "- Customer Enquiries: Inbound messages from prospective or existing customers asking about services, availability, or pricing.\n" +
+  "- Complaints: Negative feedback or dispute correspondence from customers.\n\n" +
+  "TOOLS (only tag tools whose description matches the content):\n" +
+  "- strategic-plan: Helps create a strategic business plan and 90-day action plan. Needs content describing what the business does, charges, its market position, team, finances, and goals.\n" +
+  "- news-digest: Summarises industry news and regulatory changes. Needs content reporting on regulatory changes, market conditions, technology, and industry developments.\n" +
+  "- chatbot: Answers customer questions on the business website. Needs content about services, pricing, processes, and team.\n" +
+  "- social: Creates social posts and marketing content. Needs content about completed jobs, promotions, testimonials, tips, and material to promote.\n" +
+  "- bi: Provides AI business insights from business data and market context. Needs broad business content to identify patterns, opportunities, and risks.\n" +
+  "- tender: Generates tender and proposal documents. Needs content about capabilities, past work, team, certifications, and pricing.\n" +
+  "- quote-enhancer: Enhances quotes into professional branded documents. Needs company information, past jobs, testimonials, licences, and safety information.\n\n" +
+  "RULES:\n" +
+  "1. Treat the entire source as ONE item. Return a JSON array with exactly one element representing the whole source. Do NOT split the source into multiple items by section, heading, theme, or paragraph.\n" +
+  "2. Body must be a concise summary in your own words — capture the document's purpose and key facts without reproducing the source content. Never copy long passages or bullet lists from the source.\n" +
+  "3. Category must exactly match one name from the categories list — copy it character-for-character.\n" +
+  "4. Disposition must match the category's listed disposition.\n" +
+  "5. Only tag tools whose description specifically matches the content.\n" +
+  "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
+  "7. If no meaningful content can be extracted, return an empty array [].\n" +
+  "8. Promotions & Offers is ONLY for promotions the user's own business is offering to its own customers. If the source is an inbound message, supplier email, vendor newsletter, or third-party promotional content advertising someone else's offer, do NOT classify it as Promotions & Offers. Inbound supplier promotional content belongs in Supplier Communications. Broader market or trade promotional news belongs in Industry News. Never put a received supplier or third-party promotion in Promotions & Offers, even when it uses promotional language like 'sale', 'discount', or 'limited time'. The email From header is included in the source content for this reason — use it to tell self-sent campaigns from received messages.";
+
+async function runClExtractionPrompt(emailBody, subject, sender) {
+  var userContent = 'SOURCE CONTENT (Email from ' + (sender || 'unknown sender') + ', subject: ' + subject + '):\n' + emailBody.substring(0, 6000);
+  var response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'x-api-key': ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 4000,
+      system: CL_EXTRACTION_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userContent }]
+    })
+  });
+  var data = await response.json();
+  if (data.error) {
+    console.error('[EA] CL extraction Claude API error:', JSON.stringify(data.error));
+    return [];
+  }
+  var raw = data.content && data.content[0] ? data.content[0].text : '[]';
+  try {
+    var clean = raw.replace(/```json|```/g, '').trim();
+    return JSON.parse(clean);
+  } catch (e) {
+    console.error('[EA] CL extraction JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Gmail MIME body extraction — matches cl-email-scan.js
 // ---------------------------------------------------------------------------
 
@@ -421,25 +514,35 @@ export default async function handler(req, res) {
       }
 
       // ── CL Tool Outputs push — Newsletter / Marketing emails ──────────
-      if (normCat === 'newsletters') {
+      if (normCat === 'newsletters' && email.body) {
         try {
-          var clRow = {
-            user_id: userId,
-            title: String(email.subject || '(no subject)').substring(0, 200),
-            content_text: String(analysis.summary || ''),
-            category: 'Industry News',
-            tool_tags: ['news-digest'],
-            status: 'approved',
-            source: 'tool',
-            tool_source: 'email-assistant',
-            source_ref: 'ea-newsletter:' + email.id,
-            source_detail: { sender: email.sender, sender_email: email.email, subject: email.subject, provider: email.provider, account_email: accountEmail }
-          };
-          var clRes = await supabase.from('content_library').upsert(clRow, { onConflict: 'source_ref', ignoreDuplicates: true });
-          if (clRes.error) {
-            console.error('[EA] CL newsletter push error:', clRes.error.message, 'messageId:', email.id);
+          var clItems = await runClExtractionPrompt(email.body, email.subject, email.sender + ' <' + email.email + '>');
+          if (Array.isArray(clItems) && clItems.length > 0) {
+            var clItem = clItems[0];
+            var clNormCat = clItem.category ? (CL_CATEGORY_LOOKUP[String(clItem.category).toLowerCase()] || 'Industry News') : 'Industry News';
+            var clIsDiscard = CL_DISCARD_CATEGORIES.indexOf(clNormCat) > -1;
+            var clStatus = clIsDiscard ? 'archived' : (clItem.disposition === 'discard' ? 'archived' : 'approved');
+            var clToolTags = Array.isArray(clItem.tool_tags) ? clItem.tool_tags.filter(function(t) { return CL_ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+            var clRow = {
+              user_id: userId,
+              title: String(clItem.title || email.subject || '(no subject)').substring(0, 200),
+              content_text: String(clItem.body || ''),
+              category: clNormCat,
+              tool_tags: clToolTags,
+              status: clStatus,
+              source: 'tool',
+              tool_source: 'email-assistant',
+              source_ref: 'ea-newsletter:' + email.id,
+              source_detail: { sender: email.sender, sender_email: email.email, subject: email.subject, provider: email.provider, account_email: accountEmail }
+            };
+            var clRes = await supabase.from('content_library').upsert(clRow, { onConflict: 'source_ref', ignoreDuplicates: true });
+            if (clRes.error) {
+              console.error('[EA] CL newsletter push error:', clRes.error.message, 'messageId:', email.id);
+            } else {
+              console.log('[EA] CL newsletter pushed — messageId:', email.id, 'category:', clNormCat, 'status:', clStatus);
+            }
           } else {
-            console.log('[EA] CL newsletter pushed — messageId:', email.id);
+            console.log('[EA] CL newsletter extraction returned no items — messageId:', email.id);
           }
         } catch (clErr) {
           console.error('[EA] CL newsletter push exception:', clErr.message, 'messageId:', email.id);
