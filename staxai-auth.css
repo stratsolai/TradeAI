@@ -582,7 +582,7 @@ a:hover { opacity: 0.85; }
   min-width: 200px;
   padding: 8px 14px;
   border: var(--input-border-width) solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--badge-radius);
   font-size: var(--status-font-size);
   font-family: var(--body-font);
   outline: none;
