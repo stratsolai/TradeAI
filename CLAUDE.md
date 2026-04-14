@@ -230,6 +230,34 @@ CL split (cl-review.js, cl-upload.js, cl-outputs.js,
 cl-profile.js). A spec must be written before any split
 work begins. No build action until spec is approved.
 
+### Task 28 — EA Categories Redesign
+
+Not started. Requires spec before build. Remove the Filter
+by Category button from the EA inbox. Replace with a
+category selector at the end of the All / Urgent / Flagged
+/ Dismissed status row, making it visually clear as an
+extension of that row. Leads and Projects appear on the
+main row by default (shortened from Leads / Enquiries and
+Jobs / Projects). The selector shows all remaining
+categories. Add a new setting to EA Settings allowing the
+user to choose which 6 categories appear on the main
+status row and which appear in the selector. Spec must
+cover the UI design, the settings data model, and how the
+category selection interacts with the existing filter
+logic.
+
+### Task 29 — EA Newsletter/Marketing Content Push to CL Tool Outputs
+
+Not started. Requires spec before build. Emails categorised
+as Newsletter / Marketing in the EA inbox should be
+automatically pushed to the Content Library Tool Outputs
+section for use by other tools. The pushed content must set
+source = 'tool' on the content_library row and include the
+correct tool tags and CL category tags. The platform's
+existing review process will handle approval. Spec must
+cover the trigger, the data model, deduplication, and how
+the content appears in the Tool Outputs tab.
+
 ---
 
 ## Known Issues & Notes
