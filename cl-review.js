@@ -536,22 +536,22 @@ window.CL_REVIEW = {
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
     <div class="item-card-btns">
-      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
+      <span class="item-upload-date">Upload Date: ${uploadDate}</span><button class="source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           ${this._status !== 'approved' ? '<button class="review-approve-btn" data-id="' + id + '" title="Approve">&#10003; Approve</button>' : ''}
       <button class="review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" >&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
     </div>
       </div>
   
-  <div class="review-section" id="review-tags-${id}" style="display:none">
-    <div class="review-section-head"><span class="section-head-label">Tagged Tools</span></div>
+  <div class="item-section" id="review-tags-${id}" style="display:none">
+    <div class="item-section-head"><span class="section-head-label">Tagged Tools</span></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
   </div>
-  <div class="review-section" id="review-cats-${id}" style="display:none">
-    <div class="review-section-head"><span class="section-head-label">Tagged Categories</span></div>
+  <div class="item-section" id="review-cats-${id}" style="display:none">
+    <div class="item-section-head"><span class="section-head-label">Tagged Categories</span></div>
     <div class="review-tool-pills">${catPillsHtml}</div>
   </div>
-  <div class="review-section" id="review-source-${id}" style="display:none">
-    <div class="review-section-head"><span class="section-head-label">Source</span></div>
+  <div class="item-section" id="review-source-${id}" style="display:none">
+    <div class="item-section-head"><span class="section-head-label">Source</span></div>
     <div class="source-detail">${sourceDetailHtml}</div>
   </div>
 </div>`;

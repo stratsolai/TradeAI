@@ -923,6 +923,15 @@ a:hover { opacity: 0.85; }
 /* Card action buttons — right-aligned button group inside card header */
 .item-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 
+/* Expandable section container — collapsible detail panel inside item cards */
+.item-section { padding:14px 16px; border-top:1px solid var(--border-light); }
+
+/* Expandable section heading — flex row for section label and controls */
+.item-section-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+
+/* Upload/received date label — small muted timestamp on item cards */
+.item-upload-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; align-self:center; }
+
 /* Status filter button — left-accent pill for status/category filtering */
 .status-btn { display:flex; align-items:center; padding:10px 16px; border:1px solid var(--border-subtle); border-left-width:4px; border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary); font-size:var(--label-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer; transition:opacity var(--btn-transition); }
 .status-btn:hover { opacity:0.85; }

@@ -284,7 +284,7 @@ window.CL_OUTPUTS = {
       + '<span class="review-body-preview" id="outputs-preview-' + id + '">' + bodyPreview + '</span>'
       + '</div>'
       + '<div class="item-card-btns">'
-      + '<span class="review-upload-date">' + uploadDate + '</span>'
+      + '<span class="item-upload-date">' + uploadDate + '</span>'
       + '</div>'
       + '</div>'
       + '</div>';

@@ -644,13 +644,13 @@ window.EA_LOGIC = {
           '<span class="ea-body-preview">' + summary + '</span>' +
         '</div>' +
         '<div class="item-card-btns">' +
-          '<span class="ea-upload-date">' + dateStr + '</span>' +
+          '<span class="item-upload-date">' + dateStr + '</span>' +
           '<button class="source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>' +
           actionBtn +
         '</div>' +
       '</div>' +
-      '<div class="ea-section" id="ea-source-' + id + '" style="display:none">' +
-        '<div class="ea-section-head"><span class="section-head-label">Source</span></div>' +
+      '<div class="item-section" id="ea-source-' + id + '" style="display:none">' +
+        '<div class="item-section-head"><span class="section-head-label">Source</span></div>' +
         '<div class="source-detail">' + sourceDetailHtml + '</div>' +
       '</div>' +
     '</div>';
