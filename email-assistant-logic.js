@@ -954,7 +954,7 @@ window.EA_LOGIC = {
     listEl.innerHTML =
       '<div class="ea-detail">' +
         '<div class="ea-detail-topbar">' +
-          '<button class="ea-detail-back-btn" id="ea-detail-back">&larr; Back</button>' +
+          '<button class="btn-back" id="ea-detail-back">\u2190 Back</button>' +
           openBtnHtml +
         '</div>' +
         '<div class="ea-detail-meta">' +
