@@ -914,6 +914,15 @@ a:hover { opacity: 0.85; }
 /* Content item card — left-accent card used for review items and email cards */
 .item-card { background:var(--white); border-radius:var(--card-radius); border-left:4px solid var(--blue); box-shadow:0 2px 8px var(--shadow-card); overflow:hidden; }
 
+/* Card header — flex row for checkbox, title, badges inside item cards */
+.item-card-header { display:flex; align-items:center; gap:10px; padding:14px 16px; flex-wrap:wrap; }
+
+/* Card preview row — full-width row for subject/body previews below the header */
+.item-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
+
+/* Card action buttons — right-aligned button group inside card header */
+.item-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
+
 /* Status filter button — left-accent pill for status/category filtering */
 .status-btn { display:flex; align-items:center; padding:10px 16px; border:1px solid var(--border-subtle); border-left-width:4px; border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary); font-size:var(--label-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer; transition:opacity var(--btn-transition); }
 .status-btn:hover { opacity:0.85; }

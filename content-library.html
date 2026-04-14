@@ -165,11 +165,6 @@
 /* Item list */
 .review-list { display:flex; flex-direction:column; gap:12px; }
 
-/* Item card — uses shared .item-card from stylesheet */
-.item-card-header {
-  display:flex; align-items:center; gap:10px;
-  padding:14px 16px; flex-wrap:wrap;
-}
 .item-card-title {
   flex:1; min-width:140px; font-size:15px; font-weight:600;
   color:var(--text); outline:none; cursor:text;
@@ -184,7 +179,6 @@
   padding:3px 10px; border-radius:var(--badge-radius); font-size:var(--badge-font-size);
   background:var(--bg); color:var(--text-muted); white-space:nowrap;
 }
-.item-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 .review-upload-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
 .review-filter-btns-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; }
 .review-tools-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--teal); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
@@ -204,7 +198,6 @@
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:10px;
 }
-.item-card-preview-row { display:flex; align-items:center; gap:8px; padding:4px 16px 8px 16px; flex-basis:100%; min-width:0; }
 .review-expand-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:12px; padding:0; flex-shrink:0; }
 .review-body-preview { font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
 .review-body-expanded { flex-basis:100%; padding:0 16px 8px 16px; }
