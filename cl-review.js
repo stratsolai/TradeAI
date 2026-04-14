@@ -618,14 +618,6 @@ window.CL_REVIEW = {
         btn.style.background = '';
       });
     });
-    document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
-      btn.addEventListener('mouseenter', function() { btn.style.background = '#edfaf1'; });
-      btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
-    });
-    document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
-      btn.addEventListener('mouseenter', function() { btn.style.background = '#fef2f2'; });
-      btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
-    });
     document.querySelectorAll('.item-card-title[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'title', el.innerText.trim()); });
       el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
