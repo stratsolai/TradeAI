@@ -932,10 +932,32 @@ a:hover { opacity: 0.85; }
 /* Upload/received date label — small muted timestamp on item cards */
 .item-upload-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; align-self:center; }
 
-/* Status filter button — left-accent pill for status/category filtering */
-.status-btn { display:flex; align-items:center; padding:10px 16px; border:1px solid var(--border-subtle); border-left-width:4px; border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary); font-size:var(--label-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer; transition:opacity var(--btn-transition); }
-.status-btn:hover { opacity:0.85; }
-.status-btn.active { background:var(--active-bg); color:inherit; font-weight:700; }
+/* Status filter button — left-accent pill for status/category filtering.
+   Hover and active backgrounds are defined per-status variant using attribute
+   selectors below. The hover background is always the light variant of the
+   accent colour — change the accent and the hover follows automatically. */
+.status-btn { display:flex; align-items:center; padding:10px 16px; border:1px solid var(--border-subtle); border-left-width:4px; border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary); font-size:var(--label-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer; transition:background var(--btn-transition); }
+
+/* Status button hover — hover background is the light variant of the accent colour */
+.status-btn[data-status="pending"]:hover { background:var(--blue-light); }
+.status-btn[data-status="approved"]:hover { background:var(--green-light); }
+.status-btn[data-status="rejected"]:hover { background:var(--red-hover-bg); }
+.status-btn[data-status="archived"]:hover { background:var(--archived-bg); }
+.status-btn[data-pill="all"]:hover { background:var(--blue-light); }
+.status-btn[data-pill="urgent"]:hover { background:var(--red-hover-bg); }
+.status-btn[data-pill="flagged"]:hover { background:var(--orange-light); }
+.status-btn[data-pill="handled"]:hover { background:var(--grey-light); }
+
+/* Status button active — active background matches hover, same light variant of accent */
+.status-btn.active { color:inherit; font-weight:700; }
+.status-btn.active[data-status="pending"] { background:var(--blue-light); }
+.status-btn.active[data-status="approved"] { background:var(--green-light); }
+.status-btn.active[data-status="rejected"] { background:var(--red-hover-bg); }
+.status-btn.active[data-status="archived"] { background:var(--archived-bg); }
+.status-btn.active[data-pill="all"] { background:var(--blue-light); }
+.status-btn.active[data-pill="urgent"] { background:var(--red-hover-bg); }
+.status-btn.active[data-pill="flagged"] { background:var(--orange-light); }
+.status-btn.active[data-pill="handled"] { background:var(--grey-light); }
 
 /* Item checkbox — standard checkbox for list item selection */
 .item-checkbox { width:var(--checkbox-size); height:var(--checkbox-size); cursor:pointer; flex-shrink:0; }
