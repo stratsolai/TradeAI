@@ -906,3 +906,46 @@ a:hover { opacity: 0.85; }
 /* Modal continue/confirm button — filled blue */
 .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
 .perm-modal-continue:hover { background:var(--blue-dark); }
+
+/* ------------------------------------------------------------
+   17. SHARED PAGE COMPONENTS (CL + EA)
+   ------------------------------------------------------------ */
+
+/* Content item card — left-accent card used for review items and email cards */
+.item-card { background:var(--white); border-radius:var(--card-radius); border-left:4px solid var(--blue); box-shadow:0 2px 8px var(--shadow-card); overflow:hidden; }
+
+/* Status filter button — left-accent pill for status/category filtering */
+.status-btn { display:flex; align-items:center; padding:10px 16px; border:1px solid var(--border-subtle); border-left-width:4px; border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary); font-size:var(--label-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer; transition:opacity var(--btn-transition); }
+.status-btn:hover { opacity:0.85; }
+.status-btn.active { background:var(--active-bg); color:inherit; font-weight:700; }
+
+/* Item checkbox — standard checkbox for list item selection */
+.item-checkbox { width:var(--checkbox-size); height:var(--checkbox-size); cursor:pointer; flex-shrink:0; }
+
+/* List loading state — centred spinner placeholder */
+.list-loading { text-align:center; padding:var(--loading-padding); color:var(--text-muted); font-size:var(--btn-font-size); }
+
+/* List empty state — centred no-results message */
+.list-empty { text-align:center; padding:var(--empty-padding); color:var(--text-disabled); font-size:var(--btn-font-size); }
+
+/* Expandable section heading label — uppercase muted label inside collapsible sections */
+.section-head-label { font-size:var(--badge-font-size); font-weight:var(--heading-lg-weight); color:var(--text-muted); text-transform:uppercase; letter-spacing:var(--letter-spacing-label); }
+
+/* Source detail block — metadata text inside expandable source sections */
+.source-detail { font-size:var(--label-font-size); color:var(--text-secondary); line-height:1.8; }
+
+/* Source detail label — bold key label within source detail rows */
+.source-detail-label { font-weight:var(--font-weight-semibold); color:var(--text); }
+
+/* Source expand button — left-accent button to toggle source detail visibility */
+.source-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--orange); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
+.source-btn:hover { background:var(--orange-light); }
+
+/* Filter button — blue-border toggle for filter dropdowns */
+.filter-btn { border-width:1px; border-style:solid; border-color:var(--blue); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:all var(--btn-transition); display:flex; align-items:center; }
+.filter-btn:hover { background:var(--blue-light); }
+.filter-btn.active { background:var(--blue-light); }
+
+/* Clear filters button — subtle-border button to reset all active filters */
+.clear-filters-btn { margin-left:auto; border-width:1px; border-style:solid; border-color:var(--border-subtle); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
+.clear-filters-btn:hover { background:var(--red-hover-bg); }

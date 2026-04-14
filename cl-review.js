@@ -29,7 +29,7 @@ window.CL_REVIEW = {
     this._selected = new Set();
     if (typeof window.switchPTab === 'function') window.switchPTab('review');
     var sClr = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
-    document.querySelectorAll('.review-status-btn').forEach(function(b) {
+    document.querySelectorAll('.status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
       b.style.background = b.dataset.status === status ? (sClr[status] || '') : '';
     });
@@ -41,8 +41,8 @@ window.CL_REVIEW = {
   },
 
   _closeFilterDropdowns: function() {
-    var ftb = document.querySelector('.review-filter-tools-btn');
-    var fcb = document.querySelector('.review-filter-cat-btn');
+    var ftb = document.querySelector('.filter-tools-btn');
+    var fcb = document.querySelector('.filter-cat-btn');
     if (ftb) ftb.classList.remove('active');
     if (fcb) fcb.classList.remove('active');
     var filterRow = document.getElementById('review-filter-row');
@@ -65,8 +65,8 @@ window.CL_REVIEW = {
   },
 
   _updateFilterBtnIndicators: function() {
-    var ftb = document.querySelector('.review-filter-tools-btn');
-    var fcb = document.querySelector('.review-filter-cat-btn');
+    var ftb = document.querySelector('.filter-tools-btn');
+    var fcb = document.querySelector('.filter-cat-btn');
     if (ftb && !ftb.classList.contains('active')) {
       ftb.style.background = this._toolFilters.length > 0 ? '#e8f4fd' : '';
     }
@@ -95,16 +95,16 @@ window.CL_REVIEW = {
     el.innerHTML = `
       <div class="review-wrap">
         <div class="review-status-row">
-          <button class="review-status-btn active" data-status="pending">Pending</button>
-          <button class="review-status-btn" data-status="approved">Approved</button>
-          <button class="review-status-btn" data-status="rejected">Rejected</button>
-          <button class="review-status-btn" data-status="archived">Archived</button>
+          <button class="status-btn active" data-status="pending">Pending</button>
+          <button class="status-btn" data-status="approved">Approved</button>
+          <button class="status-btn" data-status="rejected">Rejected</button>
+          <button class="status-btn" data-status="archived">Archived</button>
           <input type="text" id="review-search" class="review-search-input" placeholder="Search items...">
         </div>
         <div class="review-filter-btns-row">
-          <button class="review-filter-tools-btn">&#9783; Filter By Tools</button>
-          <button class="review-filter-cat-btn">&#9776; Filter By Category</button>
-          <button class="review-clear-filters-btn">&#10005; Clear All Filters</button>
+          <button class="filter-btn filter-tools-btn">&#9783; Filter By Tools</button>
+          <button class="filter-btn filter-cat-btn">&#9776; Filter By Category</button>
+          <button class="clear-filters-btn">&#10005; Clear All Filters</button>
           <span style="flex:1"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve All</button>
           <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn" style="border-color:#8B2500;color:#8B2500;">&#10007; Reject All</button>
@@ -128,9 +128,9 @@ window.CL_REVIEW = {
   _bindControls: function() {
     const self = this;
     var statusColors = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
-    document.querySelectorAll('.review-status-btn').forEach(function(btn) {
+    document.querySelectorAll('.status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.review-status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
+        document.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
         btn.classList.add('active');
         btn.style.background = statusColors[btn.dataset.status] || '';
         self._saveFilterState();
@@ -155,7 +155,7 @@ window.CL_REVIEW = {
     document.getElementById('review-deselect-btn').addEventListener('click', function() {
       self._selected = new Set();
       self._updateBulkBar();
-      document.querySelectorAll('.review-checkbox').forEach(function(cb) { cb.checked = false; });
+      document.querySelectorAll('.item-checkbox').forEach(function(cb) { cb.checked = false; });
     });
     document.getElementById('review-approve-all-btn').addEventListener('click', function() { self._bulkActionAll('approved'); });
     document.getElementById('review-reject-all-btn').addEventListener('click', function() {
@@ -166,9 +166,9 @@ window.CL_REVIEW = {
     self._bindBtnHover('review-bulk-approve-btn', '#edfaf1');
     self._bindBtnHover('review-bulk-reject-btn', '#fef2f2');
     self._bindBtnHover('review-deselect-btn', '#e8f4fd');
-    var filterToolsBtn = document.querySelector('.review-filter-tools-btn');
-    var filterCatBtn = document.querySelector('.review-filter-cat-btn');
-    var clearBtn = document.querySelector('.review-clear-filters-btn');
+    var filterToolsBtn = document.querySelector('.filter-tools-btn');
+    var filterCatBtn = document.querySelector('.filter-cat-btn');
+    var clearBtn = document.querySelector('.clear-filters-btn');
     function updateFilterRow() {
       var filterRow = document.getElementById('review-filter-row');
       var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
@@ -239,7 +239,7 @@ window.CL_REVIEW = {
 
   _load: async function() {
     const list = document.getElementById('review-list');
-    if (list) list.innerHTML = '<div class="review-loading">Loading...</div>';
+    if (list) list.innerHTML = '<div class="list-loading">Loading...</div>';
     const result = await this._supabase
       .from('content_library')
       .select('*')
@@ -247,7 +247,7 @@ window.CL_REVIEW = {
       .neq('source', 'tool')
       .order('created_at', { ascending: false });
     if (result.error) {
-      if (list) list.innerHTML = '<div class="review-empty">Could not load items.</div>';
+      if (list) list.innerHTML = '<div class="list-empty">Could not load items.</div>';
       return;
     }
     this._items = result.data || [];
@@ -303,8 +303,8 @@ window.CL_REVIEW = {
     const catPillsEl = document.getElementById('review-cat-pills');
     const toolPillsEl = document.getElementById('review-tool-pills');
     if (!filterRow || !catPillsEl || !toolPillsEl) return;
-    var _toolsActive = document.querySelector('.review-filter-tools-btn.active');
-    var _catActive = document.querySelector('.review-filter-cat-btn.active');
+    var _toolsActive = document.querySelector('.filter-tools-btn.active');
+    var _catActive = document.querySelector('.filter-cat-btn.active');
     filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
     const self = this;
 
@@ -394,7 +394,7 @@ window.CL_REVIEW = {
       items = ordered;
     }
     if (items.length === 0) {
-      list.innerHTML = '<div class="review-empty">No items found.</div>';
+      list.innerHTML = '<div class="list-empty">No items found.</div>';
       return;
     }
     const self = this;
@@ -402,7 +402,7 @@ window.CL_REVIEW = {
     this._bindCardEvents();
     // Scroll to a specific item if requested by an Archived Item Link click
     if (this._scrollToId) {
-      var target = document.querySelector('.review-card[data-id="' + this._scrollToId + '"]');
+      var target = document.querySelector('.item-card[data-id="' + this._scrollToId + '"]');
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         target.style.outline = '2px solid var(--blue)';
@@ -484,7 +484,7 @@ window.CL_REVIEW = {
     if (item.source_item_id && detail.file_url) {
       sourceDetailParts.push('<div><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
     }
-    const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="review-empty-detail">No source detail available.</div>';
+    const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="list-empty-detail">No source detail available.</div>';
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
       ? '<span class="review-ai-rejected-pill" style="display:inline-block;padding:2px 10px;border:1px solid var(--red);border-radius:8px;background:#fdecea;color:var(--text);font-size:11px;font-weight:600;flex-shrink:0;">AI Rejected Item</span>'
       : '';
@@ -518,43 +518,43 @@ window.CL_REVIEW = {
     if (isImgItem && item.source_item_id && this._imageUrls[item.source_item_id]) {
       thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
     }
-    return `<div class="review-card" data-id="${id}"${pairCardStyle}>
-  <div class="review-card-header">
-    <input type="checkbox" class="review-checkbox" data-id="${id}"${checked}>
+    return `<div class="item-card" data-id="${id}"${pairCardStyle}>
+  <div class="item-card-header">
+    <input type="checkbox" class="item-checkbox" data-id="${id}"${checked}>
     <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      ${thumbHtml}<span class="review-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
+      ${thumbHtml}<span class="item-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
-    <div class="review-card-preview-row">
+    <div class="item-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
       <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>${usedNoticeHtml}
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
-    <div class="review-card-btns">
-      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="review-source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
+    <div class="item-card-btns">
+      <span class="review-upload-date">Upload Date: ${uploadDate}</span><button class="source-btn" data-id="${id}" data-section="source" title="View source document">&#128196; Source</button>
           ${this._status !== 'approved' ? '<button class="btn-outline review-approve-btn" data-id="' + id + '" title="Approve" style="border-color:#2e7d32;color:#2e7d32;">&#10003; Approve</button>' : ''}
       <button class="btn-outline review-reject-btn" data-id="${id}" data-used="${isUsed ? '1' : ''}" title="${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}" style="border-color:#8B2500;color:#8B2500;">&#10007; ${this._status === 'rejected' ? (isUsed ? 'Archive' : 'Delete') : 'Reject'}</button>
     </div>
       </div>
   
   <div class="review-section" id="review-tags-${id}" style="display:none">
-    <div class="review-section-head"><span>Tagged Tools</span></div>
+    <div class="review-section-head"><span class="section-head-label">Tagged Tools</span></div>
     <div class="review-tool-pills">${toolPillsHtml}</div>
   </div>
   <div class="review-section" id="review-cats-${id}" style="display:none">
-    <div class="review-section-head"><span>Tagged Categories</span></div>
+    <div class="review-section-head"><span class="section-head-label">Tagged Categories</span></div>
     <div class="review-tool-pills">${catPillsHtml}</div>
   </div>
   <div class="review-section" id="review-source-${id}" style="display:none">
-    <div class="review-section-head"><span>Source</span></div>
-    <div class="review-source-detail">${sourceDetailHtml}</div>
+    <div class="review-section-head"><span class="section-head-label">Source</span></div>
+    <div class="source-detail">${sourceDetailHtml}</div>
   </div>
 </div>`;
   },
 
   _bindCardEvents: function() {
     const self = this;
-    document.querySelectorAll('.review-checkbox').forEach(function(cb) {
+    document.querySelectorAll('.item-checkbox').forEach(function(cb) {
       cb.addEventListener('change', function() {
         if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
         self._updateBulkBar();
@@ -562,7 +562,7 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        const card = btn.closest('.review-card');
+        const card = btn.closest('.item-card');
         if (!card) return;
         const isExpanded = card.classList.contains('review-body-expanded');
         card.classList.toggle('review-body-expanded', !isExpanded);
@@ -602,8 +602,8 @@ window.CL_REVIEW = {
       });
     });
     var listEl = document.getElementById('review-list');
-    if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .review-source-btn').forEach(function(btn) {
-      var sectionBg = btn.classList.contains('review-source-btn') ? '#fff3ee' : btn.classList.contains('review-cats-btn') ? '#F3EEF9' : '#E0F7FA';
+    if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .source-btn').forEach(function(btn) {
+      var sectionBg = btn.classList.contains('source-btn') ? '#fff3ee' : btn.classList.contains('review-cats-btn') ? '#F3EEF9' : '#E0F7FA';
       btn.addEventListener('click', function() {
         var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
@@ -627,7 +627,7 @@ window.CL_REVIEW = {
       btn.addEventListener('mouseenter', function() { btn.style.background = '#fef2f2'; });
       btn.addEventListener('mouseleave', function() { btn.style.background = ''; });
     });
-    document.querySelectorAll('.review-card-title[contenteditable]').forEach(function(el) {
+    document.querySelectorAll('.item-card-title[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'title', el.innerText.trim()); });
       el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     });
@@ -649,7 +649,7 @@ window.CL_REVIEW = {
   _changeStatus: async function(id, newStatus) {
     await this._supabase.from('content_library').update({ status: newStatus }).eq('id', id);
     this._items = this._items.filter(function(i) { return i.id !== id; });
-    const card = document.querySelector('.review-card[data-id="' + id + '"]');
+    const card = document.querySelector('.item-card[data-id="' + id + '"]');
     if (card) card.remove();
     this._selected.delete(id);
     this._updateBulkBar();
@@ -659,7 +659,7 @@ window.CL_REVIEW = {
   _deleteItem: async function(id) {
     await this._supabase.from('content_library').delete().eq('id', id);
     this._items = this._items.filter(function(i) { return i.id !== id; });
-    var card = document.querySelector('.review-card[data-id="' + id + '"]');
+    var card = document.querySelector('.item-card[data-id="' + id + '"]');
     if (card) card.remove();
     this._selected.delete(id);
     this._updateBulkBar();

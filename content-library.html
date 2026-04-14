@@ -186,40 +186,13 @@
 /* ── Review Tab ─────────────────────────────────────────── */
 .review-wrap { padding-bottom: 40px; }
 
-/* Status pill buttons — matches /chatbot filter-tab pattern */
+/* Status pill row */
 .review-status-row { display:flex; gap:8px; padding:16px 0; align-items:center; }
-.review-status-btn {
-  display:flex; align-items:center; padding:10px 16px;
-  border:1px solid var(--border-subtle); border-left-width:4px;
-  border-radius:var(--btn-radius); background:var(--white); color:var(--text-secondary);
-  font-size:var(--status-font-size); font-family:var(--body-font); font-weight:var(--font-weight-semibold);
-  cursor:pointer; transition:opacity var(--btn-transition);
-}
-.review-status-btn[data-status="pending"] {
-  border-left-color:var(--blue);
-}
-.review-status-btn[data-status="approved"] {
-  border-left-color:var(--green-dark);
-}
-.review-status-btn[data-status="rejected"] {
-  border-left-color:var(--red);
-}
-.review-status-btn.active[data-status="pending"] {
-  background:var(--active-bg); color:inherit; font-weight:700;
-}
-.review-status-btn.active[data-status="approved"] {
-  background:var(--active-bg); color:inherit; font-weight:700;
-}
-.review-status-btn.active[data-status="rejected"] {
-  background:var(--active-bg); color:inherit; font-weight:700;
-}
-.review-status-btn[data-status="archived"] {
-  border-left-color:var(--grey-accent);
-}
-.review-status-btn.active[data-status="archived"] {
-  background:var(--active-bg); color:inherit; font-weight:700;
-}
-.review-status-btn:hover { opacity:0.85; }
+/* CL status button variants — border colours per status */
+.status-btn[data-status="pending"] { border-left-color:var(--blue); }
+.status-btn[data-status="approved"] { border-left-color:var(--green-dark); }
+.status-btn[data-status="rejected"] { border-left-color:var(--red); }
+.status-btn[data-status="archived"] { border-left-color:var(--grey-accent); }
 
 /* Filter pills — category and tool */
 .review-filter-row { margin-bottom:12px; }
@@ -249,18 +222,11 @@
 /* Item list */
 .review-list { display:flex; flex-direction:column; gap:12px; }
 
-/* Item card */
-.review-card {
-  background:var(--white); border-radius:var(--card-radius);
-  border-left:4px solid var(--blue);
-  box-shadow:0 2px 8px var(--shadow-card);
-  overflow:hidden;
-}
+/* Item card — uses shared .item-card from stylesheet */
 .review-card-header {
   display:flex; align-items:center; gap:10px;
   padding:14px 16px; flex-wrap:wrap;
 }
-.review-checkbox { width:var(--checkbox-size); height:var(--checkbox-size); cursor:pointer; flex-shrink:0; }
 .review-card-title {
   flex:1; min-width:140px; font-size:15px; font-weight:600;
   color:var(--text); outline:none; cursor:text;
@@ -278,18 +244,10 @@
 .review-card-btns { display:flex; gap:8px; margin-left:auto; flex-shrink:0; }
 .review-upload-date { font-size:12px; color:var(--text-muted); white-space:nowrap; align-self:center; }
 .review-filter-btns-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; }
-    .review-clear-filters-btn { margin-left:auto; border-width:1px; border-style:solid; border-color:var(--border-subtle); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
-    .review-clear-filters-btn:hover { background:var(--red-hover-bg); }
-.review-filter-cat-btn { border-width:1px; border-style:solid; border-color:var(--blue); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:all var(--btn-transition); display:flex; align-items:center; }
-.review-filter-cat-btn:hover { background:var(--blue-light); }
-.review-filter-tools-btn { border-width:1px; border-style:solid; border-color:var(--blue); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:all var(--btn-transition); display:flex; align-items:center; }
-.review-filter-tools-btn:hover { background:var(--blue-light); }
 .review-tools-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--teal); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
 .review-tools-btn:hover { background:var(--teal-light); }
 .review-cats-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--purple); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
 .review-cats-btn:hover { background:var(--purple-hover-bg); }
-.review-source-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--orange); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
-.review-source-btn:hover { background:var(--orange-light); }
 .review-approve-btn { display:flex; align-items:center; border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--green-dark); border-radius:var(--btn-radius); padding:10px 16px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
 .review-approve-btn:hover { background:var(--green-hover-bg); }
 
@@ -302,10 +260,6 @@
 .review-section-head {
   display:flex; justify-content:space-between; align-items:center;
   margin-bottom:10px;
-}
-.review-section-head span {
-  font-size:12px; font-weight:700; color:var(--text-muted);
-  text-transform:uppercase; letter-spacing:var(--letter-spacing-label);
 }
 .review-body-text {
   font-size:14px; color:var(--text); line-height:1.6;
@@ -336,14 +290,10 @@
 .tool-pill-add-stax { font-size:11px; font-weight:600; color:var(--blue); white-space:nowrap; }
 .tool-pill-inactive:hover .tool-pill-add-stax { color:var(--blue-accent-hover); }
 
-/* Source detail */
-.review-source-detail { font-size:13px; color:var(--text-secondary); line-height:1.8; }
-.source-detail-label { font-weight:600; color:var(--text); }
+/* Source detail — uses shared .source-detail and .source-detail-label from stylesheet */
 .review-empty-detail { color:var(--text-disabled); font-style:italic; }
 
-/* States */
-.review-loading { text-align:center; padding:var(--loading-padding); color:var(--text-muted); font-size:var(--btn-font-size); }
-.review-empty { text-align:center; padding:var(--empty-padding); color:var(--text-disabled); font-size:var(--btn-font-size); }
+/* States — uses shared .list-loading and .list-empty from stylesheet */
 
 /* ---- Business Profile tab ---- */
 .profile-wrap { padding: 0; }

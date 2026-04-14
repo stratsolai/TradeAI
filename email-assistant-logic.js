@@ -115,7 +115,7 @@ window.EA_LOGIC = {
     var accounts = this._connectedAccounts;
     if (accounts.length === 0) {
       container.innerHTML = '';
-      panelsEl.innerHTML = '<div class="ea-empty">Connect your email to get started. Use the <a href="/email/settings">Settings</a> page to connect Gmail or Outlook.</div>';
+      panelsEl.innerHTML = '<div class="list-empty">Connect your email to get started. Use the <a href="/email/settings">Settings</a> page to connect Gmail or Outlook.</div>';
       return;
     }
 
@@ -145,7 +145,7 @@ window.EA_LOGIC = {
 
     panelsEl.innerHTML =
       '<div id="ea-category-tabs" class="ea-status-row"></div>' +
-      '<div id="ea-filter-btns-row" class="ea-filter-btns-row"></div>' +
+      '<div id="filter-btns-row" class="filter-btns-row"></div>' +
       '<div id="ea-filter-expand-row" class="ea-filter-expand-row" style="display:none"></div>' +
       '<div id="ea-bulk-bar" class="ea-bulk-bar" style="display:none">' +
         '<span id="ea-bulk-count" class="ea-bulk-label"></span>' +
@@ -176,11 +176,11 @@ window.EA_LOGIC = {
       if (p.id === 'handled') isActive = self._showHandled;
       else if (p.id === 'flagged') isActive = self._showFlagged && !self._showHandled;
       else isActive = !self._showHandled && !self._showFlagged && self._activeCategory === p.id;
-      return '<button class="ea-status-btn' + (isActive ? ' active' : '') + '" data-pill="' + p.id + '">' + window.escHtml(p.label) + '</button>';
+      return '<button class="status-btn' + (isActive ? ' active' : '') + '" data-pill="' + p.id + '">' + window.escHtml(p.label) + '</button>';
     }).join('') +
     '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
-    container.querySelectorAll('.ea-status-btn').forEach(function(btn) {
+    container.querySelectorAll('.status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         self._showHandled = false;
         self._showFlagged = false;
@@ -193,7 +193,7 @@ window.EA_LOGIC = {
         } else if (btn.dataset.pill === 'urgent') {
           self._activeCategory = 'urgent';
         }
-        container.querySelectorAll('.ea-status-btn').forEach(function(b) { b.classList.remove('active'); });
+        container.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         self._selected = new Set();
         self._renderFilterRow();
@@ -207,14 +207,14 @@ window.EA_LOGIC = {
 
   // ── Filter row (matches CL .review-filter-btns-row layout) ────
   _renderFilterRow: function() {
-    var container = document.getElementById('ea-filter-btns-row');
+    var container = document.getElementById('filter-btns-row');
     if (!container) return;
     var showCatFilter = !this._showHandled && !this._showFlagged && this._activeCategory === 'all';
     container.innerHTML =
-      (showCatFilter ? '<button class="ea-filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' : '') +
-      '<button class="ea-filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
-      '<button class="ea-filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
-      '<button class="ea-clear-filters-btn" id="ea-clear-filters-btn">&#10005; Clear All Filters</button>' +
+      (showCatFilter ? '<button class="filter-btn" id="ea-cat-btn">&#9776; Filter by Category</button>' : '') +
+      '<button class="filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
+      '<button class="filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
+      '<button class="clear-filters-btn" id="clear-filters-btn">&#10005; Clear All Filters</button>' +
       '<span style="flex:1"></span>' +
       '<button class="btn-outline" id="ea-scan-btn" style="border-color:var(--blue);color:var(--blue);">Scan Now</button>' +
       '<button class="btn-outline" id="ea-handle-all-btn" style="border-color:var(--red-dark);color:var(--red-dark);">&#10007; Dismiss All</button>';
@@ -350,7 +350,7 @@ window.EA_LOGIC = {
     var self = this;
     var scanBtn = document.getElementById('ea-scan-btn');
     var handleAllBtn = document.getElementById('ea-handle-all-btn');
-    var clearBtn = document.getElementById('ea-clear-filters-btn');
+    var clearBtn = document.getElementById('clear-filters-btn');
     var searchEl = document.getElementById('ea-search');
     var bulkHandleBtn = document.getElementById('ea-bulk-handle-btn');
     var deselectBtn = document.getElementById('ea-deselect-btn');
@@ -368,7 +368,7 @@ window.EA_LOGIC = {
     if (deselectBtn) deselectBtn.addEventListener('click', function() {
       self._selected = new Set();
       self._updateBulkBar();
-      document.querySelectorAll('.ea-checkbox').forEach(function(cb) { cb.checked = false; });
+      document.querySelectorAll('.item-checkbox').forEach(function(cb) { cb.checked = false; });
     });
 
     // Filter button toggles — matches CL pattern
@@ -529,7 +529,7 @@ window.EA_LOGIC = {
   // ── Load emails ───────────────────────────────────────────
   _load: async function() {
     var listEl = document.getElementById('ea-email-list');
-    if (listEl) listEl.innerHTML = '<div class="ea-loading">Loading...</div>';
+    if (listEl) listEl.innerHTML = '<div class="list-loading">Loading...</div>';
 
     var activeAcct = this._connectedAccounts.find(function(a) { return a.email === this._activeAccount; }.bind(this));
     var providerVal = activeAcct ? (activeAcct.provider === 'gmail' || activeAcct.provider === 'google' ? 'gmail' : 'outlook') : null;
@@ -559,7 +559,7 @@ window.EA_LOGIC = {
 
     var result = await query;
     if (result.error) {
-      if (listEl) listEl.innerHTML = '<div class="ea-empty">Could not load emails.</div>';
+      if (listEl) listEl.innerHTML = '<div class="list-empty">Could not load emails.</div>';
       return;
     }
     this._emails = result.data || [];
@@ -601,7 +601,7 @@ window.EA_LOGIC = {
     if (!listEl) return;
     var items = this._filteredItems();
     if (items.length === 0) {
-      listEl.innerHTML = '<div class="ea-empty">No emails found.</div>';
+      listEl.innerHTML = '<div class="list-empty">No emails found.</div>';
       return;
     }
     var self = this;
@@ -629,31 +629,31 @@ window.EA_LOGIC = {
     }
 
     var sourceDetailHtml =
-      '<div><span class="ea-source-detail-label">Connection:</span> ' + window.escHtml(providerLabel) + '</div>' +
-      '<div><span class="ea-source-detail-label">Account:</span> ' + window.escHtml(this._activeAccount || '') + '</div>' +
-      '<div><span class="ea-source-detail-label">From:</span> ' + sender + (email.sender_email ? ' &lt;' + window.escHtml(email.sender_email) + '&gt;' : '') + '</div>' +
-      '<div><span class="ea-source-detail-label">Subject:</span> ' + subject + '</div>';
+      '<div><span class="source-detail-label">Connection:</span> ' + window.escHtml(providerLabel) + '</div>' +
+      '<div><span class="source-detail-label">Account:</span> ' + window.escHtml(this._activeAccount || '') + '</div>' +
+      '<div><span class="source-detail-label">From:</span> ' + sender + (email.sender_email ? ' &lt;' + window.escHtml(email.sender_email) + '&gt;' : '') + '</div>' +
+      '<div><span class="source-detail-label">Subject:</span> ' + subject + '</div>';
 
-    return '<div class="ea-card" data-id="' + id + '">' +
-      '<div class="ea-card-header">' +
-        '<input type="checkbox" class="ea-checkbox" data-id="' + id + '"' + checked + '>' +
+    return '<div class="item-card" data-id="' + id + '">' +
+      '<div class="item-card-header">' +
+        '<input type="checkbox" class="item-checkbox" data-id="' + id + '"' + checked + '>' +
         '<button class="ea-flag-btn" data-id="' + id + '" data-flagged="' + (email.is_flagged ? '1' : '0') + '" title="' + flagTitle + '">' + flagIcon + '</button>' +
         '<span class="ea-sender-name">' + sender + '</span>' +
-        '<div class="ea-card-preview-row">' +
+        '<div class="item-card-preview-row">' +
           '<span class="ea-subject-inline">' + subject + '</span>' +
         '</div>' +
-        '<div class="ea-card-preview-row">' +
+        '<div class="item-card-preview-row">' +
           '<span class="ea-body-preview">' + summary + '</span>' +
         '</div>' +
-        '<div class="ea-card-btns">' +
+        '<div class="item-card-btns">' +
           '<span class="ea-upload-date">' + dateStr + '</span>' +
-          '<button class="ea-source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>' +
+          '<button class="source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>' +
           actionBtn +
         '</div>' +
       '</div>' +
       '<div class="ea-section" id="ea-source-' + id + '" style="display:none">' +
-        '<div class="ea-section-head"><span>Source</span></div>' +
-        '<div class="ea-source-detail">' + sourceDetailHtml + '</div>' +
+        '<div class="ea-section-head"><span class="section-head-label">Source</span></div>' +
+        '<div class="source-detail">' + sourceDetailHtml + '</div>' +
       '</div>' +
     '</div>';
   },
@@ -661,7 +661,7 @@ window.EA_LOGIC = {
   _bindCardEvents: function() {
     var self = this;
 
-    document.querySelectorAll('.ea-checkbox').forEach(function(cb) {
+    document.querySelectorAll('.item-checkbox').forEach(function(cb) {
       cb.addEventListener('change', function() {
         if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
         self._updateBulkBar();
@@ -685,7 +685,7 @@ window.EA_LOGIC = {
 
     // Source button toggle — matches CL pattern
     var listEl = document.getElementById('ea-email-list');
-    if (listEl) listEl.querySelectorAll('.ea-source-btn').forEach(function(btn) {
+    if (listEl) listEl.querySelectorAll('.source-btn').forEach(function(btn) {
       var sectionBg = 'var(--orange-light)';
       btn.addEventListener('click', function() {
         var el = document.getElementById('ea-' + btn.dataset.section + '-' + btn.dataset.id);
@@ -703,11 +703,11 @@ window.EA_LOGIC = {
       });
     });
 
-    document.querySelectorAll('.ea-card').forEach(function(card) {
+    document.querySelectorAll('.item-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
-        if (e.target.closest('.ea-checkbox') || e.target.closest('.ea-flag-btn') ||
+        if (e.target.closest('.item-checkbox') || e.target.closest('.ea-flag-btn') ||
             e.target.closest('.ea-handled-btn') || e.target.closest('.ea-unmark-btn') ||
-            e.target.closest('.ea-source-btn')) return;
+            e.target.closest('.source-btn')) return;
         var email = self._emails.find(function(em) { return (em.id || em.message_id) === card.dataset.id; });
         if (email) self._showDetail(email);
       });
@@ -840,7 +840,7 @@ window.EA_LOGIC = {
     if (btn) { btn.disabled = true; btn.textContent = 'Scanning...'; }
 
     var listEl = document.getElementById('ea-email-list');
-    if (listEl) listEl.innerHTML = '<div class="ea-loading">Scanning your inbox...</div>';
+    if (listEl) listEl.innerHTML = '<div class="list-loading">Scanning your inbox...</div>';
 
     try {
       var session = (await this._supabase.auth.getSession()).data.session;
@@ -849,7 +849,7 @@ window.EA_LOGIC = {
 
       var activeAcct = this._connectedAccounts.find(function(a) { return a.email === this._activeAccount; }.bind(this));
       if (!activeAcct) {
-        if (listEl) listEl.innerHTML = '<div class="ea-empty">No account selected.</div>';
+        if (listEl) listEl.innerHTML = '<div class="list-empty">No account selected.</div>';
         this._finishScan();
         return;
       }
@@ -858,11 +858,11 @@ window.EA_LOGIC = {
       await this._queueAndWatch(sourceType, activeAcct.email, token);
 
       if (this._pendingJobs === 0) {
-        if (listEl) listEl.innerHTML = '<div class="ea-empty">Could not start scan.</div>';
+        if (listEl) listEl.innerHTML = '<div class="list-empty">Could not start scan.</div>';
         this._finishScan();
       }
     } catch (e) {
-      if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan failed. Please try again.</div>';
+      if (listEl) listEl.innerHTML = '<div class="list-empty">Scan failed. Please try again.</div>';
       this._finishScan();
     }
   },
@@ -899,14 +899,14 @@ window.EA_LOGIC = {
           if (!row) return;
           var listEl = document.getElementById('ea-email-list');
           if (row.status === 'running') {
-            if (listEl) listEl.innerHTML = '<div class="ea-loading">Scanning ' + window.escHtml(label) + '...</div>';
+            if (listEl) listEl.innerHTML = '<div class="list-loading">Scanning ' + window.escHtml(label) + '...</div>';
           } else if (row.status === 'completed') {
             self._cleanupJob(jobId);
           } else if (row.status === 'failed') {
-            if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan failed: ' + window.escHtml(row.error_text || 'Unknown error') + '</div>';
+            if (listEl) listEl.innerHTML = '<div class="list-empty">Scan failed: ' + window.escHtml(row.error_text || 'Unknown error') + '</div>';
             self._cleanupJob(jobId);
           } else if (row.status === 'cancelled') {
-            if (listEl) listEl.innerHTML = '<div class="ea-empty">Scan cancelled.</div>';
+            if (listEl) listEl.innerHTML = '<div class="list-empty">Scan cancelled.</div>';
             self._cleanupJob(jobId);
           }
         }
