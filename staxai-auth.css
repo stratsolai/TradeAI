@@ -980,11 +980,15 @@ a:hover { opacity: 0.85; }
 /* Source expand button — left-accent button to toggle source detail visibility */
 .source-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--orange); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
 .source-btn:hover { background:var(--orange-light); }
+/* Source button open state — source detail section is expanded */
+.source-btn.open { background:var(--orange-light); }
 
 /* Filter button — blue-border toggle for filter dropdowns */
 .filter-btn { border-width:1px; border-style:solid; border-color:var(--blue); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:all var(--btn-transition); display:flex; align-items:center; }
 .filter-btn:hover { background:var(--blue-light); }
 .filter-btn.active { background:var(--blue-light); }
+/* Filter button open state — dropdown is open */
+.filter-btn.open { background:var(--blue-light); }
 
 /* Clear filters button — subtle-border button to reset all active filters */
 .clear-filters-btn { margin-left:auto; border-width:1px; border-style:solid; border-color:var(--border-subtle); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
@@ -1000,11 +1004,19 @@ a:hover { opacity: 0.85; }
 
 /* Approve All button — green outline, matches .review-bulk-approve-btn */
 .review-approve-all-btn { border-color:var(--green-dark); color:var(--green-dark); }
-.review-approve-all-btn:hover { background:var(--green-hover-bg); }
+.review-approve-all-btn:hover { background:var(--green-light); }
 
 /* Reject All button — red-dark outline, matches .review-bulk-reject-btn */
 .review-reject-all-btn { border-color:var(--red-dark); color:var(--red-dark); }
 .review-reject-all-btn:hover { background:var(--red-hover-bg); }
+
+/* Approve button hover — per-item and bulk approve buttons */
+.review-approve-btn:hover { background:var(--green-light); }
+.review-bulk-approve-btn:hover { background:var(--green-light); }
+
+/* Reject button hover — per-item and bulk reject buttons */
+.review-reject-btn:hover { background:var(--red-hover-bg); }
+.review-bulk-reject-btn:hover { background:var(--red-hover-bg); }
 
 /* Used-by-tool notice — amber warning box shown on items already consumed by a tool */
 .review-used-notice { margin:6px 0; padding:6px 10px; background:var(--warning-light); border:1px solid var(--warning); border-radius:6px; font-size:var(--badge-font-size); color:var(--text); }
@@ -1029,6 +1041,16 @@ a:hover { opacity: 0.85; }
 
 /* Category pill tagged state — purple active background for tagged category pills */
 .cat-pill-tagged { background:var(--purple-hover-bg); border-color:var(--purple); color:var(--pill-text); }
+
+/* Tool pill tagged state — applied via .tagged modifier class on .tool-pill elements */
+.tool-pill.tagged { background:var(--teal-light); border-color:var(--teal); }
+/* Tool pill hover — shows teal-light on mouseenter */
+.tool-pill:hover { background:var(--teal-light); }
+
+/* Category pill tagged state — applied via .tagged modifier class on .cat-pill elements */
+.cat-pill.tagged { background:var(--purple-hover-bg); border-color:var(--purple); }
+/* Category pill hover — shows purple-hover-bg on mouseenter */
+.cat-pill:hover { background:var(--purple-hover-bg); }
 
 /* Manual add flow — form components for the manual item entry form */
 .manual-add-title { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
@@ -1062,8 +1084,16 @@ a:hover { opacity: 0.85; }
 /* EA date label — date on email detail view */
 .ea-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; }
 
+/* Section button open states — section panel is expanded. Hover is the light variant of the accent colour. */
+.review-tools-btn.open { background:var(--teal-light); }
+.review-cats-btn.open { background:var(--purple-hover-bg); }
+
 /* Filter section label — heading above filter pill rows in all list views */
 .filter-section-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); margin-bottom:var(--label-margin-bottom); }
 
 /* EA detail metadata row — flex row for sender/badge/date in detail view */
 .ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+
+/* Settings message states — applied to save/validation feedback messages */
+.msg-error { color:var(--red); }
+.msg-success { color:var(--green-dark); }
