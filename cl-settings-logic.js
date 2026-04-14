@@ -1732,7 +1732,7 @@ window.CL_SETTINGS_LOGIC = {
       var check = function () {
         var msgEl = document.getElementById('tool-msg-' + connected);
         if (msgEl) {
-          msgEl.className = 'tool-conn-msg success';
+          msgEl.classList.remove('error'); msgEl.classList.add('tool-conn-msg', 'success');
           msgEl.textContent = connected.charAt(0).toUpperCase() + connected.slice(1) + ' connected successfully.';
         }
       };
@@ -1744,7 +1744,7 @@ window.CL_SETTINGS_LOGIC = {
         var check2 = function () {
           var msgEl = document.getElementById('tool-msg-' + platform);
           if (msgEl) {
-            msgEl.className = 'tool-conn-msg error';
+            msgEl.classList.remove('success'); msgEl.classList.add('tool-conn-msg', 'error');
             msgEl.textContent = 'Connection failed. Please try again.';
           }
         };
