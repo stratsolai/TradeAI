@@ -9,10 +9,6 @@ window.CL_OUTPUTS = {
 
   init: async function(supabase) {
     this._supabase = supabase;
-    var style = getComputedStyle(document.documentElement);
-    this._colors = {
-      blueLight: style.getPropertyValue('--blue-light').trim()
-    };
     this._render();
     var self = this;
     try {
@@ -84,8 +80,8 @@ window.CL_OUTPUTS = {
     var clearBtn = container.querySelector('.outputs-clear-btn');
     function updateFilterRow() {
       var filterRow = document.getElementById('outputs-filter-row');
-      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('active');
-      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('active');
+      var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('open');
+      var catsOpen = filterCatBtn && filterCatBtn.classList.contains('open');
       var toolWrap = document.getElementById('outputs-tool-pills-wrap');
       var catWrap = document.getElementById('outputs-cat-pills-wrap');
       if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
@@ -94,9 +90,8 @@ window.CL_OUTPUTS = {
     }
     if (filterToolsBtn) {
       filterToolsBtn.addEventListener('click', function() {
-        var isOpen = filterToolsBtn.classList.contains('active');
-        filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = !isOpen ? self._colors.blueLight : '';
+        var isOpen = filterToolsBtn.classList.contains('open');
+        filterToolsBtn.classList.toggle('open', !isOpen);
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -104,9 +99,8 @@ window.CL_OUTPUTS = {
     }
     if (filterCatBtn) {
       filterCatBtn.addEventListener('click', function() {
-        var isOpen = filterCatBtn.classList.contains('active');
-        filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = !isOpen ? self._colors.blueLight : '';
+        var isOpen = filterCatBtn.classList.contains('open');
+        filterCatBtn.classList.toggle('open', !isOpen);
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -116,8 +110,8 @@ window.CL_OUTPUTS = {
       clearBtn.addEventListener('click', function() {
         self._toolFilters = [];
         self._categoryFilter = [];
-        if (filterToolsBtn) { filterToolsBtn.classList.remove('active'); filterToolsBtn.style.background = ''; }
-        if (filterCatBtn) { filterCatBtn.classList.remove('active'); filterCatBtn.style.background = ''; }
+        if (filterToolsBtn) { filterToolsBtn.classList.remove('open', 'active'); }
+        if (filterCatBtn) { filterCatBtn.classList.remove('open', 'active'); }
         updateFilterRow();
         self._renderFilterRow();
         self._renderList();
@@ -130,8 +124,8 @@ window.CL_OUTPUTS = {
     if (!container) return;
     var ftb = container.querySelector('.outputs-filter-tools-btn');
     var fcb = container.querySelector('.outputs-filter-cat-btn');
-    if (ftb) { ftb.classList.remove('active'); ftb.style.background = ''; }
-    if (fcb) { fcb.classList.remove('active'); fcb.style.background = ''; }
+    if (ftb) { ftb.classList.remove('open', 'active'); }
+    if (fcb) { fcb.classList.remove('open', 'active'); }
     var filterRow = document.getElementById('outputs-filter-row');
     var toolWrap = document.getElementById('outputs-tool-pills-wrap');
     var catWrap = document.getElementById('outputs-cat-pills-wrap');
@@ -145,11 +139,11 @@ window.CL_OUTPUTS = {
     if (!container) return;
     var ftb = container.querySelector('.outputs-filter-tools-btn');
     var fcb = container.querySelector('.outputs-filter-cat-btn');
-    if (ftb && !ftb.classList.contains('active')) {
-      ftb.style.background = this._toolFilters.length > 0 ? this._colors.blueLight : '';
+    if (ftb && !ftb.classList.contains('open')) {
+      ftb.classList.toggle('active', this._toolFilters.length > 0);
     }
-    if (fcb && !fcb.classList.contains('active')) {
-      fcb.style.background = this._categoryFilter.length > 0 ? this._colors.blueLight : '';
+    if (fcb && !fcb.classList.contains('open')) {
+      fcb.classList.toggle('active', this._categoryFilter.length > 0);
     }
   },
 
