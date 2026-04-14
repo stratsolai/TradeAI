@@ -9,6 +9,12 @@ window.CL_OUTPUTS = {
 
   init: async function(supabase) {
     this._supabase = supabase;
+    var style = getComputedStyle(document.documentElement);
+    this._colors = {
+      blueLight: style.getPropertyValue('--blue-light').trim(),
+      greenLight: style.getPropertyValue('--green-light').trim(),
+      archivedBg: style.getPropertyValue('--archived-bg').trim()
+    };
     this._render();
     var self = this;
     try {
@@ -52,7 +58,7 @@ window.CL_OUTPUTS = {
 
   _bindControls: function() {
     var self = this;
-    var statusColors = { approved: '#edfaf1', archived: '#ECEFF1' };
+    var statusColors = { approved: self._colors.greenLight, archived: self._colors.archivedBg };
     var container = document.getElementById('cl-tab-outputs');
     if (!container) return;
     container.querySelectorAll('.outputs-status-btn').forEach(function(btn) {
@@ -97,7 +103,7 @@ window.CL_OUTPUTS = {
       filterToolsBtn.addEventListener('click', function() {
         var isOpen = filterToolsBtn.classList.contains('active');
         filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = !isOpen ? '#e8f4fd' : '';
+        filterToolsBtn.style.background = !isOpen ? self._colors.blueLight : '';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -107,7 +113,7 @@ window.CL_OUTPUTS = {
       filterCatBtn.addEventListener('click', function() {
         var isOpen = filterCatBtn.classList.contains('active');
         filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = !isOpen ? '#e8f4fd' : '';
+        filterCatBtn.style.background = !isOpen ? self._colors.blueLight : '';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -147,10 +153,10 @@ window.CL_OUTPUTS = {
     var ftb = container.querySelector('.outputs-filter-tools-btn');
     var fcb = container.querySelector('.outputs-filter-cat-btn');
     if (ftb && !ftb.classList.contains('active')) {
-      ftb.style.background = this._toolFilters.length > 0 ? '#e8f4fd' : '';
+      ftb.style.background = this._toolFilters.length > 0 ? this._colors.blueLight : '';
     }
     if (fcb && !fcb.classList.contains('active')) {
-      fcb.style.background = this._categoryFilter.length > 0 ? '#e8f4fd' : '';
+      fcb.style.background = this._categoryFilter.length > 0 ? this._colors.blueLight : '';
     }
   },
 

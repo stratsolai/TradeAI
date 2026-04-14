@@ -10,6 +10,18 @@ window.CL_REVIEW = {
 
   init: async function(supabase) {
     this._supabase = supabase;
+    var style = getComputedStyle(document.documentElement);
+    this._colors = {
+      blueLight: style.getPropertyValue('--blue-light').trim(),
+      greenLight: style.getPropertyValue('--green-light').trim(),
+      redHoverBg: style.getPropertyValue('--red-hover-bg').trim(),
+      rejectedBg: style.getPropertyValue('--rejected-bg').trim(),
+      archivedBg: style.getPropertyValue('--archived-bg').trim(),
+      orangeLight: style.getPropertyValue('--orange-light').trim(),
+      purpleHoverBg: style.getPropertyValue('--purple-hover-bg').trim(),
+      tealLight: style.getPropertyValue('--teal-light').trim(),
+      white: style.getPropertyValue('--white').trim()
+    };
     this._render();
     this._bindStatTiles();
     try {
@@ -33,7 +45,7 @@ window.CL_REVIEW = {
     this._searchTerm = '';
     this._selected = new Set();
     if (typeof window.switchPTab === 'function') window.switchPTab('review');
-    var sClr = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
+    var sClr = { pending: self._colors.blueLight, approved: self._colors.greenLight, rejected: self._colors.rejectedBg, archived: self._colors.archivedBg };
     document.querySelectorAll('.status-btn').forEach(function(b) {
       b.classList.toggle('active', b.dataset.status === status);
       b.style.background = b.dataset.status === status ? (sClr[status] || '') : '';
@@ -73,10 +85,10 @@ window.CL_REVIEW = {
     var ftb = document.querySelector('.filter-tools-btn');
     var fcb = document.querySelector('.filter-cat-btn');
     if (ftb && !ftb.classList.contains('active')) {
-      ftb.style.background = this._toolFilters.length > 0 ? '#e8f4fd' : '';
+      ftb.style.background = this._toolFilters.length > 0 ? this._colors.blueLight : '';
     }
     if (fcb && !fcb.classList.contains('active')) {
-      fcb.style.background = this._categoryFilter.length > 0 ? '#e8f4fd' : '';
+      fcb.style.background = this._categoryFilter.length > 0 ? this._colors.blueLight : '';
     }
   },
 
@@ -132,7 +144,7 @@ window.CL_REVIEW = {
 
   _bindControls: function() {
     const self = this;
-    var statusColors = { pending: '#e8f4fd', approved: '#edfaf1', rejected: '#fdecea', archived: '#ECEFF1' };
+    var statusColors = { pending: self._colors.blueLight, approved: self._colors.greenLight, rejected: self._colors.rejectedBg, archived: self._colors.archivedBg };
     document.querySelectorAll('.status-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.status-btn').forEach(function(b) { b.classList.remove('active'); b.style.background = ''; });
@@ -166,11 +178,11 @@ window.CL_REVIEW = {
     document.getElementById('review-reject-all-btn').addEventListener('click', function() {
       if (self._status === 'rejected') { self._bulkDeleteAll(); } else { self._bulkActionAll('rejected'); }
     });
-    self._bindBtnHover('review-approve-all-btn', '#edfaf1');
-    self._bindBtnHover('review-reject-all-btn', '#fef2f2');
-    self._bindBtnHover('review-bulk-approve-btn', '#edfaf1');
-    self._bindBtnHover('review-bulk-reject-btn', '#fef2f2');
-    self._bindBtnHover('review-deselect-btn', '#e8f4fd');
+    self._bindBtnHover('review-approve-all-btn', self._colors.greenLight);
+    self._bindBtnHover('review-reject-all-btn', self._colors.redHoverBg);
+    self._bindBtnHover('review-bulk-approve-btn', self._colors.greenLight);
+    self._bindBtnHover('review-bulk-reject-btn', self._colors.redHoverBg);
+    self._bindBtnHover('review-deselect-btn', self._colors.blueLight);
     var filterToolsBtn = document.querySelector('.filter-tools-btn');
     var filterCatBtn = document.querySelector('.filter-cat-btn');
     var clearBtn = document.querySelector('.clear-filters-btn');
@@ -188,7 +200,7 @@ window.CL_REVIEW = {
       filterToolsBtn.addEventListener('click', function() {
         var isOpen = filterToolsBtn.classList.contains('active');
         filterToolsBtn.classList.toggle('active', !isOpen);
-        filterToolsBtn.style.background = !isOpen ? '#e8f4fd' : '';
+        filterToolsBtn.style.background = !isOpen ? self._colors.blueLight : '';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -198,7 +210,7 @@ window.CL_REVIEW = {
       filterCatBtn.addEventListener('click', function() {
         var isOpen = filterCatBtn.classList.contains('active');
         filterCatBtn.classList.toggle('active', !isOpen);
-        filterCatBtn.style.background = !isOpen ? '#e8f4fd' : '';
+        filterCatBtn.style.background = !isOpen ? self._colors.blueLight : '';
         if (!isOpen) self._renderFilterRow();
         updateFilterRow();
         self._updateFilterBtnIndicators();
@@ -608,7 +620,7 @@ window.CL_REVIEW = {
     });
     var listEl = document.getElementById('review-list');
     if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .source-btn').forEach(function(btn) {
-      var sectionBg = btn.classList.contains('source-btn') ? '#fff3ee' : btn.classList.contains('review-cats-btn') ? '#F3EEF9' : '#E0F7FA';
+      var sectionBg = btn.classList.contains('source-btn') ? self._colors.orangeLight : btn.classList.contains('review-cats-btn') ? self._colors.purpleHoverBg : self._colors.tealLight;
       btn.addEventListener('click', function() {
         var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
@@ -633,13 +645,13 @@ window.CL_REVIEW = {
     });
     document.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
-      pill.addEventListener('mouseenter', function() { pill.style.background = '#E0F7FA'; });
-      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? '#E0F7FA' : '#fff'; });
+      pill.addEventListener('mouseenter', function() { pill.style.background = self._colors.tealLight; });
+      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('tool-pill-tagged') ? self._colors.tealLight : self._colors.white; });
     });
     document.querySelectorAll('.tool-pill[data-cat-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
-      pill.addEventListener('mouseenter', function() { pill.style.background = '#F3EEF9'; });
-      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('cat-pill-tagged') ? '#F3EEF9' : '#fff'; });
+      pill.addEventListener('mouseenter', function() { pill.style.background = self._colors.purpleHoverBg; });
+      pill.addEventListener('mouseleave', function() { pill.style.background = pill.classList.contains('cat-pill-tagged') ? self._colors.purpleHoverBg : self._colors.white; });
     });
   },
 
@@ -729,7 +741,7 @@ window.CL_REVIEW = {
     await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(toolId) > -1;
     pill.classList.toggle('tool-pill-tagged', isNowTagged);
-    pill.style.background = isNowTagged ? '#E0F7FA' : '#fff';
+    pill.style.background = isNowTagged ? this._colors.tealLight : this._colors.white;
   },
 
   _toggleCategoryTag: async function(itemId, catId, pill) {
@@ -742,7 +754,7 @@ window.CL_REVIEW = {
     await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(catId) > -1;
     pill.classList.toggle('cat-pill-tagged', isNowTagged);
-    pill.style.background = isNowTagged ? '#F3EEF9' : '#fff';
+    pill.style.background = isNowTagged ? this._colors.purpleHoverBg : this._colors.white;
   },
 
   _updateBulkBar: function() {
