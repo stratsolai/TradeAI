@@ -283,26 +283,64 @@ window.CL_SETTINGS_LOGIC = {
   _bindEventDelegation: function () {
     var self = this;
     document.addEventListener('change', function (e) {
-      var lookbackSel = e.target.closest('.drive-lookback-select');
-      if (lookbackSel) {
-        var provider = lookbackSel.getAttribute('data-provider') || 'drive';
-        var acct = lookbackSel.getAttribute('data-account');
-        if (acct) self._changeLookback(provider, acct, lookbackSel.value);
-        return;
-      }
-      var emailLookbackSel = e.target.closest('.email-lookback-select');
-      if (emailLookbackSel) {
-        var eprovider = emailLookbackSel.getAttribute('data-provider') || 'gmail';
-        var eacct = emailLookbackSel.getAttribute('data-account');
-        if (eacct) self._changeEmailLookback(eprovider, eacct, emailLookbackSel.value);
-        return;
-      }
       var websiteInput = e.target.closest && e.target.closest('#website-urls-list .website-url-input');
       if (websiteInput) {
         self._saveWebsiteUrls();
       }
     });
+    // Close lookback dropdowns on outside click
     document.addEventListener('click', function (e) {
+      if (!e.target.closest('.lookback-dropdown-wrap')) {
+        document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function (m) { m.classList.remove('open'); });
+        document.querySelectorAll('.lookback-dropdown.active').forEach(function (b) { b.classList.remove('active'); });
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+
+      // Lookback dropdown — toggle menu
+      var lbBtn = e.target.closest('.lookback-dropdown');
+      if (lbBtn) {
+        var wrap = lbBtn.closest('.lookback-dropdown-wrap');
+        var menu = wrap ? wrap.querySelector('.lookback-dropdown-menu') : null;
+        if (menu) {
+          // Close all other open lookback menus first
+          document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function (m) { if (m !== menu) m.classList.remove('open'); });
+          document.querySelectorAll('.lookback-dropdown.active').forEach(function (b) { if (b !== lbBtn) b.classList.remove('active'); });
+          menu.classList.toggle('open');
+          lbBtn.classList.toggle('active');
+        }
+        return;
+      }
+
+      // Lookback dropdown — item selected
+      var lbItem = e.target.closest('.lookback-dropdown-item');
+      if (lbItem) {
+        var lbWrap = lbItem.closest('.lookback-dropdown-wrap');
+        var lbTrigger = lbWrap ? lbWrap.querySelector('.lookback-dropdown') : null;
+        var lbMenu = lbItem.closest('.lookback-dropdown-menu');
+        if (lbTrigger && lbMenu) {
+          var val = lbItem.getAttribute('data-value');
+          var lbType = lbTrigger.getAttribute('data-lookback-type');
+          var provider = lbTrigger.getAttribute('data-provider');
+          var acct = lbTrigger.getAttribute('data-account');
+          // Update button label
+          lbTrigger.innerHTML = lbItem.textContent + ' &#9662;';
+          // Update active item
+          lbMenu.querySelectorAll('.lookback-dropdown-item').forEach(function (it) { it.classList.remove('active'); });
+          lbItem.classList.add('active');
+          // Close menu
+          lbMenu.classList.remove('open');
+          lbTrigger.classList.remove('active');
+          // Save to Supabase
+          if (lbType === 'drive' && acct) {
+            self._changeLookback(provider, acct, val);
+          } else if (lbType === 'email' && acct) {
+            self._changeEmailLookback(provider, acct, val);
+          }
+        }
+        return;
+      }
 
       var disconnectBtn = e.target.closest('.btn-disconnect, .btn-remove-folder');
       if (disconnectBtn) {
@@ -748,13 +786,19 @@ window.CL_SETTINGS_LOGIC = {
       { v: '12', l: '12 months' },
       { v: '24', l: '24 months' }
     ];
+    var currentLabel = 'All time';
+    opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
-      '<select class="drive-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
-      opts.map(function (o) {
-        var s = o.v === current ? ' selected' : '';
-        return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
-      }).join('') +
-      '</select></span>';
+      '<span class="lookback-dropdown-wrap">' +
+        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="drive">' + currentLabel + ' &#9662;</button>' +
+        '<div class="lookback-dropdown-menu">' +
+        opts.map(function (o) {
+          var cls = o.v === current ? ' active' : '';
+          return '<button type="button" class="lookback-dropdown-item' + cls + '" data-value="' + o.v + '">' + o.l + '</button>';
+        }).join('') +
+        '</div>' +
+      '</span>' +
+    '</span>';
   },
 
   // Lookback dropdown for email providers (Gmail / Outlook).
@@ -769,13 +813,19 @@ window.CL_SETTINGS_LOGIC = {
       { v: '180', l: '6 months' },
       { v: '365', l: '12 months' }
     ];
+    var currentLabel = '90 days';
+    opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
-      '<select class="email-lookback-select" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '">' +
-      opts.map(function (o) {
-        var s = o.v === current ? ' selected' : '';
-        return '<option value="' + o.v + '"' + s + '>' + o.l + '</option>';
-      }).join('') +
-      '</select></span>';
+      '<span class="lookback-dropdown-wrap">' +
+        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="email">' + currentLabel + ' &#9662;</button>' +
+        '<div class="lookback-dropdown-menu">' +
+        opts.map(function (o) {
+          var cls = o.v === current ? ' active' : '';
+          return '<button type="button" class="lookback-dropdown-item' + cls + '" data-value="' + o.v + '">' + o.l + '</button>';
+        }).join('') +
+        '</div>' +
+      '</span>' +
+    '</span>';
   },
 
   _changeEmailLookback: async function (provider, accountEmail, value) {
