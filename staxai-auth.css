@@ -1027,9 +1027,9 @@ a:hover { opacity: 0.85; }
 /* EA handled/dismiss button — uses .btn-dismiss styling from stylesheet */
 .ea-handled-btn { border-color:var(--red-dark); color:var(--red-dark); }
 
-/* EA restore button — green outline for restoring dismissed emails */
+/* EA restore button — green outline for restoring dismissed emails. Overrides .btn-outline blue to green. */
 .ea-unmark-btn { border-color:var(--green-dark); color:var(--green-dark); }
-.ea-unmark-btn:hover { background:var(--green-hover-bg); }
+.ea-unmark-btn:hover { background:var(--green-light); }
 
 /* EA source badge — provider label on email detail view */
 .ea-source-badge { padding:3px 10px; border-radius:var(--badge-radius); font-size:var(--badge-font-size); background:var(--bg); color:var(--text-muted); white-space:nowrap; }
