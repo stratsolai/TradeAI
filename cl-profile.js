@@ -203,7 +203,7 @@ window.CL_PROFILE = {
       '</div>' +
       '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn btn-outline" style="border-left-color:'+_clOrange+';margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
+      '<button class="btn btn-outline" style="margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -237,7 +237,7 @@ window.CL_PROFILE = {
         '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn btn-outline" style="border-left-color:'+_clOrange+';margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
+        '<button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation'
