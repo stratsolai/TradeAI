@@ -419,6 +419,32 @@ export default async function handler(req, res) {
       } else {
         imported++;
       }
+
+      // ── CL Tool Outputs push — Newsletter / Marketing emails ──────────
+      if (normCat === 'newsletters') {
+        try {
+          var clRow = {
+            user_id: userId,
+            title: String(email.subject || '(no subject)').substring(0, 200),
+            content_text: String(analysis.summary || ''),
+            category: 'Industry News',
+            tool_tags: ['news-digest'],
+            status: 'approved',
+            source: 'tool',
+            tool_source: 'email-assistant',
+            source_ref: 'ea-newsletter:' + email.id,
+            source_detail: { sender: email.sender, sender_email: email.email, subject: email.subject, provider: email.provider, account_email: accountEmail }
+          };
+          var clRes = await supabase.from('content_library').upsert(clRow, { onConflict: 'source_ref', ignoreDuplicates: true });
+          if (clRes.error) {
+            console.error('[EA] CL newsletter push error:', clRes.error.message, 'messageId:', email.id);
+          } else {
+            console.log('[EA] CL newsletter pushed — messageId:', email.id);
+          }
+        } catch (clErr) {
+          console.error('[EA] CL newsletter push exception:', clErr.message, 'messageId:', email.id);
+        }
+      }
     }
 
     // ── Cursor — save or clean up ──────────────────────────────────────
