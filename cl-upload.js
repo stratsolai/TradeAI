@@ -51,15 +51,15 @@ window.CL_UPLOAD = {
         "</button>",
       "</div>",
       "<div id=\"cl-manual-flow\" class=\"manual-add-flow\" style=\"display:none\">",
-        "<div class=\"manual-add-title\" style=\"font-size:15px;font-weight:600;color:#333;\">Add Manual Item</div>",
+        "<div class=\"manual-add-title\">Add Manual Item</div>",
         "<label class=\"manual-add-label\" style=\"margin-top:12px\">Title <span style=\"color:#c00\">*</span></label>",
         "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
         "<label class=\"manual-add-label\" style=\"margin-top:12px\">Description</label>",
         "<textarea id=\"cl-manual-desc\" class=\"manual-add-textarea\" rows=\"4\" placeholder=\"Enter a description (optional)\"></textarea>",
         "<label class=\"manual-add-label\">Tagged Tools <span style=\"color:#c00\">*</span></label>",
-        "<div id=\"cl-manual-tools\" class=\"manual-add-pills\" style=\"display:flex;flex-wrap:wrap;gap:8px;\"></div>",
+        "<div id=\"cl-manual-tools\" class=\"manual-add-pills\"></div>",
         "<div id=\"cl-manual-error\" class=\"manual-add-error\" style=\"display:none\"></div>",
-        "<div class=\"manual-add-actions\" style=\"display:flex;gap:12px;margin-top:12px;\">",
+        "<div class=\"manual-add-actions\">",
           "<button id=\"cl-manual-submit\" class=\"btn-dismiss\" style=\"border-color:var(--blue);color:var(--blue);min-width:100px;justify-content:center;\">Add</button>",
           "<button id=\"cl-manual-cancel\" class=\"btn-dismiss\" style=\"min-width:100px;justify-content:center;\">Cancel</button>",
         "</div>",
@@ -275,8 +275,8 @@ window.CL_UPLOAD = {
         if (t.groups && t.groups.length > 0) {
           pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the folders to scan:</div>" +
             t.groups.map(function(g) {
-              return "<div class=\"source-pill-group\" style=\"display:flex;flex-direction:column;align-items:center;margin-bottom:8px;\">" +
-                "<div class=\"source-pill-account\" style=\"font-size:12px;font-weight:600;color:#555;margin-bottom:4px;text-align:center;\">" + g.account + "</div>" +
+              return "<div class=\"source-pill-group\">" +
+                "<div class=\"source-pill-account\">" + g.account + "</div>" +
                 "<div class=\"source-select-pills\" style=\"justify-content:center;\">" + g.items.map(function(p) {
                   return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
                 }).join("") + "</div>" +
@@ -1029,9 +1029,6 @@ window.CL_UPLOAD = {
     container.style.display = "flex";
     var row = document.createElement("div");
     row.className = "upload-message upload-message-" + (type || "info");
-    row.style.display = "flex";
-    row.style.alignItems = "center";
-    row.style.gap = "8px";
     var span = document.createElement("span");
     span.className = "upload-confirm-pill";
     span.textContent = text;

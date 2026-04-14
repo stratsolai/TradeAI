@@ -988,7 +988,7 @@ a:hover { opacity: 0.85; }
 
 /* Manual add flow — form components for the manual item entry form */
 .manual-add-title { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
-.manual-add-label { margin-top:12px; }
+.manual-add-label { }
 .manual-add-pills { display:flex; flex-wrap:wrap; gap:8px; }
 .manual-add-error { display:none; }
 .manual-add-actions { display:flex; gap:var(--actions-gap); margin-top:12px; }
