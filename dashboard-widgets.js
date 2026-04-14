@@ -313,8 +313,8 @@ window.DASH_WIDGETS = (function() {
     s = SAMPLE.bi.stats; chart = SAMPLE.bi.chart; insight = SAMPLE.bi.insight;
     if (isActive) {
       try {
-        var pr = await supabaseClient.from('profiles').select('active_tools').eq('id',userId).single();
-        var toolCount = (pr.data && pr.data.active_tools) ? pr.data.active_tools.length : s.tools;
+        var pr = await supabaseClient.from('profiles').select('activated_tools').eq('id',userId).single();
+        var toolCount = (pr.data && pr.data.activated_tools) ? pr.data.activated_tools.length : s.tools;
         s = { insights: s.insights, tools: toolCount, lastAnalysis: s.lastAnalysis };
       } catch(e) {}
     }
