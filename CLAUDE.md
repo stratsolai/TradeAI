@@ -233,19 +233,18 @@ file in cl-settings.html.
 
 ### Task 28 — EA Categories Redesign
 
-Not started. Requires spec before build. Remove the Filter
-by Category button from the EA inbox. Replace with a
-category selector at the end of the All / Urgent / Flagged
-/ Dismissed status row, making it visually clear as an
-extension of that row. Leads and Projects appear on the
-main row by default (shortened from Leads / Enquiries and
-Jobs / Projects). The selector shows all remaining
-categories. Add a new setting to EA Settings allowing the
-user to choose which 6 categories appear on the main
-status row and which appear in the selector. Spec must
-cover the UI design, the settings data model, and how the
-category selection interacts with the existing filter
-logic.
+Complete April 2026. Filter by Category button removed
+from EA inbox row 2. Replaced with up to 2 shortcut
+pills on the status row (after Dismissed) plus a
+category dropdown for remaining categories. Shortcut
+selection configurable in EA Settings Categories tab
+(max 2, saved to category_shortcuts on
+email_assistant_settings). Default shortcuts: Leads and
+Projects. Category labels shortened: Leads / Enquiries
+to Leads, Jobs / Projects to Projects. Urgent removed
+from the category on/off toggle list in settings (it is
+a status, not a toggleable category). Disabled categories
+automatically removed from shortcuts.
 
 ### Task 29 — EA Newsletter/Marketing Content Push to CL Tool Outputs
 
