@@ -11,50 +11,10 @@
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
     /* ── PAGE ── */
-    .page-wrap {
-      max-width: 960px;
-      margin: 0 auto;
-      padding: var(--settings-page-padding);
-    }
-    .page-header {
-      margin-bottom: var(--page-header-margin);
-    }
+    .page-wrap { max-width: 960px; margin: 0 auto; padding: var(--settings-page-padding); }
+    .page-header { margin-bottom: var(--page-header-margin); }
 
-    .settings-row-control {
-      display: flex;
-      gap: 0;
-      border-radius: var(--btn-radius);
-      overflow: hidden;
-      border: 2px solid var(--blue);
-      flex-shrink: 0;
-      margin-left: 16px;
-    }
-    .freq-btn {
-      background: var(--white);
-      color: var(--text-muted);
-      border: none;
-      font-family: var(--body-font);
-      font-size: var(--status-font-size);
-      font-weight: 500;
-      padding: 8px 14px;
-      cursor: pointer;
-      transition: background var(--btn-transition), color var(--btn-transition);
-      border-right: 2px solid var(--blue);
-      min-width: 90px;
-      text-align: center;
-    }
-    .freq-btn:last-child { border-right: none; }
-    .freq-btn:hover {
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-    .freq-btn.active,
-    .freq-btn.active:hover {
-      background: var(--blue-light);
-      color: var(--blue);
-    }
-
-    /* Connection UI */
+    /* ── CL-SPECIFIC CONNECTION UI ── */
     .connection-status { font-size: var(--status-font-size); color: var(--text-muted); display: inline-block; }
     .connection-status:empty { display: none; }
     .connection-status.connected { color: var(--green); font-weight: 600; }
@@ -62,38 +22,18 @@
     .btn-connect:hover { background: var(--blue-dark); }
     .btn-connect.disconnect { background: var(--red); }
     .btn-connect.disconnect:hover { background: var(--red); color: var(--white); }
-    .settings-text-input { border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); width: 220px; }
-    .settings-text-input:focus { outline: none; border-color: var(--blue); }
     .btn-save-inline { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-left: 8px; transition: background var(--btn-transition); }
     .btn-save-inline:hover { background: var(--blue-dark); }
-
-    /* Connection multi-account list — two-row layout via JS-rendered wrappers:
-       row 1 = email + Disconnect, row 2 = lookback + Choose Folders (right-aligned) */
-    .connection-list { width: 100%; }
-    .connection-item { display: flex; flex-direction: column; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); }
-    .connection-item:last-child { border-bottom: none; }
-    .connection-item-row1 { display: flex; align-items: center; gap: 8px; }
-    .connection-item-row2 { display: flex; align-items: center; justify-content: flex-start; gap: 8px; }
-    /* Account email — fixed-width styled box, same width as folder/URL boxes */
-    .connection-item-email { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .connection-item-provider { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
     .connection-item-site { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
-    /* Disconnect pushed to the right edge of row 1 */
-    .connection-item-row1 > .btn-disconnect { margin-left: auto; }
-    .connection-item-lookback { display: inline-flex; align-items: center; flex-shrink: 0; }
 
-    /* Disconnect — matches the CL Reject button (red outline, red text, X prefix) */
-    .btn-disconnect { display: inline-flex; align-items: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: var(--btn-radius); padding: 6px 14px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; white-space: nowrap; transition: background var(--btn-transition), color var(--btn-transition); }
-    .btn-disconnect::before { content: "\2717"; font-size: 14px; }
-    .btn-disconnect:hover { background: var(--red-hover-bg); color: var(--red-dark); }
+    /* Remove folder — same visual as .btn-remove-url (in stylesheet). CL-specific because combined with folder selector. */
+    .btn-remove-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: 6px; padding: 5px 12px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
+    .btn-remove-folder::before { content: "\2717"; font-size: var(--badge-font-size); }
+    .btn-remove-folder:hover { background: var(--red-hover-bg); color: var(--red-dark); }
 
-    /* Remove — same red-outline style as Disconnect, smaller. Used inside folder/library/URL rows. */
-    .btn-remove-folder, .btn-remove-url { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--red-dark); border: 2px solid var(--red-dark); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
-    .btn-remove-folder::before, .btn-remove-url::before { content: "\2717"; font-size: 12px; }
-    .btn-remove-folder:hover, .btn-remove-url:hover { background: var(--red-hover-bg); color: var(--red-dark); }
-
-    /* Add — blue-outline counterpart to btn-remove-folder, same dimensions. Used in the Drive folder picker. */
-    .btn-add-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
+    /* Add folder — blue-outline counterpart to btn-remove-folder */
+    .btn-add-folder { display: inline-flex; align-items: center; justify-content: center; gap: 5px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: 6px; padding: 5px 12px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; min-width: 90px; transition: background var(--btn-transition), color var(--btn-transition); }
     .btn-add-folder:hover { background: var(--blue-light); color: var(--blue); }
 
     /* Folder picker Close buttons — red-outline style without the ✗ icon */
@@ -103,40 +43,31 @@
     #sharepoint-library-picker-cancel::before,
     #dropbox-folder-picker-cancel::before { content: none; }
 
-    /* Add buttons — blue outline */
-    .btn-add-connection { display: inline-flex; align-items: center; gap: 6px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 9px 18px; font-size: 13px; font-weight: 600; font-family: var(--body-font); cursor: pointer; margin-top: 10px; transition: background var(--btn-transition); }
-    .btn-add-connection:hover { background: var(--blue-light); color: var(--blue); }
-
-    /* Choose Folders / Choose Site / Choose Sites / Choose Libraries — same look as the add button */
-    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background var(--btn-transition); white-space: nowrap; }
+    /* Choose Folders / Choose Site / Choose Sites / Choose Libraries */
+    .btn-pick-folders, .btn-pick-site, .btn-pick-sites, .btn-pick-libraries { display: inline-flex; align-items: center; gap: 4px; background: var(--white); color: var(--blue); border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 10px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; flex-shrink: 0; transition: background var(--btn-transition); white-space: nowrap; }
     .btn-pick-folders:hover, .btn-pick-site:hover, .btn-pick-sites:hover, .btn-pick-libraries:hover { background: var(--blue-light); color: var(--blue); }
 
-    /* Connection account folder list — used by Drive, OneDrive, SharePoint, Dropbox tiles.
-       Full-width rows so folder boxes left-align with the email box above. */
+    /* Connection account folder list */
     .connection-folders-list { display: flex; flex-direction: column; gap: 6px; margin: 8px 0 4px 0; width: 100%; }
     .connection-folder-row { display: flex; align-items: center; gap: 8px; }
-    .connection-folder-name { width: 360px; flex: 0 0 360px; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .connection-folder-name { width: 360px; flex: 0 0 360px; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: var(--label-font-size); font-family: var(--body-font); color: var(--text); background: var(--white); box-sizing: border-box; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* Lookback dropdown — blue 2px outline matching the platform button style, with chevron */
-    .drive-lookback-select, .email-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 24px 5px 10px; font-size: 12px; font-weight: 600; font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
-    .drive-lookback-select:hover, .email-lookback-select:hover { background-color: var(--blue-light); }
-    .drive-lookback-select:focus, .email-lookback-select:focus { outline: none; }
+    /* Drive lookback — extends .email-lookback-select from stylesheet */
+    .drive-lookback-select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-color: var(--white); background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 12"><path d="M2 4 L6 8 L10 4" stroke="%234A6D8C" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'); background-repeat: no-repeat; background-position: right 8px center; background-size: 10px; border: 2px solid var(--blue); border-radius: var(--btn-radius); padding: 5px 24px 5px 10px; font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); color: var(--blue); cursor: pointer; flex-shrink: 0; }
+    .drive-lookback-select:hover { background-color: var(--blue-light); }
+    .drive-lookback-select:focus { outline: none; }
 
-    /* Website multi-URL list — input boxes hardcoded to the same width as the account email box */
+    /* Website multi-URL list */
     #website-urls-list { width: 100%; }
     .website-url-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: 13px; font-family: var(--body-font); color: var(--text); }
+    .website-url-input { width: 360px; flex: 0 0 360px; box-sizing: border-box; border: var(--input-border-width) solid var(--border); border-radius: 6px; padding: 6px 12px; font-size: var(--label-font-size); font-family: var(--body-font); color: var(--text); }
     .website-url-input:focus { outline: none; border-color: var(--blue); }
 
     .btn-save-urls { background: var(--blue); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 10px 22px; font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: var(--body-font); margin-top: 10px; transition: background var(--btn-transition); }
     .btn-save-urls:hover { background: var(--blue-dark); }
 
-    /* Connection row control — Add buttons align right; lists fill width */
-    .connection-row-control { display: flex; flex-direction: column; align-items: flex-end; flex: 1 1 auto; min-width: 0; }
-
     /* Uniform description column width across all connection rows */
     #connections-rows .settings-row > div:first-child { flex: 0 0 300px; max-width: 300px; }
-
 
     /* ── TOOL CONNECTIONS ── */
     .tool-conn-tile { display:flex; align-items:flex-start; justify-content:space-between; padding:18px 24px; border-bottom:1px solid var(--border); }
@@ -146,7 +77,7 @@
     .tool-conn-desc { font-size:var(--note-font-size); color:var(--text-muted); margin-top:2px; font-family:var(--body-font); }
     .tool-conn-control { display:flex; flex-direction:column; align-items:flex-end; flex:1 1 auto; min-width:0; }
     .tool-conn-account { display:flex; align-items:center; gap:8px; padding:8px 0; }
-    .tool-conn-account-name { border:var(--input-border-width) solid var(--border); border-radius:6px; padding:6px 12px; font-size:13px; font-family:var(--body-font); color:var(--text); background:var(--white); max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tool-conn-account-name { border:var(--input-border-width) solid var(--border); border-radius:6px; padding:6px 12px; font-size:var(--label-font-size); font-family:var(--body-font); color:var(--text); background:var(--white); max-width:360px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
     .tool-conn-account-date { font-size:var(--badge-font-size); color:var(--text-muted); white-space:nowrap; }
     .tool-conn-coming-soon { display:inline-block; background:var(--blue-light); color:var(--blue); font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); padding:3px 10px; border-radius:6px; }
     .tool-conn-msg { font-size:var(--note-font-size); padding:8px 0; display:none; }
@@ -154,7 +85,6 @@
     .tool-conn-msg.error { color:var(--red); display:block; }
 
     /* ── PICKER OVERRIDES ── */
-    .settings-row-top { align-items: flex-start; }
     .picker-card { display: none; width: auto; margin: 8px 24px 28px; border-left: 1px solid var(--border); }
     .picker-card .settings-card-header { border-bottom: none; }
     .picker-card .settings-rows { max-height: 300px; overflow-y: auto; padding: 0 24px; }
@@ -175,18 +105,6 @@
     .picker-folder-row-pad { padding: 6px 0; }
     .picker-row-between { justify-content: space-between; }
     .picker-row-indent { padding-left: 24px; }
-
-    /* ── PERMISSION MODAL ── */
-    .perm-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay-bg); z-index:500; align-items:center; justify-content:center; }
-    .perm-modal-overlay.open { display:flex; }
-    .perm-modal { background:var(--white); border-radius:var(--card-radius); max-width:480px; width:90%; padding:var(--modal-padding); box-shadow:var(--modal-shadow); }
-    .perm-modal-title { font-family:var(--heading-font); font-size:var(--heading-lg-size); font-weight:var(--heading-lg-weight); color:var(--text); margin-bottom:12px; }
-    .perm-modal-body { font-size:var(--modal-body-font-size); color:var(--text); line-height:var(--modal-body-line-height); margin-bottom:24px; }
-    .perm-modal-actions { display:flex; gap:var(--actions-gap); justify-content:flex-end; }
-    .perm-modal-cancel { background:var(--white); color:var(--text); border:2px solid var(--border); border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
-    .perm-modal-cancel:hover { background:var(--bg); }
-    .perm-modal-continue { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
-    .perm-modal-continue:hover { background:var(--blue-dark); }
 
     @media (max-width: 768px) {
       .connection-item-email,
