@@ -688,6 +688,11 @@ JavaScript:
   success — never before
 - No silent catch blocks — every catch must at minimum log
   the error
+- No JS hover bindings or visual state assignments via
+  element.style — all hover states, active states, and
+  visual appearance must be defined in CSS rules or classes
+  in the stylesheet. JS may only toggle class names, never
+  set visual style properties directly.
 
 File integrity:
 - DOCTYPE present, closing tags present
