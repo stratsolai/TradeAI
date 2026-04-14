@@ -761,12 +761,12 @@ a:hover { opacity: 0.85; }
 .btn-dismiss:hover { background:var(--red-hover-bg); }
 
 /* Disconnect button — red-dark outline with × prefix. Used to remove connected accounts. */
-.btn-disconnect { display:inline-flex; align-items:center; gap:5px; background:var(--white); color:var(--red-dark); border:2px solid var(--red-dark); border-radius:var(--btn-radius); padding:6px 14px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); cursor:pointer; flex-shrink:0; white-space:nowrap; min-width:150px; transition:background var(--btn-transition), color var(--btn-transition); }
+.btn-disconnect { display:inline-flex; align-items:center; justify-content:center; gap:5px; background:var(--white); color:var(--red-dark); border:2px solid var(--red-dark); border-radius:var(--btn-radius); padding:6px 14px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); cursor:pointer; flex-shrink:0; white-space:nowrap; min-width:140px; transition:background var(--btn-transition), color var(--btn-transition); }
 .btn-disconnect::before { content:"\2717"; font-size:var(--btn-font-size); }
 .btn-disconnect:hover { background:var(--red-hover-bg); color:var(--red-dark); }
 
 /* Add connection button — blue outline. Used to add new connected accounts. */
-.btn-add-connection { display:inline-flex; align-items:center; gap:6px; background:var(--white); color:var(--blue); border:2px solid var(--blue); border-radius:var(--btn-radius); padding:9px 18px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); cursor:pointer; margin-top:10px; min-width:150px; transition:background var(--btn-transition); }
+.btn-add-connection { display:inline-flex; align-items:center; justify-content:center; gap:6px; background:var(--white); color:var(--blue); border:2px solid var(--blue); border-radius:var(--btn-radius); padding:9px 18px; font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); font-family:var(--body-font); cursor:pointer; margin-top:10px; min-width:140px; transition:background var(--btn-transition); }
 .btn-add-connection:hover { background:var(--blue-light); color:var(--blue); }
 
 /* Remove URL/item button — compact red-dark outline with × prefix. Used in folder/URL rows. */
