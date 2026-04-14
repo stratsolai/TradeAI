@@ -178,11 +178,11 @@ window.CL_PROFILE = {
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
         typeSelect +
         '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(ph.number || '') + '" placeholder="Phone number" />' +
-        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + pi + '\')">Remove</button>' +
+        '<button class="btn-remove-url" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + pi + '\')">Remove</button>' +
       '</div>';
     }).join('');
     var removeBtn = isPrimary ? '' :
-      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'loc-block-' + idx + '\')">Remove Location</button>';
+      '<button class="btn-remove-url" onclick="window.CL_PROFILE._removeRow(\'loc-block-' + idx + '\')">Remove Location</button>';
     return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
       '<div class="profile-location-row-header">' +
         '<strong style="color:#1A5490;">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
@@ -226,7 +226,7 @@ window.CL_PROFILE = {
     var extraSitesHtml = sites.slice(1).map(function(u, i) {
       return '<div class="profile-repeating-row" id="prof-site-' + (i + 1) + '">' +
         '<input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" placeholder="https://yoursite.com.au" />' +
-        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + (i + 1) + '\')">Remove</button>' +
+        '<button class="btn-remove-url" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + (i + 1) + '\')">Remove</button>' +
       '</div>';
     }).join('');
     var body =
@@ -256,7 +256,7 @@ window.CL_PROFILE = {
       typeOpts.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
     '</select>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
-    '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
+    '<button class="btn-remove-url" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
     wrap.appendChild(d);
   },
 
@@ -268,7 +268,7 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = 'prof-site-' + i;
     d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" />' +
-      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button>';
+      '<button class="btn-remove-url" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button>';
     wrap.appendChild(d);
   },
 
