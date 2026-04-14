@@ -814,7 +814,7 @@ a:hover { opacity: 0.85; }
 
 /* Lookback dropdown — custom dropdown matching .ea-cat-dropdown visual style. Used by email and drive/folder import lookback controls on settings pages. */
 .lookback-dropdown-wrap { position:relative; display:inline-block; }
-.lookback-dropdown { padding:8px 14px; border:2px solid var(--blue); border-radius:var(--btn-radius); font-size:var(--btn-font-size); font-family:var(--body-font); background:var(--white); color:var(--blue); cursor:pointer; white-space:nowrap; font-weight:var(--font-weight-semibold); }
+.lookback-dropdown { padding:5px 10px; border:2px solid var(--blue); border-radius:var(--btn-radius); font-size:var(--badge-font-size); font-family:var(--body-font); background:var(--white); color:var(--blue); cursor:pointer; white-space:nowrap; font-weight:var(--font-weight-semibold); }
 .lookback-dropdown:hover { background-color:var(--blue-light); }
 .lookback-dropdown.active { background-color:var(--blue-light); }
 .lookback-dropdown-menu { display:none; position:absolute; top:100%; left:0; margin-top:4px; min-width:140px; background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius); box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0; }
