@@ -631,8 +631,9 @@ export default async function handler(req, res) {
 
       // Build the q parameter — folder + not trashed + optional lookback window
       var qClauses = ["'" + folderId + "' in parents", 'trashed=false'];
-      if (entry.lookback_months != null) {
-        var months = parseInt(entry.lookback_months, 10);
+      var lookbackMonths = entry.lookback_months === undefined ? 1 : entry.lookback_months;
+      if (lookbackMonths != null) {
+        var months = parseInt(lookbackMonths, 10);
         if (months > 0) {
           var cutoff = new Date();
           cutoff.setMonth(cutoff.getMonth() - months);
