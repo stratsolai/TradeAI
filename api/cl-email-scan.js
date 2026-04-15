@@ -647,7 +647,7 @@ export default async function handler(req, res) {
 
     // Lookback window — always scan from today minus the user's lookback
     // setting. Deduplication is handled by the source_ref UNIQUE constraint.
-    const lookbackDays = parseInt(gmailEntry.lookback_days) || 90;
+    const lookbackDays = parseInt(gmailEntry.lookback_days) || 30;
     const afterTimestamp = Math.floor((Date.now() - lookbackDays * 24 * 60 * 60 * 1000) / 1000);
     const query = 'after:' + afterTimestamp;
     console.log('[Gmail] Date filter — lookbackDays:', lookbackDays, 'afterTimestamp:', afterTimestamp, 'afterDate:', new Date(afterTimestamp * 1000).toISOString(), 'accountEmail:', accountEmail);
