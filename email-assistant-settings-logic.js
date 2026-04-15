@@ -88,7 +88,7 @@ window.EA_SETTINGS = {
       // Rebuild defaults with saved enabled state preserved
       var cleaned = DEFAULT_CATS.map(function(def) {
         var saved = savedById[def.id];
-        return { id: def.id, label: def.label, description: def.description, enabled: saved ? saved.enabled : def.enabled };
+        return { id: def.id, label: def.label, description: def.description, enabled: (saved && saved.enabled === false) ? false : def.enabled };
       });
       // Append user-defined custom categories (IDs not in default list)
       var custom = self._settings.categories.filter(function(c) {
