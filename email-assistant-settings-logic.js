@@ -197,7 +197,7 @@ window.EA_SETTINGS = {
     },
     microsoft: {
       title: 'Connect Outlook',
-      body: 'StaxAI will be able to read your emails. StaxAI cannot send, delete, or modify your emails in any way.'
+      body: 'StaxAI will be able to read your emails and flag and unflag messages on your behalf. This is used solely for the email flagging feature. StaxAI cannot send, delete, or modify your emails in any other way.'
     }
   },
 
