@@ -755,8 +755,8 @@ export default async function handler(req, res) {
       }
 
       // Lookback filter — only process files created within the user's
-      // lookback window. Default 12 months. null means all time (no filter).
-      var lookbackMonths = entry.lookback_months === undefined ? 12 : entry.lookback_months;
+      // lookback window. Default 1 month. null means all time (no filter).
+      var lookbackMonths = entry.lookback_months === undefined ? 1 : entry.lookback_months;
       if (lookbackMonths != null) {
         var cutoffDate = new Date(Date.now() - lookbackMonths * 30 * 24 * 60 * 60 * 1000).toISOString();
         allFiles = allFiles.filter(function(f) { return f.lastModifiedDateTime && f.lastModifiedDateTime >= cutoffDate; });
