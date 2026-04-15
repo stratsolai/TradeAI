@@ -409,35 +409,6 @@ window.EA_SETTINGS = {
     var grid = document.getElementById('shortcuts-grid');
     if (!grid) return;
 
-    grid.querySelectorAll('.freq-btn[data-shortcut]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var catId = btn.dataset.shortcut;
-        var idx = self._categoryShortcuts.indexOf(catId);
-        if (idx > -1) {
-          self._categoryShortcuts.splice(idx, 1);
-          btn.classList.remove('active');
-          btn.textContent = 'Select';
-        } else {
-          if (self._categoryShortcuts.length >= 2) {
-            var msg = document.getElementById('save-shortcuts-msg');
-            if (msg) {
-              msg.textContent = 'Maximum 2 shortcuts. Deselect one first.';
-              msg.style.display = 'inline';
-              msg.classList.remove('msg-success');
-              msg.classList.add('msg-error');
-              setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
-            }
-            return;
-          }
-          self._categoryShortcuts.push(catId);
-          btn.classList.add('active');
-          btn.textContent = 'Selected';
-        }
-        var scSaveBtn = document.getElementById('save-shortcuts-btn');
-        if (scSaveBtn) { scSaveBtn.textContent = 'Save'; scSaveBtn.disabled = false; }
-      });
-    });
-
     var saveBtn = document.getElementById('save-shortcuts-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', async function () {
@@ -624,6 +595,35 @@ window.EA_SETTINGS = {
         if (!isNaN(idx) && self._categories[idx]) {
           self._removeCategory(idx);
         }
+        return;
+      }
+
+      var shortcutBtn = e.target.closest('[data-shortcut]');
+      if (shortcutBtn) {
+        var catId = shortcutBtn.getAttribute('data-shortcut');
+        var scIdx = self._categoryShortcuts.indexOf(catId);
+        if (scIdx > -1) {
+          self._categoryShortcuts.splice(scIdx, 1);
+          shortcutBtn.classList.remove('active');
+          shortcutBtn.textContent = 'Select';
+        } else {
+          if (self._categoryShortcuts.length >= 2) {
+            var scMsg = document.getElementById('save-shortcuts-msg');
+            if (scMsg) {
+              scMsg.textContent = 'Maximum 2 shortcuts. Deselect one first.';
+              scMsg.style.display = 'inline';
+              scMsg.classList.remove('msg-success');
+              scMsg.classList.add('msg-error');
+              setTimeout(function () { scMsg.style.display = 'none'; scMsg.classList.remove('msg-error'); }, 3000);
+            }
+            return;
+          }
+          self._categoryShortcuts.push(catId);
+          shortcutBtn.classList.add('active');
+          shortcutBtn.textContent = 'Selected';
+        }
+        var scSaveBtn = document.getElementById('save-shortcuts-btn');
+        if (scSaveBtn) { scSaveBtn.textContent = 'Save'; scSaveBtn.disabled = false; }
         return;
       }
 
