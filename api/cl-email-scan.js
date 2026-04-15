@@ -671,6 +671,25 @@ export default async function handler(req, res) {
       console.log('[Gmail] Page fetched — count:', (listData.messages || []).length, 'totalSoFar:', messages.length, 'hasNextPage:', !!pageToken);
     } while (pageToken);
 
+    // ── Pre-filter — skip emails already processed in previous scans ──
+    if (messages.length > 0) {
+      var sourceRefs = messages.map(function(m) { return 'email:' + m.id + ':0'; });
+      var existingRes = await supabase
+        .from('content_library')
+        .select('source_ref')
+        .eq('user_id', userId)
+        .in('source_ref', sourceRefs);
+      if (existingRes.error) {
+        console.error('[Gmail] Pre-filter query error:', existingRes.error.message);
+      } else if (existingRes.data && existingRes.data.length > 0) {
+        var existingRefs = new Set();
+        existingRes.data.forEach(function(row) { existingRefs.add(row.source_ref); });
+        var beforeCount = messages.length;
+        messages = messages.filter(function(m) { return !existingRefs.has('email:' + m.id + ':0'); });
+        console.log('[Gmail] Pre-filtered — already in content_library:', beforeCount - messages.length, 'remaining:', messages.length);
+      }
+    }
+
     // ── Cursor — resume from previous batch if cursor exists ──────────
     var BATCH_SIZE = 50;
     var cursorData = null;
