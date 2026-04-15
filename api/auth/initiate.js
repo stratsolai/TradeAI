@@ -22,7 +22,7 @@ module.exports = async (req, res) => {
     microsoft: {
       clientId: process.env.MICROSOFT_CLIENT_ID,
       authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-      scopes: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access',
+      scopes: 'https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access',
       redirectUri: APP_BASE_URL + '/api/auth/microsoft/callback'
     }
   };
