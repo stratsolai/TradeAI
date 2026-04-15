@@ -253,7 +253,7 @@
   <div class="nd-page">
     <div class="nd-page-header">
       <h1 class="nd-page-title">Industry News &amp; Updates</h1>
-      <button class="nd-refresh-btn" onclick="window.ND_LOGIC.refreshNews()">Refresh Now</button>
+      <button class="nd-refresh-btn" id="nd-refresh-btn">Refresh Now</button>
     </div>
 
     <div class="nd-tab-bar-wrap">
@@ -283,7 +283,7 @@
         var session = result.data && result.data.session;
         if (!session) { window.location.href = '/login'; return; }
         if (window.ND_LOGIC && window.ND_LOGIC.init) {
-          window.ND_LOGIC.init();
+          window.ND_LOGIC.init(supabase, session.user);
         }
       });
     })();
