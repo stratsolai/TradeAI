@@ -444,12 +444,11 @@ export default async function handler(req, res) {
         .select('message_id')
         .eq('user_id', userId)
         .in('message_id', allMsgIds);
-      if (existingRes.error) console.error('[EA] Pre-filter query error:', existingRes.error.message);
-      var existingIds = new Set();
-      if (existingRes.data && existingRes.data.length > 0) {
+      if (existingRes.error) {
+        console.error('[EA] Pre-filter query error:', existingRes.error.message);
+      } else if (existingRes.data && existingRes.data.length > 0) {
+        var existingIds = new Set();
         existingRes.data.forEach(function(row) { existingIds.add(row.message_id); });
-      }
-      if (existingIds.size > 0) {
         var beforeCount = allEmails.length;
         allEmails = allEmails.filter(function(e) { return !existingIds.has(e.id); });
         console.log('[EA] Pre-filtered — already in email_summaries:', beforeCount - allEmails.length, 'remaining:', allEmails.length);
