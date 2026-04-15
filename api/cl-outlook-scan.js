@@ -574,7 +574,7 @@ export default async function handler(req, res) {
 
     // Lookback window — always scan from today minus the user's lookback
     // setting. Deduplication is handled by the source_ref UNIQUE constraint.
-    var lookbackDays = parseInt(outlookEntry.lookback_days) || 90;
+    var lookbackDays = parseInt(outlookEntry.lookback_days) || 30;
     var afterDate = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000).toISOString();
     console.log('[Outlook] Date filter — lookbackDays:', lookbackDays, 'afterDate:', afterDate, 'accountEmail:', accountEmail);
 
