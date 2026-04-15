@@ -436,6 +436,26 @@ export default async function handler(req, res) {
 
     console.log('[EA] Total emails fetched:', allEmails.length);
 
+    // ── Pre-filter — skip emails already stored in email_summaries ────
+    if (allEmails.length > 0) {
+      var allMsgIds = allEmails.map(function(e) { return e.id; });
+      var existingRes = await supabase
+        .from('email_summaries')
+        .select('message_id')
+        .eq('user_id', userId)
+        .in('message_id', allMsgIds);
+      if (existingRes.error) console.error('[EA] Pre-filter query error:', existingRes.error.message);
+      var existingIds = new Set();
+      if (existingRes.data && existingRes.data.length > 0) {
+        existingRes.data.forEach(function(row) { existingIds.add(row.message_id); });
+      }
+      if (existingIds.size > 0) {
+        var beforeCount = allEmails.length;
+        allEmails = allEmails.filter(function(e) { return !existingIds.has(e.id); });
+        console.log('[EA] Pre-filtered — already in email_summaries:', beforeCount - allEmails.length, 'remaining:', allEmails.length);
+      }
+    }
+
     // ── Cursor — resume from previous batch if cursor exists ──────────
     var BATCH_SIZE = 50;
     var cursorData = null;
