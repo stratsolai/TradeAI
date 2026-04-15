@@ -777,7 +777,7 @@ window.CL_SETTINGS_LOGIC = {
   // Lookback dropdown — rendered identically on all four file storage providers.
   // provider: 'drive' | 'onedrive' | 'sharepoint' | 'dropbox'
   _buildLookbackHtml: function (provider, accountEmail, currentMonths) {
-    var current = (currentMonths == null) ? '12' : String(currentMonths);
+    var current = (currentMonths == null) ? '1' : String(currentMonths);
     var opts = [
       { v: '',   l: 'All time' },
       { v: '1',  l: '1 month' },
@@ -786,7 +786,7 @@ window.CL_SETTINGS_LOGIC = {
       { v: '12', l: '12 months' },
       { v: '24', l: '24 months' }
     ];
-    var currentLabel = 'All time';
+    var currentLabel = '1 month';
     opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
       '<span class="lookback-dropdown-wrap">' +
@@ -805,7 +805,7 @@ window.CL_SETTINGS_LOGIC = {
   // Uses days instead of months — email lookback windows are shorter.
   // provider: 'gmail' | 'outlook'
   _buildEmailLookbackHtml: function (provider, accountEmail, currentDays) {
-    var current = (currentDays == null) ? '90' : String(currentDays);
+    var current = (currentDays == null) ? '30' : String(currentDays);
     var opts = [
       { v: '30',  l: '30 days' },
       { v: '60',  l: '60 days' },
@@ -813,7 +813,7 @@ window.CL_SETTINGS_LOGIC = {
       { v: '180', l: '6 months' },
       { v: '365', l: '12 months' }
     ];
-    var currentLabel = '90 days';
+    var currentLabel = '30 days';
     opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
       '<span class="lookback-dropdown-wrap">' +
@@ -834,7 +834,7 @@ window.CL_SETTINGS_LOGIC = {
       var arr = self._emails;
       var entryIdx = arr.findIndex(function (a) { return a && a.email === accountEmail; });
       if (entryIdx === -1) return;
-      arr[entryIdx].lookback_days = parseInt(value, 10) || 90;
+      arr[entryIdx].lookback_days = parseInt(value, 10) || 30;
       var res = await self._supabase
         .from('profiles')
         .update({ cl_connected_emails: arr })
