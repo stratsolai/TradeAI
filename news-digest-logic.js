@@ -3,6 +3,7 @@
 
   window.ND_LOGIC = {
 
+    _supabase: null,
     _profile: null,
     _settings: null,
     _items: [],
@@ -10,30 +11,44 @@
 
     // ── INIT ────────────────────────────────────────────────────────────────
 
-    async init() {
-      if (!window.supabaseClient) {
-        console.error("ND_LOGIC: supabase client not ready");
+    async init(supabase, user) {
+      if (!supabase || !user) {
+        console.error("ND_LOGIC: supabase client or user not provided");
         return;
       }
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      if (!session) {
-        window.location.href = "//login";
-        return;
-      }
-      this._session = session;
-      this._userId = session.user.id;
-      this._token = session.access_token;
+      this._supabase = supabase;
+      this._userId = user.id;
 
+      var session;
+      try {
+        var sessionRes = await supabase.auth.getSession();
+        session = sessionRes.data && sessionRes.data.session;
+      } catch (e) {
+        console.error("[ND] Session fetch error:", e.message);
+      }
+      this._token = session ? session.access_token : null;
+
+      this._bindStaticEvents();
       await this.loadSettings();
       await this.loadSavedNews();
       this._checkCadenceAndRefresh();
+    },
+
+    // ── STATIC EVENT BINDINGS ──────────────────────────────────────────────
+
+    _bindStaticEvents() {
+      var self = this;
+      var refreshBtn = document.getElementById("nd-refresh-btn");
+      if (refreshBtn) {
+        refreshBtn.addEventListener("click", function() { self.refreshNews(); });
+      }
     },
 
     // ── SETTINGS ────────────────────────────────────────────────────────────
 
     async loadSettings() {
       try {
-        const res = await fetch("/api/news-digest-settings", {
+        var res = await fetch("/api/news-digest-settings", {
           headers: { "Authorization": "Bearer " + this._token }
         });
         if (!res.ok) throw new Error("settings fetch failed");
@@ -41,6 +56,7 @@
         this.buildCategoryTabs(this._settings.categories || []);
         this._renderSummaryTab();
       } catch (e) {
+        console.error("[ND] loadSettings error:", e.message);
         this._settings = { categories: this._defaultCategories(), cadence: "weekly" };
         this.buildCategoryTabs(this._settings.categories);
         this._renderSummaryTab();
@@ -61,46 +77,47 @@
     // ── CATEGORY TABS ───────────────────────────────────────────────────────
 
     buildCategoryTabs(categories) {
-      const tabBar = document.getElementById("nd-tab-bar");
+      var tabBar = document.getElementById("nd-tab-bar");
       if (!tabBar) return;
 
-      const active = (categories || []).filter(c => c.enabled);
+      var active = (categories || []).filter(function(c) { return c.enabled; });
+      var self = this;
 
       tabBar.innerHTML = "";
 
-      const summaryBtn = document.createElement("button");
+      var summaryBtn = document.createElement("button");
       summaryBtn.className = "nd-tab" + (this._activeTab === "summary" ? " active" : "");
       summaryBtn.dataset.tab = "summary";
       summaryBtn.textContent = "Summary";
-      summaryBtn.addEventListener("click", () => this.filterTab("summary"));
+      summaryBtn.addEventListener("click", function() { self.filterTab("summary"); });
       tabBar.appendChild(summaryBtn);
 
-      active.forEach(cat => {
-        const btn = document.createElement("button");
-        btn.className = "nd-tab" + (this._activeTab === cat.id ? " active" : "");
+      active.forEach(function(cat) {
+        var btn = document.createElement("button");
+        btn.className = "nd-tab" + (self._activeTab === cat.id ? " active" : "");
         btn.dataset.tab = cat.id;
         btn.textContent = cat.label;
-        btn.addEventListener("click", () => this.filterTab(cat.id));
+        btn.addEventListener("click", function() { self.filterTab(cat.id); });
         tabBar.appendChild(btn);
       });
 
-      const savedBtn = document.createElement("button");
+      var savedBtn = document.createElement("button");
       savedBtn.className = "nd-tab" + (this._activeTab === "saved" ? " active" : "");
       savedBtn.dataset.tab = "saved";
       savedBtn.textContent = "Saved";
-      savedBtn.addEventListener("click", () => this.filterTab("saved"));
+      savedBtn.addEventListener("click", function() { self.filterTab("saved"); });
       tabBar.appendChild(savedBtn);
     },
 
     filterTab(tabId) {
       this._activeTab = tabId;
 
-      document.querySelectorAll(".nd-tab").forEach(btn => {
+      document.querySelectorAll(".nd-tab").forEach(function(btn) {
         btn.classList.toggle("active", btn.dataset.tab === tabId);
       });
 
-      const summaryPanel = document.getElementById("nd-panel-summary");
-      const feedPanel = document.getElementById("nd-panel-feed");
+      var summaryPanel = document.getElementById("nd-panel-summary");
+      var feedPanel = document.getElementById("nd-panel-feed");
 
       if (tabId === "summary") {
         if (summaryPanel) summaryPanel.style.display = "";
@@ -117,17 +134,18 @@
 
     async loadSavedNews() {
       try {
-        const { data, error } = await window.supabaseClient
+        var result = await this._supabase
           .from("news_digest_items")
           .select("*")
           .eq("user_id", this._userId)
           .order("published_at", { ascending: false })
           .limit(200);
 
-        if (error) throw error;
-        this._items = data || [];
+        if (result.error) throw result.error;
+        this._items = result.data || [];
         this.renderNews(this._items, this._activeTab === "summary" ? null : this._activeTab);
       } catch (e) {
+        console.error("[ND] loadSavedNews error:", e.message);
         this._items = [];
       }
     },
@@ -135,59 +153,74 @@
     // ── SUMMARY TAB ─────────────────────────────────────────────────────────
 
     _renderSummaryTab() {
-      const panel = document.getElementById("nd-panel-summary");
+      var panel = document.getElementById("nd-panel-summary");
       if (!panel) return;
 
-      const summary = this._settings && this._settings.updated_summary;
-      const generatedAt = this._settings && this._settings.summary_generated_at;
-      const categories = (this._settings && this._settings.categories || []).filter(c => c.enabled);
+      var summary = this._settings && this._settings.updated_summary;
+      var generatedAt = this._settings && this._settings.summary_generated_at;
+      var categories = (this._settings && this._settings.categories || []).filter(function(c) { return c.enabled; });
+      var self = this;
 
       if (!summary || Object.keys(summary).length === 0) {
         panel.innerHTML = "<div class=\"nd-empty-state\">" +
           "<p>Your Industry News Digest is ready to set up.</p>" +
           "<p>Click <strong>Refresh Now</strong> to generate your first digest.</p>" +
-          "<button class=\"nd-btn-primary\" onclick=\"window.ND_LOGIC.refreshNews()\">Generate Your First Digest</button>" +
+          "<button class=\"nd-btn-primary nd-generate-btn\">Generate Your First Digest</button>" +
           "</div>";
+        this._bindSummaryEvents(panel);
         return;
       }
 
-      let html = "<div class=\"nd-summary-header\">";
+      var html = "<div class=\"nd-summary-header\">";
       if (generatedAt) {
-        const d = new Date(generatedAt);
+        var d = new Date(generatedAt);
         html += "<span class=\"nd-last-updated\">Last updated: " + this._relativeTime(d) + "</span>";
       }
-      html += "<button class=\"nd-btn-secondary\" onclick=\"window.ND_LOGIC.refreshNews()\">Refresh Now</button>";
+      html += "<button class=\"nd-btn-secondary nd-summary-refresh-btn\">Refresh Now</button>";
       html += "</div>";
 
-      categories.forEach(cat => {
-        const catSummary = summary[cat.id];
+      categories.forEach(function(cat) {
+        var catSummary = summary[cat.id];
         if (!catSummary) return;
 
-        const topStory = this._items.find(item => item.category === cat.id && item.url);
+        var topStory = self._items.find(function(item) { return item.category === cat.id && item.url; });
 
         html += "<div class=\"nd-summary-section\">";
-        html += "<h3 class=\"nd-summary-cat-heading\">" + this._escapeHtml(cat.label) + "</h3>";
-        html += "<p class=\"nd-summary-text\">" + this._escapeHtml(catSummary) + "</p>";
+        html += "<h3 class=\"nd-summary-cat-heading\">" + escHtml(cat.label) + "</h3>";
+        html += "<p class=\"nd-summary-text\">" + escHtml(catSummary) + "</p>";
         if (topStory) {
-          html += "<a class=\"nd-read-more\" href=\"" + this._escapeHtml(topStory.url) + "\" target=\"_blank\" rel=\"noopener\">Read more</a>";
+          html += "<a class=\"nd-read-more\" href=\"" + escHtml(topStory.url) + "\" target=\"_blank\" rel=\"noopener\">Read more</a>";
         }
         html += "</div>";
       });
 
       panel.innerHTML = html;
+      this._bindSummaryEvents(panel);
+    },
+
+    _bindSummaryEvents(panel) {
+      var self = this;
+      var generateBtn = panel.querySelector(".nd-generate-btn");
+      if (generateBtn) {
+        generateBtn.addEventListener("click", function() { self.refreshNews(); });
+      }
+      var summaryRefreshBtn = panel.querySelector(".nd-summary-refresh-btn");
+      if (summaryRefreshBtn) {
+        summaryRefreshBtn.addEventListener("click", function() { self.refreshNews(); });
+      }
     },
 
     // ── NEWS FEED ───────────────────────────────────────────────────────────
 
     renderNews(items, categoryId) {
-      const feed = document.getElementById("nd-panel-feed");
+      var feed = document.getElementById("nd-panel-feed");
       if (!feed) return;
 
-      let filtered;
+      var filtered;
       if (categoryId === "saved") {
-        filtered = items.filter(item => item.is_saved);
+        filtered = items.filter(function(item) { return item.is_saved; });
       } else if (categoryId) {
-        filtered = items.filter(item => item.category === categoryId);
+        filtered = items.filter(function(item) { return item.category === categoryId; });
       } else {
         filtered = items;
       }
@@ -197,34 +230,36 @@
         return;
       }
 
-      feed.innerHTML = filtered.map(item => this.renderNewsCard(item)).join("");
+      var self = this;
+      feed.innerHTML = filtered.map(function(item) { return self.renderNewsCard(item); }).join("");
+      this._bindFeedEvents(feed);
     },
 
     renderNewsCard(item) {
-      const title = this._escapeHtml(item.title || "Untitled");
-      const summary = this._escapeHtml(item.summary || "");
-      const sourceName = this._escapeHtml(item.source_name || "");
-      const sourceDomain = this._escapeHtml(item.source_domain || "");
-      const sourceType = item.source_type || "secondary";
-      const pubDate = item.published_at ? this._relativeTime(new Date(item.published_at)) : "";
-      const isSaved = item.is_saved;
-      const itemId = item.id;
+      var title = escHtml(item.title || "Untitled");
+      var summary = escHtml(item.summary || "");
+      var sourceName = escHtml(item.source_name || "");
+      var sourceDomain = escHtml(item.source_domain || "");
+      var sourceType = item.source_type || "secondary";
+      var pubDate = item.published_at ? this._relativeTime(new Date(item.published_at)) : "";
+      var isSaved = item.is_saved;
+      var itemId = item.id;
 
-      const badgeClass = sourceType === "primary" ? "nd-badge-primary"
+      var badgeClass = sourceType === "primary" ? "nd-badge-primary"
         : sourceType === "email" ? "nd-badge-email"
         : "nd-badge-secondary";
-      const badgeLabel = sourceType === "primary" ? "Primary Source"
+      var badgeLabel = sourceType === "primary" ? "Primary Source"
         : sourceType === "email" ? "Email"
         : "Trade Media";
 
-      const titleHtml = item.url
-        ? "<a class=\"nd-card-title\" href=\"" + this._escapeHtml(item.url) + "\" target=\"_blank\" rel=\"noopener\">" + title + "</a>"
+      var titleHtml = item.url
+        ? "<a class=\"nd-card-title\" href=\"" + escHtml(item.url) + "\" target=\"_blank\" rel=\"noopener\">" + title + "</a>"
         : "<span class=\"nd-card-title\">" + title + "</span>";
 
       return "<div class=\"nd-card\" data-id=\"" + itemId + "\">" +
         "<div class=\"nd-card-header\">" +
         titleHtml +
-        "<button class=\"nd-bookmark" + (isSaved ? " saved" : "") + "\" onclick=\"window.ND_LOGIC.toggleSaved('" + itemId + "')\" title=\"" + (isSaved ? "Remove bookmark" : "Bookmark") + "\">&#9673;</button>" +
+        "<button class=\"nd-bookmark" + (isSaved ? " saved" : "") + "\" data-id=\"" + itemId + "\" title=\"" + (isSaved ? "Remove bookmark" : "Bookmark") + "\">&#9673;</button>" +
         "</div>" +
         "<p class=\"nd-card-summary\">" + summary + "</p>" +
         "<div class=\"nd-card-meta\">" +
@@ -236,20 +271,29 @@
         "</div>";
     },
 
+    _bindFeedEvents(feed) {
+      var self = this;
+      feed.querySelectorAll(".nd-bookmark").forEach(function(btn) {
+        btn.addEventListener("click", function() {
+          self.toggleSaved(btn.dataset.id);
+        });
+      });
+    },
+
     // ── REFRESH ─────────────────────────────────────────────────────────────
 
     _checkCadenceAndRefresh() {
       if (!this._settings) return;
-      const cadence = this._settings.cadence || "weekly";
-      const lastRefresh = this._settings.summary_generated_at
+      var cadence = this._settings.cadence || "weekly";
+      var lastRefresh = this._settings.summary_generated_at
         ? new Date(this._settings.summary_generated_at)
         : null;
 
       if (!lastRefresh) return;
 
-      const now = Date.now();
-      const ageMs = now - lastRefresh.getTime();
-      const threshold = cadence === "daily" ? 20 * 60 * 60 * 1000 : 6 * 24 * 60 * 60 * 1000;
+      var now = Date.now();
+      var ageMs = now - lastRefresh.getTime();
+      var threshold = cadence === "daily" ? 20 * 60 * 60 * 1000 : 6 * 24 * 60 * 60 * 1000;
 
       if (ageMs > threshold) {
         this.refreshNews();
@@ -257,11 +301,13 @@
     },
 
     async refreshNews() {
-      const refreshBtn = document.querySelector(".nd-btn-secondary, .nd-btn-primary");
+      var refreshBtn = document.querySelector(".nd-summary-refresh-btn");
+      var headerBtn = document.getElementById("nd-refresh-btn");
       if (refreshBtn) refreshBtn.textContent = "Refreshing...";
+      if (headerBtn) headerBtn.textContent = "Refreshing...";
 
       try {
-        const res = await fetch("/api/news-digest-refresh", {
+        var res = await fetch("/api/news-digest-refresh", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -275,60 +321,53 @@
         await this.loadSettings();
         await this.loadSavedNews();
       } catch (e) {
+        console.error("[ND] refreshNews error:", e.message);
         if (refreshBtn) refreshBtn.textContent = "Refresh Now";
+        if (headerBtn) headerBtn.textContent = "Refresh Now";
       }
     },
 
     // ── BOOKMARK ────────────────────────────────────────────────────────────
 
     async toggleSaved(itemId) {
-      const item = this._items.find(i => i.id === itemId);
+      var item = this._items.find(function(i) { return i.id === itemId; });
       if (!item) return;
 
-      const newSaved = !item.is_saved;
+      var newSaved = !item.is_saved;
 
-      const { error } = await window.supabaseClient
+      var result = await this._supabase
         .from("news_digest_items")
         .update({ is_saved: newSaved })
         .eq("id", itemId)
         .eq("user_id", this._userId);
 
-      if (!error) {
-        item.is_saved = newSaved;
-        const card = document.querySelector(".nd-card[data-id=\"" + itemId + "\"]");
-        if (card) {
-          const btn = card.querySelector(".nd-bookmark");
-          if (btn) {
-            btn.classList.toggle("saved", newSaved);
-            btn.title = newSaved ? "Remove bookmark" : "Bookmark";
-          }
+      if (result.error) {
+        console.error("[ND] toggleSaved error:", result.error.message);
+        return;
+      }
+
+      item.is_saved = newSaved;
+      var card = document.querySelector(".nd-card[data-id=\"" + itemId + "\"]");
+      if (card) {
+        var btn = card.querySelector(".nd-bookmark");
+        if (btn) {
+          btn.classList.toggle("saved", newSaved);
+          btn.title = newSaved ? "Remove bookmark" : "Bookmark";
         }
       }
     },
 
-    // ── SETTINGS MODAL ──────────────────────────────────────────────────────
-
     // ── UTILITIES ───────────────────────────────────────────────────────────
 
     _relativeTime(date) {
-      const diffMs = Date.now() - date.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
+      var diffMs = Date.now() - date.getTime();
+      var diffMins = Math.floor(diffMs / 60000);
       if (diffMins < 60) return diffMins + " min" + (diffMins !== 1 ? "s" : "") + " ago";
-      const diffHours = Math.floor(diffMins / 60);
+      var diffHours = Math.floor(diffMins / 60);
       if (diffHours < 24) return diffHours + " hour" + (diffHours !== 1 ? "s" : "") + " ago";
-      const diffDays = Math.floor(diffHours / 24);
+      var diffDays = Math.floor(diffHours / 24);
       if (diffDays < 7) return diffDays + " day" + (diffDays !== 1 ? "s" : "") + " ago";
       return date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-    },
-
-    _escapeHtml(str) {
-      if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
     }
 
   };
