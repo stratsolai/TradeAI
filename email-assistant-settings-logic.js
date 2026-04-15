@@ -18,6 +18,7 @@ window.EA_SETTINGS = {
       self._loadAll();
       self._bindEventDelegation();
       self._bindPermissionModal();
+      self._bindSaveMsgDismiss();
     });
   },
 
@@ -401,10 +402,16 @@ window.EA_SETTINGS = {
     '</div>' +
     '<div class="settings-footer">' +
       '<button type="button" class="btn-save" id="save-shortcuts-btn">Save</button>' +
-      '<span class="save-msg" id="save-shortcuts-msg"></span>' +
     '</div>';
 
     container.innerHTML = html;
+    if (!document.getElementById('save-shortcuts-msg')) {
+      var msgEl = document.createElement('div');
+      msgEl.id = 'save-shortcuts-msg';
+      msgEl.className = 'save-msg';
+      msgEl.innerHTML = '<div class="save-msg-card"><div class="save-msg-text"></div><button type="button" class="save-msg-ok">OK</button></div>';
+      document.body.appendChild(msgEl);
+    }
     self._bindShortcutEvents();
   },
 
@@ -436,14 +443,7 @@ window.EA_SETTINGS = {
         var nameVal = nameInput ? nameInput.value.trim() : '';
         var descVal = descInput ? descInput.value.trim() : '';
         if (!nameVal || !descVal) {
-          var msg = document.getElementById('save-categories-msg');
-          if (msg) {
-            msg.textContent = 'Both name and description are required.';
-            msg.style.display = 'inline';
-            msg.classList.remove('msg-success');
-            msg.classList.add('msg-error');
-            setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
-          }
+          self._showSaveMsg('save-categories-msg', 'Both name and description are required.', 'error');
           return;
         }
         var customId = nameVal.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -470,14 +470,7 @@ window.EA_SETTINGS = {
           if (!self._categories[i].description) { missing = true; break; }
         }
         if (missing) {
-          var msg = document.getElementById('save-categories-msg');
-          if (msg) {
-            msg.textContent = 'All custom categories require a description.';
-            msg.style.display = 'inline';
-            msg.classList.remove('msg-success');
-            msg.classList.add('msg-error');
-            setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 3000);
-          }
+          self._showSaveMsg('save-categories-msg', 'All custom categories require a description.', 'error');
           return;
         }
         self._settings.categories = self._categories;
@@ -502,7 +495,6 @@ window.EA_SETTINGS = {
     var self = this;
     var cat = self._categories[idx];
     if (!cat) return;
-    var msg = document.getElementById('save-categories-msg');
     try {
       var result = await self._supabase
         .from('email_summaries')
@@ -512,13 +504,7 @@ window.EA_SETTINGS = {
       if (result.error) { console.error('[EA Settings] Remove check query error:', result.error); return; }
       var count = result.count || 0;
       if (count > 0) {
-        if (msg) {
-          msg.textContent = 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.';
-          msg.style.display = 'inline';
-          msg.classList.remove('msg-success');
-          msg.classList.add('msg-error');
-          setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-error'); }, 5000);
-        }
+        self._showSaveMsg('save-categories-msg', 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.', 'error');
         return;
       }
     } catch (e) {
@@ -529,13 +515,7 @@ window.EA_SETTINGS = {
     self._settings.categories = self._categories;
     await self._saveSettings();
     self._renderCategories();
-    if (msg) {
-      msg.textContent = 'Category removed.';
-      msg.style.display = 'inline';
-      msg.classList.remove('msg-error');
-      msg.classList.add('msg-success');
-      setTimeout(function () { msg.style.display = 'none'; msg.classList.remove('msg-success'); }, 3000);
-    }
+    self._showSaveMsg('save-categories-msg', 'Category removed.', 'success');
   },
 
   // ── EVENT DELEGATION ──
@@ -612,14 +592,7 @@ window.EA_SETTINGS = {
           shortcutBtn.textContent = 'Select';
         } else {
           if (self._categoryShortcuts.length >= 2) {
-            var scMsg = document.getElementById('save-shortcuts-msg');
-            if (scMsg) {
-              scMsg.textContent = 'Maximum 2 shortcuts. Deselect one first.';
-              scMsg.style.display = 'inline';
-              scMsg.classList.remove('msg-success');
-              scMsg.classList.add('msg-error');
-              setTimeout(function () { scMsg.style.display = 'none'; scMsg.classList.remove('msg-error'); }, 3000);
-            }
+            self._showSaveMsg('save-shortcuts-msg', 'Maximum 2 shortcuts. Deselect one first.', 'error');
             return;
           }
           self._categoryShortcuts.push(catId);
@@ -645,6 +618,35 @@ window.EA_SETTINGS = {
           self._resetCatSaveBtn();
         }
         return;
+      }
+    });
+  },
+
+  // ── SAVE MSG MODAL ──
+  _showSaveMsg: function (elementId, text, type) {
+    var el = document.getElementById(elementId);
+    if (!el) return;
+    var textEl = el.querySelector('.save-msg-text');
+    if (textEl) textEl.textContent = text;
+    el.classList.remove('msg-error', 'msg-success');
+    el.classList.add(type === 'success' ? 'msg-success' : 'msg-error');
+    el.classList.add('open');
+  },
+
+  _bindSaveMsgDismiss: function () {
+    var self = this;
+    document.addEventListener('click', function (e) {
+      var okBtn = e.target.closest('.save-msg-ok');
+      if (okBtn) {
+        var overlay = okBtn.closest('.save-msg');
+        if (overlay) {
+          overlay.classList.remove('open', 'msg-error', 'msg-success');
+        }
+        return;
+      }
+      // Close on overlay background click
+      if (e.target.classList.contains('save-msg') && e.target.classList.contains('open')) {
+        e.target.classList.remove('open', 'msg-error', 'msg-success');
       }
     });
   },
