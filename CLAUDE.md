@@ -121,6 +121,33 @@ registration email sent April 2026, awaiting response.
 Tradify — enquiry email sent April 2026, awaiting
 confirmation of whether public API is available.
 
+### Task 18 — CL Tool Outputs Tab
+
+Build complete April 2026. Final test of output content
+and tile counts blocked until tools send data to the
+Content Library. content-library.html structural cleanup
+complete April 2026 — dead CSS removed, dead modals
+removed, inline onclick handlers moved to logic file,
+inline styles moved to CSS block. File reduced from
+1,171 to approximately 510 lines.
+
+### Task 20 — Email Assistant Functional Review and Build
+
+In progress April 2026. Current session work completed:
+email-assistant-settings.html fully rebuilt to
+LAYOUT-STANDARD.md standard, OAuth connection fixed and
+confirmed working for Gmail and Outlook.
+
+Outstanding before sign-off:
+- Integration test end-to-end with real Gmail and
+  Outlook accounts
+
+Note: stylesheet comparison pass is complete. The
+outstanding EA fixes from this session (category labels,
+shortcut pills, dedup alignment across CL and EA scan
+files) are also part of this task and must be complete
+and confirmed working before this task can be signed off.
+
 ### Task 21 — Scan Frequency Scheduling
 
 Not started. The Scan Frequency UI exists on
