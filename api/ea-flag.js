@@ -18,6 +18,47 @@ import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
+const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
+
+async function refreshGmailToken(refreshToken) {
+  var res = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      client_secret: GOOGLE_CLIENT_SECRET,
+      refresh_token: refreshToken,
+      grant_type: 'refresh_token'
+    })
+  });
+  var data = await res.json();
+  if (!data.access_token) throw new Error('Gmail token refresh failed: ' + JSON.stringify(data));
+  return data.access_token;
+}
+
+async function refreshOutlookToken(refreshToken) {
+  var params = new URLSearchParams({
+    client_id: MICROSOFT_CLIENT_ID,
+    client_secret: MICROSOFT_CLIENT_SECRET,
+    refresh_token: refreshToken,
+    grant_type: 'refresh_token',
+    scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
+  }).toString();
+  var res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': Buffer.byteLength(params).toString()
+    },
+    body: params
+  });
+  var data = await res.json();
+  if (!data.access_token) throw new Error('Outlook token refresh failed: ' + JSON.stringify(data));
+  return data.access_token;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -105,6 +146,23 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
+    // Refresh token before write-back — stored access tokens expire after ~1 hour
+    var accessToken = account.access_token;
+    if (account.refresh_token) {
+      try {
+        if (provider === 'gmail') {
+          accessToken = await refreshGmailToken(account.refresh_token);
+        } else {
+          accessToken = await refreshOutlookToken(account.refresh_token);
+        }
+        account.access_token = accessToken;
+        await supabase.from('profiles').update({ ea_connected_emails: accounts }).eq('id', userId);
+        console.log('[ea-flag] Token refreshed for', provider);
+      } catch (refreshErr) {
+        console.error('[ea-flag] Token refresh failed:', refreshErr.message);
+      }
+    }
+
     if (provider === 'gmail') {
       // Gmail: add or remove STARRED label
       var gmailUrl = 'https://gmail.googleapis.com/gmail/v1/users/me/messages/' + encodeURIComponent(externalMsgId) + '/modify';
@@ -116,7 +174,7 @@ export default async function handler(req, res) {
       var gmailResp = await fetch(gmailUrl, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer ' + account.access_token,
+          'Authorization': 'Bearer ' + accessToken,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(gmailBody)
@@ -137,7 +195,7 @@ export default async function handler(req, res) {
       var outlookResp = await fetch(outlookUrl, {
         method: 'PATCH',
         headers: {
-          'Authorization': 'Bearer ' + account.access_token,
+          'Authorization': 'Bearer ' + accessToken,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify(outlookBody)
