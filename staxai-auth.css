@@ -749,10 +749,12 @@ a:hover { opacity: 0.85; }
   cursor: not-allowed;
 }
 
-.save-msg {
-  font-size: var(--note-font-size);
-  display: none;
-}
+.save-msg { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:var(--modal-overlay-bg); z-index:500; align-items:center; justify-content:center; }
+.save-msg.open { display:flex; }
+.save-msg-card { background:var(--white); border-radius:var(--card-radius); max-width:400px; width:90%; padding:var(--modal-padding); box-shadow:var(--modal-shadow); text-align:center; }
+.save-msg-text { font-size:var(--modal-body-font-size); color:var(--text); line-height:var(--modal-body-line-height); margin-bottom:20px; }
+.save-msg-ok { background:var(--blue); color:var(--white); border:none; border-radius:var(--btn-radius); padding:10px 22px; font-size:var(--btn-font-size); font-weight:var(--font-weight-semibold); cursor:pointer; font-family:var(--body-font); transition:background var(--btn-transition); }
+.save-msg-ok:hover { background:var(--blue-dark); }
 
 /* ------------------------------------------------------------
    15. SETTINGS CONNECTIONS & SHARED COMPONENTS
@@ -1116,6 +1118,6 @@ a:hover { opacity: 0.85; }
 /* EA detail metadata row — flex row for sender/badge/date in detail view */
 .ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 
-/* Settings message states — applied to save/validation feedback messages */
-.msg-error { color:var(--red); }
-.msg-success { color:var(--green-dark); }
+/* Settings message states — applied to .save-msg-text inside modal */
+.save-msg.msg-error .save-msg-text { color:var(--red); }
+.save-msg.msg-success .save-msg-text { color:var(--green-dark); }
