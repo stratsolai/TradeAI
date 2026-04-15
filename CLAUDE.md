@@ -131,32 +131,18 @@ removed, inline onclick handlers moved to logic file,
 inline styles moved to CSS block. File reduced from
 1,171 to approximately 510 lines.
 
-### Task 20 — Email Assistant Functional Review and Build
-
-In progress April 2026. Current session work completed:
-email-assistant-settings.html fully rebuilt to
-LAYOUT-STANDARD.md standard, OAuth connection fixed and
-confirmed working for Gmail and Outlook.
-
-Outstanding before sign-off:
-- Integration test end-to-end with real Gmail and
-  Outlook accounts
-
-Note: stylesheet comparison pass is complete. The
-outstanding EA fixes from this session (category labels,
-shortcut pills, dedup alignment across CL and EA scan
-files) are also part of this task and must be complete
-and confirmed working before this task can be signed off.
-
 ### Task 21 — Scan Frequency Scheduling
 
-Not started. The Scan Frequency UI exists on
-cl-settings.html and email-assistant-settings.html and
-saves a preference to Supabase, but no scheduler or cron
-trigger reads that preference and queues scans at the
-correct intervals. Affects both CL and EA. Wire saved
-frequency preferences to the background scan worker
-queue for both CL and EA.
+Build complete April 2026. api/scan-scheduler.js runs
+daily at 1:00 AM UTC via Vercel Cron. Reads scan
+frequency preferences from cl_settings (CL sources) and
+profiles.ea_connected_emails (EA sources). Checks last
+completed scan time per source from cl_scan_jobs. Queues
+due scans with priority 2 (below manual scans at
+priority 1). Skips sources set to manual. Skips sources
+with an active queued or running job. All CL and EA scan
+frequency defaults set to manual — no automatic scans
+without explicit user choice.
 
 ---
 
@@ -243,7 +229,7 @@ is complete and confirmed working.
 
 | Step | Task                                                       |
 |------|------------------------------------------------------------|
-| 1    | Task 21 — Scan frequency scheduling for CL and EA.         |
+| 1    | ~~Task 21 — Scan frequency scheduling for CL and EA.~~ **COMPLETE** |
 | 2    | Stylesheet rollout — news-digest.html and news-digest-settings.html. |
 | 3    | Stylesheet rollout — all remaining authenticated pages     |
 | 4    | Functional reviews — all 5 built tools                     |
