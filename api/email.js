@@ -341,7 +341,7 @@ export default async function handler(req, res) {
     }
 
     // Lookback window
-    var lookbackDays = parseInt(entry.lookback_days) || 90;
+    var lookbackDays = parseInt(entry.lookback_days) || 30;
     console.log('[EA] Lookback:', lookbackDays, 'days');
 
     // Fetch messages
