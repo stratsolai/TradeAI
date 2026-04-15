@@ -144,21 +144,6 @@ with an active queued or running job. All CL and EA scan
 frequency defaults set to manual — no automatic scans
 without explicit user choice.
 
-### Task 30 — Session Expiry Handler
-
-Session expiry — when a Supabase session expires,
-authenticated actions fail silently across all pages.
-Currently only the EA star/flag button has a null-session
-guard. A global session expiry handler is needed that
-either automatically refreshes the session or redirects
-the user to login. Must be addressed before launch.
-
-### Task 31 — CL Tool Outputs Card Styling
-
-CL Tool Outputs tab — item cards are not using the same
-CSS class as Source Review tab cards and do not match the
-platform standard. Fix during the next CL session.
-
 ---
 
 ## Known Issues & Notes
@@ -234,6 +219,13 @@ platform standard. Fix during the next CL session.
 - This platform is not live. There is only one user and
   all data is test data. Decisions about database changes
   do not require data-loss analysis.
+- Global session expiry handler added to shared-utils.js
+  April 2026. Uses onAuthStateChange to listen for the
+  SIGNED_OUT event and redirects to /login. Covers all
+  authenticated pages automatically because shared-utils.js
+  is loaded on every authenticated page. Safe alongside the
+  existing sign-out redirect in topbar.js — both target
+  /login so the first redirect wins.
 
 ---
 
