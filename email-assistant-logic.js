@@ -904,7 +904,13 @@ window.EA_LOGIC = {
 
     var email = this._emails.find(function(e) { return (e.id || e.message_id) === id; });
     try {
-      var session = (await this._supabase.auth.getSession()).data.session;
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session || !session.access_token) {
+        console.error('[EA] Flag error: no active session — please refresh the page');
+        revertFlag();
+        return;
+      }
       var resp = await fetch('/api/ea-flag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
