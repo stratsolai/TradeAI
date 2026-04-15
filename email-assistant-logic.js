@@ -91,12 +91,15 @@ window.EA_LOGIC = {
     if (!this._settings.categories || this._settings.categories.length === 0) {
       this._settings.categories = this.DEFAULT_CATEGORIES;
     }
+    console.log('[EA Debug] _loadSettings complete — categories count:', this._settings.categories.length, 'shortcuts before filter:', JSON.stringify(this._categoryShortcuts));
+    console.log('[EA Debug] categories:', this._settings.categories.map(function(c) { return c.id + ':' + c.enabled; }).join(', '));
     // Filter out shortcuts for categories that are disabled
     var cats = this._settings.categories;
     this._categoryShortcuts = this._categoryShortcuts.filter(function(id) {
       var cat = cats.find(function(c) { return c.id === id; });
       return cat && cat.enabled;
     });
+    console.log('[EA Debug] shortcuts after filter:', JSON.stringify(this._categoryShortcuts));
   },
 
   // ── Accounts ───────────────────────────────────────��──────
@@ -204,6 +207,7 @@ window.EA_LOGIC = {
     var dropdownCats = enabledCats.filter(function(c) {
       return self._categoryShortcuts.indexOf(c.id) === -1;
     });
+    console.log('[EA Debug] _renderCategoryPills — enabledCats:', enabledCats.length, 'shortcutCats:', shortcutCats.length, 'dropdownCats:', dropdownCats.length, 'shortcuts:', JSON.stringify(self._categoryShortcuts));
 
     var html = pills.map(function(p) {
       var isActive = false;
@@ -237,6 +241,7 @@ window.EA_LOGIC = {
 
     html += '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
+    console.log('[EA Debug] _renderCategoryPills — html length:', html.length, 'container exists:', !!container);
     container.innerHTML = html;
 
     // Bind status pills
