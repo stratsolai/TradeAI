@@ -147,7 +147,14 @@ Every section within a tab is wrapped in a settings card.
   </div>
   <div class="settings-footer">
     <button class="btn-save" id="save-[section]-btn">Save</button>
-    <span class="save-msg" id="save-[section]-msg"></span>
+  </div>
+</div>
+
+<!-- Save message modal — placed at page level, outside the settings card -->
+<div class="save-msg" id="save-[section]-msg">
+  <div class="save-msg-card">
+    <div class="save-msg-text"></div>
+    <button type="button" class="save-msg-ok">OK</button>
   </div>
 </div>
 ```
@@ -427,8 +434,15 @@ buttons.
     <div class="settings-rows" id="[section]-grid"></div>
     <div class="settings-footer">
       <button type="button" class="btn-save" id="save-[section]-btn">Save</button>
-      <span class="save-msg" id="save-[section]-msg"></span>
     </div>
+  </div>
+</div>
+
+<!-- Save message modal — placed at page level -->
+<div class="save-msg" id="save-[section]-msg">
+  <div class="save-msg-card">
+    <div class="save-msg-text"></div>
+    <button type="button" class="save-msg-ok">OK</button>
   </div>
 </div>
 ```
