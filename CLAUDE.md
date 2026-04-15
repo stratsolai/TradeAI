@@ -144,6 +144,21 @@ with an active queued or running job. All CL and EA scan
 frequency defaults set to manual — no automatic scans
 without explicit user choice.
 
+### Task 30 — Session Expiry Handler
+
+Session expiry — when a Supabase session expires,
+authenticated actions fail silently across all pages.
+Currently only the EA star/flag button has a null-session
+guard. A global session expiry handler is needed that
+either automatically refreshes the session or redirects
+the user to login. Must be addressed before launch.
+
+### Task 31 — CL Tool Outputs Card Styling
+
+CL Tool Outputs tab — item cards are not using the same
+CSS class as Source Review tab cards and do not match the
+platform standard. Fix during the next CL session.
+
 ---
 
 ## Known Issues & Notes
@@ -330,6 +345,10 @@ Files added April 2026 (Task 27 — cl-settings-logic.js split):
 ## Supabase Schema
 
 This section is the source of truth for the database schema.
+
+All CL and EA scan frequency defaults are set to 'manual'
+in the UI and JS fallbacks as of April 2026. No automatic
+scans run without explicit user choice.
 
 ---
 
@@ -691,4 +710,7 @@ Error handling:
 | Handled-Spec-v1_1              | write-back, dismiss/restore,        |
 |                                 | days-back scan coverage control.    |
 |                                 | Approved April 2026. Build          |
+|                                 | complete.                           |
+| StaxAI-Scan-Frequency-         | Scan frequency scheduling for CL    |
+| Scheduling-Spec-v1_0           | and EA. Approved April 2026. Build  |
 |                                 | complete.                           |
