@@ -105,9 +105,13 @@ window.EA_SETTINGS = {
       self._categories = DEFAULT_CATS;
     }
 
-    // Load category shortcuts — default to Leads and Projects
+    // Load category shortcuts — default to Leads and Projects, normalise labels to IDs
     if (Array.isArray(self._settings.category_shortcuts) && self._settings.category_shortcuts.length > 0) {
-      self._categoryShortcuts = self._settings.category_shortcuts;
+      var scCats = self._categories;
+      self._categoryShortcuts = self._settings.category_shortcuts.map(function(val) {
+        var byLabel = scCats.find(function(c) { return c.label === val; });
+        return byLabel ? byLabel.id : val;
+      });
     } else {
       self._categoryShortcuts = ['enquiries', 'projects'];
     }
