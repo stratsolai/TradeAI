@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -17,85 +18,6 @@
       color: #333333;
       min-height: 100vh;
     }
-
-    .topbar {
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    
-    .topbar-logo { display: flex; align-items: center; }
-    .topbar-logo img { height: 38px; display: block; }
-    .topbar-back {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: color 0.2s;
-    }
-    .topbar-back:hover { color: #fff; }
-    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; margin-right: auto; }
-    .topbar-nav a { font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.75); text-decoration: none; transition: color 0.2s; }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
-    .topbar-account { position: relative; }
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .topbar-account-btn:hover { color: #fff; }
-    .topbar-settings-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-family: "DM Sans", sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      padding: 0;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    .topbar-settings-btn:hover { color: #fff; }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: calc(100% + 8px);
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      min-width: 180px;
-      overflow: hidden;
-      z-index: 200;
-    }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email {
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #888;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .account-dropdown-item {
-      display: block;
-      width: 100%;
-      padding: 11px 16px;
-      background: none;
-      border: none;
-      text-align: left;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      color: #333;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .account-dropdown-item:hover { background: #f5f5f5; }
 
     .nd-page {
       max-width: 900px;
@@ -310,23 +232,23 @@
 </head>
 <body>
 
-      <div class="topbar">
+  <nav class="topbar">
     <a href="/" class="topbar-logo">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
-    <div class="topbar-nav"><a id="back-btn" href="/dashboard" class="topbar-back">Dashboard</a></div>
-    <nav class="topbar-right">
-      <a class="topbar-nav-link" href="/news/settings">Settings</a>
-      <div class="topbar-account" id="account-menu">
-        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+    <div class="topbar-nav"><a href="/dashboard">Dashboard</a></div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a href="/news/settings" class="topbar-nav-link">Settings</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email">&#8212;</div>
-                    <a href="/account" class="account-dropdown-item">Account Management</a>
+          <a href="/account" class="account-dropdown-item">Account Management</a>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
-    </nav>
-  </div>
+    </div>
+  </nav>
 
   <div class="nd-page">
     <div class="nd-page-header">
@@ -349,47 +271,22 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
   <script src="/news-digest-logic.js?v=1"></script>
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.getSession().then(function (result) {
-          var session = result.data && result.data.session;
-          if (session && session.user) {
-            var email = session.user.email || "";
-            var shortEl = document.getElementById("account-email-short");
-            var dropEmailEl = document.getElementById("account-dropdown-email");
-            if (shortEl) shortEl.textContent = email.split('@')[0];
-            if (dropEmailEl) dropEmailEl.textContent = email;
-          }
-        });
-      }
-      var accountBtn = document.getElementById("account-btn");
-      var accountDropdown = document.getElementById("account-dropdown");
-      if (accountBtn && accountDropdown) {
-        accountBtn.addEventListener("click", function (e) {
-          e.stopPropagation();
-          accountDropdown.classList.toggle("open");
-        });
-        document.addEventListener("click", function () {
-          accountDropdown.classList.remove("open");
-        });
-      }
-      var signOutBtn = document.getElementById("sign-out-btn");
-      if (signOutBtn) {
-        signOutBtn.addEventListener("click", function () {
-          if (window.supabaseClient) {
-            window.supabaseClient.auth.signOut().then(function () {
-              window.location.href = "//login";
-            });
-          }
-        });
-      }
-      if (window.ND_LOGIC) {
-        window.ND_LOGIC.init();
-      }
-    });
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        if (window.ND_LOGIC && window.ND_LOGIC.init) {
+          window.ND_LOGIC.init();
+        }
+      });
+    })();
   </script>
 
 </body>
