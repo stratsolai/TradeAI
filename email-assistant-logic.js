@@ -88,6 +88,9 @@ window.EA_LOGIC = {
     if (!this._settings) {
       this._settings = { categories: this.DEFAULT_CATEGORIES, scan_cadence: 'manual', show_handled: false };
     }
+    if (!this._settings.categories || this._settings.categories.length === 0) {
+      this._settings.categories = this.DEFAULT_CATEGORIES;
+    }
     // Filter out shortcuts for categories that are disabled
     var cats = this._settings.categories;
     this._categoryShortcuts = this._categoryShortcuts.filter(function(id) {
