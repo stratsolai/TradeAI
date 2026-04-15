@@ -1118,6 +1118,4 @@ a:hover { opacity: 0.85; }
 /* EA detail metadata row — flex row for sender/badge/date in detail view */
 .ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 
-/* Settings message states — applied to .save-msg-text inside modal */
-.save-msg.msg-error .save-msg-text { color:var(--red); }
-.save-msg.msg-success .save-msg-text { color:var(--green-dark); }
+/* Settings message states — msg-error and msg-success are applied to .save-msg for JS state tracking only. Text colour is always var(--text) via .save-msg-text. */
