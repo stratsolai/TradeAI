@@ -45,7 +45,7 @@ async function refreshOutlookToken(refreshToken) {
     client_secret: MICROSOFT_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type: 'refresh_token',
-    scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
+    scope: 'https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access'
   }).toString();
   var res = await fetch('https://login.microsoftonline.com/common/oauth2/v2.0/token', {
     method: 'POST',
