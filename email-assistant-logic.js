@@ -77,9 +77,13 @@ window.EA_LOGIC = {
           scan_cadence: res.data.scan_cadence || 'manual',
           show_handled: res.data.show_handled || false
         };
-        // Load category shortcuts
+        // Load category shortcuts — normalise to IDs (database may contain labels)
         if (Array.isArray(res.data.category_shortcuts) && res.data.category_shortcuts.length > 0) {
-          this._categoryShortcuts = res.data.category_shortcuts;
+          var scCats = cleanedCats;
+          this._categoryShortcuts = res.data.category_shortcuts.map(function(val) {
+            var byLabel = scCats.find(function(c) { return c.label === val; });
+            return byLabel ? byLabel.id : val;
+          });
         }
       }
     } catch (e) {
