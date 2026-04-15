@@ -250,41 +250,96 @@ window.CL_OUTPUTS = {
     this._bindCardEvents();
   },
 
+  _connectionLabel: function(item) {
+    if (!item) return '';
+    var srcVal = item.source || '';
+    if (srcVal === 'tool') {
+      var ts = item.tool_source || '';
+      var tools = window.CORE_TOOLS || [];
+      var match = tools.find(function(t) { return t.id === ts; });
+      if (match) return Array.isArray(match.title) ? match.title.join(' ') : (match.title || ts);
+      if (ts) return ts.charAt(0).toUpperCase() + ts.slice(1);
+      return 'Tool';
+    }
+    return '';
+  },
+
   _cardHtml: function(item) {
     var id = escHtml(item.id);
     var title = escHtml(item.title || 'Untitled');
     var uploadDate = item.created_at ? new Date(item.created_at).toLocaleDateString('en-AU') : '';
     var bodyPreview = escHtml(item.content_text || '');
+    var checked = this._selected.has(item.id) ? ' checked' : '';
     var tools = window.CORE_TOOLS || [];
+    var activatedTools = this._activatedTools || [];
     var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
-    var toolBadges = toolTags.map(function(tid) {
-      var tool = tools.find(function(t) { return t.id === tid; });
-      var label = tool ? (Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id)) : tid;
-      return '<span class="review-type-badge">' + escHtml(label) + '</span>';
+    var toolPillsHtml = tools.map(function(tool) {
+      var isTagged = toolTags.indexOf(tool.id) > -1;
+      var isActivated = activatedTools.indexOf(tool.id) > -1;
+      var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
+      if (!isActivated) {
+        return '<a href="/activate?tool=' + escHtml(tool.id) + '" class="tool-pill tool-pill-inactive tool-pill-teal' + (isTagged ? ' tool-pill-tagged tagged' : '') + '" title="Learn more about this tool">' + escHtml(tLabel) + ' <span class="tool-pill-add-stax">+ Learn More</span></a>';
+      }
+      return '<button class="tool-pill tool-pill-teal' + (isTagged ? ' tool-pill-tagged tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
     }).join('');
+    var DEFAULT_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
     var catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
-    var catBadges = catTags.map(function(cat) {
-      return '<span class="review-source-badge">' + escHtml(cat) + '</span>';
+    var catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
+      var isTagged = catTags.indexOf(cat) > -1;
+      var label = cat.charAt(0).toUpperCase() + cat.slice(1);
+      return '<button class="cat-pill tool-pill tool-pill-purple' + (isTagged ? ' cat-pill-tagged tagged' : '') + '" data-item-id="' + id + '" data-cat-id="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
+    var detail = item.source_detail || {};
+    var sourceDetailParts = [];
+    var connectionLabel = this._connectionLabel(item);
+    if (connectionLabel) sourceDetailParts.push('<div><span class="source-detail-label">Tool:</span> ' + escHtml(connectionLabel) + '</div>');
+    if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span> ' + escHtml(detail.filename) + '</div>');
+    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> ' + escHtml(detail.url) + '</div>');
+    var sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="review-empty-detail">No source detail available.</div>';
+    var isArchived = this._status === 'archived';
+    var archiveBtnLabel = isArchived ? '&#8634; Restore' : '&#128451; Archive';
+    var archiveBtnTitle = isArchived ? 'Restore to approved' : 'Archive';
     return '<div class="item-card" data-id="' + id + '">'
       + '<div class="item-card-header">'
-      + '<span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
-      + '<span class="item-card-title" style="flex:0 1 auto;min-width:0;">' + title + '</span>'
-      + toolBadges + catBadges
-      + '</span>'
+      + '<input type="checkbox" class="item-checkbox outputs-checkbox" data-id="' + id + '"' + checked + '>'
+      + '<span class="item-card-title"><span>' + title + '</span></span>'
       + '<div class="item-card-preview-row">'
       + '<button class="review-expand-btn outputs-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>'
       + '<span class="review-body-preview" id="outputs-preview-' + id + '">' + bodyPreview + '</span>'
       + '</div>'
+      + '<button class="review-tools-btn outputs-tools-btn" data-id="' + id + '" data-section="tags">&#9741; Tagged Tools</button>'
+      + '<button class="review-cats-btn outputs-cats-btn" data-id="' + id + '" data-section="cats">&#9776; Tagged Categories</button>'
       + '<div class="item-card-btns">'
-      + '<span class="item-upload-date">' + uploadDate + '</span>'
+      + '<span class="item-upload-date">Upload Date: ' + uploadDate + '</span>'
+      + '<button class="source-btn outputs-source-btn" data-id="' + id + '" data-section="source" title="View source">&#128196; Source</button>'
+      + '<button class="review-reject-btn outputs-archive-btn" data-id="' + id + '" title="' + archiveBtnTitle + '">' + archiveBtnLabel + '</button>'
       + '</div>'
+      + '</div>'
+      + '<div class="item-section" id="outputs-tags-' + id + '" style="display:none">'
+      + '<div class="item-section-head"><span class="section-head-label">Tagged Tools</span></div>'
+      + '<div class="review-tool-pills">' + toolPillsHtml + '</div>'
+      + '</div>'
+      + '<div class="item-section" id="outputs-cats-' + id + '" style="display:none">'
+      + '<div class="item-section-head"><span class="section-head-label">Tagged Categories</span></div>'
+      + '<div class="review-tool-pills">' + catPillsHtml + '</div>'
+      + '</div>'
+      + '<div class="item-section" id="outputs-source-' + id + '" style="display:none">'
+      + '<div class="item-section-head"><span class="section-head-label">Source</span></div>'
+      + '<div class="source-detail">' + sourceDetailHtml + '</div>'
       + '</div>'
       + '</div>';
   },
 
   _bindCardEvents: function() {
-    document.querySelectorAll('.outputs-expand-btn').forEach(function(btn) {
+    var self = this;
+    var listEl = document.getElementById('outputs-list');
+    if (!listEl) return;
+    listEl.querySelectorAll('.outputs-checkbox').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
+      });
+    });
+    listEl.querySelectorAll('.outputs-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var card = btn.closest('.item-card');
         if (!card) return;
@@ -298,5 +353,77 @@ window.CL_OUTPUTS = {
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
+    listEl.querySelectorAll('.outputs-tools-btn, .outputs-cats-btn, .outputs-source-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var el = document.getElementById('outputs-' + btn.dataset.section + '-' + btn.dataset.id);
+        if (el) {
+          var isOpen = el.style.display !== 'none';
+          el.style.display = isOpen ? 'none' : '';
+          btn.classList.toggle('open', !isOpen);
+        }
+      });
+    });
+    listEl.querySelectorAll('.outputs-archive-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var newStatus = self._status === 'archived' ? 'approved' : 'archived';
+        self._changeStatus(btn.dataset.id, newStatus);
+      });
+    });
+    listEl.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
+      pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
+    });
+    listEl.querySelectorAll('.cat-pill[data-cat-id]').forEach(function(pill) {
+      pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
+    });
+  },
+
+  _changeStatus: async function(id, newStatus) {
+    var result = await this._supabase.from('content_library').update({ status: newStatus }).eq('id', id);
+    if (result.error) {
+      console.error('[CL Outputs] Status update failed:', result.error.message);
+      return;
+    }
+    this._items = this._items.filter(function(i) { return i.id !== id; });
+    var card = document.querySelector('.item-card[data-id="' + id + '"]');
+    if (card) card.remove();
+    this._selected.delete(id);
+    if (this._filteredItems().length === 0) {
+      var list = document.getElementById('outputs-list');
+      if (list) list.innerHTML = '<div class="list-empty">No outputs found.</div>';
+    }
+  },
+
+  _toggleToolTag: async function(itemId, toolId, pill) {
+    var item = this._items.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    var tags = Array.isArray(item.tool_tags) ? item.tool_tags.slice() : [];
+    var idx = tags.indexOf(toolId);
+    if (idx > -1) { tags.splice(idx, 1); } else { tags.push(toolId); }
+    item.tool_tags = tags;
+    var result = await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
+    if (result.error) {
+      console.error('[CL Outputs] Tool tag update failed:', result.error.message);
+      return;
+    }
+    var isNowTagged = tags.indexOf(toolId) > -1;
+    pill.classList.toggle('tool-pill-tagged', isNowTagged);
+    pill.classList.toggle('tagged', isNowTagged);
+  },
+
+  _toggleCategoryTag: async function(itemId, catId, pill) {
+    var item = this._items.find(function(i) { return i.id === itemId; });
+    if (!item) return;
+    var tags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags.slice() : (item.category ? [item.category] : []);
+    var idx = tags.indexOf(catId);
+    if (idx > -1) { tags.splice(idx, 1); } else { tags.push(catId); }
+    item.category_tags = tags;
+    var result = await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
+    if (result.error) {
+      console.error('[CL Outputs] Category tag update failed:', result.error.message);
+      return;
+    }
+    var isNowTagged = tags.indexOf(catId) > -1;
+    pill.classList.toggle('cat-pill-tagged', isNowTagged);
+    pill.classList.toggle('tagged', isNowTagged);
   }
 };
