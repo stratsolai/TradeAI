@@ -57,9 +57,23 @@ window.EA_LOGIC = {
         .eq('user_id', this._user.id)
         .maybeSingle();
       if (res.data) {
+        // Clean categories — rebuild defaults with correct labels and guaranteed enabled values
+        var rawCats = (res.data.categories && res.data.categories.length > 0) ? res.data.categories : null;
+        var cleanedCats = this.DEFAULT_CATEGORIES;
+        if (rawCats) {
+          var savedById = {};
+          rawCats.forEach(function(c) { if (c && c.id) savedById[c.id] = c; });
+          var defaultIds = this.DEFAULT_CATEGORIES.map(function(c) { return c.id; });
+          cleanedCats = this.DEFAULT_CATEGORIES.map(function(def) {
+            var saved = savedById[def.id];
+            return { id: def.id, label: def.label, description: def.description, enabled: (saved && saved.enabled === false) ? false : def.enabled };
+          });
+          var custom = rawCats.filter(function(c) { return c && c.id && defaultIds.indexOf(c.id) === -1 && c.description; });
+          cleanedCats = cleanedCats.concat(custom);
+        }
         this._settings = {
           id: res.data.id,
-          categories: (res.data.categories && res.data.categories.length > 0) ? res.data.categories : this.DEFAULT_CATEGORIES,
+          categories: cleanedCats,
           scan_cadence: res.data.scan_cadence || 'manual',
           show_handled: res.data.show_handled || false
         };
