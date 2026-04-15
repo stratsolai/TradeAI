@@ -963,6 +963,9 @@ a:hover { opacity: 0.85; }
 .status-btn.active[data-pill="urgent"] { background:var(--red-hover-bg); }
 .status-btn.active[data-pill="flagged"] { background:var(--orange-light); }
 .status-btn.active[data-pill="handled"] { background:var(--grey-light); }
+.status-btn[data-shortcut] { border-left-color:var(--blue); }
+.status-btn[data-shortcut]:hover { background:var(--blue-light); }
+.status-btn.active[data-shortcut] { background:var(--blue-light); }
 
 /* Item checkbox — standard checkbox for list item selection */
 .item-checkbox { width:var(--checkbox-size); height:var(--checkbox-size); cursor:pointer; flex-shrink:0; }
