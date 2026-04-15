@@ -70,12 +70,15 @@ export default async function handler(req, res) {
       .eq('user_id', userId)
       .single();
 
+    console.log('[ea-flag] Email row lookup — found:', !!emailRes.data, 'message_id:', emailRes.data ? emailRes.data.message_id : 'N/A', 'error:', emailRes.error ? emailRes.error.message : 'none');
+
     if (!emailRes.data || !emailRes.data.message_id) {
-      // Cannot write back without external message id
+      console.log('[ea-flag] No external message_id — skipping write-back');
       return res.status(200).json({ success: true });
     }
 
     var externalMsgId = emailRes.data.message_id;
+    console.log('[ea-flag] External message ID:', externalMsgId.substring(0, 40));
 
     // Load OAuth token from ea_connected_emails
     var profileRes = await supabase
@@ -87,13 +90,18 @@ export default async function handler(req, res) {
     var accounts = (profileRes.data && Array.isArray(profileRes.data.ea_connected_emails))
       ? profileRes.data.ea_connected_emails : [];
 
+    console.log('[ea-flag] EA accounts loaded — count:', accounts.length, 'providers:', accounts.map(function(a) { return a ? a.provider : 'null'; }).join(', '));
+
     // Find matching account by provider
     var providerMatch = provider === 'gmail' ? ['gmail', 'google'] : ['microsoft', 'outlook'];
     var account = accounts.find(function(a) {
       return a && providerMatch.indexOf(a.provider) > -1;
     });
 
+    console.log('[ea-flag] Account match — found:', !!account, 'hasAccessToken:', !!(account && account.access_token), 'hasRefreshToken:', !!(account && account.refresh_token));
+
     if (!account || !account.access_token) {
+      console.log('[ea-flag] No account or no access token — skipping write-back');
       return res.status(200).json({ success: true });
     }
 
@@ -104,7 +112,8 @@ export default async function handler(req, res) {
         ? { addLabelIds: ['STARRED'] }
         : { removeLabelIds: ['STARRED'] };
 
-      await fetch(gmailUrl, {
+      console.log('[ea-flag] Gmail write-back — url:', gmailUrl, 'body:', JSON.stringify(gmailBody));
+      var gmailResp = await fetch(gmailUrl, {
         method: 'POST',
         headers: {
           'Authorization': 'Bearer ' + account.access_token,
@@ -112,6 +121,11 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify(gmailBody)
       });
+      console.log('[ea-flag] Gmail write-back response — status:', gmailResp.status, 'ok:', gmailResp.ok);
+      if (!gmailResp.ok) {
+        var gmailErr = await gmailResp.text().catch(function() { return ''; });
+        console.error('[ea-flag] Gmail write-back failed:', gmailResp.status, gmailErr.substring(0, 500));
+      }
     } else {
       // Outlook: set flag.flagStatus
       var outlookUrl = 'https://graph.microsoft.com/v1.0/me/messages/' + encodeURIComponent(externalMsgId);
@@ -119,7 +133,8 @@ export default async function handler(req, res) {
         flag: { flagStatus: flagState ? 'flagged' : 'notFlagged' }
       };
 
-      await fetch(outlookUrl, {
+      console.log('[ea-flag] Outlook write-back — url:', outlookUrl.substring(0, 80), 'body:', JSON.stringify(outlookBody));
+      var outlookResp = await fetch(outlookUrl, {
         method: 'PATCH',
         headers: {
           'Authorization': 'Bearer ' + account.access_token,
@@ -127,6 +142,11 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify(outlookBody)
       });
+      console.log('[ea-flag] Outlook write-back response — status:', outlookResp.status, 'ok:', outlookResp.ok);
+      if (!outlookResp.ok) {
+        var outlookErr = await outlookResp.text().catch(function() { return ''; });
+        console.error('[ea-flag] Outlook write-back failed:', outlookResp.status, outlookErr.substring(0, 500));
+      }
     }
   } catch (writebackErr) {
     // Best-effort: log but do not fail
