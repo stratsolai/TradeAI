@@ -150,6 +150,7 @@ body {
   color: var(--text);
   font-size: var(--body-font-size);
   line-height: var(--body-line-height);
+  min-height: 100vh;
 }
 
 h1, h2, h3, h4, h5, h6 {
