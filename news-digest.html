@@ -4,227 +4,46 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <title>Industry News &amp; Updates Digest &mdash; StaxAI</title>
+  <title>Industry News &amp; Updates &mdash; StaxAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    .nd-page {
-      max-width: var(--settings-max-width);
-      margin: 0 auto;
-      padding: 32px 24px 64px;
-    }
-    .nd-page-header {
+    .nd-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
+    .page-header { margin-bottom: var(--page-header-margin); }
+    .nd-action-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-bottom: var(--page-header-margin);
-      flex-wrap: wrap;
       gap: var(--actions-gap);
+      margin-bottom: var(--page-header-margin);
     }
-    .nd-refresh-btn {
-      background: var(--orange);
-      color: var(--white);
-      border: none;
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      padding: 9px 20px;
-      border-radius: var(--btn-radius);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-    }
-    .nd-refresh-btn:hover { background: var(--orange-dark); }
-
-    .nd-tab-bar-wrap {
-      background: var(--white);
-      border-radius: var(--card-radius) var(--card-radius) 0 0;
-      border-bottom: 2px solid var(--border);
-      display: flex;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
-    .nd-tab-bar-wrap::-webkit-scrollbar { display: none; }
-    #nd-tab-bar { display: flex; }
-    .nd-tab {
-      background: none;
-      border: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      padding: 14px 20px;
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: color var(--btn-transition), border-color var(--btn-transition);
-    }
-    .nd-tab:hover { color: var(--text); }
-    .nd-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
-
-    .nd-panels {
-      background: var(--white);
-      border-radius: 0 0 var(--card-radius) var(--card-radius);
-      min-height: 400px;
-      padding: 28px;
-    }
-
-    .nd-summary-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .nd-last-updated { font-size: var(--note-font-size); color: var(--text-muted); }
-    .nd-summary-section {
-      border-left: 4px solid var(--blue);
-      padding: 14px 18px;
-      margin-bottom: 20px;
-      background: var(--bg-subtle);
-      border-radius: 0 var(--btn-radius) var(--btn-radius) 0;
-    }
-    .nd-summary-cat-heading {
-      font-family: var(--heading-font);
-      font-size: var(--heading-lg-size);
-      font-weight: var(--heading-lg-weight);
-      color: var(--text);
-      margin-bottom: 6px;
-    }
-    .nd-summary-text {
-      font-size: var(--body-font-size);
-      line-height: var(--body-line-height);
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-    }
-    .nd-read-more {
-      font-size: var(--note-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--orange);
-      text-decoration: none;
-    }
-    .nd-read-more:hover { text-decoration: underline; }
-
-    .nd-card {
+    .nd-last-refreshed { font-size: var(--note-font-size); color: var(--text-muted); margin-right: auto; }
+    .nd-panel-wrap {
       background: var(--white);
       border-radius: var(--card-radius);
-      border-left: 4px solid var(--blue);
-      box-shadow: 0 1px 4px var(--shadow-card);
-      padding: 18px 20px;
-      margin-bottom: 16px;
+      box-shadow: 0 2px 8px var(--shadow-card);
+      padding: 24px;
+      min-height: 300px;
     }
-    .nd-card-header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: var(--actions-gap);
-      margin-bottom: 8px;
-    }
-    .nd-card-title {
-      font-size: var(--section-title-font-size);
-      font-weight: var(--heading-lg-weight);
-      color: var(--text);
-      text-decoration: none;
-      line-height: var(--note-line-height);
-      flex: 1;
-    }
-    a.nd-card-title:hover { color: var(--orange); text-decoration: underline; }
-    .nd-bookmark {
-      background: none;
-      border: none;
-      font-size: 18px;
-      cursor: pointer;
-      color: var(--text-disabled);
-      padding: 0;
-      flex-shrink: 0;
-      line-height: 1;
-      transition: color var(--btn-transition);
-    }
-    .nd-bookmark.saved { color: var(--orange); }
-    .nd-bookmark:hover { color: var(--orange); }
-    .nd-card-summary {
-      font-size: var(--body-font-size);
-      line-height: var(--body-line-height);
-      color: var(--text-secondary);
-      margin-bottom: var(--actions-gap);
-    }
-    .nd-card-meta {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      font-size: var(--badge-font-size);
-    }
-    .nd-source-name { font-weight: var(--font-weight-semibold); color: var(--text-secondary); }
-    .nd-source-domain { color: var(--text-muted); }
-    .nd-pub-date { color: var(--text-disabled); }
-    .nd-badge {
-      padding: 2px 8px;
-      border-radius: var(--badge-radius);
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-    }
-    .nd-badge-primary { background: var(--badge-green-bg); color: var(--badge-green-text); }
-    .nd-badge-secondary { background: var(--grey-light); color: var(--grey); }
-    .nd-badge-email { background: var(--blue-light); color: var(--blue); }
-
-    .nd-empty-state {
-      text-align: center;
-      padding: var(--empty-padding) 24px;
-      color: var(--text-muted);
-    }
-    .nd-empty-state p { margin-bottom: var(--actions-gap); font-size: var(--section-title-font-size); line-height: var(--body-line-height); }
-    .nd-empty-state strong { color: var(--text-secondary); }
-
-    .nd-btn-primary {
-      background: var(--orange);
-      color: var(--white);
-      border: none;
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      padding: var(--btn-padding);
-      border-radius: var(--btn-radius);
-      cursor: pointer;
-      margin-top: 8px;
-      transition: background var(--btn-transition);
-    }
-    .nd-btn-primary:hover { background: var(--orange-dark); }
-    .nd-btn-secondary {
-      background: var(--bg-subtle);
-      color: var(--blue);
-      border: 1px solid var(--border-blue);
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      padding: 8px 18px;
-      border-radius: var(--btn-radius);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-    }
-    .nd-btn-secondary:hover { background: var(--blue-hover-bg); }
-
     @media (max-width: 600px) {
-      .nd-page { padding: 20px 16px 48px; }
-      .nd-page-title { font-size: 26px; }
-      .nd-tab { padding: 12px 14px; font-size: var(--note-font-size); }
-      .nd-panels { padding: 18px 16px; }
+      .nd-container { padding: var(--page-padding-mobile); }
+      .nd-panel-wrap { padding: var(--card-padding-mobile); }
     }
   </style>
 </head>
 <body>
 
   <nav class="topbar">
-    <a href="/" class="topbar-logo">
+    <a href="/dashboard.html" class="topbar-logo">
       <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
-    <div class="topbar-nav"><a href="/dashboard">Dashboard</a></div>
+    <div class="topbar-nav">
+      <a href="/dashboard.html">Dashboard</a>
+    </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a href="/news/settings" class="topbar-nav-link">Settings</a>
+      <a href="/news-digest-settings.html" class="topbar-nav-link">Settings</a>
       <div class="topbar-account-wrap">
         <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
@@ -235,21 +54,90 @@
     </div>
   </nav>
 
-  <div class="nd-page">
-    <div class="nd-page-header">
-      <h1 class="nd-page-title">Industry News &amp; Updates</h1>
-      <button class="nd-refresh-btn" id="nd-refresh-btn">Refresh Now</button>
+  <div class="nd-container" id="page-wrap" style="display:none">
+    <div class="page-header">
+      <h1 class="page-title">Industry News &amp; Updates</h1>
+      <p class="page-subtitle">Your personalised business intelligence briefing.</p>
     </div>
 
-    <div class="nd-tab-bar-wrap">
-      <div id="nd-tab-bar"></div>
+    <div class="nd-action-row">
+      <span class="nd-last-refreshed" id="nd-last-refreshed"></span>
+      <button class="btn-orange" id="nd-refresh-btn">Refresh Now</button>
     </div>
 
-    <div class="nd-panels">
-      <div id="nd-panel-summary">
-        <div class="nd-empty-state"><p>Loading your digest...</p></div>
+    <div class="tab-nav">
+      <button class="ptab active" data-tab="summary">Summary</button>
+      <button class="ptab" data-tab="regulatory">Regulatory &amp; Compliance</button>
+      <button class="ptab" data-tab="industry-news">Industry News</button>
+      <button class="ptab" data-tab="suppliers">Supplier &amp; Materials</button>
+      <button class="ptab" data-tab="economic">Economic &amp; Market</button>
+      <button class="ptab" data-tab="technology">Technology &amp; Innovation</button>
+      <button class="ptab" data-tab="grants-tenders">Grants &amp; Tenders</button>
+    </div>
+
+    <div class="nd-panel-wrap">
+      <div id="nd-tab-summary" class="ptab-content active">
+        <div class="empty-state" id="nd-empty-summary" style="display:none">
+          <div class="empty-state-icon">📰</div>
+          <h3>Your briefing is ready to generate</h3>
+          <p>Click Refresh Now above to generate your first business intelligence briefing.</p>
+        </div>
+        <div id="nd-content-summary"></div>
       </div>
-      <div id="nd-panel-feed" style="display:none;"></div>
+
+      <div id="nd-tab-regulatory" class="ptab-content">
+        <div class="empty-state" id="nd-empty-regulatory" style="display:none">
+          <div class="empty-state-icon">📋</div>
+          <h3>No regulatory updates yet</h3>
+          <p>Click Refresh Now to fetch the latest regulatory and compliance news.</p>
+        </div>
+        <div id="nd-content-regulatory"></div>
+      </div>
+
+      <div id="nd-tab-industry-news" class="ptab-content">
+        <div class="empty-state" id="nd-empty-industry-news" style="display:none">
+          <div class="empty-state-icon">📰</div>
+          <h3>No industry news yet</h3>
+          <p>Click Refresh Now to fetch the latest industry developments.</p>
+        </div>
+        <div id="nd-content-industry-news"></div>
+      </div>
+
+      <div id="nd-tab-suppliers" class="ptab-content">
+        <div class="empty-state" id="nd-empty-suppliers" style="display:none">
+          <div class="empty-state-icon">📦</div>
+          <h3>No supplier updates yet</h3>
+          <p>Click Refresh Now to fetch the latest supply chain news.</p>
+        </div>
+        <div id="nd-content-suppliers"></div>
+      </div>
+
+      <div id="nd-tab-economic" class="ptab-content">
+        <div class="empty-state" id="nd-empty-economic" style="display:none">
+          <div class="empty-state-icon">📊</div>
+          <h3>No economic updates yet</h3>
+          <p>Click Refresh Now to fetch the latest market conditions.</p>
+        </div>
+        <div id="nd-content-economic"></div>
+      </div>
+
+      <div id="nd-tab-technology" class="ptab-content">
+        <div class="empty-state" id="nd-empty-technology" style="display:none">
+          <div class="empty-state-icon">💡</div>
+          <h3>No technology updates yet</h3>
+          <p>Click Refresh Now to fetch the latest technology and innovation news.</p>
+        </div>
+        <div id="nd-content-technology"></div>
+      </div>
+
+      <div id="nd-tab-grants-tenders" class="ptab-content">
+        <div class="empty-state" id="nd-empty-grants-tenders" style="display:none">
+          <div class="empty-state-icon">🏛️</div>
+          <h3>No grants or tenders yet</h3>
+          <p>Click Refresh Now to fetch the latest government tenders and grants.</p>
+        </div>
+        <div id="nd-content-grants-tenders"></div>
+      </div>
     </div>
   </div>
 
@@ -259,7 +147,7 @@
   <script src="/topbar.js"></script>
   <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
-  <script src="/news-digest-logic.js?v=1"></script>
+  <script src="/news-digest-logic.js"></script>
   <script>
     (function() {
       var supabase = window.supabaseClient;
@@ -267,12 +155,12 @@
       supabase.auth.getSession().then(function(result) {
         var session = result.data && result.data.session;
         if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
         if (window.ND_LOGIC && window.ND_LOGIC.init) {
           window.ND_LOGIC.init(supabase, session.user);
         }
       });
     })();
   </script>
-
 </body>
 </html>
