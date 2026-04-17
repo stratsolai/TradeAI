@@ -302,50 +302,64 @@ async function getContentLibraryItems(userId, supabase) {
 }
 
 // ---------------------------------------------------------------------------
-// Claude enrichment (industry-agnostic)
+// Claude briefing synthesis (industry-agnostic)
 // ---------------------------------------------------------------------------
 
-var NEWS_DIGEST_SYSTEM_PROMPT =
-  'You are a news categorisation assistant for an Australian SME business platform. ' +
-  'For each item, produce a clean title, a concise 2-3 sentence summary in plain Australian English, ' +
-  'and assign it to exactly one of the six categories below using the category ID. ' +
-  'Prioritise authoritative sources (government, regulators, peak industry bodies, established trade press) when labelling source_type.\n\n' +
+var BRIEFING_SYSTEM_PROMPT =
+  'You are a business intelligence briefing writer for an Australian SME platform. ' +
+  'You receive raw news items. Your job is to categorise each item into one of five categories, ' +
+  'then synthesise the items in each category into a concise executive briefing.\n\n' +
+  'For each category that has relevant items, produce:\n' +
+  '- headline: one sentence capturing the single most important insight\n' +
+  '- bullets: 3-5 synthesised bullet points that draw from MULTIPLE sources each — ' +
+  'do NOT summarise one article per bullet, instead combine related information across sources\n' +
+  '- Each bullet has a sources array listing the articles it draws from\n\n' +
   'CATEGORIES:\n' +
-  '- regulatory: Regulatory & Compliance — laws, regulations, licensing, compliance obligations, enforcement. Includes industry-specific rules and industry-agnostic bodies (ATO, ASIC, Fair Work Commission, state regulators).\n' +
-  '- industry-news: Industry News — industry developments, trends, events, body announcements. Also includes broad SME advocacy bodies (BCA, Business NSW, state chambers).\n' +
-  '- suppliers: Supplier & Materials — supply chain news, pricing, shortages, logistics. Also includes broader Australian supply chain factors (fuel, freight, commodities).\n' +
-  '- economic: Economic & Market Conditions — business conditions at local/regional, state, and national/global levels. Interest rates, inflation, construction activity, consumer confidence, labour market.\n' +
-  '- technology: Technology & Innovation — new tools, technologies, equipment, AI applications, digital transformation for Australian SMEs.\n' +
-  '- grants-tenders: Government Grants & Tenders — government grants, funding programs, rebates for Australian SMEs plus active federal and NSW government tenders.\n\n' +
-  'SOURCE TYPES (pick exactly one):\n' +
+  '- regulatory: Regulatory & Compliance — laws, regulations, licensing, compliance obligations, enforcement. ' +
+  'Includes industry-specific rules and industry-agnostic bodies (ATO, ASIC, Fair Work Commission, state regulators).\n' +
+  '- industry-news: Industry News — industry developments, trends, events, body announcements. ' +
+  'Also includes broad SME advocacy bodies (BCA, Business NSW, state chambers).\n' +
+  '- suppliers: Supplier & Materials — supply chain news, pricing, shortages, logistics. ' +
+  'Also includes broader Australian supply chain factors (fuel, freight, commodities).\n' +
+  '- economic: Economic & Market Conditions — business conditions at local/regional, state, and national/global levels. ' +
+  'Interest rates, inflation, construction activity, consumer confidence, labour market.\n' +
+  '- technology: Technology & Innovation — new tools, technologies, equipment, AI applications, ' +
+  'digital transformation for Australian SMEs.\n\n' +
+  'SOURCE TYPES for each source reference (pick exactly one):\n' +
   '- primary: government body, regulator, or peak industry association\n' +
   '- secondary: trade press or general media\n' +
-  '- email: item already held in the user\'s Content Library\n' +
-  '- tender: active government tender or ATM record\n\n' +
+  '- email: item from the user\'s Content Library\n\n' +
   'Return ONLY valid JSON in this exact shape, with no preamble, no markdown fences:\n' +
   '{\n' +
-  '  "items": [\n' +
-  '    { "index": number, "title": string, "summary": string, "category": string, "source_type": string, "source_domain": string }\n' +
-  '  ],\n' +
-  '  "digest_summary": {\n' +
-  '    "regulatory": string, "industry-news": string, "suppliers": string, "economic": string, "technology": string, "grants-tenders": string\n' +
-  '  }\n' +
+  '  "categories": [\n' +
+  '    {\n' +
+  '      "category": "regulatory",\n' +
+  '      "headline": "One-sentence headline insight",\n' +
+  '      "bullets": [\n' +
+  '        {\n' +
+  '          "text": "Synthesised bullet point drawing from multiple sources",\n' +
+  '          "sources": [\n' +
+  '            { "name": "Source Name", "domain": "example.com", "url": "https://...", "type": "primary" }\n' +
+  '          ]\n' +
+  '        }\n' +
+  '      ]\n' +
+  '    }\n' +
+  '  ]\n' +
   '}\n\n' +
   'RULES:\n' +
-  '1. category must be exactly one of: regulatory, industry-news, suppliers, economic, technology, grants-tenders.\n' +
-  '2. source_type must be exactly one of: primary, secondary, email, tender.\n' +
-  '3. source_domain is the domain of the article URL if available, else an empty string.\n' +
-  '4. summary is plain Australian English, 2-3 sentences, no exclamation marks, no hyperbole.\n' +
-  '5. digest_summary has one 2-3 sentence paragraph per category covering the top themes from items in that category. If a category has no items, return an empty string for that category.\n' +
-  '6. If an item is a government tender or ATM record, use category "grants-tenders" and source_type "tender".\n' +
-  '7. If an item originates from the user\'s Content Library, use source_type "email".\n' +
-  '8. Return ONLY the JSON object. No other text.';
+  '1. category must be exactly one of: regulatory, industry-news, suppliers, economic, technology.\n' +
+  '2. Produce 3-5 bullets per category. Synthesise across sources — do not summarise one article per bullet.\n' +
+  '3. Prioritise the most recent and most impactful information.\n' +
+  '4. Write in plain Australian English. No exclamation marks, no hyperbole.\n' +
+  '5. If a category has no relevant items, omit it from the array entirely.\n' +
+  '6. Do not include tender or ATM items — they are handled separately.\n' +
+  '7. Return ONLY the JSON object. No other text.';
 
-async function enrichWithClaude(items) {
-  if (!items.length) return { items: [], digest_summary: {} };
+async function buildBriefing(items) {
+  if (!items.length) return [];
   if (!ANTHROPIC_API_KEY) {
-    console.error('[news-digest] ANTHROPIC_API_KEY not configured — skipping enrichment');
-    return { items: items, digest_summary: {} };
+    console.error('[news-digest] ANTHROPIC_API_KEY not configured — skipping briefing');
+    return [];
   }
   try {
     var compacted = items.map(function(it, i) {
@@ -368,46 +382,32 @@ async function enrichWithClaude(items) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 8000,
-        system: NEWS_DIGEST_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: 'Items to categorise and summarise:\n' + JSON.stringify(compacted) }]
+        system: BRIEFING_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: 'Raw news items to synthesise into a briefing:\n' + JSON.stringify(compacted) }]
       })
     });
     if (!response.ok) {
       var errText = await response.text().catch(function() { return ''; });
       console.error('[news-digest] Claude non-OK:', response.status, errText.substring(0, 300));
-      return { items: items, digest_summary: {} };
+      return [];
     }
     var data = await response.json();
     if (data.error) {
       console.error('[news-digest] Claude API error:', JSON.stringify(data.error));
-      return { items: items, digest_summary: {} };
+      return [];
     }
     var raw = data.content && data.content[0] ? data.content[0].text : '';
-    var parsed;
     try {
       var clean = raw.replace(/```json|```/g, '').trim();
-      parsed = JSON.parse(clean);
+      var parsed = JSON.parse(clean);
+      return Array.isArray(parsed.categories) ? parsed.categories : [];
     } catch (parseErr) {
       console.error('[news-digest] Claude JSON parse error:', parseErr.message, 'raw:', raw.substring(0, 500));
-      return { items: items, digest_summary: {} };
+      return [];
     }
-    var enrichedItems = items.map(function(original, i) {
-      var enriched = (parsed.items || []).find(function(x) { return x.index === i; }) || {};
-      var fallbackSourceType = original.source_origin === 'tender' ? 'tender'
-                              : original.source_origin === 'cl' ? 'email'
-                              : 'secondary';
-      return Object.assign({}, original, {
-        title: enriched.title || original.title || '',
-        summary: enriched.summary || original.snippet || '',
-        category: enriched.category || null,
-        source_type: enriched.source_type || fallbackSourceType,
-        source_domain: enriched.source_domain || deriveDomain(original.link)
-      });
-    });
-    return { items: enrichedItems, digest_summary: parsed.digest_summary || {} };
   } catch (err) {
     console.error('[news-digest] Claude exception:', err.message);
-    return { items: items, digest_summary: {} };
+    return [];
   }
 }
 
@@ -452,13 +452,44 @@ export default async function handler(req, res) {
     var preferredSources = [];
     var settingsRes = await supabase
       .from('news_digest_settings')
-      .select('preferred_sources')
+      .select('preferred_sources, lookback_days')
       .eq('user_id', userId)
       .maybeSingle();
     if (settingsRes.error) {
       console.error('[news-digest] Settings error:', settingsRes.error.message);
     } else if (settingsRes.data) {
       preferredSources = normaliseSources(settingsRes.data.preferred_sources);
+    }
+
+    // Retention cleanup — delete rows older than lookback_days
+    var lookbackDays = (settingsRes.data && parseInt(settingsRes.data.lookback_days)) || 180;
+    var cutoffDate = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000).toISOString();
+    try {
+      var delBriefings = await supabase
+        .from('news_digest_briefings')
+        .delete()
+        .eq('user_id', userId)
+        .lt('refreshed_at', cutoffDate);
+      if (delBriefings.error) console.error('[news-digest] Retention cleanup briefings error:', delBriefings.error.message);
+
+      var delTenders = await supabase
+        .from('news_digest_tenders')
+        .delete()
+        .eq('user_id', userId)
+        .lt('refreshed_at', cutoffDate);
+      if (delTenders.error) console.error('[news-digest] Retention cleanup tenders error:', delTenders.error.message);
+
+      var delCl = await supabase
+        .from('content_library')
+        .delete()
+        .eq('user_id', userId)
+        .eq('tool_source', 'news-digest')
+        .lt('created_at', cutoffDate);
+      if (delCl.error) console.error('[news-digest] Retention cleanup CL error:', delCl.error.message);
+
+      console.log('[news-digest] Retention cleanup complete — cutoff:', cutoffDate, 'lookback:', lookbackDays, 'days');
+    } catch (cleanupErr) {
+      console.error('[news-digest] Retention cleanup exception:', cleanupErr.message);
     }
 
     // Fetch all sources — independent failures must not stop the rest
@@ -484,98 +515,154 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'No items found', count: 0 });
     }
 
-    // Claude enrichment — falls back to unenriched items on any failure
-    var enrichRes = await enrichWithClaude(deduped);
-    var enriched = enrichRes.items;
-    var digestSummary = enrichRes.digest_summary;
+    // Separate tenders from non-tenders before Claude
+    var tenderItems = deduped.filter(function(item) { return item.source_origin === 'tender'; });
+    var newsItems = deduped.filter(function(item) { return item.source_origin !== 'tender'; });
 
-    // news_digest_items — store web + tender items only (CL items already live in content_library)
-    var rowsToStore = enriched.filter(function(item) {
-      return item.source_origin !== 'cl' && !!item.link;
-    }).map(function(item) {
-      return {
+    // Build briefing from non-tender items via Claude
+    var briefingCategories = await buildBriefing(newsItems);
+    console.log('[news-digest] Briefing categories returned:', briefingCategories.length);
+
+    // Upsert each category briefing to news_digest_briefings
+    var now = new Date().toISOString();
+    for (var b = 0; b < briefingCategories.length; b++) {
+      var cat = briefingCategories[b];
+      var briefingRow = {
         user_id: userId,
-        title: String(item.title || '').substring(0, 500),
-        summary: item.summary || '',
-        category: item.category || null,
-        link: item.link,
-        source_name: item.source_name || null,
-        source_domain: item.source_domain || null,
-        source_type: item.source_type || 'secondary',
-        published_at: item.published_at || new Date().toISOString(),
-        tender_meta: item.tender_meta || null
+        category: cat.category,
+        headline: cat.headline || '',
+        bullets: cat.bullets || [],
+        refreshed_at: now
       };
-    });
-
-    if (rowsToStore.length > 0) {
-      var upsertRes = await supabase
-        .from('news_digest_items')
-        .upsert(rowsToStore, { onConflict: 'link,user_id' });
-      if (upsertRes.error) {
-        console.error('[news-digest] Upsert news_digest_items error:', upsertRes.error.message);
+      var bRes = await supabase
+        .from('news_digest_briefings')
+        .upsert(briefingRow, { onConflict: 'user_id,category' });
+      if (bRes.error) {
+        console.error('[news-digest] Upsert briefing error:', bRes.error.message, 'category:', cat.category);
       }
     }
 
-    // Write category summaries + last_refreshed to news_digest_settings
+    // Delete all existing tenders for this user, then insert fresh batch
+    var delTendersRes = await supabase
+      .from('news_digest_tenders')
+      .delete()
+      .eq('user_id', userId);
+    if (delTendersRes.error) {
+      console.error('[news-digest] Delete tenders error:', delTendersRes.error.message);
+    }
+
+    if (tenderItems.length > 0) {
+      var tenderRows = tenderItems.map(function(t) {
+        return {
+          user_id: userId,
+          title: String(t.title || '').substring(0, 500),
+          url: t.link || null,
+          agency: (t.tender_meta && t.tender_meta.agency) || t.source_name || null,
+          category: (t.tender_meta && t.tender_meta.category) || null,
+          close_date: (t.tender_meta && t.tender_meta.close_date) || null,
+          location: (t.tender_meta && t.tender_meta.location) || null,
+          description: (t.snippet || '').substring(0, 1000),
+          source: (t.tender_meta && t.tender_meta.source) || 'AusTender',
+          refreshed_at: now
+        };
+      });
+      var tRes = await supabase
+        .from('news_digest_tenders')
+        .insert(tenderRows);
+      if (tRes.error) {
+        console.error('[news-digest] Insert tenders error:', tRes.error.message);
+      }
+    }
+
+    // Update last_refreshed on news_digest_settings
     var updateRes = await supabase
       .from('news_digest_settings')
       .update({
-        category_summaries: digestSummary || {},
-        last_refreshed: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        last_refreshed: now,
+        updated_at: now
       })
       .eq('user_id', userId);
     if (updateRes.error) {
       console.error('[news-digest] Settings update error:', updateRes.error.message);
     }
 
-    // Content Library write-back — Pattern B (tool-generated, always approved)
-    // CL write failure must not affect the main scan outcome.
+    // CL write-back — Pattern B (tool-generated, always approved)
+    // CL write failure must not affect the main refresh outcome.
     var clPushed = 0;
-    for (var i = 0; i < enriched.length; i++) {
-      var item = enriched[i];
-      if (item.source_origin === 'cl') continue;     // don't re-push CL-origin items
-      if (!item.link) continue;                       // source_ref requires a link
+
+    // One CL row per category briefing
+    for (var ci = 0; ci < briefingCategories.length; ci++) {
+      var bc = briefingCategories[ci];
       try {
-        var clRow = {
+        var bulletTexts = (bc.bullets || []).map(function(bl) { return bl.text || ''; }).join('\n\n');
+        var clBriefingRow = {
           user_id: userId,
-          title: String(item.title || '').substring(0, 200),
-          content_text: item.summary || '',
+          title: String(bc.headline || bc.category || '').substring(0, 200),
+          content_text: (bc.headline || '') + '\n\n' + bulletTexts,
           category: 'Industry News',
-          tool_tags: ['news-digest'],
+          tool_tags: ['news-digest', 'bi', 'strategic-plan'],
           status: 'approved',
           source: 'tool',
           tool_source: 'news-digest',
-          source_ref: 'news-digest:' + item.link,
-          source_detail: {
-            source_name: item.source_name || null,
-            source_domain: item.source_domain || null,
-            source_type: item.source_type || null,
-            published_at: item.published_at || null,
-            url: item.link,
-            tender_meta: item.tender_meta || null
-          }
+          source_ref: 'news-digest-briefing:' + bc.category + ':' + userId
         };
-        var clRes = await supabase
+        var clBRes = await supabase
           .from('content_library')
-          .upsert(clRow, { onConflict: 'source_ref', ignoreDuplicates: true });
-        if (clRes.error) {
-          console.error('[news-digest] CL write-back error:', clRes.error.message, 'link:', item.link);
+          .upsert(clBriefingRow, { onConflict: 'source_ref' });
+        if (clBRes.error) {
+          console.error('[news-digest] CL briefing write error:', clBRes.error.message, 'category:', bc.category);
         } else {
           clPushed++;
         }
-      } catch (clErr) {
-        console.error('[news-digest] CL write-back exception:', clErr.message, 'link:', item.link);
+      } catch (clBErr) {
+        console.error('[news-digest] CL briefing write exception:', clBErr.message, 'category:', bc.category);
       }
     }
 
-    console.log('[news-digest] Refresh complete — stored:', rowsToStore.length, 'cl-pushed:', clPushed, 'total-enriched:', enriched.length);
+    // One CL row per tender
+    for (var ti = 0; ti < tenderItems.length; ti++) {
+      var tender = tenderItems[ti];
+      if (!tender.link) continue;
+      try {
+        var tAgency = (tender.tender_meta && tender.tender_meta.agency) || tender.source_name || '';
+        var tClose = (tender.tender_meta && tender.tender_meta.close_date) || '';
+        var tLocation = (tender.tender_meta && tender.tender_meta.location) || '';
+        var tDesc = tender.snippet || '';
+        var contentParts = [];
+        if (tAgency) contentParts.push('Agency: ' + tAgency);
+        if (tClose) contentParts.push('Close date: ' + tClose);
+        if (tLocation) contentParts.push('Location: ' + tLocation);
+        if (tDesc) contentParts.push(tDesc);
+        var clTenderRow = {
+          user_id: userId,
+          title: String(tender.title || '').substring(0, 200),
+          content_text: contentParts.join('\n'),
+          category: 'Industry News',
+          tool_tags: ['news-digest', 'bi', 'strategic-plan'],
+          status: 'approved',
+          source: 'tool',
+          tool_source: 'news-digest',
+          source_ref: 'news-digest-tender:' + tender.link
+        };
+        var clTRes = await supabase
+          .from('content_library')
+          .upsert(clTenderRow, { onConflict: 'source_ref' });
+        if (clTRes.error) {
+          console.error('[news-digest] CL tender write error:', clTRes.error.message, 'url:', tender.link);
+        } else {
+          clPushed++;
+        }
+      } catch (clTErr) {
+        console.error('[news-digest] CL tender write exception:', clTErr.message, 'url:', tender.link);
+      }
+    }
+
+    console.log('[news-digest] Refresh complete — briefings:', briefingCategories.length, 'tenders:', tenderItems.length, 'cl-pushed:', clPushed);
     return res.status(200).json({
       message: 'Digest refreshed',
-      count: enriched.length,
-      stored: rowsToStore.length,
-      cl_pushed: clPushed,
-      digest_summary: digestSummary
+      briefings: briefingCategories.length,
+      tenders: tenderItems.length,
+      cl_pushed: clPushed
     });
 
   } catch (err) {
