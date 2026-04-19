@@ -144,6 +144,12 @@ with an active queued or running job. All CL and EA scan
 frequency defaults set to manual — no automatic scans
 without explicit user choice.
 
+### Industry News & Updates Digest Rebuild
+
+In progress. Backend complete (commit dd10602). Display
+rebuild and settings page update in progress. Governed by
+StaxAI-ID-Rebuild-Spec-v1_1.
+
 ---
 
 ## Known Issues & Notes
@@ -226,6 +232,8 @@ without explicit user choice.
   is loaded on every authenticated page. Safe alongside the
   existing sign-out redirect in topbar.js — both target
   /login so the first redirect wins.
+- NSW eTendering API is publicly accessible with no API
+  key — rate-limited by IP. No environment variable required.
 
 ---
 
@@ -243,6 +251,34 @@ is complete and confirmed working.
 | 5    | Improvements per tool based on functional review findings  |
 | 6    | Integration tests — all 5 built tools                      |
 | 7    | Dashboard rebuild                                          |
+
+---
+
+## Pre-Dashboard Build Requirements
+
+The following items must be resolved in a dedicated planning
+session before the Dashboard rebuild begins. No Dashboard
+build work starts until all three are agreed and specced.
+
+- Force Business Profile completion on first login — when a
+  new user lands on the Dashboard for the first time with an
+  incomplete Business Profile, gate them before they can
+  access any tools. Industry and location are required fields.
+  Spec required before build.
+- STAX All industry selection — users who purchase STAX All
+  get all core tools plus their industry-specific tools. The
+  relationship between their selected industry and which
+  industry-specific tools are activated must be defined before
+  build. Questions to resolve: Can industry be changed after
+  initial setup? Is this an Admin-only field? What happens to
+  existing tool data if industry changes? The Industry News &
+  Updates Digest tool drives all search queries from the
+  industry field.
+- Industry taxonomy review — the current industry list must be
+  reviewed and expanded before the Dashboard build. It affects
+  the ID tool search queries, the STAX All tool activation
+  logic, and the Business Profile setup flow. A dedicated
+  session is required to agree the complete industry taxonomy.
 
 ---
 
@@ -341,6 +377,49 @@ This section is the source of truth for the database schema.
 All CL and EA scan frequency defaults are set to 'manual'
 in the UI and JS fallbacks as of April 2026. No automatic
 scans run without explicit user choice.
+
+### news_digest_briefings
+
+One row per category per user per refresh cycle.
+
+| Column       | Type         | Notes                                                    |
+|--------------|--------------|----------------------------------------------------------|
+| id           | uuid PK      |                                                          |
+| user_id      | FK auth.users |                                                         |
+| category     | text         | regulatory, industry-news, suppliers, economic, technology, grants-tenders |
+| headline     | text         | One-sentence headline insight for the category           |
+| bullets      | jsonb        | Array of {text, sources: [{name, domain, url, type}]}    |
+| refreshed_at | timestamptz  | Set on each refresh                                      |
+| created_at   | timestamptz  |                                                          |
+
+RLS enabled.
+
+### news_digest_tenders
+
+One row per tender per user. Deleted and reinserted on each
+refresh.
+
+| Column       | Type         | Notes                                                    |
+|--------------|--------------|----------------------------------------------------------|
+| id           | uuid PK      |                                                          |
+| user_id      | FK auth.users |                                                         |
+| title        | text         |                                                          |
+| agency       | text         |                                                          |
+| close_date   | date         |                                                          |
+| location     | text         |                                                          |
+| description  | text         |                                                          |
+| url          | text         |                                                          |
+| source       | text         | 'federal' or 'nsw'                                       |
+| refreshed_at | timestamptz  | Set on each refresh                                      |
+| created_at   | timestamptz  |                                                          |
+
+RLS enabled.
+
+### news_digest_settings (new column)
+
+New column added April 2026: lookback_days (integer, default
+180). Controls how long briefing history and related CL items
+are retained. Retention cleanup runs on each refresh.
 
 ---
 
@@ -706,3 +785,7 @@ Error handling:
 | StaxAI-Scan-Frequency-         | Scan frequency scheduling for CL    |
 | Scheduling-Spec-v1_0           | and EA. Approved April 2026. Build  |
 |                                 | complete.                           |
+| StaxAI-ID-Rebuild-Spec-v1_1   | Industry News & Updates Digest      |
+|                                 | full rebuild. Backend, data model,  |
+|                                 | display, settings, and retention.   |
+|                                 | April 2026.                         |
