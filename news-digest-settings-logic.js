@@ -3,80 +3,66 @@
   if (!session) { window.location.href = "/login"; return; }
   const user = session.user;
 
-  const elShort = document.getElementById("account-email-short");
-  const elFull = document.getElementById("account-dropdown-email");
-  if (elShort) elShort.textContent = user.email ? user.email.split("@")[0] : "";
-  if (elFull) elFull.textContent = user.email || "";
-
-  const accountBtn = document.getElementById("account-btn");
-  const accountDropdown = document.getElementById("account-dropdown");
-  if (accountBtn && accountDropdown) {
-    accountBtn.addEventListener("click", function (e) { e.stopPropagation(); accountDropdown.classList.toggle("open"); });
-    document.addEventListener("click", function () { accountDropdown.classList.remove("open"); });
-  }
-  const signOutBtn = document.getElementById("sign-out-btn");
-  if (signOutBtn) {
-    signOutBtn.addEventListener("click", async function () {
-      await window.supabaseClient.auth.signOut();
-      window.location.href = "/login";
-    });
-  }
-
   let settings = {};
   try {
-    const { data } = await window.supabaseClient
+    const { data, error } = await window.supabaseClient
       .from("news_digest_settings")
       .select("*")
       .eq("user_id", user.id)
       .single();
+    if (error) console.error("[ND Settings] Load settings error:", error.message);
     if (data) settings = data;
-  } catch (e) {}
-
-  let categories = Array.isArray(settings.categories) ? settings.categories : [
-    { label: "Regulatory", enabled: true },
-    { label: "Industry Body", enabled: true },
-    { label: "Suppliers", enabled: true },
-    { label: "Workplace & Safety", enabled: true },
-    { label: "Economic & Market", enabled: true },
-    { label: "Technology", enabled: true }
-  ];
-
-  function renderCategories() {
-    const list = document.getElementById("categories-list");
-    if (!list) return;
-    list.innerHTML = categories.map(function (cat, idx) {
-      return "<div class=\"category-row\" data-idx=\"" + idx + "\">" +
-        "<label class=\"toggle-switch\"><input type=\"checkbox\" class=\"cat-toggle\" data-idx=\"" + idx + "\"" +
-        (cat.enabled ? " checked" : "") + " /><span class=\"toggle-slider\"></span></label>" +
-        "<input type=\"text\" class=\"cat-label\" data-idx=\"" + idx + "\" value=\"" +
-        cat.label.replace(/&/g, "&amp;").replace(/"/g, "&quot;") + "\" />" +
-        "<button class=\"btn-sm btn-remove cat-remove\" data-idx=\"" + idx + "\">Remove<\/button><\/div>";
-    }).join("");
-    list.querySelectorAll(".cat-toggle").forEach(function (el) {
-      el.addEventListener("change", function () { categories[+el.dataset.idx].enabled = el.checked; });
-    });
-    list.querySelectorAll(".cat-label").forEach(function (el) {
-      el.addEventListener("input", function () { categories[+el.dataset.idx].label = el.value; });
-    });
-    list.querySelectorAll(".cat-remove").forEach(function (el) {
-      el.addEventListener("click", function () { categories.splice(+el.dataset.idx, 1); renderCategories(); });
-    });
-  }
-  renderCategories();
-
-  const addBtn = document.getElementById("add-category-btn");
-  if (addBtn) {
-    addBtn.addEventListener("click", function () {
-      categories.push({ label: "New Category", enabled: true });
-      renderCategories();
-    });
+  } catch (e) {
+    console.error("[ND Settings] Load settings exception:", e.message);
   }
 
-  const cadence = settings.cadence || "weekly";
-  const cadenceEl = document.getElementById("cadence-" + cadence);
-  if (cadenceEl) cadenceEl.checked = true;
+  // ── TAB SWITCHING (.stab-bar / .stab) ────────────────────────────────
 
-  // Lookback retention — init from saved value
+  document.querySelectorAll(".stab[data-tab]").forEach(function(btn) {
+    btn.addEventListener("click", function() {
+      document.querySelectorAll(".stab").forEach(function(b) { b.classList.remove("active"); });
+      document.querySelectorAll(".stab-panel").forEach(function(p) { p.classList.remove("active"); });
+      btn.classList.add("active");
+      var panel = document.getElementById("tab-" + btn.dataset.tab);
+      if (panel) panel.classList.add("active");
+    });
+  });
+
+  // ── DIGEST FREQUENCY (.freq-btn — saves immediately) ────────────────
+
+  var cadenceCtrl = document.getElementById("cadence-ctrl");
+  if (cadenceCtrl) {
+    var savedCadence = settings.cadence || "weekly";
+    cadenceCtrl.querySelectorAll(".freq-btn").forEach(function(btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-value") === savedCadence);
+    });
+
+    cadenceCtrl.querySelectorAll(".freq-btn").forEach(function(btn) {
+      btn.addEventListener("click", async function() {
+        cadenceCtrl.querySelectorAll(".freq-btn").forEach(function(b) { b.classList.remove("active"); });
+        btn.classList.add("active");
+        var val = btn.getAttribute("data-value") || "weekly";
+        var payload = {
+          user_id: user.id,
+          cadence: val,
+          updated_at: new Date().toISOString()
+        };
+        var result;
+        if (settings.id) {
+          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
+        } else {
+          payload.created_at = new Date().toISOString();
+          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
+        }
+        if (result.error) {
+          console.error("[ND Settings] Cadence save error:", result.error.message);
+        }
+      });
+    });
+  }
+
+  // ── LOOKBACK RETENTION (.lookback-dropdown — saves immediately) ──────
+
   var lookbackDays = parseInt(settings.lookback_days) || 180;
   var lookbackBtn = document.getElementById("lookback-btn");
   var lookbackMenu = document.getElementById("lookback-menu");
@@ -86,59 +72,13 @@
     lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
       item.classList.toggle("active", item.getAttribute("data-value") === String(lookbackDays));
     });
-  }
 
-  const sourcePrefsEl = document.getElementById("source-prefs");
-  const industryEl = document.getElementById("industry-override");
-  const locationEl = document.getElementById("location-override");
-  if (sourcePrefsEl && settings.source_preferences) sourcePrefsEl.value = settings.source_preferences;
-  if (industryEl && settings.industry_override) industryEl.value = settings.industry_override;
-  if (locationEl && settings.location_override) locationEl.value = settings.location_override;
-
-  const msgEl = document.getElementById("settings-msg");
-  function showMsg(text, type) {
-    if (!msgEl) return;
-    msgEl.textContent = text;
-    msgEl.className = "settings-msg " + type;
-    msgEl.style.display = "block";
-    setTimeout(function () { msgEl.style.display = "none"; }, 4000);
-  }
-
-  const saveBtn = document.getElementById("save-settings-btn");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", async function () {
-      const selectedCadence = (document.querySelector("input[name=\"cadence\"]:checked") || {}).value || "weekly";
-      const payload = {
-        user_id: user.id,
-        categories: categories,
-        cadence: selectedCadence,
-        source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
-        industry_override: industryEl ? industryEl.value.trim() || null : null,
-        location_override: locationEl ? locationEl.value.trim() || null : null,
-        updated_at: new Date().toISOString()
-      };
-      let error;
-      if (settings.id) {
-        ({ error } = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id));
-      } else {
-        payload.created_at = new Date().toISOString();
-        ({ error } = await window.supabaseClient.from("news_digest_settings").insert(payload));
-      }
-      if (error) { showMsg("Could not save settings. Please try again.", "error"); }
-      else { showMsg("Settings saved.", "success"); }
-    });
-  }
-  // Lookback dropdown — toggle menu on button click
-  if (lookbackBtn) {
     lookbackBtn.addEventListener("click", function(e) {
       e.stopPropagation();
       lookbackMenu.classList.toggle("open");
       lookbackBtn.classList.toggle("active");
     });
-  }
 
-  // Lookback dropdown — item selection (saves immediately)
-  if (lookbackMenu) {
     lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
       item.addEventListener("click", async function() {
         var val = parseInt(item.getAttribute("data-value")) || 180;
@@ -164,14 +104,55 @@
         }
       });
     });
+
+    document.addEventListener("click", function(e) {
+      if (!e.target.closest(".lookback-dropdown-wrap")) {
+        lookbackMenu.classList.remove("open");
+        lookbackBtn.classList.remove("active");
+      }
+    });
   }
 
-  // Close lookback dropdown on outside click
-  document.addEventListener("click", function(e) {
-    if (!e.target.closest(".lookback-dropdown-wrap")) {
-      if (lookbackMenu) lookbackMenu.classList.remove("open");
-      if (lookbackBtn) lookbackBtn.classList.remove("active");
-    }
-  });
+  // ── SOURCE PREFERENCES (Save button) ────────────────────────────────
+
+  var sourcePrefsEl = document.getElementById("source-prefs");
+  if (sourcePrefsEl && settings.source_preferences) sourcePrefsEl.value = settings.source_preferences;
+
+  var saveBtn = document.getElementById("save-settings-btn");
+  if (saveBtn) {
+    saveBtn.addEventListener("click", async function() {
+      var activeFreqBtn = document.querySelector("#cadence-ctrl .freq-btn.active");
+      var currentCadence = activeFreqBtn ? activeFreqBtn.getAttribute("data-value") : "weekly";
+      var payload = {
+        user_id: user.id,
+        cadence: currentCadence,
+        source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
+        updated_at: new Date().toISOString()
+      };
+      var result;
+      if (settings.id) {
+        result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
+      } else {
+        payload.created_at = new Date().toISOString();
+        result = await window.supabaseClient.from("news_digest_settings").insert(payload);
+      }
+      if (result.error) {
+        console.error("[ND Settings] Save error:", result.error.message);
+      } else {
+        var msgOverlay = document.getElementById("save-settings-msg");
+        if (msgOverlay) {
+          var msgText = msgOverlay.querySelector(".save-msg-text");
+          if (msgText) msgText.textContent = "Settings saved.";
+          msgOverlay.classList.add("open");
+          var okBtn = msgOverlay.querySelector(".save-msg-ok");
+          if (okBtn) {
+            okBtn.addEventListener("click", function() {
+              msgOverlay.classList.remove("open");
+            }, { once: true });
+          }
+        }
+      }
+    });
+  }
 
 })();
