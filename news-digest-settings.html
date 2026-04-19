@@ -109,6 +109,28 @@
       </div>
     </div>
 
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <div class="settings-card-title">History Retention</div>
+        <div class="settings-card-hint">How long to keep your digest history and related Content Library items.</div>
+      </div>
+      <div class="settings-rows">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Retention Period</div>
+          </div>
+          <span class="lookback-dropdown-wrap">
+            <button type="button" class="lookback-dropdown" id="lookback-btn" data-lookback-type="retention">6 months &#9662;</button>
+            <div class="lookback-dropdown-menu" id="lookback-menu">
+              <button type="button" class="lookback-dropdown-item" data-value="30">1 month</button>
+              <button type="button" class="lookback-dropdown-item" data-value="90">3 months</button>
+              <button type="button" class="lookback-dropdown-item active" data-value="180">6 months</button>
+            </div>
+          </span>
+        </div>
+      </div>
+    </div>
+
     <div class="save-msg" id="save-settings-msg">
       <div class="save-msg-card">
         <div class="save-msg-text"></div>
