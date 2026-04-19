@@ -76,6 +76,18 @@
   const cadenceEl = document.getElementById("cadence-" + cadence);
   if (cadenceEl) cadenceEl.checked = true;
 
+  // Lookback retention — init from saved value
+  var lookbackDays = parseInt(settings.lookback_days) || 180;
+  var lookbackBtn = document.getElementById("lookback-btn");
+  var lookbackMenu = document.getElementById("lookback-menu");
+  if (lookbackBtn && lookbackMenu) {
+    var lookbackLabels = { "30": "1 month", "90": "3 months", "180": "6 months" };
+    lookbackBtn.innerHTML = (lookbackLabels[String(lookbackDays)] || "6 months") + " &#9662;";
+    lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
+      item.classList.toggle("active", item.getAttribute("data-value") === String(lookbackDays));
+    });
+  }
+
   const sourcePrefsEl = document.getElementById("source-prefs");
   const industryEl = document.getElementById("industry-override");
   const locationEl = document.getElementById("location-override");
@@ -116,4 +128,50 @@
       else { showMsg("Settings saved.", "success"); }
     });
   }
+  // Lookback dropdown — toggle menu on button click
+  if (lookbackBtn) {
+    lookbackBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      lookbackMenu.classList.toggle("open");
+      lookbackBtn.classList.toggle("active");
+    });
+  }
+
+  // Lookback dropdown — item selection (saves immediately)
+  if (lookbackMenu) {
+    lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
+      item.addEventListener("click", async function() {
+        var val = parseInt(item.getAttribute("data-value")) || 180;
+        lookbackBtn.innerHTML = item.textContent + " &#9662;";
+        lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(it) { it.classList.remove("active"); });
+        item.classList.add("active");
+        lookbackMenu.classList.remove("open");
+        lookbackBtn.classList.remove("active");
+        var payload = {
+          user_id: user.id,
+          lookback_days: val,
+          updated_at: new Date().toISOString()
+        };
+        var result;
+        if (settings.id) {
+          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
+        } else {
+          payload.created_at = new Date().toISOString();
+          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
+        }
+        if (result.error) {
+          console.error("[ND Settings] Lookback save error:", result.error.message);
+        }
+      });
+    });
+  }
+
+  // Close lookback dropdown on outside click
+  document.addEventListener("click", function(e) {
+    if (!e.target.closest(".lookback-dropdown-wrap")) {
+      if (lookbackMenu) lookbackMenu.classList.remove("open");
+      if (lookbackBtn) lookbackBtn.classList.remove("active");
+    }
+  });
+
 })();
