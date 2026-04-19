@@ -23,6 +23,33 @@
       font-size: var(--section-title-font-size);
       color: var(--text-muted);
     }
+    .stab-bar {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .stab {
+      padding: 13px 24px;
+      font-family: var(--body-font);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border: none;
+      background: none;
+      border-bottom: 3px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .stab:hover { color: var(--text); }
+    .stab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 600;
+    }
+    .stab-panel { display: none; }
+    .stab-panel.active { display: block; width: 100%; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -72,61 +99,73 @@
       <p class="page-subtitle">Configure your digest frequency and preferred sources.</p>
     </div>
 
-    <div class="settings-card">
-      <div class="settings-card-header">
-        <div class="settings-card-title">Digest Frequency</div>
-        <div class="settings-card-hint">How often your digest refreshes automatically.</div>
-      </div>
-      <div class="settings-rows">
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Refresh Schedule</div>
-          </div>
-          <div class="settings-row-control" id="cadence-ctrl">
-            <button class="freq-btn" data-field="cadence" data-value="daily">Daily</button>
-            <button class="freq-btn active" data-field="cadence" data-value="weekly">Weekly</button>
-          </div>
-        </div>
-      </div>
+    <div class="stab-bar">
+      <button class="stab active" data-tab="frequency">Digest Frequency</button>
+      <button class="stab" data-tab="sources">Source Preferences</button>
+      <button class="stab" data-tab="retention">History Retention</button>
     </div>
 
-    <div class="settings-card">
-      <div class="settings-card-header">
-        <div class="settings-card-title">Source Preferences</div>
-        <div class="settings-card-hint">Add specific sources or domains you want included in your digest. These are included alongside standard search results — for example: ato.gov.au, fairwork.gov.au, your-industry-body.org.au</div>
-      </div>
-      <div class="settings-rows">
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Preferred Sources</div>
-          </div>
-          <input type="text" id="source-prefs" class="settings-text-input" placeholder="e.g. ato.gov.au, fairwork.gov.au">
+    <div class="stab-panel active" id="tab-frequency">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Digest Frequency</div>
+          <div class="settings-card-hint">How often your digest refreshes automatically.</div>
         </div>
-      </div>
-      <div class="settings-footer">
-        <button class="btn-save" id="save-settings-btn">Save</button>
-        <a href="/news-digest.html">Cancel</a>
-      </div>
-    </div>
-
-    <div class="settings-card">
-      <div class="settings-card-header">
-        <div class="settings-card-title">History Retention</div>
-        <div class="settings-card-hint">How long to keep your digest history and related Content Library items.</div>
-      </div>
-      <div class="settings-rows">
-        <div class="settings-row">
-          <div>
-            <div class="settings-row-label">Retention Period</div>
-          </div>
-          <span class="lookback-dropdown-wrap">
-            <button type="button" class="lookback-dropdown" id="lookback-btn" data-lookback-type="retention">6 months &#9662;</button>
-            <div class="lookback-dropdown-menu" id="lookback-menu">
-              <button type="button" class="lookback-dropdown-item" data-value="30">1 month</button>
-              <button type="button" class="lookback-dropdown-item" data-value="90">3 months</button>
-              <button type="button" class="lookback-dropdown-item active" data-value="180">6 months</button>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Refresh Schedule</div>
             </div>
-          </span>
+            <div class="settings-row-control" id="cadence-ctrl">
+              <button class="freq-btn" data-field="cadence" data-value="daily">Daily</button>
+              <button class="freq-btn active" data-field="cadence" data-value="weekly">Weekly</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stab-panel" id="tab-sources">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Source Preferences</div>
+          <div class="settings-card-hint">Add specific sources or domains you want included in your digest. These are included alongside standard search results — for example: ato.gov.au, fairwork.gov.au, your-industry-body.org.au</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Preferred Sources</div>
+            </div>
+            <input type="text" id="source-prefs" class="settings-text-input" placeholder="e.g. ato.gov.au, fairwork.gov.au">
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="save-settings-btn">Save</button>
+          <a href="/news-digest.html">Cancel</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="stab-panel" id="tab-retention">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">History Retention</div>
+          <div class="settings-card-hint">How long to keep your digest history and related Content Library items.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Retention Period</div>
+            </div>
+            <span class="lookback-dropdown-wrap">
+              <button type="button" class="lookback-dropdown" id="lookback-btn" data-lookback-type="retention">6 months &#9662;</button>
+              <div class="lookback-dropdown-menu" id="lookback-menu">
+                <button type="button" class="lookback-dropdown-item" data-value="30">1 month</button>
+                <button type="button" class="lookback-dropdown-item" data-value="90">3 months</button>
+                <button type="button" class="lookback-dropdown-item active" data-value="180">6 months</button>
+              </div>
+            </span>
+          </div>
         </div>
       </div>
     </div>
