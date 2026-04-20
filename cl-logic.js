@@ -1,19 +1,3 @@
-  // Shared utilities - exposed on window for tab JS files
-  function getTypeIcon(type) {
-  return { image:'📸', document:'📄', testimonial:'💬', project:'✅', text:'📝', word:'📝', pdf:'📑', powerpoint:'📊', excel:'📊' }[type] || '📦';
-}
-  window.getTypeIcon = getTypeIcon;
-
-  function getDocIcon(type) {
-  return { pdf:'📑', word:'📝', powerpoint:'📊', excel:'📊', document:'📄', content:'✍️', text:'📝' }[type] || '📄';
-}
-  window.getDocIcon = getDocIcon;
-
-  function getFileType(name) {
-  const ext = name.toLowerCase().split('.').pop();
-  return { pdf:'pdf',doc:'word',docx:'word',ppt:'powerpoint',pptx:'powerpoint',xls:'excel',xlsx:'excel',txt:'text',jpg:'image',jpeg:'image',png:'image',webp:'image',heic:'image' }[ext] || 'unknown';
-}
-
 // ─── INIT ──────────────────────────────────────
 setTimeout(() => {
   window.loadStats();
@@ -21,32 +5,14 @@ setTimeout(() => {
   // Check for OAuth callbacks
   const params = new URLSearchParams(window.location.search);
   if (params.get('gdrive_connected') === 'true') {
-    alert('✅ Google Drive connected');
-    loadConnectionStatus();
+    alert('Google Drive connected');
     window.history.replaceState({}, '', window.location.pathname);
   }
   if (params.get('error')) {
-    alert('❌ Connection error: ' + params.get('details'));
+    alert('Connection error: ' + params.get('details'));
     window.history.replaceState({}, '', window.location.pathname);
   }
 }, 400);
-
-  window.getFileType = getFileType;
-
-  const catBadge = (cat) => {
-    const map = {
-      'completed-jobs': ['green','✅ Completed Job'],
-      'marketing': ['orange','🎯 Marketing'],
-      'testimonial': ['purple','💬 Testimonial'],
-      'tips': ['','💡 Tips'],
-      'team-culture': ['','👥 Team'],
-      'company': ['','🏢 Company'],
-      'service': ['','⚙️ Service'],
-    };
-    const [cls, label] = map[cat] || ['', cat];
-    return `<span class="cat-badge ${cls}">${label || cat}</span>`;
-  }
-  window.catBadge = catBadge;
 
   // Dynamic loader - tab JS files with cache-busting
   (function() {
