@@ -233,14 +233,14 @@ window.EA_LOGIC = {
       var dropdownLabel = dropdownActive
         ? self._getCategoryLabel(self._categoryFilter)
         : 'All Categories';
-      html += '<div class="ea-cat-dropdown" id="ea-cat-dropdown">' +
-        '<button class="ea-cat-dropdown-btn' + (dropdownActive ? ' active' : '') + '" id="ea-cat-dropdown-btn">' + window.escHtml(dropdownLabel) + ' &#9662;</button>' +
-        '<div class="ea-cat-dropdown-menu" id="ea-cat-dropdown-menu">' +
+      html += '<span class="lookback-dropdown-wrap" id="ea-cat-dropdown">' +
+        '<button class="lookback-dropdown lookback-dropdown-field' + (dropdownActive ? ' active' : '') + '" id="ea-cat-dropdown-btn">' + window.escHtml(dropdownLabel) + '</button>' +
+        '<div class="lookback-dropdown-menu" id="ea-cat-dropdown-menu">' +
         dropdownCats.map(function(c) {
           var isActive = self._categoryFilter === c.id;
-          return '<button class="ea-cat-dropdown-item' + (isActive ? ' active' : '') + '" data-catdropdown="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
+          return '<button class="lookback-dropdown-item' + (isActive ? ' active' : '') + '" data-catdropdown="' + window.escHtml(c.id) + '">' + window.escHtml(c.label) + '</button>';
         }).join('') +
-        '</div></div>';
+        '</div></span>';
     }
 
     html += '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
@@ -301,7 +301,7 @@ window.EA_LOGIC = {
         e.stopPropagation();
         dropdownMenu.classList.toggle('open');
       });
-      dropdownMenu.querySelectorAll('.ea-cat-dropdown-item').forEach(function(item) {
+      dropdownMenu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
         item.addEventListener('click', function(e) {
           e.stopPropagation();
           self._showHandled = false;
