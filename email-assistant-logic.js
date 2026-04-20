@@ -669,7 +669,6 @@ window.EA_LOGIC = {
     var subject = window.escHtml(email.subject || 'No subject');
     var summary = window.escHtml(email.summary || '');
     var providerLabel = email.provider === 'gmail' ? 'Gmail' : 'Outlook';
-    var catLabel = this._getCategoryLabel(email.category);
     var dateStr = email.received_at ? new Date(email.received_at).toLocaleDateString('en-AU') : '';
     var checked = this._selected.has(email.id || email.message_id) ? ' checked' : '';
     var flagIcon = email.is_flagged ? '&#9733;' : '&#9734;';
