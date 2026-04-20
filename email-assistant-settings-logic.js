@@ -279,7 +279,7 @@ window.EA_SETTINGS = {
     if (!container) return;
 
     if (self._eaEmails.length === 0) {
-      container.innerHTML = '<div class="settings-row"><div><div class="settings-row-label" style="color:var(--text-muted);">No accounts connected.</div></div></div>';
+      container.innerHTML = '<div class="settings-row"><div><div class="settings-row-desc">No accounts connected.</div></div></div>';
       return;
     }
 
@@ -348,13 +348,13 @@ window.EA_SETTINGS = {
       var desc = window.escHtml(cat.description || '');
       var descHtml = isDefault
         ? '<div class="settings-row-desc">' + desc + '</div>'
-        : '<div style="margin-top:4px;"><input type="text" class="settings-text-input ea-cat-desc-input" data-cat-desc="' + idx + '" value="' + desc + '" placeholder="Description (required)" style="width:100%"></div>';
+        : '<div class="ea-cat-desc-wrap"><input type="text" class="settings-text-input settings-add-input-full ea-cat-desc-input" data-cat-desc="' + idx + '" value="' + desc + '" placeholder="Description (required)"></div>';
       var removeHtml = !isDefault
         ? '<button type="button" class="btn-remove-url" data-remove="' + idx + '">Remove</button>'
         : '';
       var row = '<div class="settings-row cat-row">' +
         '<div><div class="settings-row-label">' + label + '</div>' + descHtml + '</div>' +
-        '<div style="display:flex;align-items:center;gap:var(--actions-gap);">' +
+        '<div class="ea-cat-actions">' +
           removeHtml +
           '<div class="settings-row-control">' +
             '<button type="button" class="freq-btn' + (isOn ? ' active' : '') + '" data-cat="' + idx + '" data-val="on">On</button>' +
