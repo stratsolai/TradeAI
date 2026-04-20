@@ -50,12 +50,13 @@ window.EA_SETTINGS = {
         .select('ea_connected_emails')
         .eq('id', self._userId)
         .single();
+      if (res.error) { console.error('[EA Settings] loadConnections error:', res.error); }
       if (res.data && Array.isArray(res.data.ea_connected_emails)) {
         self._eaEmails = res.data.ea_connected_emails;
       } else {
         self._eaEmails = [];
       }
-    } catch (e) { self._eaEmails = []; }
+    } catch (e) { console.error('[EA Settings] loadConnections exception:', e); self._eaEmails = []; }
     self._renderEmailList();
   },
 
@@ -67,6 +68,7 @@ window.EA_SETTINGS = {
         .select('*')
         .eq('user_id', self._userId)
         .maybeSingle();
+      if (res.error) { console.error('[EA Settings] loadSettings query error:', res.error); }
       if (res.data) self._settings = res.data;
     } catch (e) { console.error('[EA Settings] loadSettings error:', e.message); }
 
