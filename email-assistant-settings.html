@@ -33,7 +33,6 @@
 <script>
 (function() {
   if (window.matchMedia('(display-mode: standalone)').matches && window.innerWidth < 768) {
-    var cv = function(v) { return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); };
     var s = document.createElement('style');
     s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: var(--bg); }';
     document.head.appendChild(s);
