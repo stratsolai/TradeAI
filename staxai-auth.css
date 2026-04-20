@@ -821,6 +821,9 @@ a:hover { opacity: 0.85; }
 .lookback-dropdown { padding:5px 28px 5px 10px; border:2px solid var(--blue); border-radius:var(--btn-radius); font-size:var(--badge-font-size); font-family:var(--body-font); background-color:var(--white); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234A6D8C' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; background-size:10px 6px; color:var(--blue); cursor:pointer; white-space:nowrap; font-weight:var(--font-weight-semibold); box-sizing:border-box; }
 .lookback-dropdown:hover { background-color:var(--blue-light); }
 .lookback-dropdown.active { background-color:var(--blue-light); }
+/* Use .lookback-dropdown-field when the dropdown sits as a peer of text input fields on a form row — applies form-appropriate padding and font size */
+.lookback-dropdown-field { padding:var(--input-padding); padding-right:28px; font-size:var(--btn-font-size); font-family:var(--body-font); }
+.lookback-dropdown-field + .lookback-dropdown-menu .lookback-dropdown-item { font-size:var(--btn-font-size); }
 .lookback-dropdown-menu { display:none; position:absolute; top:100%; left:0; margin-top:4px; min-width:140px; background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius); box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0; }
 .lookback-dropdown-menu.open { display:block; }
 .lookback-dropdown-item { display:block; width:100%; padding:5px 10px; border:none; background:none; font-size:var(--badge-font-size); font-family:var(--body-font); color:var(--text); text-align:left; cursor:pointer; }
