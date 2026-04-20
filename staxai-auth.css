@@ -1025,11 +1025,13 @@ a:hover { opacity: 0.85; }
 .review-reject-all-btn { border-color:var(--red-dark); color:var(--red-dark); }
 .review-reject-all-btn:hover { background:var(--red-hover-bg); }
 
-/* Approve button hover — per-item and bulk approve buttons */
+/* Approve button — per-item green outline */
+.review-approve-btn { display:flex; align-items:center; border:2px solid var(--green-dark); border-radius:var(--btn-radius); padding:10px 16px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--green-dark); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
 .review-approve-btn:hover { background:var(--green-light); }
 .review-bulk-approve-btn:hover { background:var(--green-light); }
 
-/* Reject button hover — per-item and bulk reject buttons */
+/* Reject button — per-item red-dark outline */
+.review-reject-btn { display:flex; align-items:center; border:2px solid var(--red-dark); border-radius:var(--btn-radius); padding:10px 16px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--red-dark); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); }
 .review-reject-btn:hover { background:var(--red-hover-bg); }
 .review-bulk-reject-btn:hover { background:var(--red-hover-bg); }
 
@@ -1104,8 +1106,14 @@ a:hover { opacity: 0.85; }
 
 /* Category dropdown — consolidated into .lookback-dropdown + .lookback-dropdown-field. See Section 15 lookback dropdown component. */
 
-/* Section button open states — section panel is expanded. Hover is the light variant of the accent colour. */
+/* Tagged Tools section button — teal left-accent toggle */
+.review-tools-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--teal); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
+.review-tools-btn:hover { background:var(--teal-light); }
 .review-tools-btn.open { background:var(--teal-light); }
+
+/* Tagged Categories section button — purple left-accent toggle */
+.review-cats-btn { border-width:1px 1px 1px 4px; border-style:solid; border-color:var(--border-subtle); border-left-color:var(--purple); border-radius:var(--btn-radius); padding:10px 10px; font-size:var(--status-font-size); font-weight:var(--font-weight-semibold); color:var(--text-secondary); background:var(--white); cursor:pointer; font-family:var(--body-font); transition:opacity var(--btn-transition); display:flex; align-items:center; }
+.review-cats-btn:hover { background:var(--purple-hover-bg); }
 .review-cats-btn.open { background:var(--purple-hover-bg); }
 
 /* Filter section label — heading above filter pill rows in all list views */
