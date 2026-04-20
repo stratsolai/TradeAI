@@ -125,6 +125,17 @@
     .source-tile-error { grid-column: 1 / -1; padding: 16px; color: var(--red); font-size: 14px; background: var(--red-light); border-radius: 8px; }
     @media (max-width: 640px) { .sources-tiles { grid-template-columns: 1fr; } }
 
+    /* ── Manual Add flow ─────────────────────────────────────────── */
+    .manual-add-flow { background: var(--white); border: 1px solid var(--border); border-radius: var(--card-radius); padding: 24px; margin-bottom: 24px; }
+    .manual-add-input { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--input-font-size); font-family: var(--body-font); color: var(--text); background: var(--white); }
+    .manual-add-input:focus { outline: none; border-color: var(--blue); }
+    .manual-add-textarea { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--input-font-size); font-family: var(--body-font); color: var(--text); background: var(--white); resize: vertical; }
+    .manual-add-textarea:focus { outline: none; border-color: var(--blue); }
+
+    /* ── Upload message variants ─────────────────────────────────── */
+    .upload-message-success .upload-confirm-pill { border-color: var(--green-dark); }
+    .upload-message-error .upload-confirm-pill { border-color: var(--red-dark); }
+    .upload-message-processing .upload-confirm-pill { border-color: var(--blue); }
 
 /* ── Review Tab ─────────────────────────────────────────── */
 .review-wrap { padding-bottom: 40px; }
@@ -215,6 +226,7 @@
 
 /* Source detail — uses shared .source-detail and .source-detail-label from stylesheet */
 .review-empty-detail { color:var(--text-disabled); font-style:italic; }
+.list-empty-detail { color:var(--text-disabled); font-style:italic; }
 
 /* States — uses shared .list-loading and .list-empty from stylesheet */
 
