@@ -366,9 +366,6 @@
       var session = result.data && result.data.session;
       if (!session) { window.location.href = '/login'; return; }
       document.getElementById('page-wrap').style.display = 'block';
-      if (window.CL_LOGIC && window.CL_LOGIC.init) {
-        window.CL_LOGIC.init(supabase, session.user);
-      }
     });
   })();
 </script>
