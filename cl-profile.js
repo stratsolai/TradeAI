@@ -211,7 +211,10 @@ window.CL_PROFILE = {
       suburb: this._v('address_suburb'),
       state: this._v('address_state'),
       postcode: this._v('address_postcode'),
-      phones: Array.isArray(p.additional_phones) ? p.additional_phones : [{ type: 'Main', number: '' }]
+      phones: Array.isArray(p.additional_phones) ? p.additional_phones.map(function(ph) {
+        if (typeof ph === 'string') { try { return JSON.parse(ph); } catch(e) { return { type: 'Main', number: ph }; } }
+        return ph;
+      }) : [{ type: 'Main', number: '' }]
     };
     var extraLocs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
     var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
@@ -313,6 +316,7 @@ window.CL_PROFILE = {
     var btn = document.getElementById('prof-loc-save');
     window.handleSave(btn, async function() {
       var updates = {
+        address_name: pb.querySelector('.loc-name').value.trim(),
         address_unit: pb.querySelector('.loc-unit').value.trim(),
         address_street: pb.querySelector('.loc-street').value.trim(),
         address_suburb: pb.querySelector('.loc-suburb').value.trim(),
