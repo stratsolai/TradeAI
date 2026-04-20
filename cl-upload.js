@@ -143,6 +143,7 @@ window.CL_UPLOAD = {
       var user = userResp.data && userResp.data.user;
       if (!user) return;
       var resp = await supabase.from("profiles").select("cl_drive_accounts, cl_connected_emails, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts").eq("id", user.id).single();
+      if (resp.error) { console.error("[cl-upload] _loadConnectionStatus query error:", resp.error.message); grid.innerHTML = "<div class=\"source-tile-error\">Unable to load connection status. Please refresh the page.</div>"; return; }
       var profile = resp.data || {};
       var tiles = [];
 
@@ -682,6 +683,7 @@ window.CL_UPLOAD = {
         .in("status", ["queued", "running"])
         .order("created_at", { ascending: true });
 
+      if (jobsResp.error) { console.error("[cl-upload] _restoreActiveJobs query error:", jobsResp.error.message); return; }
       var jobs = (jobsResp.data || []);
       if (jobs.length === 0) return;
 
@@ -713,13 +715,15 @@ window.CL_UPLOAD = {
       if (entry.status === "queued") {
         // Job hasn't started — delete it from the queue
         self._supabase.from("cl_scan_jobs").delete().eq("id", entry.jobId)
-          .then(function() {
+          .then(function(result) {
+            if (result.error) { console.error("[cl-upload] Failed to delete queued job:", entry.jobId, result.error.message); return; }
             console.log("[cl-upload] Deleted queued job:", entry.jobId);
           });
       } else if (entry.status === "running") {
         // Job is in progress — set to cancelled so the worker abandons it
         self._supabase.from("cl_scan_jobs").update({ status: "cancelled" }).eq("id", entry.jobId)
-          .then(function() {
+          .then(function(result) {
+            if (result.error) { console.error("[cl-upload] Failed to cancel running job:", entry.jobId, result.error.message); return; }
             console.log("[cl-upload] Cancelled running job:", entry.jobId);
           });
       }
