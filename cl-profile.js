@@ -97,7 +97,7 @@ window.CL_PROFILE = {
     var currentLabel = sel || 'Select...';
     var currentValue = sel || '';
     return '<span class="lookback-dropdown-wrap">' +
-      '<button type="button" id="' + id + '" class="lookback-dropdown" data-value="' + window.escHtml(currentValue) + '">' + window.escHtml(currentLabel) + ' &#9662;</button>' +
+      '<button type="button" id="' + id + '" class="lookback-dropdown lookback-dropdown-field" data-value="' + window.escHtml(currentValue) + '">' + window.escHtml(currentLabel) + ' &#9662;</button>' +
       '<div class="lookback-dropdown-menu">' +
       opts.map(function(v) {
         return '<button type="button" class="lookback-dropdown-item' + (v === sel ? ' active' : '') + '" data-value="' + window.escHtml(v) + '">' + window.escHtml(v) + '</button>';
