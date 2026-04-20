@@ -82,10 +82,7 @@ window.CL_REVIEW = {
     const self = this;
     document.querySelectorAll('.stat-card[data-status]').forEach(function(tile) {
       var status = tile.dataset.status;
-      if (status === 'all') {
-        tile.style.cursor = 'default';
-        return;
-      }
+      if (status === 'all') return;
       tile.addEventListener('click', function() {
         self.setStatus(status);
       });
@@ -108,7 +105,7 @@ window.CL_REVIEW = {
           <button class="filter-btn filter-tools-btn">&#9783; Filter By Tools</button>
           <button class="filter-btn filter-cat-btn">&#9776; Filter By Category</button>
           <button class="clear-filters-btn">&#10005; Clear All Filters</button>
-          <span style="flex:1"></span>
+          <span class="review-filter-spacer"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn">&#10003; Approve All</button>
           <button class="btn-outline review-reject-all-btn" id="review-reject-all-btn">&#10007; Reject All</button>
         </div>
@@ -389,8 +386,8 @@ window.CL_REVIEW = {
       var target = document.querySelector('.item-card[data-id="' + this._scrollToId + '"]');
       if (target) {
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.style.outline = '2px solid var(--blue)';
-        setTimeout(function() { target.style.outline = ''; }, 2000);
+        target.classList.add('review-scroll-highlight');
+        setTimeout(function() { target.classList.remove('review-scroll-highlight'); }, 2000);
       }
       this._scrollToId = null;
     }
@@ -498,13 +495,13 @@ window.CL_REVIEW = {
     var itemSd = item.source_detail || {};
     var isImgItem = item.content_type === 'image' || itemSd.file_type === 'image' || (itemSd.mime_type && itemSd.mime_type.indexOf('image/') === 0);
     if (isImgItem && item.source_item_id && this._imageUrls[item.source_item_id]) {
-      thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;">';
+      thumbHtml = '<img src="' + escHtml(this._imageUrls[item.source_item_id]) + '" alt="" class="review-thumb">';
     }
     return `<div class="item-card${pairCardClass}" data-id="${id}">
   <div class="item-card-header">
     <input type="checkbox" class="item-checkbox" data-id="${id}"${checked}>
-    <span style="flex:1;min-width:140px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      ${thumbHtml}<span class="item-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'} style="flex:0 1 auto;min-width:0;">${title}</span>${aiRejectedPill}${archivedLinkPill}
+    <span class="review-title-wrap">
+      ${thumbHtml}<span class="item-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'}>${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
     <div class="item-card-preview-row">
       <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
@@ -546,13 +543,8 @@ window.CL_REVIEW = {
       btn.addEventListener('click', function() {
         const card = btn.closest('.item-card');
         if (!card) return;
-        const isExpanded = card.classList.contains('review-body-expanded');
+        var isExpanded = card.classList.contains('review-body-expanded');
         card.classList.toggle('review-body-expanded', !isExpanded);
-        var span = document.getElementById('review-preview-' + btn.dataset.id);
-        if (span) {
-          span.style.whiteSpace = isExpanded ? '' : 'pre-wrap';
-          span.style.overflow = isExpanded ? '' : 'visible';
-        }
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
