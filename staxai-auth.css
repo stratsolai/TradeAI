@@ -1115,3 +1115,16 @@ a:hover { opacity: 0.85; }
 .ea-detail-meta { display:flex; align-items:center; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
 
 /* Settings message states — msg-error and msg-success are applied to .save-msg for JS state tracking only. Text colour is always var(--text) via .save-msg-text. */
+
+/* ------------------------------------------------------------
+   19. EXPAND / COLLAPSE COMPONENT
+   ------------------------------------------------------------ */
+
+/* Truncated text preview — single-line with ellipsis. Used inside .item-card-preview-row on any list card. */
+.text-preview { font-size:var(--label-font-size); color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
+
+/* Expand button — small toggle arrow inside a preview row */
+.expand-btn { background:none; border:none; cursor:pointer; color:var(--blue); font-size:12px; padding:0; flex-shrink:0; }
+
+/* Expanded state — applied to the parent .item-card to reveal full preview text */
+.item-card.content-expanded .text-preview { white-space:pre-wrap; overflow:visible; }
