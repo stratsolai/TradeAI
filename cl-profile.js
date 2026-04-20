@@ -172,7 +172,7 @@ window.CL_PROFILE = {
       '</select>';
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
         typeSelect +
-        '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(ph.number || '') + '" placeholder="Phone number" />' +
+        '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(window.formatPhoneNumber(ph.number || '')) + '" placeholder="Phone number" />' +
         '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + pi + '\')">Remove</button>' +
       '</div>';
     }).join('');
@@ -240,8 +240,25 @@ window.CL_PROFILE = {
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save'
     );
+    var self2 = this;
     var locBtn = document.getElementById('prof-loc-save');
-    if (locBtn) { var self2 = this; locBtn.addEventListener('click', function() { self2._saveLocation(); }); }
+    if (locBtn) locBtn.addEventListener('click', function() { self2._saveLocation(); });
+    var locPanel = document.getElementById('prof-panel-location');
+    if (locPanel) self2._wirePhoneFormat(locPanel);
+  },
+
+  _wirePhoneFormat: function(container) {
+    container.querySelectorAll('.loc-phone-number').forEach(function(input) {
+      if (input.dataset.phoneFormatted) return;
+      input.dataset.phoneFormatted = '1';
+      input.addEventListener('input', function() {
+        var pos = input.selectionStart;
+        var oldLen = input.value.length;
+        input.value = window.formatPhoneNumber(input.value);
+        var newLen = input.value.length;
+        input.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
+      });
+    });
   },
 
   _addPhone: function(idPfx) {
@@ -258,6 +275,7 @@ window.CL_PROFILE = {
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
     '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
     wrap.appendChild(d);
+    this._wirePhoneFormat(d);
   },
 
   _addSite: function() {
