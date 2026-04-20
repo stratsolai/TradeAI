@@ -704,7 +704,7 @@ window.EA_LOGIC = {
           '<span class="ea-subject-inline">' + subject + '</span>' +
         '</div>' +
         '<div class="item-card-preview-row">' +
-          '<span class="ea-body-preview">' + summary + '</span>' +
+          '<span class="text-preview">' + summary + '</span>' +
         '</div>' +
         '<div class="item-card-btns">' +
           '<span class="item-upload-date">' + dateStr + '</span>' +
