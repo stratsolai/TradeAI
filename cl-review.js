@@ -504,8 +504,8 @@ window.CL_REVIEW = {
       ${thumbHtml}<span class="item-card-title"${isUsed ? '' : ' contenteditable="true"'} data-id="${id}"${isUsed ? '' : ' title="Click to edit"'}>${title}</span>${aiRejectedPill}${archivedLinkPill}
     </span>
     <div class="item-card-preview-row">
-      <button class="review-expand-btn" data-id="${id}" title="Expand">&#9654;</button>
-      <span class="review-body-preview" id="review-preview-${id}">${bodyPreview}</span>
+      <button class="expand-btn" data-id="${id}" title="Expand">&#9654;</button>
+      <span class="text-preview" id="review-preview-${id}">${bodyPreview}</span>
     </div>${usedNoticeHtml}
     <button class="review-tools-btn" data-id="${id}" data-section="tags">&#9741; Tagged Tools</button>
     <button class="review-cats-btn" data-id="${id}" data-section="cats">&#9776; Tagged Categories</button>
@@ -539,12 +539,12 @@ window.CL_REVIEW = {
         self._updateBulkBar();
       });
     });
-    document.querySelectorAll('.review-expand-btn').forEach(function(btn) {
+    document.querySelectorAll('.expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         const card = btn.closest('.item-card');
         if (!card) return;
-        var isExpanded = card.classList.contains('review-body-expanded');
-        card.classList.toggle('review-body-expanded', !isExpanded);
+        var isExpanded = card.classList.contains('content-expanded');
+        card.classList.toggle('content-expanded', !isExpanded);
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
