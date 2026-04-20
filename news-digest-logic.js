@@ -188,11 +188,11 @@ window.ND_LOGIC = {
     var hasTenders = this._tenders.length > 0;
 
     if (!hasBriefings && !hasTenders) {
-      if (empty) empty.removeAttribute('style');
+      if (empty) empty.hidden = false;
       content.innerHTML = '';
       return;
     }
-    if (empty) empty.setAttribute('style', 'display:none');
+    if (empty) empty.hidden = true;
 
     var self = this;
     var html = '';
@@ -254,11 +254,11 @@ window.ND_LOGIC = {
 
     var briefing = this._getBriefing(categoryId);
     if (!briefing || !briefing.headline) {
-      if (empty) empty.removeAttribute('style');
+      if (empty) empty.hidden = false;
       content.innerHTML = '';
       return;
     }
-    if (empty) empty.setAttribute('style', 'display:none');
+    if (empty) empty.hidden = true;
 
     var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
     var html = '<h3>' + escHtml(briefing.headline) + '</h3>'
@@ -343,11 +343,11 @@ window.ND_LOGIC = {
     var hasTenders = this._tenders.length > 0;
 
     if (!hasBriefing && !hasTenders) {
-      if (empty) empty.removeAttribute('style');
+      if (empty) empty.hidden = false;
       content.innerHTML = '';
       return;
     }
-    if (empty) empty.setAttribute('style', 'display:none');
+    if (empty) empty.hidden = true;
 
     var html = '';
 
