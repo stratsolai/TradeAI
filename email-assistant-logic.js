@@ -150,7 +150,7 @@ window.EA_LOGIC = {
     var self = this;
     if (accounts.length === 1) {
       var provLabel = this._providerLabel(accounts[0].provider);
-      container.innerHTML = '<span class="ptab active" style="cursor:default;">' + window.escHtml(provLabel + ' — ' + accounts[0].email) + '</span>';
+      container.innerHTML = '<span class="ptab active ptab-static">' + window.escHtml(provLabel + ' — ' + accounts[0].email) + '</span>';
     } else {
       container.innerHTML = accounts.map(function(acct) {
         var label = self._providerLabel(acct.provider) + ' — ' + acct.email;
@@ -333,7 +333,7 @@ window.EA_LOGIC = {
       '<button class="filter-btn" id="ea-days-btn">&#9783; Lookback Days</button>' +
       '<button class="filter-btn" id="ea-range-btn">&#9776; Date Range</button>' +
       '<button class="clear-filters-btn" id="clear-filters-btn">&#10005; Clear All Filters</button>' +
-      '<span style="flex:1"></span>' +
+      '<span class="topbar-spacer"></span>' +
       '<button class="btn-outline" id="ea-scan-btn">Scan Now</button>' +
       '<button class="btn-dismiss ea-handled-btn" id="ea-handle-all-btn">&#10007; Dismiss All</button>';
   },
@@ -389,7 +389,7 @@ window.EA_LOGIC = {
       var toVal = this._dateTo ? this._dateTo.substring(0, 10) : '';
       container.innerHTML =
         '<div class="filter-section-label">Date Range</div>' +
-        '<div class="ea-pill-row" style="align-items:center;">' +
+        '<div class="ea-pill-row">' +
           '<span class="ea-date-label">From</span>' +
           '<input type="date" class="ea-date-input" id="ea-date-from" value="' + fromVal + '">' +
           '<span class="ea-date-label">To</span>' +
