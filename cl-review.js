@@ -17,6 +17,7 @@ window.CL_REVIEW = {
       var user = authResp.data && authResp.data.user;
       if (user) {
         const profResult = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+        if (profResult.error) { console.error('[CL Review] init profile query error:', profResult.error.message); }
         window._activatedTools = (profResult.data && Array.isArray(profResult.data.activated_tools)) ? profResult.data.activated_tools : [];
         window._clCategories = (profResult.data && Array.isArray(profResult.data.cl_active_categories)) ? profResult.data.cl_active_categories : [];
       }
