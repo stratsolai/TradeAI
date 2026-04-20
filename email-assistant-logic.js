@@ -115,6 +115,7 @@ window.EA_LOGIC = {
       .select('ea_connected_emails')
       .eq('id', this._user.id)
       .single();
+    if (result.error) { console.error('[EA] loadAccounts error:', result.error); }
     var emails = (result.data && Array.isArray(result.data.ea_connected_emails)) ? result.data.ea_connected_emails : [];
     this._connectedAccounts = emails;
     if (emails.length > 0 && !this._activeAccount) {
@@ -974,6 +975,7 @@ window.EA_LOGIC = {
         this._finishScan();
       }
     } catch (e) {
+      console.error('[EA] Scan error:', e);
       if (listEl) listEl.innerHTML = '<div class="list-empty">Scan failed. Please try again.</div>';
       this._finishScan();
     }
