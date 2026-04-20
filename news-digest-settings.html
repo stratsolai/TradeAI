@@ -193,7 +193,7 @@
       var supabase = window.supabaseClient;
       if (!supabase) return;
       supabase.auth.getUser().then(function(resp) {
-        if (!resp.data || !resp.data.user) {
+        if (resp.error || !resp.data || !resp.data.user) {
           window.location.href = '/login';
           return;
         }
@@ -201,6 +201,9 @@
         if (window.ND_SETTINGS_LOGIC && window.ND_SETTINGS_LOGIC.init) {
           window.ND_SETTINGS_LOGIC.init(supabase, resp.data.user);
         }
+      }).catch(function(e) {
+        console.error('[ND Settings] Auth error:', e.message);
+        window.location.href = '/login';
       });
     })();
   </script>
