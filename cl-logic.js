@@ -30,7 +30,6 @@ setTimeout(() => {
   })();
 
 
-    var _nb = document.getElementById("notification-bar"); if (_nb) _nb.addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
 function switchPTab(tab) {
   document.querySelectorAll('.ptab-content').forEach(function(el) { el.classList.remove('active'); });
   document.querySelectorAll('.ptab').forEach(function(el) { el.classList.remove('active'); });
