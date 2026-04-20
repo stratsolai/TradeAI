@@ -52,16 +52,16 @@ window.CL_UPLOAD = {
       "</div>",
       "<div id=\"cl-manual-flow\" class=\"manual-add-flow\" style=\"display:none\">",
         "<div class=\"manual-add-title\">Add Manual Item</div>",
-        "<label class=\"manual-add-label\" style=\"margin-top:12px\">Title <span style=\"color:var(--red-dark)\">*</span></label>",
+        "<label class=\"manual-add-label manual-add-label-top\">Title <span class=\"manual-add-required\">*</span></label>",
         "<input type=\"text\" id=\"cl-manual-title\" class=\"manual-add-input\" placeholder=\"Enter a title for this item\">",
-        "<label class=\"manual-add-label\" style=\"margin-top:12px\">Description</label>",
+        "<label class=\"manual-add-label manual-add-label-top\">Description</label>",
         "<textarea id=\"cl-manual-desc\" class=\"manual-add-textarea\" rows=\"4\" placeholder=\"Enter a description (optional)\"></textarea>",
-        "<label class=\"manual-add-label\">Tagged Tools <span style=\"color:var(--red-dark)\">*</span></label>",
+        "<label class=\"manual-add-label\">Tagged Tools <span class=\"manual-add-required\">*</span></label>",
         "<div id=\"cl-manual-tools\" class=\"manual-add-pills\"></div>",
         "<div id=\"cl-manual-error\" class=\"manual-add-error\" style=\"display:none\"></div>",
         "<div class=\"manual-add-actions\">",
-          "<button id=\"cl-manual-submit\" class=\"btn-dismiss\" style=\"border-color:var(--blue);color:var(--blue);min-width:100px;justify-content:center;\">Add</button>",
-          "<button id=\"cl-manual-cancel\" class=\"btn-dismiss\" style=\"min-width:100px;justify-content:center;\">Cancel</button>",
+          "<button id=\"cl-manual-submit\" class=\"btn-dismiss manual-add-submit\">Add</button>",
+          "<button id=\"cl-manual-cancel\" class=\"btn-dismiss manual-add-cancel\">Cancel</button>",
         "</div>",
       "</div>",
       "<input type=\"file\" id=\"cl-photo-input\" accept=\"image/*\" capture=\"environment\" style=\"display:none\" multiple>",
@@ -76,8 +76,8 @@ window.CL_UPLOAD = {
       // automatically by _appendUploadMessage. Existing code paths
       // (_showProcessing, _showUploadConfirmation, _showUploadError)
       // all flow through the same append helper now.
-      "<div id=\"cl-upload-confirm\" class=\"upload-confirm\" style=\"display:none;flex-direction:column;gap:8px;align-items:stretch;\"></div>",
-      "<div class=\"upload-section\" style=\"margin-top:16px\">",
+      "<div id=\"cl-upload-confirm\" class=\"upload-confirm upload-confirm-stack\" style=\"display:none\"></div>",
+      "<div class=\"upload-section upload-section-sources\">",
         "<div class=\"upload-section-title\">Sources</div>",
         "<div class=\"upload-section-note\">Scans run in the background. You can navigate away safely.</div>",
         "<div class=\"sources-tiles\" id=\"cl-sources-grid\">",
@@ -268,24 +268,24 @@ window.CL_UPLOAD = {
         // columns and centre it inside that span. The tile keeps its
         // normal one-column width via the calc() that mirrors the grid's
         // 1fr minus half the 16px gap.
-        var tileStyle = '';
+        var tileExtraClass = '';
         if (idx === tiles.length - 1 && tiles.length % 2 === 1) {
-          tileStyle = ' style="grid-column:1 / -1;justify-self:center;width:calc((100% - 16px) / 2);"';
+          tileExtraClass = ' source-tile-centred';
         }
         var pillsHtml = "";
         if (t.groups && t.groups.length > 0) {
-          pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the folders to scan:</div>" +
+          pillsHtml = "<div class=\"source-pill-instruction\">Select the folders to scan:</div>" +
             t.groups.map(function(g) {
               return "<div class=\"source-pill-group\">" +
                 "<div class=\"source-pill-account\">" + g.account + "</div>" +
-                "<div class=\"source-select-pills\" style=\"justify-content:center;\">" + g.items.map(function(p) {
+                "<div class=\"source-select-pills source-select-pills-centred\">" + g.items.map(function(p) {
                   return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
                 }).join("") + "</div>" +
                 "</div>";
             }).join("");
         } else if (t.pills && t.pills.length > 0) {
-          pillsHtml = "<div class=\"source-pill-instruction\" style=\"text-align:center;\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
-            "<div class=\"source-select-pills\" style=\"justify-content:center;\">" + t.pills.map(function(p) {
+          pillsHtml = "<div class=\"source-pill-instruction\">Select the " + (t.id === "website" ? "URLs" : "accounts") + " to scan:</div>" +
+            "<div class=\"source-select-pills source-select-pills-centred\">" + t.pills.map(function(p) {
               return "<button class=\"source-select-pill\" data-value=\"" + p.value + "\">" + p.label + "</button>";
             }).join("") + "</div>";
         }
@@ -303,10 +303,10 @@ window.CL_UPLOAD = {
         // before any account is connected) keep the original behaviour —
         // .source-tile-actions retains its CSS margin-top:auto and pins
         // itself to the bottom on its own.
-        var noteHtml = t.note ? "<div class=\"source-tile-note\" style=\"margin-top:auto;\">" + t.note + "</div>" : "";
-        var actionsStyle = t.note ? " style=\"margin-top:0;\"" : "";
+        var noteHtml = t.note ? "<div class=\"source-tile-note\">" + t.note + "</div>" : "";
+        var actionsFlushClass = t.note ? " source-tile-actions-flush" : "";
         return [
-          "<div class=\"source-tile\"" + tileStyle + ">",
+          "<div class=\"source-tile" + tileExtraClass + "\">",
             "<div class=\"source-tile-top\">",
               "<span class=\"source-tile-icon\">" + t.icon + "</span>",
               "<div class=\"source-tile-body\">",
@@ -316,7 +316,7 @@ window.CL_UPLOAD = {
             "</div>",
             pillsHtml,
             noteHtml,
-            "<div class=\"source-tile-actions\"" + actionsStyle + ">",
+            "<div class=\"source-tile-actions" + actionsFlushClass + "\">",
               "<button class=\"source-action-btn source-scan-btn" + (t.connected ? "" : " source-btn-disabled") + "\" data-source=\"" + t.id + "\"" + (t.connected ? "" : " disabled") + ">Scan Now</button>",
               "<button class=\"source-action-btn source-stop-btn\" data-source=\"" + t.id + "\">Stop Scan</button>",
               "<a href=\"/library/settings\" class=\"source-action-btn source-scan-btn\">Connect" + (t.connected ? " Another" : " Now") + "</a>",
