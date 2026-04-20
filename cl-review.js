@@ -533,39 +533,41 @@ window.CL_REVIEW = {
 
   _bindCardEvents: function() {
     const self = this;
-    document.querySelectorAll('.item-checkbox').forEach(function(cb) {
+    var listEl = document.getElementById('review-list');
+    if (!listEl) return;
+    listEl.querySelectorAll('.item-checkbox').forEach(function(cb) {
       cb.addEventListener('change', function() {
         if (cb.checked) { self._selected.add(cb.dataset.id); } else { self._selected.delete(cb.dataset.id); }
         self._updateBulkBar();
       });
     });
-    document.querySelectorAll('.expand-btn').forEach(function(btn) {
+    listEl.querySelectorAll('.expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        const card = btn.closest('.item-card');
+        var card = btn.closest('.item-card');
         if (!card) return;
         var isExpanded = card.classList.contains('content-expanded');
         card.classList.toggle('content-expanded', !isExpanded);
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
-    document.querySelectorAll('.review-approve-btn').forEach(function(btn) {
+    listEl.querySelectorAll('.review-approve-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._changeStatus(btn.dataset.id, 'approved'); });
     });
-    document.querySelectorAll('.review-reject-btn').forEach(function(btn) {
+    listEl.querySelectorAll('.review-reject-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         if (self._status === 'rejected') {
           if (btn.dataset.used === '1') { self._changeStatus(btn.dataset.id, 'archived'); } else { self._deleteItem(btn.dataset.id); }
         } else { self._changeStatus(btn.dataset.id, 'rejected'); }
       });
     });
-    document.querySelectorAll('.review-archived-link-pill').forEach(function(pill) {
+    listEl.querySelectorAll('.review-archived-link-pill').forEach(function(pill) {
       pill.addEventListener('click', function(e) {
         e.preventDefault();
         self._scrollToId = pill.dataset.archivedId;
         self.setStatus('archived');
       });
     });
-    document.querySelectorAll('.review-copy-btn').forEach(function(btn) {
+    listEl.querySelectorAll('.review-copy-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var item = self._items.find(function(i) { return i.id === btn.dataset.id; });
         if (item && window.CL_UPLOAD) {
@@ -575,8 +577,7 @@ window.CL_REVIEW = {
         }
       });
     });
-    var listEl = document.getElementById('review-list');
-    if (listEl) listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .source-btn').forEach(function(btn) {
+    listEl.querySelectorAll('.review-tools-btn, .review-cats-btn, .source-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var el = document.getElementById('review-' + btn.dataset.section + '-' + btn.dataset.id);
         if (el) {
@@ -586,17 +587,17 @@ window.CL_REVIEW = {
         }
       });
     });
-    document.querySelectorAll('.item-card-title[contenteditable]').forEach(function(el) {
+    listEl.querySelectorAll('.item-card-title[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'title', el.innerText.trim()); });
       el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     });
-    document.querySelectorAll('.review-body-text[contenteditable]').forEach(function(el) {
+    listEl.querySelectorAll('.review-body-text[contenteditable]').forEach(function(el) {
       el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'body', el.innerText.trim()); });
     });
-    document.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
+    listEl.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
     });
-    document.querySelectorAll('.cat-pill[data-cat-id]').forEach(function(pill) {
+    listEl.querySelectorAll('.cat-pill[data-cat-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleCategoryTag(pill.dataset.itemId, pill.dataset.catId, pill); });
     });
   },
