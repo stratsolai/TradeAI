@@ -627,7 +627,7 @@ window.CL_SETTINGS_LOGIC = {
         res = await self._supabase.from('cl_settings').insert(payload);
       }
       if (res.error) throw new Error(res.error.message);
-    }, null);
+    }, document.getElementById('scan-save-msg'));
   },
 
   _checkDriveOAuthReturn: async function () {
