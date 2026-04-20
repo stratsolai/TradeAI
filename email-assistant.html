@@ -16,7 +16,7 @@
     .page-header { margin-bottom: var(--page-header-margin); }
 
     /* ─── EA STATUS / CATEGORY PILLS ─── */
-    .ea-status-row { display:flex; gap:8px; padding:16px 0; align-items:center; }
+    .ea-status-row { display:flex; gap:var(--btn-radius); padding:var(--card-padding-mobile) 0; align-items:center; }
     /* EA status button variants — border colours per pill type */
     .status-btn[data-pill="all"]       { border-left-color:var(--blue); }
     .status-btn[data-pill="urgent"]    { border-left-color:var(--red); }
@@ -24,18 +24,18 @@
     .status-btn[data-pill="handled"]   { border-left-color:var(--grey-accent); }
 
     /* ─── FILTER BUTTONS ROW (matches CL .review-filter-btns-row) ─── */
-    .filter-btns-row { display:flex; align-items:center; gap:8px; padding:0 0 12px 0; }
+    .filter-btns-row { display:flex; align-items:center; gap:var(--btn-radius); padding:0 0 var(--actions-gap) 0; }
 
     /* ─── FILTER EXPAND ROW (matches CL .review-filter-row) ─── */
-    .ea-filter-expand-row { margin-bottom:12px; }
-    .ea-pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
-    .ea-date-input { width:140px; padding:8px 12px; border:var(--input-border-width) solid var(--border); border-radius:var(--btn-radius); font-size:var(--label-font-size); font-family:var(--body-font); background:var(--white); color:var(--text); box-sizing:border-box; }
+    .ea-filter-expand-row { margin-bottom:var(--actions-gap); }
+    .ea-pill-row { display:flex; flex-wrap:wrap; gap:var(--btn-radius); margin-bottom:var(--btn-radius); }
+    .ea-date-input { width:140px; padding:var(--btn-radius) var(--actions-gap); border:var(--input-border-width) solid var(--border); border-radius:var(--btn-radius); font-size:var(--label-font-size); font-family:var(--body-font); background:var(--white); color:var(--text); box-sizing:border-box; }
     .ea-date-input:focus { outline:none; border-color:var(--blue); }
     .ea-date-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); }
 
     /* ─── SEARCH (in status row, right-aligned — matches CL) ─── */
     .ea-search-input {
-      width:240px; max-width:240px; margin-left:auto; padding:10px 14px; border:var(--input-border-width) solid var(--border);
+      width:240px; max-width:240px; margin-left:auto; padding:var(--input-padding); border:var(--input-border-width) solid var(--border);
       border-radius:var(--btn-radius); font-size:var(--btn-font-size); font-family:var(--body-font);
       box-sizing:border-box; background:var(--white); color:var(--text);
     }
@@ -43,53 +43,45 @@
 
     /* ─── BULK BAR ─── */
     .ea-bulk-bar {
-      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+      display:flex; align-items:center; gap:var(--actions-gap); flex-wrap:wrap;
       background:var(--bg); border:1px solid var(--border); border-radius:var(--btn-radius);
-      padding:10px 16px; margin-bottom:16px;
+      padding:var(--input-padding); margin-bottom:var(--card-padding-mobile);
     }
     .ea-bulk-label { font-size:var(--label-font-size); color:var(--text-secondary); }
 
     /* ─── EMAIL LIST ─── */
-    .ea-list { display:flex; flex-direction:column; gap:12px; }
+    .ea-list { display:flex; flex-direction:column; gap:var(--actions-gap); }
 
     /* ─── EMAIL CARD ─── */
-    .ea-flag-btn { background:none; border:none; cursor:pointer; font-size:22px; line-height:1; padding:4px; flex-shrink:0; transition:opacity 0.15s; }
+    .ea-flag-btn { background:none; border:none; cursor:pointer; font-size:var(--stat-value-font-size); line-height:1; padding:4px; flex-shrink:0; transition:opacity var(--btn-transition); }
     .ea-flag-btn:hover { opacity:0.7; }
     .ea-sender-name { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); flex:1; min-width:100px; }
     .ea-subject-inline { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); min-width:0; flex:1; }
-    /* .ea-body-preview replaced by shared .text-preview in staxai-auth.css */
-
-    /* ─── SOURCE BUTTON — uses shared .source-btn from stylesheet ─── */
-
-    /* ─── EXPANDABLE SECTION (matches CL .review-section) ─── */
-
     /* ─── DETAIL VIEW ─── */
     .ea-detail {
       background:var(--white); border:1px solid var(--border);
       border-radius:var(--card-radius); border-left:4px solid var(--blue);
       padding:24px; box-shadow:0 2px 8px var(--shadow-card);
     }
-    .ea-detail-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:12px; }
-    .ea-detail-subject { font-weight:var(--heading-lg-weight); font-size:18px; color:var(--text); margin-bottom:12px; }
-    .ea-detail-summary { font-size:var(--btn-font-size); color:var(--text-secondary); line-height:1.55; margin-bottom:16px; padding:12px 14px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); }
-    .ea-detail-body { font-size:var(--btn-font-size); color:var(--text); line-height:1.65; white-space:pre-wrap; word-break:break-word; padding:16px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); max-height:500px; overflow-y:auto; margin-bottom:16px; }
-    .ea-detail-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
-
-    /* ─── STATES ─── */
+    .ea-detail-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:var(--actions-gap); }
+    .ea-detail-subject { font-weight:var(--heading-lg-weight); font-size:18px; color:var(--text); margin-bottom:var(--actions-gap); }
+    .ea-detail-summary { font-size:var(--btn-font-size); color:var(--text-secondary); line-height:var(--note-line-height); margin-bottom:var(--card-padding-mobile); padding:var(--actions-gap) 14px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); }
+    .ea-detail-body { font-size:var(--btn-font-size); color:var(--text); line-height:var(--body-line-height); white-space:pre-wrap; word-break:break-word; padding:var(--card-padding-mobile); background:var(--bg-subtle); border:1px solid var(--border); border-radius:var(--btn-radius); max-height:500px; overflow-y:auto; margin-bottom:var(--card-padding-mobile); }
+    .ea-detail-footer { display:flex; align-items:center; justify-content:space-between; gap:var(--actions-gap); flex-wrap:wrap; }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 768px) {
       .container { padding: var(--page-padding-mobile); }
       .ea-status-row { flex-wrap: wrap; }
       .filter-btns-row { flex-wrap: wrap; }
-      .ea-search-input { width: 100%; max-width: 100%; margin-left: 0; font-size: 16px; }
+      .ea-search-input { width: 100%; max-width: 100%; margin-left: 0; font-size: var(--input-font-size-mobile); }
       .ea-date-input { width: 100%; }
       .ea-detail { padding: var(--card-padding-mobile); }
       .ea-detail-body { max-height: 60vh; }
       .ea-detail-topbar { flex-wrap: wrap; }
       .ea-sender-name { min-width: 0; }
       .text-preview { font-size: var(--body-font-size); }
-      .lookback-dropdown-field { font-size: 16px; }
+      .lookback-dropdown-field { font-size: var(--input-font-size-mobile); }
     }
 </style>
 </head>
