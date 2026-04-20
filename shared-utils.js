@@ -70,6 +70,45 @@ window.handleSave = async function(btn, saveFn, msgEl) {
   }
 };
 
+/**
+ * loadStats()
+ * Refreshes the stat tiles on pages that have them (e.g. content-library).
+ * Safe to call on any page — silently exits if stat elements are absent.
+ */
+window.loadStats = async function() {
+  try {
+    var sb = window.supabaseClient;
+    if (!sb) return;
+    var authResp = await sb.auth.getUser();
+    var user = authResp.data && authResp.data.user;
+    if (!user) return;
+
+    var libResult = await sb
+      .from('content_library')
+      .select('status', { count: 'exact' })
+      .eq('user_id', user.id)
+      .neq('source', 'tool');
+
+    if (libResult.error) { console.error('[CL] loadStats query error:', libResult.error); return; }
+
+    var items = libResult.data || [];
+    var total = items.length;
+    var pending = items.filter(function(i) { return i.status === 'pending'; }).length;
+    var approved = items.filter(function(i) { return i.status === 'approved'; }).length;
+    var rejected = items.filter(function(i) { return i.status === 'rejected'; }).length;
+    var archived = items.filter(function(i) { return i.status === 'archived'; }).length;
+
+    var el;
+    el = document.getElementById('stat-total'); if (el) el.textContent = total;
+    el = document.getElementById('stat-pending'); if (el) el.textContent = pending;
+    el = document.getElementById('stat-approved'); if (el) el.textContent = approved;
+    el = document.getElementById('stat-rejected'); if (el) el.textContent = rejected;
+    el = document.getElementById('stat-archived'); if (el) el.textContent = archived;
+  } catch (e) {
+    console.error('[CL] loadStats error:', e.message);
+  }
+};
+
 /* ── Global Session Expiry Handler (Task 30) ──
    Listens for Supabase SIGNED_OUT events and redirects to login.
    Covers session expiry, token refresh failure, and manual sign-out.
