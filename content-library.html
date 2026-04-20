@@ -297,16 +297,16 @@
 (function() {
   if (window.matchMedia('(display-mode: standalone)').matches && window.innerWidth < 768) {
     var s = document.createElement('style');
-    s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: #f5f7fa; }';
+    s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: var(--bg); }';
     document.head.appendChild(s);
     var d = document.createElement('div');
     d.id = 'pwa-desktop-msg';
-    d.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:\'DM Sans\',sans-serif;">'
+    d.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--body-font);">'
       + '<div style="text-align:center;max-width:360px;">'
       + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;margin-bottom:32px;">'
-      + '<div style="background:#ffffff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);padding:32px 24px;">'
-      + '<p style="font-size:15px;color:#333333;line-height:1.6;margin:0 0 24px;">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
-      + '<a href="/dashboard.html" style="display:inline-block;padding:10px 18px;background:#4A6D8C;color:white;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;font-family:inherit;">Back to Dashboard</a>'
+      + '<div style="background:var(--white);border-radius:var(--card-radius);box-shadow:0 2px 8px var(--shadow-card);padding:32px 24px;">'
+      + '<p style="font-size:var(--section-title-font-size);color:var(--text);line-height:var(--body-line-height);margin:0 0 24px;">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
+      + '<a href="/dashboard.html" style="display:inline-block;padding:var(--input-padding);background:var(--blue);color:var(--white);border-radius:var(--btn-radius);font-size:var(--label-font-size);font-weight:var(--font-weight-semibold);text-decoration:none;font-family:inherit;">Back to Dashboard</a>'
       + '</div></div></div>';
     document.body.appendChild(d);
   }
