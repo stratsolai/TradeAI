@@ -419,11 +419,28 @@ window.EA_SETTINGS = {
 
     var saveBtn = document.getElementById('save-shortcuts-btn');
     if (saveBtn) {
-      saveBtn.addEventListener('click', async function () {
+      saveBtn.addEventListener('click', function () {
         self._settings.category_shortcuts = self._categoryShortcuts;
-        await self._saveSettings();
-        saveBtn.textContent = 'Saved';
-        saveBtn.disabled = true;
+        var msgEl = document.getElementById('save-shortcuts-msg');
+        window.handleSave(saveBtn, async function() {
+          var payload = {
+            user_id: self._userId,
+            categories: self._categories,
+            category_shortcuts: self._categoryShortcuts,
+            scan_cadence: self._settings.scan_cadence || 'manual',
+            updated_at: new Date().toISOString()
+          };
+          var error;
+          if (self._settings.id) {
+            ({ error } = await self._supabase.from('email_assistant_settings').update(payload).eq('id', self._settings.id));
+          } else {
+            payload.created_at = new Date().toISOString();
+            var res = await self._supabase.from('email_assistant_settings').insert(payload).select().single();
+            if (res.data) self._settings = res.data;
+            error = res.error;
+          }
+          if (error) throw new Error(error.message);
+        }, msgEl);
       });
     }
   },
