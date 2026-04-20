@@ -1,21 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
 export default async function handler(req, res) {
   const token = (req.headers["authorization"] || "").replace("Bearer ", "").trim();
   if (!token) {
     return res.status(401).json({ error: "Unauthorised" });
   }
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
-    { global: { headers: { Authorization: "Bearer " + token } } }
-  );
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-  if (userError || !user) {
+  const userRes = await supabase.auth.getUser(token);
+  if (userRes.error || !userRes.data || !userRes.data.user) {
+    console.error("[ND Settings] Auth error:", userRes.error && userRes.error.message);
     return res.status(401).json({ error: "Unauthorised" });
   }
+  const user = userRes.data.user;
 
   const DEFAULT_CATEGORIES = [
     { id: "regulatory", label: "Regulatory", enabled: true, is_custom: false },
