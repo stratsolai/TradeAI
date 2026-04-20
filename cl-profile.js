@@ -9,7 +9,23 @@ window.CL_PROFILE = {
     if (!container) return;
     container.innerHTML = this._shell();
     this._bindTabs();
+    this._bindDelegatedEvents(container);
     this._load();
+  },
+
+  _bindDelegatedEvents: function(container) {
+    var self = this;
+    container.addEventListener('click', function(e) {
+      var btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      var action = btn.dataset.action;
+      if (action === 'remove-row') { self._removeRow(btn.dataset.target); }
+      else if (action === 'add-phone') { self._addPhone(btn.dataset.target); }
+      else if (action === 'add-location') { self._addLocation(); }
+      else if (action === 'add-site') { self._addSite(); }
+      else if (action === 'add-extra') { self._addExtra(); }
+      else if (action === 'upload-logo') { document.getElementById('prof-logo-file').click(); }
+    });
   },
 
   _shell: function() {
@@ -117,7 +133,7 @@ window.CL_PROFILE = {
     var logoHtml = '<div class="profile-logo-wrap">' +
       (p.logo_url ? '<img id="prof-logo-img" src="' + window.escHtml(p.logo_url) + '" class="profile-logo-preview" alt="Logo" />' : '<div id="prof-logo-img" class="profile-logo-placeholder">No logo</div>') +
       '<input id="prof-logo-file" type="file" accept="image/*" class="profile-file-input" />' +
-      '<button class="btn btn-outline" onclick="document.getElementById(\'prof-logo-file\').click()">Upload Logo</button>' +
+      '<button class="btn btn-outline" data-action="upload-logo">Upload Logo</button>' +
     '</div>';
     var body = '<div class="profile-fields">' +
       this._field('Legal Business Name', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
@@ -187,11 +203,11 @@ window.CL_PROFILE = {
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
         typeSelect +
         '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(window.formatPhoneNumber(ph.number || '')) + '" placeholder="Phone number" />' +
-        '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + pi + '\')">Remove</button>' +
+        '<button class="btn-dismiss" data-action="remove-row" data-target="' + idPfx + '-ph-' + pi + '">Remove</button>' +
       '</div>';
     }).join('');
     var removeBtn = isPrimary ? '' :
-      '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'loc-block-' + idx + '\')">Remove Location</button>';
+      '<button class="btn-dismiss" data-action="remove-row" data-target="loc-block-' + idx + '">Remove Location</button>';
     return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
       '<div class="profile-location-row-header">' +
         '<strong style="color:#1A5490;">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
@@ -212,7 +228,7 @@ window.CL_PROFILE = {
       '</div>' +
       '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn btn-outline" style="margin-top:4px;" onclick="window.CL_PROFILE._addPhone(\'' + idPfx + '\')">+ Add Phone</button>' +
+      '<button class="btn btn-outline" style="margin-top:4px;" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -238,18 +254,18 @@ window.CL_PROFILE = {
     var extraSitesHtml = sites.slice(1).map(function(u, i) {
       return '<div class="profile-repeating-row" id="prof-site-' + (i + 1) + '">' +
         '<input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" placeholder="https://yoursite.com.au" />' +
-        '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + (i + 1) + '\')">Remove</button>' +
+        '<button class="btn-dismiss" data-action="remove-row" data-target="prof-site-' + (i + 1) + '">Remove</button>' +
       '</div>';
     }).join('');
     var body =
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" onclick="window.CL_PROFILE._addLocation()">+ Add Location</button>' +
+      '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" data-action="add-location">+ Add Location</button>' +
       '<div class="profile-location-block" style="margin-top:0;">' +
         '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
+        '<button class="btn btn-outline" style="margin-top:8px;" data-action="add-site">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save'
@@ -327,7 +343,7 @@ window.CL_PROFILE = {
       }).join('') +
       '</div></span>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
-    '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
+    '<button class="btn-dismiss" data-action="remove-row" data-target="' + idPfx + '-ph-' + i + '">Remove</button>';
     wrap.appendChild(d);
     this._wirePhoneFormat(d);
     this._bindPhoneTypeDropdowns(d);
@@ -341,7 +357,7 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = 'prof-site-' + i;
     d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" />' +
-      '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'prof-site-' + i + '\')">Remove</button>';
+      '<button class="btn-dismiss" data-action="remove-row" data-target="prof-site-' + i + '">Remove</button>';
     wrap.appendChild(d);
   },
 
@@ -438,7 +454,7 @@ window.CL_PROFILE = {
     var extraRowsHtml = extras.map(function(item, i) {
       return '<div class="profile-repeating-row" id="prof-extra-' + i + '">' +
         '<input type="text" class="profile-input prof-extra-input" value="' + window.escHtml(item) + '" placeholder="Additional theme statement" />' +
-        '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button>' +
+        '<button class="btn btn-outline btn-sm" data-action="remove-row" data-target="prof-extra-' + i + '">Remove</button>' +
       '</div>';
     }).join('');
     var body = '<div class="profile-fields">' +
@@ -453,7 +469,7 @@ window.CL_PROFILE = {
         '<div id="prof-extras-extra">' + extraRowsHtml + '</div>'
       ) +
     '</div>' +
-    '<button class="btn btn-outline" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>';
+    '<button class="btn btn-outline" style="border-left-color:#7b2d8b;margin-top:8px;" data-action="add-extra">+ Add Statement</button>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save'
     );
@@ -469,7 +485,7 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = 'prof-extra-' + i;
     d.innerHTML = '<input type="text" class="profile-input prof-extra-input" placeholder="Additional theme statement" />' +
-      '<button class="btn btn-outline btn-sm" onclick="window.CL_PROFILE._removeRow(\'prof-extra-' + i + '\')">Remove</button>';
+      '<button class="btn btn-outline btn-sm" data-action="remove-row" data-target="prof-extra-' + i + '">Remove</button>';
     wrap.appendChild(d);
   },
 
