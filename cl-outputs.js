@@ -304,8 +304,8 @@ window.CL_OUTPUTS = {
       + '<input type="checkbox" class="item-checkbox outputs-checkbox" data-id="' + id + '"' + checked + '>'
       + '<span class="item-card-title"><span>' + title + '</span></span>'
       + '<div class="item-card-preview-row">'
-      + '<button class="review-expand-btn outputs-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>'
-      + '<span class="review-body-preview" id="outputs-preview-' + id + '">' + bodyPreview + '</span>'
+      + '<button class="expand-btn outputs-expand-btn" data-id="' + id + '" title="Expand">&#9654;</button>'
+      + '<span class="text-preview" id="outputs-preview-' + id + '">' + bodyPreview + '</span>'
       + '</div>'
       + '<button class="review-tools-btn outputs-tools-btn" data-id="' + id + '" data-section="tags">&#9741; Tagged Tools</button>'
       + '<button class="review-cats-btn outputs-cats-btn" data-id="' + id + '" data-section="cats">&#9776; Tagged Categories</button>'
@@ -343,8 +343,8 @@ window.CL_OUTPUTS = {
       btn.addEventListener('click', function() {
         var card = btn.closest('.item-card');
         if (!card) return;
-        var isExpanded = card.classList.contains('review-body-expanded');
-        card.classList.toggle('review-body-expanded', !isExpanded);
+        var isExpanded = card.classList.contains('content-expanded');
+        card.classList.toggle('content-expanded', !isExpanded);
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
