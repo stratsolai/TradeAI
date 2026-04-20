@@ -313,7 +313,6 @@ window.CL_PROFILE = {
     var btn = document.getElementById('prof-loc-save');
     window.handleSave(btn, async function() {
       var updates = {
-        address_name: pb.querySelector('.loc-name').value.trim(),
         address_unit: pb.querySelector('.loc-unit').value.trim(),
         address_street: pb.querySelector('.loc-street').value.trim(),
         address_suburb: pb.querySelector('.loc-suburb').value.trim(),
