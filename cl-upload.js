@@ -465,7 +465,7 @@ window.CL_UPLOAD = {
               } else if (row.status === "completed") {
                 self._appendUploadMessage(formatJobCountsLine(label, row), "success");
                 finishScan();
-                if (typeof loadStats === "function") loadStats();
+                if (window.loadStats) window.loadStats();
                 if (window.CL_REVIEW) window.CL_REVIEW._load();
                 // Unsubscribe and remove from active jobs — terminal state
                 self._supabase.removeChannel(channel);
@@ -639,7 +639,7 @@ window.CL_UPLOAD = {
             self._appendUploadMessage(self._formatJobMessage(source, label, row), "success");
             btn.textContent = "Scan Now";
             btn.disabled = false;
-            if (typeof loadStats === "function") loadStats();
+            if (window.loadStats) window.loadStats();
             if (window.CL_REVIEW) window.CL_REVIEW._load();
             self._supabase.removeChannel(channel);
             delete self._jobSubscriptions[jobId];
@@ -842,7 +842,7 @@ window.CL_UPLOAD = {
       } else {
         self._showUploadError("No content could be extracted from the selected images.");
       }
-      if (typeof loadStats === "function") loadStats();
+      if (window.loadStats) window.loadStats();
       if (window.CL_REVIEW) window.CL_REVIEW._load();
     } catch (err) {
       console.error("Photo upload error:", err);
@@ -887,7 +887,7 @@ window.CL_UPLOAD = {
       } else {
         self._showUploadError("No content could be extracted from the selected documents.");
       }
-      if (typeof loadStats === "function") loadStats();
+      if (window.loadStats) window.loadStats();
       if (window.CL_REVIEW) window.CL_REVIEW._load();
     } catch (err) {
       console.error("Document upload error:", err);
@@ -1013,7 +1013,7 @@ window.CL_UPLOAD = {
       if (flow) flow.style.display = "none";
       if (titleInput) titleInput.value = "";
       if (descInput) descInput.value = "";
-      if (typeof loadStats === "function") loadStats();
+      if (window.loadStats) window.loadStats();
       if (window.CL_REVIEW) window.CL_REVIEW._load();
     } catch (err) {
       console.error("Manual add error:", err);
