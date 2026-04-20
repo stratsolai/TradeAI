@@ -294,6 +294,7 @@
 })();
 </script>
 
+<div id="page-wrap" style="display:none">
 <nav class="topbar">
       <a href="/" class="topbar-logo">
     <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
@@ -347,6 +348,7 @@
     <button type="button" class="save-msg-ok">OK</button>
   </div>
 </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/supabase-client.js"></script>
@@ -363,6 +365,7 @@
     supabase.auth.getSession().then(function(result) {
       var session = result.data && result.data.session;
       if (!session) { window.location.href = '/login'; return; }
+      document.getElementById('page-wrap').style.display = 'block';
       if (window.CL_LOGIC && window.CL_LOGIC.init) {
         window.CL_LOGIC.init(supabase, session.user);
       }
