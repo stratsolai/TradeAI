@@ -93,11 +93,16 @@ window.CL_PROFILE = {
     return '<textarea id="' + id + '" class="profile-textarea" rows="' + (rows || 4) + '" placeholder="' + ph + '">' + window.escHtml(String(val)) + '</textarea>';
   },
 
-  _select: function(id, opts, sel) {
-    var o = opts.map(function(v) {
-      return '<option value="' + window.escHtml(v) + '"' + (sel === v ? ' selected' : '') + '>' + window.escHtml(v) + '</option>';
-    }).join('');
-    return '<select id="' + id + '" class="profile-select"><option value="">Select...</option>' + o + '</select>';
+  _dropdown: function(id, opts, sel) {
+    var currentLabel = sel || 'Select...';
+    var currentValue = sel || '';
+    return '<span class="lookback-dropdown-wrap">' +
+      '<button type="button" id="' + id + '" class="lookback-dropdown" data-value="' + window.escHtml(currentValue) + '">' + window.escHtml(currentLabel) + ' &#9662;</button>' +
+      '<div class="lookback-dropdown-menu">' +
+      opts.map(function(v) {
+        return '<button type="button" class="lookback-dropdown-item' + (v === sel ? ' active' : '') + '" data-value="' + window.escHtml(v) + '">' + window.escHtml(v) + '</button>';
+      }).join('') +
+      '</div></span>';
   },
 
   _removeRow: function(id) {
@@ -117,7 +122,7 @@ window.CL_PROFILE = {
       this._field('Legal Business Name', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
-      this._field2('Business Structure', this._select('prof-structure', structures, this._v('business_structure'))) +
+      this._field2('Business Structure', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
       this._field('Industry / Profession', this._input('prof-industry', 'text', this._v('industry'), 'e.g. Accounting, Retail, Construction')) +
       this._field('Business Logo', logoHtml) +
     '</div>';
@@ -125,6 +130,8 @@ window.CL_PROFILE = {
     var self = this;
     var idBtn = document.getElementById('prof-id-save');
     if (idBtn) idBtn.addEventListener('click', function() { self._saveIdentity(); });
+    var idPanel = document.getElementById('prof-panel-identity');
+    if (idPanel) self._bindPhoneTypeDropdowns(idPanel);
     document.getElementById('prof-logo-file').addEventListener('change', function(e) { self._uploadLogo(e.target.files[0]); });
     document.getElementById('prof-abn').addEventListener('input', function(e) {
       var d = e.target.value.replace(/\D/g, '').substring(0, 11);
@@ -154,7 +161,7 @@ window.CL_PROFILE = {
     var self = this;
     var btn = document.getElementById('prof-id-save');
     window.handleSave(btn, async function() {
-      var updates = { business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').value, industry: document.getElementById('prof-industry').value.trim() };
+      var updates = { business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').getAttribute('data-value') || '', industry: document.getElementById('prof-industry').value.trim() };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
@@ -255,8 +262,8 @@ window.CL_PROFILE = {
     }
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.lookback-dropdown-wrap')) {
-        document.querySelectorAll('#prof-panel-location .lookback-dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
-        document.querySelectorAll('#prof-panel-location .lookback-dropdown.active').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('#cl-tab-profile .lookback-dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
+        document.querySelectorAll('#cl-tab-profile .lookback-dropdown.active').forEach(function(b) { b.classList.remove('active'); });
       }
     });
   },
