@@ -158,7 +158,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
-    }, null);
+    }, document.getElementById('prof-save-msg'));
   },
 
     _locationBlock: function(loc, idx, isPrimary) {
@@ -327,7 +327,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
-    }, null);
+    }, document.getElementById('prof-save-msg'));
   },
 
   _renderDetails: function() {
@@ -351,7 +351,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
-    }, null);
+    }, document.getElementById('prof-save-msg'));
   },
 
   _renderMarketing: function() {
@@ -414,6 +414,6 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
-    }, null);
+    }, document.getElementById('prof-save-msg'));
   }
 };
