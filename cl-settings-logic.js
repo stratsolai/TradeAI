@@ -321,7 +321,7 @@ window.CL_SETTINGS_LOGIC = {
           var provider = lbTrigger.getAttribute('data-provider');
           var acct = lbTrigger.getAttribute('data-account');
           // Update button label
-          lbTrigger.innerHTML = lbItem.textContent + ' &#9662;';
+          lbTrigger.innerHTML = lbItem.textContent;
           // Update active item
           lbMenu.querySelectorAll('.lookback-dropdown-item').forEach(function (it) { it.classList.remove('active'); });
           lbItem.classList.add('active');
@@ -782,7 +782,7 @@ window.CL_SETTINGS_LOGIC = {
     opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
       '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="drive">' + currentLabel + ' &#9662;</button>' +
+        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="drive">' + currentLabel + '</button>' +
         '<div class="lookback-dropdown-menu">' +
         opts.map(function (o) {
           var cls = o.v === current ? ' active' : '';
@@ -809,7 +809,7 @@ window.CL_SETTINGS_LOGIC = {
     opts.forEach(function (o) { if (o.v === current) currentLabel = o.l; });
     return '<span class="connection-item-lookback">' +
       '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="email">' + currentLabel + ' &#9662;</button>' +
+        '<button type="button" class="lookback-dropdown" data-provider="' + provider + '" data-account="' + (accountEmail || '') + '" data-lookback-type="email">' + currentLabel + '</button>' +
         '<div class="lookback-dropdown-menu">' +
         opts.map(function (o) {
           var cls = o.v === current ? ' active' : '';
