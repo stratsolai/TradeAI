@@ -22,33 +22,6 @@
       font-size: var(--section-title-font-size);
       color: var(--text-muted);
     }
-    .stab-bar {
-      display: flex;
-      gap: 0;
-      border-bottom: 2px solid var(--border);
-      margin-bottom: 28px;
-    }
-    .stab {
-      padding: 13px 24px;
-      font-family: var(--body-font);
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      border: none;
-      background: none;
-      border-bottom: 3px solid transparent;
-      margin-bottom: -2px;
-      transition: color 0.15s, border-color 0.15s;
-    }
-    .stab:hover { color: var(--text); }
-    .stab.active {
-      color: var(--blue);
-      border-bottom-color: var(--blue);
-      font-weight: 600;
-    }
-    .stab-panel { display: none; }
-    .stab-panel.active { display: block; width: 100%; box-sizing: border-box; }
     #tab-retention .settings-card { overflow: visible; }
   </style>
 </head>
@@ -99,13 +72,13 @@
       <p class="page-subtitle">Configure your digest frequency and preferred sources.</p>
     </div>
 
-    <div class="stab-bar">
-      <button class="stab active" data-tab="frequency">Scan Frequency</button>
-      <button class="stab" data-tab="sources">Source Preferences</button>
-      <button class="stab" data-tab="retention">History Retention</button>
+    <div class="tab-nav">
+      <button class="ptab active settings-active" data-tab="frequency">Scan Frequency</button>
+      <button class="ptab" data-tab="sources">Source Preferences</button>
+      <button class="ptab" data-tab="retention">History Retention</button>
     </div>
 
-    <div class="stab-panel active" id="tab-frequency">
+    <div class="ptab-content active" id="tab-frequency">
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Scan Frequency</div>
@@ -128,7 +101,7 @@
       </div>
     </div>
 
-    <div class="stab-panel" id="tab-sources">
+    <div class="ptab-content" id="tab-sources">
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Source Preferences</div>
@@ -148,7 +121,7 @@
       </div>
     </div>
 
-    <div class="stab-panel" id="tab-retention">
+    <div class="ptab-content" id="tab-retention">
       <div class="settings-card">
         <div class="settings-card-header">
           <div class="settings-card-title">History Retention</div>
