@@ -408,19 +408,22 @@ window.CL_PROFILE = {
     var body = '<div class="profile-fields">' +
       this._field('Services Provided', this._textarea('prof-services', this._v('services'), 'Describe the services your business provides', 4)) +
       this._field('Products Offered <span class="profile-optional">(optional)</span>', this._textarea('prof-products', this._v('products'), 'Describe any products your business sells', 3)) +
-      this._field2('Number of Employees', this._select('prof-emp-range', empRanges, this._v('employee_range'))) +
+      this._field2('Number of Employees', this._dropdown('prof-emp-range', empRanges, this._v('employee_range'))) +
       this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200" style="max-width:120px;"')) +
     '</div>';
     document.getElementById('prof-panel-details').innerHTML = this._card('\uD83D\uDCC4', '3. Business Details', 'What your business does and how it operates', body, 'prof-det-save');
+    var self3 = this;
     var detBtn = document.getElementById('prof-det-save');
-    if (detBtn) { var self3 = this; detBtn.addEventListener('click', function() { self3._saveDetails(); }); }
+    if (detBtn) detBtn.addEventListener('click', function() { self3._saveDetails(); });
+    var detPanel = document.getElementById('prof-panel-details');
+    if (detPanel) self3._bindPhoneTypeDropdowns(detPanel);
   },
 
   _saveDetails: function() {
     var self = this;
     var btn = document.getElementById('prof-det-save');
     window.handleSave(btn, async function() {
-      var updates = { services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-emp-range').value, years_in_business: parseInt(document.getElementById('prof-years').value) || null };
+      var updates = { services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-emp-range').getAttribute('data-value') || '', years_in_business: parseInt(document.getElementById('prof-years').value) || null };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
