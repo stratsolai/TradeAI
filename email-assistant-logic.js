@@ -97,15 +97,12 @@ window.EA_LOGIC = {
     if (!this._settings.categories || this._settings.categories.length === 0) {
       this._settings.categories = this.DEFAULT_CATEGORIES;
     }
-    console.log('[EA Debug] _loadSettings complete — categories count:', this._settings.categories.length, 'shortcuts before filter:', JSON.stringify(this._categoryShortcuts));
-    console.log('[EA Debug] categories:', this._settings.categories.map(function(c) { return c.id + ':' + c.enabled; }).join(', '));
     // Filter out shortcuts for categories that are disabled
     var cats = this._settings.categories;
     this._categoryShortcuts = this._categoryShortcuts.filter(function(id) {
       var cat = cats.find(function(c) { return c.id === id; });
       return cat && cat.enabled;
     });
-    console.log('[EA Debug] shortcuts after filter:', JSON.stringify(this._categoryShortcuts));
   },
 
   // ── Accounts ───────────────────────────────────────��──────
@@ -214,8 +211,6 @@ window.EA_LOGIC = {
     var dropdownCats = enabledCats.filter(function(c) {
       return self._categoryShortcuts.indexOf(c.id) === -1;
     });
-    console.log('[EA Debug] _renderCategoryPills — enabledCats:', enabledCats.length, 'shortcutCats:', shortcutCats.length, 'dropdownCats:', dropdownCats.length, 'shortcuts:', JSON.stringify(self._categoryShortcuts));
-
     var html = pills.map(function(p) {
       var isActive = false;
       if (p.id === 'handled') isActive = self._showHandled;
@@ -248,7 +243,6 @@ window.EA_LOGIC = {
 
     html += '<input type="text" id="ea-search" class="ea-search-input" placeholder="Search emails..." value="' + window.escHtml(this._searchTerm) + '">';
 
-    console.log('[EA Debug] _renderCategoryPills — html length:', html.length, 'container exists:', !!container);
     container.innerHTML = html;
 
     // Bind status pills
@@ -745,10 +739,8 @@ window.EA_LOGIC = {
     });
 
     var flagBtns = document.querySelectorAll('.ea-flag-btn');
-    console.log('[EA Flag Debug] Binding flag buttons — count:', flagBtns.length);
     flagBtns.forEach(function(btn) {
       btn.addEventListener('click', function() {
-        console.log('[EA Flag Debug] Click fired — id:', btn.dataset.id, 'flagged:', btn.dataset.flagged);
         var isFlagged = btn.dataset.flagged === '1';
         self._toggleFlag(btn.dataset.id, !isFlagged, btn);
       });
@@ -885,7 +877,6 @@ window.EA_LOGIC = {
 
   // ── Flag ──────────────────────────────────────────────────
   _toggleFlag: async function(id, newState, btnEl) {
-    console.log('[EA Flag Debug] _toggleFlag called — id:', id, 'newState:', newState, 'btnEl:', !!btnEl);
     var oldState = !newState;
     var self = this;
     // Optimistic UI update
@@ -897,10 +888,7 @@ window.EA_LOGIC = {
     this._emails = this._emails.map(function(e) {
       return (e.id || e.message_id) === id ? Object.assign({}, e, { is_flagged: newState }) : e;
     });
-    console.log('[EA Flag Debug] Optimistic update done');
-
     function revertFlag() {
-      console.log('[EA Flag Debug] revertFlag called');
       if (btnEl) {
         btnEl.innerHTML = oldState ? '&#9733;' : '&#9734;';
         btnEl.dataset.flagged = oldState ? '1' : '0';
@@ -912,11 +900,9 @@ window.EA_LOGIC = {
     }
 
     var email = this._emails.find(function(e) { return (e.id || e.message_id) === id; });
-    console.log('[EA Flag Debug] Email found:', !!email, 'provider:', email ? email.provider : 'N/A');
     try {
       var sessionRes = await this._supabase.auth.getSession();
       var session = sessionRes.data && sessionRes.data.session;
-      console.log('[EA Flag Debug] Session:', !!session, 'hasToken:', !!(session && session.access_token));
       if (!session || !session.access_token) {
         console.error('[EA] Flag error: no active session — please refresh the page');
         revertFlag();
@@ -927,19 +913,15 @@ window.EA_LOGIC = {
         provider: email ? email.provider : 'gmail',
         flagState: newState
       };
-      console.log('[EA Flag Debug] Calling /api/ea-flag with:', JSON.stringify(payload));
       var resp = await fetch('/api/ea-flag', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify(payload)
       });
-      console.log('[EA Flag Debug] Response status:', resp.status);
       if (!resp.ok) {
         var errBody = await resp.text();
         console.error('[EA] Flag API error:', resp.status, errBody);
         revertFlag();
-      } else {
-        console.log('[EA Flag Debug] Flag toggle succeeded');
       }
     } catch (e) {
       console.error('[EA] Flag error:', e.message);
