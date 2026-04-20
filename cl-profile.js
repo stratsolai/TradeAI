@@ -165,11 +165,16 @@ window.CL_PROFILE = {
     var idPfx = isPrimary ? 'loc-p' : 'loc-' + idx;
     var nameVal = loc.name || '';
     var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Main', number: loc.phone }] : [{ type: 'Main', number: '' }]);
-    var typeOpts = ['Main', 'Mobile', 'Secondary Landline', 'Fax', 'After Hours'];
+    var typeOpts = ['Main', 'Mobile', 'Work', 'Fax'];
     var phonesHtml = phones.map(function(ph, pi) {
-      var typeSelect = '<select class="profile-select loc-phone-type loc-phone-type-select">' +
-        typeOpts.map(function(t) { return '<option value="' + t + '"' + (ph.type === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') +
-      '</select>';
+      var currentType = ph.type || 'Main';
+      var typeSelect = '<span class="lookback-dropdown-wrap">' +
+        '<button type="button" class="lookback-dropdown loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + ' &#9662;</button>' +
+        '<div class="lookback-dropdown-menu">' +
+        typeOpts.map(function(t) {
+          return '<button type="button" class="lookback-dropdown-item' + (t === currentType ? ' active' : '') + '" data-value="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+        }).join('') +
+        '</div></span>';
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
         typeSelect +
         '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(window.formatPhoneNumber(ph.number || '')) + '" placeholder="Phone number" />' +
@@ -244,7 +249,43 @@ window.CL_PROFILE = {
     var locBtn = document.getElementById('prof-loc-save');
     if (locBtn) locBtn.addEventListener('click', function() { self2._saveLocation(); });
     var locPanel = document.getElementById('prof-panel-location');
-    if (locPanel) self2._wirePhoneFormat(locPanel);
+    if (locPanel) {
+      self2._wirePhoneFormat(locPanel);
+      self2._bindPhoneTypeDropdowns(locPanel);
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.lookback-dropdown-wrap')) {
+        document.querySelectorAll('#prof-panel-location .lookback-dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
+        document.querySelectorAll('#prof-panel-location .lookback-dropdown.active').forEach(function(b) { b.classList.remove('active'); });
+      }
+    });
+  },
+
+  _bindPhoneTypeDropdowns: function(container) {
+    container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
+      if (wrap.dataset.phoneTypeBound) return;
+      wrap.dataset.phoneTypeBound = '1';
+      var trigger = wrap.querySelector('.lookback-dropdown');
+      var menu = wrap.querySelector('.lookback-dropdown-menu');
+      if (!trigger || !menu) return;
+      trigger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
+        document.querySelectorAll('.lookback-dropdown.active').forEach(function(b) { if (b !== trigger) b.classList.remove('active'); });
+        menu.classList.toggle('open');
+        trigger.classList.toggle('active');
+      });
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          trigger.setAttribute('data-value', item.getAttribute('data-value'));
+          trigger.innerHTML = window.escHtml(item.getAttribute('data-value')) + ' &#9662;';
+          menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) { it.classList.remove('active'); });
+          item.classList.add('active');
+          menu.classList.remove('open');
+          trigger.classList.remove('active');
+        });
+      });
+    });
   },
 
   _wirePhoneFormat: function(container) {
@@ -265,17 +306,22 @@ window.CL_PROFILE = {
     var wrap = document.getElementById(idPfx + '-phones');
     if (!wrap) return;
     var i = wrap.querySelectorAll('.profile-repeating-row').length;
-    var typeOpts = ['Main', 'Mobile', 'Secondary Landline', 'Fax', 'After Hours'];
+    var typeOpts = ['Main', 'Mobile', 'Work', 'Fax'];
     var d = document.createElement('div');
     d.className = 'profile-repeating-row';
     d.id = idPfx + '-ph-' + i;
-    d.innerHTML = '<select class="profile-select loc-phone-type loc-phone-type-select">' +
-      typeOpts.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
-    '</select>' +
+    d.innerHTML = '<span class="lookback-dropdown-wrap">' +
+      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Main">Main &#9662;</button>' +
+      '<div class="lookback-dropdown-menu">' +
+      typeOpts.map(function(t) {
+        return '<button type="button" class="lookback-dropdown-item' + (t === 'Main' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
+      }).join('') +
+      '</div></span>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
     '<button class="btn-dismiss" onclick="window.CL_PROFILE._removeRow(\'' + idPfx + '-ph-' + i + '\')">Remove</button>';
     wrap.appendChild(d);
     this._wirePhoneFormat(d);
+    this._bindPhoneTypeDropdowns(d);
   },
 
   _addSite: function() {
@@ -304,14 +350,14 @@ window.CL_PROFILE = {
     // Read primary location
     var pb = document.getElementById('loc-primary-block');
     var primaryPhones = Array.from(pb.querySelectorAll('#loc-p-phones .profile-repeating-row')).map(function(row) {
-      return { type: row.querySelector('.loc-phone-type').value, number: row.querySelector('.loc-phone-number').value.trim() };
+      return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Main', number: row.querySelector('.loc-phone-number').value.trim() };
     }).filter(function(ph) { return ph.number; });
     // Read extra locations
     var extraBlocks = document.querySelectorAll('#prof-extra-locs .profile-location-block');
     var locs = Array.from(extraBlocks).map(function(b) {
       var phonesWrap = b.querySelector('.loc-phones-wrap');
       var phones = phonesWrap ? Array.from(phonesWrap.querySelectorAll('.profile-repeating-row')).map(function(row) {
-        return { type: row.querySelector('.loc-phone-type').value, number: row.querySelector('.loc-phone-number').value.trim() };
+        return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Main', number: row.querySelector('.loc-phone-number').value.trim() };
       }).filter(function(ph) { return ph.number; }) : [];
       return {
         name: b.querySelector('.loc-name').value.trim(),
