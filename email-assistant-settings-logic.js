@@ -161,8 +161,8 @@ window.EA_SETTINGS = {
 
     var gmailBtn = document.getElementById('add-gmail-btn');
     var outlookBtn = document.getElementById('add-outlook-btn');
-    if (gmailBtn) { gmailBtn.onclick = function () { self._showPermModal('gmail'); }; }
-    if (outlookBtn) { outlookBtn.onclick = function () { self._showPermModal('microsoft'); }; }
+    if (gmailBtn) { gmailBtn.addEventListener('click', function () { self._showPermModal('gmail'); }); }
+    if (outlookBtn) { outlookBtn.addEventListener('click', function () { self._showPermModal('microsoft'); }); }
   },
 
   _buildLookbackHtml: function (provider, accountEmail, currentDays) {
