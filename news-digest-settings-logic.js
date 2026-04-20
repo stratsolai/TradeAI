@@ -120,38 +120,26 @@
 
   var saveBtn = document.getElementById("save-settings-btn");
   if (saveBtn) {
-    saveBtn.addEventListener("click", async function() {
-      var activeFreqBtn = document.querySelector("#cadence-ctrl .freq-btn.active");
-      var currentCadence = activeFreqBtn ? activeFreqBtn.getAttribute("data-value") : "weekly";
-      var payload = {
-        user_id: user.id,
-        cadence: currentCadence,
-        source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
-        updated_at: new Date().toISOString()
-      };
-      var result;
-      if (settings.id) {
-        result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
-      } else {
-        payload.created_at = new Date().toISOString();
-        result = await window.supabaseClient.from("news_digest_settings").insert(payload);
-      }
-      if (result.error) {
-        console.error("[ND Settings] Save error:", result.error.message);
-      } else {
-        var msgOverlay = document.getElementById("save-settings-msg");
-        if (msgOverlay) {
-          var msgText = msgOverlay.querySelector(".save-msg-text");
-          if (msgText) msgText.textContent = "Settings saved.";
-          msgOverlay.classList.add("open");
-          var okBtn = msgOverlay.querySelector(".save-msg-ok");
-          if (okBtn) {
-            okBtn.addEventListener("click", function() {
-              msgOverlay.classList.remove("open");
-            }, { once: true });
-          }
+    saveBtn.addEventListener("click", function() {
+      var msgEl = document.getElementById("save-settings-msg");
+      window.handleSave(saveBtn, async function() {
+        var activeFreqBtn = document.querySelector("#cadence-ctrl .freq-btn.active");
+        var currentCadence = activeFreqBtn ? activeFreqBtn.getAttribute("data-value") : "weekly";
+        var payload = {
+          user_id: user.id,
+          cadence: currentCadence,
+          source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
+          updated_at: new Date().toISOString()
+        };
+        var result;
+        if (settings.id) {
+          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
+        } else {
+          payload.created_at = new Date().toISOString();
+          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
         }
-      }
+        if (result.error) throw new Error(result.error.message);
+      }, msgEl);
     });
   }
 
