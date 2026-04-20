@@ -49,6 +49,7 @@ window.CL_PROFILE = {
     if (!sess.data.session) return;
     this._userId = sess.data.session.user.id;
     var res = await this._supabase.from('profiles').select('*').eq('id', this._userId).single();
+    if (res.error) { console.error('[CL Profile] _load query error:', res.error.message); return; }
     this._profile = res.data || {};
     this._renderIdentity();
     this._renderLocation();
@@ -151,7 +152,8 @@ window.CL_PROFILE = {
     var up = await this._supabase.storage.from('cl-assets').upload(path, file, { upsert: true });
     if (up.error) { alert('Upload failed: ' + up.error.message); return; }
     var url = this._supabase.storage.from('cl-assets').getPublicUrl(path).data.publicUrl;
-    await this._supabase.from('profiles').update({ logo_url: url }).eq('id', this._userId);
+    var logoRes = await this._supabase.from('profiles').update({ logo_url: url }).eq('id', this._userId);
+    if (logoRes.error) { console.error('[CL Profile] _uploadLogo update error:', logoRes.error.message); return; }
     this._profile.logo_url = url;
     var img = document.getElementById('prof-logo-img');
     if (img) img.src = url;
