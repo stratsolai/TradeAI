@@ -275,10 +275,6 @@ window.CL_SETTINGS_LOGIC = {
     });
   },
 
-  _resetSaveBtn: function (id, label) {
-    var btn = document.getElementById(id);
-    if (btn) { btn.textContent = label; btn.disabled = false; }
-  },
 
   _bindEventDelegation: function () {
     var self = this;
@@ -438,7 +434,6 @@ window.CL_SETTINGS_LOGIC = {
             : 'website_scan_frequency';
           self._settings[field] = scanBtn.getAttribute('data-value');
           self._setFreqButtons(container.id, self._settings[field]);
-          self._resetSaveBtn('save-settings-btn', 'Save');
         }
         return;
       }
@@ -603,14 +598,13 @@ window.CL_SETTINGS_LOGIC = {
         .eq('id', self._userId);
       if (res.error) { console.error('_saveWebsiteUrls error:', res.error); return; }
       self._renderWebsiteList();
-      var btn = document.getElementById('website-save-btn');
-      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
     } catch (e) { console.error('_saveWebsiteUrls exception:', e); }
   },
 
-  _saveScanSettings: async function () {
+  _saveScanSettings: function () {
     var self = this;
-    try {
+    var btn = document.getElementById('save-settings-btn');
+    window.handleSave(btn, async function() {
       var existing = await self._supabase
         .from('cl_settings')
         .select('user_id')
@@ -632,10 +626,8 @@ window.CL_SETTINGS_LOGIC = {
         payload.user_id = self._userId;
         res = await self._supabase.from('cl_settings').insert(payload);
       }
-      if (res.error) { console.error('_saveScanSettings error:', res.error); return; }
-      var btn = document.getElementById('save-settings-btn');
-      if (btn) { btn.textContent = 'Saved'; btn.disabled = true; }
-    } catch (e) { console.error('_saveScanSettings exception:', e); }
+      if (res.error) throw new Error(res.error.message);
+    }, null);
   },
 
   _checkDriveOAuthReturn: async function () {
