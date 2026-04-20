@@ -6,20 +6,16 @@ window.EA_SETTINGS = {
   _categories: [],
   _categoryShortcuts: ['enquiries', 'projects'],
 
-  init: function () {
+  init: function (supabase, user) {
     var self = this;
-    self._supabase = window.supabaseClient;
+    self._supabase = supabase;
+    self._userId = user.id;
     self._bindTabs();
-
-    self._supabase.auth.getUser().then(function (res) {
-      if (!res || !res.data || !res.data.user) { window.location.href = '/login'; return; }
-      self._userId = res.data.user.id;
-      document.getElementById('page-wrap').style.display = 'block';
-      self._loadAll();
-      self._bindEventDelegation();
-      self._bindPermissionModal();
-      self._bindSaveMsgDismiss();
-    });
+    document.getElementById('page-wrap').style.display = 'block';
+    self._loadAll();
+    self._bindEventDelegation();
+    self._bindPermissionModal();
+    self._bindSaveMsgDismiss();
   },
 
   // ── TABS ──
@@ -702,5 +698,27 @@ window.EA_SETTINGS = {
   }
 };
 
-window.EA_SETTINGS.init();
-window.addEventListener('pageshow', function (e) { if (e.persisted) window.EA_SETTINGS.init(); });
+(function() {
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) { window.location.href = '/login'; return; }
+    if (window.EA_SETTINGS && window.EA_SETTINGS.init) {
+      window.EA_SETTINGS.init(supabase, session.user);
+    }
+  });
+})();
+
+window.addEventListener('pageshow', function(e) {
+  if (!e.persisted) return;
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) return;
+    if (window.EA_SETTINGS && window.EA_SETTINGS.init) {
+      window.EA_SETTINGS.init(supabase, session.user);
+    }
+  });
+});
