@@ -610,7 +610,8 @@ window.CL_REVIEW = {
   },
 
   _changeStatus: async function(id, newStatus) {
-    await this._supabase.from('content_library').update({ status: newStatus }).eq('id', id);
+    var result = await this._supabase.from('content_library').update({ status: newStatus }).eq('id', id);
+    if (result.error) { console.error('[CL Review] _changeStatus error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return i.id !== id; });
     const card = document.querySelector('.item-card[data-id="' + id + '"]');
     if (card) card.remove();
@@ -620,7 +621,8 @@ window.CL_REVIEW = {
   },
 
   _deleteItem: async function(id) {
-    await this._supabase.from('content_library').delete().eq('id', id);
+    var result = await this._supabase.from('content_library').delete().eq('id', id);
+    if (result.error) { console.error('[CL Review] _deleteItem error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return i.id !== id; });
     var card = document.querySelector('.item-card[data-id="' + id + '"]');
     if (card) card.remove();
@@ -633,7 +635,8 @@ window.CL_REVIEW = {
     const self = this;
     const ids = Array.from(this._selected);
     if (ids.length === 0) return;
-    await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    var result = await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    if (result.error) { console.error('[CL Review] _bulkAction error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return !self._selected.has(i.id); });
     this._selected = new Set();
     this._updateBulkBar();
@@ -646,7 +649,8 @@ window.CL_REVIEW = {
     if (filtered.length === 0) return;
     var ids = filtered.map(function(i) { return i.id; });
     var self = this;
-    await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    var result = await this._supabase.from('content_library').update({ status: newStatus }).in('id', ids);
+    if (result.error) { console.error('[CL Review] _bulkActionAll error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
     this._selected = new Set();
     this._updateBulkBar();
@@ -658,7 +662,8 @@ window.CL_REVIEW = {
     var self = this;
     var ids = Array.from(this._selected);
     if (ids.length === 0) return;
-    await this._supabase.from('content_library').delete().in('id', ids);
+    var result = await this._supabase.from('content_library').delete().in('id', ids);
+    if (result.error) { console.error('[CL Review] _bulkDelete error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return !self._selected.has(i.id); });
     this._selected = new Set();
     this._updateBulkBar();
@@ -671,7 +676,8 @@ window.CL_REVIEW = {
     if (filtered.length === 0) return;
     var ids = filtered.map(function(i) { return i.id; });
     var self = this;
-    await this._supabase.from('content_library').delete().in('id', ids);
+    var result = await this._supabase.from('content_library').delete().in('id', ids);
+    if (result.error) { console.error('[CL Review] _bulkDeleteAll error:', result.error.message); return; }
     this._items = this._items.filter(function(i) { return ids.indexOf(i.id) === -1; });
     this._selected = new Set();
     this._updateBulkBar();
@@ -682,7 +688,8 @@ window.CL_REVIEW = {
   _saveField: async function(id, field, value) {
     const update = {};
     update[field] = value;
-    await this._supabase.from('content_library').update(update).eq('id', id);
+    var result = await this._supabase.from('content_library').update(update).eq('id', id);
+    if (result.error) { console.error('[CL Review] _saveField error:', result.error.message); }
   },
 
   _toggleToolTag: async function(itemId, toolId, pill) {
@@ -691,8 +698,9 @@ window.CL_REVIEW = {
     const tags = Array.isArray(item.tool_tags) ? item.tool_tags.slice() : [];
     const idx = tags.indexOf(toolId);
     if (idx > -1) { tags.splice(idx, 1); } else { tags.push(toolId); }
+    var result = await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
+    if (result.error) { console.error('[CL Review] _toggleToolTag error:', result.error.message); return; }
     item.tool_tags = tags;
-    await this._supabase.from('content_library').update({ tool_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(toolId) > -1;
     pill.classList.toggle('tool-pill-tagged', isNowTagged);
     pill.classList.toggle('tagged', isNowTagged);
@@ -704,8 +712,9 @@ window.CL_REVIEW = {
     const tags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags.slice() : (item.category ? [item.category] : []);
     const idx = tags.indexOf(catId);
     if (idx > -1) { tags.splice(idx, 1); } else { tags.push(catId); }
+    var result = await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
+    if (result.error) { console.error('[CL Review] _toggleCategoryTag error:', result.error.message); return; }
     item.category_tags = tags;
-    await this._supabase.from('content_library').update({ category_tags: tags }).eq('id', itemId);
     var isNowTagged = tags.indexOf(catId) > -1;
     pill.classList.toggle('cat-pill-tagged', isNowTagged);
     pill.classList.toggle('tagged', isNowTagged);
