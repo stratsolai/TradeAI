@@ -171,10 +171,10 @@ window.CL_PROFILE = {
     _locationBlock: function(loc, idx, isPrimary) {
     var idPfx = isPrimary ? 'loc-p' : 'loc-' + idx;
     var nameVal = loc.name || '';
-    var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Main', number: loc.phone }] : [{ type: 'Main', number: '' }]);
+    var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Mobile', number: loc.phone }] : [{ type: 'Mobile', number: '' }]);
     var typeOpts = ['Main', 'Mobile', 'Work', 'Fax'];
     var phonesHtml = phones.map(function(ph, pi) {
-      var currentType = ph.type || 'Main';
+      var currentType = ph.type || 'Mobile';
       var typeSelect = '<span class="lookback-dropdown-wrap">' +
         '<button type="button" class="lookback-dropdown loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + ' &#9662;</button>' +
         '<div class="lookback-dropdown-menu">' +
@@ -224,9 +224,9 @@ window.CL_PROFILE = {
       state: this._v('address_state'),
       postcode: this._v('address_postcode'),
       phones: Array.isArray(p.additional_phones) ? p.additional_phones.map(function(ph) {
-        if (typeof ph === 'string') { try { return JSON.parse(ph); } catch(e) { return { type: 'Main', number: ph }; } }
+        if (typeof ph === 'string') { try { return JSON.parse(ph); } catch(e) { return { type: 'Mobile', number: ph }; } }
         return ph;
-      }) : [{ type: 'Main', number: '' }]
+      }) : [{ type: 'Mobile', number: '' }]
     };
     var extraLocs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
     var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
@@ -318,10 +318,10 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = idPfx + '-ph-' + i;
     d.innerHTML = '<span class="lookback-dropdown-wrap">' +
-      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Main">Main &#9662;</button>' +
+      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Mobile">Mobile &#9662;</button>' +
       '<div class="lookback-dropdown-menu">' +
       typeOpts.map(function(t) {
-        return '<button type="button" class="lookback-dropdown-item' + (t === 'Main' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
+        return '<button type="button" class="lookback-dropdown-item' + (t === 'Mobile' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
       }).join('') +
       '</div></span>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
@@ -347,7 +347,7 @@ window.CL_PROFILE = {
     var wrap = document.getElementById('prof-extra-locs');
     if (!wrap) return;
     var i = wrap.querySelectorAll('.profile-location-block').length;
-    var emptyLoc = { name: '', unit: '', street: '', suburb: '', state: '', postcode: '', phones: [{ type: 'Main', number: '' }] };
+    var emptyLoc = { name: '', unit: '', street: '', suburb: '', state: '', postcode: '', phones: [{ type: 'Mobile', number: '' }] };
     var div = document.createElement('div');
     div.innerHTML = window.CL_PROFILE._locationBlock(emptyLoc, i, false);
     wrap.appendChild(div.firstChild);
@@ -357,14 +357,14 @@ window.CL_PROFILE = {
     // Read primary location
     var pb = document.getElementById('loc-primary-block');
     var primaryPhones = Array.from(pb.querySelectorAll('#loc-p-phones .profile-repeating-row')).map(function(row) {
-      return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Main', number: row.querySelector('.loc-phone-number').value.trim() };
+      return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Mobile', number: row.querySelector('.loc-phone-number').value.trim() };
     }).filter(function(ph) { return ph.number; });
     // Read extra locations
     var extraBlocks = document.querySelectorAll('#prof-extra-locs .profile-location-block');
     var locs = Array.from(extraBlocks).map(function(b) {
       var phonesWrap = b.querySelector('.loc-phones-wrap');
       var phones = phonesWrap ? Array.from(phonesWrap.querySelectorAll('.profile-repeating-row')).map(function(row) {
-        return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Main', number: row.querySelector('.loc-phone-number').value.trim() };
+        return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Mobile', number: row.querySelector('.loc-phone-number').value.trim() };
       }).filter(function(ph) { return ph.number; }) : [];
       return {
         name: b.querySelector('.loc-name').value.trim(),
