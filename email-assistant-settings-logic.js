@@ -316,23 +316,20 @@ window.EA_SETTINGS = {
         ctrl.querySelectorAll('.freq-btn').forEach(function (b) { b.classList.remove('active'); });
         scanBtn.classList.add('active');
       }
-      var saveBtn = document.getElementById('save-scan-btn');
-      if (saveBtn) { saveBtn.textContent = 'Save'; saveBtn.disabled = false; }
     });
 
     // Save button
     var saveBtn = document.getElementById('save-scan-btn');
     if (saveBtn) {
-      saveBtn.addEventListener('click', async function () {
-        try {
+      saveBtn.addEventListener('click', function () {
+        var msgEl = document.getElementById('save-scan-msg');
+        window.handleSave(saveBtn, async function() {
           var res = await self._supabase
             .from('profiles')
             .update({ ea_connected_emails: self._eaEmails })
             .eq('id', self._userId);
-          if (res.error) { console.error('Save scan freq error:', res.error); return; }
-          saveBtn.textContent = 'Saved';
-          saveBtn.disabled = true;
-        } catch (e) { console.error('Save scan freq exception:', e); }
+          if (res.error) throw new Error(res.error.message);
+        }, msgEl);
       });
     }
   },
@@ -451,12 +448,11 @@ window.EA_SETTINGS = {
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
         self._renderCategories();
-        self._resetCatSaveBtn();
       });
     }
 
     if (saveBtn) {
-      saveBtn.addEventListener('click', async function () {
+      saveBtn.addEventListener('click', function () {
         // Collect updated descriptions from editable inputs
         document.querySelectorAll('.ea-cat-desc-input').forEach(function(input) {
           var idx = parseInt(input.dataset.catDesc, 10);
@@ -474,21 +470,33 @@ window.EA_SETTINGS = {
           return;
         }
         self._settings.categories = self._categories;
-        // Remove shortcuts for categories that were just disabled
         self._categoryShortcuts = self._categoryShortcuts.filter(function (id) {
           return self._categories.some(function (c) { return c.id === id && c.enabled; });
         });
         self._settings.category_shortcuts = self._categoryShortcuts;
-        await self._saveSettings();
-        self._renderShortcuts();
-        if (saveBtn) { saveBtn.textContent = 'Saved'; saveBtn.disabled = true; }
+        var msgEl = document.getElementById('save-categories-msg');
+        window.handleSave(saveBtn, async function() {
+          var payload = {
+            user_id: self._userId,
+            categories: self._categories,
+            category_shortcuts: self._categoryShortcuts,
+            scan_cadence: self._settings.scan_cadence || 'manual',
+            updated_at: new Date().toISOString()
+          };
+          var error;
+          if (self._settings.id) {
+            ({ error } = await self._supabase.from('email_assistant_settings').update(payload).eq('id', self._settings.id));
+          } else {
+            payload.created_at = new Date().toISOString();
+            var res = await self._supabase.from('email_assistant_settings').insert(payload).select().single();
+            if (res.data) self._settings = res.data;
+            error = res.error;
+          }
+          if (error) throw new Error(error.message);
+          self._renderShortcuts();
+        }, msgEl);
       });
     }
-  },
-
-  _resetCatSaveBtn: function () {
-    var btn = document.getElementById('save-categories-btn');
-    if (btn) { btn.textContent = 'Save'; btn.disabled = false; }
   },
 
   _removeCategory: async function (idx) {
@@ -615,8 +623,7 @@ window.EA_SETTINGS = {
             row.querySelectorAll('.freq-btn').forEach(function (b) { b.classList.remove('active'); });
             catBtn.classList.add('active');
           }
-          self._resetCatSaveBtn();
-        }
+          }
         return;
       }
     });
