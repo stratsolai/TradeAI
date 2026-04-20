@@ -16,6 +16,20 @@
     console.error("[ND Settings] Load settings exception:", e.message);
   }
 
+  // Helper — upsert to news_digest_settings, updating settings.id after first insert
+  async function saveToSettings(payload) {
+    var result;
+    if (settings.id) {
+      result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
+    } else {
+      payload.user_id = user.id;
+      payload.created_at = new Date().toISOString();
+      result = await window.supabaseClient.from("news_digest_settings").insert(payload).select("id").single();
+      if (!result.error && result.data) settings.id = result.data.id;
+    }
+    if (result.error) throw new Error(result.error.message);
+  }
+
   // ── TAB SWITCHING (.stab-bar / .stab) ────────────────────────────────
 
   document.querySelectorAll(".stab[data-tab]").forEach(function(btn) {
@@ -28,7 +42,7 @@
     });
   });
 
-  // ── DIGEST FREQUENCY (.freq-btn — saves immediately) ────────────────
+  // ── SCAN FREQUENCY (.freq-btn — in-memory toggle, Save button commits) ──
 
   var cadenceCtrl = document.getElementById("cadence-ctrl");
   if (cadenceCtrl) {
@@ -38,26 +52,25 @@
     });
 
     cadenceCtrl.querySelectorAll(".freq-btn").forEach(function(btn) {
-      btn.addEventListener("click", async function() {
+      btn.addEventListener("click", function() {
         cadenceCtrl.querySelectorAll(".freq-btn").forEach(function(b) { b.classList.remove("active"); });
         btn.classList.add("active");
-        var val = btn.getAttribute("data-value") || "weekly";
-        var payload = {
-          user_id: user.id,
-          cadence: val,
-          updated_at: new Date().toISOString()
-        };
-        var result;
-        if (settings.id) {
-          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
-        } else {
-          payload.created_at = new Date().toISOString();
-          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
-        }
-        if (result.error) {
-          console.error("[ND Settings] Cadence save error:", result.error.message);
-        }
       });
+    });
+  }
+
+  var scanSaveBtn = document.getElementById("save-scan-btn");
+  if (scanSaveBtn) {
+    scanSaveBtn.addEventListener("click", function() {
+      var msgEl = document.getElementById("save-settings-msg");
+      var activeFreqBtn = document.querySelector("#cadence-ctrl .freq-btn.active");
+      var currentCadence = activeFreqBtn ? activeFreqBtn.getAttribute("data-value") : "weekly";
+      window.handleSave(scanSaveBtn, async function() {
+        await saveToSettings({
+          cadence: currentCadence,
+          updated_at: new Date().toISOString()
+        });
+      }, msgEl);
     });
   }
 
@@ -87,20 +100,13 @@
         item.classList.add("active");
         lookbackMenu.classList.remove("open");
         lookbackBtn.classList.remove("active");
-        var payload = {
-          user_id: user.id,
-          lookback_days: val,
-          updated_at: new Date().toISOString()
-        };
-        var result;
-        if (settings.id) {
-          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
-        } else {
-          payload.created_at = new Date().toISOString();
-          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
-        }
-        if (result.error) {
-          console.error("[ND Settings] Lookback save error:", result.error.message);
+        try {
+          await saveToSettings({
+            lookback_days: val,
+            updated_at: new Date().toISOString()
+          });
+        } catch (err) {
+          console.error("[ND Settings] Lookback save error:", err.message);
         }
       });
     });
@@ -123,22 +129,10 @@
     saveBtn.addEventListener("click", function() {
       var msgEl = document.getElementById("save-settings-msg");
       window.handleSave(saveBtn, async function() {
-        var activeFreqBtn = document.querySelector("#cadence-ctrl .freq-btn.active");
-        var currentCadence = activeFreqBtn ? activeFreqBtn.getAttribute("data-value") : "weekly";
-        var payload = {
-          user_id: user.id,
-          cadence: currentCadence,
+        await saveToSettings({
           source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
           updated_at: new Date().toISOString()
-        };
-        var result;
-        if (settings.id) {
-          result = await window.supabaseClient.from("news_digest_settings").update(payload).eq("id", settings.id);
-        } else {
-          payload.created_at = new Date().toISOString();
-          result = await window.supabaseClient.from("news_digest_settings").insert(payload);
-        }
-        if (result.error) throw new Error(result.error.message);
+        });
       }, msgEl);
     });
   }
