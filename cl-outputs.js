@@ -345,11 +345,6 @@ window.CL_OUTPUTS = {
         if (!card) return;
         var isExpanded = card.classList.contains('review-body-expanded');
         card.classList.toggle('review-body-expanded', !isExpanded);
-        var span = document.getElementById('outputs-preview-' + btn.dataset.id);
-        if (span) {
-          span.style.whiteSpace = isExpanded ? '' : 'pre-wrap';
-          span.style.overflow = isExpanded ? '' : 'visible';
-        }
         btn.innerHTML = isExpanded ? '&#9654;' : '&#9660;';
       });
     });
