@@ -163,6 +163,10 @@ h2 { font-weight: var(--heading-lg-weight); }
 
 p { margin-bottom: 12px; }
 
+.page-header {
+  margin-bottom: var(--page-header-margin);
+}
+
 .page-title {
   font-size: var(--page-title-font-size);
   font-weight: var(--heading-lg-weight);
