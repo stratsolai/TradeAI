@@ -824,7 +824,7 @@ a:hover { opacity: 0.85; }
 /* Use .lookback-dropdown-field when the dropdown sits as a peer of text input fields on a form row — applies form-appropriate padding and font size */
 .lookback-dropdown-field { padding:var(--input-padding); padding-right:28px; font-size:var(--btn-font-size); font-family:var(--body-font); }
 .lookback-dropdown-field + .lookback-dropdown-menu .lookback-dropdown-item { font-size:var(--btn-font-size); padding:8px 14px; }
-.lookback-dropdown-menu { display:none; position:absolute; top:100%; left:0; margin-top:4px; width:100%; min-width:140px; background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius); box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0; }
+.lookback-dropdown-menu { display:none; position:absolute; top:100%; left:0; margin-top:4px; min-width:100%; background:var(--white); border:1px solid var(--border); border-radius:var(--btn-radius); box-shadow:0 4px 12px var(--shadow-card); z-index:20; padding:4px 0; }
 .lookback-dropdown-menu.open { display:block; }
 .lookback-dropdown-item { display:block; width:100%; padding:5px 10px; border:none; background:none; font-size:var(--badge-font-size); font-family:var(--body-font); color:var(--text); text-align:left; cursor:pointer; }
 .lookback-dropdown-item:hover { background:var(--bg-subtle); }
