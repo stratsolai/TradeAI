@@ -828,6 +828,7 @@ window.CL_UPLOAD = {
           // of the original format.
           body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: "image", fileData: fileData, storagePath: storagePath, mediaType: "image/jpeg" })
         });
+        if (!resp.ok) { console.error("Photo processing failed:", resp.status); continue; }
         var result = await resp.json();
         if (result.success && Array.isArray(result.items)) {
           allItems = allItems.concat(result.items);
@@ -872,6 +873,7 @@ window.CL_UPLOAD = {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: user.id, fileName: file.name, fileType: fileType, fileData: fileData, storagePath: storagePath })
         });
+        if (!resp.ok) { console.error("Document processing failed:", resp.status); continue; }
         var result = await resp.json();
         if (result.success && Array.isArray(result.items)) {
           allItems = allItems.concat(result.items);
@@ -978,6 +980,7 @@ window.CL_UPLOAD = {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: user.id, fileName: title, fileType: "text", fileData: fileData, storagePath: storagePath })
       });
+      if (!resp.ok) throw new Error("Processing failed (status " + resp.status + ")");
       var result = await resp.json();
       // 3. Update inserted rows: override tool_tags, status, source
       if (result.success && Array.isArray(result.items) && result.items.length > 0) {
