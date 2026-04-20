@@ -40,6 +40,8 @@ window.EA_LOGIC = {
   init: async function(supabase, user) {
     this._supabase = supabase;
     this._user = user;
+    var pw = document.getElementById('page-wrap');
+    if (pw) pw.style.display = 'block';
     await this._loadSettings();
     await this._loadAccounts();
     this._initDateDefaults();
