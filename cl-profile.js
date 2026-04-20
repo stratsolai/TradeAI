@@ -211,7 +211,7 @@ window.CL_PROFILE = {
       suburb: this._v('address_suburb'),
       state: this._v('address_state'),
       postcode: this._v('address_postcode'),
-      phones: Array.isArray(p.primary_phones) ? p.primary_phones : (p.phone ? [{ type: 'Main', number: p.phone }] : [{ type: 'Main', number: '' }])
+      phones: Array.isArray(p.additional_phones) ? p.additional_phones : [{ type: 'Main', number: '' }]
     };
     var extraLocs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
     var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
@@ -318,8 +318,7 @@ window.CL_PROFILE = {
         address_suburb: pb.querySelector('.loc-suburb').value.trim(),
         address_state: pb.querySelector('.loc-state').value.trim(),
         address_postcode: pb.querySelector('.loc-postcode').value.trim(),
-        primary_phones: primaryPhones,
-        phone: primaryPhones.length ? primaryPhones[0].number : '',
+        additional_phones: primaryPhones,
         additional_locations: locs,
         website_urls: sites
       };
