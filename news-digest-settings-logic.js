@@ -122,15 +122,21 @@
   // ── SOURCE PREFERENCES (Save button) ────────────────────────────────
 
   var sourcePrefsEl = document.getElementById("source-prefs");
-  if (sourcePrefsEl && settings.source_preferences) sourcePrefsEl.value = settings.source_preferences;
+  if (sourcePrefsEl && Array.isArray(settings.preferred_sources) && settings.preferred_sources.length > 0) {
+    sourcePrefsEl.value = settings.preferred_sources.join(", ");
+  } else if (sourcePrefsEl && typeof settings.preferred_sources === "string" && settings.preferred_sources) {
+    sourcePrefsEl.value = settings.preferred_sources;
+  }
 
   var saveBtn = document.getElementById("save-settings-btn");
   if (saveBtn) {
     saveBtn.addEventListener("click", function() {
       var msgEl = document.getElementById("save-settings-msg");
       window.handleSave(saveBtn, async function() {
+        var raw = sourcePrefsEl ? sourcePrefsEl.value.trim() : "";
+        var preferred = raw ? raw.split(",").map(function(s) { return s.trim(); }).filter(Boolean) : [];
         await saveToSettings({
-          source_preferences: sourcePrefsEl ? sourcePrefsEl.value.trim() : null,
+          preferred_sources: preferred,
           updated_at: new Date().toISOString()
         });
       }, msgEl);
