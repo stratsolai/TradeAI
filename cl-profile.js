@@ -458,7 +458,7 @@ window.CL_PROFILE = {
     }).join('');
     var body = '<div class="profile-fields">' +
       this._field('What do you want your customers to know about your business?',
-        this._textarea('prof-theme-aware', this._v('marketing_theme_awareness'), 'e.g. We have been serving our local community for over 15 years with honest, reliable service', 3)) +
+        this._textarea('prof-theme-aware', this._v('marketing_theme_awareness'), 'e.g. A family-owned business serving the local community for over 15 years with honest, reliable service', 3)) +
       this._field('What sets you apart from your competitors?',
         this._textarea('prof-theme-diff', this._v('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
       this._field('What feeling do you want customers to have when they interact with you?',
