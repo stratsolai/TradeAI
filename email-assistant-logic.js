@@ -493,10 +493,7 @@ window.EA_LOGIC = {
     var self = this;
     document.querySelectorAll('.stat-card[data-stat]').forEach(function(tile) {
       var stat = tile.dataset.stat;
-      if (stat === 'total') {
-        tile.style.cursor = 'default';
-        return;
-      }
+      if (stat === 'total') return;
       tile.addEventListener('click', function() {
         if (stat === 'unhandled') {
           self._showHandled = false;
