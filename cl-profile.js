@@ -29,18 +29,17 @@ window.CL_PROFILE = {
   },
 
   _shell: function() {
-    var _clOrange = getComputedStyle(document.documentElement).getPropertyValue('--orange').trim();
     return '<div class="profile-wrap">' +
       '<div class="profile-nav-chips">' +
-        '<button class="profile-nav-chip active" data-ptab="identity" style="border-left-color:#1A5490;">1. Identity</button>' +
-        '<button class="profile-nav-chip" data-ptab="location" style="border-left-color:'+_clOrange+';">2. Location &amp; Contact</button>' +
-        '<button class="profile-nav-chip" data-ptab="details" style="border-left-color:#28a745;">3. Business Details</button>' +
-        '<button class="profile-nav-chip" data-ptab="marketing" style="border-left-color:#7b2d8b;">4. Marketing Theme</button>' +
+        '<button class="profile-nav-chip active" data-ptab="identity">1. Identity</button>' +
+        '<button class="profile-nav-chip" data-ptab="location">2. Location &amp; Contact</button>' +
+        '<button class="profile-nav-chip" data-ptab="details">3. Business Details</button>' +
+        '<button class="profile-nav-chip" data-ptab="marketing">4. Marketing Theme</button>' +
       '</div>' +
-      '<div id="prof-panel-identity" class="profile-panel"></div>' +
-      '<div id="prof-panel-location" class="profile-panel" style="display:none"></div>' +
-      '<div id="prof-panel-details" class="profile-panel" style="display:none"></div>' +
-      '<div id="prof-panel-marketing" class="profile-panel" style="display:none"></div>' +
+      '<div id="prof-panel-identity" class="profile-panel active"></div>' +
+      '<div id="prof-panel-location" class="profile-panel"></div>' +
+      '<div id="prof-panel-details" class="profile-panel"></div>' +
+      '<div id="prof-panel-marketing" class="profile-panel"></div>' +
     '</div>';
   },
 
@@ -53,9 +52,9 @@ window.CL_PROFILE = {
         });
         btn.classList.add('active');
         wrap.querySelectorAll('.profile-panel').forEach(function(p) {
-          p.style.display = 'none';
+          p.classList.remove('active');
         });
-        document.getElementById('prof-panel-' + btn.dataset.ptab).style.display = '';
+        document.getElementById('prof-panel-' + btn.dataset.ptab).classList.add('active');
       });
     });
   },
@@ -210,10 +209,10 @@ window.CL_PROFILE = {
       '<button class="btn-dismiss" data-action="remove-row" data-target="loc-block-' + idx + '">Remove Location</button>';
     return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
       '<div class="profile-location-row-header">' +
-        '<strong style="color:#1A5490;">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
+        '<strong class="profile-location-title">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
         removeBtn +
       '</div>' +
-      '<div class="profile-fields" style="margin-bottom:12px;">' +
+      '<div class="profile-fields profile-fields-compact">' +
         '<div class="profile-field-full"><label class="profile-label">Location Name</label>' +
           '<input type="text" class="profile-input loc-name" placeholder="e.g. Main Office, Warehouse, Bendigo Site" value="' + window.escHtml(nameVal) + '" /></div>' +
         '<div class="profile-field-full"><label class="profile-label">Suite / Level / Unit <span class="profile-optional">(optional)</span></label>' +
@@ -226,9 +225,9 @@ window.CL_PROFILE = {
           '<div><label class="profile-label">Postcode</label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
         '</div></div>' +
       '</div>' +
-      '<div class="profile-label" style="margin-bottom:8px;">Phone Numbers</div>' +
+      '<div class="profile-label profile-label-heading">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn btn-outline" style="margin-top:4px;" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
+      '<button class="btn btn-outline profile-add-btn" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -260,12 +259,12 @@ window.CL_PROFILE = {
     var body =
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn btn-outline" style="margin-top:12px;margin-bottom:24px;" data-action="add-location">+ Add Location</button>' +
-      '<div class="profile-location-block" style="margin-top:0;">' +
-        '<div class="profile-label" style="margin-bottom:8px;">Website URL(s)</div>' +
-        '<input type="url" id="prof-site-primary" class="profile-input" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" style="margin-bottom:8px;" />' +
+      '<button class="btn btn-outline profile-btn-add-location" data-action="add-location">+ Add Location</button>' +
+      '<div class="profile-location-block profile-location-block-websites">' +
+        '<div class="profile-label profile-label-heading">Website URL(s)</div>' +
+        '<input type="url" id="prof-site-primary" class="profile-input profile-input-mb" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn btn-outline" style="margin-top:8px;" data-action="add-site">+ Add Website</button>' +
+        '<button class="btn btn-outline profile-btn-add-website" data-action="add-site">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
       '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save'
@@ -427,7 +426,7 @@ window.CL_PROFILE = {
       this._field('Services Provided', this._textarea('prof-services', this._v('services'), 'Describe the services your business provides', 4)) +
       this._field('Products Offered <span class="profile-optional">(optional)</span>', this._textarea('prof-products', this._v('products'), 'Describe any products your business sells', 3)) +
       this._field2('Number of Employees', this._dropdown('prof-emp-range', empRanges, this._v('employee_range'))) +
-      this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200" style="max-width:120px;"')) +
+      this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200" class="profile-input-narrow"')) +
     '</div>';
     document.getElementById('prof-panel-details').innerHTML = this._card('\uD83D\uDCC4', '3. Business Details', 'What your business does and how it operates', body, 'prof-det-save');
     var self3 = this;
@@ -465,11 +464,11 @@ window.CL_PROFILE = {
       this._field('What feeling do you want customers to have when they interact with you?',
         this._textarea('prof-theme-feel', this._v('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
       this._field('Additional Theme Statements <span class="profile-optional">(optional)</span>',
-        '<input type="text" id="prof-extra-primary" class="profile-input" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" style="margin-bottom:8px;" />' +
+        '<input type="text" id="prof-extra-primary" class="profile-input profile-input-mb" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" />' +
         '<div id="prof-extras-extra">' + extraRowsHtml + '</div>'
       ) +
     '</div>' +
-    '<button class="btn btn-outline" style="border-left-color:#7b2d8b;margin-top:8px;" data-action="add-extra">+ Add Statement</button>';
+    '<button class="btn btn-outline profile-btn-add-statement" data-action="add-extra">+ Add Statement</button>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save'
     );
