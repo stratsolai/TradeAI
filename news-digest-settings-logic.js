@@ -81,7 +81,7 @@
   var lookbackMenu = document.getElementById("lookback-menu");
   if (lookbackBtn && lookbackMenu) {
     var lookbackLabels = { "30": "1 month", "90": "3 months", "180": "6 months" };
-    lookbackBtn.innerHTML = (lookbackLabels[String(lookbackDays)] || "6 months") + " &#9662;";
+    lookbackBtn.innerHTML = lookbackLabels[String(lookbackDays)] || "6 months";
     lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
       item.classList.toggle("active", item.getAttribute("data-value") === String(lookbackDays));
     });
@@ -95,7 +95,7 @@
     lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(item) {
       item.addEventListener("click", async function() {
         var val = parseInt(item.getAttribute("data-value")) || 180;
-        lookbackBtn.innerHTML = item.textContent + " &#9662;";
+        lookbackBtn.innerHTML = item.textContent;
         lookbackMenu.querySelectorAll(".lookback-dropdown-item").forEach(function(it) { it.classList.remove("active"); });
         item.classList.add("active");
         lookbackMenu.classList.remove("open");
