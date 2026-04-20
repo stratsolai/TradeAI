@@ -61,21 +61,7 @@ window.CL_PROFILE = {
     return (v === null || v === undefined) ? '' : v;
   },
 
-  _save: async function(updates, btnId) {
-    var btn = document.getElementById(btnId);
-    if (btn) btn.textContent = 'Saving...';
-    var res = await this._supabase.from('profiles').update(updates).eq('id', this._userId);
-    if (!btn) return;
-    if (res.error) {
-      btn.textContent = 'Error saving';
-    } else {
-      Object.assign(this._profile, updates);
-      btn.textContent = 'Saved \u2713';
-      setTimeout(function() { if (btn) btn.textContent = 'Save'; }, 2000);
-    }
-  },
-
-  _card: function(icon, title, subtitle, body, btnId, fn) {
+  _card: function(icon, title, subtitle, body, btnId) {
     return '<div class="profile-section-card">' +
       '<div class="profile-section-header">' +
         '<div class="profile-section-icon">' + icon + '</div>' +
@@ -86,7 +72,7 @@ window.CL_PROFILE = {
       '</div>' +
       body +
       '<div class="profile-save-row">' +
-        '<button id="' + btnId + '" class="btn btn-primary" onclick="window.CL_PROFILE.' + fn + '()">Save</button>' +
+        '<button id="' + btnId + '" class="btn-save">Save</button>' +
       '</div>' +
     '</div>';
   },
@@ -135,8 +121,10 @@ window.CL_PROFILE = {
       this._field('Industry / Profession', this._input('prof-industry', 'text', this._v('industry'), 'e.g. Accounting, Retail, Construction')) +
       this._field('Business Logo', logoHtml) +
     '</div>';
-    document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save', '_saveIdentity');
+    document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save');
     var self = this;
+    var idBtn = document.getElementById('prof-id-save');
+    if (idBtn) idBtn.addEventListener('click', function() { self._saveIdentity(); });
     document.getElementById('prof-logo-file').addEventListener('change', function(e) { self._uploadLogo(e.target.files[0]); });
     document.getElementById('prof-abn').addEventListener('input', function(e) {
       var d = e.target.value.replace(/\D/g, '').substring(0, 11);
@@ -163,7 +151,14 @@ window.CL_PROFILE = {
   },
 
   _saveIdentity: function() {
-    this._save({ business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').value, industry: document.getElementById('prof-industry').value.trim() }, 'prof-id-save');
+    var self = this;
+    var btn = document.getElementById('prof-id-save');
+    window.handleSave(btn, async function() {
+      var updates = { business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').value, industry: document.getElementById('prof-industry').value.trim() };
+      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
+      if (res.error) throw new Error(res.error.message);
+      Object.assign(self._profile, updates);
+    }, null);
   },
 
     _locationBlock: function(loc, idx, isPrimary) {
@@ -240,8 +235,10 @@ window.CL_PROFILE = {
         '<button class="btn btn-outline" style="margin-top:8px;" onclick="window.CL_PROFILE._addSite()">+ Add Website</button>' +
       '</div>';
     document.getElementById('prof-panel-location').innerHTML = this._card(
-      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save', '_saveLocation'
+      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save'
     );
+    var locBtn = document.getElementById('prof-loc-save');
+    if (locBtn) { var self2 = this; locBtn.addEventListener('click', function() { self2._saveLocation(); }); }
   },
 
   _addPhone: function(idPfx) {
@@ -312,18 +309,25 @@ window.CL_PROFILE = {
     Array.from(document.querySelectorAll('#prof-sites-extra .prof-add-site')).forEach(function(el) {
       if (el.value.trim()) sites.push(el.value.trim());
     });
-    this._save({
-      address_name: pb.querySelector('.loc-name').value.trim(),
-      address_unit: pb.querySelector('.loc-unit').value.trim(),
-      address_street: pb.querySelector('.loc-street').value.trim(),
-      address_suburb: pb.querySelector('.loc-suburb').value.trim(),
-      address_state: pb.querySelector('.loc-state').value.trim(),
-      address_postcode: pb.querySelector('.loc-postcode').value.trim(),
-      primary_phones: primaryPhones,
-      phone: primaryPhones.length ? primaryPhones[0].number : '',
-      additional_locations: locs,
-      website_urls: sites
-    }, 'prof-loc-save');
+    var self = this;
+    var btn = document.getElementById('prof-loc-save');
+    window.handleSave(btn, async function() {
+      var updates = {
+        address_name: pb.querySelector('.loc-name').value.trim(),
+        address_unit: pb.querySelector('.loc-unit').value.trim(),
+        address_street: pb.querySelector('.loc-street').value.trim(),
+        address_suburb: pb.querySelector('.loc-suburb').value.trim(),
+        address_state: pb.querySelector('.loc-state').value.trim(),
+        address_postcode: pb.querySelector('.loc-postcode').value.trim(),
+        primary_phones: primaryPhones,
+        phone: primaryPhones.length ? primaryPhones[0].number : '',
+        additional_locations: locs,
+        website_urls: sites
+      };
+      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
+      if (res.error) throw new Error(res.error.message);
+      Object.assign(self._profile, updates);
+    }, null);
   },
 
   _renderDetails: function() {
@@ -334,11 +338,20 @@ window.CL_PROFILE = {
       this._field2('Number of Employees', this._select('prof-emp-range', empRanges, this._v('employee_range'))) +
       this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200" style="max-width:120px;"')) +
     '</div>';
-    document.getElementById('prof-panel-details').innerHTML = this._card('\uD83D\uDCC4', '3. Business Details', 'What your business does and how it operates', body, 'prof-det-save', '_saveDetails');
+    document.getElementById('prof-panel-details').innerHTML = this._card('\uD83D\uDCC4', '3. Business Details', 'What your business does and how it operates', body, 'prof-det-save');
+    var detBtn = document.getElementById('prof-det-save');
+    if (detBtn) { var self3 = this; detBtn.addEventListener('click', function() { self3._saveDetails(); }); }
   },
 
   _saveDetails: function() {
-    this._save({ services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-emp-range').value, years_in_business: parseInt(document.getElementById('prof-years').value) || null }, 'prof-det-save');
+    var self = this;
+    var btn = document.getElementById('prof-det-save');
+    window.handleSave(btn, async function() {
+      var updates = { services: document.getElementById('prof-services').value.trim(), products: document.getElementById('prof-products').value.trim(), employee_range: document.getElementById('prof-emp-range').value, years_in_business: parseInt(document.getElementById('prof-years').value) || null };
+      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
+      if (res.error) throw new Error(res.error.message);
+      Object.assign(self._profile, updates);
+    }, null);
   },
 
   _renderMarketing: function() {
@@ -364,8 +377,10 @@ window.CL_PROFILE = {
     '</div>' +
     '<button class="btn btn-outline" style="border-left-color:#7b2d8b;margin-top:8px;" onclick="window.CL_PROFILE._addExtra()">+ Add Statement</button>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
-      '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save', '_saveMarketing'
+      '\uD83C\uDFA8', '4. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save'
     );
+    var mktBtn = document.getElementById('prof-mkt-save');
+    if (mktBtn) { var self4 = this; mktBtn.addEventListener('click', function() { self4._saveMarketing(); }); }
   },
 
   _addExtra: function() {
@@ -381,17 +396,24 @@ window.CL_PROFILE = {
   },
 
   _saveMarketing: function() {
+    var self = this;
     var statements = [];
     var primary = document.getElementById('prof-extra-primary');
     if (primary && primary.value.trim()) statements.push(primary.value.trim());
     Array.from(document.querySelectorAll('#prof-extras-extra .prof-extra-input')).forEach(function(el) {
       if (el.value.trim()) statements.push(el.value.trim());
     });
-    this._save({
-      marketing_theme_awareness: document.getElementById('prof-theme-aware').value.trim(),
-      marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(),
-      marketing_theme_feeling: document.getElementById('prof-theme-feel').value.trim(),
-      marketing_theme_extra: statements
-    }, 'prof-mkt-save');
+    var btn = document.getElementById('prof-mkt-save');
+    window.handleSave(btn, async function() {
+      var updates = {
+        marketing_theme_awareness: document.getElementById('prof-theme-aware').value.trim(),
+        marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(),
+        marketing_theme_feeling: document.getElementById('prof-theme-feel').value.trim(),
+        marketing_theme_extra: statements
+      };
+      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
+      if (res.error) throw new Error(res.error.message);
+      Object.assign(self._profile, updates);
+    }, null);
   }
 };
