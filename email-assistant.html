@@ -11,7 +11,8 @@
     /* ─── MAIN LAYOUT ─── */
     .container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    .stat-card[data-stat] { cursor: pointer; }
+    .stat-card[data-stat="unhandled"],
+    .stat-card[data-stat="urgent"] { cursor: pointer; }
 
     .page-header { margin-bottom: var(--page-header-margin); }
 
