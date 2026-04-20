@@ -483,6 +483,9 @@ a:hover { opacity: 0.85; }
   color: var(--orange);
 }
 
+/* Small button variant — compact padding for inline remove/action buttons */
+.btn-sm { padding: 6px 14px; font-size: var(--status-font-size); }
+
 /* ------------------------------------------------------------
    8. UNDERLINE PAGE TABS (.ptab / .tab-nav-item)
    ------------------------------------------------------------ */
