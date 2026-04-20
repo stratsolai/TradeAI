@@ -320,7 +320,7 @@ window.EA_SETTINGS = {
     var saveBtn = document.getElementById('save-scan-btn');
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
-        var msgEl = document.getElementById('save-scan-msg');
+        var msgEl = document.getElementById('save-msg');
         window.handleSave(saveBtn, async function() {
           var res = await self._supabase
             .from('profiles')
@@ -400,13 +400,6 @@ window.EA_SETTINGS = {
     '</div>';
 
     container.innerHTML = html;
-    if (!document.getElementById('save-shortcuts-msg')) {
-      var msgEl = document.createElement('div');
-      msgEl.id = 'save-shortcuts-msg';
-      msgEl.className = 'save-msg';
-      msgEl.innerHTML = '<div class="save-msg-card"><div class="save-msg-text"></div><button type="button" class="save-msg-ok">OK</button></div>';
-      document.body.appendChild(msgEl);
-    }
     self._bindShortcutEvents();
   },
 
@@ -419,7 +412,7 @@ window.EA_SETTINGS = {
     if (saveBtn) {
       saveBtn.addEventListener('click', function () {
         self._settings.category_shortcuts = self._categoryShortcuts;
-        var msgEl = document.getElementById('save-shortcuts-msg');
+        var msgEl = document.getElementById('save-msg');
         window.handleSave(saveBtn, async function() {
           var payload = {
             user_id: self._userId,
@@ -455,7 +448,7 @@ window.EA_SETTINGS = {
         var nameVal = nameInput ? nameInput.value.trim() : '';
         var descVal = descInput ? descInput.value.trim() : '';
         if (!nameVal || !descVal) {
-          self._showSaveMsg('save-categories-msg', 'Both name and description are required.', 'error');
+          self._showSaveMsg('save-msg', 'Both name and description are required.', 'error');
           return;
         }
         var customId = nameVal.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -481,7 +474,7 @@ window.EA_SETTINGS = {
           if (!self._categories[i].description) { missing = true; break; }
         }
         if (missing) {
-          self._showSaveMsg('save-categories-msg', 'All custom categories require a description.', 'error');
+          self._showSaveMsg('save-msg', 'All custom categories require a description.', 'error');
           return;
         }
         self._settings.categories = self._categories;
@@ -489,7 +482,7 @@ window.EA_SETTINGS = {
           return self._categories.some(function (c) { return c.id === id && c.enabled; });
         });
         self._settings.category_shortcuts = self._categoryShortcuts;
-        var msgEl = document.getElementById('save-categories-msg');
+        var msgEl = document.getElementById('save-msg');
         window.handleSave(saveBtn, async function() {
           var payload = {
             user_id: self._userId,
@@ -527,7 +520,7 @@ window.EA_SETTINGS = {
       if (result.error) { console.error('[EA Settings] Remove check query error:', result.error); return; }
       var count = result.count || 0;
       if (count > 0) {
-        self._showSaveMsg('save-categories-msg', 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.', 'error');
+        self._showSaveMsg('save-msg', 'Cannot remove — ' + count + ' email' + (count !== 1 ? 's' : '') + ' use this category. Disable it and wait up to 90 days for emails to clear.', 'error');
         return;
       }
     } catch (e) {
@@ -538,7 +531,6 @@ window.EA_SETTINGS = {
     self._settings.categories = self._categories;
     await self._saveSettings();
     self._renderCategories();
-    self._showSaveMsg('save-categories-msg', 'Category removed.', 'success');
   },
 
   // ── EVENT DELEGATION ──
@@ -615,7 +607,7 @@ window.EA_SETTINGS = {
           shortcutBtn.textContent = 'Select';
         } else {
           if (self._categoryShortcuts.length >= 2) {
-            self._showSaveMsg('save-shortcuts-msg', 'Maximum 2 shortcuts. Deselect one first.', 'error');
+            self._showSaveMsg('save-msg', 'Maximum 2 shortcuts. Deselect one first.', 'error');
             return;
           }
           self._categoryShortcuts.push(catId);
