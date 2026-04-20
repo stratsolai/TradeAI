@@ -1,4 +1,3 @@
-var _clOrange = getComputedStyle(document.documentElement).getPropertyValue('--orange').trim();
 window.CL_PROFILE = {
   _supabase: null,
   _userId: null,
@@ -14,6 +13,7 @@ window.CL_PROFILE = {
   },
 
   _shell: function() {
+    var _clOrange = getComputedStyle(document.documentElement).getPropertyValue('--orange').trim();
     return '<div class="profile-wrap">' +
       '<div class="profile-nav-chips">' +
         '<button class="profile-nav-chip active" data-ptab="identity" style="border-left-color:#1A5490;">1. Identity</button>' +
