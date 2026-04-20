@@ -124,7 +124,9 @@
   --page-max-width:     1400px;        /* Maximum content width for full-width pages */
   --settings-max-width: 960px;         /* Maximum content width for settings and narrow pages */
   --page-padding-mobile: 20px 16px;    /* Page content padding on mobile viewports */
+  --card-padding:       24px;           /* Standard padding for cards and content panels */
   --card-padding-mobile: 16px;         /* Standard padding for cards and panels on mobile */
+  --panel-min-height:   300px;         /* Minimum height for main content panels */
   --page-header-margin: 28px;          /* Bottom margin below page header block */
   --settings-page-padding: 40px 24px 80px; /* Settings page overall padding including bottom breathing room */
   --loading-padding:    40px;          /* Padding for loading spinner containers */
