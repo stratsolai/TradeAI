@@ -5,30 +5,28 @@
 
 import { createClient } from '@supabase/supabase-js';
 
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Authenticate via Supabase JWT from Authorization header
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  var authHeader = (req.headers && (req.headers.authorization || req.headers.Authorization)) || '';
+  var token = String(authHeader).replace(/^Bearer\s+/i, '').trim();
+  if (!token) {
     return res.status(401).json({ error: 'Missing or invalid Authorization header' });
   }
-  const jwt = authHeader.replace('Bearer ', '');
 
-  const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_ANON_KEY,
-    { global: { headers: { Authorization: 'Bearer ' + jwt } } }
-  );
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
-  // Verify session — extract authenticated user from JWT
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
+  const userRes = await supabase.auth.getUser(token);
+  if (userRes.error || !userRes.data || !userRes.data.user) {
+    console.error('[strategic-plan] Auth error:', userRes.error && userRes.error.message);
     return res.status(401).json({ error: 'Invalid session' });
   }
-  const userId = user.id;
+  const userId = userRes.data.user.id;
 
   let clContext = null;
   let biInsights = null;
