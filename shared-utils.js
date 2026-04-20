@@ -11,6 +11,35 @@ function escHtml(s) {
 window.escHtml = escHtml;
 
 /**
+ * formatPhoneNumber(value)
+ * Formats an Australian phone number as the user types.
+ * Strips non-digits (except leading +), then applies the appropriate mask.
+ */
+function formatPhoneNumber(value) {
+  if (!value) return '';
+  if (value.charAt(0) === '+') return value;
+  var d = value.replace(/\D/g, '');
+  if (!d) return '';
+  if (/^0[45]/.test(d)) {
+    if (d.length <= 4) return d;
+    if (d.length <= 7) return d.substring(0, 4) + ' ' + d.substring(4);
+    return d.substring(0, 4) + ' ' + d.substring(4, 7) + ' ' + d.substring(7, 10);
+  }
+  if (/^0[2378]/.test(d)) {
+    if (d.length <= 2) return '(' + d;
+    if (d.length <= 6) return '(' + d.substring(0, 2) + ') ' + d.substring(2);
+    return '(' + d.substring(0, 2) + ') ' + d.substring(2, 6) + ' ' + d.substring(6, 10);
+  }
+  if (/^1[38]00/.test(d)) {
+    if (d.length <= 4) return d;
+    if (d.length <= 7) return d.substring(0, 4) + ' ' + d.substring(4);
+    return d.substring(0, 4) + ' ' + d.substring(4, 7) + ' ' + d.substring(7, 10);
+  }
+  return value;
+}
+window.formatPhoneNumber = formatPhoneNumber;
+
+/**
  * handleSave(btn, saveFn, msgEl)
  * Standard Save button behaviour used across all settings and profile pages.
  * btn: the Save button element
