@@ -167,7 +167,7 @@ window.CL_PROFILE = {
     var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Main', number: loc.phone }] : [{ type: 'Main', number: '' }]);
     var typeOpts = ['Main', 'Mobile', 'Secondary Landline', 'Fax', 'After Hours'];
     var phonesHtml = phones.map(function(ph, pi) {
-      var typeSelect = '<select class="profile-select loc-phone-type" style="width:160px;flex-shrink:0;">' +
+      var typeSelect = '<select class="profile-select loc-phone-type loc-phone-type-select">' +
         typeOpts.map(function(t) { return '<option value="' + t + '"' + (ph.type === t ? ' selected' : '') + '>' + t + '</option>'; }).join('') +
       '</select>';
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
@@ -249,7 +249,7 @@ window.CL_PROFILE = {
     var d = document.createElement('div');
     d.className = 'profile-repeating-row';
     d.id = idPfx + '-ph-' + i;
-    d.innerHTML = '<select class="profile-select loc-phone-type" style="width:160px;flex-shrink:0;">' +
+    d.innerHTML = '<select class="profile-select loc-phone-type loc-phone-type-select">' +
       typeOpts.map(function(t) { return '<option value="' + t + '">' + t + '</option>'; }).join('') +
     '</select>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
@@ -287,11 +287,11 @@ window.CL_PROFILE = {
     }).filter(function(ph) { return ph.number; });
     // Read extra locations
     var extraBlocks = document.querySelectorAll('#prof-extra-locs .profile-location-block');
-    var locs = Array.from(extraBlocks).map(function(b, i) {
-      var idPfx = 'loc-' + i;
-      var phones = Array.from(b.querySelectorAll('#' + idPfx + '-phones .profile-repeating-row')).map(function(row) {
+    var locs = Array.from(extraBlocks).map(function(b) {
+      var phonesWrap = b.querySelector('.loc-phones-wrap');
+      var phones = phonesWrap ? Array.from(phonesWrap.querySelectorAll('.profile-repeating-row')).map(function(row) {
         return { type: row.querySelector('.loc-phone-type').value, number: row.querySelector('.loc-phone-number').value.trim() };
-      }).filter(function(ph) { return ph.number; });
+      }).filter(function(ph) { return ph.number; }) : [];
       return {
         name: b.querySelector('.loc-name').value.trim(),
         unit: b.querySelector('.loc-unit').value.trim(),
