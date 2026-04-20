@@ -261,6 +261,7 @@
 .profile-toggle-row { display: flex; gap: 8px; margin-top: 8px; }
 .profile-location-block { background: var(--bg-subtle); border-radius: 8px; border: 1px solid var(--border); padding: 16px; margin-bottom: 12px; }
 .profile-location-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.loc-phone-type-select { width: 160px; flex-shrink: 0; text-align: left; }
 
     @media (max-width: 768px) {
       .connection-tiles { grid-template-columns: 1fr; }
@@ -338,6 +339,13 @@
   <div id="cl-tab-outputs" class="ptab-content"></div>
   <div id="cl-tab-profile" class="ptab-content"></div>
 
+</div>
+
+<div class="save-msg" id="prof-save-msg">
+  <div class="save-msg-card">
+    <div class="save-msg-text"></div>
+    <button type="button" class="save-msg-ok">OK</button>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
