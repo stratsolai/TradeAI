@@ -817,6 +817,7 @@ a:hover { opacity: 0.85; }
 
 /* Lookback dropdown — custom dropdown matching .ea-cat-dropdown visual style. Used by email and drive/folder import lookback controls on settings pages. */
 .lookback-dropdown-wrap { position:relative; display:inline-block; }
+/* min-width: do not set a global min-width here. Each .lookback-dropdown instance must have a min-width set via a scoped CSS class on its container, sized to accommodate the widest option text for that specific dropdown instance. */
 .lookback-dropdown { padding:5px 10px; border:2px solid var(--blue); border-radius:var(--btn-radius); font-size:var(--badge-font-size); font-family:var(--body-font); background:var(--white); color:var(--blue); cursor:pointer; white-space:nowrap; font-weight:var(--font-weight-semibold); }
 .lookback-dropdown:hover { background-color:var(--blue-light); }
 .lookback-dropdown.active { background-color:var(--blue-light); }
