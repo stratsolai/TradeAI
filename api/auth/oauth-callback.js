@@ -127,37 +127,36 @@ module.exports = async (req, res) => {
         console.log('No Instagram account linked:', e.message);
       }
 
-      // Step 5: Save to Supabase
+      // Step 5: Save to social_settings via upsert
       const querystring = require('querystring');
       const updateData = {
+        user_id:            userId,
         meta_connected:     true,
-        meta_user_token:    userToken,
         meta_page_id:       pageId,
         meta_page_name:     pageName,
         meta_page_token:    pageToken,
-        meta_token_expires: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
         ...(instagramId ? { instagram_account_id: instagramId, instagram_username: instagramName } : {})
       };
 
+      const body = JSON.stringify(updateData);
       await new Promise((resolve, reject) => {
-        const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/profiles`);
-        const qs  = querystring.stringify({ id: `eq.${userId}` });
-        const body = JSON.stringify(updateData);
+        const url = new URL(`${process.env.SUPABASE_URL}/rest/v1/social_settings`);
+        const qs  = querystring.stringify({ on_conflict: 'user_id' });
         const options = {
           hostname: url.hostname,
           path: `${url.pathname}?${qs}`,
-          method: 'PATCH',
+          method: 'POST',
           headers: {
             'apikey': process.env.SUPABASE_SERVICE_KEY,
             'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_KEY}`,
             'Content-Type': 'application/json',
             'Content-Length': Buffer.byteLength(body),
-            'Prefer': 'return=minimal'
+            'Prefer': 'resolution=merge-duplicates,return=minimal'
           }
         };
         const supabaseReq = https.request(options, (supabaseRes) => {
           supabaseRes.on('data', () => {});
-          supabaseRes.on('end', () => { console.log('Meta tokens saved'); resolve(); });
+          supabaseRes.on('end', () => { console.log('Meta tokens saved to social_settings'); resolve(); });
         });
         supabaseReq.on('error', reject);
         supabaseReq.write(body);
