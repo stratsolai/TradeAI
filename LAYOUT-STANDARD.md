@@ -29,6 +29,8 @@ This document grows incrementally. Each page review adds new patterns.
 - No hardcoded CSS values — CSS variables only
 - Supabase CDN URL must match the platform standard used across all pages —
   confirm against an existing page before committing
+- Dashboard and Account are scheduled for rebuild and do not yet follow
+  these standards. Do not use them as reference implementations
 
 ---
 
@@ -61,7 +63,7 @@ one-line description.
 Page heading CSS (inline in the settings page file):
 
 ```css
-.page-header { margin-bottom: 32px; }
+.page-header { margin-bottom: 28px; }
 .page-title {
   font-family: var(--heading-font);
   font-size: 28px;
@@ -77,59 +79,40 @@ Page heading CSS (inline in the settings page file):
 
 ### 3a. Tab Bar and Tab Panel Structure
 
-Reference: cl-settings.html
+Reference: cl-settings.html, ea-settings.html, id-settings.html
+
+Settings pages use the same `.tab-nav` / `.ptab` tab system as tool
+pages (Section 7b), with the `.settings-active` class added to the
+`.tab-nav` container to override the active underline colour from
+`var(--orange)` to `var(--blue)`.
 
 ```html
-<div class="stab-bar">
-  <button class="stab active" data-tab="[tab-id]">Tab Label</button>
-  <button class="stab" data-tab="[tab-id]">Tab Label</button>
-  <button class="stab" data-tab="[tab-id]">Tab Label</button>
+<div class="tab-nav settings-active">
+  <button class="ptab active" data-tab="[tab-id]">Tab Label</button>
+  <button class="ptab" data-tab="[tab-id]">Tab Label</button>
+  <button class="ptab" data-tab="[tab-id]">Tab Label</button>
 </div>
 
-<div class="stab-panel active" id="tab-[tab-id]">
+<div class="ptab-content active" id="tab-[tab-id]">
   ...
 </div>
-<div class="stab-panel" id="tab-[tab-id]">
+<div class="ptab-content" id="tab-[tab-id]">
   ...
 </div>
-<div class="stab-panel" id="tab-[tab-id]">
+<div class="ptab-content" id="tab-[tab-id]">
   ...
 </div>
 ```
 
-Tab CSS (inline in the settings page file):
+Tab CSS is defined in staxai-auth.css (see Section 7b for the full
+`.tab-nav` / `.ptab` / `.ptab-content` rules). The `.settings-active`
+class provides the blue underline override:
 
 ```css
-.stab-bar {
-  display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--border);
-  margin-bottom: 28px;
-}
-.stab {
-  padding: 13px 24px;
-  font-family: var(--body-font);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-muted);
-  cursor: pointer;
-  border: none;
-  background: none;
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: color 0.15s, border-color 0.15s;
-}
-.stab:hover { color: var(--text); }
-.stab.active {
-  color: var(--blue);
-  border-bottom-color: var(--blue);
-  font-weight: 600;
-}
-.stab-panel { display: none; }
-.stab-panel.active { display: block; width: 100%; box-sizing: border-box; }
+.tab-nav.settings-active .ptab.active { border-bottom-color: var(--blue); }
 ```
 
-Tab switching is wired in the logic file via addEventListener on .stab
+Tab switching is wired in the logic file via addEventListener on `.ptab`
 buttons — never inline onclick.
 
 ### 3b. Settings Card
@@ -416,7 +399,7 @@ Save button required on this section.
 
 ## 6. On/Off Toggle Section Pattern
 
-Reference: cl-settings.html commit f7f72e2 (Categories tab, before removal).
+Reference: ea-settings.html Categories tab.
 
 Used on any settings page where a list of items can be individually enabled
 or disabled. The same .freq-btn pattern from Section 5 is reused for On/Off
@@ -425,7 +408,7 @@ buttons.
 ### 6a. Tab Panel Structure
 
 ```html
-<div class="stab-panel" id="tab-[section]">
+<div class="ptab-content" id="tab-[section]">
   <div class="settings-card" id="[section]-card">
     <div class="settings-card-header">
       <div class="settings-card-title">Section Title</div>
@@ -609,6 +592,10 @@ document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
   });
 });
 ```
+
+When tab content depends on user data (like connected accounts or dynamic
+categories), tabs may be built dynamically in JavaScript rather than
+static HTML. See Email Assistant for reference implementation.
 
 ### 7c. Filter Pill Row (Source Material Review)
 
@@ -1355,3 +1342,4 @@ error state or loading spinner on the stats bar.
 | v1.2 — April 2026 | Section 7e–7h added — filter state persistence, checkbox bulk selection, bulk action bar, and Mark All behaviour from cl-review.js. |
 | v1.3 — April 2026 | Section 7i added — stats bar pattern from content-library.html, staxai-auth.css, cl-logic.js, and cl-review.js. |
 | v1.4 — April 2026 | Section 1 — added shared-utils.js rule. escHtml must never be duplicated; all pages load shared-utils.js. |
+| v1.5 — April 2026 | Structural analysis update. Section 3a — changed from .stab-bar/.stab to .tab-nav/.ptab to match actual settings pages. Section 3.0 — fixed page-header margin to 28px. Section 6 — updated reference from removed CL Settings tab to EA Settings Categories tab. Section 7b — added dynamic tab variant note. Section 1 — added Dashboard/Account rebuild exclusion note. |
