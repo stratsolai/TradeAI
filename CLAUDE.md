@@ -18,6 +18,7 @@ Avoid pure technical jargon when reporting back — explain in plain language.
 Push to GitHub immediately after every commit — never leave commits unpushed at the end of a session.
 
 **For Claude Chat:**
+NEVER MAKE ASSUMPTIONS OR GUESS AND THEN PRESENT THAT INFORMATION AS FACT.
 Never tell Code how to do his job technically — only what to do and why.
 Use Australian English throughout — colour, organisation, recognised, etc.
 Never make decisions for the owner — always ask for confirmation.
