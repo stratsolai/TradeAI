@@ -142,7 +142,7 @@ window.ND_LOGIC = {
     try {
       var res = await this._supabase
         .from('news_digest_settings')
-        .select('last_refreshed')
+        .select('summary_generated_at')
         .eq('user_id', this._userId)
         .maybeSingle();
       if (res.error) {
@@ -150,7 +150,7 @@ window.ND_LOGIC = {
         this._lastRefreshed = null;
         return;
       }
-      this._lastRefreshed = (res.data && res.data.last_refreshed) ? new Date(res.data.last_refreshed) : null;
+      this._lastRefreshed = (res.data && res.data.summary_generated_at) ? new Date(res.data.summary_generated_at) : null;
     } catch (e) {
       console.error('[ND] Load settings exception:', e.message);
       this._lastRefreshed = null;
