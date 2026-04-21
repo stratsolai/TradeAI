@@ -89,12 +89,17 @@ async function serperNewsSearch(query) {
     var data = await response.json();
     var results = Array.isArray(data.news) ? data.news : [];
     return results.map(function(r) {
+      var pubDate = new Date().toISOString();
+      if (r.date) {
+        var parsed = new Date(r.date);
+        if (!isNaN(parsed.getTime())) pubDate = parsed.toISOString();
+      }
       return {
         title: r.title || '',
         snippet: r.snippet || '',
         link: r.link || '',
         source_name: r.source || '',
-        published_at: r.date ? new Date(r.date).toISOString() : new Date().toISOString(),
+        published_at: pubDate,
         source_origin: 'web'
       };
     });
