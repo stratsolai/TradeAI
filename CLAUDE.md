@@ -213,6 +213,9 @@ taxonomy review.
   /login so the first redirect wins.
 - NSW eTendering API is publicly accessible with no API
   key — rate-limited by IP. No environment variable required.
+- Serper.dev usage monitoring — review credit consumption
+  regularly via serper.dev dashboard. Usage tracking to be
+  added to admin page when built.
 
 ---
 
@@ -304,4 +307,4 @@ StaxAI is an AI-powered SaaS platform for Australian SME businesses. It gives bu
 | AI Graphics | Ideogram API                                             |
 | Payments    | Stripe — LIVE MODE for testing. Real money handling.     |
 | Social      | Meta Graph API v19.0                                     |
-| News        | SerpAPI — 100 free searches/month                        |
+| News        | Serper.dev — API for news search functionality            |
