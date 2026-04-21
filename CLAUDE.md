@@ -15,6 +15,7 @@ Every new Supabase table requires RLS enabled before launch — no exceptions.
 No new feature, tool page, or schema change may be built without an approved spec document in Project Knowledge.
 Only change what you were asked to change. Do not refactor, restructure, or tidy code you were not explicitly asked to touch.
 Avoid pure technical jargon when reporting back — explain in plain language.
+Push to GitHub immediately after every commit — never leave commits unpushed at the end of a session.
 
 **For Claude Chat:**
 Never tell Code how to do his job technically — only what to do and why.
