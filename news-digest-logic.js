@@ -7,11 +7,11 @@ window.ND_LOGIC = {
   _lastRefreshed: null,
 
   CATEGORIES: [
-    { id: 'regulatory', label: 'Regulatory & Compliance', colour: 'nd-tile-orange' },
-    { id: 'industry-news', label: 'Industry News', colour: '' },
-    { id: 'suppliers', label: 'Supplier & Materials', colour: 'nd-tile-purple' },
-    { id: 'economic', label: 'Economic & Market', colour: 'nd-tile-teal' },
-    { id: 'technology', label: 'Technology & Innovation', colour: 'nd-tile-green' }
+    { id: 'regulatory', label: 'Compliance' },
+    { id: 'industry-news', label: 'Industry' },
+    { id: 'suppliers', label: 'Suppliers' },
+    { id: 'economic', label: 'Economy' },
+    { id: 'technology', label: 'Technology' }
   ],
 
   init: async function(supabase, user) {
@@ -201,7 +201,7 @@ window.ND_LOGIC = {
     });
 
     var gtBriefing = self._getBriefing('grants-tenders');
-    var gtCat = { id: 'grants-tenders', label: 'Grants & Tenders', colour: '' };
+    var gtCat = { id: 'grants-tenders', label: 'Tenders' };
     if (gtBriefing && gtBriefing.headline) {
       html += self._renderSummaryTile(gtCat, gtBriefing);
     } else if (hasTenders) {
@@ -228,7 +228,7 @@ window.ND_LOGIC = {
 
   _renderSummaryTile: function(cat, briefing) {
     var hasBriefing = briefing && briefing.headline;
-    var tileClass = 'nd-tile' + (cat.colour ? ' ' + cat.colour : '') + (!hasBriefing ? ' nd-tile-empty' : '');
+    var tileClass = 'nd-tile' + (!hasBriefing ? ' nd-tile-empty' : '');
     var html = '<div class="' + tileClass + '">'
       + '<div class="nd-tile-label">' + escHtml(cat.label) + '</div>';
 
@@ -279,27 +279,37 @@ window.ND_LOGIC = {
     if (empty) empty.hidden = true;
 
     var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
-    var html = '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>';
+    var html = '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>'
+      + '<div class="nd-tile-grid">';
 
     for (var i = 0; i < bullets.length; i++) {
       var bullet = bullets[i];
       var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
+      var bulletId = categoryId + '-bullet-' + i;
 
-      html += '<div class="nd-bullet-card">'
+      html += '<div class="nd-tile">'
         + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
-        + '<div class="nd-source-list">' + this._renderSourceLinks(sources) + '</div>'
+        + '<div class="nd-tile-footer">'
+        + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
+        + '</div>'
+        + '<div class="nd-source-panel" id="' + bulletId + '" hidden>'
+        + this._renderSources(sources)
+        + '</div>'
         + '</div>';
     }
 
+    html += '</div>';
     content.innerHTML = html;
+    this._bindSourceToggles(content);
   },
 
-  _renderSourceLinks: function(sources) {
-    if (!sources.length) return '';
+  _renderSources: function(sources) {
+    if (!sources.length) return '<div class="nd-source-plain">No sources available.</div>';
     var html = '';
     for (var i = 0; i < sources.length; i++) {
       var src = sources[i];
-      var label = escHtml(src.domain || src.name || 'Source');
+      var name = escHtml(src.name || 'Unknown source');
+      var domain = escHtml(src.domain || '');
       var url = src.url || '';
       var type = src.type || 'secondary';
       var badgeClass = type === 'primary' ? 'badge-green'
@@ -307,18 +317,35 @@ window.ND_LOGIC = {
         : 'badge-grey';
       var badgeLabel = type === 'primary' ? 'Primary'
         : type === 'email' ? 'Email'
-        : '';
+        : 'Secondary';
 
+      html += '<div class="nd-source-row">';
       if (url) {
-        html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="nd-source-link">' + label + '</a>';
+        html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="nd-source-link">' + name + '</a>';
       } else {
-        html += '<span class="nd-source-plain">' + label + '</span>';
+        html += '<span>' + name + '</span>';
       }
-      if (badgeLabel) {
-        html += '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>';
+      if (domain) {
+        html += ' <span class="nd-source-plain">' + domain + '</span>';
       }
+      html += ' <span class="badge ' + badgeClass + '">' + badgeLabel + '</span>';
+      html += '</div>';
     }
     return html;
+  },
+
+  _bindSourceToggles: function(container) {
+    container.querySelectorAll('.nd-toggle-sources').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = document.getElementById(btn.dataset.target);
+        if (!target) return;
+        var isOpen = !target.hidden;
+        target.hidden = isOpen;
+        btn.classList.toggle('open', !isOpen);
+        var count = target.querySelectorAll('.nd-source-row').length;
+        btn.innerHTML = (!isOpen ? '&#9660;' : '&#9654;') + ' Sources (' + count + ')';
+      });
+    });
   },
 
   // ── GRANTS & TENDERS TAB ─────────────────────────────────────────────
@@ -343,17 +370,26 @@ window.ND_LOGIC = {
 
     if (hasBriefing) {
       var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
-      html += '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>';
+      html += '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>'
+        + '<div class="nd-tile-grid">';
 
       for (var i = 0; i < bullets.length; i++) {
         var bullet = bullets[i];
         var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
+        var bulletId = 'gt-bullet-' + i;
 
-        html += '<div class="nd-bullet-card">'
+        html += '<div class="nd-tile">'
           + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
-          + '<div class="nd-source-list">' + this._renderSourceLinks(sources) + '</div>'
+          + '<div class="nd-tile-footer">'
+          + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
+          + '</div>'
+          + '<div class="nd-source-panel" id="' + bulletId + '" hidden>'
+          + this._renderSources(sources)
+          + '</div>'
           + '</div>';
       }
+
+      html += '</div>';
     }
 
     html += '<div class="section-label">Active Government Tenders</div>';
@@ -369,6 +405,7 @@ window.ND_LOGIC = {
     html += '<p class="page-subtitle">Additional state and territory tender sources coming soon.</p>';
 
     content.innerHTML = html;
+    this._bindSourceToggles(content);
   },
 
   _renderTenderCard: function(tender) {
