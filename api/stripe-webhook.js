@@ -94,7 +94,8 @@ async function confirmSubscription(session) {
     var updatePayload = {
       is_trial: false,
       trial_expires_at: null,
-      bundle_tier: tier
+      bundle_tier: tier,
+      stripe_customer_id: session.customer || null
     };
     var res = await fetch(
       process.env.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId,
