@@ -240,13 +240,13 @@ module.exports = async (req, res) => {
   try {
 
     // ── 1. Check monthly usage cap ────────────────────────────────────────
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('graphics_cap, graphics_plan')
-      .eq('id', userId)
-      .single();
+    const { data: graphicsSettings } = await supabase
+      .from('graphics_settings')
+      .select('graphics_cap')
+      .eq('user_id', userId)
+      .maybeSingle();
 
-    const cap = profile?.graphics_cap ?? 20;
+    const cap = graphicsSettings?.graphics_cap ?? 20;
 
     // Count graphics generated this calendar month
     const monthStart = new Date();
