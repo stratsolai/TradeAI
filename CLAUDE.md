@@ -130,6 +130,91 @@ taxonomy review.
 
 ---
 
+## Known Issues & Notes
+
+- Google OAuth consent screen in Testing mode — currently only
+  designated test users can connect Gmail accounts. Must be
+  published to In production before real users can connect.
+  May trigger Google's verification process for the
+  gmail.readonly scope. Must be resolved before launch.
+- staxai-auth.css loads after the inline </style> block in
+  content-library.html — stylesheet always wins the cascade
+  for any class defined in both. Known issue to resolve
+  during stylesheet rollout.
+- OAuth consolidation — api/cl-oauth-initiate.js and the
+  three standalone callback files should be consolidated
+  into api/auth/initiate.js and api/auth/oauth-callback.js
+  in a dedicated session. Redirect URIs in Azure and Dropbox
+  will need updating at that time.
+- Extraction prompt duplicated across onedrive-import.js,
+  sharepoint-import.js, dropbox-import.js, cl-email-scan.js,
+  cl-outlook-scan.js, process-file.js. Consolidate into a
+  shared module during stylesheet rollout cleanup pass.
+- Pagination fixed at 200 items for OneDrive/SharePoint
+  folder listings and SharePoint sites. Add pagination
+  support if needed.
+- Email body stored as .txt in cl-assets. Website content
+  stored as .html in cl-assets. Tools must retrieve
+  original content from cl-assets via
+  cl_source_items.file_url — not from
+  content_library.content_text which contains the AI
+  summary only.
+- dashboard.html install banner: the PWA install prompt
+  banner was added to dashboard.html during the PWA build
+  (April 2026). The banner markup and logic must be
+  properly reviewed and integrated during the Dashboard
+  rebuild — it should not be treated as final.
+- Mobile vs desktop page split agreed April 2026. The
+  following pages are confirmed mobile-capable (full access
+  in PWA): dashboard.html, account.html, login.html,
+  forgot-password.html, reset-password.html, social.html,
+  email-assistant.html, news-digest.html,
+  customer-updates.html (when built), design-viz.html
+  (when built). All other authenticated pages are
+  desktop-only and will show the Task 17 message on
+  mobile. When new tool pages are built, confirm mobile or
+  desktop designation before build begins.
+- Existing image rows in content_library uploaded before
+  April 2026 have content_type null — thumbnail detection
+  falls back to source_detail.file_type for these rows. New
+  image rows have content_type: 'image' set correctly going
+  forward.
+- Folder scan connectors processed images as stub rows before
+  the Task 12 build — pre-existing stub rows in
+  cl_source_items will block reprocessing via dedup. Clear
+  these rows before rescanning folders that contain images
+  previously scanned as stubs.
+- Xero OAuth scopes for new apps (created after 2 March
+  2026) must use the new granular scope names. Correct
+  scope string confirmed from official documentation:
+  openid profile email accounting.invoices.read
+  accounting.contacts.read accounting.settings.read
+  accounting.reports.profitandloss.read
+  accounting.reports.balancesheet.read projects.read
+  offline_access
+- ServiceM8 OAuth scopes — correct scope string confirmed:
+  read_jobs read_customers read_staff read_job_materials
+  read_job_contacts read_forms
+- upgradeSharepointEntry function exists in two places —
+  upgrade-sharepoint.js (canonical, browser) and
+  api/sharepoint-import.js (API copy, intentional — Vercel
+  esbuild cannot resolve CJS modules from ES module API
+  files at build time). Not a bug.
+- This platform is not live. There is only one user and
+  all data is test data. Decisions about database changes
+  do not require data-loss analysis.
+- Global session expiry handler added to shared-utils.js
+  April 2026. Uses onAuthStateChange to listen for the
+  SIGNED_OUT event and redirects to /login. Covers all
+  authenticated pages automatically because shared-utils.js
+  is loaded on every authenticated page. Safe alongside the
+  existing sign-out redirect in topbar.js — both target
+  /login so the first redirect wins.
+- NSW eTendering API is publicly accessible with no API
+  key — rate-limited by IP. No environment variable required.
+
+---
+
 ## Development Rules
 
 ### Code Standards
