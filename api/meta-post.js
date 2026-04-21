@@ -74,17 +74,25 @@ function claudeRequest(apiKey, system, userMsg, maxTokens = 800) {
 // ─── GET USER META PROFILE ────────────────────────────────────────────────────
 
 async function getUserMeta(userId, supabase) {
-  const { data, error } = await supabase
+  const { data: social, error: socialError } = await supabase
+    .from('social_settings')
+    .select('meta_connected, meta_page_id, meta_page_name, meta_page_token, instagram_account_id, instagram_username')
+    .eq('user_id', userId)
+    .maybeSingle();
+
+  if (socialError) throw new Error('Could not load social settings');
+  if (!social || !social.meta_connected) throw new Error('Meta account not connected. Please connect in Social Settings.');
+  if (!social.meta_page_token) throw new Error('Facebook Page token missing. Please reconnect in Social Settings.');
+
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('meta_page_id, meta_page_name, meta_page_token, instagram_account_id, instagram_username, business_name, industry, meta_connected')
+    .select('business_name, industry')
     .eq('id', userId)
     .single();
 
-  if (error || !data) throw new Error('User profile not found');
-  if (!data.meta_connected) throw new Error('Meta account not connected. Please connect in Social Settings.');
-  if (!data.meta_page_token) throw new Error('Facebook Page token missing. Please reconnect in Social Settings.');
+  if (profileError || !profile) throw new Error('User profile not found');
 
-  return data;
+  return { ...social, ...profile };
 }
 
 // ─── ACTION: POST ─────────────────────────────────────────────────────────────
