@@ -64,8 +64,6 @@ export default async function handler(req, res) {
     if (Array.isArray(payload.categories)) upsertData.categories = payload.categories;
     if (payload.cadence === "daily" || payload.cadence === "weekly") upsertData.cadence = payload.cadence;
     if (Array.isArray(payload.source_preferences)) upsertData.source_preferences = payload.source_preferences;
-    if (typeof payload.industry_override === "string" || payload.industry_override === null) upsertData.industry_override = payload.industry_override;
-    if (typeof payload.location_override === "string" || payload.location_override === null) upsertData.location_override = payload.location_override;
 
     const { data, error } = await supabase
       .from("news_digest_settings")
