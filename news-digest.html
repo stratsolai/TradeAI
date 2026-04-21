@@ -41,10 +41,6 @@
       transition: box-shadow var(--btn-transition);
     }
     .nd-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
-    .nd-tile.nd-tile-orange { border-left-color: var(--orange); }
-    .nd-tile.nd-tile-purple { border-left-color: var(--purple); }
-    .nd-tile.nd-tile-teal { border-left-color: var(--teal); }
-    .nd-tile.nd-tile-green { border-left-color: var(--green); }
     .nd-tile.nd-tile-empty { border-left-color: var(--border); opacity: 0.65; }
     .nd-tile-label {
       font-family: var(--body-font);
@@ -112,28 +108,26 @@
       line-height: var(--body-line-height);
       margin-bottom: 20px;
     }
-    .nd-bullet-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      padding: 16px 20px;
-      margin-bottom: 12px;
-    }
     .nd-bullet-text {
       font-size: var(--body-font-size);
       color: var(--text);
       line-height: var(--body-line-height);
-      margin-bottom: 10px;
+      flex: 1;
     }
-    .nd-source-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px 12px;
+    .nd-source-panel {
+      padding-top: 12px;
+      margin-top: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+    .nd-source-row {
+      padding: 4px 0;
+      font-size: var(--note-font-size);
+      line-height: var(--note-line-height);
     }
     .nd-source-link {
-      font-size: var(--badge-font-size);
       color: var(--blue);
       text-decoration: none;
+      font-weight: var(--font-weight-semibold);
     }
     .nd-source-link:hover { text-decoration: underline; }
     .nd-source-plain {
