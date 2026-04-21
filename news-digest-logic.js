@@ -2,7 +2,6 @@ window.ND_LOGIC = {
 
   _supabase: null,
   _userId: null,
-  _token: null,
   _briefings: [],
   _tenders: [],
   _lastRefreshed: null,
@@ -22,12 +21,6 @@ window.ND_LOGIC = {
     }
     this._supabase = supabase;
     this._userId = user.id;
-    try {
-      var sessionRes = await supabase.auth.getSession();
-      this._token = (sessionRes.data && sessionRes.data.session) ? sessionRes.data.session.access_token : null;
-    } catch (e) {
-      console.error('[ND] Session fetch error:', e.message);
-    }
     this._bindTabs();
     this._bindRefresh();
     await this._loadData();
@@ -70,11 +63,16 @@ window.ND_LOGIC = {
     var tsEl = document.getElementById('nd-last-refreshed');
     if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
     try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session || !session.access_token) {
+        throw new Error('Your session has expired. Please sign out and sign back in.');
+      }
       var res = await fetch('/api/news-digest-refresh', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + this._token
+          'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({})
       });
@@ -85,7 +83,7 @@ window.ND_LOGIC = {
       await this._loadData();
     } catch (e) {
       console.error('[ND] Refresh error:', e.message);
-      if (tsEl) tsEl.textContent = 'Refresh failed. Please try again.';
+      if (tsEl) tsEl.textContent = e.message;
     }
     if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
   },
