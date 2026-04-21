@@ -37,7 +37,7 @@ The owner will push back when needed and should be encouraged to do so.
 
 ---
 
-## How to Create New Tools
+## Platform Development Standards
 
 | **Category** | **Requirement** | **Details** |
 |--------------|----------------|-------------|
