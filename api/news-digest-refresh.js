@@ -574,11 +574,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // Update last_refreshed on news_digest_settings
     var updateRes = await supabase
       .from('news_digest_settings')
       .update({
-        last_refreshed: now,
+        summary_generated_at: now,
         updated_at: now
       })
       .eq('user_id', userId);
