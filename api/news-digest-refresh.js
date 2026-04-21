@@ -438,7 +438,7 @@ export default async function handler(req, res) {
     // Industry & location — profiles table only, never body or settings overrides
     var profileRes = await supabase
       .from('profiles')
-      .select('industry, location')
+      .select('industry, address_state, address_suburb')
       .eq('id', userId)
       .single();
     if (profileRes.error) {
@@ -446,7 +446,9 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: 'Could not load profile' });
     }
     var industry = (profileRes.data && profileRes.data.industry) || 'general business';
-    var location = (profileRes.data && profileRes.data.location) || 'Australia';
+    var suburb = (profileRes.data && profileRes.data.address_suburb) || '';
+    var state = (profileRes.data && profileRes.data.address_state) || '';
+    var location = [suburb, state].filter(Boolean).join(' ') || 'Australia';
 
     // Preferred sources from settings — only field read from settings
     var preferredSources = [];
