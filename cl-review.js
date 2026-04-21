@@ -593,7 +593,7 @@ window.CL_REVIEW = {
       el.addEventListener('keydown', function(e) { if (e.key === 'Enter') { e.preventDefault(); el.blur(); } });
     });
     listEl.querySelectorAll('.review-body-text[contenteditable]').forEach(function(el) {
-      el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'body', el.innerText.trim()); });
+      el.addEventListener('blur', function() { self._saveField(el.dataset.id, 'content_text', el.innerText.trim()); });
     });
     listEl.querySelectorAll('.tool-pill[data-tool-id]').forEach(function(pill) {
       pill.addEventListener('click', function() { self._toggleToolTag(pill.dataset.itemId, pill.dataset.toolId, pill); });
