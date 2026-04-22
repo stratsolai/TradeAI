@@ -114,81 +114,33 @@ async function runSerperSearches(industry, location, preferredSources) {
   var stateFull = state ? AUSTRALIAN_STATES[state] : null;
   var queries = [];
 
-  // ── Regulatory & Compliance — 5 searches ──
+  // 1. Regulatory & compliance — broad federal + state
+  queries.push('Australia regulatory compliance business updates');
 
-  // Federal regulators
-  queries.push('site:ato.gov.au OR site:asic.gov.au OR site:fairwork.gov.au OR site:austrac.gov.au regulatory compliance updates');
+  // 2. Industry news — user's industry
+  queries.push(industry + ' industry news Australia');
 
-  // State government regulatory
-  if (state) {
-    queries.push('site:' + state.toLowerCase() + '.gov.au regulatory business compliance requirements');
-  } else {
-    queries.push('Australian state government regulatory business compliance requirements');
-  }
+  // 3. Supply chain & materials costs
+  queries.push('Australia supply chain materials costs');
 
-  // Industry-specific regulatory bodies
-  queries.push(industry + ' regulatory compliance licensing standards Australia');
+  // 4. Economic conditions
+  queries.push('Australia economic conditions business');
 
-  // Business councils and chambers
-  queries.push('site:bca.com.au OR site:acci.com.au OR site:businessnsw.com regulatory compliance business news Australia');
+  // 5. Technology & innovation — user's industry
+  queries.push(industry + ' technology innovation Australia');
 
-  // Local government
-  if (state) {
-    queries.push('local government business regulatory compliance ' + stateFull);
-  }
+  // 6. Grants, funding, and business opportunities
+  queries.push('Australia grants funding business opportunities');
 
-  // ── Industry News — 4 searches ──
-
-  // Industry associations
-  queries.push(industry + ' association Australia news updates');
-
-  // Industry publications and trends
-  queries.push(industry + ' industry news Australia trends developments');
-
-  // Professional bodies
-  queries.push(industry + ' professional body peak body Australia updates');
-
-  // Broad industry catch-all
-  queries.push(industry + ' Australia news');
-
-  // ── Supplier & Materials — 2 searches ──
-
-  // Industry-specific supply chain
-  queries.push(industry + ' supply chain materials pricing shortage Australia');
-
-  // General business costs and supply
-  queries.push('Australia business supply chain energy costs freight inflation');
-
-  // ── Economic & Market — 4 searches ──
-
-  // RBA and Treasury
-  queries.push('site:rba.gov.au OR site:treasury.gov.au economic conditions outlook Australia');
-
-  // ABS economic indicators
-  queries.push('site:abs.gov.au economic indicators business conditions Australia');
-
-  // State economic conditions
+  // 7. State-specific economic and regulatory (if state known)
   if (stateFull) {
-    queries.push(stateFull + ' economic development business conditions');
-  } else {
-    queries.push('Australian state economic development business conditions');
+    queries.push(stateFull + ' business regulatory economic updates');
   }
 
-  // Regional economic — only if suburb is set (indicates a metro area)
-  var suburb = String(location).replace(new RegExp('\\s*' + (state || '') + '\\s*', 'i'), '').trim();
-  if (suburb && suburb !== 'Australia') {
-    queries.push(suburb + ' ' + (state || '') + ' business economic conditions');
-  }
+  // 8. Industry-specific regulatory
+  queries.push(industry + ' regulatory compliance Australia');
 
-  // ── Technology & Innovation — 2 searches ──
-
-  // Industry-specific technology
-  queries.push(industry + ' technology innovation digital transformation Australia');
-
-  // General business technology
-  queries.push('AI automation business technology SME Australia');
-
-  // ── Preferred sources — one query per saved domain ──
+  // Preferred sources — one query per saved domain
   var sources = normaliseSources(preferredSources);
   for (var s = 0; s < sources.length; s++) {
     queries.push('site:' + sources[s] + ' ' + industry + ' Australia');
@@ -365,25 +317,37 @@ async function getContentLibraryItems(userId, supabase) {
 // ---------------------------------------------------------------------------
 
 var BRIEFING_SYSTEM_PROMPT =
-  'You are a business intelligence briefing writer for an Australian SME platform. ' +
-  'You receive raw news items. Your job is to categorise each item into one of five categories, ' +
-  'then synthesise the items in each category into a concise executive briefing.\n\n' +
+  'You are a strategic business intelligence analyst for an Australian SME platform. ' +
+  'You receive raw news items and the user\'s industry. Your job is to categorise items into five categories, ' +
+  'then synthesise them into actionable intelligence that identifies BOTH risks and opportunities.\n\n' +
+  'CRITICAL: Every bullet must present a balanced perspective — what the development means as a challenge ' +
+  'AND what opportunity it creates. Use the pattern: "[What is happening] — this means [risk/challenge], ' +
+  'but also [opportunity/advantage]." Help the business owner see strategic possibilities, not just threats.\n\n' +
   'For each category that has relevant items, produce:\n' +
-  '- headline: one sentence capturing the single most important insight\n' +
-  '- bullets: 3-5 synthesised bullet points that draw from MULTIPLE sources each — ' +
-  'do NOT summarise one article per bullet, instead combine related information across sources\n' +
+  '- headline: one sentence capturing the most strategically important insight for this industry\n' +
+  '- bullets: 3-5 synthesised insights that draw from MULTIPLE sources each — ' +
+  'do NOT summarise one article per bullet, instead combine related information across sources ' +
+  'into strategic intelligence with actionable implications\n' +
   '- Each bullet has a sources array listing the articles it draws from\n\n' +
-  'CATEGORIES:\n' +
-  '- regulatory: Regulatory & Compliance — laws, regulations, licensing, compliance obligations, enforcement. ' +
-  'Includes industry-specific rules and industry-agnostic bodies (ATO, ASIC, Fair Work Commission, state regulators).\n' +
-  '- industry-news: Industry News — industry developments, trends, events, body announcements. ' +
-  'Also includes broad SME advocacy bodies (BCA, Business NSW, state chambers).\n' +
-  '- suppliers: Supplier & Materials — supply chain news, pricing, shortages, logistics. ' +
-  'Also includes broader Australian supply chain factors (fuel, freight, commodities).\n' +
-  '- economic: Economic & Market Conditions — business conditions at local/regional, state, and national/global levels. ' +
-  'Interest rates, inflation, construction activity, consumer confidence, labour market.\n' +
-  '- technology: Technology & Innovation — new tools, technologies, equipment, AI applications, ' +
-  'digital transformation for Australian SMEs.\n\n' +
+  'CATEGORY ANALYSIS GUIDELINES:\n\n' +
+  '- regulatory: Regulatory & Compliance — Analyse for compliance obligations AND business opportunities. ' +
+  'Example: "New digital asset framework creates compliance requirements but opens new revenue streams" or ' +
+  '"Payday Super requires payroll changes but improves employee satisfaction and retention." ' +
+  'Cover federal (ATO, ASIC, Fair Work, AUSTRAC), state, and industry-specific regulations.\n\n' +
+  '- industry-news: Industry News — Identify both challenges AND growth opportunities. ' +
+  'Example: "Workforce shortage creates project risks but increases demand for automation and training services" or ' +
+  '"Industry consolidation creates competitive pressure but opportunities for niche specialisation." ' +
+  'Cover industry developments, trends, association announcements, and market shifts.\n\n' +
+  '- suppliers: Supplier & Materials — Extract cost pressures AND strategic advantages. ' +
+  'Example: "Steel prices rising due to supply constraints but creates opportunities for alternative materials ' +
+  'and local sourcing partnerships." Cover supply chain, materials pricing, logistics, energy, and freight.\n\n' +
+  '- economic: Economic & Market Conditions — Analyse conditions for both challenges AND opportunities. ' +
+  'Example: "Rising interest rates increase borrowing costs but create opportunities for cash-rich businesses ' +
+  'to acquire assets at lower valuations." Cover interest rates, inflation, labour market, business confidence, ' +
+  'and conditions at national and state levels.\n\n' +
+  '- technology: Technology & Innovation — Identify opportunities AND implementation considerations. ' +
+  'Example: "AI adoption requires workforce training investment but enables competitive advantages and ' +
+  'operational efficiencies." Cover new tools, AI applications, digital transformation, and equipment.\n\n' +
   'SOURCE TYPES for each source reference (pick exactly one):\n' +
   '- primary: government body, regulator, or peak industry association\n' +
   '- secondary: trade press or general media\n' +
@@ -393,10 +357,10 @@ var BRIEFING_SYSTEM_PROMPT =
   '  "categories": [\n' +
   '    {\n' +
   '      "category": "regulatory",\n' +
-  '      "headline": "One-sentence headline insight",\n' +
+  '      "headline": "One-sentence strategic headline",\n' +
   '      "bullets": [\n' +
   '        {\n' +
-  '          "text": "Synthesised bullet point drawing from multiple sources",\n' +
+  '          "text": "Balanced insight with both risk and opportunity, explaining what this means for your business",\n' +
   '          "sources": [\n' +
   '            { "name": "Source Name", "domain": "example.com", "url": "https://...", "type": "primary" }\n' +
   '          ]\n' +
@@ -408,13 +372,14 @@ var BRIEFING_SYSTEM_PROMPT =
   'RULES:\n' +
   '1. category must be exactly one of: regulatory, industry-news, suppliers, economic, technology.\n' +
   '2. Produce 3-5 bullets per category. Synthesise across sources — do not summarise one article per bullet.\n' +
-  '3. Prioritise the most recent and most impactful information.\n' +
+  '3. Every bullet must identify what it means for the business — both the risk to manage and the opportunity to pursue.\n' +
   '4. Write in plain Australian English. No exclamation marks, no hyperbole.\n' +
   '5. If a category has no relevant items, omit it from the array entirely.\n' +
   '6. Do not include tender or ATM items — they are handled separately.\n' +
-  '7. Return ONLY the JSON object. No other text.';
+  '7. Tailor analysis to the user\'s industry — generic insights are not useful.\n' +
+  '8. Return ONLY the JSON object. No other text.';
 
-async function buildBriefing(items) {
+async function buildBriefing(items, industry) {
   if (!items.length) return [];
   if (!ANTHROPIC_API_KEY) {
     console.error('[news-digest] ANTHROPIC_API_KEY not configured — skipping briefing');
@@ -431,6 +396,8 @@ async function buildBriefing(items) {
         origin: it.source_origin || null
       };
     });
+    var userMessage = 'The user\'s industry is: ' + (industry || 'general business') + '\n\n' +
+      'Raw news items to synthesise into a strategic briefing:\n' + JSON.stringify(compacted);
     var response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -442,7 +409,7 @@ async function buildBriefing(items) {
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 8000,
         system: BRIEFING_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: 'Raw news items to synthesise into a briefing:\n' + JSON.stringify(compacted) }]
+        messages: [{ role: 'user', content: userMessage }]
       })
     });
     if (!response.ok) {
@@ -581,7 +548,7 @@ export default async function handler(req, res) {
     var newsItems = deduped.filter(function(item) { return item.source_origin !== 'tender'; });
 
     // Build briefing from non-tender items via Claude
-    var briefingCategories = await buildBriefing(newsItems);
+    var briefingCategories = await buildBriefing(newsItems, industry);
     console.log('[news-digest] Briefing categories returned:', briefingCategories.length);
 
     // Upsert each category briefing to news_digest_briefings
