@@ -237,7 +237,7 @@ window.ND_LOGIC = {
       return html;
     }
 
-    html += '<div class="nd-tile-headline">' + escHtml(briefing.headline) + '</div>';
+    html += '<div class="nd-tile-headline">' + escHtml(this._shortHeadline(briefing.headline, 8)) + '</div>';
 
     var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
     if (bullets.length > 0) {
@@ -286,11 +286,16 @@ window.ND_LOGIC = {
       var bullet = bullets[i];
       var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
       var bulletId = categoryId + '-bullet-' + i;
-      var heading = this._deriveTileHeading(bullet.text || '');
+      var heading = this._shortHeadline(bullet.text || '', 10);
+      var points = this._splitBullets(bullet.text || '');
 
       html += '<div class="nd-tile">'
-        + '<div class="nd-tile-label">' + escHtml(heading) + '</div>'
-        + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
+        + '<div class="nd-tile-heading">' + escHtml(heading) + '</div>'
+        + '<ul class="nd-tile-bullet-list">';
+      for (var p = 0; p < points.length; p++) {
+        html += '<li>' + escHtml(points[p]) + '</li>';
+      }
+      html += '</ul>'
         + '<div class="nd-tile-footer">'
         + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
         + '</div>'
@@ -310,9 +315,10 @@ window.ND_LOGIC = {
     var html = '';
     for (var i = 0; i < sources.length; i++) {
       var src = sources[i];
-      var name = escHtml(src.name || 'Unknown source');
-      var domain = escHtml(src.domain || '');
+      var name = src.name || 'Unknown source';
+      var domain = src.domain || '';
       var url = src.url || '';
+      var linkText = name;
       var type = src.type || 'secondary';
       var badgeClass = type === 'primary' ? 'badge-green'
         : type === 'email' ? 'badge-blue'
@@ -323,12 +329,13 @@ window.ND_LOGIC = {
 
       html += '<div class="nd-source-row">';
       if (url) {
-        html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="nd-source-link">' + name + '</a>';
+        html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="nd-source-link">'
+          + escHtml(linkText) + '</a>';
+        if (domain) html += ' <span class="nd-source-plain">' + escHtml(domain) + '</span>';
+      } else if (domain) {
+        html += '<span class="nd-source-plain">' + escHtml(name) + ' (' + escHtml(domain) + ')</span>';
       } else {
-        html += '<span>' + name + '</span>';
-      }
-      if (domain) {
-        html += ' <span class="nd-source-plain">' + domain + '</span>';
+        html += '<span class="nd-source-plain">' + escHtml(name) + '</span>';
       }
       html += ' <span class="badge ' + badgeClass + '">' + badgeLabel + '</span>';
       html += '</div>';
@@ -379,11 +386,16 @@ window.ND_LOGIC = {
         var bullet = bullets[i];
         var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
         var bulletId = 'gt-bullet-' + i;
-        var heading = this._deriveTileHeading(bullet.text || '');
+        var heading = this._shortHeadline(bullet.text || '', 10);
+        var points = this._splitBullets(bullet.text || '');
 
         html += '<div class="nd-tile">'
-          + '<div class="nd-tile-label">' + escHtml(heading) + '</div>'
-          + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
+          + '<div class="nd-tile-heading">' + escHtml(heading) + '</div>'
+          + '<ul class="nd-tile-bullet-list">';
+        for (var p = 0; p < points.length; p++) {
+          html += '<li>' + escHtml(points[p]) + '</li>';
+        }
+        html += '</ul>'
           + '<div class="nd-tile-footer">'
           + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
           + '</div>'
@@ -467,14 +479,27 @@ window.ND_LOGIC = {
 
   // ── UTILITIES ────────────────────────────────────────────────────────
 
-  _deriveTileHeading: function(text) {
+  _shortHeadline: function(text, maxWords) {
     if (!text) return '';
-    var end = text.indexOf('. ');
-    if (end > 0 && end <= 80) return text.substring(0, end);
-    if (text.length <= 60) return text;
-    var cut = text.lastIndexOf(' ', 57);
-    if (cut < 20) cut = 57;
-    return text.substring(0, cut) + '...';
+    var words = text.split(/\s+/);
+    var limit = maxWords || 8;
+    if (words.length <= limit) return text.replace(/\.+$/, '');
+    return words.slice(0, limit).join(' ') + '...';
+  },
+
+  _splitBullets: function(text) {
+    if (!text) return [];
+    var sentences = text.split(/(?<=[.?])\s+/);
+    var points = [];
+    for (var i = 0; i < sentences.length; i++) {
+      var s = sentences[i].trim();
+      if (s.length > 10) points.push(s);
+    }
+    if (points.length <= 1) {
+      var parts = text.split(/\s*(?:—|–|\bbut\b|\bhowever\b)\s*/i);
+      if (parts.length > 1) return parts.filter(function(p) { return p.trim().length > 10; });
+    }
+    return points.length > 0 ? points : [text];
   },
 
   _getBriefing: function(categoryId) {
