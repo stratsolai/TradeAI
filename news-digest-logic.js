@@ -65,7 +65,7 @@ window.ND_LOGIC = {
       var sessionRes = await this._supabase.auth.getSession();
       var session = sessionRes.data && sessionRes.data.session;
       if (!session || !session.access_token) {
-        this._showError('Your session has expired. Please sign out and sign back in to continue.');
+        this._showError('Could not verify your session. Please refresh the page and try again.');
         if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
         return;
       }
