@@ -247,9 +247,8 @@ window.ND_LOGIC = {
       var totalSources = 0;
       html += '<ul class="nd-tile-bullets">';
       for (var i = 0; i < previewCount; i++) {
-        var text = bullets[i].text || '';
-        if (text.length > 120) text = text.substring(0, 117) + '...';
-        html += '<li>' + escHtml(text) + '</li>';
+        var summary = bullets[i].title || this._fallbackHeading(bullets[i].text || '');
+        html += '<li>' + escHtml(summary) + '</li>';
       }
       html += '</ul>';
       for (var s = 0; s < bullets.length; s++) {
