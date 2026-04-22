@@ -110,34 +110,88 @@ async function serperNewsSearch(query) {
 }
 
 async function runSerperSearches(industry, location, preferredSources) {
-  var year = new Date().getFullYear();
   var state = extractState(location);
+  var stateFull = state ? AUSTRALIAN_STATES[state] : null;
   var queries = [];
 
-  // Regulatory & Compliance — 2
-  queries.push(industry + ' regulatory compliance licensing ' + location + ' Australia ' + year);
-  queries.push('ATO ASIC Fair Work Commission Australia regulatory ' + year);
+  // ── Regulatory & Compliance — 5 searches ──
 
-  // Industry News — 2
-  queries.push(industry + ' industry news trends Australia ' + year);
-  queries.push('Business Council of Australia state chambers of commerce SME news ' + year);
+  // Federal regulators
+  queries.push('site:ato.gov.au OR site:asic.gov.au OR site:fairwork.gov.au OR site:austrac.gov.au regulatory compliance updates');
 
-  // Supplier & Materials — 2
-  queries.push(industry + ' supply chain materials pricing Australia ' + year);
-  queries.push('Australia supply chain fuel freight commodities ' + year);
+  // State government regulatory
+  if (state) {
+    queries.push('site:' + state.toLowerCase() + '.gov.au regulatory business compliance requirements');
+  } else {
+    queries.push('Australian state government regulatory business compliance requirements');
+  }
 
-  // Economic & Market — 3 (region, state, national/global)
-  queries.push(location + ' economic conditions business ' + year);
-  queries.push((state ? state + ' state' : 'Australian state') + ' economic conditions business ' + year);
-  queries.push('Australia national global economic conditions interest rates inflation ' + year);
+  // Industry-specific regulatory bodies
+  queries.push(industry + ' regulatory compliance licensing standards Australia');
 
-  // Technology & Innovation — 1
-  queries.push(industry + ' technology innovation digital tools Australia ' + year);
+  // Business councils and chambers
+  queries.push('site:bca.com.au OR site:acci.com.au OR site:businessnsw.com regulatory compliance business news Australia');
 
-  // Preferred sources — one site-restricted query per saved source
+  // Local government
+  if (state) {
+    queries.push('local government business regulatory compliance ' + stateFull);
+  }
+
+  // ── Industry News — 4 searches ──
+
+  // Industry associations
+  queries.push(industry + ' association Australia news updates');
+
+  // Industry publications and trends
+  queries.push(industry + ' industry news Australia trends developments');
+
+  // Professional bodies
+  queries.push(industry + ' professional body peak body Australia updates');
+
+  // Broad industry catch-all
+  queries.push(industry + ' Australia news');
+
+  // ── Supplier & Materials — 2 searches ──
+
+  // Industry-specific supply chain
+  queries.push(industry + ' supply chain materials pricing shortage Australia');
+
+  // General business costs and supply
+  queries.push('Australia business supply chain energy costs freight inflation');
+
+  // ── Economic & Market — 4 searches ──
+
+  // RBA and Treasury
+  queries.push('site:rba.gov.au OR site:treasury.gov.au economic conditions outlook Australia');
+
+  // ABS economic indicators
+  queries.push('site:abs.gov.au economic indicators business conditions Australia');
+
+  // State economic conditions
+  if (stateFull) {
+    queries.push(stateFull + ' economic development business conditions');
+  } else {
+    queries.push('Australian state economic development business conditions');
+  }
+
+  // Regional economic — only if suburb is set (indicates a metro area)
+  var suburb = String(location).replace(new RegExp('\\s*' + (state || '') + '\\s*', 'i'), '').trim();
+  if (suburb && suburb !== 'Australia') {
+    queries.push(suburb + ' ' + (state || '') + ' business economic conditions');
+  }
+
+  // ── Technology & Innovation — 2 searches ──
+
+  // Industry-specific technology
+  queries.push(industry + ' technology innovation digital transformation Australia');
+
+  // General business technology
+  queries.push('AI automation business technology SME Australia');
+
+  // ── Preferred sources — one query per saved domain ──
   var sources = normaliseSources(preferredSources);
   for (var s = 0; s < sources.length; s++) {
-    queries.push('site:' + sources[s] + ' ' + industry + ' Australia ' + year);
+    queries.push('site:' + sources[s] + ' ' + industry + ' Australia');
   }
 
   console.log('[news-digest] Running', queries.length, 'Serper searches');
