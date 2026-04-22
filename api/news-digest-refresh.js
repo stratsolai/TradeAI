@@ -332,17 +332,17 @@ var BRIEFING_SYSTEM_PROMPT =
   'celebrity news, political commentary without business impact).\n' +
   '- INCLUDE all relevant information comprehensively — err on the side of including rather than excluding.\n\n' +
   'For each category that has relevant items, produce:\n' +
-  '- headline: a short, punchy headline (under 10 words) capturing the key development. ' +
-  'Write it like a newspaper headline — complete and meaningful, no ellipsis. ' +
-  'Examples: "Critical compliance changes start July 1", "Steel prices climb as supply tightens", ' +
-  '"RBA holds rates steady at 4.1%".\n' +
+  '- headline: a short, broad headline (under 10 words) that summarises the OVERALL theme across ALL ' +
+  'bullets in this category — not one specific item. It must be broad enough to cover everything below it. ' +
+  'Examples: "Major compliance deadlines and enforcement changes", "Supply costs shifting across key materials", ' +
+  '"Mixed signals in economic indicators". Do NOT name one specific development if there are multiple.\n' +
   '- bullets: 3-5 synthesised information points that draw from MULTIPLE sources each — ' +
   'combine related information across sources into clear, factual summaries. ' +
   'Each bullet should cover a distinct development or theme.\n' +
-  '- Each bullet must include a title field: a complete, descriptive heading (4-10 words) that ' +
-  'summarises what that bullet is about. Write it as a standalone insight, not a sentence fragment. ' +
-  'Examples: "Payday Super changes take effect July 1", "ATO extends support for non-profits", ' +
-  '"Timber supply disruptions ease in Q2".\n' +
+  '- Each bullet must include a title field: a broad heading (4-8 words) that covers the FULL scope ' +
+  'of that bullet, not just the first sentence. The title must make sense as a label for all the ' +
+  'points within the bullet. Examples: "Compliance deadlines and payroll changes", ' +
+  '"Construction workforce and training pressures", "Freight and fuel cost movements".\n' +
   '- Each bullet has a sources array listing the articles it draws from\n\n' +
   'CATEGORIES:\n' +
   '- regulatory: Regulatory & Compliance — new and changing laws, regulations, licensing requirements, ' +
