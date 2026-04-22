@@ -247,7 +247,7 @@ window.ND_LOGIC = {
       var totalSources = 0;
       html += '<ul class="nd-tile-bullets">';
       for (var i = 0; i < previewCount; i++) {
-        var summary = bullets[i].title || this._fallbackHeading(bullets[i].text || '');
+        var summary = this._summaryLine(bullets[i]);
         html += '<li>' + escHtml(summary) + '</li>';
       }
       html += '</ul>';
@@ -479,6 +479,16 @@ window.ND_LOGIC = {
   },
 
   // ── UTILITIES ────────────────────────────────────────────────────────
+
+  _summaryLine: function(bullet) {
+    var raw = bullet.title || '';
+    if (!raw) raw = bullet.text || '';
+    if (!raw) return '';
+    raw = raw.replace(/\.+$/, '');
+    var words = raw.split(/\s+/);
+    if (words.length <= 8) return raw;
+    return words.slice(0, 8).join(' ');
+  },
 
   _fallbackHeading: function(text) {
     if (!text) return '';
