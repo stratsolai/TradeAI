@@ -7,11 +7,11 @@ window.ND_LOGIC = {
   _lastRefreshed: null,
 
   CATEGORIES: [
-    { id: 'regulatory', label: 'Compliance' },
-    { id: 'industry-news', label: 'Industry' },
-    { id: 'suppliers', label: 'Suppliers' },
-    { id: 'economic', label: 'Economy' },
-    { id: 'technology', label: 'Technology' }
+    { id: 'regulatory', label: 'Rules' },
+    { id: 'industry-news', label: 'News' },
+    { id: 'suppliers', label: 'Supply' },
+    { id: 'economic', label: 'Markets' },
+    { id: 'technology', label: 'Tech' }
   ],
 
   init: async function(supabase, user) {
@@ -286,8 +286,10 @@ window.ND_LOGIC = {
       var bullet = bullets[i];
       var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
       var bulletId = categoryId + '-bullet-' + i;
+      var heading = this._deriveTileHeading(bullet.text || '');
 
       html += '<div class="nd-tile">'
+        + '<div class="nd-tile-label">' + escHtml(heading) + '</div>'
         + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
         + '<div class="nd-tile-footer">'
         + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
@@ -377,8 +379,10 @@ window.ND_LOGIC = {
         var bullet = bullets[i];
         var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
         var bulletId = 'gt-bullet-' + i;
+        var heading = this._deriveTileHeading(bullet.text || '');
 
         html += '<div class="nd-tile">'
+          + '<div class="nd-tile-label">' + escHtml(heading) + '</div>'
           + '<div class="nd-bullet-text">' + escHtml(bullet.text || '') + '</div>'
           + '<div class="nd-tile-footer">'
           + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
@@ -462,6 +466,16 @@ window.ND_LOGIC = {
   },
 
   // ── UTILITIES ────────────────────────────────────────────────────────
+
+  _deriveTileHeading: function(text) {
+    if (!text) return '';
+    var end = text.indexOf('. ');
+    if (end > 0 && end <= 80) return text.substring(0, end);
+    if (text.length <= 60) return text;
+    var cut = text.lastIndexOf(' ', 57);
+    if (cut < 20) cut = 57;
+    return text.substring(0, cut) + '...';
+  },
 
   _getBriefing: function(categoryId) {
     return this._briefings.find(function(b) { return b.category === categoryId; }) || null;
