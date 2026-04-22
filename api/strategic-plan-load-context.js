@@ -35,7 +35,7 @@ export default async function handler(req, res) {
   try {
     const { data: clItems, error: clError } = await supabase
       .from('content_library')
-      .select('id, title, body')
+      .select('id, title, content_text')
       .eq('user_id', userId)
       .eq('status', 'approved')
       .contains('tool_tags', ['strategic-plan'])
@@ -43,16 +43,14 @@ export default async function handler(req, res) {
       .limit(10);
 
     if (!clError && clItems && clItems.length > 0) {
-      // Build summarised context string — max ~800 tokens (~3200 chars)
       const parts = clItems.map(item => {
-        const body = (item.body || '').substring(0, 280);
-        return (item.title ? item.title + ': ' : '') + body;
+        const text = (item.content_text || '').substring(0, 280);
+        return (item.title ? item.title + ': ' : '') + text;
       });
       const joined = parts.join('\n\n');
       clContext = joined.substring(0, 3200);
     }
   } catch (e) {
-    // Silently skip — CL context is optional
     clContext = null;
   }
 
@@ -74,7 +72,6 @@ export default async function handler(req, res) {
       }));
     }
   } catch (e) {
-    // Silently skip — BI insights are optional
     biInsights = null;
   }
 
