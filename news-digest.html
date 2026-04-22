@@ -108,11 +108,36 @@
       line-height: var(--body-line-height);
       margin-bottom: 20px;
     }
-    .nd-bullet-text {
+    .nd-tile-heading {
+      font-family: var(--body-font);
       font-size: var(--body-font-size);
+      font-weight: var(--heading-lg-weight);
       color: var(--text);
       line-height: var(--body-line-height);
+      margin-bottom: 10px;
+    }
+    .nd-tile-bullet-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
       flex: 1;
+    }
+    .nd-tile-bullet-list li {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      padding: 3px 0 3px 16px;
+      position: relative;
+    }
+    .nd-tile-bullet-list li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--blue);
     }
     .nd-source-panel {
       padding-top: 12px;
