@@ -80,21 +80,19 @@ The owner will push back when needed and should be encouraged to do so.
 
 ## Active Tasks
 
-### Task 13 — External Platform Connections (Accounting and Job Management)
+### Task 13 — Integration Requirements (Pending external responses)
 
-Spec complete — StaxAI-External-Platform-Connections-Spec-v1_0.
-MYOB deferred — Coming Soon placeholder in UI. Awaiting
-clarification on whether developer program subscription is
-required for production use before registering. Buildxact
-deferred — Coming Soon placeholder in UI. Third-party
-registration with Buildxact support required before build
-can begin. Integration test complete — Xero, QuickBooks,
-and ServiceM8 all connected successfully. Disconnect not
-yet verified. Fetch endpoint data pull testing deferred to
-each tool's integration test. Fergus — developer platform
-registration email sent April 2026, awaiting response.
-Tradify — enquiry email sent April 2026, awaiting
-confirmation of whether public API is available.
+- MYOB — Integration pending
+- Buildxact — Integration pending
+- Fergus — Email response received, integration pending
+- Tradify — Integration pending
+- AusTender — API registration submitted, awaiting
+  authentication token
+- buy.nsw — API access request submitted, awaiting response
+
+Note: Industry News & Updates tool rebuild complete. Government
+tender API integration blocked on external registrations —
+return to complete this task once API access confirmed.
 
 ### Task 22 — Industry News & Updates Digest Rebuild
 
