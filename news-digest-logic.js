@@ -237,7 +237,7 @@ window.ND_LOGIC = {
       return html;
     }
 
-    html += '<div class="nd-tile-headline">' + escHtml(this._shortHeadline(briefing.headline, 8)) + '</div>';
+    html += '<div class="nd-tile-headline">' + escHtml(briefing.headline) + '</div>';
 
     var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
     if (bullets.length > 0) {
@@ -286,7 +286,7 @@ window.ND_LOGIC = {
       var bullet = bullets[i];
       var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
       var bulletId = categoryId + '-bullet-' + i;
-      var heading = this._shortHeadline(bullet.text || '', 10);
+      var heading = bullet.title || this._fallbackHeading(bullet.text || '');
       var points = this._splitBullets(bullet.text || '');
 
       html += '<div class="nd-tile">'
@@ -386,7 +386,7 @@ window.ND_LOGIC = {
         var bullet = bullets[i];
         var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
         var bulletId = 'gt-bullet-' + i;
-        var heading = this._shortHeadline(bullet.text || '', 10);
+        var heading = bullet.title || this._fallbackHeading(bullet.text || '');
         var points = this._splitBullets(bullet.text || '');
 
         html += '<div class="nd-tile">'
@@ -479,12 +479,16 @@ window.ND_LOGIC = {
 
   // ── UTILITIES ────────────────────────────────────────────────────────
 
-  _shortHeadline: function(text, maxWords) {
+  _fallbackHeading: function(text) {
     if (!text) return '';
-    var words = text.split(/\s+/);
-    var limit = maxWords || 8;
-    if (words.length <= limit) return text.replace(/\.+$/, '');
-    return words.slice(0, limit).join(' ') + '...';
+    var end = text.indexOf('. ');
+    if (end > 0 && end <= 80) return text.substring(0, end);
+    var comma = text.indexOf(', ');
+    if (comma > 15 && comma <= 60) return text.substring(0, comma);
+    if (text.length <= 60) return text.replace(/\.+$/, '');
+    var cut = text.lastIndexOf(' ', 57);
+    if (cut < 20) cut = 57;
+    return text.substring(0, cut);
   },
 
   _splitBullets: function(text) {
