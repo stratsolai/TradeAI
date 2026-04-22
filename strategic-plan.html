@@ -7,357 +7,183 @@
   <title>Strategic Plan &amp; 90-Day Ops &mdash; StaxAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    /* -----------------------------------------------------------------------
-       Reset & base
-    ----------------------------------------------------------------------- */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ─── MAIN LAYOUT ─── */
+    .sp-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    body {
-      font-family: 'DM Sans', sans-serif;
-      background: #F5F7FA;
-      color: #333333;
-      min-height: 100vh;
+    /* ─── PROGRESS BAR ─── */
+    .sp-progress-wrap {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 20px var(--card-padding);
+      margin-bottom: var(--card-padding);
     }
-
-    /* -----------------------------------------------------------------------
-       Authenticated topbar — matches Content Library & Dashboard exactly
-    ----------------------------------------------------------------------- */
-    .topbar {
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      height: 68px;
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    .sp-progress-label {
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      margin-bottom: var(--actions-gap);
     }
-
-    .topbar-left {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-
-    .topbar-nav a {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-      font-family: 'DM Sans', sans-serif;
-    }
-
-    .topbar-nav a:hover { color: #ffffff; }
-
-    .topbar-logo img {
-      height: 38px;
-      display: block;
-    }
-
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      position: relative;
-    }
-
-    .topbar-account-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 8px;
-      border-radius: 6px;
-    }
-
-    .topbar-account-btn:hover { color: #ffffff; background: rgba(255,255,255,0.1); }
-
-    .account-dropdown {
-      position: absolute;
-      top: calc(100% + 10px);
-      right: 0;
-      background: #ffffff;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      min-width: 220px;
-      overflow: hidden;
-      display: none;
-      z-index: 200;
-    }
-
-    .account-dropdown.open { display: block; }
-
-    .account-dropdown-email {
-      padding: 14px 16px;
-      font-size: 13px;
-      color: #666666;
-      border-bottom: 1px solid #E0E0E0;
-      background: #F9FAFB;
-    }
-
-    .account-dropdown-signout {
-      display: block;
-      padding: 12px 16px;
-      color: #333333;
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      cursor: pointer;
-      background: none;
-      border: none;
-      width: 100%;
-      text-align: left;
-      font-family: 'DM Sans', sans-serif;
-    }
-
-    .account-dropdown-signout:hover { background: #F5F7FA; color: #C4622A; }
-
-    /* -----------------------------------------------------------------------
-       Page layout
-    ----------------------------------------------------------------------- */
-    .sp-page {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 40px 40px 80px;
-    }
-
-    .sp-page-header {
-      margin-bottom: 32px;
-    }
-
-    .sp-page-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 36px;
-      font-weight: 800;
-      color: #1A3A5C;
-      line-height: 1.1;
-    }
-
-    .sp-page-subtitle {
-      font-size: 15px;
-      color: #666666;
-      margin-top: 6px;
-    }
-
-    /* -----------------------------------------------------------------------
-       Progress container
-    ----------------------------------------------------------------------- */
-    #sp-progress-container {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #E0E0E0;
-      padding: 20px 24px;
-      margin-bottom: 24px;
-    }
-
-    #sp-progress-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #333333;
-      margin-bottom: 12px;
-    }
-
-    #sp-progress-bar {
+    .sp-progress-bar {
       display: flex;
       gap: 6px;
       height: 8px;
       border-radius: 4px;
       overflow: hidden;
     }
-
     .sp-progress-seg {
       flex: 1;
       border-radius: 4px;
       transition: background 0.3s;
     }
+    .sp-progress-done { background: var(--blue); }
+    .sp-progress-current { background: var(--orange); }
+    .sp-progress-pending { background: var(--border); }
 
-    .sp-progress-done { background: #1A5490; }
-    .sp-progress-current { background: #C4622A; }
-    .sp-progress-pending { background: #E0E0E0; }
-
-    /* -----------------------------------------------------------------------
-       Section navigation chips
-    ----------------------------------------------------------------------- */
-    #sp-section-nav {
+    /* ─── SECTION NAV CHIPS ─── */
+    .sp-section-nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 24px;
+      gap: var(--btn-radius);
+      margin-bottom: var(--card-padding);
     }
-
     .sp-nav-chip {
       padding: 10px 16px;
       border-radius: 10px;
-      border: 1px solid #E0E0E0;
-      border-left: 4px solid #1A5490;
-      background: #ffffff;
-      color: #333333;
-      font-size: 13px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      background: var(--white);
+      color: var(--text);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
       cursor: pointer;
       transition: all 0.2s;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      box-shadow: 0 1px 4px var(--shadow-card);
       white-space: nowrap;
     }
-    .sp-nav-chip.c-blue   { border-left-color: #1A5490; }
-    .sp-nav-chip.c-orange { border-left-color: #E8500A; }
-    .sp-nav-chip.c-green  { border-left-color: #28A745; }
-    .sp-nav-chip.c-purple { border-left-color: #7B2D8B; }
-    .sp-nav-chip.c-teal   { border-left-color: #0D9488; }
-    .sp-nav-chip.c-red    { border-left-color: #C4622A; }
+    .sp-nav-chip.c-blue   { border-left-color: var(--blue); }
+    .sp-nav-chip.c-orange { border-left-color: var(--orange); }
+    .sp-nav-chip.c-green  { border-left-color: var(--green); }
+    .sp-nav-chip.c-purple { border-left-color: var(--purple); }
+    .sp-nav-chip.c-teal   { border-left-color: var(--teal); }
+    .sp-nav-chip.c-red    { border-left-color: var(--red); }
     .sp-nav-chip:hover { opacity: 0.85; }
-    .sp-nav-chip-active { background: #ffffff; color: #333333; font-weight: 700; box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
-    .sp-nav-chip-done { background: #EBF3FB; color: #1A5490; }
+    .sp-nav-chip-active { font-weight: var(--heading-lg-weight); box-shadow: 0 2px 8px var(--shadow-hover); }
+    .sp-nav-chip-done { background: var(--blue-hover-bg); color: var(--blue); }
 
-    /* -----------------------------------------------------------------------
-       Sections container — filled dynamically by SP_LOGIC
-    ----------------------------------------------------------------------- */
-    #sp-sections-container { /* SP_LOGIC renders into this */ }
-
-    /* -----------------------------------------------------------------------
-       Section card
-    ----------------------------------------------------------------------- */
+    /* ─── SECTION CARD ─── */
     .sp-section {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #E0E0E0;
-      border-left: 4px solid #1A5490;
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
       padding: 32px;
-      margin-bottom: 24px;
+      margin-bottom: var(--card-padding);
     }
-
     .sp-section-header {
       display: flex;
       align-items: flex-start;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: var(--card-padding);
     }
-
-    .sp-section-icon {
-      font-size: 28px;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
+    .sp-section-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
     .sp-section-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 24px;
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
       font-weight: 800;
-      color: #1A3A5C;
+      color: var(--text);
       line-height: 1.2;
     }
-
     .sp-section-subtitle {
-      font-size: 14px;
-      color: #666666;
+      font-size: var(--btn-font-size);
+      color: var(--text-muted);
       margin-top: 4px;
-      line-height: 1.5;
+      line-height: var(--note-line-height);
     }
 
-    /* -----------------------------------------------------------------------
-       Info box (financial privacy notice etc)
-    ----------------------------------------------------------------------- */
+    /* ─── INFO BOX ─── */
     .sp-info-box {
-      background: #EBF3FB;
-      border-left: 4px solid #1A5490;
+      background: var(--blue-hover-bg);
+      border-left: 4px solid var(--blue);
       border-radius: 6px;
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #1A3A5C;
-      margin-bottom: 24px;
+      padding: var(--actions-gap) 16px;
+      font-size: var(--label-font-size);
+      color: var(--text);
+      margin-bottom: var(--card-padding);
       display: flex;
       align-items: flex-start;
       gap: 10px;
-      line-height: 1.5;
+      line-height: var(--note-line-height);
     }
-
     .sp-info-icon { font-size: 16px; flex-shrink: 0; }
 
-    /* -----------------------------------------------------------------------
-       Fields grid
-    ----------------------------------------------------------------------- */
+    /* ─── FIELDS GRID ─── */
     .sp-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
     }
-
     .sp-field {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: var(--label-margin-bottom);
     }
-
     .sp-field:has(textarea),
     .sp-field:has(.sp-chip-group),
     .sp-field:has(.sp-field-help) {
       grid-column: 1 / -1;
     }
-
     .sp-field-label {
-      font-size: 14px;
-      font-weight: 600;
-      color: #333333;
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
     }
-
     .sp-label-hint {
       font-weight: 400;
-      color: #888888;
-      font-size: 13px;
+      color: var(--text-muted);
+      font-size: var(--label-font-size);
     }
-
     .sp-field-help {
-      font-size: 13px;
-      color: #666666;
+      font-size: var(--label-font-size);
+      color: var(--text-muted);
       margin: 0;
       line-height: 1.4;
     }
+    .sp-field-error {
+      font-size: var(--label-font-size);
+      color: var(--red);
+      display: none;
+    }
 
-    /* -----------------------------------------------------------------------
-       Inputs
-    ----------------------------------------------------------------------- */
+    /* ─── INPUTS ─── */
     .sp-input,
     .sp-textarea,
     .sp-select {
       width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #E0E0E0;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: 'DM Sans', sans-serif;
-      color: #333333;
-      background: #ffffff;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      padding: var(--input-padding);
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      font-size: var(--input-font-size);
+      font-family: var(--body-font);
+      color: var(--text);
+      background: var(--white);
+      transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
       -webkit-appearance: none;
     }
-
     .sp-input:focus,
     .sp-textarea:focus,
     .sp-select:focus {
       outline: none;
-      border-color: #4A6D8C;
-      box-shadow: 0 0 0 3px rgba(74,109,140,0.12);
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--focus-ring);
     }
-
     .sp-input::placeholder,
-    .sp-textarea::placeholder { color: #AAAAAA; }
-
-    .sp-textarea {
-      resize: vertical;
-      min-height: 100px;
-    }
-
+    .sp-textarea::placeholder { color: var(--text-hint); }
+    .sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
     .sp-select {
       background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
       background-repeat: no-repeat;
@@ -365,287 +191,370 @@
       padding-right: 36px;
       cursor: pointer;
     }
+    .sp-input-error { border-color: var(--red); }
 
-    /* -----------------------------------------------------------------------
-       Chips
-    ----------------------------------------------------------------------- */
+    /* ─── CHIPS ─── */
     .sp-chip-group {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: var(--btn-radius);
     }
-
     .sp-chip {
       padding: 7px 14px;
-      border-radius: 20px;
-      border: 1px solid #E0E0E0;
-      background: #ffffff;
-      color: #555555;
-      font-size: 13px;
+      border-radius: var(--badge-radius);
+      border: 1px solid var(--border);
+      background: var(--white);
+      color: var(--text-secondary);
+      font-size: var(--label-font-size);
       font-weight: 500;
       cursor: pointer;
       transition: all 0.18s;
       user-select: none;
     }
-
-    .sp-chip:hover { border-color: #4A6D8C; color: #4A6D8C; }
-
+    .sp-chip:hover { border-color: var(--blue); color: var(--blue); }
     .sp-chip-active {
-      background: #4A6D8C;
-      border-color: #4A6D8C;
-      color: #ffffff;
+      background: var(--blue);
+      border-color: var(--blue);
+      color: var(--white);
     }
 
-    /* -----------------------------------------------------------------------
-       Navigation buttons
-    ----------------------------------------------------------------------- */
+    /* ─── NAV BUTTONS ─── */
     .sp-nav-buttons {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-top: 32px;
-      gap: 12px;
+      gap: var(--actions-gap);
     }
-
     .btn-sp-back {
-      padding: 10px 24px;
-      background: #ffffff;
-      color: #4A6D8C;
-      border: 1px solid #4A6D8C;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      padding: var(--btn-padding);
+      background: var(--white);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
       cursor: pointer;
       transition: all 0.2s;
     }
-
-    .btn-sp-back:hover { background: #EBF3FB; }
-
+    .btn-sp-back:hover { background: var(--blue-hover-bg); }
     .btn-sp-next,
     .btn-sp-generate {
       padding: 12px 32px;
-      background: #4A6D8C;
-      color: #ffffff;
+      background: var(--blue);
+      color: var(--white);
       border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 700;
-      font-family: 'DM Sans', sans-serif;
+      border-radius: var(--btn-radius);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      font-family: var(--body-font);
       cursor: pointer;
       transition: background 0.2s;
       margin-left: auto;
     }
-
     .btn-sp-next:hover,
-    .btn-sp-generate:hover { background: #3a5a7a; }
+    .btn-sp-generate:hover { background: var(--blue-accent-hover); }
+    .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    .btn-sp-generate:disabled {
-      background: #9ab0c4;
-      cursor: not-allowed;
-    }
-
-    /* -----------------------------------------------------------------------
-       Error banner
-    ----------------------------------------------------------------------- */
-    #sp-error {
-      display: none;
-      background: #FFF0F0;
-      border-left: 4px solid #D32F2F;
-      border-radius: 6px;
-      padding: 12px 16px;
-      font-size: 14px;
-      color: #D32F2F;
-      margin-bottom: 20px;
-    }
-
-    /* -----------------------------------------------------------------------
-       Results section — shown after generation
-    ----------------------------------------------------------------------- */
-    #sp-results {
-      display: none;
-    }
-
+    /* ─── RESULTS ─── */
     .sp-results-card {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #E0E0E0;
-      border-left: 4px solid #C4622A;
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--orange);
       padding: 32px;
-      margin-bottom: 24px;
+      margin-bottom: var(--card-padding);
     }
-
     .sp-results-title {
-      font-family: 'Barlow Condensed', sans-serif;
+      font-family: var(--heading-font);
       font-size: 26px;
       font-weight: 800;
-      color: #1A3A5C;
+      color: var(--text);
       margin-bottom: 8px;
     }
-
     .sp-results-subtitle {
-      font-size: 14px;
-      color: #666666;
-      margin-bottom: 24px;
+      font-size: var(--btn-font-size);
+      color: var(--text-muted);
+      margin-bottom: var(--card-padding);
     }
-
-    #sp-download-links {
+    .sp-download-links {
       display: flex;
-      gap: 12px;
+      gap: var(--actions-gap);
       flex-wrap: wrap;
     }
-
     .btn-sp-download {
       display: inline-flex;
       align-items: center;
-      gap: 8px;
-      padding: 12px 24px;
-      background: #4A6D8C;
-      color: #ffffff;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      font-family: 'DM Sans', sans-serif;
+      gap: var(--btn-gap);
+      padding: 12px var(--card-padding);
+      background: var(--blue);
+      color: var(--white);
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
       text-decoration: none;
       transition: background 0.2s;
     }
-
-    .btn-sp-download:hover { background: #3a5a7a; }
-
-    /* -----------------------------------------------------------------------
-       Action tracker section
-    ----------------------------------------------------------------------- */
-    #sp-tracker-section {
-      margin-top: 32px;
+    .btn-sp-download:hover { background: var(--blue-accent-hover); color: var(--white); opacity: 1; }
+    .btn-sp-print {
+      padding: 12px var(--card-padding);
+      background: var(--white);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: all 0.2s;
     }
+    .btn-sp-print:hover { background: var(--blue-hover-bg); }
 
-    .sp-tracker-heading {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: #1A3A5C;
-      margin-bottom: 16px;
+    /* ─── REGEN GUIDANCE ─── */
+    .sp-regen-guidance {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: var(--actions-gap) 16px;
+      font-size: var(--label-font-size);
+      color: var(--text-secondary);
+      margin-top: var(--card-padding);
+      line-height: var(--note-line-height);
     }
+    .sp-regen-guidance a { color: var(--blue); font-weight: var(--font-weight-semibold); }
 
-    #sp-tracker {
-      background: #ffffff;
-      border-radius: 12px;
-      border: 1px solid #E0E0E0;
-      padding: 24px;
-    }
-
-    .sp-tracker-empty {
-      font-size: 14px;
-      color: #888888;
-      text-align: center;
-      padding: 24px 0;
-    }
-
-    .sp-tracker-list {
+    /* ─── VERSION HISTORY ─── */
+    .sp-version-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: var(--actions-gap);
+    }
+    .sp-version-row {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .sp-version-current { border-left: 4px solid var(--blue); }
+    .sp-vh-label { font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); color: var(--text); }
+    .sp-current-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--badge-radius);
+      background: var(--badge-green-bg);
+      color: var(--badge-green-text);
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      margin-left: 8px;
+    }
+    .sp-vh-meta { font-size: var(--label-font-size); color: var(--text-muted); }
+    .sp-vh-actions { margin-left: auto; display: flex; gap: var(--btn-radius); align-items: center; }
+    .sp-vh-link {
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--blue);
+    }
+    .btn-sp-use-template {
+      padding: 6px 14px;
+      background: var(--white);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-sp-use-template:hover { background: var(--blue-hover-bg); }
+
+    /* ─── CYCLE RENEWAL BANNER ─── */
+    .sp-cycle-renewal-banner {
+      background: var(--warning-light);
+      border: 1px solid var(--warning);
+      border-radius: var(--btn-radius);
+      padding: var(--actions-gap) 16px;
+      font-size: var(--btn-font-size);
+      color: var(--text);
+      margin-bottom: var(--card-padding);
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      flex-wrap: wrap;
+    }
+    .btn-sp-new-cycle {
+      padding: 6px 14px;
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--btn-radius);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
     }
 
+    /* ─── ACTION TRACKER ─── */
+    .sp-tracker-heading {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .sp-tracker-wrap {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: var(--card-padding);
+    }
+    .sp-tracker-empty,
+    .sp-empty {
+      font-size: var(--btn-font-size);
+      color: var(--text-muted);
+      text-align: center;
+      padding: var(--empty-padding) 0;
+    }
+    .sp-month-group { margin-bottom: 24px; }
+    .sp-month-heading {
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      margin-bottom: var(--actions-gap);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
     .sp-task {
       display: flex;
       align-items: flex-start;
       gap: 14px;
       padding: 14px 16px;
-      border-radius: 8px;
-      border: 1px solid #E0E0E0;
-      background: #FAFAQA;
+      border-radius: var(--btn-radius);
+      border: 1px solid var(--border);
+      background: var(--bg-subtle);
       transition: background 0.15s;
+      margin-bottom: 8px;
     }
-
-    .sp-task:hover { background: #F0F4F8; }
-
-    .sp-task-done { background: #F0F8F0; border-color: #C8E6C9; }
-    .sp-task-done .sp-task-title { text-decoration: line-through; color: #999999; }
-
+    .sp-task:hover { background: var(--active-bg); }
+    .sp-task-done { background: var(--green-light); border-color: var(--green); }
+    .sp-task-done .sp-task-title { text-decoration: line-through; color: var(--text-hint); }
     .sp-task-check {
       width: 22px;
       height: 22px;
-      border-radius: 50%;
-      border: 2px solid #4A6D8C;
-      background: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      accent-color: var(--green);
       cursor: pointer;
       flex-shrink: 0;
-      font-size: 13px;
-      color: #4A6D8C;
-      font-weight: 700;
-      transition: all 0.15s;
+      margin-top: 2px;
     }
-
-    .sp-task-done .sp-task-check { background: #4CAF50; border-color: #4CAF50; color: #ffffff; }
-
     .sp-task-body { flex: 1; min-width: 0; }
-
     .sp-task-title {
-      font-size: 14px;
+      font-size: var(--btn-font-size);
       font-weight: 500;
-      color: #333333;
+      color: var(--text);
       line-height: 1.4;
+      cursor: pointer;
     }
-
+    .sp-task-title-input {
+      width: 100%;
+      padding: 4px 8px;
+      border: var(--input-border-width) solid var(--blue);
+      border-radius: 4px;
+      font-size: var(--btn-font-size);
+      font-family: var(--body-font);
+      color: var(--text);
+    }
+    .sp-task-saved { background: var(--green-light); transition: background 0.3s; }
     .sp-task-meta {
-      font-size: 12px;
-      color: #888888;
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
       margin-top: 4px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: var(--btn-radius);
     }
-
     .sp-task-priority {
       padding: 2px 8px;
       border-radius: 10px;
-      font-size: 11px;
-      font-weight: 600;
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      border: none;
+      font-family: var(--body-font);
+      cursor: pointer;
     }
+    .sp-cf-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: var(--badge-radius);
+      background: var(--badge-orange-bg);
+      color: var(--badge-orange-text);
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+    }
+    .sp-task-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--badge-font-size);
+      cursor: pointer;
+      font-family: var(--body-font);
+      transition: color var(--btn-transition);
+    }
+    .sp-task-delete:hover { color: var(--red); }
+    .btn-sp-add-task {
+      padding: 8px 16px;
+      background: var(--white);
+      color: var(--blue);
+      border: 1px dashed var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      margin-top: var(--actions-gap);
+      transition: background var(--btn-transition);
+    }
+    .btn-sp-add-task:hover { background: var(--blue-hover-bg); }
 
-    .sp-priority-high { background: #FDECEA; color: #C62828; }
-    .sp-priority-med { background: #FFF3E0; color: #E65100; }
-    .sp-priority-low { background: #E8F5E9; color: #2E7D32; }
-
-    /* -----------------------------------------------------------------------
-       Responsive
-    ----------------------------------------------------------------------- */
+    /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
-      .sp-page { padding: 24px 20px 60px; }
+      .sp-container { padding: var(--page-padding-mobile); }
       .sp-fields { grid-template-columns: 1fr; }
       .sp-field:has(textarea),
       .sp-field:has(.sp-chip-group),
       .sp-field:has(.sp-field-help) { grid-column: 1; }
-      .sp-section { padding: 24px 20px; }
-      #sp-download-links { flex-direction: column; }
+      .sp-section { padding: var(--card-padding) 20px; }
+      .sp-download-links { flex-direction: column; }
     }
 
     @media (max-width: 600px) {
-      .topbar { padding: 0 16px; }
-      .sp-page-title { font-size: 28px; }
       .sp-nav-buttons { flex-direction: column; }
       .btn-sp-next, .btn-sp-generate { width: 100%; margin-left: 0; }
       .btn-sp-back { width: 100%; }
+      .sp-input, .sp-textarea, .sp-select { font-size: var(--input-font-size-mobile); }
     }
-  @media print {
-  .topbar, .sp-nav-chips, .sp-interview, #sp-progress-container, #sp-cycle-banner,
-  #sp-version-history, .btn-sp-print, .btn-sp-download, .btn-sp-add-task,
-  .sp-task-delete, .sp-task-priority, #sp-regen-note { display: none !important; }
-  body { background: #fff; color: #000; }
-  #sp-results { display: block !important; }
-  .sp-month-heading { font-size: 14pt; font-weight: bold; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-  .sp-task { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 10pt; page-break-inside: avoid; }
-  .sp-task-check { flex-shrink: 0; }
-  .sp-task-title { flex: 1; }
-  .sp-cf-badge::after { content: ' (CF)'; font-size: 8pt; color: #666; }
-  .sp-cf-badge { font-size: 0; }
-  .sp-month-group { page-break-inside: avoid; margin-bottom: 16px; }
-}
-</style>
+
+    @media print {
+      .topbar, .sp-section-nav, .sp-progress-wrap, #sp-cycle-banner,
+      #sp-version-history, .btn-sp-print, .btn-sp-download, .btn-sp-add-task,
+      .sp-task-delete, .sp-task-priority, .sp-regen-guidance { display: none !important; }
+      body { background: var(--white); color: #000; }
+      #sp-results { display: block !important; }
+      .sp-month-heading { font-size: 14pt; font-weight: bold; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
+      .sp-task { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 10pt; page-break-inside: avoid; }
+      .sp-task-check { flex-shrink: 0; }
+      .sp-task-title { flex: 1; }
+      .sp-cf-badge::after { content: ' (CF)'; font-size: 8pt; color: #666; }
+      .sp-cf-badge { font-size: 0; }
+      .sp-month-group { page-break-inside: avoid; margin-bottom: 16px; }
+    }
+  </style>
 </head>
 <body>
 <script>
@@ -668,131 +577,96 @@
 })();
 </script>
 
-  <!-- Topbar — authenticated standard -->
-  <div class="topbar">
-    <div class="topbar-left">
-      <a href="/dashboard" class="topbar-logo"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" height="38"></a>
-      <div class="topbar-nav">
-        <a href="/dashboard">Back</a>
-      </div>
-    </div>
-    <div class="topbar-right">
-      <button class="topbar-account-btn" id="account-btn" onclick="toggleAccountDropdown()">
-        <span id="account-display">Account</span> &#9662;
-      </button>
+<nav class="topbar">
+  <a href="/dashboard.html" class="topbar-logo">
+    <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+  </a>
+  <div class="topbar-nav">
+    <a href="/dashboard.html">Dashboard</a>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-right">
+    <div class="topbar-account-wrap">
+      <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
       <div class="account-dropdown" id="account-dropdown">
-        <div class="account-dropdown-email" id="account-email"></div>
         <a href="/account" class="account-dropdown-item">Account Management</a>
         <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
       </div>
     </div>
   </div>
+</nav>
 
-  <!-- Page -->
-  <div class="sp-page">
+<div class="sp-container" id="page-wrap" style="display:none">
 
-    <div class="sp-page-header">
-      <h1 class="sp-page-title">Strategic Plan &amp; 90-Day Ops</h1>
-      <p class="sp-page-subtitle">Answer a few questions and your AI-generated strategic plan and 90-day action tracker will be ready to download.</p>
+  <div class="page-header">
+    <h1 class="page-title">Strategic Plan &amp; 90-Day Ops</h1>
+    <p class="page-subtitle">Answer a few questions and your AI-generated strategic plan and 90-day action tracker will be ready to download.</p>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="sp-progress-wrap" id="sp-progress-container">
+    <div class="sp-progress-label" id="sp-progress-label">Section 1 of 6</div>
+    <div class="sp-progress-bar" id="sp-progress-bar"></div>
+  </div>
+
+  <!-- Section navigation chips -->
+  <div class="sp-section-nav" id="sp-section-nav"></div>
+
+  <!-- Interview sections — rendered dynamically by SP_LOGIC -->
+  <div id="sp-sections-container"></div>
+
+  <!-- Results — shown after generation -->
+  <div id="sp-results" style="display:none">
+    <div class="sp-results-card">
+      <div class="sp-results-title">Your plan is ready</div>
+      <div class="sp-results-subtitle">Both documents have been saved to your Content Library. Download them below.</div>
+      <div class="sp-download-links" id="sp-download-links"></div>
     </div>
 
-    <!-- Error banner -->
-    <div id="sp-error"></div>
+    <!-- Version history -->
+    <div id="sp-version-history" style="display:none"></div>
 
-    <!-- Progress container -->
-    <div id="sp-progress-container">
-      <div id="sp-progress-label">Section 1 of 6</div>
-      <div id="sp-progress-bar"></div>
-    </div>
-
-    <!-- Section navigation chips -->
-    <div id="sp-section-nav"></div>
-
-    <!-- Interview sections — rendered dynamically by SP_LOGIC -->
-    <div id="sp-sections-container"></div>
-
-    <!-- Results — shown after generation -->
-    <div id="sp-results">
-      <div class="sp-results-card">
-        <div class="sp-results-title">Your plan is ready</div>
-        <div class="sp-results-subtitle">Both documents have been saved to your Content Library. Download them below.</div>
-        <div id="sp-download-links"></div>
+    <!-- Action tracker -->
+    <div id="sp-tracker-section" style="margin-top:32px">
+      <div class="sp-tracker-heading">Your 90-Day Action Tracker</div>
+      <div class="sp-tracker-wrap" id="sp-tracker">
+        <p class="sp-tracker-empty">Generating your action tracker...</p>
       </div>
-
-      <!-- Action tracker -->
-      <div id="sp-tracker-section">
-        <div class="sp-tracker-heading">Your 90-Day Action Tracker</div>
-        <div id="sp-tracker">
-          <p class="sp-tracker-empty">Generating your action tracker...</p>
-        </div>
-      </div>
     </div>
+  </div>
 
-  </div><!-- end .sp-page -->
+  <!-- Error modal (platform pattern) -->
+  <div class="save-msg" id="sp-error-msg">
+    <div class="save-msg-card">
+      <div class="save-msg-text"></div>
+      <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
 
-  <!-- Scripts — load order per spec Section 3d -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabase-client.js"></script>
-  <script src="/auth.js"></script>
-  <script src="/pwa.js"></script>
-  <script>
-    (function() {
-      var ts = Date.now();
-      var s1 = document.createElement("script"); s1.src = "/strategic-plan-data.js?v=" + ts; s1.charset = "utf-8";
-      s1.onload = function() {
-        var s2 = document.createElement("script"); s2.src = "/strategic-plan-logic.js?v=" + ts; s2.charset = "utf-8";
-        s2.onload = function() { if (window.SP_LOGIC) window.SP_LOGIC.init(); };
-        document.head.appendChild(s2);
-      };
-      document.head.appendChild(s1);
-    })();
-  </script>
+</div>
 
-  <script>
-    // Account dropdown wiring — uses window.supabaseClient
-    function toggleAccountDropdown() {
-      document.getElementById('account-dropdown').classList.toggle('open');
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script src="/topbar.js"></script>
+<script src="/shared-utils.js"></script>
+<script src="/pwa.js"></script>
+<script src="/strategic-plan-data.js"></script>
+<script src="/strategic-plan-logic.js"></script>
+<script>
+(function() {
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) { window.location.href = '/login'; return; }
+    document.getElementById('page-wrap').style.display = 'block';
+    if (window.SP_LOGIC && window.SP_LOGIC.init) {
+      window.SP_LOGIC.init();
     }
-
-    document.addEventListener('click', function(e) {
-      var btn = document.getElementById('account-btn');
-      var dd = document.getElementById('account-dropdown');
-      if (btn && dd && !btn.contains(e.target) && !dd.contains(e.target)) {
-        dd.classList.remove('open');
-      }
-    });
-
-    function signOut() {
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.signOut().then(function() {
-          window.location.href = '/login';
-        });
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-      // Populate account display name/email
-      if (window.supabaseClient) {
-        window.supabaseClient.auth.getUser().then(function(result) {
-          var user = result.data && result.data.user;
-          if (user) {
-            var display = user.user_metadata && user.user_metadata.full_name
-              ? user.user_metadata.full_name
-              : user.email.split('@')[0];
-            var emailEl = document.getElementById('account-email');
-            var displayEl = document.getElementById('account-display');
-            if (emailEl) emailEl.textContent = user.email;
-            if (displayEl) displayEl.textContent = display;
-          }
-        });
-      }
-
-      // Initialise SP_LOGIC
-      if (window.SP_LOGIC) {
-        window.SP_LOGIC.init();
-      }
-    });
-  </script>
+  });
+})();
+</script>
 
 </body>
 </html>
