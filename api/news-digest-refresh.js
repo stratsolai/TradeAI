@@ -332,10 +332,17 @@ var BRIEFING_SYSTEM_PROMPT =
   'celebrity news, political commentary without business impact).\n' +
   '- INCLUDE all relevant information comprehensively — err on the side of including rather than excluding.\n\n' +
   'For each category that has relevant items, produce:\n' +
-  '- headline: one factual sentence summarising the most important development in this category\n' +
+  '- headline: a short, punchy headline (under 10 words) capturing the key development. ' +
+  'Write it like a newspaper headline — complete and meaningful, no ellipsis. ' +
+  'Examples: "Critical compliance changes start July 1", "Steel prices climb as supply tightens", ' +
+  '"RBA holds rates steady at 4.1%".\n' +
   '- bullets: 3-5 synthesised information points that draw from MULTIPLE sources each — ' +
   'combine related information across sources into clear, factual summaries. ' +
   'Each bullet should cover a distinct development or theme.\n' +
+  '- Each bullet must include a title field: a complete, descriptive heading (4-10 words) that ' +
+  'summarises what that bullet is about. Write it as a standalone insight, not a sentence fragment. ' +
+  'Examples: "Payday Super changes take effect July 1", "ATO extends support for non-profits", ' +
+  '"Timber supply disruptions ease in Q2".\n' +
   '- Each bullet has a sources array listing the articles it draws from\n\n' +
   'CATEGORIES:\n' +
   '- regulatory: Regulatory & Compliance — new and changing laws, regulations, licensing requirements, ' +
@@ -368,9 +375,10 @@ var BRIEFING_SYSTEM_PROMPT =
   '  "categories": [\n' +
   '    {\n' +
   '      "category": "regulatory",\n' +
-  '      "headline": "Factual one-sentence summary of the key development",\n' +
+  '      "headline": "Short punchy headline under 10 words",\n' +
   '      "bullets": [\n' +
   '        {\n' +
+  '          "title": "Complete descriptive heading for this item",\n' +
   '          "text": "Clear factual summary synthesised from multiple sources with specific details",\n' +
   '          "sources": [\n' +
   '            { "name": "Source Name", "domain": "example.com", "url": "https://...", "type": "primary" }\n' +
