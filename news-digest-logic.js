@@ -170,9 +170,11 @@ window.ND_LOGIC = {
   _renderTimestamp: function() {
     var el = document.getElementById('nd-last-refreshed');
     if (!el) return;
-    el.textContent = this._lastRefreshed
-      ? 'Last refreshed: ' + this._relativeTime(this._lastRefreshed)
-      : '';
+    if (!this._lastRefreshed) { el.textContent = ''; return; }
+    var d = this._lastRefreshed;
+    var date = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
+    var time = d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+    el.textContent = 'Last refreshed: ' + date + ' at ' + time;
   },
 
   // ── SUMMARY TAB ──────────────────────────────────────────────────────
@@ -508,18 +510,6 @@ window.ND_LOGIC = {
 
   _getBriefing: function(categoryId) {
     return this._briefings.find(function(b) { return b.category === categoryId; }) || null;
-  },
-
-  _relativeTime: function(date) {
-    var diffMs = Date.now() - date.getTime();
-    var diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return diffMins + ' min' + (diffMins !== 1 ? 's' : '') + ' ago';
-    var diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return diffHours + ' hour' + (diffHours !== 1 ? 's' : '') + ' ago';
-    var diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 7) return diffDays + ' day' + (diffDays !== 1 ? 's' : '') + ' ago';
-    return date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
 };
