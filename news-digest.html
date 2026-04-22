@@ -102,7 +102,7 @@
     }
     .nd-detail-headline {
       font-family: var(--body-font);
-      font-size: 16px;
+      font-size: var(--section-title-font-size);
       font-weight: var(--heading-lg-weight);
       color: var(--text);
       line-height: var(--body-line-height);
@@ -165,6 +165,9 @@
       #nd-refresh-btn { min-height: 44px; }
       .nd-tile-grid { grid-template-columns: 1fr; }
       .nd-tile { padding: 16px; }
+      .nd-tile-label,
+      .nd-tile-source-count,
+      .nd-source-plain { font-size: var(--note-font-size); }
     }
   </style>
 </head>
