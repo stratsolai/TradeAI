@@ -60,13 +60,14 @@ window.ND_LOGIC = {
 
   _refresh: async function() {
     var btn = document.getElementById('nd-refresh-btn');
-    var tsEl = document.getElementById('nd-last-refreshed');
     if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
     try {
       var sessionRes = await this._supabase.auth.getSession();
       var session = sessionRes.data && sessionRes.data.session;
       if (!session || !session.access_token) {
-        throw new Error('Your session has expired. Please sign out and sign back in.');
+        this._showError('Your session has expired. Please sign out and sign back in to continue.');
+        if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
+        return;
       }
       var res = await fetch('/api/news-digest-refresh', {
         method: 'POST',
@@ -78,14 +79,28 @@ window.ND_LOGIC = {
       });
       if (!res.ok) {
         var errBody = await res.json().catch(function() { return {}; });
-        throw new Error(errBody.error || 'Refresh failed (' + res.status + ')');
+        var msg = errBody.error || 'Something went wrong while refreshing your briefing. Please try again.';
+        this._showError(msg);
+        if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
+        return;
       }
       await this._loadData();
     } catch (e) {
       console.error('[ND] Refresh error:', e.message);
-      if (tsEl) tsEl.textContent = e.message;
+      this._showError('Could not refresh your briefing. Please check your connection and try again.');
     }
     if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
+  },
+
+  _showError: function(message) {
+    var modal = document.getElementById('nd-error-msg');
+    if (!modal) return;
+    var textEl = modal.querySelector('.save-msg-text');
+    if (textEl) textEl.textContent = message;
+    modal.classList.add('open');
+    var okBtn = modal.querySelector('.save-msg-ok');
+    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
   },
 
   // ── DATA LOADING ─────────────────────────────────────────────────────
