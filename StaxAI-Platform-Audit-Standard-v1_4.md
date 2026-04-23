@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Document** | StaxAI-Platform-Audit-Standard-v1_4 |
-| **Version** | v1.4 — April 2026 |
+| **Version** | v1.5 — April 2026 |
 | **Status** | Approved — permanent reference |
 | **Purpose** | Structured audit instruction to run against every authenticated page set. Covers file architecture, stylesheet compliance, JavaScript standards, error handling patterns, database integrity, shared utility usage, behavioural consistency, and copy standards. Run as a report-only step. No changes during audit. |
 | **Reference** | Rules & Instructions v2.9, CLAUDE.md, Page Layout Standard, staxai-auth.css, shared-utils.js |
@@ -26,7 +26,7 @@ This document is updated whenever new platform standards are agreed. Every updat
 
 ## 2. Audit Categories
 
-The audit covers 13 categories. Each category is checked against every file in the page set. Results are reported as Pass, Fail, or N/A per item per file.
+The audit covers 14 categories. Each category is checked against every file in the page set. Results are reported as Pass, Fail, or N/A per item per file.
 
 ### Category 1 — File Architecture
 
@@ -72,6 +72,9 @@ The audit covers 13 categories. Each category is checked against every file in t
 - No hex colour values in JS. All colours read from the stylesheet at runtime via getComputedStyle if needed.
 - No JS hover bindings or visual state assignments via element.style. All hover states defined in CSS.
 - staxai-auth.css loads before the page style block — the stylesheet always wins the cascade for shared classes.
+- Uses existing platform components instead of custom equivalents. FAIL if the tool creates custom button, pill, navigation, or card classes when platform equivalents exist in staxai-auth.css (e.g. .btn-primary, .btn-outline, .filter-pill, .profile-nav-chip, .profile-section-card, .ptab). Before creating any new CSS class, grep staxai-auth.css for an existing component that serves the same purpose.
+- No shared components in page style blocks. FAIL if a CSS component used by more than one page is defined in a page-local style block instead of staxai-auth.css. Components used by multiple pages must be in the shared stylesheet.
+- Every platform class referenced in HTML or JS must be verified to exist in staxai-auth.css before use. Run grep against the stylesheet to confirm. Do not assume a class exists based on another page's local styles — page-local CSS is not available to other pages.
 
 ### Category 6 — JavaScript Standards
 
@@ -86,6 +89,7 @@ The audit covers 13 categories. Each category is checked against every file in t
 - JS syntax valid — confirmed with node --check.
 - Apostrophes in JS strings handled correctly — escaped or using double-quoted outer strings.
 - No hardcoded industry, trade, or business-type assumptions in prompts, labels, or data models.
+- No custom interactive behaviours that don't exist on reference platform pages. FAIL if the tool adds visual state changes (e.g. colour progression on tabs, done states, preview text in buttons) that are not present on comparable platform pages. Check against the reference page specified for visual consistency.
 
 ### Category 7 — Error Handling Standard
 
@@ -161,6 +165,13 @@ This category applies to confirmed mobile-capable pages only. N/A for desktop-on
 - All ORDER BY column references (.order()) exist in their respective tables.
 - No queries attempt to access columns that were renamed, removed, or never existed in the schema.
 
+### Category 14 — Component Standards
+
+- Platform component verification. Before referencing any platform class in HTML or JS, the auditor must confirm it exists in staxai-auth.css by searching the file directly. Do not rely on class names seen in other page HTML files — those may be page-local CSS. Every class assumed to come from the stylesheet must have a confirmed match in the stylesheet.
+- Approval required for custom CSS creation. Any new CSS class that does not exist in staxai-auth.css requires explicit owner approval before creation. The audit must flag every page-local CSS class and confirm it has no equivalent in the stylesheet. If an equivalent exists, the page must use the stylesheet class.
+- Reference page specified for visual consistency. Every tool page audit must name one existing platform page as its visual reference (e.g. "matches news-digest.html" or "matches content-library.html Business Profile"). The auditor must visually compare navigation, buttons, pills, cards, and form inputs between the tool and its reference page. FAIL if any component renders differently from the reference page when using the same platform class.
+- Custom class count reported. The audit must count and report the total number of page-local CSS classes (classes defined in the page style block, not in staxai-auth.css). This count is tracked over time. Any increase between audit versions requires justification.
+
 ---
 
 ## 3. Audit Instruction Template
@@ -194,6 +205,7 @@ The following table lists the files to include for each page set audit. Always i
 | Dashboard | All frontend files: dashboard.html, dashboard-data.js, dashboard-widgets.js. All backend API files that interact with dashboard data. |
 | Account | All frontend files: account.html, account-logic.js. All backend API files that interact with account/user management data. |
 | Panel Auth | All frontend files: panel-auth.html. All backend API files related to panel authentication and tool activation. |
+| Strategic Plan | All frontend files: strategic-plan.html, strategic-plan-logic.js, strategic-plan-data.js. All backend API files: api/strategic-plan-generate.js, api/strategic-plan-load-context.js. Reference page: content-library.html Business Profile section. |
 
 ---
 
@@ -226,3 +238,4 @@ New items discovered during a fix session that should have been caught by the au
 | v1.2 — April 2026 | Added Category 13 — Database Integrity. All database table names and column names referenced in code must exist in the actual Supabase schema. Covers .select(), .eq(), .update(), .insert(), .upsert(), and data property access patterns. Prevents schema/code mismatches that cause runtime errors. Total categories increased from 12 to 13. |
 | v1.3 — April 2026 | Updated Page Sets to include all backend API files for comprehensive coverage. Each tool audit now includes both frontend files and all related API endpoints that interact with that tool's data. Prevents schema mismatches in backend code that were previously missed. |
 | v1.4 — April 2026 | Restored Categories 1-12 that were accidentally dropped in v1.2. The v1.2 update replaced the entire category list with only the new Category 13 instead of adding to the existing categories. This version merges: Categories 1-12 from v1.1 (including the corrected .tab-nav/.ptab/.ptab-content pattern), Category 13 from v1.2, and the expanded Page Sets from v1.3. All 13 categories and 90 audit items now present. |
+| v1.5 — April 2026 | Strengthened audit to catch component reuse violations discovered during the Strategic Plan tool rebuild. Category 5 (Stylesheet Compliance): added 3 new checks — must use existing platform components instead of custom equivalents, no shared components in page-local style blocks, and must verify platform classes exist in staxai-auth.css before referencing them. Category 6 (JavaScript Standards): added check for custom interactive behaviours not present on reference platform pages. New Category 14 (Component Standards): 4 checks covering platform component verification, approval for custom CSS creation, reference page requirement for visual consistency, and custom class count reporting. Added Strategic Plan to Page Sets. Total categories increased from 13 to 14. |
