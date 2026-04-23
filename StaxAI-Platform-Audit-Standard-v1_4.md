@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Document** | StaxAI-Platform-Audit-Standard-v1_4 |
-| **Version** | v1.5 — April 2026 |
+| **Version** | v1.6 — April 2026 |
 | **Status** | Approved — permanent reference |
 | **Purpose** | Structured audit instruction to run against every authenticated page set. Covers file architecture, stylesheet compliance, JavaScript standards, error handling patterns, database integrity, shared utility usage, behavioural consistency, and copy standards. Run as a report-only step. No changes during audit. |
 | **Reference** | Rules & Instructions v2.9, CLAUDE.md, Page Layout Standard, staxai-auth.css, shared-utils.js |
@@ -26,7 +26,7 @@ This document is updated whenever new platform standards are agreed. Every updat
 
 ## 2. Audit Categories
 
-The audit covers 14 categories. Each category is checked against every file in the page set. Results are reported as Pass, Fail, or N/A per item per file.
+The audit covers 15 categories. Each category is checked against every file in the page set. Results are reported as Pass, Fail, or N/A per item per file.
 
 ### Category 1 — File Architecture
 
@@ -172,6 +172,18 @@ This category applies to confirmed mobile-capable pages only. N/A for desktop-on
 - Reference page specified for visual consistency. Every tool page audit must name one existing platform page as its visual reference (e.g. "matches news-digest.html" or "matches content-library.html Business Profile"). The auditor must visually compare navigation, buttons, pills, cards, and form inputs between the tool and its reference page. FAIL if any component renders differently from the reference page when using the same platform class.
 - Custom class count reported. The audit must count and report the total number of page-local CSS classes (classes defined in the page style block, not in staxai-auth.css). This count is tracked over time. Any increase between audit versions requires justification.
 
+### Category 15 — Module System & Deployment Consistency
+
+This category applies to API files in the api/ directory only. N/A for frontend files.
+
+- All API files use the same module system. The platform standard is ES modules (import/export). No API file should use CommonJS require() or module.exports unless there is a documented Vercel compatibility reason.
+- Import/export patterns are consistent across all API endpoints. Every API file should use `import ... from` for dependencies and `export default async function handler` for the handler. No mixing of `module.exports` with `import` statements within the same file.
+- All npm dependencies used in API files are listed in package.json. No API file should import a package that is not in the dependencies section of package.json.
+- package-lock.json is committed. Without a lock file, Vercel installs non-deterministic dependency versions that may differ from local development.
+- Dependencies that Vercel esbuild cannot bundle correctly are declared in vercel.json using includeFiles. FAIL if an API file imports a complex or dual-format npm package (e.g. docx, sharp, canvas) without a corresponding includeFiles entry in vercel.json. Check by running the function on Vercel — if it fails with "Cannot find module" at runtime, the package needs includeFiles.
+- No use of import.meta outside ES module context. Vercel serverless functions may not support import.meta even in files using import/export syntax. Avoid import.meta.url and createRequire patterns unless verified to work on Vercel.
+- Environment variable names are consistent across all API files. The platform standard is ANTHROPIC_API_KEY (not CLAUDE_API_KEY), SUPABASE_URL, and SUPABASE_SERVICE_KEY. FAIL if an API file uses a non-standard env var name for a service that already has an established name in other API files.
+
 ---
 
 ## 3. Audit Instruction Template
@@ -239,3 +251,4 @@ New items discovered during a fix session that should have been caught by the au
 | v1.3 — April 2026 | Updated Page Sets to include all backend API files for comprehensive coverage. Each tool audit now includes both frontend files and all related API endpoints that interact with that tool's data. Prevents schema mismatches in backend code that were previously missed. |
 | v1.4 — April 2026 | Restored Categories 1-12 that were accidentally dropped in v1.2. The v1.2 update replaced the entire category list with only the new Category 13 instead of adding to the existing categories. This version merges: Categories 1-12 from v1.1 (including the corrected .tab-nav/.ptab/.ptab-content pattern), Category 13 from v1.2, and the expanded Page Sets from v1.3. All 13 categories and 90 audit items now present. |
 | v1.5 — April 2026 | Strengthened audit to catch component reuse violations discovered during the Strategic Plan tool rebuild. Category 5 (Stylesheet Compliance): added 3 new checks — must use existing platform components instead of custom equivalents, no shared components in page-local style blocks, and must verify platform classes exist in staxai-auth.css before referencing them. Category 6 (JavaScript Standards): added check for custom interactive behaviours not present on reference platform pages. New Category 14 (Component Standards): 4 checks covering platform component verification, approval for custom CSS creation, reference page requirement for visual consistency, and custom class count reporting. Added Strategic Plan to Page Sets. Total categories increased from 13 to 14. |
+| v1.6 — April 2026 | New Category 15 — Module System & Deployment Consistency. Covers: consistent ES module usage across all API files, import/export pattern consistency, npm dependencies listed in package.json, package-lock.json committed, Vercel includeFiles for packages esbuild cannot bundle (e.g. docx), no import.meta in Vercel serverless context, and environment variable naming consistency (ANTHROPIC_API_KEY not CLAUDE_API_KEY). Added after the Strategic Plan tool rebuild exposed a deployment failure caused by the docx package not being bundled correctly by Vercel esbuild — the audit should catch module/deployment issues before they reach production. Total categories increased from 14 to 15. |
