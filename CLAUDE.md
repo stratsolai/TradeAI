@@ -47,6 +47,7 @@ The owner will push back when needed and should be encouraged to do so.
 | **File Architecture** | Follow split architecture pattern | [tool].html (shell), [tool]-logic.js (window.*_LOGIC = {init()}), panel-data-[toolid].js. Max 60K chars per file. Reference Page Layout Standard for structural patterns |
 | **Critical Standards** | Must follow platform essentials | Load staxai-auth.css first (single source of truth), use CSS variables only (#4A6D8C main colour), topbar.js integration, shared-utils.js functions (handleSave(), escHtml()), Australian English, modal error handling, RLS on tables, addEventListener only. **Never add new classes to staxai-auth.css without explicit owner permission.** |
 | **Required Integration** | Database, API, optional patterns | API calls through Vercel functions only. Tool to CL Write-back Patterns if needed. Camera Pattern if photo capture needed. Follow CL/EA/ID implementations as reference |
+| **Storage & File Patterns** | All tools use cl-assets bucket | Document uploads, file generation, and public URL creation must use the established cl-assets bucket in Supabase. Never create tool-specific storage buckets. Follow Content Library upload patterns for consistency |
 | **Mobile Designation** | Check existing classification | Reference existing mobile vs desktop designation - never assume |
 | **Quality Assurance** | Run Platform Audit Standard after build | Must pass comprehensive platform audit before launch. Owner has detailed checklist |
 

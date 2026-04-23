@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Document** | StaxAI-Platform-Audit-Standard-v1_4 |
-| **Version** | v1.6 — April 2026 |
+| **Version** | v1.7 — April 2026 |
 | **Status** | Approved — permanent reference |
 | **Purpose** | Structured audit instruction to run against every authenticated page set. Covers file architecture, stylesheet compliance, JavaScript standards, error handling patterns, database integrity, shared utility usage, behavioural consistency, and copy standards. Run as a report-only step. No changes during audit. |
 | **Reference** | Rules & Instructions v2.9, CLAUDE.md, Page Layout Standard, staxai-auth.css, shared-utils.js |
@@ -40,6 +40,8 @@ The audit covers 15 categories. Each category is checked against every file in t
 - handleSave() is used from shared-utils.js for all Save button operations — never implemented locally.
 - Any function used by 3 or more files lives in shared-utils.js, not duplicated inline (per Rules v2.9 Section 13b).
 - No dead imports, unused requires, or duplicate module-level declarations.
+- All file uploads and document generation use the cl-assets Supabase Storage bucket. No tool-specific buckets. FAIL if any API file references a storage bucket other than cl-assets for file uploads or public URL generation.
+- File storage patterns follow Content Library established patterns — same bucket, same upload options, same public URL approach.
 
 ### Category 2 — Script Load Order
 
@@ -252,3 +254,4 @@ New items discovered during a fix session that should have been caught by the au
 | v1.4 — April 2026 | Restored Categories 1-12 that were accidentally dropped in v1.2. The v1.2 update replaced the entire category list with only the new Category 13 instead of adding to the existing categories. This version merges: Categories 1-12 from v1.1 (including the corrected .tab-nav/.ptab/.ptab-content pattern), Category 13 from v1.2, and the expanded Page Sets from v1.3. All 13 categories and 90 audit items now present. |
 | v1.5 — April 2026 | Strengthened audit to catch component reuse violations discovered during the Strategic Plan tool rebuild. Category 5 (Stylesheet Compliance): added 3 new checks — must use existing platform components instead of custom equivalents, no shared components in page-local style blocks, and must verify platform classes exist in staxai-auth.css before referencing them. Category 6 (JavaScript Standards): added check for custom interactive behaviours not present on reference platform pages. New Category 14 (Component Standards): 4 checks covering platform component verification, approval for custom CSS creation, reference page requirement for visual consistency, and custom class count reporting. Added Strategic Plan to Page Sets. Total categories increased from 13 to 14. |
 | v1.6 — April 2026 | New Category 15 — Module System & Deployment Consistency. Covers: consistent ES module usage across all API files, import/export pattern consistency, npm dependencies listed in package.json, package-lock.json committed, Vercel includeFiles for packages esbuild cannot bundle (e.g. docx), no import.meta in Vercel serverless context, and environment variable naming consistency (ANTHROPIC_API_KEY not CLAUDE_API_KEY). Added after the Strategic Plan tool rebuild exposed a deployment failure caused by the docx package not being bundled correctly by Vercel esbuild — the audit should catch module/deployment issues before they reach production. Total categories increased from 14 to 15. |
+| v1.7 — April 2026 | Category 1 (File Architecture): added 2 new checks — all file uploads must use the cl-assets Supabase Storage bucket (no tool-specific buckets), and file storage patterns must follow Content Library established patterns. Added after the Strategic Plan tool used a non-existent marketing-assets bucket instead of the platform-standard cl-assets bucket. CLAUDE.md also updated with new Storage & File Patterns row in the Platform Development Standards table. |
