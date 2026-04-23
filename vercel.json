@@ -13,6 +13,9 @@
   "functions": {
     "api/ideogram-generate.js": {
       "maxDuration": 60
+    },
+    "api/strategic-plan-generate.js": {
+      "includeFiles": "node_modules/docx/**"
     }
   },
   "crons": [
