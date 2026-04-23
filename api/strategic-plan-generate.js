@@ -8,9 +8,11 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
-import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
-  Header } from 'docx';
+  Header } = require('docx');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
