@@ -62,6 +62,11 @@
         nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
       }
 
+      var hasProfileFields = s.fields.some(function(f) { return f.fromProfile; });
+      var profileNote = hasProfileFields
+        ? '<p class="sp-profile-note">Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</p>'
+        : '';
+
       return '<div class="profile-section-card" id="section-' + s.id + '" style="display:none;">' +
         '<div class="profile-section-header">' +
           '<span class="profile-section-icon">' + s.icon + '</span>' +
@@ -72,6 +77,7 @@
         '</div>' +
         infoBox +
         '<div class="sp-fields">' + fieldsHtml + '</div>' +
+        profileNote +
         '<div class="sp-nav-buttons">' + backBtn + nextBtn + '</div>' +
       '</div>';
     }).join('');
@@ -344,14 +350,6 @@
           el.readOnly = true;
           el.disabled = (el.tagName === 'SELECT');
           el.classList.add('sp-from-profile');
-          var wrapper = el.closest('.sp-field');
-          if (wrapper) {
-            var badge = document.createElement('span');
-            badge.className = 'sp-profile-badge';
-            badge.textContent = 'From Business Profile';
-            var labelEl = wrapper.querySelector('.sp-field-label');
-            if (labelEl) labelEl.appendChild(badge);
-          }
         }
       });
     });
