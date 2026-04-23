@@ -57,14 +57,14 @@
 
       var nextBtn = '';
       if (s.id < sections.length - 1) {
-        nextBtn = '<button class="btn-primary" data-nav="1">Next</button>';
+        nextBtn = '<button class="btn-outline" data-nav="1">Next</button>';
       } else {
-        nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
+        nextBtn = '<button class="btn-outline btn-sp-generate">Generate My Plan</button>';
       }
 
       var hasProfileFields = s.fields.some(function(f) { return f.fromProfile; });
       var profileNote = hasProfileFields
-        ? '<p class="sp-profile-note">Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</p>'
+        ? '<span class="sp-profile-note">Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</span>'
         : '';
 
       return '<div class="profile-section-card" id="section-' + s.id + '" style="display:none;">' +
@@ -77,8 +77,7 @@
         '</div>' +
         infoBox +
         '<div class="sp-fields">' + fieldsHtml + '</div>' +
-        profileNote +
-        '<div class="sp-nav-buttons">' + backBtn + nextBtn + '</div>' +
+        '<div class="sp-nav-buttons">' + profileNote + backBtn + nextBtn + '</div>' +
       '</div>';
     }).join('');
 

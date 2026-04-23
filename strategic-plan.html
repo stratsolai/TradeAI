@@ -110,9 +110,12 @@
     select.sp-from-profile:disabled { opacity: 0.8; }
     .sp-profile-note {
       font-size: var(--note-font-size);
-      color: var(--text-muted);
-      margin-top: 20px;
+      color: var(--text-secondary);
       line-height: var(--note-line-height);
+      background: var(--bg-subtle);
+      padding: 8px 12px;
+      border-radius: var(--btn-radius);
+      margin-right: auto;
     }
 
     /* ─── INPUTS ─── */
@@ -156,16 +159,13 @@
       gap: var(--btn-radius);
     }
 
-    /* ─── NAV BUTTONS (uses platform .btn-primary / .btn-outline) ─── */
+    /* ─── NAV BUTTONS (uses platform .btn-outline) ─── */
     .sp-nav-buttons {
       display: flex;
-      justify-content: space-between;
       align-items: center;
       margin-top: 32px;
       gap: var(--actions-gap);
     }
-    .sp-nav-buttons .btn-primary,
-    .sp-nav-buttons .btn-sp-generate { margin-left: auto; }
     .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ─── RESULTS ─── */
@@ -445,10 +445,10 @@
     }
 
     @media (max-width: 600px) {
-      .sp-nav-buttons { flex-direction: column; }
-      .sp-nav-buttons .btn-primary,
-      .sp-nav-buttons .btn-sp-generate,
-      .sp-nav-buttons .btn-outline { width: 100%; margin-left: 0; justify-content: center; }
+      .sp-nav-buttons { flex-wrap: wrap; }
+      .sp-nav-buttons .btn-outline,
+      .sp-nav-buttons .btn-sp-generate { width: 100%; justify-content: center; }
+      .sp-profile-note { order: 3; width: 100%; margin-right: 0; }
       .sp-input, .sp-textarea, .sp-select { font-size: var(--input-font-size-mobile); }
     }
 
