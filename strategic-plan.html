@@ -43,17 +43,37 @@
     .sp-progress-current { background: var(--orange); }
     .sp-progress-pending { background: var(--border); }
 
-    /* ─── SECTION NAV CHIPS (reuses CL Business Profile .profile-nav-chip pattern) ─── */
+    /* ─── SECTION NAV CHIPS (matches CL Business Profile .profile-nav-chip pattern) ─── */
     .profile-nav-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: var(--card-padding); }
+    .profile-nav-chip { padding: 10px 16px; border-radius: var(--btn-radius); border: 1px solid var(--border); border-left: 4px solid var(--blue); background: var(--white); color: var(--text); font-size: var(--status-font-size); font-weight: var(--font-weight-semibold); font-family: var(--body-font); cursor: pointer; transition: all var(--btn-transition); box-shadow: 0 1px 4px var(--shadow-card); white-space: nowrap; }
+    .profile-nav-chip:hover { box-shadow: 0 2px 8px var(--shadow-hover); }
+    .profile-nav-chip.active { font-weight: var(--heading-lg-weight); box-shadow: 0 2px 8px var(--shadow-hover); }
+    .profile-nav-chip[data-ptab="identity"] { border-left-color: var(--blue); }
+    .profile-nav-chip[data-ptab="location"] { border-left-color: var(--orange); }
+    .profile-nav-chip[data-ptab="details"] { border-left-color: var(--green); }
+    .profile-nav-chip[data-ptab="marketing"] { border-left-color: var(--purple); }
     .profile-nav-chip[data-ptab="operations"] { border-left-color: var(--teal); }
     .profile-nav-chip[data-ptab="risk"] { border-left-color: var(--red); }
+    .profile-nav-chip[data-ptab="identity"]:hover,
+    .profile-nav-chip[data-ptab="identity"].active { background: var(--blue-light); }
+    .profile-nav-chip[data-ptab="location"]:hover,
+    .profile-nav-chip[data-ptab="location"].active { background: var(--orange-light); }
+    .profile-nav-chip[data-ptab="details"]:hover,
+    .profile-nav-chip[data-ptab="details"].active { background: var(--green-light); }
+    .profile-nav-chip[data-ptab="marketing"]:hover,
+    .profile-nav-chip[data-ptab="marketing"].active { background: var(--purple-hover-bg); }
     .profile-nav-chip[data-ptab="operations"]:hover,
     .profile-nav-chip[data-ptab="operations"].active { background: var(--teal-light); }
     .profile-nav-chip[data-ptab="risk"]:hover,
     .profile-nav-chip[data-ptab="risk"].active { background: var(--red-light); }
     .profile-nav-chip.done { background: var(--blue-hover-bg); color: var(--blue); }
 
-    /* ─── SECTION CARD (reuses CL Business Profile .profile-section-card pattern) ─── */
+    /* ─── SECTION CARD (matches CL Business Profile .profile-section-card pattern) ─── */
+    .profile-section-card { background: var(--white); border-radius: var(--card-radius); border: 1px solid var(--border); border-left: 4px solid var(--blue); padding: 32px; margin-bottom: 24px; }
+    .profile-section-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+    .profile-section-icon { font-size: 22px; line-height: 1; margin-top: 2px; }
+    .profile-section-title { font-size: var(--section-title-font-size); font-weight: var(--font-weight-semibold); color: var(--text); margin: 0 0 4px; font-family: var(--body-font); }
+    .profile-section-subtitle { font-size: var(--note-font-size); color: var(--text-muted); margin: 0; }
 
     /* ─── INFO BOX ─── */
     .sp-info-box {
