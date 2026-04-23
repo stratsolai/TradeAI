@@ -100,14 +100,6 @@
       display: none;
     }
 
-    /* ─── PROFILE-SOURCED FIELDS (read-only) ─── */
-    .sp-from-profile {
-      background: var(--blue-light);
-      color: var(--text-secondary);
-      cursor: default;
-    }
-    .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
-    select.sp-from-profile:disabled { opacity: 0.8; }
     .sp-profile-note {
       font-size: var(--note-font-size);
       color: var(--text-secondary);
@@ -151,6 +143,15 @@
       cursor: pointer;
     }
     .sp-input-error { border-color: var(--red); }
+
+    /* ─── PROFILE-SOURCED FIELDS (after inputs so it wins the cascade) ─── */
+    .sp-from-profile {
+      background: var(--blue-light);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
+    select.sp-from-profile:disabled { opacity: 0.8; }
 
     /* ─── FORM SELECTION PILLS (uses platform .filter-pill from staxai-auth.css) ─── */
     .sp-chip-group {
