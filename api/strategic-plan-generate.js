@@ -446,17 +446,17 @@ export default async function handler(req, res) {
     var docxContentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 
     var { error: e1 } = await supabase.storage
-      .from('marketing-assets')
+      .from('cl-assets')
       .upload(strategyStoragePath, strategyBuffer, { contentType: docxContentType, upsert: true });
     if (e1) throw new Error('Strategy upload failed: ' + e1.message);
 
     var { error: e2 } = await supabase.storage
-      .from('marketing-assets')
+      .from('cl-assets')
       .upload(opsStoragePath, opsBuffer, { contentType: docxContentType, upsert: true });
     if (e2) throw new Error('Ops upload failed: ' + e2.message);
 
-    var strategyUrl = supabase.storage.from('marketing-assets').getPublicUrl(strategyStoragePath).data.publicUrl;
-    var opsUrl = supabase.storage.from('marketing-assets').getPublicUrl(opsStoragePath).data.publicUrl;
+    var strategyUrl = supabase.storage.from('cl-assets').getPublicUrl(strategyStoragePath).data.publicUrl;
+    var opsUrl = supabase.storage.from('cl-assets').getPublicUrl(opsStoragePath).data.publicUrl;
 
     // 4. Write to content_library (Pattern B — tool-generated, always approved)
     var clRows = [
