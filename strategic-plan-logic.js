@@ -32,10 +32,10 @@
     var sections = window.SP_SECTIONS;
     if (!sections || !sections.length) return;
 
-    var chipColors = ['c-blue', 'c-orange', 'c-green', 'c-purple', 'c-teal', 'c-red'];
+    var chipTabs = ['identity', 'location', 'details', 'marketing', 'operations', 'risk'];
     var navHtml = sections.map(function(s, i) {
       var shortTitle = s.title.split('. ')[1] || s.title;
-      return '<button class="sp-nav-chip ' + chipColors[i % chipColors.length] + '" data-section="' + i + '">' + (i + 1) + '. ' + _esc(shortTitle) + '</button>';
+      return '<button class="profile-nav-chip" data-ptab="' + chipTabs[i % chipTabs.length] + '" data-section="' + i + '">' + (i + 1) + '. ' + _esc(shortTitle) + '</button>';
     }).join('');
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) navEl.innerHTML = navHtml;
@@ -53,23 +53,23 @@
         : '';
 
       var backBtn = s.id > 0
-        ? '<button class="btn-sp-back" data-nav="-1">Back</button>'
+        ? '<button class="btn-outline" data-nav="-1">Back</button>'
         : '';
 
       var nextBtn = '';
       if (s.id < sections.length - 1) {
         var nextTitle = sections[s.id + 1].title.split('. ')[1] || sections[s.id + 1].title;
-        nextBtn = '<button class="btn-sp-next" data-nav="1">Next: ' + _esc(nextTitle) + '</button>';
+        nextBtn = '<button class="btn-primary" data-nav="1">Next: ' + _esc(nextTitle) + '</button>';
       } else {
-        nextBtn = '<button class="btn-sp-generate">Generate My Plan</button>';
+        nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
       }
 
-      return '<div class="sp-section" id="section-' + s.id + '" style="display:none;">' +
-        '<div class="sp-section-header">' +
-          '<span class="sp-section-icon">' + s.icon + '</span>' +
+      return '<div class="profile-section-card" id="section-' + s.id + '" style="display:none;">' +
+        '<div class="profile-section-header">' +
+          '<span class="profile-section-icon">' + s.icon + '</span>' +
           '<div>' +
-            '<h2 class="sp-section-title">' + _esc(s.title) + '</h2>' +
-            '<p class="sp-section-subtitle">' + _esc(s.subtitle) + '</p>' +
+            '<h2 class="profile-section-title">' + _esc(s.title) + '</h2>' +
+            '<p class="profile-section-subtitle">' + _esc(s.subtitle) + '</p>' +
           '</div>' +
         '</div>' +
         infoBox +
@@ -124,7 +124,7 @@
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) {
       navEl.addEventListener('click', function(e) {
-        var chip = e.target.closest('.sp-nav-chip');
+        var chip = e.target.closest('.profile-nav-chip');
         if (chip && chip.dataset.section !== undefined) {
           goToSection(parseInt(chip.dataset.section, 10));
         }
@@ -263,9 +263,9 @@
 
     currentSection = index;
 
-    document.querySelectorAll('.sp-nav-chip').forEach(function(c, i) {
-      c.classList.toggle('sp-nav-chip-active', i === index);
-      c.classList.toggle('sp-nav-chip-done', i < index);
+    document.querySelectorAll('.profile-nav-chip').forEach(function(c, i) {
+      c.classList.toggle('active', i === index);
+      c.classList.toggle('done', i < index);
     });
 
     updateProgress(index);

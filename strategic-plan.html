@@ -43,67 +43,17 @@
     .sp-progress-current { background: var(--orange); }
     .sp-progress-pending { background: var(--border); }
 
-    /* ─── SECTION NAV CHIPS ─── */
-    .sp-section-nav {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--btn-radius);
-      margin-bottom: var(--card-padding);
-    }
-    .sp-nav-chip {
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      background: var(--white);
-      color: var(--text);
-      font-size: var(--label-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: all 0.2s;
-      box-shadow: 0 1px 4px var(--shadow-card);
-      white-space: nowrap;
-    }
-    .sp-nav-chip.c-blue   { border-left-color: var(--blue); }
-    .sp-nav-chip.c-orange { border-left-color: var(--orange); }
-    .sp-nav-chip.c-green  { border-left-color: var(--green); }
-    .sp-nav-chip.c-purple { border-left-color: var(--purple); }
-    .sp-nav-chip.c-teal   { border-left-color: var(--teal); }
-    .sp-nav-chip.c-red    { border-left-color: var(--red); }
-    .sp-nav-chip:hover { opacity: 0.85; }
-    .sp-nav-chip-active { font-weight: var(--heading-lg-weight); box-shadow: 0 2px 8px var(--shadow-hover); }
-    .sp-nav-chip-done { background: var(--blue-hover-bg); color: var(--blue); }
+    /* ─── SECTION NAV CHIPS (reuses CL Business Profile .profile-nav-chip pattern) ─── */
+    .profile-nav-chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: var(--card-padding); }
+    .profile-nav-chip[data-ptab="operations"] { border-left-color: var(--teal); }
+    .profile-nav-chip[data-ptab="risk"] { border-left-color: var(--red); }
+    .profile-nav-chip[data-ptab="operations"]:hover,
+    .profile-nav-chip[data-ptab="operations"].active { background: var(--teal-light); }
+    .profile-nav-chip[data-ptab="risk"]:hover,
+    .profile-nav-chip[data-ptab="risk"].active { background: var(--red-light); }
+    .profile-nav-chip.done { background: var(--blue-hover-bg); color: var(--blue); }
 
-    /* ─── SECTION CARD ─── */
-    .sp-section {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      padding: 32px;
-      margin-bottom: var(--card-padding);
-    }
-    .sp-section-header {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      margin-bottom: var(--card-padding);
-    }
-    .sp-section-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
-    .sp-section-title {
-      font-family: var(--heading-font);
-      font-size: var(--heading-lg-size);
-      font-weight: 800;
-      color: var(--text);
-      line-height: 1.2;
-    }
-    .sp-section-subtitle {
-      font-size: var(--btn-font-size);
-      color: var(--text-muted);
-      margin-top: 4px;
-      line-height: var(--note-line-height);
-    }
+    /* ─── SECTION CARD (reuses CL Business Profile .profile-section-card pattern) ─── */
 
     /* ─── INFO BOX ─── */
     .sp-info-box {
@@ -218,7 +168,7 @@
       color: var(--white);
     }
 
-    /* ─── NAV BUTTONS ─── */
+    /* ─── NAV BUTTONS (uses platform .btn-primary / .btn-outline) ─── */
     .sp-nav-buttons {
       display: flex;
       justify-content: space-between;
@@ -226,35 +176,8 @@
       margin-top: 32px;
       gap: var(--actions-gap);
     }
-    .btn-sp-back {
-      padding: var(--btn-padding);
-      background: var(--white);
-      color: var(--blue);
-      border: 1px solid var(--blue);
-      border-radius: var(--btn-radius);
-      font-size: var(--section-title-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .btn-sp-back:hover { background: var(--blue-hover-bg); }
-    .btn-sp-next,
-    .btn-sp-generate {
-      padding: 12px 32px;
-      background: var(--blue);
-      color: var(--white);
-      border: none;
-      border-radius: var(--btn-radius);
-      font-size: var(--section-title-font-size);
-      font-weight: var(--heading-lg-weight);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background 0.2s;
-      margin-left: auto;
-    }
-    .btn-sp-next:hover,
-    .btn-sp-generate:hover { background: var(--blue-accent-hover); }
+    .sp-nav-buttons .btn-primary,
+    .sp-nav-buttons .btn-sp-generate { margin-left: auto; }
     .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ─── RESULTS ─── */
@@ -529,19 +452,20 @@
       .sp-field:has(textarea),
       .sp-field:has(.sp-chip-group),
       .sp-field:has(.sp-field-help) { grid-column: 1; }
-      .sp-section { padding: var(--card-padding) 20px; }
+      .profile-section-card { padding: var(--card-padding) 20px; }
       .sp-download-links { flex-direction: column; }
     }
 
     @media (max-width: 600px) {
       .sp-nav-buttons { flex-direction: column; }
-      .btn-sp-next, .btn-sp-generate { width: 100%; margin-left: 0; }
-      .btn-sp-back { width: 100%; }
+      .sp-nav-buttons .btn-primary,
+      .sp-nav-buttons .btn-sp-generate,
+      .sp-nav-buttons .btn-outline { width: 100%; margin-left: 0; justify-content: center; }
       .sp-input, .sp-textarea, .sp-select { font-size: var(--input-font-size-mobile); }
     }
 
     @media print {
-      .topbar, .sp-section-nav, .sp-progress-wrap, #sp-cycle-banner,
+      .topbar, .profile-nav-chips, .sp-progress-wrap, #sp-cycle-banner,
       #sp-version-history, .btn-sp-print, .btn-sp-download, .btn-sp-add-task,
       .sp-task-delete, .sp-task-priority, .sp-regen-guidance { display: none !important; }
       body { background: var(--white); color: #000; }
@@ -609,8 +533,8 @@
     <div class="sp-progress-bar" id="sp-progress-bar"></div>
   </div>
 
-  <!-- Section navigation chips -->
-  <div class="sp-section-nav" id="sp-section-nav"></div>
+  <!-- Section navigation chips (CL Business Profile pattern) -->
+  <div class="profile-nav-chips" id="sp-section-nav"></div>
 
   <!-- Interview sections — rendered dynamically by SP_LOGIC -->
   <div id="sp-sections-container"></div>
