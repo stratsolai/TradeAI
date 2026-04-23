@@ -6,6 +6,9 @@
 // Each field includes:
 //   apiKey    — the property name the API expects in the planData payload
 //   valueType — "string" | "array" | "number" (controls how collectSectionData builds the payload)
+//   profileKey — column name in profiles table for prefill (single column)
+//   profileKeys — array of column names for composite prefill (e.g. location from suburb + state)
+//   fromProfile — true if this field is populated from Business Profile and should be read-only
 
 window.SP_SECTIONS = [
 
@@ -16,16 +19,17 @@ window.SP_SECTIONS = [
     id: 0,
     icon: "\u{1F4CB}",
     title: "1. Business Snapshot",
-    subtitle: "Basic details about your business. We've pre-filled what we know - just confirm or update.",
+    subtitle: "These details come from your Business Profile. If anything needs updating, edit your Business Profile in the Content Library.",
     fields: [
-      { id: "s0-business-name", apiKey: "businessName", valueType: "string", profileKey: "business_name", label: "Business Name", type: "text", required: true, placeholder: "e.g. Smith Plumbing Pty Ltd, Apex Legal Group, Chen Advisory" },
-      { id: "s0-abn", apiKey: "abn", valueType: "string", profileKey: "abn", label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
-      { id: "s0-structure", apiKey: "structure", valueType: "string", profileKey: "business_structure", label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "sole-trader", label: "Sole Trader" },{ value: "partnership", label: "Partnership" },{ value: "company", label: "Pty Ltd Company" },{ value: "trust", label: "Trust" }] },
-      { id: "s0-industry", apiKey: "industry", valueType: "string", profileKey: "industry", label: "Industry / Profession", type: "text", required: true, placeholder: "e.g. Plumbing, Commercial Law, Accounting & Advisory, Landscaping" },
-      { id: "s0-years", apiKey: "yearsInBusiness", valueType: "string", profileKey: "years_in_business", label: "Years in Business", type: "text", required: false, placeholder: "e.g. 8" },
-      { id: "s0-location", apiKey: "location", valueType: "string", profileKey: "location", label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
-      { id: "s0-team-size", apiKey: "teamSize", valueType: "string", profileKey: "team_size", label: "Team Size", labelHint: "(including yourself)", type: "text", required: false, placeholder: "e.g. 4" },
-      { id: "s0-licences", apiKey: "licences", valueType: "string", profileKey: "licences", label: "Licences & Certifications", type: "text", required: false, placeholder: "e.g. A-Grade Electrician Licence, QBCC, Legal Practising Certificate" },
+      { id: "s0-business-name", apiKey: "businessName", valueType: "string", profileKey: "business_name", fromProfile: true, label: "Business Name", type: "text", required: true, placeholder: "e.g. Smith Plumbing Pty Ltd, Apex Legal Group, Chen Advisory" },
+      { id: "s0-trading-name", apiKey: "tradingName", valueType: "string", profileKey: "trading_name", fromProfile: true, label: "Trading Name", labelHint: "(if different from legal name)", type: "text", required: false, placeholder: "e.g. Smith's Plumbing" },
+      { id: "s0-abn", apiKey: "abn", valueType: "string", profileKey: "abn", fromProfile: true, label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
+      { id: "s0-structure", apiKey: "structure", valueType: "string", profileKey: "business_structure", fromProfile: true, label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "Sole Trader", label: "Sole Trader" },{ value: "Partnership", label: "Partnership" },{ value: "Company", label: "Company" },{ value: "Trust", label: "Trust" },{ value: "Other", label: "Other" }] },
+      { id: "s0-industry", apiKey: "industry", valueType: "string", profileKey: "industry", fromProfile: true, label: "Industry / Profession", type: "text", required: true, placeholder: "e.g. Plumbing, Commercial Law, Accounting & Advisory, Landscaping" },
+      { id: "s0-years", apiKey: "yearsInBusiness", valueType: "number", profileKey: "years_in_business", fromProfile: true, label: "Years in Business", type: "text", required: false, placeholder: "e.g. 8" },
+      { id: "s0-location", apiKey: "location", valueType: "string", profileKeys: ["address_suburb", "address_state"], fromProfile: true, label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
+      { id: "s0-team-size", apiKey: "teamSize", valueType: "string", profileKey: "employee_range", fromProfile: true, label: "Team Size", type: "text", required: false, placeholder: "e.g. 4 or 2-5" },
+      { id: "s0-licences", apiKey: "licences", valueType: "string", label: "Licences & Certifications", type: "text", required: false, placeholder: "e.g. A-Grade Electrician Licence, QBCC, Legal Practising Certificate" },
       { id: "s0-key-person", apiKey: "keyPersonDependency", valueType: "string", label: "Key Person Dependency", labelHint: "(optional)", type: "chip-single", group: "key-person-chips", required: false, helpText: "If you couldn't work for 2 weeks, what would happen to the business?", options: [{ value: "runs-fine", label: "Business keeps running" },{ value: "slows-down", label: "It would slow down" },{ value: "would-stop", label: "It would stop completely" }] }
     ]
   },
@@ -39,12 +43,14 @@ window.SP_SECTIONS = [
     title: "2. What You Do & Who For",
     subtitle: "Describe your services and customers. This is the heart of your business case.",
     fields: [
-      { id: "s1-services", apiKey: "services", valueType: "string", label: "Core Services", labelHint: "(what do you mainly do?)", type: "textarea", required: false, placeholder: "e.g. Residential plumbing repairs, commercial fit-outs, strategic advisory retainers, tax compliance and planning" },
+      { id: "s1-services", apiKey: "services", valueType: "string", profileKey: "services", fromProfile: true, label: "Core Services", labelHint: "(from your Business Profile)", type: "textarea", required: false, placeholder: "e.g. Residential plumbing repairs, commercial fit-outs, strategic advisory retainers, tax compliance and planning" },
+      { id: "s1-products", apiKey: "products", valueType: "string", profileKey: "products", fromProfile: true, label: "Products Offered", labelHint: "(from your Business Profile, optional)", type: "textarea", required: false, placeholder: "e.g. Branded merchandise, custom fabrication, software licences" },
       { id: "s1-customers", apiKey: "targetCustomers", valueType: "array", label: "Target Customers", type: "chip-multi", group: "customer-chips", required: false, options: [{ value: "homeowners", label: "Homeowners" },{ value: "commercial", label: "Commercial" },{ value: "builders-devs", label: "Builders / Developers" },{ value: "industrial", label: "Industrial" },{ value: "strata", label: "Strata / Property Managers" },{ value: "retail-hosp", label: "Retail / Hospitality" },{ value: "corporate", label: "Corporate / Enterprise" },{ value: "government", label: "Government / Council" },{ value: "professional-svcs", label: "Professional Services" },{ value: "nfp", label: "Not-for-Profit / Community" }] },
       { id: "s1-service-area", apiKey: "serviceArea", valueType: "string", label: "Service Area", type: "text", required: false, placeholder: "e.g. All of Greater Melbourne, within 50km of Brisbane CBD, National" },
-      { id: "s1-differentiators", apiKey: "differentiators", valueType: "string", label: "What makes you different from your competitors?", type: "textarea", required: false, placeholder: "e.g. 24/7 emergency service, 15+ years experience, fixed-fee engagements" },
+      { id: "s1-differentiators", apiKey: "differentiators", valueType: "string", profileKey: "marketing_theme_differentiators", fromProfile: true, label: "What makes you different from your competitors?", labelHint: "(from your Marketing Theme)", type: "textarea", required: false, placeholder: "e.g. 24/7 emergency service, 15+ years experience, fixed-fee engagements" },
       { id: "s1-competitors", apiKey: "competitors", valueType: "string", label: "Your top 3 competitors", labelHint: "(optional)", type: "text", required: false, placeholder: "e.g. Smith & Co, FastFix, MasterPlumb" },
-      { id: "s1-best-service", apiKey: "mostProfitableService", valueType: "string", label: "Most profitable service or product", labelHint: "(optional)", type: "text", required: false, placeholder: "e.g. Emergency callouts, strategic advisory retainers" }
+      { id: "s1-best-service", apiKey: "mostProfitableService", valueType: "string", label: "Most profitable service or product", labelHint: "(optional)", type: "text", required: false, placeholder: "e.g. Emergency callouts, strategic advisory retainers" },
+      { id: "s1-website", apiKey: "websiteUrl", valueType: "string", profileKey: "website_urls", fromProfile: true, label: "Website", labelHint: "(from your Business Profile)", type: "text", required: false, placeholder: "e.g. https://yoursite.com.au" }
     ]
   },
 

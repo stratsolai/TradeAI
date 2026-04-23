@@ -100,6 +100,26 @@
       display: none;
     }
 
+    /* ─── PROFILE-SOURCED FIELDS (read-only) ─── */
+    .sp-from-profile {
+      background: var(--bg-subtle);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
+    select.sp-from-profile:disabled { opacity: 0.8; }
+    .sp-profile-badge {
+      display: inline-block;
+      margin-left: 8px;
+      padding: 2px 8px;
+      border-radius: var(--badge-radius);
+      background: var(--blue-light);
+      color: var(--blue);
+      font-size: var(--badge-font-size);
+      font-weight: 500;
+      vertical-align: middle;
+    }
+
     /* ─── INPUTS ─── */
     .sp-input,
     .sp-textarea,

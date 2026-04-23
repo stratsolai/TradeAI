@@ -34,6 +34,7 @@ async function generatePlanContent(planData, clContext, biInsights) {
   var userPrompt = 'Generate comprehensive business plan content for this business:\n\n' +
     'BUSINESS DATA:\n' +
     '- Name: ' + (planData.businessName || 'Not provided') + '\n' +
+    '- Trading Name: ' + (planData.tradingName || 'Same as above') + '\n' +
     '- ABN: ' + (planData.abn || 'Not provided') + '\n' +
     '- Structure: ' + (planData.structure || 'Not specified') + '\n' +
     '- Industry/Trade: ' + (planData.industry || 'Not specified') + '\n' +
@@ -42,6 +43,8 @@ async function generatePlanContent(planData, clContext, biInsights) {
     '- Team size: ' + (planData.teamSize || 'Not specified') + '\n' +
     '- Licences: ' + (planData.licences || 'Not specified') + '\n' +
     '- Services: ' + (planData.services || 'Not specified') + '\n' +
+    '- Products: ' + (planData.products || 'Not specified') + '\n' +
+    '- Website: ' + (planData.websiteUrl || 'Not provided') + '\n' +
     '- Target customers: ' + (Array.isArray(planData.targetCustomers) ? planData.targetCustomers.join(', ') : (planData.targetCustomers || 'Not specified')) + '\n' +
     '- Service area: ' + (planData.serviceArea || 'Not specified') + '\n' +
     '- Differentiators: ' + (planData.differentiators || 'Not specified') + '\n' +

@@ -320,9 +320,38 @@
   function prefillFromProfile(profile) {
     window.SP_SECTIONS.forEach(function(section) {
       section.fields.forEach(function(field) {
-        if (field.profileKey && profile[field.profileKey]) {
-          var el = document.getElementById(field.id);
-          if (el) el.value = profile[field.profileKey];
+        var val = null;
+
+        if (field.profileKeys && Array.isArray(field.profileKeys)) {
+          var parts = field.profileKeys.map(function(k) { return profile[k] || ''; }).filter(Boolean);
+          val = parts.join(', ');
+        } else if (field.profileKey) {
+          var raw = profile[field.profileKey];
+          if (field.profileKey === 'website_urls' && Array.isArray(raw)) {
+            val = raw[0] || '';
+          } else {
+            val = raw;
+          }
+        }
+
+        if (!val) return;
+        var el = document.getElementById(field.id);
+        if (!el) return;
+
+        el.value = val;
+
+        if (field.fromProfile) {
+          el.readOnly = true;
+          el.disabled = (el.tagName === 'SELECT');
+          el.classList.add('sp-from-profile');
+          var wrapper = el.closest('.sp-field');
+          if (wrapper) {
+            var badge = document.createElement('span');
+            badge.className = 'sp-profile-badge';
+            badge.textContent = 'From Business Profile';
+            var labelEl = wrapper.querySelector('.sp-field-label');
+            if (labelEl) labelEl.appendChild(badge);
+          }
         }
       });
     });
