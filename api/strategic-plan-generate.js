@@ -8,6 +8,9 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+  HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
+  Header } from 'docx';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -157,10 +160,6 @@ async function generatePlanContent(planData, clContext, biInsights) {
 // ── DOCX GENERATORS (docx package in dependencies) ──────────────────────────
 
 async function generateStrategyDoc(planData, content) {
-  var { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-    HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
-    Header } = await import('docx');
-
   var today = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
 
   var BLUE = '1A5490';
@@ -290,9 +289,6 @@ async function generateStrategyDoc(planData, content) {
 }
 
 async function generateOpsDoc(planData, content) {
-  var { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-    HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType } = await import('docx');
-
   var today = new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' });
 
   var BLUE = '1A5490';
