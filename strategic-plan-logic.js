@@ -32,10 +32,9 @@
     var sections = window.SP_SECTIONS;
     if (!sections || !sections.length) return;
 
-    var chipTabs = ['identity', 'location', 'details', 'marketing', 'operations', 'risk'];
     var navHtml = sections.map(function(s, i) {
       var shortTitle = s.title.split('. ')[1] || s.title;
-      return '<button class="profile-nav-chip" data-ptab="' + chipTabs[i % chipTabs.length] + '" data-section="' + i + '">' + (i + 1) + '. ' + _esc(shortTitle) + '</button>';
+      return '<button class="profile-nav-chip" data-section="' + i + '">' + (i + 1) + '. ' + _esc(shortTitle) + '</button>';
     }).join('');
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) navEl.innerHTML = navHtml;
@@ -58,8 +57,7 @@
 
       var nextBtn = '';
       if (s.id < sections.length - 1) {
-        var nextTitle = sections[s.id + 1].title.split('. ')[1] || sections[s.id + 1].title;
-        nextBtn = '<button class="btn-primary" data-nav="1">Next: ' + _esc(nextTitle) + '</button>';
+        nextBtn = '<button class="btn-primary" data-nav="1">Next</button>';
       } else {
         nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
       }
@@ -109,7 +107,7 @@
       input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
       var chips = (field.options || []).map(function(o) {
-        return '<div class="sp-chip" data-value="' + _esc(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + _esc(o.label) + '</div>';
+        return '<div class="filter-pill" data-value="' + _esc(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + _esc(o.label) + '</div>';
       }).join('');
       input = '<div class="sp-chip-group" id="' + field.id + '-chips">' + chips + '</div>';
       input += '<input type="hidden" id="' + field.id + '" value="">';
@@ -134,7 +132,7 @@
     var container = document.getElementById('sp-sections-container');
     if (container) {
       container.addEventListener('click', function(e) {
-        var chip = e.target.closest('.sp-chip');
+        var chip = e.target.closest('.filter-pill');
         if (chip) {
           toggleChip(chip, chip.dataset.group, chip.dataset.multi === 'true');
           return;
@@ -232,13 +230,13 @@
     if (!group) return;
 
     if (!isMulti) {
-      group.querySelectorAll('.sp-chip').forEach(function(c) { c.classList.remove('sp-chip-active'); });
-      el.classList.add('sp-chip-active');
+      group.querySelectorAll('.filter-pill').forEach(function(c) { c.classList.remove('active'); });
+      el.classList.add('active');
     } else {
-      el.classList.toggle('sp-chip-active');
+      el.classList.toggle('active');
     }
 
-    var selected = Array.from(group.querySelectorAll('.sp-chip-active'))
+    var selected = Array.from(group.querySelectorAll('.filter-pill.active'))
       .map(function(c) { return c.getAttribute('data-value'); });
     var hidden = document.getElementById(groupId);
     if (hidden) hidden.value = selected.join(',');
@@ -265,7 +263,6 @@
 
     document.querySelectorAll('.profile-nav-chip').forEach(function(c, i) {
       c.classList.toggle('active', i === index);
-      c.classList.toggle('done', i < index);
     });
 
     updateProgress(index);
