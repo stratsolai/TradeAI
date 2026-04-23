@@ -441,15 +441,20 @@
           cycleEndDate: cycleEndDate
         })
       });
-      var result = await r.json();
+      var result;
+      try { result = await r.json(); } catch (parseErr) {
+        var rawText = await r.text().catch(function() { return ''; });
+        throw new Error('Server returned status ' + r.status + ': ' + rawText.substring(0, 200));
+      }
       if (result.error) throw new Error(result.error);
       showResults(result);
     } catch (err) {
+      console.error('[SP] Generate error:', err);
       if (btn) {
         btn.disabled = false;
         btn.textContent = 'Generate My Plan';
       }
-      _showError('Something went wrong generating your plan. Please try again.');
+      _showError(err.message || 'Something went wrong generating your plan. Please try again.');
     }
   }
 
