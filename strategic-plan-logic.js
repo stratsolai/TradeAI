@@ -339,11 +339,10 @@
           }
         }
 
-        if (!val) return;
         var el = document.getElementById(field.id);
         if (!el) return;
 
-        el.value = val;
+        if (val) el.value = val;
 
         if (field.fromProfile) {
           el.readOnly = true;
