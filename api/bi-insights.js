@@ -40,9 +40,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    var financial = await callInternal('bi-financial', {});
-    var customers = await callInternal('bi-customers', {});
-    var operations = await callInternal('bi-operations', {});
+    var results = await Promise.all([
+      callInternal('bi-financial', {}),
+      callInternal('bi-customers', {}),
+      callInternal('bi-operations', {})
+    ]);
+    var financial = results[0];
+    var customers = results[1];
+    var operations = results[2];
 
     var contextParts = [];
     contextParts.push('Business: ' + (profile.business_name || 'Unknown'));

@@ -160,25 +160,52 @@ window.BI_LOGIC = {
     var sb = this._supabase;
     var userId = this._user.id;
 
-    if (!forceRefresh) {
-      var result = await sb.from('bi_insights').select('*').eq('user_id', userId).eq('is_dismissed', false);
-      if (!result.error && result.data && result.data.length > 0) {
-        var now = new Date().toISOString();
-        var valid = result.data.filter(function(r) { return !r.expires_at || r.expires_at > now; });
-        if (valid.length > 0) {
-          this._insights = {};
-          for (var i = 0; i < valid.length; i++) {
-            var row = valid[i];
-            if (!this._insights[row.module]) this._insights[row.module] = [];
-            this._insights[row.module].push(row);
-          }
-          return;
-        }
+    var result = await sb.from('bi_insights').select('*').eq('user_id', userId).eq('is_dismissed', false);
+    var hasCache = !result.error && result.data && result.data.length > 0;
+
+    if (hasCache) {
+      this._insights = {};
+      for (var i = 0; i < result.data.length; i++) {
+        var row = result.data[i];
+        if (!this._insights[row.module]) this._insights[row.module] = [];
+        this._insights[row.module].push(row);
       }
+
+      var now = new Date().toISOString();
+      var allValid = result.data.every(function(r) { return !r.expires_at || r.expires_at > now; });
+      if (!forceRefresh && allValid) return;
+
+      this._refreshInsightsInBackground();
+      return;
     }
 
     this._insights = {};
+    await this._callInsightsAPI();
+  },
+
+  _refreshInsightsInBackground: function() {
+    var self = this;
+    var indicator = document.getElementById('bi-last-refreshed');
+    var origText = indicator ? indicator.textContent : '';
+    if (indicator) indicator.textContent = 'Updating insights...';
+
+    self._callInsightsAPI().then(function() {
+      self._renderAlertsModule();
+      if (indicator) {
+        var now = new Date();
+        var h = now.getHours(); var m = now.getMinutes();
+        var ampm = h >= 12 ? 'pm' : 'am';
+        h = h % 12 || 12;
+        indicator.textContent = 'Last refreshed: ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+      }
+    }).catch(function() {
+      if (indicator) indicator.textContent = origText;
+    });
+  },
+
+  _callInsightsAPI: async function() {
     try {
+      var sb = this._supabase;
       var session = await sb.auth.getSession();
       var token = session.data && session.data.session && session.data.session.access_token;
       if (!token) return;
@@ -194,6 +221,7 @@ window.BI_LOGIC = {
       }
       var json = await resp.json();
       if (json.success && json.data) {
+        this._insights = {};
         for (var j = 0; j < json.data.length; j++) {
           var row = json.data[j];
           if (!this._insights[row.module]) this._insights[row.module] = [];
