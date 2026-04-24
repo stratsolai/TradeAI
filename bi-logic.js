@@ -210,8 +210,199 @@ window.BI_LOGIC = {
     });
   },
 
+  _SUGGESTED_QUESTIONS: {
+    'cash flow': ['How urgent is this?', 'What are my options?', 'Should I chase invoices or cut costs first?'],
+    'concentration': ['Is this normal for my industry?', 'What is a safe concentration level?', 'How do I diversify my customer base?'],
+    'opportunity': ['Am I qualified for this?', 'What would I need to apply?', 'Is this worth pursuing?'],
+    'margin': ['What is causing this?', 'How do I fix it?', 'What margin should I be targeting?'],
+    'growth': ['How do I capitalise on this?', 'Do I have capacity?', 'What resources do I need?'],
+    'digital': ['Where do I start?', 'What is the typical cost?', 'How long does this usually take?'],
+    'overdue': ['How urgent is this?', 'What are my options?', 'Should I chase invoices or cut costs first?'],
+    'compliance': ['What is the risk if I ignore this?', 'How do I fix it quickly?', 'Is there a legal obligation?'],
+    '_default': ['What does this mean for my business?', 'What should I do about this?', 'How serious is this?']
+  },
+
+  _getSuggestedQuestions: function(insightData) {
+    if (!insightData) return this._SUGGESTED_QUESTIONS._default;
+    var text = ((insightData.headline || '') + ' ' + (insightData.text || '') + ' ' + (insightData.detail || '')).toLowerCase();
+    var keys = Object.keys(this._SUGGESTED_QUESTIONS);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i] !== '_default' && text.indexOf(keys[i]) !== -1) return this._SUGGESTED_QUESTIONS[keys[i]];
+    }
+    return this._SUGGESTED_QUESTIONS._default;
+  },
+
+  _getInsightData: function(insightId, mod) {
+    var allInsights = this._insights[mod] || [];
+    for (var i = 0; i < allInsights.length; i++) {
+      if (allInsights[i].id === insightId) return allInsights[i].insight_data || {};
+    }
+    return null;
+  },
+
   _openChat: function(insightId, mod) {
-    // Mini-chat will be fully implemented in Steps 17-18
+    var self = this;
+    var existing = document.getElementById('bi-chat-active');
+    if (existing) existing.remove();
+
+    var insightData = this._getInsightData(insightId, mod);
+    var chatKey = insightId + '-' + mod;
+    if (!this._chatState[chatKey]) {
+      this._chatState[chatKey] = { history: [], turns: 0 };
+    }
+    var state = this._chatState[chatKey];
+
+    var suggested = this._getSuggestedQuestions(insightData);
+    var maxTurns = 4;
+
+    var topic = '';
+    if (insightData) topic = insightData.headline || insightData.text || 'this insight';
+    if (topic.length > 60) topic = topic.substring(0, 57) + '...';
+
+    var panel = document.createElement('div');
+    panel.className = 'bi-chat-panel open';
+    panel.id = 'bi-chat-active';
+
+    var html = '<div class="bi-chat-header">';
+    html += '<span class="bi-chat-title">Ask about: ' + escHtml(topic) + '</span>';
+    html += '<button class="bi-chat-close" id="bi-chat-close-btn">&times;</button>';
+    html += '</div>';
+    html += '<div class="bi-chat-messages" id="bi-chat-messages">';
+    for (var h = 0; h < state.history.length; h++) {
+      var msg = state.history[h];
+      html += '<div class="bi-chat-msg ' + escHtml(msg.role) + '">' + escHtml(msg.content) + '</div>';
+    }
+    html += '</div>';
+
+    if (state.turns < maxTurns) {
+      html += '<div class="bi-chat-suggestions" id="bi-chat-suggestions">';
+      for (var s = 0; s < suggested.length; s++) {
+        html += '<button class="bi-chat-suggestion" data-q="' + escHtml(suggested[s]) + '">' + escHtml(suggested[s]) + '</button>';
+      }
+      html += '</div>';
+      html += '<div class="bi-chat-input-row">';
+      html += '<input class="bi-chat-input" id="bi-chat-input" type="text" placeholder="Ask a question...">';
+      html += '<button class="bi-chat-send" id="bi-chat-send-btn">Send</button>';
+      html += '</div>';
+    } else {
+      html += '<div class="bi-chat-msg assistant">To explore this further, consider acting on this insight or consulting your advisor.</div>';
+    }
+
+    panel.innerHTML = html;
+
+    var targetCard = null;
+    if (insightId) {
+      targetCard = document.querySelector('[data-insight-id="' + insightId + '"]');
+      if (!targetCard) {
+        var modCard = document.getElementById('bi-mod-' + mod);
+        if (modCard) targetCard = modCard;
+      }
+    }
+    if (!targetCard) targetCard = document.getElementById('bi-mod-alerts');
+    if (targetCard) {
+      var moduleCard = targetCard.closest('.bi-module-card');
+      if (moduleCard) moduleCard.appendChild(panel);
+      else targetCard.parentElement.appendChild(panel);
+    }
+
+    var closeBtn = document.getElementById('bi-chat-close-btn');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function() { panel.remove(); });
+    }
+
+    if (state.turns < maxTurns) {
+      var sendBtn = document.getElementById('bi-chat-send-btn');
+      var input = document.getElementById('bi-chat-input');
+
+      var sendFn = function() {
+        var q = input ? input.value.trim() : '';
+        if (!q) return;
+        self._sendChatMessage(chatKey, q, insightData, mod, panel);
+      };
+
+      if (sendBtn) sendBtn.addEventListener('click', sendFn);
+      if (input) {
+        input.addEventListener('keydown', function(e) { if (e.key === 'Enter') sendFn(); });
+        input.focus();
+      }
+
+      panel.querySelectorAll('.bi-chat-suggestion').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var q = btn.getAttribute('data-q');
+          if (input) input.value = q;
+          self._sendChatMessage(chatKey, q, insightData, mod, panel);
+        });
+      });
+    }
+  },
+
+  _sendChatMessage: async function(chatKey, question, insightData, mod, panel) {
+    var state = this._chatState[chatKey];
+    if (!state) return;
+
+    var messagesEl = document.getElementById('bi-chat-messages');
+    var input = document.getElementById('bi-chat-input');
+    var sendBtn = document.getElementById('bi-chat-send-btn');
+    var suggestionsEl = document.getElementById('bi-chat-suggestions');
+
+    if (suggestionsEl) suggestionsEl.style.display = 'none';
+
+    var userMsg = document.createElement('div');
+    userMsg.className = 'bi-chat-msg user';
+    userMsg.textContent = question;
+    if (messagesEl) { messagesEl.appendChild(userMsg); messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+    state.history.push({ role: 'user', content: question });
+    state.turns++;
+
+    if (input) { input.value = ''; input.disabled = true; }
+    if (sendBtn) { sendBtn.disabled = true; sendBtn.textContent = '...'; }
+
+    try {
+      var sb = this._supabase;
+      var session = await sb.auth.getSession();
+      var token = session.data && session.data.session && session.data.session.access_token;
+
+      var resp = await fetch('/api/bi-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          insightData: insightData,
+          question: question,
+          history: state.history.slice(0, -1),
+          module: mod
+        })
+      });
+
+      var json = await resp.json();
+      var reply = (json.success && json.reply) ? json.reply : 'Sorry, I could not generate a response. Please try again.';
+
+      state.history.push({ role: 'assistant', content: reply });
+
+      var assistantMsg = document.createElement('div');
+      assistantMsg.className = 'bi-chat-msg assistant';
+      assistantMsg.textContent = reply;
+      if (messagesEl) { messagesEl.appendChild(assistantMsg); messagesEl.scrollTop = messagesEl.scrollHeight; }
+
+    } catch (err) {
+      console.error('[BI] Chat error:', err.message || err);
+      var errMsg = document.createElement('div');
+      errMsg.className = 'bi-chat-msg assistant';
+      errMsg.textContent = 'Something went wrong. Please try again.';
+      if (messagesEl) messagesEl.appendChild(errMsg);
+    }
+
+    if (state.turns >= 4) {
+      if (input) input.parentElement.remove();
+      var limitMsg = document.createElement('div');
+      limitMsg.className = 'bi-chat-msg assistant';
+      limitMsg.textContent = 'To explore this further, consider acting on this insight or consulting your advisor.';
+      if (messagesEl) { messagesEl.appendChild(limitMsg); messagesEl.scrollTop = messagesEl.scrollHeight; }
+    } else {
+      if (input) input.disabled = false;
+      if (sendBtn) { sendBtn.disabled = false; sendBtn.textContent = 'Send'; }
+      if (input) input.focus();
+    }
   },
 
   _actOnInsight: function(insightId) {
