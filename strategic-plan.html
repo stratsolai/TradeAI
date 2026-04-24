@@ -617,6 +617,15 @@
       gap: 16px;
     }
 
+    /* Inline add task form */
+    .sp-add-task-form {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 16px;
+      margin-top: 8px;
+    }
+
     /* Notes toggle */
     .sp-notes-toggle {
       background: none;
@@ -626,6 +635,19 @@
       cursor: pointer;
       padding: 0;
       font-family: var(--body-font);
+    }
+
+    /* Clickable meta elements */
+    .sp-subtask-due,
+    .sp-subtask-owner {
+      cursor: pointer;
+      border-bottom: 1px dashed var(--border);
+      padding-bottom: 1px;
+    }
+    .sp-subtask-due:hover,
+    .sp-subtask-owner:hover {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
     }
 
     /* ─── RESPONSIVE ─── */
@@ -805,7 +827,7 @@
 
     <!-- Progress bar -->
     <div class="sp-progress-wrap" id="sp-progress-container">
-      <div class="sp-progress-label" id="sp-progress-label">Section 1 of 6</div>
+      <div class="sp-progress-label" id="sp-progress-label">Section 1 of 7</div>
       <div class="sp-progress-bar" id="sp-progress-bar"></div>
     </div>
 

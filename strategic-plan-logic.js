@@ -1,8 +1,4 @@
-// strategic-plan-logic.js
-// All JavaScript logic for the Strategic Plan & 90-Day Ops tool.
-// Reads window.SP_SECTIONS (defined in strategic-plan-data.js) to render the interview.
-// Uses field.apiKey and field.valueType to build the correct API payload.
-
+// strategic-plan-logic.js — SP tool logic. Reads window.SP_SECTIONS for form rendering.
 (function() {
 
   var currentSection = 0;
@@ -87,7 +83,7 @@
     });
   }
 
-  // ── RENDER SECTIONS (Tab 3 form) ─────────────────────────────────────
+  // ── RENDER SECTIONS (Tab 3 form) ──
 
   function renderSections() {
     var sections = window.SP_SECTIONS;
@@ -343,10 +339,51 @@
         return;
       }
 
-      // Add task within initiative
+      // Due date click
+      var dueEl = e.target.closest('.sp-subtask-due');
+      if (dueEl) {
+        var subtask = dueEl.closest('.sp-subtask');
+        if (subtask) editDueDate(subtask.dataset.id, dueEl);
+        return;
+      }
+
+      // Owner click
+      var ownerEl = e.target.closest('.sp-subtask-owner');
+      if (ownerEl) {
+        var subtask = ownerEl.closest('.sp-subtask');
+        if (subtask) editOwner(subtask.dataset.id, ownerEl);
+        return;
+      }
+
+      // Notes toggle
+      var notesBtn = e.target.closest('.sp-notes-toggle');
+      if (notesBtn) {
+        var notesEl = notesBtn.closest('.sp-subtask').querySelector('.sp-subtask-notes');
+        if (notesEl) notesEl.style.display = notesEl.style.display === 'none' ? 'block' : 'none';
+        return;
+      }
+
+      // Add task within initiative — show inline form
       var addTaskBtn = e.target.closest('.btn-sp-add-task');
       if (addTaskBtn) {
-        addSubtask(addTaskBtn.dataset.parentId);
+        showAddTaskForm(addTaskBtn);
+        return;
+      }
+
+      // Add task form submit
+      var addTaskSubmit = e.target.closest('.sp-add-task-submit');
+      if (addTaskSubmit) {
+        submitAddTaskForm(addTaskSubmit);
+        return;
+      }
+
+      // Add task form cancel
+      var addTaskCancel = e.target.closest('.sp-add-task-cancel');
+      if (addTaskCancel) {
+        var form = addTaskCancel.closest('.sp-add-task-form');
+        if (form) form.remove();
+        var btn = addTaskCancel.closest('.sp-add-task-row').querySelector('.btn-sp-add-task');
+        if (btn) btn.style.display = '';
         return;
       }
 
@@ -570,15 +607,99 @@
     });
   }
 
+  // ── BI CONTEXT LOAD ────────────────────────────────────────────────────
+
+  function loadBIContext() {
+    _getJwt().then(function(jwt) {
+      if (!jwt) return;
+      fetch('/api/bi-context', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt }
+      }).then(function(r) {
+        if (!r.ok) return;
+        return r.json();
+      }).then(function(data) {
+        if (data && data.context) prefillFromBIContext(data.context);
+      }).catch(function() { /* BI context is optional */ });
+    });
+  }
+
   // ── PREFILL FROM PREVIOUS PLAN ────────────────────────────────────────
 
   function prefillFromPreviousPlan(interviewData) {
     if (!interviewData) return;
-    Object.keys(interviewData).forEach(function(key) {
-      var el = document.getElementById(key);
-      if (el && !el.classList.contains('sp-from-profile')) {
-        el.value = interviewData[key] || '';
-      }
+
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        var key = field.apiKey || field.id;
+        var val = interviewData[key];
+        if (val === undefined || val === null) return;
+
+        var el = document.getElementById(field.id);
+        if (!el || el.classList.contains('sp-from-profile')) return;
+
+        if (field.type === 'chip-single' || field.type === 'chip-multi') {
+          var values = Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map(function(v) { return v.trim(); }).filter(Boolean) : []);
+          el.value = values.join(',');
+          var group = document.getElementById(field.id + '-chips');
+          if (group) {
+            group.querySelectorAll('.filter-pill').forEach(function(chip) {
+              var chipVal = chip.getAttribute('data-value');
+              if (chipVal !== '__other__' && values.indexOf(chipVal) !== -1) {
+                chip.classList.add('active');
+              }
+            });
+          }
+        } else if (field.type === 'select-or-text') {
+          var selectEl = document.getElementById(field.id + '-select');
+          if (selectEl) {
+            var matchedOption = false;
+            Array.from(selectEl.options).forEach(function(opt) {
+              if (opt.value === val) { matchedOption = true; }
+            });
+            if (matchedOption) {
+              selectEl.value = val;
+              el.value = val;
+            } else if (val) {
+              selectEl.value = '__other__';
+              var otherInput = document.getElementById(field.id + '-other');
+              if (otherInput) { otherInput.value = val; otherInput.style.display = 'block'; }
+              el.value = val;
+            }
+          }
+        } else {
+          el.value = typeof val === 'object' ? JSON.stringify(val) : val;
+        }
+      });
+    });
+  }
+
+  // ── PREFILL FROM BI CONTEXT ───────────────────────────────────────────
+
+  function prefillFromBIContext(biContext) {
+    if (!biContext) return;
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        if (!field.fromBI) return;
+        var key = field.apiKey;
+        var val = biContext[key];
+        if (val === undefined || val === null) return;
+
+        var el = document.getElementById(field.id);
+        if (!el || el.value) return;
+
+        if (field.type === 'chip-single') {
+          el.value = val;
+          var group = document.getElementById(field.id + '-chips');
+          if (group) {
+            group.querySelectorAll('.filter-pill').forEach(function(chip) {
+              if (chip.getAttribute('data-value') === val) chip.classList.add('active');
+            });
+          }
+        } else {
+          el.value = val;
+        }
+      });
     });
   }
 
@@ -615,6 +736,19 @@
         }
       });
     });
+
+    // Collect strategic decisions for tracking
+    var decisions = {};
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        if (field.isDecision && field.decisionId) {
+          var el = document.getElementById(field.id);
+          var val = el ? (el.value || '').trim() : '';
+          if (val) decisions[field.decisionId] = val;
+        }
+      });
+    });
+    data._decisions = decisions;
 
     planData = data;
     return valid ? data : null;
@@ -846,78 +980,33 @@
   }
 
   function renderFlatTracker(rows) {
-    var tasks = rows.map(function(row) {
-      var items = row.items || {};
-      return {
-        id: row.id,
-        title: items.title || '',
-        status: items.status || 'pending',
-        priority: items.priority || 'Medium',
-        month_group: row.month_group || 0,
-        is_carried_forward: row.is_carried_forward || false,
-        owner: row.owner || items.owner || ''
-      };
-    });
-
-    var totalTasks = tasks.length;
-    var completedTasks = tasks.filter(function(t) { return t.status === 'done'; }).length;
-
+    var completedTasks = 0;
     var groups = { 1: [], 2: [], 3: [], 0: [] };
-    tasks.forEach(function(t) {
-      var g = t.month_group || 0;
+    rows.forEach(function(row) {
+      var g = row.month_group || 0;
       if (!groups[g]) groups[g] = [];
-      groups[g].push(t);
+      groups[g].push(row);
+      if (row.items && row.items.status === 'done') completedTasks++;
     });
 
     var html = '';
     [1, 2, 3, 0].forEach(function(g) {
       if (!groups[g] || groups[g].length === 0) return;
       var heading = g === 1 ? 'Month 1 (Days 1\u201330)' : g === 2 ? 'Month 2 (Days 31\u201360)' : g === 3 ? 'Month 3 (Days 61\u201390)' : 'General Tasks';
-
       html += '<div class="sp-initiative expanded" data-month-group="' + g + '">';
-      html += '<div class="sp-initiative-header">';
-      html += '<span class="sp-initiative-name">' + _esc(heading) + '</span>';
-      html += '<span class="sp-initiative-chevron">&#9660;</span>';
-      html += '</div>';
+      html += '<div class="sp-initiative-header"><span class="sp-initiative-name">' + _esc(heading) + '</span><span class="sp-initiative-chevron">&#9660;</span></div>';
       html += '<div class="sp-initiative-body">';
-
-      groups[g].forEach(function(task) {
-        var done = task.status === 'done';
-        var cf = task.is_carried_forward ? ' <span class="badge badge-orange">Carried Forward</span>' : '';
-        var priorityBg = task.priority === 'High' ? 'background:var(--badge-red-bg);color:var(--badge-red-text)' :
-                         task.priority === 'Low' ? 'background:var(--badge-green-bg);color:var(--badge-green-text)' :
-                         'background:var(--badge-orange-bg);color:var(--badge-orange-text)';
-
-        html += '<div class="sp-subtask' + (done ? ' sp-subtask-done' : '') + '" data-id="' + _esc(task.id) + '">';
-        html += '<input type="checkbox" class="sp-subtask-check"' + (done ? ' checked' : '') + '>';
-        html += '<div class="sp-subtask-body">';
-        html += '<span class="sp-subtask-title">' + _esc(task.title) + '</span>' + cf;
-        html += '<div class="sp-subtask-meta">';
-        if (task.owner) html += '<span class="sp-subtask-owner">' + _esc(task.owner) + '</span>';
-        html += '<select class="sp-subtask-priority" style="' + priorityBg + '">';
-        ['High', 'Medium', 'Low'].forEach(function(p) {
-          html += '<option value="' + p + '"' + (task.priority === p ? ' selected' : '') + '>' + p + '</option>';
-        });
-        html += '</select>';
-        html += '</div></div>';
-        html += '<div class="sp-subtask-actions">';
-        html += '<button class="sp-subtask-action-btn edit-btn" type="button" title="Edit">&#9998;</button>';
-        html += '<button class="sp-subtask-action-btn delete-btn" type="button" title="Delete">&#10005;</button>';
-        html += '</div></div>';
-      });
-
+      groups[g].forEach(function(row) { html += renderSubtaskRow(row); });
       html += '</div></div>';
     });
 
     var listEl = document.getElementById('sp-initiatives-list');
     if (listEl) listEl.innerHTML = html;
-
-    var overallPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    var pct = rows.length > 0 ? Math.round((completedTasks / rows.length) * 100) : 0;
     var fillEl = document.getElementById('sp-ops-progress-fill');
-    if (fillEl) fillEl.style.width = overallPct + '%';
+    if (fillEl) fillEl.style.width = pct + '%';
     var pctLabel = document.getElementById('sp-ops-progress-pct');
-    if (pctLabel) pctLabel.textContent = overallPct + '% complete';
-
+    if (pctLabel) pctLabel.textContent = pct + '% complete';
     updateOpsStats(0, completedTasks, 0, 0);
   }
 
@@ -928,6 +1017,7 @@
     var priority = items.priority || 'Medium';
     var dueDate = items.due_date || '';
     var owner = row.owner || items.owner || '';
+    var notes = items.notes || '';
 
     var priorityBg = priority === 'High' ? 'background:var(--badge-red-bg);color:var(--badge-red-text)' :
                      priority === 'Low' ? 'background:var(--badge-green-bg);color:var(--badge-green-text)' :
@@ -942,14 +1032,17 @@
     html += '<div class="sp-subtask-body">';
     html += '<span class="sp-subtask-title">' + _esc(title) + '</span>' + sourceBadge;
     html += '<div class="sp-subtask-meta">';
-    if (dueDate) html += '<span class="sp-subtask-due">' + _esc(dueDate) + '</span>';
-    if (owner) html += '<span class="sp-subtask-owner">' + _esc(owner) + '</span>';
+    html += '<span class="sp-subtask-due" title="Click to change">' + _esc(dueDate || 'Set date') + '</span>';
+    html += '<span class="sp-subtask-owner" title="Click to change">' + _esc(owner || 'Owner') + '</span>';
     html += '<select class="sp-subtask-priority" style="' + priorityBg + '">';
     ['High', 'Medium', 'Low'].forEach(function(p) {
       html += '<option value="' + p + '"' + (priority === p ? ' selected' : '') + '>' + p + '</option>';
     });
     html += '</select>';
-    html += '</div></div>';
+    if (notes) html += '<button class="sp-notes-toggle" type="button">Notes</button>';
+    html += '</div>';
+    if (notes) html += '<div class="sp-subtask-notes" style="display:none;font-size:var(--label-font-size);color:var(--text-muted);margin-top:6px;line-height:var(--note-line-height)">' + _esc(notes) + '</div>';
+    html += '</div>';
     html += '<div class="sp-subtask-actions">';
     html += '<button class="sp-subtask-action-btn edit-btn" type="button" title="Edit">&#9998;</button>';
     html += '<button class="sp-subtask-action-btn delete-btn" type="button" title="Delete">&#10005;</button>';
@@ -1071,6 +1164,126 @@
     input.addEventListener('keydown', function(e) { if (e.key === 'Enter') input.blur(); });
   }
 
+  function editDueDate(taskId, dueEl) {
+    if (dueEl.querySelector('input')) return;
+    var current = (dueEl.textContent || '').trim();
+    var input = document.createElement('input');
+    input.type = 'date';
+    input.className = 'sp-inline-edit-input';
+    input.style.width = '150px';
+    if (current && !current.startsWith('Day')) {
+      input.value = current;
+    }
+    dueEl.textContent = '';
+    dueEl.appendChild(input);
+    input.focus();
+
+    function save() {
+      var v = input.value;
+      if (v) {
+        saveTaskField(taskId, 'due_date', v);
+        dueEl.textContent = v;
+      } else {
+        dueEl.textContent = current || 'Set date';
+      }
+    }
+    input.addEventListener('blur', save);
+    input.addEventListener('change', function() { input.blur(); });
+  }
+
+  function editOwner(taskId, ownerEl) {
+    if (ownerEl.querySelector('select')) return;
+    var current = (ownerEl.textContent || '').trim();
+    var roles = ['Owner', 'Admin', 'Office manager', 'Leading hand', 'Project manager', 'Estimator', 'Business development', 'Bookkeeper'];
+    var select = document.createElement('select');
+    select.className = 'sp-inline-edit-input';
+    select.style.width = '160px';
+    select.innerHTML = roles.map(function(r) {
+      return '<option value="' + _esc(r) + '"' + (r === current ? ' selected' : '') + '>' + _esc(r) + '</option>';
+    }).join('');
+    ownerEl.textContent = '';
+    ownerEl.appendChild(select);
+    select.focus();
+
+    function save() {
+      var v = select.value;
+      saveTaskField(taskId, 'owner', v);
+      _supabase.from('action_tracker').update({ owner: v }).eq('id', taskId).then(function() {});
+      ownerEl.textContent = v;
+    }
+    select.addEventListener('blur', save);
+    select.addEventListener('change', function() { select.blur(); });
+  }
+
+  function showAddTaskForm(btn) {
+    var row = btn.closest('.sp-add-task-row');
+    if (!row || row.querySelector('.sp-add-task-form')) return;
+    btn.style.display = 'none';
+    var parentId = btn.dataset.parentId;
+    var form = document.createElement('div');
+    form.className = 'sp-add-task-form';
+    form.innerHTML =
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">' +
+        '<div style="flex:1;min-width:200px">' +
+          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Task Title</label>' +
+          '<input type="text" class="sp-input sp-add-task-title" placeholder="What needs to be done?">' +
+        '</div>' +
+        '<div style="width:130px">' +
+          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Priority</label>' +
+          '<select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select>' +
+        '</div>' +
+        '<div style="width:150px">' +
+          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Due Date</label>' +
+          '<input type="date" class="sp-input sp-add-task-due">' +
+        '</div>' +
+        '<div style="width:150px">' +
+          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Owner</label>' +
+          '<select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office manager</option><option value="Leading hand">Leading hand</option><option value="Project manager">Project manager</option><option value="Other">Other</option></select>' +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:8px">' +
+        '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + _esc(parentId) + '" type="button">Add Task</button>' +
+        '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button>' +
+      '</div>';
+    row.appendChild(form);
+    form.querySelector('.sp-add-task-title').focus();
+  }
+
+  function submitAddTaskForm(btn) {
+    var form = btn.closest('.sp-add-task-form');
+    if (!form) return;
+    var parentId = btn.dataset.parentId;
+    var title = (form.querySelector('.sp-add-task-title').value || '').trim();
+    if (!title) {
+      form.querySelector('.sp-add-task-title').classList.add('sp-input-error');
+      return;
+    }
+    var priority = form.querySelector('.sp-add-task-priority').value;
+    var dueDate = form.querySelector('.sp-add-task-due').value;
+    var owner = form.querySelector('.sp-add-task-owner').value;
+
+    if (!_supabase || !_userId) return;
+    _supabase
+      .from('action_tracker')
+      .insert({
+        user_id: _userId,
+        items: { title: title, status: 'pending', priority: priority, due_date: dueDate || null },
+        parent_task_id: parentId,
+        source: 'user_added',
+        owner: owner,
+        plan_id: null
+      })
+      .select()
+      .single()
+      .then(function(res) {
+        if (res.error) {
+          _showError('Could not add task. Please try again.');
+          return;
+        }
+        loadInitiatives();
+      });
+  }
+
   function saveTaskField(taskId, field, value) {
     if (!_supabase) return;
     _supabase
@@ -1118,27 +1331,6 @@
       });
   }
 
-  function addSubtask(parentId) {
-    if (!_supabase || !_userId) return;
-    _supabase
-      .from('action_tracker')
-      .insert({
-        user_id: _userId,
-        items: { title: 'New task', status: 'pending', priority: 'Medium' },
-        parent_task_id: parentId,
-        source: 'user_added',
-        plan_id: null
-      })
-      .select()
-      .single()
-      .then(function(res) {
-        if (!res.error) {
-          loadInitiatives();
-          var newRow = document.querySelector('.sp-subtask[data-id="' + res.data.id + '"]');
-          if (newRow) editSubtaskTitle(res.data.id);
-        }
-      });
-  }
 
   // ── INITIATIVE OPERATIONS ─────────────────────────────────────────────
 
@@ -1378,6 +1570,7 @@
       bindDocEvents();
       bindModalEvents();
       loadProfile();
+      loadBIContext();
 
       checkPlanExists().then(function(exists) {
         updateTabStates();
