@@ -68,13 +68,13 @@ const CORE_TOOLS = [
   },
   {
     id: "bi",
-    status: "pending",
+    status: "built",
     icon: "📊",
     category: "intelligence",
     title: ["Business Intelligence", "Dashboard"],
     desc: "Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software - then goes further. AI predicts opportunities for new products and services, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.",
     price: "$89",
-    priceId: null,
+    priceId: "price_1T4dClHnoVvjo5gxjSvoi4ky",
   },
   {
     id: "tender",
