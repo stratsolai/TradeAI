@@ -38,11 +38,6 @@
       color: var(--text);
       margin-bottom: 4px;
     }
-    .sp-ops-cycle {
-      font-size: var(--btn-font-size);
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
     .sp-ops-progress-track {
       height: 10px;
       background: var(--border);
@@ -549,32 +544,6 @@
       margin-top: 8px;
     }
 
-    /* Cycle renewal banner */
-    .sp-cycle-renewal-banner {
-      background: var(--warning-light);
-      border: 1px solid var(--warning);
-      border-radius: var(--btn-radius);
-      padding: var(--actions-gap) 16px;
-      font-size: var(--btn-font-size);
-      color: var(--text);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: var(--actions-gap);
-      flex-wrap: wrap;
-    }
-    .btn-sp-new-cycle {
-      padding: 6px 14px;
-      background: var(--blue);
-      color: var(--white);
-      border: none;
-      border-radius: var(--btn-radius);
-      font-size: var(--label-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-    }
-
     /* Inline edit input */
     .sp-inline-edit-input {
       width: 100%;
@@ -635,6 +604,134 @@
       cursor: pointer;
       padding: 0;
       font-family: var(--body-font);
+    }
+
+    /* View toggle */
+    .sp-view-toggle {
+      display: inline-flex;
+      border: 2px solid var(--blue);
+      border-radius: var(--btn-radius);
+      overflow: hidden;
+    }
+    .sp-view-btn {
+      background: var(--white);
+      color: var(--text-muted);
+      border: none;
+      font-family: var(--body-font);
+      font-size: var(--label-font-size);
+      font-weight: 500;
+      padding: 6px 14px;
+      cursor: pointer;
+      transition: background var(--btn-transition), color var(--btn-transition);
+      border-right: 2px solid var(--blue);
+    }
+    .sp-view-btn:last-child { border-right: none; }
+    .sp-view-btn:hover { background: var(--blue-light); color: var(--blue); }
+    .sp-view-btn.active { background: var(--blue-light); color: var(--blue); }
+
+    /* 90-Day Outlook timeline */
+    .sp-outlook-wrap {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: var(--card-padding);
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+    .sp-outlook-header {
+      display: flex;
+      gap: 0;
+      margin-bottom: 4px;
+      min-width: 900px;
+    }
+    .sp-outlook-week {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      padding: 4px 2px;
+      border-right: 1px solid var(--border-light);
+    }
+    .sp-outlook-week:last-child { border-right: none; }
+    .sp-outlook-week.current { background: var(--blue-light); border-radius: 4px; color: var(--blue); }
+    .sp-outlook-track {
+      display: flex;
+      gap: 0;
+      min-width: 900px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sp-outlook-track:last-child { border-bottom: none; }
+    .sp-outlook-track-label {
+      width: 160px;
+      flex-shrink: 0;
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      padding: 4px 8px 4px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sp-outlook-cells {
+      display: flex;
+      flex: 1;
+      gap: 0;
+    }
+    .sp-outlook-cell {
+      flex: 1;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex-wrap: wrap;
+      border-right: 1px solid var(--border-light);
+      padding: 2px;
+    }
+    .sp-outlook-cell:last-child { border-right: none; }
+    .sp-outlook-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform var(--btn-transition);
+      flex-shrink: 0;
+    }
+    .sp-outlook-dot:hover { transform: scale(1.6); }
+    .sp-outlook-dot.high { background: var(--red); }
+    .sp-outlook-dot.medium { background: var(--orange); }
+    .sp-outlook-dot.low { background: var(--green); }
+    .sp-outlook-dot.done { background: var(--grey); opacity: 0.5; }
+    .sp-outlook-tooltip {
+      position: fixed;
+      background: var(--text-dark);
+      color: var(--white);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: var(--label-font-size);
+      font-family: var(--body-font);
+      max-width: 280px;
+      z-index: 300;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+    .sp-outlook-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      align-items: center;
+    }
+    .sp-outlook-legend-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 4px;
+      vertical-align: middle;
     }
 
     /* Clickable meta elements */
@@ -751,13 +848,9 @@
     <!-- Live content (shown when SP exists) -->
     <div id="sp-ops-content" style="display:none">
 
-      <!-- Cycle renewal banner -->
-      <div id="sp-cycle-banner" style="display:none"></div>
-
-      <!-- Header: plan title, cycle, overall progress, quick stats -->
+      <!-- Header: plan title, overall progress -->
       <div class="sp-ops-header" id="sp-ops-header">
         <div class="sp-ops-title" id="sp-ops-plan-title"></div>
-        <div class="sp-ops-cycle" id="sp-ops-cycle"></div>
         <div class="sp-ops-progress-track">
           <div class="sp-ops-progress-fill" id="sp-ops-progress-fill" style="width:0%"></div>
         </div>
@@ -773,12 +866,19 @@
         <button class="filter-pill" data-view="active">Active</button>
         <button class="filter-pill" data-view="completed">Completed</button>
         <div class="sp-ops-controls-right">
+          <div class="sp-view-toggle">
+            <button class="sp-view-btn active" data-ops-view="list">List</button>
+            <button class="sp-view-btn" data-ops-view="outlook">90-Day Outlook</button>
+          </div>
           <button class="filter-pill" data-expand="all">Expand All</button>
         </div>
       </div>
 
-      <!-- Initiative cards container -->
+      <!-- List view (initiative cards) -->
       <div id="sp-initiatives-list"></div>
+
+      <!-- 90-Day Outlook view -->
+      <div id="sp-outlook-view" style="display:none"></div>
 
       <!-- Add initiative button -->
       <button class="btn-sp-add-initiative" id="sp-add-initiative-btn" type="button">+ Add Initiative</button>

@@ -138,17 +138,19 @@ async function generatePlanContent(planData, clContext, biInsights) {
     '      "name": "Initiative name e.g. Digital Transformation",\n' +
     '      "sp_section": "growth_transformation",\n' +
     '      "tasks": [\n' +
-    '        {"title":"...", "dueDay":"Day 14", "priority":"High", "owner":"Owner", "notes":"..."}\n' +
+    '        {"title":"...", "dueDate":"YYYY-MM-DD", "priority":"High", "owner":"Owner", "notes":"..."}\n' +
     '      ]\n' +
     '    }\n' +
     '  ]\n' +
     '}\n\n' +
+    'Today is ' + new Date().toISOString().substring(0, 10) + '.\n\n' +
     'IMPORTANT INSTRUCTIONS FOR STRATEGIC INITIATIVES:\n' +
     '- Generate 3-7 Strategic Initiatives based on the Growth & Transformation decisions.\n' +
     '- Each initiative must have a clear name, an sp_section value (one of: business_foundation, products_services, financial_position, operations_capacity, market_competition, growth_transformation, risk_resilience), and 2-5 sub-tasks.\n' +
-    '- Each task needs title, dueDay (e.g. "Day 14"), priority ("High"/"Medium"/"Low"), owner (from key roles or "Owner"), and notes.\n' +
+    '- Each task needs title, dueDate (absolute date in YYYY-MM-DD format, spread across the next 90 days from today), priority ("High"/"Medium"/"Low"), owner (from key roles or "Owner"), and notes.\n' +
     '- Generate 10-25 tasks total across all initiatives.\n' +
-    '- Always include a 45-day review checkpoint task.\n' +
+    '- Spread tasks across the next 90 days using real calendar dates.\n' +
+    '- Always include a mid-point review checkpoint task.\n' +
     '- Set owner to the relevant role from keyRoles if provided, otherwise use "Owner".';
 
   if (clContext) {
@@ -391,7 +393,7 @@ async function generateOpsDoc(planData, content) {
       children: [
         new TableCell({ width: { size: 4200, type: WidthType.DXA }, shading: { fill: 'FAFAFA', type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: children }),
         new TableCell({ width: { size: 1500, type: WidthType.DXA }, shading: { fill: pFill, type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: [new Paragraph({ children: [new TextRun({ text: action.priority || 'Medium', size: 20, bold: true, font: 'Arial', color: pText })] })] }),
-        new TableCell({ width: { size: 1500, type: WidthType.DXA }, shading: { fill: 'FFFFFF', type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: [new Paragraph({ children: [new TextRun({ text: action.dueDay || '', size: 20, font: 'Arial' })] })] }),
+        new TableCell({ width: { size: 1500, type: WidthType.DXA }, shading: { fill: 'FFFFFF', type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: [new Paragraph({ children: [new TextRun({ text: action.dueDate || action.dueDay || '', size: 20, font: 'Arial' })] })] }),
         new TableCell({ width: { size: 1560, type: WidthType.DXA }, shading: { fill: 'FFFFFF', type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: [new Paragraph({ children: [new TextRun({ text: action.owner || 'Owner', size: 20, font: 'Arial' })] })] }),
         new TableCell({ width: { size: 600, type: WidthType.DXA }, shading: { fill: 'FFFFFF', type: ShadingType.CLEAR }, margins: { top: 80, bottom: 80, left: 120, right: 120 }, borders: borders, children: [new Paragraph({ children: [new TextRun({ text: '\u2610', size: 22, font: 'Arial' })] })] })
       ]
@@ -466,7 +468,7 @@ export default async function handler(req, res) {
   }
   var userId = userRes.data.user.id;
 
-  var { planData, clContext, biInsights, cycleEndDate } = req.body;
+  var { planData, clContext, biInsights } = req.body;
   if (!planData) return res.status(400).json({ error: 'planData required' });
 
   var businessSlug = (planData.businessName || 'business').replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -614,12 +616,18 @@ export default async function handler(req, res) {
           if (initErr) { console.error('[strategic-plan] initiative insert error:', initErr.message); continue; }
           var parentId = initRow.id;
 
-          // Create sub-task rows
+          // Create sub-task rows with absolute calendar dates
           var tasks = init.tasks || [];
+          var genDate = new Date();
           var subRows = tasks.map(function(task) {
-            var dayMatch = (task.dueDay || '').match(/\d+/);
-            var dueOffset = dayMatch ? parseInt(dayMatch[0], 10) : null;
-            var monthGroup = dueOffset ? (dueOffset <= 30 ? 1 : dueOffset <= 60 ? 2 : 3) : 0;
+            var dueDate = task.dueDate || task.dueDay || '';
+            // Convert relative "Day X" to absolute if AI used old format
+            if (dueDate && /^Day\s*\d+$/i.test(dueDate)) {
+              var dayNum = parseInt(dueDate.replace(/\D/g, ''), 10);
+              var abs = new Date(genDate);
+              abs.setDate(abs.getDate() + dayNum);
+              dueDate = abs.toISOString().substring(0, 10);
+            }
             return {
               user_id: userId,
               plan_id: planId,
@@ -628,12 +636,10 @@ export default async function handler(req, res) {
                 title: task.title || '',
                 status: 'pending',
                 priority: task.priority || 'Medium',
-                due_date: task.dueDay || '',
+                due_date: dueDate,
                 notes: task.notes || '',
                 owner: task.owner || 'Owner'
               },
-              month_group: monthGroup,
-              due_day_offset: dueOffset,
               owner: task.owner || 'Owner',
               source: 'sp_generated',
               is_carried_forward: false

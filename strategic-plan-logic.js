@@ -1,4 +1,4 @@
-// strategic-plan-logic.js — SP tool logic. Reads window.SP_SECTIONS for form rendering.
+// strategic-plan-logic.js
 (function() {
 
   var currentSection = 0;
@@ -23,7 +23,6 @@
     if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
   }
-
 
   function switchTab(tabId) {
     if (!hasPlan && (tabId === 'ops-plan' || tabId === 'strat-plan')) return;
@@ -81,7 +80,6 @@
       switchTab(tab.dataset.tab);
     });
   }
-
 
   function renderSections() {
     var sections = window.SP_SECTIONS;
@@ -193,7 +191,6 @@
 
     return '<div class="sp-field">' + label + helpText + input + errorEl + '</div>';
   }
-
 
   function bindFormEvents() {
     var navEl = document.getElementById('sp-section-nav');
@@ -391,16 +388,10 @@
         return;
       }
 
-      // Cycle banner buttons
-      var newCycleBtn = e.target.closest('.btn-sp-new-cycle');
-      if (newCycleBtn) {
-        startNewCycle();
-        return;
-      }
-      var dismissBtn = e.target.closest('[data-dismiss-banner]');
-      if (dismissBtn) {
-        var banner = document.getElementById('sp-cycle-banner');
-        if (banner) banner.style.display = 'none';
+      // View toggle (list / outlook)
+      var viewBtn = e.target.closest('[data-ops-view]');
+      if (viewBtn) {
+        toggleOpsView(viewBtn.dataset.opsView);
         return;
       }
     });
@@ -471,7 +462,6 @@
     });
   }
 
-
   function toggleChip(el, groupId, isMulti) {
     var group = document.getElementById(groupId + '-chips');
     if (!group) return;
@@ -511,7 +501,6 @@
     var hidden = document.getElementById(groupId);
     if (hidden) hidden.value = selected.join(',');
   }
-
 
   function goToSection(index) {
     var sections = window.SP_SECTIONS;
@@ -553,7 +542,6 @@
     var label = document.getElementById('sp-progress-label');
     if (label) label.textContent = 'Section ' + (index + 1) + ' of ' + total + ' \u2014 ' + window.SP_SECTIONS[index].title;
   }
-
 
   function loadProfile() {
     if (!_supabase || !_userId) return;
@@ -601,99 +589,46 @@
     });
   }
 
-
   function loadBIContext() {
     _getJwt().then(function(jwt) {
       if (!jwt) return;
-      fetch('/api/bi-context', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt }
-      }).then(function(r) {
-        if (!r.ok) return;
-        return r.json();
-      }).then(function(data) {
-        if (data && data.context) prefillFromBIContext(data.context);
-      }).catch(function() { /* BI context is optional */ });
+      fetch('/api/bi-context', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt} })
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) { if (d && d.context) prefillFromBIContext(d.context); })
+        .catch(function() {});
     });
   }
 
-
-  function prefillFromPreviousPlan(interviewData) {
-    if (!interviewData) return;
-
-    window.SP_SECTIONS.forEach(function(section) {
-      section.fields.forEach(function(field) {
-        var key = field.apiKey || field.id;
-        var val = interviewData[key];
-        if (val === undefined || val === null) return;
-
-        var el = document.getElementById(field.id);
-        if (!el || el.classList.contains('sp-from-profile')) return;
-
-        if (field.type === 'chip-single' || field.type === 'chip-multi') {
-          var values = Array.isArray(val) ? val : (typeof val === 'string' ? val.split(',').map(function(v) { return v.trim(); }).filter(Boolean) : []);
-          el.value = values.join(',');
-          var group = document.getElementById(field.id + '-chips');
-          if (group) {
-            group.querySelectorAll('.filter-pill').forEach(function(chip) {
-              var chipVal = chip.getAttribute('data-value');
-              if (chipVal !== '__other__' && values.indexOf(chipVal) !== -1) {
-                chip.classList.add('active');
-              }
-            });
-          }
-        } else if (field.type === 'select-or-text') {
-          var selectEl = document.getElementById(field.id + '-select');
-          if (selectEl) {
-            var matchedOption = false;
-            Array.from(selectEl.options).forEach(function(opt) {
-              if (opt.value === val) { matchedOption = true; }
-            });
-            if (matchedOption) {
-              selectEl.value = val;
-              el.value = val;
-            } else if (val) {
-              selectEl.value = '__other__';
-              var otherInput = document.getElementById(field.id + '-other');
-              if (otherInput) { otherInput.value = val; otherInput.style.display = 'block'; }
-              el.value = val;
-            }
-          }
-        } else {
-          el.value = typeof val === 'object' ? JSON.stringify(val) : val;
-        }
-      });
-    });
+  function prefillFromPreviousPlan(d) {
+    if (!d) return;
+    window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
+      var v = d[f.apiKey || f.id]; if (v == null) return;
+      var el = document.getElementById(f.id); if (!el || el.classList.contains('sp-from-profile')) return;
+      if (f.type === 'chip-single' || f.type === 'chip-multi') {
+        var vals = Array.isArray(v) ? v : (typeof v === 'string' ? v.split(',').map(function(x){return x.trim()}).filter(Boolean) : []);
+        el.value = vals.join(',');
+        var g = document.getElementById(f.id + '-chips');
+        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value !== '__other__' && vals.indexOf(c.dataset.value) !== -1) c.classList.add('active'); });
+      } else if (f.type === 'select-or-text') {
+        var sel = document.getElementById(f.id + '-select');
+        if (sel) { var matched = Array.from(sel.options).some(function(o){return o.value===v}); if (matched) { sel.value = v; el.value = v; } else if (v) { sel.value='__other__'; var oi=document.getElementById(f.id+'-other'); if(oi){oi.value=v;oi.style.display='block'} el.value=v; } }
+      } else { el.value = typeof v === 'object' ? JSON.stringify(v) : v; }
+    }); });
   }
 
-
-  function prefillFromBIContext(biContext) {
-    if (!biContext) return;
-    window.SP_SECTIONS.forEach(function(section) {
-      section.fields.forEach(function(field) {
-        if (!field.fromBI) return;
-        var key = field.apiKey;
-        var val = biContext[key];
-        if (val === undefined || val === null) return;
-
-        var el = document.getElementById(field.id);
-        if (!el || el.value) return;
-
-        if (field.type === 'chip-single') {
-          el.value = val;
-          var group = document.getElementById(field.id + '-chips');
-          if (group) {
-            group.querySelectorAll('.filter-pill').forEach(function(chip) {
-              if (chip.getAttribute('data-value') === val) chip.classList.add('active');
-            });
-          }
-        } else {
-          el.value = val;
-        }
-      });
-    });
+  function prefillFromBIContext(bi) {
+    if (!bi) return;
+    window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
+      if (!f.fromBI) return;
+      var v = bi[f.apiKey]; if (v == null) return;
+      var el = document.getElementById(f.id); if (!el || el.value) return;
+      if (f.type === 'chip-single') {
+        el.value = v;
+        var g = document.getElementById(f.id + '-chips');
+        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+      } else { el.value = v; }
+    }); });
   }
-
 
   function collectSectionData() {
     var data = {};
@@ -744,7 +679,6 @@
     return valid ? data : null;
   }
 
-
   async function generate() {
     var data = collectSectionData();
     if (!data) {
@@ -767,8 +701,6 @@
 
     var clContext = null;
     var biInsights = null;
-    var cycleEndDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().substring(0, 10);
-
     try {
       var jwt = await _getJwt();
       if (jwt) {
@@ -795,8 +727,7 @@
         body: JSON.stringify({
           planData: data,
           clContext: clContext,
-          biInsights: biInsights,
-          cycleEndDate: cycleEndDate
+          biInsights: biInsights
         })
       });
       var result;
@@ -822,7 +753,6 @@
     return (sess && sess.data && sess.data.session) ? sess.data.session.access_token : null;
   }
 
-
   function onPlanGenerated(result) {
     hasPlan = true;
     _currentPlanData = result;
@@ -830,31 +760,18 @@
     switchTab('ops-plan');
   }
 
-
   function loadOperationalPlan() {
     if (!_supabase || !_userId) return;
-
     _supabase
       .from('strategic_plans')
-      .select('id, plan_name, version, created_at, interview_data, swot_data')
+      .select('id, plan_name, version')
       .eq('user_id', _userId)
       .eq('is_current', true)
       .single()
       .then(function(res) {
         if (res.error || !res.data) return;
-        var plan = res.data;
-
         var titleEl = document.getElementById('sp-ops-plan-title');
-        if (titleEl) titleEl.textContent = (plan.plan_name || 'Strategic Plan') + ' v' + (plan.version || 1);
-
-        var cycleStart = new Date(plan.created_at);
-        var cycleEnd = new Date(cycleStart.getTime() + 90 * 24 * 60 * 60 * 1000);
-        var today = new Date();
-        var dayNum = Math.max(1, Math.ceil((today - cycleStart) / (1000 * 60 * 60 * 24)));
-        var cycleEl = document.getElementById('sp-ops-cycle');
-        if (cycleEl) cycleEl.textContent = '90-Day Cycle: Day ' + Math.min(dayNum, 90) + ' of 90';
-
-        checkCycleRenewal(cycleEnd);
+        if (titleEl) titleEl.textContent = (res.data.plan_name || 'Strategic Plan') + ' v' + (res.data.version || 1);
         loadInitiatives();
       });
   }
@@ -910,6 +827,11 @@
     var completedTasks = 0;
     var overdueTasks = 0;
     var dueThisWeek = 0;
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    var allSubtasks = [];
 
     var html = '';
     initiatives.forEach(function(init) {
@@ -919,6 +841,15 @@
         var status = (s.items && s.items.status) || 'pending';
         totalTasks++;
         if (status === 'done') { done++; completedTasks++; }
+        else {
+          var dd = s.items && s.items.due_date ? new Date(s.items.due_date) : null;
+          if (dd) {
+            dd.setHours(0, 0, 0, 0);
+            if (dd < today) overdueTasks++;
+            if (dd >= today && dd < weekEnd) dueThisWeek++;
+          }
+        }
+        allSubtasks.push({ row: s, initName: init.initiative_name || (init.items && init.items.title) || '' });
       });
       var pct = subs.length > 0 ? Math.round((done / subs.length) * 100) : 0;
 
@@ -928,13 +859,8 @@
         else if (done < subs.length * 0.5) statusClass = 'status-amber';
       }
 
-      var spBadge = init.sp_section
-        ? ' <span class="badge badge-blue">' + _esc(formatSectionName(init.sp_section)) + '</span>'
-        : '';
-
-      var sourceBadge = '';
-      if (init.source === 'bi_action') sourceBadge = ' <span class="badge badge-orange">BI Recommendation</span>';
-      else if (init.is_carried_forward) sourceBadge = ' <span class="badge badge-orange">Carried Forward</span>';
+      var spBadge = init.sp_section ? ' <span class="badge badge-blue">' + _esc(formatSectionName(init.sp_section)) + '</span>' : '';
+      var sourceBadge = init.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : init.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
 
       var expanded = getExpandState(init.id);
 
@@ -964,6 +890,7 @@
     if (pctLabel) pctLabel.textContent = overallPct + '% complete';
 
     updateOpsStats(initiatives.length, completedTasks, overdueTasks, dueThisWeek);
+    renderOutlookView(allSubtasks, initiatives, subtaskMap);
   }
 
   function renderFlatTracker(rows) {
@@ -997,6 +924,14 @@
     updateOpsStats(0, completedTasks, 0, 0);
   }
 
+  function _formatDate(d) {
+    if (!d) return '';
+    var dt = typeof d === 'string' ? new Date(d) : d;
+    if (isNaN(dt.getTime())) return d;
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+  }
+
   function renderSubtaskRow(row) {
     var items = row.items || {};
     var done = items.status === 'done';
@@ -1010,16 +945,21 @@
                      priority === 'Low' ? 'background:var(--badge-green-bg);color:var(--badge-green-text)' :
                      'background:var(--badge-orange-bg);color:var(--badge-orange-text)';
 
-    var sourceBadge = '';
-    if (row.source === 'bi_action') sourceBadge = ' <span class="badge badge-orange">BI Recommendation</span>';
-    else if (row.is_carried_forward) sourceBadge = ' <span class="badge badge-orange">Carried Forward</span>';
+    var sourceBadge = row.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : row.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
 
     var html = '<div class="sp-subtask' + (done ? ' sp-subtask-done' : '') + '" data-id="' + _esc(row.id) + '">';
     html += '<input type="checkbox" class="sp-subtask-check"' + (done ? ' checked' : '') + '>';
     html += '<div class="sp-subtask-body">';
     html += '<span class="sp-subtask-title">' + _esc(title) + '</span>' + sourceBadge;
     html += '<div class="sp-subtask-meta">';
-    html += '<span class="sp-subtask-due" title="Click to change">' + _esc(dueDate || 'Set date') + '</span>';
+    var dueDateDisplay = dueDate ? _formatDate(dueDate) : 'Set date';
+    var isOverdue = false;
+    if (dueDate && !done) {
+      var dd = new Date(dueDate); dd.setHours(0,0,0,0);
+      var now = new Date(); now.setHours(0,0,0,0);
+      isOverdue = dd < now;
+    }
+    html += '<span class="sp-subtask-due" title="Click to change"' + (isOverdue ? ' style="color:var(--red);font-weight:var(--font-weight-semibold)"' : '') + '>' + _esc(dueDateDisplay) + '</span>';
     html += '<span class="sp-subtask-owner" title="Click to change">' + _esc(owner || 'Owner') + '</span>';
     html += '<select class="sp-subtask-priority" style="' + priorityBg + '">';
     ['High', 'Medium', 'Low'].forEach(function(p) {
@@ -1047,19 +987,9 @@
       '<div class="stat-card"><div class="stat-value">' + dueThisWeek + '</div><div class="stat-label">Due This Week</div></div>';
   }
 
-  function formatSectionName(key) {
-    var map = {
-      'business_foundation': 'Business Foundation',
-      'products_services': 'Products & Services',
-      'financial_position': 'Financial Position',
-      'operations_capacity': 'Operations & Capacity',
-      'market_competition': 'Market & Competition',
-      'growth_transformation': 'Growth & Transformation',
-      'risk_resilience': 'Risk & Resilience'
-    };
-    return map[key] || key;
+  function formatSectionName(k) {
+    return {business_foundation:'Foundation',products_services:'Products',financial_position:'Financial',operations_capacity:'Operations',market_competition:'Market',growth_transformation:'Growth',risk_resilience:'Risk'}[k]||k;
   }
-
 
   function getExpandState(initId) {
     try {
@@ -1104,6 +1034,95 @@
     });
   }
 
+  function toggleOpsView(viewId) {
+    document.querySelectorAll('[data-ops-view]').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.opsView === viewId);
+    });
+    var listEl = document.getElementById('sp-initiatives-list');
+    var outlookEl = document.getElementById('sp-outlook-view');
+    var addBtn = document.getElementById('sp-add-initiative-btn');
+    var expandBtn = document.querySelector('[data-expand]');
+    if (viewId === 'outlook') {
+      if (listEl) listEl.style.display = 'none';
+      if (outlookEl) outlookEl.style.display = 'block';
+      if (addBtn) addBtn.style.display = 'none';
+      if (expandBtn) expandBtn.style.display = 'none';
+    } else {
+      if (listEl) listEl.style.display = '';
+      if (outlookEl) outlookEl.style.display = 'none';
+      if (addBtn) addBtn.style.display = '';
+      if (expandBtn) expandBtn.style.display = '';
+    }
+  }
+
+  function renderOutlookView(allSubtasks, initiatives, subtaskMap) {
+    var container = document.getElementById('sp-outlook-view');
+    if (!container) return;
+    if (!allSubtasks || allSubtasks.length === 0) {
+      container.innerHTML = '<div class="empty-state"><p>No tasks with dates to display.</p></div>';
+      return;
+    }
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var weeks = [];
+    for (var w = 0; w < 13; w++) {
+      var wStart = new Date(today);
+      wStart.setDate(wStart.getDate() + (w * 7));
+      var wEnd = new Date(wStart);
+      wEnd.setDate(wEnd.getDate() + 6);
+      weeks.push({ start: wStart, end: wEnd, label: _formatDate(wStart).replace(/ \d{4}$/, '') });
+    }
+    var headerHtml = '<div class="sp-outlook-header"><div style="width:160px;flex-shrink:0"></div>';
+    weeks.forEach(function(wk, i) {
+      headerHtml += '<div class="sp-outlook-week' + (i === 0 ? ' current' : '') + '">' + _esc(wk.label) + '</div>';
+    });
+    headerHtml += '</div>';
+    var tracksHtml = '';
+    initiatives.forEach(function(init) {
+      var subs = subtaskMap[init.id] || [];
+      if (subs.length === 0) return;
+      var initName = init.initiative_name || (init.items && init.items.title) || 'Untitled';
+      tracksHtml += '<div class="sp-outlook-track"><div class="sp-outlook-track-label" title="' + _esc(initName) + '">' + _esc(initName) + '</div><div class="sp-outlook-cells">';
+      weeks.forEach(function(wk) {
+        tracksHtml += '<div class="sp-outlook-cell">';
+        subs.forEach(function(sub) {
+          var dd = sub.items && sub.items.due_date ? new Date(sub.items.due_date) : null;
+          if (!dd || isNaN(dd.getTime())) return;
+          dd.setHours(0, 0, 0, 0);
+          if (dd >= wk.start && dd <= wk.end) {
+            var prio = (sub.items.priority || 'medium').toLowerCase();
+            var isDone = sub.items.status === 'done';
+            var cls = isDone ? 'done' : prio;
+            var tip = _esc((sub.items.title || '') + ' (' + _formatDate(dd) + ')');
+            tracksHtml += '<span class="sp-outlook-dot ' + cls + '" data-task-id="' + _esc(sub.id) + '" title="' + tip + '"></span>';
+          }
+        });
+        tracksHtml += '</div>';
+      });
+      tracksHtml += '</div></div>';
+    });
+    var leg = '<div class="sp-outlook-legend">';
+    [['red','High'],['orange','Medium'],['green','Low'],['grey','Done']].forEach(function(p) {
+      leg += '<span><span class="sp-outlook-legend-dot" style="background:var(--' + p[0] + ')"></span>' + p[1] + '</span>';
+    });
+    container.innerHTML = '<div class="sp-outlook-wrap">' + headerHtml + tracksHtml + leg + '</div></div>';
+    container.querySelectorAll('.sp-outlook-dot').forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var taskId = dot.dataset.taskId;
+        toggleOpsView('list');
+        setTimeout(function() {
+          var taskEl = document.querySelector('.sp-subtask[data-id="' + taskId + '"]');
+          if (taskEl) {
+            var initEl = taskEl.closest('.sp-initiative');
+            if (initEl && !initEl.classList.contains('expanded')) initEl.classList.add('expanded');
+            taskEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            taskEl.style.background = 'var(--warning-light)';
+            setTimeout(function() { taskEl.style.background = ''; }, 2000);
+          }
+        }, 100);
+      });
+    });
+  }
 
   function toggleSubtask(taskId) {
     if (!_supabase) return;
@@ -1179,7 +1198,7 @@
   function editOwner(taskId, ownerEl) {
     if (ownerEl.querySelector('select')) return;
     var current = (ownerEl.textContent || '').trim();
-    var roles = ['Owner', 'Admin', 'Office manager', 'Leading hand', 'Project manager', 'Estimator', 'Business development', 'Bookkeeper'];
+    var roles = ['Owner','Admin','Office manager','Leading hand','Project manager','Estimator','Bookkeeper'];
     var select = document.createElement('select');
     select.className = 'sp-inline-edit-input';
     select.style.width = '160px';
@@ -1207,29 +1226,15 @@
     var parentId = btn.dataset.parentId;
     var form = document.createElement('div');
     form.className = 'sp-add-task-form';
-    form.innerHTML =
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">' +
-        '<div style="flex:1;min-width:200px">' +
-          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Task Title</label>' +
-          '<input type="text" class="sp-input sp-add-task-title" placeholder="What needs to be done?">' +
-        '</div>' +
-        '<div style="width:130px">' +
-          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Priority</label>' +
-          '<select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select>' +
-        '</div>' +
-        '<div style="width:150px">' +
-          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Due Date</label>' +
-          '<input type="date" class="sp-input sp-add-task-due">' +
-        '</div>' +
-        '<div style="width:150px">' +
-          '<label class="sp-field-label" style="font-size:var(--label-font-size);margin-bottom:4px">Owner</label>' +
-          '<select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office manager</option><option value="Leading hand">Leading hand</option><option value="Project manager">Project manager</option><option value="Other">Other</option></select>' +
-        '</div>' +
-      '</div>' +
-      '<div style="display:flex;gap:8px;margin-top:8px">' +
-        '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + _esc(parentId) + '" type="button">Add Task</button>' +
-        '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button>' +
-      '</div>';
+    var f = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
+    f += '<div style="flex:1;min-width:200px"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
+    f += '<div style="width:120px"><select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
+    f += '<div style="width:140px"><input type="date" class="sp-input sp-add-task-due"></div>';
+    f += '<div style="width:140px"><select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
+    f += '</div><div style="display:flex;gap:8px;margin-top:8px">';
+    f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + _esc(parentId) + '" type="button">Add</button>';
+    f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
+    form.innerHTML = f;
     row.appendChild(form);
     form.querySelector('.sp-add-task-title').focus();
   }
@@ -1355,7 +1360,6 @@
       });
   }
 
-
   function loadStrategicPlanView() {
     if (!_supabase || !_userId) return;
 
@@ -1421,7 +1425,6 @@
     section.style.display = 'block';
   }
 
-
   function loadVersionHistory() {
     var el = document.getElementById('sp-version-history');
     if (!el || !_supabase || !_userId) return;
@@ -1471,72 +1474,21 @@
       });
   }
 
-
-  function checkCycleRenewal(cycleEnd) {
-    if (!cycleEnd) return;
-    var daysLeft = Math.ceil((cycleEnd - new Date()) / (1000 * 60 * 60 * 24));
-    if (daysLeft <= 14) {
-      var banner = document.getElementById('sp-cycle-banner');
-      if (banner) {
-        banner.className = 'sp-cycle-renewal-banner';
-        banner.innerHTML = 'Your current 90-day plan cycle ends on ' + _esc(cycleEnd.toISOString().substring(0, 10)) +
-          '. Ready to plan your next quarter? ' +
-          '<button class="btn-sp-new-cycle" type="button">Start New Cycle</button> ' +
-          '<button data-dismiss-banner type="button" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-family:var(--body-font)">Dismiss</button>';
-        banner.style.display = 'flex';
-      }
-    }
-  }
-
-  function startNewCycle() {
-    if (!_supabase || !_userId) return;
-    _supabase
-      .from('strategic_plans')
-      .select('interview_data')
-      .eq('user_id', _userId)
-      .eq('is_current', true)
-      .single()
-      .then(function(res) {
-        if (res.data && res.data.interview_data) {
-          prefillFromPreviousPlan(res.data.interview_data);
-          switchTab('create-plan');
-          goToSection(0);
-        }
-      });
-  }
-
-
   function highlightDecisionSection(decisionId) {
-    // Find which section contains the decision field
-    var targetSection = -1;
-    window.SP_SECTIONS.forEach(function(section) {
-      section.fields.forEach(function(field) {
-        if (field.decisionId === decisionId) {
-          targetSection = section.id;
-        }
-      });
-    });
-    if (targetSection >= 0) {
-      goToSection(targetSection);
-      // Find and highlight the field
+    var sec = -1;
+    window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) { if (f.decisionId === decisionId) sec = s.id; }); });
+    if (sec >= 0) {
+      goToSection(sec);
       setTimeout(function() {
-        window.SP_SECTIONS[targetSection].fields.forEach(function(field) {
-          if (field.decisionId === decisionId) {
-            var fieldEl = document.getElementById(field.id);
-            var container = fieldEl ? fieldEl.closest('.sp-field') : null;
-            if (container) {
-              container.style.background = 'var(--warning-light)';
-              container.style.border = '1px solid var(--warning)';
-              container.style.borderRadius = 'var(--btn-radius)';
-              container.style.padding = '12px';
-              container.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
+        window.SP_SECTIONS[sec].fields.forEach(function(f) {
+          if (f.decisionId === decisionId) {
+            var c = (document.getElementById(f.id) || {}).closest && document.getElementById(f.id).closest('.sp-field');
+            if (c) { c.style.cssText = 'background:var(--warning-light);border:1px solid var(--warning);border-radius:var(--btn-radius);padding:12px'; c.scrollIntoView({behavior:'smooth',block:'center'}); }
           }
         });
       }, 300);
     }
   }
-
 
   function checkPlanExists() {
     if (!_supabase || !_userId) return Promise.resolve(false);
@@ -1558,7 +1510,6 @@
         return false;
       });
   }
-
 
   function init() {
     _supabase = window.supabaseClient;
@@ -1602,7 +1553,6 @@
       });
     });
   }
-
 
   window.SP_LOGIC = {
     init: init,
