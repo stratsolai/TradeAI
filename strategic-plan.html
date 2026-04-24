@@ -1010,7 +1010,7 @@
     if (!session) { window.location.href = '/login'; return; }
     document.getElementById('page-wrap').style.display = 'block';
     if (window.SP_LOGIC && window.SP_LOGIC.init) {
-      window.SP_LOGIC.init();
+      window.SP_LOGIC.init(supabase, session.user);
     }
   });
 })();

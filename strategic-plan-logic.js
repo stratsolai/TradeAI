@@ -11,8 +11,6 @@
   var _userId = null;
   var _currentPlanData = null;
 
-  function _esc(s) { return window.escHtml ? window.escHtml(s) : (s || ''); }
-
   function _showError(message) {
     var modal = document.getElementById('sp-error-msg');
     if (!modal) return;
@@ -87,7 +85,7 @@
 
     var navHtml = sections.map(function(s, i) {
       var shortTitle = s.title.split('. ')[1] || s.title;
-      return '<button class="profile-nav-chip" data-section="' + i + '">' + (i + 1) + '. ' + _esc(shortTitle) + '</button>';
+      return '<button class="profile-nav-chip" data-section="' + i + '">' + (i + 1) + '. ' + escHtml(shortTitle) + '</button>';
     }).join('');
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) navEl.innerHTML = navHtml;
@@ -101,7 +99,7 @@
       }).join('');
 
       var infoBox = s.infoBox
-        ? '<div class="sp-info-box"><span class="sp-info-icon">&#x1F4A1;</span> ' + _esc(s.infoBox) + '</div>'
+        ? '<div class="sp-info-box"><span class="sp-info-icon">&#x1F4A1;</span> ' + escHtml(s.infoBox) + '</div>'
         : '';
 
       var backBtn = s.id > 0
@@ -124,8 +122,8 @@
         '<div class="profile-section-header">' +
           '<span class="profile-section-icon">' + s.icon + '</span>' +
           '<div>' +
-            '<h2 class="profile-section-title">' + _esc(s.title) + '</h2>' +
-            '<p class="profile-section-subtitle">' + _esc(s.subtitle) + '</p>' +
+            '<h2 class="profile-section-title">' + escHtml(s.title) + '</h2>' +
+            '<p class="profile-section-subtitle">' + escHtml(s.subtitle) + '</p>' +
           '</div>' +
         '</div>' +
         infoBox +
@@ -144,12 +142,12 @@
   function renderField(field) {
     var reqMark = field.required ? ' <span style="color:var(--red)">*</span>' : '';
     var label = '<label class="sp-field-label" for="' + field.id + '">' +
-      _esc(field.label) + reqMark +
-      (field.labelHint ? ' <span class="sp-label-hint">' + _esc(field.labelHint) + '</span>' : '') +
+      escHtml(field.label) + reqMark +
+      (field.labelHint ? ' <span class="sp-label-hint">' + escHtml(field.labelHint) + '</span>' : '') +
       '</label>';
 
     var helpText = field.helpText
-      ? '<p class="sp-field-help">' + _esc(field.helpText) + '</p>'
+      ? '<p class="sp-field-help">' + escHtml(field.helpText) + '</p>'
       : '';
 
     var errorEl = field.required
@@ -159,25 +157,25 @@
     var input = '';
 
     if (field.type === 'text') {
-      input = '<input type="text" id="' + field.id + '" class="sp-input" placeholder="' + _esc(field.placeholder || '') + '">';
+      input = '<input type="text" id="' + field.id + '" class="sp-input" placeholder="' + escHtml(field.placeholder || '') + '">';
     } else if (field.type === 'textarea') {
-      input = '<textarea id="' + field.id + '" class="sp-textarea" placeholder="' + _esc(field.placeholder || '') + '" rows="4"></textarea>';
+      input = '<textarea id="' + field.id + '" class="sp-textarea" placeholder="' + escHtml(field.placeholder || '') + '" rows="4"></textarea>';
     } else if (field.type === 'select') {
       var opts = (field.options || []).map(function(o) {
-        return '<option value="' + _esc(o.value) + '">' + _esc(o.label) + '</option>';
+        return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
       input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
     } else if (field.type === 'select-or-text') {
       var sOpts = (field.options || []).map(function(o) {
-        return '<option value="' + _esc(o.value) + '">' + _esc(o.label) + '</option>';
+        return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
       sOpts += '<option value="__other__">Other (specify)</option>';
       input = '<select id="' + field.id + '-select" class="sp-select sp-select-or-text" data-target="' + field.id + '">' + sOpts + '</select>';
-      input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + _esc(field.placeholder || '') + '" style="display:none;margin-top:8px">';
+      input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + escHtml(field.placeholder || '') + '" style="display:none;margin-top:8px">';
       input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
       var chips = (field.options || []).map(function(o) {
-        return '<div class="filter-pill" data-value="' + _esc(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + _esc(o.label) + '</div>';
+        return '<div class="filter-pill" data-value="' + escHtml(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + escHtml(o.label) + '</div>';
       }).join('');
       if (field.allowOther) {
         chips += '<div class="filter-pill sp-other-pill" data-value="__other__" data-group="' + field.id + '" data-multi="true">Other</div>';
@@ -551,6 +549,7 @@
       .eq('id', _userId)
       .single()
       .then(function(res) {
+        if (res.error) { console.error('[SP] Profile load error:', res.error.message); return; }
         if (res.data) {
           userProfile = res.data;
           prefillFromProfile(res.data);
@@ -595,7 +594,7 @@
       fetch('/api/bi-context', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt} })
         .then(function(r) { return r.ok ? r.json() : null; })
         .then(function(d) { if (d && d.context) prefillFromBIContext(d.context); })
-        .catch(function() {});
+        .catch(function(err) { console.error('[SP] BI context fetch error:', err.message || err); });
     });
   }
 
@@ -714,7 +713,7 @@
           biInsights = cd.biInsights || null;
         }
       }
-    } catch (e) { /* context load is optional */ }
+    } catch (e) { console.error('[SP] Context load error:', e.message || e); }
 
     try {
       var jwt = await _getJwt();
@@ -730,11 +729,11 @@
           biInsights: biInsights
         })
       });
-      var result;
-      try { result = await r.json(); } catch (parseErr) {
-        var rawText = await r.text().catch(function() { return ''; });
-        throw new Error('Server returned status ' + r.status + ': ' + rawText.substring(0, 200));
+      if (!r.ok) {
+        var errText = await r.text().catch(function() { return ''; });
+        throw new Error('Server returned status ' + r.status + ': ' + errText.substring(0, 200));
       }
+      var result = await r.json();
       if (result.error) throw new Error(result.error);
       onPlanGenerated(result);
     } catch (err) {
@@ -859,14 +858,14 @@
         else if (done < subs.length * 0.5) statusClass = 'status-amber';
       }
 
-      var spBadge = init.sp_section ? ' <span class="badge badge-blue">' + _esc(formatSectionName(init.sp_section)) + '</span>' : '';
+      var spBadge = init.sp_section ? ' <span class="badge badge-blue">' + escHtml(formatSectionName(init.sp_section)) + '</span>' : '';
       var sourceBadge = init.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : init.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
 
       var expanded = getExpandState(init.id);
 
-      html += '<div class="sp-initiative' + (statusClass ? ' ' + statusClass : '') + (expanded ? ' expanded' : '') + '" data-init-id="' + _esc(init.id) + '">';
+      html += '<div class="sp-initiative' + (statusClass ? ' ' + statusClass : '') + (expanded ? ' expanded' : '') + '" data-init-id="' + escHtml(init.id) + '">';
       html += '<div class="sp-initiative-header">';
-      html += '<span class="sp-initiative-name">' + _esc(init.initiative_name || (init.items && init.items.title) || 'Untitled Initiative') + spBadge + sourceBadge + '</span>';
+      html += '<span class="sp-initiative-name">' + escHtml(init.initiative_name || (init.items && init.items.title) || 'Untitled Initiative') + spBadge + sourceBadge + '</span>';
       html += '<div class="sp-initiative-progress"><div class="sp-initiative-progress-fill" style="width:' + pct + '%"></div></div>';
       html += '<span class="sp-initiative-count">' + done + ' of ' + subs.length + ' tasks</span>';
       html += '<span class="sp-initiative-chevron">&#9660;</span>';
@@ -876,7 +875,7 @@
       subs.forEach(function(sub) {
         html += renderSubtaskRow(sub);
       });
-      html += '<div class="sp-add-task-row"><button class="btn-sp-add-task" data-parent-id="' + _esc(init.id) + '" type="button">+ Add Task</button></div>';
+      html += '<div class="sp-add-task-row"><button class="btn-sp-add-task" data-parent-id="' + escHtml(init.id) + '" type="button">+ Add Task</button></div>';
       html += '</div></div>';
     });
 
@@ -908,7 +907,7 @@
       if (!groups[g] || groups[g].length === 0) return;
       var heading = g === 1 ? 'Month 1 (Days 1\u201330)' : g === 2 ? 'Month 2 (Days 31\u201360)' : g === 3 ? 'Month 3 (Days 61\u201390)' : 'General Tasks';
       html += '<div class="sp-initiative expanded" data-month-group="' + g + '">';
-      html += '<div class="sp-initiative-header"><span class="sp-initiative-name">' + _esc(heading) + '</span><span class="sp-initiative-chevron">&#9660;</span></div>';
+      html += '<div class="sp-initiative-header"><span class="sp-initiative-name">' + escHtml(heading) + '</span><span class="sp-initiative-chevron">&#9660;</span></div>';
       html += '<div class="sp-initiative-body">';
       groups[g].forEach(function(row) { html += renderSubtaskRow(row); });
       html += '</div></div>';
@@ -947,10 +946,10 @@
 
     var sourceBadge = row.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : row.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
 
-    var html = '<div class="sp-subtask' + (done ? ' sp-subtask-done' : '') + '" data-id="' + _esc(row.id) + '">';
+    var html = '<div class="sp-subtask' + (done ? ' sp-subtask-done' : '') + '" data-id="' + escHtml(row.id) + '">';
     html += '<input type="checkbox" class="sp-subtask-check"' + (done ? ' checked' : '') + '>';
     html += '<div class="sp-subtask-body">';
-    html += '<span class="sp-subtask-title">' + _esc(title) + '</span>' + sourceBadge;
+    html += '<span class="sp-subtask-title">' + escHtml(title) + '</span>' + sourceBadge;
     html += '<div class="sp-subtask-meta">';
     var dueDateDisplay = dueDate ? _formatDate(dueDate) : 'Set date';
     var isOverdue = false;
@@ -959,8 +958,8 @@
       var now = new Date(); now.setHours(0,0,0,0);
       isOverdue = dd < now;
     }
-    html += '<span class="sp-subtask-due" title="Click to change"' + (isOverdue ? ' style="color:var(--red);font-weight:var(--font-weight-semibold)"' : '') + '>' + _esc(dueDateDisplay) + '</span>';
-    html += '<span class="sp-subtask-owner" title="Click to change">' + _esc(owner || 'Owner') + '</span>';
+    html += '<span class="sp-subtask-due" title="Click to change"' + (isOverdue ? ' style="color:var(--red);font-weight:var(--font-weight-semibold)"' : '') + '>' + escHtml(dueDateDisplay) + '</span>';
+    html += '<span class="sp-subtask-owner" title="Click to change">' + escHtml(owner || 'Owner') + '</span>';
     html += '<select class="sp-subtask-priority" style="' + priorityBg + '">';
     ['High', 'Medium', 'Low'].forEach(function(p) {
       html += '<option value="' + p + '"' + (priority === p ? ' selected' : '') + '>' + p + '</option>';
@@ -968,7 +967,7 @@
     html += '</select>';
     if (notes) html += '<button class="sp-notes-toggle" type="button">Notes</button>';
     html += '</div>';
-    if (notes) html += '<div class="sp-subtask-notes" style="display:none;font-size:var(--label-font-size);color:var(--text-muted);margin-top:6px;line-height:var(--note-line-height)">' + _esc(notes) + '</div>';
+    if (notes) html += '<div class="sp-subtask-notes" style="display:none;font-size:var(--label-font-size);color:var(--text-muted);margin-top:6px;line-height:var(--note-line-height)">' + escHtml(notes) + '</div>';
     html += '</div>';
     html += '<div class="sp-subtask-actions">';
     html += '<button class="sp-subtask-action-btn edit-btn" type="button" title="Edit">&#9998;</button>';
@@ -1074,7 +1073,7 @@
     }
     var headerHtml = '<div class="sp-outlook-header"><div style="width:160px;flex-shrink:0"></div>';
     weeks.forEach(function(wk, i) {
-      headerHtml += '<div class="sp-outlook-week' + (i === 0 ? ' current' : '') + '">' + _esc(wk.label) + '</div>';
+      headerHtml += '<div class="sp-outlook-week' + (i === 0 ? ' current' : '') + '">' + escHtml(wk.label) + '</div>';
     });
     headerHtml += '</div>';
     var tracksHtml = '';
@@ -1082,7 +1081,7 @@
       var subs = subtaskMap[init.id] || [];
       if (subs.length === 0) return;
       var initName = init.initiative_name || (init.items && init.items.title) || 'Untitled';
-      tracksHtml += '<div class="sp-outlook-track"><div class="sp-outlook-track-label" title="' + _esc(initName) + '">' + _esc(initName) + '</div><div class="sp-outlook-cells">';
+      tracksHtml += '<div class="sp-outlook-track"><div class="sp-outlook-track-label" title="' + escHtml(initName) + '">' + escHtml(initName) + '</div><div class="sp-outlook-cells">';
       weeks.forEach(function(wk) {
         tracksHtml += '<div class="sp-outlook-cell">';
         subs.forEach(function(sub) {
@@ -1093,8 +1092,8 @@
             var prio = (sub.items.priority || 'medium').toLowerCase();
             var isDone = sub.items.status === 'done';
             var cls = isDone ? 'done' : prio;
-            var tip = _esc((sub.items.title || '') + ' (' + _formatDate(dd) + ')');
-            tracksHtml += '<span class="sp-outlook-dot ' + cls + '" data-task-id="' + _esc(sub.id) + '" title="' + tip + '"></span>';
+            var tip = escHtml((sub.items.title || '') + ' (' + _formatDate(dd) + ')');
+            tracksHtml += '<span class="sp-outlook-dot ' + cls + '" data-task-id="' + escHtml(sub.id) + '" title="' + tip + '"></span>';
           }
         });
         tracksHtml += '</div>';
@@ -1140,7 +1139,8 @@
           .update({ items: items })
           .eq('id', taskId)
           .then(function(upRes) {
-            if (!upRes.error) loadInitiatives();
+            if (upRes.error) { console.error('[SP] Toggle subtask update error:', upRes.error.message); return; }
+            loadInitiatives();
           });
       });
   }
@@ -1203,7 +1203,7 @@
     select.className = 'sp-inline-edit-input';
     select.style.width = '160px';
     select.innerHTML = roles.map(function(r) {
-      return '<option value="' + _esc(r) + '"' + (r === current ? ' selected' : '') + '>' + _esc(r) + '</option>';
+      return '<option value="' + escHtml(r) + '"' + (r === current ? ' selected' : '') + '>' + escHtml(r) + '</option>';
     }).join('');
     ownerEl.textContent = '';
     ownerEl.appendChild(select);
@@ -1232,7 +1232,7 @@
     f += '<div style="width:140px"><input type="date" class="sp-input sp-add-task-due"></div>';
     f += '<div style="width:140px"><select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
     f += '</div><div style="display:flex;gap:8px;margin-top:8px">';
-    f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + _esc(parentId) + '" type="button">Add</button>';
+    f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + escHtml(parentId) + '" type="button">Add</button>';
     f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
     form.innerHTML = f;
     row.appendChild(form);
@@ -1289,7 +1289,9 @@
           .from('action_tracker')
           .update({ items: items })
           .eq('id', taskId)
-          .then(function() {});
+          .then(function(upRes) {
+            if (upRes.error) console.error('[SP] Save task field error:', upRes.error.message);
+          });
       });
   }
 
@@ -1383,10 +1385,10 @@
         if (linksEl) {
           var dlHtml = '';
           if (plan.document_1_url) {
-            dlHtml += '<a href="' + _esc(plan.document_1_url) + '" class="btn-sp-download" download>Strategic Plan (Word)</a> ';
+            dlHtml += '<a href="' + escHtml(plan.document_1_url) + '" class="btn-sp-download" download>Strategic Plan (Word)</a> ';
           }
           if (plan.document_2_url) {
-            dlHtml += '<a href="' + _esc(plan.document_2_url) + '" class="btn-sp-download" download>Operational Plan (Word)</a> ';
+            dlHtml += '<a href="' + escHtml(plan.document_2_url) + '" class="btn-sp-download" download>Operational Plan (Word)</a> ';
           }
           dlHtml += '<button class="btn-sp-print" type="button">Print / Save as PDF</button>';
           dlHtml += ' <button class="btn-outline btn-sm" id="sp-update-plan-btn" type="button">Update Plan</button>';
@@ -1412,9 +1414,9 @@
       html += '<div class="sp-swot-title">' + cat.charAt(0).toUpperCase() + cat.slice(1) + '</div>';
       html += '<div class="sp-swot-items">';
       if (Array.isArray(items) && items.length > 0) {
-        html += items.map(function(item) { return '\u2022 ' + _esc(item); }).join('<br>');
+        html += items.map(function(item) { return '\u2022 ' + escHtml(item); }).join('<br>');
       } else if (typeof items === 'string') {
-        html += _esc(items);
+        html += escHtml(items);
       } else {
         html += '<em>Not available</em>';
       }
@@ -1434,6 +1436,7 @@
       .eq('user_id', _userId)
       .order('version', { ascending: false })
       .then(function(res) {
+        if (res.error) { console.error('[SP] Version history error:', res.error.message); return; }
         if (res.data && res.data.length > 0) renderVersionHistory(res.data, el);
       });
   }
@@ -1445,12 +1448,12 @@
       var label = v.plan_name || ('Plan v' + v.version);
       var dateStr = v.created_at ? v.created_at.substring(0, 10) : '';
       var badge = v.is_current ? ' <span class="sp-current-badge">Current Plan</span>' : '';
-      var doc1 = v.document_1_url ? '<a href="' + _esc(v.document_1_url) + '" class="sp-vh-link" download>Strategic Plan</a> ' : '';
-      var doc2 = v.document_2_url ? '<a href="' + _esc(v.document_2_url) + '" class="sp-vh-link" download>Ops Plan</a> ' : '';
-      var useBtn = v.is_current ? '' : '<button class="btn-sp-use-template" data-plan-id="' + _esc(v.id) + '" type="button">Use as Template</button>';
+      var doc1 = v.document_1_url ? '<a href="' + escHtml(v.document_1_url) + '" class="sp-vh-link" download>Strategic Plan</a> ' : '';
+      var doc2 = v.document_2_url ? '<a href="' + escHtml(v.document_2_url) + '" class="sp-vh-link" download>Ops Plan</a> ' : '';
+      var useBtn = v.is_current ? '' : '<button class="btn-sp-use-template" data-plan-id="' + escHtml(v.id) + '" type="button">Use as Template</button>';
       html += '<div class="sp-version-row' + (v.is_current ? ' sp-version-current' : '') + '">';
-      html += '<div class="sp-vh-label">' + _esc(label) + badge + '</div>';
-      html += '<div class="sp-vh-meta">Generated: ' + _esc(dateStr) + '</div>';
+      html += '<div class="sp-vh-label">' + escHtml(label) + badge + '</div>';
+      html += '<div class="sp-vh-meta">Generated: ' + escHtml(dateStr) + '</div>';
       html += '<div class="sp-vh-actions">' + doc1 + doc2 + useBtn + '</div></div>';
     });
     html += '</div>';
@@ -1511,46 +1514,41 @@
       });
   }
 
-  function init() {
-    _supabase = window.supabaseClient;
-    if (!_supabase) {
+  function init(supabase, user) {
+    _supabase = supabase;
+    _userId = user ? user.id : null;
+
+    if (!_supabase || !_userId) {
       renderSections();
       goToSection(0);
       return;
     }
 
-    _supabase.auth.getUser().then(function(r) {
-      var user = r.data && r.data.user;
-      if (user) _userId = user.id;
+    renderSections();
+    goToSection(0);
+    bindTabEvents();
+    bindOpsEvents();
+    bindDocEvents();
+    bindModalEvents();
+    loadProfile();
+    loadBIContext();
 
-      renderSections();
-      goToSection(0);
-      bindTabEvents();
-      bindOpsEvents();
-      bindDocEvents();
-      bindModalEvents();
-      loadProfile();
-      loadBIContext();
+    checkPlanExists().then(function(exists) {
+      updateTabStates();
 
-      checkPlanExists().then(function(exists) {
-        updateTabStates();
-
-        // Handle SP rewrite flow from BI contradiction
-        var params = new URLSearchParams(window.location.search);
-        if (params.get('rewrite') === 'true' && exists) {
-          switchTab('create-plan');
-          var decisionId = params.get('decision');
-          if (decisionId) {
-            highlightDecisionSection(decisionId);
-          }
-          // Clean URL without reloading
-          window.history.replaceState({}, '', window.location.pathname);
-        } else if (exists) {
-          switchTab('ops-plan');
-        } else {
-          switchTab('create-plan');
+      var params = new URLSearchParams(window.location.search);
+      if (params.get('rewrite') === 'true' && exists) {
+        switchTab('create-plan');
+        var decisionId = params.get('decision');
+        if (decisionId) {
+          highlightDecisionSection(decisionId);
         }
-      });
+        window.history.replaceState({}, '', window.location.pathname);
+      } else if (exists) {
+        switchTab('ops-plan');
+      } else {
+        switchTab('create-plan');
+      }
     });
   }
 

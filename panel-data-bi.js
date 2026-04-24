@@ -81,7 +81,7 @@ window.PANEL_TOOL = {
         sb.from('profiles').select('industry, address_state, cl_xero_accounts, cl_quickbooks_accounts, cl_servicem8_accounts, business_name').eq('id', user.id).single(),
         sb.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'approved'),
         sb.from('strategic_plans').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        sb.from('user_tools').select('tool_id').eq('user_id', user.id).eq('tool_id', 'id').eq('is_active', true)
+        sb.from('user_tools').select('tool_id').eq('user_id', user.id).eq('tool_id', 'news-digest').eq('is_active', true)
       ]).then(function(results) {
         var profile = results[0].data || {};
         var clCount = results[1].count || 0;

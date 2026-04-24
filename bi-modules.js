@@ -295,9 +295,12 @@ window.BI_MODULES = {
 
   fetchMarket: async function(sb, userId) {
     var briefings = await sb.from('news_digest_briefings').select('id, title, summary, category, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
+    if (briefings.error) console.error('[BI] Market briefings query error:', briefings.error.message);
     var tenders = await sb.from('news_digest_tenders').select('id, title, location, close_date, value_text').eq('user_id', userId).order('close_date', { ascending: true }).limit(5);
+    if (tenders.error) console.error('[BI] Market tenders query error:', tenders.error.message);
     var hasID = false;
     var tc = await sb.from('profiles').select('activated_tools').eq('id', userId).single();
+    if (tc.error) console.error('[BI] Market profile query error:', tc.error.message);
     if (tc.data && Array.isArray(tc.data.activated_tools)) hasID = tc.data.activated_tools.indexOf('news-digest') !== -1;
     return { briefings: briefings.data||[], tenders: tenders.data||[], hasNewsDigest: hasID };
   },
