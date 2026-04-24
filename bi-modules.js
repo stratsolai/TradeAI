@@ -68,11 +68,12 @@ window.BI_MODULES = {
     };
   },
 
-  fetchFinancial: async function(sb) {
+  fetchFinancial: async function(sb, dateRange) {
     var session = await sb.auth.getSession();
     var token = session.data && session.data.session && session.data.session.access_token;
     if (!token) return null;
-    var resp = await fetch('/api/bi-financial', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: '{}' });
+    var body = dateRange ? { fromDate: dateRange.fromDate, toDate: dateRange.toDate } : {};
+    var resp = await fetch('/api/bi-financial', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
     if (!resp.ok) return null;
     var json = await resp.json();
     return json.success ? json : null;
@@ -152,11 +153,12 @@ window.BI_MODULES = {
     ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }, title: { display: true, text: 'Receivable & Payable Aging', font: { size: 13 }, color: '#888' } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return '$'+(v>=1000?Math.round(v/1000)+'K':v);} } } } } });
   },
 
-  fetchCustomers: async function(sb) {
+  fetchCustomers: async function(sb, dateRange) {
     var session = await sb.auth.getSession();
     var token = session.data && session.data.session && session.data.session.access_token;
     if (!token) return null;
-    var resp = await fetch('/api/bi-customers', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: '{}' });
+    var body = dateRange ? { fromDate: dateRange.fromDate, toDate: dateRange.toDate } : {};
+    var resp = await fetch('/api/bi-customers', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
     if (!resp.ok) return null;
     var json = await resp.json();
     return json.success ? json : null;
@@ -221,11 +223,12 @@ window.BI_MODULES = {
     }
   },
 
-  fetchOperations: async function(sb) {
+  fetchOperations: async function(sb, dateRange) {
     var session = await sb.auth.getSession();
     var token = session.data && session.data.session && session.data.session.access_token;
     if (!token) return null;
-    var resp = await fetch('/api/bi-operations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: '{}' });
+    var body = dateRange ? { fromDate: dateRange.fromDate, toDate: dateRange.toDate } : {};
+    var resp = await fetch('/api/bi-operations', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
     if (!resp.ok) return null;
     var json = await resp.json();
     return json.success ? json : null;

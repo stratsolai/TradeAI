@@ -9,12 +9,48 @@ window.BI_LOGIC = {
   _operationsData: null,
   _marketData: null,
   _strategicData: null,
+  _period: '12m',
 
   init: function(supabase, user) {
     this._supabase = supabase;
     this._user = user;
     this._bindEvents();
     this._loadAllModules();
+  },
+
+  _calcDateRange: function() {
+    var now = new Date();
+    var from, to;
+    to = now.toISOString().split('T')[0];
+
+    switch (this._period) {
+      case '30d':
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 30);
+        break;
+      case '90d':
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 90);
+        break;
+      case 'this-quarter':
+        var qm = Math.floor(now.getMonth() / 3) * 3;
+        from = new Date(now.getFullYear(), qm, 1);
+        break;
+      case 'last-quarter':
+        var lqm = Math.floor(now.getMonth() / 3) * 3 - 3;
+        var lqy = now.getFullYear();
+        if (lqm < 0) { lqm += 12; lqy--; }
+        from = new Date(lqy, lqm, 1);
+        to = new Date(lqy, lqm + 3, 0).toISOString().split('T')[0];
+        break;
+      case 'this-fy':
+        from = now.getMonth() >= 6 ? new Date(now.getFullYear(), 6, 1) : new Date(now.getFullYear() - 1, 6, 1);
+        break;
+      case '12m':
+      default:
+        from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+        break;
+    }
+    if (from instanceof Date) from = from.toISOString().split('T')[0];
+    return { fromDate: from, toDate: to };
   },
 
   _bindEvents: function() {
@@ -31,6 +67,39 @@ window.BI_LOGIC = {
     if (errorOverlay) {
       errorOverlay.addEventListener('click', function(e) { if (e.target === errorOverlay) errorOverlay.classList.remove('open'); });
     }
+
+    var periodBtn = document.getElementById('bi-period-btn');
+    var periodMenu = document.getElementById('bi-period-menu');
+    if (periodBtn && periodMenu) {
+      periodBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        periodMenu.classList.toggle('open');
+        periodBtn.classList.toggle('active');
+      });
+      periodMenu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          var period = item.getAttribute('data-period');
+          self._period = period;
+          periodBtn.textContent = item.textContent;
+          periodMenu.querySelectorAll('.lookback-dropdown-item').forEach(function(el) { el.classList.remove('active'); });
+          item.classList.add('active');
+          periodMenu.classList.remove('open');
+          periodBtn.classList.remove('active');
+          self._loadAllModules(true);
+        });
+      });
+      document.addEventListener('click', function() {
+        periodMenu.classList.remove('open');
+        periodBtn.classList.remove('active');
+      });
+    }
+
+    document.querySelectorAll('.bi-history-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var mod = btn.getAttribute('data-module');
+        self._toggleHistory(mod);
+      });
+    });
   },
 
   _showError: function(msg) {
@@ -45,11 +114,13 @@ window.BI_LOGIC = {
     var M = window.BI_MODULES;
     self._setRefreshState(true);
 
+    var dateRange = self._calcDateRange();
+
     Promise.all([
       self._loadCachedInsights(forceRefresh),
-      M.fetchFinancial(self._supabase).then(function(d) { self._financialData = d; }).catch(function(e) { console.error('[BI] Financial:', e.message); }),
-      M.fetchCustomers(self._supabase).then(function(d) { self._customerData = d; }).catch(function(e) { console.error('[BI] Customers:', e.message); }),
-      M.fetchOperations(self._supabase).then(function(d) { self._operationsData = d; }).catch(function(e) { console.error('[BI] Operations:', e.message); }),
+      M.fetchFinancial(self._supabase, dateRange).then(function(d) { self._financialData = d; }).catch(function(e) { console.error('[BI] Financial:', e.message); }),
+      M.fetchCustomers(self._supabase, dateRange).then(function(d) { self._customerData = d; }).catch(function(e) { console.error('[BI] Customers:', e.message); }),
+      M.fetchOperations(self._supabase, dateRange).then(function(d) { self._operationsData = d; }).catch(function(e) { console.error('[BI] Operations:', e.message); }),
       M.fetchMarket(self._supabase, self._user.id).then(function(d) { self._marketData = d; }).catch(function(e) { console.error('[BI] Market:', e.message); }),
       M.fetchStrategic(self._supabase, self._user.id).then(function(d) { self._strategicData = d; }).catch(function(e) { console.error('[BI] Strategic:', e.message); })
     ]).then(function() {
@@ -208,6 +279,95 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-dismiss-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._dismissInsight(btn.getAttribute('data-insight-id'), btn); });
     });
+  },
+
+  _toggleHistory: async function(mod) {
+    var panel = document.getElementById('bi-history-' + mod);
+    if (!panel) return;
+
+    if (panel.classList.contains('open')) {
+      panel.classList.remove('open');
+      return;
+    }
+
+    panel.innerHTML = '<div class="bi-history-empty">Loading history...</div>';
+    panel.classList.add('open');
+
+    try {
+      var sb = this._supabase;
+      var userId = this._user.id;
+      var oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      var cutoff = oneYearAgo.toISOString();
+
+      var dismissed = await sb.from('bi_insights').select('id, insight_data, module, updated_at').eq('user_id', userId).eq('module', mod).eq('is_dismissed', true).gte('created_at', cutoff).order('updated_at', { ascending: false }).limit(50);
+
+      var acted = await sb.from('bi_decisions').select('id, bi_insight_id, decision, decision_date, initiative_id').eq('user_id', userId).gte('created_at', cutoff);
+
+      var actedMap = {};
+      if (acted.data) {
+        acted.data.forEach(function(d) { actedMap[d.bi_insight_id] = d; });
+      }
+
+      var allActedInsightIds = Object.keys(actedMap);
+      var actedInsights = [];
+      if (allActedInsightIds.length > 0) {
+        var aiRes = await sb.from('bi_insights').select('id, insight_data, module, updated_at').eq('module', mod).in('id', allActedInsightIds);
+        if (aiRes.data) actedInsights = aiRes.data;
+      }
+
+      var items = [];
+      if (dismissed.data) {
+        dismissed.data.forEach(function(row) {
+          var d = row.insight_data || {};
+          items.push({
+            headline: d.headline || d.text || 'Insight',
+            date: (row.updated_at || '').substring(0, 10),
+            status: 'dismissed',
+            initiativeId: null
+          });
+        });
+      }
+      actedInsights.forEach(function(row) {
+        var d = row.insight_data || {};
+        var decision = actedMap[row.id];
+        items.push({
+          headline: d.headline || d.text || 'Insight',
+          date: (decision.decision_date || row.updated_at || '').substring(0, 10),
+          status: 'acted',
+          initiativeId: decision.initiative_id || null
+        });
+      });
+
+      items.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+      if (items.length === 0) {
+        panel.innerHTML = '<div class="bi-history-empty">No history for this module yet.</div>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < items.length; i++) {
+        var it = items[i];
+        html += '<div class="bi-history-item">';
+        html += '<span class="bi-history-headline">' + escHtml(it.headline) + '</span>';
+        html += '<span class="bi-history-date">' + escHtml(it.date) + '</span>';
+        if (it.status === 'acted') {
+          if (it.initiativeId) {
+            html += '<a href="/strategic-plan.html#tracker" class="bi-history-status acted">Acted on</a>';
+          } else {
+            html += '<span class="bi-history-status acted">Acted on</span>';
+          }
+        } else {
+          html += '<span class="bi-history-status dismissed">Dismissed</span>';
+        }
+        html += '</div>';
+      }
+      panel.innerHTML = html;
+    } catch (err) {
+      console.error('[BI] History error:', err.message || err);
+      panel.innerHTML = '<div class="bi-history-empty">Could not load history.</div>';
+    }
   },
 
   _SUGGESTED_QUESTIONS: {

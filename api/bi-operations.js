@@ -20,6 +20,8 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
+  const { fromDate, toDate } = req.body || {};
+
   var profileRes = await supabase
     .from('profiles')
     .select('cl_servicem8_accounts')
@@ -76,6 +78,14 @@ export default async function handler(req, res) {
     }
 
     await Promise.all(promises);
+
+    if (fromDate || toDate) {
+      var fDate = fromDate || '1900-01-01';
+      var tDate = toDate || '2999-12-31';
+      allJobs = allJobs.filter(function(j) { var d = (j.scheduled_date || '').substring(0, 10); return d >= fDate && d <= tDate; });
+      allQuotes = allQuotes.filter(function(q) { var d = (q.date || '').substring(0, 10); return d >= fDate && d <= tDate; });
+      allInvoices = allInvoices.filter(function(inv) { var d = (inv.date || '').substring(0, 10); return d >= fDate && d <= tDate; });
+    }
 
     // Job status breakdown
     var statusCounts = {};

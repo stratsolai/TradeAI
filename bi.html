@@ -450,6 +450,88 @@
       color: var(--text);
     }
 
+    .bi-period-wrap {
+      min-width: 170px;
+    }
+
+    .bi-history-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--badge-font-size);
+      font-family: var(--body-font);
+      cursor: pointer;
+      padding: 2px 6px;
+      transition: color var(--btn-transition);
+      white-space: nowrap;
+    }
+
+    .bi-history-btn:hover {
+      color: var(--blue);
+    }
+
+    .bi-history-panel {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      background: var(--bg-subtle);
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .bi-history-panel.open {
+      display: block;
+    }
+
+    .bi-history-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: var(--label-font-size);
+    }
+
+    .bi-history-item:last-child {
+      border-bottom: none;
+    }
+
+    .bi-history-headline {
+      flex: 1;
+      color: var(--text);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .bi-history-date {
+      color: var(--text-muted);
+      font-size: var(--badge-font-size);
+      white-space: nowrap;
+    }
+
+    .bi-history-status {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      white-space: nowrap;
+    }
+
+    .bi-history-status.dismissed {
+      color: var(--grey);
+    }
+
+    .bi-history-status.acted {
+      color: var(--green-dark);
+    }
+
+    .bi-history-empty {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-muted);
+      font-size: var(--label-font-size);
+    }
+
     .bi-upsell-box {
       background: var(--blue-light);
       border: 1px solid var(--blue);
@@ -525,6 +607,17 @@
   </div>
 
   <div class="bi-refresh-row">
+    <div class="lookback-dropdown-wrap bi-period-wrap">
+      <button class="lookback-dropdown" id="bi-period-btn">Last 12 months</button>
+      <div class="lookback-dropdown-menu" id="bi-period-menu">
+        <button class="lookback-dropdown-item" data-period="30d">Last 30 days</button>
+        <button class="lookback-dropdown-item" data-period="90d">Last 90 days</button>
+        <button class="lookback-dropdown-item" data-period="this-quarter">This quarter</button>
+        <button class="lookback-dropdown-item" data-period="last-quarter">Last quarter</button>
+        <button class="lookback-dropdown-item" data-period="this-fy">This financial year</button>
+        <button class="lookback-dropdown-item active" data-period="12m">Last 12 months</button>
+      </div>
+    </div>
     <span class="bi-last-refreshed" id="bi-last-refreshed"></span>
     <button class="btn-outline btn-sm" id="bi-refresh-btn">Refresh Insights</button>
   </div>
@@ -537,10 +630,12 @@
         <span class="bi-module-icon">&#9888;</span>
         <span class="bi-module-title">Risk &amp; Opportunity Alerts</span>
         <span class="bi-module-updated" id="bi-mod-alerts-updated"></span>
+        <button class="bi-history-btn" data-module="alerts">History</button>
       </div>
       <div id="bi-mod-alerts-content">
         <div class="bi-module-loading">Loading alerts...</div>
       </div>
+      <div class="bi-history-panel" id="bi-history-alerts"></div>
     </div>
 
     <!-- Module 1: Financial Health -->
@@ -549,6 +644,7 @@
         <span class="bi-module-icon">&#128176;</span>
         <span class="bi-module-title">Financial Health</span>
         <span class="bi-module-updated" id="bi-mod-financial-updated"></span>
+        <button class="bi-history-btn" data-module="financial">History</button>
       </div>
       <div id="bi-mod-financial-kpis" class="bi-kpi-row"></div>
       <div class="bi-chart-area" id="bi-mod-financial-chart">
@@ -560,6 +656,7 @@
           <div class="bi-module-loading">Loading insights...</div>
         </div>
       </div>
+      <div class="bi-history-panel" id="bi-history-financial"></div>
     </div>
 
     <!-- Module 2: Customer & Revenue Analysis -->
@@ -568,6 +665,7 @@
         <span class="bi-module-icon">&#128101;</span>
         <span class="bi-module-title">Customer &amp; Revenue</span>
         <span class="bi-module-updated" id="bi-mod-customers-updated"></span>
+        <button class="bi-history-btn" data-module="customers">History</button>
       </div>
       <div id="bi-mod-customers-kpis" class="bi-kpi-row"></div>
       <div class="bi-chart-area" id="bi-mod-customers-chart">
@@ -579,6 +677,7 @@
           <div class="bi-module-loading">Loading insights...</div>
         </div>
       </div>
+      <div class="bi-history-panel" id="bi-history-customers"></div>
     </div>
 
     <!-- Module 3: Operational Performance -->
@@ -587,6 +686,7 @@
         <span class="bi-module-icon">&#9881;</span>
         <span class="bi-module-title">Operational Performance</span>
         <span class="bi-module-updated" id="bi-mod-operations-updated"></span>
+        <button class="bi-history-btn" data-module="operations">History</button>
       </div>
       <div id="bi-mod-operations-kpis" class="bi-kpi-row"></div>
       <div class="bi-chart-area" id="bi-mod-operations-chart">
@@ -598,6 +698,7 @@
           <div class="bi-module-loading">Loading insights...</div>
         </div>
       </div>
+      <div class="bi-history-panel" id="bi-history-operations"></div>
     </div>
 
     <!-- Module 4: Market Intelligence -->
@@ -606,6 +707,7 @@
         <span class="bi-module-icon">&#127758;</span>
         <span class="bi-module-title">Market Intelligence</span>
         <span class="bi-module-updated" id="bi-mod-market-updated"></span>
+        <button class="bi-history-btn" data-module="market">History</button>
       </div>
       <div id="bi-mod-market-kpis" class="bi-kpi-row"></div>
       <div class="bi-chart-area" id="bi-mod-market-chart">
@@ -617,6 +719,7 @@
           <div class="bi-module-loading">Loading insights...</div>
         </div>
       </div>
+      <div class="bi-history-panel" id="bi-history-market"></div>
     </div>
 
     <!-- Module 5: Strategic Alignment -->
@@ -625,6 +728,7 @@
         <span class="bi-module-icon">&#127919;</span>
         <span class="bi-module-title">Strategic Alignment</span>
         <span class="bi-module-updated" id="bi-mod-strategic-updated"></span>
+        <button class="bi-history-btn" data-module="strategic">History</button>
       </div>
       <div id="bi-mod-strategic-kpis" class="bi-kpi-row"></div>
       <div class="bi-chart-area" id="bi-mod-strategic-chart">
@@ -636,6 +740,7 @@
           <div class="bi-module-loading">Loading insights...</div>
         </div>
       </div>
+      <div class="bi-history-panel" id="bi-history-strategic"></div>
     </div>
 
   </div>
