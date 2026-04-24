@@ -6,6 +6,7 @@ window.BI_LOGIC = {
   _chatState: {},
   _financialData: null,
   _customerData: null,
+  _operationsData: null,
 
   init: function(supabase, user) {
     this._supabase = supabase;
@@ -52,12 +53,13 @@ window.BI_LOGIC = {
     Promise.all([
       self._loadCachedInsights(forceRefresh),
       self._fetchFinancialData(),
-      self._fetchCustomerData()
+      self._fetchCustomerData(),
+      self._fetchOperationsData()
     ]).then(function() {
       self._renderModule('alerts');
       self._renderFinancialModule();
       self._renderCustomerModule();
-      self._renderModule('operations');
+      self._renderOperationsModule();
       self._renderModule('market');
       self._renderModule('strategic');
       self._updateLastRefreshed();
@@ -854,6 +856,220 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         self._openChat(btn.getAttribute('data-insight-idx'), 'customers');
+      });
+    });
+  },
+
+  _fetchOperationsData: async function() {
+    try {
+      var sb = this._supabase;
+      var session = await sb.auth.getSession();
+      var token = session.data && session.data.session && session.data.session.access_token;
+      if (!token) return;
+
+      var resp = await fetch('/api/bi-operations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({})
+      });
+      if (!resp.ok) { console.error('[BI] Operations fetch failed:', resp.status); return; }
+      var json = await resp.json();
+      if (json.success) this._operationsData = json;
+    } catch (err) {
+      console.error('[BI] Operations fetch error:', err.message || err);
+    }
+  },
+
+  _renderOperationsModule: function() {
+    var kpisEl = document.getElementById('bi-mod-operations-kpis');
+    var chartArea = document.getElementById('bi-mod-operations-chart');
+    var advisoryList = document.getElementById('bi-mod-operations-advisory-list');
+    var updatedEl = document.getElementById('bi-mod-operations-updated');
+
+    if (!this._operationsData || !this._operationsData.connected) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      if (chartArea) chartArea.style.display = 'none';
+      var advisorySection = document.getElementById('bi-mod-operations-advisory');
+      if (advisorySection) {
+        advisorySection.innerHTML = '<div class="bi-module-prompt">' +
+          '<div class="bi-module-prompt-icon">&#9881;</div>' +
+          '<h3>Operational Insights</h3>' +
+          '<p>Connect your job management system (ServiceM8, Buildxact, Fergus, or Tradify) to see operational insights, job profitability, and efficiency metrics.</p>' +
+          '</div>';
+      }
+      return;
+    }
+
+    var d = this._operationsData.data;
+    var s = d.summary;
+
+    if (updatedEl) {
+      var now = new Date();
+      var h = now.getHours(); var m = now.getMinutes();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      updatedEl.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
+    this._renderOpsKPIs(s, kpisEl);
+    this._renderOpsCharts(d, chartArea);
+    this._renderOpsAdvisory(d, advisoryList);
+  },
+
+  _renderOpsKPIs: function(s, container) {
+    if (!container) return;
+    var formColour = s.form_completion_rate >= 90 ? 'green' : s.form_completion_rate >= 70 ? 'orange' : 'red';
+
+    var kpis = [
+      { value: '' + s.total_jobs, label: 'Total Jobs', colour: '', trend: 'flat', trendText: s.completed_jobs + ' completed' },
+      { value: '$' + this._formatNum(s.avg_job_value), label: 'Avg Job Value', colour: 'orange', trend: 'flat', trendText: '' },
+      { value: s.avg_duration_days + 'd', label: 'Avg Duration', colour: 'purple', trend: 'flat', trendText: '' },
+      { value: s.form_completion_rate + '%', label: 'Form Completion', colour: formColour, trend: s.form_completion_rate >= 80 ? 'up' : 'down', trendText: s.total_forms + ' forms' }
+    ];
+
+    var html = '';
+    for (var i = 0; i < kpis.length; i++) {
+      var k = kpis[i];
+      var colClass = k.colour ? ' ' + k.colour : '';
+      var trendClass = k.trend === 'up' ? 'up' : k.trend === 'down' ? 'down' : 'flat';
+      var arrow = k.trend === 'up' ? '&#9650;' : k.trend === 'down' ? '&#9660;' : '&#8212;';
+      html += '<div class="bi-kpi-card' + colClass + '">';
+      html += '<div class="bi-kpi-value">' + escHtml(k.value) + '</div>';
+      html += '<div class="bi-kpi-label">' + escHtml(k.label) + '</div>';
+      if (k.trendText) {
+        html += '<div class="bi-kpi-trend ' + trendClass + '">' + arrow + ' ' + escHtml(k.trendText) + '</div>';
+      }
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  },
+
+  _renderOpsCharts: function(d, chartArea) {
+    if (!chartArea) return;
+    chartArea.style.display = 'block';
+
+    if (this._charts.opsStatus) { this._charts.opsStatus.destroy(); this._charts.opsStatus = null; }
+    if (this._charts.opsMonthly) { this._charts.opsMonthly.destroy(); this._charts.opsMonthly = null; }
+
+    var statusCanvas = document.getElementById('bi-chart-operations');
+    if (!statusCanvas) return;
+
+    var statuses = d.status_breakdown || {};
+    var monthly = d.monthly_jobs || [];
+    var statusKeys = Object.keys(statuses);
+
+    if (statusKeys.length === 0 && monthly.length === 0) {
+      chartArea.innerHTML = '<div class="bi-module-loading">No operations data available yet.</div>';
+      return;
+    }
+
+    var monthlyCanvas = document.createElement('canvas');
+    monthlyCanvas.id = 'bi-chart-ops-monthly';
+    chartArea.innerHTML = '';
+    chartArea.appendChild(statusCanvas);
+    chartArea.appendChild(monthlyCanvas);
+
+    var rootStyle = getComputedStyle(document.documentElement);
+    var blue = rootStyle.getPropertyValue('--blue').trim() || '#4A6D8C';
+    var orange = rootStyle.getPropertyValue('--orange').trim() || '#c4622a';
+    var green = rootStyle.getPropertyValue('--green').trim() || '#28a745';
+    var grey = rootStyle.getPropertyValue('--grey').trim() || '#6c757d';
+    var purple = rootStyle.getPropertyValue('--purple').trim() || '#7B5EA7';
+
+    if (statusKeys.length > 0) {
+      var statusColours = [blue, green, orange, purple, grey, '#0097A7', '#dc3545'];
+      this._charts.opsStatus = new Chart(statusCanvas, {
+        type: 'doughnut',
+        data: {
+          labels: statusKeys,
+          datasets: [{
+            data: statusKeys.map(function(k) { return statuses[k]; }),
+            backgroundColor: statusKeys.map(function(k, i) { return statusColours[i % statusColours.length]; })
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
+            title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: '#888' }
+          }
+        }
+      });
+    }
+
+    if (monthly.length > 0) {
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      this._charts.opsMonthly = new Chart(monthlyCanvas, {
+        type: 'bar',
+        data: {
+          labels: monthly.map(function(m) {
+            var parts = m.month.split('-');
+            return months[parseInt(parts[1], 10) - 1] + ' ' + parts[0].substring(2);
+          }),
+          datasets: [{
+            label: 'Jobs',
+            data: monthly.map(function(m) { return m.count; }),
+            backgroundColor: blue + 'AA'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Jobs by Month', font: { size: 13 }, color: '#888' }
+          },
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+  },
+
+  _renderOpsAdvisory: function(d, container) {
+    if (!container) return;
+    var s = d.summary;
+    var items = [];
+
+    var totalQuoted = s.over_quote_count + s.under_quote_count + s.on_quote_count;
+    if (totalQuoted > 0 && s.over_quote_count > 0) {
+      var overPct = Math.round((s.over_quote_count / totalQuoted) * 100);
+      items.push({ icon: '&#9888;', text: overPct + '% of jobs ran over quoted price (' + s.over_quote_count + ' of ' + totalQuoted + ') \u2014 review your estimation process.' });
+    }
+
+    if (s.avg_duration_days > 0) {
+      items.push({ icon: '&#128197;', text: 'Average job duration is ' + s.avg_duration_days + ' days across ' + s.completed_jobs + ' completed jobs.' });
+    }
+
+    if (s.form_completion_rate < 80 && s.total_jobs > 0) {
+      items.push({ icon: '&#9888;', text: 'Forms completed on ' + s.form_completion_rate + '% of jobs \u2014 compliance gap identified.' });
+    } else if (s.form_completion_rate >= 90) {
+      items.push({ icon: '&#9989;', text: 'Strong form compliance at ' + s.form_completion_rate + '% across all jobs.' });
+    }
+
+    if (s.avg_job_value > 0) {
+      items.push({ icon: '&#128176;', text: 'Average job value is $' + this._formatNum(s.avg_job_value) + '.' });
+    }
+
+    if (items.length === 0) {
+      items.push({ icon: '&#128161;', text: 'Operations data loaded. More insights will appear as job history grows.' });
+    }
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      html += '<div class="bi-advisory-item">';
+      html += '<span class="bi-advisory-icon">' + items[i].icon + '</span>';
+      html += '<span class="bi-advisory-text">' + escHtml(items[i].text) + '</span>';
+      html += '<div class="bi-advisory-actions">';
+      html += '<button class="bi-ask-btn" data-module="operations" data-insight-idx="' + i + '">Ask about this</button>';
+      html += '</div></div>';
+    }
+    container.innerHTML = html;
+
+    var self = this;
+    container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._openChat(btn.getAttribute('data-insight-idx'), 'operations');
       });
     });
   },
