@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <title>Business Intelligence — StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
+  <style>
+    .bi-container {
+      max-width: var(--page-max-width);
+      margin: 0 auto;
+      padding: var(--page-padding);
+    }
+
+    .bi-refresh-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: var(--actions-gap);
+      margin-bottom: 20px;
+    }
+
+    .bi-last-refreshed {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+    }
+
+    .bi-module-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .bi-module-full {
+      grid-column: 1 / -1;
+    }
+
+    .bi-module-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 8px var(--shadow-card);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .bi-module-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .bi-module-icon {
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .bi-module-title {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      flex: 1;
+    }
+
+    .bi-module-updated {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+
+    .bi-kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      padding: 16px 20px;
+    }
+
+    .bi-kpi-card {
+      background: var(--bg-subtle);
+      border-radius: var(--btn-radius);
+      padding: 14px 16px;
+      border-left: 3px solid var(--blue);
+    }
+
+    .bi-kpi-card.orange { border-left-color: var(--orange); }
+    .bi-kpi-card.green { border-left-color: var(--green); }
+    .bi-kpi-card.red { border-left-color: var(--red); }
+    .bi-kpi-card.purple { border-left-color: var(--purple); }
+    .bi-kpi-card.teal { border-left-color: var(--teal); }
+
+    .bi-kpi-value {
+      font-family: var(--body-font);
+      font-size: var(--stat-value-font-size);
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .bi-kpi-label {
+      font-family: var(--body-font);
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+    }
+
+    .bi-kpi-trend {
+      font-size: 11px;
+      margin-top: 4px;
+    }
+
+    .bi-kpi-trend.up { color: var(--green); }
+    .bi-kpi-trend.down { color: var(--red); }
+    .bi-kpi-trend.flat { color: var(--text-muted); }
+
+    .bi-chart-area {
+      padding: 16px 20px;
+      min-height: 200px;
+    }
+
+    .bi-chart-area canvas {
+      max-width: 100%;
+    }
+
+    .bi-advisory-section {
+      background: var(--bg-subtle);
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+    }
+
+    .bi-advisory-label {
+      font-family: var(--body-font);
+      font-size: var(--badge-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      margin-bottom: 10px;
+    }
+
+    .bi-advisory-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .bi-advisory-item:last-child {
+      border-bottom: none;
+    }
+
+    .bi-advisory-icon {
+      font-size: 16px;
+      line-height: 1.4;
+      flex-shrink: 0;
+    }
+
+    .bi-advisory-text {
+      font-size: var(--btn-font-size);
+      color: var(--text);
+      line-height: var(--body-line-height);
+      flex: 1;
+    }
+
+    .bi-advisory-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .bi-ask-btn {
+      background: var(--white);
+      color: var(--blue);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      padding: 4px 10px;
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: background var(--btn-transition);
+      white-space: nowrap;
+    }
+
+    .bi-ask-btn:hover {
+      background: var(--blue-light);
+    }
+
+    .bi-act-btn {
+      background: var(--white);
+      color: var(--green-dark);
+      border: 1px solid var(--green-dark);
+      border-radius: var(--btn-radius);
+      padding: 4px 10px;
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: background var(--btn-transition);
+      white-space: nowrap;
+    }
+
+    .bi-act-btn:hover {
+      background: var(--green-light);
+    }
+
+    .bi-dismiss-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--badge-font-size);
+      cursor: pointer;
+      padding: 4px 6px;
+      transition: color var(--btn-transition);
+    }
+
+    .bi-dismiss-btn:hover {
+      color: var(--text);
+    }
+
+    .bi-alert-card {
+      background: var(--white);
+      border-radius: var(--btn-radius);
+      border-left: 4px solid var(--blue);
+      box-shadow: 0 1px 4px var(--shadow-card);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+    }
+
+    .bi-alert-card.severity-red { border-left-color: var(--red); }
+    .bi-alert-card.severity-amber { border-left-color: var(--warning); }
+    .bi-alert-card.severity-green { border-left-color: var(--green); }
+
+    .bi-alert-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .bi-alert-type-icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .bi-alert-headline {
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      flex: 1;
+    }
+
+    .bi-alert-detail {
+      font-size: var(--label-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+      display: none;
+    }
+
+    .bi-alert-detail.open {
+      display: block;
+    }
+
+    .bi-alert-suggestion {
+      font-size: var(--label-font-size);
+      color: var(--blue);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: 8px;
+    }
+
+    .bi-alert-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bi-alert-expand-btn {
+      background: none;
+      border: none;
+      color: var(--blue);
+      font-size: var(--badge-font-size);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .bi-module-prompt {
+      text-align: center;
+      padding: var(--empty-padding) 20px;
+      color: var(--text-muted);
+    }
+
+    .bi-module-prompt-icon {
+      font-size: 36px;
+      margin-bottom: 12px;
+      opacity: 0.4;
+    }
+
+    .bi-module-prompt h3 {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .bi-module-prompt p {
+      font-size: var(--btn-font-size);
+      color: var(--text-muted);
+      margin-bottom: 0;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .bi-module-loading {
+      text-align: center;
+      padding: var(--loading-padding);
+      color: var(--text-muted);
+      font-size: var(--btn-font-size);
+    }
+
+    .bi-chat-panel {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 16px 20px;
+      background: var(--white);
+    }
+
+    .bi-chat-panel.open {
+      display: block;
+    }
+
+    .bi-chat-messages {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 12px;
+    }
+
+    .bi-chat-msg {
+      padding: 8px 12px;
+      border-radius: var(--btn-radius);
+      margin-bottom: 8px;
+      font-size: var(--label-font-size);
+      line-height: var(--note-line-height);
+    }
+
+    .bi-chat-msg.user {
+      background: var(--blue-light);
+      color: var(--text);
+      margin-left: 40px;
+    }
+
+    .bi-chat-msg.assistant {
+      background: var(--bg-subtle);
+      color: var(--text);
+      margin-right: 40px;
+    }
+
+    .bi-chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .bi-chat-suggestion {
+      background: var(--white);
+      border: 1px solid var(--border-blue);
+      border-radius: var(--btn-radius);
+      padding: 5px 12px;
+      font-size: var(--badge-font-size);
+      font-family: var(--body-font);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background var(--btn-transition);
+    }
+
+    .bi-chat-suggestion:hover {
+      background: var(--blue-light);
+    }
+
+    .bi-chat-input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bi-chat-input {
+      flex: 1;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      padding: 8px 12px;
+      font-family: var(--body-font);
+      font-size: var(--label-font-size);
+      color: var(--text);
+      outline: none;
+    }
+
+    .bi-chat-input:focus {
+      border-color: var(--blue);
+    }
+
+    .bi-chat-send {
+      background: var(--blue);
+      color: var(--white);
+      border: none;
+      border-radius: var(--btn-radius);
+      padding: 8px 16px;
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: opacity var(--btn-transition);
+    }
+
+    .bi-chat-send:hover {
+      opacity: 0.85;
+    }
+
+    .bi-chat-close {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--btn-font-size);
+      cursor: pointer;
+      padding: 4px 8px;
+      margin-left: auto;
+    }
+
+    .bi-chat-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .bi-chat-title {
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+    }
+
+    .bi-upsell-box {
+      background: var(--blue-light);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      padding: 12px 16px;
+      margin-top: 12px;
+      font-size: var(--label-font-size);
+      color: var(--text);
+      line-height: var(--note-line-height);
+    }
+
+    .bi-module-footer {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    @media (max-width: 900px) {
+      .bi-module-grid {
+        grid-template-columns: 1fr;
+      }
+      .bi-kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .bi-container {
+        padding: var(--page-padding-mobile);
+      }
+      .bi-kpi-row {
+        grid-template-columns: 1fr;
+      }
+      .bi-advisory-item {
+        flex-direction: column;
+      }
+      .bi-advisory-actions {
+        align-self: flex-end;
+      }
+      .bi-alert-header {
+        flex-wrap: wrap;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a href="/dashboard.html" class="topbar-logo">
+    <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+  </a>
+  <div class="topbar-nav">
+    <a href="/dashboard.html">Dashboard</a>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-right">
+    <div class="topbar-account-wrap">
+      <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+      <div class="account-dropdown" id="account-dropdown">
+        <a href="/account" class="account-dropdown-item">Account Management</a>
+        <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="bi-container" id="page-wrap" style="display:none">
+  <div class="page-header">
+    <h1 class="page-title">Business Intelligence</h1>
+    <p class="page-subtitle">AI-powered business advisory — your virtual Board of Directors.</p>
+  </div>
+
+  <div class="bi-refresh-row">
+    <span class="bi-last-refreshed" id="bi-last-refreshed"></span>
+    <button class="btn-outline btn-sm" id="bi-refresh-btn">Refresh Insights</button>
+  </div>
+
+  <div class="bi-module-grid">
+
+    <!-- Module 6: Risk & Opportunity Alerts (full width, top) -->
+    <div class="bi-module-card bi-module-full" id="bi-mod-alerts">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#9888;</span>
+        <span class="bi-module-title">Risk &amp; Opportunity Alerts</span>
+        <span class="bi-module-updated" id="bi-mod-alerts-updated"></span>
+      </div>
+      <div id="bi-mod-alerts-content">
+        <div class="bi-module-loading">Loading alerts...</div>
+      </div>
+    </div>
+
+    <!-- Module 1: Financial Health -->
+    <div class="bi-module-card" id="bi-mod-financial">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#128176;</span>
+        <span class="bi-module-title">Financial Health</span>
+        <span class="bi-module-updated" id="bi-mod-financial-updated"></span>
+      </div>
+      <div id="bi-mod-financial-kpis" class="bi-kpi-row"></div>
+      <div class="bi-chart-area" id="bi-mod-financial-chart">
+        <canvas id="bi-chart-financial"></canvas>
+      </div>
+      <div class="bi-advisory-section" id="bi-mod-financial-advisory">
+        <div class="bi-advisory-label">AI Advisory</div>
+        <div id="bi-mod-financial-advisory-list">
+          <div class="bi-module-loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 2: Customer & Revenue Analysis -->
+    <div class="bi-module-card" id="bi-mod-customers">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#128101;</span>
+        <span class="bi-module-title">Customer &amp; Revenue</span>
+        <span class="bi-module-updated" id="bi-mod-customers-updated"></span>
+      </div>
+      <div id="bi-mod-customers-kpis" class="bi-kpi-row"></div>
+      <div class="bi-chart-area" id="bi-mod-customers-chart">
+        <canvas id="bi-chart-customers"></canvas>
+      </div>
+      <div class="bi-advisory-section" id="bi-mod-customers-advisory">
+        <div class="bi-advisory-label">AI Advisory</div>
+        <div id="bi-mod-customers-advisory-list">
+          <div class="bi-module-loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 3: Operational Performance -->
+    <div class="bi-module-card" id="bi-mod-operations">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#9881;</span>
+        <span class="bi-module-title">Operational Performance</span>
+        <span class="bi-module-updated" id="bi-mod-operations-updated"></span>
+      </div>
+      <div id="bi-mod-operations-kpis" class="bi-kpi-row"></div>
+      <div class="bi-chart-area" id="bi-mod-operations-chart">
+        <canvas id="bi-chart-operations"></canvas>
+      </div>
+      <div class="bi-advisory-section" id="bi-mod-operations-advisory">
+        <div class="bi-advisory-label">AI Advisory</div>
+        <div id="bi-mod-operations-advisory-list">
+          <div class="bi-module-loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 4: Market Intelligence -->
+    <div class="bi-module-card" id="bi-mod-market">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#127758;</span>
+        <span class="bi-module-title">Market Intelligence</span>
+        <span class="bi-module-updated" id="bi-mod-market-updated"></span>
+      </div>
+      <div id="bi-mod-market-kpis" class="bi-kpi-row"></div>
+      <div class="bi-chart-area" id="bi-mod-market-chart">
+        <canvas id="bi-chart-market"></canvas>
+      </div>
+      <div class="bi-advisory-section" id="bi-mod-market-advisory">
+        <div class="bi-advisory-label">AI Advisory</div>
+        <div id="bi-mod-market-advisory-list">
+          <div class="bi-module-loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Module 5: Strategic Alignment -->
+    <div class="bi-module-card" id="bi-mod-strategic">
+      <div class="bi-module-header">
+        <span class="bi-module-icon">&#127919;</span>
+        <span class="bi-module-title">Strategic Alignment</span>
+        <span class="bi-module-updated" id="bi-mod-strategic-updated"></span>
+      </div>
+      <div id="bi-mod-strategic-kpis" class="bi-kpi-row"></div>
+      <div class="bi-chart-area" id="bi-mod-strategic-chart">
+        <canvas id="bi-chart-strategic"></canvas>
+      </div>
+      <div class="bi-advisory-section" id="bi-mod-strategic-advisory">
+        <div class="bi-advisory-label">AI Advisory</div>
+        <div id="bi-mod-strategic-advisory-list">
+          <div class="bi-module-loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Error modal -->
+  <div class="save-msg" id="bi-error-msg">
+    <div class="save-msg-card">
+      <div class="save-msg-text"></div>
+      <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script src="/topbar.js"></script>
+<script src="/shared-utils.js"></script>
+<script src="/pwa.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script src="/bi-logic.js"></script>
+<script>
+(function() {
+  var supabase = window.supabaseClient;
+  if (!supabase) return;
+  supabase.auth.getSession().then(function(result) {
+    var session = result.data && result.data.session;
+    if (!session) { window.location.href = '/login'; return; }
+    document.getElementById('page-wrap').style.display = 'block';
+    if (window.BI_LOGIC && window.BI_LOGIC.init) {
+      window.BI_LOGIC.init(supabase, session.user);
+    }
+  });
+})();
+</script>
+</body>
+</html>
