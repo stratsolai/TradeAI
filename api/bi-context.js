@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       if (!r.ok) return null;
       var j = await r.json();
       return j.success ? j.data || j : null;
-    } catch (e) { return null; }
+    } catch (e) { console.error('[bi-context] fetch error:', e.message); return null; }
   }
 
   try {

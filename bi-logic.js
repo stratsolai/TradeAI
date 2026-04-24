@@ -19,6 +19,7 @@ window.BI_LOGIC = {
     this._bindEvents();
 
     var pr = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+    if (pr.error) console.error('[BI] Profile check error:', pr.error.message);
     if (pr.data && Array.isArray(pr.data.activated_tools) && pr.data.activated_tools.indexOf('bi') !== -1) {
       this._isActivated = true;
       this._loadAllModules();
@@ -320,13 +321,13 @@ window.BI_LOGIC = {
 
   _renderSampleMode: function() {
     var refreshRow = document.querySelector('.bi-refresh-row');
-    if (refreshRow) refreshRow.style.display = 'none';
+    if (refreshRow) refreshRow.classList.add('bi-hidden');
 
     var badge = document.createElement('div');
-    badge.style.cssText = 'background:var(--warning-light,#FFF8E1);border:1px solid var(--warning,#FFC107);border-radius:8px;padding:12px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;';
-    badge.innerHTML = '<span style="font-weight:700;color:var(--text,#333);font-size:14px;">SAMPLE DATA</span>' +
-      '<span style="color:var(--text-secondary,#555);font-size:14px;">This is a preview with sample data. Activate BI to see insights from your real business data.</span>' +
-      '<a href="/panel-auth.html?tool=bi" style="margin-left:auto;background:var(--blue,#4A6D8C);color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">Activate</a>';
+    badge.style.cssText = 'background:var(--warning-light);border:1px solid var(--warning);border-radius:8px;padding:12px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;';
+    badge.innerHTML = '<span style="font-weight:700;color:var(--text);font-size:14px;">SAMPLE DATA</span>' +
+      '<span style="color:var(--text-secondary);font-size:14px;">This is a preview with sample data. Activate BI to see insights from your real business data.</span>' +
+      '<a href="/panel-auth.html?tool=bi" style="margin-left:auto;background:var(--blue);color:var(--white);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">Activate</a>';
 
     var grid = document.querySelector('.bi-module-grid');
     if (grid) grid.parentElement.insertBefore(badge, grid);
@@ -350,8 +351,7 @@ window.BI_LOGIC = {
     }
 
     document.querySelectorAll('.bi-module-card').forEach(function(card) {
-      card.style.opacity = '0.7';
-      card.style.pointerEvents = 'none';
+      card.classList.add('bi-sample-disabled');
     });
   },
 
@@ -432,8 +432,10 @@ window.BI_LOGIC = {
       var cutoff = oneYearAgo.toISOString();
 
       var dismissed = await sb.from('bi_insights').select('id, insight_data, module, updated_at').eq('user_id', userId).eq('module', mod).eq('is_dismissed', true).gte('created_at', cutoff).order('updated_at', { ascending: false }).limit(50);
+      if (dismissed.error) console.error('[BI] History dismissed query error:', dismissed.error.message);
 
       var acted = await sb.from('bi_decisions').select('id, bi_insight_id, decision, decision_date, initiative_id').eq('user_id', userId).gte('created_at', cutoff);
+      if (acted.error) console.error('[BI] History acted query error:', acted.error.message);
 
       var actedMap = {};
       if (acted.data) {
@@ -636,7 +638,7 @@ window.BI_LOGIC = {
     var sendBtn = document.getElementById('bi-chat-send-btn');
     var suggestionsEl = document.getElementById('bi-chat-suggestions');
 
-    if (suggestionsEl) suggestionsEl.style.display = 'none';
+    if (suggestionsEl) suggestionsEl.classList.add('bi-hidden');
 
     var userMsg = document.createElement('div');
     userMsg.className = 'bi-chat-msg user';
@@ -664,6 +666,8 @@ window.BI_LOGIC = {
           module: mod
         })
       });
+
+      if (!resp.ok) throw new Error('Chat request failed');
 
       var json = await resp.json();
       var reply = (json.success && json.reply) ? json.reply : 'Sorry, I could not generate a response. Please try again.';
@@ -818,8 +822,8 @@ window.BI_LOGIC = {
           actBtn.disabled = true;
         }
         var notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark,#2e7d32);color:#fff;padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
-        notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html#tracker" style="color:#fff;text-decoration:underline;font-weight:600;">View</a>';
+        notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
+        notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html#tracker" style="color:var(--white);text-decoration:underline;font-weight:600;">View</a>';
         document.body.appendChild(notification);
         setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
       } else {

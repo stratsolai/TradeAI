@@ -68,6 +68,8 @@ export default async function handler(req, res) {
       })
     });
 
+    if (!claudeResp.ok) { console.error('[bi-chat] Claude HTTP error:', claudeResp.status); return res.status(502).json({ error: 'AI service unavailable. Please try again.' }); }
+
     var claudeData = await claudeResp.json();
     if (claudeData.error) {
       console.error('[bi-chat] Claude error:', JSON.stringify(claudeData.error));
