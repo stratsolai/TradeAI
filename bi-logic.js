@@ -7,6 +7,8 @@ window.BI_LOGIC = {
   _financialData: null,
   _customerData: null,
   _operationsData: null,
+  _marketData: null,
+  _strategicData: null,
 
   init: function(supabase, user) {
     this._supabase = supabase;
@@ -54,14 +56,16 @@ window.BI_LOGIC = {
       self._loadCachedInsights(forceRefresh),
       self._fetchFinancialData(),
       self._fetchCustomerData(),
-      self._fetchOperationsData()
+      self._fetchOperationsData(),
+      self._fetchMarketData(),
+      self._fetchStrategicData()
     ]).then(function() {
       self._renderModule('alerts');
       self._renderFinancialModule();
       self._renderCustomerModule();
       self._renderOperationsModule();
-      self._renderModule('market');
-      self._renderModule('strategic');
+      self._renderMarketModule();
+      self._renderStrategicModule();
       self._updateLastRefreshed();
       self._setRefreshState(false);
     }).catch(function(err) {
@@ -1072,6 +1076,298 @@ window.BI_LOGIC = {
         self._openChat(btn.getAttribute('data-insight-idx'), 'operations');
       });
     });
+  },
+
+  _fetchMarketData: async function() {
+    try {
+      var sb = this._supabase;
+      var userId = this._user.id;
+      var briefings = await sb.from('news_digest_briefings').select('id, title, summary, category, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
+      var tenders = await sb.from('news_digest_tenders').select('id, title, location, close_date, value_text').eq('user_id', userId).order('close_date', { ascending: true }).limit(5);
+      var hasID = false;
+      var toolCheck = await sb.from('profiles').select('activated_tools').eq('id', userId).single();
+      if (toolCheck.data && Array.isArray(toolCheck.data.activated_tools)) {
+        hasID = toolCheck.data.activated_tools.indexOf('news-digest') !== -1;
+      }
+      this._marketData = {
+        briefings: (briefings.data || []),
+        tenders: (tenders.data || []),
+        hasNewsDigest: hasID
+      };
+    } catch (err) {
+      console.error('[BI] Market fetch error:', err.message || err);
+    }
+  },
+
+  _renderMarketModule: function() {
+    var kpisEl = document.getElementById('bi-mod-market-kpis');
+    var chartArea = document.getElementById('bi-mod-market-chart');
+    var advisoryList = document.getElementById('bi-mod-market-advisory-list');
+    var updatedEl = document.getElementById('bi-mod-market-updated');
+
+    if (!this._marketData) {
+      this._renderModulePrompt('market', kpisEl, document.getElementById('bi-mod-market-advisory'));
+      return;
+    }
+
+    var md = this._marketData;
+    var briefings = md.briefings || [];
+    var tenders = md.tenders || [];
+
+    if (updatedEl) {
+      var now = new Date();
+      var h = now.getHours(); var m = now.getMinutes();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      updatedEl.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
+    if (kpisEl) {
+      var kpis = [
+        { value: '' + briefings.length, label: 'Recent Headlines', colour: '' },
+        { value: '' + tenders.length, label: 'Open Tenders', colour: 'orange' }
+      ];
+      var html = '';
+      for (var i = 0; i < kpis.length; i++) {
+        var colClass = kpis[i].colour ? ' ' + kpis[i].colour : '';
+        html += '<div class="bi-kpi-card' + colClass + '">';
+        html += '<div class="bi-kpi-value">' + escHtml(kpis[i].value) + '</div>';
+        html += '<div class="bi-kpi-label">' + escHtml(kpis[i].label) + '</div>';
+        html += '</div>';
+      }
+      kpisEl.innerHTML = html;
+    }
+
+    if (chartArea) chartArea.style.display = 'none';
+
+    if (advisoryList) {
+      var items = [];
+
+      for (var b = 0; b < Math.min(briefings.length, 3); b++) {
+        var br = briefings[b];
+        items.push({ icon: '&#128240;', text: escHtml(br.title || 'Industry update') + (br.summary ? ' \u2014 ' + escHtml(br.summary.substring(0, 120)) : '') });
+      }
+
+      var today = new Date().toISOString().split('T')[0];
+      var closingSoon = tenders.filter(function(t) { return t.close_date && t.close_date >= today; }).slice(0, 2);
+      for (var t = 0; t < closingSoon.length; t++) {
+        var tn = closingSoon[t];
+        items.push({ icon: '&#128203;', text: 'Tender: ' + escHtml(tn.title || 'Opportunity') + (tn.location ? ' in ' + escHtml(tn.location) : '') + (tn.close_date ? ' \u2014 closes ' + escHtml(tn.close_date) : '') });
+      }
+
+      if (items.length === 0) {
+        items.push({ icon: '&#127758;', text: 'No recent market intelligence available. ' + (md.hasNewsDigest ? 'Check Industry News for full briefings.' : 'Activate Industry News & Updates for market insights.') });
+      }
+
+      var upsellHtml = '';
+      if (!md.hasNewsDigest) {
+        upsellHtml = '<div class="bi-upsell-box">This is a summary view. Activate Industry News &amp; Updates for full briefings, email scanning, supplier monitoring, and personalised industry intelligence.</div>';
+      } else {
+        upsellHtml = '<div class="bi-upsell-box">Powered by Industry News &amp; Updates \u2014 <a href="/news-digest.html">open full tool</a></div>';
+      }
+
+      var html = '';
+      for (var a = 0; a < items.length; a++) {
+        html += '<div class="bi-advisory-item">';
+        html += '<span class="bi-advisory-icon">' + items[a].icon + '</span>';
+        html += '<span class="bi-advisory-text">' + items[a].text + '</span>';
+        html += '</div>';
+      }
+      html += upsellHtml;
+      advisoryList.innerHTML = html;
+    }
+  },
+
+  _fetchStrategicData: async function() {
+    try {
+      var sb = this._supabase;
+      var userId = this._user.id;
+
+      var planRes = await sb.from('strategic_plans').select('id, swot_data, cycle_end_date, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+      var plan = (planRes.data && planRes.data.length > 0) ? planRes.data[0] : null;
+
+      var tasks = [];
+      if (plan) {
+        var taskRes = await sb.from('action_tracker').select('id, items, month_group, is_carried_forward').eq('user_id', userId).eq('plan_id', plan.id);
+        tasks = (taskRes.data || []).map(function(row) {
+          var it = row.items || {};
+          return {
+            id: row.id,
+            title: it.title || '',
+            due_date: it.due_date || '',
+            status: it.status || 'pending',
+            priority: it.priority || 'Medium',
+            month_group: row.month_group || 0
+          };
+        });
+      }
+
+      this._strategicData = { plan: plan, tasks: tasks };
+    } catch (err) {
+      console.error('[BI] Strategic fetch error:', err.message || err);
+    }
+  },
+
+  _renderStrategicModule: function() {
+    var kpisEl = document.getElementById('bi-mod-strategic-kpis');
+    var chartArea = document.getElementById('bi-mod-strategic-chart');
+    var advisoryList = document.getElementById('bi-mod-strategic-advisory-list');
+    var updatedEl = document.getElementById('bi-mod-strategic-updated');
+
+    if (!this._strategicData || !this._strategicData.plan) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      if (chartArea) chartArea.style.display = 'none';
+      var advisorySection = document.getElementById('bi-mod-strategic-advisory');
+      if (advisorySection) {
+        advisorySection.innerHTML = '<div class="bi-module-prompt">' +
+          '<div class="bi-module-prompt-icon">&#127919;</div>' +
+          '<h3>Strategic Alignment</h3>' +
+          '<p>Create your Strategic Plan to track progress against your goals, monitor action items, and align operations with strategy.</p>' +
+          '</div>';
+      }
+      return;
+    }
+
+    var plan = this._strategicData.plan;
+    var tasks = this._strategicData.tasks;
+
+    if (updatedEl) {
+      var now = new Date();
+      var h = now.getHours(); var m = now.getMinutes();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      updatedEl.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
+    var today = new Date().toISOString().split('T')[0];
+    var total = tasks.length;
+    var completed = tasks.filter(function(t) { return t.status === 'completed' || t.status === 'done'; }).length;
+    var overdue = tasks.filter(function(t) { return t.due_date && t.due_date < today && t.status !== 'completed' && t.status !== 'done'; }).length;
+    var progressPct = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    var cycleEnd = plan.cycle_end_date || '';
+    var daysLeft = 0;
+    if (cycleEnd) {
+      daysLeft = Math.max(0, Math.ceil((new Date(cycleEnd) - new Date()) / 86400000));
+    }
+
+    if (kpisEl) {
+      var kpis = [
+        { value: progressPct + '%', label: '90-Day Progress', colour: progressPct >= 70 ? 'green' : progressPct >= 40 ? 'orange' : 'red', trend: progressPct >= 50 ? 'up' : 'down', trendText: completed + ' of ' + total + ' tasks' },
+        { value: '' + overdue, label: 'Overdue Tasks', colour: overdue > 0 ? 'red' : 'green', trend: overdue > 0 ? 'down' : 'up', trendText: overdue > 0 ? 'Action needed' : 'On track' },
+        { value: daysLeft + 'd', label: 'Cycle Remaining', colour: daysLeft <= 14 ? 'orange' : 'purple', trend: 'flat', trendText: cycleEnd ? 'Ends ' + cycleEnd : '' }
+      ];
+
+      var html = '';
+      for (var i = 0; i < kpis.length; i++) {
+        var k = kpis[i];
+        var colClass = k.colour ? ' ' + k.colour : '';
+        var trendClass = k.trend === 'up' ? 'up' : k.trend === 'down' ? 'down' : 'flat';
+        var arrow = k.trend === 'up' ? '&#9650;' : k.trend === 'down' ? '&#9660;' : '&#8212;';
+        html += '<div class="bi-kpi-card' + colClass + '">';
+        html += '<div class="bi-kpi-value">' + escHtml(k.value) + '</div>';
+        html += '<div class="bi-kpi-label">' + escHtml(k.label) + '</div>';
+        if (k.trendText) {
+          html += '<div class="bi-kpi-trend ' + trendClass + '">' + arrow + ' ' + escHtml(k.trendText) + '</div>';
+        }
+        html += '</div>';
+      }
+      kpisEl.innerHTML = html;
+    }
+
+    if (chartArea) {
+      chartArea.style.display = 'block';
+      if (this._charts.strategicStatus) { this._charts.strategicStatus.destroy(); this._charts.strategicStatus = null; }
+
+      var canvas = document.getElementById('bi-chart-strategic');
+      if (canvas && total > 0) {
+        chartArea.innerHTML = '';
+        chartArea.appendChild(canvas);
+
+        var statusCounts = {};
+        tasks.forEach(function(t) {
+          var s = t.status || 'pending';
+          statusCounts[s] = (statusCounts[s] || 0) + 1;
+        });
+
+        var rootStyle = getComputedStyle(document.documentElement);
+        var green = rootStyle.getPropertyValue('--green').trim() || '#28a745';
+        var blue = rootStyle.getPropertyValue('--blue').trim() || '#4A6D8C';
+        var orange = rootStyle.getPropertyValue('--orange').trim() || '#c4622a';
+        var red = rootStyle.getPropertyValue('--red').trim() || '#dc3545';
+        var grey = rootStyle.getPropertyValue('--grey').trim() || '#6c757d';
+
+        var statusLabels = Object.keys(statusCounts);
+        var colourMap = { completed: green, done: green, 'in-progress': blue, 'in_progress': blue, pending: orange, overdue: red };
+        var statusColours = statusLabels.map(function(s) { return colourMap[s.toLowerCase()] || grey; });
+
+        this._charts.strategicStatus = new Chart(canvas, {
+          type: 'doughnut',
+          data: {
+            labels: statusLabels.map(function(s) { return s.charAt(0).toUpperCase() + s.slice(1); }),
+            datasets: [{ data: statusLabels.map(function(s) { return statusCounts[s]; }), backgroundColor: statusColours }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+              legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
+              title: { display: true, text: 'Tasks by Status', font: { size: 13 }, color: '#888' }
+            }
+          }
+        });
+      } else {
+        chartArea.style.display = 'none';
+      }
+    }
+
+    if (advisoryList) {
+      var items = [];
+
+      if (overdue > 0) {
+        items.push({ icon: '&#9888;', text: overdue + ' of ' + total + ' strategic actions are overdue \u2014 review priorities with your team.' });
+      }
+
+      if (daysLeft > 0 && daysLeft <= 21) {
+        items.push({ icon: '&#128197;', text: '90-day cycle ends in ' + daysLeft + ' days \u2014 schedule a strategic review session.' });
+      }
+
+      if (progressPct < 30 && total > 0) {
+        items.push({ icon: '&#9888;', text: 'Only ' + progressPct + '% of actions completed \u2014 consider reprioritising or delegating.' });
+      } else if (progressPct >= 75) {
+        items.push({ icon: '&#9989;', text: 'Strong progress at ' + progressPct + '% \u2014 on track to meet your 90-day goals.' });
+      }
+
+      var swot = plan.swot_data;
+      if (swot) {
+        var weaknesses = (swot.weaknesses || swot.Weaknesses || []);
+        if (weaknesses.length > 0) {
+          items.push({ icon: '&#128161;', text: 'SWOT: ' + weaknesses.length + ' weakness' + (weaknesses.length > 1 ? 'es' : '') + ' identified \u2014 review against current progress.' });
+        }
+      }
+
+      if (items.length === 0) {
+        items.push({ icon: '&#127919;', text: 'Strategic plan active. Progress tracking is live.' });
+      }
+
+      var advHtml = '';
+      for (var a = 0; a < items.length; a++) {
+        advHtml += '<div class="bi-advisory-item">';
+        advHtml += '<span class="bi-advisory-icon">' + items[a].icon + '</span>';
+        advHtml += '<span class="bi-advisory-text">' + escHtml(items[a].text) + '</span>';
+        advHtml += '<div class="bi-advisory-actions">';
+        advHtml += '<button class="bi-ask-btn" data-module="strategic" data-insight-idx="' + a + '">Ask about this</button>';
+        advHtml += '</div></div>';
+      }
+      advisoryList.innerHTML = advHtml;
+
+      var self = this;
+      advisoryList.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          self._openChat(btn.getAttribute('data-insight-idx'), 'strategic');
+        });
+      });
+    }
   },
 
   _formatNum: function(n) {
