@@ -87,7 +87,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 @keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 .industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
 .industry-card{position:relative;border-radius:16px;cursor:pointer;height:220px;border:2px solid rgba(255,255,255,0.07);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1),box-shadow 0.35s,border-color 0.3s;animation:cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;}
-.industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}.industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}.industry-card:nth-child(5){animation-delay:0.20s}.industry-card:nth-child(6){animation-delay:0.24s}.industry-card:nth-child(7){animation-delay:0.28s}.industry-card:nth-child(8){animation-delay:0.32s}.industry-card:nth-child(9){animation-delay:0.36s}.industry-card:nth-child(10){animation-delay:0.40s}.industry-card:nth-child(11){animation-delay:0.44s}
+.industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}.industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}.industry-card:nth-child(5){animation-delay:0.20s}.industry-card:nth-child(6){animation-delay:0.24s}.industry-card:nth-child(7){animation-delay:0.28s}.industry-card:nth-child(8){animation-delay:0.32s}.industry-card:nth-child(9){animation-delay:0.36s}
 .industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
 .industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
 .industry-card:hover{border-color:transparent;}
@@ -477,8 +477,8 @@ footer {
       <div class="hiw-step">
         <div class="hiw-step-num">1</div>
         <div class="hiw-step-body">
-          <div class="hiw-step-title">Choose Your Trade</div>
-          <div class="hiw-step-desc">Select from 12 industries — tools built around how your trade actually works.</div>
+          <div class="hiw-step-title">Choose Your Industry</div>
+          <div class="hiw-step-desc">Select from 9 industry groups — tools built around how your business actually works.</div>
         </div>
       </div>
       <div class="hiw-connector"></div>
@@ -509,67 +509,49 @@ footer {
     </div>
     <div class="industry-grid">
 
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1575429198097-0414ec08e8cd?w=500&q=80&auto=format')">
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127946;</span><div class="card-name">Pool Builders</div><p class="card-desc">Residential and commercial pool construction, renovation and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128295;</span><div class="card-name">Plumbers</div><p class="card-desc">Residential and commercial plumbing, gas fitting and drainage</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#127959;</span><div class="card-name">Building &amp; Construction</div><p class="card-desc">Residential and commercial building, renovations and project management</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
       <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#9889;</span><div class="card-name">Electricians</div><p class="card-desc">Residential and commercial electrical installation, testing and maintenance</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#9889;</span><div class="card-name">Electrical &amp; Solar</div><p class="card-desc">Electrical installation, solar systems, and data communications</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&q=80&auto=format')">
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127959;</span><div class="card-name">Builders</div><p class="card-desc">Residential and commercial building, renovations and project management</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#128295;</span><div class="card-name">Plumbing &amp; Gas</div><p class="card-desc">Plumbing, gas fitting, drainage and roofing services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
       <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1545259741-2ea3ebf61fa3?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#10052;</span><div class="card-name">HVAC</div><p class="card-desc">Air conditioning, heating, ventilation and refrigeration services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1683830932134-2d06849534eb?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128297;</span><div class="card-name">Fabricators</div><p class="card-desc">Custom fabrication, welding, structural steel and sheet metal work</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#129529;</span><div class="card-name">Cleaners</div><p class="card-desc">Commercial, industrial and strata cleaning services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#10052;</span><div class="card-name">HVAC &amp; Refrigeration</div><p class="card-desc">Air conditioning, heating, ventilation and refrigeration services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
       <div class="industry-card" style="--card-photo:url('https://plus.unsplash.com/premium_photo-1664299231556-57f570023f87?w=500&auto=format&fit=crop&q=60&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127807;</span><div class="card-name">Landscapers</div><p class="card-desc">Garden design, hardscaping, irrigation and outdoor living spaces</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
-      </div>
-
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1700727448686-b314cb5f9948?w=500&q=80&auto=format')">
-        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#127981;</span><div class="card-name">Manufacturers</div><p class="card-desc">Product manufacturing, assembly, packaging and distribution</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#127807;</span><div class="card-name">Landscaping &amp; Outdoor</div><p class="card-desc">Garden design, pools, fencing, concrete and outdoor living</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
       <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1766961980272-921bba4240bc?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#129704;</span><div class="card-name">Concreters</div><p class="card-desc">Residential and commercial concrete, driveways, paths and slabs</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#127912;</span><div class="card-name">Painting &amp; Finishing</div><p class="card-desc">Painting, plastering, rendering, tiling and flooring services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
-      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1676311396794-f14881e9daaa?w=500&q=80&auto=format')">
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1683830932134-2d06849534eb?w=500&q=80&auto=format')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128296;</span><div class="card-name">Handymen</div><p class="card-desc">General repairs, maintenance and multi-trade property services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+        <div class="card-content"><span class="card-icon">&#128297;</span><div class="card-name">Fabrication &amp; Manufacturing</div><p class="card-desc">Custom fabrication, welding, sheet metal and manufacturing</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
+
+      <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content"><span class="card-icon">&#129529;</span><div class="card-name">Cleaning &amp; Maintenance</div><p class="card-desc">Commercial cleaning, property maintenance and pest control</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
+      </div>
+
       <div class="industry-card" style="--card-photo:url('https://images.unsplash.com/photo-1521791136064-7986c2920216?w=500&q=80')">
         <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
-        <div class="card-content"><span class="card-icon">&#128188;</span>
-          <div class="card-name">Service &amp; Professional</div>
-          <p class="card-desc">Accountants, consultants, real estate and professional services</p>
-          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
-        </div>
+        <div class="card-content"><span class="card-icon">&#128188;</span><div class="card-name">Service &amp; Professional</div><p class="card-desc">Accounting, consulting, legal, real estate and IT services</p><div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div></div>
       </div>
 
       <div style="grid-column:1/-1;display:flex;justify-content:flex-end;padding:4px 0 8px 0;">
@@ -686,7 +668,7 @@ window.addEventListener('resize', alignHIW);
 
 // Industry card navigation
 (function(){
-  var ids=['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman','service'];
+  var ids=['building-construction','electrical-solar','plumbing-gas','hvac-refrigeration','landscaping-outdoor','painting-finishing','fabrication-manufacturing','cleaning-maintenance','service-professional'];
   var cards=document.querySelectorAll('.industry-card');
   cards.forEach(function(c,i){
     c.style.cursor='pointer';

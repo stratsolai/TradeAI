@@ -129,6 +129,7 @@ window.CL_PROFILE = {
   _renderIdentity: function() {
     var p = this._profile;
     var structures = ['Sole Trader', 'Partnership', 'Company', 'Trust', 'Other'];
+    var industries = ['Building & Construction', 'Electrical & Solar', 'Plumbing & Gas', 'HVAC & Refrigeration', 'Landscaping & Outdoor', 'Painting & Finishing', 'Fabrication & Manufacturing', 'Cleaning & Maintenance', 'Service & Professional'];
     var logoHtml = '<div class="profile-logo-wrap">' +
       (p.logo_url ? '<img id="prof-logo-img" src="' + window.escHtml(p.logo_url) + '" class="profile-logo-preview" alt="Logo" />' : '<div id="prof-logo-img" class="profile-logo-placeholder">No logo</div>') +
       '<input id="prof-logo-file" type="file" accept="image/*" class="profile-file-input" />' +
@@ -139,7 +140,7 @@ window.CL_PROFILE = {
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
       this._field2('Business Structure', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industry / Profession', this._input('prof-industry', 'text', this._v('industry'), 'e.g. Accounting, Retail, Construction')) +
+      this._field2('Industry', this._dropdown('prof-industry', industries, this._v('industry'))) +
       this._field('Business Logo', logoHtml) +
     '</div>';
     document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save');
@@ -178,7 +179,7 @@ window.CL_PROFILE = {
     var self = this;
     var btn = document.getElementById('prof-id-save');
     window.handleSave(btn, async function() {
-      var updates = { business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').getAttribute('data-value') || '', industry: document.getElementById('prof-industry').value.trim() };
+      var updates = { business_name: document.getElementById('prof-biz-name').value.trim(), trading_name: document.getElementById('prof-trading-name').value.trim(), abn: document.getElementById('prof-abn').value.trim(), business_structure: document.getElementById('prof-structure').getAttribute('data-value') || '', industry: document.getElementById('prof-industry').getAttribute('data-value') || '' };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
