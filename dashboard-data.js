@@ -37,7 +37,7 @@ window.DASH_DATA = (function() {
         html += '<a href="' + tool.url + '" class="btn-stax-open">Open Tool</a>';
       } else if (!isPending) {
         html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
-        html += '<a href="/activate?tool=" + tool.id + "" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="" + tool.id + "" style="margin-top:6px;display:inline-block;">Activate</button>';
+        html += '<a href="/panel-auth.html?tool=' + tool.id + '" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="' + tool.id + '" style="margin-top:6px;display:inline-block;">Activate</button>';
       }
       html += '</div></div>';
     });
