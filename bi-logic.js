@@ -5,6 +5,7 @@ window.BI_LOGIC = {
   _charts: {},
   _chatState: {},
   _financialData: null,
+  _customerData: null,
 
   init: function(supabase, user) {
     this._supabase = supabase;
@@ -50,11 +51,12 @@ window.BI_LOGIC = {
 
     Promise.all([
       self._loadCachedInsights(forceRefresh),
-      self._fetchFinancialData()
+      self._fetchFinancialData(),
+      self._fetchCustomerData()
     ]).then(function() {
       self._renderModule('alerts');
       self._renderFinancialModule();
-      self._renderModule('customers');
+      self._renderCustomerModule();
       self._renderModule('operations');
       self._renderModule('market');
       self._renderModule('strategic');
@@ -629,6 +631,229 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         self._openChat(btn.getAttribute('data-insight-idx'), 'financial');
+      });
+    });
+  },
+
+  _fetchCustomerData: async function() {
+    try {
+      var sb = this._supabase;
+      var session = await sb.auth.getSession();
+      var token = session.data && session.data.session && session.data.session.access_token;
+      if (!token) return;
+
+      var resp = await fetch('/api/bi-customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({})
+      });
+      if (!resp.ok) { console.error('[BI] Customer fetch failed:', resp.status); return; }
+      var json = await resp.json();
+      if (json.success) this._customerData = json;
+    } catch (err) {
+      console.error('[BI] Customer fetch error:', err.message || err);
+    }
+  },
+
+  _renderCustomerModule: function() {
+    var kpisEl = document.getElementById('bi-mod-customers-kpis');
+    var chartArea = document.getElementById('bi-mod-customers-chart');
+    var advisoryList = document.getElementById('bi-mod-customers-advisory-list');
+    var updatedEl = document.getElementById('bi-mod-customers-updated');
+
+    if (!this._customerData || !this._customerData.connected) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      if (chartArea) chartArea.style.display = 'none';
+      var advisorySection = document.getElementById('bi-mod-customers-advisory');
+      if (advisorySection) {
+        advisorySection.innerHTML = '<div class="bi-module-prompt">' +
+          '<div class="bi-module-prompt-icon">&#128101;</div>' +
+          '<h3>Customer Analysis</h3>' +
+          '<p>Connect your accounting software to analyse your customer base, revenue concentration, and quote conversion rates.</p>' +
+          '</div>';
+      }
+      return;
+    }
+
+    var d = this._customerData.data;
+    var s = d.summary;
+
+    if (updatedEl) {
+      var now = new Date();
+      var h = now.getHours(); var m = now.getMinutes();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      updatedEl.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
+    this._renderCustomerKPIs(s, kpisEl);
+    this._renderCustomerCharts(d, chartArea);
+    this._renderCustomerAdvisory(d, advisoryList);
+  },
+
+  _renderCustomerKPIs: function(s, container) {
+    if (!container) return;
+    var concRisk = s.concentration_pct >= 60 ? 'red' : s.concentration_pct >= 40 ? 'orange' : 'green';
+    var convColour = s.conversion_rate >= 45 ? 'green' : s.conversion_rate >= 25 ? 'orange' : 'red';
+
+    var kpis = [
+      { value: '' + s.total_customers, label: 'Total Customers', colour: '', trend: 'flat', trendText: '$' + this._formatNum(s.total_revenue) + ' total revenue' },
+      { value: '$' + this._formatNum(s.avg_invoice_value), label: 'Avg Invoice Value', colour: 'orange', trend: 'flat', trendText: '' },
+      { value: s.concentration_pct + '%', label: 'Top 3 Concentration', colour: concRisk, trend: concRisk === 'red' ? 'down' : 'up', trendText: concRisk === 'red' ? 'High risk' : concRisk === 'orange' ? 'Moderate' : 'Healthy' },
+      { value: s.conversion_rate + '%', label: 'Quote Conversion', colour: convColour, trend: s.conversion_rate >= 45 ? 'up' : 'down', trendText: s.accepted_quotes + ' of ' + s.quote_count + ' quotes' }
+    ];
+
+    var html = '';
+    for (var i = 0; i < kpis.length; i++) {
+      var k = kpis[i];
+      var colClass = k.colour ? ' ' + k.colour : '';
+      var trendClass = k.trend === 'up' ? 'up' : k.trend === 'down' ? 'down' : 'flat';
+      var arrow = k.trend === 'up' ? '&#9650;' : k.trend === 'down' ? '&#9660;' : '&#8212;';
+      html += '<div class="bi-kpi-card' + colClass + '">';
+      html += '<div class="bi-kpi-value">' + escHtml(k.value) + '</div>';
+      html += '<div class="bi-kpi-label">' + escHtml(k.label) + '</div>';
+      if (k.trendText) {
+        html += '<div class="bi-kpi-trend ' + trendClass + '">' + arrow + ' ' + escHtml(k.trendText) + '</div>';
+      }
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  },
+
+  _renderCustomerCharts: function(d, chartArea) {
+    if (!chartArea) return;
+    chartArea.style.display = 'block';
+
+    if (this._charts.customers) { this._charts.customers.destroy(); this._charts.customers = null; }
+    if (this._charts.customersNvR) { this._charts.customersNvR.destroy(); this._charts.customersNvR = null; }
+
+    var topCanvas = document.getElementById('bi-chart-customers');
+    if (!topCanvas) return;
+
+    var top = d.top_customers || [];
+    var nvr = d.new_vs_repeat || [];
+
+    if (top.length === 0 && nvr.length === 0) {
+      chartArea.innerHTML = '<div class="bi-module-loading">No customer data available yet.</div>';
+      return;
+    }
+
+    var nvrCanvas = document.createElement('canvas');
+    nvrCanvas.id = 'bi-chart-customers-nvr';
+    chartArea.innerHTML = '';
+    chartArea.appendChild(topCanvas);
+    chartArea.appendChild(nvrCanvas);
+
+    var rootStyle = getComputedStyle(document.documentElement);
+    var blue = rootStyle.getPropertyValue('--blue').trim() || '#4A6D8C';
+    var orange = rootStyle.getPropertyValue('--orange').trim() || '#c4622a';
+    var green = rootStyle.getPropertyValue('--green').trim() || '#28a745';
+
+    if (top.length > 0) {
+      this._charts.customers = new Chart(topCanvas, {
+        type: 'bar',
+        data: {
+          labels: top.map(function(c) { return c.name.length > 20 ? c.name.substring(0, 18) + '\u2026' : c.name; }),
+          datasets: [{
+            label: 'Revenue',
+            data: top.map(function(c) { return c.revenue; }),
+            backgroundColor: blue + 'CC'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Top Customers by Revenue', font: { size: 13 }, color: '#888' }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { callback: function(val) { return '$' + (val >= 1000 ? Math.round(val / 1000) + 'K' : val); } }
+            }
+          }
+        }
+      });
+    }
+
+    if (nvr.length > 0) {
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      this._charts.customersNvR = new Chart(nvrCanvas, {
+        type: 'bar',
+        data: {
+          labels: nvr.map(function(r) {
+            var parts = r.month.split('-');
+            return months[parseInt(parts[1], 10) - 1] + ' ' + parts[0].substring(2);
+          }),
+          datasets: [
+            { label: 'New Customers', data: nvr.map(function(r) { return r.new_customers; }), backgroundColor: green + 'AA' },
+            { label: 'Repeat Customers', data: nvr.map(function(r) { return r.repeat_customers; }), backgroundColor: blue + 'AA' }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+            title: { display: true, text: 'New vs Repeat Customers', font: { size: 13 }, color: '#888' }
+          },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
+        }
+      });
+    }
+  },
+
+  _renderCustomerAdvisory: function(d, container) {
+    if (!container) return;
+    var s = d.summary;
+    var items = [];
+
+    if (s.concentration_pct >= 50) {
+      items.push({ icon: '&#9888;', text: s.concentration_pct + '% of revenue comes from your top 3 customers \u2014 high concentration risk. Consider diversifying your customer base.' });
+    } else if (s.concentration_pct > 0) {
+      items.push({ icon: '&#9989;', text: 'Customer concentration at ' + s.concentration_pct + '% across your top 3 \u2014 reasonably diversified.' });
+    }
+
+    if (s.conversion_rate > 0 && s.conversion_rate < 35) {
+      items.push({ icon: '&#128200;', text: 'Quote conversion rate is ' + s.conversion_rate + '%. Industry benchmark is approximately 45% \u2014 review your quoting process.' });
+    } else if (s.conversion_rate >= 45) {
+      items.push({ icon: '&#9989;', text: 'Strong quote conversion at ' + s.conversion_rate + '% \u2014 above the typical 45% benchmark.' });
+    }
+
+    if (s.avg_invoice_value > 0) {
+      items.push({ icon: '&#128176;', text: 'Average invoice value is $' + this._formatNum(s.avg_invoice_value) + ' across ' + s.total_customers + ' customers.' });
+    }
+
+    var inactive = d.inactive_customers || [];
+    if (inactive.length > 0) {
+      var topInactive = inactive.slice(0, 3).map(function(c) { return c.name; }).join(', ');
+      items.push({ icon: '&#9888;', text: inactive.length + ' customer' + (inactive.length > 1 ? 's haven\'t' : ' hasn\'t') + ' placed an order in 60+ days: ' + topInactive + '.' });
+    }
+
+    if (items.length === 0) {
+      items.push({ icon: '&#128161;', text: 'Customer data loaded. More insights will appear as invoice history grows.' });
+    }
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      html += '<div class="bi-advisory-item">';
+      html += '<span class="bi-advisory-icon">' + items[i].icon + '</span>';
+      html += '<span class="bi-advisory-text">' + escHtml(items[i].text) + '</span>';
+      html += '<div class="bi-advisory-actions">';
+      html += '<button class="bi-ask-btn" data-module="customers" data-insight-idx="' + i + '">Ask about this</button>';
+      html += '</div></div>';
+    }
+    container.innerHTML = html;
+
+    var self = this;
+    container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._openChat(btn.getAttribute('data-insight-idx'), 'customers');
       });
     });
   },
