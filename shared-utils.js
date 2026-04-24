@@ -113,13 +113,17 @@ window.loadStats = async function() {
    Listens for Supabase SIGNED_OUT events and redirects to login.
    Covers session expiry, token refresh failure, and manual sign-out.
    Safe alongside the existing sign-out redirect in topbar.js —
-   both target /login so the first redirect wins. */
+   both target /login so the first redirect wins.
+   Retries if supabaseClient is not yet initialised (CDN polling). */
 (function() {
-  var sb = window.supabaseClient;
-  if (!sb) return;
-  sb.auth.onAuthStateChange(function(event) {
-    if (event === 'SIGNED_OUT') {
-      window.location.href = '/login';
-    }
-  });
+  function attach() {
+    var sb = window.supabaseClient;
+    if (!sb) { setTimeout(attach, 150); return; }
+    sb.auth.onAuthStateChange(function(event) {
+      if (event === 'SIGNED_OUT') {
+        window.location.href = '/login';
+      }
+    });
+  }
+  attach();
 })();
