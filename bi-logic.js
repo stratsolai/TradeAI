@@ -821,11 +821,20 @@ window.BI_LOGIC = {
           actBtn.textContent = 'Added';
           actBtn.disabled = true;
         }
-        var notification = document.createElement('div');
-        notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
-        notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html#tracker" style="color:var(--white);text-decoration:underline;font-weight:600;">View</a>';
-        document.body.appendChild(notification);
-        setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
+
+        if (json.spRewriteRequired && json.contradiction) {
+          var rewriteNotification = document.createElement('div');
+          rewriteNotification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--orange);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;max-width:600px;';
+          rewriteNotification.innerHTML = escHtml(json.contradiction.message) + ' <a href="/strategic-plan.html?rewrite=true&decision=' + encodeURIComponent(json.contradiction.decisionId || '') + '" style="color:var(--white);text-decoration:underline;font-weight:600;white-space:nowrap">Update Plan</a>';
+          document.body.appendChild(rewriteNotification);
+          setTimeout(function() { if (rewriteNotification.parentNode) rewriteNotification.parentNode.removeChild(rewriteNotification); }, 10000);
+        } else {
+          var notification = document.createElement('div');
+          notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
+          notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html" style="color:var(--white);text-decoration:underline;font-weight:600;">View</a>';
+          document.body.appendChild(notification);
+          setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
+        }
       } else {
         if (actBtn) { actBtn.textContent = 'Act on this'; actBtn.disabled = false; }
         self._showError(json.error || 'Could not add to Operational Plan.');

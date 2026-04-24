@@ -18,93 +18,137 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // ── CLAUDE CONTENT GENERATOR ────────────────────────────────────────────────
 
-async function generatePlanContent(planData, clContext, biInsights) {
-  var revenueLabels = {
-    'under-100k': 'Under $100,000', '100k-250k': '$100,000\u2013$250,000',
-    '250k-500k': '$250,000\u2013$500,000', '500k-1m': '$500,000\u2013$1,000,000',
-    '1m-2m': '$1,000,000\u2013$2,000,000', 'over-2m': 'Over $2,000,000'
-  };
+function _arr(v) { return Array.isArray(v) ? v.join(', ') : (v || 'Not specified'); }
 
-  var systemPrompt = 'You are an expert business plan writer specialising in Australian small and medium businesses across trades, construction, professional services, and other industries.\n' +
-    'Write professional, polished business plan content suitable for submission to banks, lenders, or investors.\n' +
-    'Use plain language \u2014 avoid jargon. Write in third person (e.g. "The business operates..." not "We operate...").\n' +
+async function generatePlanContent(planData, clContext, biInsights) {
+  var systemPrompt = 'You are an expert business plan writer specialising in Australian small and medium businesses.\n' +
+    'Write professional, polished content suitable for banks, lenders, or investors.\n' +
+    'Use plain language. Write in third person (e.g. "The business operates..." not "We operate...").\n' +
     'All content must be specific to the business data provided, not generic filler.\n' +
     'Return ONLY a JSON object \u2014 no markdown, no preamble.\n' +
-    'If BI Intelligence Insights are provided, incorporate them into the Growth Strategy, Market Analysis, and Products & Services sections of Document 1. Do not fabricate insights \u2014 only reference what is explicitly listed.\n' +
-    'Always include a SWOT Analysis section in Document 1 with exactly 3\u20135 dot points each for Strengths, Weaknesses, Opportunities, and Threats.\n' +
-    'After the full document content, append a JSON block delimited by ###SWOT_JSON_START### and ###SWOT_JSON_END### containing: {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]}.';
+    'If BI Intelligence Insights are provided, incorporate them into relevant sections. Do not fabricate insights.\n' +
+    'Always include a SWOT Analysis with exactly 3\u20135 dot points each for Strengths, Weaknesses, Opportunities, Threats.\n' +
+    'After the full content, append a JSON block delimited by ###SWOT_JSON_START### and ###SWOT_JSON_END### containing: {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]}.';
 
   var userPrompt = 'Generate comprehensive business plan content for this business:\n\n' +
-    'BUSINESS DATA:\n' +
-    '- Name: ' + (planData.businessName || 'Not provided') + '\n' +
+    'SECTION 1 \u2014 BUSINESS FOUNDATION:\n' +
+    '- Business Name: ' + (planData.businessName || 'Not provided') + '\n' +
     '- Trading Name: ' + (planData.tradingName || 'Same as above') + '\n' +
     '- ABN: ' + (planData.abn || 'Not provided') + '\n' +
     '- Structure: ' + (planData.structure || 'Not specified') + '\n' +
-    '- Industry/Trade: ' + (planData.industry || 'Not specified') + '\n' +
+    '- Industry: ' + (planData.industry || 'Not specified') + '\n' +
     '- Years operating: ' + (planData.yearsInBusiness || 'Not specified') + '\n' +
     '- Location: ' + (planData.location || 'Not specified') + '\n' +
     '- Team size: ' + (planData.teamSize || 'Not specified') + '\n' +
-    '- Licences: ' + (planData.licences || 'Not specified') + '\n' +
+    '- Licences: ' + _arr(planData.licences) + '\n' +
+    '- Mission: ' + (planData.missionStatement || 'Not provided') + '\n' +
+    '- Vision: ' + (planData.visionStatement || 'Not provided') + '\n' +
+    '- Core Values: ' + _arr(planData.coreValues) + '\n' +
+    '- Key Person Dependency: ' + (planData.keyPersonDependency || 'Not provided') + '\n\n' +
+    'SECTION 2 \u2014 PRODUCTS, SERVICES & CUSTOMERS:\n' +
     '- Services: ' + (planData.services || 'Not specified') + '\n' +
     '- Products: ' + (planData.products || 'Not specified') + '\n' +
-    '- Website: ' + (planData.websiteUrl || 'Not provided') + '\n' +
-    '- Target customers: ' + (Array.isArray(planData.targetCustomers) ? planData.targetCustomers.join(', ') : (planData.targetCustomers || 'Not specified')) + '\n' +
-    '- Service area: ' + (planData.serviceArea || 'Not specified') + '\n' +
-    '- Differentiators: ' + (planData.differentiators || 'Not specified') + '\n' +
-    '- Competitors: ' + (planData.competitors || 'Not specified') + '\n' +
-    '- Annual revenue: ' + (revenueLabels[planData.revenue] || planData.revenue || 'Not specified') + '\n' +
-    '- Jobs per month: ' + (planData.jobsPerMonth || 'Not specified') + '\n' +
+    '- Target customers: ' + _arr(planData.targetCustomers) + '\n' +
+    '- Primary segment: ' + (planData.primarySegment || 'Not specified') + '\n' +
+    '- Customer concentration: ' + (planData.customerConcentration || 'Not specified') + '\n' +
+    '- Service area: ' + _arr(planData.serviceArea) + '\n' +
+    '- Pricing model: ' + _arr(planData.pricingModel) + '\n' +
     '- Avg job value: ' + (planData.avgJobValue || 'Not specified') + '\n' +
-    '- Biggest costs: ' + (Array.isArray(planData.biggestCosts) ? planData.biggestCosts.join(', ') : (planData.biggestCosts || 'Not specified')) + '\n' +
-    '- Existing finance: ' + (planData.existingFinance || 'None noted') + '\n' +
-    '- Plan purpose: ' + (Array.isArray(planData.planPurpose) ? planData.planPurpose.join(', ') : (planData.planPurpose || 'Not specified')) + '\n' +
-    '- 12-month goals: ' + (planData.goals1yr || 'Not specified') + '\n' +
-    '- 3-year vision: ' + (planData.goals3yr || 'Not specified') + '\n' +
-    '- Planned investments: ' + (planData.investments || 'Not specified') + '\n' +
-    '- Hiring plans: ' + (Array.isArray(planData.hiringPlans) ? planData.hiringPlans.join(', ') : (planData.hiringPlans || 'Not specified')) + '\n' +
-    '- Lead generation: ' + (Array.isArray(planData.leadGeneration) ? planData.leadGeneration.join(', ') : (planData.leadGeneration || 'Not specified')) + '\n' +
-    '- Key suppliers: ' + (planData.suppliers || 'Not specified') + '\n' +
-    '- Subcontractors: ' + (planData.subcontractors || 'Not specified') + '\n' +
-    '- Technology: ' + (Array.isArray(planData.technology) ? planData.technology.join(', ') : (planData.technology || 'Not specified')) + '\n' +
-    '- Marketing: ' + (planData.marketing || 'Not specified') + '\n' +
-    '- Risks: ' + (Array.isArray(planData.risks) ? planData.risks.join(', ') : (planData.risks || 'Not specified')) + '\n' +
-    '- Contingency: ' + (planData.contingency || 'Not specified') + '\n' +
-    '- Insurance: ' + (Array.isArray(planData.insurance) ? planData.insurance.join(', ') : (planData.insurance || 'Not specified')) + '\n' +
-    '- Additional: ' + (planData.additionalInfo || 'None') + '\n' +
-    '- Key Person Dependency: ' + (planData.keyPersonDependency || 'Not provided') + '\n' +
-    '- Most Profitable Service: ' + (planData.mostProfitableService || 'Not provided') + '\n' +
-    '- Average Payment Time: ' + (planData.avgPaymentTime || 'Not provided') + '\n' +
-    '- Gross Margin Awareness: ' + (planData.grossMarginAwareness || 'Not provided') + '\n' +
-    '- Monthly Marketing Budget: ' + (planData.marketingBudget || 'Not provided') + '\n' +
-    '- Biggest Marketing Challenges: ' + (Array.isArray(planData.marketingChallenges) ? planData.marketingChallenges.join(', ') : (planData.marketingChallenges || 'Not provided')) + '\n' +
-    '- Key Roles in Business: ' + (Array.isArray(planData.keyRoles) ? planData.keyRoles.join(', ') : (planData.keyRoles || 'Not provided')) + '\n' +
-    '- Compliance Actions Due: ' + (planData.complianceActions || 'Not provided') + '\n\n' +
+    '- Differentiators: ' + (planData.differentiators || 'Not specified') + '\n' +
+    '- Most profitable service: ' + (planData.mostProfitableService || 'Not specified') + '\n\n' +
+    'SECTION 3 \u2014 FINANCIAL POSITION:\n' +
+    '- Annual revenue: ' + (planData.annualRevenue || 'Not specified') + '\n' +
+    '- Revenue trend: ' + (planData.revenueTrend || 'Not specified') + '\n' +
+    '- Gross margin: ' + (planData.grossMargin || 'Not specified') + '\n' +
+    '- Net profit margin: ' + (planData.netProfitMargin || 'Not specified') + '\n' +
+    '- Cash position: ' + (planData.cashPosition || 'Not specified') + '\n' +
+    '- Biggest costs: ' + _arr(planData.biggestCosts) + '\n' +
+    '- Current finance: ' + (planData.currentFinance || 'None') + '\n' +
+    '- Finance purpose: ' + _arr(planData.financePurpose) + '\n' +
+    '- Avg payment time: ' + (planData.avgPaymentTime || 'Not specified') + '\n' +
+    '- Plan purpose: ' + _arr(planData.planPurpose) + '\n\n' +
+    'SECTION 4 \u2014 OPERATIONS & CAPACITY:\n' +
+    '- Lead sources: ' + _arr(planData.leadSources) + '\n' +
+    '- Lead conversion: ' + (planData.leadConversion || 'Not specified') + '\n' +
+    '- Jobs/clients per month: ' + (planData.jobsPerMonth || 'Not specified') + '\n' +
+    '- Capacity utilisation: ' + (planData.capacityUtilisation || 'Not specified') + '\n' +
+    '- Key suppliers: ' + (planData.keySuppliers || 'Not specified') + '\n' +
+    '- Supplier dependency: ' + (planData.supplierDependency || 'Not specified') + '\n' +
+    '- Subcontractor use: ' + (planData.subcontractorUse || 'Not specified') + '\n' +
+    '- Technology: ' + _arr(planData.technology) + '\n' +
+    '- Technology maturity: ' + (planData.technologyMaturity || 'Not specified') + '\n' +
+    '- Key roles: ' + _arr(planData.keyRoles) + '\n' +
+    '- Headcount: ' + (planData.currentHeadcount || 'Not specified') + '\n' +
+    '- Compliance actions: ' + _arr(planData.complianceActions) + '\n\n' +
+    'SECTION 5 \u2014 MARKET & COMPETITION:\n' +
+    '- Market position: ' + (planData.marketPosition || 'Not specified') + '\n' +
+    '- Competitive advantage: ' + _arr(planData.competitiveAdvantage) + '\n' +
+    '- Top competitors: ' + (planData.topCompetitors || 'Not specified') + '\n' +
+    '- Competitor threat: ' + (planData.competitorThreatLevel || 'Not specified') + '\n' +
+    '- Industry outlook: ' + (planData.industryOutlook || 'Not specified') + '\n' +
+    '- Market trends: ' + _arr(planData.marketTrends) + '\n' +
+    '- Regulatory environment: ' + (planData.regulatoryEnvironment || 'Not specified') + '\n' +
+    '- Barriers to entry: ' + _arr(planData.barriersToEntry) + '\n\n' +
+    'SECTION 6 \u2014 GROWTH & TRANSFORMATION:\n' +
+    '- 12-month revenue target: ' + (planData.revenueTarget || 'Not specified') + '\n' +
+    '- 12-month goals: ' + (planData.goals12Month || 'Not specified') + '\n' +
+    '- 3-year vision: ' + (planData.vision3Year || 'Not specified') + '\n' +
+    '- Growth strategies: ' + _arr(planData.growthStrategies) + '\n' +
+    '- Geographic expansion: ' + (planData.geoExpansion || 'Not specified') + '\n' +
+    '- Target expansion areas: ' + (planData.targetExpansionAreas || 'Not specified') + '\n' +
+    '- New service lines: ' + (planData.newServiceLines || 'Not specified') + '\n' +
+    '- Planned new services: ' + (planData.plannedNewServices || 'Not specified') + '\n' +
+    '- Government tendering: ' + (planData.govTendering || 'Not specified') + '\n' +
+    '- Digital transformation: ' + (planData.digitalTransformation || 'Not specified') + '\n' +
+    '- Digital focus: ' + _arr(planData.digitalFocus) + '\n' +
+    '- Process improvement: ' + (planData.processImprovement || 'Not specified') + '\n' +
+    '- Hiring plans: ' + (planData.hiringPlans || 'Not specified') + '\n' +
+    '- Planned investments: ' + _arr(planData.plannedInvestments) + '\n' +
+    '- Investment budget: ' + (planData.investmentBudget || 'Not specified') + '\n' +
+    '- Marketing budget: ' + (planData.marketingBudget || 'Not specified') + '\n' +
+    '- Marketing challenges: ' + _arr(planData.marketingChallenges) + '\n\n' +
+    'SECTION 7 \u2014 RISK & RESILIENCE:\n' +
+    '- Biggest risks: ' + _arr(planData.biggestRisks) + '\n' +
+    '- Contingency planning: ' + (planData.contingencyPlanning || 'Not specified') + '\n' +
+    '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
+    '- Insurance: ' + _arr(planData.insuranceCoverage) + '\n' +
+    '- Insurance review due: ' + (planData.insuranceReviewDue || 'Not specified') + '\n' +
+    '- Compliance calendar: ' + (planData.complianceCalendar || 'Not specified') + '\n' +
+    '- Succession planning: ' + (planData.successionPlanning || 'Not specified') + '\n' +
+    '- Exit timeline: ' + (planData.exitTimeline || 'Not specified') + '\n' +
+    '- Exit strategy: ' + (planData.exitStrategy || 'Not specified') + '\n' +
+    '- Additional context: ' + (planData.additionalContext || 'None') + '\n\n' +
     'Return this exact JSON structure:\n' +
     '{\n' +
     '  "executiveSummary": "3-4 paragraph executive summary suitable for a bank manager",\n' +
     '  "businessOverview": "2-3 paragraphs describing the business, its history and structure",\n' +
     '  "productsServices": "2-3 paragraphs describing services offered and target market",\n' +
     '  "marketAnalysis": "2-3 paragraphs on the market, competition and opportunity",\n' +
-    '  "competitorAnalysis": "3-5 sentences positioning the business relative to named competitors or a general market statement if none named",\n' +
-    '  "swotAnalysis": "STRENGTHS\\n- point\\n- point\\n- point\\n\\nWEAKNESSES\\n- point\\n- point\\n- point\\n\\nOPPORTUNITIES\\n- point\\n- point\\n- point\\n\\nTHREATS\\n- point\\n- point\\n- point",\n' +
-    '  "marketingStrategy": "2 paragraphs on how the business attracts and retains customers",\n' +
-    '  "operationsOverview": "2 paragraphs on how the business operates day-to-day",\n' +
+    '  "competitorAnalysis": "3-5 sentences positioning the business vs competitors",\n' +
+    '  "swotAnalysis": "STRENGTHS\\n- point\\n...\\n\\nWEAKNESSES\\n- ...\\n\\nOPPORTUNITIES\\n- ...\\n\\nTHREATS\\n- ...",\n' +
+    '  "marketingStrategy": "2 paragraphs on customer attraction and retention",\n' +
+    '  "operationsOverview": "2 paragraphs on day-to-day operations",\n' +
     '  "managementTeam": "1-2 paragraphs on leadership and key personnel",\n' +
-    '  "financialOverview": "2-3 paragraphs covering revenue, costs and financial position",\n' +
+    '  "financialOverview": "2-3 paragraphs on revenue, costs and financial position",\n' +
     '  "growthStrategy": "2-3 paragraphs on 12-month and 3-year plans",\n' +
-    '  "riskManagement": "2 paragraphs covering identified risks and mitigation strategies",\n' +
+    '  "riskManagement": "2 paragraphs on identified risks and mitigation",\n' +
     '  "conclusion": "1 strong closing paragraph",\n' +
-    '  "operationalActions": [\n' +
-    '    { "month": 1, "actions": [{"title":"...", "dueDay":"Day 14", "priority":"High", "owner":"Owner", "notes":"..."}] },\n' +
-    '    { "month": 2, "actions": [{"title":"...", "dueDay":"Day 45", "priority":"Medium", "owner":"Owner", "notes":"..."}] },\n' +
-    '    { "month": 3, "actions": [{"title":"...", "dueDay":"Day 75", "priority":"Low", "owner":"Owner", "notes":"..."}] }\n' +
+    '  "strategicInitiatives": [\n' +
+    '    {\n' +
+    '      "name": "Initiative name e.g. Digital Transformation",\n' +
+    '      "sp_section": "growth_transformation",\n' +
+    '      "tasks": [\n' +
+    '        {"title":"...", "dueDay":"Day 14", "priority":"High", "owner":"Owner", "notes":"..."}\n' +
+    '      ]\n' +
+    '    }\n' +
     '  ]\n' +
     '}\n\n' +
-    'IMPORTANT INSTRUCTIONS FOR TASK GENERATION:\n' +
-    '- Generate between 8 and 20 tasks total across all three months.\n' +
-    '- Each month object must have a numeric "month" field (1, 2, or 3) and an "actions" array.\n' +
-    '- Each action must include title, dueDay (e.g. "Day 14"), priority ("High"/"Medium"/"Low"), owner, and notes.\n' +
-    '- Always include a 45-day review checkpoint task in month 2.\n' +
+    'IMPORTANT INSTRUCTIONS FOR STRATEGIC INITIATIVES:\n' +
+    '- Generate 3-7 Strategic Initiatives based on the Growth & Transformation decisions.\n' +
+    '- Each initiative must have a clear name, an sp_section value (one of: business_foundation, products_services, financial_position, operations_capacity, market_competition, growth_transformation, risk_resilience), and 2-5 sub-tasks.\n' +
+    '- Each task needs title, dueDay (e.g. "Day 14"), priority ("High"/"Medium"/"Low"), owner (from key roles or "Owner"), and notes.\n' +
+    '- Generate 10-25 tasks total across all initiatives.\n' +
+    '- Always include a 45-day review checkpoint task.\n' +
     '- Set owner to the relevant role from keyRoles if provided, otherwise use "Owner".';
 
   if (clContext) {
@@ -491,9 +535,12 @@ export default async function handler(req, res) {
       if (clRes.error) console.error('[strategic-plan] CL write error:', clRes.error.message);
     }
 
-    // 5. Write to strategic_plans
+    // 5. Write to strategic_plans — include decisions tracking
     var swotData = content.__swotData || null;
     var planId = null;
+    var decisions = planData._decisions || {};
+    delete planData._decisions;
+    var interviewDataWithDecisions = Object.assign({}, planData, { decisions: decisions });
 
     try {
       await supabase.from('strategic_plans').update({ is_current: false }).eq('user_id', userId);
@@ -513,7 +560,7 @@ export default async function handler(req, res) {
           version: nextVersion,
           is_current: true,
           plan_name: (planData.businessName || 'Plan') + ' v' + nextVersion,
-          interview_data: planData,
+          interview_data: interviewDataWithDecisions,
           plan_data: content,
           swot_data: swotData,
           document_1_url: strategyUrl,
@@ -527,50 +574,82 @@ export default async function handler(req, res) {
       console.error('[strategic-plan] strategic_plans insert error:', e.message);
     }
 
-    // 6. Create action_tracker rows (items jsonb structure)
+    // 6. Create hierarchical action_tracker rows (initiatives + sub-tasks)
     if (planId) {
       try {
-        var opActions = content.operationalActions || [];
-        var trackerRows = [];
-
-        for (var mi = 0; mi < opActions.length; mi++) {
-          var monthObj = opActions[mi];
-          var monthNum = monthObj.month || (mi + 1);
-          var actions = monthObj.actions || [];
-
-          for (var ai = 0; ai < actions.length; ai++) {
-            var action = actions[ai];
-            var dayMatch = (action.dueDay || '').match(/\d+/);
-            var dueOffset = dayMatch ? parseInt(dayMatch[0], 10) : null;
-
-            trackerRows.push({
-              user_id: userId,
-              plan_id: planId,
-              items: {
-                title: action.title || '',
-                status: 'pending',
-                priority: action.priority || 'Medium',
-                due_date: action.dueDay || '',
-                notes: action.notes || '',
-                owner: action.owner || 'Owner'
-              },
-              month_group: monthNum,
-              due_day_offset: dueOffset,
-              owner: action.owner || 'Owner',
-              is_carried_forward: false
+        var initiatives = content.strategicInitiatives || [];
+        // Fallback: if AI returned old operationalActions format, wrap them
+        if (initiatives.length === 0 && content.operationalActions) {
+          var opActions = content.operationalActions || [];
+          for (var mi = 0; mi < opActions.length; mi++) {
+            var monthObj = opActions[mi];
+            var monthNum = monthObj.month || (mi + 1);
+            initiatives.push({
+              name: 'Month ' + monthNum + ' Actions',
+              sp_section: 'growth_transformation',
+              tasks: (monthObj.actions || [])
             });
           }
         }
 
-        if (trackerRows.length > 0) {
-          var trRes = await supabase.from('action_tracker').insert(trackerRows);
-          if (trRes.error) console.error('[strategic-plan] action_tracker insert error:', trRes.error.message);
+        for (var ii = 0; ii < initiatives.length; ii++) {
+          var init = initiatives[ii];
+          // Create parent initiative row
+          var { data: initRow, error: initErr } = await supabase
+            .from('action_tracker')
+            .insert({
+              user_id: userId,
+              plan_id: planId,
+              items: { title: init.name || 'Initiative', status: 'pending' },
+              initiative_name: init.name || 'Initiative',
+              sp_section: init.sp_section || null,
+              source: 'sp_generated',
+              parent_task_id: null,
+              owner: 'Owner',
+              is_carried_forward: false
+            })
+            .select('id')
+            .single();
+
+          if (initErr) { console.error('[strategic-plan] initiative insert error:', initErr.message); continue; }
+          var parentId = initRow.id;
+
+          // Create sub-task rows
+          var tasks = init.tasks || [];
+          var subRows = tasks.map(function(task) {
+            var dayMatch = (task.dueDay || '').match(/\d+/);
+            var dueOffset = dayMatch ? parseInt(dayMatch[0], 10) : null;
+            var monthGroup = dueOffset ? (dueOffset <= 30 ? 1 : dueOffset <= 60 ? 2 : 3) : 0;
+            return {
+              user_id: userId,
+              plan_id: planId,
+              parent_task_id: parentId,
+              items: {
+                title: task.title || '',
+                status: 'pending',
+                priority: task.priority || 'Medium',
+                due_date: task.dueDay || '',
+                notes: task.notes || '',
+                owner: task.owner || 'Owner'
+              },
+              month_group: monthGroup,
+              due_day_offset: dueOffset,
+              owner: task.owner || 'Owner',
+              source: 'sp_generated',
+              is_carried_forward: false
+            };
+          });
+
+          if (subRows.length > 0) {
+            var subRes = await supabase.from('action_tracker').insert(subRows);
+            if (subRes.error) console.error('[strategic-plan] sub-task insert error:', subRes.error.message);
+          }
         }
       } catch (e) {
         console.error('[strategic-plan] action_tracker error:', e.message);
       }
 
-      // Carry forward incomplete tasks from prior plan
+      // Carry forward incomplete sub-tasks from prior plan
       try {
         var { data: priorPlanRows } = await supabase
           .from('strategic_plans')
@@ -584,32 +663,40 @@ export default async function handler(req, res) {
           var priorPlanId = priorPlanRows[0].id;
           var { data: incompleteRows } = await supabase
             .from('action_tracker')
-            .select('items, month_group, due_day_offset, owner')
-            .eq('plan_id', priorPlanId);
+            .select('items, month_group, due_day_offset, owner, parent_task_id, initiative_name, sp_section, source')
+            .eq('plan_id', priorPlanId)
+            .not('parent_task_id', 'is', null);
 
           if (incompleteRows && incompleteRows.length > 0) {
-            var carried = incompleteRows
-              .filter(function(r) { return r.items && r.items.status !== 'done'; })
-              .map(function(r) {
+            var incomplete = incompleteRows.filter(function(r) { return r.items && r.items.status !== 'done'; });
+            if (incomplete.length > 0) {
+              // Create a "Carried Forward" initiative
+              var { data: cfInit } = await supabase.from('action_tracker')
+                .insert({
+                  user_id: userId, plan_id: planId,
+                  items: { title: 'Carried Forward Tasks', status: 'pending' },
+                  initiative_name: 'Carried Forward Tasks',
+                  sp_section: null, source: 'sp_generated',
+                  parent_task_id: null, owner: 'Owner', is_carried_forward: true
+                }).select('id').single();
+
+              var cfParentId = cfInit ? cfInit.id : null;
+              var carried = incomplete.map(function(r) {
                 return {
-                  user_id: userId,
-                  plan_id: planId,
+                  user_id: userId, plan_id: planId,
+                  parent_task_id: cfParentId,
                   items: {
-                    title: r.items.title || '',
-                    status: 'pending',
+                    title: r.items.title || '', status: 'pending',
                     priority: r.items.priority || 'Medium',
                     due_date: r.items.due_date || '',
                     notes: r.items.notes || '',
                     owner: r.items.owner || r.owner || ''
                   },
-                  month_group: r.month_group,
-                  due_day_offset: r.due_day_offset,
-                  owner: r.owner || '',
+                  month_group: r.month_group, due_day_offset: r.due_day_offset,
+                  owner: r.owner || '', source: r.source || 'sp_generated',
                   is_carried_forward: true
                 };
               });
-
-            if (carried.length > 0) {
               await supabase.from('action_tracker').insert(carried);
             }
           }

@@ -24,7 +24,6 @@
     modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
   }
 
-  // ── TAB NAVIGATION ───────────────────────────────────────────────────
 
   function switchTab(tabId) {
     if (!hasPlan && (tabId === 'ops-plan' || tabId === 'strat-plan')) return;
@@ -83,7 +82,6 @@
     });
   }
 
-  // ── RENDER SECTIONS (Tab 3 form) ──
 
   function renderSections() {
     var sections = window.SP_SECTIONS;
@@ -196,7 +194,6 @@
     return '<div class="sp-field">' + label + helpText + input + errorEl + '</div>';
   }
 
-  // ── EVENT DELEGATION ──────────────────────────────────────────────────
 
   function bindFormEvents() {
     var navEl = document.getElementById('sp-section-nav');
@@ -474,7 +471,6 @@
     });
   }
 
-  // ── CHIP TOGGLE ───────────────────────────────────────────────────────
 
   function toggleChip(el, groupId, isMulti) {
     var group = document.getElementById(groupId + '-chips');
@@ -516,7 +512,6 @@
     if (hidden) hidden.value = selected.join(',');
   }
 
-  // ── SECTION NAVIGATION (Tab 3 form) ──────────────────────────────────
 
   function goToSection(index) {
     var sections = window.SP_SECTIONS;
@@ -559,7 +554,6 @@
     if (label) label.textContent = 'Section ' + (index + 1) + ' of ' + total + ' \u2014 ' + window.SP_SECTIONS[index].title;
   }
 
-  // ── PROFILE PREFILL ───────────────────────────────────────────────────
 
   function loadProfile() {
     if (!_supabase || !_userId) return;
@@ -607,7 +601,6 @@
     });
   }
 
-  // ── BI CONTEXT LOAD ────────────────────────────────────────────────────
 
   function loadBIContext() {
     _getJwt().then(function(jwt) {
@@ -624,7 +617,6 @@
     });
   }
 
-  // ── PREFILL FROM PREVIOUS PLAN ────────────────────────────────────────
 
   function prefillFromPreviousPlan(interviewData) {
     if (!interviewData) return;
@@ -674,7 +666,6 @@
     });
   }
 
-  // ── PREFILL FROM BI CONTEXT ───────────────────────────────────────────
 
   function prefillFromBIContext(biContext) {
     if (!biContext) return;
@@ -703,7 +694,6 @@
     });
   }
 
-  // ── DATA COLLECTION (uses apiKey + valueType) ─────────────────────────
 
   function collectSectionData() {
     var data = {};
@@ -754,7 +744,6 @@
     return valid ? data : null;
   }
 
-  // ── GENERATE ──────────────────────────────────────────────────────────
 
   async function generate() {
     var data = collectSectionData();
@@ -833,7 +822,6 @@
     return (sess && sess.data && sess.data.session) ? sess.data.session.access_token : null;
   }
 
-  // ── POST-GENERATION ───────────────────────────────────────────────────
 
   function onPlanGenerated(result) {
     hasPlan = true;
@@ -842,7 +830,6 @@
     switchTab('ops-plan');
   }
 
-  // ── TAB 1: OPERATIONAL PLAN ───────────────────────────────────────────
 
   function loadOperationalPlan() {
     if (!_supabase || !_userId) return;
@@ -1073,7 +1060,6 @@
     return map[key] || key;
   }
 
-  // ── EXPAND/COLLAPSE STATE ─────────────────────────────────────────────
 
   function getExpandState(initId) {
     try {
@@ -1118,7 +1104,6 @@
     });
   }
 
-  // ── SUBTASK OPERATIONS ────────────────────────────────────────────────
 
   function toggleSubtask(taskId) {
     if (!_supabase) return;
@@ -1331,9 +1316,6 @@
       });
   }
 
-
-  // ── INITIATIVE OPERATIONS ─────────────────────────────────────────────
-
   function showAddInitiativeModal() {
     var modal = document.getElementById('sp-add-init-modal');
     if (!modal) return;
@@ -1373,7 +1355,6 @@
       });
   }
 
-  // ── TAB 2: STRATEGIC PLAN VIEW ────────────────────────────────────────
 
   function loadStrategicPlanView() {
     if (!_supabase || !_userId) return;
@@ -1440,7 +1421,6 @@
     section.style.display = 'block';
   }
 
-  // ── VERSION HISTORY ───────────────────────────────────────────────────
 
   function loadVersionHistory() {
     var el = document.getElementById('sp-version-history');
@@ -1491,7 +1471,6 @@
       });
   }
 
-  // ── CYCLE RENEWAL ─────────────────────────────────────────────────────
 
   function checkCycleRenewal(cycleEnd) {
     if (!cycleEnd) return;
@@ -1526,7 +1505,38 @@
       });
   }
 
-  // ── CHECK IF PLAN EXISTS ──────────────────────────────────────────────
+
+  function highlightDecisionSection(decisionId) {
+    // Find which section contains the decision field
+    var targetSection = -1;
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        if (field.decisionId === decisionId) {
+          targetSection = section.id;
+        }
+      });
+    });
+    if (targetSection >= 0) {
+      goToSection(targetSection);
+      // Find and highlight the field
+      setTimeout(function() {
+        window.SP_SECTIONS[targetSection].fields.forEach(function(field) {
+          if (field.decisionId === decisionId) {
+            var fieldEl = document.getElementById(field.id);
+            var container = fieldEl ? fieldEl.closest('.sp-field') : null;
+            if (container) {
+              container.style.background = 'var(--warning-light)';
+              container.style.border = '1px solid var(--warning)';
+              container.style.borderRadius = 'var(--btn-radius)';
+              container.style.padding = '12px';
+              container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        });
+      }, 300);
+    }
+  }
+
 
   function checkPlanExists() {
     if (!_supabase || !_userId) return Promise.resolve(false);
@@ -1549,7 +1559,6 @@
       });
   }
 
-  // ── INIT ──────────────────────────────────────────────────────────────
 
   function init() {
     _supabase = window.supabaseClient;
@@ -1574,7 +1583,18 @@
 
       checkPlanExists().then(function(exists) {
         updateTabStates();
-        if (exists) {
+
+        // Handle SP rewrite flow from BI contradiction
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('rewrite') === 'true' && exists) {
+          switchTab('create-plan');
+          var decisionId = params.get('decision');
+          if (decisionId) {
+            highlightDecisionSection(decisionId);
+          }
+          // Clean URL without reloading
+          window.history.replaceState({}, '', window.location.pathname);
+        } else if (exists) {
           switchTab('ops-plan');
         } else {
           switchTab('create-plan');
@@ -1583,7 +1603,6 @@
     });
   }
 
-  // ── PUBLIC API ────────────────────────────────────────────────────────
 
   window.SP_LOGIC = {
     init: init,
