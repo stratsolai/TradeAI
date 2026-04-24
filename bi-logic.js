@@ -4,6 +4,7 @@ window.BI_LOGIC = {
   _insights: {},
   _charts: {},
   _chatState: {},
+  _financialData: null,
 
   init: function(supabase, user) {
     this._supabase = supabase;
@@ -47,9 +48,12 @@ window.BI_LOGIC = {
     var self = this;
     self._setRefreshState(true);
 
-    self._loadCachedInsights(forceRefresh).then(function() {
+    Promise.all([
+      self._loadCachedInsights(forceRefresh),
+      self._fetchFinancialData()
+    ]).then(function() {
       self._renderModule('alerts');
-      self._renderModule('financial');
+      self._renderFinancialModule();
       self._renderModule('customers');
       self._renderModule('operations');
       self._renderModule('market');
@@ -334,6 +338,307 @@ window.BI_LOGIC = {
         self._openChat(id, m);
       });
     });
+  },
+
+  _fetchFinancialData: async function() {
+    try {
+      var sb = this._supabase;
+      var session = await sb.auth.getSession();
+      var token = session.data && session.data.session && session.data.session.access_token;
+      if (!token) return;
+
+      var resp = await fetch('/api/bi-financial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({})
+      });
+      if (!resp.ok) {
+        console.error('[BI] Financial fetch failed:', resp.status);
+        return;
+      }
+      var json = await resp.json();
+      if (json.success) {
+        this._financialData = json;
+      }
+    } catch (err) {
+      console.error('[BI] Financial fetch error:', err.message || err);
+    }
+  },
+
+  _renderFinancialModule: function() {
+    var kpisEl = document.getElementById('bi-mod-financial-kpis');
+    var chartArea = document.getElementById('bi-mod-financial-chart');
+    var advisoryList = document.getElementById('bi-mod-financial-advisory-list');
+    var updatedEl = document.getElementById('bi-mod-financial-updated');
+
+    if (!this._financialData || !this._financialData.connected) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      if (chartArea) chartArea.style.display = 'none';
+      var advisorySection = document.getElementById('bi-mod-financial-advisory');
+      if (advisorySection) {
+        advisorySection.innerHTML = '<div class="bi-module-prompt">' +
+          '<div class="bi-module-prompt-icon">&#128176;</div>' +
+          '<h3>Financial Insights</h3>' +
+          '<p>Connect your accounting software (Xero, QuickBooks, or MYOB) to see financial health insights, revenue trends, and cash flow analysis.</p>' +
+          '</div>';
+      }
+      return;
+    }
+
+    var d = this._financialData.data;
+    var s = d.summary;
+
+    if (updatedEl) {
+      var now = new Date();
+      var h = now.getHours(); var m = now.getMinutes();
+      var ampm = h >= 12 ? 'pm' : 'am';
+      h = h % 12 || 12;
+      updatedEl.textContent = h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    }
+
+    this._renderFinancialKPIs(s, kpisEl);
+    this._renderFinancialCharts(d, chartArea);
+    this._renderFinancialAdvisory(d, advisoryList);
+  },
+
+  _renderFinancialKPIs: function(s, container) {
+    if (!container) return;
+    var margin = s.profit_margin || 0;
+    var marginTrend = margin >= 20 ? 'up' : margin >= 10 ? 'flat' : 'down';
+
+    var kpis = [
+      { value: '$' + this._formatNum(s.total_revenue), label: 'Revenue', colour: '', trend: s.total_revenue > 0 ? 'up' : 'flat', trendText: s.invoice_count + ' invoices' },
+      { value: '$' + this._formatNum(s.total_expenses), label: 'Expenses', colour: 'orange', trend: 'flat', trendText: s.bill_count + ' bills' },
+      { value: margin + '%', label: 'Profit Margin', colour: margin >= 20 ? 'green' : margin >= 10 ? 'orange' : 'red', trend: marginTrend, trendText: '$' + this._formatNum(s.net_profit) + ' net' },
+      { value: '$' + this._formatNum(s.cash_balance), label: 'Cash Position', colour: s.cash_balance > 0 ? 'green' : 'red', trend: s.cash_balance > 0 ? 'up' : 'down', trendText: '' }
+    ];
+
+    var html = '';
+    for (var i = 0; i < kpis.length; i++) {
+      var k = kpis[i];
+      var colClass = k.colour ? ' ' + k.colour : '';
+      var trendClass = k.trend === 'up' ? 'up' : k.trend === 'down' ? 'down' : 'flat';
+      var arrow = k.trend === 'up' ? '&#9650;' : k.trend === 'down' ? '&#9660;' : '&#8212;';
+      html += '<div class="bi-kpi-card' + colClass + '">';
+      html += '<div class="bi-kpi-value">' + escHtml(k.value) + '</div>';
+      html += '<div class="bi-kpi-label">' + escHtml(k.label) + '</div>';
+      if (k.trendText) {
+        html += '<div class="bi-kpi-trend ' + trendClass + '">' + arrow + ' ' + escHtml(k.trendText) + '</div>';
+      }
+      html += '</div>';
+    }
+    container.innerHTML = html;
+  },
+
+  _renderFinancialCharts: function(d, chartArea) {
+    if (!chartArea) return;
+    chartArea.style.display = 'block';
+
+    if (this._charts.financial) {
+      this._charts.financial.destroy();
+      this._charts.financial = null;
+    }
+    if (this._charts.financialAging) {
+      this._charts.financialAging.destroy();
+      this._charts.financialAging = null;
+    }
+
+    var canvas = document.getElementById('bi-chart-financial');
+    if (!canvas) return;
+
+    var trend = d.trend || [];
+    if (trend.length === 0) {
+      chartArea.innerHTML = '<div class="bi-module-loading">No trend data available yet.</div>';
+      return;
+    }
+
+    var agingCanvas = document.createElement('canvas');
+    agingCanvas.id = 'bi-chart-financial-aging';
+    chartArea.innerHTML = '';
+    chartArea.appendChild(canvas);
+    chartArea.appendChild(agingCanvas);
+
+    var labels = trend.map(function(t) {
+      var parts = t.month.split('-');
+      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return months[parseInt(parts[1], 10) - 1] + ' ' + parts[0].substring(2);
+    });
+    var revenueData = trend.map(function(t) { return t.revenue; });
+    var expenseData = trend.map(function(t) { return t.expenses; });
+    var profitData = trend.map(function(t) { return t.profit; });
+
+    var rootStyle = getComputedStyle(document.documentElement);
+    var blue = rootStyle.getPropertyValue('--blue').trim() || '#4A6D8C';
+    var orange = rootStyle.getPropertyValue('--orange').trim() || '#c4622a';
+    var green = rootStyle.getPropertyValue('--green').trim() || '#28a745';
+
+    this._charts.financial = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Revenue',
+            data: revenueData,
+            borderColor: blue,
+            backgroundColor: blue + '20',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 3
+          },
+          {
+            label: 'Expenses',
+            data: expenseData,
+            borderColor: orange,
+            backgroundColor: orange + '20',
+            fill: false,
+            tension: 0.3,
+            pointRadius: 3
+          },
+          {
+            label: 'Profit',
+            data: profitData,
+            borderColor: green,
+            backgroundColor: green + '15',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(val) { return '$' + (val >= 1000 ? Math.round(val / 1000) + 'K' : val); }
+            }
+          }
+        }
+      }
+    });
+
+    var aging = d.receivable_aging || {};
+    var payAging = d.payable_aging || {};
+
+    this._charts.financialAging = new Chart(agingCanvas, {
+      type: 'bar',
+      data: {
+        labels: ['Current', '30 days', '60 days', '90+ days'],
+        datasets: [
+          {
+            label: 'Receivable',
+            data: [aging.current || 0, aging.days_30 || 0, aging.days_60 || 0, aging.days_90_plus || 0],
+            backgroundColor: blue + 'AA'
+          },
+          {
+            label: 'Payable',
+            data: [payAging.current || 0, payAging.days_30 || 0, payAging.days_60 || 0, payAging.days_90_plus || 0],
+            backgroundColor: orange + 'AA'
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+          title: { display: true, text: 'Receivable & Payable Aging', font: { size: 13 }, color: '#888' }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(val) { return '$' + (val >= 1000 ? Math.round(val / 1000) + 'K' : val); }
+            }
+          }
+        }
+      }
+    });
+  },
+
+  _renderFinancialAdvisory: function(d, container) {
+    if (!container) return;
+    var s = d.summary;
+    var items = [];
+
+    if (s.profit_margin < 15) {
+      items.push({ icon: '&#9888;', text: 'Profit margin is ' + s.profit_margin + '% \u2014 consider reviewing pricing or reducing costs to improve margins.' });
+    } else if (s.profit_margin >= 25) {
+      items.push({ icon: '&#9989;', text: 'Healthy profit margin at ' + s.profit_margin + '%. Revenue and expenses are well balanced.' });
+    }
+
+    if (s.overdue_receivable > 0) {
+      items.push({ icon: '&#128176;', text: 'You have $' + this._formatNum(s.overdue_receivable) + ' in overdue receivables. Consider following up on outstanding invoices.' });
+    }
+
+    if (s.cash_balance > 0 && s.total_expenses > 0) {
+      var monthsRunway = Math.round(s.cash_balance / (s.total_expenses / Math.max(1, (d.trend || []).length)));
+      if (monthsRunway < 3) {
+        items.push({ icon: '&#9888;', text: 'Cash runway at current expense rate: approximately ' + monthsRunway + ' months. Monitor closely.' });
+      } else {
+        items.push({ icon: '&#9989;', text: 'Cash runway at current expense rate: approximately ' + monthsRunway + ' months.' });
+      }
+    }
+
+    var trend = d.trend || [];
+    if (trend.length >= 3) {
+      var recent = trend.slice(-3);
+      var prevRev = recent[0].revenue;
+      var latestRev = recent[recent.length - 1].revenue;
+      if (prevRev > 0) {
+        var revChange = Math.round(((latestRev - prevRev) / prevRev) * 100);
+        var prevExp = recent[0].expenses;
+        var latestExp = recent[recent.length - 1].expenses;
+        var expChange = prevExp > 0 ? Math.round(((latestExp - prevExp) / prevExp) * 100) : 0;
+        if (revChange > 0 && expChange > revChange) {
+          items.push({ icon: '&#9888;', text: 'Revenue is up ' + revChange + '% but expenses grew ' + expChange + '% \u2014 margin compression risk.' });
+        } else if (revChange > 5) {
+          items.push({ icon: '&#128200;', text: 'Revenue trending up ' + revChange + '% over the last 3 months.' });
+        } else if (revChange < -5) {
+          items.push({ icon: '&#128201;', text: 'Revenue trending down ' + Math.abs(revChange) + '% over the last 3 months. Review sales pipeline.' });
+        }
+      }
+    }
+
+    if (items.length === 0) {
+      items.push({ icon: '&#128161;', text: 'Financial data loaded successfully. More insights will appear as data accumulates.' });
+    }
+
+    var html = '';
+    for (var i = 0; i < items.length; i++) {
+      html += '<div class="bi-advisory-item">';
+      html += '<span class="bi-advisory-icon">' + items[i].icon + '</span>';
+      html += '<span class="bi-advisory-text">' + escHtml(items[i].text) + '</span>';
+      html += '<div class="bi-advisory-actions">';
+      html += '<button class="bi-ask-btn" data-module="financial" data-insight-idx="' + i + '">Ask about this</button>';
+      html += '</div>';
+      html += '</div>';
+    }
+    container.innerHTML = html;
+
+    var self = this;
+    container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._openChat(btn.getAttribute('data-insight-idx'), 'financial');
+      });
+    });
+  },
+
+  _formatNum: function(n) {
+    if (n == null) return '0';
+    n = Math.round(n);
+    if (Math.abs(n) >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+    if (Math.abs(n) >= 1000) return Math.round(n).toLocaleString();
+    return '' + n;
   },
 
   _openChat: function(insightId, mod) {
