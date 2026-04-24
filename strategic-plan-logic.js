@@ -53,19 +53,19 @@
 
       var backBtn = s.id > 0
         ? '<button class="btn-outline" data-nav="-1">Back</button>'
-        : '';
-
-      var nextBtn = '';
-      if (s.id < sections.length - 1) {
-        nextBtn = '<button class="btn-outline" data-nav="1">Next</button>';
-      } else {
-        nextBtn = '<button class="btn-outline btn-sp-generate">Generate My Plan</button>';
-      }
+        : '<span></span>';
 
       var hasProfileFields = s.fields.some(function(f) { return f.fromProfile; });
       var profileNote = hasProfileFields
         ? '<span class="sp-profile-note">Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</span>'
         : '';
+
+      var nextBtn = '';
+      if (s.id < sections.length - 1) {
+        nextBtn = '<button class="btn-primary" data-nav="1">Next</button>';
+      } else {
+        nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
+      }
 
       return '<div class="profile-section-card" id="section-' + s.id + '" style="display:none;">' +
         '<div class="profile-section-header">' +
@@ -77,7 +77,11 @@
         '</div>' +
         infoBox +
         '<div class="sp-fields">' + fieldsHtml + '</div>' +
-        '<div class="sp-nav-buttons">' + profileNote + backBtn + nextBtn + '</div>' +
+        '<div class="sp-nav-buttons">' +
+          '<div class="sp-nav-left">' + backBtn + '</div>' +
+          '<div class="sp-nav-centre">' + profileNote + '</div>' +
+          '<div class="sp-nav-right">' + nextBtn + '</div>' +
+        '</div>' +
       '</div>';
     }).join('');
 
@@ -110,11 +114,25 @@
         return '<option value="' + _esc(o.value) + '">' + _esc(o.label) + '</option>';
       }).join('');
       input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
+    } else if (field.type === 'select-or-text') {
+      var sOpts = (field.options || []).map(function(o) {
+        return '<option value="' + _esc(o.value) + '">' + _esc(o.label) + '</option>';
+      }).join('');
+      sOpts += '<option value="__other__">Other (specify)</option>';
+      input = '<select id="' + field.id + '-select" class="sp-select sp-select-or-text" data-target="' + field.id + '">' + sOpts + '</select>';
+      input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + _esc(field.placeholder || '') + '" style="display:none;margin-top:8px">';
+      input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
       var chips = (field.options || []).map(function(o) {
         return '<div class="filter-pill" data-value="' + _esc(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + _esc(o.label) + '</div>';
       }).join('');
+      if (field.allowOther) {
+        chips += '<div class="filter-pill sp-other-pill" data-value="__other__" data-group="' + field.id + '" data-multi="true">Other</div>';
+      }
       input = '<div class="sp-chip-group" id="' + field.id + '-chips">' + chips + '</div>';
+      if (field.allowOther) {
+        input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="Add your own (comma-separated)" style="display:none;margin-top:8px">';
+      }
       input += '<input type="hidden" id="' + field.id + '" value="">';
     }
 
@@ -153,7 +171,57 @@
           return;
         }
       });
+
+      container.addEventListener('change', function(e) {
+        var sel = e.target.closest('.sp-select-or-text');
+        if (sel) {
+          var targetId = sel.dataset.target;
+          var otherInput = document.getElementById(targetId + '-other');
+          var hidden = document.getElementById(targetId);
+          if (sel.value === '__other__') {
+            if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); }
+            if (hidden) hidden.value = '';
+          } else {
+            if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
+            if (hidden) hidden.value = sel.value;
+          }
+          return;
+        }
+      });
+
+      container.addEventListener('input', function(e) {
+        var otherInput = e.target.closest('.sp-other-input');
+        if (otherInput) {
+          var fieldId = otherInput.id.replace('-other', '');
+          var hidden = document.getElementById(fieldId);
+          var selectEl = document.getElementById(fieldId + '-select');
+          if (hidden && selectEl) {
+            hidden.value = otherInput.value.trim();
+          }
+          if (hidden && !selectEl) {
+            updateChipHiddenWithOther(fieldId);
+          }
+        }
+      });
     }
+  }
+
+  function updateChipHiddenWithOther(fieldId) {
+    var group = document.getElementById(fieldId + '-chips');
+    var hidden = document.getElementById(fieldId);
+    var otherInput = document.getElementById(fieldId + '-other');
+    if (!group || !hidden) return;
+
+    var selected = Array.from(group.querySelectorAll('.filter-pill.active'))
+      .map(function(c) { return c.getAttribute('data-value'); })
+      .filter(function(v) { return v !== '__other__'; });
+
+    if (otherInput && otherInput.value.trim()) {
+      var customs = otherInput.value.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+      selected = selected.concat(customs);
+    }
+
+    hidden.value = selected.join(',');
   }
 
   function bindTrackerEvents() {
@@ -234,6 +302,8 @@
     var group = document.getElementById(groupId + '-chips');
     if (!group) return;
 
+    var isOther = el.getAttribute('data-value') === '__other__';
+
     if (!isMulti) {
       group.querySelectorAll('.filter-pill').forEach(function(c) { c.classList.remove('active'); });
       el.classList.add('active');
@@ -241,8 +311,29 @@
       el.classList.toggle('active');
     }
 
+    if (isOther) {
+      var otherInput = document.getElementById(groupId + '-other');
+      if (otherInput) {
+        if (el.classList.contains('active')) {
+          otherInput.style.display = 'block';
+          otherInput.focus();
+        } else {
+          otherInput.style.display = 'none';
+          otherInput.value = '';
+        }
+      }
+    }
+
     var selected = Array.from(group.querySelectorAll('.filter-pill.active'))
-      .map(function(c) { return c.getAttribute('data-value'); });
+      .map(function(c) { return c.getAttribute('data-value'); })
+      .filter(function(v) { return v !== '__other__'; });
+
+    var otherInput = document.getElementById(groupId + '-other');
+    if (otherInput && otherInput.value.trim() && el.closest('.sp-chip-group').querySelector('.sp-other-pill.active')) {
+      var customs = otherInput.value.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+      selected = selected.concat(customs);
+    }
+
     var hidden = document.getElementById(groupId);
     if (hidden) hidden.value = selected.join(',');
   }

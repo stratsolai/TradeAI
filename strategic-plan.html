@@ -160,14 +160,23 @@
       gap: var(--btn-radius);
     }
 
-    /* ─── NAV BUTTONS (uses platform .btn-outline) ─── */
+    /* ─── NAV BUTTONS ─── */
     .sp-nav-buttons {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       margin-top: 32px;
       gap: var(--actions-gap);
     }
+    .sp-nav-left { flex-shrink: 0; }
+    .sp-nav-centre { flex: 1; text-align: center; }
+    .sp-nav-right { flex-shrink: 0; }
     .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ─── SELECT-OR-TEXT + OTHER INPUT ─── */
+    .sp-other-input {
+      margin-top: 8px;
+    }
 
     /* ─── RESULTS ─── */
     .sp-results-card {
@@ -447,9 +456,10 @@
 
     @media (max-width: 600px) {
       .sp-nav-buttons { flex-wrap: wrap; }
-      .sp-nav-buttons .btn-outline,
-      .sp-nav-buttons .btn-sp-generate { width: 100%; justify-content: center; }
-      .sp-profile-note { order: 3; width: 100%; margin-right: 0; }
+      .sp-nav-left, .sp-nav-right { width: 100%; }
+      .sp-nav-left .btn-outline, .sp-nav-right .btn-primary,
+      .sp-nav-right .btn-sp-generate { width: 100%; justify-content: center; }
+      .sp-nav-centre { width: 100%; order: 3; text-align: center; }
       .sp-input, .sp-textarea, .sp-select { font-size: var(--input-font-size-mobile); }
     }
 
