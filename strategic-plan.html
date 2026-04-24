@@ -13,188 +13,250 @@
     /* ─── MAIN LAYOUT ─── */
     .sp-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    /* ─── PROGRESS BAR ─── */
-    .sp-progress-wrap {
+    /* ─── TAB DISABLED STATE ─── */
+    .ptab.sp-tab-disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    /* ─── TAB 1: OPERATIONAL PLAN ─── */
+
+    /* Header section */
+    .sp-ops-header {
       background: var(--white);
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
-      padding: 20px var(--card-padding);
-      margin-bottom: var(--card-padding);
-    }
-    .sp-progress-label {
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text);
-      margin-bottom: var(--actions-gap);
-    }
-    .sp-progress-bar {
-      display: flex;
-      gap: 6px;
-      height: 8px;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .sp-progress-seg {
-      flex: 1;
-      border-radius: 4px;
-      transition: background 0.3s;
-    }
-    .sp-progress-done { background: var(--blue); }
-    .sp-progress-current { background: var(--orange); }
-    .sp-progress-pending { background: var(--border); }
-
-    /* ─── SECTION NAV + SECTION CARDS ─── */
-    /* .profile-nav-chip, .profile-section-card and variants defined in staxai-auth.css section 9b */
-
-    /* ─── INFO BOX ─── */
-    .sp-info-box {
-      background: var(--blue-hover-bg);
       border-left: 4px solid var(--blue);
-      border-radius: 6px;
-      padding: var(--actions-gap) 16px;
-      font-size: var(--label-font-size);
+      padding: var(--card-padding);
+      margin-bottom: 20px;
+    }
+    .sp-ops-title {
+      font-family: var(--heading-font);
+      font-size: var(--page-title-font-size);
+      font-weight: var(--heading-lg-weight);
       color: var(--text);
-      margin-bottom: var(--card-padding);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      line-height: var(--note-line-height);
+      margin-bottom: 4px;
     }
-    .sp-info-icon { font-size: 16px; flex-shrink: 0; }
-
-    /* ─── FIELDS GRID ─── */
-    .sp-fields {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-    }
-    .sp-field {
-      display: flex;
-      flex-direction: column;
-      gap: var(--label-margin-bottom);
-    }
-    .sp-field:has(textarea),
-    .sp-field:has(.sp-chip-group),
-    .sp-field:has(.sp-field-help) {
-      grid-column: 1 / -1;
-    }
-    .sp-field-label {
+    .sp-ops-cycle {
       font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text);
-    }
-    .sp-label-hint {
-      font-weight: 400;
       color: var(--text-muted);
-      font-size: var(--label-font-size);
+      margin-bottom: 16px;
     }
-    .sp-field-help {
+    .sp-ops-progress-track {
+      height: 10px;
+      background: var(--border);
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .sp-ops-progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 5px;
+      transition: width 0.4s;
+    }
+    .sp-ops-progress-label {
       font-size: var(--label-font-size);
       color: var(--text-muted);
-      margin: 0;
-      line-height: 1.4;
-    }
-    .sp-field-error {
-      font-size: var(--label-font-size);
-      color: var(--red);
-      display: none;
+      text-align: right;
     }
 
-    .sp-profile-note {
-      font-size: var(--note-font-size);
-      color: var(--text-secondary);
-      line-height: var(--note-line-height);
-      background: var(--blue-light);
-      padding: 8px 12px;
-      border-radius: var(--btn-radius);
-      margin-right: auto;
-    }
-
-    /* ─── INPUTS ─── */
-    .sp-input,
-    .sp-textarea,
-    .sp-select {
-      width: 100%;
-      padding: var(--input-padding);
-      border: var(--input-border-width) solid var(--border);
-      border-radius: var(--input-radius);
-      font-size: var(--input-font-size);
-      font-family: var(--body-font);
-      color: var(--text);
-      background: var(--white);
-      transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
-      -webkit-appearance: none;
-    }
-    .sp-input:focus,
-    .sp-textarea:focus,
-    .sp-select:focus {
-      outline: none;
-      border-color: var(--blue);
-      box-shadow: 0 0 0 3px var(--focus-ring);
-    }
-    .sp-input::placeholder,
-    .sp-textarea::placeholder { color: var(--text-hint); }
-    .sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
-    .sp-select {
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      padding-right: 36px;
-      cursor: pointer;
-    }
-    .sp-input-error { border-color: var(--red); }
-
-    /* ─── PROFILE-SOURCED FIELDS (after inputs so it wins the cascade) ─── */
-    .sp-from-profile {
-      background: var(--blue-light);
-      color: var(--text-secondary);
-      cursor: default;
-    }
-    .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
-    select.sp-from-profile:disabled { opacity: 0.8; }
-
-    /* ─── FORM SELECTION PILLS (uses platform .filter-pill from staxai-auth.css) ─── */
-    .sp-chip-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--btn-radius);
-    }
-
-    /* ─── NAV BUTTONS ─── */
-    .sp-nav-buttons {
+    /* Filter/view controls */
+    .sp-ops-controls {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      margin-top: 32px;
+      gap: var(--actions-gap);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .sp-ops-controls-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
       gap: var(--actions-gap);
     }
-    .sp-nav-left { flex-shrink: 0; }
-    .sp-nav-centre { flex: 1; text-align: center; }
-    .sp-nav-right { flex-shrink: 0; }
-    .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ─── SELECT-OR-TEXT + OTHER INPUT ─── */
-    .sp-other-input {
+    /* Initiative cards */
+    .sp-initiative {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .sp-initiative.status-amber { border-left-color: var(--orange); }
+    .sp-initiative.status-red { border-left-color: var(--red); }
+    .sp-initiative.status-green { border-left-color: var(--green); }
+    .sp-initiative-header {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      padding: 16px 20px;
+      cursor: pointer;
+      transition: background var(--btn-transition);
+    }
+    .sp-initiative-header:hover { background: var(--bg-subtle); }
+    .sp-initiative-name {
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      flex: 1;
+      min-width: 0;
+    }
+    .sp-initiative-progress {
+      width: 120px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .sp-initiative-progress-fill {
+      height: 100%;
+      background: var(--blue);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .sp-initiative-count {
+      font-size: var(--label-font-size);
+      color: var(--text-muted);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .sp-initiative-chevron {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+    .sp-initiative.expanded .sp-initiative-chevron { transform: rotate(180deg); }
+    .sp-initiative-body {
+      display: none;
+      padding: 0 20px 16px;
+      border-top: 1px solid var(--border-light);
+    }
+    .sp-initiative.expanded .sp-initiative-body { display: block; }
+
+    /* Sub-task rows */
+    .sp-subtask {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sp-subtask:last-of-type { border-bottom: none; }
+    .sp-subtask-done .sp-subtask-title { text-decoration: line-through; color: var(--text-hint); }
+    .sp-subtask-check {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--green);
+      cursor: pointer;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .sp-subtask-body { flex: 1; min-width: 0; }
+    .sp-subtask-title {
+      font-size: var(--btn-font-size);
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .sp-subtask-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+    .sp-subtask-due {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+    }
+    .sp-subtask-owner {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+    }
+    .sp-subtask-priority {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      border: none;
+      font-family: var(--body-font);
+      cursor: pointer;
+    }
+    .sp-subtask-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+      align-self: center;
+    }
+    .sp-subtask-action-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--badge-font-size);
+      cursor: pointer;
+      font-family: var(--body-font);
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color var(--btn-transition), background var(--btn-transition);
+    }
+    .sp-subtask-action-btn:hover { color: var(--text); background: var(--bg-subtle); }
+    .sp-subtask-action-btn.delete-btn:hover { color: var(--red); }
+
+    .sp-add-task-row {
+      padding: 8px 0;
+    }
+    .btn-sp-add-task {
+      padding: 8px 16px;
+      background: var(--white);
+      color: var(--blue);
+      border: 1px dashed var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: background var(--btn-transition);
+    }
+    .btn-sp-add-task:hover { background: var(--blue-hover-bg); }
+
+    .btn-sp-add-initiative {
+      padding: 10px 20px;
+      background: var(--white);
+      color: var(--blue);
+      border: 1px dashed var(--blue);
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      font-family: var(--body-font);
+      cursor: pointer;
+      transition: background var(--btn-transition);
       margin-top: 8px;
     }
+    .btn-sp-add-initiative:hover { background: var(--blue-hover-bg); }
 
-    /* ─── RESULTS ─── */
-    .sp-results-card {
+    /* ─── TAB 2: STRATEGIC PLAN VIEW ─── */
+    .sp-doc-card {
       background: var(--white);
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
       border-left: 4px solid var(--orange);
       padding: 32px;
-      margin-bottom: var(--card-padding);
+      margin-bottom: 20px;
     }
-    .sp-results-title {
+    .sp-doc-title {
       font-family: var(--heading-font);
       font-size: 26px;
       font-weight: 800;
       color: var(--text);
       margin-bottom: 8px;
     }
-    .sp-results-subtitle {
+    .sp-doc-subtitle {
       font-size: var(--btn-font-size);
       color: var(--text-muted);
       margin-bottom: var(--card-padding);
@@ -233,20 +295,36 @@
     }
     .btn-sp-print:hover { background: var(--blue-hover-bg); }
 
-    /* ─── REGEN GUIDANCE ─── */
-    .sp-regen-guidance {
-      background: var(--bg-subtle);
+    /* SWOT cards */
+    .sp-swot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .sp-swot-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
       border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      padding: var(--actions-gap) 16px;
+      padding: 20px;
+    }
+    .sp-swot-card.strengths { border-left: 4px solid var(--green); }
+    .sp-swot-card.weaknesses { border-left: 4px solid var(--red); }
+    .sp-swot-card.opportunities { border-left: 4px solid var(--blue); }
+    .sp-swot-card.threats { border-left: 4px solid var(--orange); }
+    .sp-swot-title {
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .sp-swot-items {
       font-size: var(--label-font-size);
       color: var(--text-secondary);
-      margin-top: var(--card-padding);
-      line-height: var(--note-line-height);
+      line-height: var(--body-line-height);
     }
-    .sp-regen-guidance a { color: var(--blue); font-weight: var(--font-weight-semibold); }
 
-    /* ─── VERSION HISTORY ─── */
+    /* Version history */
     .sp-version-list {
       display: flex;
       flex-direction: column;
@@ -295,7 +373,183 @@
     }
     .btn-sp-use-template:hover { background: var(--blue-hover-bg); }
 
-    /* ─── CYCLE RENEWAL BANNER ─── */
+    /* Regen guidance */
+    .sp-regen-guidance {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: var(--actions-gap) 16px;
+      font-size: var(--label-font-size);
+      color: var(--text-secondary);
+      margin-top: 20px;
+      line-height: var(--note-line-height);
+    }
+
+    /* ─── TAB 3: CREATE / UPDATE PLAN (interview form) ─── */
+
+    /* Progress bar */
+    .sp-progress-wrap {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: 20px var(--card-padding);
+      margin-bottom: var(--card-padding);
+    }
+    .sp-progress-label {
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-progress-bar {
+      display: flex;
+      gap: 6px;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .sp-progress-seg {
+      flex: 1;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .sp-progress-done { background: var(--blue); }
+    .sp-progress-current { background: var(--orange); }
+    .sp-progress-pending { background: var(--border); }
+
+    /* Info box */
+    .sp-info-box {
+      background: var(--blue-hover-bg);
+      border-left: 4px solid var(--blue);
+      border-radius: 6px;
+      padding: var(--actions-gap) 16px;
+      font-size: var(--label-font-size);
+      color: var(--text);
+      margin-bottom: var(--card-padding);
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: var(--note-line-height);
+    }
+    .sp-info-icon { font-size: 16px; flex-shrink: 0; }
+
+    /* Fields grid */
+    .sp-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .sp-field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--label-margin-bottom);
+    }
+    .sp-field:has(textarea),
+    .sp-field:has(.sp-chip-group),
+    .sp-field:has(.sp-field-help) {
+      grid-column: 1 / -1;
+    }
+    .sp-field-label {
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+    }
+    .sp-label-hint {
+      font-weight: 400;
+      color: var(--text-muted);
+      font-size: var(--label-font-size);
+    }
+    .sp-field-help {
+      font-size: var(--label-font-size);
+      color: var(--text-muted);
+      margin: 0;
+      line-height: 1.4;
+    }
+    .sp-field-error {
+      font-size: var(--label-font-size);
+      color: var(--red);
+      display: none;
+    }
+
+    .sp-profile-note {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      background: var(--blue-light);
+      padding: 8px 12px;
+      border-radius: var(--btn-radius);
+      margin-right: auto;
+    }
+
+    /* Inputs */
+    .sp-input,
+    .sp-textarea,
+    .sp-select {
+      width: 100%;
+      padding: var(--input-padding);
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      font-size: var(--input-font-size);
+      font-family: var(--body-font);
+      color: var(--text);
+      background: var(--white);
+      transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
+      -webkit-appearance: none;
+    }
+    .sp-input:focus,
+    .sp-textarea:focus,
+    .sp-select:focus {
+      outline: none;
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px var(--focus-ring);
+    }
+    .sp-input::placeholder,
+    .sp-textarea::placeholder { color: var(--text-hint); }
+    .sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
+    .sp-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
+    .sp-input-error { border-color: var(--red); }
+
+    /* Profile-sourced fields */
+    .sp-from-profile {
+      background: var(--blue-light);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
+    select.sp-from-profile:disabled { opacity: 0.8; }
+
+    /* Form selection pills */
+    .sp-chip-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--btn-radius);
+    }
+
+    /* Nav buttons */
+    .sp-nav-buttons {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 32px;
+      gap: var(--actions-gap);
+    }
+    .sp-nav-left { flex-shrink: 0; }
+    .sp-nav-centre { flex: 1; text-align: center; }
+    .sp-nav-right { flex-shrink: 0; }
+    .btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* Select-or-text + Other input */
+    .sp-other-input {
+      margin-top: 8px;
+    }
+
+    /* Cycle renewal banner */
     .sp-cycle-renewal-banner {
       background: var(--warning-light);
       border: 1px solid var(--warning);
@@ -303,7 +557,7 @@
       padding: var(--actions-gap) 16px;
       font-size: var(--btn-font-size);
       color: var(--text);
-      margin-bottom: var(--card-padding);
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       gap: var(--actions-gap);
@@ -321,68 +575,8 @@
       cursor: pointer;
     }
 
-    /* ─── ACTION TRACKER ─── */
-    .sp-tracker-heading {
-      font-family: var(--heading-font);
-      font-size: var(--heading-lg-size);
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 16px;
-    }
-    .sp-tracker-wrap {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      border: 1px solid var(--border);
-      padding: var(--card-padding);
-    }
-    .sp-tracker-empty,
-    .sp-empty {
-      font-size: var(--btn-font-size);
-      color: var(--text-muted);
-      text-align: center;
-      padding: var(--empty-padding) 0;
-    }
-    .sp-month-group { margin-bottom: 24px; }
-    .sp-month-heading {
-      font-family: var(--heading-font);
-      font-size: var(--section-title-font-size);
-      font-weight: var(--heading-lg-weight);
-      color: var(--text);
-      margin-bottom: var(--actions-gap);
-      padding-bottom: 8px;
-      border-bottom: 1px solid var(--border);
-    }
-    .sp-task {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 14px 16px;
-      border-radius: var(--btn-radius);
-      border: 1px solid var(--border);
-      background: var(--bg-subtle);
-      transition: background 0.15s;
-      margin-bottom: 8px;
-    }
-    .sp-task:hover { background: var(--active-bg); }
-    .sp-task-done { background: var(--green-light); border-color: var(--green); }
-    .sp-task-done .sp-task-title { text-decoration: line-through; color: var(--text-hint); }
-    .sp-task-check {
-      width: 22px;
-      height: 22px;
-      accent-color: var(--green);
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .sp-task-body { flex: 1; min-width: 0; }
-    .sp-task-title {
-      font-size: var(--btn-font-size);
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.4;
-      cursor: pointer;
-    }
-    .sp-task-title-input {
+    /* Inline edit input */
+    .sp-inline-edit-input {
       width: 100%;
       padding: 4px 8px;
       border: var(--input-border-width) solid var(--blue);
@@ -391,57 +585,48 @@
       font-family: var(--body-font);
       color: var(--text);
     }
-    .sp-task-saved { background: var(--green-light); transition: background 0.3s; }
-    .sp-task-meta {
-      font-size: var(--badge-font-size);
+
+    /* ─── LOCKED TAB OVERLAY ─── */
+    .sp-tab-locked {
+      text-align: center;
+      padding: 60px 20px;
       color: var(--text-muted);
-      margin-top: 4px;
+    }
+    .sp-tab-locked-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.4;
+    }
+    .sp-tab-locked h3 {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+    .sp-tab-locked p {
+      font-size: var(--btn-font-size);
+      color: var(--text-muted);
+      margin-bottom: 0;
+    }
+
+    /* Add initiative modal */
+    .sp-add-init-form {
       display: flex;
-      align-items: center;
-      gap: var(--btn-radius);
+      flex-direction: column;
+      gap: 16px;
     }
-    .sp-task-priority {
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      border: none;
-      font-family: var(--body-font);
-      cursor: pointer;
-    }
-    .sp-cf-badge {
-      display: inline-block;
-      padding: 2px 8px;
-      border-radius: var(--badge-radius);
-      background: var(--badge-orange-bg);
-      color: var(--badge-orange-text);
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-    }
-    .sp-task-delete {
+
+    /* Notes toggle */
+    .sp-notes-toggle {
       background: none;
       border: none;
-      color: var(--text-muted);
+      color: var(--blue);
       font-size: var(--badge-font-size);
       cursor: pointer;
+      padding: 0;
       font-family: var(--body-font);
-      transition: color var(--btn-transition);
     }
-    .sp-task-delete:hover { color: var(--red); }
-    .btn-sp-add-task {
-      padding: 8px 16px;
-      background: var(--white);
-      color: var(--blue);
-      border: 1px dashed var(--blue);
-      border-radius: var(--btn-radius);
-      font-size: var(--label-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      margin-top: var(--actions-gap);
-      transition: background var(--btn-transition);
-    }
-    .btn-sp-add-task:hover { background: var(--blue-hover-bg); }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
@@ -452,6 +637,9 @@
       .sp-field:has(.sp-field-help) { grid-column: 1; }
       .profile-section-card { padding: var(--card-padding) 20px; }
       .sp-download-links { flex-direction: column; }
+      .sp-swot-grid { grid-template-columns: 1fr; }
+      .sp-ops-controls { flex-direction: column; align-items: flex-start; }
+      .sp-ops-controls-right { margin-left: 0; }
     }
 
     @media (max-width: 600px) {
@@ -464,18 +652,11 @@
     }
 
     @media print {
-      .topbar, .profile-nav-chips, .sp-progress-wrap, #sp-cycle-banner,
-      #sp-version-history, .btn-sp-print, .btn-sp-download, .btn-sp-add-task,
-      .sp-task-delete, .sp-task-priority, .sp-regen-guidance { display: none !important; }
+      .topbar, .tab-nav, .sp-ops-controls, .btn-sp-add-task,
+      .btn-sp-add-initiative, .sp-subtask-actions,
+      .sp-subtask-priority, .sp-regen-guidance,
+      .btn-sp-download, .btn-sp-print { display: none !important; }
       body { background: var(--white); color: #000; }
-      #sp-results { display: block !important; }
-      .sp-month-heading { font-size: 14pt; font-weight: bold; margin-top: 20px; border-bottom: 1px solid #ccc; padding-bottom: 4px; }
-      .sp-task { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid #eee; font-size: 10pt; page-break-inside: avoid; }
-      .sp-task-check { flex-shrink: 0; }
-      .sp-task-title { flex: 1; }
-      .sp-cf-badge::after { content: ' (CF)'; font-size: 8pt; color: #666; }
-      .sp-cf-badge { font-size: 0; }
-      .sp-month-group { page-break-inside: avoid; margin-bottom: 16px; }
     }
   </style>
 </head>
@@ -523,46 +704,168 @@
 
   <div class="page-header">
     <h1 class="page-title">Strategic Plan &amp; 90-Day Ops</h1>
-    <p class="page-subtitle">Answer a few questions and your AI-generated strategic plan and 90-day action tracker will be ready to download.</p>
+    <p class="page-subtitle">Your strategic plan, operational tasks, and business goals in one place.</p>
   </div>
 
-  <!-- Progress bar -->
-  <div class="sp-progress-wrap" id="sp-progress-container">
-    <div class="sp-progress-label" id="sp-progress-label">Section 1 of 6</div>
-    <div class="sp-progress-bar" id="sp-progress-bar"></div>
+  <!-- 3-tab navigation -->
+  <div class="tab-nav" id="sp-tab-nav">
+    <button class="ptab" data-tab="ops-plan">Operational Plan</button>
+    <button class="ptab" data-tab="strat-plan">Strategic Plan</button>
+    <button class="ptab" data-tab="create-plan">Create / Update Plan</button>
   </div>
 
-  <!-- Section navigation chips (CL Business Profile pattern) -->
-  <div class="profile-nav-chips" id="sp-section-nav"></div>
+  <!-- ═══ TAB 1: OPERATIONAL PLAN ═══ -->
+  <div class="ptab-content" id="tab-ops-plan">
 
-  <!-- Interview sections — rendered dynamically by SP_LOGIC -->
-  <div id="sp-sections-container"></div>
-
-  <!-- Results — shown after generation -->
-  <div id="sp-results" style="display:none">
-    <div class="sp-results-card">
-      <div class="sp-results-title">Your plan is ready</div>
-      <div class="sp-results-subtitle">Both documents have been saved to your Content Library. Download them below.</div>
-      <div class="sp-download-links" id="sp-download-links"></div>
+    <!-- Locked overlay (shown when no SP exists) -->
+    <div id="sp-ops-locked" style="display:none">
+      <div class="sp-tab-locked">
+        <div class="sp-tab-locked-icon">&#x1F4CB;</div>
+        <h3>Create your plan to unlock</h3>
+        <p>Complete the Create / Update Plan form to generate your Operational Plan.</p>
+      </div>
     </div>
 
-    <!-- Version history -->
-    <div id="sp-version-history" style="display:none"></div>
+    <!-- Live content (shown when SP exists) -->
+    <div id="sp-ops-content" style="display:none">
 
-    <!-- Action tracker -->
-    <div id="sp-tracker-section" style="margin-top:32px">
-      <div class="sp-tracker-heading">Your 90-Day Action Tracker</div>
-      <div class="sp-tracker-wrap" id="sp-tracker">
-        <p class="sp-tracker-empty">Generating your action tracker...</p>
+      <!-- Cycle renewal banner -->
+      <div id="sp-cycle-banner" style="display:none"></div>
+
+      <!-- Header: plan title, cycle, overall progress, quick stats -->
+      <div class="sp-ops-header" id="sp-ops-header">
+        <div class="sp-ops-title" id="sp-ops-plan-title"></div>
+        <div class="sp-ops-cycle" id="sp-ops-cycle"></div>
+        <div class="sp-ops-progress-track">
+          <div class="sp-ops-progress-fill" id="sp-ops-progress-fill" style="width:0%"></div>
+        </div>
+        <div class="sp-ops-progress-label" id="sp-ops-progress-pct"></div>
+      </div>
+
+      <!-- Quick stats -->
+      <div class="stats-bar" id="sp-ops-stats"></div>
+
+      <!-- Filter/view controls -->
+      <div class="sp-ops-controls" id="sp-ops-controls">
+        <button class="filter-pill active" data-view="all">All</button>
+        <button class="filter-pill" data-view="active">Active</button>
+        <button class="filter-pill" data-view="completed">Completed</button>
+        <div class="sp-ops-controls-right">
+          <button class="filter-pill" data-expand="all">Expand All</button>
+        </div>
+      </div>
+
+      <!-- Initiative cards container -->
+      <div id="sp-initiatives-list"></div>
+
+      <!-- Add initiative button -->
+      <button class="btn-sp-add-initiative" id="sp-add-initiative-btn" type="button">+ Add Initiative</button>
+    </div>
+  </div>
+
+  <!-- ═══ TAB 2: STRATEGIC PLAN VIEW ═══ -->
+  <div class="ptab-content" id="tab-strat-plan">
+
+    <!-- Locked overlay -->
+    <div id="sp-doc-locked" style="display:none">
+      <div class="sp-tab-locked">
+        <div class="sp-tab-locked-icon">&#x1F4C4;</div>
+        <h3>Create your plan to unlock</h3>
+        <p>Complete the Create / Update Plan form to generate your Strategic Plan document.</p>
+      </div>
+    </div>
+
+    <!-- Live content -->
+    <div id="sp-doc-content" style="display:none">
+
+      <!-- Current plan section -->
+      <div class="sp-doc-card" id="sp-doc-card">
+        <div class="sp-doc-title" id="sp-doc-plan-title"></div>
+        <div class="sp-doc-subtitle" id="sp-doc-generated-date"></div>
+        <div class="sp-download-links" id="sp-download-links"></div>
+      </div>
+
+      <!-- SWOT summary -->
+      <div id="sp-swot-section" style="display:none">
+        <h3 style="font-family:var(--heading-font);font-size:var(--heading-lg-size);font-weight:var(--heading-lg-weight);color:var(--text);margin-bottom:16px">SWOT Analysis</h3>
+        <div class="sp-swot-grid" id="sp-swot-grid"></div>
+      </div>
+
+      <!-- Version history -->
+      <div id="sp-version-history" style="margin-top:32px;display:none"></div>
+
+      <div class="sp-regen-guidance">
+        Not happy with the output? Go to <strong>Create / Update Plan</strong> to adjust your answers and regenerate. Your previous version is always saved.
       </div>
     </div>
   </div>
+
+  <!-- ═══ TAB 3: CREATE / UPDATE PLAN ═══ -->
+  <div class="ptab-content" id="tab-create-plan">
+
+    <!-- Progress bar -->
+    <div class="sp-progress-wrap" id="sp-progress-container">
+      <div class="sp-progress-label" id="sp-progress-label">Section 1 of 6</div>
+      <div class="sp-progress-bar" id="sp-progress-bar"></div>
+    </div>
+
+    <!-- Section navigation chips -->
+    <div class="profile-nav-chips" id="sp-section-nav"></div>
+
+    <!-- Interview sections — rendered dynamically by SP_LOGIC -->
+    <div id="sp-sections-container"></div>
+
+  </div>
+
+  <!-- ═══ SHARED MODALS ═══ -->
 
   <!-- Error modal (platform pattern) -->
   <div class="save-msg" id="sp-error-msg">
     <div class="save-msg-card">
       <div class="save-msg-text"></div>
       <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
+
+  <!-- Delete confirmation modal -->
+  <div class="perm-modal-overlay" id="sp-confirm-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title" id="sp-confirm-title">Confirm</div>
+      <div class="perm-modal-body" id="sp-confirm-body"></div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="sp-confirm-cancel" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="sp-confirm-ok" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add initiative modal -->
+  <div class="perm-modal-overlay" id="sp-add-init-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title">Add Strategic Initiative</div>
+      <div class="sp-add-init-form">
+        <div class="sp-field">
+          <label class="sp-field-label" for="sp-new-init-name">Initiative Name</label>
+          <input type="text" id="sp-new-init-name" class="sp-input" placeholder="e.g. Digital Transformation, Geographic Expansion">
+        </div>
+        <div class="sp-field">
+          <label class="sp-field-label" for="sp-new-init-section">Related SP Section</label>
+          <select id="sp-new-init-section" class="sp-select">
+            <option value="">Select...</option>
+            <option value="business_foundation">Business Foundation</option>
+            <option value="products_services">Products, Services &amp; Customers</option>
+            <option value="financial_position">Financial Position</option>
+            <option value="operations_capacity">Operations &amp; Capacity</option>
+            <option value="market_competition">Market &amp; Competition</option>
+            <option value="growth_transformation">Growth &amp; Transformation</option>
+            <option value="risk_resilience">Risk &amp; Resilience</option>
+          </select>
+        </div>
+      </div>
+      <div class="perm-modal-actions" style="margin-top:20px">
+        <button class="perm-modal-cancel" id="sp-add-init-cancel" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="sp-add-init-confirm" type="button">Add Initiative</button>
+      </div>
     </div>
   </div>
 
