@@ -330,7 +330,7 @@ window.BI_MODULES = {
   },
 
   fetchStrategic: async function(sb, userId) {
-    var pr = await sb.from('strategic_plans').select('id, swot_data, cycle_end_date, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+    var pr = await sb.from('strategic_plans').select('id, swot_data, cycle_end_date, interview_data, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
     var plan = (pr.data && pr.data.length > 0) ? pr.data[0] : null;
     var tasks = [];
     if (plan) {

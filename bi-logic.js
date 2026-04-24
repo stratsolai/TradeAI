@@ -565,8 +565,140 @@ window.BI_LOGIC = {
     }
   },
 
-  _actOnInsight: function(insightId) {
-    // Act on this flow will be implemented in Step 19
+  _CONTRADICTION_MAP: {
+    'hire': { field: 'hiringPlans', contra: 'no-hiring', label: 'hiring' },
+    'staff': { field: 'hiringPlans', contra: 'no-hiring', label: 'hiring' },
+    'employee': { field: 'hiringPlans', contra: 'no-hiring', label: 'hiring' },
+    'apprentice': { field: 'hiringPlans', contra: 'no-hiring', label: 'hiring' },
+    'job management software': { field: 'technology', contra: 'none', label: 'digital transformation' },
+    'implement software': { field: 'technology', contra: 'none', label: 'digital transformation' },
+    'digital': { field: 'technology', contra: 'none', label: 'digital transformation' },
+    'tender': { field: 'goals1yr', contra: null, label: 'government tendering' },
+    'expand': { field: 'goals1yr', contra: null, label: 'geographic expansion' },
+    'new region': { field: 'goals1yr', contra: null, label: 'geographic expansion' }
+  },
+
+  _checkContradiction: function(insightData) {
+    if (!this._strategicData || !this._strategicData.plan) return null;
+
+    var plan = this._strategicData.plan;
+    var sb = this._supabase;
+    var text = ((insightData.headline || '') + ' ' + (insightData.detail || '') + ' ' + (insightData.suggestion || '') + ' ' + (insightData.text || '')).toLowerCase();
+
+    var keys = Object.keys(this._CONTRADICTION_MAP);
+    for (var i = 0; i < keys.length; i++) {
+      if (text.indexOf(keys[i]) === -1) continue;
+      var rule = this._CONTRADICTION_MAP[keys[i]];
+      if (!rule.contra) continue;
+
+      var interviewData = plan.interview_data || plan.swot_data || {};
+      var fieldVal = interviewData[rule.field];
+      if (!fieldVal) continue;
+
+      if (Array.isArray(fieldVal) && fieldVal.indexOf(rule.contra) !== -1) {
+        return rule.label;
+      }
+      if (typeof fieldVal === 'string' && fieldVal === rule.contra) {
+        return rule.label;
+      }
+    }
+    return null;
+  },
+
+  _actOnInsight: async function(insightId) {
+    var self = this;
+
+    var insightData = null;
+    var allModules = ['alerts', 'financial', 'customers', 'operations', 'market', 'strategic'];
+    for (var m = 0; m < allModules.length; m++) {
+      var modInsights = this._insights[allModules[m]] || [];
+      for (var j = 0; j < modInsights.length; j++) {
+        if (modInsights[j].id === insightId) { insightData = modInsights[j].insight_data || {}; break; }
+      }
+      if (insightData) break;
+    }
+    if (!insightData) {
+      this._showError('Could not find insight data.');
+      return;
+    }
+
+    var contradiction = this._checkContradiction(insightData);
+
+    if (contradiction) {
+      self._showContradictionModal(insightId, insightData, contradiction);
+      return;
+    }
+
+    await self._executeAct(insightId, insightData, false);
+  },
+
+  _showContradictionModal: function(insightId, insightData, contradictionLabel) {
+    var self = this;
+    var overlay = document.createElement('div');
+    overlay.className = 'save-msg open';
+    overlay.innerHTML = '<div class="save-msg-card">' +
+      '<div class="save-msg-text" style="text-align:left;margin-bottom:16px;">' +
+      '<strong>This changes your strategic direction</strong><br><br>' +
+      'Acting on this recommendation contradicts your current Strategic Plan position on <strong>' + escHtml(contradictionLabel) + '</strong>. Your plan will need to be updated to reflect this new direction.' +
+      '</div>' +
+      '<div style="display:flex;gap:12px;justify-content:flex-end;">' +
+      '<button class="btn-outline btn-sm" id="bi-contra-cancel">Cancel</button>' +
+      '<button class="btn-primary btn-sm" id="bi-contra-update">Update Plan</button>' +
+      '</div></div>';
+
+    document.body.appendChild(overlay);
+
+    document.getElementById('bi-contra-cancel').addEventListener('click', function() {
+      overlay.remove();
+    });
+
+    document.getElementById('bi-contra-update').addEventListener('click', async function() {
+      overlay.remove();
+      await self._executeAct(insightId, insightData, true);
+      window.location.href = '/strategic-plan.html#update';
+    });
+  },
+
+  _executeAct: async function(insightId, insightData, spRewriteTriggered) {
+    var self = this;
+    try {
+      var sb = this._supabase;
+      var session = await sb.auth.getSession();
+      var token = session.data && session.data.session && session.data.session.access_token;
+
+      var actBtn = document.querySelector('.bi-act-btn[data-insight-id="' + insightId + '"]');
+      if (actBtn) { actBtn.textContent = 'Adding...'; actBtn.disabled = true; }
+
+      var resp = await fetch('/api/bi-act', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          insightId: insightId,
+          insightData: insightData,
+          spRewriteTriggered: spRewriteTriggered
+        })
+      });
+
+      var json = await resp.json();
+
+      if (json.success) {
+        if (actBtn) {
+          actBtn.textContent = 'Added';
+          actBtn.disabled = true;
+        }
+        var notification = document.createElement('div');
+        notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark,#2e7d32);color:#fff;padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
+        notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html#tracker" style="color:#fff;text-decoration:underline;font-weight:600;">View</a>';
+        document.body.appendChild(notification);
+        setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
+      } else {
+        if (actBtn) { actBtn.textContent = 'Act on this'; actBtn.disabled = false; }
+        self._showError(json.error || 'Could not add to Operational Plan.');
+      }
+    } catch (err) {
+      console.error('[BI] Act error:', err.message || err);
+      self._showError('Could not process action. Please try again.');
+    }
   },
 
   _dismissInsight: async function(insightId, btn) {
