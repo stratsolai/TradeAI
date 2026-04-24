@@ -140,7 +140,7 @@
   }
 
   function renderField(field) {
-    var reqMark = field.required ? ' <span style="color:var(--red)">*</span>' : '';
+    var reqMark = field.required ? ' <span class="sp-required">*</span>' : '';
     var label = '<label class="sp-field-label" for="' + field.id + '">' +
       escHtml(field.label) + reqMark +
       (field.labelHint ? ' <span class="sp-label-hint">' + escHtml(field.labelHint) + '</span>' : '') +
@@ -350,7 +350,7 @@
       // Notes toggle
       var notesBtn = e.target.closest('.sp-notes-toggle');
       if (notesBtn) {
-        var notesEl = notesBtn.closest('.sp-subtask').querySelector('.sp-subtask-notes');
+        var notesEl = notesBtn.closest('.sp-subtask').querySelector('.sp-subtask-notes-text');
         if (notesEl) notesEl.style.display = notesEl.style.display === 'none' ? 'block' : 'none';
         return;
       }
@@ -940,9 +940,9 @@
     var owner = row.owner || items.owner || '';
     var notes = items.notes || '';
 
-    var priorityBg = priority === 'High' ? 'background:var(--badge-red-bg);color:var(--badge-red-text)' :
-                     priority === 'Low' ? 'background:var(--badge-green-bg);color:var(--badge-green-text)' :
-                     'background:var(--badge-orange-bg);color:var(--badge-orange-text)';
+    var priorityClass = priority === 'High' ? 'sp-priority-high' :
+                        priority === 'Low' ? 'sp-priority-low' :
+                        'sp-priority-medium';
 
     var sourceBadge = row.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : row.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
 
@@ -958,16 +958,16 @@
       var now = new Date(); now.setHours(0,0,0,0);
       isOverdue = dd < now;
     }
-    html += '<span class="sp-subtask-due" title="Click to change"' + (isOverdue ? ' style="color:var(--red);font-weight:var(--font-weight-semibold)"' : '') + '>' + escHtml(dueDateDisplay) + '</span>';
+    html += '<span class="sp-subtask-due' + (isOverdue ? ' sp-subtask-overdue' : '') + '" title="Click to change">' + escHtml(dueDateDisplay) + '</span>';
     html += '<span class="sp-subtask-owner" title="Click to change">' + escHtml(owner || 'Owner') + '</span>';
-    html += '<select class="sp-subtask-priority" style="' + priorityBg + '">';
+    html += '<select class="sp-subtask-priority ' + priorityClass + '">';
     ['High', 'Medium', 'Low'].forEach(function(p) {
       html += '<option value="' + p + '"' + (priority === p ? ' selected' : '') + '>' + p + '</option>';
     });
     html += '</select>';
     if (notes) html += '<button class="sp-notes-toggle" type="button">Notes</button>';
     html += '</div>';
-    if (notes) html += '<div class="sp-subtask-notes" style="display:none;font-size:var(--label-font-size);color:var(--text-muted);margin-top:6px;line-height:var(--note-line-height)">' + escHtml(notes) + '</div>';
+    if (notes) html += '<div class="sp-subtask-notes sp-subtask-notes-text">' + escHtml(notes) + '</div>';
     html += '</div>';
     html += '<div class="sp-subtask-actions">';
     html += '<button class="sp-subtask-action-btn edit-btn" type="button" title="Edit">&#9998;</button>';
@@ -1071,7 +1071,7 @@
       wEnd.setDate(wEnd.getDate() + 6);
       weeks.push({ start: wStart, end: wEnd, label: _formatDate(wStart).replace(/ \d{4}$/, '') });
     }
-    var headerHtml = '<div class="sp-outlook-header"><div style="width:160px;flex-shrink:0"></div>';
+    var headerHtml = '<div class="sp-outlook-header"><div class="sp-outlook-track-label"></div>';
     weeks.forEach(function(wk, i) {
       headerHtml += '<div class="sp-outlook-week' + (i === 0 ? ' current' : '') + '">' + escHtml(wk.label) + '</div>';
     });
@@ -1226,12 +1226,12 @@
     var parentId = btn.dataset.parentId;
     var form = document.createElement('div');
     form.className = 'sp-add-task-form';
-    var f = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">';
-    f += '<div style="flex:1;min-width:200px"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
-    f += '<div style="width:120px"><select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
-    f += '<div style="width:140px"><input type="date" class="sp-input sp-add-task-due"></div>';
-    f += '<div style="width:140px"><select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
-    f += '</div><div style="display:flex;gap:8px;margin-top:8px">';
+    var f = '<div class="sp-add-task-grid">';
+    f += '<div class="sp-add-task-col-title"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
+    f += '<div class="sp-add-task-col-sm"><select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
+    f += '<div class="sp-add-task-col-md"><input type="date" class="sp-input sp-add-task-due"></div>';
+    f += '<div class="sp-add-task-col-md"><select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
+    f += '</div><div class="sp-add-task-buttons">';
     f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + escHtml(parentId) + '" type="button">Add</button>';
     f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
     form.innerHTML = f;
@@ -1443,7 +1443,7 @@
 
   function renderVersionHistory(versions, el) {
     if (!el || !versions || versions.length === 0) return;
-    var html = '<h3 style="font-family:var(--heading-font);font-size:var(--heading-lg-size);font-weight:var(--heading-lg-weight);color:var(--text);margin-bottom:16px">Version History</h3><div class="sp-version-list">';
+    var html = '<h3 class="sp-section-heading">Version History</h3><div class="sp-version-list">';
     versions.forEach(function(v) {
       var label = v.plan_name || ('Plan v' + v.version);
       var dateStr = v.created_at ? v.created_at.substring(0, 10) : '';

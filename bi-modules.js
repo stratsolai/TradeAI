@@ -64,7 +64,9 @@ window.BI_MODULES = {
       green: s.getPropertyValue('--green').trim() || '#28a745',
       red: s.getPropertyValue('--red').trim() || '#dc3545',
       grey: s.getPropertyValue('--grey').trim() || '#6c757d',
-      purple: s.getPropertyValue('--purple').trim() || '#7B5EA7'
+      purple: s.getPropertyValue('--purple').trim() || '#7B5EA7',
+      teal: s.getPropertyValue('--teal').trim() || '#0097A7',
+      textMuted: s.getPropertyValue('--text-muted').trim() || '#888888'
     };
   },
 
@@ -150,7 +152,7 @@ window.BI_MODULES = {
     charts.financialAging = new Chart(agingCanvas, { type: 'bar', data: { labels: ['Current','30 days','60 days','90+ days'], datasets: [
       { label: 'Receivable', data: [ag.current||0,ag.days_30||0,ag.days_60||0,ag.days_90_plus||0], backgroundColor: c.blue+'AA' },
       { label: 'Payable', data: [pa.current||0,pa.days_30||0,pa.days_60||0,pa.days_90_plus||0], backgroundColor: c.orange+'AA' }
-    ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }, title: { display: true, text: 'Receivable & Payable Aging', font: { size: 13 }, color: '#888' } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return '$'+(v>=1000?Math.round(v/1000)+'K':v);} } } } } });
+    ]}, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }, title: { display: true, text: 'Receivable & Payable Aging', font: { size: 13 }, color: c.textMuted } }, scales: { y: { beginAtZero: true, ticks: { callback: function(v){return '$'+(v>=1000?Math.round(v/1000)+'K':v);} } } } } });
   },
 
   fetchCustomers: async function(sb, dateRange) {
@@ -215,11 +217,11 @@ window.BI_MODULES = {
     chartArea.innerHTML = ''; chartArea.appendChild(topCanvas); chartArea.appendChild(nvrCanvas);
     var c = this._getCSS();
     if (top.length > 0) {
-      charts.customers = new Chart(topCanvas, { type: 'bar', data: { labels: top.map(function(x){return x.name.length>20?x.name.substring(0,18)+'\u2026':x.name;}), datasets: [{ label: 'Revenue', data: top.map(function(x){return x.revenue;}), backgroundColor: c.blue+'CC' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Top Customers by Revenue', font: { size: 13 }, color: '#888' } }, scales: { x: { beginAtZero: true, ticks: { callback: function(v){return '$'+(v>=1000?Math.round(v/1000)+'K':v);} } } } } });
+      charts.customers = new Chart(topCanvas, { type: 'bar', data: { labels: top.map(function(x){return x.name.length>20?x.name.substring(0,18)+'\u2026':x.name;}), datasets: [{ label: 'Revenue', data: top.map(function(x){return x.revenue;}), backgroundColor: c.blue+'CC' }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Top Customers by Revenue', font: { size: 13 }, color: c.textMuted } }, scales: { x: { beginAtZero: true, ticks: { callback: function(v){return '$'+(v>=1000?Math.round(v/1000)+'K':v);} } } } } });
     }
     if (nvr.length > 0) {
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      charts.customersNvR = new Chart(nvrCanvas, { type: 'bar', data: { labels: nvr.map(function(r){var p=r.month.split('-');return months[parseInt(p[1],10)-1]+' '+p[0].substring(2);}), datasets: [ { label: 'New', data: nvr.map(function(r){return r.new_customers;}), backgroundColor: c.green+'AA' }, { label: 'Repeat', data: nvr.map(function(r){return r.repeat_customers;}), backgroundColor: c.blue+'AA' } ] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }, title: { display: true, text: 'New vs Repeat Customers', font: { size: 13 }, color: '#888' } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } });
+      charts.customersNvR = new Chart(nvrCanvas, { type: 'bar', data: { labels: nvr.map(function(r){var p=r.month.split('-');return months[parseInt(p[1],10)-1]+' '+p[0].substring(2);}), datasets: [ { label: 'New', data: nvr.map(function(r){return r.new_customers;}), backgroundColor: c.green+'AA' }, { label: 'Repeat', data: nvr.map(function(r){return r.repeat_customers;}), backgroundColor: c.blue+'AA' } ] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }, title: { display: true, text: 'New vs Repeat Customers', font: { size: 13 }, color: c.textMuted } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } } } });
     }
   },
 
@@ -284,12 +286,12 @@ window.BI_MODULES = {
     chartArea.innerHTML = ''; chartArea.appendChild(statusCanvas); chartArea.appendChild(monthlyCanvas);
     var c = this._getCSS();
     if (sk.length > 0) {
-      var cols = [c.blue, c.green, c.orange, c.purple, c.grey, '#0097A7', c.red];
-      charts.opsStatus = new Chart(statusCanvas, { type: 'doughnut', data: { labels: sk, datasets: [{ data: sk.map(function(k){return statuses[k];}), backgroundColor: sk.map(function(k,i){return cols[i%cols.length];}) }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: '#888' } } } });
+      var cols = [c.blue, c.green, c.orange, c.purple, c.grey, c.teal, c.red];
+      charts.opsStatus = new Chart(statusCanvas, { type: 'doughnut', data: { labels: sk, datasets: [{ data: sk.map(function(k){return statuses[k];}), backgroundColor: sk.map(function(k,i){return cols[i%cols.length];}) }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: c.textMuted } } } });
     }
     if (monthly.length > 0) {
       var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      charts.opsMonthly = new Chart(monthlyCanvas, { type: 'bar', data: { labels: monthly.map(function(m){var p=m.month.split('-');return months[parseInt(p[1],10)-1]+' '+p[0].substring(2);}), datasets: [{ label: 'Jobs', data: monthly.map(function(m){return m.count;}), backgroundColor: c.blue+'AA' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Jobs by Month', font: { size: 13 }, color: '#888' } }, scales: { y: { beginAtZero: true } } } });
+      charts.opsMonthly = new Chart(monthlyCanvas, { type: 'bar', data: { labels: monthly.map(function(m){var p=m.month.split('-');return months[parseInt(p[1],10)-1]+' '+p[0].substring(2);}), datasets: [{ label: 'Jobs', data: monthly.map(function(m){return m.count;}), backgroundColor: c.blue+'AA' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Jobs by Month', font: { size: 13 }, color: c.textMuted } }, scales: { y: { beginAtZero: true } } } });
     }
   },
 
@@ -382,7 +384,7 @@ window.BI_MODULES = {
         var c = this._getCSS();
         var cm = {completed:c.green,done:c.green,'in-progress':c.blue,in_progress:c.blue,pending:c.orange,overdue:c.red};
         var sl = Object.keys(sc);
-        charts.strategicStatus = new Chart(canvas, { type: 'doughnut', data: { labels: sl.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1);}), datasets: [{ data: sl.map(function(s){return sc[s];}), backgroundColor: sl.map(function(s){return cm[s.toLowerCase()]||c.grey;}) }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, title: { display: true, text: 'Tasks by Status', font: { size: 13 }, color: '#888' } } } });
+        charts.strategicStatus = new Chart(canvas, { type: 'doughnut', data: { labels: sl.map(function(s){return s.charAt(0).toUpperCase()+s.slice(1);}), datasets: [{ data: sl.map(function(s){return sc[s];}), backgroundColor: sl.map(function(s){return cm[s.toLowerCase()]||c.grey;}) }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, title: { display: true, text: 'Tasks by Status', font: { size: 13 }, color: c.textMuted } } } });
       } else { chartArea.style.display = 'none'; }
     }
 

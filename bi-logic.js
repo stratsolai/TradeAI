@@ -267,7 +267,7 @@ window.BI_LOGIC = {
       return;
     }
 
-    var html = '<div style="padding:16px 20px">';
+    var html = '<div class="bi-alerts-body">';
     for (var i = 0; i < data.length; i++) {
       var item = data[i];
       var d = item.insight_data || {};
@@ -324,10 +324,10 @@ window.BI_LOGIC = {
     if (refreshRow) refreshRow.classList.add('bi-hidden');
 
     var badge = document.createElement('div');
-    badge.style.cssText = 'background:var(--warning-light);border:1px solid var(--warning);border-radius:8px;padding:12px 20px;margin-bottom:20px;display:flex;align-items:center;gap:12px;';
-    badge.innerHTML = '<span style="font-weight:700;color:var(--text);font-size:14px;">SAMPLE DATA</span>' +
-      '<span style="color:var(--text-secondary);font-size:14px;">This is a preview with sample data. Activate BI to see insights from your real business data.</span>' +
-      '<a href="/panel-auth.html?tool=bi" style="margin-left:auto;background:var(--blue);color:var(--white);padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap;">Activate</a>';
+    badge.className = 'bi-sample-banner';
+    badge.innerHTML = '<span class="bi-sample-label">SAMPLE DATA</span>' +
+      '<span class="bi-sample-text">This is a preview with sample data. Activate BI to see insights from your real business data.</span>' +
+      '<a href="/panel-auth.html?tool=bi" class="bi-sample-cta">Activate</a>';
 
     var grid = document.querySelector('.bi-module-grid');
     if (grid) grid.parentElement.insertBefore(badge, grid);
@@ -343,7 +343,7 @@ window.BI_LOGIC = {
 
     var alertsEl = document.getElementById('bi-mod-alerts-content');
     if (alertsEl) {
-      alertsEl.innerHTML = '<div style="padding:16px 20px">' +
+      alertsEl.innerHTML = '<div class="bi-alerts-body">' +
         '<div class="bi-alert-card severity-amber"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#9888;</span><span class="bi-alert-headline">Cash flow may be tight in 3 weeks based on upcoming bills</span></div></div>' +
         '<div class="bi-alert-card severity-red"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#128176;</span><span class="bi-alert-headline">Top customer has not ordered in 60 days — unusual pattern</span></div></div>' +
         '<div class="bi-alert-card severity-green"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#128200;</span><span class="bi-alert-headline">Quote requests up 40% this month — capacity check needed</span></div></div>' +
@@ -772,11 +772,11 @@ window.BI_LOGIC = {
     var overlay = document.createElement('div');
     overlay.className = 'save-msg open';
     overlay.innerHTML = '<div class="save-msg-card">' +
-      '<div class="save-msg-text" style="text-align:left;margin-bottom:16px;">' +
+      '<div class="save-msg-text bi-modal-body">' +
       '<strong>This changes your strategic direction</strong><br><br>' +
       'Acting on this recommendation contradicts your current Strategic Plan position on <strong>' + escHtml(contradictionLabel) + '</strong>. Your plan will need to be updated to reflect this new direction.' +
       '</div>' +
-      '<div style="display:flex;gap:12px;justify-content:flex-end;">' +
+      '<div class="bi-modal-actions">' +
       '<button class="btn-outline btn-sm" id="bi-contra-cancel">Cancel</button>' +
       '<button class="btn-primary btn-sm" id="bi-contra-update">Update Plan</button>' +
       '</div></div>';
@@ -824,14 +824,14 @@ window.BI_LOGIC = {
 
         if (json.spRewriteRequired && json.contradiction) {
           var rewriteNotification = document.createElement('div');
-          rewriteNotification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--orange);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;max-width:600px;';
-          rewriteNotification.innerHTML = escHtml(json.contradiction.message) + ' <a href="/strategic-plan.html?rewrite=true&decision=' + encodeURIComponent(json.contradiction.decisionId || '') + '" style="color:var(--white);text-decoration:underline;font-weight:600;white-space:nowrap">Update Plan</a>';
+          rewriteNotification.className = 'bi-toast orange';
+          rewriteNotification.innerHTML = escHtml(json.contradiction.message) + ' <a href="/strategic-plan.html?rewrite=true&decision=' + encodeURIComponent(json.contradiction.decisionId || '') + '">Update Plan</a>';
           document.body.appendChild(rewriteNotification);
           setTimeout(function() { if (rewriteNotification.parentNode) rewriteNotification.parentNode.removeChild(rewriteNotification); }, 10000);
         } else {
           var notification = document.createElement('div');
-          notification.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:var(--green-dark);color:var(--white);padding:14px 28px;border-radius:8px;font-family:var(--body-font);font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;';
-          notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html" style="color:var(--white);text-decoration:underline;font-weight:600;">View</a>';
+          notification.className = 'bi-toast';
+          notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html">View</a>';
           document.body.appendChild(notification);
           setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
         }

@@ -29,7 +29,7 @@
       border: 1px solid var(--border);
       border-left: 4px solid var(--blue);
       padding: var(--card-padding);
-      margin-bottom: 20px;
+      margin-bottom: var(--card-padding);
     }
     .sp-ops-title {
       font-family: var(--heading-font);
@@ -62,7 +62,7 @@
       display: flex;
       align-items: center;
       gap: var(--actions-gap);
-      margin-bottom: 20px;
+      margin-bottom: var(--card-padding);
       flex-wrap: wrap;
     }
     .sp-ops-controls-right {
@@ -78,7 +78,7 @@
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
       border-left: 4px solid var(--blue);
-      margin-bottom: 16px;
+      margin-bottom: var(--actions-gap);
       overflow: hidden;
     }
     .sp-initiative.status-amber { border-left-color: var(--orange); }
@@ -88,7 +88,7 @@
       display: flex;
       align-items: center;
       gap: var(--actions-gap);
-      padding: 16px 20px;
+      padding: var(--actions-gap) var(--card-padding);
       cursor: pointer;
       transition: background var(--btn-transition);
     }
@@ -129,7 +129,7 @@
     .sp-initiative.expanded .sp-initiative-chevron { transform: rotate(180deg); }
     .sp-initiative-body {
       display: none;
-      padding: 0 20px 16px;
+      padding: 0 var(--card-padding) var(--actions-gap);
       border-top: 1px solid var(--border-light);
     }
     .sp-initiative.expanded .sp-initiative-body { display: block; }
@@ -241,13 +241,13 @@
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
       border-left: 4px solid var(--orange);
-      padding: 32px;
-      margin-bottom: 20px;
+      padding: var(--card-padding);
+      margin-bottom: var(--card-padding);
     }
     .sp-doc-title {
       font-family: var(--heading-font);
-      font-size: 26px;
-      font-weight: 800;
+      font-size: var(--page-title-font-size);
+      font-weight: var(--heading-lg-weight);
       color: var(--text);
       margin-bottom: 8px;
     }
@@ -294,14 +294,14 @@
     .sp-swot-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 20px;
+      gap: var(--actions-gap);
+      margin-top: var(--card-padding);
     }
     .sp-swot-card {
       background: var(--white);
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
-      padding: 20px;
+      padding: var(--card-padding);
     }
     .sp-swot-card.strengths { border-left: 4px solid var(--green); }
     .sp-swot-card.weaknesses { border-left: 4px solid var(--red); }
@@ -329,10 +329,10 @@
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: var(--btn-radius);
-      padding: 14px 16px;
+      padding: var(--input-padding);
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: var(--actions-gap);
       flex-wrap: wrap;
     }
     .sp-version-current { border-left: 4px solid var(--blue); }
@@ -376,7 +376,7 @@
       padding: var(--actions-gap) 16px;
       font-size: var(--label-font-size);
       color: var(--text-secondary);
-      margin-top: 20px;
+      margin-top: var(--card-padding);
       line-height: var(--note-line-height);
     }
 
@@ -387,7 +387,7 @@
       background: var(--white);
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
-      padding: 20px var(--card-padding);
+      padding: var(--card-padding);
       margin-bottom: var(--card-padding);
     }
     .sp-progress-label {
@@ -432,7 +432,7 @@
     .sp-fields {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: var(--card-padding);
     }
     .sp-field {
       display: flex;
@@ -531,7 +531,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 32px;
+      margin-top: var(--card-padding);
       gap: var(--actions-gap);
     }
     .sp-nav-left { flex-shrink: 0; }
@@ -563,7 +563,7 @@
     }
     .sp-tab-locked-icon {
       font-size: 48px;
-      margin-bottom: 16px;
+      margin-bottom: var(--actions-gap);
       opacity: 0.4;
     }
     .sp-tab-locked h3 {
@@ -583,7 +583,7 @@
     .sp-add-init-form {
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: var(--actions-gap);
     }
 
     /* Inline add task form */
@@ -591,8 +591,8 @@
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       border-radius: var(--btn-radius);
-      padding: 16px;
-      margin-top: 8px;
+      padding: var(--actions-gap);
+      margin-top: var(--btn-radius);
     }
 
     /* Notes toggle */
@@ -635,7 +635,7 @@
       border-radius: var(--card-radius);
       border: 1px solid var(--border);
       padding: var(--card-padding);
-      margin-bottom: 20px;
+      margin-bottom: var(--card-padding);
       overflow-x: auto;
     }
     .sp-outlook-header {
@@ -719,8 +719,8 @@
     }
     .sp-outlook-legend {
       display: flex;
-      gap: 16px;
-      margin-top: 12px;
+      gap: var(--actions-gap);
+      margin-top: var(--actions-gap);
       font-size: var(--badge-font-size);
       color: var(--text-muted);
       align-items: center;
@@ -746,6 +746,42 @@
       color: var(--blue);
       border-bottom-color: var(--blue);
     }
+
+    /* ─── JS-BUILT ELEMENT CLASSES ─── */
+    .sp-required { color: var(--red); }
+    .sp-subtask-overdue { color: var(--red); font-weight: var(--font-weight-semibold); }
+    .sp-priority-high { background: var(--badge-red-bg); color: var(--badge-red-text); }
+    .sp-priority-medium { background: var(--badge-orange-bg); color: var(--badge-orange-text); }
+    .sp-priority-low { background: var(--badge-green-bg); color: var(--badge-green-text); }
+    .sp-subtask-notes-text {
+      display: none;
+      font-size: var(--label-font-size);
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: var(--note-line-height);
+    }
+    .sp-add-task-grid {
+      display: flex;
+      gap: var(--btn-radius);
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+    .sp-add-task-col-title { flex: 1; min-width: 200px; }
+    .sp-add-task-col-sm { width: 120px; }
+    .sp-add-task-col-md { width: 140px; }
+    .sp-add-task-buttons {
+      display: flex;
+      gap: var(--btn-radius);
+      margin-top: var(--btn-radius);
+    }
+    .sp-section-heading {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-version-history-wrap { margin-top: var(--card-padding); }
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 900px) {
@@ -909,12 +945,12 @@
 
       <!-- SWOT summary -->
       <div id="sp-swot-section" style="display:none">
-        <h3 style="font-family:var(--heading-font);font-size:var(--heading-lg-size);font-weight:var(--heading-lg-weight);color:var(--text);margin-bottom:16px">SWOT Analysis</h3>
+        <h3 class="sp-section-heading">SWOT Analysis</h3>
         <div class="sp-swot-grid" id="sp-swot-grid"></div>
       </div>
 
       <!-- Version history -->
-      <div id="sp-version-history" style="margin-top:32px;display:none"></div>
+      <div id="sp-version-history" class="sp-version-history-wrap" style="display:none"></div>
 
       <div class="sp-regen-guidance">
         Not happy with the output? Go to <strong>Create / Update Plan</strong> to adjust your answers and regenerate. Your previous version is always saved.
@@ -984,7 +1020,7 @@
           </select>
         </div>
       </div>
-      <div class="perm-modal-actions" style="margin-top:20px">
+      <div class="perm-modal-actions" style="margin-top:var(--card-padding)">
         <button class="perm-modal-cancel" id="sp-add-init-cancel" type="button">Cancel</button>
         <button class="perm-modal-continue" id="sp-add-init-confirm" type="button">Add Initiative</button>
       </div>
