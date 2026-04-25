@@ -44,13 +44,30 @@ window.DASH_DATA = (function() {
     grid.innerHTML = html;
   }
 
+  function checkBPComplete(p) {
+    if (!p) return false;
+    var hasText = function(k) { return p[k] && typeof p[k] === 'string' && p[k].trim() !== ''; };
+    var hasArr = function(k) { return Array.isArray(p[k]) && p[k].length > 0; };
+    var hasJsonArr = function(k) { var v = p[k]; return Array.isArray(v) && v.length > 0; };
+    return hasText('business_name') && hasText('abn') && hasText('business_structure') &&
+      hasArr('industry') && hasText('years_in_business') &&
+      hasText('address_name') && hasText('address_street') && hasText('address_suburb') &&
+      hasText('address_state') && hasText('address_postcode') &&
+      hasArr('service_area') &&
+      hasJsonArr('bp_services') && hasJsonArr('bp_products') &&
+      hasArr('payment_methods') && hasText('response_time') &&
+      hasText('warranty_info') && hasText('complaints_handling') &&
+      hasText('marketing_theme_awareness') && hasText('marketing_theme_differentiators') &&
+      hasText('marketing_theme_feeling');
+  }
+
   async function loadNotifications(userId) {
     var bar = document.getElementById('notification-bar');
     if (!bar) return;
     var items = [];
     try {
-      var pr = await window.supabaseClient.from('profiles').select('profile_complete').eq('id', userId).single();
-      if (pr.data && !pr.data.profile_complete) {
+      var pr = await window.supabaseClient.from('profiles').select('business_name,abn,business_structure,industry,years_in_business,address_name,address_street,address_suburb,address_state,address_postcode,service_area,bp_services,bp_products,payment_methods,response_time,warranty_info,complaints_handling,marketing_theme_awareness,marketing_theme_differentiators,marketing_theme_feeling,logo_url,additional_phones').eq('id', userId).single();
+      if (pr.data && !checkBPComplete(pr.data)) {
         items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: '/library#business-profile', linkText: 'Complete now' });
       }
     } catch(e) {}
