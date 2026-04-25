@@ -569,6 +569,10 @@
           var raw = profile[field.profileKey];
           if (field.profileKey === 'website_urls' && Array.isArray(raw)) {
             val = raw[0] || '';
+          } else if (field.profileTransform === 'svc_list' && Array.isArray(raw)) {
+            val = raw.map(function(item) { return item.name || ''; }).filter(Boolean).join(', ');
+          } else if (Array.isArray(raw)) {
+            val = raw.join(', ');
           } else {
             val = raw;
           }
@@ -577,7 +581,7 @@
         var el = document.getElementById(field.id);
         if (!el) return;
 
-        if (val) el.value = val;
+        if (val !== null && val !== undefined && val !== '') el.value = val;
 
         if (field.fromProfile) {
           el.readOnly = true;
