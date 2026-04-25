@@ -262,6 +262,36 @@
 .profile-field .lookback-dropdown-wrap { width: 100%; }
 .profile-field .lookback-dropdown { width: 100%; text-align: left; box-sizing: border-box; }
 
+.profile-chip-group { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.profile-chip { padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); color: var(--text); font-size: 13px; font-weight: 500; font-family: var(--body-font); cursor: pointer; transition: all 0.15s; }
+.profile-chip:hover { border-color: var(--blue); background: var(--blue-light); }
+.profile-chip.selected { border-color: var(--blue); background: var(--blue-light); color: var(--blue); font-weight: 600; }
+.profile-chip-warn { display: none; margin-top: 8px; padding: 10px 14px; border-radius: var(--btn-radius); background: #FFF8E1; border: 1px solid #FFC000; color: #7a5000; font-size: 13px; line-height: 1.5; }
+.profile-chip-warn.visible { display: block; }
+.profile-chip-warn-actions { display: flex; gap: 8px; margin-top: 8px; }
+
+.profile-other-wrap { margin-top: 8px; }
+.profile-other-row { display: flex; gap: 8px; align-items: center; }
+.profile-other-row .profile-input { flex: 1; }
+.profile-other-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.profile-other-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 16px; background: var(--blue-light); color: var(--blue); font-size: 12px; font-weight: 500; }
+.profile-other-chip-remove { background: none; border: none; cursor: pointer; color: var(--blue); font-size: 14px; line-height: 1; padding: 0; font-weight: 700; }
+
+.profile-svc-row { display: grid; grid-template-columns: 1fr 140px 120px 36px; gap: 8px; align-items: start; margin-bottom: 8px; }
+.profile-svc-row-range { grid-template-columns: 1fr 140px 60px 60px 36px; }
+.profile-svc-amount { display: flex; gap: 6px; align-items: center; }
+.profile-svc-amount .profile-input { max-width: 120px; }
+.profile-svc-remove { background: none; border: none; cursor: pointer; color: var(--red); font-size: 18px; line-height: 1; padding: 4px; margin-top: 6px; }
+
+.profile-hours-grid { margin-top: 4px; }
+.profile-hours-row { display: grid; grid-template-columns: 90px 1fr 1fr; gap: 8px; align-items: center; margin-bottom: 6px; }
+.profile-hours-day { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
+.profile-hours-day input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
+.profile-hours-preset { display: flex; gap: 8px; margin-bottom: 12px; }
+
+.profile-field-full .lookback-dropdown-wrap { width: 100%; }
+.profile-field-full .lookback-dropdown { width: 100%; text-align: left; box-sizing: border-box; }
+
     @media (max-width: 768px) {
       .profile-fields { grid-template-columns: 1fr; }
       .profile-address-row { grid-template-columns: 1fr; }
@@ -354,6 +384,7 @@
 <script src="/topbar.js"></script>
 <script src="/upgrade-sharepoint.js"></script>
 <script src="/shared-utils.js"></script>
+<script src="/bp-industry-data.js"></script>
 <script src="/cl-logic.js"></script>
 <script>
   (function() {
