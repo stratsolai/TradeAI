@@ -149,6 +149,11 @@
     .trust-item::before { content:'✓'; color:var(--orange); font-weight:700; }
     
 
+    .industry-chips { display:flex; flex-wrap:wrap; gap:8px; }
+    .ind-chip { padding:8px 14px; border-radius:20px; border:1px solid rgba(255,255,255,0.18); background:rgba(255,255,255,0.06); color:rgba(255,255,255,0.75); font-family:var(--body-font); font-size:13px; font-weight:500; cursor:pointer; transition:all 0.2s; }
+    .ind-chip:hover { border-color:rgba(255,255,255,0.35); color:#fff; background:rgba(255,255,255,0.1); }
+    .ind-chip.selected { border-color:var(--orange); background:rgba(196,98,42,0.25); color:#fff; }
+
     @media(max-width:480px) { .container { padding:28px 20px; } }
   footer {
       align-self: stretch; width: 100%; background:#1a2f4a; padding:32px 48px 20px;
@@ -231,19 +236,18 @@
       <input type="tel" id="signup-phone" placeholder="04xx xxx xxx">
     </div>
     <div class="form-group">
-      <label>Industry</label>
-      <select id="signup-industry">
-        <option value="">Select your industry</option>
-        <option value="Building &amp; Construction">Building &amp; Construction</option>
-        <option value="Electrical &amp; Solar">Electrical &amp; Solar</option>
-        <option value="Plumbing &amp; Gas">Plumbing &amp; Gas</option>
-        <option value="HVAC &amp; Refrigeration">HVAC &amp; Refrigeration</option>
-        <option value="Landscaping &amp; Outdoor">Landscaping &amp; Outdoor</option>
-        <option value="Painting &amp; Finishing">Painting &amp; Finishing</option>
-        <option value="Fabrication &amp; Manufacturing">Fabrication &amp; Manufacturing</option>
-        <option value="Cleaning &amp; Maintenance">Cleaning &amp; Maintenance</option>
-        <option value="Service &amp; Professional">Service &amp; Professional</option>
-      </select>
+      <label>Industry <span style="font-weight:400;color:rgba(255,255,255,0.4)">(select all that apply)</span></label>
+      <div id="signup-industry-chips" class="industry-chips">
+        <button type="button" class="ind-chip" data-value="Building &amp; Construction">Building &amp; Construction</button>
+        <button type="button" class="ind-chip" data-value="Electrical &amp; Solar">Electrical &amp; Solar</button>
+        <button type="button" class="ind-chip" data-value="Plumbing &amp; Gas">Plumbing &amp; Gas</button>
+        <button type="button" class="ind-chip" data-value="HVAC &amp; Refrigeration">HVAC &amp; Refrigeration</button>
+        <button type="button" class="ind-chip" data-value="Landscaping &amp; Outdoor">Landscaping &amp; Outdoor</button>
+        <button type="button" class="ind-chip" data-value="Painting &amp; Finishing">Painting &amp; Finishing</button>
+        <button type="button" class="ind-chip" data-value="Fabrication &amp; Manufacturing">Fabrication &amp; Manufacturing</button>
+        <button type="button" class="ind-chip" data-value="Cleaning &amp; Maintenance">Cleaning &amp; Maintenance</button>
+        <button type="button" class="ind-chip" data-value="Service &amp; Professional">Service &amp; Professional</button>
+      </div>
     </div>
     <button type="submit" class="btn">Create Account</button>
     <div class="terms-note">
@@ -329,6 +333,24 @@
       }
     });
 
+    // Industry chip toggle
+    document.getElementById("signup-industry-chips").addEventListener("click", function(e) {
+      var chip = e.target.closest(".ind-chip");
+      if (chip) chip.classList.toggle("selected");
+    });
+
+    // Pre-select industries from industry-select.html
+    var preSelected = sessionStorage.getItem("signup_industries");
+    if (preSelected) {
+      try {
+        var preArr = JSON.parse(preSelected);
+        document.querySelectorAll("#signup-industry-chips .ind-chip").forEach(function(c) {
+          if (preArr.indexOf(c.getAttribute("data-value")) > -1) c.classList.add("selected");
+        });
+        sessionStorage.removeItem("signup_industries");
+      } catch(e) {}
+    }
+
     // Handle signup
     document.getElementById("signup-form").addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -337,8 +359,10 @@
       var password = document.getElementById("signup-password").value;
       var businessName = document.getElementById("signup-business").value;
       var phone = document.getElementById("signup-phone").value;
-      var industry = document.getElementById("signup-industry").value;
-      var result = await signUp(email, password, businessName, phone, industry);
+      var selectedChips = document.querySelectorAll("#signup-industry-chips .ind-chip.selected");
+      var industries = Array.from(selectedChips).map(function(c) { return c.getAttribute("data-value"); });
+      if (industries.length === 0) { showError("Please select at least one industry."); return; }
+      var result = await signUp(email, password, businessName, phone, industries);
       if (result.success) {
         // Write trial activation to Supabase profiles
         var trialTool = sessionStorage.getItem("trial_tool");

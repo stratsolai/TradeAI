@@ -9,7 +9,6 @@ async function checkAuth() {
 // Sign up new user
 async function signUp(email, password, businessName, phone, industry) {
   try {
-    // Create auth user
     const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: email,
       password: password
@@ -17,14 +16,14 @@ async function signUp(email, password, businessName, phone, industry) {
 
     if (authError) throw authError;
 
-    // Update profile with business info
     if (authData.user) {
+      var industryArr = Array.isArray(industry) ? industry : (industry ? [industry] : []);
       const { error: profileError } = await supabaseClient
         .from('profiles')
         .update({
           business_name: businessName,
           phone: phone,
-          industry: industry
+          industry: industryArr
         })
         .eq('id', authData.user.id);
 

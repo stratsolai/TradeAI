@@ -666,14 +666,55 @@ function alignHIW() {
 window.addEventListener('load', alignHIW);
 window.addEventListener('resize', alignHIW);
 
-// Industry card navigation
+// Industry card navigation — multi-select mode when ?mode=select in URL
 (function(){
   var ids=['building-construction','electrical-solar','plumbing-gas','hvac-refrigeration','landscaping-outdoor','painting-finishing','fabrication-manufacturing','cleaning-maintenance','service-professional'];
+  var names=['Building & Construction','Electrical & Solar','Plumbing & Gas','HVAC & Refrigeration','Landscaping & Outdoor','Painting & Finishing','Fabrication & Manufacturing','Cleaning & Maintenance','Service & Professional'];
   var cards=document.querySelectorAll('.industry-card');
-  cards.forEach(function(c,i){
-    c.style.cursor='pointer';
-    c.addEventListener('click',function(){ window.location.href='/tools?industry='+ids[i]; });
-  });
+  var isSelectMode = new URLSearchParams(window.location.search).get('mode') === 'select';
+
+  if (isSelectMode) {
+    var continueBar = document.createElement('div');
+    continueBar.id = 'ind-continue-bar';
+    continueBar.style.cssText = 'display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(10,18,35,0.95);border-top:2px solid #c4622a;padding:14px 32px;text-align:center;backdrop-filter:blur(8px);';
+    continueBar.innerHTML = '<span id="ind-count" style="color:rgba(255,255,255,0.8);font-size:14px;font-weight:500;margin-right:16px;"></span><button id="ind-continue-btn" style="padding:12px 32px;background:#c4622a;color:#fff;border:none;border-radius:8px;font-family:DM Sans,sans-serif;font-size:16px;font-weight:700;cursor:pointer;">Continue</button>';
+    document.body.appendChild(continueBar);
+
+    var selected = [];
+    cards.forEach(function(c,i){
+      c.style.cursor='pointer';
+      c.addEventListener('click', function(){
+        var idx = selected.indexOf(names[i]);
+        if (idx > -1) {
+          selected.splice(idx, 1);
+          c.style.outline = '';
+          c.style.outlineOffset = '';
+        } else {
+          selected.push(names[i]);
+          c.style.outline = '3px solid #c4622a';
+          c.style.outlineOffset = '2px';
+        }
+        var bar = document.getElementById('ind-continue-bar');
+        var countEl = document.getElementById('ind-count');
+        if (selected.length > 0) {
+          bar.style.display = 'block';
+          countEl.textContent = selected.length + ' industr' + (selected.length === 1 ? 'y' : 'ies') + ' selected';
+        } else {
+          bar.style.display = 'none';
+        }
+      });
+    });
+
+    document.getElementById('ind-continue-btn').addEventListener('click', function(){
+      sessionStorage.setItem('signup_industries', JSON.stringify(selected));
+      window.location.href = '/login?tab=signup';
+    });
+  } else {
+    cards.forEach(function(c,i){
+      c.style.cursor='pointer';
+      c.addEventListener('click',function(){ window.location.href='/tools?industry='+ids[i]; });
+    });
+  }
 })();
 </script>
 <script>
