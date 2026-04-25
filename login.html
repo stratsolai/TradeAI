@@ -264,7 +264,7 @@
 </div>
 
 <!-- Supabase JS SDK -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <!-- Our Supabase client -->
 <script src="/supabase-client.js"></script>
 <!-- Our auth functions -->
@@ -300,17 +300,32 @@
     if (tierParam) sessionStorage.setItem("trial_tier", tierParam);
     if (toolsParam) sessionStorage.setItem("trial_tools", toolsParam);
 
-    // Handle login --- unchanged from original
+    // Handle login
     document.getElementById("login-form").addEventListener("submit", async function(e) {
       e.preventDefault();
       hideMessages();
+      var btn = e.target.querySelector('button[type="submit"]');
+      var btnLabel = btn ? btn.textContent : '';
+      if (btn) { btn.textContent = 'Signing in...'; btn.disabled = true; }
+      if (!window.supabaseClient) {
+        showError('Unable to connect. Please refresh the page and try again.');
+        if (btn) { btn.textContent = btnLabel; btn.disabled = false; }
+        return;
+      }
       var email = document.getElementById("login-email").value;
       var password = document.getElementById("login-password").value;
-      var result = await signIn(email, password);
-      if (result.success) {
-        window.location.href = "/dashboard.html";
-      } else {
-        showError(result.error || "Login failed. Please check your credentials.");
+      try {
+        var timeout = new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Connection timed out. Please check your internet connection and try again.')); }, 15000); });
+        var result = await Promise.race([signIn(email, password), timeout]);
+        if (result.success) {
+          window.location.href = "/dashboard.html";
+        } else {
+          showError(result.error || "Login failed. Please check your credentials.");
+          if (btn) { btn.textContent = btnLabel; btn.disabled = false; }
+        }
+      } catch (err) {
+        showError(err.message || 'Something went wrong. Please try again.');
+        if (btn) { btn.textContent = btnLabel; btn.disabled = false; }
       }
     });
 
