@@ -1144,41 +1144,6 @@ window.addEventListener('resize', alignHIW);
     }
 
     updatePicker();
-  } else {
-    // Non-pick mode: intercept tool card clicks to trigger industry modal
-    // Reverse mapping from tool industry key to industry group name
-    var KEY_TO_INDUSTRY = {};
-    var indMap = {
-      'Building & Construction': ['builder'],
-      'Electrical & Solar': ['electrician'],
-      'Plumbing & Gas': ['plumber'],
-      'HVAC & Refrigeration': ['hvac'],
-      'Landscaping & Outdoor': ['landscaper', 'pool', 'concreter'],
-      'Painting & Finishing': [],
-      'Fabrication & Manufacturing': ['fabricator', 'manufacturer'],
-      'Cleaning & Maintenance': ['cleaner', 'handyman'],
-      'Service & Professional': ['service']
-    };
-    Object.keys(indMap).forEach(function(name) {
-      indMap[name].forEach(function(key) { KEY_TO_INDUSTRY[key] = name; });
-    });
-
-    document.addEventListener('click', function(e) {
-      var card = e.target.closest('.tool-card');
-      if (!card) return;
-      if (e.target.classList.contains('card-desc-toggle')) return;
-      e.preventDefault();
-      var toolId = card.getAttribute('data-toolid');
-      var industryKey = card.getAttribute('data-industry-key');
-      var preSelect = industryKey ? KEY_TO_INDUSTRY[industryKey] : null;
-      var opts = {
-        onContinue: function() {
-          window.location.href = '/login?tab=signup&trial_tool=' + (toolId || card.getAttribute('href').split('tool=')[1].split('&')[0]);
-        }
-      };
-      if (preSelect) opts.preSelect = preSelect;
-      openIndustryModal(opts);
-    });
   }
 })();
 
