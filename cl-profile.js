@@ -724,7 +724,6 @@ window.CL_PROFILE = {
     var self = this;
     document.getElementById('prof-svc-save').addEventListener('click', function() { self._saveServices(); });
     var svcPanel = document.getElementById('prof-panel-services');
-    self._bindPhoneTypeDropdowns(svcPanel);
     self._bindSvcDropdowns(svcPanel);
   },
 
@@ -784,7 +783,6 @@ window.CL_PROFILE = {
     var div = document.createElement('div');
     div.innerHTML = this._svcRow(prefix, idx, {}, items);
     container.appendChild(div.firstChild);
-    this._bindPhoneTypeDropdowns(container);
     this._bindSvcDropdowns(container);
   },
 
@@ -942,7 +940,6 @@ window.CL_PROFILE = {
     var self = this;
     document.getElementById('prof-prod-save').addEventListener('click', function() { self._saveProducts(); });
     var prodPanel = document.getElementById('prof-panel-products');
-    self._bindPhoneTypeDropdowns(prodPanel);
     self._bindSvcDropdowns(prodPanel);
   },
 
