@@ -1,582 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <title>AI Website Chatbot — StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>AI Website Chatbot &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .cb-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    :root {
-      --bg: #F5F7FA;
-      --card: #FFFFFF;
-      --topbar: #4A6D8C;
-      --orange: #C4622A;
-      --blue: #1A5490;
-      --text: #333333;
-      --muted: #888888;
-      --border: rgba(0,0,0,0.08);
-      --shadow: 0 2px 8px rgba(0,0,0,0.15);
-      --radius: 12px;
-    }
-
-    body {
-      font-family: "DM Sans", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    .topbar {
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      display: flex;
-      align-items: center;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-    .topbar-logo img { height: 38px; }
-    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; }
-    .topbar-back {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-back:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
-    .topbar-nav-link {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-nav-link:hover { color: #fff; }
-    .topbar-account-wrap { position: relative; }
-    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-    .topbar-logo img { height: 38px; }
-    .topbar-back {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-back:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
-    .topbar-nav-link {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-nav-link:hover { color: #fff; }
-    .topbar-account-wrap { position: relative; }
-    .topbar-logo {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-    }
-    .topbar-logo img { height: 38px; }
-    .topbar-nav {
-      display: flex;
-      align-items: center;
-      gap: 24px;
-    }
-    .topbar-nav a {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      position: relative;
-    }
-    .account-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
-      font-family: "DM Sans", sans-serif;
-    }
-    .account-btn:hover { color: #fff; }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      min-width: 200px;
-      z-index: 200;
-    }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email {
-      padding: 12px 16px;
-      font-size: 13px;
-      color: #888888;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-    }
-    .account-dropdown a {
-      display: block;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333333;
-      text-decoration: none;
-      cursor: pointer;
-    }
-    .account-dropdown a:hover { background: #F5F7FA; }
-
-    .page-wrap {
-      max-width: 1400px;
-      margin: 0 auto;
-      padding: 32px 24px;
-    }
-    .page-header { margin-bottom: 24px; }
-    .page-header h1 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-weight: 900;
-      font-size: 32px;
-      color: #1A5490;
-    }
-    .page-header p {
-      font-size: 15px;
-      color: #888888;
-      margin-top: 4px;
-    }
-    
-    
-
-    .chatbot-grid {
-      display: grid;
-      grid-template-columns: 1fr 0.8fr;
-      gap: 24px;
-      align-items: start;
-    }
-
-    .card {
-      background: #FFFFFF;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      overflow: hidden;
-    }
-    .card-header {
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .card-header h2 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #1A5490;
-    }
-    .card-body { padding: 20px; }
-
-    .filter-tabs {
-      display: flex;
-      gap: 8px;
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      flex-wrap: wrap;
-    }
-    .filter-tab {
-      display: flex;
-      align-items: center;
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.10);
-      border-left-width: 4px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555555;
-      background: #fff;
-      cursor: pointer;
-      font-family: "DM Sans", sans-serif;
-      transition: opacity 0.15s;
-    }
-    .filter-tab[data-filter="all"] { border-left-color: #1A5490; }
-    .filter-tab[data-filter="leads"] { border-left-color: #C4622A; }
-    .filter-tab[data-filter="appointments"] { border-left-color: #2e7d32; }
-    .filter-tab:hover { opacity: 0.8; }
-    .filter-tab.active { background: #f0f4f8; font-weight: 700; color: #1A5490; }
-
-    .unanswered-section {
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.08);
-      background: #fffbf5;
-    }
-    .unanswered-header {
-      font-size: 13px;
-      font-weight: 700;
-      color: #C4622A;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .unanswered-badge {
-      background: #C4622A;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 10px;
-    }
-    .unanswered-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      padding: 6px 0;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(0,0,0,0.04);
-    }
-    .unanswered-item:last-child { border-bottom: none; }
-    .btn-answer {
-      font-size: 12px;
-      font-weight: 600;
-      color: #C4622A;
-      text-decoration: none;
+    /* Conversation list */
+    .cb-conv-list { display: flex; flex-direction: column; gap: 10px; }
+    .cb-conv-card { cursor: pointer; }
+    .cb-conv-preview {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      line-height: var(--note-line-height);
+      padding: 4px 16px 12px;
       white-space: nowrap;
-    }
-    .unanswered-empty { font-size: 13px; color: #888888; }
-
-    .conversation-list { padding: 12px 20px; }
-    .conv-empty {
-      font-size: 14px;
-      color: #888888;
-      padding: 20px 0;
-      text-align: center;
-    }
-    .conv-card {
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 8px;
-      margin-bottom: 10px;
-      cursor: pointer;
-      transition: box-shadow 0.15s;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .conv-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .conv-card-header {
+    .cb-conv-lead-row {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 14px 6px;
-    }
-    .conv-meta { display: flex; align-items: center; gap: 10px; }
-    .conv-date { font-size: 12px; color: #888888; }
-    .conv-duration { font-size: 12px; color: #888888; }
-    .conv-badges { display: flex; gap: 6px; flex-wrap: wrap; }
-    .conv-badge {
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 10px;
-    }
-    .badge-completed { background: #e8f5e9; color: #2e7d32; }
-    .badge-abandoned { background: #fafafa; color: #888888; }
-    .badge-lead { background: #fff3e0; color: #e65100; }
-    .badge-appt { background: #e3f2fd; color: #1565c0; }
-    .conv-preview { padding: 4px 14px 10px; font-size: 13px; color: #333333; }
-    .conv-lead-details {
-      padding: 6px 14px;
-      background: #fffbf5;
-      border-top: 1px solid rgba(0,0,0,0.08);
-      display: flex;
-      gap: 12px;
+      gap: var(--actions-gap);
       flex-wrap: wrap;
-      font-size: 13px;
+      padding: 8px 16px;
+      border-top: 1px solid var(--border-light);
+      font-size: var(--note-font-size);
     }
-    .conv-lead-details a { color: #C4622A; text-decoration: none; font-weight: 600; }
-    .conv-slots {
-      padding: 8px 14px;
-      background: #f0f7ff;
-      border-top: 1px solid rgba(0,0,0,0.08);
-      font-size: 13px;
-    }
-    .conv-slots ul { margin: 4px 0 0 16px; }
-    .conv-slots li { margin-bottom: 2px; }
-    .conv-transcript {
+    .cb-conv-lead-row a { color: var(--blue); font-weight: var(--font-weight-semibold); }
+
+    /* Transcript */
+    .cb-transcript {
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.3s ease;
       border-top: 1px solid transparent;
     }
-    .conv-transcript.open {
-      max-height: 400px;
+    .cb-transcript.open {
+      max-height: 500px;
       overflow-y: auto;
-      border-top: 1px solid rgba(0,0,0,0.08);
+      border-top-color: var(--border-light);
     }
-    .transcript-inner { padding: 12px 14px; }
-    .transcript-msg { margin-bottom: 8px; font-size: 13px; line-height: 1.5; }
-    .transcript-user { color: #333333; }
-    .transcript-assistant { color: #1A5490; }
+    .cb-transcript-inner { padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .cb-msg {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: var(--card-radius);
+      font-size: var(--body-font-size);
+      line-height: var(--body-line-height);
+    }
+    .cb-msg-user {
+      background: var(--blue);
+      color: var(--white);
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .cb-msg-assistant {
+      background: var(--bg-subtle);
+      color: var(--text);
+      align-self: flex-start;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+    }
 
-    .test-widget { display: flex; flex-direction: column; height: 560px; }
-    .test-chat-log {
+    /* Unanswered questions */
+    .cb-question-card { margin-bottom: 12px; }
+    .cb-question-text {
+      font-size: var(--body-font-size);
+      color: var(--text);
+      line-height: var(--body-line-height);
+      padding: 14px 16px;
+    }
+    .cb-question-meta {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      padding: 10px 16px;
+      border-top: 1px solid var(--border-light);
+      flex-wrap: wrap;
+    }
+
+    /* Test panel */
+    .cb-test-wrap {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 8px var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      height: 560px;
+      overflow: hidden;
+    }
+    .cb-test-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cb-test-title {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+    }
+    .cb-test-log {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
       display: flex;
       flex-direction: column;
       gap: 10px;
-      background: #fafbfc;
+      background: var(--bg-subtle);
     }
-    .test-msg {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .test-msg-user {
-      background: #1A5490;
-      color: #fff;
-      align-self: flex-end;
-      border-bottom-right-radius: 4px;
-    }
-    .test-msg-assistant {
-      background: #fff;
-      color: #333333;
+    .cb-test-thinking {
+      color: var(--text-muted);
+      font-style: italic;
+      font-size: var(--note-font-size);
       align-self: flex-start;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-bottom-left-radius: 4px;
     }
-    .test-thinking { color: #888888; font-style: italic; }
-    .test-input-row {
+    .cb-test-input-row {
       display: flex;
       gap: 8px;
       padding: 12px 16px;
-      border-top: 1px solid rgba(0,0,0,0.08);
-      background: #fff;
+      border-top: 1px solid var(--border);
+      background: var(--white);
     }
-    .test-input {
-      flex: 1;
-      padding: 10px 14px;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: "DM Sans", sans-serif;
-      outline: none;
-    }
-    .test-input:focus { border-color: #1A5490; }
-    .btn-send {
-      background: #1A5490;
-      color: #fff;
-      font-size: 14px;
-      font-weight: 700;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: "DM Sans", sans-serif;
-    }
-    .btn-send:hover { background: #163f73; }
-    .btn-clear {
-      background: transparent;
-      border: 1px solid rgba(0,0,0,0.08);
-      color: #888888;
-      font-size: 13px;
-      font-weight: 600;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .btn-clear:hover { border-color: #888888; }
-    .faq-link {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1A5490;
-      text-decoration: none;
-    }
-    .faq-badge {
-      background: #C4622A;
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 7px;
-      border-radius: 10px;
-      display: none;
-    }
+    .cb-test-input { flex: 1; }
 
-    .appt-picker {
-      background: #f0f7ff;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 10px;
-      padding: 14px;
-      margin-top: 8px;
-      align-self: stretch;
+    /* Slots display */
+    .cb-slots-row {
+      padding: 8px 16px;
+      border-top: 1px solid var(--border-light);
+      background: var(--blue-light);
+      font-size: var(--note-font-size);
     }
-    .appt-picker-title { font-size: 13px; font-weight: 700; color: #1A5490; margin-bottom: 10px; }
-    .appt-calendar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .appt-day { border-radius: 8px; padding: 8px 10px; min-width: 90px; }
-    .appt-day.unavailable { background: #f0f0f0; opacity: 0.5; }
-    .appt-day.available { background: #fff; border: 1px solid rgba(0,0,0,0.08); }
-    .appt-date { display: block; font-size: 12px; font-weight: 700; color: #333333; margin-bottom: 6px; }
-    .appt-slots { display: flex; flex-direction: column; gap: 4px; }
-    .appt-slot {
-      background: #e3f2fd;
-      color: #1565c0;
-      border: none;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 4px 8px;
-      cursor: pointer;
-    }
-    .appt-slot.selected { background: #1A5490; color: #fff; }
-    .appt-selected { font-size: 12px; color: #888888; margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
-    .appt-slot-tag { background: #1A5490; color: #fff; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-    .appt-confirm {
-      background: #C4622A;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 18px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      width: 100%;
-    }
-    .appt-confirm:hover { opacity: 0.9; }
+    .cb-slots-row ul { margin: 4px 0 0 18px; }
 
-    @media (max-width: 900px) {
-      .chatbot-grid { grid-template-columns: 1fr; }
-      .test-widget { height: 420px; }
+    /* Filter row */
+    .cb-filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+    @media (max-width: 600px) {
+      .cb-container { padding: var(--page-padding-mobile); }
+      .cb-test-wrap { height: 420px; }
     }
   </style>
 </head>
 <body>
-<script>
-(function() {
-  if (window.matchMedia('(display-mode: standalone)').matches && window.innerWidth < 768) {
-    var s = document.createElement('style');
-    s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: var(--bg); }';
-    document.head.appendChild(s);
-    var d = document.createElement('div');
-    d.id = 'pwa-desktop-msg';
-    d.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--body-font);">'
-      + '<div style="text-align:center;max-width:360px;">'
-      + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;margin-bottom:32px;">'
-      + '<div style="background:var(--white);border-radius:var(--card-radius);box-shadow:0 2px 8px var(--shadow-card);padding:32px 24px;">'
-      + '<p style="font-size:var(--section-title-font-size);color:var(--text);line-height:var(--body-line-height);margin:0 0 24px;">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
-      + '<a href="/dashboard.html" style="display:inline-block;padding:var(--input-padding);background:var(--blue);color:var(--white);border-radius:var(--btn-radius);font-size:var(--label-font-size);font-weight:var(--font-weight-semibold);text-decoration:none;font-family:inherit;">Back to Dashboard</a>'
-      + '</div></div></div>';
-    document.body.appendChild(d);
-  }
-})();
-</script>
 
   <nav class="topbar">
-    <a class="topbar-logo" href="/dashboard">
-      <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
     <div class="topbar-nav">
-      <a class="topbar-back" href="/dashboard">Dashboard</a>
+      <a href="/dashboard.html">Dashboard</a>
     </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a class="topbar-nav-link" href="/chatbot/settings">Settings</a>
+      <a href="/chatbot-settings.html" class="topbar-nav-link">Settings</a>
       <div class="topbar-account-wrap">
-        <button class="account-btn" id="account-btn"><span id="account-email-short"></span> &#9662;</button>
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email"></div>
           <a href="/account" class="account-dropdown-item">Account Management</a>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
     </div>
   </nav>
-  </nav>
 
-  <div class="page-wrap">
-
+  <div class="cb-container" id="page-wrap" style="display:none">
     <div class="page-header">
-      <h1>AI Website Chatbot</h1>
-      <p>Customer conversations from your live widget. Test your chatbot on the right.</p>
+      <h1 class="page-title">AI Website Chatbot</h1>
+      <p class="page-subtitle">Customer conversations, leads, and unanswered questions from your live chatbot.</p>
     </div>
 
-    <div class="chatbot-grid">
-
-      <div>
-
-        <div class="card" style="margin-bottom: 20px;">
-          <div class="unanswered-section">
-            <div class="unanswered-header">
-              Questions to Answer
-              <span class="unanswered-badge" id="unanswered-badge">0</span>
-            </div>
-            <div id="unanswered-questions">
-              <p class="unanswered-empty">Loading...</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="card-header">
-            <h2>Conversations</h2>
-            <a href="/chatbot/settings#faq" class="faq-link">
-              FAQs to Approve
-              <span class="faq-badge" id="faq-badge">0</span>
-            </a>
-          </div>
-          <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">All</button>
-            <button class="filter-tab" data-filter="leads">Leads</button>
-            <button class="filter-tab" data-filter="appointments">Appointments</button>
-          </div>
-          <div class="conversation-list" id="conversation-list">
-            <div class="conv-empty">Loading conversations...</div>
-          </div>
-        </div>
-
+    <div class="stats-bar" id="cb-stats">
+      <div class="stat-tile blue">
+        <div class="stat-value" id="stat-conversations">0</div>
+        <div class="stat-label">Conversations</div>
       </div>
+      <div class="stat-tile orange">
+        <div class="stat-value" id="stat-leads">0</div>
+        <div class="stat-label">Leads</div>
+      </div>
+      <div class="stat-tile green">
+        <div class="stat-value" id="stat-appointments">0</div>
+        <div class="stat-label">Appointments</div>
+      </div>
+      <div class="stat-tile red">
+        <div class="stat-value" id="stat-unanswered">0</div>
+        <div class="stat-label">Unanswered</div>
+      </div>
+    </div>
 
-      <div class="card">
-        <div class="card-header">
-          <h2>Test Your Chatbot</h2>
-        </div>
-        <div class="test-widget">
-          <div class="test-chat-log" id="test-chat-log"></div>
-          <div class="test-input-row">
-            <input class="test-input" id="test-input" type="text" placeholder="Type a test message..." autocomplete="off" />
-            <button class="btn-send" id="test-send">Send</button>
-            <button class="btn-clear" id="test-clear">Clear</button>
-          </div>
+    <div class="tab-nav">
+      <button class="ptab active" data-tab="conversations">Conversations</button>
+      <button class="ptab" data-tab="leads">Leads</button>
+      <button class="ptab" data-tab="unanswered">Unanswered Questions</button>
+      <button class="ptab" data-tab="test">Test Chatbot</button>
+    </div>
+
+    <!-- CONVERSATIONS TAB -->
+    <div id="cb-tab-conversations" class="ptab-content active">
+      <div class="cb-filter-row">
+        <button class="status-btn active" data-filter="all" data-status="pending">All</button>
+        <button class="status-btn" data-filter="completed" data-status="approved">Completed</button>
+        <button class="status-btn" data-filter="abandoned" data-status="archived">Abandoned</button>
+      </div>
+      <div id="cb-conv-list" class="cb-conv-list">
+        <div class="empty-state" id="cb-empty-conversations">
+          <div class="empty-state-icon">💬</div>
+          <h3>No conversations yet</h3>
+          <p>Conversations will appear here once customers start using your chatbot.</p>
         </div>
       </div>
+    </div>
 
+    <!-- LEADS TAB -->
+    <div id="cb-tab-leads" class="ptab-content">
+      <div id="cb-leads-list" class="cb-conv-list">
+        <div class="empty-state" id="cb-empty-leads">
+          <div class="empty-state-icon">📋</div>
+          <h3>No leads captured yet</h3>
+          <p>When customers share their contact details through the chatbot, they will appear here.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNANSWERED TAB -->
+    <div id="cb-tab-unanswered" class="ptab-content">
+      <div class="cb-filter-row">
+        <button class="status-btn active" data-qfilter="active" data-status="pending">Active</button>
+        <button class="status-btn" data-qfilter="resolved" data-status="approved">Resolved</button>
+      </div>
+      <div id="cb-questions-list">
+        <div class="empty-state" id="cb-empty-questions">
+          <div class="empty-state-icon">❓</div>
+          <h3>No unanswered questions</h3>
+          <p>When your chatbot cannot answer a customer question, it will appear here for you to resolve.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEST TAB -->
+    <div id="cb-tab-test" class="ptab-content">
+      <div class="cb-test-wrap">
+        <div class="cb-test-header">
+          <div class="cb-test-title">Test Your Chatbot</div>
+          <button class="btn-outline btn-sm" id="cb-test-clear">Clear</button>
+        </div>
+        <div class="cb-test-log" id="cb-test-log"></div>
+        <div class="cb-test-input-row">
+          <input class="form-input cb-test-input" id="cb-test-input" type="text" placeholder="Type a test message..." autocomplete="off">
+          <button class="btn-primary" id="cb-test-send">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR MODAL -->
+    <div class="save-msg" id="cb-error-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="supabase-client.js"></script>
-  <script src="chatbot-logic.js?v=1"></script>
-
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/chatbot-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.CB_LOGIC && window.CB_LOGIC.init) {
+          window.CB_LOGIC.init(supabase, session.user);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
