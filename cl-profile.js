@@ -147,10 +147,10 @@ window.CL_PROFILE = {
 
   _chipGroup: function(id, options, selected) {
     if (!Array.isArray(selected)) selected = [];
-    return '<div id="' + id + '" class="profile-chip-group">' +
+    return '<div id="' + id + '" class="review-pill-row">' +
       options.map(function(opt) {
         var isSelected = selected.indexOf(opt) > -1;
-        return '<button type="button" class="profile-chip' + (isSelected ? ' selected' : '') + '" data-value="' + window.escHtml(opt) + '">' + window.escHtml(opt) + '</button>';
+        return '<button type="button" class="filter-pill' + (isSelected ? ' active' : '') + '" data-value="' + window.escHtml(opt) + '">' + window.escHtml(opt) + '</button>';
       }).join('') +
     '</div>';
   },
@@ -160,21 +160,17 @@ window.CL_PROFILE = {
     if (!Array.isArray(customItems)) customItems = [];
     var standardChips = options.map(function(opt) {
       var isSelected = selected.indexOf(opt) > -1;
-      return '<button type="button" class="profile-chip' + (isSelected ? ' selected' : '') + '" data-value="' + window.escHtml(opt) + '">' + window.escHtml(opt) + '</button>';
+      return '<button type="button" class="filter-pill' + (isSelected ? ' active' : '') + '" data-value="' + window.escHtml(opt) + '">' + window.escHtml(opt) + '</button>';
     }).join('');
     var otherChips = customItems.map(function(item) {
-      return '<span class="profile-other-chip">' + window.escHtml(item) +
-        '<button type="button" class="profile-other-chip-remove" data-action="remove-other" data-group="' + id + '" data-value="' + window.escHtml(item) + '">\u00D7</button></span>';
+      return '<button type="button" class="filter-pill active prof-custom-pill" data-value="' + window.escHtml(item) + '" data-custom="1">' + window.escHtml(item) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + id + '">\u00D7</span></button>';
     }).join('');
-    return '<div id="' + id + '" class="profile-chip-group" data-custom=\'' + window.escHtml(JSON.stringify(customItems)) + '\'>' +
-      standardChips +
+    return '<div id="' + id + '" class="review-pill-row">' +
+      standardChips + otherChips +
     '</div>' +
-    '<div class="profile-other-wrap">' +
-      '<div class="profile-other-chips" id="' + id + '-others">' + otherChips + '</div>' +
-      '<div class="profile-other-row">' +
-        '<input type="text" class="profile-input" id="' + id + '-other-input" placeholder="Add custom entry" />' +
-        '<button type="button" class="btn-outline btn-sm" data-action="add-other-item" data-target="' + id + '">Add</button>' +
-      '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:8px">' +
+      '<input type="text" class="profile-input" id="' + id + '-other-input" placeholder="Add custom entry" style="flex:1" />' +
+      '<button type="button" class="btn-outline btn-sm" data-action="add-other-item" data-target="' + id + '">Add</button>' +
     '</div>';
   },
 
@@ -184,12 +180,13 @@ window.CL_PROFILE = {
   },
 
   _bindChipToggles: function(container) {
-    container.querySelectorAll('.profile-chip-group').forEach(function(group) {
+    container.querySelectorAll('.review-pill-row').forEach(function(group) {
       if (group.dataset.chipBound) return;
       group.dataset.chipBound = '1';
       group.addEventListener('click', function(e) {
-        var chip = e.target.closest('.profile-chip');
-        if (chip) chip.classList.toggle('selected');
+        if (e.target.closest('.prof-pill-remove')) return;
+        var chip = e.target.closest('.filter-pill');
+        if (chip && !chip.dataset.custom) chip.classList.toggle('active');
       });
     });
   },
@@ -197,16 +194,16 @@ window.CL_PROFILE = {
   _getSelectedChips: function(groupId) {
     var group = document.getElementById(groupId);
     if (!group) return [];
-    return Array.from(group.querySelectorAll('.profile-chip.selected')).map(function(c) {
+    return Array.from(group.querySelectorAll('.filter-pill.active:not([data-custom])')).map(function(c) {
       return c.getAttribute('data-value');
     });
   },
 
   _getOtherItems: function(groupId) {
-    var wrap = document.getElementById(groupId + '-others');
-    if (!wrap) return [];
-    return Array.from(wrap.querySelectorAll('.profile-other-chip')).map(function(c) {
-      return c.textContent.replace('\u00D7', '').trim();
+    var group = document.getElementById(groupId);
+    if (!group) return [];
+    return Array.from(group.querySelectorAll('.filter-pill[data-custom]')).map(function(c) {
+      return c.getAttribute('data-value');
     });
   },
 
@@ -215,20 +212,22 @@ window.CL_PROFILE = {
     if (!input) return;
     var val = input.value.trim();
     if (!val) return;
-    var wrap = document.getElementById(groupId + '-others');
-    if (!wrap) return;
+    var group = document.getElementById(groupId);
+    if (!group) return;
     var existing = this._getOtherItems(groupId);
     if (existing.indexOf(val) > -1) { input.value = ''; return; }
-    var chip = document.createElement('span');
-    chip.className = 'profile-other-chip';
-    chip.innerHTML = window.escHtml(val) +
-      '<button type="button" class="profile-other-chip-remove" data-action="remove-other" data-group="' + groupId + '" data-value="' + window.escHtml(val) + '">\u00D7</button>';
-    wrap.appendChild(chip);
+    var chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'filter-pill active prof-custom-pill';
+    chip.setAttribute('data-value', val);
+    chip.setAttribute('data-custom', '1');
+    chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + groupId + '">\u00D7</span>';
+    group.appendChild(chip);
     input.value = '';
   },
 
   _removeOtherChip: function(btn) {
-    var chip = btn.closest('.profile-other-chip');
+    var chip = btn.closest('.filter-pill');
     if (chip) chip.parentNode.removeChild(chip);
   },
 
@@ -252,16 +251,25 @@ window.CL_PROFILE = {
     '</div>';
 
     var industryChips = this._chipGroup('prof-industries', industries, selectedIndustries);
-    var industryWarn = '<div id="prof-industry-warn" class="profile-chip-warn"></div>';
 
     var body = '<div class="profile-fields">' +
       this._field('Legal Business Name', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
       this._field2('Business Structure', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industries <span class="profile-optional">(select all that apply)</span>', industryChips + industryWarn) +
+      this._field('Industries <span class="profile-optional">(select all that apply)</span>', industryChips) +
       this._field('Business Logo', logoHtml) +
       this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
+    '</div>' +
+    '<div class="perm-modal-overlay" id="prof-industry-modal">' +
+      '<div class="perm-modal">' +
+        '<div class="perm-modal-title">Remove Industry</div>' +
+        '<div class="perm-modal-body" id="prof-industry-modal-body"></div>' +
+        '<div class="perm-modal-actions">' +
+          '<button type="button" class="perm-modal-cancel" id="prof-industry-modal-cancel">Cancel</button>' +
+          '<button type="button" class="perm-modal-continue" id="prof-industry-modal-confirm">Remove</button>' +
+        '</div>' +
+      '</div>' +
     '</div>';
 
     document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save');
@@ -286,21 +294,31 @@ window.CL_PROFILE = {
   },
 
   _bindIndustryWarn: function(previousIndustries) {
-    var self = this;
     var group = document.getElementById('prof-industries');
     if (!group) return;
     group.addEventListener('click', function(e) {
-      var chip = e.target.closest('.profile-chip');
+      if (e.target.closest('.prof-pill-remove')) return;
+      var chip = e.target.closest('.filter-pill');
       if (!chip) return;
       var val = chip.getAttribute('data-value');
       var wasSelected = previousIndustries.indexOf(val) > -1;
-      var isNowDeselected = !chip.classList.contains('selected');
-      var warn = document.getElementById('prof-industry-warn');
+      var isNowDeselected = !chip.classList.contains('active');
       if (wasSelected && isNowDeselected) {
-        warn.innerHTML = 'Removing <strong>' + window.escHtml(val) + '</strong> will disable it rather than delete it. Existing services, products, and tool outputs linked to this industry will remain intact.';
-        warn.classList.add('visible');
-      } else {
-        warn.classList.remove('visible');
+        var modal = document.getElementById('prof-industry-modal');
+        var body = document.getElementById('prof-industry-modal-body');
+        body.innerHTML = 'Removing <strong>' + window.escHtml(val) + '</strong> will disable it rather than delete it. Existing services, products, and tool outputs linked to this industry will remain intact.';
+        modal.classList.add('open');
+        var confirmBtn = document.getElementById('prof-industry-modal-confirm');
+        var cancelBtn = document.getElementById('prof-industry-modal-cancel');
+        var cleanup = function() {
+          modal.classList.remove('open');
+          confirmBtn.removeEventListener('click', onConfirm);
+          cancelBtn.removeEventListener('click', onCancel);
+        };
+        var onConfirm = function() { cleanup(); };
+        var onCancel = function() { chip.classList.add('active'); cleanup(); };
+        confirmBtn.addEventListener('click', onConfirm);
+        cancelBtn.addEventListener('click', onCancel);
       }
     });
   },
