@@ -239,9 +239,14 @@ window.DV_LOGIC = {
     return this._uploadedPhotoPath;
   },
 
-  _storageUrl: function(path) {
+  _storageUrl: async function(path) {
     if (!path) return '';
-    return this._supabase.storage.from('cl-assets').getPublicUrl(path).data.publicUrl;
+    var result = await this._supabase.storage.from('cl-assets').createSignedUrl(path, 3600);
+    if (result.error) {
+      console.error('[DV] Signed URL error:', result.error.message);
+      return '';
+    }
+    return result.data.signedUrl;
   },
 
   _updateGenerateBtn: function() {
@@ -297,7 +302,7 @@ window.DV_LOGIC = {
       }
 
       await this._loadRenders();
-      this._renderGallery();
+      await this._renderGallery();
       this._updateStats();
 
       // Show refine section
@@ -359,7 +364,7 @@ window.DV_LOGIC = {
 
       if (input) input.value = '';
       await this._loadRenders();
-      this._renderGallery();
+      await this._renderGallery();
       this._updateStats();
 
     } catch (e) {
@@ -414,7 +419,7 @@ window.DV_LOGIC = {
       }
 
       render.is_final = true;
-      this._renderGallery();
+      await this._renderGallery();
 
     } catch (e) {
       console.error('[DV] Save to CL exception:', e.message);
@@ -577,7 +582,7 @@ window.DV_LOGIC = {
 
     this._renderProjectDetail();
     await this._loadRenders();
-    this._renderGallery();
+    await this._renderGallery();
 
     var refineSection = document.getElementById('dv-refine-section');
     if (refineSection) refineSection.style.display = this._renders.length > 0 ? '' : 'none';
@@ -689,7 +694,7 @@ window.DV_LOGIC = {
     if (notesEl) notesEl.textContent = p.notes || '—';
   },
 
-  _renderGallery: function() {
+  _renderGallery: async function() {
     var container = document.getElementById('dv-render-gallery');
     var empty = document.getElementById('dv-empty-renders');
     if (!container) return;
@@ -703,13 +708,17 @@ window.DV_LOGIC = {
     if (empty) empty.hidden = true;
 
     var self = this;
+    var signedUrls = await Promise.all(this._renders.map(function(r) {
+      return self._storageUrl(r.render_url);
+    }));
+
     var html = '';
-    this._renders.forEach(function(r) {
+    this._renders.forEach(function(r, idx) {
       var date = new Date(r.created_at);
       var dateStr = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
         + ' ' + date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-      var displayUrl = self._storageUrl(r.render_url);
+      var displayUrl = signedUrls[idx];
       html += '<div class="dv-render-card" data-render-id="' + r.id + '">'
         + '<img src="' + escHtml(displayUrl) + '" alt="Design render" loading="lazy">'
         + '<div class="dv-render-meta">'
