@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <title>Design Visualiser Settings &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
+  <style>
+    .page-wrap { padding: var(--settings-page-padding); }
+    .pwa-guard-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--card-padding);
+      font-family: var(--body-font);
+    }
+    .pwa-guard-inner { text-align: center; max-width: 360px; }
+    .pwa-guard-logo { height: 38px; margin-bottom: 32px; }
+    .pwa-guard-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 8px var(--shadow-card);
+      padding: 32px var(--card-padding);
+    }
+    .pwa-guard-text {
+      font-size: var(--section-title-font-size);
+      color: var(--text);
+      line-height: var(--body-line-height);
+      margin: 0 0 24px;
+    }
+    .pwa-guard-btn {
+      display: inline-block;
+      padding: var(--input-padding);
+      background: var(--blue);
+      color: var(--white);
+      border-radius: var(--btn-radius);
+      font-size: var(--label-font-size);
+      font-weight: var(--font-weight-semibold);
+      text-decoration: none;
+      font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+<script>
+(function() {
+  if (window.matchMedia('(display-mode: standalone)').matches && window.innerWidth < 768) {
+    var s = document.createElement('style');
+    s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: var(--bg); }';
+    document.head.appendChild(s);
+    var d = document.createElement('div');
+    d.id = 'pwa-desktop-msg';
+    d.innerHTML = '<div class="pwa-guard-wrap">'
+      + '<div class="pwa-guard-inner">'
+      + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="pwa-guard-logo">'
+      + '<div class="pwa-guard-card">'
+      + '<p class="pwa-guard-text">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
+      + '<a href="/dashboard.html" class="pwa-guard-btn">Back to Dashboard</a>'
+      + '</div></div></div>';
+    document.body.appendChild(d);
+  }
+})();
+</script>
+
+  <nav class="topbar">
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+    </a>
+    <div class="topbar-nav">
+      <a href="/dashboard.html">Dashboard</a>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a href="/design-viz.html" class="topbar-nav-link">Design Visualiser</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="page-wrap" id="page-wrap" style="display:none">
+    <div class="page-header">
+      <h1 class="page-title">Design Visualiser Settings</h1>
+      <p class="page-subtitle">Configure how the Design Visualiser works with your website chatbot.</p>
+    </div>
+
+    <div class="settings-card">
+      <div class="settings-card-header">
+        <div class="settings-card-title">Chatbot Access</div>
+        <div class="settings-card-hint">Control whether customers can generate design renders through your website chatbot.</div>
+      </div>
+      <div class="settings-rows">
+        <div class="settings-row">
+          <div>
+            <div class="settings-row-label">Chatbot Render Mode</div>
+            <div class="settings-row-desc">When enabled, customers can upload photos and receive AI-generated renders in the chatbot.</div>
+          </div>
+          <div class="settings-row-control" id="cb-mode-ctrl">
+            <button class="freq-btn" data-value="off">Off</button>
+            <button class="freq-btn" data-value="watermarked">Watermarked</button>
+            <button class="freq-btn" data-value="full_access">Full Access</button>
+          </div>
+        </div>
+        <div class="settings-row" id="watermark-hint-row" style="display:none">
+          <div>
+            <div class="settings-row-desc" style="color:var(--text-secondary)">Watermarked mode tiles your business logo (or business name if no logo is uploaded) across customer renders at 25% opacity. Clean versions are saved to your Content Library.</div>
+          </div>
+        </div>
+      </div>
+      <div class="settings-footer">
+        <button class="btn-save" id="save-cb-btn">Save</button>
+      </div>
+    </div>
+
+    <div class="save-msg" id="dv-settings-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/design-viz-settings-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getUser().then(function(resp) {
+        if (resp.error || !resp.data || !resp.data.user) {
+          window.location.href = '/login';
+          return;
+        }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.DV_SETTINGS_LOGIC && window.DV_SETTINGS_LOGIC.init) {
+          window.DV_SETTINGS_LOGIC.init(supabase, resp.data.user);
+        }
+      }).catch(function(e) {
+        console.error('[DV Settings] Auth error:', e.message);
+        window.location.href = '/login';
+      });
+    })();
+  </script>
+</body>
+</html>
