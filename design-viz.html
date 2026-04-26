@@ -32,7 +32,7 @@
     .dv-upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
     .dv-upload-text { font-size: var(--body-font-size); color: var(--text); margin-bottom: 4px; }
     .dv-upload-hint { font-size: var(--note-font-size); color: var(--text-muted); }
-    .dv-photo-preview { margin-bottom: 16px; }
+    .dv-photo-preview { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
     .dv-photo-preview img {
       max-width: 300px;
       max-height: 200px;
@@ -91,6 +91,11 @@
       flex-wrap: wrap;
     }
     .dv-detail-actions { margin-left: auto; display: flex; gap: 8px; }
+    #dv-status-btn { padding: 6px 14px; }
+    .dv-generate-form { display: flex; flex-direction: column; gap: 16px; }
+    #dv-render-type { max-width: 300px; }
+    #dv-description { min-height: var(--textarea-min-height); }
+    .dv-render-grid .empty-state { grid-column: 1 / -1; }
     .dv-lightbox {
       display: none;
       position: fixed;
@@ -177,38 +182,38 @@
     <div id="dv-project-detail" style="display:none">
       <div class="dv-detail-header">
         <button class="btn-back" id="dv-back-btn">&#8592; Back</button>
-        <h2 style="font-family:var(--heading-font); font-size:var(--heading-lg-size); margin:0" id="dv-detail-title"></h2>
+        <h2 class="detail-title" id="dv-detail-title"></h2>
         <span class="badge badge-blue" id="dv-detail-status"></span>
         <div class="dv-detail-actions">
           <button class="btn-outline btn-sm" id="dv-edit-btn">Edit</button>
-          <button class="btn-sm" id="dv-status-btn" style="border:2px solid var(--green-dark); color:var(--green-dark); background:var(--white); border-radius:var(--btn-radius); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer">Mark Complete</button>
+          <button class="review-approve-btn btn-sm" id="dv-status-btn">Mark Complete</button>
         </div>
       </div>
 
-      <div id="dv-detail-info" class="settings-card" style="margin-bottom:24px">
+      <div id="dv-detail-info" class="settings-card">
         <div class="settings-rows">
           <div class="settings-row">
             <div class="settings-row-label">Customer</div>
-            <div id="dv-detail-customer" style="color:var(--text-secondary)"></div>
+            <div id="dv-detail-customer" class="text-secondary"></div>
           </div>
           <div class="settings-row">
             <div class="settings-row-label">Address</div>
-            <div id="dv-detail-address" style="color:var(--text-secondary)"></div>
+            <div id="dv-detail-address" class="text-secondary"></div>
           </div>
           <div class="settings-row">
             <div class="settings-row-label">Notes</div>
-            <div id="dv-detail-notes" style="color:var(--text-secondary)"></div>
+            <div id="dv-detail-notes" class="text-secondary"></div>
           </div>
         </div>
       </div>
 
       <!-- UPLOAD + GENERATE -->
-      <div class="settings-card" style="margin-bottom:24px" id="dv-generate-card">
+      <div class="settings-card" id="dv-generate-card">
         <div class="settings-card-header">
           <div class="settings-card-title">Generate Render</div>
           <div class="settings-card-hint">Upload a photo and describe the changes you want to visualise.</div>
         </div>
-        <div style="padding:24px">
+        <div class="card-body dv-generate-form">
           <div class="dv-upload-zone" id="dv-upload-zone">
             <div class="dv-upload-icon">📷</div>
             <div class="dv-upload-text">Drop a photo here, or click to browse</div>
@@ -217,37 +222,35 @@
           </div>
           <div class="dv-photo-preview" id="dv-photo-preview" style="display:none">
             <img id="dv-photo-img" alt="Uploaded photo">
-            <div style="margin-top:8px">
-              <button class="btn-outline btn-sm" id="dv-change-photo-btn">Change Photo</button>
-            </div>
+            <button class="btn-outline btn-sm" id="dv-change-photo-btn">Change Photo</button>
           </div>
 
-          <div style="margin-top:16px">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Describe what you want to visualise</label>
-            <textarea class="form-input" id="dv-description" rows="3" placeholder="e.g. Add a timber deck to the backyard with built-in seating and planter boxes" style="min-height:var(--textarea-min-height)"></textarea>
+          <div>
+            <label class="form-label">Describe what you want to visualise</label>
+            <textarea class="form-input" id="dv-description" rows="3" placeholder="e.g. Add a timber deck to the backyard with built-in seating and planter boxes"></textarea>
           </div>
 
-          <div style="margin-top:12px">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Render type (optional)</label>
-            <select class="form-input" id="dv-render-type" style="max-width:300px">
+          <div>
+            <label class="form-label">Render type (optional)</label>
+            <select class="form-input" id="dv-render-type">
               <option value="">Auto-detect</option>
             </select>
           </div>
 
-          <div style="margin-top:16px; display:flex; align-items:center; gap:12px">
+          <div class="action-row">
             <button class="btn-primary" id="dv-generate-btn" disabled>Generate Render</button>
-            <span id="dv-generating-msg" style="display:none; font-size:var(--note-font-size); color:var(--text-muted)">Generating render&hellip; this may take 15&ndash;30 seconds.</span>
+            <span class="text-muted" id="dv-generating-msg" style="display:none">Generating render&hellip; this may take 15&ndash;30 seconds.</span>
           </div>
         </div>
       </div>
 
       <!-- REFINE -->
-      <div id="dv-refine-section" class="settings-card" style="margin-bottom:24px; display:none">
+      <div id="dv-refine-section" class="settings-card" style="display:none">
         <div class="settings-card-header">
           <div class="settings-card-title">Refine</div>
           <div class="settings-card-hint">Describe changes to apply to the latest render.</div>
         </div>
-        <div style="padding:24px">
+        <div class="card-body">
           <div class="dv-refine-row">
             <textarea class="form-input dv-refine-input" id="dv-refine-input" rows="2" placeholder="e.g. Make the deck wider, try a darker timber"></textarea>
             <button class="btn-primary" id="dv-refine-btn">Refine</button>
@@ -256,9 +259,9 @@
       </div>
 
       <!-- RENDER GALLERY -->
-      <div class="section-label" style="margin-top:8px">Renders</div>
+      <div class="section-label">Renders</div>
       <div id="dv-render-gallery" class="dv-render-grid">
-        <div class="empty-state" id="dv-empty-renders" style="grid-column:1/-1">
+        <div class="empty-state" id="dv-empty-renders">
           <div class="empty-state-icon">🖼️</div>
           <h3>No renders yet</h3>
           <p>Upload a photo and describe your vision to generate your first render.</p>
@@ -270,21 +273,21 @@
     <div class="perm-modal-overlay" id="dv-project-modal">
       <div class="perm-modal">
         <div class="perm-modal-title" id="dv-modal-title">New Project</div>
-        <div class="perm-modal-body" style="text-align:left">
-          <div style="margin-bottom:12px">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Project Name</label>
+        <div class="perm-modal-body">
+          <div class="form-group">
+            <label class="form-label">Project Name</label>
             <input type="text" class="form-input" id="dv-modal-name" placeholder="e.g. Smith Kitchen Renovation">
           </div>
-          <div style="margin-bottom:12px">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Customer Name</label>
+          <div class="form-group">
+            <label class="form-label">Customer Name</label>
             <input type="text" class="form-input" id="dv-modal-customer" placeholder="e.g. John Smith">
           </div>
-          <div style="margin-bottom:12px">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Address</label>
+          <div class="form-group">
+            <label class="form-label">Address</label>
             <input type="text" class="form-input" id="dv-modal-address" placeholder="e.g. 42 Main St, Sydney">
           </div>
-          <div style="margin-bottom:0">
-            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Notes</label>
+          <div class="form-group">
+            <label class="form-label">Notes</label>
             <textarea class="form-input" id="dv-modal-notes" rows="2" placeholder="Any additional context"></textarea>
           </div>
         </div>
