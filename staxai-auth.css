@@ -1140,6 +1140,9 @@ a:hover { opacity: 0.85; }
 .review-cats-btn:hover { background:var(--purple-hover-bg); }
 .review-cats-btn.open { background:var(--purple-hover-bg); }
 
+/* Filter pill row — flex-wrap container for filter-pill groups. Used by CL review, BP chip selectors. */
+.review-pill-row { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; }
+
 /* Filter section label — heading above filter pill rows in all list views */
 .filter-section-label { font-size:var(--badge-font-size); font-weight:var(--font-weight-semibold); color:var(--text-muted); margin-bottom:var(--label-margin-bottom); }
 
