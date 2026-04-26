@@ -1,7 +1,6 @@
 window.DV_LOGIC = {
 
   _supabase: null,
-  _user: null,
   _userId: null,
   _projects: [],
   _renders: [],
@@ -59,7 +58,6 @@ window.DV_LOGIC = {
   init: async function(supabase, user) {
     if (!supabase || !user) return;
     this._supabase = supabase;
-    this._user = user;
     this._userId = user.id;
 
     await this._loadProfile();
