@@ -373,6 +373,10 @@
             trial_used: true
           });
         }
+        sessionStorage.removeItem("signup_industries");
+        sessionStorage.removeItem("trial_tool");
+        sessionStorage.removeItem("trial_tier");
+        sessionStorage.removeItem("trial_tools");
         showSuccess("Account created. Please check your email to verify your account.");
         var redirectParam = trialTool ? "?activated=" + trialTool : (trialTier ? "?tier=" + trialTier : "");
         setTimeout(function() { window.location.href = "/dashboard.html" + redirectParam; }, 2000);

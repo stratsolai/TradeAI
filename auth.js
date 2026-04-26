@@ -9,6 +9,15 @@ async function checkAuth() {
 // Sign up new user
 async function signUp(email, password, businessName, phone, industry) {
   try {
+    // Read industries from sessionStorage as fallback
+    var industryArr = Array.isArray(industry) ? industry : (industry ? [industry] : []);
+    if (industryArr.length === 0) {
+      var stored = sessionStorage.getItem('signup_industries');
+      if (stored) {
+        try { industryArr = JSON.parse(stored); } catch(e) {}
+      }
+    }
+
     const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: email,
       password: password
@@ -17,7 +26,6 @@ async function signUp(email, password, businessName, phone, industry) {
     if (authError) throw authError;
 
     if (authData.user) {
-      var industryArr = Array.isArray(industry) ? industry : (industry ? [industry] : []);
       const { error: profileError } = await supabaseClient
         .from('profiles')
         .update({
@@ -29,6 +37,9 @@ async function signUp(email, password, businessName, phone, industry) {
 
       if (profileError) throw profileError;
     }
+
+    // Clear signup sessionStorage after successful signup
+    sessionStorage.removeItem('signup_industries');
 
     return { success: true, data: authData };
   } catch (error) {
