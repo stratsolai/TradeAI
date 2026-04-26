@@ -13,7 +13,7 @@ window.DASH_DATA = (function() {
     { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: '/panel?tool=customer-updates', priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN' },
     { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: '/panel?tool=handover-docs',  priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL' },
     { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: '/panel?tool=review-booster', priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa' },
-    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: 'TBC',  status: 'pending', url: '/panel?tool=design-viz',     priceId: null }
+    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: '$89',  status: 'built',   url: '/design',                   priceId: 'price_1TQLbEHnoVvjo5gxIuSSm7tH' }
   ];
 
   function renderStax(activeTools) {
