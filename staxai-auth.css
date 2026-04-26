@@ -1163,3 +1163,41 @@ a:hover { opacity: 0.85; }
 
 /* Expanded state — applied to the parent .item-card to reveal full preview text */
 .item-card.content-expanded .text-preview { white-space:pre-wrap; overflow:visible; }
+
+/* ------------------------------------------------------------
+   20. SHARED UTILITY CLASSES
+   ------------------------------------------------------------ */
+
+/* Form label — standard label for form fields. Used across modal forms, tool pages, settings add rows. */
+.form-label { font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom); font-family:var(--body-font); color:var(--text); }
+
+/* Form group — wrapper for a form field with standard bottom spacing */
+.form-group { margin-bottom:12px; }
+.form-group:last-child { margin-bottom:0; }
+
+/* Card body — inner padding wrapper for card content below the header */
+.card-body { padding:var(--card-padding); }
+
+/* Text secondary — applies the secondary text colour */
+.text-secondary { color:var(--text-secondary); }
+
+/* Text muted — small muted text for inline status messages and hints */
+.text-muted { font-size:var(--note-font-size); color:var(--text-muted); }
+
+/* Detail title — section/page heading using the heading font at large size */
+.detail-title { font-family:var(--heading-font); font-size:var(--heading-lg-size); font-weight:var(--heading-lg-weight); color:var(--text); margin:0; }
+
+/* Action row — horizontal flex row with standard gap and vertical centering */
+.action-row { display:flex; align-items:center; gap:var(--actions-gap); }
+
+/* ------------------------------------------------------------
+   21. PWA DESKTOP-ONLY GUARD
+   ------------------------------------------------------------ */
+
+/* Full-screen guard shown on desktop-only pages when opened in the PWA on mobile */
+.pwa-guard-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:var(--card-padding); font-family:var(--body-font); }
+.pwa-guard-inner { text-align:center; max-width:360px; }
+.pwa-guard-logo { height:38px; margin-bottom:32px; }
+.pwa-guard-card { background:var(--white); border-radius:var(--card-radius); box-shadow:0 2px 8px var(--shadow-card); padding:32px var(--card-padding); }
+.pwa-guard-text { font-size:var(--section-title-font-size); color:var(--text); line-height:var(--body-line-height); margin:0 0 24px; }
+.pwa-guard-btn { display:inline-block; padding:var(--input-padding); background:var(--blue); color:var(--white); border-radius:var(--btn-radius); font-size:var(--label-font-size); font-weight:var(--font-weight-semibold); text-decoration:none; font-family:inherit; }
