@@ -235,20 +235,6 @@
       <label>Phone</label>
       <input type="tel" id="signup-phone" placeholder="04xx xxx xxx">
     </div>
-    <div class="form-group">
-      <label>Industry <span style="font-weight:400;color:rgba(255,255,255,0.4)">(select all that apply)</span></label>
-      <div id="signup-industry-chips" class="industry-chips">
-        <button type="button" class="ind-chip" data-value="Building &amp; Construction">Building &amp; Construction</button>
-        <button type="button" class="ind-chip" data-value="Electrical &amp; Solar">Electrical &amp; Solar</button>
-        <button type="button" class="ind-chip" data-value="Plumbing &amp; Gas">Plumbing &amp; Gas</button>
-        <button type="button" class="ind-chip" data-value="HVAC &amp; Refrigeration">HVAC &amp; Refrigeration</button>
-        <button type="button" class="ind-chip" data-value="Landscaping &amp; Outdoor">Landscaping &amp; Outdoor</button>
-        <button type="button" class="ind-chip" data-value="Painting &amp; Finishing">Painting &amp; Finishing</button>
-        <button type="button" class="ind-chip" data-value="Fabrication &amp; Manufacturing">Fabrication &amp; Manufacturing</button>
-        <button type="button" class="ind-chip" data-value="Cleaning &amp; Maintenance">Cleaning &amp; Maintenance</button>
-        <button type="button" class="ind-chip" data-value="Service &amp; Professional">Service &amp; Professional</button>
-      </div>
-    </div>
     <button type="submit" class="btn">Create Account</button>
     <div class="terms-note">
       By signing up you agree to our
@@ -333,22 +319,14 @@
       }
     });
 
-    // Industry chip toggle
-    document.getElementById("signup-industry-chips").addEventListener("click", function(e) {
-      var chip = e.target.closest(".ind-chip");
-      if (chip) chip.classList.toggle("selected");
-    });
-
-    // Pre-select industries from industry-select.html
-    var preSelected = sessionStorage.getItem("signup_industries");
-    if (preSelected) {
-      try {
-        var preArr = JSON.parse(preSelected);
-        document.querySelectorAll("#signup-industry-chips .ind-chip").forEach(function(c) {
-          if (preArr.indexOf(c.getAttribute("data-value")) > -1) c.classList.add("selected");
-        });
-        sessionStorage.removeItem("signup_industries");
-      } catch(e) {}
+    // Redirect guard: if signup mode with no tool context and no industries, send to pricing
+    if (params.get("tab") === "signup") {
+      var hasToolContext = params.get("tool") || params.get("tier") || sessionStorage.getItem("trial_tool") || sessionStorage.getItem("trial_tier");
+      var hasIndustries = sessionStorage.getItem("signup_industries");
+      if (!hasToolContext && !hasIndustries) {
+        window.location.href = "/pricing-page.html";
+        return;
+      }
     }
 
     // Handle signup
@@ -359,9 +337,12 @@
       var password = document.getElementById("signup-password").value;
       var businessName = document.getElementById("signup-business").value;
       var phone = document.getElementById("signup-phone").value;
-      var selectedChips = document.querySelectorAll("#signup-industry-chips .ind-chip.selected");
-      var industries = Array.from(selectedChips).map(function(c) { return c.getAttribute("data-value"); });
-      if (industries.length === 0) { showError("Please select at least one industry."); return; }
+      var industries = [];
+      var storedIndustries = sessionStorage.getItem("signup_industries");
+      if (storedIndustries) {
+        try { industries = JSON.parse(storedIndustries); } catch(e) {}
+      }
+      if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
       var result = await signUp(email, password, businessName, phone, industries);
       if (result.success) {
         // Write trial activation to Supabase profiles
