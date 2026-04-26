@@ -77,12 +77,16 @@ window.DV_LOGIC = {
         .select('industry, business_name')
         .eq('id', this._userId)
         .maybeSingle();
+      if (res.error) {
+        console.error('[DV] Profile load error:', res.error.message);
+        return;
+      }
       if (res.data) {
         this._industries = Array.isArray(res.data.industry) ? res.data.industry : [];
         this._businessName = res.data.business_name || '';
       }
     } catch (e) {
-      console.error('[DV] Profile load error:', e.message);
+      console.error('[DV] Profile load exception:', e.message);
     }
   },
 
@@ -376,7 +380,7 @@ window.DV_LOGIC = {
       var contentText = 'Design render: ' + (render.prompt_used || '');
       var projectName = this._currentProject ? this._currentProject.project_name : '';
 
-      await this._supabase.from('content_library').upsert({
+      var upsertRes = await this._supabase.from('content_library').upsert({
         user_id: this._userId,
         source: 'tool',
         tool_source: 'design-viz',
@@ -397,16 +401,25 @@ window.DV_LOGIC = {
         first_used_at: new Date().toISOString()
       }, { onConflict: 'source_ref', ignoreDuplicates: true });
 
-      // Mark as final in dv_renders
-      await this._supabase.from('dv_renders')
+      if (upsertRes.error) {
+        console.error('[DV] CL upsert error:', upsertRes.error.message);
+        this._showError('Could not save to Content Library. Please try again.');
+        return;
+      }
+
+      var updateRes = await this._supabase.from('dv_renders')
         .update({ is_final: true })
         .eq('id', render.id);
+
+      if (updateRes.error) {
+        console.error('[DV] Render final flag error:', updateRes.error.message);
+      }
 
       render.is_final = true;
       this._renderGallery();
 
     } catch (e) {
-      console.error('[DV] Save to CL error:', e.message);
+      console.error('[DV] Save to CL exception:', e.message);
       this._showError('Could not save to Content Library. Please try again.');
     }
   },
