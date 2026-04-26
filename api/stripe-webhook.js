@@ -1,13 +1,15 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
+import https from 'https';
 
-// Disable body parsing for webhooks
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -122,8 +124,6 @@ async function confirmSubscription(session) {
 }
 
 async function activateTool(userId, toolId) {
-  const https = require('https');
-  
   const supabaseUrl = process.env.SUPABASE_URL;
   const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
