@@ -1,4 +1,7 @@
-module.exports = async (req, res) => {
+import https from 'https';
+import querystring from 'querystring';
+
+export default async function handler(req, res) {
   console.log('OAuth callback hit');
   console.log('Path:', req.url);
   console.log('Query params:', req.query);
@@ -37,7 +40,6 @@ module.exports = async (req, res) => {
   // ── META / FACEBOOK ──────────────────────────────────────────────────────────
   if (provider === 'meta') {
     try {
-      const https = require('https');
       const APP_BASE_URL = 'https://staxai.com.au';
       const REDIRECT_URI = `${APP_BASE_URL}/api/auth/meta/callback`;
       const GRAPH = 'v19.0';
@@ -128,7 +130,6 @@ module.exports = async (req, res) => {
       }
 
       // Step 5: Save to social_settings via upsert
-      const querystring = require('querystring');
       const updateData = {
         user_id:            userId,
         meta_connected:     true,
@@ -175,8 +176,6 @@ module.exports = async (req, res) => {
 
   // ── GOOGLE / MICROSOFT (existing logic unchanged) ────────────────────────────
   try {
-    const https = require('https');
-    const querystring = require('querystring');
 
     const clientId = provider === 'microsoft' 
       ? process.env.MICROSOFT_CLIENT_ID 

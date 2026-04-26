@@ -1,7 +1,8 @@
-const https = require('https');
-const zlib = require('zlib');
-const { randomUUID } = require('crypto');
-const { createClient } = require('@supabase/supabase-js');
+import https from 'https';
+import http from 'http';
+import zlib from 'zlib';
+import { randomUUID } from 'crypto';
+import { createClient } from '@supabase/supabase-js';
 
 function getSupabase() {
   return createClient(
@@ -364,7 +365,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category, a
 // WEBSITE SCRAPER
 async function scrapeWebsite(url) {
   return new Promise((resolve) => {
-    const mod = url.startsWith('https') ? require('https') : require('http');
+    const mod = url.startsWith('https') ? https : http;
     const req = mod.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; StaxAI-Scanner/1.0)', 'Accept': 'text/html' }, timeout: 10000 }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
         resolve(scrapeWebsite(res.headers.location));
@@ -634,5 +635,5 @@ function callClaude(requestBody, apiKey) {
   });
 }
 
-module.exports = handler;
-module.exports.config = { maxDuration: 300 };
+export default handler;
+export const config = { maxDuration: 300 };

@@ -1,13 +1,14 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from 'stripe';
 
-// Bundle tier price IDs — update when Stripe Live products are confirmed
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
 const BUNDLE_PRICE_IDS = {
   stax3:    process.env.STRIPE_PRICE_STAX3    || null,
   stax6:    process.env.STRIPE_PRICE_STAX6    || null,
   'stax-all': process.env.STRIPE_PRICE_STAX_ALL || null,
 };
 
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
