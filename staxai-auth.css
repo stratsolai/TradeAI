@@ -492,6 +492,16 @@ a:hover { opacity: 0.85; }
 /* Small button variant — compact padding for inline remove/action buttons */
 .btn-sm { padding: 6px 14px; font-size: var(--status-font-size); }
 
+/* Mobile tap target — 44px minimum height for all interactive buttons */
+@media (max-width: 600px) {
+  .btn-primary,
+  .btn-outline,
+  .btn-orange,
+  .btn-sm,
+  .btn-save,
+  .btn-back { min-height: 44px; }
+}
+
 /* ------------------------------------------------------------
    8. UNDERLINE PAGE TABS (.ptab / .tab-nav-item)
    ------------------------------------------------------------ */
