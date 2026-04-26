@@ -144,7 +144,11 @@ window.DV_LOGIC = {
     var zone = document.getElementById('dv-upload-zone');
     var fileInput = document.getElementById('dv-file-input');
     if (zone && fileInput) {
-      zone.addEventListener('click', function() { fileInput.click(); });
+      zone.addEventListener('click', function(e) {
+        if (e.target === fileInput) return;
+        fileInput.click();
+      });
+      fileInput.addEventListener('click', function(e) { e.stopPropagation(); });
       zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
       zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
       zone.addEventListener('drop', function(e) {
@@ -197,7 +201,7 @@ window.DV_LOGIC = {
       var img = document.getElementById('dv-photo-img');
       if (img) img.src = e.target.result;
       document.getElementById('dv-upload-zone').style.display = 'none';
-      document.getElementById('dv-photo-preview').style.display = 'block';
+      document.getElementById('dv-photo-preview').style.display = '';
       self._updateGenerateBtn();
     };
     reader.readAsDataURL(file);
