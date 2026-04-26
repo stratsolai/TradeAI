@@ -15,6 +15,7 @@
  */
 
 import https from 'https';
+import http from 'http';
 import { createClient } from '@supabase/supabase-js';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
@@ -41,7 +42,7 @@ function httpsPost(hostname, path, headers, body) {
 
 function downloadImage(url) {
   return new Promise(function(resolve, reject) {
-    var lib = url.startsWith('https') ? https : await import('http');
+    var lib = url.startsWith('https') ? https : http;
     lib.get(url, function(res) {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return downloadImage(res.headers.location).then(resolve).catch(reject);
