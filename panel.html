@@ -1254,6 +1254,7 @@ footer {
   </div>
 </div>
 
+<script src="/industry-modal.js"></script>
 <script>
   // 1. Dynamic loader IIFE
   (function() {
@@ -1300,11 +1301,31 @@ footer {
     if (priceEl) priceEl.textContent = tool.price || 'Coming Soon';
     var priceFooter = document.getElementById('panel-price-footer');
     if (priceFooter) priceFooter.textContent = tool.price || 'Coming Soon';
+    // Industry pre-select for industry-specific tools
+    var industryParam = new URLSearchParams(window.location.search).get('industry');
+    var KEY_TO_INDUSTRY = {
+      builder:'Building & Construction', electrician:'Electrical & Solar',
+      plumber:'Plumbing & Gas', hvac:'HVAC & Refrigeration',
+      landscaper:'Landscaping & Outdoor', pool:'Landscaping & Outdoor',
+      concreter:'Landscaping & Outdoor', fabricator:'Fabrication & Manufacturing',
+      manufacturer:'Fabrication & Manufacturing', cleaner:'Cleaning & Maintenance',
+      handyman:'Cleaning & Maintenance', service:'Service & Professional'
+    };
+    var preSelectIndustry = industryParam ? KEY_TO_INDUSTRY[industryParam] || null : null;
+
+    function triggerTrialModal(toolIdVal) {
+      var opts = {
+        onContinue: function() { window.location.href = '/login?tab=signup&tool=' + toolIdVal; }
+      };
+      if (preSelectIndustry) opts.preSelect = preSelectIndustry;
+      openIndustryModal(opts);
+    }
+
     var ctaBtn = document.getElementById('cta-btn');
     if (ctaBtn) {
       if (tool.status === 'built') {
         ctaBtn.textContent = 'Start 14 Day Free Trial';
-        ctaBtn.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
+        ctaBtn.addEventListener('click', function() { triggerTrialModal(tool.id); });
       } else {
         ctaBtn.textContent = 'Notify Me When Live';
         ctaBtn.href = '#';
@@ -1314,7 +1335,7 @@ footer {
     if (ctaFooter) {
       if (tool.status === 'built') {
         ctaFooter.textContent = 'Start 14 Day Free Trial';
-        ctaFooter.addEventListener('click', function() { window.location.href = '/login?tab=signup&tool=' + tool.id; });
+        ctaFooter.addEventListener('click', function() { triggerTrialModal(tool.id); });
       } else {
         ctaFooter.textContent = 'Notify Me When Live';
         ctaFooter.href = '#';
