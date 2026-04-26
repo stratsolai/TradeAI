@@ -72,6 +72,7 @@
   --modal-overlay-bg:   rgba(0,0,0,0.4);   /* Modal backdrop. Semi-transparent overlay behind modals */
   --modal-shadow:       0 8px 32px rgba(0,0,0,0.18); /* Modal drop shadow. Strong elevation for modal dialogs */
   --focus-ring:         rgba(26,84,144,0.08); /* Focus ring glow. Subtle blue outline for keyboard focus states */
+  --lightbox-overlay:   rgba(0,0,0,0.85);    /* Lightbox backdrop. Dark overlay for full-screen image preview */
 
   /* Typography — fonts, sizes, weights, line-heights, letter-spacing */
   --heading-font:       'Barlow Condensed', sans-serif; /* Heading typeface. All h1-h6, page titles, card titles */
