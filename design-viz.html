@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <title>Design Visualiser &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
+  <style>
+    .dv-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
+    .dv-action-row { display: flex; justify-content: flex-end; margin-bottom: 20px; }
+    .dv-project-cards { display: flex; flex-direction: column; gap: 12px; }
+    .dv-project-card { cursor: pointer; }
+    .dv-project-card .source-detail { padding: 8px 16px 14px; }
+    .dv-project-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .dv-upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: var(--card-radius);
+      padding: 40px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--btn-transition), background var(--btn-transition);
+    }
+    .dv-upload-zone:hover,
+    .dv-upload-zone.dragover {
+      border-color: var(--blue);
+      background: var(--blue-light);
+    }
+    .dv-upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
+    .dv-upload-text { font-size: var(--body-font-size); color: var(--text); margin-bottom: 4px; }
+    .dv-upload-hint { font-size: var(--note-font-size); color: var(--text-muted); }
+    .dv-photo-preview { margin-bottom: 16px; }
+    .dv-photo-preview img {
+      max-width: 300px;
+      max-height: 200px;
+      border-radius: var(--radius-thumbnail);
+      border: 1px solid var(--border);
+    }
+    .dv-render-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    .dv-render-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      transition: box-shadow var(--btn-transition);
+    }
+    .dv-render-card:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
+    .dv-render-card img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      display: block;
+      cursor: pointer;
+    }
+    .dv-render-meta { padding: 12px 16px; }
+    .dv-render-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .dv-render-prompt {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      line-height: var(--note-line-height);
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .dv-render-date {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      white-space: nowrap;
+    }
+    .dv-refine-row { display: flex; gap: var(--actions-gap); align-items: flex-end; }
+    .dv-refine-input { flex: 1; }
+    .dv-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .dv-detail-actions { margin-left: auto; display: flex; gap: 8px; }
+    .dv-lightbox {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .dv-lightbox.open { display: flex; }
+    .dv-lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: var(--card-radius);
+    }
+    @media (max-width: 600px) {
+      .dv-container { padding: var(--page-padding-mobile); }
+      .dv-render-grid { grid-template-columns: 1fr; }
+      .dv-upload-zone { padding: 24px 16px; }
+      .dv-refine-row { flex-direction: column; }
+      .dv-detail-actions { margin-left: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar">
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+    </a>
+    <div class="topbar-nav">
+      <a href="/dashboard.html">Dashboard</a>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <a href="/design-viz-settings.html" class="topbar-nav-link">Settings</a>
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="dv-container" id="page-wrap" style="display:none">
+    <div class="page-header">
+      <h1 class="page-title">Design Visualiser</h1>
+      <p class="page-subtitle">Create AI-powered visual renders for quotes and customer engagement.</p>
+    </div>
+
+    <div class="stats-bar" id="dv-stats">
+      <div class="stat-tile blue">
+        <div class="stat-value" id="stat-active">0</div>
+        <div class="stat-label">Active Projects</div>
+      </div>
+      <div class="stat-tile green">
+        <div class="stat-value" id="stat-completed">0</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-tile orange">
+        <div class="stat-value" id="stat-renders">0</div>
+        <div class="stat-label">Total Renders</div>
+      </div>
+    </div>
+
+    <!-- PROJECTS LIST VIEW -->
+    <div id="dv-projects-view">
+      <div class="dv-action-row">
+        <button class="btn-primary" id="dv-new-project-btn">New Project</button>
+      </div>
+      <div id="dv-project-list" class="dv-project-cards">
+        <div class="empty-state" id="dv-empty-projects">
+          <div class="empty-state-icon">🎨</div>
+          <h3>No projects yet</h3>
+          <p>Create your first project to start generating design renders.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJECT DETAIL VIEW -->
+    <div id="dv-project-detail" style="display:none">
+      <div class="dv-detail-header">
+        <button class="btn-back" id="dv-back-btn">&#8592; Back</button>
+        <h2 style="font-family:var(--heading-font); font-size:var(--heading-lg-size); margin:0" id="dv-detail-title"></h2>
+        <span class="badge badge-blue" id="dv-detail-status"></span>
+        <div class="dv-detail-actions">
+          <button class="btn-outline btn-sm" id="dv-edit-btn">Edit</button>
+          <button class="btn-sm" id="dv-status-btn" style="border:2px solid var(--green-dark); color:var(--green-dark); background:var(--white); border-radius:var(--btn-radius); font-family:var(--body-font); font-weight:var(--font-weight-semibold); cursor:pointer">Mark Complete</button>
+        </div>
+      </div>
+
+      <div id="dv-detail-info" class="settings-card" style="margin-bottom:24px">
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div class="settings-row-label">Customer</div>
+            <div id="dv-detail-customer" style="color:var(--text-secondary)"></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-label">Address</div>
+            <div id="dv-detail-address" style="color:var(--text-secondary)"></div>
+          </div>
+          <div class="settings-row">
+            <div class="settings-row-label">Notes</div>
+            <div id="dv-detail-notes" style="color:var(--text-secondary)"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UPLOAD + GENERATE -->
+      <div class="settings-card" style="margin-bottom:24px" id="dv-generate-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Generate Render</div>
+          <div class="settings-card-hint">Upload a photo and describe the changes you want to visualise.</div>
+        </div>
+        <div style="padding:24px">
+          <div class="dv-upload-zone" id="dv-upload-zone">
+            <div class="dv-upload-icon">📷</div>
+            <div class="dv-upload-text">Drop a photo here, or click to browse</div>
+            <div class="dv-upload-hint">Supports JPG, PNG up to 10 MB</div>
+            <input type="file" id="dv-file-input" accept="image/*" style="display:none">
+          </div>
+          <div class="dv-photo-preview" id="dv-photo-preview" style="display:none">
+            <img id="dv-photo-img" alt="Uploaded photo">
+            <div style="margin-top:8px">
+              <button class="btn-outline btn-sm" id="dv-change-photo-btn">Change Photo</button>
+            </div>
+          </div>
+
+          <div style="margin-top:16px">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Describe what you want to visualise</label>
+            <textarea class="form-input" id="dv-description" rows="3" placeholder="e.g. Add a timber deck to the backyard with built-in seating and planter boxes" style="min-height:var(--textarea-min-height)"></textarea>
+          </div>
+
+          <div style="margin-top:12px">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Render type (optional)</label>
+            <select class="form-input" id="dv-render-type" style="max-width:300px">
+              <option value="">Auto-detect</option>
+            </select>
+          </div>
+
+          <div style="margin-top:16px; display:flex; align-items:center; gap:12px">
+            <button class="btn-primary" id="dv-generate-btn" disabled>Generate Render</button>
+            <span id="dv-generating-msg" style="display:none; font-size:var(--note-font-size); color:var(--text-muted)">Generating render&hellip; this may take 15&ndash;30 seconds.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFINE -->
+      <div id="dv-refine-section" class="settings-card" style="margin-bottom:24px; display:none">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Refine</div>
+          <div class="settings-card-hint">Describe changes to apply to the latest render.</div>
+        </div>
+        <div style="padding:24px">
+          <div class="dv-refine-row">
+            <textarea class="form-input dv-refine-input" id="dv-refine-input" rows="2" placeholder="e.g. Make the deck wider, try a darker timber"></textarea>
+            <button class="btn-primary" id="dv-refine-btn">Refine</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RENDER GALLERY -->
+      <div class="section-label" style="margin-top:8px">Renders</div>
+      <div id="dv-render-gallery" class="dv-render-grid">
+        <div class="empty-state" id="dv-empty-renders" style="grid-column:1/-1">
+          <div class="empty-state-icon">🖼️</div>
+          <h3>No renders yet</h3>
+          <p>Upload a photo and describe your vision to generate your first render.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEW / EDIT PROJECT MODAL -->
+    <div class="perm-modal-overlay" id="dv-project-modal">
+      <div class="perm-modal">
+        <div class="perm-modal-title" id="dv-modal-title">New Project</div>
+        <div class="perm-modal-body" style="text-align:left">
+          <div style="margin-bottom:12px">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Project Name</label>
+            <input type="text" class="form-input" id="dv-modal-name" placeholder="e.g. Smith Kitchen Renovation">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Customer Name</label>
+            <input type="text" class="form-input" id="dv-modal-customer" placeholder="e.g. John Smith">
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Address</label>
+            <input type="text" class="form-input" id="dv-modal-address" placeholder="e.g. 42 Main St, Sydney">
+          </div>
+          <div style="margin-bottom:0">
+            <label style="font-size:var(--label-font-size); font-weight:var(--label-font-weight); display:block; margin-bottom:var(--label-margin-bottom)">Notes</label>
+            <textarea class="form-input" id="dv-modal-notes" rows="2" placeholder="Any additional context"></textarea>
+          </div>
+        </div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="dv-modal-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="dv-modal-save">Create Project</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGHTBOX -->
+    <div class="dv-lightbox" id="dv-lightbox">
+      <img id="dv-lightbox-img" alt="Render preview">
+    </div>
+
+    <!-- ERROR MODAL -->
+    <div class="save-msg" id="dv-error-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/design-viz-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.DV_LOGIC && window.DV_LOGIC.init) {
+          window.DV_LOGIC.init(supabase, session.user);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
