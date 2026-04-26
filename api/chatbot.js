@@ -323,22 +323,81 @@ async function sendNotification(supabase, userId, details) {
 
     var businessName = (profileRes.data && profileRes.data.business_name) || 'StaxAI';
 
-    var subject = 'Customer question needs your attention — ' + businessName;
-    var textBody = 'A customer asked a question your chatbot could not answer.\n\n';
-    if (details.customerName) textBody += 'Customer: ' + details.customerName + '\n';
+    var subject = 'New lead requires attention — ' + businessName;
+
+    // Plain text fallback
+    var textBody = 'NEW LEAD REQUIRES ATTENTION\n'
+      + businessName + '\n'
+      + '================================\n\n'
+      + 'A customer asked a question your chatbot could not answer and left their contact details.\n\n'
+      + 'CUSTOMER DETAILS\n';
+    if (details.customerName) textBody += 'Name: ' + details.customerName + '\n';
     if (details.customerEmail) textBody += 'Email: ' + details.customerEmail + '\n';
     if (details.customerPhone) textBody += 'Phone: ' + details.customerPhone + '\n';
-    textBody += '\nQuestions:\n';
+    textBody += '\nUNANSWERED QUESTIONS\n';
     details.questions.forEach(function(q) { textBody += '- ' + q + '\n'; });
-    textBody += '\nLog in to your StaxAI dashboard to review the full conversation.';
+    textBody += '\nView the full conversation: https://staxai.com.au/chatbot\n\n'
+      + '---\n'
+      + 'StaxAI — Your AI Business Assistant\n'
+      + 'https://staxai.com.au';
 
-    var htmlBody = '<p>A customer asked a question your chatbot could not answer.</p>';
-    if (details.customerName) htmlBody += '<p><strong>Customer:</strong> ' + details.customerName + '</p>';
-    if (details.customerEmail) htmlBody += '<p><strong>Email:</strong> ' + details.customerEmail + '</p>';
-    if (details.customerPhone) htmlBody += '<p><strong>Phone:</strong> ' + details.customerPhone + '</p>';
-    htmlBody += '<p><strong>Questions:</strong></p><ul>';
-    details.questions.forEach(function(q) { htmlBody += '<li>' + q + '</li>'; });
-    htmlBody += '</ul><p>Log in to your <a href="https://staxai.com.au/chatbot">StaxAI dashboard</a> to review the full conversation.</p>';
+    // Branded HTML email
+    var contactRows = '';
+    if (details.customerName) contactRows += '<tr><td style="padding:6px 12px;color:#888;font-size:13px;width:70px">Name</td><td style="padding:6px 12px;color:#333;font-size:14px;font-weight:600">' + details.customerName + '</td></tr>';
+    if (details.customerEmail) contactRows += '<tr><td style="padding:6px 12px;color:#888;font-size:13px;width:70px">Email</td><td style="padding:6px 12px;color:#333;font-size:14px"><a href="mailto:' + details.customerEmail + '" style="color:#4A6D8C;text-decoration:none">' + details.customerEmail + '</a></td></tr>';
+    if (details.customerPhone) contactRows += '<tr><td style="padding:6px 12px;color:#888;font-size:13px;width:70px">Phone</td><td style="padding:6px 12px;color:#333;font-size:14px"><a href="tel:' + details.customerPhone + '" style="color:#4A6D8C;text-decoration:none">' + details.customerPhone + '</a></td></tr>';
+
+    var questionItems = '';
+    details.questions.forEach(function(q) { questionItems += '<li style="padding:6px 0;color:#333;font-size:14px;line-height:1.5">' + q + '</li>'; });
+
+    var htmlBody = '<!DOCTYPE html>'
+      + '<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>'
+      + '<body style="margin:0;padding:0;background:#f5f7fa;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif">'
+      + '<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f7fa;padding:32px 16px">'
+      + '<tr><td align="center">'
+      + '<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%">'
+
+      // Header
+      + '<tr><td style="background:linear-gradient(135deg,#4A6D8C 0%,#3d5f7a 100%);padding:28px 32px;border-radius:12px 12px 0 0;text-align:center">'
+      + '<img src="https://staxai.com.au/icons/icon-192.png" alt="StaxAI" width="48" height="48" style="display:block;margin:0 auto 12px">'
+      + '<div style="color:#ffffff;font-size:20px;font-weight:700;letter-spacing:0.3px">New Lead Requires Attention</div>'
+      + '<div style="color:rgba(255,255,255,0.75);font-size:14px;margin-top:4px">' + businessName + '</div>'
+      + '</td></tr>'
+
+      // Body
+      + '<tr><td style="background:#ffffff;padding:32px">'
+
+      // Intro
+      + '<p style="margin:0 0 24px;color:#555;font-size:14px;line-height:1.6">A customer asked a question your chatbot could not answer and left their contact details for follow-up.</p>'
+
+      // Customer details card
+      + '<div style="background:#f8fafc;border:1px solid #e5e5e5;border-left:4px solid #4A6D8C;border-radius:8px;margin-bottom:24px;overflow:hidden">'
+      + '<div style="padding:12px 16px;border-bottom:1px solid #e5e5e5;font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em">Customer Details</div>'
+      + '<table width="100%" cellpadding="0" cellspacing="0">' + contactRows + '</table>'
+      + '</div>'
+
+      // Unanswered questions card
+      + '<div style="background:#f8fafc;border:1px solid #e5e5e5;border-left:4px solid #c4622a;border-radius:8px;margin-bottom:28px;overflow:hidden">'
+      + '<div style="padding:12px 16px;border-bottom:1px solid #e5e5e5;font-size:12px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:0.05em">Unanswered Questions</div>'
+      + '<div style="padding:8px 16px"><ul style="margin:0;padding:0 0 0 18px">' + questionItems + '</ul></div>'
+      + '</div>'
+
+      // CTA button
+      + '<table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">'
+      + '<a href="https://staxai.com.au/chatbot" style="display:inline-block;padding:14px 32px;background:#4A6D8C;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px">View Conversation</a>'
+      + '</td></tr></table>'
+
+      + '</td></tr>'
+
+      // Footer
+      + '<tr><td style="background:#f5f7fa;padding:20px 32px;border-top:1px solid #e5e5e5;border-radius:0 0 12px 12px;text-align:center">'
+      + '<div style="color:#888;font-size:12px">StaxAI — Your AI Business Assistant</div>'
+      + '<div style="margin-top:4px"><a href="https://staxai.com.au" style="color:#4A6D8C;font-size:12px;text-decoration:none">staxai.com.au</a></div>'
+      + '</td></tr>'
+
+      + '</table>'
+      + '</td></tr></table>'
+      + '</body></html>';
 
     var smtp2goKey = process.env.SMTP2GO_API_KEY;
     if (!smtp2goKey) {
