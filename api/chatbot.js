@@ -324,17 +324,46 @@ async function sendNotification(supabase, userId, details) {
     var businessName = (profileRes.data && profileRes.data.business_name) || 'StaxAI';
 
     var subject = 'Customer question needs your attention — ' + businessName;
-    var body = 'A customer asked a question your chatbot could not answer.\n\n';
-    if (details.customerName) body += 'Customer: ' + details.customerName + '\n';
-    if (details.customerEmail) body += 'Email: ' + details.customerEmail + '\n';
-    if (details.customerPhone) body += 'Phone: ' + details.customerPhone + '\n';
-    body += '\nQuestions:\n';
-    details.questions.forEach(function(q) { body += '- ' + q + '\n'; });
-    body += '\nLog in to your StaxAI dashboard to review the full conversation.';
+    var textBody = 'A customer asked a question your chatbot could not answer.\n\n';
+    if (details.customerName) textBody += 'Customer: ' + details.customerName + '\n';
+    if (details.customerEmail) textBody += 'Email: ' + details.customerEmail + '\n';
+    if (details.customerPhone) textBody += 'Phone: ' + details.customerPhone + '\n';
+    textBody += '\nQuestions:\n';
+    details.questions.forEach(function(q) { textBody += '- ' + q + '\n'; });
+    textBody += '\nLog in to your StaxAI dashboard to review the full conversation.';
 
-    // Store notification for owner review — email delivery requires
-    // an email service (e.g. Resend) to be configured
-    console.log('[CB] Notification for', notifEmail, ':', subject);
+    var htmlBody = '<p>A customer asked a question your chatbot could not answer.</p>';
+    if (details.customerName) htmlBody += '<p><strong>Customer:</strong> ' + details.customerName + '</p>';
+    if (details.customerEmail) htmlBody += '<p><strong>Email:</strong> ' + details.customerEmail + '</p>';
+    if (details.customerPhone) htmlBody += '<p><strong>Phone:</strong> ' + details.customerPhone + '</p>';
+    htmlBody += '<p><strong>Questions:</strong></p><ul>';
+    details.questions.forEach(function(q) { htmlBody += '<li>' + q + '</li>'; });
+    htmlBody += '</ul><p>Log in to your <a href="https://staxai.com.au/chatbot">StaxAI dashboard</a> to review the full conversation.</p>';
+
+    var resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) {
+      console.log('[CB] RESEND_API_KEY not configured — notification email skipped for', notifEmail);
+      return;
+    }
+
+    var emailPayload = {
+      from: 'StaxAI <notifications@staxai.com.au>',
+      to: [notifEmail],
+      subject: subject,
+      text: textBody,
+      html: htmlBody
+    };
+
+    var emailRes = await httpsPost('api.resend.com', '/emails', {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + resendKey
+    }, emailPayload);
+
+    if (emailRes.status >= 200 && emailRes.status < 300) {
+      console.log('[CB] Notification email sent to', notifEmail);
+    } else {
+      console.error('[CB] Resend API error:', emailRes.status, emailRes.body);
+    }
 
   } catch(e) {
     console.error('[CB] Notification error:', e.message);
