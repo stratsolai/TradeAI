@@ -24,8 +24,21 @@ window.DV_SETTINGS_LOGIC = {
       console.error('[DV Settings] Load exception:', e.message);
     }
 
+    this._bindTabs();
     this._bindCbMode();
     this._bindSave();
+  },
+
+  _bindTabs: function() {
+    document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active', 'settings-active'); });
+        document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active', 'settings-active');
+        var panel = document.getElementById('tab-' + btn.dataset.tab);
+        if (panel) panel.classList.add('active');
+      });
+    });
   },
 
   _saveSettings: async function(payload) {
