@@ -222,7 +222,7 @@ window.DV_LOGIC = {
     if (!this._uploadedPhotoFile) return null;
 
     var ext = this._uploadedPhotoFile.type.indexOf('png') !== -1 ? 'png' : 'jpg';
-    var path = 'dv-photos/' + this._userId + '/' + Date.now() + '.' + ext;
+    var path = this._userId + '/dv-photos/' + Date.now() + '.' + ext;
     var arrayBuffer = await this._uploadedPhotoFile.arrayBuffer();
 
     var result = await this._supabase.storage

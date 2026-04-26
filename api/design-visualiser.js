@@ -343,7 +343,7 @@ module.exports = async function(req, res) {
     console.log('[DV] Uploading render to storage...');
     var renderData = await downloadImage(ideogramUrl);
     var timestamp = Date.now();
-    var cleanPath = 'dv-renders/' + user.id + '/' + timestamp + '.jpg';
+    var cleanPath = user.id + '/dv-renders/' + timestamp + '.jpg';
 
     var uploadResult = await supabase.storage
       .from('cl-assets')
@@ -380,7 +380,7 @@ module.exports = async function(req, res) {
         var wmBusinessName = (profileResult.data && profileResult.data.business_name) || businessName || 'StaxAI';
 
         var wmBuffer = await applyWatermark(renderData.buffer, logoUrl, wmBusinessName);
-        var wmPath = 'dv-renders/' + user.id + '/' + timestamp + '-wm.jpg';
+        var wmPath = user.id + '/dv-renders/' + timestamp + '-wm.jpg';
 
         await supabase.storage
           .from('cl-assets')
