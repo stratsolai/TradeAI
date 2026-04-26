@@ -1,6 +1,7 @@
 // industry-modal.js — Reusable pre-login industry selection modal
-// Uses .perm-modal-overlay / .perm-modal pattern from staxai-auth.css
+// Mirrors .perm-modal-overlay / .perm-modal pattern from staxai-auth.css
 // and .filter-pill / .active pattern for industry chips
+// Self-contained styles so it works on pre-login dark-themed pages
 
 (function() {
   var INDUSTRIES = [
@@ -18,6 +19,31 @@
   var MAX_INDUSTRIES = 2;
   var overlayEl = null;
   var onContinueCallback = null;
+  var stylesInjected = false;
+
+  function injectStyles() {
+    if (stylesInjected) return;
+    stylesInjected = true;
+    var style = document.createElement('style');
+    style.textContent =
+      '#industry-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:500;align-items:center;justify-content:center;}' +
+      '#industry-modal-overlay.open{display:flex;}' +
+      '.ind-modal{background:#172035;border:1px solid rgba(255,255,255,0.16);border-radius:20px;max-width:520px;width:90%;padding:32px;box-shadow:0 8px 32px rgba(0,0,0,0.4);}' +
+      '.ind-modal-title{font-family:"Barlow Condensed",sans-serif;font-size:24px;font-weight:800;color:#fff;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px;}' +
+      '.ind-modal-sub{font-size:15px;color:rgba(255,255,255,0.65);margin-bottom:20px;font-family:"DM Sans",sans-serif;}' +
+      '.ind-modal-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}' +
+      '.ind-modal-chip{padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;}' +
+      '.ind-modal-chip:hover{border-color:rgba(255,255,255,0.35);color:#fff;background:rgba(255,255,255,0.1);}' +
+      '.ind-modal-chip.active{border-color:#c4622a;background:rgba(196,98,42,0.25);color:#fff;}' +
+      '.ind-modal-counter{font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:4px;font-family:"DM Sans",sans-serif;}' +
+      '.ind-modal-max-msg{font-size:13px;color:#ff8a8a;margin-bottom:8px;font-family:"DM Sans",sans-serif;}' +
+      '.ind-modal-actions{display:flex;gap:12px;justify-content:flex-end;margin-top:20px;}' +
+      '.ind-modal-cancel{background:transparent;color:rgba(255,255,255,0.7);border:1px solid rgba(255,255,255,0.2);border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all 0.2s;}' +
+      '.ind-modal-cancel:hover{background:rgba(255,255,255,0.08);color:#fff;}' +
+      '.ind-modal-continue{background:#c4622a;color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;font-family:"DM Sans",sans-serif;transition:all 0.2s;}' +
+      '.ind-modal-continue:hover:not(:disabled){background:#d4844a;}';
+    document.head.appendChild(style);
+  }
 
   function getSelected() {
     if (!overlayEl) return [];
@@ -49,27 +75,25 @@
 
   function buildModal() {
     if (overlayEl) return;
+    injectStyles();
 
     overlayEl = document.createElement('div');
-    overlayEl.className = 'perm-modal-overlay';
     overlayEl.id = 'industry-modal-overlay';
 
     var chipsHtml = INDUSTRIES.map(function(ind) {
-      return '<button type="button" class="filter-pill ind-modal-chip" data-industry="' + ind.name + '">' + ind.name + '</button>';
+      return '<button type="button" class="ind-modal-chip" data-industry="' + ind.name + '">' + ind.name + '</button>';
     }).join('');
 
     overlayEl.innerHTML =
-      '<div class="perm-modal" style="max-width:520px">' +
-        '<div class="perm-modal-title">Select your industries</div>' +
-        '<div class="perm-modal-body">' +
-          '<p style="margin-bottom:16px">Choose up to 2 that best describe your business</p>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">' + chipsHtml + '</div>' +
-          '<div class="ind-modal-counter" style="font-size:13px;color:var(--text-muted,#888);margin-bottom:4px">0 of 2 selected</div>' +
-          '<div class="ind-modal-max-msg" style="display:none;font-size:13px;color:var(--red,#dc3545);margin-bottom:8px">Maximum 2 industries — remove one to select another</div>' +
-        '</div>' +
-        '<div class="perm-modal-actions">' +
-          '<button type="button" class="perm-modal-cancel ind-modal-cancel">Cancel</button>' +
-          '<button type="button" class="perm-modal-continue ind-modal-continue" disabled style="opacity:0.4;cursor:not-allowed">Continue</button>' +
+      '<div class="ind-modal">' +
+        '<div class="ind-modal-title">Select your industries</div>' +
+        '<div class="ind-modal-sub">Choose up to 2 that best describe your business</div>' +
+        '<div class="ind-modal-chips">' + chipsHtml + '</div>' +
+        '<div class="ind-modal-counter">0 of 2 selected</div>' +
+        '<div class="ind-modal-max-msg" style="display:none">Maximum 2 industries — remove one to select another</div>' +
+        '<div class="ind-modal-actions">' +
+          '<button type="button" class="ind-modal-cancel">Cancel</button>' +
+          '<button type="button" class="ind-modal-continue" disabled style="opacity:0.4;cursor:not-allowed">Continue</button>' +
         '</div>' +
       '</div>';
 

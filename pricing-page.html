@@ -717,7 +717,7 @@
           <li>Up to 5 team members per subscription</li>
                    <li>Full access to Content Library</li>
 </ul>
-        <a class="bundle-cta" href="/login?tab=signup&tier=stax-all">Start Free Trial — All Tools</a>
+        <button class="bundle-cta" id="btn-stax-all">Start Free Trial — All Tools</button>
       </div>
 
     </div>
@@ -845,6 +845,7 @@
   </div>
 </footer>
 
+  <script src="/industry-modal.js"></script>
   <script>
     function handlePromptParam() {
       var params = new URLSearchParams(window.location.search);
@@ -858,10 +859,19 @@
       handlePromptParam();
 
       var b3 = document.getElementById('btn-stax3');
-      if (b3) b3.addEventListener('click', function() { window.location.href = 'tools.html?tier=stax3'; });
+      if (b3) b3.addEventListener('click', function() {
+        openIndustryModal({ onContinue: function() { window.location.href = 'tools.html?tier=stax3'; } });
+      });
 
       var b6 = document.getElementById('btn-stax6');
-      if (b6) b6.addEventListener('click', function() { window.location.href = 'tools.html?tier=stax6'; });
+      if (b6) b6.addEventListener('click', function() {
+        openIndustryModal({ onContinue: function() { window.location.href = 'tools.html?tier=stax6'; } });
+      });
+
+      var bAll = document.getElementById('btn-stax-all');
+      if (bAll) bAll.addEventListener('click', function() {
+        openIndustryModal({ onContinue: function() { window.location.href = '/login?tab=signup&tier=stax-all'; } });
+      });
 
       // FAQ accordion
       document.querySelectorAll('.faq-question').forEach(function(btn) {
