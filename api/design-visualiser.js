@@ -262,7 +262,7 @@ module.exports = async function(req, res) {
   var user = authResult.data.user;
 
   var body = req.body || {};
-  var photoUrl = body.photoUrl;
+  var photoPath = body.photoPath;
   var description = body.description;
   var renderType = body.renderType || null;
   var projectId = body.projectId || null;
@@ -273,7 +273,7 @@ module.exports = async function(req, res) {
   var mode = body.mode || 'initial';
   var previousDescription = body.previousDescription || '';
 
-  if (!photoUrl) return res.status(400).json({ error: 'photoUrl required' });
+  if (!photoPath) return res.status(400).json({ error: 'photoPath required' });
   if (!description) return res.status(400).json({ error: 'description required' });
 
   try {
@@ -306,10 +306,17 @@ module.exports = async function(req, res) {
     });
     console.log('[DV] Prompt:', renderPrompt);
 
-    // Download source image
-    console.log('[DV] Downloading source image...');
-    var sourceData = await downloadImage(photoUrl);
-    var extension = sourceData.contentType.indexOf('png') !== -1 ? 'png' : 'jpg';
+    // Download source image from cl-assets via Supabase client
+    console.log('[DV] Downloading source image from storage...');
+    var dlResult = await supabase.storage.from('cl-assets').download(photoPath);
+    if (dlResult.error) {
+      console.error('[DV] Storage download error:', dlResult.error);
+      return res.status(500).json({ error: 'Could not retrieve photo from storage.' });
+    }
+    var sourceArrayBuffer = await dlResult.data.arrayBuffer();
+    var sourceBuffer = Buffer.from(sourceArrayBuffer);
+    var extension = photoPath.indexOf('.png') !== -1 ? 'png' : 'jpg';
+    var sourceContentType = extension === 'png' ? 'image/png' : 'image/jpeg';
 
     // Call Ideogram v3 remix
     console.log('[DV] Calling Ideogram remix...');
@@ -321,9 +328,9 @@ module.exports = async function(req, res) {
         image_weight: 60,
         negative_prompt: 'blurry, low quality, distorted, ugly, overexposed, watermark, text overlay, cartoon, anime, illustration'
       },
-      sourceData.buffer,
+      sourceBuffer,
       'source.' + extension,
-      sourceData.contentType
+      sourceContentType
     );
 
     var remixResp = await ideogramMultipart(
@@ -359,11 +366,10 @@ module.exports = async function(req, res) {
       return res.status(500).json({ error: 'Could not save render. Please try again.' });
     }
 
-    var publicUrlData = supabase.storage.from('cl-assets').getPublicUrl(cleanPath);
-    var renderUrl = publicUrlData.data && publicUrlData.data.publicUrl;
+    var renderPath = cleanPath;
 
     // Watermark for CB widget renders if mode is 'watermarked'
-    var watermarkedUrl = null;
+    var watermarkedPath = null;
     if (sourceContext === 'cb_widget') {
       var settingsResult = await supabase
         .from('dv_settings')
@@ -391,8 +397,7 @@ module.exports = async function(req, res) {
           .from('cl-assets')
           .upload(wmPath, wmBuffer, { contentType: 'image/jpeg', upsert: false });
 
-        var wmUrlData = supabase.storage.from('cl-assets').getPublicUrl(wmPath);
-        watermarkedUrl = wmUrlData.data && wmUrlData.data.publicUrl;
+        watermarkedPath = wmPath;
       }
     }
 
@@ -402,8 +407,8 @@ module.exports = async function(req, res) {
       .insert({
         project_id: projectId,
         user_id: user.id,
-        original_photo_url: photoUrl,
-        render_url: renderUrl,
+        original_photo_url: photoPath,
+        render_url: renderPath,
         prompt_used: renderPrompt,
         render_type: renderType,
         is_final: false,
@@ -421,8 +426,8 @@ module.exports = async function(req, res) {
     return res.status(200).json({
       success: true,
       renderId: renderInsert.data ? renderInsert.data.id : null,
-      renderUrl: renderUrl,
-      watermarkedUrl: watermarkedUrl,
+      renderPath: renderPath,
+      watermarkedPath: watermarkedPath,
       promptUsed: renderPrompt
     });
 

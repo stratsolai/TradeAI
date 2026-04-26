@@ -6,7 +6,7 @@ window.DV_LOGIC = {
   _projects: [],
   _renders: [],
   _currentProject: null,
-  _uploadedPhotoUrl: null,
+  _uploadedPhotoPath: null,
   _uploadedPhotoFile: null,
   _industries: [],
   _editingProjectId: null,
@@ -209,7 +209,7 @@ window.DV_LOGIC = {
 
   _resetUpload: function() {
     this._uploadedPhotoFile = null;
-    this._uploadedPhotoUrl = null;
+    this._uploadedPhotoPath = null;
     document.getElementById('dv-upload-zone').style.display = '';
     document.getElementById('dv-photo-preview').style.display = 'none';
     var fileInput = document.getElementById('dv-file-input');
@@ -218,7 +218,7 @@ window.DV_LOGIC = {
   },
 
   _uploadPhotoToStorage: async function() {
-    if (this._uploadedPhotoUrl) return this._uploadedPhotoUrl;
+    if (this._uploadedPhotoPath) return this._uploadedPhotoPath;
     if (!this._uploadedPhotoFile) return null;
 
     var ext = this._uploadedPhotoFile.type.indexOf('png') !== -1 ? 'png' : 'jpg';
@@ -233,9 +233,13 @@ window.DV_LOGIC = {
       throw new Error('Could not upload photo: ' + result.error.message);
     }
 
-    var urlData = this._supabase.storage.from('cl-assets').getPublicUrl(path);
-    this._uploadedPhotoUrl = urlData.data && urlData.data.publicUrl;
-    return this._uploadedPhotoUrl;
+    this._uploadedPhotoPath = path;
+    return this._uploadedPhotoPath;
+  },
+
+  _storageUrl: function(path) {
+    if (!path) return '';
+    return this._supabase.storage.from('cl-assets').getPublicUrl(path).data.publicUrl;
   },
 
   _updateGenerateBtn: function() {
@@ -255,8 +259,8 @@ window.DV_LOGIC = {
     if (msg) msg.style.display = 'inline';
 
     try {
-      var photoUrl = await this._uploadPhotoToStorage();
-      if (!photoUrl) throw new Error('Photo upload failed');
+      var photoPath = await this._uploadPhotoToStorage();
+      if (!photoPath) throw new Error('Photo upload failed');
 
       var desc = document.getElementById('dv-description');
       var typeSelect = document.getElementById('dv-render-type');
@@ -274,7 +278,7 @@ window.DV_LOGIC = {
           'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
-          photoUrl: photoUrl,
+          photoPath: photoPath,
           description: description,
           renderType: renderType,
           projectId: this._currentProject ? this._currentProject.id : null,
@@ -334,7 +338,7 @@ window.DV_LOGIC = {
           'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
-          photoUrl: latestRender.render_url,
+          photoPath: latestRender.render_url,
           description: refinement,
           renderType: latestRender.render_type || '',
           projectId: this._currentProject ? this._currentProject.id : null,
@@ -694,8 +698,9 @@ window.DV_LOGIC = {
       var dateStr = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })
         + ' ' + date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
 
+      var displayUrl = self._storageUrl(r.render_url);
       html += '<div class="dv-render-card" data-render-id="' + r.id + '">'
-        + '<img src="' + escHtml(r.render_url) + '" alt="Design render" loading="lazy">'
+        + '<img src="' + escHtml(displayUrl) + '" alt="Design render" loading="lazy">'
         + '<div class="dv-render-meta">'
         + '<div class="dv-render-prompt">' + escHtml(r.prompt_used || '') + '</div>'
         + '<div class="dv-render-meta-row">'
