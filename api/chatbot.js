@@ -340,29 +340,29 @@ async function sendNotification(supabase, userId, details) {
     details.questions.forEach(function(q) { htmlBody += '<li>' + q + '</li>'; });
     htmlBody += '</ul><p>Log in to your <a href="https://staxai.com.au/chatbot">StaxAI dashboard</a> to review the full conversation.</p>';
 
-    var resendKey = process.env.RESEND_API_KEY;
-    if (!resendKey) {
-      console.log('[CB] RESEND_API_KEY not configured — notification email skipped for', notifEmail);
+    var smtp2goKey = process.env.SMTP2GO_API_KEY;
+    if (!smtp2goKey) {
+      console.log('[CB] SMTP2GO_API_KEY not configured — notification email skipped for', notifEmail);
       return;
     }
 
     var emailPayload = {
-      from: 'StaxAI <notifications@staxai.com.au>',
+      api_key: smtp2goKey,
+      sender: 'StaxAI <notifications@staxai.com.au>',
       to: [notifEmail],
       subject: subject,
-      text: textBody,
-      html: htmlBody
+      text_body: textBody,
+      html_body: htmlBody
     };
 
-    var emailRes = await httpsPost('api.resend.com', '/emails', {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + resendKey
+    var emailRes = await httpsPost('api.smtp2go.com', '/v3/email/send', {
+      'Content-Type': 'application/json'
     }, emailPayload);
 
-    if (emailRes.status >= 200 && emailRes.status < 300) {
+    if (emailRes.status >= 200 && emailRes.status < 300 && emailRes.body && emailRes.body.data && emailRes.body.data.succeeded > 0) {
       console.log('[CB] Notification email sent to', notifEmail);
     } else {
-      console.error('[CB] Resend API error:', emailRes.status, emailRes.body);
+      console.error('[CB] SMTP2Go API error:', emailRes.status, emailRes.body);
     }
 
   } catch(e) {
