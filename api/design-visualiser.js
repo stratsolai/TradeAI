@@ -2,20 +2,20 @@
  * api/design-visualiser.js
  *
  * Design Visualiser render generation endpoint.
- * Takes a source photo URL + description, generates an AI render via Ideogram,
- * stores the result in cl-assets, and saves to dv_renders.
+ * Takes a source photo storage path + description, generates an AI render
+ * via Ideogram, stores the result in cl-assets, and saves to dv_renders.
  *
  * Supports watermarked renders for chatbot widget integration.
  *
  * ENV VARS REQUIRED:
  *   IDEOGRAM_API_KEY
- *   CLAUDE_API_KEY
+ *   ANTHROPIC_API_KEY
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_KEY
  */
 
-const https = require('https');
-const { createClient } = require('@supabase/supabase-js');
+import https from 'https';
+import { createClient } from '@supabase/supabase-js';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -41,7 +41,7 @@ function httpsPost(hostname, path, headers, body) {
 
 function downloadImage(url) {
   return new Promise(function(resolve, reject) {
-    var lib = url.startsWith('https') ? https : require('http');
+    var lib = url.startsWith('https') ? https : await import('http');
     lib.get(url, function(res) {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return downloadImage(res.headers.location).then(resolve).catch(reject);
@@ -186,7 +186,7 @@ async function buildRenderPrompt(claudeKey, params) {
 // ── WATERMARK ────────────────────────────────────────────────────────────────
 
 async function applyWatermark(imageBuffer, logoUrl, businessName) {
-  var Jimp = require('jimp');
+  var Jimp = (await import('jimp')).default;
   var image = await Jimp.read(imageBuffer);
   var w = image.getWidth();
   var h = image.getHeight();
@@ -237,7 +237,7 @@ async function applyWatermark(imageBuffer, logoUrl, businessName) {
 
 // ── MAIN HANDLER ─────────────────────────────────────────────────────────────
 
-module.exports = async function(req, res) {
+export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   var authHeader = req.headers.authorization || '';
@@ -247,11 +247,11 @@ module.exports = async function(req, res) {
   var supabaseUrl = process.env.SUPABASE_URL;
   var supabaseKey = process.env.SUPABASE_SERVICE_KEY;
   var ideogramKey = process.env.IDEOGRAM_API_KEY;
-  var claudeKey = process.env.CLAUDE_API_KEY;
+  var claudeKey = process.env.ANTHROPIC_API_KEY;
 
   if (!supabaseUrl || !supabaseKey) return res.status(500).json({ error: 'Supabase not configured' });
   if (!ideogramKey) return res.status(500).json({ error: 'IDEOGRAM_API_KEY not configured' });
-  if (!claudeKey) return res.status(500).json({ error: 'CLAUDE_API_KEY not configured' });
+  if (!claudeKey) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not configured' });
 
   var supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -435,4 +435,4 @@ module.exports = async function(req, res) {
     console.error('[DV] Unexpected error:', err);
     return res.status(500).json({ error: err.message || 'Unexpected error generating render' });
   }
-};
+}
