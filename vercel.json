@@ -14,6 +14,9 @@
     "api/ideogram-generate.js": {
       "maxDuration": 60
     },
+    "api/design-visualiser.js": {
+      "maxDuration": 60
+    },
     "api/strategic-plan-generate.js": {
       "includeFiles": "node_modules/docx/**"
     }
@@ -120,6 +123,14 @@
     {
       "source": "/social/settings",
       "destination": "/social-settings.html"
+    },
+    {
+      "source": "/design",
+      "destination": "/design-viz.html"
+    },
+    {
+      "source": "/design/settings",
+      "destination": "/design-viz-settings.html"
     },
     {
       "source": "/account",
