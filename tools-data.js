@@ -138,12 +138,13 @@ const CORE_TOOLS = [
   },
   {
     id: "design-viz",
-    status: "pending",
+    status: "built",
     icon: "🎨",
     category: "marketing",
     title: ["Design", "Visualiser"],
     desc: "Upload a site photo, describe the project, and AI generates a professional concept visualisation. Request variations - different colours, materials, or layouts - until it is perfect. Use it in your quotes, tenders, and marketing. Activate it with your website chatbot and customers can generate their own renders.",
     price: "$89",
+    priceId: "price_1TQLbEHnoVvjo5gxIuSSm7tH",
   }
 ];
 
