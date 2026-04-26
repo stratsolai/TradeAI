@@ -32,7 +32,5 @@ if (typeof window !== 'undefined') {
   window.upgradeSharepointEntry = upgradeSharepointEntry;
 }
 
-// Node/Vercel: CommonJS export
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports.upgradeSharepointEntry = upgradeSharepointEntry;
-}
+// ESM export for Node/Vercel
+export { upgradeSharepointEntry };
