@@ -135,29 +135,30 @@ async function buildRenderPrompt(claudeKey, params) {
     .join('\n');
 
   var systemPrompt = 'You are an expert AI image prompt writer for design visualisation renders.\n'
-    + 'You write prompts for Ideogram 3.0 — an AI image generator that modifies existing photos to show proposed changes.\n\n'
+    + 'You write prompts for Ideogram 3.0 remix mode — an AI image generator that takes an existing photo and applies targeted modifications while preserving the rest of the scene.\n\n'
+    + 'CRITICAL: The source photo is a real customer photo. The output MUST look like the same location with specific changes applied. Do NOT describe a new scene or environment.\n\n'
     + 'Your prompts must:\n'
-    + '- Describe the MODIFICATIONS to apply to the source photo\n'
-    + '- Be specific about materials, colours, dimensions and placement\n'
-    + '- Include lighting and perspective cues to match the original photo\n'
-    + '- Maintain photorealistic quality — the result should look like a real photo\n'
-    + '- Be 2-4 sentences maximum\n'
-    + '- Focus on what CHANGES, not what stays the same\n\n'
+    + '- ONLY describe the specific additions or changes to apply — never describe the existing scene\n'
+    + '- Start with "Modify this photo to" or "Add" or "Replace" — never describe the whole image\n'
+    + '- Be specific about materials, colours, dimensions and placement of the CHANGES\n'
+    + '- Keep the existing structure, lighting, perspective and surroundings exactly as they are\n'
+    + '- Maintain photorealistic quality matching the original photo\n'
+    + '- Be 1-3 sentences maximum\n\n'
     + 'Industry context for this business:\n'
     + (industryLines || 'General trades and services') + '\n\n'
-    + 'Respond with ONLY the image modification prompt. No preamble, no explanation.';
+    + 'Respond with ONLY the modification prompt. No preamble, no explanation.';
 
   var userPrompt;
   if (params.mode === 'refine') {
     userPrompt = 'The customer wants to refine a previous render.\n\n'
       + 'Previous render was based on: "' + (params.previousDescription || '') + '"\n\n'
       + 'Requested changes: "' + params.description + '"\n\n'
-      + 'Write an Ideogram prompt that applies these refinements while maintaining the previous changes. The prompt should describe the complete desired outcome (not just the changes).';
+      + 'Write a short Ideogram remix prompt that applies ONLY these refinements. Do not describe the whole scene — just the targeted changes.';
   } else {
-    userPrompt = 'Generate an Ideogram image modification prompt for this design visualisation request:\n\n'
-      + 'Customer\'s description: "' + params.description + '"\n'
-      + (params.renderType ? 'Render type: ' + params.renderType + '\n' : '')
-      + '\nWrite a prompt that will modify the uploaded photo to show the requested changes with photorealistic quality.';
+    userPrompt = 'A customer has uploaded a photo of their property. They want to see what it would look like with specific changes.\n\n'
+      + 'Requested changes: "' + params.description + '"\n'
+      + (params.renderType ? 'Type of work: ' + params.renderType + '\n' : '')
+      + '\nWrite a short Ideogram remix prompt that describes ONLY the modifications to apply to the existing photo. Do not describe the background, surroundings or existing structures.';
   }
 
   var response = await httpsPost(
@@ -326,7 +327,7 @@ export default async function handler(req, res) {
         prompt: renderPrompt,
         rendering_speed: 'BALANCED',
         magic_prompt_option: 'OFF',
-        image_weight: 60,
+        image_weight: 80,
         negative_prompt: 'blurry, low quality, distorted, ugly, overexposed, watermark, text overlay, cartoon, anime, illustration'
       },
       sourceBuffer,
