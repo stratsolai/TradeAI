@@ -20,8 +20,9 @@
  *   SUPABASE_SERVICE_KEY  — already exists
  */
 
-const https = require('https');
-const { createClient } = require('@supabase/supabase-js');
+import https from 'https';
+import http from 'http';
+import { createClient } from '@supabase/supabase-js';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ function httpsPost(hostname, path, headers, body) {
 // Download a remote image and return as a Buffer + content-type
 function downloadImage(url) {
   return new Promise((resolve, reject) => {
-    const lib = url.startsWith('https') ? https : require('http');
+    const lib = url.startsWith('https') ? https : http;
     lib.get(url, (res) => {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return downloadImage(res.headers.location).then(resolve).catch(reject);
@@ -206,7 +207,7 @@ function getAspectRatio(platforms) {
 
 // ─── MAIN HANDLER ─────────────────────────────────────────────────────────────
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

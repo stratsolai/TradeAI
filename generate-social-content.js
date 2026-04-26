@@ -1,4 +1,6 @@
-module.exports = async (req, res) => {
+import https from 'https';
+
+export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
@@ -15,7 +17,6 @@ module.exports = async (req, res) => {
   if (!claudeApiKey) return res.status(500).json({ error: 'Claude API not configured' });
 
   try {
-    const https = require('https');
 
     // ─── MARKETING DNA SECTION ────────────────────────────────────────────
     // This is injected into every prompt to keep all content on-brand

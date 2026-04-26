@@ -18,7 +18,7 @@
 // State: base64-encoded JSON { userId, provider } — the standalone callbacks
 // decode this to resolve the user.
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const { provider, userId } = req.query;

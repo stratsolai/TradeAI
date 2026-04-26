@@ -12,8 +12,8 @@
  *      SUPABASE_URL, SUPABASE_SERVICE_KEY
  */
 
-const https = require('https');
-const { createClient } = require('@supabase/supabase-js');
+import https from 'https';
+import { createClient } from '@supabase/supabase-js';
 
 const GRAPH_VERSION = 'v19.0';
 
@@ -324,7 +324,7 @@ async function handleGetPages(req, res) {
 
 // ─── MAIN ROUTER ─────────────────────────────────────────────────────────────
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');

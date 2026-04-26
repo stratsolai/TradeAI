@@ -1,4 +1,6 @@
-module.exports = async (req, res) => {
+import https from 'https';
+
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
 
@@ -20,7 +22,6 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const https = require('https');
 
     const userData = await new Promise((resolve, reject) => {
       const url = new URL(`${supabaseUrl}/rest/v1/profiles`);
