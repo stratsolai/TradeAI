@@ -613,9 +613,9 @@ window.DV_LOGIC = {
         + '<div class="source-detail">'
         + '<div class="dv-project-meta">';
       if (p.customer_name) html += '<span>' + escHtml(p.customer_name) + '</span>';
-      if (p.address) html += '<span style="color:var(--text-muted)">' + escHtml(p.address) + '</span>';
+      if (p.address) html += '<span class="text-muted">' + escHtml(p.address) + '</span>';
       html += '<span class="badge badge-grey">' + renderCount + ' render' + (renderCount !== 1 ? 's' : '') + '</span>'
-        + '<span style="color:var(--text-muted); font-size:var(--badge-font-size)">' + dateStr + '</span>'
+        + '<span class="item-upload-date">' + dateStr + '</span>'
         + '</div>'
         + '</div>'
         + '</div>';
@@ -653,12 +653,12 @@ window.DV_LOGIC = {
     if (statusBtn) {
       if (p.status === 'completed') {
         statusBtn.textContent = 'Reopen';
-        statusBtn.style.borderColor = 'var(--blue)';
-        statusBtn.style.color = 'var(--blue)';
+        statusBtn.classList.remove('review-approve-btn');
+        statusBtn.classList.add('btn-outline');
       } else {
         statusBtn.textContent = 'Mark Complete';
-        statusBtn.style.borderColor = 'var(--green-dark)';
-        statusBtn.style.color = 'var(--green-dark)';
+        statusBtn.classList.remove('btn-outline');
+        statusBtn.classList.add('review-approve-btn');
       }
     }
 
@@ -696,7 +696,7 @@ window.DV_LOGIC = {
         + '<div class="dv-render-prompt">' + escHtml(r.prompt_used || '') + '</div>'
         + '<div class="dv-render-meta-row">'
         + '<span class="dv-render-date">' + dateStr + '</span>'
-        + '<div style="display:flex; gap:6px; align-items:center">';
+        + '<div class="action-row">';
 
       if (r.is_final) {
         html += '<span class="badge badge-green">Saved to Library</span>';
