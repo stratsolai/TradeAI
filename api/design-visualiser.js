@@ -46,12 +46,17 @@ function downloadImage(url) {
       if (res.statusCode === 301 || res.statusCode === 302) {
         return downloadImage(res.headers.location).then(resolve).catch(reject);
       }
+      if (res.statusCode < 200 || res.statusCode >= 300) {
+        return reject(new Error('Image download failed with status ' + res.statusCode));
+      }
       var chunks = [];
       res.on('data', function(chunk) { chunks.push(chunk); });
       res.on('end', function() {
+        var rawType = res.headers['content-type'] || 'image/jpeg';
+        var contentType = rawType.split(';')[0].trim();
         resolve({
           buffer: Buffer.concat(chunks),
-          contentType: res.headers['content-type'] || 'image/jpeg'
+          contentType: contentType
         });
       });
     }).on('error', reject);
