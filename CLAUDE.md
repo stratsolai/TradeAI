@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 21, 2026
+# Updated: April 27, 2026
 
 ---
 
@@ -95,23 +95,14 @@ Note: Industry News & Updates tool rebuild complete. Government
 tender API integration blocked on external registrations —
 return to complete this task once API access confirmed.
 
-### Task 22 — Industry News & Updates Digest Rebuild
-
-In progress. Backend complete (commit dd10602). Display
-rebuild and settings page update in progress. Governed by
-StaxAI-ID-Rebuild-Spec-v1_1.
-
-### Task 23 — Strategic Plan Tool Rebuild
-
-Complete rebuild to bring up to current platform standards.
-Assessment, backend fixes, structural rebuild, stylesheet
-integration, missing features, and functional review.
-
 ### Task 24 — Chatbot Tool Rebuild
 
-Complete rebuild to bring up to current platform standards.
-Assessment, backend fixes, structural rebuild, stylesheet
-integration, missing features, and functional review.
+Rebuild complete. Platform audit underway per Platform Audit
+Standard v1.4. Integration test and functional review pending.
+
+Files rebuilt: api/chatbot.js, api/chatbot-widget-settings.js,
+chatbot.html, chatbot-logic.js, chatbot-settings.html,
+chatbot-settings-logic.js, widget.js
 
 ### Task 25 — Social Media Tool Rebuild
 
@@ -121,12 +112,19 @@ integration, missing features, and functional review.
 
 ### Task 26 — Dashboard Rebuild
 
-Pre-Dashboard build requirements must be resolved in a
-dedicated planning session before the Dashboard rebuild
-begins. No Dashboard build work starts until all three are
-agreed and specced: Force Business Profile completion on
-first login, STAX All industry selection logic, Industry
-taxonomy review.
+No longer blocked. Ready to start after CB audit passes.
+
+### Task 27 — DV API Update
+
+Update Design Visualiser from Ideogram to REimagine Home API.
+Blocked on API access — email sent to info@reimaginehome.ai.
+DV Spec v1.2 approved.
+
+### Task 28 — Full Platform Testing on Demo Data
+
+End-to-end testing of all tools using simulated test environment.
+Blocked on Dashboard rebuild and Test Environment Setup Spec.
+All tools require full testing once demo data is populated.
 
 ---
 
@@ -215,6 +213,21 @@ taxonomy review.
 - Serper.dev usage monitoring — review credit consumption
   regularly via serper.dev dashboard. Usage tracking to be
   added to admin page when built.
+- SMTP2Go is the platform email service. Env var SMTP2GO_API_KEY
+  in Vercel. From address: notifications@staxai.com.au. First
+  use is CB notification emails. Supabase Auth still handles
+  auth emails (password reset, signup) via its own SMTP.
+- DV switched from Ideogram to REimagine Home API (April 2026).
+  DV Spec v1.2 reflects this change. Pending API access.
+- CB notification emails have unsubscribe footer from SMTP2Go
+  API key settings — review appearance when testing.
+- Strategic Plan, News Digest, and Email Assistant builds
+  complete — all passed audit, integration test, and functional
+  review.
+- BI Dashboard build and audit complete. Integration test
+  waiting on demo data population.
+- Design Visualiser build and audit complete. API update
+  required before testing.
 
 ---
 
@@ -300,10 +313,12 @@ StaxAI is an AI-powered SaaS platform for Australian SME businesses. It gives bu
 | Hosting     | Vercel Pro — auto-deploys from GitHub main               |
 | Database    | Supabase (PostgreSQL)                                    |
 | Auth        | Supabase Auth — email/password + session management      |
+| Email       | SMTP2Go — transactional emails via REST API.             |
+|             | Env var: SMTP2GO_API_KEY. From: notifications@staxai.com.au |
 | AI          | Anthropic Claude API — claude-haiku-4-5 for internal     |
 |             | tools, claude-sonnet-4-6 for customer-facing outputs.    |
 |             | Never exposed to browser.                                |
-| AI Graphics | Ideogram API                                             |
+| AI Graphics | Ideogram API (Social Media). REimagine Home API (DV — pending). |
 | Payments    | Stripe — LIVE MODE for testing. Real money handling.     |
 | Social      | Meta Graph API v19.0                                     |
 | News        | Serper.dev — API for news search functionality            |
