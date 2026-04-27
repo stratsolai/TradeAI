@@ -1,240 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <title>Chatbot Settings — StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <title>Chatbot Settings &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --bg: #F5F7FA;
-      --card: #FFFFFF;
-      --topbar: #4A6D8C;
-      --orange: #C4622A;
-      --blue: #1A5490;
-      --text: #333333;
-      --muted: #888888;
-      --border: rgba(0,0,0,0.08);
-      --shadow: 0 2px 8px rgba(0,0,0,0.15);
-      --radius: 12px;
-    }
-
-    body {
-      font-family: "DM Sans", sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    .topbar {
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    .page-wrap { padding: var(--settings-page-padding); }
+    .cb-avail-grid { margin-top: 8px; }
+    .cb-avail-day {
       display: flex;
       align-items: center;
-      padding: 0 24px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-    .topbar-logo img { height: 38px; }
-    .topbar-nav { margin-left: 64px; display: flex; align-items: center; gap: 28px; }
-    .topbar-back { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-back:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
-    .topbar-nav-link { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-nav-link:hover { color: #fff; }
-    .topbar-account-wrap { position: relative; }
-    .topbar-logo { display: flex; align-items: center; text-decoration: none; flex-shrink: 0; }
-    .topbar-logo img { height: 38px; }
-    .topbar-back {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-back:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right { display: flex; align-items: center; gap: 20px; position: relative; }
-    .topbar-nav-link {
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-    }
-    .topbar-nav-link:hover { color: #fff; }
-    .topbar-account-wrap { position: relative; }
-    .topbar-logo { display: flex; align-items: center; text-decoration: none; }
-    .topbar-logo img { height: 38px; }
-    .topbar-nav { display: flex; align-items: center; gap: 24px; }
-    .topbar-nav a { color: rgba(255,255,255,0.75); font-size: 16px; font-weight: 600; text-decoration: none; }
-    .topbar-nav a:hover { color: #fff; }
-    .topbar-right { display: flex; align-items: center; gap: 16px; position: relative; }
-    .account-btn {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.75);
-      font-size: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      padding: 0;
-      font-family: "DM Sans", sans-serif;
-    }
-    .account-btn:hover { color: #fff; }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      min-width: 200px;
-      z-index: 200;
-    }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: #888888; border-bottom: 1px solid rgba(0,0,0,0.08); }
-    .account-dropdown a { display: block; padding: 10px 16px; font-size: 14px; font-weight: 600; color: #333333; text-decoration: none; cursor: pointer; }
-    .account-dropdown a:hover { background: #F5F7FA; }
-
-    .page-wrap { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
-    .page-header { margin-bottom: 28px; }
-    .page-header h1 { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 32px; color: #1A5490; }
-    .page-header p { font-size: 15px; color: #888888; margin-top: 4px; }
-
-    .settings-tabs {
-      display: flex;
-      gap: 8px;
-      padding: 20px 0 16px 0;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
       flex-wrap: wrap;
     }
-    .settings-tab {
-      display: flex;
+    .cb-avail-day:last-child { border-bottom: none; }
+    .cb-avail-day-name {
+      font-size: var(--body-font-size);
+      font-weight: var(--font-weight-semibold);
+      width: 100px;
+      flex-shrink: 0;
+    }
+    .cb-avail-toggle { display: flex; align-items: center; gap: 6px; font-size: var(--note-font-size); cursor: pointer; }
+    .cb-avail-toggle input { width: var(--checkbox-size); height: var(--checkbox-size); cursor: pointer; }
+    .cb-avail-slots {
+      display: none;
       align-items: center;
-      padding: 10px 16px;
-      border-radius: 10px;
-      border: 1px solid rgba(0,0,0,0.10);
-      border-left-width: 4px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555555;
-      background: #fff;
-      cursor: pointer;
-      font-family: "DM Sans", sans-serif;
-      transition: opacity 0.15s;
+      gap: 12px;
+      flex-wrap: wrap;
     }
-    .settings-tab[data-tab="knowledge"] { border-left-color: #1A5490; }
-    .settings-tab[data-tab="faq"] { border-left-color: #C4622A; }
-    .settings-tab[data-tab="greeting"] { border-left-color: #2e7d32; }
-    .settings-tab[data-tab="appointments"] { border-left-color: #6a1b9a; }
-    .settings-tab[data-tab="widget"] { border-left-color: #00695c; }
-    .settings-tab[data-tab="design-viz"] { border-left-color: #e65100; }
-    .settings-tab:hover { opacity: 0.8; }
-    .settings-tab.active { background: #f0f4f8; font-weight: 700; color: #1A5490; }
-    .settings-panel {
-      background: #FFFFFF;
-      border-radius: 12px;
-      border: 1px solid rgba(0,0,0,0.08);
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    .cb-avail-slots.visible { display: flex; }
+    .cb-avail-slot { display: flex; align-items: center; gap: 4px; font-size: var(--note-font-size); cursor: pointer; }
+    .cb-avail-slot input { width: var(--checkbox-size); height: var(--checkbox-size); cursor: pointer; }
+    .cb-domain-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+    .cb-domain-row { display: flex; align-items: center; gap: 8px; }
+    .cb-domain-input { width: 360px; flex: 0 0 360px; }
+    .cb-embed-code {
+      font-family: monospace;
+      font-size: var(--badge-font-size);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--input-radius);
+      padding: var(--input-padding);
+      width: 100%;
+      resize: none;
     }
-    .tab-panel { display: none; padding: 28px; }
-    .tab-panel.active { display: block; }
-    .panel-intro { margin-bottom: 20px; }
-    .tab-panel h2 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-weight: 800;
-      font-size: 22px;
-      color: #1A5490;
-      margin-bottom: 4px;
-    }
-    .tab-panel h3 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-weight: 800;
-      font-size: 16px;
-      color: #1A5490;
-      margin-bottom: 12px;
-    }
-    .panel-intro p { font-size: 14px; color: #888888; }
-    
-
-    .form-row { margin-bottom: 16px; }
-    .form-row label { display: block; font-size: 13px; font-weight: 600; color: #333333; margin-bottom: 6px; }
-    .form-row .help-text { font-size: 12px; color: #888888; margin-top: 4px; }
-    input[type="text"], textarea, select { width: 100%; padding: 10px 14px; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; font-size: 14px; font-family: "DM Sans", sans-serif; color: #333333; background: #fff; outline: none; }
-    input[type="text"]:focus, textarea:focus, select:focus { border-color: #1A5490; }
-    textarea { resize: vertical; }
-
-    .btn-primary { background: #4A6D8C; color: #fff; font-size: 14px; font-weight: 700; padding: 10px 22px; border: none; border-radius: 8px; cursor: pointer; }
-    .btn-primary:hover { background: #3a5a78; }
-    .btn-secondary { background: #fff; color: #1A5490; font-size: 14px; font-weight: 600; padding: 10px 22px; border: 1px solid #1A5490; border-radius: 8px; cursor: pointer; }
-    .btn-secondary:hover { background: #f0f7ff; }
-    .btn-sm { font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 6px; border: none; cursor: pointer; }
-    .btn-approve { background: #e8f5e9; color: #2e7d32; }
-    .btn-approve:hover { background: #c8e6c9; }
-    .btn-reject { background: #fce4ec; color: #c62828; }
-    .btn-reject:hover { background: #f8bbd0; }
-    .btn-edit-item { background: #e3f2fd; color: #1565c0; }
-    .btn-edit-item:hover { background: #bbdefb; }
-    .btn-save-edit { background: #C4622A; color: #fff; }
-    .btn-cancel-edit { background: #f5f5f5; color: #888888; }
-    .btn-delete-item { background: #fce4ec; color: #c62828; }
-    .btn-delete-item:hover { background: #f8bbd0; }
-
-    .settings-msg { display: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 12px; }
-    .settings-msg.success { background: #e8f5e9; color: #2e7d32; }
-    .settings-msg.error { background: #fce4ec; color: #c62828; }
-    .status-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
-    .status-pending { background: #fff3e0; color: #e65100; }
-    .status-approved { background: #e8f5e9; color: #2e7d32; }
-    .status-rejected { background: #fce4ec; color: #c62828; }
-
-    .knowledge-item, .faq-item { border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-    .item-header { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 14px; gap: 12px; flex-wrap: wrap; }
-    .item-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .item-title { font-size: 14px; font-weight: 600; }
-    .source-label { font-size: 11px; color: #888888; }
-    .item-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-    .item-data-preview { padding: 6px 14px 10px; font-size: 12px; color: #888888; font-family: monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .item-edit-form { padding: 12px 14px; background: #fafbfc; border-top: 1px solid rgba(0,0,0,0.06); }
-    .edit-textarea { font-family: monospace; font-size: 12px; }
-    .edit-actions { display: flex; gap: 8px; margin-top: 8px; }
-    .cat-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; background: #e3f2fd; color: #1565c0; }
-    .faq-question { padding: 6px 14px; font-size: 13px; }
-    .faq-answer-wrap { padding: 6px 14px 12px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
-    .faq-answer-input { font-size: 13px; }
-    .empty-state { font-size: 14px; color: #888888; padding: 12px 0; }
-
-    .add-item-form { border: 1px dashed rgba(0,0,0,0.15); border-radius: 8px; padding: 16px; margin-top: 16px; background: #fafbfc; }
-    .add-item-form h3 { font-family: "Barlow Condensed", sans-serif; font-size: 16px; font-weight: 800; color: #1A5490; margin-bottom: 12px; }
-
-    .toggle-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .toggle-label { font-size: 14px; font-weight: 600; }
-    input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #C4622A; }
-    .avail-grid { margin-top: 12px; }
-    .avail-day-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); flex-wrap: wrap; }
-    .avail-day-row:last-child { border-bottom: none; }
-    .avail-day-name { font-size: 14px; font-weight: 600; width: 90px; }
-    .avail-slots-row { display: none; align-items: center; gap: 12px; flex-wrap: wrap; }
-    .avail-slot-check { display: flex; align-items: center; gap: 5px; font-size: 13px; }
-    .time-labels-row { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
-    .time-label-field { flex: 1; min-width: 120px; }
-
-    .embed-wrap { display: flex; gap: 8px; }
-    .embed-wrap textarea { font-family: monospace; font-size: 12px; resize: none; flex: 1; }
-
-    .design-viz-note { display: none; font-size: 12px; color: #888888; margin-top: 6px; font-style: italic; }
-
     @media (max-width: 600px) {
-      .page-wrap { padding: 20px 16px; }
-      .item-header { flex-direction: column; }
-      .embed-wrap { flex-direction: column; }
+      .cb-domain-input { width: 100%; flex: 1; }
+      .cb-avail-day { flex-direction: column; align-items: flex-start; gap: 8px; }
     }
   </style>
 </head>
@@ -247,12 +66,12 @@
     document.head.appendChild(s);
     var d = document.createElement('div');
     d.id = 'pwa-desktop-msg';
-    d.innerHTML = '<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;font-family:var(--body-font);">'
-      + '<div style="text-align:center;max-width:360px;">'
-      + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;margin-bottom:32px;">'
-      + '<div style="background:var(--white);border-radius:var(--card-radius);box-shadow:0 2px 8px var(--shadow-card);padding:32px 24px;">'
-      + '<p style="font-size:var(--section-title-font-size);color:var(--text);line-height:var(--body-line-height);margin:0 0 24px;">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
-      + '<a href="/dashboard.html" style="display:inline-block;padding:var(--input-padding);background:var(--blue);color:var(--white);border-radius:var(--btn-radius);font-size:var(--label-font-size);font-weight:var(--font-weight-semibold);text-decoration:none;font-family:inherit;">Back to Dashboard</a>'
+    d.innerHTML = '<div class="pwa-guard-wrap">'
+      + '<div class="pwa-guard-inner">'
+      + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="pwa-guard-logo">'
+      + '<div class="pwa-guard-card">'
+      + '<p class="pwa-guard-text">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
+      + '<a href="/dashboard.html" class="pwa-guard-btn">Back to Dashboard</a>'
       + '</div></div></div>';
     document.body.appendChild(d);
   }
@@ -260,160 +79,290 @@
 </script>
 
   <nav class="topbar">
-    <a class="topbar-logo" href="/dashboard">
-      <img src="StaxAI Cropped Transparent.png" alt="StaxAI" />
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
     <div class="topbar-nav">
-      <a class="topbar-back" href="/dashboard">Dashboard</a>
+      <a href="/dashboard.html">Dashboard</a>
     </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a class="topbar-nav-link" href="/chatbot">Chatbot</a>
+      <a href="/chatbot.html" class="topbar-nav-link">Chatbot</a>
       <div class="topbar-account-wrap">
-        <button class="account-btn" id="account-btn"><span id="account-email-short"></span> &#9662;</button>
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email"></div>
           <a href="/account" class="account-dropdown-item">Account Management</a>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
     </div>
   </nav>
-  </nav>
 
-  <div class="page-wrap">
-
+  <div class="page-wrap" id="page-wrap" style="display:none">
     <div class="page-header">
-      <h1>Chatbot Settings</h1>
-      <p>Manage your knowledge base, FAQs, appointment availability, and widget configuration.</p>
+      <h1 class="page-title">Chatbot Settings</h1>
+      <p class="page-subtitle">Configure your chatbot widget, appointments, and notification preferences.</p>
     </div>
 
-    <div class="settings-tabs">
-      <button class="settings-tab active" data-tab="knowledge">Knowledge Base</button>
-      <button class="settings-tab" data-tab="faq">FAQ Queue</button>
-      <button class="settings-tab" data-tab="greeting">Greeting</button>
-      <button class="settings-tab" data-tab="appointments">Appointments</button>
-      <button class="settings-tab" data-tab="widget">Widget</button>
-      <button class="settings-tab" data-tab="design-viz">Design Visualiser</button>
+    <div class="tab-nav">
+      <button class="ptab active settings-active" data-tab="widget">Widget</button>
+      <button class="ptab" data-tab="appointments">Appointments</button>
+      <button class="ptab" data-tab="embed">Embed &amp; Security</button>
     </div>
 
-    <div class="settings-panel">
-
-      <!-- Knowledge Base -->
-      <div class="tab-panel active" id="tab-knowledge">
-        <div class="panel-intro"><h2>Knowledge Base</h2>
-          <p>The AI answers customer questions from this approved knowledge. At least one approved item is required before the chatbot responds.</p>
+    <!-- WIDGET TAB -->
+    <div class="ptab-content active" id="tab-widget">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Widget Appearance</div>
+          <div class="settings-card-hint">How the chatbot appears to customers on your website.</div>
         </div>
-        <div id="knowledge-list"><p class="empty-state">Loading knowledge items...</p></div>
-        <div class="add-item-form">
-          <h3>Add Knowledge Item</h3>
-          <div class="form-row"><label>Category</label><select id="new-knowledge-category"><option value="">Select a category</option><option value="services">Services</option><option value="pricing">Pricing Guide</option><option value="process">Process &amp; Timelines</option><option value="areas">Service Areas</option><option value="business">Business Details</option><option value="custom_qa">Custom Q&amp;A</option></select></div>
-          <div class="form-row"><label>Title</label><input type="text" id="new-knowledge-title" placeholder="e.g. Pool Installation Pricing" /></div>
-          <div class="form-row"><label>Content</label><textarea id="new-knowledge-data" rows="5" placeholder="Enter your knowledge content here. Plain text or valid JSON accepted."></textarea></div>
-          <button class="btn-primary" id="add-knowledge-btn">Add Item</button>
-          <div class="settings-msg" id="knowledge-msg"></div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Widget Title</div>
+              <div class="settings-row-desc">Displayed in the widget header bar.</div>
+            </div>
+            <input type="text" class="form-input" id="cb-widget-title" placeholder="e.g. Chat with us" style="max-width:300px">
+          </div>
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">Greeting Message</div>
+              <div class="settings-row-desc">First message shown when a customer opens the widget.</div>
+            </div>
+            <textarea class="form-input" id="cb-greeting" rows="2" placeholder="e.g. Hi there — how can we help you today?" style="max-width:400px"></textarea>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Widget Colour</div>
+              <div class="settings-row-desc">Primary colour for the widget header and send button.</div>
+            </div>
+            <input type="color" id="cb-widget-colour" value="#4A6D8C" style="width:50px;height:36px;border:1px solid var(--border);border-radius:var(--input-radius);cursor:pointer;padding:2px">
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="cb-save-widget">Save</button>
         </div>
       </div>
 
-      <!-- FAQ Queue -->
-      <div class="tab-panel" id="tab-faq">
-        <div class="panel-intro"><h2>FAQ Queue</h2>
-          <p>Suggested FAQs from unanswered customer questions. Edit the answer inline, then approve.</p>
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Chatbot Behaviour</div>
+          <div class="settings-card-hint">Control how the chatbot responds to pricing and design visualiser requests.</div>
         </div>
-        <div id="faq-list"><p class="empty-state">Loading FAQs...</p></div>
-        <div class="add-item-form">
-          <h3>Add FAQ Manually</h3>
-          <div class="form-row"><label>Question</label><input type="text" id="new-faq-question" placeholder="e.g. Do you offer free quotes?" /></div>
-          <div class="form-row"><label>Answer</label><textarea id="new-faq-answer" rows="3" placeholder="Enter the answer to this question"></textarea></div>
-          <button class="btn-primary" id="add-faq-btn">Add &amp; Approve FAQ</button>
-          <div class="settings-msg" id="faq-msg"></div>
-        </div>
-      </div>
-
-      <!-- Greeting -->
-      <div class="tab-panel" id="tab-greeting">
-        <div class="panel-intro"><h2>Greeting Message</h2>
-          <p>The first message customers see when they open the chat widget.</p>
-        </div>
-        <div class="form-row"><label>Widget Title</label><input type="text" id="widget-title" placeholder="Your business name (shown in widget header)" /></div>
-        <div class="form-row"><label>Greeting Message</label><textarea id="greeting-message" rows="3" placeholder="e.g. Hi there &#8212; how can I help you today?"></textarea></div>
-        <button class="btn-primary" id="save-widget-settings">Save</button>
-        <div class="settings-msg" id="widget-settings-msg"></div>
-      </div>
-
-      <!-- Appointments -->
-      <div class="tab-panel" id="tab-appointments">
-        <div class="panel-intro"><h2>Appointment Settings</h2>
-          <p>Allow customers to select preferred appointment times directly in the chat widget.</p>
-        </div>
-        <div class="toggle-row">
-          <input type="checkbox" id="appt-toggle" />
-          <span class="toggle-label">Enable appointment booking in widget</span>
-        </div>
-        <div id="appt-config" style="display:none;">
-          <div class="form-row">
-            <label>Time of Day Labels</label>
-            <p class="help-text" style="margin-bottom:10px;">Set the label for each of your three available time slots shown to customers.</p>
-            <div class="time-labels-row">
-              <div class="time-label-field"><input type="text" id="time-label-0" placeholder="e.g. Morning" /></div>
-              <div class="time-label-field"><input type="text" id="time-label-1" placeholder="e.g. Afternoon" /></div>
-              <div class="time-label-field"><input type="text" id="time-label-2" placeholder="e.g. Evening" /></div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Pricing Disclosure</div>
+              <div class="settings-row-desc">How the chatbot handles pricing questions from customers.</div>
+            </div>
+            <div class="settings-row-control" id="cb-pricing-ctrl">
+              <button class="freq-btn" data-value="actual">Share Prices</button>
+              <button class="freq-btn" data-value="ranges">Ranges Only</button>
+              <button class="freq-btn active" data-value="none">Don&#39;t Discuss</button>
             </div>
           </div>
-          <div class="form-row">
-            <label>Availability</label>
-            <p class="help-text" style="margin-bottom:10px;">Select which days you are available and which time slots apply for each day.</p>
-            <div class="avail-grid">
-              <div class="avail-day-row"><span class="avail-day-name">Monday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-monday" /> Available</label><div class="avail-slots-row" id="avail-slots-monday"><label class="avail-slot-check"><input type="checkbox" id="slot-monday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-monday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Tuesday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-tuesday" /> Available</label><div class="avail-slots-row" id="avail-slots-tuesday"><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-tuesday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Wednesday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-wednesday" /> Available</label><div class="avail-slots-row" id="avail-slots-wednesday"><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-wednesday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Thursday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-thursday" /> Available</label><div class="avail-slots-row" id="avail-slots-thursday"><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-thursday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Friday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-friday" /> Available</label><div class="avail-slots-row" id="avail-slots-friday"><label class="avail-slot-check"><input type="checkbox" id="slot-friday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-friday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Saturday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-saturday" /> Available</label><div class="avail-slots-row" id="avail-slots-saturday"><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-saturday-2" /> <span>Slot 3</span></label></div></div>
-              <div class="avail-day-row"><span class="avail-day-name">Sunday</span><label class="avail-toggle-label"><input type="checkbox" id="avail-sunday" /> Available</label><div class="avail-slots-row" id="avail-slots-sunday"><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-0" /> <span>Slot 1</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-1" /> <span>Slot 2</span></label><label class="avail-slot-check"><input type="checkbox" id="slot-sunday-2" /> <span>Slot 3</span></label></div></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Design Visualiser Mode</div>
+              <div class="settings-row-desc">Allow customers to upload photos and receive AI-generated renders in the chatbot.</div>
+            </div>
+            <div class="settings-row-control" id="cb-dv-ctrl">
+              <button class="freq-btn active" data-value="off">Off</button>
+              <button class="freq-btn" data-value="watermarked">Watermarked</button>
+              <button class="freq-btn" data-value="full_access">Full Access</button>
             </div>
           </div>
         </div>
-        <button class="btn-primary" id="save-appt-settings" style="margin-top:16px;">Save Appointment Settings</button>
-        <div class="settings-msg" id="appt-msg"></div>
-      </div>
-
-      <!-- Widget Configuration -->
-      <div class="tab-panel" id="tab-widget">
-        <div class="panel-intro"><h2>Widget Configuration</h2>
-          <p>Copy the embed code and paste it into your website before the closing &lt;/body&gt; tag.</p>
-        </div>
-        <div class="form-row">
-          <label>Embed Code</label>
-          <div class="embed-wrap"><textarea id="embed-code" rows="3" readonly></textarea><button class="btn-secondary" id="copy-embed">Copy</button></div>
-          <p class="help-text">Paste this snippet into your website HTML to activate the chatbot widget.</p>
+        <div class="settings-footer">
+          <button class="btn-save" id="cb-save-behaviour">Save</button>
         </div>
       </div>
+    </div>
 
-      <!-- Design Visualiser -->
-      <div class="tab-panel" id="tab-design-viz">
-        <div class="panel-intro"><h2>Design Visualiser</h2>
-          <p>Allow customers to upload a site photo and receive an AI-generated concept render through the chat widget.</p>
+    <!-- APPOINTMENTS TAB -->
+    <div class="ptab-content" id="tab-appointments">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Appointment Booking</div>
+          <div class="settings-card-hint">Allow customers to select preferred appointment times through the chatbot.</div>
         </div>
-        <div class="form-row">
-          <label>Mode</label>
-          <select id="design-viz-mode">
-            <option value="off">Off</option>
-            <option value="watermarked">Watermarked &#8212; render delivered with business logo watermark</option>
-            <option value="full_access">Full Access &#8212; unwatermarked render delivered directly</option>
-          </select>
-          <p class="design-viz-note" id="design-viz-note">Requires Design Visualiser &#8212; activate this tool from your dashboard to enable render generation.</p>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Enable Appointment Booking</div>
+              <div class="settings-row-desc">When enabled, the chatbot offers a time picker when customers ask about booking.</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+              <input type="checkbox" id="cb-appt-toggle" style="width:var(--checkbox-size);height:var(--checkbox-size);cursor:pointer">
+              <span class="text-secondary" id="cb-appt-toggle-label">Disabled</span>
+            </label>
+          </div>
         </div>
-        <button class="btn-primary" id="save-design-viz">Save</button>
-        <div class="settings-msg" id="design-viz-msg"></div>
+        <div id="cb-appt-config" style="display:none">
+          <div class="settings-rows">
+            <div class="settings-row settings-row-top">
+              <div>
+                <div class="settings-row-label">Time Slot Labels</div>
+                <div class="settings-row-desc">Labels shown to customers for each time period.</div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <input type="text" class="form-input" id="cb-time-0" placeholder="Morning" style="max-width:140px">
+                <input type="text" class="form-input" id="cb-time-1" placeholder="Afternoon" style="max-width:140px">
+                <input type="text" class="form-input" id="cb-time-2" placeholder="Evening" style="max-width:140px">
+              </div>
+            </div>
+            <div class="settings-row settings-row-top">
+              <div>
+                <div class="settings-row-label">Available Days</div>
+                <div class="settings-row-desc">Select which days and time slots are available for booking.</div>
+              </div>
+              <div class="cb-avail-grid" id="cb-avail-grid"></div>
+            </div>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="cb-save-appt">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMBED & SECURITY TAB -->
+    <div class="ptab-content" id="tab-embed">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Notification Email</div>
+          <div class="settings-card-hint">Receive an email alert when a customer question cannot be answered.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div class="settings-row-label">Email Address</div>
+            <input type="email" class="form-input" id="cb-notif-email" placeholder="e.g. you@yourbusiness.com.au" style="max-width:360px">
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="cb-save-notif">Save</button>
+        </div>
       </div>
 
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Allowed Domains</div>
+          <div class="settings-card-hint">The widget will only work on these domains. At least one is required.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">Domains</div>
+              <div class="settings-row-desc">Add each domain where the chatbot widget should be active.</div>
+            </div>
+            <div>
+              <div class="cb-domain-list" id="cb-domain-list"></div>
+              <button class="btn-outline btn-sm" id="cb-add-domain">Add Domain</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="cb-save-domains">Save</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Embed Code</div>
+          <div class="settings-card-hint">Copy this code and paste it into your website just before the closing &lt;/body&gt; tag.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">Your Embed Code</div>
+            </div>
+            <div style="flex:1;min-width:0">
+              <textarea class="cb-embed-code" id="cb-embed-code" rows="2" readonly></textarea>
+              <div class="action-row" style="margin-top:8px">
+                <button class="btn-outline btn-sm" id="cb-copy-embed">Copy Code</button>
+                <button class="btn-outline btn-sm" id="cb-email-embed">Email to My Web Team</button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Regenerate Widget ID</div>
+              <div class="settings-row-desc">Creates a new widget ID. The old embed code will stop working immediately.</div>
+            </div>
+            <button class="btn-sm" id="cb-regen-id" style="border:2px solid var(--red-dark);color:var(--red-dark);background:var(--white);border-radius:var(--btn-radius);font-family:var(--body-font);font-weight:var(--font-weight-semibold);cursor:pointer">Regenerate</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMAIL MODAL -->
+    <div class="perm-modal-overlay" id="cb-email-modal">
+      <div class="perm-modal">
+        <div class="perm-modal-title">Email Embed Code</div>
+        <div class="perm-modal-body">
+          <p>Send the embed code with instructions to your web developer.</p>
+          <div class="form-group">
+            <label class="form-label">Recipient Email</label>
+            <input type="email" class="form-input" id="cb-email-recipient" placeholder="e.g. developer@example.com">
+          </div>
+        </div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="cb-email-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="cb-email-send">Send Email</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRM MODAL -->
+    <div class="perm-modal-overlay" id="cb-confirm-modal">
+      <div class="perm-modal">
+        <div class="perm-modal-title">Regenerate Widget ID</div>
+        <div class="perm-modal-body">
+          <p>This will create a new widget ID. The current embed code on your website will stop working immediately and you will need to update it.</p>
+          <p>Are you sure you want to continue?</p>
+        </div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="cb-regen-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="cb-regen-confirm" style="background:var(--red)">Regenerate</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR / FEEDBACK MODAL -->
+    <div class="save-msg" id="cb-settings-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
+      </div>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="supabase-client.js"></script>
-  <script src="chatbot-settings-logic.js?v=1"></script>
-
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/chatbot-settings-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getUser().then(function(resp) {
+        if (resp.error || !resp.data || !resp.data.user) {
+          window.location.href = '/login';
+          return;
+        }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.CB_SETTINGS_LOGIC && window.CB_SETTINGS_LOGIC.init) {
+          window.CB_SETTINGS_LOGIC.init(supabase, resp.data.user);
+        }
+      }).catch(function(e) {
+        console.error('[CB Settings] Auth error:', e.message);
+        window.location.href = '/login';
+      });
+    })();
+  </script>
 </body>
 </html>
