@@ -144,6 +144,17 @@
     /* Filter row */
     .cb-filter-row { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
 
+    /* Appointment picker (test panel) */
+    .cb-appt-picker { align-self: stretch; border: 1px solid var(--border); border-radius: var(--card-radius); padding: 12px; margin-top: 4px; }
+    .cb-appt-title { font-weight: var(--font-weight-semibold); margin-bottom: 8px; }
+    .cb-appt-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .cb-appt-day { border: 1px solid var(--border); border-radius: var(--btn-radius); padding: 8px 10px; min-width: 90px; }
+    .cb-appt-date { font-size: var(--badge-font-size); font-weight: var(--heading-lg-weight); margin-bottom: 6px; }
+    .cb-appt-slot-btn { display: block; width: 100%; margin-bottom: 4px; font-size: var(--badge-font-size); }
+    .cb-appt-slot-btn.active { background: var(--blue); color: var(--white); border-color: var(--blue); }
+    .cb-appt-summary { margin-bottom: 8px; }
+    .cb-appt-confirm { width: 100%; }
+
     @media (max-width: 600px) {
       .cb-container { padding: var(--page-padding-mobile); }
       .cb-test-wrap { height: 420px; }

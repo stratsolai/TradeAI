@@ -51,6 +51,17 @@
       width: 100%;
       resize: none;
     }
+    .cb-input-sm { max-width: 140px; }
+    .cb-input-md { max-width: 300px; }
+    .cb-input-wide { max-width: 360px; }
+    .cb-input-lg { max-width: 400px; }
+    .cb-colour-picker { width: 50px; height: 36px; border: 1px solid var(--border); border-radius: var(--input-radius); cursor: pointer; padding: 2px; }
+    .cb-toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+    .cb-time-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .cb-embed-wrap { flex: 1; min-width: 0; }
+    .cb-embed-actions { margin-top: 8px; }
+    .cb-confirm-danger { background: var(--red); }
+    .cb-confirm-danger:hover { background: var(--red); opacity: 0.9; }
     @media (max-width: 600px) {
       .cb-domain-input { width: 100%; flex: 1; }
       .cb-avail-day { flex-direction: column; align-items: flex-start; gap: 8px; }
@@ -123,21 +134,21 @@
               <div class="settings-row-label">Widget Title</div>
               <div class="settings-row-desc">Displayed in the widget header bar.</div>
             </div>
-            <input type="text" class="form-input" id="cb-widget-title" placeholder="e.g. Chat with us" style="max-width:300px">
+            <input type="text" class="form-input cb-input-md" id="cb-widget-title" placeholder="e.g. Chat with us">
           </div>
           <div class="settings-row settings-row-top">
             <div>
               <div class="settings-row-label">Greeting Message</div>
               <div class="settings-row-desc">First message shown when a customer opens the widget.</div>
             </div>
-            <textarea class="form-input" id="cb-greeting" rows="2" placeholder="e.g. Hi there — how can we help you today?" style="max-width:400px"></textarea>
+            <textarea class="form-input cb-input-lg" id="cb-greeting" rows="2" placeholder="e.g. Hi there — how can we help you today?"></textarea>
           </div>
           <div class="settings-row">
             <div>
               <div class="settings-row-label">Widget Colour</div>
               <div class="settings-row-desc">Primary colour for the widget header and send button.</div>
             </div>
-            <input type="color" id="cb-widget-colour" value="#4A6D8C" style="width:50px;height:36px;border:1px solid var(--border);border-radius:var(--input-radius);cursor:pointer;padding:2px">
+            <input type="color" id="cb-widget-colour" value="#4A6D8C" class="cb-colour-picker">
           </div>
         </div>
         <div class="settings-footer">
@@ -193,8 +204,8 @@
               <div class="settings-row-label">Enable Appointment Booking</div>
               <div class="settings-row-desc">When enabled, the chatbot offers a time picker when customers ask about booking.</div>
             </div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="cb-appt-toggle" style="width:var(--checkbox-size);height:var(--checkbox-size);cursor:pointer">
+            <label class="cb-toggle-label">
+              <input type="checkbox" id="cb-appt-toggle" class="item-checkbox">
               <span class="text-secondary" id="cb-appt-toggle-label">Disabled</span>
             </label>
           </div>
@@ -206,10 +217,10 @@
                 <div class="settings-row-label">Time Slot Labels</div>
                 <div class="settings-row-desc">Labels shown to customers for each time period.</div>
               </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <input type="text" class="form-input" id="cb-time-0" placeholder="Morning" style="max-width:140px">
-                <input type="text" class="form-input" id="cb-time-1" placeholder="Afternoon" style="max-width:140px">
-                <input type="text" class="form-input" id="cb-time-2" placeholder="Evening" style="max-width:140px">
+              <div class="cb-time-row">
+                <input type="text" class="form-input cb-input-sm" id="cb-time-0" placeholder="Morning">
+                <input type="text" class="form-input cb-input-sm" id="cb-time-1" placeholder="Afternoon">
+                <input type="text" class="form-input cb-input-sm" id="cb-time-2" placeholder="Evening">
               </div>
             </div>
             <div class="settings-row settings-row-top">
@@ -237,7 +248,7 @@
         <div class="settings-rows">
           <div class="settings-row">
             <div class="settings-row-label">Email Address</div>
-            <input type="email" class="form-input" id="cb-notif-email" placeholder="e.g. you@yourbusiness.com.au" style="max-width:360px">
+            <input type="email" class="form-input cb-input-wide" id="cb-notif-email" placeholder="e.g. you@yourbusiness.com.au">
           </div>
         </div>
         <div class="settings-footer">
@@ -277,9 +288,9 @@
             <div>
               <div class="settings-row-label">Your Embed Code</div>
             </div>
-            <div style="flex:1;min-width:0">
+            <div class="cb-embed-wrap">
               <textarea class="cb-embed-code" id="cb-embed-code" rows="2" readonly></textarea>
-              <div class="action-row" style="margin-top:8px">
+              <div class="action-row cb-embed-actions">
                 <button class="btn-outline btn-sm" id="cb-copy-embed">Copy Code</button>
                 <button class="btn-outline btn-sm" id="cb-email-embed">Email to My Web Team</button>
               </div>
@@ -290,7 +301,7 @@
               <div class="settings-row-label">Regenerate Widget ID</div>
               <div class="settings-row-desc">Creates a new widget ID. The old embed code will stop working immediately.</div>
             </div>
-            <button class="btn-sm" id="cb-regen-id" style="border:2px solid var(--red-dark);color:var(--red-dark);background:var(--white);border-radius:var(--btn-radius);font-family:var(--body-font);font-weight:var(--font-weight-semibold);cursor:pointer">Regenerate</button>
+            <button class="btn-dismiss btn-sm" id="cb-regen-id">Regenerate</button>
           </div>
         </div>
       </div>
@@ -324,7 +335,7 @@
         </div>
         <div class="perm-modal-actions">
           <button class="perm-modal-cancel" id="cb-regen-cancel">Cancel</button>
-          <button class="perm-modal-continue" id="cb-regen-confirm" style="background:var(--red)">Regenerate</button>
+          <button class="perm-modal-continue cb-confirm-danger" id="cb-regen-confirm">Regenerate</button>
         </div>
       </div>
     </div>

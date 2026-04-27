@@ -199,7 +199,7 @@ window.CB_LOGIC = {
       + leadRow
       + slotsRow
       + '<div class="cb-transcript"><div class="cb-transcript-inner">'
-      + (transcriptHtml || '<em style="color:var(--text-muted);font-size:var(--note-font-size)">No transcript available</em>')
+      + (transcriptHtml || '<em class="text-muted">No transcript available</em>')
       + '</div></div>'
       + '</div>';
   },
@@ -302,7 +302,7 @@ window.CB_LOGIC = {
       if (!q.resolved) {
         html += '<a href="/library#business-profile" class="btn-outline btn-sm">Add to Business Profile</a>'
           + '<button class="btn-outline btn-sm cb-create-kb-btn" data-text="' + escHtml(q.text) + '">Create Knowledge Item</button>'
-          + '<button class="btn-sm cb-dismiss-btn" style="border:2px solid var(--red-dark);color:var(--red-dark);background:var(--white);border-radius:var(--btn-radius);font-family:var(--body-font);font-weight:var(--font-weight-semibold);cursor:pointer">Dismiss</button>';
+          + '<button class="btn-dismiss btn-sm cb-dismiss-btn">Dismiss</button>';
       } else {
         html += '<span class="badge badge-green">Resolved</span>';
       }
@@ -518,45 +518,40 @@ window.CB_LOGIC = {
     }
 
     var picker = document.createElement('div');
-    picker.className = 'cb-slots-row';
-    picker.style.cssText = 'align-self:stretch;border:1px solid var(--border);border-radius:var(--card-radius);margin-top:4px';
+    picker.className = 'cb-appt-picker';
 
-    var html = '<div style="font-weight:var(--font-weight-semibold);margin-bottom:8px">Select your preferred times (up to 4)</div>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
+    var html = '<div class="cb-appt-title">Select your preferred times (up to 4)</div>'
+      + '<div class="cb-appt-grid">';
 
     days.forEach(function(day) {
       var dateStr = day.date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
       var fullDay = day.date.toLocaleDateString('en-AU', { weekday: 'long' });
       var fullDate = day.date.toISOString().split('T')[0];
-      html += '<div style="border:1px solid var(--border);border-radius:var(--btn-radius);padding:8px 10px;min-width:90px">'
-        + '<div style="font-size:var(--badge-font-size);font-weight:var(--heading-lg-weight);margin-bottom:6px">' + dateStr + '</div>';
+      html += '<div class="cb-appt-day">'
+        + '<div class="cb-appt-date">' + dateStr + '</div>';
       day.slots.forEach(function(idx) {
-        html += '<button class="btn-sm btn-outline cb-appt-slot" data-date="' + fullDate + '" data-day="' + fullDay + '" data-slot="' + timeLabels[idx] + '" style="display:block;width:100%;margin-bottom:4px;font-size:var(--badge-font-size)">' + timeLabels[idx] + '</button>';
+        html += '<button class="btn-sm btn-outline cb-appt-slot-btn" data-date="' + fullDate + '" data-day="' + fullDay + '" data-slot="' + timeLabels[idx] + '">' + timeLabels[idx] + '</button>';
       });
       html += '</div>';
     });
 
     html += '</div>'
-      + '<div id="cb-appt-selected" style="font-size:var(--note-font-size);color:var(--text-muted);margin-bottom:8px">No slots selected yet</div>'
-      + '<button class="btn-primary" id="cb-appt-confirm" style="width:100%">Confirm Preferred Times</button>';
+      + '<div class="text-muted cb-appt-summary" id="cb-appt-selected">No slots selected yet</div>'
+      + '<button class="btn-primary cb-appt-confirm" id="cb-appt-confirm">Confirm Preferred Times</button>';
 
     picker.innerHTML = html;
     log.appendChild(picker);
     log.scrollTop = log.scrollHeight;
 
     var selectedSlots = [];
-    picker.querySelectorAll('.cb-appt-slot').forEach(function(btn) {
+    picker.querySelectorAll('.cb-appt-slot-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
         if (btn.classList.contains('active')) {
           btn.classList.remove('active');
-          btn.style.background = '';
-          btn.style.color = '';
           selectedSlots = selectedSlots.filter(function(s) { return !(s.date === btn.dataset.date && s.slot === btn.dataset.slot); });
         } else if (selectedSlots.length < 4) {
           btn.classList.add('active');
-          btn.style.background = 'var(--blue)';
-          btn.style.color = 'var(--white)';
           selectedSlots.push({ date: btn.dataset.date, day: btn.dataset.day, slot: btn.dataset.slot });
         }
         var selEl = document.getElementById('cb-appt-selected');
