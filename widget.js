@@ -1,426 +1,209 @@
 (function() {
-  // Get the script tag that loaded this widget
-  const scriptTag = document.currentScript;
-  const userId = scriptTag.getAttribute('data-user-id');
-  let _chatbotSettings = {};
-  (async function() {
-    try {
-      const _settingsRes = await fetch('/api/chatbot-widget-settings?userId=' + userId);
-      if (_settingsRes.ok) _chatbotSettings = await _settingsRes.json();
-    } catch(e) { /* non-fatal */ }
-  })();
-  
-  if (!userId) {
-    console.error('TradeAI Widget: Missing data-user-id attribute');
-    return;
+  var script = document.currentScript;
+  if (!script) return;
+  var widgetId = script.getAttribute('data-widget-id');
+  if (!widgetId) { console.error('StaxAI Widget: missing data-widget-id'); return; }
+
+  var apiBase = script.src.substring(0, script.src.lastIndexOf('/'));
+  var sessionId = 'ws_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8);
+  var messages = [];
+  var settings = null;
+  var settingsLoaded = false;
+  var colour = '#4A6D8C';
+
+  // ── STYLES ──────────────────────────────────────────────────────────────
+
+  var css = document.createElement('style');
+  css.textContent = ''
+    + '.sxw{position:fixed;bottom:20px;right:20px;z-index:99999;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;font-size:14px;line-height:1.5;}'
+    + '.sxw *{box-sizing:border-box;margin:0;padding:0;}'
+    + '.sxw-bubble{width:60px;height:60px;border-radius:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.18);transition:transform 0.2s;}'
+    + '.sxw-bubble:hover{transform:scale(1.08);}'
+    + '.sxw-bubble svg{width:28px;height:28px;fill:#fff;}'
+    + '.sxw-win{position:fixed;bottom:90px;right:20px;width:380px;height:560px;max-height:calc(100vh - 110px);background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,0.18);display:none;flex-direction:column;overflow:hidden;z-index:99999;}'
+    + '.sxw-win.open{display:flex;}'
+    + '.sxw-hdr{color:#fff;padding:16px;display:flex;justify-content:space-between;align-items:center;}'
+    + '.sxw-hdr-title{font-weight:700;font-size:16px;}'
+    + '.sxw-hdr-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0 4px;line-height:1;}'
+    + '.sxw-log{flex:1;overflow-y:auto;padding:14px;background:#f8f9fa;display:flex;flex-direction:column;gap:10px;}'
+    + '.sxw-msg{max-width:82%;padding:10px 14px;border-radius:12px;font-size:14px;line-height:1.5;word-wrap:break-word;}'
+    + '.sxw-msg-u{align-self:flex-end;color:#fff;border-bottom-right-radius:4px;}'
+    + '.sxw-msg-a{align-self:flex-start;background:#fff;color:#333;border:1px solid #e5e5e5;border-bottom-left-radius:4px;}'
+    + '.sxw-typing{align-self:flex-start;background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:10px 16px;display:none;}'
+    + '.sxw-typing.on{display:block;}'
+    + '.sxw-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#999;margin:0 2px;animation:sxw-bounce 1.4s infinite;}'
+    + '.sxw-dot:nth-child(2){animation-delay:0.2s;}'
+    + '.sxw-dot:nth-child(3){animation-delay:0.4s;}'
+    + '@keyframes sxw-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}'
+    + '.sxw-bar{padding:10px 12px;border-top:1px solid #e5e5e5;background:#fff;display:flex;gap:8px;}'
+    + '.sxw-in{flex:1;padding:10px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;outline:none;}'
+    + '.sxw-in:focus{border-color:var(--sxw-c,#4A6D8C);}'
+    + '.sxw-send{color:#fff;border:none;padding:10px 18px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;font-family:inherit;}'
+    + '.sxw-send:disabled{opacity:0.5;cursor:not-allowed;}'
+    + '@media(max-width:480px){.sxw-win{width:calc(100vw - 24px);height:calc(100vh - 110px);right:12px;bottom:80px;}}';
+  document.head.appendChild(css);
+
+  // ── HTML ────────────────────────────────────────────────────────────────
+
+  function build() {
+    var el = document.createElement('div');
+    el.className = 'sxw';
+    el.innerHTML = ''
+      + '<div class="sxw-bubble" id="sxw-bubble"><svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/></svg></div>'
+      + '<div class="sxw-win" id="sxw-win">'
+      +   '<div class="sxw-hdr" id="sxw-hdr"><span class="sxw-hdr-title" id="sxw-title">Chat with us</span><button class="sxw-hdr-close" id="sxw-close">&times;</button></div>'
+      +   '<div class="sxw-log" id="sxw-log">'
+      +     '<div class="sxw-typing" id="sxw-typing"><span class="sxw-dot"></span><span class="sxw-dot"></span><span class="sxw-dot"></span></div>'
+      +   '</div>'
+      +   '<div class="sxw-bar"><input class="sxw-in" id="sxw-in" type="text" placeholder="Type your message..." autocomplete="off"><button class="sxw-send" id="sxw-send">Send</button></div>'
+      + '</div>';
+    document.body.appendChild(el);
+    return el;
   }
 
-  // Widget styles
-  const styles = `
-    .tradeai-widget {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 9999;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
+  // ── INIT ────────────────────────────────────────────────────────────────
 
-    .tradeai-bubble {
-      width: 60px;
-      height: 60px;
-      border-radius: 30px;
-      background: linear-gradient(135deg, #1a5490 0%, #4a9fd8 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
+  function init() {
+    var root = build();
 
-    .tradeai-bubble:hover {
-      transform: scale(1.05);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
-    }
+    var bubble = root.querySelector('#sxw-bubble');
+    var win = root.querySelector('#sxw-win');
+    var closeBtn = root.querySelector('#sxw-close');
+    var input = root.querySelector('#sxw-in');
+    var sendBtn = root.querySelector('#sxw-send');
+    var log = root.querySelector('#sxw-log');
+    var typing = root.querySelector('#sxw-typing');
+    var titleEl = root.querySelector('#sxw-title');
+    var hdr = root.querySelector('#sxw-hdr');
 
-    .tradeai-bubble svg {
-      width: 28px;
-      height: 28px;
-      fill: white;
-    }
-
-    .tradeai-chat-window {
-      position: fixed;
-      bottom: 90px;
-      right: 20px;
-      width: 380px;
-      height: 550px;
-      max-height: calc(100vh - 120px);
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      display: none;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .tradeai-chat-window.open {
-      display: flex;
-    }
-
-    .tradeai-chat-header {
-      background: linear-gradient(135deg, #1a5490 0%, #4a9fd8 100%);
-      color: white;
-      padding: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .tradeai-chat-title {
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .tradeai-close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      padding: 0;
-      width: 24px;
-      height: 24px;
-      line-height: 24px;
-    }
-
-    .tradeai-messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 16px;
-      background: #f9f9f9;
-    }
-
-    .tradeai-message {
-      margin-bottom: 12px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .tradeai-message.user {
-      align-items: flex-end;
-    }
-
-    .tradeai-message.bot {
-      align-items: flex-start;
-    }
-
-    .tradeai-message-bubble {
-      max-width: 80%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      line-height: 1.4;
-      font-size: 14px;
-    }
-
-    .tradeai-message.user .tradeai-message-bubble {
-      background: #1a5490;
-      color: white;
-    }
-
-    .tradeai-message.bot .tradeai-message-bubble {
-      background: white;
-      color: #333;
-      border: 1px solid #e5e5e5;
-    }
-
-    .tradeai-typing {
-      display: none;
-      padding: 10px 14px;
-      background: white;
-      border: 1px solid #e5e5e5;
-      border-radius: 12px;
-      max-width: 80px;
-      margin-bottom: 12px;
-    }
-
-    .tradeai-typing.active {
-      display: block;
-    }
-
-    .tradeai-typing-dot {
-      display: inline-block;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: #999;
-      margin: 0 2px;
-      animation: tradeai-typing 1.4s infinite;
-    }
-
-    .tradeai-typing-dot:nth-child(2) {
-      animation-delay: 0.2s;
-    }
-
-    .tradeai-typing-dot:nth-child(3) {
-      animation-delay: 0.4s;
-    }
-
-    @keyframes tradeai-typing {
-      0%, 60%, 100% { transform: translateY(0); }
-      30% { transform: translateY(-8px); }
-    }
-
-    .tradeai-input-area {
-      padding: 12px;
-      background: white;
-      border-top: 1px solid #e5e5e5;
-      display: flex;
-      gap: 8px;
-    }
-
-    .tradeai-input {
-      flex: 1;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 14px;
-      font-family: inherit;
-    }
-
-    .tradeai-input:focus {
-      outline: none;
-      border-color: #1a5490;
-    }
-
-    .tradeai-send-btn {
-      background: #1a5490;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 14px;
-    }
-
-    .tradeai-send-btn:hover {
-      background: #144070;
-    }
-
-    .tradeai-send-btn:disabled {
-      background: #ccc;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 480px) {
-      .tradeai-chat-window {
-        width: calc(100vw - 40px);
-        height: calc(100vh - 120px);
-        bottom: 70px;
-      }
-    }
-  `;
-
-  // Inject styles
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = styles;
-  document.head.appendChild(styleSheet);
-
-  // Create widget HTML
-  const widgetHTML = `
-    <div class="tradeai-widget">
-      <div class="tradeai-bubble" id="tradeai-bubble">
-        <svg viewBox="0 0 24 24">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
-        </svg>
-      </div>
-
-      <div class="tradeai-chat-window" id="tradeai-chat-window">
-        <div class="tradeai-chat-header">
-          <div class="tradeai-chat-title">Chat with us</div>
-          <button class="tradeai-close-btn" id="tradeai-close-btn">×</button>
-        </div>
-
-        <div class="tradeai-messages" id="tradeai-messages">
-          <!-- Messages will be added here -->
-        </div>
-
-        <div class="tradeai-typing" id="tradeai-typing">
-          <span class="tradeai-typing-dot"></span>
-          <span class="tradeai-typing-dot"></span>
-          <span class="tradeai-typing-dot"></span>
-        </div>
-
-        <div class="tradeai-input-area">
-          <input 
-            type="text" 
-            class="tradeai-input" 
-            id="tradeai-input" 
-            placeholder="Type your message..."
-          />
-          <button class="tradeai-send-btn" id="tradeai-send-btn">Send</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  // Wait for DOM to be ready
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initWidget);
-  } else {
-    initWidget();
-  }
-
-  function initWidget() {
-    // Add widget to page
-    const container = document.createElement('div');
-    container.innerHTML = widgetHTML;
-    document.body.appendChild(container.firstElementChild);
-
-    // Get elements
-    const bubble = document.getElementById('tradeai-bubble');
-    const chatWindow = document.getElementById('tradeai-chat-window');
-    const closeBtn = document.getElementById('tradeai-close-btn');
-    const input = document.getElementById('tradeai-input');
-    const sendBtn = document.getElementById('tradeai-send-btn');
-    const messagesContainer = document.getElementById('tradeai-messages');
-    const typingIndicator = document.getElementById('tradeai-typing');
-
-    let conversationHistory = [];
-    let greetingLoaded = false;
-
-    // Toggle chat window
-    bubble.addEventListener('click', () => {
-      chatWindow.classList.add('open');
-      if (!greetingLoaded) {
-        loadGreeting();
-        greetingLoaded = true;
-      }
+    bubble.addEventListener('click', function() {
+      win.classList.add('open');
+      bubble.style.display = 'none';
+      if (!settingsLoaded) { loadSettings(titleEl, hdr, log, bubble, sendBtn); settingsLoaded = true; }
       input.focus();
     });
 
-    closeBtn.addEventListener('click', () => {
-      chatWindow.classList.remove('open');
+    closeBtn.addEventListener('click', function() {
+      win.classList.remove('open');
+      bubble.style.display = '';
+      endConversation();
     });
 
-    // Send message on Enter
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        sendMessage();
-      }
+    sendBtn.addEventListener('click', function() { send(input, log, typing, sendBtn); });
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input, log, typing, sendBtn); }
     });
+  }
 
-    // Send message on button click
-    sendBtn.addEventListener('click', sendMessage);
+  // ── SETTINGS ────────────────────────────────────────────────────────────
 
-    // Load greeting from API
-    async function loadGreeting() {
-      try {
-        const response = await fetch(`https://trade-ai-seven-blue.vercel.app/api/get-greeting?userId=${userId}`);
-        const data = await response.json();
-        
-        console.log('Greeting API response:', data); // DEBUG
-        
-        if (data.success) {
-          // Update chat header with business name
-          if (data.businessName) {
-            console.log('Setting business name:', data.businessName); // DEBUG
-            const titleElement = document.querySelector('.tradeai-chat-title');
-            console.log('Title element:', titleElement); // DEBUG
-            if (titleElement) {
-              titleElement.textContent = `Chat with ${data.businessName}`;
-            }
-          }
-          
-          // Add greeting message
-          if (data.greeting) {
-            addMessage(data.greeting, 'bot');
-          } else {
-            addMessage('👋 Hi! How can I help you today?', 'bot');
-          }
-        } else {
-          addMessage('👋 Hi! How can I help you today?', 'bot');
+  function loadSettings(titleEl, hdr, log, bubble, sendBtn) {
+    fetch(apiBase + '/api/chatbot-widget-settings?widget_id=' + encodeURIComponent(widgetId))
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        settings = data;
+        colour = data.widget_colour || '#4A6D8C';
+        applyColour(colour, bubble, hdr, sendBtn);
+        if (data.widget_title) titleEl.textContent = data.widget_title;
+        else if (data.business_name) titleEl.textContent = 'Chat with ' + data.business_name;
+        var greeting = data.greeting_message || 'Hi there — how can we help you today?';
+        addMsg(log, 'assistant', greeting);
+        messages.push({ role: 'assistant', content: greeting });
+      })
+      .catch(function() {
+        addMsg(log, 'assistant', 'Hi there — how can we help you today?');
+        messages.push({ role: 'assistant', content: 'Hi there — how can we help you today?' });
+      });
+  }
+
+  function applyColour(c, bubble, hdr, sendBtn) {
+    bubble.style.background = c;
+    hdr.style.background = c;
+    sendBtn.style.background = c;
+    document.documentElement.style.setProperty('--sxw-c', c);
+  }
+
+  // ── MESSAGES ────────────────────────────────────────────────────────────
+
+  function addMsg(log, role, text) {
+    var div = document.createElement('div');
+    div.className = 'sxw-msg ' + (role === 'user' ? 'sxw-msg-u' : 'sxw-msg-a');
+    if (role === 'user') div.style.background = colour;
+    div.textContent = text;
+    var typing = log.querySelector('#sxw-typing');
+    if (typing) log.insertBefore(div, typing);
+    else log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function send(input, log, typing, sendBtn) {
+    var text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    input.disabled = true;
+    sendBtn.disabled = true;
+
+    messages.push({ role: 'user', content: text });
+    addMsg(log, 'user', text);
+    typing.classList.add('on');
+    log.scrollTop = log.scrollHeight;
+
+    var apiMessages = messages.filter(function(m) { return m.role === 'user' || m.role === 'assistant'; });
+
+    fetch(apiBase + '/api/chatbot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        widget_id: widgetId,
+        messages: apiMessages,
+        session_id: sessionId
+      })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      typing.classList.remove('on');
+      if (data.reply) {
+        messages.push({ role: 'assistant', content: data.reply });
+        addMsg(log, 'assistant', data.reply);
+        if (data.trigger_appointment_picker && settings && settings.appointment_booking_enabled) {
+          renderPicker(log);
         }
-      } catch (error) {
-        console.error('Error loading greeting:', error);
-        addMessage('👋 Hi! How can I help you today?', 'bot');
+      } else if (data.error) {
+        addMsg(log, 'assistant', 'Sorry, something went wrong. Please try again.');
       }
-    }
-
-    // Send message
-    async function sendMessage() {
-      const message = input.value.trim();
-      if (!message) return;
-
-      // Disable input
-      input.disabled = true;
-      sendBtn.disabled = true;
-
-      // Add user message
-      addMessage(message, 'user');
-      input.value = '';
-
-      // Show typing
-      typingIndicator.classList.add('active');
-
-      try {
-        const response = await fetch('https://trade-ai-seven-blue.vercel.app/api/chatbot', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            message: message,
-            conversationHistory: conversationHistory,
-            userId: userId
-          })
-        });
-
-        const data = await response.json();
-
-        typingIndicator.classList.remove('active');
-
-        if (data.success) {
-          addMessage(data.message, 'bot');
-        if (data.trigger_appointment_picker && _chatbotSettings.appointment_booking_enabled) {
-          renderAppointmentPicker(_chatbotSettings, messagesContainer, messages, userId);
-        }
-          conversationHistory = data.conversationHistory;
-        } else {
-          addMessage('Sorry, I encountered an error. Please try again.', 'bot');
-        }
-
-      } catch (error) {
-        typingIndicator.classList.remove('active');
-        addMessage('Sorry, I couldn\'t connect. Please try again.', 'bot');
-        console.error('Error:', error);
-      }
-
-      // Re-enable input
       input.disabled = false;
       sendBtn.disabled = false;
       input.focus();
-    }
-
-    // Add message to UI
-    function addMessage(text, sender) {
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `tradeai-message ${sender}`;
-      
-      const bubbleDiv = document.createElement('div');
-      bubbleDiv.className = 'tradeai-message-bubble';
-      bubbleDiv.textContent = text;
-      
-      messageDiv.appendChild(bubbleDiv);
-      messagesContainer.appendChild(messageDiv);
-      
-      // Scroll to bottom
-      messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    })
+    .catch(function() {
+      typing.classList.remove('on');
+      addMsg(log, 'assistant', 'Sorry, could not connect. Please try again.');
+      input.disabled = false;
+      sendBtn.disabled = false;
+      input.focus();
+    });
   }
 
-  function renderAppointmentPicker(settings, container, messages, userId) {
+  // ── END CONVERSATION ────────────────────────────────────────────────────
+
+  function endConversation() {
+    if (messages.length <= 1) return;
+    fetch(apiBase + '/api/chatbot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        widget_id: widgetId,
+        action: 'end_conversation',
+        messages: messages,
+        session_id: sessionId
+      })
+    }).catch(function() {});
+  }
+
+  // ── APPOINTMENT PICKER ──────────────────────────────────────────────────
+
+  function renderPicker(log) {
+    if (!settings) return;
     var availability = settings.availability || {};
     var timeLabels = settings.time_labels || ['Morning', 'Afternoon', 'Evening'];
     var dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
@@ -430,79 +213,91 @@
       var d = new Date(today);
       d.setDate(today.getDate() + i);
       var dayKey = dayNames[d.getDay() === 0 ? 6 : d.getDay() - 1];
-      var availableSlots = availability[dayKey] || [];
-      days.push({ date: d, dayKey: dayKey, availableSlots: availableSlots });
+      var slots = availability[dayKey] || [];
+      if (slots.length > 0) days.push({ date: d, dayKey: dayKey, slots: slots });
     }
+    if (days.length === 0) {
+      addMsg(log, 'assistant', 'No available booking times at the moment. Please contact us directly.');
+      return;
+    }
+
+    var selected = [];
     var picker = document.createElement('div');
-    picker.style.cssText = 'background:#f0f7ff;border-radius:10px;padding:12px;margin:8px 0;';
+    picker.style.cssText = 'background:#f0f4f8;border-radius:10px;padding:12px;margin:4px 0;align-self:stretch;';
+
     var title = document.createElement('div');
-    title.style.cssText = 'font-weight:700;font-size:13px;color:#1A5490;margin-bottom:10px;';
+    title.style.cssText = 'font-weight:700;font-size:13px;color:' + colour + ';margin-bottom:10px;';
     title.textContent = 'Select your preferred times (up to 4)';
     picker.appendChild(title);
+
     var grid = document.createElement('div');
     grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;';
-    var selectedSlots = [];
+
     days.forEach(function(day) {
       var dateStr = day.date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
       var fullDay = day.date.toLocaleDateString('en-AU', { weekday: 'long' });
       var fullDate = day.date.toISOString().split('T')[0];
-      var isAvailable = day.availableSlots.length > 0;
-      var dayEl = document.createElement('div');
-      dayEl.style.cssText = isAvailable ? 'background:#fff;border:1px solid rgba(0,0,0,0.1);border-radius:8px;padding:6px 8px;min-width:80px;' : 'background:#f0f0f0;border-radius:8px;padding:6px 8px;min-width:80px;opacity:0.4;';
-      var dateLabel = document.createElement('div');
-      dateLabel.style.cssText = 'font-size:11px;font-weight:700;color:#333;margin-bottom:4px;';
-      dateLabel.textContent = dateStr;
-      dayEl.appendChild(dateLabel);
-      if (isAvailable) {
-        day.availableSlots.forEach(function(idx) {
-          var slotBtn = document.createElement('button');
-          slotBtn.textContent = timeLabels[idx] || ('Slot ' + (idx + 1));
-          slotBtn.style.cssText = 'display:block;width:100%;background:#e3f2fd;color:#1565c0;border:none;border-radius:4px;font-size:11px;font-weight:600;padding:3px 6px;margin-top:3px;cursor:pointer;';
-          slotBtn.dataset.date = fullDate;
-          slotBtn.dataset.day = fullDay;
-          slotBtn.dataset.slot = timeLabels[idx] || ('Slot ' + (idx + 1));
-          slotBtn.addEventListener('click', function() {
-            if (slotBtn.dataset.selected === 'true') {
-              slotBtn.dataset.selected = 'false';
-              slotBtn.style.background = '#e3f2fd';
-              slotBtn.style.color = '#1565c0';
-              var i = selectedSlots.findIndex(function(s) { return s.date === slotBtn.dataset.date && s.slot === slotBtn.dataset.slot; });
-              if (i > -1) selectedSlots.splice(i, 1);
-            } else if (selectedSlots.length < 4) {
-              slotBtn.dataset.selected = 'true';
-              slotBtn.style.background = '#1A5490';
-              slotBtn.style.color = '#fff';
-              selectedSlots.push({ date: slotBtn.dataset.date, day: slotBtn.dataset.day, slot: slotBtn.dataset.slot });
-            }
-            updateSummary();
-          });
-          dayEl.appendChild(slotBtn);
+      var col = document.createElement('div');
+      col.style.cssText = 'background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:6px 8px;min-width:80px;';
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;font-weight:700;color:#333;margin-bottom:4px;';
+      lbl.textContent = dateStr;
+      col.appendChild(lbl);
+      day.slots.forEach(function(idx) {
+        var btn = document.createElement('button');
+        btn.textContent = timeLabels[idx] || ('Slot ' + (idx + 1));
+        btn.style.cssText = 'display:block;width:100%;background:#e8f0fb;color:' + colour + ';border:none;border-radius:4px;font-size:11px;font-weight:600;padding:4px 6px;margin-top:3px;cursor:pointer;';
+        btn.addEventListener('click', function() {
+          var key = fullDate + '|' + idx;
+          var si = selected.findIndex(function(s) { return s.key === key; });
+          if (si > -1) {
+            selected.splice(si, 1);
+            btn.style.background = '#e8f0fb';
+            btn.style.color = colour;
+          } else if (selected.length < 4) {
+            selected.push({ key: key, date: fullDate, day: fullDay, slot: timeLabels[idx] || ('Slot ' + (idx + 1)) });
+            btn.style.background = colour;
+            btn.style.color = '#fff';
+          }
+          sum.textContent = selected.length === 0 ? 'No times selected yet'
+            : selected.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
         });
-      }
-      grid.appendChild(dayEl);
+        col.appendChild(btn);
+      });
+      grid.appendChild(col);
     });
     picker.appendChild(grid);
-    var summary = document.createElement('div');
-    summary.style.cssText = 'font-size:12px;color:#888;margin-bottom:8px;';
-    summary.textContent = 'No times selected yet';
-    picker.appendChild(summary);
-    function updateSummary() {
-      summary.textContent = selectedSlots.length === 0 ? 'No times selected yet' : 'Selected: ' + selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
-    }
-    var confirmBtn = document.createElement('button');
-    confirmBtn.textContent = 'Confirm Preferred Times';
-    confirmBtn.style.cssText = 'background:#C4622A;color:#fff;font-weight:700;font-size:13px;padding:8px 16px;border:none;border-radius:6px;cursor:pointer;width:100%;';
-    confirmBtn.addEventListener('click', function() {
-      if (selectedSlots.length === 0) return;
+
+    var sum = document.createElement('div');
+    sum.style.cssText = 'font-size:12px;color:#888;margin-bottom:8px;';
+    sum.textContent = 'No times selected yet';
+    picker.appendChild(sum);
+
+    var confirm = document.createElement('button');
+    confirm.textContent = 'Confirm Preferred Times';
+    confirm.style.cssText = 'background:' + colour + ';color:#fff;font-weight:700;font-size:13px;padding:8px;border:none;border-radius:6px;cursor:pointer;width:100%;';
+    confirm.addEventListener('click', function() {
+      if (selected.length === 0) return;
       picker.remove();
-      var summaryText = 'Preferred times: ' + selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
-      messages.push({ role: 'user', content: summaryText });
-      messages.push({ role: 'system_slots', content: JSON.stringify(selectedSlots) });
-      addMessage(summaryText, 'user');
-      addMessage('Thank you \u2014 we will be in touch to confirm the best time.', 'bot');
+      var text = 'Preferred times: ' + selected.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
+      messages.push({ role: 'user', content: text });
+      messages.push({ role: 'system_slots', content: JSON.stringify(selected.map(function(s) { return { date: s.date, day: s.day, slot: s.slot }; })) });
+      addMsg(log, 'user', text);
+      addMsg(log, 'assistant', 'Thank you \u2014 we will be in touch to confirm the best time.');
     });
-    picker.appendChild(confirmBtn);
-    container.appendChild(picker);
-    container.scrollTop = container.scrollHeight;
+    picker.appendChild(confirm);
+
+    var typing = log.querySelector('#sxw-typing');
+    if (typing) log.insertBefore(picker, typing);
+    else log.appendChild(picker);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  // ── BOOT ────────────────────────────────────────────────────────────────
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
