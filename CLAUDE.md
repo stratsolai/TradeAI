@@ -90,19 +90,12 @@ The owner will push back when needed and should be encouraged to do so.
 - AusTender — API registration submitted, awaiting
   authentication token
 - buy.nsw — API access request submitted, awaiting response
+- REimagine Home API — email sent, awaiting response for
+  API access and documentation
 
 Note: Industry News & Updates tool rebuild complete. Government
 tender API integration blocked on external registrations —
 return to complete this task once API access confirmed.
-
-### Task 24 — Chatbot Tool Rebuild
-
-Rebuild complete. Platform audit underway per Platform Audit
-Standard v1.4. Integration test and functional review pending.
-
-Files rebuilt: api/chatbot.js, api/chatbot-widget-settings.js,
-chatbot.html, chatbot-logic.js, chatbot-settings.html,
-chatbot-settings-logic.js, widget.js
 
 ### Task 25 — Social Media Tool Rebuild
 
