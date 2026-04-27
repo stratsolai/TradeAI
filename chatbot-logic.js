@@ -1,438 +1,597 @@
-// chatbot-logic.js — AI Website Chatbot logic file
-// Defines window.CHAT_LOGIC with init() method
-// Per Chatbot Rebuild Spec v1.1 Section 10c
+window.CB_LOGIC = {
 
-window.CHAT_LOGIC = {
-
-  _user: null,
-  _session: null,
-  _messages: [],
-  _activeFilter: "all",
+  _supabase: null,
+  _userId: null,
   _conversations: [],
-  _settings: null,
+  _settings: {},
+  _testMessages: [],
+  _convFilter: 'all',
 
-  init: async function () {
-    // Auth check
-    const { data: { session } } = await window.supabaseClient.auth.getSession();
-    if (!session) {
-      window.location.href = "/login";
-      return;
-    }
-    this._user = session.user;
-    this._session = session;
+  // ── INIT ──────────────────────────────────────────────────────────────
 
-    // Populate account dropdown
-    const emailPrefix = this._user.email ? this._user.email.split("@")[0] : "";
-    const elShort = document.getElementById("account-email-short");
-    const elFull = document.getElementById("account-dropdown-email");
-    if (elShort) elShort.textContent = emailPrefix;
-    if (elFull) elFull.textContent = this._user.email || "";
+  init: async function(supabase, user) {
+    if (!supabase || !user) return;
+    this._supabase = supabase;
+    this._userId = user.id;
 
-    // Sign out
-    const signOutBtn = document.getElementById("sign-out-btn");
-    if (signOutBtn) {
-      signOutBtn.addEventListener("click", async () => {
-        await window.supabaseClient.auth.signOut();
-        window.location.href = "/login";
-      });
-    }
-
-    // Account dropdown toggle
-    const accountBtn = document.getElementById("account-btn");
-    const accountDropdown = document.getElementById("account-dropdown");
-    if (accountBtn && accountDropdown) {
-      accountBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        accountDropdown.classList.toggle("open");
-      });
-      document.addEventListener("click", () => accountDropdown.classList.remove("open"));
-    }
-
-    // Load settings for FAQ badge and test widget
-    await this.loadSettings();
-
-    // Load conversations
-    await this.loadConversations();
-
-    // Load unanswered questions
-    await this.loadUnansweredQuestions();
-
-    // Wire filter tabs
-    this.wireFilterTabs();
-
-    // Wire test widget
-    this.initTestWidget();
-
-    // Update FAQ badge
-    await this.updateFaqBadge();
+    await Promise.all([
+      this._loadSettings(),
+      this._loadConversations()
+    ]);
+    this._bindTabs();
+    this._bindConvFilters();
+    this._bindQuestionFilters();
+    this._bindTestChat();
+    this._renderConversations();
+    this._renderLeads();
+    this._renderQuestions();
+    this._updateStats();
   },
 
-  loadSettings: async function () {
+  // ── DATA LOADING ──────────────────────────────────────────────────────
+
+  _loadSettings: async function() {
     try {
-      const { data } = await window.supabaseClient
-        .from("chatbot_settings")
-        .select("*")
-        .eq("user_id", this._user.id)
-        .single();
-      this._settings = data || {};
+      var res = await this._supabase
+        .from('chatbot_settings')
+        .select('*')
+        .eq('user_id', this._userId)
+        .maybeSingle();
+      if (res.error) console.error('[CB] Settings load error:', res.error.message);
+      if (res.data) this._settings = res.data;
     } catch (e) {
-      this._settings = {};
+      console.error('[CB] Settings load exception:', e.message);
     }
   },
 
-  loadConversations: async function () {
+  _loadConversations: async function() {
     try {
-      const { data } = await window.supabaseClient
-        .from("chatbot_conversations")
-        .select("*")
-        .eq("user_id", this._user.id)
-        .order("created_at", { ascending: false })
-        .limit(100);
-      this._conversations = data || [];
+      var res = await this._supabase
+        .from('chatbot_conversations')
+        .select('*')
+        .eq('user_id', this._userId)
+        .order('created_at', { ascending: false })
+        .limit(200);
+      if (res.error) {
+        console.error('[CB] Conversations load error:', res.error.message);
+        this._conversations = [];
+        return;
+      }
+      this._conversations = res.data || [];
     } catch (e) {
+      console.error('[CB] Conversations load exception:', e.message);
       this._conversations = [];
     }
-    this.renderConversations();
   },
 
-  getFilteredConversations: function () {
-    if (this._activeFilter === "leads") {
-      return this._conversations.filter(c => c.is_lead === true);
-    }
-    if (this._activeFilter === "appointments") {
-      return this._conversations.filter(c => c.appointment_requested === true);
-    }
+  // ── TABS ──────────────────────────────────────────────────────────────
+
+  _bindTabs: function() {
+    var self = this;
+    document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('cb-tab-' + btn.dataset.tab);
+        if (panel) panel.classList.add('active');
+        if (btn.dataset.tab === 'test' && self._testMessages.length === 0) {
+          self._showGreeting();
+        }
+      });
+    });
+  },
+
+  // ── STATS ─────────────────────────────────────────────────────────────
+
+  _updateStats: function() {
+    var total = this._conversations.length;
+    var leads = 0;
+    var appointments = 0;
+    var unanswered = 0;
+    this._conversations.forEach(function(c) {
+      if (c.is_lead) leads++;
+      if (c.appointment_requested) appointments++;
+      if (Array.isArray(c.unanswered_questions) && c.unanswered_questions.length > 0) {
+        unanswered += c.unanswered_questions.length;
+      }
+    });
+    var el;
+    el = document.getElementById('stat-conversations'); if (el) el.textContent = total;
+    el = document.getElementById('stat-leads'); if (el) el.textContent = leads;
+    el = document.getElementById('stat-appointments'); if (el) el.textContent = appointments;
+    el = document.getElementById('stat-unanswered'); if (el) el.textContent = unanswered;
+  },
+
+  // ── CONVERSATIONS TAB ─────────────────────────────────────────────────
+
+  _bindConvFilters: function() {
+    var self = this;
+    document.querySelectorAll('#cb-tab-conversations .status-btn[data-filter]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#cb-tab-conversations .status-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        self._convFilter = btn.getAttribute('data-filter');
+        self._renderConversations();
+      });
+    });
+  },
+
+  _getFilteredConversations: function() {
+    var filter = this._convFilter;
+    if (filter === 'completed') return this._conversations.filter(function(c) { return c.status === 'completed'; });
+    if (filter === 'abandoned') return this._conversations.filter(function(c) { return c.status === 'abandoned'; });
     return this._conversations;
   },
 
-  renderConversations: function () {
-    const list = document.getElementById("conversation-list");
-    if (!list) return;
+  _renderConversations: function() {
+    var container = document.getElementById('cb-conv-list');
+    var empty = document.getElementById('cb-empty-conversations');
+    if (!container) return;
 
-    const items = this.getFilteredConversations();
-
+    var items = this._getFilteredConversations();
     if (items.length === 0) {
-      list.innerHTML = "<div class=\"conv-empty\">No conversations yet. Customer conversations from your live widget will appear here.</div>";
+      if (empty) empty.hidden = false;
+      var existing = container.querySelectorAll('.cb-conv-card');
+      existing.forEach(function(el) { el.remove(); });
       return;
     }
+    if (empty) empty.hidden = true;
 
-    list.innerHTML = items.map(c => this.renderConversationCard(c)).join("");
+    var self = this;
+    var html = '';
+    items.forEach(function(c) { html += self._buildConvCard(c); });
+    container.innerHTML = html + (empty ? empty.outerHTML : '');
+    var newEmpty = document.getElementById('cb-empty-conversations');
+    if (newEmpty) newEmpty.hidden = true;
 
-    // Wire expand/collapse
-    list.querySelectorAll(".conv-card").forEach(card => {
-      card.addEventListener("click", () => {
-        const id = card.dataset.id;
-        const transcript = card.querySelector(".conv-transcript");
-        if (transcript) transcript.classList.toggle("open");
+    container.querySelectorAll('.cb-conv-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var transcript = card.querySelector('.cb-transcript');
+        if (transcript) transcript.classList.toggle('open');
       });
     });
   },
 
-  renderConversationCard: function (c) {
-    const date = c.started_at ? new Date(c.started_at) : new Date(c.created_at);
-    const dateStr = date.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" });
-    const timeStr = date.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit" });
+  _buildConvCard: function(c) {
+    var date = new Date(c.started_at || c.created_at);
+    var dateStr = date.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    var timeStr = date.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
 
-    let duration = "";
-    if (c.started_at && c.ended_at) {
-      const mins = Math.round((new Date(c.ended_at) - new Date(c.started_at)) / 60000);
-      duration = mins > 0 ? mins + " min" : "Less than 1 min";
+    var transcript = Array.isArray(c.transcript) ? c.transcript : [];
+    var firstUser = transcript.find(function(m) { return m.role === 'user'; });
+    var preview = firstUser ? firstUser.content : 'No messages';
+    if (preview.length > 100) preview = preview.substring(0, 100) + '...';
+
+    var badges = '';
+    if (c.status === 'completed') badges += '<span class="badge badge-green">Completed</span>';
+    else badges += '<span class="badge badge-grey">Abandoned</span>';
+    if (c.is_lead) badges += '<span class="badge badge-orange">Lead</span>';
+    if (c.appointment_requested) badges += '<span class="badge badge-blue">Appointment</span>';
+
+    var leadRow = '';
+    if (c.is_lead && (c.lead_name || c.lead_email || c.lead_phone)) {
+      leadRow = '<div class="cb-conv-lead-row">';
+      if (c.lead_name) leadRow += '<span>' + escHtml(c.lead_name) + '</span>';
+      if (c.lead_email) leadRow += '<a href="mailto:' + escHtml(c.lead_email) + '">' + escHtml(c.lead_email) + '</a>';
+      if (c.lead_phone) leadRow += '<a href="tel:' + escHtml(c.lead_phone) + '">' + escHtml(c.lead_phone) + '</a>';
+      leadRow += '</div>';
     }
 
-    const statusBadge = c.status === "completed"
-      ? "<span class=\"conv-badge badge-completed\">Completed</span>"
-      : "<span class=\"conv-badge badge-abandoned\">Abandoned</span>";
-
-    const leadBadge = c.is_lead
-      ? "<span class=\"conv-badge badge-lead\">Lead</span>"
-      : "";
-
-    const apptBadge = c.appointment_requested
-      ? "<span class=\"conv-badge badge-appt\">Appointment</span>"
-      : "";
-
-    const transcript = c.transcript || [];
-    const firstMsg = transcript.find(m => m.role === "user");
-    const preview = firstMsg
-      ? (firstMsg.content.length > 80 ? firstMsg.content.substring(0, 80) + "..." : firstMsg.content)
-      : "No messages";
-
-    let leadDetails = "";
-    if (c.is_lead) {
-      leadDetails = "<div class=\"conv-lead-details\">";
-      if (c.lead_name) leadDetails += "<span>" + c.lead_name + "</span>";
-      if (c.lead_email) leadDetails += "<a href=\"mailto:" + c.lead_email + "\">" + c.lead_email + "</a>";
-      if (c.lead_phone) leadDetails += "<a href=\"tel:" + c.lead_phone + "\">" + c.lead_phone + "</a>";
-      leadDetails += "</div>";
+    var slotsRow = '';
+    if (c.appointment_requested && Array.isArray(c.preferred_slots) && c.preferred_slots.length > 0) {
+      slotsRow = '<div class="cb-slots-row"><strong>Preferred slots:</strong><ul>'
+        + c.preferred_slots.map(function(s) { return '<li>' + escHtml((s.day || '') + ' ' + (s.date || '') + ' — ' + (s.slot || '')) + '</li>'; }).join('')
+        + '</ul></div>';
     }
 
-    let slotDetails = "";
-    if (c.appointment_requested && c.preferred_slots && c.preferred_slots.length > 0) {
-      slotDetails = "<div class=\"conv-slots\"><strong>Preferred slots:</strong><ul>" +
-        c.preferred_slots.map(s => "<li>" + s.day + " " + s.date + " — " + s.slot + "</li>").join("") +
-        "</ul></div>";
-    }
+    var transcriptHtml = transcript.map(function(m) {
+      var cls = m.role === 'user' ? 'cb-msg cb-msg-user' : 'cb-msg cb-msg-assistant';
+      return '<div class="' + cls + '">' + escHtml(m.content || '') + '</div>';
+    }).join('');
 
-    const transcriptHtml = transcript.map(m => {
-      const roleLabel = m.role === "user" ? "Customer" : "Assistant";
-      return "<div class=\"transcript-msg transcript-" + m.role + "\"><strong>" + roleLabel + ":</strong> " + this.escapeHtml(m.content || "") + "</div>";
-    }).join("");
-
-    return `<div class="conv-card" data-id="${c.id}">
-      <div class="conv-card-header">
-        <div class="conv-meta">
-          <span class="conv-date">${dateStr} ${timeStr}</span>
-          ${duration ? "<span class=\"conv-duration\">" + duration + "</span>" : ""}
-        </div>
-        <div class="conv-badges">${statusBadge}${leadBadge}${apptBadge}</div>
-      </div>
-      <div class="conv-preview">${this.escapeHtml(preview)}</div>
-      ${leadDetails}
-      ${slotDetails}
-      <div class="conv-transcript">
-        <div class="transcript-inner">${transcriptHtml || "<em>No transcript available</em>"}</div>
-      </div>
-    </div>`;
+    return '<div class="item-card cb-conv-card">'
+      + '<div class="item-card-header">'
+      + '<span class="item-upload-date">' + dateStr + ' ' + timeStr + '</span>'
+      + '<div class="item-card-btns">' + badges + '</div>'
+      + '</div>'
+      + '<div class="cb-conv-preview">' + escHtml(preview) + '</div>'
+      + leadRow
+      + slotsRow
+      + '<div class="cb-transcript"><div class="cb-transcript-inner">'
+      + (transcriptHtml || '<em style="color:var(--text-muted);font-size:var(--note-font-size)">No transcript available</em>')
+      + '</div></div>'
+      + '</div>';
   },
 
-  escapeHtml: function (str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  },
+  // ── LEADS TAB ─────────────────────────────────────────────────────────
 
-  wireFilterTabs: function () {
-    const tabs = document.querySelectorAll(".filter-tab");
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => {
-        tabs.forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        this._activeFilter = tab.dataset.filter;
-        this.renderConversations();
+  _renderLeads: function() {
+    var container = document.getElementById('cb-leads-list');
+    var empty = document.getElementById('cb-empty-leads');
+    if (!container) return;
+
+    var leads = this._conversations.filter(function(c) { return c.is_lead; });
+    if (leads.length === 0) {
+      if (empty) empty.hidden = false;
+      var existing = container.querySelectorAll('.cb-conv-card');
+      existing.forEach(function(el) { el.remove(); });
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    var self = this;
+    var html = '';
+    leads.forEach(function(c) { html += self._buildConvCard(c); });
+    container.innerHTML = html + (empty ? empty.outerHTML : '');
+    var newEmpty = document.getElementById('cb-empty-leads');
+    if (newEmpty) newEmpty.hidden = true;
+
+    container.querySelectorAll('.cb-conv-card').forEach(function(card) {
+      card.addEventListener('click', function() {
+        var transcript = card.querySelector('.cb-transcript');
+        if (transcript) transcript.classList.toggle('open');
       });
     });
   },
 
-  loadUnansweredQuestions: async function () {
-    try {
-      const { data } = await window.supabaseClient
-        .from("chatbot_conversations")
-        .select("unanswered_questions")
-        .eq("user_id", this._user.id)
-        .not("unanswered_questions", "is", null);
+  // ── UNANSWERED QUESTIONS TAB ──────────────────────────────────────────
 
-      const allQuestions = [];
-      (data || []).forEach(row => {
-        if (Array.isArray(row.unanswered_questions)) {
-          allQuestions.push(...row.unanswered_questions);
+  _qFilter: 'active',
+
+  _bindQuestionFilters: function() {
+    var self = this;
+    document.querySelectorAll('#cb-tab-unanswered .status-btn[data-qfilter]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#cb-tab-unanswered .status-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        self._qFilter = btn.getAttribute('data-qfilter');
+        self._renderQuestions();
+      });
+    });
+  },
+
+  _getQuestions: function() {
+    var questions = [];
+    this._conversations.forEach(function(c) {
+      if (!Array.isArray(c.unanswered_questions)) return;
+      c.unanswered_questions.forEach(function(q, idx) {
+        var text = typeof q === 'string' ? q : (q.text || '');
+        var resolved = typeof q === 'object' && q.resolved === true;
+        if (text) {
+          questions.push({
+            convId: c.id,
+            index: idx,
+            text: text,
+            resolved: resolved,
+            date: c.created_at
+          });
         }
       });
+    });
+    return questions;
+  },
 
-      const container = document.getElementById("unanswered-questions");
-      const badge = document.getElementById("unanswered-badge");
-      if (badge) badge.textContent = allQuestions.length;
+  _renderQuestions: function() {
+    var container = document.getElementById('cb-questions-list');
+    var empty = document.getElementById('cb-empty-questions');
+    if (!container) return;
 
-      if (!container) return;
+    var allQ = this._getQuestions();
+    var filtered = allQ.filter(function(q) {
+      return this._qFilter === 'active' ? !q.resolved : q.resolved;
+    }.bind(this));
 
-      if (allQuestions.length === 0) {
-        container.innerHTML = "<p class=\"unanswered-empty\">No unanswered questions — your knowledge base is covering customer enquiries well.</p>";
+    if (filtered.length === 0) {
+      if (empty) empty.hidden = false;
+      var existing = container.querySelectorAll('.cb-question-card');
+      existing.forEach(function(el) { el.remove(); });
+      return;
+    }
+    if (empty) empty.hidden = true;
+
+    var self = this;
+    var html = '';
+    filtered.forEach(function(q) {
+      var dateStr = new Date(q.date).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      html += '<div class="item-card cb-question-card" data-conv-id="' + q.convId + '" data-index="' + q.index + '">'
+        + '<div class="cb-question-text">' + escHtml(q.text) + '</div>'
+        + '<div class="cb-question-meta">'
+        + '<span class="item-upload-date">' + dateStr + '</span>';
+
+      if (!q.resolved) {
+        html += '<a href="/library#business-profile" class="btn-outline btn-sm">Add to Business Profile</a>'
+          + '<button class="btn-outline btn-sm cb-create-kb-btn" data-text="' + escHtml(q.text) + '">Create Knowledge Item</button>'
+          + '<button class="btn-sm cb-dismiss-btn" style="border:2px solid var(--red-dark);color:var(--red-dark);background:var(--white);border-radius:var(--btn-radius);font-family:var(--body-font);font-weight:var(--font-weight-semibold);cursor:pointer">Dismiss</button>';
+      } else {
+        html += '<span class="badge badge-green">Resolved</span>';
+      }
+
+      html += '</div></div>';
+    });
+
+    container.innerHTML = html + (empty ? empty.outerHTML : '');
+    var newEmpty = document.getElementById('cb-empty-questions');
+    if (newEmpty) newEmpty.hidden = true;
+
+    // Wire dismiss buttons
+    container.querySelectorAll('.cb-dismiss-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var card = btn.closest('.cb-question-card');
+        var convId = card.getAttribute('data-conv-id');
+        var index = parseInt(card.getAttribute('data-index'));
+        self._resolveQuestion(convId, index);
+      });
+    });
+
+    // Wire create knowledge item buttons
+    container.querySelectorAll('.cb-create-kb-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var text = btn.getAttribute('data-text');
+        self._createKnowledgeItem(text);
+      });
+    });
+  },
+
+  _resolveQuestion: async function(convId, index) {
+    try {
+      var conv = this._conversations.find(function(c) { return c.id === convId; });
+      if (!conv || !Array.isArray(conv.unanswered_questions)) return;
+
+      var q = conv.unanswered_questions[index];
+      if (typeof q === 'string') {
+        conv.unanswered_questions[index] = { text: q, resolved: true };
+      } else if (q && typeof q === 'object') {
+        q.resolved = true;
+      }
+
+      var res = await this._supabase
+        .from('chatbot_conversations')
+        .update({ unanswered_questions: conv.unanswered_questions })
+        .eq('id', convId);
+
+      if (res.error) {
+        console.error('[CB] Resolve question error:', res.error.message);
+        this._showError('Could not dismiss question. Please try again.');
         return;
       }
 
-      container.innerHTML = allQuestions.slice(0, 10).map(q =>
-        "<div class=\"unanswered-item\"><span>" + this.escapeHtml(q) + "</span><a href=\"/chatbot/settings\" class=\"btn-answer\">Add to knowledge base</a></div>"
-      ).join("");
-    } catch (e) {
-      // non-fatal
+      this._renderQuestions();
+      this._updateStats();
+    } catch(e) {
+      console.error('[CB] Resolve question exception:', e.message);
+      this._showError('Could not dismiss question. Please try again.');
     }
   },
 
-  updateFaqBadge: async function () {
+  _createKnowledgeItem: async function(questionText) {
+    var answer = prompt('Write the answer for this question. It will be saved to your Content Library and used by the chatbot.\n\nQuestion: ' + questionText);
+    if (!answer || !answer.trim()) return;
+
     try {
-      const { count } = await window.supabaseClient
-        .from("chatbot_faqs")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", this._user.id)
-        .eq("status", "pending");
+      var sourceRef = 'cb-kb-' + Date.now() + '-' + this._userId;
+      var res = await this._supabase.from('content_library').insert({
+        user_id: this._userId,
+        source: 'tool',
+        tool_source: 'chatbot',
+        source_ref: sourceRef,
+        status: 'approved',
+        category: 'knowledge',
+        tool_tags: ['CB'],
+        content_text: 'Q: ' + questionText + '\nA: ' + answer.trim(),
+        content_type: 'text'
+      });
 
-      const badge = document.getElementById("faq-badge");
-      if (badge) {
-        badge.textContent = count || 0;
-        badge.style.display = count > 0 ? "inline-flex" : "none";
+      if (res.error) {
+        console.error('[CB] Create KB item error:', res.error.message);
+        this._showError('Could not create knowledge item. Please try again.');
+        return;
       }
-    } catch (e) {
-      // non-fatal
+
+      this._showError('Knowledge item created and added to your chatbot.');
+    } catch(e) {
+      console.error('[CB] Create KB item exception:', e.message);
+      this._showError('Could not create knowledge item. Please try again.');
     }
   },
 
-  initTestWidget: function () {
-    this._messages = [];
-    const input = document.getElementById("test-input");
-    const sendBtn = document.getElementById("test-send");
-    const clearBtn = document.getElementById("test-clear");
-    const chatLog = document.getElementById("test-chat-log");
+  // ── TEST CHATBOT TAB ──────────────────────────────────────────────────
 
-    if (!input || !sendBtn || !chatLog) return;
+  _bindTestChat: function() {
+    var self = this;
+    var input = document.getElementById('cb-test-input');
+    var sendBtn = document.getElementById('cb-test-send');
+    var clearBtn = document.getElementById('cb-test-clear');
 
-    if (this._settings && this._settings.greeting_message) {
-      this.appendTestMessage("assistant", this._settings.greeting_message, chatLog);
-      this._messages.push({ role: "assistant", content: this._settings.greeting_message });
-    }
-
-    sendBtn.addEventListener("click", () => this.sendTestMessage(input, chatLog));
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        this.sendTestMessage(input, chatLog);
-      }
+    if (sendBtn) sendBtn.addEventListener('click', function() { self._sendTestMessage(); });
+    if (input) input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); self._sendTestMessage(); }
     });
+    if (clearBtn) clearBtn.addEventListener('click', function() { self._clearTestChat(); });
+  },
 
-    if (clearBtn) {
-      clearBtn.addEventListener("click", () => {
-        this._messages = [];
-        chatLog.innerHTML = "";
-        if (this._settings && this._settings.greeting_message) {
-          this.appendTestMessage("assistant", this._settings.greeting_message, chatLog);
-          this._messages.push({ role: "assistant", content: this._settings.greeting_message });
-        }
-      });
+  _showGreeting: function() {
+    if (this._testMessages.length > 0) return;
+    var greeting = this._settings.greeting_message;
+    if (greeting) {
+      this._appendTestMsg('assistant', greeting);
+      this._testMessages.push({ role: 'assistant', content: greeting });
     }
   },
 
-  sendTestMessage: async function (input, chatLog) {
-    const text = input.value.trim();
+  _sendTestMessage: async function() {
+    var input = document.getElementById('cb-test-input');
+    var text = input ? input.value.trim() : '';
     if (!text) return;
-    input.value = "";
+    if (input) input.value = '';
 
-    this._messages.push({ role: "user", content: text });
-    this.appendTestMessage("user", text, chatLog);
+    this._testMessages.push({ role: 'user', content: text });
+    this._appendTestMsg('user', text);
 
-    const thinking = document.createElement("div");
-    thinking.className = "test-msg test-msg-assistant test-thinking";
-    thinking.textContent = "Thinking...";
-    chatLog.appendChild(thinking);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    var log = document.getElementById('cb-test-log');
+    var thinking = document.createElement('div');
+    thinking.className = 'cb-test-thinking';
+    thinking.textContent = 'Thinking...';
+    if (log) { log.appendChild(thinking); log.scrollTop = log.scrollHeight; }
 
     try {
-      const { data: { session } } = await window.supabaseClient.auth.getSession();
-      const resp = await fetch("/api/chatbot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + session.access_token
-        },
-        body: JSON.stringify({
-          messages: this._messages.filter(m => m.role === "user" || m.role === "assistant"),
-          session_id: "test_" + Date.now()
-        })
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session || !session.access_token) throw new Error('Session expired.');
+
+      var apiMessages = this._testMessages.filter(function(m) {
+        return m.role === 'user' || m.role === 'assistant';
       });
 
-      const data = await resp.json();
-      thinking.remove();
+      var res = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ messages: apiMessages })
+      });
+
+      if (thinking.parentNode) thinking.remove();
+
+      var data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Something went wrong.');
 
       if (data.reply) {
-        this._messages.push({ role: "assistant", content: data.reply });
-        this.appendTestMessage("assistant", data.reply, chatLog);
-
-        if (data.trigger_appointment_picker && this._settings && this._settings.appointment_booking_enabled) {
-          this.renderAppointmentPicker(chatLog);
-        }
-      } else {
-        this.appendTestMessage("assistant", "Something went wrong. Please try again.", chatLog);
+        this._testMessages.push({ role: 'assistant', content: data.reply });
+        this._appendTestMsg('assistant', data.reply);
       }
-    } catch (e) {
-      thinking.remove();
-      this.appendTestMessage("assistant", "Something went wrong. Please try again.", chatLog);
+
+      if (data.trigger_appointment_picker && this._settings.appointment_booking_enabled) {
+        this._renderAppointmentPicker();
+      }
+
+    } catch(e) {
+      if (thinking.parentNode) thinking.remove();
+      console.error('[CB] Test message error:', e.message);
+      this._appendTestMsg('assistant', 'Something went wrong. Please try again.');
     }
   },
 
-  appendTestMessage: function (role, text, chatLog) {
-    const div = document.createElement("div");
-    div.className = "test-msg test-msg-" + role;
+  _appendTestMsg: function(role, text) {
+    var log = document.getElementById('cb-test-log');
+    if (!log) return;
+    var div = document.createElement('div');
+    div.className = 'cb-msg ' + (role === 'user' ? 'cb-msg-user' : 'cb-msg-assistant');
     div.textContent = text;
-    chatLog.appendChild(div);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
   },
 
-  renderAppointmentPicker: function (chatLog) {
-    if (!this._settings) return;
-    const availability = this._settings.availability || {};
-    const timeLabels = this._settings.time_labels || ["Morning", "Afternoon", "Evening"];
+  _clearTestChat: function() {
+    this._testMessages = [];
+    var log = document.getElementById('cb-test-log');
+    if (log) log.innerHTML = '';
+    this._showGreeting();
+  },
 
-    const dayNames = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-    const today = new Date();
+  _renderAppointmentPicker: function() {
+    var log = document.getElementById('cb-test-log');
+    if (!log) return;
+    var availability = this._settings.availability || {};
+    var timeLabels = this._settings.time_labels || ['Morning', 'Afternoon', 'Evening'];
+    var dayNames = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    var today = new Date();
+    var self = this;
 
-    const days = [];
-    for (let i = 1; i <= 14; i++) {
-      const d = new Date(today);
+    var days = [];
+    for (var i = 1; i <= 14; i++) {
+      var d = new Date(today);
       d.setDate(today.getDate() + i);
-      const dayKey = dayNames[d.getDay() === 0 ? 6 : d.getDay() - 1];
-      const availableSlots = availability[dayKey] || [];
-      days.push({ date: d, dayKey, availableSlots });
+      var dayKey = dayNames[d.getDay() === 0 ? 6 : d.getDay() - 1];
+      var availableSlots = availability[dayKey] || [];
+      if (availableSlots.length > 0) {
+        days.push({ date: d, dayKey: dayKey, slots: availableSlots });
+      }
     }
 
-    const pickerEl = document.createElement("div");
-    pickerEl.className = "appt-picker";
-    pickerEl.innerHTML = "<div class=\"appt-picker-title\">Select your preferred times (up to 4)</div>" +
-      "<div class=\"appt-calendar\">" +
-      days.map(day => {
-        const dateStr = day.date.toLocaleDateString("en-AU", { weekday: "short", day: "numeric", month: "short" });
-        const fullDay = day.date.toLocaleDateString("en-AU", { weekday: "long" });
-        const fullDate = day.date.toISOString().split("T")[0];
-        const isAvailable = day.availableSlots.length > 0;
+    if (days.length === 0) {
+      this._appendTestMsg('assistant', 'No available booking slots are configured at the moment. Please contact the business directly.');
+      return;
+    }
 
-        if (!isAvailable) {
-          return "<div class=\"appt-day unavailable\"><span class=\"appt-date\">" + dateStr + "</span></div>";
-        }
+    var picker = document.createElement('div');
+    picker.className = 'cb-slots-row';
+    picker.style.cssText = 'align-self:stretch;border:1px solid var(--border);border-radius:var(--card-radius);margin-top:4px';
 
-        const slots = day.availableSlots.map(idx =>
-          "<button class=\"appt-slot\" data-date=\"" + fullDate + "\" data-day=\"" + fullDay + "\" data-slot=\"" + timeLabels[idx] + "\">" + timeLabels[idx] + "</button>"
-        ).join("");
+    var html = '<div style="font-weight:var(--font-weight-semibold);margin-bottom:8px">Select your preferred times (up to 4)</div>'
+      + '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px">';
 
-        return "<div class=\"appt-day available\"><span class=\"appt-date\">" + dateStr + "</span><div class=\"appt-slots\">" + slots + "</div></div>";
-      }).join("") +
-      "</div>" +
-      "<div class=\"appt-selected\" id=\"appt-selected-list\"><em>No slots selected yet</em></div>" +
-      "<button class=\"appt-confirm\" id=\"appt-confirm-btn\">Confirm Preferred Times</button>";
+    days.forEach(function(day) {
+      var dateStr = day.date.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+      var fullDay = day.date.toLocaleDateString('en-AU', { weekday: 'long' });
+      var fullDate = day.date.toISOString().split('T')[0];
+      html += '<div style="border:1px solid var(--border);border-radius:var(--btn-radius);padding:8px 10px;min-width:90px">'
+        + '<div style="font-size:var(--badge-font-size);font-weight:var(--heading-lg-weight);margin-bottom:6px">' + dateStr + '</div>';
+      day.slots.forEach(function(idx) {
+        html += '<button class="btn-sm btn-outline cb-appt-slot" data-date="' + fullDate + '" data-day="' + fullDay + '" data-slot="' + timeLabels[idx] + '" style="display:block;width:100%;margin-bottom:4px;font-size:var(--badge-font-size)">' + timeLabels[idx] + '</button>';
+      });
+      html += '</div>';
+    });
 
-    chatLog.appendChild(pickerEl);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    html += '</div>'
+      + '<div id="cb-appt-selected" style="font-size:var(--note-font-size);color:var(--text-muted);margin-bottom:8px">No slots selected yet</div>'
+      + '<button class="btn-primary" id="cb-appt-confirm" style="width:100%">Confirm Preferred Times</button>';
 
-    const selectedSlots = [];
-    pickerEl.querySelectorAll(".appt-slot").forEach(btn => {
-      btn.addEventListener("click", () => {
-        if (btn.classList.contains("selected")) {
-          btn.classList.remove("selected");
-          const idx = selectedSlots.findIndex(s => s.date === btn.dataset.date && s.slot === btn.dataset.slot);
-          if (idx > -1) selectedSlots.splice(idx, 1);
+    picker.innerHTML = html;
+    log.appendChild(picker);
+    log.scrollTop = log.scrollHeight;
+
+    var selectedSlots = [];
+    picker.querySelectorAll('.cb-appt-slot').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (btn.classList.contains('active')) {
+          btn.classList.remove('active');
+          btn.style.background = '';
+          btn.style.color = '';
+          selectedSlots = selectedSlots.filter(function(s) { return !(s.date === btn.dataset.date && s.slot === btn.dataset.slot); });
         } else if (selectedSlots.length < 4) {
-          btn.classList.add("selected");
+          btn.classList.add('active');
+          btn.style.background = 'var(--blue)';
+          btn.style.color = 'var(--white)';
           selectedSlots.push({ date: btn.dataset.date, day: btn.dataset.day, slot: btn.dataset.slot });
         }
-        const listEl = document.getElementById("appt-selected-list");
-        if (listEl) {
-          listEl.innerHTML = selectedSlots.length > 0
-            ? selectedSlots.map(s => "<span class=\"appt-slot-tag\">" + s.day + " " + s.date + " — " + s.slot + "</span>").join("")
-            : "<em>No slots selected yet</em>";
+        var selEl = document.getElementById('cb-appt-selected');
+        if (selEl) {
+          selEl.textContent = selectedSlots.length > 0
+            ? selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' — ' + s.slot; }).join(', ')
+            : 'No slots selected yet';
         }
       });
     });
 
-    const confirmBtn = document.getElementById("appt-confirm-btn");
+    var confirmBtn = document.getElementById('cb-appt-confirm');
     if (confirmBtn) {
-      confirmBtn.addEventListener("click", () => {
+      confirmBtn.addEventListener('click', function() {
         if (selectedSlots.length === 0) return;
-        pickerEl.remove();
-        const summary = "Preferred times: " + selectedSlots.map(s => s.day + " " + s.date + " (" + s.slot + ")").join(", ");
-        this.appendTestMessage("user", summary, chatLog);
-        this._messages.push({ role: "system_slots", content: JSON.stringify(selectedSlots) });
-        this.appendTestMessage("assistant", "Thank you — we will be in touch to confirm the best time.", chatLog);
+        picker.remove();
+        var summary = selectedSlots.map(function(s) { return s.day + ' ' + s.date + ' (' + s.slot + ')'; }).join(', ');
+        self._appendTestMsg('user', 'Preferred times: ' + summary);
+        self._testMessages.push({ role: 'system_slots', content: JSON.stringify(selectedSlots) });
+        self._appendTestMsg('assistant', 'Thank you — the business will be in touch to confirm the best time.');
       });
     }
-  }
-};
+  },
 
-// Initialise on DOM ready
-document.addEventListener("DOMContentLoaded", () => window.CHAT_LOGIC.init());
+  // ── ERROR DISPLAY ─────────────────────────────────────────────────────
+
+  _showError: function(message) {
+    var modal = document.getElementById('cb-error-msg');
+    if (!modal) return;
+    var textEl = modal.querySelector('.save-msg-text');
+    if (textEl) textEl.textContent = message;
+    modal.classList.add('open');
+    var okBtn = modal.querySelector('.save-msg-ok');
+    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
+  }
+
+};
