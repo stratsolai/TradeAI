@@ -31,6 +31,3 @@ function upgradeSharepointEntry(entry) {
 if (typeof window !== 'undefined') {
   window.upgradeSharepointEntry = upgradeSharepointEntry;
 }
-
-// ESM export for Node/Vercel
-export { upgradeSharepointEntry };
