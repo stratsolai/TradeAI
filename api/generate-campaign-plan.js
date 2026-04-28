@@ -24,11 +24,16 @@ export default async function handler(req, res) {
 
   const { action, inputs, marketing_plan, campaign_id } = req.body;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("business_profiles")
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    console.error('[generate-campaign-plan] query error:', profileError.message);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
 
   const bp = profile || {};
   const businessName = bp.business_name || "the business";

@@ -25,6 +25,21 @@
     },
     "api/generate-campaign-plan.js": {
       "maxDuration": 60
+    },
+    "api/meta-post.js": {
+      "maxDuration": 30
+    },
+    "api/predis-generate.js": {
+      "maxDuration": 30
+    },
+    "api/predis-brand.js": {
+      "maxDuration": 30
+    },
+    "api/social-publisher.js": {
+      "maxDuration": 60
+    },
+    "api/generate-marketing-theme.js": {
+      "maxDuration": 30
     }
   },
   "crons": [

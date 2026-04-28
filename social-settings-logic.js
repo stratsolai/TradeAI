@@ -60,7 +60,7 @@ window.SM_SETTINGS_LOGIC = {
     var fbBtn = document.getElementById('fb-connect-btn');
     if (s.facebook_connected) {
       if (fbStatus) fbStatus.innerHTML = '<span class="badge badge-green">Connected</span>' +
-        (s.meta_page_name ? '<span style="margin-left:8px;font-size:var(--note-font-size);color:var(--text-muted)">' + window.escHtml(s.meta_page_name) + '</span>' : '');
+        (s.meta_page_name ? '<span class="text-muted" style="margin-left:8px">' + window.escHtml(s.meta_page_name) + '</span>' : '');
       if (fbBtn) { fbBtn.textContent = 'Disconnect'; fbBtn.classList.add('disconnect'); }
     }
 
@@ -68,7 +68,7 @@ window.SM_SETTINGS_LOGIC = {
     var igBtn = document.getElementById('ig-connect-btn');
     if (s.instagram_connected) {
       if (igStatus) igStatus.innerHTML = '<span class="badge badge-green">Connected</span>' +
-        (s.instagram_username ? '<span style="margin-left:8px;font-size:var(--note-font-size);color:var(--text-muted)">@' + window.escHtml(s.instagram_username) + '</span>' : '');
+        (s.instagram_username ? '<span class="text-muted" style="margin-left:8px">@' + window.escHtml(s.instagram_username) + '</span>' : '');
       if (igBtn) { igBtn.textContent = 'Disconnect'; igBtn.classList.add('disconnect'); }
     }
 

@@ -55,19 +55,27 @@ export default async function handler(req, res) {
   for (const scheduledPost of duePosts) {
     const post = scheduledPost.social_posts;
     if (!post) {
-      await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+      const { error: skipErr } = await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+      if (skipErr) console.error("[social-publisher] scheduled_posts update error:", skipErr.message);
       continue;
     }
 
     try {
-      const { data: settings } = await supabase
+      const { data: settings, error: settingsErr } = await supabase
         .from("social_settings")
         .select("meta_page_id, meta_page_token, instagram_account_id, facebook_connected, instagram_connected")
         .eq("user_id", post.user_id)
         .maybeSingle();
 
+      if (settingsErr) {
+        console.error("[social-publisher] social_settings query error:", settingsErr.message);
+        errors.push({ id: scheduledPost.id, error: "Failed to load social settings" });
+        continue;
+      }
+
       if (!settings || !settings.meta_page_token) {
-        await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+        const { error: failErr } = await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+        if (failErr) console.error("[social-publisher] scheduled_posts update error:", failErr.message);
         errors.push({ id: scheduledPost.id, error: "No Meta connection found" });
         continue;
       }
@@ -109,22 +117,25 @@ export default async function handler(req, res) {
       }
 
       const publishedOk = fbResult || igResult;
-      await supabase.from("scheduled_posts").update({
+      const { error: schedUpdateErr } = await supabase.from("scheduled_posts").update({
         status: publishedOk ? "published" : "failed"
       }).eq("id", scheduledPost.id);
+      if (schedUpdateErr) console.error("[social-publisher] scheduled_posts update error:", schedUpdateErr.message);
 
-      await supabase.from("social_posts").update({
+      const { error: postUpdateErr } = await supabase.from("social_posts").update({
         status: publishedOk ? "published" : "failed",
         published_at: publishedOk ? new Date().toISOString() : null,
         post_id: fbResult || igResult || null,
         metadata: { facebook_id: fbResult, instagram_id: igResult },
         updated_at: new Date().toISOString()
       }).eq("id", post.id);
+      if (postUpdateErr) console.error("[social-publisher] social_posts update error:", postUpdateErr.message);
 
       if (publishedOk) published++;
     } catch (err) {
       console.error("[social-publisher] Error publishing post:", scheduledPost.id, err.message);
-      await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+      const { error: catchUpdateErr } = await supabase.from("scheduled_posts").update({ status: "failed" }).eq("id", scheduledPost.id);
+      if (catchUpdateErr) console.error("[social-publisher] scheduled_posts update error:", catchUpdateErr.message);
       errors.push({ id: scheduledPost.id, error: err.message });
     }
   }

@@ -26,21 +26,31 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("business_profiles")
       .select("business_name, website, logo_url, primary_brand_colour, secondary_brand_colour, tone_of_voice")
       .eq("user_id", user.id)
       .maybeSingle();
 
+    if (profileError) {
+      console.error('[predis-brand] query error:', profileError.message);
+      return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
+
     if (!profile) {
       return res.status(400).json({ error: "Business profile not found. Please set up your Business Profile first." });
     }
 
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from("social_settings")
       .select("predis_brand_id")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (settingsError) {
+      console.error('[predis-brand] query error:', settingsError.message);
+      return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
 
     const brandPayload = {
       name: profile.business_name || "My Business",
@@ -84,13 +94,18 @@ export default async function handler(req, res) {
     const brandId = data.brand_id || data.id || settings?.predis_brand_id;
 
     if (brandId) {
-      await supabase
+      const { error: upsertError } = await supabase
         .from("social_settings")
         .upsert({
           user_id: user.id,
           predis_brand_id: brandId,
           updated_at: new Date().toISOString()
         }, { onConflict: "user_id" });
+
+      if (upsertError) {
+        console.error('[predis-brand] upsert error:', upsertError.message);
+        return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+      }
     }
 
     return res.status(200).json({

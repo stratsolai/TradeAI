@@ -31,11 +31,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from("social_settings")
       .select("predis_brand_id")
       .eq("user_id", user.id)
       .maybeSingle();
+
+    if (settingsError) {
+      console.error('[predis-generate] query error:', settingsError.message);
+      return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    }
 
     const brandId = settings?.predis_brand_id || null;
 

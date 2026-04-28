@@ -27,11 +27,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "journey_type is required" });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("business_profiles")
     .select("*")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    console.error('[generate-social-content] query error:', profileError.message);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
 
   const businessName = profile?.business_name || "your business";
   const industry = profile?.industry || "business";

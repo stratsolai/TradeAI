@@ -16,8 +16,8 @@ window.SM_CAMPAIGN = {
     { id: 'timeframe', title: 'Timeframe', question: 'How long should the campaign run?' },
     { id: 'upcoming', title: 'Anything Happening Soon', question: 'Do you have anything coming up?' },
     { id: 'content', title: 'Content Inputs', question: 'What content do you have available?' },
-    { id: 'frequency', title: 'Posting Frequency', question: 'How often should we post?' },
-    { id: 'connections', title: 'Connections Check', question: 'Where should we publish?' }
+    { id: 'frequency', title: 'Posting Frequency', question: 'How often should you post?' },
+    { id: 'connections', title: 'Connections Check', question: 'Where should you publish?' }
   ],
 
   GOALS: [
@@ -76,7 +76,7 @@ window.SM_CAMPAIGN = {
         '</div>' +
         '<div class="sm-step-indicator" id="smc-step-indicator"></div>' +
         '<div class="sm-step-content" id="smc-step-content"></div>' +
-        '<div class="sm-wizard-nav">' +
+        '<div class="action-row sm-wizard-nav">' +
         '<button class="btn-back" id="smc-prev-btn" style="display:none">Back</button>' +
         '<button class="btn-outline" id="smc-save-btn">Save &amp; Exit</button>' +
         '<button class="btn-primary" id="smc-next-btn">Next</button>' +
@@ -243,7 +243,7 @@ window.SM_CAMPAIGN = {
 
   _renderFrequencyStep: function() {
     var current = this._campaignInputs.frequency || '';
-    var html = '<div class="sm-step-hint">How often should we post? The AI will recommend a frequency based on your goal.</div>';
+    var html = '<div class="sm-step-hint">How often should you post? The AI will recommend a frequency based on your goal.</div>';
     html += '<div class="sm-option-pills">';
     this.FREQUENCIES.forEach(function(f) {
       var active = current === f.id ? ' active' : '';
@@ -394,7 +394,7 @@ window.SM_CAMPAIGN = {
   _generatePlan: async function() {
     var self = this;
     var wizardEl = document.getElementById('sm-campaign-wizard');
-    wizardEl.innerHTML = '<div class="sm-generating"><div class="sm-generating-spinner"></div><div>Generating your marketing plan...</div></div>';
+    wizardEl.innerHTML = '<div class="sm-generating"><div class="loading-spinner"></div><div>Generating your marketing plan...</div></div>';
 
     try {
       var sessionRes = await this._supabase.auth.getSession();
@@ -433,9 +433,9 @@ window.SM_CAMPAIGN = {
       '</div>' +
       '<div class="sm-step-content">' +
       '<div class="sm-step-hint">Review the plan below. You can edit it before confirming.</div>' +
-      '<textarea class="sm-edit-caption" id="smc-plan-text" style="min-height:300px">' + window.escHtml(planText) + '</textarea>' +
+      '<textarea class="form-input" style="min-height:120px;line-height:var(--body-line-height);resize:vertical" id="smc-plan-text" style="min-height:300px">' + window.escHtml(planText) + '</textarea>' +
       '</div>' +
-      '<div class="sm-wizard-nav" style="margin-top:20px">' +
+      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
       '<button class="btn-outline" id="smc-plan-regenerate">Regenerate</button>' +
       '<button class="btn-primary" id="smc-plan-confirm">Confirm &amp; Create Campaign</button>' +
       '</div>';
@@ -491,7 +491,7 @@ window.SM_CAMPAIGN = {
     var activeEl = document.getElementById('sm-campaign-active');
     if (activeEl) {
       activeEl.style.display = 'block';
-      activeEl.innerHTML = '<div class="sm-generating"><div class="sm-generating-spinner"></div><div>Generating campaign posts from your marketing plan...</div></div>';
+      activeEl.innerHTML = '<div class="sm-generating"><div class="loading-spinner"></div><div>Generating campaign posts from your marketing plan...</div></div>';
     }
 
     try {
@@ -521,14 +521,15 @@ window.SM_CAMPAIGN = {
       var data = await res.json();
       this._campaignPosts = data.posts || [];
 
-      await this._supabase.from('campaigns').update({
+      var updResult = await this._supabase.from('campaigns').update({
         status: 'implementing',
         updated_at: new Date().toISOString()
       }).eq('id', campaign.id);
+      if (updResult.error) { this._showError('Could not update campaign status.'); return; }
 
       for (var i = 0; i < this._campaignPosts.length; i++) {
         var post = this._campaignPosts[i];
-        await this._supabase.from('campaign_outputs').insert({
+        var insResult = await this._supabase.from('campaign_outputs').insert({
           campaign_id: campaign.id,
           user_id: this._userId,
           journey_type: post.journey_type || 'social_post',
@@ -539,6 +540,7 @@ window.SM_CAMPAIGN = {
           sort_order: i,
           created_at: new Date().toISOString()
         });
+        if (insResult.error) console.error('[SM Campaign] campaign_outputs insert error:', insResult.error.message);
       }
 
       this._renderPostReview(campaign);
@@ -586,7 +588,7 @@ window.SM_CAMPAIGN = {
       else if (post.status === 'pending') statusBadge = '<span class="badge badge-orange">Pending</span>';
       else if (post.status === 'skipped') statusBadge = '<span class="badge badge-grey">Skipped</span>';
 
-      html += '<div class="sm-post-card" data-id="' + post.id + '">' +
+      html += '<div class="item-card sm-post-card" data-id="' + post.id + '">' +
         '<div class="sm-post-thumb">\uD83D\uDCDD</div>' +
         '<div class="sm-post-body">' +
         '<div class="sm-post-meta">' +
@@ -594,7 +596,7 @@ window.SM_CAMPAIGN = {
         statusBadge +
         (post.scheduled_for ? '<span class="sm-post-date">' + new Date(post.scheduled_for).toLocaleDateString('en-AU') + '</span>' : '') +
         '</div>' +
-        '<div class="sm-post-caption-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
+        '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
         '<div class="sm-post-actions">';
 
       if (post.status === 'pending') {
@@ -636,16 +638,18 @@ window.SM_CAMPAIGN = {
   _handleCampaignPostAction: async function(action, postId, campaign) {
     var self = this;
     if (action === 'approve') {
-      await this._supabase.from('campaign_outputs').update({
+      var approveRes = await this._supabase.from('campaign_outputs').update({
         status: 'approved',
         updated_at: new Date().toISOString()
       }).eq('id', postId);
+      if (approveRes.error) { this._showError('Could not approve post.'); return; }
       this._renderPostReview(campaign);
     } else if (action === 'skip') {
-      await this._supabase.from('campaign_outputs').update({
+      var skipRes = await this._supabase.from('campaign_outputs').update({
         status: 'skipped',
         updated_at: new Date().toISOString()
       }).eq('id', postId);
+      if (skipRes.error) { this._showError('Could not skip post.'); return; }
       this._renderPostReview(campaign);
     } else if (action === 'edit') {
       this._editCampaignPost(postId, campaign);
@@ -666,25 +670,26 @@ window.SM_CAMPAIGN = {
       '<div class="sm-wizard-title">Edit Post</div></div>' +
       '<div class="sm-step-content">' +
       '<div class="form-group"><label class="form-label">Caption</label>' +
-      '<textarea class="sm-edit-caption" id="smc-edit-caption">' + window.escHtml(post.caption || '') + '</textarea></div>' +
+      '<textarea class="form-input" style="min-height:120px;line-height:var(--body-line-height);resize:vertical" id="smc-edit-caption">' + window.escHtml(post.caption || '') + '</textarea></div>' +
       '<div class="form-group"><label class="form-label">Hashtags</label>' +
-      '<input type="text" class="sm-edit-hashtags" id="smc-edit-hashtags" value="' + window.escHtml(post.hashtags || '') + '"></div>' +
+      '<input type="text" class="form-input sm-edit-hashtags-colour" id="smc-edit-hashtags" value="' + window.escHtml(post.hashtags || '') + '"></div>' +
       '<div class="form-group"><label class="form-label">Scheduled date</label>' +
       '<input type="date" class="form-input" id="smc-edit-date" value="' + (post.scheduled_for ? post.scheduled_for.substring(0, 10) : '') + '"></div>' +
       '</div>' +
-      '<div class="sm-wizard-nav" style="margin-top:20px">' +
+      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
       '<button class="btn-primary" id="smc-edit-save">Save Changes</button></div>';
 
     document.getElementById('smc-edit-back').addEventListener('click', function() {
       self._renderPostReview(campaign);
     });
     document.getElementById('smc-edit-save').addEventListener('click', async function() {
-      await self._supabase.from('campaign_outputs').update({
+      var editRes = await self._supabase.from('campaign_outputs').update({
         caption: document.getElementById('smc-edit-caption').value,
         hashtags: document.getElementById('smc-edit-hashtags').value,
         scheduled_for: document.getElementById('smc-edit-date').value || null,
         updated_at: new Date().toISOString()
       }).eq('id', postId);
+      if (editRes.error) { self._showError('Could not save changes.'); return; }
       self._renderPostReview(campaign);
     });
   },
@@ -713,12 +718,15 @@ window.SM_CAMPAIGN = {
 
       if (res.ok) {
         var data = await res.json();
-        await this._supabase.from('campaign_outputs').update({
+        var regenRes = await this._supabase.from('campaign_outputs').update({
           caption: data.caption || data.content || '',
           hashtags: data.hashtags || '',
           status: 'pending',
           updated_at: new Date().toISOString()
         }).eq('id', postId);
+        if (regenRes.error) { this._showError('Could not save regenerated post.'); return; }
+      } else {
+        this._showError('Could not regenerate post. Please try again.');
       }
       this._renderPostReview(campaign);
     } catch (err) {
@@ -727,10 +735,11 @@ window.SM_CAMPAIGN = {
   },
 
   _approveAllPosts: async function(campaign) {
-    await this._supabase.from('campaign_outputs').update({
+    var bulkRes = await this._supabase.from('campaign_outputs').update({
       status: 'approved',
       updated_at: new Date().toISOString()
     }).eq('campaign_id', campaign.id).eq('status', 'pending');
+    if (bulkRes.error) { this._showError('Could not approve posts.'); return; }
     this._renderPostReview(campaign);
   },
 
@@ -746,6 +755,7 @@ window.SM_CAMPAIGN = {
           .eq('campaign_id', campaign.id)
           .eq('status', 'approved')
           .order('sort_order', { ascending: true });
+        if (outputs.error) { self._showError('Could not load campaign posts.'); return; }
 
         var posts = outputs.data || [];
         for (var i = 0; i < posts.length; i++) {
@@ -762,22 +772,25 @@ window.SM_CAMPAIGN = {
             updated_at: new Date().toISOString()
           }).select().single();
 
+          if (postResult.error) { console.error('[SM Campaign] social_posts insert error:', postResult.error.message); continue; }
           if (postResult.data && p.scheduled_for) {
-            await self._supabase.from('scheduled_posts').insert({
+            var schedRes = await self._supabase.from('scheduled_posts').insert({
               user_id: self._userId,
               social_post_id: postResult.data.id,
               scheduled_for: p.scheduled_for,
               platforms: campaign.connections || ['facebook'],
               status: 'pending'
             });
+            if (schedRes.error) console.error('[SM Campaign] scheduled_posts insert error:', schedRes.error.message);
           }
         }
 
-        await self._supabase.from('campaigns').update({
+        var launchRes = await self._supabase.from('campaigns').update({
           status: 'active',
           started_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }).eq('id', campaign.id);
+        if (launchRes.error) { self._showError('Could not launch campaign.'); return; }
 
         self.renderActive(campaign.id);
       }
@@ -845,10 +858,11 @@ window.SM_CAMPAIGN = {
         window.escHtml((next.caption || '').substring(0, 200)) + '</div></div>';
     }
 
-    html += '<div class="sm-publish-actions" style="margin-bottom:20px">';
+    html += '<div class="action-row sm-publish-actions" style="margin-bottom:20px">';
     if (campaign.status === 'active') {
       html += '<button class="btn-outline" id="smc-pause">Pause Campaign</button>';
       html += '<button class="btn-outline" id="smc-add-post">Add a Post</button>';
+      html += '<button class="btn-outline" id="smc-extend">Extend Campaign</button>';
     } else if (campaign.status === 'paused') {
       html += '<button class="btn-primary" id="smc-resume">Resume Campaign</button>';
     }
@@ -863,10 +877,10 @@ window.SM_CAMPAIGN = {
       else if (post.status === 'scheduled') pBadge = '<span class="badge badge-blue">Scheduled</span>';
       else pBadge = '<span class="badge badge-grey">' + window.escHtml(post.status) + '</span>';
 
-      html += '<div class="sm-post-card"><div class="sm-post-thumb">\uD83D\uDCDD</div>' +
+      html += '<div class="item-card sm-post-card"><div class="sm-post-thumb">\uD83D\uDCDD</div>' +
         '<div class="sm-post-body"><div class="sm-post-meta">' + pBadge +
         '<span class="sm-post-date">' + (post.published_at ? new Date(post.published_at).toLocaleDateString('en-AU') : '') + '</span></div>' +
-        '<div class="sm-post-caption-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
+        '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
 
       if (post.status === 'published') {
         html += '<div class="sm-post-metrics">' +
@@ -877,6 +891,8 @@ window.SM_CAMPAIGN = {
       html += '</div></div>';
     });
     html += '</div>';
+
+    html += '<div id="smc-campaign-history"></div>';
 
     activeEl.innerHTML = html;
 
@@ -898,21 +914,31 @@ window.SM_CAMPAIGN = {
         window.SOCIAL_LOGIC._switchTab('create');
       });
     }
+    var extendBtn = document.getElementById('smc-extend');
+    if (extendBtn) {
+      extendBtn.addEventListener('click', function() {
+        self._showExtendForm(campaign);
+      });
+    }
+
+    this._loadCampaignHistory();
   },
 
   _setCampaignStatus: async function(campaignId, status) {
-    await this._supabase.from('campaigns').update({
+    var statusRes = await this._supabase.from('campaigns').update({
       status: status,
       updated_at: new Date().toISOString()
     }).eq('id', campaignId);
+    if (statusRes.error) { this._showError('Could not update campaign status.'); return; }
 
     if (status === 'completed') {
-      await this._supabase.from('scheduled_posts')
+      var cancelRes = await this._supabase.from('scheduled_posts')
         .update({ status: 'cancelled' })
         .eq('user_id', this._userId)
         .in('social_post_id',
           this._supabase.from('social_posts').select('id').eq('campaign_id', campaignId).eq('status', 'scheduled')
         );
+      if (cancelRes.error) console.error('[SM Campaign] cancel scheduled_posts error:', cancelRes.error.message);
     }
 
     this.renderActive(campaignId);
@@ -932,6 +958,252 @@ window.SM_CAMPAIGN = {
       return;
     }
     this._exitWizard();
+  },
+
+  _loadCampaignHistoryEmpty: async function() {
+    var container = document.getElementById('smc-campaign-history-empty');
+    if (!container) return;
+
+    var result = await this._supabase
+      .from('campaigns')
+      .select('*')
+      .eq('user_id', this._userId)
+      .eq('status', 'completed')
+      .order('updated_at', { ascending: false })
+      .limit(10);
+
+    if (result.error || !result.data || result.data.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    this._renderHistoryList(result.data, container);
+  },
+
+  _loadCampaignHistory: async function() {
+    var container = document.getElementById('smc-campaign-history');
+    if (!container) return;
+
+    var result = await this._supabase
+      .from('campaigns')
+      .select('*')
+      .eq('user_id', this._userId)
+      .eq('status', 'completed')
+      .order('updated_at', { ascending: false })
+      .limit(10);
+
+    if (result.error || !result.data || result.data.length === 0) {
+      container.innerHTML = '';
+      return;
+    }
+
+    this._renderHistoryList(result.data, container);
+  },
+
+  _renderHistoryList: async function(campaigns, container) {
+    var self = this;
+    var html = '<div class="sm-step-question" style="margin-top:32px;margin-bottom:12px">Campaign History</div>';
+
+    for (var i = 0; i < campaigns.length; i++) {
+      var c = campaigns[i];
+      var postsResult = await self._supabase
+        .from('social_posts')
+        .select('status,reach,engagement')
+        .eq('campaign_id', c.id);
+
+      var posts = postsResult.data || [];
+      var published = posts.filter(function(p) { return p.status === 'published'; }).length;
+      var totalReach = 0;
+      var totalEngagement = 0;
+      posts.forEach(function(p) {
+        totalReach += (p.reach || 0);
+        totalEngagement += (p.engagement || 0);
+      });
+
+      var startDate = c.created_at ? new Date(c.created_at).toLocaleDateString('en-AU') : '';
+      var endDate = c.updated_at ? new Date(c.updated_at).toLocaleDateString('en-AU') : '';
+
+      html += '<div class="item-card" style="margin-bottom:12px;padding:16px">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">' +
+        '<div><div style="font-weight:var(--heading-lg-weight);margin-bottom:4px">' + window.escHtml(c.name || 'Campaign') + '</div>' +
+        '<div style="font-size:var(--badge-font-size);color:var(--text-muted)">' + startDate + ' \u2014 ' + endDate + '</div></div>' +
+        '<button class="btn-outline btn-sm" data-runagain="' + c.id + '">Run Again</button>' +
+        '</div>' +
+        '<div class="stats-bar" style="margin-top:12px">' +
+        '<div class="stat-card green" style="padding:8px"><div class="stat-value">' + published + '</div><div class="stat-label">Published</div></div>' +
+        '<div class="stat-card teal" style="padding:8px"><div class="stat-value">' + totalReach + '</div><div class="stat-label">Reach</div></div>' +
+        '<div class="stat-card orange" style="padding:8px"><div class="stat-value">' + totalEngagement + '</div><div class="stat-label">Engagement</div></div>' +
+        '</div></div>';
+    }
+
+    container.innerHTML = html;
+
+    container.querySelectorAll('[data-runagain]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._runAgain(btn.dataset.runagain);
+      });
+    });
+  },
+
+  _runAgain: async function(campaignId) {
+    var result = await this._supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .single();
+
+    if (result.error || !result.data) {
+      this._showError('Could not load campaign details.');
+      return;
+    }
+
+    var campaign = result.data;
+    this._campaignInputs = campaign.inputs || {};
+    this._campaignStep = 0;
+
+    var wizardEl = document.getElementById('sm-campaign-wizard');
+    var contentEl = document.getElementById('sm-campaign-content');
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (contentEl) contentEl.style.display = 'none';
+    if (activeEl) activeEl.style.display = 'none';
+    if (wizardEl) {
+      wizardEl.classList.add('active');
+      wizardEl.innerHTML = '<div class="sm-wizard-header">' +
+        '<button class="btn-back" id="smc-wizard-back">Back</button>' +
+        '<div class="sm-wizard-title">New Campaign (from previous)</div>' +
+        '</div>' +
+        '<div class="sm-step-indicator" id="smc-step-indicator"></div>' +
+        '<div class="sm-step-content" id="smc-step-content"></div>' +
+        '<div class="action-row sm-wizard-nav">' +
+        '<button class="btn-back" id="smc-prev-btn" style="display:none">Back</button>' +
+        '<button class="btn-outline" id="smc-save-btn">Save &amp; Exit</button>' +
+        '<button class="btn-primary" id="smc-next-btn">Next</button>' +
+        '</div>';
+      this._bindWizardNav();
+      this._renderStep();
+    }
+  },
+
+  _showExtendForm: function(campaign) {
+    var self = this;
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (!activeEl) return;
+
+    var prevHtml = activeEl.innerHTML;
+
+    var html = '<div class="sm-wizard-header">' +
+      '<button class="btn-back" id="smc-extend-back">Back</button>' +
+      '<div class="sm-wizard-title">Extend Campaign</div>' +
+      '</div>' +
+      '<div class="sm-step-content">' +
+      '<div class="sm-step-hint">Add more posts to your running campaign.</div>' +
+      '<div class="form-group"><label class="form-label">Additional weeks</label>' +
+      '<select class="form-input" id="smc-extend-weeks" style="width:200px">' +
+      '<option value="1">1 week</option>' +
+      '<option value="2" selected>2 weeks</option>' +
+      '<option value="3">3 weeks</option>' +
+      '<option value="4">4 weeks</option>' +
+      '</select></div>' +
+      '<div class="form-group"><label class="form-label">Posts per week</label>' +
+      '<select class="form-input" id="smc-extend-ppw" style="width:200px">' +
+      '<option value="2">2 per week</option>' +
+      '<option value="3" selected>3 per week</option>' +
+      '<option value="4">4 per week</option>' +
+      '<option value="5">5 per week</option>' +
+      '</select></div>' +
+      '</div>' +
+      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
+      '<button class="btn-primary" id="smc-extend-submit">Generate Extension Posts</button>' +
+      '</div>';
+
+    activeEl.innerHTML = html;
+
+    document.getElementById('smc-extend-back').addEventListener('click', function() {
+      self.renderActive(campaign.id);
+    });
+    document.getElementById('smc-extend-submit').addEventListener('click', function() {
+      var weeks = parseInt(document.getElementById('smc-extend-weeks').value, 10);
+      var ppw = parseInt(document.getElementById('smc-extend-ppw').value, 10);
+      self._submitExtend(campaign, weeks, ppw);
+    });
+  },
+
+  _submitExtend: async function(campaign, weeks, postsPerWeek) {
+    var self = this;
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (activeEl) {
+      activeEl.innerHTML = '<div class="sm-generating"><div class="loading-spinner"></div><div>Generating extension posts...</div></div>';
+    }
+
+    try {
+      var existingResult = await this._supabase
+        .from('campaign_outputs')
+        .select('sort_order')
+        .eq('campaign_id', campaign.id)
+        .order('sort_order', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      var startOrder = 0;
+      if (existingResult.data) {
+        startOrder = (existingResult.data.sort_order || 0) + 1;
+      }
+
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) { this._showError('Session expired. Please refresh.'); return; }
+
+      var extendContext = 'This is an EXTENSION of an existing campaign. Generate ' + (weeks * postsPerWeek) +
+        ' additional posts (' + postsPerWeek + ' per week for ' + weeks + ' weeks). ' +
+        'Continue the themes and style of the existing campaign. Start dates from next week onwards.';
+
+      var res = await fetch('/api/generate-campaign-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({
+          action: 'generate-posts',
+          campaign_id: campaign.id,
+          marketing_plan: (campaign.marketing_plan || '') + '\n\n' + extendContext,
+          inputs: campaign.inputs || {}
+        })
+      });
+
+      if (!res.ok) {
+        var errData = await res.json().catch(function() { return {}; });
+        throw new Error(errData.error || 'Failed to generate extension posts.');
+      }
+
+      var data = await res.json();
+      var newPosts = data.posts || [];
+
+      for (var i = 0; i < newPosts.length; i++) {
+        var post = newPosts[i];
+        var insResult = await this._supabase.from('campaign_outputs').insert({
+          campaign_id: campaign.id,
+          user_id: this._userId,
+          journey_type: post.journey_type || 'social_post',
+          caption: post.caption || '',
+          hashtags: post.hashtags || '',
+          scheduled_for: post.suggested_date || null,
+          status: 'pending',
+          sort_order: startOrder + i,
+          created_at: new Date().toISOString()
+        });
+        if (insResult.error) console.error('[SM Campaign] extend insert error:', insResult.error.message);
+      }
+
+      await this._supabase.from('campaigns').update({
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+
+      this._renderPostReview(campaign);
+    } catch (err) {
+      this._showError(err.message);
+      this.renderActive(campaign.id);
+    }
   },
 
   _showError: function(msg) {

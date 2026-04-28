@@ -18,7 +18,7 @@
       border: 1px solid var(--border);
       border-left: 4px solid var(--blue);
       border-radius: var(--card-radius);
-      padding: 24px;
+      padding: var(--card-padding);
       cursor: pointer;
       transition: box-shadow var(--btn-transition);
     }
@@ -27,7 +27,7 @@
     .sm-group-tile-icon { font-size: 28px; margin-bottom: 12px; }
     .sm-group-tile-title {
       font-family: var(--heading-font);
-      font-size: var(--section-title-font-size);
+      font-size: 24px;
       font-weight: var(--heading-lg-weight);
       color: var(--text);
       margin-bottom: 8px;
@@ -43,7 +43,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 14px 18px;
+      padding: var(--btn-padding);
       background: var(--bg-subtle);
       border: 1px solid var(--border);
       border-radius: var(--btn-radius);
@@ -73,7 +73,7 @@
     }
     .sm-step-indicator {
       display: flex;
-      gap: 6px;
+      gap: var(--btn-gap);
       align-items: center;
       margin-bottom: 24px;
     }
@@ -112,58 +112,42 @@
       margin-bottom: 16px;
       line-height: var(--note-line-height);
     }
-    .sm-wizard-nav {
-      display: flex;
-      align-items: center;
-      gap: var(--actions-gap);
-      margin-top: 20px;
-    }
+    .sm-wizard-nav { margin-top: 20px; }
     .sm-wizard-nav .btn-primary { margin-left: auto; }
 
     .sm-tone-pills { display: flex; flex-wrap: wrap; gap: 10px; }
     .sm-tone-pill {
-      padding: 10px 18px;
-      border: 2px solid var(--border);
+      padding: 6px 16px;
+      border: 1px solid var(--border-blue);
       border-radius: var(--btn-radius);
       background: var(--white);
       font-family: var(--body-font);
-      font-size: var(--body-font-size);
-      font-weight: var(--font-weight-semibold);
+      font-size: var(--label-font-size);
+      font-weight: 500;
       color: var(--text-secondary);
       cursor: pointer;
       transition: all var(--btn-transition);
     }
-    .sm-tone-pill:hover { border-color: var(--blue); color: var(--blue); }
-    .sm-tone-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+    .sm-tone-pill:hover { background: var(--blue-light); }
+    .sm-tone-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); }
 
     .sm-option-pills { display: flex; flex-wrap: wrap; gap: 10px; }
     .sm-option-pill {
-      padding: 10px 18px;
-      border: 1px solid var(--border);
+      padding: 6px 16px;
+      border: 1px solid var(--border-blue);
       border-radius: var(--btn-radius);
       background: var(--white);
       font-family: var(--body-font);
-      font-size: var(--body-font-size);
+      font-size: var(--label-font-size);
+      font-weight: 500;
       color: var(--text-secondary);
       cursor: pointer;
       transition: all var(--btn-transition);
     }
-    .sm-option-pill:hover { border-color: var(--blue); background: var(--blue-light); }
-    .sm-option-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); font-weight: var(--font-weight-semibold); }
+    .sm-option-pill:hover { background: var(--blue-light); }
+    .sm-option-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); }
 
-    .sm-media-area {
-      border: 2px dashed var(--border);
-      border-radius: var(--card-radius);
-      padding: 32px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color var(--btn-transition), background var(--btn-transition);
-    }
-    .sm-media-area:hover { border-color: var(--blue); background: var(--blue-light); }
-    .sm-media-area-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
-    .sm-media-area-text { font-size: var(--body-font-size); color: var(--text-muted); margin-bottom: 8px; }
-    .sm-media-area-hint { font-size: var(--badge-font-size); color: var(--text-hint); }
-    .sm-media-preview-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .sm-media-preview-grid { display: flex; flex-wrap: wrap; gap: var(--actions-gap); margin-top: 16px; }
     .sm-media-preview-item {
       width: 100px;
       height: 100px;
@@ -183,7 +167,7 @@
       background: var(--white);
       border: 1px solid var(--border);
       color: var(--red);
-      font-size: 12px;
+      font-size: var(--label-font-size);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -231,36 +215,14 @@
     }
     .sm-preview-hashtags { font-size: var(--note-font-size); color: var(--blue); line-height: var(--note-line-height); }
 
-    .sm-edit-caption {
-      width: 100%;
-      min-height: 120px;
-      border: var(--input-border-width) solid var(--border);
-      border-radius: var(--input-radius);
-      padding: var(--input-padding);
-      font-family: var(--body-font);
-      font-size: var(--body-font-size);
-      color: var(--text);
-      line-height: var(--body-line-height);
-      resize: vertical;
-    }
-    .sm-edit-caption:focus { border-color: var(--blue); outline: none; }
-    .sm-edit-hashtags {
-      width: 100%;
-      border: var(--input-border-width) solid var(--border);
-      border-radius: var(--input-radius);
-      padding: var(--input-padding);
-      font-family: var(--body-font);
-      font-size: var(--note-font-size);
-      color: var(--blue);
-    }
-    .sm-edit-hashtags:focus { border-color: var(--blue); outline: none; }
+    .sm-edit-hashtags-colour { color: var(--blue); }
 
-    .sm-connection-checks { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .sm-connection-checks { display: flex; flex-direction: column; gap: var(--actions-gap); margin-bottom: 20px; }
     .sm-connection-check {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 14px 18px;
+      padding: 10px 16px;
       border: 1px solid var(--border);
       border-radius: var(--btn-radius);
       background: var(--white);
@@ -268,17 +230,12 @@
     .sm-connection-check input[type="checkbox"] { width: var(--checkbox-size); height: var(--checkbox-size); cursor: pointer; }
     .sm-connection-check-label { font-weight: var(--font-weight-semibold); color: var(--text); }
     .sm-connection-check-status { font-size: var(--badge-font-size); color: var(--text-muted); margin-left: auto; }
-    .sm-publish-actions { display: flex; gap: var(--actions-gap); flex-wrap: wrap; }
+    .sm-publish-actions { flex-wrap: wrap; }
 
-    .sm-post-list { display: flex; flex-direction: column; gap: 12px; }
+    .sm-post-list { display: flex; flex-direction: column; gap: var(--actions-gap); }
     .sm-post-card {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      border-left: 4px solid var(--blue);
-      box-shadow: 0 2px 8px var(--shadow-card);
       display: flex;
       align-items: stretch;
-      overflow: hidden;
     }
     .sm-post-thumb {
       width: 100px;
@@ -296,20 +253,12 @@
     .sm-post-meta {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
+      gap: 10px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
     .sm-post-type { font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); }
     .sm-post-date { font-size: var(--badge-font-size); color: var(--text-muted); margin-left: auto; }
-    .sm-post-caption-preview {
-      font-size: var(--body-font-size);
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 8px;
-    }
     .sm-post-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .sm-post-metrics { display: flex; gap: 16px; margin-top: 8px; }
     .sm-post-metric { font-size: var(--badge-font-size); color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
@@ -333,21 +282,6 @@
       margin-bottom: 20px;
       flex-wrap: wrap;
     }
-    .sm-campaign-progress { font-size: var(--note-font-size); color: var(--text-muted); }
-    .sm-campaign-timeline { margin-top: 20px; }
-    .sm-campaign-week {
-      border-left: 3px solid var(--blue);
-      padding-left: 20px;
-      margin-bottom: 24px;
-    }
-    .sm-campaign-week-label {
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: var(--letter-spacing-label);
-      margin-bottom: 10px;
-    }
 
     .sm-filter-bar {
       display: flex;
@@ -363,17 +297,6 @@
       padding: var(--loading-padding);
       color: var(--text-muted);
     }
-    .sm-generating-spinner {
-      display: inline-block;
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--blue);
-      border-radius: 50%;
-      animation: sm-spin 0.8s linear infinite;
-      margin-bottom: 12px;
-    }
-    @keyframes sm-spin { to { transform: rotate(360deg); } }
 
     .sm-calendar { width: 100%; border-collapse: collapse; }
     .sm-calendar th {
@@ -399,7 +322,7 @@
       border-radius: 4px;
       background: var(--blue-light);
       color: var(--blue);
-      font-size: 11px;
+      font-size: var(--label-font-size);
       margin-bottom: 2px;
       cursor: pointer;
       white-space: nowrap;
@@ -421,7 +344,6 @@
       .sm-filter-bar { flex-direction: column; align-items: stretch; }
       .sm-filter-bar .search-input { max-width: 100%; }
       .sm-tone-pills { gap: 8px; }
-      .sm-media-area { padding: 20px; }
       .sm-publish-actions { flex-direction: column; }
       .sm-publish-actions .btn-primary,
       .sm-publish-actions .btn-outline { width: 100%; justify-content: center; }
@@ -497,7 +419,7 @@
         </div>
         <div class="sm-step-indicator" id="sm-step-indicator"></div>
         <div class="sm-step-content" id="sm-step-content"></div>
-        <div class="sm-wizard-nav">
+        <div class="action-row sm-wizard-nav">
           <button class="btn-back" id="sm-step-prev-btn">Back</button>
           <button class="btn-outline" id="sm-save-exit-btn">Save &amp; Exit</button>
           <button class="btn-primary" id="sm-step-next-btn">Next</button>
@@ -505,7 +427,7 @@
       </div>
       <div id="sm-generate-view" style="display:none">
         <div class="sm-generating" id="sm-generating">
-          <div class="sm-generating-spinner"></div>
+          <div class="loading-spinner"></div>
           <div>Generating your content...</div>
         </div>
       </div>
@@ -518,14 +440,14 @@
         <div style="margin-top:20px">
           <div class="sm-step-question">Edit Caption</div>
           <div class="form-group">
-            <textarea class="sm-edit-caption" id="sm-edit-caption"></textarea>
+            <textarea class="form-input" id="sm-edit-caption" style="min-height:120px;line-height:var(--body-line-height);resize:vertical"></textarea>
           </div>
           <div class="form-group">
             <label class="form-label">Hashtags</label>
-            <input type="text" class="sm-edit-hashtags" id="sm-edit-hashtags">
+            <input type="text" class="form-input sm-edit-hashtags-colour" id="sm-edit-hashtags">
           </div>
         </div>
-        <div class="sm-wizard-nav" style="margin-top:24px">
+        <div class="action-row sm-wizard-nav" style="margin-top:24px">
           <button class="btn-outline" id="sm-regenerate-btn">Regenerate</button>
           <button class="btn-primary" id="sm-approve-btn">Approve &amp; Continue</button>
         </div>
@@ -538,7 +460,7 @@
         <div class="sm-step-content">
           <div class="sm-step-question">Where would you like to publish?</div>
           <div class="sm-connection-checks" id="sm-connection-checks"></div>
-          <div class="sm-publish-actions">
+          <div class="action-row sm-publish-actions">
             <button class="btn-primary" id="sm-post-now-btn">Post Now</button>
             <button class="btn-outline" id="sm-schedule-btn">Schedule</button>
             <button class="btn-outline" id="sm-save-draft-btn">Save as Draft</button>
@@ -557,6 +479,7 @@
         <div style="text-align:center;margin-top:16px">
           <button class="btn-primary" id="sm-start-campaign-btn">Start a Campaign</button>
         </div>
+        <div id="smc-campaign-history-empty"></div>
       </div>
       <div id="sm-campaign-wizard" class="sm-wizard"></div>
       <div id="sm-campaign-active" style="display:none"></div>
@@ -669,6 +592,7 @@
   <script src="/pwa.js"></script>
   <script src="/social-campaign.js"></script>
   <script src="/social-logic.js"></script>
+  <script src="/social-modules.js"></script>
   <script>
     (function() {
       var supabase = window.supabaseClient;

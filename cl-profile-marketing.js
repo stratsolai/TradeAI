@@ -21,7 +21,8 @@ window.BP_MARKETING = {
       feeling: [], feeling_other: '',
       tone: p.tone_of_voice || 'friendly',
       primary_colour: p.primary_brand_colour || '', secondary_colour: p.secondary_brand_colour || '',
-      tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no'
+      tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no',
+      specialise_services: [], specialise_duration: ''
     };
     var hasExisting = p.marketing_theme_differentiators || p.marketing_theme_awareness || p.marketing_theme_feeling;
     if (hasExisting) {
@@ -81,7 +82,7 @@ window.BP_MARKETING = {
         if (pill.classList.contains('active')) {
           pill.classList.remove('active');
         } else {
-          if (attr === 'tone') {
+          if (attr === 'tone' || attr === 'specdur') {
             pill.parentElement.querySelectorAll('.sm-option-pill').forEach(function(s) { s.classList.remove('active'); });
           }
           if (attr === 'feelingMax') {
@@ -125,6 +126,28 @@ window.BP_MARKETING = {
     if (a.standout.indexOf('More experienced or qualified') !== -1) {
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Years in business</label>' +
         '<input type="text" class="profile-input" id="prof-mkt-exp-years" value="' + window.escHtml(a.experience_years || '') + '" style="width:120px"></div>';
+    }
+    if (a.standout.indexOf('We specialise in certain areas') !== -1) {
+      var bp = this._profile || {};
+      var bpServices = Array.isArray(bp.bp_services) ? bp.bp_services : [];
+      var serviceNames = bpServices.map(function(s) { return s.name || s; }).filter(function(n) { return !!n; });
+      var selectedSpecialise = a.specialise_services || [];
+      html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Which services do you specialise in?</label>';
+      if (serviceNames.length > 0) {
+        html += '<div class="sm-option-pills" style="margin-bottom:8px">';
+        serviceNames.forEach(function(svc) {
+          var active = selectedSpecialise.indexOf(svc) !== -1 ? ' active' : '';
+          html += '<button class="sm-option-pill' + active + '" data-specsvc="' + window.escHtml(svc) + '">' + window.escHtml(svc) + '</button>';
+        });
+        html += '</div>';
+      } else {
+        html += '<div style="color:var(--text-muted);font-size:var(--badge-font-size);margin-bottom:8px">No services found in your Business Profile. Add services to your profile to select them here.</div>';
+      }
+      html += '</div>';
+      var durationOptions = ['Less than 2 years', '2\u20135 years', '5\u201310 years', '10+ years'];
+      var currentDuration = a.specialise_duration ? [a.specialise_duration] : [];
+      html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">How long have you been specialising in this?</label>' +
+        this._pills(durationOptions, currentDuration, 'specdur') + '</div>';
     }
     return html;
   },
@@ -237,6 +260,10 @@ window.BP_MARKETING = {
       document.querySelectorAll('[data-affdetail].active').forEach(function(p) { a.affordable_detail.push(p.dataset.affdetail); });
       var expYears = document.getElementById('prof-mkt-exp-years');
       if (expYears) a.experience_years = expYears.value;
+      a.specialise_services = [];
+      document.querySelectorAll('[data-specsvc].active').forEach(function(p) { a.specialise_services.push(p.dataset.specsvc); });
+      a.specialise_duration = '';
+      document.querySelectorAll('[data-specdur].active').forEach(function(p) { a.specialise_duration = p.dataset.specdur; });
     } else if (t === 1) {
       a.awareness = [];
       document.querySelectorAll('[data-awareness].active').forEach(function(p) { a.awareness.push(p.dataset.awareness); });

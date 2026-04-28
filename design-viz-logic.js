@@ -151,11 +151,11 @@ window.DV_LOGIC = {
         fileInput.click();
       });
       fileInput.addEventListener('click', function(e) { e.stopPropagation(); });
-      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('dragover'); });
-      zone.addEventListener('dragleave', function() { zone.classList.remove('dragover'); });
+      zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+      zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
       zone.addEventListener('drop', function(e) {
         e.preventDefault();
-        zone.classList.remove('dragover');
+        zone.classList.remove('drag-over');
         var files = e.dataTransfer && e.dataTransfer.files;
         if (files && files.length > 0) self._handleFileSelect(files[0]);
       });

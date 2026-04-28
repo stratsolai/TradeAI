@@ -16,22 +16,6 @@
     .dv-project-card { cursor: pointer; }
     .dv-project-card .source-detail { padding: 8px 16px 14px; }
     .dv-project-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .dv-upload-zone {
-      border: 2px dashed var(--border);
-      border-radius: var(--card-radius);
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color var(--btn-transition), background var(--btn-transition);
-    }
-    .dv-upload-zone:hover,
-    .dv-upload-zone.dragover {
-      border-color: var(--blue);
-      background: var(--blue-light);
-    }
-    .dv-upload-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.5; }
-    .dv-upload-text { font-size: var(--body-font-size); color: var(--text); margin-bottom: 4px; }
-    .dv-upload-hint { font-size: var(--note-font-size); color: var(--text-muted); }
     .dv-photo-preview { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
     .dv-photo-preview img {
       max-width: 300px;
@@ -115,7 +99,6 @@
     @media (max-width: 600px) {
       .dv-container { padding: var(--page-padding-mobile); }
       .dv-render-grid { grid-template-columns: 1fr; }
-      .dv-upload-zone { padding: 24px 16px; }
       .dv-refine-row { flex-direction: column; }
       .dv-detail-actions { margin-left: 0; width: 100%; }
     }
@@ -214,10 +197,10 @@
           <div class="settings-card-hint">Upload a photo and describe the changes you want to visualise.</div>
         </div>
         <div class="card-body dv-generate-form">
-          <div class="dv-upload-zone" id="dv-upload-zone">
-            <div class="dv-upload-icon">📷</div>
-            <div class="dv-upload-text">Drop a photo here, or click to browse</div>
-            <div class="dv-upload-hint">Supports JPG, PNG up to 10 MB</div>
+          <div class="upload-zone" id="dv-upload-zone">
+            <div class="upload-zone-icon">📷</div>
+            <div class="upload-zone-label">Drop a photo here, or click to browse</div>
+            <div class="upload-zone-hint">Supports JPG, PNG up to 10 MB</div>
             <input type="file" id="dv-file-input" accept="image/*" style="display:none">
           </div>
           <div class="dv-photo-preview" id="dv-photo-preview" style="display:none">

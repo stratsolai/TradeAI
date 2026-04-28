@@ -8,8 +8,8 @@
  *   'suggest-boost' → AI analyses top posts and suggests which to boost + budget
  *   'get-pages'     → return connected page + Instagram account details
  *
- * ENV: META_APP_ID, META_APP_SECRET, CLAUDE_API_KEY,
- *      SUPABASE_URL, SUPABASE_SERVICE_KEY
+ * ENV: META_APP_ID, META_APP_SECRET, ANTHROPIC_API_KEY,
+ *      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
  */
 
 import https from 'https';
@@ -56,7 +56,7 @@ function graphPost(path, body, token) {
 
 function claudeRequest(apiKey, system, userMsg, maxTokens = 800) {
   const body = JSON.stringify({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6',
     max_tokens: maxTokens,
     system,
     messages: [{ role: 'user', content: userMsg }]
@@ -168,7 +168,7 @@ async function handlePost(req, res, userId) {
   const postStatus = results.facebook || results.instagram ? 'published' : 'failed';
 
   if (req.body.post_id) {
-    await supabase.from('social_posts').update({
+    const { error: updateError } = await supabase.from('social_posts').update({
       status:       postStatus,
       published_at: postStatus === 'published' ? new Date().toISOString() : null,
       platform:     platforms.join(','),
@@ -176,6 +176,10 @@ async function handlePost(req, res, userId) {
       metadata:     { facebook_id: results.facebook, instagram_id: results.instagram },
       updated_at:   new Date().toISOString()
     }).eq('id', req.body.post_id).eq('user_id', userId);
+
+    if (updateError) {
+      console.error('[meta-post] social_posts update error:', updateError.message);
+    }
   }
 
   return res.status(200).json({
@@ -364,6 +368,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'action must be: post, get-insights, get-ads, suggest-boost, get-pages, or get-auth-url' });
   } catch(err) {
     console.error('[meta-post]', err.message);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
   }
 };

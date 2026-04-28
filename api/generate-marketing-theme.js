@@ -27,11 +27,16 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "answers required" });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from("business_profiles")
     .select("business_name, industry")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (profileError) {
+    console.error('[generate-marketing-theme] query error:', profileError.message);
+    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+  }
 
   const businessName = profile?.business_name || "the business";
   const industry = profile?.industry || "business";

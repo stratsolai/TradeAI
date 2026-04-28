@@ -17,13 +17,18 @@ export default async function handler(req, res) {
 
   try {
     if (status === "completed" && output_url) {
-      await supabase
+      const { error: updateError } = await supabase
         .from("social_posts")
         .update({
           image_url: output_url,
           updated_at: new Date().toISOString()
         })
         .eq("predis_generation_id", generation_id);
+
+      if (updateError) {
+        console.error('[predis-webhook] query error:', updateError.message);
+        return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+      }
 
       console.log("[predis-webhook] Generation complete:", generation_id);
     } else if (status === "failed") {
