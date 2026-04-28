@@ -15,6 +15,11 @@
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
 
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 const GRAPH_VERSION = 'v19.0';
 
 // ─── HTTP HELPERS ─────────────────────────────────────────────────────────────
@@ -97,11 +102,9 @@ async function getUserMeta(userId, supabase) {
 
 // ─── ACTION: POST ─────────────────────────────────────────────────────────────
 
-async function handlePost(req, res) {
-  const { userId, caption, imageUrl, platforms = ['facebook', 'instagram'], scheduledAt } = req.body;
-  if (!userId || !caption) return res.status(400).json({ error: 'userId and caption required' });
-
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+async function handlePost(req, res, userId) {
+  const { caption, image_url: imageUrl, platforms = ['facebook', 'instagram'] } = req.body;
+  if (!caption) return res.status(400).json({ error: 'caption required' });
   const profile = await getUserMeta(userId, supabase);
 
   const results = { facebook: null, instagram: null, errors: [] };
@@ -162,19 +165,18 @@ async function handlePost(req, res) {
     }
   }
 
-  // ── Save to social_posts table ────────────────────────────────────────────
   const postStatus = results.facebook || results.instagram ? 'published' : 'failed';
 
-  await supabase.from('social_posts').insert({
-    user_id:      userId,
-    platform:     platforms.join(','),
-    caption,
-    image_url:    imageUrl || null,
-    status:       postStatus,
-    published_at: postStatus === 'published' ? new Date().toISOString() : null,
-    post_id:      results.facebook || results.instagram || null,
-    metadata:     JSON.stringify({ facebook_id: results.facebook, instagram_id: results.instagram })
-  });
+  if (req.body.post_id) {
+    await supabase.from('social_posts').update({
+      status:       postStatus,
+      published_at: postStatus === 'published' ? new Date().toISOString() : null,
+      platform:     platforms.join(','),
+      post_id:      results.facebook || results.instagram || null,
+      metadata:     { facebook_id: results.facebook, instagram_id: results.instagram },
+      updated_at:   new Date().toISOString()
+    }).eq('id', req.body.post_id).eq('user_id', userId);
+  }
 
   return res.status(200).json({
     success: postStatus === 'published',
@@ -185,9 +187,8 @@ async function handlePost(req, res) {
 
 // ─── ACTION: GET INSIGHTS ─────────────────────────────────────────────────────
 
-async function handleGetInsights(req, res) {
-  const { userId, period = 'week' } = req.body;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+async function handleGetInsights(req, res, userId) {
+  const { period = 'week' } = req.body;
   const profile = await getUserMeta(userId, supabase);
 
   // Fetch page-level insights
@@ -215,9 +216,7 @@ async function handleGetInsights(req, res) {
 
 // ─── ACTION: GET ADS ──────────────────────────────────────────────────────────
 
-async function handleGetAds(req, res) {
-  const { userId } = req.body;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+async function handleGetAds(req, res, userId) {
   const profile = await getUserMeta(userId, supabase);
 
   // Get Ad Account associated with the page
@@ -254,10 +253,8 @@ async function handleGetAds(req, res) {
 
 // ─── ACTION: SUGGEST BOOST ────────────────────────────────────────────────────
 
-async function handleSuggestBoost(req, res) {
-  const { userId } = req.body;
-  const claudeKey = process.env.CLAUDE_API_KEY;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+async function handleSuggestBoost(req, res, userId) {
+  const claudeKey = process.env.ANTHROPIC_API_KEY;
   const profile = await getUserMeta(userId, supabase);
 
   // Fetch recent posts with insights
@@ -307,9 +304,7 @@ Respond ONLY with JSON: {"suggestions": [{"post_index": 0, "reason": "...", "sug
 
 // ─── ACTION: GET PAGES ────────────────────────────────────────────────────────
 
-async function handleGetPages(req, res) {
-  const { userId } = req.body;
-  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
+async function handleGetPages(req, res, userId) {
   const profile = await getUserMeta(userId, supabase);
 
   return res.status(200).json({
@@ -320,6 +315,19 @@ async function handleGetPages(req, res) {
       ? { id: profile.instagram_account_id, username: profile.instagram_username }
       : null
   });
+}
+
+// ─── ACTION: GET AUTH URL ────────────────────────────────────────────────────
+
+async function handleGetAuthUrl(req, res, userId) {
+  const appId = process.env.META_APP_ID;
+  if (!appId) {
+    return res.status(500).json({ error: 'Meta App ID not configured.' });
+  }
+  const redirectUri = encodeURIComponent('https://staxai.com.au/api/meta-callback');
+  const scopes = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish';
+  const authUrl = `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scopes}&state=${userId}`;
+  return res.status(200).json({ auth_url: authUrl });
 }
 
 // ─── MAIN ROUTER ─────────────────────────────────────────────────────────────
@@ -343,16 +351,17 @@ export default async function handler(req, res) {
   }
 
 
-  const { action, userId } = req.body;
-  if (!userId) return res.status(400).json({ error: 'userId required' });
+  const { action } = req.body;
+  const userId = user.id;
 
   try {
-    if (action === 'post')           return await handlePost(req, res);
-    if (action === 'get-insights')   return await handleGetInsights(req, res);
-    if (action === 'get-ads')        return await handleGetAds(req, res);
-    if (action === 'suggest-boost')  return await handleSuggestBoost(req, res);
-    if (action === 'get-pages')      return await handleGetPages(req, res);
-    return res.status(400).json({ error: 'action must be: post, get-insights, get-ads, suggest-boost, or get-pages' });
+    if (action === 'post')           return await handlePost(req, res, userId);
+    if (action === 'get-insights')   return await handleGetInsights(req, res, userId);
+    if (action === 'get-ads')        return await handleGetAds(req, res, userId);
+    if (action === 'suggest-boost')  return await handleSuggestBoost(req, res, userId);
+    if (action === 'get-pages')      return await handleGetPages(req, res, userId);
+    if (action === 'get-auth-url')   return await handleGetAuthUrl(req, res, userId);
+    return res.status(400).json({ error: 'action must be: post, get-insights, get-ads, suggest-boost, get-pages, or get-auth-url' });
   } catch(err) {
     console.error('[meta-post]', err.message);
     return res.status(500).json({ error: err.message });
