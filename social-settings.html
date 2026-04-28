@@ -1,356 +1,200 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <title>Marketing &amp; Social Media Settings — StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <title>Social Media Settings &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      font-family: "DM Sans", sans-serif;
-      background: #F5F7FA;
-      color: #333333;
-      min-height: 100vh;
-    }
-
-    /* --- Topbar --- */
-    .topbar {
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .topbar-logo img { height: 38px; display: block; }
-    .topbar-nav {
-      display: flex;
-      gap: 28px;
-      margin-left: 64px;
-      margin-right: auto;
-    }
-    .topbar-nav-link, .topbar-back {
-      font-family: "DM Sans", sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-    }
-    .topbar-nav-link:hover, .topbar-back:hover { color: #ffffff; }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    /* Account dropdown */
-    .topbar-account-wrap { position: relative; }
-    .account-btn {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: #fff;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      min-width: 200px;
-      z-index: 200;
-      padding: 8px 0;
-    }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email {
-      padding: 8px 16px;
-      font-size: 13px;
-      color: #888;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .sign-out-btn {
-      display: block;
-      width: 100%;
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      text-align: left;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      cursor: pointer;
-    }
-    .sign-out-btn:hover { background: #f5f5f5; }
-
-    /* --- Page layout --- */
-    .page-wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 40px 24px 80px;
-    }
-
-    .page-heading {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 28px;
-      font-weight: 800;
-      color: #1F3864;
-      margin-bottom: 6px;
-    }
-    .page-sub {
-      font-size: 14px;
-      color: #666;
-      margin-bottom: 32px;
-    }
-
-    /* --- Settings cards --- */
-    .settings-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 28px;
-      margin-bottom: 20px;
-    }
-    .settings-card-coming-soon {
-      border-left-color: #888;
-      opacity: 0.6;
-    }
-    .settings-card h2 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #1F3864;
-      margin-bottom: 6px;
-    }
-    .settings-card p {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
-
-    /* --- Connection row --- */
-    .connection-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-    }
-    .connection-status {
-      font-size: 13px;
-      font-weight: 600;
-      padding: 4px 10px;
-      border-radius: 12px;
-    }
-    .connection-status.connected { background: #e6f4ea; color: #28a745; }
-    .connection-status.disconnected { background: #fff3ee; color: #C4622A; }
-    .connection-status.coming-soon { background: #f0f0f0; color: #888; }
-
-    /* --- Category toggles --- */
-    .category-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-    .category-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px 0;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .category-item:last-child { border-bottom: none; }
-    .category-label { font-size: 14px; font-weight: 600; color: #333; }
-    .category-sub { font-size: 12px; color: #888; margin-top: 2px; }
-    .toggle-wrap { display: flex; align-items: center; }
-    .category-toggle {
-      width: 18px;
-      height: 18px;
-      accent-color: #1A5490;
-      cursor: pointer;
-    }
-
-    /* --- Buttons --- */
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-family: "DM Sans", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-primary { background: #1A5490; color: #fff; }
-    .btn-primary:hover { background: #154070; }
-    .btn-primary:disabled { background: #8aaac8; cursor: not-allowed; }
-    .btn-outline {
-      background: #fff;
-      border: 1px solid #1A5490;
-      color: #1A5490;
-    }
-    .btn-outline:hover { background: #f0f5ff; }
-    .btn-grey { background: #f0f0f0; color: #555; }
-    .btn-grey:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 24px; }
-
-    /* --- Error --- */
-    .error-msg {
-      display: none;
-      color: #dc3545;
-      font-size: 13px;
-      margin-top: 12px;
-    }
-
-    @media (max-width: 600px) {
-      .connection-row { flex-direction: column; align-items: flex-start; }
-    }
+    .page-wrap { padding: var(--settings-page-padding); }
   </style>
 </head>
 <body>
+<script>
+(function() {
+  if (window.matchMedia('(display-mode: standalone)').matches && window.innerWidth < 768) {
+    var s = document.createElement('style');
+    s.textContent = 'body > *:not(#pwa-desktop-msg) { display: none !important; } body { margin: 0; background: var(--bg); }';
+    document.head.appendChild(s);
+    var d = document.createElement('div');
+    d.id = 'pwa-desktop-msg';
+    d.innerHTML = '<div class="pwa-guard-wrap">'
+      + '<div class="pwa-guard-inner">'
+      + '<img src="/StaxAI Cropped Transparent.png" alt="StaxAI" class="pwa-guard-logo">'
+      + '<div class="pwa-guard-card">'
+      + '<p class="pwa-guard-text">This page is designed for desktop. For the best experience please open StaxAI on your computer.</p>'
+      + '<a href="/dashboard.html" class="pwa-guard-btn">Back to Dashboard</a>'
+      + '</div></div></div>';
+    document.body.appendChild(d);
+  }
+})();
+</script>
 
-  <!-- Topbar -->
   <nav class="topbar">
-    <a href="/index.html" class="topbar-logo">
-      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" />
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
     <div class="topbar-nav">
-      <a href="/dashboard.html" class="topbar-back">Dashboard</a>
+      <a href="/dashboard.html">Dashboard</a>
     </div>
+    <div class="topbar-spacer"></div>
     <div class="topbar-right">
       <a href="/social.html" class="topbar-nav-link">Marketing &amp; Social Media</a>
       <div class="topbar-account-wrap">
-        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email"></div>
-          <button class="sign-out-btn" id="sign-out-btn">Sign out</button>
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
     </div>
   </nav>
 
-  <div class="page-wrap">
+  <div class="page-wrap" id="page-wrap" style="display:none">
+    <div class="page-header">
+      <h1 class="page-title">Social Media Settings</h1>
+      <p class="page-subtitle">Manage your social media connections and preferences.</p>
+    </div>
 
-    <h1 class="page-heading">Social Media Settings</h1>
-    <p class="page-sub">Connect your accounts and manage your content preferences.</p>
+    <div class="tab-nav settings-active">
+      <button class="ptab active" data-tab="connections">Connections</button>
+      <button class="ptab" data-tab="preferences">Preferences</button>
+    </div>
 
-    <!-- Facebook -->
-    <div class="settings-card">
-      <h2>Facebook</h2>
-      <p>Connect your Facebook Page to auto-post content directly from StaxAI.</p>
-      <div class="connection-row">
-        <span class="connection-status disconnected" id="facebook-status">Not connected</span>
-        <button class="btn btn-primary" id="btn-connect-facebook">Connect Facebook</button>
+    <div class="ptab-content active" id="tab-connections">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Social Media Connections</div>
+          <div class="settings-card-hint">Connect your social media accounts to publish directly from StaxAI.</div>
+        </div>
+        <div class="settings-rows" id="connections-rows">
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">Facebook Page</div>
+              <div class="settings-row-desc">Connect your Facebook Page to publish posts directly.</div>
+            </div>
+            <div class="connection-row-control">
+              <div id="fb-connection-status"></div>
+              <button class="btn-connect" id="fb-connect-btn">Connect Facebook</button>
+            </div>
+          </div>
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">Instagram Business</div>
+              <div class="settings-row-desc">Connect your Instagram Business account via your Facebook Page.</div>
+            </div>
+            <div class="connection-row-control">
+              <div id="ig-connection-status"></div>
+              <button class="btn-connect" id="ig-connect-btn">Connect Instagram</button>
+            </div>
+          </div>
+          <div class="settings-row settings-row-top">
+            <div>
+              <div class="settings-row-label">LinkedIn</div>
+              <div class="settings-row-desc">Connect your LinkedIn profile or company page.</div>
+            </div>
+            <div class="connection-row-control">
+              <span class="badge badge-grey">Coming Soon</span>
+            </div>
+          </div>
+        </div>
+        <div class="connection-note">
+          Facebook and Instagram connections use the Meta Graph API. You will need a Facebook Page and an Instagram Business account linked to that page.
+        </div>
       </div>
     </div>
 
-    <!-- Instagram -->
-    <div class="settings-card">
-      <h2>Instagram</h2>
-      <p>Connect your Instagram Business account to publish posts directly from StaxAI. Requires a connected Facebook Page.</p>
-      <div class="connection-row">
-        <span class="connection-status disconnected" id="instagram-status">Not connected</span>
-        <button class="btn btn-primary" id="btn-connect-instagram">Connect Instagram</button>
+    <div class="ptab-content" id="tab-preferences">
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Default Post Settings</div>
+          <div class="settings-card-hint">These defaults apply to new posts. You can override them per post.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Default Tone</div>
+              <div class="settings-row-desc">The default tone of voice for generated content.</div>
+            </div>
+            <span class="lookback-dropdown-wrap">
+              <button type="button" class="lookback-dropdown" id="tone-dropdown-btn">Friendly &#9662;</button>
+              <div class="lookback-dropdown-menu" id="tone-dropdown-menu">
+                <button type="button" class="lookback-dropdown-item" data-value="professional">Professional</button>
+                <button type="button" class="lookback-dropdown-item active" data-value="friendly">Friendly</button>
+                <button type="button" class="lookback-dropdown-item" data-value="casual">Casual</button>
+                <button type="button" class="lookback-dropdown-item" data-value="bold">Bold</button>
+                <button type="button" class="lookback-dropdown-item" data-value="helpful">Helpful</button>
+              </div>
+            </span>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Include Hashtags</div>
+              <div class="settings-row-desc">Automatically generate hashtags with every post.</div>
+            </div>
+            <div class="settings-row-control" id="hashtags-ctrl">
+              <button class="freq-btn active" data-field="include_hashtags" data-value="yes">Yes</button>
+              <button class="freq-btn" data-field="include_hashtags" data-value="no">No</button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-footer">
+          <button class="btn-save" id="save-prefs-btn">Save</button>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Auto-Publish Settings</div>
+          <div class="settings-card-hint">Control how scheduled posts are handled.</div>
+        </div>
+        <div class="settings-rows">
+          <div class="settings-row">
+            <div>
+              <div class="settings-row-label">Scheduled Post Publishing</div>
+              <div class="settings-row-desc">Automatically publish posts at their scheduled time.</div>
+            </div>
+            <div class="settings-row-control" id="autopublish-ctrl">
+              <button class="freq-btn active" data-field="auto_publish" data-value="yes">Automatic</button>
+              <button class="freq-btn" data-field="auto_publish" data-value="no">Manual only</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- LinkedIn -->
-    <div class="settings-card settings-card-coming-soon">
-      <h2>LinkedIn</h2>
-      <p>LinkedIn integration is coming soon.</p>
-      <div class="connection-row">
-        <span class="connection-status coming-soon" id="linkedin-status">Coming soon</span>
-        <button class="btn btn-grey" id="btn-connect-linkedin" disabled>Coming soon</button>
+    <div class="save-msg" id="save-settings-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
       </div>
     </div>
-
-    <!-- Category toggles -->
-    <div class="settings-card">
-      <h2>Active categories</h2>
-      <p>Choose which post categories are available when creating content.</p>
-      <div class="category-list">
-        <div class="category-item">
-          <div>
-            <div class="category-label">Completed Job</div>
-            <div class="category-sub">Showcase finished work</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="completed-job" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Before &amp; After</div>
-            <div class="category-sub">Show transformations</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="before-after" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Seasonal Offer</div>
-            <div class="category-sub">Time-limited promotions</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="seasonal-offer" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">New Service</div>
-            <div class="category-sub">Announce a new offering</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="new-service" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Promotion</div>
-            <div class="category-sub">General promotional posts</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="promotion" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Tips &amp; Advice</div>
-            <div class="category-sub">Helpful industry tips</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="tips-advice" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Industry News</div>
-            <div class="category-sub">News relevant to your industry</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="industry-news" /></div>
-        </div>
-        <div class="category-item">
-          <div>
-            <div class="category-label">Community</div>
-            <div class="category-sub">Local and community content</div>
-          </div>
-          <div class="toggle-wrap"><input type="checkbox" class="category-toggle" data-category="community" /></div>
-        </div>
-      </div>
-      <div class="error-msg" id="settings-error"></div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-save-settings">Save settings</button>
-      </div>
-    </div>
-
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
   <script src="/social-settings-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.SM_SETTINGS_LOGIC && window.SM_SETTINGS_LOGIC.init) {
+          window.SM_SETTINGS_LOGIC.init(supabase, session.user);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>

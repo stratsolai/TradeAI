@@ -1,155 +1,288 @@
-window.SOCIAL_SETTINGS_LOGIC = {
+window.SM_SETTINGS_LOGIC = {
 
-  _session: null,
+  _supabase: null,
+  _userId: null,
+  _settings: {},
 
-  init() {
-    this._initAuth();
+  init: async function(supabase, user) {
+    if (!supabase || !user) return;
+    this._supabase = supabase;
+    this._userId = user.id;
+    this._bindTabs();
+    this._bindFreqButtons();
+    this._bindToneDropdown();
+    this._bindSave();
+    this._bindConnections();
+    await this._loadSettings();
   },
 
-  async _initAuth() {
-    const { data: { session } } = await window.supabaseClient.auth.getSession();
-    if (!session) { window.location.href = "/login.html"; return; }
-    this._session = session;
-    this._initAccountDropdown();
-    this._loadSettings();
-  },
-
-  _initAccountDropdown() {
-    const user = this._session.user;
-    const emailShort = user.email.split("@")[0];
-    const elShort = document.getElementById("account-email-short");
-    const elFull = document.getElementById("account-dropdown-email");
-    const btn = document.getElementById("account-btn");
-    const dropdown = document.getElementById("account-dropdown");
-    const signOut = document.getElementById("sign-out-btn");
-    if (elShort) elShort.textContent = emailShort;
-    if (elFull) elFull.textContent = user.email;
-    if (btn && dropdown) {
-      btn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle("open");
+  _bindTabs: function() {
+    var self = this;
+    document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._switchTab(btn.dataset.tab);
       });
-      document.addEventListener("click", () => dropdown.classList.remove("open"));
-    }
-    if (signOut) {
-      signOut.addEventListener("click", async () => {
-        await window.supabaseClient.auth.signOut();
-        window.location.href = "/login.html";
-      });
-    }
-  },
-
-  async _loadSettings() {
-    const { data: settings } = await window.supabaseClient
-      .from("social_settings")
-      .select("*")
-      .eq("user_id", this._session.user.id)
-      .single();
-
-    this._renderFacebookStatus(settings);
-    this._renderInstagramStatus(settings);
-    this._renderLinkedInStatus();
-    this._renderCategoryToggles(settings);
-    this._initSaveButton();
-  },
-
-  _renderFacebookStatus(settings) {
-    const connected = settings && settings.facebook_connected;
-    const statusEl = document.getElementById("facebook-status");
-    const btnEl = document.getElementById("btn-connect-facebook");
-    if (statusEl) statusEl.textContent = connected ? "Connected" : "Not connected";
-    if (statusEl) statusEl.className = "connection-status " + (connected ? "connected" : "disconnected");
-    if (btnEl) {
-      btnEl.textContent = connected ? "Disconnect" : "Connect Facebook";
-      btnEl.addEventListener("click", () => connected ? this._disconnectPlatform("facebook") : this._connectFacebook());
-    }
-  },
-
-  _renderInstagramStatus(settings) {
-    const connected = settings && settings.instagram_connected;
-    const statusEl = document.getElementById("instagram-status");
-    const btnEl = document.getElementById("btn-connect-instagram");
-    if (statusEl) statusEl.textContent = connected ? "Connected" : "Not connected";
-    if (statusEl) statusEl.className = "connection-status " + (connected ? "connected" : "disconnected");
-    if (btnEl) {
-      btnEl.textContent = connected ? "Disconnect" : "Connect Instagram";
-      btnEl.addEventListener("click", () => connected ? this._disconnectPlatform("instagram") : this._connectInstagram());
-    }
-  },
-
-  _renderLinkedInStatus() {
-    const statusEl = document.getElementById("linkedin-status");
-    const btnEl = document.getElementById("btn-connect-linkedin");
-    if (statusEl) { statusEl.textContent = "Coming soon"; statusEl.className = "connection-status coming-soon"; }
-    if (btnEl) { btnEl.textContent = "Coming soon"; btnEl.disabled = true; }
-  },
-
-  _renderCategoryToggles(settings) {
-    const activeCategories = (settings && settings.active_categories) || [
-      "completed-job", "before-after", "seasonal-offer", "new-service",
-      "promotion", "tips-advice", "industry-news", "community"
-    ];
-    document.querySelectorAll(".category-toggle").forEach(toggle => {
-      const cat = toggle.dataset.category;
-      toggle.checked = activeCategories.includes(cat);
     });
   },
 
-  _initSaveButton() {
-    const btn = document.getElementById("btn-save-settings");
-    if (btn) btn.addEventListener("click", () => this._saveSettings());
+  _switchTab: function(tabId) {
+    document.querySelectorAll('.ptab').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.tab === tabId);
+      btn.classList.toggle('settings-active', btn.dataset.tab === tabId);
+    });
+    document.querySelectorAll('.ptab-content').forEach(function(panel) {
+      panel.classList.remove('active');
+    });
+    var target = document.getElementById('tab-' + tabId);
+    if (target) target.classList.add('active');
   },
 
-  async _saveSettings() {
-    const btn = document.getElementById("btn-save-settings");
-    if (btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+  _loadSettings: async function() {
+    var result = await this._supabase
+      .from('social_settings')
+      .select('*')
+      .eq('user_id', this._userId)
+      .maybeSingle();
 
-    const activeCategories = [];
-    document.querySelectorAll(".category-toggle:checked").forEach(toggle => {
-      activeCategories.push(toggle.dataset.category);
-    });
+    if (result.error) {
+      console.error('[SM Settings] Load error:', result.error.message);
+      return;
+    }
 
-    const { error } = await window.supabaseClient
-      .from("social_settings")
-      .upsert({ user_id: this._session.user.id, active_categories: activeCategories }, { onConflict: "user_id" });
+    this._settings = result.data || {};
+    this._applySettings();
+  },
 
-    if (btn) {
-      btn.disabled = false;
-      if (error) {
-        btn.textContent = "Save settings";
-        this._showError("Settings could not be saved. Please try again.");
-      } else {
-        btn.textContent = "Saved";
-        setTimeout(() => { btn.textContent = "Save settings"; }, 2000);
+  _applySettings: function() {
+    var s = this._settings;
+
+    var fbStatus = document.getElementById('fb-connection-status');
+    var fbBtn = document.getElementById('fb-connect-btn');
+    if (s.facebook_connected) {
+      if (fbStatus) fbStatus.innerHTML = '<span class="badge badge-green">Connected</span>' +
+        (s.meta_page_name ? '<span style="margin-left:8px;font-size:var(--note-font-size);color:var(--text-muted)">' + window.escHtml(s.meta_page_name) + '</span>' : '');
+      if (fbBtn) { fbBtn.textContent = 'Disconnect'; fbBtn.classList.add('disconnect'); }
+    }
+
+    var igStatus = document.getElementById('ig-connection-status');
+    var igBtn = document.getElementById('ig-connect-btn');
+    if (s.instagram_connected) {
+      if (igStatus) igStatus.innerHTML = '<span class="badge badge-green">Connected</span>' +
+        (s.instagram_username ? '<span style="margin-left:8px;font-size:var(--note-font-size);color:var(--text-muted)">@' + window.escHtml(s.instagram_username) + '</span>' : '');
+      if (igBtn) { igBtn.textContent = 'Disconnect'; igBtn.classList.add('disconnect'); }
+    }
+
+    if (s.default_tone) {
+      var toneBtn = document.getElementById('tone-dropdown-btn');
+      if (toneBtn) {
+        var toneLabels = { professional: 'Professional', friendly: 'Friendly', casual: 'Casual', bold: 'Bold', helpful: 'Helpful' };
+        toneBtn.innerHTML = (toneLabels[s.default_tone] || 'Friendly') + ' &#9662;';
       }
+      document.querySelectorAll('#tone-dropdown-menu .lookback-dropdown-item').forEach(function(item) {
+        item.classList.toggle('active', item.dataset.value === s.default_tone);
+      });
+    }
+
+    this._setFreqActive('hashtags-ctrl', s.include_hashtags === false ? 'no' : 'yes');
+    this._setFreqActive('autopublish-ctrl', s.auto_publish === false ? 'no' : 'yes');
+  },
+
+  _setFreqActive: function(ctrlId, value) {
+    var ctrl = document.getElementById(ctrlId);
+    if (!ctrl) return;
+    ctrl.querySelectorAll('.freq-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.value === value);
+    });
+  },
+
+  _bindFreqButtons: function() {
+    var self = this;
+    document.querySelectorAll('.freq-btn[data-field]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var ctrl = btn.closest('.settings-row-control');
+        if (ctrl) {
+          ctrl.querySelectorAll('.freq-btn').forEach(function(b) { b.classList.remove('active'); });
+        }
+        btn.classList.add('active');
+        var payload = {};
+        payload[btn.dataset.field] = btn.dataset.value === 'yes';
+        self._saveToSettings(payload);
+      });
+    });
+  },
+
+  _bindToneDropdown: function() {
+    var self = this;
+    var btn = document.getElementById('tone-dropdown-btn');
+    var menu = document.getElementById('tone-dropdown-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        var toneLabels = { professional: 'Professional', friendly: 'Friendly', casual: 'Casual', bold: 'Bold', helpful: 'Helpful' };
+        btn.innerHTML = (toneLabels[item.dataset.value] || item.dataset.value) + ' &#9662;';
+        menu.classList.remove('open');
+        self._saveToSettings({ default_tone: item.dataset.value });
+      });
+    });
+
+    document.addEventListener('click', function() {
+      menu.classList.remove('open');
+    });
+  },
+
+  _bindSave: function() {
+    var self = this;
+    var saveBtn = document.getElementById('save-prefs-btn');
+    var msgEl = document.getElementById('save-settings-msg');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', function() {
+        window.handleSave(saveBtn, async function() {
+          await self._saveToSettings({
+            updated_at: new Date().toISOString()
+          });
+        }, msgEl);
+      });
     }
   },
 
-  _connectFacebook() {
-    const clientId = document.getElementById("fb-app-id") ? document.getElementById("fb-app-id").dataset.value : "";
-    const redirect = encodeURIComponent(window.location.origin + "/api/auth/oauth-callback");
-    const scope = "pages_manage_posts,pages_read_engagement,instagram_basic,instagram_content_publish";
-    window.location.href = "https://www.facebook.com/v19.0/dialog/oauth?client_id=" + clientId + "&redirect_uri=" + redirect + "&scope=" + scope + "&state=facebook";
+  _saveToSettings: async function(payload) {
+    payload.user_id = this._userId;
+    payload.updated_at = new Date().toISOString();
+    var result = await this._supabase
+      .from('social_settings')
+      .upsert(payload, { onConflict: 'user_id' });
+    if (result.error) {
+      console.error('[SM Settings] Save error:', result.error.message);
+      throw new Error('Could not save settings. Please try again.');
+    }
+    Object.assign(this._settings, payload);
   },
 
-  _connectInstagram() {
-    this._connectFacebook();
+  _bindConnections: function() {
+    var self = this;
+
+    document.getElementById('fb-connect-btn').addEventListener('click', function() {
+      if (self._settings.facebook_connected) {
+        self._disconnectFacebook();
+      } else {
+        self._connectFacebook();
+      }
+    });
+
+    document.getElementById('ig-connect-btn').addEventListener('click', function() {
+      if (self._settings.instagram_connected) {
+        self._disconnectInstagram();
+      } else {
+        self._connectInstagram();
+      }
+    });
   },
 
-  async _disconnectPlatform(platform) {
-    const col = platform + "_connected";
-    const { error } = await window.supabaseClient
-      .from("social_settings")
-      .upsert({ user_id: this._session.user.id, [col]: false }, { onConflict: "user_id" });
-    if (!error) window.location.reload();
-    else this._showError("Could not disconnect. Please try again.");
+  _connectFacebook: async function() {
+    try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) return;
+
+      var res = await fetch('/api/meta-post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ action: 'get-auth-url', platform: 'facebook' })
+      });
+
+      if (!res.ok) {
+        var errData = await res.json().catch(function() { return {}; });
+        this._showError(errData.error || 'Could not start Facebook connection.');
+        return;
+      }
+
+      var data = await res.json();
+      if (data.auth_url) {
+        window.location.href = data.auth_url;
+      }
+    } catch (err) {
+      this._showError('Could not connect to Facebook. Please try again.');
+    }
   },
 
-  _showError(message) {
-    const el = document.getElementById("settings-error");
-    if (el) { el.textContent = message; el.style.display = "block"; }
+  _disconnectFacebook: async function() {
+    await this._saveToSettings({
+      facebook_connected: false,
+      meta_page_id: null,
+      meta_page_name: null,
+      meta_page_token: null
+    });
+    window.location.reload();
+  },
+
+  _connectInstagram: async function() {
+    if (!this._settings.facebook_connected) {
+      this._showError('Please connect your Facebook Page first. Instagram Business accounts connect through Facebook.');
+      return;
+    }
+    try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) return;
+
+      var res = await fetch('/api/meta-post', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ action: 'get-pages' })
+      });
+
+      if (!res.ok) {
+        this._showError('Could not retrieve Instagram account. Please try again.');
+        return;
+      }
+
+      var data = await res.json();
+      if (data.instagram_account_id) {
+        await this._saveToSettings({
+          instagram_connected: true,
+          instagram_account_id: data.instagram_account_id,
+          instagram_username: data.instagram_username || ''
+        });
+        window.location.reload();
+      } else {
+        this._showError('No Instagram Business account found linked to your Facebook Page. Please link one in Facebook settings first.');
+      }
+    } catch (err) {
+      this._showError('Could not connect to Instagram. Please try again.');
+    }
+  },
+
+  _disconnectInstagram: async function() {
+    await this._saveToSettings({
+      instagram_connected: false,
+      instagram_account_id: null,
+      instagram_username: null
+    });
+    window.location.reload();
+  },
+
+  _showError: function(msg) {
+    var modal = document.getElementById('save-settings-msg');
+    if (!modal) return;
+    var textEl = modal.querySelector('.save-msg-text');
+    if (textEl) textEl.textContent = msg;
+    modal.classList.add('open');
+    var okBtn = modal.querySelector('.save-msg-ok');
+    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
+    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
   }
-
 };
-
-document.addEventListener("DOMContentLoaded", () => window.SOCIAL_SETTINGS_LOGIC.init());
