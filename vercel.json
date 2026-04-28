@@ -19,6 +19,9 @@
     },
     "api/strategic-plan-generate.js": {
       "includeFiles": "node_modules/docx/**"
+    },
+    "api/generate-social-content.js": {
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -37,6 +40,10 @@
     {
       "path": "/api/scan-scheduler",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/social-publisher",
+      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [
