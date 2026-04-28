@@ -22,6 +22,9 @@
     },
     "api/generate-social-content.js": {
       "maxDuration": 30
+    },
+    "api/generate-campaign-plan.js": {
+      "maxDuration": 60
     }
   },
   "crons": [

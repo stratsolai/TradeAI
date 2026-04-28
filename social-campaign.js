@@ -1,0 +1,942 @@
+window.SM_CAMPAIGN = {
+
+  _supabase: null,
+  _userId: null,
+  _profile: null,
+  _settings: null,
+  _campaignInputs: {},
+  _campaignStep: 0,
+  _activeCampaign: null,
+  _campaignPosts: [],
+  _campaignPostsSelected: new Set(),
+
+  CAMPAIGN_STEPS: [
+    { id: 'goal', title: 'Campaign Goal', question: 'What do you want to achieve?' },
+    { id: 'focus', title: 'Specific Focus', question: 'What should the campaign focus on?' },
+    { id: 'timeframe', title: 'Timeframe', question: 'How long should the campaign run?' },
+    { id: 'upcoming', title: 'Anything Happening Soon', question: 'Do you have anything coming up?' },
+    { id: 'content', title: 'Content Inputs', question: 'What content do you have available?' },
+    { id: 'frequency', title: 'Posting Frequency', question: 'How often should we post?' },
+    { id: 'connections', title: 'Connections Check', question: 'Where should we publish?' }
+  ],
+
+  GOALS: [
+    'Get more enquiries or leads',
+    'Build awareness',
+    'Promote something specific',
+    'Stay top of mind',
+    'Establish expertise',
+    'Launch something new',
+    'Not sure (AI helps decide)'
+  ],
+
+  TIMEFRAMES: [
+    { id: '4w', label: '4 weeks' },
+    { id: '8w', label: '8 weeks' },
+    { id: '12w', label: '12 weeks' },
+    { id: 'ongoing', label: 'Ongoing' },
+    { id: 'unsure', label: 'Not sure (AI recommends)' }
+  ],
+
+  FREQUENCIES: [
+    { id: '2x', label: '2x per week' },
+    { id: '3x', label: '3x per week' },
+    { id: 'daily', label: 'Daily' },
+    { id: 'custom', label: 'Custom' }
+  ],
+
+  UPCOMING_TYPES: [
+    'Special offer',
+    'Event',
+    'Seasonal moment',
+    'Product/service launch',
+    'Milestone or anniversary',
+    'Award or recognition',
+    'None of these'
+  ],
+
+  init: function(supabase, userId, profile, settings) {
+    this._supabase = supabase;
+    this._userId = userId;
+    this._profile = profile || {};
+    this._settings = settings || {};
+  },
+
+  startWizard: function() {
+    this._campaignInputs = {};
+    this._campaignStep = 0;
+    var wizardEl = document.getElementById('sm-campaign-wizard');
+    var contentEl = document.getElementById('sm-campaign-content');
+    if (contentEl) contentEl.style.display = 'none';
+    if (wizardEl) {
+      wizardEl.classList.add('active');
+      wizardEl.innerHTML = '<div class="sm-wizard-header">' +
+        '<button class="btn-back" id="smc-wizard-back">Back</button>' +
+        '<div class="sm-wizard-title" id="smc-wizard-title">New Marketing Campaign</div>' +
+        '</div>' +
+        '<div class="sm-step-indicator" id="smc-step-indicator"></div>' +
+        '<div class="sm-step-content" id="smc-step-content"></div>' +
+        '<div class="sm-wizard-nav">' +
+        '<button class="btn-back" id="smc-prev-btn" style="display:none">Back</button>' +
+        '<button class="btn-outline" id="smc-save-btn">Save &amp; Exit</button>' +
+        '<button class="btn-primary" id="smc-next-btn">Next</button>' +
+        '</div>';
+      this._bindWizardNav();
+      this._renderStep();
+    }
+  },
+
+  _bindWizardNav: function() {
+    var self = this;
+    document.getElementById('smc-wizard-back').addEventListener('click', function() {
+      self._exitWizard();
+    });
+    document.getElementById('smc-prev-btn').addEventListener('click', function() {
+      if (self._campaignStep > 0) {
+        self._saveStepData();
+        self._campaignStep--;
+        self._renderStep();
+      }
+    });
+    document.getElementById('smc-next-btn').addEventListener('click', function() {
+      self._saveStepData();
+      if (self._campaignStep < self.CAMPAIGN_STEPS.length - 1) {
+        self._campaignStep++;
+        self._renderStep();
+      } else {
+        self._generatePlan();
+      }
+    });
+    document.getElementById('smc-save-btn').addEventListener('click', function() {
+      self._saveStepData();
+      self._saveCampaignDraft();
+    });
+  },
+
+  _exitWizard: function() {
+    var wizardEl = document.getElementById('sm-campaign-wizard');
+    var contentEl = document.getElementById('sm-campaign-content');
+    if (wizardEl) wizardEl.classList.remove('active');
+    if (contentEl) contentEl.style.display = '';
+    this._campaignInputs = {};
+    this._campaignStep = 0;
+  },
+
+  _renderStep: function() {
+    var step = this.CAMPAIGN_STEPS[this._campaignStep];
+    var indicator = document.getElementById('smc-step-indicator');
+    var contentEl = document.getElementById('smc-step-content');
+    var prevBtn = document.getElementById('smc-prev-btn');
+    var nextBtn = document.getElementById('smc-next-btn');
+
+    var dotHtml = '';
+    for (var d = 0; d < this.CAMPAIGN_STEPS.length; d++) {
+      var cls = 'sm-step-dot';
+      if (d < this._campaignStep) cls += ' completed';
+      if (d === this._campaignStep) cls += ' active';
+      dotHtml += '<div class="' + cls + '"></div>';
+    }
+    dotHtml += '<span class="sm-step-label">Step ' + (this._campaignStep + 1) + ' of ' + this.CAMPAIGN_STEPS.length + ' &mdash; ' + window.escHtml(step.title) + '</span>';
+    indicator.innerHTML = dotHtml;
+
+    prevBtn.style.display = this._campaignStep > 0 ? '' : 'none';
+    nextBtn.textContent = this._campaignStep === this.CAMPAIGN_STEPS.length - 1 ? 'Generate Plan' : 'Next';
+
+    var html = '<div class="sm-step-question">' + window.escHtml(step.question) + '</div>';
+
+    if (step.id === 'goal') html += this._renderGoalStep();
+    else if (step.id === 'focus') html += this._renderFocusStep();
+    else if (step.id === 'timeframe') html += this._renderTimeframeStep();
+    else if (step.id === 'upcoming') html += this._renderUpcomingStep();
+    else if (step.id === 'content') html += this._renderContentStep();
+    else if (step.id === 'frequency') html += this._renderFrequencyStep();
+    else if (step.id === 'connections') html += this._renderConnectionsStep();
+
+    contentEl.innerHTML = html;
+    this._bindStepEvents(step);
+  },
+
+  _renderGoalStep: function() {
+    var current = this._campaignInputs.goal || '';
+    var html = '<div class="sm-step-hint">Choose the primary goal for your campaign.</div>';
+    html += '<div class="sm-option-pills">';
+    this.GOALS.forEach(function(g) {
+      var active = current === g ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-goal="' + window.escHtml(g) + '">' + window.escHtml(g) + '</button>';
+    });
+    html += '</div>';
+    if (current && current !== 'Not sure (AI helps decide)') {
+      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Any additional detail about this goal? (optional)</label>' +
+        '<input type="text" class="form-input" id="smc-goal-detail" value="' + window.escHtml(this._campaignInputs.goal_detail || '') + '"></div>';
+    }
+    return html;
+  },
+
+  _renderFocusStep: function() {
+    var current = this._campaignInputs.focus || '';
+    var bp = this._profile || {};
+    var options = ['General business promotion'];
+    if (bp.bp_services) {
+      var services = Array.isArray(bp.bp_services) ? bp.bp_services : [];
+      services.forEach(function(s) {
+        if (s && s.name) options.push(s.name);
+      });
+    }
+    if (bp.bp_products) {
+      var products = Array.isArray(bp.bp_products) ? bp.bp_products : [];
+      products.forEach(function(p) {
+        if (p && p.name) options.push(p.name);
+      });
+    }
+    var html = '<div class="sm-step-hint">Focus on a specific service, product, or promote your business generally.</div>';
+    html += '<div class="sm-option-pills">';
+    options.forEach(function(o) {
+      var active = current === o ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-focus="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Target customer type (optional)</label>' +
+      '<input type="text" class="form-input" id="smc-target-customer" placeholder="e.g. Homeowners, small businesses..." value="' + window.escHtml(this._campaignInputs.target_customer || '') + '"></div>';
+    return html;
+  },
+
+  _renderTimeframeStep: function() {
+    var current = this._campaignInputs.timeframe || '';
+    var html = '<div class="sm-step-hint">How long should the campaign run?</div>';
+    html += '<div class="sm-option-pills">';
+    this.TIMEFRAMES.forEach(function(t) {
+      var active = current === t.id ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-timeframe="' + t.id + '">' + window.escHtml(t.label) + '</button>';
+    });
+    html += '</div>';
+    return html;
+  },
+
+  _renderUpcomingStep: function() {
+    var current = this._campaignInputs.upcoming || [];
+    var html = '<div class="sm-step-hint">Select anything happening soon that the campaign should include.</div>';
+    html += '<div class="sm-option-pills">';
+    this.UPCOMING_TYPES.forEach(function(u) {
+      var active = current.indexOf(u) !== -1 ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-upcoming="' + window.escHtml(u) + '">' + window.escHtml(u) + '</button>';
+    });
+    html += '</div>';
+    if (current.length > 0 && current.indexOf('None of these') === -1) {
+      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Tell us more about what is coming up</label>' +
+        '<textarea class="form-input" id="smc-upcoming-detail" rows="3">' + window.escHtml(this._campaignInputs.upcoming_detail || '') + '</textarea></div>';
+    }
+    return html;
+  },
+
+  _renderContentStep: function() {
+    var current = this._campaignInputs.content_source || '';
+    var options = ['I have photos and videos to upload', 'Use my Content Library', 'AI-generated graphics only', 'A mix of all'];
+    var html = '<div class="sm-step-hint">What content do you have available for the campaign?</div>';
+    html += '<div class="sm-option-pills">';
+    options.forEach(function(o) {
+      var active = current === o ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-content="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
+    });
+    html += '</div>';
+    return html;
+  },
+
+  _renderFrequencyStep: function() {
+    var current = this._campaignInputs.frequency || '';
+    var html = '<div class="sm-step-hint">How often should we post? The AI will recommend a frequency based on your goal.</div>';
+    html += '<div class="sm-option-pills">';
+    this.FREQUENCIES.forEach(function(f) {
+      var active = current === f.id ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-frequency="' + f.id + '">' + window.escHtml(f.label) + '</button>';
+    });
+    html += '</div>';
+    html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Preferred posting days (optional)</label>' +
+      '<div class="sm-option-pills" id="smc-days-pills">';
+    var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    var selectedDays = this._campaignInputs.preferred_days || [];
+    days.forEach(function(d) {
+      var active = selectedDays.indexOf(d) !== -1 ? ' active' : '';
+      html += '<button class="sm-option-pill' + active + '" data-day="' + d + '">' + d.substring(0, 3) + '</button>';
+    });
+    html += '</div></div>';
+    return html;
+  },
+
+  _renderConnectionsStep: function() {
+    var s = this._settings || {};
+    var html = '<div class="sm-step-hint">Where should the campaign post to? You can also share manually.</div>';
+    html += '<div class="sm-connection-checks">';
+    html += '<div class="sm-connection-check">' +
+      '<input type="checkbox" id="smc-conn-facebook" value="facebook"' + (s.facebook_connected ? ' checked' : ' disabled') + '>' +
+      '<span class="sm-connection-check-label">Facebook</span>' +
+      '<span class="sm-connection-check-status">' + (s.facebook_connected ? 'Connected' : 'Not connected') + '</span></div>';
+    html += '<div class="sm-connection-check">' +
+      '<input type="checkbox" id="smc-conn-instagram" value="instagram"' + (s.instagram_connected ? ' checked' : ' disabled') + '>' +
+      '<span class="sm-connection-check-label">Instagram</span>' +
+      '<span class="sm-connection-check-status">' + (s.instagram_connected ? 'Connected' : 'Not connected') + '</span></div>';
+    html += '<div class="sm-connection-check">' +
+      '<input type="checkbox" id="smc-conn-manual" value="manual" checked>' +
+      '<span class="sm-connection-check-label">Manual sharing (download for community groups, emails, etc.)</span>' +
+      '</div>';
+    html += '</div>';
+    return html;
+  },
+
+  _bindStepEvents: function(step) {
+    var self = this;
+
+    if (step.id === 'goal') {
+      document.querySelectorAll('[data-goal]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-goal]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._campaignInputs.goal = pill.dataset.goal;
+          self._renderStep();
+        });
+      });
+    }
+
+    if (step.id === 'focus') {
+      document.querySelectorAll('[data-focus]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-focus]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._campaignInputs.focus = pill.dataset.focus;
+        });
+      });
+    }
+
+    if (step.id === 'timeframe') {
+      document.querySelectorAll('[data-timeframe]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-timeframe]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._campaignInputs.timeframe = pill.dataset.timeframe;
+        });
+      });
+    }
+
+    if (step.id === 'upcoming') {
+      document.querySelectorAll('[data-upcoming]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          var val = pill.dataset.upcoming;
+          if (!self._campaignInputs.upcoming) self._campaignInputs.upcoming = [];
+          if (val === 'None of these') {
+            self._campaignInputs.upcoming = ['None of these'];
+          } else {
+            self._campaignInputs.upcoming = self._campaignInputs.upcoming.filter(function(v) { return v !== 'None of these'; });
+            var idx = self._campaignInputs.upcoming.indexOf(val);
+            if (idx !== -1) self._campaignInputs.upcoming.splice(idx, 1);
+            else self._campaignInputs.upcoming.push(val);
+          }
+          self._renderStep();
+        });
+      });
+    }
+
+    if (step.id === 'content') {
+      document.querySelectorAll('[data-content]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-content]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._campaignInputs.content_source = pill.dataset.content;
+        });
+      });
+    }
+
+    if (step.id === 'frequency') {
+      document.querySelectorAll('[data-frequency]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-frequency]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._campaignInputs.frequency = pill.dataset.frequency;
+        });
+      });
+      document.querySelectorAll('[data-day]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          if (!self._campaignInputs.preferred_days) self._campaignInputs.preferred_days = [];
+          pill.classList.toggle('active');
+          var day = pill.dataset.day;
+          var idx = self._campaignInputs.preferred_days.indexOf(day);
+          if (idx !== -1) self._campaignInputs.preferred_days.splice(idx, 1);
+          else self._campaignInputs.preferred_days.push(day);
+        });
+      });
+    }
+  },
+
+  _saveStepData: function() {
+    var step = this.CAMPAIGN_STEPS[this._campaignStep];
+    if (step.id === 'goal') {
+      var detail = document.getElementById('smc-goal-detail');
+      if (detail) this._campaignInputs.goal_detail = detail.value;
+    }
+    if (step.id === 'focus') {
+      var tc = document.getElementById('smc-target-customer');
+      if (tc) this._campaignInputs.target_customer = tc.value;
+    }
+    if (step.id === 'upcoming') {
+      var ud = document.getElementById('smc-upcoming-detail');
+      if (ud) this._campaignInputs.upcoming_detail = ud.value;
+    }
+    if (step.id === 'connections') {
+      var conns = [];
+      var fb = document.getElementById('smc-conn-facebook');
+      if (fb && fb.checked) conns.push('facebook');
+      var ig = document.getElementById('smc-conn-instagram');
+      if (ig && ig.checked) conns.push('instagram');
+      var manual = document.getElementById('smc-conn-manual');
+      if (manual && manual.checked) conns.push('manual');
+      this._campaignInputs.connections = conns;
+    }
+  },
+
+  _generatePlan: async function() {
+    var self = this;
+    var wizardEl = document.getElementById('sm-campaign-wizard');
+    wizardEl.innerHTML = '<div class="sm-generating"><div class="sm-generating-spinner"></div><div>Generating your marketing plan...</div></div>';
+
+    try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) { this._showError('Session expired. Please refresh.'); return; }
+
+      var res = await fetch('/api/generate-campaign-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({ inputs: this._campaignInputs })
+      });
+
+      if (!res.ok) {
+        var errData = await res.json().catch(function() { return {}; });
+        throw new Error(errData.error || 'Failed to generate plan.');
+      }
+
+      var data = await res.json();
+      this._showPlanReview(data.plan);
+    } catch (err) {
+      this._showError(err.message);
+      this._exitWizard();
+    }
+  },
+
+  _showPlanReview: function(planText) {
+    var self = this;
+    var wizardEl = document.getElementById('sm-campaign-wizard');
+
+    var html = '<div class="sm-wizard-header">' +
+      '<button class="btn-back" id="smc-plan-back">Back to Edit</button>' +
+      '<div class="sm-wizard-title">Your Marketing Plan</div>' +
+      '</div>' +
+      '<div class="sm-step-content">' +
+      '<div class="sm-step-hint">Review the plan below. You can edit it before confirming.</div>' +
+      '<textarea class="sm-edit-caption" id="smc-plan-text" style="min-height:300px">' + window.escHtml(planText) + '</textarea>' +
+      '</div>' +
+      '<div class="sm-wizard-nav" style="margin-top:20px">' +
+      '<button class="btn-outline" id="smc-plan-regenerate">Regenerate</button>' +
+      '<button class="btn-primary" id="smc-plan-confirm">Confirm &amp; Create Campaign</button>' +
+      '</div>';
+
+    wizardEl.innerHTML = html;
+
+    document.getElementById('smc-plan-back').addEventListener('click', function() {
+      self._campaignStep = self.CAMPAIGN_STEPS.length - 1;
+      self.startWizard();
+      self._campaignStep = self.CAMPAIGN_STEPS.length - 1;
+      self._renderStep();
+    });
+    document.getElementById('smc-plan-regenerate').addEventListener('click', function() {
+      self._generatePlan();
+    });
+    document.getElementById('smc-plan-confirm').addEventListener('click', function() {
+      var planText = document.getElementById('smc-plan-text').value;
+      self._confirmPlan(planText);
+    });
+  },
+
+  _confirmPlan: async function(planText) {
+    try {
+      var result = await this._supabase.from('campaigns').insert({
+        user_id: this._userId,
+        name: (this._campaignInputs.goal || 'Marketing Campaign').substring(0, 100),
+        status: 'planned',
+        inputs: this._campaignInputs,
+        marketing_plan: planText,
+        connections: this._campaignInputs.connections || [],
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }).select().single();
+
+      if (result.error) {
+        this._showError('Could not save campaign. ' + (result.error.message || ''));
+        return;
+      }
+
+      this._activeCampaign = result.data;
+      this._exitWizard();
+      this._showPhase2(result.data);
+    } catch (err) {
+      this._showError(err.message);
+    }
+  },
+
+  _showPhase2: async function(campaign) {
+    var self = this;
+    var contentEl = document.getElementById('sm-campaign-content');
+    if (contentEl) contentEl.style.display = 'none';
+
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (activeEl) {
+      activeEl.style.display = 'block';
+      activeEl.innerHTML = '<div class="sm-generating"><div class="sm-generating-spinner"></div><div>Generating campaign posts from your marketing plan...</div></div>';
+    }
+
+    try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) { this._showError('Session expired.'); return; }
+
+      var res = await fetch('/api/generate-campaign-plan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({
+          action: 'generate-posts',
+          campaign_id: campaign.id,
+          marketing_plan: campaign.marketing_plan,
+          inputs: campaign.inputs
+        })
+      });
+
+      if (!res.ok) {
+        var errData = await res.json().catch(function() { return {}; });
+        throw new Error(errData.error || 'Failed to generate posts.');
+      }
+
+      var data = await res.json();
+      this._campaignPosts = data.posts || [];
+
+      await this._supabase.from('campaigns').update({
+        status: 'implementing',
+        updated_at: new Date().toISOString()
+      }).eq('id', campaign.id);
+
+      for (var i = 0; i < this._campaignPosts.length; i++) {
+        var post = this._campaignPosts[i];
+        await this._supabase.from('campaign_outputs').insert({
+          campaign_id: campaign.id,
+          user_id: this._userId,
+          journey_type: post.journey_type || 'social_post',
+          caption: post.caption || '',
+          hashtags: post.hashtags || '',
+          scheduled_for: post.suggested_date || null,
+          status: 'pending',
+          sort_order: i,
+          created_at: new Date().toISOString()
+        });
+      }
+
+      this._renderPostReview(campaign);
+    } catch (err) {
+      this._showError(err.message);
+      if (activeEl) activeEl.innerHTML = '';
+    }
+  },
+
+  _renderPostReview: async function(campaign) {
+    var self = this;
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (!activeEl) return;
+
+    var result = await this._supabase
+      .from('campaign_outputs')
+      .select('*')
+      .eq('campaign_id', campaign.id)
+      .order('sort_order', { ascending: true });
+
+    var posts = result.data || [];
+    this._campaignPosts = posts;
+
+    var pending = posts.filter(function(p) { return p.status === 'pending'; }).length;
+    var approved = posts.filter(function(p) { return p.status === 'approved'; }).length;
+    var total = posts.length;
+
+    var html = '<div class="sm-wizard-header">' +
+      '<div class="sm-wizard-title">Review Campaign Posts</div>' +
+      '</div>' +
+      '<div class="sm-step-hint">' + approved + ' of ' + total + ' posts approved. ' + pending + ' pending review.</div>';
+
+    if (pending === 0 && total > 0) {
+      html += '<div style="margin-bottom:20px"><button class="btn-primary" id="smc-launch-btn">Launch Campaign</button></div>';
+    } else {
+      html += '<div style="margin-bottom:20px;display:flex;gap:8px">' +
+        '<button class="btn-outline btn-sm" id="smc-approve-all">Approve All Remaining</button>' +
+        '</div>';
+    }
+
+    html += '<div class="sm-post-list">';
+    posts.forEach(function(post, idx) {
+      var statusBadge = '';
+      if (post.status === 'approved') statusBadge = '<span class="badge badge-green">Approved</span>';
+      else if (post.status === 'pending') statusBadge = '<span class="badge badge-orange">Pending</span>';
+      else if (post.status === 'skipped') statusBadge = '<span class="badge badge-grey">Skipped</span>';
+
+      html += '<div class="sm-post-card" data-id="' + post.id + '">' +
+        '<div class="sm-post-thumb">\uD83D\uDCDD</div>' +
+        '<div class="sm-post-body">' +
+        '<div class="sm-post-meta">' +
+        '<span class="sm-post-type">Post ' + (idx + 1) + '</span>' +
+        statusBadge +
+        (post.scheduled_for ? '<span class="sm-post-date">' + new Date(post.scheduled_for).toLocaleDateString('en-AU') + '</span>' : '') +
+        '</div>' +
+        '<div class="sm-post-caption-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
+        '<div class="sm-post-actions">';
+
+      if (post.status === 'pending') {
+        html += '<button class="btn-primary btn-sm" data-caction="approve" data-cid="' + post.id + '">Approve</button>' +
+          '<button class="btn-outline btn-sm" data-caction="edit" data-cid="' + post.id + '">Edit</button>' +
+          '<button class="btn-outline btn-sm" data-caction="regenerate" data-cid="' + post.id + '">Regenerate</button>' +
+          '<button class="btn-outline btn-sm" data-caction="skip" data-cid="' + post.id + '">Skip</button>';
+      } else if (post.status === 'approved') {
+        html += '<button class="btn-outline btn-sm" data-caction="edit" data-cid="' + post.id + '">Edit</button>';
+      }
+
+      html += '</div></div></div>';
+    });
+    html += '</div>';
+
+    activeEl.innerHTML = html;
+
+    activeEl.querySelectorAll('[data-caction]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._handleCampaignPostAction(btn.dataset.caction, btn.dataset.cid, campaign);
+      });
+    });
+
+    var approveAllBtn = document.getElementById('smc-approve-all');
+    if (approveAllBtn) {
+      approveAllBtn.addEventListener('click', function() {
+        self._approveAllPosts(campaign);
+      });
+    }
+
+    var launchBtn = document.getElementById('smc-launch-btn');
+    if (launchBtn) {
+      launchBtn.addEventListener('click', function() {
+        self._launchCampaign(campaign);
+      });
+    }
+  },
+
+  _handleCampaignPostAction: async function(action, postId, campaign) {
+    var self = this;
+    if (action === 'approve') {
+      await this._supabase.from('campaign_outputs').update({
+        status: 'approved',
+        updated_at: new Date().toISOString()
+      }).eq('id', postId);
+      this._renderPostReview(campaign);
+    } else if (action === 'skip') {
+      await this._supabase.from('campaign_outputs').update({
+        status: 'skipped',
+        updated_at: new Date().toISOString()
+      }).eq('id', postId);
+      this._renderPostReview(campaign);
+    } else if (action === 'edit') {
+      this._editCampaignPost(postId, campaign);
+    } else if (action === 'regenerate') {
+      this._regenerateCampaignPost(postId, campaign);
+    }
+  },
+
+  _editCampaignPost: async function(postId, campaign) {
+    var self = this;
+    var result = await this._supabase.from('campaign_outputs').select('*').eq('id', postId).single();
+    if (result.error || !result.data) return;
+    var post = result.data;
+
+    var activeEl = document.getElementById('sm-campaign-active');
+    activeEl.innerHTML = '<div class="sm-wizard-header">' +
+      '<button class="btn-back" id="smc-edit-back">Back to Review</button>' +
+      '<div class="sm-wizard-title">Edit Post</div></div>' +
+      '<div class="sm-step-content">' +
+      '<div class="form-group"><label class="form-label">Caption</label>' +
+      '<textarea class="sm-edit-caption" id="smc-edit-caption">' + window.escHtml(post.caption || '') + '</textarea></div>' +
+      '<div class="form-group"><label class="form-label">Hashtags</label>' +
+      '<input type="text" class="sm-edit-hashtags" id="smc-edit-hashtags" value="' + window.escHtml(post.hashtags || '') + '"></div>' +
+      '<div class="form-group"><label class="form-label">Scheduled date</label>' +
+      '<input type="date" class="form-input" id="smc-edit-date" value="' + (post.scheduled_for ? post.scheduled_for.substring(0, 10) : '') + '"></div>' +
+      '</div>' +
+      '<div class="sm-wizard-nav" style="margin-top:20px">' +
+      '<button class="btn-primary" id="smc-edit-save">Save Changes</button></div>';
+
+    document.getElementById('smc-edit-back').addEventListener('click', function() {
+      self._renderPostReview(campaign);
+    });
+    document.getElementById('smc-edit-save').addEventListener('click', async function() {
+      await self._supabase.from('campaign_outputs').update({
+        caption: document.getElementById('smc-edit-caption').value,
+        hashtags: document.getElementById('smc-edit-hashtags').value,
+        scheduled_for: document.getElementById('smc-edit-date').value || null,
+        updated_at: new Date().toISOString()
+      }).eq('id', postId);
+      self._renderPostReview(campaign);
+    });
+  },
+
+  _regenerateCampaignPost: async function(postId, campaign) {
+    try {
+      var sessionRes = await this._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session) return;
+
+      var result = await this._supabase.from('campaign_outputs').select('*').eq('id', postId).single();
+      if (!result.data) return;
+
+      var res = await fetch('/api/generate-social-content', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + session.access_token
+        },
+        body: JSON.stringify({
+          journey_type: result.data.journey_type || 'business_update',
+          inputs: { description: result.data.caption },
+          output_type: 'social_post'
+        })
+      });
+
+      if (res.ok) {
+        var data = await res.json();
+        await this._supabase.from('campaign_outputs').update({
+          caption: data.caption || data.content || '',
+          hashtags: data.hashtags || '',
+          status: 'pending',
+          updated_at: new Date().toISOString()
+        }).eq('id', postId);
+      }
+      this._renderPostReview(campaign);
+    } catch (err) {
+      this._showError('Could not regenerate post.');
+    }
+  },
+
+  _approveAllPosts: async function(campaign) {
+    await this._supabase.from('campaign_outputs').update({
+      status: 'approved',
+      updated_at: new Date().toISOString()
+    }).eq('campaign_id', campaign.id).eq('status', 'pending');
+    this._renderPostReview(campaign);
+  },
+
+  _launchCampaign: async function(campaign) {
+    var self = this;
+    window.SOCIAL_LOGIC._showConfirm(
+      'Launch Campaign',
+      'All approved posts will be scheduled and published automatically. Ready to go?',
+      async function() {
+        var outputs = await self._supabase
+          .from('campaign_outputs')
+          .select('*')
+          .eq('campaign_id', campaign.id)
+          .eq('status', 'approved')
+          .order('sort_order', { ascending: true });
+
+        var posts = outputs.data || [];
+        for (var i = 0; i < posts.length; i++) {
+          var p = posts[i];
+          var postResult = await self._supabase.from('social_posts').insert({
+            user_id: self._userId,
+            journey_type: p.journey_type || 'social_post',
+            caption: p.caption,
+            hashtags: p.hashtags,
+            status: 'scheduled',
+            campaign_id: campaign.id,
+            connections: campaign.connections || [],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }).select().single();
+
+          if (postResult.data && p.scheduled_for) {
+            await self._supabase.from('scheduled_posts').insert({
+              user_id: self._userId,
+              social_post_id: postResult.data.id,
+              scheduled_for: p.scheduled_for,
+              platforms: campaign.connections || ['facebook'],
+              status: 'pending'
+            });
+          }
+        }
+
+        await self._supabase.from('campaigns').update({
+          status: 'active',
+          started_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }).eq('id', campaign.id);
+
+        self.renderActive(campaign.id);
+      }
+    );
+  },
+
+  renderActive: async function(campaignId) {
+    var self = this;
+    var result = await this._supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .single();
+
+    if (result.error || !result.data) return;
+    var campaign = result.data;
+    this._activeCampaign = campaign;
+
+    var contentEl = document.getElementById('sm-campaign-content');
+    if (contentEl) contentEl.style.display = 'none';
+
+    var activeEl = document.getElementById('sm-campaign-active');
+    if (!activeEl) return;
+    activeEl.style.display = 'block';
+
+    var postsResult = await this._supabase
+      .from('social_posts')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .order('created_at', { ascending: true });
+
+    var posts = postsResult.data || [];
+    var published = posts.filter(function(p) { return p.status === 'published'; });
+    var scheduled = posts.filter(function(p) { return p.status === 'scheduled'; });
+    var totalReach = 0;
+    var totalEngagement = 0;
+    published.forEach(function(p) {
+      totalReach += (p.reach || 0);
+      totalEngagement += (p.engagement || 0);
+    });
+
+    var statusBadge = '';
+    if (campaign.status === 'active') statusBadge = '<span class="badge badge-green">Active</span>';
+    else if (campaign.status === 'paused') statusBadge = '<span class="badge badge-orange">Paused</span>';
+    else if (campaign.status === 'completed') statusBadge = '<span class="badge badge-grey">Completed</span>';
+    else statusBadge = '<span class="badge badge-blue">' + window.escHtml(campaign.status) + '</span>';
+
+    var html = '<div class="sm-campaign-header">' +
+      '<div class="detail-title">' + window.escHtml(campaign.name || 'Marketing Campaign') + '</div>' +
+      statusBadge +
+      '</div>';
+
+    html += '<div class="stats-bar">' +
+      '<div class="stat-card green"><div class="stat-value">' + published.length + '</div><div class="stat-label">Published</div></div>' +
+      '<div class="stat-card"><div class="stat-value">' + scheduled.length + '</div><div class="stat-label">Scheduled</div></div>' +
+      '<div class="stat-card teal"><div class="stat-value">' + totalReach + '</div><div class="stat-label">Total Reach</div></div>' +
+      '<div class="stat-card orange"><div class="stat-value">' + totalEngagement + '</div><div class="stat-label">Engagement</div></div>' +
+      '</div>';
+
+    if (scheduled.length > 0) {
+      var next = scheduled[0];
+      html += '<div class="sm-step-content" style="margin-bottom:20px">' +
+        '<div class="sm-step-question">Next Post</div>' +
+        '<div style="font-size:var(--body-font-size);color:var(--text);line-height:var(--body-line-height)">' +
+        window.escHtml((next.caption || '').substring(0, 200)) + '</div></div>';
+    }
+
+    html += '<div class="sm-publish-actions" style="margin-bottom:20px">';
+    if (campaign.status === 'active') {
+      html += '<button class="btn-outline" id="smc-pause">Pause Campaign</button>';
+      html += '<button class="btn-outline" id="smc-add-post">Add a Post</button>';
+    } else if (campaign.status === 'paused') {
+      html += '<button class="btn-primary" id="smc-resume">Resume Campaign</button>';
+    }
+    html += '<button class="btn-dismiss" id="smc-end">End Campaign</button>';
+    html += '</div>';
+
+    html += '<div class="sm-step-question" style="margin-bottom:12px">All Posts</div>';
+    html += '<div class="sm-post-list">';
+    posts.forEach(function(post) {
+      var pBadge = '';
+      if (post.status === 'published') pBadge = '<span class="badge badge-green">Published</span>';
+      else if (post.status === 'scheduled') pBadge = '<span class="badge badge-blue">Scheduled</span>';
+      else pBadge = '<span class="badge badge-grey">' + window.escHtml(post.status) + '</span>';
+
+      html += '<div class="sm-post-card"><div class="sm-post-thumb">\uD83D\uDCDD</div>' +
+        '<div class="sm-post-body"><div class="sm-post-meta">' + pBadge +
+        '<span class="sm-post-date">' + (post.published_at ? new Date(post.published_at).toLocaleDateString('en-AU') : '') + '</span></div>' +
+        '<div class="sm-post-caption-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
+
+      if (post.status === 'published') {
+        html += '<div class="sm-post-metrics">' +
+          '<div class="sm-post-metric">\uD83D\uDC41 <span class="sm-post-metric-value">' + (post.reach || 0) + '</span></div>' +
+          '<div class="sm-post-metric">\u2764\uFE0F <span class="sm-post-metric-value">' + (post.engagement || 0) + '</span></div>' +
+          '</div>';
+      }
+      html += '</div></div>';
+    });
+    html += '</div>';
+
+    activeEl.innerHTML = html;
+
+    var pauseBtn = document.getElementById('smc-pause');
+    if (pauseBtn) pauseBtn.addEventListener('click', function() { self._setCampaignStatus(campaign.id, 'paused'); });
+    var resumeBtn = document.getElementById('smc-resume');
+    if (resumeBtn) resumeBtn.addEventListener('click', function() { self._setCampaignStatus(campaign.id, 'active'); });
+    var endBtn = document.getElementById('smc-end');
+    if (endBtn) {
+      endBtn.addEventListener('click', function() {
+        window.SOCIAL_LOGIC._showConfirm('End Campaign', 'Published posts will remain. Scheduled posts will be cancelled.', function() {
+          self._setCampaignStatus(campaign.id, 'completed');
+        });
+      });
+    }
+    var addBtn = document.getElementById('smc-add-post');
+    if (addBtn) {
+      addBtn.addEventListener('click', function() {
+        window.SOCIAL_LOGIC._switchTab('create');
+      });
+    }
+  },
+
+  _setCampaignStatus: async function(campaignId, status) {
+    await this._supabase.from('campaigns').update({
+      status: status,
+      updated_at: new Date().toISOString()
+    }).eq('id', campaignId);
+
+    if (status === 'completed') {
+      await this._supabase.from('scheduled_posts')
+        .update({ status: 'cancelled' })
+        .eq('user_id', this._userId)
+        .in('social_post_id',
+          this._supabase.from('social_posts').select('id').eq('campaign_id', campaignId).eq('status', 'scheduled')
+        );
+    }
+
+    this.renderActive(campaignId);
+  },
+
+  _saveCampaignDraft: async function() {
+    var result = await this._supabase.from('campaigns').insert({
+      user_id: this._userId,
+      name: (this._campaignInputs.goal || 'Draft Campaign').substring(0, 100),
+      status: 'planning',
+      inputs: this._campaignInputs,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    });
+    if (result.error) {
+      this._showError('Could not save campaign draft.');
+      return;
+    }
+    this._exitWizard();
+  },
+
+  _showError: function(msg) {
+    if (window.SOCIAL_LOGIC && window.SOCIAL_LOGIC._showError) {
+      window.SOCIAL_LOGIC._showError(msg);
+    }
+  }
+};

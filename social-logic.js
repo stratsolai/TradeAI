@@ -1610,6 +1610,9 @@ window.SOCIAL_LOGIC = {
   },
 
   _loadCampaign: async function() {
+    if (window.SM_CAMPAIGN) {
+      window.SM_CAMPAIGN.init(this._supabase, this._userId, this._profile, this._settings);
+    }
     var result = await this._supabase
       .from('campaigns')
       .select('*')
@@ -1635,73 +1638,21 @@ window.SOCIAL_LOGIC = {
 
     if (emptyEl) emptyEl.style.display = 'none';
     if (startBtn) startBtn.parentElement.style.display = 'none';
-    if (activeEl) activeEl.style.display = 'block';
-    this._renderActiveCampaign(campaign);
-  },
 
-  _renderActiveCampaign: function(campaign) {
-    var container = document.getElementById('sm-campaign-active');
-    if (!container) return;
-
-    var statusBadge = '';
-    if (campaign.status === 'active') statusBadge = '<span class="badge badge-green">Active</span>';
-    else if (campaign.status === 'paused') statusBadge = '<span class="badge badge-orange">Paused</span>';
-    else if (campaign.status === 'planning') statusBadge = '<span class="badge badge-blue">Planning</span>';
-    else statusBadge = '<span class="badge badge-grey">' + window.escHtml(campaign.status) + '</span>';
-
-    var html = '<div class="sm-campaign-header">' +
-      '<div class="detail-title">' + window.escHtml(campaign.name || 'Marketing Campaign') + '</div>' +
-      statusBadge +
-      '</div>';
-
-    if (campaign.marketing_plan) {
-      html += '<div class="sm-step-content">' +
-        '<div class="sm-step-question">Marketing Plan</div>' +
-        '<div style="white-space:pre-wrap;font-size:var(--body-font-size);line-height:var(--body-line-height)">' + window.escHtml(campaign.marketing_plan) + '</div>' +
-        '</div>';
+    if (campaign.status === 'planning') {
+      window.SM_CAMPAIGN.startWizard();
+    } else if (campaign.status === 'planned' || campaign.status === 'implementing') {
+      window.SM_CAMPAIGN._showPhase2(campaign);
+    } else {
+      window.SM_CAMPAIGN.renderActive(campaign.id);
     }
-
-    html += '<div class="sm-publish-actions" style="margin-top:16px">';
-    if (campaign.status === 'active') {
-      html += '<button class="btn-outline" id="sm-campaign-pause">Pause Campaign</button>';
-    } else if (campaign.status === 'paused') {
-      html += '<button class="btn-primary" id="sm-campaign-resume">Resume Campaign</button>';
-    }
-    html += '<button class="btn-dismiss" id="sm-campaign-end">End Campaign</button>';
-    html += '</div>';
-
-    container.innerHTML = html;
-
-    var self = this;
-    var pauseBtn = document.getElementById('sm-campaign-pause');
-    if (pauseBtn) {
-      pauseBtn.addEventListener('click', function() {
-        self._updateCampaignStatus(campaign.id, 'paused');
-      });
-    }
-    var resumeBtn = document.getElementById('sm-campaign-resume');
-    if (resumeBtn) {
-      resumeBtn.addEventListener('click', function() {
-        self._updateCampaignStatus(campaign.id, 'active');
-      });
-    }
-    var endBtn = document.getElementById('sm-campaign-end');
-    if (endBtn) {
-      endBtn.addEventListener('click', function() {
-        self._showConfirm('End Campaign', 'This will stop all scheduled posts and archive the campaign.', function() {
-          self._updateCampaignStatus(campaign.id, 'completed');
-        });
-      });
-    }
-  },
-
-  _updateCampaignStatus: async function(campaignId, status) {
-    await this._supabase.from('campaigns').update({ status: status, updated_at: new Date().toISOString() }).eq('id', campaignId);
-    this._loadCampaign();
   },
 
   _startCampaignWizard: function() {
-    this._showError('Campaign creation is coming soon. This feature requires additional setup.');
+    if (window.SM_CAMPAIGN) {
+      window.SM_CAMPAIGN.init(this._supabase, this._userId, this._profile, this._settings);
+      window.SM_CAMPAIGN.startWizard();
+    }
   },
 
   _scheduledItems: []
