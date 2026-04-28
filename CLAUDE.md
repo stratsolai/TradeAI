@@ -83,19 +83,58 @@ The owner will push back when needed and should be encouraged to do so.
 
 ### Task 13 — Integration Requirements (Pending external responses)
 
+**Job Management / Accounting Integrations:**
 - MYOB — Integration pending
 - Buildxact — Integration pending
 - Fergus — Email response received, integration pending
 - Tradify — Integration pending
+
+**Government Tender APIs:**
 - AusTender — API registration submitted, awaiting
   authentication token
 - buy.nsw — API access request submitted, awaiting response
-- REimagine Home API — email sent, awaiting response for
-  API access and documentation
 
 Note: Industry News & Updates tool rebuild complete. Government
 tender API integration blocked on external registrations —
 return to complete this task once API access confirmed.
+
+**Google OAuth Verification:**
+- Status: Submitted for manual review (28 April 2026)
+- Waiting on: Branding verification (privacy policy link in
+  footer — disputed as it exists)
+- Scopes requested: gmail.modify, drive.readonly
+- Expected timeline: 2-3 days for branding, then 3-5 weeks
+  for scope verification + CASA assessment
+
+**Meta App Review:**
+- Status: Blocked — cannot complete Data Deletion URL field
+- Blocker: Vercel returning 403 to Facebook crawler
+  (facebookexternalhit)
+- Vercel support ticket submitted 28 April 2026
+- What is ready: App icon, Privacy URL, Terms URL, Business
+  Portfolio connected, OAuth redirect URI configured
+- What is blocked: Data Deletion URL validation fails due
+  to 403
+
+**Vercel Support — Facebook Crawler 403:**
+- Status: Support ticket submitted (28 April 2026)
+- Issue: Facebook crawler (facebookexternalhit) receives 403
+  on all URLs despite firewall bypass rule, bot protection
+  off, no middleware blocking
+- Evidence: curl with Facebook User-Agent returns 200 OK
+  locally, but Facebook actual crawler gets 403
+- Conclusion: Vercel infrastructure-level block on Facebook
+  IP ranges
+
+**Predis.ai:**
+- Status: 7-day free trial active (started 28 April 2026)
+- API key configured in Vercel env vars
+- Action needed: Decide whether to continue subscription
+  before trial ends, or cancel and reactivate at launch
+
+**REimagine Home API:**
+- Email sent to info@reimaginehome.ai, awaiting response
+  for API access and documentation
 
 ### Task 25 — Social Media Tool Rebuild
 
