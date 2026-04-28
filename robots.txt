@@ -1,0 +1,78 @@
+# robots.txt — StaxAI
+# Public marketing pages are crawlable. Authenticated areas are blocked.
+
+# Allow legitimate crawlers to access public pages
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /panel-auth
+Disallow: /content-library
+Disallow: /cl-settings
+Disallow: /email-assistant
+Disallow: /email-assistant-settings
+Disallow: /news-digest
+Disallow: /news-digest-settings
+Disallow: /strategic-plan
+Disallow: /strategic-plan-settings
+Disallow: /social
+Disallow: /social-settings
+Disallow: /design-viz
+Disallow: /bi-dashboard
+
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /panel-auth
+Disallow: /content-library
+Disallow: /cl-settings
+Disallow: /email-assistant
+Disallow: /email-assistant-settings
+Disallow: /news-digest
+Disallow: /news-digest-settings
+Disallow: /strategic-plan
+Disallow: /strategic-plan-settings
+Disallow: /social
+Disallow: /social-settings
+Disallow: /design-viz
+Disallow: /bi-dashboard
+
+# Default rule for all other crawlers
+User-agent: *
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /about
+Allow: /tools
+Allow: /pricing
+Allow: /industry
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /account
+Disallow: /panel-auth
+Disallow: /content-library
+Disallow: /cl-settings
+Disallow: /email-assistant
+Disallow: /email-assistant-settings
+Disallow: /news-digest
+Disallow: /news-digest-settings
+Disallow: /strategic-plan
+Disallow: /strategic-plan-settings
+Disallow: /social
+Disallow: /social-settings
+Disallow: /design-viz
+Disallow: /bi-dashboard
+
+Sitemap: https://staxai.com.au/sitemap.xml
