@@ -1055,70 +1055,14 @@ window.CL_PROFILE = {
     }, document.getElementById('prof-save-msg'));
   },
 
-  // ─────────────────────────────────────────────────────────
-  // Panel 6: Marketing Theme
-  // ─────────────────────────────────────────────────────────
-
   _renderMarketing: function() {
-    var p = this._profile;
-    var extras = Array.isArray(p.marketing_theme_extra) ? p.marketing_theme_extra : [];
-    var extraRowsHtml = extras.slice(1).map(function(item, i) {
-      return '<div class="profile-repeating-row" id="prof-extra-' + i + '">' +
-        '<input type="text" class="profile-input prof-extra-input" value="' + window.escHtml(item) + '" placeholder="Additional theme statement" />' +
-        '<button class="btn btn-outline btn-sm" data-action="remove-row" data-target="prof-extra-' + i + '">Remove</button>' +
-      '</div>';
-    }).join('');
-    var body = '<div class="profile-fields">' +
-      this._field('What do you want your customers to know about your business?',
-        this._textarea('prof-theme-aware', this._v('marketing_theme_awareness'), 'e.g. A family-owned business serving the local community for over 15 years with honest, reliable service', 3)) +
-      this._field('What sets you apart from your competitors?',
-        this._textarea('prof-theme-diff', this._v('marketing_theme_differentiators'), 'e.g. Same-day service, upfront pricing, and a 100% satisfaction guarantee', 3)) +
-      this._field('What feeling do you want customers to have when they interact with you?',
-        this._textarea('prof-theme-feel', this._v('marketing_theme_feeling'), 'e.g. Confident, reassured, and well looked after', 3)) +
-      this._field('Additional Theme Statements <span class="profile-optional">(optional)</span>',
-        '<input type="text" id="prof-extra-primary" class="profile-input profile-input-mb" value="' + window.escHtml(extras[0] || '') + '" placeholder="Additional theme statement" />' +
-        '<div id="prof-extras-extra">' + extraRowsHtml + '</div>'
-      ) +
-    '</div>' +
-    '<button class="btn btn-outline profile-btn-add-statement" data-action="add-extra">+ Add Statement</button>';
+    var body = '<div id="prof-mkt-guided"></div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
-      '\uD83C\uDFA8', '6. Marketing Theme', 'These answers personalise your outputs across every StaxAI tool', body, 'prof-mkt-save'
+      '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'prof-mkt-save'
     );
-    var self = this;
-    document.getElementById('prof-mkt-save').addEventListener('click', function() { self._saveMarketing(); });
-  },
-
-  _addExtra: function() {
-    var wrap = document.getElementById('prof-extras-extra');
-    if (!wrap) return;
-    var i = wrap.querySelectorAll('.profile-repeating-row').length + 1;
-    var d = document.createElement('div');
-    d.className = 'profile-repeating-row';
-    d.id = 'prof-extra-' + i;
-    d.innerHTML = '<input type="text" class="profile-input prof-extra-input" placeholder="Additional theme statement" />' +
-      '<button class="btn btn-outline btn-sm" data-action="remove-row" data-target="prof-extra-' + i + '">Remove</button>';
-    wrap.appendChild(d);
-  },
-
-  _saveMarketing: function() {
-    var self = this;
-    var statements = [];
-    var primary = document.getElementById('prof-extra-primary');
-    if (primary && primary.value.trim()) statements.push(primary.value.trim());
-    Array.from(document.querySelectorAll('#prof-extras-extra .prof-extra-input')).forEach(function(el) {
-      if (el.value.trim()) statements.push(el.value.trim());
-    });
-    var btn = document.getElementById('prof-mkt-save');
-    window.handleSave(btn, async function() {
-      var updates = {
-        marketing_theme_awareness: document.getElementById('prof-theme-aware').value.trim(),
-        marketing_theme_differentiators: document.getElementById('prof-theme-diff').value.trim(),
-        marketing_theme_feeling: document.getElementById('prof-theme-feel').value.trim(),
-        marketing_theme_extra: statements
-      };
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
-      Object.assign(self._profile, updates);
-    }, document.getElementById('prof-save-msg'));
+    document.getElementById('prof-mkt-save').style.display = 'none';
+    if (window.BP_MARKETING) {
+      window.BP_MARKETING.init(this._supabase, this._userId, this._profile, this);
+    }
   }
 };
