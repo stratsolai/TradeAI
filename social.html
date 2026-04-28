@@ -364,7 +364,7 @@
     </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a href="/social-settings.html" class="topbar-nav-link">Settings</a>
+      <a href="/social-settings.html" class="topbar-nav-link" title="Settings">&#9881;</a>
       <div class="topbar-account-wrap">
         <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
@@ -500,6 +500,7 @@
         <div class="empty-state-icon">📝</div>
         <h3>No drafts yet</h3>
         <p>When you save a post as a draft, it will appear here.</p>
+        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
       </div>
       <div id="sm-drafts-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -519,6 +520,7 @@
         <div class="empty-state-icon">📅</div>
         <h3>No scheduled posts</h3>
         <p>When you schedule a post for later, it will appear here.</p>
+        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
       </div>
       <div id="sm-scheduled-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -539,6 +541,7 @@
         <div class="empty-state-icon">📊</div>
         <h3>No published posts yet</h3>
         <p>Published posts with performance data will appear here.</p>
+        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
       </div>
       <div id="sm-published-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -577,6 +580,18 @@
         <div class="perm-modal-actions">
           <button class="perm-modal-cancel" id="sm-schedule-cancel">Cancel</button>
           <button class="perm-modal-continue" id="sm-schedule-confirm">Schedule</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="perm-modal-overlay" id="sm-cl-media-modal">
+      <div class="perm-modal" style="max-width:680px">
+        <div class="perm-modal-title">Select from Content Library</div>
+        <div class="perm-modal-body" id="sm-cl-media-body" style="max-height:400px;overflow-y:auto">
+        </div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="sm-cl-media-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="sm-cl-media-confirm">Add Selected</button>
         </div>
       </div>
     </div>

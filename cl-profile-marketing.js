@@ -76,6 +76,7 @@ window.BP_MARKETING = {
   },
 
   _bindPills: function() {
+    var self = this;
     document.querySelectorAll('#prof-mkt-guided .filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
         var attr = Object.keys(pill.dataset)[0];
@@ -90,6 +91,11 @@ window.BP_MARKETING = {
             if (activeCount >= 2) return;
           }
           pill.classList.add('active');
+        }
+        var reRenderAttrs = ['standout', 'qualdetail', 'svcdetail', 'affdetail'];
+        if (reRenderAttrs.indexOf(attr) !== -1) {
+          self._saveTopicData();
+          self._renderTopic();
         }
       });
     });
@@ -109,23 +115,49 @@ window.BP_MARKETING = {
       '<input type="text" class="profile-input" id="prof-mkt-standout-other" value="' + window.escHtml(a.standout_other) + '" placeholder="Something else that sets you apart"></div>';
 
     if (a.standout.indexOf('Our products or services are better quality') !== -1) {
-      var qualityItems = ['Premium materials or ingredients', 'More thorough process', 'Better attention to detail', 'Longer lasting results', 'We don\'t cut corners', 'Industry-leading brands or suppliers'];
+      var qualityItems = ['Premium materials or ingredients', 'More thorough process', 'Better attention to detail', 'Longer lasting results', 'We don\'t cut corners', 'Industry-leading brands or suppliers', 'Other'];
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">What makes your quality better?</label>' +
-        this._pills(qualityItems, a.quality_detail || [], 'qualdetail') + '</div>';
+        this._pills(qualityItems, a.quality_detail || [], 'qualdetail');
+      if ((a.quality_detail || []).indexOf('Other') !== -1) {
+        html += '<input type="text" class="profile-input" id="prof-mkt-quality-other" value="' + window.escHtml(a.quality_other || '') + '" placeholder="Describe what else" style="margin-top:8px">';
+      }
+      html += '</div>';
     }
     if (a.standout.indexOf('Better customer service') !== -1) {
-      var serviceItems = ['We always answer the phone', 'We show up on time', 'We explain everything clearly', 'We\'re easy to deal with', 'We go above and beyond', 'We follow up after the job', 'We clean up after ourselves'];
+      var serviceItems = ['We always answer the phone', 'We show up on time', 'We explain everything clearly', 'We\'re easy to deal with', 'We go above and beyond', 'We follow up after the job', 'We clean up after ourselves', 'Other'];
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">What is different about your customer service?</label>' +
-        this._pills(serviceItems, a.service_detail || [], 'svcdetail') + '</div>';
+        this._pills(serviceItems, a.service_detail || [], 'svcdetail');
+      if ((a.service_detail || []).indexOf('Other') !== -1) {
+        html += '<input type="text" class="profile-input" id="prof-mkt-service-other" value="' + window.escHtml(a.service_other || '') + '" placeholder="Describe what else" style="margin-top:8px">';
+      }
+      html += '</div>';
     }
     if (a.standout.indexOf('We\'re more affordable') !== -1) {
-      var affordItems = ['Lower prices than competitors', 'No call-out fees', 'Free quotes', 'Upfront pricing \u2014 no surprises', 'We match or beat quotes'];
+      var affordItems = ['Lower prices than competitors', 'No call-out fees', 'Free quotes', 'Upfront pricing \u2014 no surprises', 'We match or beat quotes', 'Other'];
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">How are you more affordable?</label>' +
-        this._pills(affordItems, a.affordable_detail || [], 'affdetail') + '</div>';
+        this._pills(affordItems, a.affordable_detail || [], 'affdetail');
+      if ((a.affordable_detail || []).indexOf('Other') !== -1) {
+        html += '<input type="text" class="profile-input" id="prof-mkt-affordable-other" value="' + window.escHtml(a.affordable_other || '') + '" placeholder="Describe what else" style="margin-top:8px">';
+      }
+      html += '</div>';
     }
     if (a.standout.indexOf('More experienced or qualified') !== -1) {
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Years in business</label>' +
         '<input type="text" class="profile-input" id="prof-mkt-exp-years" value="' + window.escHtml(a.experience_years || '') + '" style="width:120px"></div>';
+      var bp = this._profile || {};
+      var bpLicences = Array.isArray(bp.licences) ? bp.licences : [];
+      if (bpLicences.length > 0) {
+        var selectedCerts = a.certifications || [];
+        html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Qualifications and certifications</label>';
+        html += '<div class="review-pill-row" style="margin-bottom:8px">';
+        bpLicences.forEach(function(lic) {
+          var active = selectedCerts.indexOf(lic) !== -1 ? ' active' : '';
+          html += '<button class="filter-pill' + active + '" data-certpill="' + window.escHtml(lic) + '">' + window.escHtml(lic) + '</button>';
+        });
+        html += '</div></div>';
+      }
+      html += '<div class="profile-field-full" style="margin-top:8px"><label class="profile-label">Other certifications (optional)</label>' +
+        '<input type="text" class="profile-input" id="prof-mkt-cert-other" value="' + window.escHtml(a.certifications_other || '') + '" placeholder="Any other qualifications or certifications"></div>';
     }
     if (a.standout.indexOf('We specialise in certain areas') !== -1) {
       var bp = this._profile || {};
@@ -254,12 +286,22 @@ window.BP_MARKETING = {
       if (other) a.standout_other = other.value;
       a.quality_detail = [];
       document.querySelectorAll('[data-qualdetail].active').forEach(function(p) { a.quality_detail.push(p.dataset.qualdetail); });
+      var qualOther = document.getElementById('prof-mkt-quality-other');
+      if (qualOther) a.quality_other = qualOther.value;
       a.service_detail = [];
       document.querySelectorAll('[data-svcdetail].active').forEach(function(p) { a.service_detail.push(p.dataset.svcdetail); });
+      var svcOther = document.getElementById('prof-mkt-service-other');
+      if (svcOther) a.service_other = svcOther.value;
       a.affordable_detail = [];
       document.querySelectorAll('[data-affdetail].active').forEach(function(p) { a.affordable_detail.push(p.dataset.affdetail); });
+      var affOther = document.getElementById('prof-mkt-affordable-other');
+      if (affOther) a.affordable_other = affOther.value;
       var expYears = document.getElementById('prof-mkt-exp-years');
       if (expYears) a.experience_years = expYears.value;
+      a.certifications = [];
+      document.querySelectorAll('[data-certpill].active').forEach(function(p) { a.certifications.push(p.dataset.certpill); });
+      var certOther = document.getElementById('prof-mkt-cert-other');
+      if (certOther) a.certifications_other = certOther.value;
       a.specialise_services = [];
       document.querySelectorAll('[data-specsvc].active').forEach(function(p) { a.specialise_services.push(p.dataset.specsvc); });
       a.specialise_duration = '';
@@ -383,6 +425,20 @@ window.BP_MARKETING = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
+
+      try {
+        var sessionRes = await self._supabase.auth.getSession();
+        var sess = sessionRes.data && sessionRes.data.session;
+        if (sess) {
+          fetch('/api/predis-brand', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + sess.access_token
+            }
+          }).catch(function() {});
+        }
+      } catch (e) { /* background sync — do not block */ }
     }, document.getElementById('prof-save-msg'));
   }
 };

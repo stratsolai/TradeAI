@@ -588,12 +588,23 @@ window.SM_CAMPAIGN = {
       else if (post.status === 'pending') statusBadge = '<span class="badge badge-orange">Pending</span>';
       else if (post.status === 'skipped') statusBadge = '<span class="badge badge-grey">Skipped</span>';
 
+      var connList = (campaign.connections || []).map(function(c) {
+        return c.charAt(0).toUpperCase() + c.slice(1);
+      }).join(', ');
+
       html += '<div class="item-card sm-post-card" data-id="' + post.id + '">' +
-        '<div class="sm-post-thumb">\uD83D\uDCDD</div>' +
+        '<div class="sm-post-thumb">';
+      if (post.image_url) {
+        html += '<img src="' + window.escHtml(post.image_url) + '" alt="">';
+      } else {
+        html += '\uD83D\uDCDD';
+      }
+      html += '</div>' +
         '<div class="sm-post-body">' +
         '<div class="sm-post-meta">' +
         '<span class="sm-post-type">Post ' + (idx + 1) + '</span>' +
         statusBadge +
+        (connList ? '<span style="font-size:var(--badge-font-size);color:var(--text-muted)">' + window.escHtml(connList) + '</span>' : '') +
         (post.scheduled_for ? '<span class="sm-post-date">' + new Date(post.scheduled_for).toLocaleDateString('en-AU') + '</span>' : '') +
         '</div>' +
         '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
@@ -838,9 +849,24 @@ window.SM_CAMPAIGN = {
     else if (campaign.status === 'completed') statusBadge = '<span class="badge badge-grey">Completed</span>';
     else statusBadge = '<span class="badge badge-blue">' + window.escHtml(campaign.status) + '</span>';
 
+    var weekLabel = '';
+    var timeframeId = (campaign.inputs && campaign.inputs.timeframe) || '';
+    var totalWeeksMap = { '4w': 4, '8w': 8, '12w': 12 };
+    var totalWeeks = totalWeeksMap[timeframeId] || 0;
+    if (campaign.started_at) {
+      var startMs = new Date(campaign.started_at).getTime();
+      var nowMs = Date.now();
+      var currentWeek = Math.max(1, Math.ceil((nowMs - startMs) / (7 * 24 * 60 * 60 * 1000)));
+      if (totalWeeks > 0) {
+        weekLabel = '<span class="badge badge-blue">Week ' + currentWeek + ' of ' + totalWeeks + '</span>';
+      } else {
+        weekLabel = '<span class="badge badge-blue">Week ' + currentWeek + '</span>';
+      }
+    }
+
     var html = '<div class="sm-campaign-header">' +
       '<div class="detail-title">' + window.escHtml(campaign.name || 'Marketing Campaign') + '</div>' +
-      statusBadge +
+      statusBadge + weekLabel +
       '</div>';
 
     html += '<div class="stats-bar">' +
@@ -869,28 +895,52 @@ window.SM_CAMPAIGN = {
     html += '<button class="btn-dismiss" id="smc-end">End Campaign</button>';
     html += '</div>';
 
-    html += '<div class="sm-step-question" style="margin-bottom:12px">All Posts</div>';
-    html += '<div class="sm-post-list">';
+    html += '<div class="sm-step-question" style="margin-bottom:12px">Campaign Timeline</div>';
+
+    var campaignStartMs = campaign.started_at ? new Date(campaign.started_at).getTime() : (posts.length > 0 ? new Date(posts[0].created_at).getTime() : Date.now());
+    var weekBuckets = {};
     posts.forEach(function(post) {
-      var pBadge = '';
-      if (post.status === 'published') pBadge = '<span class="badge badge-green">Published</span>';
-      else if (post.status === 'scheduled') pBadge = '<span class="badge badge-blue">Scheduled</span>';
-      else pBadge = '<span class="badge badge-grey">' + window.escHtml(post.status) + '</span>';
+      var postMs = post.published_at ? new Date(post.published_at).getTime() : new Date(post.created_at).getTime();
+      var weekNum = Math.max(1, Math.ceil((postMs - campaignStartMs) / (7 * 24 * 60 * 60 * 1000)));
+      if (weekNum < 1) weekNum = 1;
+      if (!weekBuckets[weekNum]) weekBuckets[weekNum] = [];
+      weekBuckets[weekNum].push(post);
+    });
+    var weekNums = Object.keys(weekBuckets).map(Number).sort(function(a, b) { return a - b; });
+    var displayTotalWeeks = totalWeeks || (weekNums.length > 0 ? weekNums[weekNums.length - 1] : 1);
 
-      html += '<div class="item-card sm-post-card"><div class="sm-post-thumb">\uD83D\uDCDD</div>' +
-        '<div class="sm-post-body"><div class="sm-post-meta">' + pBadge +
-        '<span class="sm-post-date">' + (post.published_at ? new Date(post.published_at).toLocaleDateString('en-AU') : '') + '</span></div>' +
-        '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
+    weekNums.forEach(function(wn) {
+      var weekTitle = totalWeeks > 0 ? 'Week ' + wn + ' of ' + displayTotalWeeks : 'Week ' + wn;
+      html += '<div class="sm-step-content" style="margin-bottom:16px">' +
+        '<div class="sm-step-question" style="margin-bottom:12px">' + weekTitle + '</div>' +
+        '<div class="sm-post-list">';
+      weekBuckets[wn].forEach(function(post) {
+        var pBadge = '';
+        if (post.status === 'published') pBadge = '<span class="badge badge-green">Published</span>';
+        else if (post.status === 'scheduled') pBadge = '<span class="badge badge-blue">Scheduled</span>';
+        else pBadge = '<span class="badge badge-grey">' + window.escHtml(post.status) + '</span>';
 
-      if (post.status === 'published') {
-        html += '<div class="sm-post-metrics">' +
-          '<div class="sm-post-metric">\uD83D\uDC41 <span class="sm-post-metric-value">' + (post.reach || 0) + '</span></div>' +
-          '<div class="sm-post-metric">\u2764\uFE0F <span class="sm-post-metric-value">' + (post.engagement || 0) + '</span></div>' +
-          '</div>';
-      }
+        html += '<div class="item-card sm-post-card"><div class="sm-post-thumb">';
+        if (post.image_url) {
+          html += '<img src="' + window.escHtml(post.image_url) + '" alt="">';
+        } else {
+          html += '\uD83D\uDCDD';
+        }
+        html += '</div>' +
+          '<div class="sm-post-body"><div class="sm-post-meta">' + pBadge +
+          '<span class="sm-post-date">' + (post.published_at ? new Date(post.published_at).toLocaleDateString('en-AU') : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-AU') : '')) + '</span></div>' +
+          '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
+
+        if (post.status === 'published') {
+          html += '<div class="sm-post-metrics">' +
+            '<div class="sm-post-metric">\uD83D\uDC41 <span class="sm-post-metric-value">' + (post.reach || 0) + '</span></div>' +
+            '<div class="sm-post-metric">\u2764\uFE0F <span class="sm-post-metric-value">' + (post.engagement || 0) + '</span></div>' +
+            '</div>';
+        }
+        html += '</div></div>';
+      });
       html += '</div></div>';
     });
-    html += '</div>';
 
     html += '<div id="smc-campaign-history"></div>';
 

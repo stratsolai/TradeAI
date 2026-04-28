@@ -17,6 +17,9 @@ window.SOCIAL_LOGIC = {
   _draftsSelected: new Set(),
   _pageSize: 12,
   _scheduledView: 'list',
+  _pendingSchedulePostId: null,
+  _pendingBulkScheduleIds: null,
+  _editingPostId: null,
 
   JOURNEY_GROUPS: [
     {
@@ -444,6 +447,7 @@ window.SOCIAL_LOGIC = {
     this._mediaFiles = [];
     this._mediaUrls = [];
     this._generatedContent = null;
+    this._editingPostId = null;
   },
 
   _renderStep: function() {
@@ -544,9 +548,22 @@ window.SOCIAL_LOGIC = {
     if (this._mediaUrls.length > 0) {
       html += '<div class="sm-media-preview-grid" id="sm-media-previews">';
       this._mediaUrls.forEach(function(url, idx) {
-        html += '<div class="sm-media-preview-item">' +
-          '<img src="' + window.escHtml(url) + '" alt="">' +
-          '<button class="sm-media-remove" data-idx="' + idx + '">\u2715</button>' +
+        var isVideo = false;
+        if (self._mediaFiles[idx]) {
+          var mimeType = self._mediaFiles[idx].type || '';
+          if (mimeType.indexOf('video') === 0) isVideo = true;
+        }
+        if (!isVideo) {
+          var ext = url.split('.').pop().split('?')[0].toLowerCase();
+          if (['mp4', 'mov', 'webm', 'avi', 'mkv', 'ogv'].indexOf(ext) !== -1) isVideo = true;
+        }
+        html += '<div class="sm-media-preview-item">';
+        if (isVideo) {
+          html += '<video src="' + window.escHtml(url) + '" style="width:100%;height:100%;object-fit:cover" muted></video>';
+        } else {
+          html += '<img src="' + window.escHtml(url) + '" alt="">';
+        }
+        html += '<button class="sm-media-remove" data-idx="' + idx + '">\u2715</button>' +
           '</div>';
       });
       html += '</div>';
@@ -591,7 +608,7 @@ window.SOCIAL_LOGIC = {
   },
 
   _renderOutputTypeStep: function() {
-    var current = this._journeyInputs.output_type || 'social_post';
+    var selected = this._journeyInputs.output_types || [this._journeyInputs.output_type || 'social_post'];
     var options = [
       { id: 'social_post', label: 'Social Post' },
       { id: 'ad_graphic', label: 'Ad Graphic' },
@@ -604,7 +621,7 @@ window.SOCIAL_LOGIC = {
     var html = '<div class="sm-step-hint">You can select multiple formats to generate from the same inputs.</div>';
     html += '<div class="sm-option-pills">';
     options.forEach(function(o) {
-      var active = current === o.id ? ' active' : '';
+      var active = selected.indexOf(o.id) !== -1 ? ' active' : '';
       html += '<button class="sm-option-pill' + active + '" data-output="' + o.id + '">' + window.escHtml(o.label) + '</button>';
     });
     html += '</div>';
@@ -636,10 +653,18 @@ window.SOCIAL_LOGIC = {
 
   _renderTextStep: function(step) {
     var field = step.id;
+    if (field === 'what' && this._currentJourney === 'event_promo') {
+      return this._renderEventTypePills();
+    }
+    if (field === 'what' && this._currentJourney === 'offer_promo') {
+      return this._renderOfferTypePills();
+    }
     var html = '<div class="form-group"><label class="form-label">' + window.escHtml(step.question) + '</label>' +
       '<textarea class="form-input" id="sm-field-' + field + '" rows="4">' + window.escHtml(this._journeyInputs[field] || '') + '</textarea></div>';
     return html;
   },
+
+  // Event/Offer pill renderers in social-modules.js
 
   _renderWhenWhereStep: function() {
     var vals = this._journeyInputs;
@@ -679,6 +704,7 @@ window.SOCIAL_LOGIC = {
       html += '<button class="sm-option-pill' + active + '" data-source="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
+    html += '<div id="sm-nd-items-container" style="margin-top:16px;display:none"></div>';
     return html;
   },
 
@@ -727,20 +753,7 @@ window.SOCIAL_LOGIC = {
     return html;
   },
 
-  _renderProjectStep: function() {
-    var html = '<div class="sm-step-hint">Choose from your completed projects, or enter details manually.</div>';
-    html += '<div class="sm-option-pills">' +
-      '<button class="sm-option-pill" id="sm-project-manual">Enter manually</button>' +
-      '</div>';
-    html += '<div id="sm-project-list" style="margin-top:16px"></div>';
-    html += '<div id="sm-project-manual-fields" style="display:none;margin-top:16px">' +
-      '<div class="form-group"><label class="form-label">Customer first name</label>' +
-      '<input type="text" class="form-input" id="sm-field-customer-name" value="' + window.escHtml(this._journeyInputs.customer_name || '') + '"></div>' +
-      '<div class="form-group"><label class="form-label">Service provided</label>' +
-      '<input type="text" class="form-input" id="sm-field-service" value="' + window.escHtml(this._journeyInputs.service || '') + '"></div>' +
-      '</div>';
-    return html;
-  },
+  /* _renderProjectStep is overridden by social-modules.js CL Projects CRUD */
 
   _renderTestimonialStep: function() {
     var html = '<div class="form-group"><label class="form-label">Testimonial text</label>' +
@@ -767,6 +780,8 @@ window.SOCIAL_LOGIC = {
     if (step.id === 'media') {
       var dropArea = document.getElementById('sm-media-drop');
       var uploadBtn = document.getElementById('sm-media-upload-btn');
+      var aiBtn = document.getElementById('sm-media-ai-btn');
+      var clBtn = document.getElementById('sm-media-cl-btn');
       if (dropArea) {
         dropArea.addEventListener('click', function() {
           document.getElementById('sm-file-input').click();
@@ -775,6 +790,16 @@ window.SOCIAL_LOGIC = {
       if (uploadBtn) {
         uploadBtn.addEventListener('click', function() {
           document.getElementById('sm-file-input').click();
+        });
+      }
+      if (aiBtn) {
+        aiBtn.addEventListener('click', function() {
+          self._handleAIGenerate();
+        });
+      }
+      if (clBtn) {
+        clBtn.addEventListener('click', function() {
+          self._openCLMediaPicker();
         });
       }
       document.querySelectorAll('.sm-media-remove').forEach(function(btn) {
@@ -810,9 +835,13 @@ window.SOCIAL_LOGIC = {
     if (step.id === 'output_type') {
       document.querySelectorAll('[data-output]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-output]').forEach(function(p) { p.classList.remove('active'); });
-          pill.classList.add('active');
-          self._journeyInputs.output_type = pill.dataset.output;
+          pill.classList.toggle('active');
+          var selected = [];
+          document.querySelectorAll('[data-output].active').forEach(function(p) {
+            selected.push(p.dataset.output);
+          });
+          self._journeyInputs.output_types = selected;
+          self._journeyInputs.output_type = selected[0] || 'social_post';
         });
       });
     }
@@ -823,6 +852,13 @@ window.SOCIAL_LOGIC = {
           document.querySelectorAll('[data-source]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.source_type = pill.dataset.source;
+          var ndContainer = document.getElementById('sm-nd-items-container');
+          if (pill.dataset.source === 'News Digest (saved items)' || pill.dataset.source === 'Expand a News Digest item') {
+            if (ndContainer) { ndContainer.style.display = 'block'; }
+            self._loadNewsDigestItems();
+          } else {
+            if (ndContainer) { ndContainer.style.display = 'none'; }
+          }
         });
       });
     }
@@ -857,12 +893,49 @@ window.SOCIAL_LOGIC = {
       });
     }
 
+    if (step.id === 'what' && this._currentJourney === 'event_promo') {
+      document.querySelectorAll('[data-eventtype]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-eventtype]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._journeyInputs.what = pill.dataset.eventtype;
+          var otherWrap = document.getElementById('sm-event-other-wrap');
+          if (otherWrap) otherWrap.style.display = pill.dataset.eventtype === 'Other' ? 'block' : 'none';
+        });
+      });
+    }
+
+    if (step.id === 'what' && this._currentJourney === 'offer_promo') {
+      document.querySelectorAll('[data-offertype]').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          document.querySelectorAll('[data-offertype]').forEach(function(p) { p.classList.remove('active'); });
+          pill.classList.add('active');
+          self._journeyInputs.what = pill.dataset.offertype;
+          var otherWrap = document.getElementById('sm-offer-other-wrap');
+          if (otherWrap) otherWrap.style.display = pill.dataset.offertype === 'Other' ? 'block' : 'none';
+        });
+      });
+    }
+
     if (step.id === 'project') {
-      var manualBtn = document.getElementById('sm-project-manual');
-      if (manualBtn) {
-        manualBtn.addEventListener('click', function() {
-          var fields = document.getElementById('sm-project-manual-fields');
-          if (fields) fields.style.display = fields.style.display === 'none' ? 'block' : 'none';
+      if (self._bindProjectStepEvents) {
+        self._bindProjectStepEvents();
+      } else {
+        var manualBtn = document.getElementById('sm-project-manual');
+        if (manualBtn) {
+          manualBtn.addEventListener('click', function() {
+            var fields = document.getElementById('sm-project-manual-fields');
+            if (fields) fields.style.display = fields.style.display === 'none' ? 'block' : 'none';
+          });
+        }
+      }
+    }
+
+    if (step.id === 'logo') {
+      var websiteInput = document.getElementById('sm-field-customer-website');
+      if (websiteInput) {
+        websiteInput.addEventListener('blur', function() {
+          self._fetchLogoFromUrl(websiteInput.value);
         });
       }
     }
@@ -928,6 +1001,22 @@ window.SOCIAL_LOGIC = {
       if (sv) this._journeyInputs.service = sv.value;
     }
 
+    if (step.id === 'output_type') {
+      var selected = [];
+      document.querySelectorAll('[data-output].active').forEach(function(p) {
+        selected.push(p.dataset.output);
+      });
+      if (selected.length > 0) {
+        this._journeyInputs.output_types = selected;
+        this._journeyInputs.output_type = selected[0];
+      }
+    }
+
+    if (step.id === 'what' && (this._currentJourney === 'event_promo' || this._currentJourney === 'offer_promo')) {
+      var otherField = document.getElementById('sm-field-what-other');
+      if (otherField) this._journeyInputs.what_other = otherField.value;
+    }
+
     var genericFields = ['what', 'who', 'why_now', 'included', 'insight', 'key_points'];
     if (genericFields.indexOf(step.id) !== -1) {
       var tf = document.getElementById('sm-field-' + step.id);
@@ -940,17 +1029,6 @@ window.SOCIAL_LOGIC = {
       var btitle = document.getElementById('sm-field-blog-title');
       if (btitle) this._journeyInputs.blog_title = btitle.value;
     }
-  },
-
-  _handleFileSelect: function(files) {
-    if (!files || files.length === 0) return;
-    for (var i = 0; i < files.length; i++) {
-      var file = files[i];
-      this._mediaFiles.push(file);
-      var url = URL.createObjectURL(file);
-      this._mediaUrls.push(url);
-    }
-    this._renderStep();
   },
 
   _generateContent: async function() {
@@ -981,7 +1059,8 @@ window.SOCIAL_LOGIC = {
           journey_type: this._currentJourney,
           inputs: this._journeyInputs,
           media_url: mediaUrl,
-          output_type: this._journeyInputs.output_type || 'social_post'
+          output_type: this._journeyInputs.output_type || 'social_post',
+          output_types: this._journeyInputs.output_types || [this._journeyInputs.output_type || 'social_post']
         })
       });
 
@@ -1006,70 +1085,9 @@ window.SOCIAL_LOGIC = {
     }
   },
 
-  _uploadMedia: async function(file, token) {
-    var ext = file.name.split('.').pop() || 'jpg';
-    var path = this._userId + '/social/' + Date.now() + '.' + ext;
-    var result = await this._supabase.storage.from('cl-assets').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false
-    });
-    if (result.error) {
-      throw new Error('Failed to upload media. Please try again.');
-    }
-    var urlResult = this._supabase.storage.from('cl-assets').getPublicUrl(path);
-    return urlResult.data.publicUrl;
-  },
+  // _uploadMedia in social-modules.js
 
-  _showPreview: function() {
-    var previewView = document.getElementById('sm-preview-view');
-    var previewContent = document.getElementById('sm-preview-content');
-    var captionEl = document.getElementById('sm-edit-caption');
-    var hashtagsEl = document.getElementById('sm-edit-hashtags');
-
-    var businessName = (this._profile && this._profile.business_name) || 'Your Business';
-    var initial = businessName.charAt(0).toUpperCase();
-
-    var html = '<div class="sm-preview-card">' +
-      '<div class="sm-preview-header">' +
-      '<div class="sm-preview-avatar">' + initial + '</div>' +
-      '<div><div class="sm-preview-name">' + window.escHtml(businessName) + '</div>' +
-      '<div class="sm-preview-platform">Preview</div></div></div>';
-    if (this._generatedContent.image_url) {
-      html += '<img class="sm-preview-media" src="' + window.escHtml(this._generatedContent.image_url) + '" alt="Post media">';
-    }
-    html += '<div class="sm-preview-body">' +
-      '<div class="sm-preview-caption" id="sm-preview-caption-text">' + window.escHtml(this._generatedContent.caption) + '</div>' +
-      '<div class="sm-preview-hashtags" id="sm-preview-hashtags-text">' + window.escHtml(this._generatedContent.hashtags) + '</div>' +
-      '</div></div>';
-
-    previewContent.innerHTML = html;
-    if (captionEl) captionEl.value = this._generatedContent.caption;
-    if (hashtagsEl) hashtagsEl.value = this._generatedContent.hashtags;
-    previewView.style.display = 'block';
-  },
-
-  _showPublishView: function() {
-    var publishView = document.getElementById('sm-publish-view');
-    var checksEl = document.getElementById('sm-connection-checks');
-    var settings = this._settings || {};
-
-    var html = '';
-    html += '<div class="sm-connection-check">' +
-      '<input type="checkbox" id="sm-conn-facebook" value="facebook"' + (settings.facebook_connected ? '' : ' disabled') + '>' +
-      '<span class="sm-connection-check-label">Facebook</span>' +
-      '<span class="sm-connection-check-status">' + (settings.facebook_connected ? 'Connected' : 'Not connected') + '</span></div>';
-    html += '<div class="sm-connection-check">' +
-      '<input type="checkbox" id="sm-conn-instagram" value="instagram"' + (settings.instagram_connected ? '' : ' disabled') + '>' +
-      '<span class="sm-connection-check-label">Instagram</span>' +
-      '<span class="sm-connection-check-status">' + (settings.instagram_connected ? 'Connected' : 'Not connected') + '</span></div>';
-    html += '<div class="sm-connection-check">' +
-      '<input type="checkbox" disabled>' +
-      '<span class="sm-connection-check-label">LinkedIn</span>' +
-      '<span class="sm-connection-check-status badge badge-grey">Coming Soon</span></div>';
-
-    checksEl.innerHTML = html;
-    publishView.style.display = 'block';
-  },
+  // Preview and publish views in social-modules.js
 
   _bindPublishActions: function() {
     var self = this;
@@ -1108,8 +1126,7 @@ window.SOCIAL_LOGIC = {
         return;
       }
       document.getElementById('sm-schedule-modal').classList.remove('open');
-      self._selectedConnections = self._getSelectedConnections();
-      self._schedulePost(dateVal + 'T' + timeVal);
+      self._handleScheduleConfirm(dateVal + 'T' + timeVal);
     });
 
     document.getElementById('sm-schedule-modal').addEventListener('click', function(e) {
@@ -1117,6 +1134,16 @@ window.SOCIAL_LOGIC = {
         document.getElementById('sm-schedule-modal').classList.remove('open');
       }
     });
+
+    var clMediaModal = document.getElementById('sm-cl-media-modal');
+    if (clMediaModal) {
+      document.getElementById('sm-cl-media-cancel').addEventListener('click', function() {
+        clMediaModal.classList.remove('open');
+      });
+      clMediaModal.addEventListener('click', function(e) {
+        if (e.target === clMediaModal) clMediaModal.classList.remove('open');
+      });
+    }
   },
 
   _getSelectedConnections: function() {
@@ -1242,8 +1269,8 @@ window.SOCIAL_LOGIC = {
 
     await this._saveJourneyRecord(result.data.id, status);
 
-    if (this._currentJourney === 'blog_content' && content.caption && this._saveBlogToCL) {
-      this._saveBlogToCL(content, this._journeyInputs);
+    if (content.caption && this._saveOutputToCL) {
+      this._saveOutputToCL(content, this._journeyInputs, this._currentJourney);
     }
 
     return result.data;
@@ -1261,6 +1288,15 @@ window.SOCIAL_LOGIC = {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
+    if (this._journeyInputs.scheduled_for) {
+      record.scheduled_for = this._journeyInputs.scheduled_for;
+    }
+    if (status === 'published') {
+      record.published_at = new Date().toISOString();
+    }
+    if (this._journeyInputs.campaign_id) {
+      record.campaign_id = this._journeyInputs.campaign_id;
+    }
     var result = await this._supabase.from('journey_records').insert(record);
     if (result.error) console.error('[SM] journey_records insert error:', result.error.message);
   },
@@ -1299,6 +1335,10 @@ window.SOCIAL_LOGIC = {
 
     document.getElementById('sm-drafts-schedule-selected').addEventListener('click', function() {
       if (self._draftsSelected.size === 0) return;
+      self._pendingBulkScheduleIds = Array.from(self._draftsSelected);
+      self._pendingSchedulePostId = null;
+      document.getElementById('sm-schedule-date').value = '';
+      document.getElementById('sm-schedule-time').value = '';
       var modal = document.getElementById('sm-schedule-modal');
       if (modal) modal.classList.add('open');
     });
@@ -1311,6 +1351,12 @@ window.SOCIAL_LOGIC = {
 
     document.getElementById('sm-start-campaign-btn').addEventListener('click', function() {
       self._startCampaignWizard();
+    });
+
+    document.querySelectorAll('.sm-empty-create-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        self._switchTab('create');
+      });
     });
   },
 
