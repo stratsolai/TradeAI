@@ -275,6 +275,67 @@ All tools that support photo capture must reuse the camera input pattern from PW
 ### Spec First
 - No new feature, page, or schema change without an approved spec in Project Knowledge — owner can override when agreed with Chat
 
+### Spec Compliance Section — Mandatory for All Tool Specs
+
+Every tool specification must include the following Platform Compliance section, word-for-word, immediately after the Overview section. This section is non-negotiable and must not be modified per tool.
+
+#### Platform Compliance — MANDATORY
+
+**WARNING:** This section is non-negotiable. Code must read and follow these requirements before writing any code. Violations will require rebuild.
+
+**Files to Read First**
+
+Before starting any build work, Code must read these files in full:
+
+- CLAUDE.md — platform rules and constraints
+- staxai-auth.css — the single source of truth for all styling
+- shared-utils.js — shared functions that must be used
+- Page Layout Standard section in CLAUDE.md
+- Platform Audit Standard v1.4 — the checklist this tool must pass
+
+**Architecture Requirements**
+
+| Requirement | Detail |
+|---|---|
+| Split file architecture | [tool].html (shell + CSS), [tool]-logic.js (window.[TOOL]_LOGIC = {init()}), panel-data-[tool].js (tool panel data) |
+| Maximum file size | 60,000 characters per file. If [tool]-logic.js exceeds this, split into [tool]-logic.js + [tool]-modules.js |
+| Topbar integration | Must use topbar.js — do not build custom navigation |
+| Shared utilities | Must use shared-utils.js functions: handleSave(), escHtml(), formatDate(), etc. |
+| Event handlers | addEventListener only — no inline onclick handlers |
+| Australian English | colour, organisation, recognised, etc. throughout all UI copy |
+
+**Styling Requirements**
+
+| Requirement | Detail |
+|---|---|
+| CSS source | staxai-auth.css is the single source of truth. Load it first. |
+| Colours | CSS variables only. Primary: var(--stax-primary) = #4A6D8C. Never hardcode colours. |
+| New classes | DO NOT create new classes in staxai-auth.css without explicit owner permission. |
+| Missing styles | If a required style doesn't exist, STOP and report back. Do not invent classes. |
+| Component patterns | Match existing CL/EA/ID implementations exactly for dropdowns, tabs, cards, modals. |
+
+**WARNING:** If Code needs a CSS class, component, or pattern that doesn't exist in staxai-auth.css, Code must STOP and report back. The owner and Chat will decide whether to add it to the stylesheet or find an existing solution. Code does not create new classes independently.
+
+**API Requirements**
+
+| Requirement | Detail |
+|---|---|
+| All AI calls | Server-side only via Vercel functions in api/ folder |
+| Model | claude-sonnet-4-6 for customer-facing outputs |
+| Authentication | JWT Bearer token + supabase.auth.getUser() on every endpoint |
+| Error handling | Modal error display using platform pattern — no console.log for user-facing errors |
+| API keys | Never expose to browser. All keys server-side only. |
+
+**Database Requirements**
+
+| Requirement | Detail |
+|---|---|
+| New tables | RLS enabled before any data is written |
+| Column naming | snake_case. Booleans: is_[name] or has_[name]. Timestamps: created_at, updated_at |
+| Schema documentation | Any new tables must be documented in this spec before creation |
+
+End of mandatory compliance section.
+
 ---
 
 ## Important Platform Facts
