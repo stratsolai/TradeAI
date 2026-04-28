@@ -324,7 +324,7 @@ async function handleGetAuthUrl(req, res, userId) {
   if (!appId) {
     return res.status(500).json({ error: 'Meta App ID not configured.' });
   }
-  const redirectUri = encodeURIComponent('https://staxai.com.au/api/meta-callback');
+  const redirectUri = encodeURIComponent('https://staxai.com.au/api/auth/meta/callback');
   const scopes = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish';
   const authUrl = `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scopes}&state=${userId}`;
   return res.status(200).json({ auth_url: authUrl });

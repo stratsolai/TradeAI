@@ -56,6 +56,10 @@
       "destination": "/api/auth/oauth-callback.js"
     },
     {
+      "source": "/api/auth/meta/callback",
+      "destination": "/api/auth/oauth-callback.js"
+    },
+    {
       "source": "/tools",
       "destination": "/tools.html"
     },
