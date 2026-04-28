@@ -81,22 +81,39 @@ The owner will push back when needed and should be encouraged to do so.
 
 ## Active Tasks
 
-### Task 13 — Integration Requirements (Pending external responses)
+### Task 13 — Integration Requirements
 
 **Job Management / Accounting Integrations:**
-- MYOB — Integration pending
-- Buildxact — Integration pending
-- Fergus — Email response received, integration pending
-- Tradify — Integration pending
+
+| Integration | Status | Next Step |
+|-------------|--------|-----------|
+| Fergus | Callback URL sent, awaiting credentials | Wait for Client ID & Secret from Paul |
+| Buildxact | Registration confirmed, awaiting credentials | Wait for Client ID & Secret |
+| Tradify | API enquiry sent, awaiting response | May not have public API |
+| MYOB | Ready but paused until launch | $110/month from day one — activate just before launch |
+
+Callback URLs confirmed:
+- Fergus: `https://staxai.com.au/api/cl-fergus-callback`
+- Buildxact: `https://staxai.com.au/api/cl-buildxact-callback`
+
+Both follow Pattern 2 (standalone CL integration) matching
+ServiceM8.
 
 **Government Tender APIs:**
-- AusTender — API registration submitted, awaiting
-  authentication token
-- buy.nsw — API access request submitted, awaiting response
 
-Note: Industry News & Updates tool rebuild complete. Government
-tender API integration blocked on external registrations —
-return to complete this task once API access confirmed.
+| Source | Status | Method |
+|--------|--------|--------|
+| AusTender (Federal) | Ready to build | RSS feed + page scraping — no auth required |
+| NSW (buy.nsw) | Email registered | tenders@staxai.com.au subscribed to notifications — waiting for first email to assess data |
+| buy.nsw API | Closed | API restricted to government agencies only |
+
+AusTender RSS feed confirmed:
+- URL: `https://www.tenders.gov.au/public_data/rss/rss.xml`
+- Contains 88 current open tenders (Approaches to Market)
+- Requires page scraping for full details (closing date,
+  agency, category)
+- No authentication required — just needs browser-like
+  User-Agent header
 
 **Google OAuth Verification:**
 - Status: Submitted for manual review (28 April 2026)
@@ -111,30 +128,25 @@ return to complete this task once API access confirmed.
 - Blocker: Vercel returning 403 to Facebook crawler
   (facebookexternalhit)
 - Vercel support ticket submitted 28 April 2026
-- What is ready: App icon, Privacy URL, Terms URL, Business
-  Portfolio connected, OAuth redirect URI configured
-- What is blocked: Data Deletion URL validation fails due
-  to 403
 
 **Vercel Support — Facebook Crawler 403:**
 - Status: Support ticket submitted (28 April 2026)
-- Issue: Facebook crawler (facebookexternalhit) receives 403
-  on all URLs despite firewall bypass rule, bot protection
-  off, no middleware blocking
-- Evidence: curl with Facebook User-Agent returns 200 OK
-  locally, but Facebook actual crawler gets 403
-- Conclusion: Vercel infrastructure-level block on Facebook
-  IP ranges
+- Issue: Facebook crawler receives 403 on all URLs despite
+  firewall bypass rule
 
 **Predis.ai:**
 - Status: 7-day free trial active (started 28 April 2026)
-- API key configured in Vercel env vars
 - Action needed: Decide whether to continue subscription
-  before trial ends, or cancel and reactivate at launch
+  before trial ends
 
-**REimagine Home API:**
-- Email sent to info@reimaginehome.ai, awaiting response
-  for API access and documentation
+**REimagine Home API (Design Visualiser):**
+- Status: Email sent to info@reimaginehome.ai, awaiting
+  response
+- Purpose: Replace Ideogram API for Design Visualiser tool
+- Spec: DV Spec v1.2 approved and ready — blocked on API
+  access
+- DV build and audit complete — API update required before
+  testing
 
 ### Task 25 — Social Media Tool Rebuild
 
@@ -145,12 +157,6 @@ integration, missing features, and functional review.
 ### Task 26 — Dashboard Rebuild
 
 No longer blocked. Ready to start after CB audit passes.
-
-### Task 27 — DV API Update
-
-Update Design Visualiser from Ideogram to REimagine Home API.
-Blocked on API access — email sent to info@reimaginehome.ai.
-DV Spec v1.2 approved.
 
 ### Task 28 — Full Platform Testing on Demo Data
 
