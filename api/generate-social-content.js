@@ -28,9 +28,9 @@ export default async function handler(req, res) {
   }
 
   const { data: profile, error: profileError } = await supabase
-    .from("business_profiles")
+    .from("profiles")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   if (profileError) {

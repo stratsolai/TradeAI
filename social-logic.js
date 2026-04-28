@@ -236,9 +236,9 @@ window.SOCIAL_LOGIC = {
 
   _loadProfile: async function() {
     var result = await this._supabase
-      .from('business_profiles')
+      .from('profiles')
       .select('*')
-      .eq('user_id', this._userId)
+      .eq('id', this._userId)
       .maybeSingle();
     this._profile = (result.data) || {};
   },
