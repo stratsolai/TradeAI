@@ -66,27 +66,27 @@ window.BP_MARKETING = {
   },
 
   _pills: function(items, selected, dataAttr) {
-    var html = '<div class="sm-option-pills" style="margin-bottom:12px">';
+    var html = '<div class="review-pill-row" style="margin-bottom:12px">';
     items.forEach(function(item) {
       var active = selected.indexOf(item) !== -1 ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-' + dataAttr + '="' + window.escHtml(item) + '">' + window.escHtml(item) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-' + dataAttr + '="' + window.escHtml(item) + '">' + window.escHtml(item) + '</button>';
     });
     html += '</div>';
     return html;
   },
 
   _bindPills: function() {
-    document.querySelectorAll('#prof-mkt-guided .sm-option-pill').forEach(function(pill) {
+    document.querySelectorAll('#prof-mkt-guided .filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
         var attr = Object.keys(pill.dataset)[0];
         if (pill.classList.contains('active')) {
           pill.classList.remove('active');
         } else {
           if (attr === 'tone' || attr === 'specdur') {
-            pill.parentElement.querySelectorAll('.sm-option-pill').forEach(function(s) { s.classList.remove('active'); });
+            pill.parentElement.querySelectorAll('.filter-pill').forEach(function(s) { s.classList.remove('active'); });
           }
           if (attr === 'feelingMax') {
-            var activeCount = pill.parentElement.querySelectorAll('.sm-option-pill.active').length;
+            var activeCount = pill.parentElement.querySelectorAll('.filter-pill.active').length;
             if (activeCount >= 2) return;
           }
           pill.classList.add('active');
@@ -134,10 +134,10 @@ window.BP_MARKETING = {
       var selectedSpecialise = a.specialise_services || [];
       html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Which services do you specialise in?</label>';
       if (serviceNames.length > 0) {
-        html += '<div class="sm-option-pills" style="margin-bottom:8px">';
+        html += '<div class="review-pill-row" style="margin-bottom:8px">';
         serviceNames.forEach(function(svc) {
           var active = selectedSpecialise.indexOf(svc) !== -1 ? ' active' : '';
-          html += '<button class="sm-option-pill' + active + '" data-specsvc="' + window.escHtml(svc) + '">' + window.escHtml(svc) + '</button>';
+          html += '<button class="filter-pill' + active + '" data-specsvc="' + window.escHtml(svc) + '">' + window.escHtml(svc) + '</button>';
         });
         html += '</div>';
       } else {
@@ -202,10 +202,10 @@ window.BP_MARKETING = {
     ];
     var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">How does your business communicate?</div>';
     html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:12px">Select one</div>';
-    html += '<div class="sm-option-pills" style="margin-bottom:12px">';
+    html += '<div class="review-pill-row" style="margin-bottom:12px">';
     tones.forEach(function(t) {
       var active = a.tone === t.id ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-tone="' + t.id + '">' +
+      html += '<button class="filter-pill' + active + '" data-tone="' + t.id + '">' +
         t.id.charAt(0).toUpperCase() + t.id.slice(1) +
         '<br><span style="font-size:var(--badge-font-size);font-weight:400;color:var(--text-muted)">' + t.desc + '</span></button>';
     });
@@ -220,7 +220,7 @@ window.BP_MARKETING = {
       '<div style="display:flex;align-items:center;gap:12px">' +
       '<input type="color" id="prof-mkt-colour1" value="' + (a.primary_colour || '#4A6D8C') + '" style="width:50px;height:36px;border:var(--input-border-width) solid var(--border);border-radius:var(--input-radius);cursor:pointer">' +
       '<input type="text" class="profile-input" id="prof-mkt-colour1-hex" value="' + window.escHtml(a.primary_colour || '') + '" placeholder="#000000" style="width:120px">' +
-      '<button class="sm-option-pill" id="prof-mkt-no-colour">I don\'t have one</button>' +
+      '<button class="filter-pill" id="prof-mkt-no-colour">I don\'t have one</button>' +
       '</div></div>';
     html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Secondary brand colour (optional)</label>' +
       '<div style="display:flex;align-items:center;gap:12px">' +
@@ -234,9 +234,9 @@ window.BP_MARKETING = {
     var a = this._answers;
     var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">Business Tagline</div>';
     html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:12px">Do you have a business tagline or slogan?</div>';
-    html += '<div class="sm-option-pills" style="margin-bottom:12px">';
-    html += '<button class="sm-option-pill' + (a.has_tagline === 'yes' ? ' active' : '') + '" data-tagline="yes">Yes</button>';
-    html += '<button class="sm-option-pill' + (a.has_tagline === 'no' ? ' active' : '') + '" data-tagline="no">No</button>';
+    html += '<div class="review-pill-row" style="margin-bottom:12px">';
+    html += '<button class="filter-pill' + (a.has_tagline === 'yes' ? ' active' : '') + '" data-tagline="yes">Yes</button>';
+    html += '<button class="filter-pill' + (a.has_tagline === 'no' ? ' active' : '') + '" data-tagline="no">No</button>';
     html += '</div>';
     if (a.has_tagline === 'yes') {
       html += '<div class="profile-field-full"><input type="text" class="profile-input" id="prof-mkt-tagline" value="' + window.escHtml(a.tagline) + '" placeholder="Your tagline or slogan"></div>';
