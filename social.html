@@ -1,616 +1,686 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
-  <title>Marketing &amp; Social Media Manager — StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <title>Marketing &amp; Social Media &mdash; StaxAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .sm-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    body {
-      font-family: "DM Sans", sans-serif;
-      background: #F5F7FA;
-      color: #333333;
-      min-height: 100vh;
-    }
-
-    /* --- Topbar --- */
-    .topbar {
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .topbar-logo img { height: 38px; display: block; }
-    .topbar-nav {
-      display: flex;
-      gap: 28px;
-      margin-left: 64px;
-      margin-right: auto;
-    }
-    .topbar-nav-link, .topbar-back {
-      font-family: "DM Sans", sans-serif;
-      font-size: 16px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.75);
-      text-decoration: none;
-    }
-    .topbar-nav-link:hover, .topbar-back:hover { color: #ffffff; }
-    .topbar-right {
-      display: flex;
-      align-items: center;
-      gap: 20px;
-    }
-
-    /* Account dropdown */
-    .topbar-account-wrap { position: relative; }
-    .account-btn {
-      background: rgba(255,255,255,0.15);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: #fff;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 6px;
+    .sm-groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .sm-group-tile {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: 24px;
       cursor: pointer;
+      transition: box-shadow var(--btn-transition);
     }
-    .account-dropdown {
-      display: none;
-      position: absolute;
-      top: calc(100% + 8px);
-      right: 0;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-      min-width: 200px;
-      z-index: 200;
-      padding: 8px 0;
-    }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email {
-      padding: 8px 16px;
-      font-size: 13px;
-      color: #888;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    .sign-out-btn {
-      display: block;
-      width: 100%;
-      padding: 10px 16px;
-      background: none;
-      border: none;
-      text-align: left;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      cursor: pointer;
-    }
-    .sign-out-btn:hover { background: #f5f5f5; }
-
-    /* --- Page layout --- */
-    .page-wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 40px 24px 80px;
-    }
-
-    /* --- Views --- */
-    .view { display: none; }
-
-    /* --- Cards --- */
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 28px;
-      margin-bottom: 16px;
-    }
-    .card-orange { border-left-color: #C4622A; }
-    .card-green { border-left-color: #28a745; }
-
-    /* --- Fork cards --- */
-    .fork-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 32px;
-    }
-    .fork-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 32px 28px;
-      cursor: pointer;
-      transition: box-shadow 0.15s, transform 0.15s;
-    }
-    .fork-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.10); transform: translateY(-2px); }
-    .fork-card h2 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 24px;
-      font-weight: 800;
-      color: #1F3864;
-      margin-bottom: 10px;
-    }
-    .fork-card p { font-size: 14px; color: #555; line-height: 1.6; }
-
-    /* --- Section heading --- */
-    .section-heading {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 28px;
-      font-weight: 800;
-      color: #1F3864;
+    .sm-group-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
+    .sm-group-tile.expanded { box-shadow: 0 4px 16px var(--shadow-hover); }
+    .sm-group-tile-icon { font-size: 28px; margin-bottom: 12px; }
+    .sm-group-tile-title {
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
       margin-bottom: 8px;
     }
-    .section-sub {
-      font-size: 14px;
-      color: #666;
+    .sm-group-tile-desc {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      line-height: var(--note-line-height);
+    }
+    .sm-journey-list { display: none; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .sm-group-tile.expanded .sm-journey-list { display: flex; }
+    .sm-journey-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      cursor: pointer;
+      font-family: var(--body-font);
+      font-size: var(--body-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      transition: background var(--btn-transition);
+    }
+    .sm-journey-btn:hover { background: var(--blue-light); }
+
+    .sm-wizard { display: none; }
+    .sm-wizard.active { display: block; }
+    .sm-wizard-header {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-bottom: var(--page-header-margin);
+    }
+    .sm-wizard-title {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      flex: 1;
+    }
+    .sm-step-indicator {
+      display: flex;
+      gap: 6px;
+      align-items: center;
       margin-bottom: 24px;
     }
-
-    /* --- Input type cards --- */
-    .input-type-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
+    .sm-step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background var(--btn-transition);
     }
-    .input-type-card {
-      background: #fff;
-      border-radius: 10px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 20px;
-      cursor: pointer;
-      transition: box-shadow 0.15s, transform 0.15s;
+    .sm-step-dot.active { background: var(--blue); }
+    .sm-step-dot.completed { background: var(--green); }
+    .sm-step-label {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      margin-left: 8px;
     }
-    .input-type-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.10); transform: translateY(-2px); }
-    .input-type-card.orange { border-left-color: #C4622A; }
-    .input-type-card.green { border-left-color: #28a745; }
-    .input-type-card h3 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: #1F3864;
-      margin-bottom: 6px;
-    }
-    .input-type-card p { font-size: 13px; color: #666; line-height: 1.5; }
-
-    /* --- Category pills --- */
-    .category-pills-wrap { margin-bottom: 20px; }
-    .category-pills-label { font-size: 13px; font-weight: 600; color: #555; margin-bottom: 8px; }
-    #category-pills { display: flex; gap: 8px; flex-wrap: wrap; }
-    .category-pill {
-      padding: 6px 14px;
-      border-radius: 20px;
-      border: 1px solid #d0d0d0;
-      background: #fff;
-      font-family: "DM Sans", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-      cursor: pointer;
-    }
-    .category-pill.active {
-      background: #1A5490;
-      border-color: #1A5490;
-      color: #fff;
-    }
-
-    /* --- Forms --- */
-    .form-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 28px;
+    .sm-step-content {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      box-shadow: 0 2px 8px var(--shadow-card);
+      padding: var(--card-padding);
+      min-height: 200px;
       margin-bottom: 20px;
     }
-    .form-group { margin-bottom: 18px; }
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #444;
-      margin-bottom: 6px;
-    }
-    .form-optional { font-weight: 400; color: #888; }
-    .form-input, .form-textarea {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #d8d8d8;
-      border-radius: 8px;
-      font-family: "DM Sans", sans-serif;
-      font-size: 14px;
-      color: #333;
-      background: #fafafa;
-    }
-    .form-input:focus, .form-textarea:focus {
-      outline: none;
-      border-color: #1A5490;
-      background: #fff;
-    }
-    .form-textarea { resize: vertical; }
-
-    /* --- Tone selector --- */
-    .tone-selector { display: flex; gap: 8px; flex-wrap: wrap; }
-    .tone-btn {
-      padding: 7px 16px;
-      border-radius: 20px;
-      border: 1px solid #d0d0d0;
-      background: #fff;
-      font-family: "DM Sans", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-      cursor: pointer;
-    }
-    .tone-btn.active {
-      background: #1A5490;
-      border-color: #1A5490;
-      color: #fff;
-    }
-
-    /* --- Buttons --- */
-    .btn {
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      font-family: "DM Sans", sans-serif;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-primary { background: #1A5490; color: #fff; }
-    .btn-primary:hover { background: #154070; }
-    .btn-primary:disabled { background: #8aaac8; cursor: not-allowed; }
-    .btn-outline {
-      background: #fff;
-      border: 1px solid #1A5490;
-      color: #1A5490;
-    }
-    .btn-outline:hover { background: #f0f5ff; }
-    .btn-grey { background: #f0f0f0; color: #555; }
-    .btn-grey:hover { background: #e4e4e4; }
-    .btn-green { background: #28a745; color: #fff; }
-    .btn-green:hover { background: #1e8035; }
-    .btn-row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px; }
-
-    /* --- Preview card --- */
-    .preview-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 28px;
-      margin-bottom: 20px;
-    }
-    #preview-content-text, #share-content-text, #marketing-output-text {
-      font-size: 15px;
-      line-height: 1.7;
-      color: #333;
-      white-space: pre-wrap;
-      min-height: 80px;
-    }
-
-    /* --- Delivery --- */
-    .delivery-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 28px;
+    .sm-step-question {
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
       margin-bottom: 16px;
     }
-    .delivery-card h3 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: #1F3864;
+    .sm-step-hint {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: var(--note-line-height);
+    }
+    .sm-wizard-nav {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-top: 20px;
+    }
+    .sm-wizard-nav .btn-primary { margin-left: auto; }
+
+    .sm-tone-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+    .sm-tone-pill {
+      padding: 10px 18px;
+      border: 2px solid var(--border);
+      border-radius: var(--btn-radius);
+      background: var(--white);
+      font-family: var(--body-font);
+      font-size: var(--body-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--btn-transition);
+    }
+    .sm-tone-pill:hover { border-color: var(--blue); color: var(--blue); }
+    .sm-tone-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--blue); }
+
+    .sm-option-pills { display: flex; flex-wrap: wrap; gap: 10px; }
+    .sm-option-pill {
+      padding: 10px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      background: var(--white);
+      font-family: var(--body-font);
+      font-size: var(--body-font-size);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--btn-transition);
+    }
+    .sm-option-pill:hover { border-color: var(--blue); background: var(--blue-light); }
+    .sm-option-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); font-weight: var(--font-weight-semibold); }
+
+    .sm-media-area {
+      border: 2px dashed var(--border);
+      border-radius: var(--card-radius);
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--btn-transition), background var(--btn-transition);
+    }
+    .sm-media-area:hover { border-color: var(--blue); background: var(--blue-light); }
+    .sm-media-area-icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+    .sm-media-area-text { font-size: var(--body-font-size); color: var(--text-muted); margin-bottom: 8px; }
+    .sm-media-area-hint { font-size: var(--badge-font-size); color: var(--text-hint); }
+    .sm-media-preview-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; }
+    .sm-media-preview-item {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--radius-thumbnail);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid var(--border);
+    }
+    .sm-media-preview-item img { width: 100%; height: 100%; object-fit: cover; }
+    .sm-media-remove {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1px solid var(--border);
+      color: var(--red);
+      font-size: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .sm-media-options { display: flex; gap: 10px; margin-top: 16px; justify-content: center; }
+
+    .sm-preview-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      max-width: 500px;
+    }
+    .sm-preview-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sm-preview-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--blue-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: var(--heading-lg-weight);
+      color: var(--blue);
+      font-size: var(--body-font-size);
+    }
+    .sm-preview-name { font-weight: var(--font-weight-semibold); color: var(--text); font-size: var(--body-font-size); }
+    .sm-preview-platform { font-size: var(--badge-font-size); color: var(--text-muted); }
+    .sm-preview-media { width: 100%; max-height: 400px; object-fit: cover; }
+    .sm-preview-body { padding: 16px; }
+    .sm-preview-caption {
+      font-size: var(--body-font-size);
+      color: var(--text);
+      line-height: var(--body-line-height);
+      white-space: pre-wrap;
       margin-bottom: 12px;
     }
-    .platform-checks { display: flex; gap: 20px; margin-bottom: 16px; }
-    .platform-check { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
-    .schedule-row { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+    .sm-preview-hashtags { font-size: var(--note-font-size); color: var(--blue); line-height: var(--note-line-height); }
 
-    /* --- Info / notice boxes --- */
-    .info-box {
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 16px;
+    .sm-edit-caption {
+      width: 100%;
+      min-height: 120px;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      padding: var(--input-padding);
+      font-family: var(--body-font);
+      font-size: var(--body-font-size);
+      color: var(--text);
+      line-height: var(--body-line-height);
+      resize: vertical;
     }
-    .info-box-blue { background: #e8f4fd; border-left: 4px solid #1A5490; color: #1A5490; }
-    .info-box-orange { background: #fff3ee; border-left: 4px solid #C4622A; color: #C4622A; }
+    .sm-edit-caption:focus { border-color: var(--blue); outline: none; }
+    .sm-edit-hashtags {
+      width: 100%;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      padding: var(--input-padding);
+      font-family: var(--body-font);
+      font-size: var(--note-font-size);
+      color: var(--blue);
+    }
+    .sm-edit-hashtags:focus { border-color: var(--blue); outline: none; }
 
-    /* --- Success --- */
-    .success-card {
-      background: #fff;
-      border-radius: 12px;
-      border-left: 4px solid #28a745;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 40px 28px;
-      text-align: center;
+    .sm-connection-checks { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; }
+    .sm-connection-check {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      background: var(--white);
     }
-    .success-card h2 {
-      font-family: "Barlow Condensed", sans-serif;
+    .sm-connection-check input[type="checkbox"] { width: var(--checkbox-size); height: var(--checkbox-size); cursor: pointer; }
+    .sm-connection-check-label { font-weight: var(--font-weight-semibold); color: var(--text); }
+    .sm-connection-check-status { font-size: var(--badge-font-size); color: var(--text-muted); margin-left: auto; }
+    .sm-publish-actions { display: flex; gap: var(--actions-gap); flex-wrap: wrap; }
+
+    .sm-post-list { display: flex; flex-direction: column; gap: 12px; }
+    .sm-post-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border-left: 4px solid var(--blue);
+      box-shadow: 0 2px 8px var(--shadow-card);
+      display: flex;
+      align-items: stretch;
+      overflow: hidden;
+    }
+    .sm-post-thumb {
+      width: 100px;
+      min-height: 100px;
+      background: var(--bg-subtle);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 28px;
-      font-weight: 800;
-      color: #28a745;
+      color: var(--text-muted);
+    }
+    .sm-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .sm-post-body { flex: 1; padding: 14px 16px; min-width: 0; }
+    .sm-post-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .sm-post-type { font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); }
+    .sm-post-date { font-size: var(--badge-font-size); color: var(--text-muted); margin-left: auto; }
+    .sm-post-caption-preview {
+      font-size: var(--body-font-size);
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       margin-bottom: 8px;
     }
-    #success-message { font-size: 15px; color: #555; margin-bottom: 24px; }
+    .sm-post-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .sm-post-metrics { display: flex; gap: 16px; margin-top: 8px; }
+    .sm-post-metric { font-size: var(--badge-font-size); color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .sm-post-metric-value { font-weight: var(--font-weight-semibold); color: var(--text); }
 
-    /* --- Back link --- */
-    .back-link {
-      display: inline-flex;
+    .sm-pagination {
+      display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #1A5490;
-      text-decoration: none;
-      margin-bottom: 24px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      padding: 0;
+      justify-content: center;
+      gap: var(--actions-gap);
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-light);
     }
-    .back-link:hover { color: #154070; }
+    .sm-pagination-info { font-size: var(--note-font-size); color: var(--text-muted); }
 
-    /* --- Error --- */
-    .error-msg {
-      display: none;
-      color: #dc3545;
-      font-size: 13px;
-      margin-top: 8px;
+    .sm-campaign-header {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
-
-    /* --- Marketing option cards --- */
-    .marketing-options-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
+    .sm-campaign-progress { font-size: var(--note-font-size); color: var(--text-muted); }
+    .sm-campaign-timeline { margin-top: 20px; }
+    .sm-campaign-week {
+      border-left: 3px solid var(--blue);
+      padding-left: 20px;
       margin-bottom: 24px;
     }
-    .marketing-option-card {
-      background: #fff;
-      border-radius: 10px;
-      border-left: 4px solid #1A5490;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-      padding: 20px;
-      cursor: pointer;
-      transition: box-shadow 0.15s, transform 0.15s;
+    .sm-campaign-week-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      margin-bottom: 10px;
     }
-    .marketing-option-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.10); transform: translateY(-2px); }
-    .marketing-option-card h3 {
-      font-family: "Barlow Condensed", sans-serif;
-      font-size: 18px;
-      font-weight: 800;
-      color: #1F3864;
-      margin-bottom: 6px;
-    }
-    .marketing-option-card p { font-size: 13px; color: #666; line-height: 1.5; }
 
-    @media (max-width: 700px) {
-      .fork-grid { grid-template-columns: 1fr; }
-      .input-type-grid { grid-template-columns: 1fr; }
-      .marketing-options-grid { grid-template-columns: 1fr; }
+    .sm-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .sm-filter-bar .search-input { max-width: 240px; }
+
+    .sm-generating {
+      text-align: center;
+      padding: var(--loading-padding);
+      color: var(--text-muted);
+    }
+    .sm-generating-spinner {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: sm-spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes sm-spin { to { transform: rotate(360deg); } }
+
+    .sm-calendar { width: 100%; border-collapse: collapse; }
+    .sm-calendar th {
+      padding: 10px;
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+    }
+    .sm-calendar td {
+      padding: 8px;
+      vertical-align: top;
+      min-height: 80px;
+      border: 1px solid var(--border-light);
+      font-size: var(--badge-font-size);
+    }
+    .sm-calendar-day { color: var(--text-muted); margin-bottom: 4px; }
+    .sm-calendar-post {
+      padding: 4px 6px;
+      border-radius: 4px;
+      background: var(--blue-light);
+      color: var(--blue);
+      font-size: 11px;
+      margin-bottom: 2px;
+      cursor: pointer;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sm-calendar-today { background: var(--blue-light); }
+
+    @media (max-width: 600px) {
+      .sm-container { padding: var(--page-padding-mobile); }
+      .sm-groups-grid { grid-template-columns: 1fr; }
+      .sm-post-card { flex-direction: column; }
+      .sm-post-thumb { width: 100%; min-height: 150px; }
+      .sm-preview-card { max-width: 100%; }
+      .sm-wizard-nav { flex-wrap: wrap; }
+      .sm-wizard-nav .btn-primary { margin-left: 0; width: 100%; justify-content: center; }
+      .sm-wizard-nav .btn-back { width: 100%; justify-content: center; }
+      .sm-wizard-nav .btn-outline { width: 100%; justify-content: center; }
+      .sm-filter-bar { flex-direction: column; align-items: stretch; }
+      .sm-filter-bar .search-input { max-width: 100%; }
+      .sm-tone-pills { gap: 8px; }
+      .sm-media-area { padding: 20px; }
+      .sm-publish-actions { flex-direction: column; }
+      .sm-publish-actions .btn-primary,
+      .sm-publish-actions .btn-outline { width: 100%; justify-content: center; }
+      .sm-campaign-header { flex-direction: column; align-items: stretch; }
+      .sm-post-metrics { flex-wrap: wrap; }
+      .sm-step-indicator { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Topbar -->
   <nav class="topbar">
-    <a href="/" class="topbar-logo">
-      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI" />
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
     </a>
     <div class="topbar-nav">
-      <a href="/dashboard" class="topbar-back">Dashboard</a>
+      <a href="/dashboard.html">Dashboard</a>
     </div>
+    <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a href="/social/settings" class="topbar-nav-link">Settings</a>
+      <a href="/social-settings.html" class="topbar-nav-link">Settings</a>
       <div class="topbar-account-wrap">
-        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email"></div>
-          <button class="sign-out-btn" id="sign-out-btn">Sign out</button>
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
     </div>
   </nav>
 
-  <div class="page-wrap">
+  <div class="sm-container" id="page-wrap" style="display:none">
+    <div class="page-header">
+      <h1 class="page-title">Marketing &amp; Social Media</h1>
+      <p class="page-subtitle">Create, schedule, and publish marketing content across your social channels.</p>
+    </div>
 
-    <!-- VIEW: Fork selection -->
-    <div class="view" id="view-fork">
-      <h1 class="section-heading">Marketing &amp; Social Media</h1>
-      <p class="section-sub">What would you like to create today?</p>
-      <div class="fork-grid">
-        <div class="fork-card" id="btn-fork-social">
-          <h2>Social Post</h2>
-          <p>Create content for Facebook and Instagram. Showcase your work, promote a service, or share a tip.</p>
-        </div>
-        <div class="fork-card" id="btn-fork-marketing">
-          <h2>Marketing Content</h2>
-          <p>Generate a newsletter, blog post, or promotional flyer for your business.</p>
-        </div>
+    <div class="stats-bar" id="sm-stats-bar">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total Posts</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-value" id="stat-drafts">0</div>
+        <div class="stat-label">Drafts</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-value" id="stat-scheduled">0</div>
+        <div class="stat-label">Scheduled</div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-value" id="stat-published">0</div>
+        <div class="stat-label">Published</div>
       </div>
     </div>
 
-    <!-- VIEW: Social — input type selection -->
-    <div class="view" id="view-social-input-type">
-      <button class="back-link" id="btn-back-to-fork">← Back</button>
-      <h1 class="section-heading">Social Post</h1>
-      <p class="section-sub">Choose the type of post you want to create.</p>
-      <div class="input-type-grid">
-        <div class="input-type-card" id="input-type-job">
-          <h3>Job or Project</h3>
-          <p>Showcase completed work with a photo and description.</p>
-        </div>
-        <div class="input-type-card orange" id="input-type-offer">
-          <h3>Offer or Promotion</h3>
-          <p>Promote a service, seasonal offer, or special deal.</p>
-        </div>
-        <div class="input-type-card green" id="input-type-news">
-          <h3>News or Tips</h3>
-          <p>Share industry news, a useful tip, or community content.</p>
-        </div>
-      </div>
+    <div class="tab-nav" id="sm-tab-nav">
+      <button class="ptab active" data-tab="create">Create</button>
+      <button class="ptab" data-tab="campaign">Campaign</button>
+      <button class="ptab" data-tab="drafts">Drafts</button>
+      <button class="ptab" data-tab="scheduled">Scheduled</button>
+      <button class="ptab" data-tab="published">Published</button>
     </div>
 
-    <!-- VIEW: Social — content form -->
-    <div class="view" id="view-social-form">
-      <button class="back-link" id="btn-back-to-input-type">← Back</button>
-      <h1 class="section-heading">Your post details</h1>
-      <p class="section-sub">Fill in the details and the AI will generate your post.</p>
-      <div class="category-pills-wrap">
-        <div class="category-pills-label">Category</div>
-        <div id="category-pills"></div>
+    <div id="sm-tab-create" class="ptab-content active">
+      <div id="sm-groups-view">
+        <div class="sm-groups-grid" id="sm-groups-grid"></div>
       </div>
-      <div class="form-card">
-        <div id="social-form-fields"></div>
-        <div class="error-msg" id="social-form-error"></div>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-generate-social">Generate post</button>
+      <div id="sm-wizard-view" class="sm-wizard">
+        <div class="sm-wizard-header">
+          <button class="btn-back" id="sm-wizard-back-btn">Back</button>
+          <div class="sm-wizard-title" id="sm-wizard-title"></div>
+        </div>
+        <div class="sm-step-indicator" id="sm-step-indicator"></div>
+        <div class="sm-step-content" id="sm-step-content"></div>
+        <div class="sm-wizard-nav">
+          <button class="btn-back" id="sm-step-prev-btn">Back</button>
+          <button class="btn-outline" id="sm-save-exit-btn">Save &amp; Exit</button>
+          <button class="btn-primary" id="sm-step-next-btn">Next</button>
         </div>
       </div>
-    </div>
-
-    <!-- VIEW: Social — preview -->
-    <div class="view" id="view-social-preview">
-      <button class="back-link" id="btn-back-to-form">← Back</button>
-      <h1 class="section-heading">Your generated post</h1>
-      <p class="section-sub">Review and edit before choosing how to share it.</p>
-      <div class="preview-card">
-        <div id="preview-content-text"></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-outline" id="btn-edit-preview">Edit</button>
-        <button class="btn btn-grey" id="btn-save-edit" style="display:none;">Save edit</button>
-        <button class="btn btn-primary" id="btn-proceed-to-delivery">Choose how to share →</button>
-      </div>
-    </div>
-
-    <!-- VIEW: Social — delivery -->
-    <div class="view" id="view-social-delivery">
-      <button class="back-link" id="btn-back-to-preview">← Back</button>
-      <h1 class="section-heading">Share your post</h1>
-      <p class="section-sub">Choose how to publish or save your content.</p>
-      <div class="info-box info-box-orange" id="no-connection-notice" style="display:none;">
-        No social accounts connected. Connect your accounts in <a href="/social/settings" style="color:#C4622A;font-weight:600;">Settings</a> to auto-post.
-      </div>
-      <div class="delivery-card">
-        <h3>Auto-post</h3>
-        <div class="platform-checks">
-          <label class="platform-check"><input type="checkbox" id="platform-facebook" class="requires-connection" /> Facebook</label>
-          <label class="platform-check"><input type="checkbox" id="platform-instagram" class="requires-connection" /> Instagram</label>
+      <div id="sm-generate-view" style="display:none">
+        <div class="sm-generating" id="sm-generating">
+          <div class="sm-generating-spinner"></div>
+          <div>Generating your content...</div>
         </div>
-        <div class="btn-row">
-          <button class="btn btn-primary requires-connection" id="btn-post-now">Post now</button>
-          <div class="schedule-row">
-            <input type="datetime-local" id="schedule-datetime" class="form-input" style="width:auto;" />
-            <button class="btn btn-outline requires-connection" id="btn-schedule">Schedule</button>
+      </div>
+      <div id="sm-preview-view" style="display:none">
+        <div class="sm-wizard-header">
+          <button class="btn-back" id="sm-preview-back-btn">Back to Edit</button>
+          <div class="sm-wizard-title">Preview &amp; Publish</div>
+        </div>
+        <div id="sm-preview-content"></div>
+        <div style="margin-top:20px">
+          <div class="sm-step-question">Edit Caption</div>
+          <div class="form-group">
+            <textarea class="sm-edit-caption" id="sm-edit-caption"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hashtags</label>
+            <input type="text" class="sm-edit-hashtags" id="sm-edit-hashtags">
+          </div>
+        </div>
+        <div class="sm-wizard-nav" style="margin-top:24px">
+          <button class="btn-outline" id="sm-regenerate-btn">Regenerate</button>
+          <button class="btn-primary" id="sm-approve-btn">Approve &amp; Continue</button>
+        </div>
+      </div>
+      <div id="sm-publish-view" style="display:none">
+        <div class="sm-wizard-header">
+          <button class="btn-back" id="sm-publish-back-btn">Back to Preview</button>
+          <div class="sm-wizard-title">Output &amp; Publish</div>
+        </div>
+        <div class="sm-step-content">
+          <div class="sm-step-question">Where would you like to publish?</div>
+          <div class="sm-connection-checks" id="sm-connection-checks"></div>
+          <div class="sm-publish-actions">
+            <button class="btn-primary" id="sm-post-now-btn">Post Now</button>
+            <button class="btn-outline" id="sm-schedule-btn">Schedule</button>
+            <button class="btn-outline" id="sm-save-draft-btn">Save as Draft</button>
           </div>
         </div>
       </div>
-      <div class="delivery-card">
-        <h3>Share manually</h3>
-        <div class="btn-row">
-          <button class="btn btn-grey" id="btn-share-manually">Copy &amp; share yourself</button>
-          <button class="btn btn-grey" id="btn-save-draft">Save as draft</button>
+    </div>
+
+    <div id="sm-tab-campaign" class="ptab-content">
+      <div id="sm-campaign-content">
+        <div class="empty-state" id="sm-campaign-empty">
+          <div class="empty-state-icon">📢</div>
+          <h3>No active campaign</h3>
+          <p>Start a marketing campaign to create and schedule a coordinated series of posts.</p>
+        </div>
+        <div style="text-align:center;margin-top:16px">
+          <button class="btn-primary" id="sm-start-campaign-btn">Start a Campaign</button>
         </div>
       </div>
-      <div class="error-msg" id="delivery-error"></div>
+      <div id="sm-campaign-wizard" class="sm-wizard"></div>
+      <div id="sm-campaign-active" style="display:none"></div>
     </div>
 
-    <!-- VIEW: Share manually -->
-    <div class="view" id="view-share-manually">
-      <button class="back-link" id="btn-back-to-delivery">← Back</button>
-      <h1 class="section-heading">Copy your post</h1>
-      <p class="section-sub">Copy the text below and paste it into your social media app.</p>
-      <div class="preview-card">
-        <div id="share-content-text"></div>
+    <div id="sm-tab-drafts" class="ptab-content">
+      <div class="sm-filter-bar">
+        <input type="text" class="search-input" id="sm-drafts-search" placeholder="Search drafts...">
+        <div id="sm-drafts-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
       </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-copy-text">Copy text</button>
+      <div id="sm-drafts-bulk-bar" class="action-row" style="display:none;margin-bottom:16px">
+        <span id="sm-drafts-bulk-count" class="text-muted"></span>
+        <button class="btn-outline btn-sm" id="sm-drafts-schedule-selected">Schedule Selected</button>
+        <button class="btn-dismiss btn-sm" id="sm-drafts-delete-selected">Delete Selected</button>
       </div>
+      <div id="sm-drafts-list" class="sm-post-list"></div>
+      <div class="empty-state" id="sm-drafts-empty" style="display:none">
+        <div class="empty-state-icon">📝</div>
+        <h3>No drafts yet</h3>
+        <p>When you save a post as a draft, it will appear here.</p>
+      </div>
+      <div id="sm-drafts-pagination" class="sm-pagination" style="display:none"></div>
     </div>
 
-    <!-- VIEW: Marketing — options -->
-    <div class="view" id="view-marketing-options">
-      <button class="back-link" id="btn-back-to-fork-from-marketing">← Back</button>
-      <h1 class="section-heading">Marketing Content</h1>
-      <p class="section-sub">Choose the type of content you want to create.</p>
-      <div class="marketing-options-grid">
-        <div class="marketing-option-card" id="marketing-option-newsletter">
-          <h3>Monthly Newsletter</h3>
-          <p>A ready-to-send newsletter draft using your profile and recent activity.</p>
-        </div>
-        <div class="marketing-option-card" id="marketing-option-blog">
-          <h3>Blog Post</h3>
-          <p>A full SEO-optimised blog post or website page on a topic of your choice.</p>
-        </div>
-        <div class="marketing-option-card" id="marketing-option-flyer">
-          <h3>Flyer</h3>
-          <p>A one-page promotional flyer text ready to share or print.</p>
+    <div id="sm-tab-scheduled" class="ptab-content">
+      <div class="sm-filter-bar">
+        <input type="text" class="search-input" id="sm-scheduled-search" placeholder="Search scheduled...">
+        <div id="sm-scheduled-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="filter-pill active" id="sm-view-list-btn">List</button>
+          <button class="filter-pill" id="sm-view-calendar-btn">Calendar</button>
         </div>
       </div>
+      <div id="sm-scheduled-list" class="sm-post-list"></div>
+      <div id="sm-scheduled-calendar" style="display:none"></div>
+      <div class="empty-state" id="sm-scheduled-empty" style="display:none">
+        <div class="empty-state-icon">📅</div>
+        <h3>No scheduled posts</h3>
+        <p>When you schedule a post for later, it will appear here.</p>
+      </div>
+      <div id="sm-scheduled-pagination" class="sm-pagination" style="display:none"></div>
     </div>
 
-    <!-- VIEW: Marketing — form -->
-    <div class="view" id="view-marketing-form">
-      <button class="back-link" id="btn-back-to-marketing-options">← Back</button>
-      <h1 class="section-heading">Content details</h1>
-      <p class="section-sub">Fill in the details and the AI will generate your content.</p>
-      <div class="form-card">
-        <div id="marketing-form-fields"></div>
-        <div class="error-msg" id="marketing-form-error"></div>
-        <div class="btn-row">
-          <button class="btn btn-primary" id="btn-generate-marketing">Generate content</button>
+    <div id="sm-tab-published" class="ptab-content">
+      <div class="sm-filter-bar">
+        <input type="text" class="search-input" id="sm-published-search" placeholder="Search published...">
+        <div id="sm-published-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <select class="search-input" id="sm-published-sort" style="margin-left:auto;min-width:160px;max-width:200px;flex:none">
+          <option value="newest">Newest first</option>
+          <option value="oldest">Oldest first</option>
+          <option value="reach">Highest reach</option>
+          <option value="engagement">Highest engagement</option>
+        </select>
+      </div>
+      <div id="sm-published-list" class="sm-post-list"></div>
+      <div class="empty-state" id="sm-published-empty" style="display:none">
+        <div class="empty-state-icon">📊</div>
+        <h3>No published posts yet</h3>
+        <p>Published posts with performance data will appear here.</p>
+      </div>
+      <div id="sm-published-pagination" class="sm-pagination" style="display:none"></div>
+    </div>
+
+    <div class="save-msg" id="sm-error-msg">
+      <div class="save-msg-card">
+        <div class="save-msg-text"></div>
+        <button type="button" class="save-msg-ok">OK</button>
+      </div>
+    </div>
+
+    <div class="perm-modal-overlay" id="sm-confirm-modal">
+      <div class="perm-modal">
+        <div class="perm-modal-title" id="sm-confirm-title"></div>
+        <div class="perm-modal-body" id="sm-confirm-body"></div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="sm-confirm-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="sm-confirm-ok">Confirm</button>
         </div>
       </div>
     </div>
 
-    <!-- VIEW: Marketing — output -->
-    <div class="view" id="view-marketing-output">
-      <button class="back-link" id="btn-back-to-marketing-form">← Back</button>
-      <h1 class="section-heading">Your generated content</h1>
-      <p class="section-sub">Review and copy your content.</p>
-      <div class="preview-card">
-        <div id="marketing-output-text"></div>
-      </div>
-      <div class="btn-row">
-        <button class="btn btn-primary" id="btn-copy-marketing">Copy text</button>
-      </div>
-    </div>
-
-    <!-- VIEW: Success -->
-    <div class="view" id="view-success">
-      <div class="success-card">
-        <h2>Done</h2>
-        <div id="success-message"></div>
-        <button class="btn btn-primary" id="btn-start-again">Create another post</button>
+    <div class="perm-modal-overlay" id="sm-schedule-modal">
+      <div class="perm-modal">
+        <div class="perm-modal-title">Schedule Post</div>
+        <div class="perm-modal-body">
+          <div class="form-group">
+            <label class="form-label">Date</label>
+            <input type="date" class="form-input" id="sm-schedule-date">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time</label>
+            <input type="time" class="form-input" id="sm-schedule-time">
+          </div>
+        </div>
+        <div class="perm-modal-actions">
+          <button class="perm-modal-cancel" id="sm-schedule-cancel">Cancel</button>
+          <button class="perm-modal-continue" id="sm-schedule-confirm">Schedule</button>
+        </div>
       </div>
     </div>
-
   </div>
 
+  <input type="file" id="sm-file-input" accept="image/*,video/*" multiple style="display:none">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
   <script src="/social-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.SOCIAL_LOGIC && window.SOCIAL_LOGIC.init) {
+          window.SOCIAL_LOGIC.init(supabase, session.user);
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
