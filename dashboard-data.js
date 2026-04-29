@@ -24,11 +24,21 @@ window.DASH_DATA = (function() {
     _user = user;
 
     var pr = await _supabase.from('profiles')
-      .select('activated_tools, trial_expires_at, is_trial, bundle_tier, business_name, abn, business_structure, industry, years_in_business, address_name, address_street, address_suburb, address_state, address_postcode, service_area, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling')
+      .select('activated_tools, trial_expires_at, is_trial, bundle_tier, business_name')
       .eq('id', user.id).single();
 
+    if (pr.error) {
+      console.error('[Dashboard] Profile query error:', pr.error.message || pr.error);
+    }
     _profile = (pr.data) ? pr.data : {};
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
+
+    var bp = await _supabase.from('profiles')
+      .select('abn, business_structure, industry, years_in_business, address_name, address_street, address_suburb, address_state, address_postcode, service_area, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling')
+      .eq('id', user.id).single();
+    if (bp.data) {
+      Object.keys(bp.data).forEach(function(k) { _profile[k] = bp.data[k]; });
+    }
 
     setHeading();
     renderTrialModal(_profile);
