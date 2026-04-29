@@ -7,240 +7,259 @@
   <title>Dashboard — StaxAI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ── Dashboard container ── */
+    .dash-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    :root {
-      --bg-page:    #F5F5F5;
-      --bg-topbar:  #4A6D8C;
-      --bg-card:    #FFFFFF;
-      --border:     #E0E0E0;
-      --orange:     #C4622A;
-      --orange-lt:  #D4844A;
-      --blue:       #4A6D8C;
-      --text:       #333333;
-      --muted:      #666666;
-      --green:      #2E7D32;
-      --amber-warn: #E65100;
-      --red:        #C62828;
-      --notif-bg:   #FFF3CD;
-      --notif-text: #856404;
-    }
+    /* ── Welcome strip ── */
+    .dash-welcome { font-size: var(--section-title-font-size); color: var(--text-muted); margin-bottom: 24px; }
+    .dash-welcome strong { color: var(--text); }
 
-    body {
-      font-family: "DM Sans", sans-serif;
-      background: var(--bg-page);
+    /* ── Zone headings ── */
+    .dash-heading {
+      font-family: var(--heading-font);
+      font-size: var(--page-title-font-size);
+      font-weight: var(--heading-lg-weight);
       color: var(--text);
-      min-height: 100vh;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+      margin: 0 0 16px;
     }
+    .dash-heading .accent { color: var(--orange); }
+    .dash-zone { margin-bottom: 40px; }
 
-    .topbar {
-      background: var(--bg-topbar);
-      height: 68px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+    /* ── Notification bar (BP completion) ── */
+    #notification-bar { font-size: var(--note-font-size); font-weight: 500; }
+    #notification-bar:empty { display: none; }
+    .notif-item {
       display: flex;
       align-items: center;
-      padding: 0 32px;
+      padding: 10px 32px;
+      gap: 10px;
+      background: var(--badge-orange-bg);
+      color: var(--badge-orange-text);
+      border-bottom: 1px solid var(--border);
     }
-    .topbar-logo { height: 38px; display: block; }
-    .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 24px; }
-    .topbar-link { color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
-    .topbar-link:hover { text-decoration: none; color: #fff; }
-    .topbar-nav a:hover{color:#fff;}
-    .topbar-account { position: relative; }
-    .topbar-account-btn { background: none; border: none; color: rgba(255,255,255,0.75); font-family: "DM Sans", sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    .topbar-account-btn:hover { text-decoration: none; color: #fff; }
-    .account-dropdown { display: none; position: absolute; right: 0; top: calc(100% + 10px); background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; min-width: 190px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); z-index: 200; }
-    .account-dropdown.open { display: block; }
-    .account-dropdown-email { padding: 12px 16px; font-size: 13px; color: var(--muted); border-bottom: 1px solid var(--border); }
-    .account-dropdown-item { display: block; padding: 12px 16px; font-size: 14px; color: var(--text); text-decoration: none; cursor: pointer; background: none; border: none; width: 100%; text-align: left; font-family: "DM Sans", sans-serif; }
-    .account-dropdown-item:hover { background: var(--bg-page); }
-
-    #notification-bar { background: var(--notif-bg); color: var(--notif-text); font-size: 13px; font-weight: 500; }
-    .notif-item { display: flex; align-items: center; padding: 8px 32px; gap: 10px; border-bottom: 1px solid #F0E4B0; }
     .notif-item:last-child { border-bottom: none; }
-    .notif-item a { color: var(--notif-text); font-weight: 600; margin-left: auto; text-decoration: underline; white-space: nowrap; }
-    .notif-dismiss { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--notif-text); padding: 0 4px; line-height: 1; }
+    .notif-item a { color: var(--badge-orange-text); font-weight: var(--font-weight-semibold); margin-left: auto; text-decoration: underline; white-space: nowrap; }
+    .notif-item a:hover { opacity: 1; }
+    .notif-dismiss { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--badge-orange-text); padding: 0 4px; line-height: 1; }
 
-    .main { max-width: 1400px; margin: 0 auto; padding: 28px 32px 64px; }
-    .welcome-strip { font-size: 15px; color: var(--muted); margin-bottom: 24px; }
-    .welcome-strip strong { color: var(--text); }
-    .section-heading { font-family: "Barlow Condensed", sans-serif; font-size: 26px; font-weight: 700; color: var(--text); letter-spacing: 0.02em; margin-bottom: 16px; text-transform: uppercase; }
-    .section-heading .accent { background: linear-gradient(90deg, #C4622A, #D4844A, #D4A04A); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-
-    .panel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    @media (max-width: 900px) { .panel-grid { grid-template-columns: 1fr; } }
-
-    .widget-panel { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; min-height: 200px; transition: filter 0.3s, opacity 0.3s; }
-    .widget-panel.inactive { filter: grayscale(0.7); opacity: 0.58; }
-    .widget-panel.inactive:hover { filter: grayscale(0.4); opacity: 0.75; cursor: pointer; }
-
-    .widget-header { display: flex; align-items: center; gap: 8px; padding: 0 14px; height: 44px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-    .widget-icon { font-size: 18px; line-height: 1; }
-    .widget-title { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
-    .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-    .badge-live     { background: #E8F5E9; color: #2E7D32; }
-    .badge-inactive { background: #F5F5F5; color: #888; }
-    .widget-refresh { background: none; border: none; cursor: pointer; font-size: 15px; color: var(--muted); padding: 2px 4px; line-height: 1; }
-    .widget-refresh:hover { color: var(--orange); }
-    .btn-activate-header { display: inline-block; padding: 5px 12px; background: var(--orange); color: #fff; border: none; border-radius: 6px; font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap; }
-    .btn-activate-header:hover { background: var(--orange-lt); }
-
-    .sample-banner { display: none; align-items: center; gap: 6px; padding: 5px 14px; background: var(--notif-bg); color: var(--notif-text); font-size: 11px; font-weight: 500; border-bottom: 1px solid #F0E4B0; flex-shrink: 0; }
-    .widget-panel.inactive .sample-banner { display: flex; }
-
-    .widget-body { display: flex; flex-direction: row; gap: 0; flex: 1; overflow: hidden; }
-
-    .panel-kpis { width: 180px; flex-shrink: 0; padding: 14px 12px 10px 14px; display: flex; flex-direction: column; gap: 8px; border-right: 1px solid var(--border); }
-    .kpi-tile { display: flex; flex-direction: column; gap: 1px; }
-    .kpi-val { font-family: "Barlow Condensed", sans-serif; font-size: 26px; font-weight: 700; color: var(--orange); line-height: 1; }
-    .kpi-lbl { font-size: 11px; color: var(--muted); line-height: 1.2; }
-
-    .panel-chart { flex: 1; min-width: 0; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; }
-    .chart-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
-    .chart-wrap { flex: 1; display: flex; align-items: flex-end; }
-    .chart-wrap svg { display: block; }
-
-    .panel-secondary { width: 210px; flex-shrink: 0; padding: 10px 14px 10px 12px; display: flex; flex-direction: column; gap: 6px; border-left: 1px solid var(--border); overflow: hidden; }
-    .secondary-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px; }
-    .sec-row { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: var(--text); min-height: 32px; }
-    .sec-row-main { flex: 1; min-width: 0; }
-    .sec-row-primary { font-weight: 600; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sec-row-sub { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .sec-row-time { font-size: 10px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
-    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
-    .dot-red   { background: var(--red); }
-    .dot-amber { background: var(--amber-warn); }
-    .dot-green { background: var(--green); }
-    .dot-blue  { background: var(--blue); }
-
-    .widget-footer { height: 36px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 14px; font-size: 12px; color: var(--muted); flex-shrink: 0; }
-    .widget-footer a { color: var(--orange); text-decoration: none; font-weight: 600; font-size: 12px; }
-    .widget-footer a:hover { text-decoration: underline; }
-
-    .donut-wrap { display: flex; align-items: center; justify-content: center; flex: 1; }
-
-    @media (max-width: 900px) { .panel-kpis { width: 150px; } .panel-secondary { width: 170px; } }
-    @media (max-width: 600px) { .widget-body { flex-direction: column; } .panel-kpis { width: 100%; border-right: none; border-bottom: 1px solid var(--border); flex-direction: row; flex-wrap: wrap; gap: 12px; } .panel-secondary { width: 100%; border-left: none; border-top: 1px solid var(--border); } }
-
-    .panel-loading { display: flex; align-items: center; justify-content: center; flex: 1; font-size: 13px; color: var(--muted); padding: 32px; }
-  
-    /* ── YOUR STAX GRID ── */
-    #stax-section { margin-top: 48px; }
-    .stax-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    @media (max-width: 1100px) { .stax-grid { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 600px)  { .stax-grid { grid-template-columns: 1fr; } }
-    .stax-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: box-shadow 0.15s; }
-    .stax-card:hover { box-shadow: 0 4px 14px rgba(0,0,0,0.07); }
-    .stax-card.stax-active { border-left: 3px solid var(--orange); }
-    .stax-card.stax-coming { opacity: 0.42; pointer-events: none; }
-    .stax-card-top { display: flex; align-items: flex-start; gap: 10px; }
-    .stax-card-icon { font-size: 20px; line-height: 1; flex-shrink: 0; }
-    .stax-card-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; flex: 1; }
-    .stax-card-badge { flex-shrink: 0; }
-    .stax-card-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
-    .stax-card-price { font-size: 12px; font-weight: 600; color: var(--text); }
-    .stax-card-actions { margin-top: 4px; }
-    .btn-stax-open { display: inline-block; padding: 6px 14px; background: var(--orange); color: #fff; border: none; border-radius: 6px; font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; }
-    .btn-stax-open:hover { background: var(--orange-lt); }
-    .btn-stax-activate { display: inline-block; padding: 6px 14px; background: transparent; color: var(--orange); border: 1.5px solid var(--orange); border-radius: 6px; font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; }
-    .btn-stax-activate:hover { background: #FEF2EC; }
-    .btn-stax-learn { display: inline-block; padding: 6px 14px; background: #4A6D8C; color: #FFFFFF; border: 1.5px solid #4A6D8C; border-radius: 8px; font-family: "DM Sans", sans-serif; font-size: 12px; font-weight: 600; text-decoration: none; }
-    .btn-stax-learn:hover { background: #3d5f7a; }
-
-    /* Trial Banner */
-    .trial-banner { display: none; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-radius: 10px; margin: 0 0 24px 0; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; }
-    .trial-banner.trial-banner--info    { background: #e8f0fe; border: 1px solid #4A6D8C; color: #1F3864; }
-    .trial-banner.trial-banner--warning  { background: #fff8e1; border: 1px solid #FFC000; color: #7a5000; }
-    .trial-banner.trial-banner--urgent   { background: #fdecea; border: 1px solid #c0392b; color: #7a1010; }
-    .trial-banner.trial-banner--expired  { background: #f2f2f2; border: 1px solid #aaaaaa; color: #555555; }
+    /* ── Trial banner ── */
+    .trial-banner { display: none; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-radius: var(--card-radius); margin: 0 0 24px 0; font-family: var(--body-font); font-size: var(--body-font-size); font-weight: 500; }
+    .trial-banner.trial-banner--info    { background: var(--blue-light); border: 1px solid var(--blue); color: var(--blue-dark); }
+    .trial-banner.trial-banner--warning  { background: var(--badge-orange-bg); border: 1px solid var(--orange); color: var(--badge-orange-text); }
+    .trial-banner.trial-banner--urgent   { background: var(--badge-red-bg); border: 1px solid var(--red); color: var(--badge-red-text); }
+    .trial-banner.trial-banner--expired  { background: var(--grey-light); border: 1px solid var(--grey); color: var(--text-secondary); }
     .trial-banner.visible { display: flex; }
     .trial-banner__msg { flex: 1; }
-    .trial-banner__actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
-    .trial-banner__cta { background: #c4622a; color: #fff; border: none; border-radius: 6px; padding: 8px 18px; font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; text-decoration: none; white-space: nowrap; }
-    .trial-banner__cta:hover { background: #a8521f; }
+    .trial-banner__actions { display: flex; align-items: center; gap: var(--actions-gap); flex-shrink: 0; }
+    .trial-banner__cta { background: var(--orange); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 8px 18px; font-family: var(--body-font); font-size: var(--body-font-size); font-weight: var(--heading-lg-weight); cursor: pointer; text-decoration: none; white-space: nowrap; }
+    .trial-banner__cta:hover { opacity: 0.85; }
     .trial-banner__dismiss { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; color: inherit; opacity: 0.6; padding: 0 4px; }
     .trial-banner__dismiss:hover { opacity: 1; }
-</style>
+
+    /* ── Zone 1: Action Tiles ── */
+    .dash-action-tile {
+      text-decoration: none;
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      transition: box-shadow var(--btn-transition);
+    }
+    .dash-action-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); opacity: 1; }
+    .dash-action-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .dash-action-icon { font-size: 18px; line-height: 1; }
+    .dash-action-name { font-size: var(--note-font-size); font-weight: var(--font-weight-semibold); color: var(--text-secondary); }
+
+    /* ── Zone 2: Tool Overview Tiles ── */
+    .dash-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .dash-overview-tile {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      overflow: hidden;
+    }
+    .dash-overview-tile-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .dash-overview-tile-icon { font-size: 18px; line-height: 1; }
+    .dash-overview-tile-name {
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      flex: 1;
+    }
+    .dash-overview-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      text-decoration: none;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+      transition: background var(--btn-transition);
+    }
+    .dash-overview-link:last-child { border-bottom: none; }
+    .dash-overview-link:hover { background: var(--blue-hover-bg); opacity: 1; }
+    .dash-overview-link-value {
+      font-family: var(--heading-font);
+      font-size: var(--stat-value-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--orange);
+      min-width: 40px;
+      text-align: center;
+    }
+    .dash-overview-link-label { font-size: var(--body-font-size); color: var(--text); flex: 1; }
+    .dash-overview-empty {
+      padding: 12px 16px;
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+    }
+
+    /* ── Zone 3: Your Stax ── */
+    .dash-stax-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .dash-stax-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: box-shadow var(--btn-transition);
+    }
+    .dash-stax-card:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
+    .dash-stax-card.dash-stax-live { border-left: 4px solid var(--orange); }
+    .dash-stax-card.dash-stax-coming { opacity: 0.45; }
+    .dash-stax-card-top { display: flex; align-items: flex-start; gap: 10px; }
+    .dash-stax-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
+    .dash-stax-card-info { flex: 1; min-width: 0; }
+    .dash-stax-name { display: block; font-size: var(--note-font-size); font-weight: var(--font-weight-semibold); color: var(--text); line-height: 1.3; }
+    .dash-stax-tagline { display: block; font-size: var(--badge-font-size); color: var(--text-muted); line-height: 1.4; margin-top: 2px; }
+    .dash-stax-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .dash-stax-price { font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); color: var(--text); }
+    .dash-stax-benefit { font-size: var(--badge-font-size); color: var(--text-muted); font-style: italic; }
+    .dash-stax-card-actions { display: flex; align-items: center; gap: 10px; margin-top: auto; }
+    .dash-stax-settings-link { font-size: var(--badge-font-size); color: var(--blue); text-decoration: none; font-weight: var(--font-weight-semibold); }
+    .dash-stax-settings-link:hover { opacity: 0.85; }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) { .dash-stax-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) {
+      .dash-container { padding: var(--page-padding-mobile); }
+      .dash-stax-grid { grid-template-columns: 1fr; }
+      .dash-overview-grid { grid-template-columns: 1fr; }
+      .notif-item { padding: 10px 16px; }
+      .trial-banner { flex-direction: column; text-align: center; }
+      .trial-banner__actions { justify-content: center; }
+    }
+  </style>
 </head>
 <body>
 
-  <header class="topbar">
-    <a href="/dashboard"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" class="topbar-logo"></a>
-    <nav class="topbar-right">
-      <button class="topbar-link" onclick="DASH_WIDGETS.renderAll()">Refresh Data</button>
-      <div class="topbar-account" id="account-menu">
-        <button class="topbar-account-btn" id="account-btn"><span id="account-email-short">Account</span> ▾</button>
+  <nav class="topbar">
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+    </a>
+    <div class="topbar-nav">
+      <a href="/content-library.html">Content Library</a>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
-          <div class="account-dropdown-email" id="account-dropdown-email">—</div>
           <a href="/account" class="account-dropdown-item">Account Management</a>
           <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
       </div>
-    </nav>
-  </header>
+    </div>
+  </nav>
 
   <div id="notification-bar"></div>
 
-  <main class="main">
-    <div class="trial-banner" id="trial-banner" role="alert">
-      <span class="trial-banner__msg" id="trial-banner-msg"></span>
-      <div class="trial-banner__actions">
-        <button class="trial-banner__cta" id="trial-banner-cta">Subscribe Now</button>
-        <button class="trial-banner__dismiss" id="trial-banner-dismiss" aria-label="Dismiss">×</button>
-      </div>
-    </div>
-    <p class="welcome-strip" id="welcome-strip">Welcome back.</p>
-    <h2 class="section-heading">LIVE <span class="accent">INTELLIGENCE</span></h2>
-    <div class="panel-grid">
-      <div class="widget-panel" id="panel-social"><div class="panel-loading">Loading…</div></div>
-      <div class="widget-panel" id="panel-email"><div class="panel-loading">Loading…</div></div>
-      <div class="widget-panel" id="panel-chatbot"><div class="panel-loading">Loading…</div></div>
-      <div class="widget-panel" id="panel-news-digest"><div class="panel-loading">Loading…</div></div>
-      <div class="widget-panel" id="panel-bi"><div class="panel-loading">Loading…</div></div>
-      <div class="widget-panel" id="panel-strategic-plan"><div class="panel-loading">Loading…</div></div>
-    </div>
-  
-    <section id="stax-section">
-      <h2 class="section-heading">YOUR <span class="accent">STAX</span></h2>
-      <div class="stax-grid" id="stax-grid"><div class="panel-loading">Loading…</div></div>
-    </section>
+  <div id="page-wrap" style="display:none">
+    <div class="dash-container">
 
-  </main>
+      <div class="trial-banner" id="trial-banner" role="alert">
+        <span class="trial-banner__msg" id="trial-banner-msg"></span>
+        <div class="trial-banner__actions">
+          <button class="trial-banner__cta" id="trial-banner-cta">Subscribe Now</button>
+          <button class="trial-banner__dismiss" id="trial-banner-dismiss" aria-label="Dismiss">&times;</button>
+        </div>
+      </div>
+
+      <p class="dash-welcome" id="welcome-strip">Welcome back.</p>
+
+      <!-- Zone 1: Action Tiles -->
+      <section class="dash-zone" id="zone-1-wrap">
+        <div class="stats-bar" id="zone-1"></div>
+      </section>
+
+      <!-- Zone 2: Tool Overview Tiles -->
+      <section class="dash-zone" id="zone-2-wrap">
+        <h2 class="dash-heading">YOUR <span class="accent">TOOLS</span></h2>
+        <div class="dash-overview-grid" id="zone-2"></div>
+      </section>
+
+      <!-- Zone 3: Your Stax -->
+      <section class="dash-zone" id="zone-3-wrap">
+        <h2 class="dash-heading">YOUR <span class="accent">STAX</span></h2>
+        <div class="tab-nav">
+          <button class="ptab active" data-tab="active">Active Tools</button>
+          <button class="ptab" data-tab="available">Available Tools</button>
+        </div>
+        <div class="ptab-content active" id="dash-tab-active"></div>
+        <div class="ptab-content" id="dash-tab-available"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="save-msg" id="dash-error-msg">
+    <div class="save-msg-card">
+      <div class="save-msg-text"></div>
+      <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="supabase-client.js"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/dashboard-data.js"></script>
+  <script src="/dashboard-widgets.js"></script>
   <script>
-(function(){
-  ['dashboard-data.js','dashboard-widgets.js'].forEach(function(src){
-    var s=document.createElement('script');
-    s.src=src+'?v='+Date.now();
-    document.head.appendChild(s);
-  });
-})();
-</script>
-
-  <script>
-    document.getElementById("account-btn").addEventListener("click", function(e) { e.stopPropagation(); document.getElementById("account-dropdown").classList.toggle("open"); });
-    document.addEventListener("click", function() { document.getElementById("account-dropdown").classList.remove("open"); });
-    document.getElementById("sign-out-btn").addEventListener("click", async function() { await supabaseClient.auth.signOut(); window.location.href = "/login"; });
-    document.getElementById("notification-bar").addEventListener("click", function(e) { if (e.target.classList.contains("notif-dismiss")) e.target.closest(".notif-item").remove(); });
-    window.dashboardInit = async function() {
-      const { data: { user }, error: _authErr } = await supabaseClient.auth.getUser();
-      if (!user || _authErr) { window.location.href = "/login"; return; }
-      const email = user.email || "";
-      document.getElementById("account-dropdown-email").textContent = email;
-      document.getElementById("account-email-short").textContent = email.split("@")[0] || "Account";
-      const firstName = user.user_metadata?.first_name || user.user_metadata?.full_name?.split(" ")[0] || "";
-      const ws = document.getElementById("welcome-strip");
-      ws.innerHTML = firstName ? "Welcome back, <strong>" + firstName + "<\/strong>." : "Welcome back.";
-      if (window.DASH_DATA && typeof window.DASH_DATA.init === "function") await window.DASH_DATA.init(user);
-    };
-    document.addEventListener("DOMContentLoaded", function() { window.dashboardInit(); });
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        document.getElementById('page-wrap').style.display = 'block';
+        if (window.DASH_DATA && window.DASH_DATA.init) {
+          window.DASH_DATA.init(supabase, session.user);
+        }
+      });
+    })();
   </script>
-
 </body>
 </html>
