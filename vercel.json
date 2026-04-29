@@ -40,6 +40,12 @@
     },
     "api/generate-marketing-theme.js": {
       "maxDuration": 30
+    },
+    "api/social-metrics-refresh.js": {
+      "maxDuration": 60
+    },
+    "api/generate-flyer-pdf.js": {
+      "maxDuration": 30
     }
   },
   "crons": [
@@ -62,6 +68,10 @@
     {
       "path": "/api/social-publisher",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/social-metrics-refresh",
+      "schedule": "0 */6 * * *"
     }
   ],
   "rewrites": [

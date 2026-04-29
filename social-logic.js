@@ -1173,9 +1173,14 @@ window.SOCIAL_LOGIC = {
         }
       }
 
+      var isBlogPublish = this._currentJourney === 'blog_content';
+      var pubRecord = postRecord;
       this._exitWizard();
       this._loadStats();
       this._switchTab('published');
+      if (isBlogPublish) {
+        this._promptBlogPromotion(pubRecord);
+      }
     } catch (err) {
       this._showError(err.message || 'Failed to publish. Please try again.');
     }
@@ -1219,11 +1224,16 @@ window.SOCIAL_LOGIC = {
 
   _saveAsDraft: async function(isInProgress) {
     try {
+      var isBlog = this._currentJourney === 'blog_content';
       var postRecord = await this._savePostRecord(isInProgress ? 'in_progress' : 'draft');
       if (!postRecord) return;
+      var journeyType = this._currentJourney;
       this._exitWizard();
       this._loadStats();
       this._switchTab('drafts');
+      if (isBlog && !isInProgress) {
+        this._promptBlogPromotion(postRecord);
+      }
     } catch (err) {
       this._showError(err.message || 'Failed to save draft.');
     }
@@ -1397,6 +1407,21 @@ window.SOCIAL_LOGIC = {
         self._switchTab('create');
       });
     });
+  },
+
+  _promptBlogPromotion: function(postRecord) {
+    var self = this;
+    this._showConfirm(
+      'Promote Your Blog',
+      'Your blog has been saved. Create a social post to promote this article?',
+      function() {
+        self._switchTab('create');
+        self._startJourney('business_update', {
+          news_type: 'Other',
+          description: 'Promoting blog post: ' + (postRecord.caption || '').substring(0, 200)
+        });
+      }
+    );
   },
 
   _scheduledItems: []
