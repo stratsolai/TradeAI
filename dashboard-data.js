@@ -34,7 +34,7 @@ window.DASH_DATA = (function() {
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
 
     var bp = await _supabase.from('profiles')
-      .select('abn, business_structure, industry, years_in_business, address_name, address_street, address_suburb, address_state, address_postcode, service_area, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling')
+      .select('abn, business_structure, industry, years_in_business, logo_url, address_name, address_street, address_suburb, address_state, address_postcode, additional_phones, service_area, trading_hours, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, after_hours_support, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling, tone_of_voice, primary_brand_colour')
       .eq('id', user.id).single();
     if (bp.data) {
       Object.keys(bp.data).forEach(function(k) { _profile[k] = bp.data[k]; });
@@ -52,6 +52,7 @@ window.DASH_DATA = (function() {
     renderYourStax(_activeTools);
     wireTabSwitching();
     wireActivateButtons();
+    wireToolBlocker();
 
     hideEmptyZones();
   }
@@ -64,26 +65,60 @@ window.DASH_DATA = (function() {
     el.textContent = companyName ? 'Dashboard \u2014 ' + companyName : 'Dashboard';
   }
 
-  // ── NOTIFICATIONS (BP completion) ──
+  // ── BP COMPLETION CHECK (27 mandatory fields + tone_of_voice + primary_brand_colour) ──
+  var _bpComplete = false;
+
   function checkBPComplete(p) {
     if (!p) return false;
     var hasText = function(k) { return p[k] && typeof p[k] === 'string' && p[k].trim() !== ''; };
     var hasArr = function(k) { return Array.isArray(p[k]) && p[k].length > 0; };
-    return hasText('business_name') && hasText('abn') && hasText('business_structure') &&
-      hasArr('industry') && hasText('years_in_business') &&
-      hasText('address_name') && hasText('address_street') && hasText('address_suburb') &&
-      hasText('address_state') && hasText('address_postcode') &&
-      hasArr('service_area') && hasArr('bp_services') && hasArr('bp_products') &&
-      hasArr('payment_methods') && hasText('response_time') &&
-      hasText('warranty_info') && hasText('complaints_handling') &&
-      hasText('marketing_theme_awareness') && hasText('marketing_theme_differentiators') &&
-      hasText('marketing_theme_feeling');
+    var hasJson = function(k) {
+      var v = p[k];
+      if (Array.isArray(v) && v.length > 0) return true;
+      if (v && typeof v === 'object' && !Array.isArray(v)) {
+        return v.type && typeof v.type === 'string' && v.type.trim() !== '';
+      }
+      return false;
+    };
+    var hasPhone = function() {
+      if (Array.isArray(p.additional_phones) && p.additional_phones.length > 0) return true;
+      return false;
+    };
+
+    return (
+      hasText('business_name') &&
+      hasText('abn') &&
+      hasText('business_structure') &&
+      hasArr('industry') &&
+      hasText('logo_url') &&
+      hasText('years_in_business') &&
+      hasText('address_name') &&
+      hasText('address_street') &&
+      hasText('address_suburb') &&
+      hasText('address_state') &&
+      hasText('address_postcode') &&
+      hasPhone() &&
+      hasArr('service_area') &&
+      hasJson('trading_hours') &&
+      hasArr('bp_services') &&
+      hasArr('bp_products') &&
+      hasArr('payment_methods') &&
+      hasText('response_time') &&
+      hasText('warranty_info') &&
+      hasText('complaints_handling') &&
+      hasJson('after_hours_support') &&
+      hasText('marketing_theme_awareness') &&
+      hasText('marketing_theme_differentiators') &&
+      hasText('marketing_theme_feeling') &&
+      hasText('tone_of_voice') &&
+      hasText('primary_brand_colour')
+    );
   }
 
-  // ── BP COMPLETION MODAL ──
+  // ── BP COMPLETION MODAL (hard block) ──
   function showBPModal() {
-    if (checkBPComplete(_profile)) return;
-    if (sessionStorage.getItem('bp_modal_dismissed') === 'true') return;
+    _bpComplete = checkBPComplete(_profile);
+    if (_bpComplete) return;
 
     var modal = document.getElementById('bp-modal');
     if (!modal) return;
@@ -92,15 +127,41 @@ window.DASH_DATA = (function() {
     var dismiss = document.getElementById('bp-modal-dismiss');
     if (dismiss) {
       dismiss.addEventListener('click', function() {
-        sessionStorage.setItem('bp_modal_dismissed', 'true');
         modal.classList.remove('open');
       });
     }
     modal.addEventListener('click', function(e) {
       if (e.target === modal) {
-        sessionStorage.setItem('bp_modal_dismissed', 'true');
         modal.classList.remove('open');
       }
+    });
+  }
+
+  // ── TOOL NAVIGATION BLOCKER ──
+  function wireToolBlocker() {
+    if (_bpComplete) return;
+
+    var toolUrls = ['/social', '/email', '/chatbot', '/news', '/bi.html', '/strategy', '/design',
+      '/social-settings', '/email-assistant-settings', '/chatbot-settings', '/news-digest-settings',
+      '/design-viz-settings', '/panel'];
+
+    function isToolLink(href) {
+      if (!href) return false;
+      for (var i = 0; i < toolUrls.length; i++) {
+        if (href.indexOf(toolUrls[i]) !== -1) return true;
+      }
+      return false;
+    }
+
+    document.addEventListener('click', function(e) {
+      var link = e.target.closest('a[href]');
+      if (!link) return;
+      var href = link.getAttribute('href');
+      if (!isToolLink(href)) return;
+
+      e.preventDefault();
+      var modal = document.getElementById('bp-modal');
+      if (modal) modal.classList.add('open');
     });
   }
 
