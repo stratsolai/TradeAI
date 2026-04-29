@@ -13,9 +13,8 @@
     /* ── Dashboard container ── */
     .dash-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    /* ── Welcome strip ── */
-    .dash-welcome { font-size: var(--section-title-font-size); color: var(--text-muted); margin-bottom: 24px; }
-    .dash-welcome strong { color: var(--text); }
+    /* ── Page heading ── */
+    .dash-page-heading { margin-bottom: var(--page-header-margin); }
 
     /* ── Zone headings ── */
     .dash-heading {
@@ -194,7 +193,9 @@
         </div>
       </div>
 
-      <p class="dash-welcome" id="welcome-strip">Welcome back.</p>
+      <div class="dash-page-heading">
+        <h1 class="page-title" id="dash-heading">Dashboard</h1>
+      </div>
 
       <!-- Zone 1: Action Tiles -->
       <section class="dash-zone" id="zone-1-wrap">

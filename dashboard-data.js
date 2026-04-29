@@ -30,7 +30,7 @@ window.DASH_DATA = (function() {
     _profile = (pr.data) ? pr.data : {};
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
 
-    setWelcome(user);
+    setHeading();
     renderTrialModal(_profile);
     loadNotifications(user.id);
     await renderActionTiles(user.id, _activeTools);
@@ -46,13 +46,12 @@ window.DASH_DATA = (function() {
     hideEmptyZones();
   }
 
-  // ── WELCOME STRIP ──
-  function setWelcome(user) {
-    var el = document.getElementById('welcome-strip');
+  // ── PAGE HEADING ──
+  function setHeading() {
+    var el = document.getElementById('dash-heading');
     if (!el) return;
-    var firstName = (user.user_metadata && user.user_metadata.first_name) ||
-      (user.user_metadata && user.user_metadata.full_name && user.user_metadata.full_name.split(' ')[0]) || '';
-    el.innerHTML = firstName ? 'Welcome back, <strong>' + escHtml(firstName) + '</strong>.' : 'Welcome back.';
+    var companyName = _profile.business_name || '';
+    el.textContent = companyName ? 'Dashboard \u2014 ' + companyName : 'Dashboard';
   }
 
   // ── NOTIFICATIONS (BP completion) ──
