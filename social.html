@@ -562,6 +562,11 @@
           <button class="filter-pill" id="sm-view-calendar-btn">Calendar</button>
         </div>
       </div>
+      <div id="sm-scheduled-bulk-bar" class="action-row sm-bulk-bar" style="display:none">
+        <span id="sm-scheduled-bulk-count" class="text-muted"></span>
+        <button class="btn-outline btn-sm" id="sm-scheduled-reschedule-selected">Reschedule Selected</button>
+        <button class="btn-dismiss btn-sm" id="sm-scheduled-cancel-selected">Cancel Selected</button>
+      </div>
       <div id="sm-scheduled-list" class="sm-post-list"></div>
       <div id="sm-scheduled-calendar" style="display:none"></div>
       <div class="empty-state" id="sm-scheduled-empty" style="display:none">
@@ -586,6 +591,13 @@
             <button type="button" class="lookback-dropdown-item" data-sort="engagement">Highest engagement</button>
           </div>
         </span>
+      </div>
+      <div class="sm-filter-bar" id="sm-published-date-bar" style="margin-top:-12px">
+        <label class="form-label" style="margin-bottom:0;white-space:nowrap">Date range:</label>
+        <input type="date" class="form-input" id="sm-published-date-from" style="width:auto;padding:6px 10px;font-size:var(--badge-font-size)">
+        <span style="color:var(--text-muted)">to</span>
+        <input type="date" class="form-input" id="sm-published-date-to" style="width:auto;padding:6px 10px;font-size:var(--badge-font-size)">
+        <button class="btn-outline btn-sm" id="sm-published-date-clear">Clear</button>
       </div>
       <div id="sm-published-list" class="sm-post-list"></div>
       <div class="empty-state" id="sm-published-empty" style="display:none">

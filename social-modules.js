@@ -85,6 +85,27 @@
       }
     }
 
+    var timeFilter = this._scheduledTimeFilter || 'all';
+    if (timeFilter !== 'all') {
+      var now = new Date();
+      var startOfWeek = new Date(now); startOfWeek.setDate(now.getDate() - now.getDay()); startOfWeek.setHours(0,0,0,0);
+      var endOfWeek = new Date(startOfWeek); endOfWeek.setDate(startOfWeek.getDate() + 7);
+      var startOfNextWeek = new Date(endOfWeek);
+      var endOfNextWeek = new Date(startOfNextWeek); endOfNextWeek.setDate(startOfNextWeek.getDate() + 7);
+      var startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      var endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+      items = items.filter(function(item) {
+        var sp = item.scheduled_posts;
+        var schedDate = sp && sp.length > 0 ? new Date(sp[0].scheduled_for) : null;
+        if (!schedDate) return false;
+        if (timeFilter === 'this_week') return schedDate >= startOfWeek && schedDate < endOfWeek;
+        if (timeFilter === 'next_week') return schedDate >= startOfNextWeek && schedDate < endOfNextWeek;
+        if (timeFilter === 'this_month') return schedDate >= startOfMonth && schedDate <= endOfMonth;
+        return true;
+      });
+    }
+
     var list = document.getElementById('sm-scheduled-list');
     var empty = document.getElementById('sm-scheduled-empty');
 
@@ -149,6 +170,21 @@
       items = items.filter(function(item) { return !item.campaign_id; });
     }
 
+    var dateFrom = (document.getElementById('sm-published-date-from') || {}).value;
+    var dateTo = (document.getElementById('sm-published-date-to') || {}).value;
+    if (dateFrom) {
+      var fromMs = new Date(dateFrom).getTime();
+      items = items.filter(function(item) {
+        return item.published_at && new Date(item.published_at).getTime() >= fromMs;
+      });
+    }
+    if (dateTo) {
+      var toMs = new Date(dateTo + 'T23:59:59').getTime();
+      items = items.filter(function(item) {
+        return item.published_at && new Date(item.published_at).getTime() <= toMs;
+      });
+    }
+
     var list = document.getElementById('sm-published-list');
     var empty = document.getElementById('sm-published-empty');
 
@@ -194,6 +230,9 @@
     });
   },
 
+  _scheduledTimeFilter: 'all',
+  _scheduledSelected: new Set(),
+
   _renderScheduledFilters: function(items) {
     var self = this;
     var container = document.getElementById('sm-scheduled-filters');
@@ -220,11 +259,29 @@
       var label = p.charAt(0).toUpperCase() + p.slice(1);
       html += '<button class="filter-pill' + (self._scheduledFilter === p ? ' active' : '') + '" data-filter="' + window.escHtml(p) + '">' + window.escHtml(label) + '</button>';
     });
+    html += '<span style="margin-left:8px;border-left:1px solid var(--border);padding-left:8px"></span>';
+    var timeFilters = [
+      { id: 'all', label: 'All time' },
+      { id: 'this_week', label: 'This week' },
+      { id: 'next_week', label: 'Next week' },
+      { id: 'this_month', label: 'This month' }
+    ];
+    timeFilters.forEach(function(tf) {
+      var active = self._scheduledTimeFilter === tf.id ? ' active' : '';
+      html += '<button class="filter-pill' + active + '" data-timefilter="' + tf.id + '">' + tf.label + '</button>';
+    });
     container.innerHTML = html;
 
-    container.querySelectorAll('.filter-pill').forEach(function(pill) {
+    container.querySelectorAll('[data-filter]').forEach(function(pill) {
       pill.addEventListener('click', function() {
         self._scheduledFilter = pill.dataset.filter;
+        self._scheduledPage = 0;
+        self._loadScheduled();
+      });
+    });
+    container.querySelectorAll('[data-timefilter]').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        self._scheduledTimeFilter = pill.dataset.timefilter;
         self._scheduledPage = 0;
         self._loadScheduled();
       });
@@ -288,13 +345,33 @@
       var journeyLabel = self._getJourneyLabel(item.journey_type);
       var preview = (item.caption || '').substring(0, 100);
       var dateStr = '';
+      var timeUntil = '';
       if (tab === 'published' && item.published_at) {
         dateStr = new Date(item.published_at).toLocaleDateString('en-AU');
+      } else if (tab === 'scheduled') {
+        var sp = item.scheduled_posts;
+        var schedFor = sp && sp.length > 0 ? sp[0].scheduled_for : null;
+        if (schedFor) {
+          dateStr = new Date(schedFor).toLocaleDateString('en-AU') + ' ' + new Date(schedFor).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' });
+          var diff = new Date(schedFor).getTime() - Date.now();
+          if (diff > 0) {
+            var days = Math.floor(diff / 86400000);
+            var hours = Math.floor((diff % 86400000) / 3600000);
+            if (days > 0) timeUntil = days + 'd ' + hours + 'h';
+            else if (hours > 0) timeUntil = hours + 'h';
+            else timeUntil = Math.ceil(diff / 60000) + 'min';
+          }
+        } else {
+          dateStr = new Date(item.created_at).toLocaleDateString('en-AU');
+        }
       } else {
         dateStr = new Date(item.created_at).toLocaleDateString('en-AU');
       }
 
       html += '<div class="item-card sm-post-card" data-id="' + item.id + '">';
+      if (tab === 'scheduled') {
+        html += '<div style="display:flex;align-items:center;padding:0 8px"><input type="checkbox" class="item-checkbox sm-sched-check" data-checkid="' + item.id + '" style="width:18px;height:18px;accent-color:var(--blue)"></div>';
+      }
       html += '<div class="sm-post-thumb">';
       if (item.image_url) {
         html += '<img src="' + window.escHtml(item.image_url) + '" alt="">';
@@ -309,6 +386,9 @@
         html += '<span class="badge badge-orange">In Progress</span>';
       }
       html += '<span class="sm-post-date">' + dateStr + '</span>';
+      if (timeUntil) {
+        html += '<span class="badge badge-blue" style="margin-left:auto">' + timeUntil + '</span>';
+      }
       html += '</div>';
       html += '<div class="text-preview sm-text-preview">' + window.escHtml(preview) + '</div>';
       html += '<div class="sm-post-actions">';
@@ -321,6 +401,7 @@
       } else if (tab === 'scheduled') {
         html += '<button class="btn-outline btn-sm" data-action="edit" data-id="' + item.id + '">Edit</button>';
         html += '<button class="btn-outline btn-sm" data-action="reschedule" data-id="' + item.id + '">Reschedule</button>';
+        html += '<button class="btn-primary btn-sm" data-action="post-now-scheduled" data-id="' + item.id + '">Post Now</button>';
         html += '<button class="btn-outline btn-sm" data-action="cancel" data-id="' + item.id + '">Cancel</button>';
       } else if (tab === 'published') {
         html += '<button class="btn-outline btn-sm" data-action="view" data-id="' + item.id + '">View</button>';
@@ -350,6 +431,23 @@
         self._handlePostAction(btn.dataset.action, btn.dataset.id);
       });
     });
+
+    if (tab === 'scheduled') {
+      container.querySelectorAll('.sm-sched-check').forEach(function(cb) {
+        cb.addEventListener('change', function() {
+          if (cb.checked) self._scheduledSelected.add(cb.dataset.checkid);
+          else self._scheduledSelected.delete(cb.dataset.checkid);
+          var bar = document.getElementById('sm-scheduled-bulk-bar');
+          var count = document.getElementById('sm-scheduled-bulk-count');
+          if (self._scheduledSelected.size > 0) {
+            bar.style.display = '';
+            count.textContent = self._scheduledSelected.size + ' selected';
+          } else {
+            bar.style.display = 'none';
+          }
+        });
+      });
+    }
   },
 
   _handlePostAction: async function(action, postId) {
@@ -549,6 +647,45 @@
       document.getElementById('sm-confirm-ok').addEventListener('click', closeHandler, { once: true });
       modal.addEventListener('click', function(e) { if (e.target === modal) closeHandler(); }, { once: true });
 
+    } else if (action === 'post-now-scheduled') {
+      this._showConfirm('Post Now', 'This will publish the post immediately. Continue?', async function() {
+        var postResult = await self._supabase.from('social_posts').select('*').eq('id', postId).single();
+        if (postResult.error || !postResult.data) { self._showError('Could not load post.'); return; }
+        var postData = postResult.data;
+
+        var sessionRes = await self._supabase.auth.getSession();
+        var session = sessionRes.data && sessionRes.data.session;
+        if (!session) { self._showError('Session expired.'); return; }
+
+        if (postData.connections && postData.connections.length > 0) {
+          var metaRes = await fetch('/api/meta-post', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({
+              action: 'post',
+              caption: (postData.caption || '') + '\n\n' + (postData.hashtags || ''),
+              image_url: postData.image_url,
+              platforms: postData.connections,
+              post_id: postId
+            })
+          });
+          if (!metaRes.ok) {
+            var errData = await metaRes.json().catch(function() { return {}; });
+            self._showError(errData.error || 'Failed to publish.');
+            return;
+          }
+        }
+
+        await self._supabase.from('scheduled_posts').delete().eq('social_post_id', postId);
+        await self._supabase.from('social_posts').update({
+          status: 'published', published_at: new Date().toISOString(), updated_at: new Date().toISOString()
+        }).eq('id', postId);
+
+        self._loadScheduled();
+        self._loadStats();
+        self._showSuccess('Post published successfully.');
+      });
+
     } else if (action === 'view-on-platform') {
       var vpResult = await this._supabase.from('social_posts').select('metadata').eq('id', postId).single();
       if (vpResult.error) { this._showError('Could not load post details.'); return; }
@@ -687,12 +824,18 @@
     container.style.display = '';
 
     var html = '<button class="btn-outline btn-sm" id="' + containerId + '-prev"' + (currentPage === 0 ? ' disabled' : '') + '>Previous</button>';
-    html += '<span class="sm-pagination-info">Page ' + (currentPage + 1) + ' of ' + totalPages + '</span>';
+    html += '<select class="form-input" id="' + containerId + '-jump" style="width:auto;padding:6px 10px;font-size:var(--badge-font-size)">';
+    for (var pg = 0; pg < totalPages; pg++) {
+      html += '<option value="' + pg + '"' + (pg === currentPage ? ' selected' : '') + '>Page ' + (pg + 1) + '</option>';
+    }
+    html += '</select>';
+    html += '<span class="sm-pagination-info">of ' + totalPages + '</span>';
     html += '<button class="btn-outline btn-sm" id="' + containerId + '-next"' + (currentPage >= totalPages - 1 ? ' disabled' : '') + '>Next</button>';
     container.innerHTML = html;
 
     var prevBtn = document.getElementById(containerId + '-prev');
     var nextBtn = document.getElementById(containerId + '-next');
+    var jumpSelect = document.getElementById(containerId + '-jump');
     if (prevBtn) {
       prevBtn.addEventListener('click', function() {
         if (self[pageField] > 0) { self[pageField]--; self[loadMethod](); }
@@ -701,6 +844,12 @@
     if (nextBtn) {
       nextBtn.addEventListener('click', function() {
         if (self[pageField] < totalPages - 1) { self[pageField]++; self[loadMethod](); }
+      });
+    }
+    if (jumpSelect) {
+      jumpSelect.addEventListener('change', function() {
+        self[pageField] = parseInt(jumpSelect.value, 10);
+        self[loadMethod]();
       });
     }
   },

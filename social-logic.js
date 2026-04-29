@@ -1352,6 +1352,42 @@ window.SOCIAL_LOGIC = {
       });
     });
 
+    document.getElementById('sm-published-date-from').addEventListener('change', function() {
+      self._publishedPage = 0; self._loadPublished();
+    });
+    document.getElementById('sm-published-date-to').addEventListener('change', function() {
+      self._publishedPage = 0; self._loadPublished();
+    });
+    document.getElementById('sm-published-date-clear').addEventListener('click', function() {
+      document.getElementById('sm-published-date-from').value = '';
+      document.getElementById('sm-published-date-to').value = '';
+      self._publishedPage = 0; self._loadPublished();
+    });
+
+    document.getElementById('sm-scheduled-reschedule-selected').addEventListener('click', function() {
+      var selected = self._scheduledSelected;
+      if (!selected || selected.size === 0) return;
+      self._pendingBulkScheduleIds = Array.from(selected);
+      self._pendingSchedulePostId = null;
+      document.getElementById('sm-schedule-date').value = '';
+      document.getElementById('sm-schedule-time').value = '';
+      document.getElementById('sm-schedule-modal').classList.add('open');
+    });
+    document.getElementById('sm-scheduled-cancel-selected').addEventListener('click', function() {
+      var selected = self._scheduledSelected;
+      if (!selected || selected.size === 0) return;
+      self._showConfirm('Cancel Selected', 'Move ' + selected.size + ' post(s) back to drafts?', async function() {
+        var ids = Array.from(selected);
+        for (var i = 0; i < ids.length; i++) {
+          await self._supabase.from('scheduled_posts').delete().eq('social_post_id', ids[i]);
+          await self._supabase.from('social_posts').update({ status: 'draft', updated_at: new Date().toISOString() }).eq('id', ids[i]);
+        }
+        self._scheduledSelected = new Set();
+        self._loadScheduled();
+        self._loadStats();
+      });
+    });
+
     document.getElementById('sm-start-campaign-btn').addEventListener('click', function() {
       self._startCampaignWizard();
     });
