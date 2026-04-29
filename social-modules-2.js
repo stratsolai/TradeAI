@@ -278,24 +278,24 @@
       return;
     }
 
-    var html = '<div class="sm-step-hint" style="margin-top:8px">Select a news item to use as the source for your content.</div>';
-    html += '<div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">';
+    var html = '<div class="sm-step-hint">Select a news item to use as the source for your content.</div>';
+    html += '<div class="sm-nd-list">';
 
     briefings.forEach(function(briefing, bIdx) {
       if (!briefing.headline) return;
       var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
 
-      html += '<div class="item-card" style="padding:12px;cursor:pointer" data-nd-idx="' + bIdx + '">' +
-        '<div style="font-weight:var(--font-weight-semibold);margin-bottom:6px">' + window.escHtml(briefing.headline) + '</div>' +
-        '<div style="font-size:var(--badge-font-size);color:var(--text-muted);text-transform:uppercase;letter-spacing:var(--letter-spacing-label);margin-bottom:4px">' +
+      html += '<div class="item-card sm-nd-card" data-nd-idx="' + bIdx + '">' +
+        '<div class="sm-nd-headline">' + window.escHtml(briefing.headline) + '</div>' +
+        '<div class="sm-nd-category">' +
         window.escHtml(briefing.category || '') + '</div>';
 
       bullets.forEach(function(b, idx) {
         var title = b.title || '';
         var text = (b.text || '').substring(0, 120);
-        html += '<div class="sm-nd-bullet" data-nd-briefing="' + bIdx + '" data-nd-bullet="' + idx + '" style="padding:8px;border:1px solid var(--border-light);border-radius:var(--btn-radius);margin-top:6px;cursor:pointer">' +
-          (title ? '<div style="font-weight:500">' + window.escHtml(title) + '</div>' : '') +
-          '<div style="font-size:var(--note-font-size);color:var(--text-secondary)">' + window.escHtml(text) + '</div>' +
+        html += '<div class="sm-nd-bullet" data-nd-briefing="' + bIdx + '" data-nd-bullet="' + idx + '">' +
+          (title ? '<div class="sm-nd-bullet-title">' + window.escHtml(title) + '</div>' : '') +
+          '<div class="sm-nd-bullet-text">' + window.escHtml(text) + '</div>' +
           '</div>';
       });
       html += '</div>';
@@ -313,8 +313,8 @@
         var b = briefing.bullets[bulletIdx];
         if (!b) return;
 
-        container.querySelectorAll('.sm-nd-bullet').forEach(function(el) { el.style.borderColor = ''; });
-        bullet.style.borderColor = 'var(--blue)';
+        container.querySelectorAll('.sm-nd-bullet').forEach(function(el) { el.classList.remove('active'); });
+        bullet.classList.add('active');
 
         if (self._currentJourney === 'industry_insight') {
           self._journeyInputs.nd_source_title = b.title || briefing.headline;
@@ -341,7 +341,7 @@
       html += '<button class="filter-pill' + active + '" data-eventtype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
-    html += '<div id="sm-event-other-wrap" style="margin-top:16px;display:' + (current === 'Other' ? 'block' : 'none') + '">' +
+    html += '<div id="sm-event-other-wrap" class="sm-other-wrap" style="display:' + (current === 'Other' ? 'block' : 'none') + '">' +
       '<div class="form-group"><label class="form-label">Event details</label>' +
       '<textarea class="form-input" id="sm-field-what-other" rows="3">' + window.escHtml(this._journeyInputs.what_other || '') + '</textarea></div></div>';
     return html;
@@ -356,7 +356,7 @@
       html += '<button class="filter-pill' + active + '" data-offertype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
-    html += '<div id="sm-offer-other-wrap" style="margin-top:16px;display:' + (current === 'Other' ? 'block' : 'none') + '">' +
+    html += '<div id="sm-offer-other-wrap" class="sm-other-wrap" style="display:' + (current === 'Other' ? 'block' : 'none') + '">' +
       '<div class="form-group"><label class="form-label">Offer details</label>' +
       '<textarea class="form-input" id="sm-field-what-other" rows="3">' + window.escHtml(this._journeyInputs.what_other || '') + '</textarea></div></div>';
     return html;
@@ -373,12 +373,12 @@
       if (!trimmed) return;
       var headingMatch = trimmed.match(/^(#{2,3})\s+(.+?)$/m);
       var heading = headingMatch ? headingMatch[2] : 'Section ' + (idx + 1);
-      html += '<div class="sm-blog-section" data-section="' + idx + '" style="margin-bottom:16px;padding:12px;border:1px solid var(--border-light);border-radius:var(--btn-radius)">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-        '<div style="font-weight:var(--font-weight-semibold)">' + window.escHtml(heading) + '</div>' +
+      html += '<div class="sm-blog-section" data-section="' + idx + '">' +
+        '<div class="sm-blog-section-header">' +
+        '<div class="sm-blog-section-title">' + window.escHtml(heading) + '</div>' +
         '<button class="btn-outline btn-sm" data-regen-section="' + idx + '">Regenerate Section</button>' +
         '</div>' +
-        '<div class="sm-blog-section-content" style="font-size:var(--body-font-size);color:var(--text);white-space:pre-wrap">' + window.escHtml(trimmed) + '</div>' +
+        '<div class="sm-blog-section-content">' + window.escHtml(trimmed) + '</div>' +
         '</div>';
     });
     return html;
@@ -532,14 +532,14 @@
       var domain = parsed.hostname;
       var faviconUrl = 'https://www.google.com/s2/favicons?domain=' + encodeURIComponent(domain) + '&sz=128';
 
-      preview.innerHTML = '<div style="display:flex;align-items:center;gap:12px">' +
-        '<img src="' + window.escHtml(faviconUrl) + '" alt="Logo" style="width:64px;height:64px;border-radius:var(--btn-radius);border:1px solid var(--border)">' +
-        '<div style="font-size:var(--note-font-size);color:var(--text-muted)">Logo fetched from ' + window.escHtml(domain) + '</div>' +
+      preview.innerHTML = '<div class="sm-logo-preview">' +
+        '<img src="' + window.escHtml(faviconUrl) + '" alt="Logo" class="sm-logo-img">' +
+        '<div class="text-muted">Logo fetched from ' + window.escHtml(domain) + '</div>' +
         '</div>';
 
       this._journeyInputs.logo_url = faviconUrl;
     } catch (e) {
-      preview.innerHTML = '<div style="font-size:var(--note-font-size);color:var(--text-muted)">Could not fetch logo. Check the URL and try again.</div>';
+      preview.innerHTML = '<div class="text-muted">Could not fetch logo. Check the URL and try again.</div>';
     }
   }
 

@@ -267,10 +267,23 @@
       margin-bottom: var(--card-gap, 20px);
       flex-wrap: wrap;
     }
-    .sm-filter-bar .search-input { max-width: 240px; }
-    .sm-filter-bar-right { margin-left: auto; display: flex; gap: var(--btn-gap); }
-    .sm-filter-pills { display: flex; gap: var(--btn-gap); flex-wrap: wrap; }
-    .sm-sort-select { margin-left: auto; min-width: 160px; max-width: 200px; flex: none; }
+    .sm-search-input {
+      width: 240px; max-width: 240px; margin-left: auto; padding: var(--input-padding);
+      border: var(--input-border-width) solid var(--border); border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size); font-family: var(--body-font);
+      box-sizing: border-box; background: var(--white); color: var(--text); outline: none;
+      transition: border-color var(--btn-transition);
+    }
+    .sm-search-input:focus { border-color: var(--blue); }
+    .sm-filter-bar-right { margin-left: auto; display: flex; gap: 8px; }
+    .sm-filter-pills { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .sm-sort-select {
+      margin-left: auto; min-width: 160px; max-width: 200px; flex: none;
+      padding: var(--input-padding); border: var(--input-border-width) solid var(--border);
+      border-radius: var(--btn-radius); font-size: var(--btn-font-size);
+      font-family: var(--body-font); background: var(--white); color: var(--text); outline: none;
+    }
+    .sm-sort-select:focus { border-color: var(--blue); }
     .sm-bulk-bar { margin-bottom: 16px; }
     .sm-empty-create { margin-top: var(--btn-gap); }
     .sm-cl-media-modal-inner { max-width: 680px; }
@@ -278,11 +291,61 @@
     .sm-edit-section { margin-top: var(--card-gap, 20px); }
     .sm-edit-nav { margin-top: var(--card-gap, 24px); }
     .sm-campaign-start { text-align: center; margin-top: 16px; }
-    .sm-campaign-filter-label { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--btn-gap); font-size: var(--label-font-size); color: var(--text-secondary); cursor: pointer; }
+    .sm-campaign-filter-label { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; font-size: var(--label-font-size); color: var(--text-secondary); cursor: pointer; }
+    .sm-campaign-filter-label .item-checkbox { accent-color: var(--blue); }
     .sm-cl-media-item { width: 120px; cursor: pointer; overflow: hidden; }
     .sm-cl-media-item.active { border-color: var(--blue); }
     .sm-cl-media-thumb { width: 100%; height: 90px; object-fit: cover; display: block; }
     .sm-cl-media-label { padding: 4px 6px; font-size: var(--badge-font-size); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sm-text-preview { margin-bottom: 8px; }
+    .sm-view-detail { max-width: 600px; margin: 0 auto; }
+    .sm-detail-metrics { padding: 12px 16px; border-top: 1px solid var(--border-light); }
+    .sm-detail-links { padding: 0 16px 12px; display: flex; gap: 8px; }
+    .sm-detail-platforms { text-align: center; margin-top: 12px; font-size: var(--badge-font-size); color: var(--text-muted); }
+    .sm-cal-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 16px; }
+    .sm-nd-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .sm-nd-card { padding: 12px; cursor: pointer; }
+    .sm-nd-headline { font-weight: var(--font-weight-semibold); margin-bottom: 6px; }
+    .sm-nd-category { font-size: var(--badge-font-size); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); margin-bottom: 4px; }
+    .sm-nd-bullet { padding: 8px; border: 1px solid var(--border-light); border-radius: var(--btn-radius); margin-top: 6px; cursor: pointer; }
+    .sm-nd-bullet.active { border-color: var(--blue); }
+    .sm-nd-bullet-title { font-weight: 500; }
+    .sm-nd-bullet-text { font-size: var(--note-font-size); color: var(--text-secondary); }
+    .sm-blog-section { margin-bottom: 16px; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--btn-radius); }
+    .sm-blog-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .sm-blog-section-title { font-weight: var(--font-weight-semibold); }
+    .sm-blog-section-content { font-size: var(--body-font-size); color: var(--text); white-space: pre-wrap; }
+    .sm-logo-preview { display: flex; align-items: center; gap: 12px; }
+    .sm-logo-img { width: 64px; height: 64px; border-radius: var(--btn-radius); border: 1px solid var(--border); }
+    .sm-logo-permission-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .sm-logo-permission-row .form-label { margin-bottom: 0; }
+    .sm-checkbox-row { display: flex; align-items: center; gap: 8px; }
+    .sm-checkbox-row .form-label { margin-bottom: 0; }
+    .sm-other-wrap { margin-top: 16px; }
+    .sm-video-fill { width: 100%; height: 100%; object-fit: cover; }
+    .sm-conn-label { font-size: var(--badge-font-size); color: var(--text-muted); }
+    .sm-proj-empty { color: var(--text-muted); font-size: var(--note-font-size); }
+    .sm-proj-card { margin-bottom: 8px; padding: 12px; cursor: pointer; }
+    .sm-proj-card.active { border-color: var(--blue); }
+    .sm-proj-row { display: flex; justify-content: space-between; align-items: center; }
+    .sm-proj-actions { display: flex; align-items: center; gap: 8px; }
+    .sm-proj-desc { font-size: var(--note-font-size); color: var(--text-muted); margin-top: 4px; }
+    .sm-proj-status-select { width: 200px; }
+    .sm-campaign-history-title { margin-top: 32px; margin-bottom: 12px; }
+    .sm-campaign-history-card { margin-bottom: 12px; padding: 16px; }
+    .sm-campaign-history-row { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+    .sm-campaign-history-name { font-weight: var(--heading-lg-weight); margin-bottom: 4px; }
+    .sm-campaign-history-dates { font-size: var(--badge-font-size); color: var(--text-muted); }
+    .sm-campaign-history-stats { margin-top: 12px; }
+    .sm-stat-compact { padding: 8px; }
+    .sm-launch-wrap { margin-bottom: 20px; }
+    .sm-approve-wrap { margin-bottom: 20px; display: flex; gap: 8px; }
+    .sm-campaign-actions { margin-bottom: 20px; }
+    .sm-next-post { margin-bottom: 20px; }
+    .sm-next-post-body { font-size: var(--body-font-size); color: var(--text); line-height: var(--body-line-height); }
+    .sm-timeline-title { margin-bottom: 12px; }
+    .sm-week-card { margin-bottom: 16px; }
+    .sm-extend-select { width: 200px; }
 
     .sm-generating {
       text-align: center;
@@ -334,7 +397,7 @@
       .sm-wizard-nav .btn-back { width: 100%; justify-content: center; }
       .sm-wizard-nav .btn-outline { width: 100%; justify-content: center; }
       .sm-filter-bar { flex-direction: column; align-items: stretch; }
-      .sm-filter-bar .search-input { max-width: 100%; }
+      .sm-search-input { width: 100%; max-width: 100%; margin-left: 0; font-size: var(--input-font-size-mobile, 16px); }
       .sm-pills-wrap { gap: var(--btn-gap); }
       .sm-publish-actions { flex-direction: column; }
       .sm-publish-actions .btn-primary,
@@ -478,7 +541,7 @@
 
     <div id="sm-tab-drafts" class="ptab-content">
       <div class="sm-filter-bar">
-        <input type="text" class="search-input" id="sm-drafts-search" placeholder="Search drafts...">
+        <input type="text" class="sm-search-input" id="sm-drafts-search" placeholder="Search drafts...">
         <div id="sm-drafts-filters" class="sm-filter-pills"></div>
       </div>
       <div id="sm-drafts-bulk-bar" class="action-row sm-bulk-bar" style="display:none">
@@ -498,7 +561,7 @@
 
     <div id="sm-tab-scheduled" class="ptab-content">
       <div class="sm-filter-bar">
-        <input type="text" class="search-input" id="sm-scheduled-search" placeholder="Search scheduled...">
+        <input type="text" class="sm-search-input" id="sm-scheduled-search" placeholder="Search scheduled...">
         <div id="sm-scheduled-filters" class="sm-filter-pills"></div>
         <div class="sm-filter-bar-right">
           <button class="filter-pill active" id="sm-view-list-btn">List</button>
@@ -518,9 +581,9 @@
 
     <div id="sm-tab-published" class="ptab-content">
       <div class="sm-filter-bar">
-        <input type="text" class="search-input" id="sm-published-search" placeholder="Search published...">
+        <input type="text" class="sm-search-input" id="sm-published-search" placeholder="Search published...">
         <div id="sm-published-filters" class="sm-filter-pills"></div>
-        <select class="search-input sm-sort-select" id="sm-published-sort">
+        <select class="sm-sort-select" id="sm-published-sort">
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
           <option value="reach">Highest reach</option>

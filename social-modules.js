@@ -310,7 +310,7 @@
       }
       html += '<span class="sm-post-date">' + dateStr + '</span>';
       html += '</div>';
-      html += '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml(preview) + '</div>';
+      html += '<div class="text-preview sm-text-preview">' + window.escHtml(preview) + '</div>';
       html += '<div class="sm-post-actions">';
 
       if (tab === 'draft') {
@@ -497,7 +497,7 @@
       var businessName = (this._profile && this._profile.business_name) || 'Your Business';
       var initial = businessName.charAt(0).toUpperCase();
 
-      var detailHtml = '<div class="sm-preview-card" style="max-width:600px;margin:0 auto">' +
+      var detailHtml = '<div class="sm-preview-card sm-view-detail">' +
         '<div class="sm-preview-header">' +
         '<div class="sm-preview-avatar">' + initial + '</div>' +
         '<div><div class="sm-preview-name">' + window.escHtml(businessName) + '</div>' +
@@ -509,7 +509,7 @@
         '<div class="sm-preview-caption">' + window.escHtml(viewPost.caption || '') + '</div>' +
         '<div class="sm-preview-hashtags">' + window.escHtml(viewPost.hashtags || '') + '</div>' +
         '</div>';
-      detailHtml += '<div style="padding:12px 16px;border-top:1px solid var(--border-light)">' +
+      detailHtml += '<div class="sm-detail-metrics">' +
         '<div class="sm-post-metrics">' +
         '<div class="sm-post-metric">\uD83D\uDC41 <span class="sm-post-metric-value">' + (viewPost.reach || 0) + '</span> reach</div>' +
         '<div class="sm-post-metric">\u2764\uFE0F <span class="sm-post-metric-value">' + (viewPost.engagement || 0) + '</span> engagement</div>' +
@@ -517,7 +517,7 @@
         '</div></div>';
 
       if (viewPost.metadata && (viewPost.metadata.facebook_id || viewPost.metadata.instagram_id)) {
-        detailHtml += '<div style="padding:0 16px 12px;display:flex;gap:8px">';
+        detailHtml += '<div class="sm-detail-links">';
         if (viewPost.metadata.facebook_id) {
           detailHtml += '<a href="https://www.facebook.com/' + window.escHtml(viewPost.metadata.facebook_id) + '" target="_blank" rel="noopener" class="btn-outline btn-sm">View on Facebook</a>';
         }
@@ -531,7 +531,7 @@
 
       var conns = viewPost.connections || [];
       if (conns.length > 0) {
-        detailHtml += '<div style="text-align:center;margin-top:12px;font-size:var(--badge-font-size);color:var(--text-muted)">Published to: ' + window.escHtml(conns.join(', ')) + '</div>';
+        detailHtml += '<div class="sm-detail-platforms">Published to: ' + window.escHtml(conns.join(', ')) + '</div>';
       }
 
       document.getElementById('sm-confirm-title').textContent = 'Post Details';
@@ -717,7 +717,7 @@
     var daysInMonth = new Date(year, month + 1, 0).getDate();
     var monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-    var html = '<div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">';
+    var html = '<div class="sm-cal-nav">';
     html += '<button class="btn-outline btn-sm" id="sm-cal-prev">Previous</button>';
     html += '<strong>' + monthNames[month] + ' ' + year + '</strong>';
     html += '<button class="btn-outline btn-sm" id="sm-cal-next">Next</button>';
@@ -995,16 +995,16 @@
       '<button class="filter-pill" id="sm-project-manual">Enter manually</button>' +
       '<button class="filter-pill" id="sm-project-add-new">Add a new project</button>' +
       '</div>';
-    html += '<div id="sm-project-list" style="margin-top:16px"></div>';
-    html += '<div id="sm-project-manual-fields" style="display:none;margin-top:16px">' +
+    html += '<div id="sm-project-list"></div>';
+    html += '<div id="sm-project-manual-fields" style="display:none">' +
       '<div class="form-group"><label class="form-label">Customer first name</label>' +
       '<input type="text" class="form-input" id="sm-field-customer-name" value="' + window.escHtml(this._journeyInputs.customer_name || '') + '"></div>' +
       '<div class="form-group"><label class="form-label">Service provided</label>' +
       '<input type="text" class="form-input" id="sm-field-service" value="' + window.escHtml(this._journeyInputs.service || '') + '"></div>' +
       '</div>';
-    html += '<div id="sm-project-add-form" style="display:none;margin-top:16px">' +
+    html += '<div id="sm-project-add-form" style="display:none">' +
       '<div class="sm-step-content">' +
-      '<div class="sm-step-question" style="margin-bottom:12px">Add New Project</div>' +
+      '<div class="sm-step-question">Add New Project</div>' +
       '<div class="form-group"><label class="form-label">Customer name</label>' +
       '<input type="text" class="form-input" id="sm-proj-new-name"></div>' +
       '<div class="form-group"><label class="form-label">Service provided</label>' +
@@ -1012,11 +1012,11 @@
       '<div class="form-group"><label class="form-label">Description (optional)</label>' +
       '<textarea class="form-input" id="sm-proj-new-desc" rows="2"></textarea></div>' +
       '<div class="form-group"><label class="form-label">Status</label>' +
-      '<select class="form-input" id="sm-proj-new-status" style="width:200px">' +
+      '<select class="form-input sm-proj-status-select" id="sm-proj-new-status">' +
       '<option value="completed">Completed</option>' +
       '<option value="active">Active</option>' +
       '</select></div>' +
-      '<div class="action-row" style="margin-top:12px">' +
+      '<div class="action-row">' +
       '<button class="btn-primary btn-sm" id="sm-proj-save-new">Save Project</button>' +
       '<button class="btn-outline btn-sm" id="sm-proj-cancel-new">Cancel</button>' +
       '</div></div></div>';
@@ -1106,7 +1106,7 @@
 
     var projects = await this._loadCLProjects();
     if (projects.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--note-font-size)">No saved projects yet. Enter details manually or add a new project.</div>';
+      container.innerHTML = '<div class="sm-proj-empty">No saved projects yet. Enter details manually or add a new project.</div>';
       return;
     }
 
@@ -1117,16 +1117,16 @@
       var statusBadge = p.status === 'active'
         ? '<span class="badge badge-green">Active</span>'
         : '<span class="badge badge-grey">Completed</span>';
-      html += '<div class="item-card" style="margin-bottom:8px;padding:12px;cursor:pointer' + (isSelected ? ';border-color:var(--blue)' : '') + '" data-projid="' + p.id + '">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+      html += '<div class="item-card sm-proj-card' + (isSelected ? ' active' : '') + '" data-projid="' + p.id + '">' +
+        '<div class="sm-proj-row">' +
         '<div><strong>' + window.escHtml(p.customer_name || '') + '</strong>' +
         (p.service_provided ? ' &mdash; ' + window.escHtml(p.service_provided) : '') +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:8px">' + statusBadge +
-        '<button class="btn-outline btn-sm" data-projdelete="' + p.id + '" style="padding:2px 8px;font-size:var(--badge-font-size)">Delete</button>' +
+        '<div class="sm-proj-actions">' + statusBadge +
+        '<button class="btn-outline btn-sm" data-projdelete="' + p.id + '">Delete</button>' +
         '</div></div>';
       if (p.description) {
-        html += '<div style="font-size:var(--note-font-size);color:var(--text-muted);margin-top:4px">' + window.escHtml(p.description.substring(0, 120)) + '</div>';
+        html += '<div class="sm-proj-desc">' + window.escHtml(p.description.substring(0, 120)) + '</div>';
       }
       html += '</div>';
     });

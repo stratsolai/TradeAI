@@ -576,9 +576,9 @@ window.SM_CAMPAIGN = {
       '<div class="sm-step-hint">' + approved + ' of ' + total + ' posts approved. ' + pending + ' pending review.</div>';
 
     if (pending === 0 && total > 0) {
-      html += '<div style="margin-bottom:20px"><button class="btn-primary" id="smc-launch-btn">Launch Campaign</button></div>';
+      html += '<div class="sm-launch-wrap"><button class="btn-primary" id="smc-launch-btn">Launch Campaign</button></div>';
     } else {
-      html += '<div style="margin-bottom:20px;display:flex;gap:8px">' +
+      html += '<div class="sm-approve-wrap">' +
         '<button class="btn-outline btn-sm" id="smc-approve-all">Approve All Remaining</button>' +
         '</div>';
     }
@@ -606,10 +606,10 @@ window.SM_CAMPAIGN = {
         '<div class="sm-post-meta">' +
         '<span class="sm-post-type">Post ' + (idx + 1) + '</span>' +
         statusBadge +
-        (connList ? '<span style="font-size:var(--badge-font-size);color:var(--text-muted)">' + window.escHtml(connList) + '</span>' : '') +
+        (connList ? '<span class="sm-conn-label">' + window.escHtml(connList) + '</span>' : '') +
         (post.scheduled_for ? '<span class="sm-post-date">' + new Date(post.scheduled_for).toLocaleDateString('en-AU') + '</span>' : '') +
         '</div>' +
-        '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
+        '<div class="text-preview sm-text-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>' +
         '<div class="sm-post-actions">';
 
       if (post.status === 'pending') {
@@ -683,7 +683,7 @@ window.SM_CAMPAIGN = {
       '<div class="sm-wizard-title">Edit Post</div></div>' +
       '<div class="sm-step-content">' +
       '<div class="form-group"><label class="form-label">Caption</label>' +
-      '<textarea class="form-input" style="min-height:120px;line-height:var(--body-line-height);resize:vertical" id="smc-edit-caption">' + window.escHtml(post.caption || '') + '</textarea></div>' +
+      '<textarea class="form-input sm-edit-textarea" id="smc-edit-caption">' + window.escHtml(post.caption || '') + '</textarea></div>' +
       '<div class="form-group"><label class="form-label">Hashtags</label>' +
       '<input type="text" class="form-input sm-edit-hashtags-colour" id="smc-edit-hashtags" value="' + window.escHtml(post.hashtags || '') + '"></div>' +
       '<div class="form-group"><label class="form-label">Scheduled date</label>' +
@@ -880,13 +880,13 @@ window.SM_CAMPAIGN = {
 
     if (scheduled.length > 0) {
       var next = scheduled[0];
-      html += '<div class="sm-step-content" style="margin-bottom:20px">' +
+      html += '<div class="sm-step-content sm-next-post">' +
         '<div class="sm-step-question">Next Post</div>' +
-        '<div style="font-size:var(--body-font-size);color:var(--text);line-height:var(--body-line-height)">' +
+        '<div class="sm-next-post-body">' +
         window.escHtml((next.caption || '').substring(0, 200)) + '</div></div>';
     }
 
-    html += '<div class="action-row sm-publish-actions" style="margin-bottom:20px">';
+    html += '<div class="action-row sm-publish-actions sm-campaign-actions">';
     if (campaign.status === 'active') {
       html += '<button class="btn-outline" id="smc-pause">Pause Campaign</button>';
       html += '<button class="btn-outline" id="smc-add-post">Add a Post</button>';
@@ -897,7 +897,7 @@ window.SM_CAMPAIGN = {
     html += '<button class="btn-dismiss" id="smc-end">End Campaign</button>';
     html += '</div>';
 
-    html += '<div class="sm-step-question" style="margin-bottom:12px">Campaign Timeline</div>';
+    html += '<div class="sm-step-question sm-timeline-title">Campaign Timeline</div>';
 
     var campaignStartMs = campaign.started_at ? new Date(campaign.started_at).getTime() : (posts.length > 0 ? new Date(posts[0].created_at).getTime() : Date.now());
     var weekBuckets = {};
@@ -913,8 +913,8 @@ window.SM_CAMPAIGN = {
 
     weekNums.forEach(function(wn) {
       var weekTitle = totalWeeks > 0 ? 'Week ' + wn + ' of ' + displayTotalWeeks : 'Week ' + wn;
-      html += '<div class="sm-step-content" style="margin-bottom:16px">' +
-        '<div class="sm-step-question" style="margin-bottom:12px">' + weekTitle + '</div>' +
+      html += '<div class="sm-step-content sm-week-card">' +
+        '<div class="sm-step-question sm-timeline-title">' + weekTitle + '</div>' +
         '<div class="sm-post-list">';
       weekBuckets[wn].forEach(function(post) {
         var pBadge = '';
@@ -931,7 +931,7 @@ window.SM_CAMPAIGN = {
         html += '</div>' +
           '<div class="sm-post-body"><div class="sm-post-meta">' + pBadge +
           '<span class="sm-post-date">' + (post.published_at ? new Date(post.published_at).toLocaleDateString('en-AU') : (post.created_at ? new Date(post.created_at).toLocaleDateString('en-AU') : '')) + '</span></div>' +
-          '<div class="text-preview" style="margin-bottom:8px">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
+          '<div class="text-preview sm-text-preview">' + window.escHtml((post.caption || '').substring(0, 100)) + '</div>';
 
         if (post.status === 'published') {
           html += '<div class="sm-post-metrics">' +
@@ -1054,7 +1054,7 @@ window.SM_CAMPAIGN = {
 
   _renderHistoryList: async function(campaigns, container) {
     var self = this;
-    var html = '<div class="sm-step-question" style="margin-top:32px;margin-bottom:12px">Campaign History</div>';
+    var html = '<div class="sm-step-question sm-campaign-history-title">Campaign History</div>';
 
     for (var i = 0; i < campaigns.length; i++) {
       var c = campaigns[i];
@@ -1075,16 +1075,16 @@ window.SM_CAMPAIGN = {
       var startDate = c.created_at ? new Date(c.created_at).toLocaleDateString('en-AU') : '';
       var endDate = c.updated_at ? new Date(c.updated_at).toLocaleDateString('en-AU') : '';
 
-      html += '<div class="item-card" style="margin-bottom:12px;padding:16px">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">' +
-        '<div><div style="font-weight:var(--heading-lg-weight);margin-bottom:4px">' + window.escHtml(c.name || 'Campaign') + '</div>' +
-        '<div style="font-size:var(--badge-font-size);color:var(--text-muted)">' + startDate + ' \u2014 ' + endDate + '</div></div>' +
+      html += '<div class="item-card sm-campaign-history-card">' +
+        '<div class="sm-campaign-history-row">' +
+        '<div><div class="sm-campaign-history-name">' + window.escHtml(c.name || 'Campaign') + '</div>' +
+        '<div class="sm-campaign-history-dates">' + startDate + ' \u2014 ' + endDate + '</div></div>' +
         '<button class="btn-outline btn-sm" data-runagain="' + c.id + '">Run Again</button>' +
         '</div>' +
-        '<div class="stats-bar" style="margin-top:12px">' +
-        '<div class="stat-card green" style="padding:8px"><div class="stat-value">' + published + '</div><div class="stat-label">Published</div></div>' +
-        '<div class="stat-card teal" style="padding:8px"><div class="stat-value">' + totalReach + '</div><div class="stat-label">Reach</div></div>' +
-        '<div class="stat-card orange" style="padding:8px"><div class="stat-value">' + totalEngagement + '</div><div class="stat-label">Engagement</div></div>' +
+        '<div class="stats-bar sm-campaign-history-stats">' +
+        '<div class="stat-card green sm-stat-compact"><div class="stat-value">' + published + '</div><div class="stat-label">Published</div></div>' +
+        '<div class="stat-card teal sm-stat-compact"><div class="stat-value">' + totalReach + '</div><div class="stat-label">Reach</div></div>' +
+        '<div class="stat-card orange sm-stat-compact"><div class="stat-value">' + totalEngagement + '</div><div class="stat-label">Engagement</div></div>' +
         '</div></div>';
     }
 
@@ -1150,14 +1150,14 @@ window.SM_CAMPAIGN = {
       '<div class="sm-step-content">' +
       '<div class="sm-step-hint">Add more posts to your running campaign.</div>' +
       '<div class="form-group"><label class="form-label">Additional weeks</label>' +
-      '<select class="form-input" id="smc-extend-weeks" style="width:200px">' +
+      '<select class="form-input sm-extend-select" id="smc-extend-weeks">' +
       '<option value="1">1 week</option>' +
       '<option value="2" selected>2 weeks</option>' +
       '<option value="3">3 weeks</option>' +
       '<option value="4">4 weeks</option>' +
       '</select></div>' +
       '<div class="form-group"><label class="form-label">Posts per week</label>' +
-      '<select class="form-input" id="smc-extend-ppw" style="width:200px">' +
+      '<select class="form-input sm-extend-select" id="smc-extend-ppw">' +
       '<option value="2">2 per week</option>' +
       '<option value="3" selected>3 per week</option>' +
       '<option value="4">4 per week</option>' +

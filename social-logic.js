@@ -564,7 +564,7 @@ window.SOCIAL_LOGIC = {
         }
         html += '<div class="sm-media-preview-item">';
         if (isVideo) {
-          html += '<video src="' + window.escHtml(url) + '" style="width:100%;height:100%;object-fit:cover" muted></video>';
+          html += '<video src="' + window.escHtml(url) + '" class="sm-video-fill" muted></video>';
         } else {
           html += '<img src="' + window.escHtml(url) + '" alt="">';
         }
@@ -583,7 +583,7 @@ window.SOCIAL_LOGIC = {
     this.TONES.forEach(function(t) {
       var active = currentTone === t.id ? ' active' : '';
       html += '<button class="filter-pill' + active + '" data-tone="' + t.id + '">' +
-        window.escHtml(t.label) + '<br><span class="text-muted" style="font-weight:400">' +
+        window.escHtml(t.label) + '<br><span class="text-muted">' +
         window.escHtml(t.desc) + '</span></button>';
     });
     html += '</div>';
@@ -637,10 +637,10 @@ window.SOCIAL_LOGIC = {
     var html = '<div class="sm-step-hint">A headline for your graphic. The AI can suggest one, or enter your own.</div>';
     html += '<div class="form-group"><label class="form-label">Headline</label>' +
       '<input type="text" class="form-input" id="sm-field-headline" placeholder="Enter a headline or leave blank for AI suggestion" value="' + window.escHtml(this._journeyInputs.headline || '') + '"></div>';
-    html += '<div class="form-group" style="display:flex;align-items:center;gap:8px">' +
+    html += '<div class="form-group sm-checkbox-row">' +
       '<input type="checkbox" class="item-checkbox" id="sm-field-headline-on-graphic"' +
       (this._journeyInputs.headline_on_graphic !== false ? ' checked' : '') + '>' +
-      '<label class="form-label" for="sm-field-headline-on-graphic" style="margin-bottom:0">Include headline on graphic</label></div>';
+      '<label class="form-label" for="sm-field-headline-on-graphic">Include headline on graphic</label></div>';
     return html;
   },
 
@@ -688,10 +688,10 @@ window.SOCIAL_LOGIC = {
       '<input type="date" class="form-input" id="sm-field-start-date" value="' + window.escHtml(vals.start_date || '') + '"></div>';
     html += '<div class="form-group"><label class="form-label">End date</label>' +
       '<input type="date" class="form-input" id="sm-field-end-date" value="' + window.escHtml(vals.end_date || '') + '"></div>';
-    html += '<div class="form-group" style="display:flex;align-items:center;gap:8px">' +
+    html += '<div class="form-group sm-checkbox-row">' +
       '<input type="checkbox" class="item-checkbox" id="sm-field-ongoing"' +
       (vals.ongoing ? ' checked' : '') + '>' +
-      '<label class="form-label" for="sm-field-ongoing" style="margin-bottom:0">Ongoing / while stocks last</label></div>';
+      '<label class="form-label" for="sm-field-ongoing">Ongoing / while stocks last</label></div>';
     return html;
   },
 
@@ -709,7 +709,7 @@ window.SOCIAL_LOGIC = {
       html += '<button class="filter-pill' + active + '" data-source="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
-    html += '<div id="sm-nd-items-container" style="margin-top:16px;display:none"></div>';
+    html += '<div id="sm-nd-items-container" style="display:none"></div>';
     return html;
   },
 
