@@ -1,830 +1,295 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" href="/manifest.json">
   <title>Account Management — StaxAI</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
-  <script src="/supabase-client.js"></script>
-  <script src="/tools-data.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    .acct-container { max-width: var(--settings-max-width); margin: 0 auto; padding: var(--settings-page-padding); }
 
-    :root {
-      --bg:           #F5F7FA;
-      --card:         #FFFFFF;
-      --orange:       #c4622a;
-      --orange-light: #d4844a;
-      --navy:         #1A3A5C;
-      --navy-light:   #4A6D8C;
-      --text:         #1a2a3a;
-      --muted:        #6b7c93;
-      --border:       #e2e8f0;
-      --danger:       #c0392b;
-      --success:      #1a7a4a;
-      --font-body:    'DM Sans', sans-serif;
-      --font-head:    'Barlow Condensed', sans-serif;
-      --radius:       10px;
-      --shadow:       0 1px 4px rgba(0,0,0,0.08);
-      --shadow-md:    0 4px 16px rgba(0,0,0,0.10);
-    }
-
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* ── TOPBAR ── */
-    .topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 68px;
-      background: linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);
+    /* ── Subscription cards ── */
+    .acct-sub-list { display: flex; flex-direction: column; gap: 12px; }
+    .acct-sub-item {
       display: flex;
       align-items: center;
-      padding: 0 28px;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .topbar-logo img { height: 36px; display: block; }
-    .topbar-logo { text-decoration: none; }
-    .topbar-nav { display: flex; align-items: center; margin-left: 64px; }
-    .topbar-back { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 16px; font-weight: 600; transition: color 0.2s; }
-    .topbar-back:hover { color: #fff; }
-    .topbar-spacer { flex: 1; }
-    .topbar-right { display: flex; align-items: center; }
-    .topbar-nav-link { color: rgba(255,255,255,0.75); text-decoration: none; font-size: 16px; font-weight: 600; transition: color 0.2s; }
-    .topbar-nav-link:hover { color: #fff; }
-
-    /* ── PAGE LAYOUT ── */
-    .page-wrap {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 100px 24px 60px;
-    }
-    .page-heading {
-      font-family: var(--font-head);
-      font-size: 32px;
-      font-weight: 700;
-      color: var(--navy);
-      margin-bottom: 6px;
-      letter-spacing: 0.3px;
-    }
-    .page-subheading {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 36px;
-    }
-
-    /* ── SECTION CARDS ── */
-    .section-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      margin-bottom: 24px;
-      overflow: hidden;
-    }
-    .section-header {
-      padding: 18px 24px 16px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .section-title {
-      font-family: var(--font-head);
-      font-size: 18px;
-      font-weight: 600;
-      color: var(--navy);
-      letter-spacing: 0.3px;
-    }
-    .section-body { padding: 24px; }
-
-    /* ── SUBSCRIPTIONS ── */
-    .sub-empty {
-      text-align: center;
-      padding: 32px 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-    .sub-empty a {
-      color: var(--orange);
-      text-decoration: none;
-      font-weight: 600;
-    }
-    .sub-list { display: flex; flex-direction: column; gap: 12px; }
-    .sub-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
+      gap: 14px;
       padding: 14px 16px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--btn-radius);
     }
-    .sub-icon {
-      width: 40px; height: 40px;
-      background: var(--navy);
-      border-radius: 8px;
+    .acct-sub-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--blue);
+      border-radius: var(--btn-radius);
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       flex-shrink: 0;
     }
-    .sub-info { flex: 1; }
-    .sub-name {
-      font-weight: 600;
-      font-size: 14px;
-      color: var(--text);
-    }
-    .sub-desc {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .sub-price {
-      font-family: var(--font-head);
+    .acct-sub-info { flex: 1; min-width: 0; }
+    .acct-sub-name { font-weight: var(--font-weight-semibold); font-size: var(--body-font-size); color: var(--text); }
+    .acct-sub-desc { font-size: var(--badge-font-size); color: var(--text-muted); margin-top: 2px; }
+    .acct-sub-price {
+      font-family: var(--heading-font);
       font-size: 16px;
-      font-weight: 600;
-      color: var(--navy);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
       white-space: nowrap;
     }
 
-    /* ── BILLING ── */
-    .billing-body {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-    }
-    .billing-text {
-      font-size: 14px;
-      color: var(--muted);
-      max-width: 480px;
-      line-height: 1.5;
-    }
-
-    /* ── USER MANAGEMENT ── */
-    .team-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-    .team-item {
+    /* ── Team members ── */
+    .acct-team-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+    .acct-team-item {
       display: flex;
       align-items: center;
       gap: 14px;
       padding: 12px 16px;
       background: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-radius: var(--btn-radius);
     }
-    .team-avatar {
-      width: 36px; height: 36px;
+    .acct-avatar {
+      width: 36px;
+      height: 36px;
       border-radius: 50%;
-      background: var(--navy-light);
+      background: var(--blue);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: var(--font-head);
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--white);
       flex-shrink: 0;
     }
-    .team-info { flex: 1; min-width: 0; }
-    .team-email {
-      font-size: 14px;
+    .acct-avatar-muted { background: var(--grey); }
+    .acct-team-info { flex: 1; min-width: 0; }
+    .acct-team-email {
+      font-size: var(--body-font-size);
       font-weight: 500;
       color: var(--text);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    .team-meta {
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .level-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      white-space: nowrap;
-    }
-    .level-1 { background: rgba(196,98,42,0.12); color: var(--orange); }
-    .level-2 { background: rgba(26,58,92,0.10); color: var(--navy); }
-    .level-3 { background: rgba(107,124,147,0.15); color: var(--muted); }
-    .pending-badge {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 9px;
-      border-radius: 20px;
-      background: rgba(196,98,42,0.10);
-      color: var(--orange);
-      white-space: nowrap;
-    }
+    .acct-team-meta { font-size: var(--badge-font-size); color: var(--text-muted); margin-top: 2px; }
+    .acct-team-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-    .team-actions { display: flex; gap: 8px; }
-
-    /* ── INVITE SECTION ── */
-    .invite-section {
-      border-top: 1px solid var(--border);
-      padding-top: 24px;
-      margin-top: 8px;
-    }
-    .invite-title {
-      font-family: var(--font-head);
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--navy);
+    /* ── Invite form ── */
+    .acct-invite-section { border-top: 1px solid var(--border); padding-top: 24px; margin-top: 8px; }
+    .acct-invite-title {
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
       margin-bottom: 14px;
     }
-    .invite-form {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: flex-end;
-    }
-    .invite-form .field { display: flex; flex-direction: column; gap: 5px; }
-    .invite-form label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
+    .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+    .acct-invite-field { display: flex; flex-direction: column; gap: 5px; }
+    .acct-invite-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: var(--letter-spacing-label);
     }
-    .invite-form input,
-    .invite-form select {
+    .acct-invite-input {
       height: 38px;
       padding: 0 12px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      font-family: var(--font-body);
-      font-size: 14px;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      font-family: var(--body-font);
+      font-size: var(--input-font-size);
       color: var(--text);
-      background: #fff;
+      background: var(--white);
       outline: none;
-      transition: border-color 0.2s;
+      width: 260px;
+      transition: border-color var(--btn-transition);
     }
-    .invite-form input { width: 260px; }
-    .invite-form input:focus,
-    .invite-form select:focus { border-color: var(--navy-light); }
-    .invite-max-msg {
-      font-size: 13px;
-      color: var(--muted);
-      padding: 12px 0;
+    .acct-invite-input:focus { border-color: var(--blue); }
+    .acct-invite-select {
+      height: 38px;
+      padding: 0 12px;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      font-family: var(--body-font);
+      font-size: var(--input-font-size);
+      color: var(--text);
+      background: var(--white);
+      outline: none;
+      transition: border-color var(--btn-transition);
     }
+    .acct-invite-select:focus { border-color: var(--blue); }
+    .acct-max-msg { font-size: var(--note-font-size); color: var(--text-muted); padding: 12px 0; }
 
-    /* ── ACCOUNT DETAILS ── */
-    .detail-row {
+    /* ── Account detail rows ── */
+    .acct-detail-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 14px 0;
       border-bottom: 1px solid var(--border);
     }
-    .detail-row:last-child { border-bottom: none; }
-    .detail-label {
-      font-size: 13px;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    .detail-value {
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--text);
-    }
+    .acct-detail-row:last-child { border-bottom: none; }
+    .acct-detail-label { font-size: var(--note-font-size); color: var(--text-muted); font-weight: 500; }
+    .acct-detail-value { font-size: var(--body-font-size); font-weight: 500; color: var(--text); }
 
-    /* ── BUTTONS ── */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      height: 38px;
-      padding: 0 18px;
-      border-radius: 6px;
-      font-family: var(--font-body);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      text-decoration: none;
-      transition: opacity 0.2s, background 0.2s;
-      white-space: nowrap;
-    }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-primary { background: var(--orange); color: #fff; }
-    .btn-primary:hover { background: var(--orange-light); }
-    .btn-navy { background: var(--navy); color: #fff; }
-    .btn-navy:hover { opacity: 0.88; }
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-    .btn-outline:hover { border-color: var(--navy-light); color: var(--navy); }
-    .btn-danger-outline {
-      background: transparent;
-      border: 1px solid #e2b8b8;
-      color: var(--danger);
-      font-size: 12px;
-      height: 30px;
-      padding: 0 12px;
-    }
-    .btn-danger-outline:hover { background: rgba(192,57,43,0.06); }
-    .btn-sm-outline {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      font-size: 12px;
-      height: 30px;
-      padding: 0 12px;
-    }
-    .btn-sm-outline:hover { border-color: var(--navy-light); color: var(--navy); }
-
-    /* ── MESSAGES ── */
-    .msg {
-      display: none;
-      padding: 12px 16px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
-      margin-bottom: 16px;
-    }
-    .msg.show { display: block; }
-    .msg-error { background: rgba(192,57,43,0.08); color: var(--danger); border: 1px solid rgba(192,57,43,0.2); }
-    .msg-success { background: rgba(26,122,74,0.08); color: var(--success); border: 1px solid rgba(26,122,74,0.2); }
-
-    /* ── LOADER ── */
-    .spinner {
-      width: 20px; height: 20px;
-      border: 2px solid rgba(0,0,0,0.1);
-      border-top-color: var(--orange);
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      display: inline-block;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loading-row {
+    /* ── Billing body ── */
+    .acct-billing-body {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 20px 0;
-      color: var(--muted);
-      font-size: 14px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
     }
+    .acct-billing-text { font-size: var(--body-font-size); color: var(--text-muted); max-width: 480px; line-height: var(--body-line-height); }
 
-    /* ── LEVEL-BASED VISIBILITY ── */
+    /* ── Owner-only sections ── */
     .owner-only { display: none; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .acct-container { padding: var(--page-padding-mobile); }
+      .acct-invite-form { flex-direction: column; }
+      .acct-invite-input { width: 100%; }
+      .acct-billing-body { flex-direction: column; align-items: flex-start; }
+      .acct-sub-item { flex-wrap: wrap; }
+    }
   </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
-<nav class="topbar">
-  <a class="topbar-logo" href="/dashboard.html"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" /></a>
-  <div class="topbar-nav"><a class="topbar-back" href="/dashboard.html">Dashboard</a></div>
-  <div class="topbar-spacer"></div>
-  <div class="topbar-right">
-    <a class="topbar-nav-link" href="#" id="topbarToolLink" style="display:none"></a>
-  </div>
-</nav>
-
-<!-- PAGE -->
-<main class="page-wrap">
-  <h1 class="page-heading">Account Management</h1>
-  <p class="page-subheading">Manage your subscriptions, billing, and team.</p>
-
-  <!-- GLOBAL MESSAGE -->
-  <div class="msg msg-error" id="globalError"></div>
-  <div class="msg msg-success" id="globalSuccess"></div>
-
-  <!-- ACTIVE SUBSCRIPTIONS -->
-  <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">Active Subscriptions</span>
+  <nav class="topbar">
+    <a href="/dashboard.html" class="topbar-logo">
+      <img src="/StaxAI Cropped Transparent.png" alt="StaxAI">
+    </a>
+    <div class="topbar-nav">
+      <a href="/dashboard.html">Dashboard</a>
     </div>
-    <div class="section-body" id="subsBody">
-      <div class="loading-row"><span class="spinner"></span> Loading subscriptions…</div>
-    </div>
-  </div>
-
-  <!-- BILLING (Level 1 only) -->
-  <div class="section-card owner-only" id="billingCard">
-    <div class="section-header">
-      <span class="section-title">Billing</span>
-    </div>
-    <div class="section-body">
-      <div class="billing-body">
-        <p class="billing-text">Use the billing portal to update your payment method, download invoices, or cancel subscriptions.</p>
-        <a href="#" id="billingPortalBtn" class="btn btn-navy" target="_blank" rel="noopener">Manage Billing</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- USER MANAGEMENT (Level 1 only) -->
-  <div class="section-card owner-only" id="userMgmtCard">
-    <div class="section-header">
-      <span class="section-title">Team Members</span>
-      <span id="teamCount" style="font-size:13px;color:var(--muted);"></span>
-    </div>
-    <div class="section-body" id="teamBody">
-      <div class="loading-row"><span class="spinner"></span> Loading team…</div>
-    </div>
-  </div>
-
-  <!-- ACCOUNT DETAILS -->
-  <div class="section-card">
-    <div class="section-header">
-      <span class="section-title">Account Details</span>
-    </div>
-    <div class="section-body">
-      <div class="detail-row">
-        <span class="detail-label">Email address</span>
-        <span class="detail-value" id="accountEmail">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Account type</span>
-        <span class="detail-value" id="accountRole">—</span>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Password</span>
-        <a href="#" id="changePasswordLink" class="btn btn-outline" style="height:32px;font-size:13px;padding:0 14px;">Change Password</a>
-      </div>
-      <div class="detail-row">
-        <span class="detail-label">Session</span>
-        <button id="signOutBtn" class="btn btn-danger-outline" style="height:32px;font-size:13px;padding:0 14px;">Sign Out</button>
-      </div>
-    </div>
-  </div>
-
-</main>
-
-<script>
-(async function() {
-  // ── AUTH CHECK ──
-  const { data: { session }, error: sessErr } = await window.supabaseClient.auth.getSession();
-  if (!session) { window.location.href = '/login.html'; return; }
-
-  const user = session.user;
-  document.getElementById('accountEmail').textContent = user.email;
-
-
-  // ── ACCOUNT OWNER RESOLUTION ──
-  // Check if this user is a team member
-  let accountOwnerId = user.id;
-  let securityLevel = 1;
-
-  const { data: memberRow } = await window.supabaseClient
-    .from('team_members')
-    .select('account_owner_id, security_level')
-    .eq('user_id', user.id)
-    .eq('status', 'active')
-    .maybeSingle();
-
-  if (memberRow) {
-    accountOwnerId = memberRow.account_owner_id;
-    securityLevel = memberRow.security_level;
-  }
-
-  window.accountOwnerId = accountOwnerId;
-  window.userSecurityLevel = securityLevel;
-
-  // ── ROLE LABEL ──
-  const roleLabels = { 1: 'Account Owner', 2: 'Manager', 3: 'Staff' };
-  document.getElementById('accountRole').textContent = roleLabels[securityLevel] || 'User';
-
-  // ── SHOW OWNER-ONLY SECTIONS ──
-  if (securityLevel === 1) {
-    document.querySelectorAll('.owner-only').forEach(el => el.style.display = '');
-  }
-
-  // ── LOAD SUBSCRIPTIONS ──
-  const { data: profile } = await window.supabaseClient
-    .from('profiles')
-    .select('activated_tools')
-    .eq('id', accountOwnerId)
-    .maybeSingle();
-
-  const subsBody = document.getElementById('subsBody');
-  const activatedTools = (profile && profile.activated_tools) ? profile.activated_tools : [];
-
-  if (activatedTools.length === 0) {
-    subsBody.innerHTML = '<div class="sub-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
-  } else {
-    // Look up tool details from tools-data.js (window.CORE_TOOLS)
-    const toolsData = (typeof window.CORE_TOOLS !== 'undefined') ? window.CORE_TOOLS : [];
-    const items = activatedTools.map(toolId => {
-      const tool = toolsData.find(t => t.toolId === toolId || t.id === toolId);
-      return tool || { name: toolId, icon: '🔧', price: '—' };
-    });
-
-    subsBody.innerHTML = '<div class="sub-list">' + items.map(t => `
-      <div class="sub-item">
-        <div class="sub-icon">${t.icon || '🔧'}</div>
-        <div class="sub-info">
-          <div class="sub-name">${t.name || t.toolId || t.id}</div>
-          <div class="sub-desc">${t.shortDesc || t.description || ''}</div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-right">
+      <div class="topbar-account-wrap">
+        <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
+        <div class="account-dropdown" id="account-dropdown">
+          <a href="/account" class="account-dropdown-item">Account Management</a>
+          <button class="account-dropdown-item" id="sign-out-btn">Sign out</button>
         </div>
-        <div class="sub-price">${t.price ? '$' + t.price + '/mo' : '—'}</div>
-      </div>`).join('') + '</div>';
-  }
+      </div>
+    </div>
+  </nav>
 
-  // ── BILLING PORTAL LINK ──
-  document.getElementById('billingPortalBtn').addEventListener('click', async function(e) {
-    e.preventDefault();
-    this.textContent = 'Opening…';
-    this.style.pointerEvents = 'none';
-    try {
-      const res = await fetch('/api/billing-portal', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token }
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
-      } else {
-        showGlobalError('Could not open billing portal. Please try again.');
-      }
-    } catch {
-      showGlobalError('Could not open billing portal. Please try again.');
-    }
-    this.textContent = 'Manage Billing';
-    this.style.pointerEvents = '';
-  });
+  <div id="page-wrap" style="display:none">
+    <div class="acct-container">
 
-  // ── TEAM MEMBERS (Level 1 only) ──
-  if (securityLevel === 1) {
-    await loadTeam();
-  }
+      <div class="page-header">
+        <h1 class="page-title">Account Management</h1>
+        <p class="page-subtitle">Manage your subscriptions, billing, and team.</p>
+      </div>
 
-  async function loadTeam() {
-    const teamBody = document.getElementById('teamBody');
-
-    const { data: activeMembers } = await window.supabaseClient
-      .from('team_members')
-      .select('id, email, security_level, status, joined_at, invited_at')
-      .eq('account_owner_id', user.id)
-      .eq('status', 'active')
-      .order('joined_at', { ascending: true });
-
-    const { data: pendingMembers } = await window.supabaseClient
-      .from('team_members')
-      .select('id, email, security_level, status, invited_at')
-      .eq('account_owner_id', user.id)
-      .eq('status', 'pending')
-      .order('invited_at', { ascending: false });
-
-    const active = activeMembers || [];
-    const pending = pendingMembers || [];
-    const total = active.length + pending.length;
-
-    document.getElementById('teamCount').textContent = `${total} of 4 team member${total !== 1 ? 's' : ''}`;
-
-    let html = '<div class="team-list">';
-
-    // Owner row (always first)
-    const ownerInitial = user.email.charAt(0).toUpperCase();
-    html += `
-      <div class="team-item">
-        <div class="team-avatar">${ownerInitial}</div>
-        <div class="team-info">
-          <div class="team-email">${user.email}</div>
-          <div class="team-meta">You</div>
+      <!-- Active Subscriptions (Level 1 + 2) -->
+      <div class="settings-card" id="subs-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Active Subscriptions</div>
         </div>
-        <span class="level-badge level-1">Account Owner</span>
-      </div>`;
+        <div class="settings-rows" id="subs-body">
+          <div class="list-loading">Loading subscriptions…</div>
+        </div>
+      </div>
 
-    // Active members
-    active.forEach(m => {
-      const initial = m.email.charAt(0).toUpperCase();
-      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
-      const levelClass = m.security_level === 2 ? 'level-2' : 'level-3';
-      const joined = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-      html += `
-        <div class="team-item" id="member-${m.id}">
-          <div class="team-avatar">${initial}</div>
-          <div class="team-info">
-            <div class="team-email">${m.email}</div>
-            <div class="team-meta">Joined ${joined}</div>
-          </div>
-          <span class="level-badge ${levelClass}">${levelLabel}</span>
-          <div class="team-actions">
-            <button class="btn btn-danger-outline" onclick="removeMember('${m.id}', '${m.email}')">Remove</button>
-          </div>
-        </div>`;
-    });
-
-    // Pending invites
-    pending.forEach(m => {
-      const initial = m.email.charAt(0).toUpperCase();
-      const levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
-      const invited = m.invited_at ? new Date(m.invited_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-      html += `
-        <div class="team-item" id="member-${m.id}">
-          <div class="team-avatar" style="background:var(--muted);">${initial}</div>
-          <div class="team-info">
-            <div class="team-email">${m.email}</div>
-            <div class="team-meta">Invited ${invited} · ${levelLabel}</div>
-          </div>
-          <span class="pending-badge">Pending</span>
-          <div class="team-actions">
-            <button class="btn btn-sm-outline" onclick="resendInvite('${m.id}', '${m.email}', ${m.security_level})">Resend</button>
-            <button class="btn btn-danger-outline" onclick="cancelInvite('${m.id}')">Cancel</button>
-          </div>
-        </div>`;
-    });
-
-    html += '</div>';
-
-    // Invite form or max message
-    if (total < 4) {
-      html += `
-        <div class="invite-section">
-          <div class="invite-title">Invite Team Member</div>
-          <div id="inviteMsg" class="msg"></div>
-          <div class="invite-form">
-            <div class="field">
-              <label>Email address</label>
-              <input type="email" id="inviteEmail" placeholder="teammate@example.com" />
+      <!-- Billing (Level 1 only) -->
+      <div class="settings-card owner-only" id="billing-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Billing</div>
+        </div>
+        <div class="settings-rows">
+          <div style="padding:18px 24px;">
+            <div class="acct-billing-body">
+              <p class="acct-billing-text">Use the billing portal to update your payment method, download invoices, or cancel subscriptions.</p>
+              <button class="btn-primary" id="billing-portal-btn">Manage Billing</button>
             </div>
-            <div class="field">
-              <label>Access level</label>
-              <select id="inviteLevel">
-                <option value="2">Manager</option>
-                <option value="3">Staff</option>
-              </select>
-            </div>
-            <button class="btn btn-primary" id="inviteBtn" onclick="sendInvite()">Send Invite</button>
           </div>
-        </div>`;
-    } else {
-      html += `
-        <div class="invite-section">
-          <p class="invite-max-msg">Your account has reached the maximum of 5 users (you + 4 team members).</p>
-        </div>`;
-    }
+        </div>
+      </div>
 
-    teamBody.innerHTML = html;
-  }
+      <!-- User Management (Level 1 only) -->
+      <div class="settings-card owner-only" id="team-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Team Members</div>
+          <div class="settings-card-hint" id="team-count"></div>
+        </div>
+        <div class="settings-rows" id="team-body">
+          <div class="list-loading">Loading team…</div>
+        </div>
+      </div>
 
-  // ── INVITE ──
-  window.sendInvite = async function() {
-    const email = document.getElementById('inviteEmail').value.trim();
-    const level = parseInt(document.getElementById('inviteLevel').value);
-    const btn = document.getElementById('inviteBtn');
-    const msg = document.getElementById('inviteMsg');
+      <!-- Account Details (All Levels) -->
+      <div class="settings-card">
+        <div class="settings-card-header">
+          <div class="settings-card-title">Account Details</div>
+        </div>
+        <div class="settings-rows">
+          <div style="padding:18px 24px;">
+            <div class="acct-detail-row">
+              <span class="acct-detail-label">Email address</span>
+              <span class="acct-detail-value" id="acct-email">&mdash;</span>
+            </div>
+            <div class="acct-detail-row">
+              <span class="acct-detail-label">Account type</span>
+              <span class="acct-detail-value" id="acct-role">&mdash;</span>
+            </div>
+            <div class="acct-detail-row">
+              <span class="acct-detail-label">Password</span>
+              <button class="btn-outline btn-sm" id="change-password-btn">Change Password</button>
+            </div>
+            <div class="acct-detail-row">
+              <span class="acct-detail-label">Session</span>
+              <button class="btn-outline btn-sm" id="acct-sign-out-btn" style="color:var(--red);border-color:var(--red);">Sign Out</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    if (!email) { showInviteMsg('Please enter an email address.', false); return; }
+    </div>
+  </div>
 
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
-    msg.className = 'msg';
-    msg.style.display = 'none';
+  <div class="save-msg" id="acct-msg">
+    <div class="save-msg-card">
+      <div class="save-msg-text"></div>
+      <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
 
-    try {
-      const res = await fetch('/api/invite-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ email, security_level: level })
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/auth.js"></script>
+  <script src="/topbar.js"></script>
+  <script src="/shared-utils.js"></script>
+  <script src="/pwa.js"></script>
+  <script src="/tools-data.js"></script>
+  <script src="/account-logic.js"></script>
+  <script>
+    (function() {
+      var supabase = window.supabaseClient;
+      if (!supabase) return;
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        window.resolveAccountOwner(session.user.id).then(function() {
+          document.getElementById('page-wrap').style.display = 'block';
+          if (window.ACCOUNT_LOGIC && window.ACCOUNT_LOGIC.init) {
+            window.ACCOUNT_LOGIC.init(supabase, session.user);
+          }
+        });
       });
-      const data = await res.json();
-      if (res.ok) {
-        showInviteMsg('Invite sent to ' + email, true);
-        document.getElementById('inviteEmail').value = '';
-        await loadTeam();
-      } else {
-        showInviteMsg(data.error || 'Could not send invite. Please try again.', false);
-      }
-    } catch {
-      showInviteMsg('Could not send invite. Please try again.', false);
-    }
-
-    btn.disabled = false;
-    btn.textContent = 'Send Invite';
-  };
-
-  function showInviteMsg(text, success) {
-    const msg = document.getElementById('inviteMsg');
-    if (!msg) return;
-    msg.textContent = text;
-    msg.className = 'msg show ' + (success ? 'msg-success' : 'msg-error');
-  }
-
-  // ── REMOVE MEMBER ──
-  window.removeMember = async function(id, email) {
-    if (!confirm('Remove ' + email + ' from your team? They will lose access immediately.')) return;
-    try {
-      const res = await fetch('/api/remove-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ team_member_id: id })
-      });
-      if (res.ok) {
-        showGlobalSuccess(email + ' has been removed from your team.');
-        await loadTeam();
-      } else {
-        const data = await res.json();
-        showGlobalError(data.error || 'Could not remove user. Please try again.');
-      }
-    } catch {
-      showGlobalError('Could not remove user. Please try again.');
-    }
-  };
-
-  // ── RESEND INVITE ──
-  window.resendInvite = async function(id, email, level) {
-    try {
-      const res = await fetch('/api/invite-user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({ email, security_level: level, resend: true })
-      });
-      if (res.ok) {
-        showGlobalSuccess('Invite resent to ' + email);
-      } else {
-        const data = await res.json();
-        showGlobalError(data.error || 'Could not resend invite.');
-      }
-    } catch {
-      showGlobalError('Could not resend invite.');
-    }
-  };
-
-  // ── CANCEL INVITE ──
-  window.cancelInvite = async function(id) {
-    const { error } = await window.supabaseClient
-      .from('team_members')
-      .update({ status: 'revoked' })
-      .eq('id', id)
-      .eq('account_owner_id', user.id);
-    if (error) { showGlobalError('Could not cancel invite.'); return; }
-    showGlobalSuccess('Invite cancelled.');
-    await loadTeam();
-  };
-
-  // ── CHANGE PASSWORD ──
-  document.getElementById('changePasswordLink').addEventListener('click', async function(e) {
-    e.preventDefault();
-    this.textContent = 'Sending…';
-    this.style.pointerEvents = 'none';
-    const { error } = await window.supabaseClient.auth.resetPasswordForEmail(user.email);
-    if (error) {
-      showGlobalError('Could not send reset email. Please try again.');
-    } else {
-      showGlobalSuccess('Password reset email sent to ' + user.email);
-    }
-    this.textContent = 'Change Password';
-    this.style.pointerEvents = '';
-  });
-
-  // SIGN OUT
-  document.getElementById('signOutBtn').addEventListener('click', async function() {
-    await supabase.auth.signOut();
-    window.location.href = '/login.html';
-  });
-
-  // ── TOPBAR TOOL LINK ──
-  var lastTool = sessionStorage.getItem('stax_last_tool');
-  if (lastTool) {
-    try {
-      var lt = JSON.parse(lastTool);
-      if (lt.name && lt.href) {
-        var tl = document.getElementById('topbarToolLink');
-        tl.textContent = lt.name;
-        tl.href = lt.href;
-        tl.style.display = '';
-      }
-    } catch(e) {}
-  }
-
-  // ── SIGN OUT ──
-
-
-  // ── HELPERS ──
-  function showGlobalError(msg) {
-    const el = document.getElementById('globalError');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 5000);
-  }
-  function showGlobalSuccess(msg) {
-    const el = document.getElementById('globalSuccess');
-    el.textContent = msg;
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 5000);
-  }
-
-})();
-</script>
-
+    })();
+  </script>
 </body>
 </html>
