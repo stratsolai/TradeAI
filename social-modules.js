@@ -258,7 +258,7 @@
       html += '<button class="filter-pill' + (self._publishedFilter === p ? ' active' : '') + '" data-filter="' + window.escHtml(p) + '">' + window.escHtml(label) + '</button>';
     });
     html += '<button class="filter-pill' + (self._publishedFilter === 'campaign' ? ' active' : '') + '" data-filter="campaign">Campaign Posts</button>';
-    html += '<label style="display:inline-flex;align-items:center;gap:6px;margin-left:8px;font-size:var(--label-font-size);color:var(--text-secondary);cursor:pointer">' +
+    html += '<label class="sm-campaign-filter-label">' +
       '<input type="checkbox" class="item-checkbox" id="sm-published-include-campaign"' + (self._publishedIncludeCampaign ? ' checked' : '') + '>' +
       'Include campaign posts</label>';
     container.innerHTML = html;
@@ -883,10 +883,10 @@
 
     var wrapper = document.createElement('div');
     wrapper.id = 'sm-hashtag-suggestions';
-    wrapper.style.cssText = 'margin-top:8px;display:flex;flex-wrap:wrap;gap:6px';
+    wrapper.className = 'sm-pills-wrap';
 
     var label = document.createElement('span');
-    label.style.cssText = 'font-size:var(--badge-font-size);color:var(--text-muted);width:100%;margin-bottom:2px';
+    label.className = 'text-muted';
     label.textContent = 'Recent hashtags:';
     wrapper.appendChild(label);
 
@@ -894,7 +894,6 @@
       var pill = document.createElement('button');
       pill.className = 'filter-pill';
       pill.textContent = tag;
-      pill.style.cssText = 'font-size:var(--badge-font-size);padding:3px 10px';
       pill.addEventListener('click', function(e) {
         e.preventDefault();
         var current = hashtagsEl.value.trim();
@@ -907,45 +906,8 @@
     hashtagsEl.parentElement.after(wrapper);
   },
 
-  _saveBlogToCL: async function(content, inputs) {
-    try {
-      var sourceRef = 'sm-blog-' + Date.now();
-      var result = await this._supabase
-        .from('content_library')
-        .upsert({
-          source: 'tool',
-          tool_source: 'social',
-          source_ref: sourceRef,
-          status: 'approved',
-          category: 'blog',
-          tool_tags: ['blog', 'website'],
-          content_text: content.caption || '',
-          title: inputs.blog_title || 'Blog Post',
-          user_id: this._userId,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'source_ref', ignoreDuplicates: true });
-
-      if (result.error) {
-        console.error('[SM] Blog CL write-back error:', result.error.message);
-        return;
-      }
-
-      this._showSuccess('Blog content saved to your Content Library.');
-    } catch (err) {
-      console.error('[SM] Blog CL write-back error:', err.message);
-    }
-  },
-
   _showSuccess: function(msg) {
-    var modal = document.getElementById('sm-error-msg');
-    if (!modal) return;
-    var textEl = modal.querySelector('.save-msg-text');
-    if (textEl) textEl.textContent = msg;
-    modal.classList.add('open');
-    var okBtn = modal.querySelector('.save-msg-ok');
-    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
+    window.showModalSuccess(msg, 'sm-error-msg');
   }
 
   };
@@ -1029,9 +991,9 @@
   _renderProjectStep: function() {
     var self = this;
     var html = '<div class="sm-step-hint">Choose from your completed projects, or enter details manually.</div>';
-    html += '<div class="sm-option-pills" style="margin-bottom:12px">' +
-      '<button class="sm-option-pill" id="sm-project-manual">Enter manually</button>' +
-      '<button class="sm-option-pill" id="sm-project-add-new">Add a new project</button>' +
+    html += '<div class="sm-pills-wrap">' +
+      '<button class="filter-pill" id="sm-project-manual">Enter manually</button>' +
+      '<button class="filter-pill" id="sm-project-add-new">Add a new project</button>' +
       '</div>';
     html += '<div id="sm-project-list" style="margin-top:16px"></div>';
     html += '<div id="sm-project-manual-fields" style="display:none;margin-top:16px">' +
@@ -1160,8 +1122,8 @@
           self._journeyInputs.customer_name = selected.customer_name || '';
           self._journeyInputs.service = selected.service_provided || '';
           self._journeyInputs.cl_project_id = selected.id;
-          container.querySelectorAll('.item-card').forEach(function(c) { c.style.borderColor = ''; });
-          card.style.borderColor = 'var(--blue)';
+          container.querySelectorAll('.item-card').forEach(function(c) { c.classList.remove('active'); });
+          card.classList.add('active');
           var fields = document.getElementById('sm-project-manual-fields');
           if (fields) fields.style.display = 'none';
         }
@@ -1406,13 +1368,13 @@
       return;
     }
 
-    var html = '<div style="display:flex;flex-wrap:wrap;gap:12px">';
+    var html = '<div class="sm-pills-wrap">';
     items.forEach(function(item) {
       var url = item.file_url || '';
       var title = item.title || 'Untitled';
-      html += '<div class="sm-cl-media-item" data-url="' + window.escHtml(url) + '" data-id="' + item.id + '" style="width:120px;cursor:pointer;border:2px solid transparent;border-radius:var(--card-radius);overflow:hidden">' +
-        '<img src="' + window.escHtml(url) + '" alt="" style="width:100%;height:90px;object-fit:cover;display:block">' +
-        '<div style="padding:4px 6px;font-size:var(--badge-font-size);color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + window.escHtml(title) + '</div>' +
+      html += '<div class="sm-cl-media-item item-card" data-url="' + window.escHtml(url) + '" data-id="' + item.id + '">' +
+        '<img src="' + window.escHtml(url) + '" alt="" class="sm-cl-media-thumb">' +
+        '<div class="sm-cl-media-label">' + window.escHtml(title) + '</div>' +
         '</div>';
     });
     html += '</div>';
@@ -1421,13 +1383,13 @@
     var selectedUrls = [];
     body.querySelectorAll('.sm-cl-media-item').forEach(function(card) {
       card.addEventListener('click', function() {
-        var isSelected = card.style.borderColor === 'var(--blue)';
+        var isSelected = card.classList.contains('active');
         if (isSelected) {
-          card.style.borderColor = 'transparent';
+          card.classList.remove('active');
           var idx = selectedUrls.indexOf(card.dataset.url);
           if (idx !== -1) selectedUrls.splice(idx, 1);
         } else {
-          card.style.borderColor = 'var(--blue)';
+          card.classList.add('active');
           selectedUrls.push(card.dataset.url);
         }
       });
@@ -1529,10 +1491,10 @@
   _renderEventTypePills: function() {
     var current = this._journeyInputs.what || '';
     var types = ['Open day', 'Workshop', 'Trade show', 'Sale event', 'Community event', 'Launch party', 'Other'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-eventtype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-eventtype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     html += '<div id="sm-event-other-wrap" style="margin-top:16px;display:' + (current === 'Other' ? 'block' : 'none') + '">' +
@@ -1544,10 +1506,10 @@
   _renderOfferTypePills: function() {
     var current = this._journeyInputs.what || '';
     var types = ['Discount', 'Bundle deal', 'Free service/add-on', 'Seasonal offer', 'Loyalty reward', 'Other'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-offertype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-offertype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     html += '<div id="sm-offer-other-wrap" style="margin-top:16px;display:' + (current === 'Other' ? 'block' : 'none') + '">' +
@@ -1692,6 +1654,7 @@
           content_text: content.caption || '',
           title: title,
           user_id: this._userId,
+          first_used_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }, { onConflict: 'source_ref', ignoreDuplicates: true });

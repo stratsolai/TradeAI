@@ -109,6 +109,31 @@ window.loadStats = async function() {
   }
 };
 
+/**
+ * showModalError(msg, modalId)
+ * Displays an error message in the platform-standard .save-msg modal.
+ * modalId: optional — defaults to first .save-msg on the page.
+ */
+window.showModalError = function(msg, modalId) {
+  var modal = modalId ? document.getElementById(modalId) : document.querySelector('.save-msg');
+  if (!modal) return;
+  var textEl = modal.querySelector('.save-msg-text');
+  if (textEl) textEl.textContent = msg;
+  modal.classList.add('open');
+  var okBtn = modal.querySelector('.save-msg-ok');
+  if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
+  modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
+};
+
+/**
+ * showModalSuccess(msg, modalId)
+ * Displays a success message in the platform-standard .save-msg modal.
+ * modalId: optional — defaults to first .save-msg on the page.
+ */
+window.showModalSuccess = function(msg, modalId) {
+  window.showModalError(msg, modalId);
+};
+
 /* ── Global Session Expiry Handler (Task 30) ──
    Listens for Supabase SIGNED_OUT events and redirects to login.
    Covers session expiry, token refresh failure, and manual sign-out.

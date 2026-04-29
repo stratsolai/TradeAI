@@ -12,7 +12,7 @@
   <style>
     .sm-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    .sm-groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .sm-groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--card-gap, 20px); }
     .sm-group-tile {
       background: var(--white);
       border: 1px solid var(--border);
@@ -24,25 +24,25 @@
     }
     .sm-group-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
     .sm-group-tile.expanded { box-shadow: 0 4px 16px var(--shadow-hover); }
-    .sm-group-tile-icon { font-size: 28px; margin-bottom: 12px; }
+    .sm-group-tile-icon { font-size: var(--heading-lg-size); margin-bottom: var(--btn-gap); }
     .sm-group-tile-title {
       font-family: var(--heading-font);
-      font-size: 20px;
+      font-size: var(--section-title-font-size);
       font-weight: var(--heading-lg-weight);
       color: var(--text);
-      margin-bottom: 8px;
+      margin-bottom: var(--btn-gap);
     }
     .sm-group-tile-desc {
       font-size: var(--note-font-size);
       color: var(--text-muted);
       line-height: var(--note-line-height);
     }
-    .sm-journey-list { display: none; flex-direction: column; gap: 10px; margin-top: 16px; }
+    .sm-journey-list { display: none; flex-direction: column; gap: var(--btn-gap); margin-top: 16px; }
     .sm-group-tile.expanded .sm-journey-list { display: flex; }
     .sm-journey-btn {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--btn-gap);
       padding: var(--btn-padding);
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -75,7 +75,7 @@
       display: flex;
       gap: var(--btn-gap);
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: var(--card-gap, 24px);
     }
     .sm-step-dot {
       width: 10px;
@@ -83,13 +83,16 @@
       border-radius: 50%;
       background: var(--border);
       transition: background var(--btn-transition);
+      padding: 17px;
+      box-sizing: content-box;
+      margin: -17px;
     }
     .sm-step-dot.active { background: var(--blue); }
     .sm-step-dot.completed { background: var(--green); }
     .sm-step-label {
       font-size: var(--badge-font-size);
       color: var(--text-muted);
-      margin-left: 8px;
+      margin-left: var(--btn-gap);
     }
     .sm-step-content {
       background: var(--white);
@@ -97,7 +100,7 @@
       box-shadow: 0 2px 8px var(--shadow-card);
       padding: var(--card-padding);
       min-height: 200px;
-      margin-bottom: 20px;
+      margin-bottom: var(--card-gap, 20px);
     }
     .sm-step-question {
       font-family: var(--heading-font);
@@ -112,40 +115,10 @@
       margin-bottom: 16px;
       line-height: var(--note-line-height);
     }
-    .sm-wizard-nav { margin-top: 20px; }
+    .sm-wizard-nav { margin-top: var(--card-gap, 20px); }
     .sm-wizard-nav .btn-primary { margin-left: auto; }
 
-    .sm-tone-pills { display: flex; flex-wrap: wrap; gap: 10px; }
-    .sm-tone-pill {
-      padding: 6px 16px;
-      border: 1px solid var(--border-blue);
-      border-radius: var(--btn-radius);
-      background: var(--white);
-      font-family: var(--body-font);
-      font-size: var(--label-font-size);
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all var(--btn-transition);
-    }
-    .sm-tone-pill:hover { background: var(--blue-light); }
-    .sm-tone-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); }
-
-    .sm-option-pills { display: flex; flex-wrap: wrap; gap: 10px; }
-    .sm-option-pill {
-      padding: 6px 16px;
-      border: 1px solid var(--border-blue);
-      border-radius: var(--btn-radius);
-      background: var(--white);
-      font-family: var(--body-font);
-      font-size: var(--label-font-size);
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all var(--btn-transition);
-    }
-    .sm-option-pill:hover { background: var(--blue-light); }
-    .sm-option-pill.active { border-color: var(--blue); background: var(--blue-light); color: var(--text); }
+    .sm-pills-wrap { display: flex; flex-wrap: wrap; gap: var(--btn-gap); }
 
     .sm-media-preview-grid { display: flex; flex-wrap: wrap; gap: var(--actions-gap); margin-top: 16px; }
     .sm-media-preview-item {
@@ -159,10 +132,10 @@
     .sm-media-preview-item img { width: 100%; height: 100%; object-fit: cover; }
     .sm-media-remove {
       position: absolute;
-      top: 4px;
-      right: 4px;
-      width: 22px;
-      height: 22px;
+      top: 0;
+      right: 0;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       background: var(--white);
       border: 1px solid var(--border);
@@ -174,7 +147,7 @@
       justify-content: center;
       line-height: 1;
     }
-    .sm-media-options { display: flex; gap: 10px; margin-top: 16px; justify-content: center; }
+    .sm-media-options { display: flex; gap: var(--btn-gap); margin-top: 16px; justify-content: center; }
 
     .sm-preview-card {
       background: var(--white);
@@ -186,7 +159,7 @@
     .sm-preview-header {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--btn-gap);
       padding: 14px 16px;
       border-bottom: 1px solid var(--border-light);
     }
@@ -211,18 +184,20 @@
       color: var(--text);
       line-height: var(--body-line-height);
       white-space: pre-wrap;
-      margin-bottom: 12px;
+      margin-bottom: var(--btn-gap);
     }
     .sm-preview-hashtags { font-size: var(--note-font-size); color: var(--blue); line-height: var(--note-line-height); }
 
     .sm-edit-hashtags-colour { color: var(--blue); }
+    .sm-edit-textarea { min-height: 120px; line-height: var(--body-line-height); resize: vertical; }
+    .sm-plan-textarea { min-height: 300px; line-height: var(--body-line-height); resize: vertical; }
 
-    .sm-connection-checks { display: flex; flex-direction: column; gap: var(--actions-gap); margin-bottom: 20px; }
+    .sm-connection-checks { display: flex; flex-direction: column; gap: var(--actions-gap); margin-bottom: var(--card-gap, 20px); }
     .sm-connection-check {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 16px;
+      gap: var(--btn-gap);
+      padding: var(--btn-padding);
       border: 1px solid var(--border);
       border-radius: var(--btn-radius);
       background: var(--white);
@@ -233,10 +208,7 @@
     .sm-publish-actions { flex-wrap: wrap; }
 
     .sm-post-list { display: flex; flex-direction: column; gap: var(--actions-gap); }
-    .sm-post-card {
-      display: flex;
-      align-items: stretch;
-    }
+    .sm-post-card { display: flex; align-items: stretch; }
     .sm-post-thumb {
       width: 100px;
       min-height: 100px;
@@ -245,7 +217,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: var(--heading-lg-size);
       color: var(--text-muted);
     }
     .sm-post-thumb img { width: 100%; height: 100%; object-fit: cover; }
@@ -253,14 +225,14 @@
     .sm-post-meta {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: var(--btn-gap);
       margin-bottom: 14px;
       flex-wrap: wrap;
     }
     .sm-post-type { font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); }
     .sm-post-date { font-size: var(--badge-font-size); color: var(--text-muted); margin-left: auto; }
-    .sm-post-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .sm-post-metrics { display: flex; gap: 16px; margin-top: 8px; }
+    .sm-post-actions { display: flex; gap: var(--btn-gap); flex-wrap: wrap; }
+    .sm-post-metrics { display: flex; gap: 16px; margin-top: var(--btn-gap); }
     .sm-post-metric { font-size: var(--badge-font-size); color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
     .sm-post-metric-value { font-weight: var(--font-weight-semibold); color: var(--text); }
 
@@ -269,7 +241,7 @@
       align-items: center;
       justify-content: center;
       gap: var(--actions-gap);
-      margin-top: 24px;
+      margin-top: var(--card-gap, 24px);
       padding-top: 16px;
       border-top: 1px solid var(--border-light);
     }
@@ -279,7 +251,7 @@
       display: flex;
       align-items: center;
       gap: var(--actions-gap);
-      margin-bottom: 20px;
+      margin-bottom: var(--card-gap, 20px);
       flex-wrap: wrap;
     }
 
@@ -287,10 +259,25 @@
       display: flex;
       align-items: center;
       gap: var(--actions-gap);
-      margin-bottom: 20px;
+      margin-bottom: var(--card-gap, 20px);
       flex-wrap: wrap;
     }
     .sm-filter-bar .search-input { max-width: 240px; }
+    .sm-filter-bar-right { margin-left: auto; display: flex; gap: var(--btn-gap); }
+    .sm-filter-pills { display: flex; gap: var(--btn-gap); flex-wrap: wrap; }
+    .sm-sort-select { margin-left: auto; min-width: 160px; max-width: 200px; flex: none; }
+    .sm-bulk-bar { margin-bottom: 16px; }
+    .sm-empty-create { margin-top: var(--btn-gap); }
+    .sm-cl-media-modal-inner { max-width: 680px; }
+    .sm-cl-media-body { max-height: 400px; overflow-y: auto; }
+    .sm-edit-section { margin-top: var(--card-gap, 20px); }
+    .sm-edit-nav { margin-top: var(--card-gap, 24px); }
+    .sm-campaign-start { text-align: center; margin-top: 16px; }
+    .sm-campaign-filter-label { display: inline-flex; align-items: center; gap: 6px; margin-left: var(--btn-gap); font-size: var(--label-font-size); color: var(--text-secondary); cursor: pointer; }
+    .sm-cl-media-item { width: 120px; cursor: pointer; overflow: hidden; }
+    .sm-cl-media-item.active { border-color: var(--blue); }
+    .sm-cl-media-thumb { width: 100%; height: 90px; object-fit: cover; display: block; }
+    .sm-cl-media-label { padding: 4px 6px; font-size: var(--badge-font-size); color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
     .sm-generating {
       text-align: center;
@@ -300,7 +287,7 @@
 
     .sm-calendar { width: 100%; border-collapse: collapse; }
     .sm-calendar th {
-      padding: 10px;
+      padding: var(--btn-gap);
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
       color: var(--text-muted);
@@ -310,7 +297,7 @@
       border-bottom: 1px solid var(--border);
     }
     .sm-calendar td {
-      padding: 8px;
+      padding: var(--btn-gap);
       vertical-align: top;
       min-height: 80px;
       border: 1px solid var(--border-light);
@@ -319,7 +306,7 @@
     .sm-calendar-day { color: var(--text-muted); margin-bottom: 4px; }
     .sm-calendar-post {
       padding: 4px 6px;
-      border-radius: 4px;
+      border-radius: var(--btn-radius);
       background: var(--blue-light);
       color: var(--blue);
       font-size: var(--label-font-size);
@@ -343,7 +330,7 @@
       .sm-wizard-nav .btn-outline { width: 100%; justify-content: center; }
       .sm-filter-bar { flex-direction: column; align-items: stretch; }
       .sm-filter-bar .search-input { max-width: 100%; }
-      .sm-tone-pills { gap: 8px; }
+      .sm-pills-wrap { gap: var(--btn-gap); }
       .sm-publish-actions { flex-direction: column; }
       .sm-publish-actions .btn-primary,
       .sm-publish-actions .btn-outline { width: 100%; justify-content: center; }
@@ -437,17 +424,17 @@
           <div class="sm-wizard-title">Preview &amp; Publish</div>
         </div>
         <div id="sm-preview-content"></div>
-        <div style="margin-top:20px">
+        <div class="sm-edit-section">
           <div class="sm-step-question">Edit Caption</div>
           <div class="form-group">
-            <textarea class="form-input" id="sm-edit-caption" style="min-height:120px;line-height:var(--body-line-height);resize:vertical"></textarea>
+            <textarea class="form-input sm-edit-textarea" id="sm-edit-caption"></textarea>
           </div>
           <div class="form-group">
             <label class="form-label">Hashtags</label>
             <input type="text" class="form-input sm-edit-hashtags-colour" id="sm-edit-hashtags">
           </div>
         </div>
-        <div class="action-row sm-wizard-nav" style="margin-top:24px">
+        <div class="action-row sm-wizard-nav sm-edit-nav">
           <button class="btn-outline" id="sm-regenerate-btn">Regenerate</button>
           <button class="btn-primary" id="sm-approve-btn">Approve &amp; Continue</button>
         </div>
@@ -476,7 +463,7 @@
           <h3>No active campaign</h3>
           <p>Start a marketing campaign to create and schedule a coordinated series of posts.</p>
         </div>
-        <div style="text-align:center;margin-top:16px">
+        <div class="sm-campaign-start">
           <button class="btn-primary" id="sm-start-campaign-btn">Start a Campaign</button>
         </div>
         <div id="smc-campaign-history-empty"></div>
@@ -488,9 +475,9 @@
     <div id="sm-tab-drafts" class="ptab-content">
       <div class="sm-filter-bar">
         <input type="text" class="search-input" id="sm-drafts-search" placeholder="Search drafts...">
-        <div id="sm-drafts-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+        <div id="sm-drafts-filters" class="sm-filter-pills"></div>
       </div>
-      <div id="sm-drafts-bulk-bar" class="action-row" style="display:none;margin-bottom:16px">
+      <div id="sm-drafts-bulk-bar" class="action-row sm-bulk-bar" style="display:none">
         <span id="sm-drafts-bulk-count" class="text-muted"></span>
         <button class="btn-outline btn-sm" id="sm-drafts-schedule-selected">Schedule Selected</button>
         <button class="btn-dismiss btn-sm" id="sm-drafts-delete-selected">Delete Selected</button>
@@ -500,7 +487,7 @@
         <div class="empty-state-icon">📝</div>
         <h3>No drafts yet</h3>
         <p>When you save a post as a draft, it will appear here.</p>
-        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
+        <button class="btn-primary sm-empty-create-btn sm-empty-create">Create a Post</button>
       </div>
       <div id="sm-drafts-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -508,8 +495,8 @@
     <div id="sm-tab-scheduled" class="ptab-content">
       <div class="sm-filter-bar">
         <input type="text" class="search-input" id="sm-scheduled-search" placeholder="Search scheduled...">
-        <div id="sm-scheduled-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-        <div style="margin-left:auto;display:flex;gap:8px">
+        <div id="sm-scheduled-filters" class="sm-filter-pills"></div>
+        <div class="sm-filter-bar-right">
           <button class="filter-pill active" id="sm-view-list-btn">List</button>
           <button class="filter-pill" id="sm-view-calendar-btn">Calendar</button>
         </div>
@@ -520,7 +507,7 @@
         <div class="empty-state-icon">📅</div>
         <h3>No scheduled posts</h3>
         <p>When you schedule a post for later, it will appear here.</p>
-        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
+        <button class="btn-primary sm-empty-create-btn sm-empty-create">Create a Post</button>
       </div>
       <div id="sm-scheduled-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -528,8 +515,8 @@
     <div id="sm-tab-published" class="ptab-content">
       <div class="sm-filter-bar">
         <input type="text" class="search-input" id="sm-published-search" placeholder="Search published...">
-        <div id="sm-published-filters" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-        <select class="search-input" id="sm-published-sort" style="margin-left:auto;min-width:160px;max-width:200px;flex:none">
+        <div id="sm-published-filters" class="sm-filter-pills"></div>
+        <select class="search-input sm-sort-select" id="sm-published-sort">
           <option value="newest">Newest first</option>
           <option value="oldest">Oldest first</option>
           <option value="reach">Highest reach</option>
@@ -541,7 +528,7 @@
         <div class="empty-state-icon">📊</div>
         <h3>No published posts yet</h3>
         <p>Published posts with performance data will appear here.</p>
-        <button class="btn-primary sm-empty-create-btn" style="margin-top:12px">Create a Post</button>
+        <button class="btn-primary sm-empty-create-btn sm-empty-create">Create a Post</button>
       </div>
       <div id="sm-published-pagination" class="sm-pagination" style="display:none"></div>
     </div>
@@ -585,9 +572,9 @@
     </div>
 
     <div class="perm-modal-overlay" id="sm-cl-media-modal">
-      <div class="perm-modal" style="max-width:680px">
+      <div class="perm-modal sm-cl-media-modal-inner">
         <div class="perm-modal-title">Select from Content Library</div>
-        <div class="perm-modal-body" id="sm-cl-media-body" style="max-height:400px;overflow-y:auto">
+        <div class="perm-modal-body sm-cl-media-body" id="sm-cl-media-body">
         </div>
         <div class="perm-modal-actions">
           <button class="perm-modal-cancel" id="sm-cl-media-cancel">Cancel</button>

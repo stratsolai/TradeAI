@@ -11,7 +11,6 @@ window.SM_SETTINGS_LOGIC = {
     this._bindTabs();
     this._bindFreqButtons();
     this._bindToneDropdown();
-    this._bindSave();
     this._bindConnections();
     await this._loadSettings();
   },
@@ -28,7 +27,6 @@ window.SM_SETTINGS_LOGIC = {
   _switchTab: function(tabId) {
     document.querySelectorAll('.ptab').forEach(function(btn) {
       btn.classList.toggle('active', btn.dataset.tab === tabId);
-      btn.classList.toggle('settings-active', btn.dataset.tab === tabId);
     });
     document.querySelectorAll('.ptab-content').forEach(function(panel) {
       panel.classList.remove('active');
@@ -136,21 +134,6 @@ window.SM_SETTINGS_LOGIC = {
     document.addEventListener('click', function() {
       menu.classList.remove('open');
     });
-  },
-
-  _bindSave: function() {
-    var self = this;
-    var saveBtn = document.getElementById('save-prefs-btn');
-    var msgEl = document.getElementById('save-settings-msg');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function() {
-        window.handleSave(saveBtn, async function() {
-          await self._saveToSettings({
-            updated_at: new Date().toISOString()
-          });
-        }, msgEl);
-      });
-    }
   },
 
   _saveToSettings: async function(payload) {
@@ -276,13 +259,6 @@ window.SM_SETTINGS_LOGIC = {
   },
 
   _showError: function(msg) {
-    var modal = document.getElementById('save-settings-msg');
-    if (!modal) return;
-    var textEl = modal.querySelector('.save-msg-text');
-    if (textEl) textEl.textContent = msg;
-    modal.classList.add('open');
-    var okBtn = modal.querySelector('.save-msg-ok');
-    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
+    window.showModalError(msg, 'save-settings-msg');
   }
 };

@@ -159,10 +159,10 @@ window.SM_CAMPAIGN = {
   _renderGoalStep: function() {
     var current = this._campaignInputs.goal || '';
     var html = '<div class="sm-step-hint">Choose the primary goal for your campaign.</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     this.GOALS.forEach(function(g) {
       var active = current === g ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-goal="' + window.escHtml(g) + '">' + window.escHtml(g) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-goal="' + window.escHtml(g) + '">' + window.escHtml(g) + '</button>';
     });
     html += '</div>';
     if (current && current !== 'Not sure (AI helps decide)') {
@@ -189,10 +189,10 @@ window.SM_CAMPAIGN = {
       });
     }
     var html = '<div class="sm-step-hint">Focus on a specific service, product, or promote your business generally.</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     options.forEach(function(o) {
       var active = current === o ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-focus="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-focus="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
     html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Target customer type (optional)</label>' +
@@ -203,10 +203,10 @@ window.SM_CAMPAIGN = {
   _renderTimeframeStep: function() {
     var current = this._campaignInputs.timeframe || '';
     var html = '<div class="sm-step-hint">How long should the campaign run?</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     this.TIMEFRAMES.forEach(function(t) {
       var active = current === t.id ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-timeframe="' + t.id + '">' + window.escHtml(t.label) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-timeframe="' + t.id + '">' + window.escHtml(t.label) + '</button>';
     });
     html += '</div>';
     return html;
@@ -215,14 +215,14 @@ window.SM_CAMPAIGN = {
   _renderUpcomingStep: function() {
     var current = this._campaignInputs.upcoming || [];
     var html = '<div class="sm-step-hint">Select anything happening soon that the campaign should include.</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     this.UPCOMING_TYPES.forEach(function(u) {
       var active = current.indexOf(u) !== -1 ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-upcoming="' + window.escHtml(u) + '">' + window.escHtml(u) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-upcoming="' + window.escHtml(u) + '">' + window.escHtml(u) + '</button>';
     });
     html += '</div>';
     if (current.length > 0 && current.indexOf('None of these') === -1) {
-      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Tell us more about what is coming up</label>' +
+      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Share more about what is coming up</label>' +
         '<textarea class="form-input" id="smc-upcoming-detail" rows="3">' + window.escHtml(this._campaignInputs.upcoming_detail || '') + '</textarea></div>';
     }
     return html;
@@ -232,10 +232,10 @@ window.SM_CAMPAIGN = {
     var current = this._campaignInputs.content_source || '';
     var options = ['I have photos and videos to upload', 'Use my Content Library', 'AI-generated graphics only', 'A mix of all'];
     var html = '<div class="sm-step-hint">What content do you have available for the campaign?</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     options.forEach(function(o) {
       var active = current === o ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-content="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-content="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
     return html;
@@ -244,19 +244,19 @@ window.SM_CAMPAIGN = {
   _renderFrequencyStep: function() {
     var current = this._campaignInputs.frequency || '';
     var html = '<div class="sm-step-hint">How often should you post? The AI will recommend a frequency based on your goal.</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     this.FREQUENCIES.forEach(function(f) {
       var active = current === f.id ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-frequency="' + f.id + '">' + window.escHtml(f.label) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-frequency="' + f.id + '">' + window.escHtml(f.label) + '</button>';
     });
     html += '</div>';
     html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Preferred posting days (optional)</label>' +
-      '<div class="sm-option-pills" id="smc-days-pills">';
+      '<div class="sm-pills-wrap" id="smc-days-pills">';
     var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     var selectedDays = this._campaignInputs.preferred_days || [];
     days.forEach(function(d) {
       var active = selectedDays.indexOf(d) !== -1 ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-day="' + d + '">' + d.substring(0, 3) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-day="' + d + '">' + d.substring(0, 3) + '</button>';
     });
     html += '</div></div>';
     return html;
@@ -433,7 +433,7 @@ window.SM_CAMPAIGN = {
       '</div>' +
       '<div class="sm-step-content">' +
       '<div class="sm-step-hint">Review the plan below. You can edit it before confirming.</div>' +
-      '<textarea class="form-input" style="min-height:120px;line-height:var(--body-line-height);resize:vertical" id="smc-plan-text" style="min-height:300px">' + window.escHtml(planText) + '</textarea>' +
+      '<textarea class="form-input sm-plan-textarea" id="smc-plan-text">' + window.escHtml(planText) + '</textarea>' +
       '</div>' +
       '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
       '<button class="btn-outline" id="smc-plan-regenerate">Regenerate</button>' +

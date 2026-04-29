@@ -77,7 +77,7 @@ window.SOCIAL_LOGIC = {
   JOURNEY_STEPS: {
     finished_job: [
       { id: 'media', title: 'Media', question: 'Add photos or videos of the completed job' },
-      { id: 'details', title: 'Details', question: 'Tell us about the job' },
+      { id: 'details', title: 'Details', question: 'Describe the job' },
       { id: 'tone', title: 'Tone', question: 'Choose the tone for your post' },
       { id: 'generate', title: 'Generate', question: '' },
       { id: 'edit_approve', title: 'Edit & Approve', question: '' },
@@ -96,7 +96,7 @@ window.SOCIAL_LOGIC = {
     behind_scenes: [
       { id: 'media', title: 'Media', question: 'Upload photos or videos of your team, workspace, or process' },
       { id: 'story_type', title: 'What\'s the Story?', question: 'What kind of behind-the-scenes content is this?' },
-      { id: 'details', title: 'Details', question: 'Give us some details' },
+      { id: 'details', title: 'Details', question: 'Share some details' },
       { id: 'tone', title: 'Tone', question: 'Choose the tone for your post' },
       { id: 'generate', title: 'Generate', question: '' },
       { id: 'edit_approve', title: 'Edit & Approve', question: '' },
@@ -172,7 +172,7 @@ window.SOCIAL_LOGIC = {
     ],
     business_update: [
       { id: 'news_type', title: 'What Is the News?', question: 'What kind of update are you sharing?' },
-      { id: 'details', title: 'Details', question: 'Tell us more' },
+      { id: 'details', title: 'Details', question: 'Provide more details' },
       { id: 'media', title: 'Media', question: 'Add photos or videos' },
       { id: 'headline', title: 'Headline', question: 'Add a headline' },
       { id: 'tone', title: 'Tone', question: 'Choose the tone' },
@@ -234,6 +234,11 @@ window.SOCIAL_LOGIC = {
       .select('*')
       .eq('user_id', this._userId)
       .maybeSingle();
+    if (result.error) {
+      console.error('[SM] social_settings load error:', result.error.message);
+      this._settings = {};
+      return;
+    }
     this._settings = (result.data) || {};
   },
 
@@ -243,6 +248,11 @@ window.SOCIAL_LOGIC = {
       .select('*')
       .eq('id', this._userId)
       .maybeSingle();
+    if (result.error) {
+      console.error('[SM] profiles load error:', result.error.message);
+      this._profile = {};
+      return;
+    }
     this._profile = (result.data) || {};
   },
 
@@ -264,14 +274,7 @@ window.SOCIAL_LOGIC = {
   },
 
   _showError: function(msg) {
-    var modal = document.getElementById('sm-error-msg');
-    if (!modal) return;
-    var textEl = modal.querySelector('.save-msg-text');
-    if (textEl) textEl.textContent = msg;
-    modal.classList.add('open');
-    var okBtn = modal.querySelector('.save-msg-ok');
-    if (okBtn) okBtn.addEventListener('click', function() { modal.classList.remove('open'); }, { once: true });
-    modal.addEventListener('click', function(e) { if (e.target === modal) modal.classList.remove('open'); }, { once: true });
+    window.showModalError(msg, 'sm-error-msg');
   },
 
   _showConfirm: function(title, body, onConfirm) {
@@ -574,10 +577,10 @@ window.SOCIAL_LOGIC = {
   _renderToneStep: function() {
     var currentTone = this._journeyInputs.tone || '';
     var html = '<div class="sm-step-hint">This sets the voice for your content. You can always change it.</div>';
-    html += '<div class="sm-tone-pills">';
+    html += '<div class="sm-pills-wrap">';
     this.TONES.forEach(function(t) {
       var active = currentTone === t.id ? ' active' : '';
-      html += '<button class="sm-tone-pill' + active + '" data-tone="' + t.id + '">' +
+      html += '<button class="filter-pill' + active + '" data-tone="' + t.id + '">' +
         window.escHtml(t.label) + '<br><span class="text-muted" style="font-weight:400">' +
         window.escHtml(t.desc) + '</span></button>';
     });
@@ -619,10 +622,10 @@ window.SOCIAL_LOGIC = {
       options = options.filter(function(o) { return o.id !== 'blog_post'; });
     }
     var html = '<div class="sm-step-hint">You can select multiple formats to generate from the same inputs.</div>';
-    html += '<div class="sm-option-pills">';
+    html += '<div class="sm-pills-wrap">';
     options.forEach(function(o) {
       var active = selected.indexOf(o.id) !== -1 ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-output="' + o.id + '">' + window.escHtml(o.label) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-output="' + o.id + '">' + window.escHtml(o.label) + '</button>';
     });
     html += '</div>';
     return html;
@@ -642,10 +645,10 @@ window.SOCIAL_LOGIC = {
   _renderStoryTypeStep: function() {
     var current = this._journeyInputs.story_type || '';
     var types = ['Team spotlight', 'How you work', 'Your workspace', 'Day in the life', 'Other'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-story="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-story="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     return html;
@@ -698,10 +701,10 @@ window.SOCIAL_LOGIC = {
     } else if (this._currentJourney === 'blog_content') {
       options = ['Start from scratch', 'Expand a News Digest item', 'Expand a previous post', 'Use Content Library content'];
     }
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     options.forEach(function(o) {
       var active = current === o ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-source="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-source="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
     html += '<div id="sm-nd-items-container" style="margin-top:16px;display:none"></div>';
@@ -711,10 +714,10 @@ window.SOCIAL_LOGIC = {
   _renderTopicStep: function() {
     var current = this._journeyInputs.topic_type || '';
     var types = ['How-to', 'Common mistake to avoid', 'FAQ answer', 'Pro tip', 'Myth buster'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-topic="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-topic="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     return html;
@@ -732,10 +735,10 @@ window.SOCIAL_LOGIC = {
   _renderAudienceStep: function() {
     var current = this._journeyInputs.audience || '';
     var types = ['Customers', 'Prospects', 'Industry peers', 'General public'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-audience="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-audience="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     return html;
@@ -744,10 +747,10 @@ window.SOCIAL_LOGIC = {
   _renderNewsTypeStep: function() {
     var current = this._journeyInputs.news_type || '';
     var types = ['New team member', 'Milestone', 'Award', 'New location', 'Anniversary', 'Partnership', 'Rebrand', 'Other'];
-    var html = '<div class="sm-option-pills">';
+    var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';
-      html += '<button class="sm-option-pill' + active + '" data-newstype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
+      html += '<button class="filter-pill' + active + '" data-newstype="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
     });
     html += '</div>';
     return html;
@@ -813,9 +816,9 @@ window.SOCIAL_LOGIC = {
     }
 
     if (step.id === 'tone') {
-      document.querySelectorAll('.sm-tone-pill').forEach(function(pill) {
+      document.querySelectorAll('.filter-pill').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('.sm-tone-pill').forEach(function(p) { p.classList.remove('active'); });
+          document.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.tone = pill.dataset.tone;
         });
