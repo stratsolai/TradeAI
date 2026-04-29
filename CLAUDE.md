@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 27, 2026
+# Updated: April 29, 2026
 
 ---
 
@@ -87,8 +87,8 @@ The owner will push back when needed and should be encouraged to do so.
 
 | Integration | Status | Next Step |
 |-------------|--------|-----------|
-| Fergus | Callback URL sent, awaiting credentials | Wait for Client ID & Secret from Paul |
-| Buildxact | Registration confirmed, awaiting credentials | Wait for Client ID & Secret |
+| Fergus | Credentials received and in Vercel. OAuth callback, data fetch endpoint, and UI integration built. Database column cl_fergus_accounts added to profiles table. | Awaiting API endpoint confirmation from Fergus (email sent) |
+| Buildxact | Registration confirmed, awaiting credentials | Wait for Client ID & Secret from support |
 | Tradify | API enquiry sent, awaiting response | May not have public API |
 | MYOB | Ready but paused until launch | $110/month from day one — activate just before launch |
 
@@ -117,22 +117,20 @@ AusTender RSS feed confirmed:
 
 **Google OAuth Verification:**
 - Status: Submitted for manual review (28 April 2026)
-- Waiting on: Branding verification (privacy policy link in
-  footer — disputed as it exists)
+- Waiting on: Google response for branding verification
 - Scopes requested: gmail.modify, drive.readonly
 - Expected timeline: 2-3 days for branding, then 3-5 weeks
   for scope verification + CASA assessment
 
 **Meta App Review:**
-- Status: Blocked — cannot complete Data Deletion URL field
-- Blocker: Vercel returning 403 to Facebook crawler
-  (facebookexternalhit)
-- Vercel support ticket submitted 28 April 2026
+- Status: Facebook crawler now working (Response Code 206)
+- og:image and fb:app_id added to all public pages
+- Business Verification started
+- Ready to submit App Review once Business Verification
+  progresses
 
-**Vercel Support — Facebook Crawler 403:**
-- Status: Support ticket submitted (28 April 2026)
-- Issue: Facebook crawler receives 403 on all URLs despite
-  firewall bypass rule
+**Vercel/Facebook Firewall:**
+- Status: Resolved — Facebook can now crawl the site
 
 **Predis.ai:**
 - Status: 7-day free trial active (started 28 April 2026)
@@ -150,13 +148,31 @@ AusTender RSS feed confirmed:
 
 ### Task 25 — Social Media Tool Rebuild
 
-Complete rebuild to bring up to current platform standards.
-Assessment, backend fixes, structural rebuild, stylesheet
-integration, missing features, and functional review.
+Major build in progress. All audit items fixed, all files
+under 60K, visual elements matched to CL/EA/ID. File split
+completed (social-modules-2.js created). Dropdowns use
+.lookback-dropdown for consistency.
+
+Completed features: All 10 Journey types, Campaign wizard,
+Phase 2 post generation and review, active Campaign
+management, Campaign history with Run Again, Drafts/Scheduled/
+Published tabs, calendar view, Predis AI integration, Meta
+Graph API posting, CL write-back, News Digest integration,
+CL Projects Tab (Section 9), Scheduled tab enhancements
+(Post Now, bulk actions, time filters, time until posting),
+Published tab date range picker, pagination page jump
+dropdown, Campaign grid view and bulk approve, flyer PDF
+generation, ad graphic output, metrics refresh cron (every
+6 hours), blog post promote prompt, Campaign confirmation
+screen with summary.
+
+BP Marketing Theme Guided Conversation (Section 10) was
+already built in cl-profile-marketing.js — full 6-topic flow
+with follow-ups, AI summary, and field saving.
 
 ### Task 26 — Dashboard Rebuild
 
-No longer blocked. Ready to start after CB audit passes.
+Ready to build. Spec v3.3 complete and in Project Knowledge.
 
 ### Task 28 — Full Platform Testing on Demo Data
 
@@ -266,6 +282,19 @@ All tools require full testing once demo data is populated.
   waiting on demo data population.
 - Design Visualiser build and audit complete. API update
   required before testing.
+- SM audit remediation completed April 2026 — full gap
+  analysis and fixes applied. File split created
+  (social-modules-2.js). Visual consistency fixes applied
+  (dropdowns now use .lookback-dropdown).
+- og:image added to 11 public pages. fb:app_id added to all
+  pages with og tags. April 2026.
+- Fergus integration structure built — OAuth callback, data
+  fetch endpoint, and UI integration in CL settings.
+  cl_fergus_accounts column added to profiles table.
+- Page titles fixed — removed "Mockup" references from all
+  authenticated pages.
+- Env var security fixed in Vercel — all sensitive keys
+  marked as Sensitive.
 
 ---
 
