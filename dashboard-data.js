@@ -1,160 +1,99 @@
 window.DASH_DATA = (function() {
 
+  var _supabase, _user, _profile, _activeTools;
+
   var TOOLS = [
-    { id: 'social',        icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: '/social',        priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI' },
-    { id: 'email',         icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: '/email', priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL' },
-    { id: 'chatbot',       icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',           price: '$79',  status: 'built',   url: '/chatbot',        priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf' },
-    { id: 'news-digest',   icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: '/news',    priceId: 'price_1TB7IdHnoVvjo5gxTA1rOKRI' },
-    { id: 'bi',            icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                  price: '$89',  status: 'built',   url: 'bi.html',             priceId: 'price_1T4dClHnoVvjo5gxjSvoi4ky' },
-    { id: 'strategic-plan',icon: '🗺️', name: 'Strategic Plan & Operations',      desc: 'Create your roadmap in minutes from a simple AI-guided interview',                              price: '$69',  status: 'built',   url: '/strategy', priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego' },
-    { id: 'tender',        icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',         price: '$99',  status: 'pending', url: '/panel?tool=tender',          priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc' },
-    { id: 'quote-enhancer',icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',             price: 'TBC',  status: 'pending', url: '/panel?tool=quote-enhancer', priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI' },
-    { id: 'swms',          icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',             price: 'TBC',  status: 'pending', url: '/panel?tool=swms',            priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF' },
-    { id: 'customer-updates',icon: '📲',name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                  price: 'TBC',  status: 'pending', url: '/panel?tool=customer-updates', priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN' },
-    { id: 'handover-docs', icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: '/panel?tool=handover-docs',  priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL' },
-    { id: 'review-booster',icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',      price: 'TBC',  status: 'pending', url: '/panel?tool=review-booster', priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa' },
-    { id: 'design-viz',    icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: '$89',  status: 'built',   url: '/design',                   priceId: 'price_1TQLbEHnoVvjo5gxIuSSm7tH' }
+    { id: 'social',         icon: '\ud83d\udcf1', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content \u2014 auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: '/social',         settingsUrl: '/social-settings.html',            priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI', benefit: 'Works great with Content Library' },
+    { id: 'email',          icon: '\ud83d\udce7', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook \u2014 summarised on one smart dashboard',                          price: '$59',  status: 'built',   url: '/email',          settingsUrl: '/email-assistant-settings.html',   priceId: 'price_1T4dBcHnoVvjo5gx8EuxX5hL', benefit: 'Feeds into BI insights' },
+    { id: 'chatbot',        icon: '\ud83d\udcac', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website \u2014 answers customers, qualifies leads, books jobs \u2014 24/7',     price: '$79',  status: 'built',   url: '/chatbot',        settingsUrl: '/chatbot-settings.html',           priceId: 'price_1T4dAyHnoVvjo5gxMgLczawf', benefit: 'Uses your Content Library' },
+    { id: 'news-digest',    icon: '\ud83d\udcf0', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates \u2014 AI-summarised on one dashboard',          price: '$59',  status: 'built',   url: '/news',           settingsUrl: '/news-digest-settings.html',       priceId: 'price_1TB7IdHnoVvjo5gxTA1rOKRI', benefit: 'Feeds into BI insights' },
+    { id: 'bi',             icon: '\ud83e\udde0', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                      price: '$89',  status: 'built',   url: '/bi.html',        settingsUrl: null,                               priceId: 'price_1T4dClHnoVvjo5gxjSvoi4ky', benefit: 'Uses your Content Library' },
+    { id: 'strategic-plan', icon: '\ud83d\uddfa\ufe0f', name: 'Strategic Plan & Operations', desc: 'Create your roadmap in minutes from a simple AI-guided interview',                                  price: '$69',  status: 'built',   url: '/strategy',       settingsUrl: null,                               priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego', benefit: 'Works great with BI Dashboard' },
+    { id: 'design-viz',     icon: '\ud83c\udfa8', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief \u2014 show customers what the finished job looks like',   price: '$89',  status: 'built',   url: '/design',         settingsUrl: '/design-viz-settings.html',        priceId: 'price_1TQLbEHnoVvjo5gxIuSSm7tH', benefit: 'Uses your Content Library' },
+    { id: 'tender',         icon: '\ud83d\udccb', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response \u2014 ready to submit',       price: '$99',  status: 'pending', url: '/panel?tool=tender',          settingsUrl: null, priceId: 'price_1T4dDMHnoVvjo5gxWhPHyqQc', benefit: '' },
+    { id: 'quote-enhancer', icon: '\ud83d\udcb0', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',                 price: 'TBC',  status: 'pending', url: '/panel?tool=quote-enhancer', settingsUrl: null, priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI', benefit: '' },
+    { id: 'swms',           icon: '\ud83e\uddba', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',                 price: 'TBC',  status: 'pending', url: '/panel?tool=swms',            settingsUrl: null, priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF', benefit: '' },
+    { id: 'customer-updates',icon:'\ud83d\udcf2', name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                      price: 'TBC',  status: 'pending', url: '/panel?tool=customer-updates', settingsUrl: null, priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN', benefit: '' },
+    { id: 'handover-docs',  icon: '\ud83d\udcc1', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data \u2014 warranties, compliance, sign-off',  price: 'TBC',  status: 'pending', url: '/panel?tool=handover-docs',  settingsUrl: null, priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL', benefit: '' },
+    { id: 'review-booster', icon: '\u2b50',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals \u2014 and writes the message',     price: 'TBC',  status: 'pending', url: '/panel?tool=review-booster', settingsUrl: null, priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa', benefit: '' }
   ];
 
-  function renderStax(activeTools) {
-    var grid = document.getElementById('stax-grid');
-    if (!grid) return;
-    var html = '';
-    TOOLS.forEach(function(tool) {
-      var isActive  = activeTools.indexOf(tool.id) !== -1;
-      var isPending = tool.status === 'pending';
-      var cls = 'stax-card' + (isActive ? ' stax-active' : '') + (isPending ? ' stax-coming' : '');
-      html += '<div class="' + cls + '">';
-      html += '<div class="stax-card-top">';
-      html += '<span class="stax-card-icon">' + tool.icon + '</span>';
-      html += '<span class="stax-card-name">' + tool.name + '</span>';
-      if (isActive) html += '<span class="stax-card-badge badge badge-live">Live</span>';
-      else if (isPending) html += '<span class="stax-card-badge badge badge-inactive">Soon</span>';
-      html += '</div>';
-      html += '<p class="stax-card-desc">' + tool.desc + '</p>';
-      html += '<div class="stax-card-actions">';
-      if (isActive) {
-        html += '<a href="' + tool.url + '" class="btn-stax-open">Open Tool</a>';
-      } else if (!isPending) {
-        html += '<span class="stax-card-price">' + tool.price + '/month</span><br>';
-        html += '<a href="/panel-auth.html?tool=' + tool.id + '" class="btn-stax-learn" style="margin-top:6px;display:inline-block;margin-right:6px;">Learn More</a><button class="btn-stax-activate" data-toolid="' + tool.id + '" style="margin-top:6px;display:inline-block;">Activate</button>';
-      }
-      html += '</div></div>';
-    });
-    grid.innerHTML = html;
+  // ── INIT ──
+  async function init(supabase, user) {
+    _supabase = supabase;
+    _user = user;
+
+    var pr = await _supabase.from('profiles')
+      .select('activated_tools, trial_expires_at, is_trial, bundle_tier, business_name, abn, business_structure, industry, years_in_business, address_name, address_street, address_suburb, address_state, address_postcode, service_area, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling')
+      .eq('id', user.id).single();
+
+    _profile = (pr.data) ? pr.data : {};
+    _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
+
+    setWelcome(user);
+    renderTrialBanner(_profile);
+    loadNotifications(user.id);
+    await renderActionTiles(user.id, _activeTools);
+
+    if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
+      await window.DASH_WIDGETS.renderAll(_supabase, user.id, _activeTools);
+    }
+
+    renderYourStax(_activeTools);
+    wireTabSwitching();
+    wireActivateButtons();
+
+    hideEmptyZones();
   }
 
+  // ── WELCOME STRIP ──
+  function setWelcome(user) {
+    var el = document.getElementById('welcome-strip');
+    if (!el) return;
+    var firstName = (user.user_metadata && user.user_metadata.first_name) ||
+      (user.user_metadata && user.user_metadata.full_name && user.user_metadata.full_name.split(' ')[0]) || '';
+    el.innerHTML = firstName ? 'Welcome back, <strong>' + escHtml(firstName) + '</strong>.' : 'Welcome back.';
+  }
+
+  // ── NOTIFICATIONS (BP completion) ──
   function checkBPComplete(p) {
     if (!p) return false;
     var hasText = function(k) { return p[k] && typeof p[k] === 'string' && p[k].trim() !== ''; };
     var hasArr = function(k) { return Array.isArray(p[k]) && p[k].length > 0; };
-    var hasJsonArr = function(k) { var v = p[k]; return Array.isArray(v) && v.length > 0; };
     return hasText('business_name') && hasText('abn') && hasText('business_structure') &&
       hasArr('industry') && hasText('years_in_business') &&
       hasText('address_name') && hasText('address_street') && hasText('address_suburb') &&
       hasText('address_state') && hasText('address_postcode') &&
-      hasArr('service_area') &&
-      hasJsonArr('bp_services') && hasJsonArr('bp_products') &&
+      hasArr('service_area') && hasArr('bp_services') && hasArr('bp_products') &&
       hasArr('payment_methods') && hasText('response_time') &&
       hasText('warranty_info') && hasText('complaints_handling') &&
       hasText('marketing_theme_awareness') && hasText('marketing_theme_differentiators') &&
       hasText('marketing_theme_feeling');
   }
 
-  async function loadNotifications(userId) {
+  function loadNotifications(userId) {
     var bar = document.getElementById('notification-bar');
     if (!bar) return;
-    var items = [];
-    try {
-      var pr = await window.supabaseClient.from('profiles').select('business_name,abn,business_structure,industry,years_in_business,address_name,address_street,address_suburb,address_state,address_postcode,service_area,bp_services,bp_products,payment_methods,response_time,warranty_info,complaints_handling,marketing_theme_awareness,marketing_theme_differentiators,marketing_theme_feeling,logo_url,additional_phones').eq('id', userId).single();
-      if (pr.data && !checkBPComplete(pr.data)) {
-        items.push({ msg: 'Complete your Business Profile so your tools can personalise outputs', link: '/library#business-profile', linkText: 'Complete now' });
-      }
-    } catch(e) {}
-    try {
-      var cr = await window.supabaseClient.from('content_library').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending');
-      if (cr.count && cr.count > 0) {
-        items.push({ msg: cr.count + ' item' + (cr.count > 1 ? 's' : '') + ' awaiting approval in Content Library', link: '/library', linkText: 'Review' });
-      }
-    } catch(e) {}
-    try {
-      var sp = await window.supabaseClient.from('social_posts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending_review');
-      if (sp.count && sp.count > 0) {
-        items.push({ msg: sp.count + ' post' + (sp.count > 1 ? 's' : '') + ' ready for review in Marketing Hub', link: '/social', linkText: 'Review' });
-      }
-    } catch(e) {}
-    if (items.length === 0) { bar.style.display = 'none'; return; }
-    items = items.slice(0, 3);
-    bar.innerHTML = items.map(function(item) {
-      return '<div class="notif-item"><span>' + item.msg + '</span><a href="' + item.link + '">' + item.linkText + '</a><button class="notif-dismiss" title="Dismiss">&times;</button></div>';
-    }).join('');
-  }
-
-  async function init(user) {
-    var userId = user.id;
-    var activeTools = [];
-    try {
-      var pr = await window.supabaseClient.from('profiles').select('activated_tools, trial_expires_at, is_trial, bundle_tier').eq('id', userId).single();
-      if (pr.data && Array.isArray(pr.data.activated_tools)) activeTools = pr.data.activated_tools;
-    } catch(e) {}
-    await loadNotifications(userId);
-    if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
-      await window.DASH_WIDGETS.renderAll(userId, activeTools);
+    if (!checkBPComplete(_profile)) {
+      bar.innerHTML = '<div class="notif-item"><span>Complete your Business Profile so your tools can personalise outputs</span><a href="/content-library.html#business-profile">Complete now</a><button class="notif-dismiss" title="Dismiss">&times;</button></div>';
     }
-    renderTrialBanner(pr.data);
-    renderStax(activeTools);
   }
 
-  function activateTool(toolId) {
-    var tool = TOOLS.find(function(t) { return t.id === toolId; });
-    if (!tool || !tool.priceId) {
-      var msg = document.createElement('div');
-      msg.textContent = 'Coming Soon — this tool is not yet available for purchase.';
-      msg.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#4A6D8C;color:#fff;padding:14px 28px;border-radius:8px;font-family:DM Sans,sans-serif;font-size:15px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.18);';
-      document.body.appendChild(msg);
-      setTimeout(function(){ if (msg.parentNode) msg.parentNode.removeChild(msg); }, 3500);
-      return;
-    }
-    window.supabaseClient.auth.getUser().then(function(res) {
-      var user = res.data && res.data.user;
-      if (!user) { window.location.href = '//login'; return; }
-      fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ priceId: tool.priceId, userId: user.id, toolId: toolId })
-      })
-      .then(function(r) { return r.json(); })
-      .then(function(data) {
-        if (data.url) { window.location.href = data.url; }
-        else { console.error('activateTool: no checkout URL returned', data); }
-      })
-      .catch(function(e) { console.error('activateTool: fetch error', e); });
-    });
-  }
-
-  // Wire stax-section activate buttons via event delegation
-  document.addEventListener('click', function(e) {
-    var btn = e.target.closest('.btn-stax-activate');
-    if (!btn) return;
-    var toolId = btn.getAttribute('data-toolid');
-    if (!toolId) return;
-    DASH_DATA.activateTool(toolId);
-  });
-
+  // ── TRIAL BANNER ──
   function renderTrialBanner(profile) {
-    var DISMISS_KEY = 'trial_banner_dismissed';
     var banner = document.getElementById('trial-banner');
     var msg = document.getElementById('trial-banner-msg');
     var cta = document.getElementById('trial-banner-cta');
     var dismiss = document.getElementById('trial-banner-dismiss');
     if (!banner || !profile) return;
     if (!profile.is_trial || !profile.trial_expires_at) return;
-    if (sessionStorage.getItem(DISMISS_KEY) === 'true') return;
+    if (sessionStorage.getItem('trial_banner_dismissed') === 'true') return;
+
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
-    var msLeft = expires - now;
-    var daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+    var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
     var bannerClass, bannerMsg;
+
     if (daysLeft <= 0) {
       bannerClass = 'trial-banner--expired';
       bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
@@ -170,20 +109,257 @@ window.DASH_DATA = (function() {
     } else {
       return;
     }
+
     banner.className = 'trial-banner ' + bannerClass + ' visible';
     msg.textContent = bannerMsg;
+
     var tier = profile.bundle_tier;
-    cta.onclick = function() {
+    cta.addEventListener('click', function() {
       if (tier === 'stax3' || tier === 'stax6') {
-        window.location.href = 'subscribe-confirm.html?tier=' + tier;
+        window.location.href = '/subscribe-confirm.html?tier=' + tier;
       } else {
         window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
       }
-    };
-    dismiss.onclick = function() {
-      sessionStorage.setItem(DISMISS_KEY, 'true');
+    });
+    dismiss.addEventListener('click', function() {
+      sessionStorage.setItem('trial_banner_dismissed', 'true');
       banner.classList.remove('visible');
-    };
+    });
+  }
+
+  // ── ZONE 1: ACTION TILES ──
+  async function renderActionTiles(userId, activeTools) {
+    var container = document.getElementById('zone-1');
+    if (!container) return;
+
+    var tiles = [];
+
+    // CL tile — always first
+    try {
+      var pending = await _supabase.from('content_library')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('status', 'pending').neq('source', 'tool');
+      var outputs = await _supabase.from('content_library')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId).eq('source', 'tool')
+        .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
+
+      var pendingCount = (pending.count) || 0;
+      var outputCount = (outputs.count) || 0;
+      var summary = [];
+      if (pendingCount > 0) summary.push(pendingCount + ' pending review');
+      if (outputCount > 0) summary.push(outputCount + ' new output' + (outputCount !== 1 ? 's' : '') + ' this week');
+      if (summary.length === 0) summary.push('All clear');
+
+      tiles.push(tileHtml('\ud83d\udcda', 'Content Library', summary.join(' \u00b7 '), '/content-library.html#review', 'orange'));
+    } catch (e) {
+      tiles.push(tileHtml('\ud83d\udcda', 'Content Library', 'All clear', '/content-library.html', 'orange'));
+    }
+
+    // Social — pending posts
+    if (activeTools.indexOf('social') !== -1) {
+      try {
+        var sp = await _supabase.from('social_posts')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId).eq('status', 'pending_review');
+        if (sp.count && sp.count > 0) {
+          tiles.push(tileHtml('\ud83d\udcf1', 'Marketing & Social', sp.count + ' post' + (sp.count !== 1 ? 's' : '') + ' to approve', '/social', 'orange'));
+        }
+      } catch (e) {}
+    }
+
+    // Chatbot — pending FAQs
+    if (activeTools.indexOf('chatbot') !== -1) {
+      try {
+        var fq = await _supabase.from('learned_faqs')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId).eq('status', 'pending');
+        if (fq.count && fq.count > 0) {
+          tiles.push(tileHtml('\ud83d\udcac', 'Website Chatbot', fq.count + ' FAQ' + (fq.count !== 1 ? 's' : '') + ' to approve', '/chatbot', ''));
+        }
+      } catch (e) {}
+    }
+
+    // Email — urgent emails
+    if (activeTools.indexOf('email') !== -1) {
+      try {
+        var ur = await _supabase.from('email_summaries')
+          .select('id', { count: 'exact', head: true })
+          .eq('user_id', userId).eq('urgency', 'high');
+        if (ur.count && ur.count > 0) {
+          tiles.push(tileHtml('\ud83d\udce7', 'Email Assistant', ur.count + ' urgent email' + (ur.count !== 1 ? 's' : ''), '/email', 'orange'));
+        }
+      } catch (e) {}
+    }
+
+    container.innerHTML = tiles.join('');
+  }
+
+  function tileHtml(icon, name, summary, href, colourClass) {
+    return '<a href="' + href + '" class="stat-card ' + colourClass + ' dash-action-tile">'
+      + '<div class="dash-action-row">'
+      + '<span class="dash-action-icon">' + icon + '</span>'
+      + '<span class="dash-action-name">' + escHtml(name) + '</span>'
+      + '</div>'
+      + '<div class="stat-label">' + escHtml(summary) + '</div>'
+      + '</a>';
+  }
+
+  // ── ZONE 3: YOUR STAX ──
+  function renderYourStax(activeTools) {
+    var activeContainer = document.getElementById('dash-tab-active');
+    var availableContainer = document.getElementById('dash-tab-available');
+    if (!activeContainer || !availableContainer) return;
+
+    var activeHtml = '';
+    var availableHtml = '';
+    var hasActive = false;
+    var hasAvailable = false;
+
+    TOOLS.forEach(function(tool) {
+      var isActive = activeTools.indexOf(tool.id) !== -1;
+      var isPending = tool.status === 'pending';
+
+      if (isActive) {
+        hasActive = true;
+        activeHtml += activeCardHtml(tool);
+      } else if (isPending) {
+        hasAvailable = true;
+        availableHtml += comingSoonCardHtml(tool);
+      } else {
+        hasAvailable = true;
+        availableHtml += availableCardHtml(tool);
+      }
+    });
+
+    if (!hasActive) {
+      activeHtml = '<div class="empty-state"><div class="empty-state-icon">\ud83d\udce6</div><h3>No active tools yet</h3><p>Check out the Available Tools tab to get started.</p></div>';
+    }
+    if (!hasAvailable) {
+      availableHtml = '<div class="empty-state"><div class="empty-state-icon">\u2705</div><h3>All tools activated</h3><p>You have access to every available tool.</p></div>';
+    }
+
+    activeContainer.innerHTML = '<div class="dash-stax-grid">' + activeHtml + '</div>';
+    availableContainer.innerHTML = '<div class="dash-stax-grid">' + availableHtml + '</div>';
+  }
+
+  function activeCardHtml(tool) {
+    var settingsLink = tool.settingsUrl
+      ? '<a href="' + tool.settingsUrl + '" class="dash-stax-settings-link">Settings</a>'
+      : '';
+    return '<div class="dash-stax-card dash-stax-live">'
+      + '<div class="dash-stax-card-top">'
+      + '<span class="dash-stax-icon">' + tool.icon + '</span>'
+      + '<div class="dash-stax-card-info">'
+      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
+      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '</div>'
+      + '<span class="badge badge-green">Live</span>'
+      + '</div>'
+      + '<div class="dash-stax-card-actions">'
+      + '<a href="' + tool.url + '" class="btn-primary btn-sm">Open Tool</a>'
+      + settingsLink
+      + '</div>'
+      + '</div>';
+  }
+
+  function availableCardHtml(tool) {
+    return '<div class="dash-stax-card">'
+      + '<div class="dash-stax-card-top">'
+      + '<span class="dash-stax-icon">' + tool.icon + '</span>'
+      + '<div class="dash-stax-card-info">'
+      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
+      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '</div>'
+      + '</div>'
+      + '<div class="dash-stax-meta">'
+      + '<span class="dash-stax-price">' + tool.price + '/month</span>'
+      + (tool.benefit ? '<span class="dash-stax-benefit">' + escHtml(tool.benefit) + '</span>' : '')
+      + '</div>'
+      + '<div class="dash-stax-card-actions">'
+      + '<a href="/panel-auth.html?tool=' + tool.id + '" class="btn-outline btn-sm">Learn More</a>'
+      + '<button class="btn-orange btn-sm dash-activate-btn" data-toolid="' + tool.id + '">Activate</button>'
+      + '</div>'
+      + '</div>';
+  }
+
+  function comingSoonCardHtml(tool) {
+    return '<div class="dash-stax-card dash-stax-coming">'
+      + '<div class="dash-stax-card-top">'
+      + '<span class="dash-stax-icon">' + tool.icon + '</span>'
+      + '<div class="dash-stax-card-info">'
+      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
+      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '</div>'
+      + '<span class="badge badge-grey">Coming Soon</span>'
+      + '</div>'
+      + '</div>';
+  }
+
+  // ── TAB SWITCHING ──
+  function wireTabSwitching() {
+    document.querySelectorAll('#zone-3-wrap .ptab[data-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('#zone-3-wrap .ptab').forEach(function(b) { b.classList.remove('active'); });
+        document.querySelectorAll('#zone-3-wrap .ptab-content').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        var panel = document.getElementById('dash-tab-' + btn.dataset.tab);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  }
+
+  // ── ACTIVATE TOOL ──
+  function activateTool(toolId) {
+    var tool = TOOLS.find(function(t) { return t.id === toolId; });
+    if (!tool || !tool.priceId || tool.status === 'pending') {
+      window.showModalError('Coming Soon \u2014 this tool is not yet available for purchase.');
+      return;
+    }
+    if (!_user) { window.location.href = '/login'; return; }
+    fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priceId: tool.priceId, userId: _user.id, toolId: toolId })
+    })
+    .then(function(r) {
+      if (!r.ok) throw new Error('Checkout failed');
+      return r.json();
+    })
+    .then(function(data) {
+      if (data.url) { window.location.href = data.url; }
+      else { window.showModalError('Could not start checkout. Please try again.'); }
+    })
+    .catch(function(e) {
+      console.error('activateTool error:', e);
+      window.showModalError('Could not start checkout. Please try again.');
+    });
+  }
+
+  function wireActivateButtons() {
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.dash-activate-btn');
+      if (!btn) return;
+      var toolId = btn.getAttribute('data-toolid');
+      if (toolId) activateTool(toolId);
+    });
+  }
+
+  // ── NOTIFICATION DISMISS ──
+  document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('notif-dismiss')) {
+      var item = e.target.closest('.notif-item');
+      if (item) item.remove();
+    }
+  });
+
+  // ── HIDE EMPTY ZONES ──
+  function hideEmptyZones() {
+    var zone2 = document.getElementById('zone-2');
+    var zone2Wrap = document.getElementById('zone-2-wrap');
+    if (zone2 && zone2Wrap && !zone2.innerHTML.trim()) {
+      zone2Wrap.style.display = 'none';
+    }
   }
 
   return { init: init, activateTool: activateTool };
