@@ -106,3 +106,26 @@ async function requireAuth() {
   }
   return true;
 }
+
+// Resolve account owner and security level for multi-user access.
+// Sets window.accountOwnerId and window.userSecurityLevel.
+// Must run after supabaseClient is available and user is authenticated.
+async function resolveAccountOwner(userId) {
+  window.accountOwnerId = userId;
+  window.userSecurityLevel = 1;
+  try {
+    var result = await window.supabaseClient
+      .from('team_members')
+      .select('account_owner_id, security_level')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (result.data) {
+      window.accountOwnerId = result.data.account_owner_id;
+      window.userSecurityLevel = result.data.security_level;
+    }
+  } catch (e) {
+    console.error('[auth] resolveAccountOwner error:', e);
+  }
+}
+window.resolveAccountOwner = resolveAccountOwner;
