@@ -282,7 +282,7 @@ window.SOCIAL_LOGIC = {
     var modal = document.getElementById('sm-confirm-modal');
     if (!modal) return;
     document.getElementById('sm-confirm-title').textContent = title;
-    document.getElementById('sm-confirm-body').textContent = body;
+    document.getElementById('sm-confirm-body').innerHTML = body;
     modal.classList.add('open');
     var okBtn = document.getElementById('sm-confirm-ok');
     var cancelBtn = document.getElementById('sm-confirm-cancel');

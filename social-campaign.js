@@ -570,8 +570,15 @@ window.SM_CAMPAIGN = {
     var approved = posts.filter(function(p) { return p.status === 'approved'; }).length;
     var total = posts.length;
 
+    var isDesktop = window.innerWidth >= 768;
+    var viewMode = this._reviewViewMode || (isDesktop ? 'grid' : 'list');
+
     var html = '<div class="sm-wizard-header">' +
       '<div class="sm-wizard-title">Review Campaign Posts</div>' +
+      '<div style="margin-left:auto;display:flex;gap:8px">' +
+        '<button class="filter-pill' + (viewMode === 'list' ? ' active' : '') + '" id="smc-view-list">List</button>' +
+        '<button class="filter-pill' + (viewMode === 'grid' ? ' active' : '') + '" id="smc-view-grid">Grid</button>' +
+      '</div>' +
       '</div>' +
       '<div class="sm-step-hint">' + approved + ' of ' + total + ' posts approved. ' + pending + ' pending review.</div>';
 
@@ -580,10 +587,12 @@ window.SM_CAMPAIGN = {
     } else {
       html += '<div class="sm-approve-wrap">' +
         '<button class="btn-outline btn-sm" id="smc-approve-all">Approve All Remaining</button>' +
+        '<button class="btn-outline btn-sm" id="smc-approve-selected" style="display:none">Approve Selected</button>' +
         '</div>';
     }
 
-    html += '<div class="sm-post-list">';
+    var listClass = viewMode === 'grid' ? 'sm-post-list sm-campaign-grid' : 'sm-post-list';
+    html += '<div class="' + listClass + '">';
     posts.forEach(function(post, idx) {
       var statusBadge = '';
       if (post.status === 'approved') statusBadge = '<span class="badge badge-green">Approved</span>';
@@ -594,8 +603,11 @@ window.SM_CAMPAIGN = {
         return c.charAt(0).toUpperCase() + c.slice(1);
       }).join(', ');
 
-      html += '<div class="item-card sm-post-card" data-id="' + post.id + '">' +
-        '<div class="sm-post-thumb">';
+      html += '<div class="item-card sm-post-card" data-id="' + post.id + '">';
+      if (post.status === 'pending') {
+        html += '<div style="display:flex;align-items:center;padding:0 8px"><input type="checkbox" class="item-checkbox smc-select-check" data-selectid="' + post.id + '" style="width:18px;height:18px;accent-color:var(--blue)"></div>';
+      }
+      html += '<div class="sm-post-thumb">';
       if (post.image_url) {
         html += '<img src="' + window.escHtml(post.image_url) + '" alt="">';
       } else {
@@ -644,6 +656,49 @@ window.SM_CAMPAIGN = {
     if (launchBtn) {
       launchBtn.addEventListener('click', function() {
         self._launchCampaign(campaign);
+      });
+    }
+
+    var viewListBtn = document.getElementById('smc-view-list');
+    var viewGridBtn = document.getElementById('smc-view-grid');
+    if (viewListBtn) {
+      viewListBtn.addEventListener('click', function() {
+        self._reviewViewMode = 'list';
+        self._renderPostReview(campaign);
+      });
+    }
+    if (viewGridBtn) {
+      viewGridBtn.addEventListener('click', function() {
+        self._reviewViewMode = 'grid';
+        self._renderPostReview(campaign);
+      });
+    }
+
+    var approveSelectedBtn = document.getElementById('smc-approve-selected');
+    activeEl.querySelectorAll('.smc-select-check').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        if (cb.checked) self._campaignPostsSelected.add(cb.dataset.selectid);
+        else self._campaignPostsSelected.delete(cb.dataset.selectid);
+        if (approveSelectedBtn) {
+          if (self._campaignPostsSelected.size > 0) {
+            approveSelectedBtn.style.display = '';
+            approveSelectedBtn.textContent = 'Approve Selected (' + self._campaignPostsSelected.size + ')';
+          } else {
+            approveSelectedBtn.style.display = 'none';
+          }
+        }
+      });
+    });
+    if (approveSelectedBtn) {
+      approveSelectedBtn.addEventListener('click', async function() {
+        var ids = Array.from(self._campaignPostsSelected);
+        if (ids.length === 0) return;
+        var bulkRes = await self._supabase.from('campaign_outputs').update({
+          status: 'approved', updated_at: new Date().toISOString()
+        }).in('id', ids);
+        if (bulkRes.error) { self._showError('Could not approve selected posts.'); return; }
+        self._campaignPostsSelected = new Set();
+        self._renderPostReview(campaign);
       });
     }
   },
@@ -758,17 +813,31 @@ window.SM_CAMPAIGN = {
 
   _launchCampaign: async function(campaign) {
     var self = this;
+    var outputs = await self._supabase
+      .from('campaign_outputs')
+      .select('*')
+      .eq('campaign_id', campaign.id)
+      .eq('status', 'approved')
+      .order('sort_order', { ascending: true });
+    if (outputs.error) { self._showError('Could not load campaign posts.'); return; }
+
+    var posts = outputs.data || [];
+    var platforms = (campaign.connections || []).filter(function(c) { return c !== 'manual'; });
+    var platformList = platforms.map(function(c) { return c.charAt(0).toUpperCase() + c.slice(1); }).join(', ') || 'Manual only';
+    var firstDate = posts.length > 0 && posts[0].scheduled_for
+      ? new Date(posts[0].scheduled_for).toLocaleDateString('en-AU')
+      : 'Not set';
+
+    var summaryHtml = '<div style="text-align:left;margin:12px 0">' +
+      '<div style="margin-bottom:8px"><strong>Total posts:</strong> ' + posts.length + '</div>' +
+      '<div style="margin-bottom:8px"><strong>First post date:</strong> ' + firstDate + '</div>' +
+      '<div><strong>Platforms:</strong> ' + window.escHtml(platformList) + '</div>' +
+      '</div>';
+
     window.SOCIAL_LOGIC._showConfirm(
       'Launch Campaign',
-      'All approved posts will be scheduled and published automatically. Ready to go?',
+      summaryHtml,
       async function() {
-        var outputs = await self._supabase
-          .from('campaign_outputs')
-          .select('*')
-          .eq('campaign_id', campaign.id)
-          .eq('status', 'approved')
-          .order('sort_order', { ascending: true });
-        if (outputs.error) { self._showError('Could not load campaign posts.'); return; }
 
         var posts = outputs.data || [];
         for (var i = 0; i < posts.length; i++) {

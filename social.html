@@ -341,6 +341,10 @@
     .sm-week-card { margin-bottom: 16px; }
     .sm-extend-select { width: 200px; }
 
+    .sm-campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--card-gap, 20px); }
+    .sm-campaign-grid .sm-post-card { flex-direction: column; }
+    .sm-campaign-grid .sm-post-thumb { width: 100%; min-height: 120px; }
+
     .sm-generating {
       text-align: center;
       padding: var(--loading-padding);
