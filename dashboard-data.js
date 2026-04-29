@@ -130,6 +130,13 @@ window.DASH_DATA = (function() {
         modal.classList.remove('open');
       });
     }
+    var ctaBtn = document.getElementById('bp-modal-cta');
+    if (ctaBtn) {
+      ctaBtn.addEventListener('click', function() {
+        try { sessionStorage.setItem('tab_state:/content-library.html', 'profile'); } catch (e) {}
+        window.location.href = '/content-library.html#profile';
+      });
+    }
     modal.addEventListener('click', function(e) {
       if (e.target === modal) {
         modal.classList.remove('open');
