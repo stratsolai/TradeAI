@@ -22,6 +22,7 @@ export default async function handler(req, res) {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return res.status(400).json({ error: 'Invalid email address.' });
     }
+    security_level = parseInt(security_level, 10);
     if (security_level !== 2 && security_level !== 3) {
       return res.status(400).json({ error: 'Access level must be Manager (2) or Staff (3).' });
     }

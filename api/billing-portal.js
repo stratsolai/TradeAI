@@ -16,6 +16,18 @@ export default async function handler(req, res) {
     var { data: { user }, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !user) return res.status(401).json({ error: 'Invalid token' });
 
+    // Verify caller is account owner
+    var { data: memberCheck } = await supabase
+      .from('team_members')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('status', 'active')
+      .maybeSingle();
+
+    if (memberCheck) {
+      return res.status(403).json({ error: 'Only the account owner can access billing.' });
+    }
+
     var { data: profile, error: profErr } = await supabase
       .from('profiles')
       .select('stripe_customer_id')
