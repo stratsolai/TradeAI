@@ -41,8 +41,8 @@ window.DASH_DATA = (function() {
     }
 
     setHeading();
-    renderTrialModal(_profile);
-    loadNotifications(user.id);
+    renderTrialBanner(_profile);
+    showBPModal();
     await renderActionTiles(user.id, _activeTools);
 
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
@@ -80,49 +80,59 @@ window.DASH_DATA = (function() {
       hasText('marketing_theme_feeling');
   }
 
-  function loadNotifications(userId) {
-    var bar = document.getElementById('notification-bar');
-    if (!bar) return;
-    if (!checkBPComplete(_profile)) {
-      bar.innerHTML = '<div class="notif-item"><span>Complete your Business Profile so your tools can personalise outputs</span><a href="/content-library.html#business-profile">Complete now</a><button class="notif-dismiss" title="Dismiss">&times;</button></div>';
+  // ── BP COMPLETION MODAL ──
+  function showBPModal() {
+    if (checkBPComplete(_profile)) return;
+    if (sessionStorage.getItem('bp_modal_dismissed') === 'true') return;
+
+    var modal = document.getElementById('bp-modal');
+    if (!modal) return;
+    modal.classList.add('open');
+
+    var dismiss = document.getElementById('bp-modal-dismiss');
+    if (dismiss) {
+      dismiss.addEventListener('click', function() {
+        sessionStorage.setItem('bp_modal_dismissed', 'true');
+        modal.classList.remove('open');
+      });
     }
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        sessionStorage.setItem('bp_modal_dismissed', 'true');
+        modal.classList.remove('open');
+      }
+    });
   }
 
-  // ── TRIAL MODAL ──
-  function renderTrialModal(profile) {
-    var modal = document.getElementById('trial-modal');
-    var msg = document.getElementById('trial-modal-msg');
-    var cta = document.getElementById('trial-modal-cta');
-    var dismiss = document.getElementById('trial-modal-dismiss');
-    if (!modal || !profile) return;
+  // ── TRIAL BANNER ──
+  function renderTrialBanner(profile) {
+    var banner = document.getElementById('trial-banner');
+    var msg = document.getElementById('trial-banner-msg');
+    var cta = document.getElementById('trial-banner-cta');
+    var dismiss = document.getElementById('trial-banner-dismiss');
+    if (!banner || !profile) return;
     if (!profile.is_trial || !profile.trial_expires_at) return;
-    if (sessionStorage.getItem('trial_modal_dismissed') === 'true') return;
+    if (sessionStorage.getItem('trial_banner_dismissed') === 'true') return;
 
-    var title = document.getElementById('trial-modal-title');
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
     var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
-    var trialMsg, trialTitle;
+    var bannerMsg;
 
     if (daysLeft <= 0) {
-      trialTitle = 'Trial Ended';
-      trialMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
+      bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
     } else if (daysLeft <= 1) {
-      trialTitle = 'Trial Ending Tomorrow';
-      trialMsg = 'Your free trial ends tomorrow. Subscribe now to keep access to your tools.';
+      bannerMsg = 'Your free trial ends tomorrow.';
     } else if (daysLeft <= 3) {
-      trialTitle = 'Trial Ending Soon';
-      trialMsg = daysLeft + ' days left on your free trial. Subscribe to keep your Stax.';
+      bannerMsg = daysLeft + ' days left on your free trial.';
     } else if (daysLeft <= 7) {
-      trialTitle = 'Free Trial';
-      trialMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
+      bannerMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
     } else {
       return;
     }
 
-    if (title) title.textContent = trialTitle;
-    msg.textContent = trialMsg;
-    modal.classList.add('open');
+    msg.textContent = bannerMsg;
+    banner.classList.add('visible');
 
     var tier = profile.bundle_tier;
     cta.addEventListener('click', function() {
@@ -133,14 +143,8 @@ window.DASH_DATA = (function() {
       }
     });
     dismiss.addEventListener('click', function() {
-      sessionStorage.setItem('trial_modal_dismissed', 'true');
-      modal.classList.remove('open');
-    });
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        sessionStorage.setItem('trial_modal_dismissed', 'true');
-        modal.classList.remove('open');
-      }
+      sessionStorage.setItem('trial_banner_dismissed', 'true');
+      banner.classList.remove('visible');
     });
   }
 
@@ -361,14 +365,6 @@ window.DASH_DATA = (function() {
       if (toolId) activateTool(toolId);
     });
   }
-
-  // ── NOTIFICATION DISMISS ──
-  document.addEventListener('click', function(e) {
-    if (e.target.classList.contains('notif-dismiss')) {
-      var item = e.target.closest('.notif-item');
-      if (item) item.remove();
-    }
-  });
 
   // ── HIDE EMPTY ZONES ──
   function hideEmptyZones() {

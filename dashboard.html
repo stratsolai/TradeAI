@@ -29,22 +29,46 @@
     .dash-heading .accent { color: var(--orange); }
     .dash-zone { margin-bottom: 40px; }
 
-    /* ── Notification bar (BP completion) ── */
-    #notification-bar { font-size: var(--note-font-size); font-weight: 500; }
-    #notification-bar:empty { display: none; }
-    .notif-item {
-      display: flex;
+    /* ── Trial banner ── */
+    .dash-trial-banner {
+      display: none;
       align-items: center;
-      padding: 10px 32px;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 32px;
       background: var(--badge-orange-bg);
       color: var(--badge-orange-text);
+      font-size: var(--body-font-size);
+      font-weight: 500;
       border-bottom: 1px solid var(--border);
     }
-    .notif-item:last-child { border-bottom: none; }
-    .notif-item a { color: var(--badge-orange-text); font-weight: var(--font-weight-semibold); margin-left: auto; text-decoration: underline; white-space: nowrap; }
-    .notif-item a:hover { opacity: 1; }
-    .notif-dismiss { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--badge-orange-text); padding: 0 4px; line-height: 1; }
+    .dash-trial-banner.visible { display: flex; }
+    .dash-trial-banner-msg { flex: 1; }
+    .dash-trial-banner-actions { display: flex; align-items: center; gap: var(--actions-gap); flex-shrink: 0; }
+    .dash-trial-banner-cta {
+      background: var(--orange);
+      color: var(--white);
+      border: none;
+      border-radius: var(--btn-radius);
+      padding: 8px 18px;
+      font-family: var(--body-font);
+      font-size: var(--body-font-size);
+      font-weight: var(--heading-lg-weight);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .dash-trial-banner-cta:hover { opacity: 0.85; }
+    .dash-trial-banner-dismiss {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      color: var(--badge-orange-text);
+      opacity: 0.6;
+      padding: 0 4px;
+    }
+    .dash-trial-banner-dismiss:hover { opacity: 1; }
 
 
     /* ── Zone 1: Action Tiles ── */
@@ -151,7 +175,7 @@
       .dash-container { padding: var(--page-padding-mobile); }
       .dash-stax-grid { grid-template-columns: 1fr; }
       .dash-overview-grid { grid-template-columns: 1fr; }
-      .notif-item { padding: 10px 16px; }
+      .dash-trial-banner { padding: 10px 16px; flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -173,7 +197,13 @@
     </div>
   </nav>
 
-  <div id="notification-bar"></div>
+  <div class="dash-trial-banner" id="trial-banner">
+    <span class="dash-trial-banner-msg" id="trial-banner-msg"></span>
+    <div class="dash-trial-banner-actions">
+      <button class="dash-trial-banner-cta" id="trial-banner-cta">Subscribe Now</button>
+      <button class="dash-trial-banner-dismiss" id="trial-banner-dismiss" aria-label="Dismiss">&times;</button>
+    </div>
+  </div>
 
   <div id="page-wrap" style="display:none">
     <div class="dash-container">
@@ -207,13 +237,13 @@
     </div>
   </div>
 
-  <div class="perm-modal-overlay" id="trial-modal">
+  <div class="perm-modal-overlay" id="bp-modal">
     <div class="perm-modal">
-      <div class="perm-modal-title" id="trial-modal-title">Free Trial</div>
-      <div class="perm-modal-body" id="trial-modal-msg"></div>
+      <div class="perm-modal-title">Complete Your Business Profile</div>
+      <div class="perm-modal-body">Completing your Business Profile helps your tools personalise outputs for your business — better marketing copy, more relevant insights, and smarter recommendations.</div>
       <div class="perm-modal-actions">
-        <button type="button" class="perm-modal-cancel" id="trial-modal-dismiss">Dismiss</button>
-        <button type="button" class="perm-modal-continue" id="trial-modal-cta">Subscribe Now</button>
+        <button type="button" class="perm-modal-cancel" id="bp-modal-dismiss">Dismiss</button>
+        <a href="/content-library.html#business-profile" class="perm-modal-continue" id="bp-modal-cta">Complete Now</a>
       </div>
     </div>
   </div>
