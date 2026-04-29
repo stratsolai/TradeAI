@@ -247,6 +247,105 @@ window.BP_INDUSTRY_DATA = {
     return merged;
   },
 
+  licences: {
+    'Building & Construction': [
+      'Builder\u2019s Licence (Domestic)', 'Builder\u2019s Licence (Commercial)', 'Builder\u2019s Licence (Unlimited)',
+      'Owner Builder Permit', 'Demolition Licence', 'Asbestos Removal Licence (Class A)',
+      'Asbestos Removal Licence (Class B)', 'White Card (Construction Induction)',
+      'Working at Heights Certificate', 'Scaffolding Licence', 'Rigging Licence',
+      'Crane Operator Licence', 'Forklift Licence', 'Dogging Licence',
+      'Building Practitioner Registration', 'Registered Building Surveyor',
+      'Occupational Health & Safety Certificate', 'First Aid Certificate',
+      'Master Builders Association Member', 'Housing Industry Association (HIA) Member'
+    ],
+    'Electrical & Solar': [
+      'Electrical Licence (Full)', 'Electrical Licence (Restricted)', 'Electrical Contractor Licence',
+      'Clean Energy Council (CEC) Accreditation', 'CEC Solar Design Accreditation',
+      'CEC Battery Endorsement', 'Disconnect/Reconnect Authorisation',
+      'White Card (Construction Induction)', 'Working at Heights Certificate',
+      'Data Cabling Registration', 'Security Installer Licence',
+      'Test & Tag Competency Certificate', 'CPR & First Aid Certificate',
+      'Electrical Safety Certificate', 'Restricted Electrical Licence (Disconnect/Reconnect)'
+    ],
+    'Plumbing & Gas': [
+      'Plumbing Licence (Full)', 'Plumbing Licence (Restricted)', 'Plumbing Contractor Licence',
+      'Gas Fitting Licence', 'Gas Fitting Permit (Type A)', 'Gas Fitting Permit (Type B)',
+      'Drainer\u2019s Licence', 'Roof Plumber Licence', 'Backflow Prevention Accreditation',
+      'White Card (Construction Induction)', 'Working at Heights Certificate',
+      'Water Efficiency Certification (WELS)', 'Thermostatic Mixing Valve (TMV) Certification',
+      'CPR & First Aid Certificate', 'Master Plumbers Association Member'
+    ],
+    'HVAC & Refrigeration': [
+      'Refrigerant Handling Licence (Full)', 'Restricted Refrigerant Handling Licence',
+      'Refrigeration & Air Conditioning Mechanic Licence', 'Split System Installation Endorsement',
+      'Gas Fitting Licence', 'Electrical Licence (Restricted)',
+      'ARCTICK Certification', 'White Card (Construction Induction)',
+      'Working at Heights Certificate', 'CPR & First Aid Certificate',
+      'Energy Efficiency Certificate', 'Commercial Refrigeration Endorsement'
+    ],
+    'Landscaping & Outdoor': [
+      'Landscape Contractor Licence', 'Landscape Designer Registration',
+      'Arborist Qualification (AQF Level 3+)', 'Tree Worker Licence',
+      'Chainsaw Operator Certificate', 'Pool Builder Licence',
+      'Pool Safety Inspector Licence', 'Pool Fence Compliance Certificate',
+      'Pesticide Application Licence', 'Irrigation Association of Australia Member',
+      'White Card (Construction Induction)', 'Working at Heights Certificate',
+      'Forklift Licence', 'Traffic Control Certificate', 'CPR & First Aid Certificate'
+    ],
+    'Painting & Finishing': [
+      'Painter\u2019s Registration', 'Painting Contractor Licence',
+      'Lead Paint Removal Certification', 'Asbestos Awareness Certificate',
+      'White Card (Construction Induction)', 'Working at Heights Certificate',
+      'Scaffolding Licence', 'Waterproofing Licence',
+      'Master Painters Association Member', 'Dulux Accredited Painter',
+      'Floor Sanding & Polishing Certification', 'CPR & First Aid Certificate'
+    ],
+    'Fabrication & Manufacturing': [
+      'Welding Certification (AS/NZS 1554)', 'Welding Certification (AS/NZS 2980)',
+      'Structural Steel Fabrication Certification', 'Boilermaker Trade Certificate',
+      'Pressure Vessel Welding Certification', 'CNC Machinist Qualification',
+      'Forklift Licence', 'Crane Operator Licence', 'Rigging Licence',
+      'White Card (Construction Induction)', 'Working at Heights Certificate',
+      'ISO 9001 Quality Management', 'ISO 3834 Welding Quality',
+      'Occupational Health & Safety Certificate', 'CPR & First Aid Certificate'
+    ],
+    'Cleaning & Maintenance': [
+      'Pest Management Licence', 'Pest Control Operator Licence',
+      'Fumigation Licence', 'Asbestos Assessor Licence',
+      'Asbestos Awareness Certificate', 'Working at Heights Certificate',
+      'Cleaning Industry Certification (ISSA/BSCAI)', 'IICRC Certification',
+      'Building Service Contractors Licence', 'Security Licence (for premises access)',
+      'National Police Check', 'Working With Children Check',
+      'CPR & First Aid Certificate', 'Chemical Handling Certificate',
+      'Carpet Cleaning Technician Certification'
+    ],
+    'Service & Professional': [
+      'CPA Australia Member', 'Chartered Accountant (CA ANZ)',
+      'Tax Agent Registration (TPB)', 'BAS Agent Registration (TPB)',
+      'Australian Financial Services Licence (AFSL)', 'Practising Certificate (Law)',
+      'Real Estate Agent Licence', 'Conveyancer Licence',
+      'ISO 9001 Quality Management', 'ISO 27001 Information Security',
+      'CompTIA Certification', 'Cisco Certification (CCNA/CCNP)',
+      'Microsoft Certification', 'AWS Certification',
+      'Google Ads Certification', 'Meta Blueprint Certification',
+      'National Police Check', 'Working With Children Check',
+      'Professional Indemnity Insurance', 'CPR & First Aid Certificate'
+    ]
+  },
+
+  getMergedLicences: function(industries) {
+    if (!Array.isArray(industries)) industries = [industries];
+    var merged = [];
+    var seen = {};
+    for (var i = 0; i < industries.length; i++) {
+      var list = this.licences[industries[i]] || [];
+      for (var j = 0; j < list.length; j++) {
+        if (!seen[list[j]]) { seen[list[j]] = true; merged.push(list[j]); }
+      }
+    }
+    return merged;
+  },
+
   getGroupByName: function(name) {
     return this.groups.find(function(g) { return g.name === name; }) || null;
   }
