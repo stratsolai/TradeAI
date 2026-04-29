@@ -2,6 +2,8 @@ window.CL_PROFILE = {
   _supabase: null,
   _userId: null,
   _profile: {},
+  _autoSaveTimer: null,
+  _activePanel: 'identity',
 
   init: function(supabase) {
     this._supabase = supabase;
@@ -55,12 +57,15 @@ window.CL_PROFILE = {
   },
 
   _bindTabs: function() {
+    var self = this;
     var wrap = document.getElementById('cl-tab-profile');
     wrap.querySelectorAll('.profile-nav-chip').forEach(function(btn) {
       btn.addEventListener('click', function() {
+        self._triggerAutoSave(self._activePanel);
         wrap.querySelectorAll('.profile-nav-chip').forEach(function(b) { b.classList.remove('active'); });
         btn.classList.add('active');
         wrap.querySelectorAll('.profile-panel').forEach(function(p) { p.classList.remove('active'); });
+        self._activePanel = btn.dataset.ptab;
         document.getElementById('prof-panel-' + btn.dataset.ptab).classList.add('active');
       });
     });
@@ -228,9 +233,42 @@ window.CL_PROFILE = {
     if (chip) chip.parentNode.removeChild(chip);
   },
 
-  // ─────────────────────────────────────────────────────────
-  // Panel 1: Identity
-  // ─────────────────────────────────────────────────────────
+  _triggerAutoSave: function(panel) {
+    var btnIds = { identity: 'prof-id-save', location: 'prof-loc-save', services: 'prof-svc-save', products: 'prof-prod-save', credentials: 'prof-cred-save' };
+    var btn = document.getElementById(btnIds[panel]);
+    if (btn && !btn.disabled) btn.click();
+  },
+
+  _scheduleAutoSave: function(panel, delay) {
+    var self = this;
+    if (self._autoSaveTimer) clearTimeout(self._autoSaveTimer);
+    self._autoSaveTimer = setTimeout(function() { self._triggerAutoSave(panel); }, delay || 500);
+  },
+
+  _bindAutoSave: function(panel, container) {
+    var self = this;
+    container.querySelectorAll('.profile-input, .profile-textarea, input[type="text"], input[type="number"], input[type="url"], textarea').forEach(function(input) {
+      if (input.dataset.autoSaveBound) return;
+      input.dataset.autoSaveBound = '1';
+      input.addEventListener('blur', function() { self._scheduleAutoSave(panel, 300); });
+    });
+    container.querySelectorAll('select, input[type="checkbox"]').forEach(function(el) {
+      if (el.dataset.autoSaveBound) return;
+      el.dataset.autoSaveBound = '1';
+      el.addEventListener('change', function() { self._scheduleAutoSave(panel, 300); });
+    });
+    container.querySelectorAll('.review-pill-row').forEach(function(group) {
+      if (group.dataset.autoSaveChipBound) return;
+      group.dataset.autoSaveChipBound = '1';
+      group.addEventListener('click', function(e) {
+        if (e.target.closest('.filter-pill')) {
+          self._scheduleAutoSave(panel, 500);
+        }
+      });
+    });
+  },
+
+  // Identity
 
   _renderIdentity: function() {
     var p = this._profile;
@@ -290,6 +328,7 @@ window.CL_PROFILE = {
 
     document.getElementById('prof-id-save').addEventListener('click', function() { self._saveIdentity(); });
     document.getElementById('prof-logo-file').addEventListener('change', function(e) { self._uploadLogo(e.target.files[0]); });
+    self._bindAutoSave('identity', idPanel);
     document.getElementById('prof-abn').addEventListener('input', function(e) {
       var d = e.target.value.replace(/\D/g, '').substring(0, 11);
       var f = '';
@@ -393,9 +432,7 @@ window.CL_PROFILE = {
     }, document.getElementById('prof-save-msg'));
   },
 
-  // ─────────────────────────────────────────────────────────
-  // Panel 2: Location & Contact
-  // ─────────────────────────────────────────────────────────
+  // Location
 
   _locationBlock: function(loc, idx, isPrimary) {
     var idPfx = isPrimary ? 'loc-p' : 'loc-' + idx;
@@ -503,6 +540,7 @@ window.CL_PROFILE = {
     self._bindPhoneTypeDropdowns(locPanel);
     self._bindChipToggles(locPanel);
     self._bindHoursPresets();
+    self._bindAutoSave('location', locPanel);
 
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.lookback-dropdown-wrap')) {
@@ -743,10 +781,6 @@ window.CL_PROFILE = {
     }, document.getElementById('prof-save-msg'));
   },
 
-  // ─────────────────────────────────────────────────────────
-  // Panel 3: Services
-  // ─────────────────────────────────────────────────────────
-
   _renderServices: function() {
     this._renderMultiSelect('svc', 'bp_services', 'Services', '\uD83D\uDEE0\uFE0F', '3. Services',
       'What services your business provides with pricing', 'prof-panel-services', 'prof-svc-save');
@@ -804,6 +838,9 @@ window.CL_PROFILE = {
 
     this._renderPricingRows(prefix, items, pricingTypes);
     this._bindMultiSelectPills(prefix, profileKey, pricingTypes);
+
+    var panelContainer = document.getElementById(panelId);
+    this._bindAutoSave(prefix === 'svc' ? 'services' : 'products', panelContainer);
 
     document.getElementById(saveBtnId).addEventListener('click', function() {
       self._saveMultiSelect(prefix, profileKey, saveBtnId);
@@ -1023,9 +1060,7 @@ window.CL_PROFILE = {
     }, document.getElementById('prof-save-msg'));
   },
 
-  // ─────────────────────────────────────────────────────────
-  // Panel 5: Credentials & Support
-  // ─────────────────────────────────────────────────────────
+  // Credentials
 
   _renderCredentials: function() {
     var industries = this._va('industry');
@@ -1068,6 +1103,7 @@ window.CL_PROFILE = {
     var credPanel = document.getElementById('prof-panel-credentials');
     self._bindChipToggles(credPanel);
     self._bindPhoneTypeDropdowns(credPanel);
+    self._bindAutoSave('credentials', credPanel);
 
     document.getElementById('prof-cred-save').addEventListener('click', function() { self._saveCredentials(); });
 
@@ -1077,8 +1113,17 @@ window.CL_PROFILE = {
         var val = afterHoursBtn.getAttribute('data-value');
         var textField = document.getElementById('prof-after-hours-text');
         if (textField) textField.style.display = val === 'Available' ? '' : 'none';
+        self._scheduleAutoSave('credentials', 500);
       });
       observer.observe(afterHoursBtn, { attributes: true, attributeFilter: ['data-value'] });
+    }
+
+    var responseBtn = document.getElementById('prof-response-time');
+    if (responseBtn) {
+      var respObserver = new MutationObserver(function() {
+        self._scheduleAutoSave('credentials', 500);
+      });
+      respObserver.observe(responseBtn, { attributes: true, attributeFilter: ['data-value'] });
     }
   },
 
