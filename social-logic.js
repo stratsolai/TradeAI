@@ -756,26 +756,7 @@ window.SOCIAL_LOGIC = {
     return html;
   },
 
-  /* _renderProjectStep is overridden by social-modules.js CL Projects CRUD */
-
-  _renderTestimonialStep: function() {
-    var html = '<div class="form-group"><label class="form-label">Testimonial text</label>' +
-      '<textarea class="form-input" id="sm-field-testimonial" rows="4" placeholder="What did the customer say?">' +
-      window.escHtml(this._journeyInputs.testimonial || '') + '</textarea></div>';
-    return html;
-  },
-
-  _renderLogoStep: function() {
-    var html = '<div class="sm-step-hint">Add the customer\'s logo to make the post more professional. This step is optional.</div>';
-    html += '<div class="form-group"><label class="form-label">Customer website URL (for logo fetch)</label>' +
-      '<input type="text" class="form-input" id="sm-field-customer-website" placeholder="https://..." value="' + window.escHtml(this._journeyInputs.customer_website || '') + '"></div>';
-    html += '<div id="sm-logo-preview" style="margin-top:12px"></div>';
-    html += '<div class="form-group" style="display:flex;align-items:center;gap:8px;margin-top:12px">' +
-      '<input type="checkbox" class="item-checkbox" id="sm-field-logo-permission"' +
-      (this._journeyInputs.logo_permission ? ' checked' : '') + '>' +
-      '<label class="form-label" for="sm-field-logo-permission" style="margin-bottom:0">I have permission to use this logo in my marketing</label></div>';
-    return html;
-  },
+  /* _renderProjectStep, _renderTestimonialStep, _renderLogoStep overridden by social-modules.js */
 
   _bindStepEvents: function(step) {
     var self = this;
