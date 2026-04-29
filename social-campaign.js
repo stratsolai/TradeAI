@@ -129,15 +129,17 @@ window.SM_CAMPAIGN = {
     var prevBtn = document.getElementById('smc-prev-btn');
     var nextBtn = document.getElementById('smc-next-btn');
 
-    var dotHtml = '';
+    var barHtml = '<div class="sm-step-label">Step ' + (this._campaignStep + 1) + ' of ' + this.CAMPAIGN_STEPS.length + ' \u2014 ' + window.escHtml(step.title) + '</div>';
+    barHtml += '<div class="sm-step-bar">';
     for (var d = 0; d < this.CAMPAIGN_STEPS.length; d++) {
-      var cls = 'sm-step-dot';
-      if (d < this._campaignStep) cls += ' completed';
-      if (d === this._campaignStep) cls += ' active';
-      dotHtml += '<div class="' + cls + '"></div>';
+      var cls = 'sm-step-seg';
+      if (d < this._campaignStep) cls += ' sm-step-done';
+      else if (d === this._campaignStep) cls += ' sm-step-current';
+      else cls += ' sm-step-pending';
+      barHtml += '<div class="' + cls + '"></div>';
     }
-    dotHtml += '<span class="sm-step-label">Step ' + (this._campaignStep + 1) + ' of ' + this.CAMPAIGN_STEPS.length + ' &mdash; ' + window.escHtml(step.title) + '</span>';
-    indicator.innerHTML = dotHtml;
+    barHtml += '</div>';
+    indicator.innerHTML = barHtml;
 
     prevBtn.style.display = this._campaignStep > 0 ? '' : 'none';
     nextBtn.textContent = this._campaignStep === this.CAMPAIGN_STEPS.length - 1 ? 'Generate Plan' : 'Next';

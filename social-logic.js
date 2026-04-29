@@ -463,7 +463,6 @@ window.SOCIAL_LOGIC = {
     var prevBtn = document.getElementById('sm-step-prev-btn');
     var nextBtn = document.getElementById('sm-step-next-btn');
 
-    var dotHtml = '';
     var visibleSteps = steps.filter(function(s) {
       return s.id !== 'generate' && s.id !== 'edit_approve' && s.id !== 'publish';
     });
@@ -471,14 +470,17 @@ window.SOCIAL_LOGIC = {
     for (var vi = 0; vi < visibleSteps.length; vi++) {
       if (visibleSteps[vi].id === step.id) { visibleIndex = vi; break; }
     }
+    var barHtml = '<div class="sm-step-label">Step ' + (visibleIndex + 1) + ' of ' + visibleSteps.length + ' \u2014 ' + window.escHtml(step.title) + '</div>';
+    barHtml += '<div class="sm-step-bar">';
     for (var d = 0; d < visibleSteps.length; d++) {
-      var cls = 'sm-step-dot';
-      if (d < visibleIndex) cls += ' completed';
-      if (d === visibleIndex) cls += ' active';
-      dotHtml += '<div class="' + cls + '"></div>';
+      var cls = 'sm-step-seg';
+      if (d < visibleIndex) cls += ' sm-step-done';
+      else if (d === visibleIndex) cls += ' sm-step-current';
+      else cls += ' sm-step-pending';
+      barHtml += '<div class="' + cls + '"></div>';
     }
-    dotHtml += '<span class="sm-step-label">Step ' + (visibleIndex + 1) + ' of ' + visibleSteps.length + ' &mdash; ' + window.escHtml(step.title) + '</span>';
-    indicator.innerHTML = dotHtml;
+    barHtml += '</div>';
+    indicator.innerHTML = barHtml;
 
     prevBtn.style.display = this._currentStep > 0 ? '' : 'none';
 

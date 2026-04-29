@@ -27,7 +27,7 @@
     .sm-group-tile-icon { font-size: var(--heading-lg-size); margin-bottom: var(--btn-gap); }
     .sm-group-tile-title {
       font-family: var(--heading-font);
-      font-size: var(--section-title-font-size);
+      font-size: 20px;
       font-weight: var(--heading-lg-weight);
       color: var(--text);
       margin-bottom: var(--btn-gap);
@@ -72,28 +72,33 @@
       flex: 1;
     }
     .sm-step-indicator {
-      display: flex;
-      gap: var(--btn-gap);
-      align-items: center;
-      margin-bottom: var(--card-gap, 24px);
+      background: var(--white);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border);
+      padding: var(--card-padding);
+      margin-bottom: var(--card-padding);
     }
-    .sm-step-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: background var(--btn-transition);
-      padding: 17px;
-      box-sizing: content-box;
-      margin: -17px;
-    }
-    .sm-step-dot.active { background: var(--blue); }
-    .sm-step-dot.completed { background: var(--green); }
     .sm-step-label {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-      margin-left: var(--btn-gap);
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      margin-bottom: var(--actions-gap);
     }
+    .sm-step-bar {
+      display: flex;
+      gap: 6px;
+      height: 8px;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .sm-step-seg {
+      flex: 1;
+      border-radius: 4px;
+      transition: background 0.3s;
+    }
+    .sm-step-done { background: var(--blue); }
+    .sm-step-current { background: var(--orange); }
+    .sm-step-pending { background: var(--border); }
     .sm-step-content {
       background: var(--white);
       border-radius: var(--card-radius);
@@ -336,7 +341,6 @@
       .sm-publish-actions .btn-outline { width: 100%; justify-content: center; }
       .sm-campaign-header { flex-direction: column; align-items: stretch; }
       .sm-post-metrics { flex-wrap: wrap; }
-      .sm-step-indicator { flex-wrap: wrap; }
     }
   </style>
 </head>
@@ -351,7 +355,7 @@
     </div>
     <div class="topbar-spacer"></div>
     <div class="topbar-right">
-      <a href="/social-settings.html" class="topbar-nav-link" title="Settings">&#9881;</a>
+      <a href="/social-settings.html" class="topbar-nav-link">Settings</a>
       <div class="topbar-account-wrap">
         <button class="account-btn" id="account-btn"><span id="account-email-short">Account</span> &#9662;</button>
         <div class="account-dropdown" id="account-dropdown">
