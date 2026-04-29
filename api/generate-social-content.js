@@ -22,7 +22,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorised" });
   }
 
-  const { journey_type, inputs, media_url, output_type } = req.body;
+  const { journey_type, inputs, media_url, output_type, output_types } = req.body;
   if (!journey_type) {
     return res.status(400).json({ error: "journey_type is required" });
   }
@@ -93,7 +93,11 @@ Tone: ${toneDesc}`;
       return res.status(400).json({ error: "Invalid journey_type." });
     }
 
-    const maxTokens = journey_type === "blog_content" ? 4096 : 1024;
+    const allOutputTypes = output_types || [output_type || "social_post"];
+    const hasFlyer = allOutputTypes.indexOf("flyer") !== -1;
+    const hasAdGraphic = allOutputTypes.indexOf("ad_graphic") !== -1;
+
+    const maxTokens = journey_type === "blog_content" ? 4096 : (hasFlyer ? 2048 : 1024);
 
     const message = await anthropic.messages.create({
       model: "claude-sonnet-4-6",
@@ -104,11 +108,57 @@ Tone: ${toneDesc}`;
     const raw = message.content[0].text;
     const { caption, hashtags } = parseResponse(raw);
 
-    return res.status(200).json({
+    const result = {
       caption: caption,
       hashtags: hashtags,
       image_url: media_url || null
-    });
+    };
+
+    if (hasFlyer) {
+      const flyerPrompt = `Based on this social media content, create structured flyer copy.
+
+${caption}
+
+Generate professional flyer copy with these sections, labelled exactly:
+HEADLINE: [short punchy headline, max 8 words]
+SUBHEADLINE: [one supporting line]
+BODY: [2-3 short paragraphs suitable for a printed flyer, no hashtags]
+CALL_TO_ACTION: [clear call to action, e.g. "Call now on..." or "Visit..."]
+FINE_PRINT: [any terms, conditions, or dates if applicable, otherwise ""]
+
+Business: ${businessName}
+Australian English. No exclamation marks.`;
+
+      const flyerMsg = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: flyerPrompt }]
+      });
+      result.flyer = parseFlyerResponse(flyerMsg.content[0].text);
+    }
+
+    if (hasAdGraphic) {
+      const adPrompt = `Based on this social media content, create ad graphic copy.
+
+${caption}
+
+Generate ad graphic text with these sections, labelled exactly:
+HEADLINE: [bold headline, max 6 words]
+SUBTEXT: [one short supporting line, max 15 words]
+CTA_BUTTON: [button text, max 4 words, e.g. "Learn More", "Book Now"]
+
+Business: ${businessName}
+Australian English. No exclamation marks.`;
+
+      const adMsg = await anthropic.messages.create({
+        model: "claude-sonnet-4-6",
+        max_tokens: 256,
+        messages: [{ role: "user", content: adPrompt }]
+      });
+      result.ad_graphic = parseAdGraphicResponse(adMsg.content[0].text);
+    }
+
+    return res.status(200).json(result);
   } catch (err) {
     console.error("generate-social-content error:", err);
     return res.status(500).json({ error: "Failed to generate content. Please try again." });
@@ -124,6 +174,34 @@ function parseResponse(text) {
     caption = text.substring(0, text.length - hashtagMatch[0].length).trim();
   }
   return { caption, hashtags };
+}
+
+function parseFlyerResponse(text) {
+  const result = { headline: "", subheadline: "", body: "", call_to_action: "", fine_print: "" };
+  const lines = text.split("\n");
+  let currentField = null;
+  let bodyLines = [];
+  for (const line of lines) {
+    if (line.startsWith("HEADLINE:")) { result.headline = line.replace("HEADLINE:", "").trim(); currentField = "headline"; }
+    else if (line.startsWith("SUBHEADLINE:")) { result.subheadline = line.replace("SUBHEADLINE:", "").trim(); currentField = "subheadline"; }
+    else if (line.startsWith("BODY:")) { bodyLines = [line.replace("BODY:", "").trim()]; currentField = "body"; }
+    else if (line.startsWith("CALL_TO_ACTION:")) { result.body = bodyLines.join("\n").trim(); result.call_to_action = line.replace("CALL_TO_ACTION:", "").trim(); currentField = "cta"; }
+    else if (line.startsWith("FINE_PRINT:")) { result.fine_print = line.replace("FINE_PRINT:", "").trim(); currentField = "fine"; }
+    else if (currentField === "body" && line.trim()) { bodyLines.push(line.trim()); }
+  }
+  if (bodyLines.length > 0 && !result.body) result.body = bodyLines.join("\n").trim();
+  return result;
+}
+
+function parseAdGraphicResponse(text) {
+  const result = { headline: "", subtext: "", cta_button: "" };
+  const lines = text.split("\n");
+  for (const line of lines) {
+    if (line.startsWith("HEADLINE:")) result.headline = line.replace("HEADLINE:", "").trim();
+    else if (line.startsWith("SUBTEXT:")) result.subtext = line.replace("SUBTEXT:", "").trim();
+    else if (line.startsWith("CTA_BUTTON:")) result.cta_button = line.replace("CTA_BUTTON:", "").trim();
+  }
+  return result;
 }
 
 function buildFinishedJobPrompt(ctx, inputs, mediaUrl) {

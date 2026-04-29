@@ -57,6 +57,31 @@
     html += '<div class="sm-preview-hashtags" id="sm-preview-hashtags-text">' + window.escHtml(this._generatedContent.hashtags) + '</div>';
     html += '</div></div>';
 
+    var gc = this._generatedContent;
+    if (gc.flyer) {
+      html += '<div class="sm-step-content" style="margin-top:16px">' +
+        '<div class="sm-step-question">Flyer Output</div>' +
+        '<div style="border:2px solid var(--border);border-radius:var(--card-radius);padding:24px;background:var(--white)">' +
+        '<div style="font-size:24px;font-weight:700;color:var(--text);margin-bottom:6px">' + window.escHtml(gc.flyer.headline || '') + '</div>' +
+        (gc.flyer.subheadline ? '<div style="font-size:14px;color:var(--text-muted);margin-bottom:12px">' + window.escHtml(gc.flyer.subheadline) + '</div>' : '') +
+        '<div style="font-size:14px;line-height:1.7;margin-bottom:12px;white-space:pre-wrap">' + window.escHtml(gc.flyer.body || '') + '</div>' +
+        (gc.flyer.call_to_action ? '<div style="background:var(--blue);color:var(--white);padding:12px;border-radius:6px;text-align:center;font-weight:600">' + window.escHtml(gc.flyer.call_to_action) + '</div>' : '') +
+        (gc.flyer.fine_print ? '<div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:8px">' + window.escHtml(gc.flyer.fine_print) + '</div>' : '') +
+        '</div>' +
+        '<button class="btn-outline btn-sm" id="sm-download-flyer" style="margin-top:12px">Download Flyer</button>' +
+        '</div>';
+    }
+
+    if (gc.ad_graphic) {
+      html += '<div class="sm-step-content" style="margin-top:16px">' +
+        '<div class="sm-step-question">Ad Graphic Text</div>' +
+        '<div style="border:2px solid var(--border);border-radius:var(--card-radius);padding:24px;background:var(--blue-light);text-align:center">' +
+        '<div style="font-size:22px;font-weight:700;color:var(--text);margin-bottom:8px">' + window.escHtml(gc.ad_graphic.headline || '') + '</div>' +
+        '<div style="font-size:14px;color:var(--text-secondary);margin-bottom:12px">' + window.escHtml(gc.ad_graphic.subtext || '') + '</div>' +
+        (gc.ad_graphic.cta_button ? '<div style="display:inline-block;background:var(--blue);color:var(--white);padding:10px 24px;border-radius:6px;font-weight:600">' + window.escHtml(gc.ad_graphic.cta_button) + '</div>' : '') +
+        '</div></div>';
+    }
+
     previewContent.innerHTML = html;
     if (captionEl) captionEl.value = this._generatedContent.caption;
     if (hashtagsEl) hashtagsEl.value = this._generatedContent.hashtags;
@@ -65,6 +90,36 @@
 
     if (isBlog) {
       this._bindBlogSectionEvents();
+    }
+
+    var flyerBtn = document.getElementById('sm-download-flyer');
+    if (flyerBtn) {
+      var self2 = this;
+      flyerBtn.addEventListener('click', async function() {
+        flyerBtn.disabled = true;
+        flyerBtn.textContent = 'Generating...';
+        try {
+          var sessionRes = await self2._supabase.auth.getSession();
+          var session = sessionRes.data && sessionRes.data.session;
+          if (!session) { self2._showError('Session expired.'); return; }
+          var res = await fetch('/api/generate-flyer-pdf', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+            body: JSON.stringify({
+              flyer: gc.flyer,
+              business_name: (self2._profile && self2._profile.business_name) || '',
+              primary_colour: (self2._profile && self2._profile.primary_brand_colour) || '#4A6D8C'
+            })
+          });
+          if (!res.ok) throw new Error('Failed to generate flyer');
+          var data = await res.json();
+          if (data.flyer_url) window.open(data.flyer_url, '_blank');
+        } catch (err) {
+          self2._showError('Could not generate flyer. Please try again.');
+        }
+        flyerBtn.disabled = false;
+        flyerBtn.textContent = 'Download Flyer';
+      });
     }
   },
 
