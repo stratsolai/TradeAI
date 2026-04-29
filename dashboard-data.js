@@ -98,23 +98,29 @@ window.DASH_DATA = (function() {
     if (!profile.is_trial || !profile.trial_expires_at) return;
     if (sessionStorage.getItem('trial_modal_dismissed') === 'true') return;
 
+    var title = document.getElementById('trial-modal-title');
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
     var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
-    var trialMsg;
+    var trialMsg, trialTitle;
 
     if (daysLeft <= 0) {
+      trialTitle = 'Trial Ended';
       trialMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
     } else if (daysLeft <= 1) {
-      trialMsg = 'Your free trial ends tomorrow.';
+      trialTitle = 'Trial Ending Tomorrow';
+      trialMsg = 'Your free trial ends tomorrow. Subscribe now to keep access to your tools.';
     } else if (daysLeft <= 3) {
-      trialMsg = '3 days left on your free trial.';
+      trialTitle = 'Trial Ending Soon';
+      trialMsg = daysLeft + ' days left on your free trial. Subscribe to keep your Stax.';
     } else if (daysLeft <= 7) {
+      trialTitle = 'Free Trial';
       trialMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
     } else {
       return;
     }
 
+    if (title) title.textContent = trialTitle;
     msg.textContent = trialMsg;
     modal.classList.add('open');
 

@@ -46,8 +46,6 @@
     .notif-item a:hover { opacity: 1; }
     .notif-dismiss { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--badge-orange-text); padding: 0 4px; line-height: 1; }
 
-    /* ── Trial modal actions ── */
-    .trial-modal-actions { display: flex; gap: var(--actions-gap); justify-content: center; margin-top: 20px; }
 
     /* ── Zone 1: Action Tiles ── */
     .dash-action-tile {
@@ -180,16 +178,6 @@
   <div id="page-wrap" style="display:none">
     <div class="dash-container">
 
-      <div class="save-msg" id="trial-modal">
-        <div class="save-msg-card">
-          <div class="save-msg-text" id="trial-modal-msg"></div>
-          <div class="trial-modal-actions">
-            <button type="button" class="btn-primary" id="trial-modal-cta">Subscribe Now</button>
-            <button type="button" class="save-msg-ok" id="trial-modal-dismiss">Dismiss</button>
-          </div>
-        </div>
-      </div>
-
       <div class="dash-page-heading">
         <h1 class="page-title" id="dash-heading">Dashboard</h1>
       </div>
@@ -216,6 +204,17 @@
         <div class="ptab-content" id="dash-tab-available"></div>
       </section>
 
+    </div>
+  </div>
+
+  <div class="perm-modal-overlay" id="trial-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title" id="trial-modal-title">Free Trial</div>
+      <div class="perm-modal-body" id="trial-modal-msg"></div>
+      <div class="perm-modal-actions">
+        <button type="button" class="perm-modal-cancel" id="trial-modal-dismiss">Dismiss</button>
+        <button type="button" class="perm-modal-continue" id="trial-modal-cta">Subscribe Now</button>
+      </div>
     </div>
   </div>
 
