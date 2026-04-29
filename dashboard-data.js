@@ -65,8 +65,9 @@ window.DASH_DATA = (function() {
     el.textContent = companyName ? 'Dashboard \u2014 ' + companyName : 'Dashboard';
   }
 
-  // ── BP COMPLETION CHECK (27 mandatory fields + tone_of_voice + primary_brand_colour) ──
+  // ── BP COMPLETION CHECK ──
   var _bpComplete = false;
+  var _bpMissing = [];
 
   function checkBPComplete(p) {
     if (!p) return false;
@@ -81,38 +82,43 @@ window.DASH_DATA = (function() {
       return false;
     };
     var hasPhone = function() {
-      if (Array.isArray(p.additional_phones) && p.additional_phones.length > 0) return true;
-      return false;
+      return Array.isArray(p.additional_phones) && p.additional_phones.length > 0;
     };
 
-    return (
-      hasText('business_name') &&
-      hasText('abn') &&
-      hasText('business_structure') &&
-      hasArr('industry') &&
-      hasText('logo_url') &&
-      hasText('years_in_business') &&
-      hasText('address_name') &&
-      hasText('address_street') &&
-      hasText('address_suburb') &&
-      hasText('address_state') &&
-      hasText('address_postcode') &&
-      hasPhone() &&
-      hasArr('service_area') &&
-      hasJson('trading_hours') &&
-      hasArr('bp_services') &&
-      hasArr('bp_products') &&
-      hasArr('payment_methods') &&
-      hasText('response_time') &&
-      hasText('warranty_info') &&
-      hasText('complaints_handling') &&
-      hasJson('after_hours_support') &&
-      hasText('marketing_theme_awareness') &&
-      hasText('marketing_theme_differentiators') &&
-      hasText('marketing_theme_feeling') &&
-      hasText('tone_of_voice') &&
-      hasText('primary_brand_colour')
-    );
+    var checks = [
+      { panel: 'Identity',                test: hasText('business_name'),       label: 'Business Name' },
+      { panel: 'Identity',                test: hasText('abn'),                 label: 'ABN' },
+      { panel: 'Identity',                test: hasText('business_structure'),  label: 'Business Structure' },
+      { panel: 'Identity',                test: hasArr('industry'),             label: 'Industry (at least one)' },
+      { panel: 'Identity',                test: hasText('logo_url'),            label: 'Business Logo' },
+      { panel: 'Identity',                test: hasText('years_in_business'),   label: 'Years in Business' },
+      { panel: 'Location & Contact',      test: hasText('address_name'),        label: 'Location Name' },
+      { panel: 'Location & Contact',      test: hasText('address_street'),      label: 'Street Address' },
+      { panel: 'Location & Contact',      test: hasText('address_suburb'),      label: 'Suburb' },
+      { panel: 'Location & Contact',      test: hasText('address_state'),       label: 'State' },
+      { panel: 'Location & Contact',      test: hasText('address_postcode'),    label: 'Postcode' },
+      { panel: 'Location & Contact',      test: hasPhone(),                     label: 'Phone Number (at least one)' },
+      { panel: 'Location & Contact',      test: hasArr('service_area'),         label: 'Service Area' },
+      { panel: 'Location & Contact',      test: hasJson('trading_hours'),       label: 'Trading Hours' },
+      { panel: 'Services',                test: hasArr('bp_services'),           label: 'Services (at least one)' },
+      { panel: 'Products',                test: hasArr('bp_products'),            label: 'Products (at least one)' },
+      { panel: 'Credentials & Support',   test: hasArr('payment_methods'),       label: 'Payment Methods' },
+      { panel: 'Credentials & Support',   test: hasText('response_time'),        label: 'Response Time' },
+      { panel: 'Credentials & Support',   test: hasText('warranty_info'),        label: 'Warranty / Guarantee' },
+      { panel: 'Credentials & Support',   test: hasText('complaints_handling'),  label: 'Complaints Handling' },
+      { panel: 'Credentials & Support',   test: hasJson('after_hours_support'),  label: 'After-Hours Support' },
+      { panel: 'Marketing Theme',         test: hasText('marketing_theme_differentiators'), label: 'What Makes You Stand Out' },
+      { panel: 'Marketing Theme',         test: hasText('marketing_theme_awareness'),       label: 'What Customers Should Know' },
+      { panel: 'Marketing Theme',         test: hasText('marketing_theme_feeling'),         label: 'How Customers Should Feel' },
+      { panel: 'Marketing Theme',         test: hasText('tone_of_voice'),                   label: 'Tone of Voice' },
+      { panel: 'Marketing Theme',         test: hasText('primary_brand_colour'),             label: 'Primary Brand Colour' }
+    ];
+
+    _bpMissing = [];
+    for (var i = 0; i < checks.length; i++) {
+      if (!checks[i].test) _bpMissing.push(checks[i]);
+    }
+    return _bpMissing.length === 0;
   }
 
   // ── BP COMPLETION MODAL (hard block) ──
@@ -122,6 +128,28 @@ window.DASH_DATA = (function() {
 
     var modal = document.getElementById('bp-modal');
     if (!modal) return;
+
+    var bodyEl = modal.querySelector('.perm-modal-body');
+    if (bodyEl && _bpMissing.length > 0) {
+      var grouped = {};
+      for (var i = 0; i < _bpMissing.length; i++) {
+        var panel = _bpMissing[i].panel;
+        if (!grouped[panel]) grouped[panel] = [];
+        grouped[panel].push(_bpMissing[i].label);
+      }
+      var html = '<p style="margin-bottom:16px">To access your tools, please complete these required fields:</p>';
+      var panels = Object.keys(grouped);
+      for (var j = 0; j < panels.length; j++) {
+        html += '<div style="margin-bottom:12px"><div style="font-weight:var(--font-weight-semibold);font-size:var(--label-font-size);color:var(--text);margin-bottom:4px">' + window.escHtml(panels[j]) + '</div>';
+        html += '<ul style="margin:0;padding-left:20px;color:var(--text-secondary);font-size:var(--note-font-size);line-height:1.8">';
+        for (var k = 0; k < grouped[panels[j]].length; k++) {
+          html += '<li>' + window.escHtml(grouped[panels[j]][k]) + '</li>';
+        }
+        html += '</ul></div>';
+      }
+      bodyEl.innerHTML = html;
+    }
+
     modal.classList.add('open');
 
     var dismiss = document.getElementById('bp-modal-dismiss');

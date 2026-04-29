@@ -1,10 +1,6 @@
 window.CL_PROFILE = {
-  _supabase: null,
-  _userId: null,
-  _profile: {},
-  _autoSaveTimer: null,
-  _activePanel: 'identity',
-
+  _supabase: null, _userId: null, _profile: {},
+  _autoSaveTimer: null, _activePanel: 'identity',
   init: function(supabase) {
     this._supabase = supabase;
     var container = document.getElementById('cl-tab-profile');
@@ -86,23 +82,14 @@ window.CL_PROFILE = {
     this._renderMarketing();
   },
 
-  _v: function(key) {
-    var v = this._profile[key];
-    return (v === null || v === undefined) ? '' : v;
-  },
-
-  _va: function(key) {
-    var v = this._profile[key];
-    return Array.isArray(v) ? v : [];
-  },
-
+  _v: function(key) { var v = this._profile[key]; return (v === null || v === undefined) ? '' : v; },
+  _va: function(key) { var v = this._profile[key]; return Array.isArray(v) ? v : []; },
   _vj: function(key, fallback) {
     var v = this._profile[key];
     if (v === null || v === undefined) return fallback || [];
     if (typeof v === 'string') { try { return JSON.parse(v); } catch(e) { return fallback || []; } }
     return v;
   },
-
   _card: function(icon, title, subtitle, body, btnId) {
     return '<div class="profile-section-card">' +
       '<div class="profile-section-header">' +
@@ -119,22 +106,10 @@ window.CL_PROFILE = {
     '</div>';
   },
 
-  _field: function(label, html) {
-    return '<div class="profile-field-full"><label class="profile-label">' + label + '</label>' + html + '</div>';
-  },
-
-  _field2: function(label, html) {
-    return '<div class="profile-field"><label class="profile-label">' + label + '</label>' + html + '</div>';
-  },
-
-  _input: function(id, type, val, ph, extra) {
-    return '<input id="' + id + '" type="' + type + '" class="profile-input" value="' + window.escHtml(String(val)) + '" placeholder="' + ph + '"' + (extra ? ' ' + extra : '') + ' />';
-  },
-
-  _textarea: function(id, val, ph, rows) {
-    return '<textarea id="' + id + '" class="profile-textarea" rows="' + (rows || 4) + '" placeholder="' + ph + '">' + window.escHtml(String(val)) + '</textarea>';
-  },
-
+  _field: function(label, html) { return '<div class="profile-field-full"><label class="profile-label">' + label + '</label>' + html + '</div>'; },
+  _field2: function(label, html) { return '<div class="profile-field"><label class="profile-label">' + label + '</label>' + html + '</div>'; },
+  _input: function(id, type, val, ph, extra) { return '<input id="' + id + '" type="' + type + '" class="profile-input" value="' + window.escHtml(String(val)) + '" placeholder="' + ph + '"' + (extra ? ' ' + extra : '') + ' />'; },
+  _textarea: function(id, val, ph, rows) { return '<textarea id="' + id + '" class="profile-textarea" rows="' + (rows || 4) + '" placeholder="' + ph + '">' + window.escHtml(String(val)) + '</textarea>'; },
   _dropdown: function(id, opts, sel) {
     var currentLabel = sel || 'Select...';
     var currentValue = sel || '';
@@ -228,26 +203,19 @@ window.CL_PROFILE = {
     input.value = '';
   },
 
-  _removeOtherChip: function(btn) {
-    var chip = btn.closest('.filter-pill');
-    if (chip) chip.parentNode.removeChild(chip);
-  },
-
+  _removeOtherChip: function(btn) { var c = btn.closest('.filter-pill'); if (c) c.remove(); },
   _triggerAutoSave: function(panel) {
     var btnIds = { identity: 'prof-id-save', location: 'prof-loc-save', services: 'prof-svc-save', products: 'prof-prod-save', credentials: 'prof-cred-save' };
     var btn = document.getElementById(btnIds[panel]);
     if (btn && !btn.disabled) btn.click();
   },
-
   _scheduleAutoSave: function(panel, delay) {
-    var self = this;
-    if (self._autoSaveTimer) clearTimeout(self._autoSaveTimer);
-    self._autoSaveTimer = setTimeout(function() { self._triggerAutoSave(panel); }, delay || 500);
+    var s = this; if (s._autoSaveTimer) clearTimeout(s._autoSaveTimer);
+    s._autoSaveTimer = setTimeout(function() { s._triggerAutoSave(panel); }, delay || 500);
   },
-
   _bindAutoSave: function(panel, container) {
     var self = this;
-    container.querySelectorAll('.profile-input, .profile-textarea, input[type="text"], input[type="number"], input[type="url"], textarea').forEach(function(input) {
+    container.querySelectorAll('input[type="text"],input[type="number"],input[type="url"],textarea').forEach(function(input) {
       if (input.dataset.autoSaveBound) return;
       input.dataset.autoSaveBound = '1';
       input.addEventListener('blur', function() { self._scheduleAutoSave(panel, 300); });
@@ -868,7 +836,8 @@ window.CL_PROFILE = {
         amountHtml = '<input type="number" class="profile-input prof-svc-amount-min" value="' + (item.amount_min || '') + '" placeholder="$ Min" min="0" style="max-width:80px" />' +
           '<input type="number" class="profile-input prof-svc-amount-max" value="' + (item.amount_max || '') + '" placeholder="$ Max" min="0" style="max-width:80px" />';
       }
-      html += '<div class="profile-svc-row" data-svc-pricing="' + window.escHtml(item.name) + '" data-custom="' + (item.is_custom ? '1' : '0') + '">' +
+      var rowClass = 'profile-svc-row' + (pType === 'range' ? ' profile-svc-row-range' : '');
+      html += '<div class="' + rowClass + '" data-svc-pricing="' + window.escHtml(item.name) + '" data-custom="' + (item.is_custom ? '1' : '0') + '">' +
         '<div style="font-size:var(--btn-font-size);font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + window.escHtml(item.name) + '</div>' +
         '<span class="lookback-dropdown-wrap">' +
           '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-svc-ptype" data-value="' + window.escHtml(pType) + '">' + window.escHtml(pTypeLabel) + '</button>' +
