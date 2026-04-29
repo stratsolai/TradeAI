@@ -1,15 +1,17 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  if (!ANTHROPIC_API_KEY) {
+    console.error("[generate-marketing-theme] ANTHROPIC_API_KEY not configured");
+    return res.status(500).json({ error: "API key not configured. Please contact support." });
   }
 
   const authHeader = req.headers.authorization;
@@ -17,6 +19,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "Unauthorised" });
   }
   const token = authHeader.split(" ")[1];
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) {
     return res.status(401).json({ error: "Unauthorised" });
@@ -34,15 +38,22 @@ export default async function handler(req, res) {
     .maybeSingle();
 
   if (profileError) {
-    console.error('[generate-marketing-theme] query error:', profileError.message);
-    return res.status(500).json({ error: 'Something went wrong. Please try again.' });
+    console.error("[generate-marketing-theme] query error:", profileError.message);
+    return res.status(500).json({ error: "Something went wrong. Please try again." });
   }
 
   const businessName = profile?.business_name || "the business";
-  const industry = profile?.industry || "business";
+  const industry = Array.isArray(profile?.industry) ? profile.industry.join(", ") : (profile?.industry || "business");
 
   const standout = (answers.standout || []).join(", ");
   const standoutOther = answers.standout_other || "";
+  const qualityDetail = (answers.quality_detail || []).join(", ");
+  const serviceDetail = (answers.service_detail || []).join(", ");
+  const affordableDetail = (answers.affordable_detail || []).join(", ");
+  const experienceYears = answers.experience_years || "";
+  const certifications = (answers.certifications || []).join(", ");
+  const specialiseServices = (answers.specialise_services || []).join(", ");
+
   const awareness = (answers.awareness || []).join(", ");
   const awarenessOther = answers.awareness_other || "";
   const customerCount = answers.customer_count || "";
@@ -57,6 +68,12 @@ Based on the business owner's answers below, write three concise paragraphs:
 1. DIFFERENTIATORS — What makes this business stand out (2-3 sentences)
 Selected: ${standout}
 ${standoutOther ? "Other: " + standoutOther : ""}
+${qualityDetail ? "Quality details: " + qualityDetail : ""}
+${serviceDetail ? "Service details: " + serviceDetail : ""}
+${affordableDetail ? "Affordability details: " + affordableDetail : ""}
+${experienceYears ? "Years in business: " + experienceYears : ""}
+${certifications ? "Certifications: " + certifications : ""}
+${specialiseServices ? "Specialises in: " + specialiseServices : ""}
 
 2. AWARENESS — What customers should know (2-3 sentences)
 Selected: ${awareness}
@@ -76,12 +93,27 @@ AWARENESS: [text]
 FEELING: [text]`;
 
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      messages: [{ role: "user", content: prompt }]
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }]
+      })
     });
 
+    if (!response.ok) {
+      const errBody = await response.text();
+      console.error("[generate-marketing-theme] Anthropic API error:", response.status, errBody);
+      return res.status(500).json({ error: "AI generation failed (status " + response.status + "). Please try again." });
+    }
+
+    const message = await response.json();
     const raw = message.content[0].text;
     const lines = raw.split("\n").filter(l => l.trim());
     let differentiators = "";
@@ -104,7 +136,7 @@ FEELING: [text]`;
       feeling: feelText
     });
   } catch (err) {
-    console.error("[generate-marketing-theme] Error:", err);
-    return res.status(500).json({ error: "Failed to generate marketing theme. Please try again." });
+    console.error("[generate-marketing-theme] Error:", err.message || err);
+    return res.status(500).json({ error: "Failed to generate marketing theme: " + (err.message || "unknown error") });
   }
 }
