@@ -25,11 +25,8 @@ window.CL_PROFILE = {
       else if (action === 'add-site') { self._addSite(); }
       else if (action === 'add-extra') { self._addExtra(); }
       else if (action === 'upload-logo') { document.getElementById('prof-logo-file').click(); }
-      else if (action === 'add-service') { self._addServiceRow('svc'); }
-      else if (action === 'add-product') { self._addServiceRow('prod'); }
       else if (action === 'add-other-item') { self._addOtherItem(btn.dataset.target); }
       else if (action === 'remove-other') { self._removeOtherChip(btn); }
-      else if (action === 'remove-svc') { self._removeSvcRow(btn.dataset.target); }
     });
     container.addEventListener('change', function(e) {
       if (e.target.classList.contains('prof-hours-toggle')) {
@@ -751,157 +748,224 @@ window.CL_PROFILE = {
   // ─────────────────────────────────────────────────────────
 
   _renderServices: function() {
-    var services = this._vj('bp_services', []);
-    var industries = this._va('industry');
-    var availableServices = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : [];
+    this._renderMultiSelect('svc', 'bp_services', 'Services', '\uD83D\uDEE0\uFE0F', '3. Services',
+      'What services your business provides with pricing', 'prof-panel-services', 'prof-svc-save');
+  },
 
-    var rowsHtml = services.map(function(svc, i) {
-      return window.CL_PROFILE._svcRow('svc', i, svc, availableServices);
-    }).join('');
+  _renderProducts: function() {
+    this._renderMultiSelect('prod', 'bp_products', 'Products', '\uD83D\uDCE6', '4. Products',
+      'What products your business sells with pricing', 'prof-panel-products', 'prof-prod-save');
+  },
 
-    var body = '<div class="profile-fields">' +
-      this._field('Services <span class="profile-optional">(add your services with pricing)</span>',
-        '<div id="prof-svc-rows">' + rowsHtml + '</div>' +
-        '<button class="btn btn-outline profile-add-btn" data-action="add-service">+ Add Service</button>'
-      ) +
-    '</div>';
-
-    document.getElementById('prof-panel-services').innerHTML = this._card(
-      '\uD83D\uDEE0\uFE0F', '3. Services', 'What services your business provides with pricing', body, 'prof-svc-save'
-    );
-
+  _renderMultiSelect: function(prefix, profileKey, label, icon, title, subtitle, panelId, saveBtnId) {
     var self = this;
-    document.getElementById('prof-svc-save').addEventListener('click', function() { self._saveServices(); });
-    var svcPanel = document.getElementById('prof-panel-services');
-    self._bindSvcDropdowns(svcPanel);
-  },
-
-  _svcRow: function(prefix, idx, data, availableItems) {
-    data = data || {};
-    var pricingTypes = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.pricingTypes : [];
-    var pType = data.pricing_type || '';
-    var showAmount = pType === 'hourly' || pType === 'fixed';
-    var showRange = pType === 'range';
-
-    var itemOpts = availableItems.map(function(s) {
-      return '<button type="button" class="lookback-dropdown-item' + (s === data.name ? ' active' : '') + '" data-value="' + window.escHtml(s) + '">' + window.escHtml(s) + '</button>';
-    }).join('') + '<button type="button" class="lookback-dropdown-item' + (data.is_custom ? ' active' : '') + '" data-value="__other__">Other (custom)</button>';
-
-    var pTypeOpts = pricingTypes.map(function(pt) {
-      return '<button type="button" class="lookback-dropdown-item' + (pt.value === pType ? ' active' : '') + '" data-value="' + pt.value + '">' + window.escHtml(pt.label) + '</button>';
-    }).join('');
-
-    var displayName = data.name || 'Select service...';
-    var pTypeLabel = pType ? (pricingTypes.find(function(pt) { return pt.value === pType; }) || {}).label || 'Pricing type...' : 'Pricing type...';
-
-    var amountHtml = '';
-    if (showAmount) {
-      amountHtml = '<input type="number" class="profile-input prof-svc-amount-val" value="' + (data.amount || '') + '" placeholder="$ Amount" min="0" />';
-    } else if (showRange) {
-      amountHtml = '<input type="number" class="profile-input prof-svc-amount-min" value="' + (data.amount_min || '') + '" placeholder="$ Min" min="0" style="max-width:80px" />' +
-        '<input type="number" class="profile-input prof-svc-amount-max" value="' + (data.amount_max || '') + '" placeholder="$ Max" min="0" style="max-width:80px" />';
-    }
-
-    var customInput = data.is_custom ? '<input type="text" class="profile-input prof-svc-custom-name" value="' + window.escHtml(data.name || '') + '" placeholder="Enter custom service name" style="margin-top:4px" />' : '';
-
-    return '<div class="profile-svc-row' + (showRange ? ' profile-svc-row-range' : '') + '" id="' + prefix + '-row-' + idx + '">' +
-      '<div>' +
-        '<span class="lookback-dropdown-wrap">' +
-          '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-svc-name" data-value="' + window.escHtml(data.is_custom ? '__other__' : data.name || '') + '">' + window.escHtml(displayName) + '</button>' +
-          '<div class="lookback-dropdown-menu">' + itemOpts + '</div>' +
-        '</span>' +
-        customInput +
-      '</div>' +
-      '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-svc-ptype" data-value="' + window.escHtml(pType) + '">' + window.escHtml(pTypeLabel) + '</button>' +
-        '<div class="lookback-dropdown-menu">' + pTypeOpts + '</div>' +
-      '</span>' +
-      amountHtml +
-      '<button class="profile-svc-remove" data-action="remove-svc" data-target="' + prefix + '-row-' + idx + '">\u00D7</button>' +
-    '</div>';
-  },
-
-  _addServiceRow: function(prefix) {
-    var container = document.getElementById('prof-' + prefix + '-rows');
-    if (!container) return;
-    var idx = container.querySelectorAll('.profile-svc-row').length;
+    var items = this._vj(profileKey, []);
     var industries = this._va('industry');
-    var items = prefix === 'svc'
-      ? (window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : [])
-      : (window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedProducts(industries) : []);
-    var div = document.createElement('div');
-    div.innerHTML = this._svcRow(prefix, idx, {}, items);
-    container.appendChild(div.firstChild);
-    this._bindSvcDropdowns(container);
+    var availableItems = window.BP_INDUSTRY_DATA
+      ? (prefix === 'svc' ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : window.BP_INDUSTRY_DATA.getMergedProducts(industries))
+      : [];
+    var selectedNames = items.map(function(i) { return i.name || ''; }).filter(function(n) { return !!n; });
+    var customItems = items.filter(function(i) { return i.is_custom; });
+    var pricingTypes = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.pricingTypes : [];
+
+    var pillsHtml = '<div class="profile-label" style="margin-bottom:8px">Select from your industry list</div>';
+    pillsHtml += '<div id="prof-' + prefix + '-pills" class="review-pill-row" style="margin-bottom:16px">';
+    availableItems.forEach(function(name) {
+      var active = selectedNames.indexOf(name) > -1 ? ' active' : '';
+      pillsHtml += '<button type="button" class="filter-pill' + active + '" data-svc-pill="' + window.escHtml(name) + '">' + window.escHtml(name) + '</button>';
+    });
+    pillsHtml += '</div>';
+
+    var customHtml = '<div style="margin-bottom:16px">';
+    customHtml += '<div class="profile-label" style="margin-bottom:8px">Custom ' + label.toLowerCase() + '</div>';
+    customHtml += '<div id="prof-' + prefix + '-custom-pills" class="review-pill-row" style="margin-bottom:8px">';
+    customItems.forEach(function(item) {
+      customHtml += '<button type="button" class="filter-pill active prof-custom-pill" data-svc-custom="' + window.escHtml(item.name) + '">' +
+        window.escHtml(item.name) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="prof-' + prefix + '-custom-pills">\u00D7</span></button>';
+    });
+    customHtml += '</div>';
+    customHtml += '<div style="display:flex;gap:8px;align-items:center">';
+    customHtml += '<input type="text" class="profile-input" id="prof-' + prefix + '-other-input" placeholder="Add custom ' + label.toLowerCase().slice(0, -1) + '" style="flex:1" />';
+    customHtml += '<button type="button" class="btn-outline btn-sm" id="prof-' + prefix + '-add-other">Add</button>';
+    customHtml += '</div></div>';
+
+    var pricingHtml = '<div id="prof-' + prefix + '-pricing" style="margin-top:8px"></div>';
+
+    var body = '<div class="profile-fields" style="display:block">' +
+      '<div class="profile-field-full">' +
+        '<label class="profile-label">' + label + ' <span class="profile-optional">(select all that apply, then set pricing)</span></label>' +
+        pillsHtml + customHtml +
+        '<div class="profile-label" style="margin-bottom:8px;margin-top:16px;font-weight:var(--heading-lg-weight)">Pricing for selected ' + label.toLowerCase() + '</div>' +
+        pricingHtml +
+      '</div>' +
+    '</div>';
+
+    document.getElementById(panelId).innerHTML = this._card(icon, title, subtitle, body, saveBtnId);
+
+    this._renderPricingRows(prefix, items, pricingTypes);
+    this._bindMultiSelectPills(prefix, profileKey, pricingTypes);
+
+    document.getElementById(saveBtnId).addEventListener('click', function() {
+      self._saveMultiSelect(prefix, profileKey, saveBtnId);
+    });
   },
 
-  _removeSvcRow: function(id) {
-    var el = document.getElementById(id);
-    if (el) el.parentNode.removeChild(el);
-  },
+  _renderPricingRows: function(prefix, items, pricingTypes) {
+    var container = document.getElementById('prof-' + prefix + '-pricing');
+    if (!container) return;
+    if (items.length === 0) {
+      container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--note-font-size);padding:8px 0">No ' + (prefix === 'svc' ? 'services' : 'products') + ' selected yet. Click items above to add them.</div>';
+      return;
+    }
+    var html = '';
+    items.forEach(function(item, idx) {
+      var pType = item.pricing_type || '';
+      var pTypeLabel = pType ? (pricingTypes.find(function(pt) { return pt.value === pType; }) || {}).label || 'Pricing type...' : 'Pricing type...';
+      var pTypeOpts = pricingTypes.map(function(pt) {
+        return '<button type="button" class="lookback-dropdown-item' + (pt.value === pType ? ' active' : '') + '" data-value="' + pt.value + '">' + window.escHtml(pt.label) + '</button>';
+      }).join('');
+      var amountHtml = '';
+      if (pType === 'hourly' || pType === 'fixed') {
+        amountHtml = '<input type="number" class="profile-input prof-svc-amount-val" value="' + (item.amount || '') + '" placeholder="$ Amount" min="0" style="max-width:120px" />';
+      } else if (pType === 'range') {
+        amountHtml = '<input type="number" class="profile-input prof-svc-amount-min" value="' + (item.amount_min || '') + '" placeholder="$ Min" min="0" style="max-width:80px" />' +
+          '<input type="number" class="profile-input prof-svc-amount-max" value="' + (item.amount_max || '') + '" placeholder="$ Max" min="0" style="max-width:80px" />';
+      }
+      html += '<div class="profile-svc-row" data-svc-pricing="' + window.escHtml(item.name) + '" data-custom="' + (item.is_custom ? '1' : '0') + '">' +
+        '<div style="font-size:var(--btn-font-size);font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + window.escHtml(item.name) + '</div>' +
+        '<span class="lookback-dropdown-wrap">' +
+          '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-svc-ptype" data-value="' + window.escHtml(pType) + '">' + window.escHtml(pTypeLabel) + '</button>' +
+          '<div class="lookback-dropdown-menu">' + pTypeOpts + '</div>' +
+        '</span>' +
+        amountHtml +
+      '</div>';
+    });
+    container.innerHTML = html;
 
-  _bindSvcDropdowns: function(container) {
     var self = this;
     container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
-      if (wrap.dataset.svcBound) return;
-      wrap.dataset.svcBound = '1';
       var trigger = wrap.querySelector('.lookback-dropdown');
       var menu = wrap.querySelector('.lookback-dropdown-menu');
       if (!trigger || !menu) return;
-
       trigger.addEventListener('click', function(e) {
         e.stopPropagation();
         document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
         menu.classList.toggle('open');
         trigger.classList.toggle('active');
       });
-
-      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-          var val = item.getAttribute('data-value');
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(menuItem) {
+        menuItem.addEventListener('click', function() {
+          var val = menuItem.getAttribute('data-value');
           trigger.setAttribute('data-value', val);
-          trigger.textContent = val === '__other__' ? 'Other (custom)' : val;
+          trigger.textContent = menuItem.textContent;
           menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) { it.classList.remove('active'); });
-          item.classList.add('active');
+          menuItem.classList.add('active');
           menu.classList.remove('open');
           trigger.classList.remove('active');
-
-          if (trigger.classList.contains('prof-svc-name') && val === '__other__') {
-            var row = trigger.closest('.profile-svc-row');
-            if (row && !row.querySelector('.prof-svc-custom-name')) {
-              var inp = document.createElement('input');
-              inp.type = 'text';
-              inp.className = 'profile-input prof-svc-custom-name';
-              inp.placeholder = 'Enter custom name';
-              inp.style.marginTop = '4px';
-              trigger.closest('div').appendChild(inp);
-            }
-          } else if (trigger.classList.contains('prof-svc-name')) {
-            var row2 = trigger.closest('.profile-svc-row');
-            var cust = row2 ? row2.querySelector('.prof-svc-custom-name') : null;
-            if (cust) cust.parentNode.removeChild(cust);
-          }
-
-          if (trigger.classList.contains('prof-svc-ptype')) {
-            self._updatePricingFields(trigger.closest('.profile-svc-row'), val);
-          }
+          self._updatePricingFields(trigger.closest('.profile-svc-row'), val);
         });
       });
     });
+  },
+
+  _bindMultiSelectPills: function(prefix, profileKey, pricingTypes) {
+    var self = this;
+    var pillsContainer = document.getElementById('prof-' + prefix + '-pills');
+    if (pillsContainer) {
+      pillsContainer.addEventListener('click', function(e) {
+        var pill = e.target.closest('.filter-pill');
+        if (!pill) return;
+        pill.classList.toggle('active');
+        self._syncPricingFromPills(prefix, pricingTypes);
+      });
+    }
+
+    var customPillsContainer = document.getElementById('prof-' + prefix + '-custom-pills');
+    if (customPillsContainer) {
+      customPillsContainer.addEventListener('click', function(e) {
+        var removeSpan = e.target.closest('.prof-pill-remove');
+        if (removeSpan) {
+          var pill = removeSpan.closest('.filter-pill');
+          if (pill) pill.parentNode.removeChild(pill);
+          self._syncPricingFromPills(prefix, pricingTypes);
+        }
+      });
+    }
+
+    var addBtn = document.getElementById('prof-' + prefix + '-add-other');
+    if (addBtn) {
+      addBtn.addEventListener('click', function() {
+        var input = document.getElementById('prof-' + prefix + '-other-input');
+        var val = input ? input.value.trim() : '';
+        if (!val) return;
+        var customContainer = document.getElementById('prof-' + prefix + '-custom-pills');
+        var existing = Array.from(customContainer.querySelectorAll('.filter-pill')).map(function(p) { return p.getAttribute('data-svc-custom'); });
+        if (existing.indexOf(val) > -1) { input.value = ''; return; }
+        var chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'filter-pill active prof-custom-pill';
+        chip.setAttribute('data-svc-custom', val);
+        chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="prof-' + prefix + '-custom-pills">\u00D7</span>';
+        customContainer.appendChild(chip);
+        input.value = '';
+        self._syncPricingFromPills(prefix, pricingTypes);
+      });
+    }
+  },
+
+  _syncPricingFromPills: function(prefix, pricingTypes) {
+    var pillsContainer = document.getElementById('prof-' + prefix + '-pills');
+    var customContainer = document.getElementById('prof-' + prefix + '-custom-pills');
+    var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
+    if (!pricingContainer) return;
+
+    var existingPricing = {};
+    pricingContainer.querySelectorAll('[data-svc-pricing]').forEach(function(row) {
+      var name = row.getAttribute('data-svc-pricing');
+      var pTypeBtn = row.querySelector('.prof-svc-ptype');
+      var amountVal = row.querySelector('.prof-svc-amount-val');
+      var amountMin = row.querySelector('.prof-svc-amount-min');
+      var amountMax = row.querySelector('.prof-svc-amount-max');
+      existingPricing[name] = {
+        pricing_type: pTypeBtn ? pTypeBtn.getAttribute('data-value') : '',
+        amount: amountVal ? parseFloat(amountVal.value) || null : null,
+        amount_min: amountMin ? parseFloat(amountMin.value) || null : null,
+        amount_max: amountMax ? parseFloat(amountMax.value) || null : null,
+        is_custom: row.getAttribute('data-custom') === '1'
+      };
+    });
+
+    var items = [];
+    if (pillsContainer) {
+      pillsContainer.querySelectorAll('.filter-pill.active').forEach(function(pill) {
+        var name = pill.getAttribute('data-svc-pill');
+        var existing = existingPricing[name] || {};
+        items.push({ name: name, pricing_type: existing.pricing_type || '', amount: existing.amount || null, amount_min: existing.amount_min || null, amount_max: existing.amount_max || null, is_custom: false });
+      });
+    }
+    if (customContainer) {
+      customContainer.querySelectorAll('.filter-pill').forEach(function(pill) {
+        var name = pill.getAttribute('data-svc-custom');
+        var existing = existingPricing[name] || {};
+        items.push({ name: name, pricing_type: existing.pricing_type || '', amount: existing.amount || null, amount_min: existing.amount_min || null, amount_max: existing.amount_max || null, is_custom: true });
+      });
+    }
+    this._renderPricingRows(prefix, items, pricingTypes);
   },
 
   _updatePricingFields: function(row, pType) {
     var existingAmounts = row.querySelectorAll('.prof-svc-amount-val, .prof-svc-amount-min, .prof-svc-amount-max');
     existingAmounts.forEach(function(el) { el.parentNode.removeChild(el); });
 
-    var removeBtn = row.querySelector('.profile-svc-remove');
+    var lastChild = row.lastElementChild;
     if (pType === 'hourly' || pType === 'fixed') {
       var inp = document.createElement('input');
       inp.type = 'number';
       inp.className = 'profile-input prof-svc-amount-val';
       inp.placeholder = '$ Amount';
       inp.min = '0';
-      row.insertBefore(inp, removeBtn);
+      inp.style.maxWidth = '120px';
+      row.appendChild(inp);
       row.classList.remove('profile-svc-row-range');
     } else if (pType === 'range') {
       var min = document.createElement('input');
@@ -916,25 +980,21 @@ window.CL_PROFILE = {
       max.placeholder = '$ Max';
       max.min = '0';
       max.style.maxWidth = '80px';
-      row.insertBefore(min, removeBtn);
-      row.insertBefore(max, removeBtn);
+      row.appendChild(min);
+      row.appendChild(max);
       row.classList.add('profile-svc-row-range');
     } else {
       row.classList.remove('profile-svc-row-range');
     }
   },
 
-  _collectSvcRows: function(prefix) {
-    var container = document.getElementById('prof-' + prefix + '-rows');
-    if (!container) return [];
-    return Array.from(container.querySelectorAll('.profile-svc-row')).map(function(row) {
-      var nameBtn = row.querySelector('.prof-svc-name');
+  _collectMultiSelectData: function(prefix) {
+    var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
+    if (!pricingContainer) return [];
+    return Array.from(pricingContainer.querySelectorAll('[data-svc-pricing]')).map(function(row) {
+      var name = row.getAttribute('data-svc-pricing');
+      var isCustom = row.getAttribute('data-custom') === '1';
       var pTypeBtn = row.querySelector('.prof-svc-ptype');
-      var rawName = nameBtn ? nameBtn.getAttribute('data-value') : '';
-      var isCustom = rawName === '__other__';
-      var customInput = row.querySelector('.prof-svc-custom-name');
-      var name = isCustom ? (customInput ? customInput.value.trim() : '') : rawName;
-      if (!name) return null;
       var pType = pTypeBtn ? pTypeBtn.getAttribute('data-value') : '';
       var amountVal = row.querySelector('.prof-svc-amount-val');
       var amountMin = row.querySelector('.prof-svc-amount-min');
@@ -947,57 +1007,16 @@ window.CL_PROFILE = {
         amount_max: amountMax ? parseFloat(amountMax.value) || null : null,
         is_custom: isCustom
       };
-    }).filter(function(r) { return r !== null; });
+    });
   },
 
-  _saveServices: function() {
+  _saveMultiSelect: function(prefix, profileKey, saveBtnId) {
     var self = this;
-    var btn = document.getElementById('prof-svc-save');
+    var btn = document.getElementById(saveBtnId);
     window.handleSave(btn, async function() {
-      var services = self._collectSvcRows('svc');
-      var updates = { bp_services: services };
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
-      Object.assign(self._profile, updates);
-    }, document.getElementById('prof-save-msg'));
-  },
-
-  // ─────────────────────────────────────────────────────────
-  // Panel 4: Products
-  // ─────────────────────────────────────────────────────────
-
-  _renderProducts: function() {
-    var products = this._vj('bp_products', []);
-    var industries = this._va('industry');
-    var availableProducts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedProducts(industries) : [];
-
-    var rowsHtml = products.map(function(prod, i) {
-      return window.CL_PROFILE._svcRow('prod', i, prod, availableProducts);
-    }).join('');
-
-    var body = '<div class="profile-fields">' +
-      this._field('Products <span class="profile-optional">(add your products with pricing)</span>',
-        '<div id="prof-prod-rows">' + rowsHtml + '</div>' +
-        '<button class="btn btn-outline profile-add-btn" data-action="add-product">+ Add Product</button>'
-      ) +
-    '</div>';
-
-    document.getElementById('prof-panel-products').innerHTML = this._card(
-      '\uD83D\uDCE6', '4. Products', 'What products your business sells with pricing', body, 'prof-prod-save'
-    );
-
-    var self = this;
-    document.getElementById('prof-prod-save').addEventListener('click', function() { self._saveProducts(); });
-    var prodPanel = document.getElementById('prof-panel-products');
-    self._bindSvcDropdowns(prodPanel);
-  },
-
-  _saveProducts: function() {
-    var self = this;
-    var btn = document.getElementById('prof-prod-save');
-    window.handleSave(btn, async function() {
-      var products = self._collectSvcRows('prod');
-      var updates = { bp_products: products };
+      var data = self._collectMultiSelectData(prefix);
+      var updates = {};
+      updates[profileKey] = data;
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
