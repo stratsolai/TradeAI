@@ -104,7 +104,7 @@
 
   _loadPublished: async function() {
     var search = (document.getElementById('sm-published-search').value || '').toLowerCase();
-    var sortVal = document.getElementById('sm-published-sort').value;
+    var sortVal = this._publishedSort || 'newest';
 
     var orderCol = 'published_at';
     var ascending = false;

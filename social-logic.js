@@ -20,6 +20,7 @@ window.SOCIAL_LOGIC = {
   _pendingSchedulePostId: null,
   _pendingBulkScheduleIds: null,
   _editingPostId: null,
+  _publishedSort: 'newest',
 
   JOURNEY_GROUPS: [
     {
@@ -1299,9 +1300,25 @@ window.SOCIAL_LOGIC = {
     document.getElementById('sm-published-search').addEventListener('input', function() {
       self._loadPublished();
     });
-    document.getElementById('sm-published-sort').addEventListener('change', function() {
-      self._loadPublished();
-    });
+    var sortBtn = document.getElementById('sm-published-sort-btn');
+    var sortMenu = document.getElementById('sm-published-sort-menu');
+    if (sortBtn && sortMenu) {
+      sortBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        sortMenu.classList.toggle('open');
+      });
+      sortMenu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          sortMenu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+          item.classList.add('active');
+          sortBtn.textContent = item.textContent;
+          sortMenu.classList.remove('open');
+          self._publishedSort = item.dataset.sort;
+          self._loadPublished();
+        });
+      });
+      document.addEventListener('click', function() { sortMenu.classList.remove('open'); });
+    }
 
     document.getElementById('sm-view-list-btn').addEventListener('click', function() {
       self._scheduledView = 'list';
