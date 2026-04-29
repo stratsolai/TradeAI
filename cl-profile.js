@@ -280,6 +280,17 @@ window.CL_PROFILE = {
     self._bindChipToggles(idPanel);
     self._bindIndustryWarn(selectedIndustries);
 
+    var logoImg = document.getElementById('prof-logo-img');
+    if (logoImg && logoImg.tagName === 'IMG') {
+      logoImg.addEventListener('error', function() {
+        var ph = document.createElement('div');
+        ph.id = 'prof-logo-img';
+        ph.className = 'profile-logo-placeholder';
+        ph.textContent = 'No logo';
+        logoImg.parentNode.replaceChild(ph, logoImg);
+      });
+    }
+
     document.getElementById('prof-id-save').addEventListener('click', function() { self._saveIdentity(); });
     document.getElementById('prof-logo-file').addEventListener('change', function(e) { self._uploadLogo(e.target.files[0]); });
     document.getElementById('prof-abn').addEventListener('input', function(e) {
@@ -325,22 +336,42 @@ window.CL_PROFILE = {
 
   _uploadLogo: async function(file) {
     if (!file) return;
-    var ext = file.name.split('.').pop();
+    var ext = file.name.split('.').pop().toLowerCase();
     var path = 'logos/' + this._userId + '.' + ext;
     var up = await this._supabase.storage.from('cl-assets').upload(path, file, { upsert: true });
-    if (up.error) { alert('Upload failed: ' + up.error.message); return; }
-    var url = this._supabase.storage.from('cl-assets').getPublicUrl(path).data.publicUrl;
+    if (up.error) { window.showModalError('Upload failed: ' + up.error.message); return; }
+    var signedRes = await this._supabase.storage.from('cl-assets').createSignedUrl(path, 31536000);
+    var url;
+    if (signedRes.data && signedRes.data.signedUrl) {
+      url = signedRes.data.signedUrl;
+    } else {
+      url = this._supabase.storage.from('cl-assets').getPublicUrl(path).data.publicUrl;
+    }
     var logoRes = await this._supabase.from('profiles').update({ logo_url: url }).eq('id', this._userId);
     if (logoRes.error) { console.error('[CL Profile] _uploadLogo update error:', logoRes.error.message); return; }
     this._profile.logo_url = url;
+    this._setLogoImg(url);
+  },
+
+  _setLogoImg: function(url) {
     var img = document.getElementById('prof-logo-img');
-    if (img.tagName === 'IMG') { img.src = url; }
-    else {
+    if (!img) return;
+    if (img.tagName === 'IMG') {
+      img.src = url;
+    } else {
       var newImg = document.createElement('img');
       newImg.id = 'prof-logo-img';
       newImg.src = url;
       newImg.className = 'profile-logo-preview';
       newImg.alt = 'Logo';
+      newImg.addEventListener('error', function() {
+        newImg.style.display = 'none';
+        var ph = document.createElement('div');
+        ph.id = 'prof-logo-img';
+        ph.className = 'profile-logo-placeholder';
+        ph.textContent = 'Logo';
+        newImg.parentNode.replaceChild(ph, newImg);
+      });
       img.parentNode.replaceChild(newImg, img);
     }
   },
@@ -978,12 +1009,11 @@ window.CL_PROFILE = {
   // ─────────────────────────────────────────────────────────
 
   _renderCredentials: function() {
-    var licenceOpts = [
-      'Builder\u2019s Licence', 'Electrical Licence', 'Plumbing Licence',
-      'Gas Fitting Licence', 'Refrigerant Handling Licence', 'Practising Certificate',
-      'CPA / CA', 'ISO Certification', 'Safety Certification',
-      'Asbestos Removal Licence', 'White Card', 'Working at Heights'
-    ];
+    var industries = this._va('industry');
+    if (typeof this._v('industry') === 'string' && this._v('industry')) {
+      industries = [this._v('industry')];
+    }
+    var licenceOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedLicences(industries) : [];
     var selectedLicences = this._va('licences');
     var customLicences = selectedLicences.filter(function(l) { return licenceOpts.indexOf(l) === -1; });
     var licenceHtml = this._chipGroupWithOther('prof-licences', licenceOpts, selectedLicences, customLicences);
