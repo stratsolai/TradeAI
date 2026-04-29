@@ -24,17 +24,95 @@ window.BP_MARKETING = {
       tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no',
       specialise_services: [], specialise_duration: ''
     };
+    this._renderPanel();
+  },
+
+  _renderPanel: function() {
+    var self = this;
+    var el = document.getElementById('prof-mkt-guided');
+    if (!el) return;
+    var p = this._profile;
     var hasExisting = p.marketing_theme_differentiators || p.marketing_theme_awareness || p.marketing_theme_feeling;
+
+    var html = '';
     if (hasExisting) {
-      this._showSummary(true);
+      html += '<div style="margin-bottom:20px">' +
+        '<button class="btn-primary" id="prof-mkt-open-modal">Update Marketing Theme</button>' +
+      '</div>';
+      html += this._summaryHtml(true);
     } else {
-      this._renderTopic();
+      html += '<div class="empty-state" style="padding:32px 20px">' +
+        '<div class="empty-state-icon">\uD83C\uDFA8</div>' +
+        '<h3>No Marketing Theme Yet</h3>' +
+        '<p>Answer a few questions and the AI will build your marketing theme.</p>' +
+        '<button class="btn-primary" id="prof-mkt-open-modal" style="margin-top:16px">Create Marketing Theme</button>' +
+      '</div>';
     }
+
+    el.innerHTML = html;
+
+    document.getElementById('prof-mkt-open-modal').addEventListener('click', function() {
+      self._topic = 0;
+      self._openModal();
+    });
+  },
+
+  _summaryHtml: function(fromProfile) {
+    var p = this._profile;
+    var d = this._summaryData || {};
+    var diff = fromProfile ? (p.marketing_theme_differentiators || '') : (d.differentiators || '');
+    var aware = fromProfile ? (p.marketing_theme_awareness || '') : (d.awareness || '');
+    var feel = fromProfile ? (p.marketing_theme_feeling || '') : (d.feeling || '');
+    var tone = fromProfile ? (p.tone_of_voice || '') : (this._answers.tone || '');
+    var pc = fromProfile ? (p.primary_brand_colour || '') : (this._answers.primary_colour || '');
+    var sc = fromProfile ? (p.secondary_brand_colour || '') : (this._answers.secondary_colour || '');
+    var tag = fromProfile ? (p.tagline || '') : (this._answers.tagline || '');
+
+    var toneLabel = tone ? tone.charAt(0).toUpperCase() + tone.slice(1) : '\u2014';
+    var colourSwatches = '';
+    if (pc) colourSwatches += '<span style="display:inline-block;width:20px;height:20px;border-radius:4px;background:' + window.escHtml(pc) + ';border:1px solid var(--border);vertical-align:middle"></span> ' + window.escHtml(pc);
+    if (sc) colourSwatches += '&nbsp;&nbsp;<span style="display:inline-block;width:20px;height:20px;border-radius:4px;background:' + window.escHtml(sc) + ';border:1px solid var(--border);vertical-align:middle"></span> ' + window.escHtml(sc);
+
+    return '<div style="display:grid;gap:16px">' +
+      '<div><div class="profile-label">What makes you stand out</div><div style="color:var(--text-secondary);font-size:var(--btn-font-size);line-height:1.6">' + window.escHtml(diff) + '</div></div>' +
+      '<div><div class="profile-label">What customers should know</div><div style="color:var(--text-secondary);font-size:var(--btn-font-size);line-height:1.6">' + window.escHtml(aware) + '</div></div>' +
+      '<div><div class="profile-label">How you want customers to feel</div><div style="color:var(--text-secondary);font-size:var(--btn-font-size);line-height:1.6">' + window.escHtml(feel) + '</div></div>' +
+      '<div style="display:flex;gap:24px;flex-wrap:wrap">' +
+        '<div><div class="profile-label">Tone of voice</div><div style="color:var(--text-secondary)">' + window.escHtml(toneLabel) + '</div></div>' +
+        '<div><div class="profile-label">Brand colours</div><div style="color:var(--text-secondary)">' + (colourSwatches || '\u2014') + '</div></div>' +
+        '<div><div class="profile-label">Tagline</div><div style="color:var(--text-secondary)">' + (tag ? window.escHtml(tag) : '\u2014') + '</div></div>' +
+      '</div>' +
+    '</div>';
+  },
+
+  _openModal: function() {
+    var existing = document.getElementById('prof-mkt-modal');
+    if (existing) existing.parentNode.removeChild(existing);
+
+    var overlay = document.createElement('div');
+    overlay.id = 'prof-mkt-modal';
+    overlay.className = 'perm-modal-overlay open';
+    overlay.innerHTML = '<div class="perm-modal" style="max-width:640px;max-height:85vh;overflow-y:auto">' +
+      '<div id="prof-mkt-modal-content"></div>' +
+    '</div>';
+    document.body.appendChild(overlay);
+
+    var self = this;
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) self._closeModal();
+    });
+
+    this._renderTopic();
+  },
+
+  _closeModal: function() {
+    var modal = document.getElementById('prof-mkt-modal');
+    if (modal) modal.parentNode.removeChild(modal);
   },
 
   _renderTopic: function() {
     var self = this;
-    var el = document.getElementById('prof-mkt-guided');
+    var el = document.getElementById('prof-mkt-modal-content');
     if (!el) return;
     var t = this._topic;
     var html = '';
@@ -63,6 +141,7 @@ window.BP_MARKETING = {
       self._saveTopicData(); self._topic++; self._renderTopic();
     });
     this._bindPills();
+    this._bindColourSync();
   },
 
   _pills: function(items, selected, dataAttr) {
@@ -77,13 +156,15 @@ window.BP_MARKETING = {
 
   _bindPills: function() {
     var self = this;
-    document.querySelectorAll('#prof-mkt-guided .filter-pill').forEach(function(pill) {
+    var container = document.getElementById('prof-mkt-modal-content');
+    if (!container) return;
+    container.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
         var attr = Object.keys(pill.dataset)[0];
         if (pill.classList.contains('active')) {
           pill.classList.remove('active');
         } else {
-          if (attr === 'tone' || attr === 'specdur') {
+          if (attr === 'tone' || attr === 'specdur' || attr === 'tagline' || attr === 'custcount') {
             pill.parentElement.querySelectorAll('.filter-pill').forEach(function(s) { s.classList.remove('active'); });
           }
           if (attr === 'feelingMax') {
@@ -92,13 +173,36 @@ window.BP_MARKETING = {
           }
           pill.classList.add('active');
         }
-        var reRenderAttrs = ['standout', 'qualdetail', 'svcdetail', 'affdetail'];
+        var reRenderAttrs = ['standout', 'qualdetail', 'svcdetail', 'affdetail', 'tagline'];
         if (reRenderAttrs.indexOf(attr) !== -1) {
           self._saveTopicData();
           self._renderTopic();
         }
       });
     });
+  },
+
+  _bindColourSync: function() {
+    var picker1 = document.getElementById('prof-mkt-colour1');
+    var hex1 = document.getElementById('prof-mkt-colour1-hex');
+    if (picker1 && hex1) {
+      picker1.addEventListener('input', function() { hex1.value = picker1.value; });
+      hex1.addEventListener('input', function() {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex1.value)) picker1.value = hex1.value;
+      });
+    }
+    var picker2 = document.getElementById('prof-mkt-colour2');
+    var hex2 = document.getElementById('prof-mkt-colour2-hex');
+    if (picker2 && hex2) {
+      picker2.addEventListener('input', function() { hex2.value = picker2.value; });
+      hex2.addEventListener('input', function() {
+        if (/^#[0-9a-fA-F]{6}$/.test(hex2.value)) picker2.value = hex2.value;
+      });
+    }
+    var noColourBtn = document.getElementById('prof-mkt-no-colour');
+    if (noColourBtn && hex1) {
+      noColourBtn.addEventListener('click', function() { hex1.value = ''; });
+    }
   },
 
   _topicStandout: function() {
@@ -226,20 +330,21 @@ window.BP_MARKETING = {
   _topicTone: function() {
     var a = this._answers;
     var tones = [
-      { id: 'professional', desc: 'Formal, trustworthy, corporate' },
-      { id: 'friendly', desc: 'Warm, approachable, conversational' },
-      { id: 'casual', desc: 'Relaxed, informal, matey' },
-      { id: 'bold', desc: 'Confident, direct, punchy' },
-      { id: 'helpful', desc: 'Supportive, educational, advisory' }
+      { id: 'professional', label: 'Professional', desc: 'Formal, trustworthy, corporate' },
+      { id: 'friendly', label: 'Friendly', desc: 'Warm, approachable, conversational' },
+      { id: 'casual', label: 'Casual', desc: 'Relaxed, informal, matey' },
+      { id: 'bold', label: 'Bold', desc: 'Confident, direct, punchy' },
+      { id: 'helpful', label: 'Helpful', desc: 'Supportive, educational, advisory' }
     ];
     var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">How does your business communicate?</div>';
     html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:12px">Select one</div>';
-    html += '<div class="review-pill-row" style="margin-bottom:12px">';
+    html += '<div class="review-pill-row" style="margin-bottom:12px;gap:12px">';
     tones.forEach(function(t) {
       var active = a.tone === t.id ? ' active' : '';
-      html += '<button class="filter-pill' + active + '" data-tone="' + t.id + '">' +
-        t.id.charAt(0).toUpperCase() + t.id.slice(1) +
-        '<br><span style="font-size:var(--badge-font-size);font-weight:400;color:var(--text-muted)">' + t.desc + '</span></button>';
+      html += '<button class="filter-pill' + active + '" data-tone="' + t.id + '" style="flex-direction:column;align-items:flex-start;padding:12px 16px;min-width:120px">' +
+        '<span style="font-weight:var(--font-weight-semibold)">' + window.escHtml(t.label) + '</span>' +
+        '<span style="font-size:var(--badge-font-size);font-weight:400;color:var(--text-muted);margin-top:4px">' + window.escHtml(t.desc) + '</span>' +
+      '</button>';
     });
     html += '</div>';
     return html;
@@ -271,7 +376,8 @@ window.BP_MARKETING = {
     html += '<button class="filter-pill' + (a.has_tagline === 'no' ? ' active' : '') + '" data-tagline="no">No</button>';
     html += '</div>';
     if (a.has_tagline === 'yes') {
-      html += '<div class="profile-field-full"><input type="text" class="profile-input" id="prof-mkt-tagline" value="' + window.escHtml(a.tagline) + '" placeholder="Your tagline or slogan"></div>';
+      html += '<div class="profile-field-full"><label class="profile-label">Your tagline</label>' +
+        '<input type="text" class="profile-input" id="prof-mkt-tagline" value="' + window.escHtml(a.tagline) + '" placeholder="Your tagline or slogan"></div>';
     }
     return html;
   },
@@ -338,46 +444,69 @@ window.BP_MARKETING = {
 
   _generate: async function() {
     var self = this;
-    var el = document.getElementById('prof-mkt-guided');
+    var el = document.getElementById('prof-mkt-modal-content');
     if (!el) return;
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)"><div class="sm-generating-spinner" style="display:inline-block;width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sm-spin 0.8s linear infinite;margin-bottom:12px"></div><div>Generating your marketing theme...</div></div>';
+
+    var savedAnswers = JSON.parse(JSON.stringify(this._answers));
+
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">' +
+      '<div class="loading-spinner"></div>' +
+      '<div>Generating your marketing theme...</div>' +
+    '</div>';
 
     try {
       var sessionRes = await this._supabase.auth.getSession();
       var session = sessionRes.data && sessionRes.data.session;
-      if (!session) throw new Error('Session expired.');
+      if (!session) throw new Error('Session expired. Please sign in again.');
 
       var res = await fetch('/api/generate-marketing-theme', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
         body: JSON.stringify({ answers: this._answers })
       });
-      if (!res.ok) throw new Error('Failed to generate theme.');
+      if (!res.ok) {
+        var errData = null;
+        try { errData = await res.json(); } catch(e) {}
+        throw new Error((errData && errData.error) || 'Failed to generate theme. Please try again.');
+      }
       var data = await res.json();
       this._summaryData = data;
-      this._showSummary(false);
+      this._showReview();
     } catch (err) {
-      el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--red)">' + window.escHtml(err.message) + '</div>';
+      this._answers = savedAnswers;
+      el.innerHTML = '<div style="text-align:center;padding:20px">' +
+        '<div style="color:var(--red);margin-bottom:16px">' + window.escHtml(err.message) + '</div>' +
+        '<div style="display:flex;gap:12px;justify-content:center">' +
+          '<button class="btn-back" id="prof-mkt-err-back">Back</button>' +
+          '<button class="btn-primary" id="prof-mkt-err-retry">Try Again</button>' +
+        '</div>' +
+      '</div>';
+      document.getElementById('prof-mkt-err-back').addEventListener('click', function() {
+        self._topic = 5;
+        self._renderTopic();
+      });
+      document.getElementById('prof-mkt-err-retry').addEventListener('click', function() {
+        self._generate();
+      });
     }
   },
 
-  _showSummary: function(fromExisting) {
+  _showReview: function() {
     var self = this;
-    var el = document.getElementById('prof-mkt-guided');
+    var el = document.getElementById('prof-mkt-modal-content');
     if (!el) return;
     var pr = this._parent;
-    var p = this._profile;
     var d = this._summaryData || {};
-    var diff = fromExisting ? (p.marketing_theme_differentiators || '') : (d.differentiators || '');
-    var aware = fromExisting ? (p.marketing_theme_awareness || '') : (d.awareness || '');
-    var feel = fromExisting ? (p.marketing_theme_feeling || '') : (d.feeling || '');
-    var tone = fromExisting ? (p.tone_of_voice || 'friendly') : (this._answers.tone || 'friendly');
-    var pc = fromExisting ? (p.primary_brand_colour || '') : (this._answers.primary_colour || '');
-    var sc = fromExisting ? (p.secondary_brand_colour || '') : (this._answers.secondary_colour || '');
-    var tag = fromExisting ? (p.tagline || '') : (this._answers.tagline || '');
+    var diff = d.differentiators || '';
+    var aware = d.awareness || '';
+    var feel = d.feeling || '';
+    var tone = this._answers.tone || 'friendly';
+    var pc = this._answers.primary_colour || '';
+    var sc = this._answers.secondary_colour || '';
+    var tag = this._answers.tagline || '';
 
     var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:16px">Your Marketing Theme</div>';
-    html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:16px">Review and edit, then save.</div>';
+    html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:16px">Review and edit, then confirm to save.</div>';
     html += pr._field('What makes you stand out', pr._textarea('prof-sum-diff', diff, '', 3));
     html += pr._field('What customers should know', pr._textarea('prof-sum-aware', aware, '', 3));
     html += pr._field('How you want customers to feel', pr._textarea('prof-sum-feel', feel, '', 2));
@@ -426,6 +555,9 @@ window.BP_MARKETING = {
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
 
+      self._closeModal();
+      self._renderPanel();
+
       try {
         var sessionRes = await self._supabase.auth.getSession();
         var sess = sessionRes.data && sessionRes.data.session;
@@ -438,7 +570,7 @@ window.BP_MARKETING = {
             }
           }).catch(function() {});
         }
-      } catch (e) { /* background sync — do not block */ }
+      } catch (e) {}
     }, document.getElementById('prof-save-msg'));
   }
 };
