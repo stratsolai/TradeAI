@@ -12,6 +12,7 @@ window.CL_SETTINGS_LOGIC = {
   _xeroAccounts: [],
   _quickbooksAccounts: [],
   _servicem8Accounts: [],
+  _fergusAccounts: [],
 
   init: function () {
     var self = this;
@@ -113,7 +114,7 @@ window.CL_SETTINGS_LOGIC = {
     try {
       var res = await self._supabase
         .from('profiles')
-        .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts, cl_xero_accounts, cl_quickbooks_accounts, cl_servicem8_accounts')
+        .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts, cl_xero_accounts, cl_quickbooks_accounts, cl_servicem8_accounts, cl_fergus_accounts')
         .eq('id', self._userId)
         .maybeSingle();
       if (res.error) { console.error('_loadConnections error:', res.error); return; }
@@ -140,6 +141,7 @@ window.CL_SETTINGS_LOGIC = {
       self._xeroAccounts = nonNull(Array.isArray(data.cl_xero_accounts) ? data.cl_xero_accounts : []);
       self._quickbooksAccounts = nonNull(Array.isArray(data.cl_quickbooks_accounts) ? data.cl_quickbooks_accounts : []);
       self._servicem8Accounts = nonNull(Array.isArray(data.cl_servicem8_accounts) ? data.cl_servicem8_accounts : []);
+      self._fergusAccounts = nonNull(Array.isArray(data.cl_fergus_accounts) ? data.cl_fergus_accounts : []);
       self._renderEmailList();
       self._renderDriveList();
       self._renderWebsiteList();
@@ -386,6 +388,9 @@ window.CL_SETTINGS_LOGIC = {
         } else if (type === 'servicem8') {
           var smAcct = disconnectBtn.getAttribute('data-account');
           if (smAcct) self._disconnectToolAccount('servicem8', smAcct);
+        } else if (type === 'fergus') {
+          var fgAcct = disconnectBtn.getAttribute('data-account');
+          if (fgAcct) self._disconnectToolAccount('fergus', fgAcct);
         }
         return;
       }

@@ -58,6 +58,18 @@
       comingSoon: false
     },
     {
+      key: 'fergus',
+      label: 'Fergus',
+      stateField: '_fergusAccounts',
+      column: 'cl_fergus_accounts',
+      accountKey: 'account_name',
+      idKey: 'account_name',
+      desc: 'Connect your Fergus account so your tools can access jobs, clients, invoices, quotes, and more.',
+      permTitle: 'Connect Fergus',
+      permBody: 'StaxAI will be able to read your jobs, clients, invoices, and quotes. It cannot create or edit jobs, send messages, or change anything in your Fergus account.',
+      comingSoon: false
+    },
+    {
       key: 'buildxact',
       label: 'Buildxact',
       stateField: '_buildxactAccounts',
@@ -261,7 +273,7 @@
     var tab = params.get('tab');
 
     // Only handle tool connection platforms
-    var toolKeys = ['xero', 'quickbooks', 'servicem8'];
+    var toolKeys = ['xero', 'quickbooks', 'servicem8', 'fergus'];
     var isToolPlatform = false;
     if (connected && toolKeys.indexOf(connected) !== -1) isToolPlatform = true;
     if (error && toolKeys.some(function (k) { return error.indexOf(k) !== -1; })) isToolPlatform = true;

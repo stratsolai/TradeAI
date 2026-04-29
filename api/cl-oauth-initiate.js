@@ -76,6 +76,13 @@ export default async function handler(req, res) {
       redirectUri: APP_BASE_URL + '/api/cl-servicem8-callback',
       flavour: 'servicem8',
     },
+    fergus: {
+      clientId: process.env.FERGUS_CLIENT_ID,
+      authUrl: 'https://app.fergus.com/oauth/authorize',
+      scopes: 'openid profile email',
+      redirectUri: APP_BASE_URL + '/api/cl-fergus-callback',
+      flavour: 'fergus',
+    },
   };
 
   const config = PROVIDERS[provider];
