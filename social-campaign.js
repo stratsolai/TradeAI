@@ -168,7 +168,7 @@ window.SM_CAMPAIGN = {
     });
     html += '</div>';
     if (current && current !== 'Not sure (AI helps decide)') {
-      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Any additional detail about this goal? (optional)</label>' +
+      html += '<div class="form-group"><label class="form-label">Any additional detail about this goal? (optional)</label>' +
         '<input type="text" class="form-input" id="smc-goal-detail" value="' + window.escHtml(this._campaignInputs.goal_detail || '') + '"></div>';
     }
     return html;
@@ -197,7 +197,7 @@ window.SM_CAMPAIGN = {
       html += '<button class="filter-pill' + active + '" data-focus="' + window.escHtml(o) + '">' + window.escHtml(o) + '</button>';
     });
     html += '</div>';
-    html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Target customer type (optional)</label>' +
+    html += '<div class="form-group"><label class="form-label">Target customer type (optional)</label>' +
       '<input type="text" class="form-input" id="smc-target-customer" placeholder="e.g. Homeowners, small businesses..." value="' + window.escHtml(this._campaignInputs.target_customer || '') + '"></div>';
     return html;
   },
@@ -224,7 +224,7 @@ window.SM_CAMPAIGN = {
     });
     html += '</div>';
     if (current.length > 0 && current.indexOf('None of these') === -1) {
-      html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Share more about what is coming up</label>' +
+      html += '<div class="form-group"><label class="form-label">Share more about what is coming up</label>' +
         '<textarea class="form-input" id="smc-upcoming-detail" rows="3">' + window.escHtml(this._campaignInputs.upcoming_detail || '') + '</textarea></div>';
     }
     return html;
@@ -252,7 +252,7 @@ window.SM_CAMPAIGN = {
       html += '<button class="filter-pill' + active + '" data-frequency="' + f.id + '">' + window.escHtml(f.label) + '</button>';
     });
     html += '</div>';
-    html += '<div class="form-group" style="margin-top:16px"><label class="form-label">Preferred posting days (optional)</label>' +
+    html += '<div class="form-group"><label class="form-label">Preferred posting days (optional)</label>' +
       '<div class="sm-pills-wrap" id="smc-days-pills">';
     var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     var selectedDays = this._campaignInputs.preferred_days || [];
@@ -437,7 +437,7 @@ window.SM_CAMPAIGN = {
       '<div class="sm-step-hint">Review the plan below. You can edit it before confirming.</div>' +
       '<textarea class="form-input sm-plan-textarea" id="smc-plan-text">' + window.escHtml(planText) + '</textarea>' +
       '</div>' +
-      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
+      '<div class="action-row sm-wizard-nav sm-edit-nav">' +
       '<button class="btn-outline" id="smc-plan-regenerate">Regenerate</button>' +
       '<button class="btn-primary" id="smc-plan-confirm">Confirm &amp; Create Campaign</button>' +
       '</div>';
@@ -689,7 +689,7 @@ window.SM_CAMPAIGN = {
       '<div class="form-group"><label class="form-label">Scheduled date</label>' +
       '<input type="date" class="form-input" id="smc-edit-date" value="' + (post.scheduled_for ? post.scheduled_for.substring(0, 10) : '') + '"></div>' +
       '</div>' +
-      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
+      '<div class="action-row sm-wizard-nav sm-edit-nav">' +
       '<button class="btn-primary" id="smc-edit-save">Save Changes</button></div>';
 
     document.getElementById('smc-edit-back').addEventListener('click', function() {
@@ -1164,7 +1164,7 @@ window.SM_CAMPAIGN = {
       '<option value="5">5 per week</option>' +
       '</select></div>' +
       '</div>' +
-      '<div class="action-row sm-wizard-nav" style="margin-top:20px">' +
+      '<div class="action-row sm-wizard-nav sm-edit-nav">' +
       '<button class="btn-primary" id="smc-extend-submit">Generate Extension Posts</button>' +
       '</div>';
 

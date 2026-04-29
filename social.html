@@ -281,7 +281,8 @@
       margin-left: auto; min-width: 160px; max-width: 200px; flex: none;
       padding: var(--input-padding); border: var(--input-border-width) solid var(--border);
       border-radius: var(--btn-radius); font-size: var(--btn-font-size);
-      font-family: var(--body-font); background: var(--white); color: var(--text); outline: none;
+      font-family: var(--body-font); background: var(--white); color: var(--text);
+      box-sizing: border-box; outline: none; transition: border-color var(--btn-transition);
     }
     .sm-sort-select:focus { border-color: var(--blue); }
     .sm-bulk-bar { margin-bottom: 16px; }
