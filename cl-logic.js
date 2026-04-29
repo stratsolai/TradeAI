@@ -51,6 +51,20 @@ document.querySelectorAll('.ptab[data-tab]').forEach(function(btn) {
   });
 });
 
+(function() {
+  var key = 'tab_state:/content-library.html';
+  var saved = null;
+  try { saved = sessionStorage.getItem(key); } catch (e) {}
+  if (!saved) {
+    var hash = window.location.hash.replace('#', '');
+    if (hash) saved = hash;
+  }
+  if (saved) {
+    switchPTab(saved);
+    try { sessionStorage.removeItem(key); } catch (e) {}
+  }
+})();
+
 window.addEventListener('pageshow', function(e) {
   if (!e.persisted) return;
   var s = window.supabaseClient;
