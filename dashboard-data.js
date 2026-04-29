@@ -31,7 +31,7 @@ window.DASH_DATA = (function() {
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
 
     setWelcome(user);
-    renderTrialBanner(_profile);
+    renderTrialModal(_profile);
     loadNotifications(user.id);
     await renderActionTiles(user.id, _activeTools);
 
@@ -79,39 +79,35 @@ window.DASH_DATA = (function() {
     }
   }
 
-  // ── TRIAL BANNER ──
-  function renderTrialBanner(profile) {
-    var banner = document.getElementById('trial-banner');
-    var msg = document.getElementById('trial-banner-msg');
-    var cta = document.getElementById('trial-banner-cta');
-    var dismiss = document.getElementById('trial-banner-dismiss');
-    if (!banner || !profile) return;
+  // ── TRIAL MODAL ──
+  function renderTrialModal(profile) {
+    var modal = document.getElementById('trial-modal');
+    var msg = document.getElementById('trial-modal-msg');
+    var cta = document.getElementById('trial-modal-cta');
+    var dismiss = document.getElementById('trial-modal-dismiss');
+    if (!modal || !profile) return;
     if (!profile.is_trial || !profile.trial_expires_at) return;
-    if (sessionStorage.getItem('trial_banner_dismissed') === 'true') return;
+    if (sessionStorage.getItem('trial_modal_dismissed') === 'true') return;
 
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
     var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
-    var bannerClass, bannerMsg;
+    var trialMsg;
 
     if (daysLeft <= 0) {
-      bannerClass = 'trial-banner--expired';
-      bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
+      trialMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
     } else if (daysLeft <= 1) {
-      bannerClass = 'trial-banner--urgent';
-      bannerMsg = 'Your free trial ends tomorrow.';
+      trialMsg = 'Your free trial ends tomorrow.';
     } else if (daysLeft <= 3) {
-      bannerClass = 'trial-banner--warning';
-      bannerMsg = '3 days left on your free trial.';
+      trialMsg = '3 days left on your free trial.';
     } else if (daysLeft <= 7) {
-      bannerClass = 'trial-banner--info';
-      bannerMsg = 'Your free trial ends in 7 days. Subscribe to keep your Stax.';
+      trialMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
     } else {
       return;
     }
 
-    banner.className = 'trial-banner ' + bannerClass + ' visible';
-    msg.textContent = bannerMsg;
+    msg.textContent = trialMsg;
+    modal.classList.add('open');
 
     var tier = profile.bundle_tier;
     cta.addEventListener('click', function() {
@@ -122,8 +118,14 @@ window.DASH_DATA = (function() {
       }
     });
     dismiss.addEventListener('click', function() {
-      sessionStorage.setItem('trial_banner_dismissed', 'true');
-      banner.classList.remove('visible');
+      sessionStorage.setItem('trial_modal_dismissed', 'true');
+      modal.classList.remove('open');
+    });
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        sessionStorage.setItem('trial_modal_dismissed', 'true');
+        modal.classList.remove('open');
+      }
     });
   }
 

@@ -47,19 +47,8 @@
     .notif-item a:hover { opacity: 1; }
     .notif-dismiss { background: none; border: none; cursor: pointer; font-size: 16px; color: var(--badge-orange-text); padding: 0 4px; line-height: 1; }
 
-    /* ── Trial banner ── */
-    .trial-banner { display: none; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-radius: var(--card-radius); margin: 0 0 24px 0; font-family: var(--body-font); font-size: var(--body-font-size); font-weight: 500; }
-    .trial-banner.trial-banner--info    { background: var(--blue-light); border: 1px solid var(--blue); color: var(--blue-dark); }
-    .trial-banner.trial-banner--warning  { background: var(--badge-orange-bg); border: 1px solid var(--orange); color: var(--badge-orange-text); }
-    .trial-banner.trial-banner--urgent   { background: var(--badge-red-bg); border: 1px solid var(--red); color: var(--badge-red-text); }
-    .trial-banner.trial-banner--expired  { background: var(--grey-light); border: 1px solid var(--grey); color: var(--text-secondary); }
-    .trial-banner.visible { display: flex; }
-    .trial-banner__msg { flex: 1; }
-    .trial-banner__actions { display: flex; align-items: center; gap: var(--actions-gap); flex-shrink: 0; }
-    .trial-banner__cta { background: var(--orange); color: var(--white); border: none; border-radius: var(--btn-radius); padding: 8px 18px; font-family: var(--body-font); font-size: var(--body-font-size); font-weight: var(--heading-lg-weight); cursor: pointer; text-decoration: none; white-space: nowrap; }
-    .trial-banner__cta:hover { opacity: 0.85; }
-    .trial-banner__dismiss { background: none; border: none; cursor: pointer; font-size: 18px; line-height: 1; color: inherit; opacity: 0.6; padding: 0 4px; }
-    .trial-banner__dismiss:hover { opacity: 1; }
+    /* ── Trial modal actions ── */
+    .trial-modal-actions { display: flex; gap: var(--actions-gap); justify-content: center; margin-top: 20px; }
 
     /* ── Zone 1: Action Tiles ── */
     .dash-action-tile {
@@ -166,8 +155,6 @@
       .dash-stax-grid { grid-template-columns: 1fr; }
       .dash-overview-grid { grid-template-columns: 1fr; }
       .notif-item { padding: 10px 16px; }
-      .trial-banner { flex-direction: column; text-align: center; }
-      .trial-banner__actions { justify-content: center; }
     }
   </style>
 </head>
@@ -197,11 +184,13 @@
   <div id="page-wrap" style="display:none">
     <div class="dash-container">
 
-      <div class="trial-banner" id="trial-banner" role="alert">
-        <span class="trial-banner__msg" id="trial-banner-msg"></span>
-        <div class="trial-banner__actions">
-          <button class="trial-banner__cta" id="trial-banner-cta">Subscribe Now</button>
-          <button class="trial-banner__dismiss" id="trial-banner-dismiss" aria-label="Dismiss">&times;</button>
+      <div class="save-msg" id="trial-modal">
+        <div class="save-msg-card">
+          <div class="save-msg-text" id="trial-modal-msg"></div>
+          <div class="trial-modal-actions">
+            <button type="button" class="btn-primary" id="trial-modal-cta">Subscribe Now</button>
+            <button type="button" class="save-msg-ok" id="trial-modal-dismiss">Dismiss</button>
+          </div>
         </div>
       </div>
 
