@@ -24,7 +24,7 @@ window.ACCOUNT_LOGIC = {
     document.getElementById('acct-role').textContent = roleLabels[level] || 'User';
 
     if (level === 1) {
-      document.querySelectorAll('.owner-only').forEach(function(el) { el.style.display = ''; });
+      document.querySelectorAll('.owner-only').forEach(function(el) { el.classList.remove('owner-only'); });
     }
 
     if (level === 3) {
