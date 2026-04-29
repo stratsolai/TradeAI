@@ -29,6 +29,7 @@ setTimeout(() => {
       loadScript("cl-profile.js", function() { if (window.CL_PROFILE) window.CL_PROFILE.init(s); });
     });
     loadScript("cl-outputs.js", function() { if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s); });
+    if (window.CL_PROJECTS) window.CL_PROJECTS.init(s);
   })();
 
 
