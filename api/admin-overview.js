@@ -31,13 +31,24 @@ export default async function handler(req, res) {
       .gte('created_at', sevenDaysAgo);
     const newSignups7d = newSignupsRes.count || 0;
 
-    // Recent signups — newest 10 with key fields
+    // Recent signups — newest 10 with key fields. profiles does not
+    // store email, so fetch the auth.users emails for these specific
+    // ids in parallel via admin.getUserById and merge.
     const recentSignupsRes = await supabase
       .from('profiles')
-      .select('id, email, business_name, industry, is_trial, bundle_tier, created_at')
+      .select('id, business_name, industry, is_trial, bundle_tier, created_at')
       .order('created_at', { ascending: false })
       .limit(10);
     const recentSignups = recentSignupsRes.data || [];
+    if (recentSignups.length > 0) {
+      const emailLookups = await Promise.all(recentSignups.map(function(p) {
+        return supabase.auth.admin.getUserById(p.id).then(function(r) {
+          return [p.id, (r.data && r.data.user && r.data.user.email) || null];
+        }).catch(function() { return [p.id, null]; });
+      }));
+      const emailMap = new Map(emailLookups);
+      recentSignups.forEach(function(p) { p.email = emailMap.get(p.id) || null; });
+    }
 
     // Tool activations + industry breakdown — pull all activated_tools / industry rows
     const allProfilesRes = await supabase

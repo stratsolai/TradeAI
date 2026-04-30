@@ -11,18 +11,16 @@ export default async function handler(req, res) {
 
     const q = req.query || {};
 
+    // Profiles do not carry email — that lives in auth.users. Fetch the
+    // base profile rows with whatever DB-side filters we can apply, then
+    // merge emails from auth.users.admin.listUsers and apply the
+    // remaining filters (search-by-email and industry array) post-merge.
     let query = supabase
       .from('profiles')
-      .select('id, email, business_name, industry, activated_tools, bundle_tier, is_trial, created_at, stripe_customer_id, trial_expires_at')
+      .select('id, business_name, industry, activated_tools, bundle_tier, is_trial, created_at, stripe_customer_id, trial_expires_at')
       .order('created_at', { ascending: false })
       .limit(500);
 
-    if (q.search) {
-      const s = String(q.search).trim();
-      if (s) {
-        query = query.or('email.ilike.%' + s + '%,business_name.ilike.%' + s + '%');
-      }
-    }
     if (q.bundle) query = query.eq('bundle_tier', q.bundle);
     if (q.trial === 'true') query = query.eq('is_trial', true);
     if (q.trial === 'false') query = query.eq('is_trial', false);
@@ -37,7 +35,23 @@ export default async function handler(req, res) {
 
     let rows = data || [];
 
-    // Industry filter — array column, can't easily filter via PostgREST
+    // Merge emails from auth.users.
+    const emailMap = await fetchEmailMap();
+    rows.forEach(function(r) { r.email = emailMap.get(r.id) || null; });
+
+    // Search — email OR business_name (case-insensitive contains).
+    if (q.search) {
+      const s = String(q.search).toLowerCase().trim();
+      if (s) {
+        rows = rows.filter(function(p) {
+          const e = (p.email || '').toLowerCase();
+          const b = (p.business_name || '').toLowerCase();
+          return e.indexOf(s) !== -1 || b.indexOf(s) !== -1;
+        });
+      }
+    }
+
+    // Industry — text[] column on profiles, can't filter that via PostgREST eq.
     if (q.industry) {
       rows = rows.filter(function(p) {
         const inds = Array.isArray(p.industry) ? p.industry : (p.industry ? [p.industry] : []);
@@ -45,7 +59,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // Number-of-tools filter
     if (q.min_tools) {
       const min = parseInt(q.min_tools, 10);
       if (!isNaN(min)) {
@@ -68,6 +81,27 @@ export default async function handler(req, res) {
     console.error('[admin-customers] error:', err && err.message);
     return res.status(500).json({ error: err && err.message ? err.message : 'Could not load customers' });
   }
+}
+
+// Build a Map<userId, email> by paging through auth.users via the admin
+// API. Service key is required (already configured at module init).
+async function fetchEmailMap() {
+  const map = new Map();
+  let page = 1;
+  const perPage = 1000;
+  for (;;) {
+    const r = await supabase.auth.admin.listUsers({ page: page, perPage: perPage });
+    if (r.error) {
+      console.error('[admin-customers] listUsers error:', r.error.message);
+      break;
+    }
+    const users = (r.data && r.data.users) || [];
+    users.forEach(function(u) { map.set(u.id, u.email || ''); });
+    if (users.length < perPage) break;
+    page += 1;
+    if (page > 20) break; // hard safety cap — 20k users
+  }
+  return map;
 }
 
 async function requireAdmin(req) {
