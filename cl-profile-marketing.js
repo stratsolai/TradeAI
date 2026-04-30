@@ -15,9 +15,13 @@ window.BP_MARKETING = {
     this._parent = parent;
     var p = this._profile;
     this._topic = 0;
-    var raw = p.marketing_theme_extra;
-    if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) { raw = null; } }
-    var saved = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : null;
+    var saved = null;
+    var mte = p.marketing_theme_extra;
+    if (Array.isArray(mte) && mte.length === 1 && typeof mte[0] === 'string') {
+      try { saved = JSON.parse(mte[0]); } catch(e) { saved = null; }
+    } else if (mte && typeof mte === 'object' && !Array.isArray(mte)) {
+      saved = mte;
+    }
     var hasSaved = saved && Array.isArray(saved.standout);
     this._answers = {
       standout: hasSaved ? (saved.standout || []) : [],
@@ -586,7 +590,7 @@ window.BP_MARKETING = {
         marketing_theme_differentiators: document.getElementById('prof-sum-diff').value.trim(),
         marketing_theme_awareness: document.getElementById('prof-sum-aware').value.trim(),
         marketing_theme_feeling: document.getElementById('prof-sum-feel').value.trim(),
-        marketing_theme_extra: JSON.parse(JSON.stringify(self._answers)),
+        marketing_theme_extra: [JSON.stringify(self._answers)],
         tone_of_voice: document.getElementById('prof-sum-tone').value.trim(),
         primary_brand_colour: document.getElementById('prof-sum-colour1').value.trim() || null,
         secondary_brand_colour: document.getElementById('prof-sum-colour2').value.trim() || null,
