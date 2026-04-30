@@ -10,29 +10,67 @@ window.ADMIN_LOGIC = {
     var self = this;
     self._supabase = supabase;
 
+    console.log('[admin] init started');
+
     // Auth gate — redirects to /login if no session.
     if (typeof window.requireAuth === 'function') {
       var ok = await window.requireAuth();
-      if (!ok) return;
+      if (!ok) {
+        console.log('[admin] requireAuth returned false — redirected to /login');
+        return;
+      }
     }
 
     var sess = await supabase.auth.getSession();
     self._session = sess.data && sess.data.session;
     self._user = self._session && self._session.user;
-    if (!self._user) { window.location.href = '/login'; return; }
+    if (!self._user) {
+      console.error('[admin] No user in session — redirecting to /login');
+      window.location.href = '/login';
+      return;
+    }
+    console.log('[admin] Authenticated user:', self._user.id, self._user.email);
 
     // is_admin check — first thing after auth, per spec.
+    // Use .maybeSingle() so we can tell apart "no row" (returns null data,
+    // null error — usually RLS blocking) from "row exists, has admin flag".
     var profileRes = await supabase
       .from('profiles')
       .select('is_admin, email')
       .eq('id', self._user.id)
-      .single();
+      .maybeSingle();
 
-    if (profileRes.error || !profileRes.data || !profileRes.data.is_admin) {
+    console.log('[admin] Profile lookup result:', profileRes);
+
+    if (profileRes.error) {
+      console.error('[admin] Profile lookup error:', profileRes.error);
+      self._showError('Could not verify admin access. ' + (profileRes.error.message || '') +
+        ' Check the browser console for details.');
+      return;
+    }
+    if (!profileRes.data) {
+      // Row exists in profiles for this id (since the user is signed in
+      // and has a profile somewhere) but RLS is hiding it from a SELECT,
+      // OR the profiles row genuinely is missing.
+      console.error('[admin] No profile row returned for user', self._user.id,
+        '— most likely an RLS policy is blocking the read. Check that ' +
+        '"users can read own profile" SELECT policy exists on profiles.');
+      self._showError('Your profile row is not readable. Most likely an RLS ' +
+        'policy is blocking SELECT on profiles for your user. Check the ' +
+        'browser console for the user ID.');
+      return;
+    }
+
+    console.log('[admin] is_admin value:', profileRes.data.is_admin,
+      '(type: ' + typeof profileRes.data.is_admin + ')');
+
+    if (profileRes.data.is_admin !== true) {
+      console.warn('[admin] is_admin is not strictly true — redirecting to /dashboard.html');
       window.location.href = '/dashboard.html';
       return;
     }
 
+    console.log('[admin] is_admin check passed — revealing page');
     document.getElementById('page-wrap').style.display = 'block';
 
     self._wireTabs();
