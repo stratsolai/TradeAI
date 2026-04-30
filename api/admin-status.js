@@ -5,11 +5,20 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 const CACHE_TTL_MS = 5 * 60 * 1000;
 let _cache = { data: null, fetchedAt: 0 };
 
+// Each provider lists URLs in priority order — fetchProviderStatus
+// tries them in sequence and uses the first one that returns 200 +
+// parseable JSON. Stripe runs on Instatus, which historically uses
+// /summary.json at the page root. The other three are Atlassian
+// Statuspage and use /api/v2/status.json.
 const PROVIDERS = [
-  { name: 'Stripe',    url: 'https://status.stripe.com/api/v2/status.json' },
-  { name: 'Supabase',  url: 'https://status.supabase.com/api/v2/status.json' },
-  { name: 'Anthropic', url: 'https://status.anthropic.com/api/v2/status.json' },
-  { name: 'Vercel',    url: 'https://www.vercel-status.com/api/v2/status.json' }
+  { name: 'Stripe', urls: [
+    'https://status.stripe.com/summary.json',
+    'https://status.stripe.com/api/v2/summary.json',
+    'https://status.stripe.com/api/v2/status.json'
+  ] },
+  { name: 'Supabase',  urls: ['https://status.supabase.com/api/v2/status.json'] },
+  { name: 'Anthropic', urls: ['https://status.anthropic.com/api/v2/status.json'] },
+  { name: 'Vercel',    urls: ['https://www.vercel-status.com/api/v2/status.json'] }
 ];
 
 const FETCH_TIMEOUT_MS = 5000;
@@ -42,35 +51,53 @@ export default async function handler(req, res) {
 }
 
 async function fetchProviderStatus(p) {
+  const urls = Array.isArray(p.urls) ? p.urls : (p.url ? [p.url] : []);
+  let lastError = null;
+  for (let i = 0; i < urls.length; i++) {
+    const result = await tryProviderUrl(p.name, urls[i]);
+    if (result.ok) {
+      return {
+        name: p.name,
+        status: indicatorToStatus(result.indicator),
+        indicator: result.indicator,
+        description: result.description,
+        url: urls[i]
+      };
+    }
+    lastError = result.error;
+  }
+  console.error('[admin-status]', p.name, 'all URLs failed; last error:', lastError);
+  return {
+    name: p.name,
+    status: 'unknown',
+    indicator: 'unknown',
+    description: '',
+    error: lastError || 'No status URL responded'
+  };
+}
+
+async function tryProviderUrl(providerName, url) {
   const ctrl = new AbortController();
   const t = setTimeout(function() { ctrl.abort(); }, FETCH_TIMEOUT_MS);
   try {
-    const r = await fetch(p.url, { signal: ctrl.signal });
+    const r = await fetch(url, { signal: ctrl.signal });
     const text = await r.text().catch(function() { return ''; });
-    console.log('[admin-status]', p.name, 'HTTP', r.status, 'body first 300 chars:', text.slice(0, 300));
+    console.log('[admin-status]', providerName, url, 'HTTP', r.status, 'body first 300 chars:', text.slice(0, 300));
     if (!r.ok) {
-      throw new Error('HTTP ' + r.status);
+      return { ok: false, error: 'HTTP ' + r.status + ' from ' + url };
     }
     let j;
     try { j = JSON.parse(text); }
-    catch (e) { throw new Error('Non-JSON response: ' + text.slice(0, 100)); }
-
+    catch (e) {
+      return { ok: false, error: 'Non-JSON response from ' + url + ': ' + text.slice(0, 100) };
+    }
     const parsed = parseStatusBody(j);
-    return {
-      name: p.name,
-      status: indicatorToStatus(parsed.indicator),
-      indicator: parsed.indicator,
-      description: parsed.description
-    };
+    if (parsed.indicator === 'unknown') {
+      return { ok: false, error: 'Unrecognised status response shape from ' + url };
+    }
+    return { ok: true, indicator: parsed.indicator, description: parsed.description };
   } catch (e) {
-    console.error('[admin-status]', p.name, 'fetch failed:', e && e.message);
-    return {
-      name: p.name,
-      status: 'unknown',
-      indicator: 'unknown',
-      description: '',
-      error: e && e.message ? e.message : String(e)
-    };
+    return { ok: false, error: (e && e.message ? e.message : String(e)) + ' from ' + url };
   } finally {
     clearTimeout(t);
   }
