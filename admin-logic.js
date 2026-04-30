@@ -36,7 +36,7 @@ window.ADMIN_LOGIC = {
     // null error — usually RLS blocking) from "row exists, has admin flag".
     var profileRes = await supabase
       .from('profiles')
-      .select('is_admin, email')
+      .select('is_admin')
       .eq('id', self._user.id)
       .maybeSingle();
 
