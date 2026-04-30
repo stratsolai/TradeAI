@@ -932,7 +932,7 @@ window.ADMIN_LOGIC = {
           + '<span class="admin-status-dot ' + dotClass + '"></span>'
           + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
           + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">' + self._esc(label) + '</span>'
-          + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" class="topbar-link" style="font-size:var(--note-font-size);">Status page</a>' : '')
+          + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Status page</a>' : '')
           + '</div>';
       });
     }
