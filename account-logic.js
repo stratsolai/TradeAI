@@ -267,20 +267,17 @@ window.ACCOUNT_LOGIC = {
       // Invite form or max message
       if (total < 4) {
         html += '<div class="acct-invite-section">'
-          + '<div class="acct-invite-title">Invite Team Member</div>'
+          + '<div class="section-label">Invite Team Member</div>'
           + '<div class="acct-invite-form">'
-          + '<div class="acct-invite-field">'
-          + '<label class="form-label" for="invite-email">Email address</label>'
-          + '<input type="email" id="invite-email" class="form-input" style="width:260px;" placeholder="teammate@example.com">'
+          + '<input type="email" id="invite-email" class="form-input acct-invite-email" placeholder="teammate@example.com">'
+          + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager &#9662;</button>'
+          + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
+          + '<button type="button" class="lookback-dropdown-item active" data-value="2">Manager</button>'
+          + '<button type="button" class="lookback-dropdown-item" data-value="3">Staff</button>'
           + '</div>'
-          + '<div class="acct-invite-field">'
-          + '<label class="form-label" for="invite-level">Access level</label>'
-          + '<select id="invite-level" class="form-input" style="width:auto;">'
-          + '<option value="2">Manager</option>'
-          + '<option value="3">Staff</option>'
-          + '</select>'
-          + '</div>'
-          + '<button class="btn-outline" id="invite-btn">Send Invite</button>'
+          + '</span>'
+          + '<button type="button" class="btn-outline" id="invite-btn">Send Invite</button>'
           + '</div>'
           + '</div>';
       } else {
@@ -292,7 +289,28 @@ window.ACCOUNT_LOGIC = {
       html += '</div>';
       body.innerHTML = html;
       self._wireTeamActions();
+      self._wireInviteLevelDropdown();
     });
+  },
+
+  _wireInviteLevelDropdown: function() {
+    var btn = document.getElementById('invite-level-btn');
+    var menu = document.getElementById('invite-level-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        btn.setAttribute('data-value', item.getAttribute('data-value'));
+        btn.innerHTML = item.textContent + ' &#9662;';
+        menu.classList.remove('open');
+      });
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _wireTeamActions: function() {
@@ -329,8 +347,8 @@ window.ACCOUNT_LOGIC = {
     if (inviteBtn) {
       inviteBtn.addEventListener('click', function() {
         var email = document.getElementById('invite-email').value.trim();
-        var levelEl = document.getElementById('invite-level');
-        var level = parseInt(levelEl ? levelEl.value : '2');
+        var levelBtn = document.getElementById('invite-level-btn');
+        var level = parseInt(levelBtn ? levelBtn.getAttribute('data-value') : '2');
         if (!email) { window.showModalError('Please enter an email address.'); return; }
         self._sendInvite(email, level, false);
       });

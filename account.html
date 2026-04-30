@@ -92,8 +92,8 @@
       color: var(--text);
       margin-bottom: 14px;
     }
-    .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
-    .acct-invite-field { display: flex; flex-direction: column; gap: 5px; }
+    .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .acct-invite-email { width: 260px; flex: 0 0 260px; }
     .acct-invite-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
@@ -147,7 +147,7 @@
     @media (max-width: 600px) {
       .acct-container { padding: var(--page-padding-mobile); }
       .acct-invite-form { flex-direction: column; }
-      .acct-invite-input { width: 100%; }
+      .acct-invite-email { width: 100%; flex: 1 1 100%; }
       .acct-billing-body { flex-direction: column; align-items: flex-start; }
       .acct-sub-item { flex-wrap: wrap; }
     }
@@ -189,16 +189,6 @@
       </div>
 
       <div class="ptab-content active" id="tab-subscriptions">
-        <!-- Active Subscriptions (Level 1 + 2) -->
-        <div class="settings-card" id="subs-card">
-          <div class="settings-card-header">
-            <div class="settings-card-title">Active Subscriptions</div>
-          </div>
-          <div class="settings-rows" id="subs-body">
-            <div class="list-loading">Loading subscriptions…</div>
-          </div>
-        </div>
-
         <!-- Billing (Level 1 only) -->
         <div class="settings-card owner-only" id="billing-card">
           <div class="settings-card-header">
@@ -211,6 +201,16 @@
                 <button class="btn-outline btn-sm" id="billing-portal-btn">Manage Billing</button>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Active Subscriptions (Level 1 + 2) -->
+        <div class="settings-card" id="subs-card">
+          <div class="settings-card-header">
+            <div class="settings-card-title">Active Subscriptions</div>
+          </div>
+          <div class="settings-rows" id="subs-body">
+            <div class="list-loading">Loading subscriptions…</div>
           </div>
         </div>
       </div>
