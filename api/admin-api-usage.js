@@ -22,12 +22,24 @@ export default async function handler(req, res) {
           .order('entered_at', { ascending: false })
           .limit(500);
         if (r.error) {
-          note = 'api_usage table not yet created — manual entry will fail until it is added.';
+          // Distinguish "table genuinely missing" from any other error.
+          // PostgREST returns SQLSTATE 42P01 / "relation ... does not exist"
+          // when the table is not there. Anything else (missing column,
+          // bad RLS, network) is a real error worth surfacing.
+          console.error('[admin-api-usage] SELECT error:', r.error);
+          var msg = r.error.message || '';
+          var code = r.error.code || '';
+          if (code === '42P01' || /relation .* does not exist/i.test(msg)) {
+            note = 'api_usage table not yet created in Supabase.';
+          } else {
+            note = 'Could not read api_usage: ' + msg + (code ? ' [' + code + ']' : '');
+          }
         } else {
           rows = r.data || [];
         }
       } catch (e) {
-        note = 'api_usage table not yet created — manual entry will fail until it is added.';
+        console.error('[admin-api-usage] SELECT threw:', e);
+        note = 'Could not read api_usage: ' + (e && e.message ? e.message : String(e));
       }
 
       // Total monthly spend (current period) for per-customer cost calc

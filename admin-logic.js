@@ -80,8 +80,11 @@ window.ADMIN_LOGIC = {
 
   // ── HELPERS ────────────────────────────────────────────────────
   _esc: function(s) {
-    if (typeof window.escHtml === 'function') return window.escHtml(s);
-    return String(s == null ? '' : s)
+    // shared-utils.escHtml does s.replace() without coercing first, so
+    // numbers, booleans, etc. throw. Always hand it a string.
+    var str = (s == null) ? '' : String(s);
+    if (typeof window.escHtml === 'function') return window.escHtml(str);
+    return str
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   },
