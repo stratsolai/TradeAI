@@ -15,8 +15,10 @@ window.BP_MARKETING = {
     this._parent = parent;
     var p = this._profile;
     this._topic = 0;
-    var saved = p.marketing_theme_extra;
-    var hasSaved = saved && typeof saved === 'object' && !Array.isArray(saved) && saved.standout;
+    var raw = p.marketing_theme_extra;
+    if (typeof raw === 'string') { try { raw = JSON.parse(raw); } catch(e) { raw = null; } }
+    var saved = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : null;
+    var hasSaved = saved && Array.isArray(saved.standout);
     this._answers = {
       standout: hasSaved ? (saved.standout || []) : [],
       standout_other: hasSaved ? (saved.standout_other || '') : '',
@@ -109,7 +111,8 @@ window.BP_MARKETING = {
     var overlay = document.createElement('div');
     overlay.id = 'prof-mkt-modal';
     overlay.className = 'perm-modal-overlay open';
-    overlay.innerHTML = '<div class="perm-modal" style="max-width:640px;max-height:85vh;overflow-y:auto">' +
+    overlay.innerHTML = '<div class="perm-modal" style="max-width:640px;max-height:85vh;overflow-y:auto;position:relative">' +
+      '<button type="button" id="prof-mkt-close" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:var(--text-muted);line-height:1;padding:4px">\u00D7</button>' +
       '<div id="prof-mkt-modal-content"></div>' +
     '</div>';
     document.body.appendChild(overlay);
@@ -118,6 +121,11 @@ window.BP_MARKETING = {
     overlay.addEventListener('click', function(e) {
       if (e.target === overlay) self._closeModal();
     });
+    document.getElementById('prof-mkt-close').addEventListener('click', function() {
+      self._closeModal();
+    });
+    self._escHandler = function(e) { if (e.key === 'Escape') self._closeModal(); };
+    document.addEventListener('keydown', self._escHandler);
 
     this._renderTopic();
   },
@@ -125,6 +133,10 @@ window.BP_MARKETING = {
   _closeModal: function() {
     var modal = document.getElementById('prof-mkt-modal');
     if (modal) modal.parentNode.removeChild(modal);
+    if (this._escHandler) {
+      document.removeEventListener('keydown', this._escHandler);
+      this._escHandler = null;
+    }
   },
 
   _renderTopic: function() {
@@ -143,12 +155,16 @@ window.BP_MARKETING = {
     else { this._generate(); return; }
 
     var nav = '<div style="display:flex;gap:12px;margin-top:20px">';
+    nav += '<button class="perm-modal-cancel" id="prof-mkt-cancel">Cancel</button>';
     if (t > 0) nav += '<button class="btn-back" id="prof-mkt-prev">Back</button>';
     nav += '<button class="btn-primary" id="prof-mkt-next" style="margin-left:auto">' + (t < 5 ? 'Next' : 'Generate Summary') + '</button>';
     nav += '</div>';
 
     el.innerHTML = '<div style="margin-bottom:8px;font-size:var(--badge-font-size);color:var(--text-muted)">Topic ' + (t + 1) + ' of 6</div>' + html + nav;
 
+    document.getElementById('prof-mkt-cancel').addEventListener('click', function() {
+      self._closeModal();
+    });
     if (document.getElementById('prof-mkt-prev')) {
       document.getElementById('prof-mkt-prev').addEventListener('click', function() {
         self._saveTopicData(); self._topic--; self._renderTopic();
@@ -558,7 +574,7 @@ window.BP_MARKETING = {
         marketing_theme_differentiators: document.getElementById('prof-sum-diff').value.trim(),
         marketing_theme_awareness: document.getElementById('prof-sum-aware').value.trim(),
         marketing_theme_feeling: document.getElementById('prof-sum-feel').value.trim(),
-        marketing_theme_extra: self._answers,
+        marketing_theme_extra: JSON.parse(JSON.stringify(self._answers)),
         tone_of_voice: document.getElementById('prof-sum-tone').value.trim(),
         primary_brand_colour: document.getElementById('prof-sum-colour1').value.trim() || null,
         secondary_brand_colour: document.getElementById('prof-sum-colour2').value.trim() || null,
