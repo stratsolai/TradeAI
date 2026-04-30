@@ -146,39 +146,38 @@ AusTender RSS feed confirmed:
 - DV build and audit complete — API update required before
   testing
 
-### Task 25 — Social Media Tool Rebuild
-
-Major build in progress. All audit items fixed, all files
-under 60K, visual elements matched to CL/EA/ID. File split
-completed (social-modules-2.js created). Dropdowns use
-.lookback-dropdown for consistency.
-
-Completed features: All 10 Journey types, Campaign wizard,
-Phase 2 post generation and review, active Campaign
-management, Campaign history with Run Again, Drafts/Scheduled/
-Published tabs, calendar view, Predis AI integration, Meta
-Graph API posting, CL write-back, News Digest integration,
-CL Projects Tab (Section 9), Scheduled tab enhancements
-(Post Now, bulk actions, time filters, time until posting),
-Published tab date range picker, pagination page jump
-dropdown, Campaign grid view and bulk approve, flyer PDF
-generation, ad graphic output, metrics refresh cron (every
-6 hours), blog post promote prompt, Campaign confirmation
-screen with summary.
-
-BP Marketing Theme Guided Conversation (Section 10) was
-already built in cl-profile-marketing.js — full 6-topic flow
-with follow-ups, AI summary, and field saving.
-
 ### Task 26 — Dashboard Rebuild
 
-Ready to build. Spec v3.3 complete and in Project Knowledge.
+Dashboard rebuild complete. UI review required — main landing
+page looks flat and needs visual improvement.
 
-### Task 28 — Full Platform Testing on Demo Data
+Status: waiting on UI review.
 
-End-to-end testing of all tools using simulated test environment.
-Blocked on Dashboard rebuild and Test Environment Setup Spec.
-All tools require full testing once demo data is populated.
+### Task 29 — Build Admin Page
+
+Status: Not started.
+
+Spec: StaxAI-Admin-Page-Spec-v1_0.docx in Project Knowledge.
+
+### Task 30 — Build Testing Environment
+
+Status: Not started.
+
+Spec: StaxAI-Test-Environment-Setup-v1_0.docx in Project Knowledge.
+
+### Task 31 — Full Platform Testing
+
+Status: Blocked on Task 30.
+
+All tools require end-to-end testing using the test environment
+once populated.
+
+### Task 32 — Outstanding Tasks Review
+
+Status: Not started.
+
+Review StaxAI-Outstanding-Tasks-v1_3.docx and bring in additional
+tasks as required.
 
 ---
 
