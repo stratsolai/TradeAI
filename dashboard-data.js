@@ -71,7 +71,13 @@ window.DASH_DATA = (function() {
 
   function checkBPComplete(p) {
     if (!p) return false;
-    var hasText = function(k) { return p[k] && typeof p[k] === 'string' && p[k].trim() !== ''; };
+    var hasText = function(k) {
+      var v = p[k];
+      if (v === null || v === undefined || v === '') return false;
+      if (typeof v === 'number') return true;
+      if (typeof v === 'string') return v.trim() !== '';
+      return false;
+    };
     var hasArr = function(k) { return Array.isArray(p[k]) && p[k].length > 0; };
     var hasJson = function(k) {
       var v = p[k];

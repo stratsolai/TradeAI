@@ -15,14 +15,31 @@ window.BP_MARKETING = {
     this._parent = parent;
     var p = this._profile;
     this._topic = 0;
+    var saved = p.marketing_theme_extra;
+    var hasSaved = saved && typeof saved === 'object' && !Array.isArray(saved) && saved.standout;
     this._answers = {
-      standout: [], standout_other: '',
-      awareness: [], awareness_other: '', customer_count: '', awards_text: '',
-      feeling: [], feeling_other: '',
-      tone: p.tone_of_voice || 'friendly',
+      standout: hasSaved ? (saved.standout || []) : [],
+      standout_other: hasSaved ? (saved.standout_other || '') : '',
+      quality_detail: hasSaved ? (saved.quality_detail || []) : [],
+      quality_other: hasSaved ? (saved.quality_other || '') : '',
+      service_detail: hasSaved ? (saved.service_detail || []) : [],
+      service_other: hasSaved ? (saved.service_other || '') : '',
+      affordable_detail: hasSaved ? (saved.affordable_detail || []) : [],
+      affordable_other: hasSaved ? (saved.affordable_other || '') : '',
+      experience_years: hasSaved ? (saved.experience_years || '') : '',
+      certifications: hasSaved ? (saved.certifications || []) : [],
+      certifications_other: hasSaved ? (saved.certifications_other || '') : '',
+      awareness: hasSaved ? (saved.awareness || []) : [],
+      awareness_other: hasSaved ? (saved.awareness_other || '') : '',
+      customer_count: hasSaved ? (saved.customer_count || '') : '',
+      awards_text: hasSaved ? (saved.awards_text || '') : '',
+      feeling: hasSaved ? (saved.feeling || []) : [],
+      feeling_other: hasSaved ? (saved.feeling_other || '') : '',
+      tone: p.tone_of_voice || (hasSaved ? (saved.tone || 'friendly') : 'friendly'),
       primary_colour: p.primary_brand_colour || '', secondary_colour: p.secondary_brand_colour || '',
       tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no',
-      specialise_services: [], specialise_duration: ''
+      specialise_services: hasSaved ? (saved.specialise_services || []) : [],
+      specialise_duration: hasSaved ? (saved.specialise_duration || '') : ''
     };
     this._renderPanel();
   },
@@ -535,17 +552,13 @@ window.BP_MARKETING = {
   _saveFinal: function() {
     var self = this;
     var btn = document.getElementById('prof-mkt-save-final');
-    var extras = [];
-    if (this._answers.standout_other) extras.push(this._answers.standout_other);
-    if (this._answers.awareness_other) extras.push(this._answers.awareness_other);
-    if (this._answers.feeling_other) extras.push(this._answers.feeling_other);
 
     window.handleSave(btn, async function() {
       var updates = {
         marketing_theme_differentiators: document.getElementById('prof-sum-diff').value.trim(),
         marketing_theme_awareness: document.getElementById('prof-sum-aware').value.trim(),
         marketing_theme_feeling: document.getElementById('prof-sum-feel').value.trim(),
-        marketing_theme_extra: extras,
+        marketing_theme_extra: self._answers,
         tone_of_voice: document.getElementById('prof-sum-tone').value.trim(),
         primary_brand_colour: document.getElementById('prof-sum-colour1').value.trim() || null,
         secondary_brand_colour: document.getElementById('prof-sum-colour2').value.trim() || null,
