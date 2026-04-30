@@ -302,16 +302,19 @@ window.ADMIN_LOGIC = {
       // Manual entry form
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Add Usage Entry</div></div>';
       html += '<div class="admin-entry-form" id="api-usage-form">'
-        + '<select class="form-input" id="api-usage-provider">'
-        + providers.map(function(p) {
-          return '<option value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</option>';
+        + '<span class="lookback-dropdown-wrap api-provider-wrap">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="api-usage-provider" data-value="' + self._esc(providers[0].id) + '">' + self._esc(providers[0].name) + '</button>'
+        + '<div class="lookback-dropdown-menu" id="api-usage-provider-menu">'
+        + providers.map(function(p, i) {
+          return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</button>';
         }).join('')
-        + '</select>'
+        + '</div>'
+        + '</span>'
         + '<input type="text" class="form-input" id="api-usage-period" placeholder="YYYY-MM" value="' + self._esc(d.period || '') + '">'
         + '<input type="text" class="form-input" id="api-usage-value" placeholder="Usage (e.g. 250000 tokens)">'
         + '<input type="number" step="0.01" class="form-input" id="api-usage-cost" placeholder="Cost AUD">'
         + '<input type="text" class="form-input" id="api-usage-notes" placeholder="Notes (optional)">'
-        + '<button class="btn-primary" id="api-usage-submit">Add Entry</button>'
+        + '<button class="btn-add-connection" id="api-usage-submit">+ Add Entry</button>'
         + '</div></div>';
 
       // Note if api_usage table missing
@@ -343,9 +346,30 @@ window.ADMIN_LOGIC = {
 
       container.innerHTML = html;
       self._wireApiUsageForm();
+      self._wireApiProviderDropdown();
     }).catch(function(err) {
       container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load API usage: ' + err.message) + '</div>';
     });
+  },
+
+  _wireApiProviderDropdown: function() {
+    var btn = document.getElementById('api-usage-provider');
+    var menu = document.getElementById('api-usage-provider-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        btn.setAttribute('data-value', item.getAttribute('data-value'));
+        btn.textContent = item.textContent;
+        menu.classList.remove('open');
+      });
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _wireApiUsageForm: function() {
@@ -353,7 +377,8 @@ window.ADMIN_LOGIC = {
     var btn = document.getElementById('api-usage-submit');
     if (!btn) return;
     btn.addEventListener('click', function() {
-      var provider = document.getElementById('api-usage-provider').value;
+      var providerBtn = document.getElementById('api-usage-provider');
+      var provider = providerBtn ? providerBtn.getAttribute('data-value') : '';
       var period = document.getElementById('api-usage-period').value.trim();
       var usage = document.getElementById('api-usage-value').value.trim();
       var cost = document.getElementById('api-usage-cost').value.trim();
@@ -374,7 +399,7 @@ window.ADMIN_LOGIC = {
       }).catch(function(err) {
         self._showError('Could not save entry: ' + err.message);
       }).finally(function() {
-        btn.disabled = false; btn.textContent = 'Add Entry';
+        btn.disabled = false; btn.textContent = '+ Add Entry';
       });
     });
   },
@@ -408,7 +433,7 @@ window.ADMIN_LOGIC = {
       + '<input type="date" class="form-input" id="cust-after">'
       + '<span class="admin-filter-label">Min tools</span>'
       + '<input type="number" min="0" class="form-input" id="cust-min-tools" style="min-width:80px;">'
-      + '<button class="btn-primary" id="cust-apply">Apply</button>'
+      + '<button class="btn-add-connection" id="cust-apply">Apply</button>'
       + '</div>';
 
     html += '<div id="cust-table-wrap"><div class="admin-loading">Loading customers…</div></div>';
