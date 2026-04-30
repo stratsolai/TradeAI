@@ -254,102 +254,181 @@ window.ADMIN_LOGIC = {
   },
 
   // ── SECTION 2: API COST TRACKER ────────────────────────────────
+  // Pulls automated cost data from /api/admin-costs (Anthropic +
+  // Vercel + Serper) and manual entries from /api/admin-api-usage
+  // (Predis + REimagine). Renders a per-customer summary, the
+  // automated cost table with month-over-month trend, and a
+  // Manual Tracking card with form + history filtered to the
+  // providers without usage APIs.
   _renderApiCosts: function() {
     var self = this;
     var container = document.getElementById('section-api-costs');
     container.innerHTML = '<div class="admin-loading">Loading API usage…</div>';
 
-    self._fetchAdmin('admin-api-usage').then(function(d) {
-      var html = '';
-
-      // Per-customer cost summary
-      html += '<div class="admin-metric-grid">'
-        + self._statCard('Total Spend (' + (d.period || '') + ')', self._formatMoney(d.total_this_month || 0))
-        + self._statCard('Active Customers', d.active_customers || 0)
-        + self._statCard('Cost / Customer', self._formatMoney(d.cost_per_customer || 0), '', d.cost_per_customer > 50 ? 'red' : 'green')
-        + '</div>';
-
-      // Provider cards — one per known provider
-      var providers = [
-        { id: 'anthropic', name: 'Anthropic Claude', purpose: 'All AI generation (chatbot, email, SP, BI, content)' },
-        { id: 'serper', name: 'Serper.dev', purpose: 'News Digest search' },
-        { id: 'predis', name: 'Predis.ai', purpose: 'Social Media graphics and video' },
-        { id: 'reimagine', name: 'REimagine Home', purpose: 'Design Visualiser renders' },
-        { id: 'meta', name: 'Meta Graph API', purpose: 'Social posting and metrics' },
-        { id: 'google_oauth', name: 'Google OAuth', purpose: 'Gmail / Drive connections' },
-        { id: 'microsoft_oauth', name: 'Microsoft OAuth', purpose: 'Outlook / OneDrive connections' }
-      ];
-      var entriesByProvider = {};
-      (d.entries || []).forEach(function(e) {
-        if (!entriesByProvider[e.provider]) entriesByProvider[e.provider] = [];
-        entriesByProvider[e.provider].push(e);
-      });
-
-      html += '<div class="admin-provider-grid">';
-      providers.forEach(function(p) {
-        var entries = entriesByProvider[p.id] || [];
-        var latest = entries[0];
-        html += '<div class="admin-provider-card">'
-          + '<div class="admin-provider-name">' + self._esc(p.name) + '</div>'
-          + '<div class="admin-provider-purpose">' + self._esc(p.purpose) + '</div>'
-          + '<div class="admin-provider-row"><span class="label">Latest period</span><span>' + self._esc(latest ? latest.period : '—') + '</span></div>'
-          + '<div class="admin-provider-row"><span class="label">Usage</span><span>' + self._esc(latest && latest.usage_value ? latest.usage_value : '—') + '</span></div>'
-          + '<div class="admin-provider-row"><span class="label">Estimated cost</span><span>' + (latest && typeof latest.cost_estimate === 'number' ? self._formatMoney(latest.cost_estimate) : '—') + '</span></div>'
-          + '</div>';
-      });
-      html += '</div>';
-
-      // Manual entry form
-      html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Add Usage Entry</div></div>';
-      html += '<div class="admin-entry-form" id="api-usage-form">'
-        + '<span class="lookback-dropdown-wrap api-provider-wrap">'
-        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="api-usage-provider" data-value="' + self._esc(providers[0].id) + '">' + self._esc(providers[0].name) + '</button>'
-        + '<div class="lookback-dropdown-menu" id="api-usage-provider-menu">'
-        + providers.map(function(p, i) {
-          return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</button>';
-        }).join('')
-        + '</div>'
-        + '</span>'
-        + '<input type="text" class="form-input" id="api-usage-period" placeholder="YYYY-MM" value="' + self._esc(d.period || '') + '">'
-        + '<input type="text" class="form-input" id="api-usage-value" placeholder="Usage (e.g. 250000 tokens)">'
-        + '<input type="number" step="0.01" class="form-input" id="api-usage-cost" placeholder="Cost AUD">'
-        + '<input type="text" class="form-input" id="api-usage-notes" placeholder="Notes (optional)">'
-        + '<button class="btn-add-connection" id="api-usage-submit">+ Add Entry</button>'
-        + '</div></div>';
-
-      // Note if api_usage table missing
-      if (d.note) {
-        html += '<div class="admin-note">' + self._esc(d.note) + '</div>';
-      }
-
-      // History table
-      html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Recent Entries</div></div>';
-      html += '<div class="admin-table-wrap">';
-      html += '<table class="admin-table"><thead><tr>'
-        + '<th>Provider</th><th>Period</th><th>Usage</th><th>Cost</th><th>Notes</th><th>Entered</th>'
-        + '</tr></thead><tbody>';
-      if (!d.entries || d.entries.length === 0) {
-        html += '<tr><td colspan="6" class="admin-empty">No entries yet.</td></tr>';
-      } else {
-        d.entries.forEach(function(e) {
-          html += '<tr>'
-            + '<td>' + self._esc(e.provider || '') + '</td>'
-            + '<td>' + self._esc(e.period || '') + '</td>'
-            + '<td>' + self._esc(e.usage_value || '—') + '</td>'
-            + '<td>' + (typeof e.cost_estimate === 'number' ? self._formatMoney(e.cost_estimate) : '—') + '</td>'
-            + '<td>' + self._esc(e.notes || '') + '</td>'
-            + '<td>' + self._formatDate(e.entered_at) + '</td>'
-            + '</tr>';
-        });
-      }
-      html += '</tbody></table></div></div>';
-
-      container.innerHTML = html;
-      self._wireApiUsageForm();
-      self._wireApiProviderDropdown();
+    Promise.all([
+      self._fetchAdmin('admin-costs'),
+      self._fetchAdmin('admin-api-usage')
+    ]).then(function(results) {
+      var costs = results[0] || {};
+      var manual = results[1] || {};
+      self._renderApiCostsContent(container, costs, manual);
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load API usage: ' + err.message) + '</div>';
+      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load API costs: ' + err.message) + '</div>';
     });
+  },
+
+  _renderApiCostsContent: function(container, costs, manual) {
+    var self = this;
+    var html = '';
+
+    // Per-customer summary — automated total ÷ active paying customers.
+    // Health indicator: <$10 green, $10-30 orange, >$30 red. Spec asked
+    // for "% of average subscription" but that needs an extra Stripe
+    // pagination call; the dollar thresholds are a reasonable proxy
+    // until we wire ARPC through.
+    var totalCurrent = (costs.totals && costs.totals.current_month_usd) || 0;
+    var totalPrev = (costs.totals && costs.totals.previous_month_usd) || 0;
+    var activeCustomers = manual.active_customers || 0;
+    var costPerCustomer = activeCustomers > 0 ? +(totalCurrent / activeCustomers).toFixed(2) : 0;
+    var modifier = costPerCustomer > 30 ? 'red' : (costPerCustomer > 10 ? 'orange' : 'green');
+    var periodLabel = (costs.periods && costs.periods.current_month) || '';
+
+    html += '<div class="admin-metric-grid">'
+      + self._statCard('Total Spend (' + periodLabel + ')', self._formatMoney(totalCurrent))
+      + self._statCard('Active Customers', activeCustomers)
+      + self._statCard('Cost / Customer', self._formatMoney(costPerCustomer), '/mth', modifier)
+      + self._statCard('vs Last Month', self._formatTrendText(costs.totals && costs.totals.trend_percent))
+      + '</div>';
+
+    // Automated Costs table
+    var lastRefresh = self._timeAgo(costs.cached_at);
+    html += '<div class="settings-card"><div class="settings-card-header">'
+      + '<div class="settings-card-title">Automated Costs</div>'
+      + '<div class="settings-card-hint">Refreshed every 5 minutes' + (lastRefresh ? ' — last refresh ' + self._esc(lastRefresh) : '') + '</div>'
+      + '</div>';
+    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      + '<th>Provider</th><th>This Month</th><th>Last Month</th><th>Trend</th>'
+      + '</tr></thead><tbody>';
+    html += self._costRow('Anthropic Claude', costs.anthropic, false);
+    html += self._costRow('Vercel', costs.vercel, false);
+    html += self._costRow('Serper.dev', costs.serper, true);
+    if (costs.totals) {
+      html += '<tr style="font-weight:var(--font-weight-semibold);background:var(--bg-subtle);">'
+        + '<td>Total</td>'
+        + '<td>' + self._formatMoney(costs.totals.current_month_usd || 0) + '</td>'
+        + '<td>' + self._formatMoney(costs.totals.previous_month_usd || 0) + '</td>'
+        + '<td>' + self._formatTrend(costs.totals.trend_percent) + '</td>'
+        + '</tr>';
+    }
+    html += '</tbody></table></div></div>';
+
+    // Manual Tracking — Predis.ai and REimagine Home only.
+    var manualProviders = [
+      { id: 'predis', name: 'Predis.ai' },
+      { id: 'reimagine', name: 'REimagine Home' }
+    ];
+    var manualEntries = (manual.entries || []).filter(function(e) {
+      return e.provider === 'predis' || e.provider === 'reimagine';
+    });
+
+    html += '<div class="settings-card"><div class="settings-card-header">'
+      + '<div class="settings-card-title">Manual Tracking</div>'
+      + '<div class="settings-card-hint">These providers do not expose usage APIs — enter monthly figures manually from each provider\'s dashboard.</div>'
+      + '</div>';
+    html += '<div class="admin-entry-form" id="api-usage-form">'
+      + '<span class="lookback-dropdown-wrap api-provider-wrap">'
+      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="api-usage-provider" data-value="' + self._esc(manualProviders[0].id) + '">' + self._esc(manualProviders[0].name) + '</button>'
+      + '<div class="lookback-dropdown-menu" id="api-usage-provider-menu">'
+      + manualProviders.map(function(p, i) {
+        return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</button>';
+      }).join('')
+      + '</div>'
+      + '</span>'
+      + '<input type="text" class="form-input" id="api-usage-period" placeholder="YYYY-MM" value="' + self._esc(manual.period || '') + '">'
+      + '<input type="text" class="form-input" id="api-usage-value" placeholder="Usage">'
+      + '<input type="number" step="0.01" class="form-input" id="api-usage-cost" placeholder="Cost AUD">'
+      + '<input type="text" class="form-input" id="api-usage-notes" placeholder="Notes (optional)">'
+      + '<button class="btn-add-connection" id="api-usage-submit">+ Add Entry</button>'
+      + '</div>';
+
+    if (manual.note) {
+      html += '<div class="admin-note" style="margin:0 16px 16px;">' + self._esc(manual.note) + '</div>';
+    }
+    html += '</div>';
+
+    // Manual entries history — filtered to manual providers only.
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Manual Entries — History</div></div>';
+    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      + '<th>Provider</th><th>Period</th><th>Usage</th><th>Cost</th><th>Notes</th><th>Entered</th>'
+      + '</tr></thead><tbody>';
+    if (manualEntries.length === 0) {
+      html += '<tr><td colspan="6" class="admin-empty">No manual entries yet.</td></tr>';
+    } else {
+      manualEntries.forEach(function(e) {
+        html += '<tr>'
+          + '<td>' + self._esc(e.provider || '') + '</td>'
+          + '<td>' + self._esc(e.period || '') + '</td>'
+          + '<td>' + self._esc(e.usage_value || '—') + '</td>'
+          + '<td>' + (typeof e.cost_estimate === 'number' ? self._formatMoney(e.cost_estimate) : '—') + '</td>'
+          + '<td>' + self._esc(e.notes || '') + '</td>'
+          + '<td>' + self._formatDate(e.entered_at) + '</td>'
+          + '</tr>';
+      });
+    }
+    html += '</tbody></table></div></div>';
+
+    container.innerHTML = html;
+    self._wireApiUsageForm();
+    self._wireApiProviderDropdown();
+  },
+
+  _costRow: function(name, data, includeSearches) {
+    var self = this;
+    if (!data) {
+      return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">No data</td></tr>';
+    }
+    if (data.error) {
+      return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">' + self._esc(data.error) + '</td></tr>';
+    }
+    var current = data.current_month;
+    var prev = data.previous_month;
+    var currentCost = current && typeof current.cost_usd === 'number' ? current.cost_usd : 0;
+    var prevCost = prev && typeof prev.cost_usd === 'number' ? prev.cost_usd : 0;
+    var currentLabel = self._formatMoney(currentCost);
+    if (includeSearches && current && typeof current.searches === 'number') {
+      currentLabel += ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);">(' + current.searches.toLocaleString('en-AU') + ' searches)</span>';
+    }
+    return '<tr>'
+      + '<td>' + self._esc(name) + '</td>'
+      + '<td>' + currentLabel + '</td>'
+      + '<td>' + self._formatMoney(prevCost) + '</td>'
+      + '<td>' + self._formatTrend(data.trend_percent) + '</td>'
+      + '</tr>';
+  },
+
+  _formatTrend: function(pct) {
+    if (pct == null || isNaN(pct)) return '<span style="color:var(--text-muted);">—</span>';
+    var arrow = pct > 0 ? '↑' : (pct < 0 ? '↓' : '→');
+    var color = pct > 0 ? 'var(--red)' : (pct < 0 ? 'var(--green)' : 'var(--text-muted)');
+    return '<span style="color:' + color + ';">' + arrow + ' ' + Math.abs(pct).toFixed(1) + '%</span>';
+  },
+
+  _formatTrendText: function(pct) {
+    if (pct == null || isNaN(pct)) return '—';
+    var arrow = pct > 0 ? '↑' : (pct < 0 ? '↓' : '→');
+    return arrow + ' ' + Math.abs(pct).toFixed(1) + '%';
+  },
+
+  _timeAgo: function(iso) {
+    if (!iso) return '';
+    var diffMs = Date.now() - new Date(iso).getTime();
+    if (isNaN(diffMs) || diffMs < 0) return '';
+    var minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes === 1) return '1 minute ago';
+    if (minutes < 60) return minutes + ' minutes ago';
+    var hours = Math.floor(minutes / 60);
+    return hours + ' hour' + (hours === 1 ? '' : 's') + ' ago';
   },
 
   _wireApiProviderDropdown: function() {
