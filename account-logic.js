@@ -99,18 +99,18 @@ window.ACCOUNT_LOGIC = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
       })
-      .then(function(r) {
-        if (!r.ok) throw new Error('Portal request failed');
-        return r.json();
-      })
-      .then(function(data) {
-        if (data.url) {
-          window.open(data.url, '_blank');
+      .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+      .then(function(res) {
+        if (res.ok && res.data && res.data.url) {
+          window.open(res.data.url, '_blank');
         } else {
-          window.showModalError('Could not open billing portal. Please try again.');
+          var msg = (res.data && res.data.error) ? res.data.error : 'Could not open billing portal. Please try again.';
+          console.error('[billing-portal] API error:', msg);
+          window.showModalError(msg);
         }
       })
-      .catch(function() {
+      .catch(function(err) {
+        console.error('[billing-portal] Fetch error:', err && err.message);
         window.showModalError('Could not open billing portal. Please try again.');
       })
       .finally(function() {
@@ -205,14 +205,17 @@ window.ACCOUNT_LOGIC = {
           + '<div class="acct-invite-form">'
           + '<div class="acct-invite-field">'
           + '<label class="acct-invite-label">Email address</label>'
-          + '<input type="email" id="invite-email" class="acct-invite-input" placeholder="teammate@example.com">'
+          + '<input type="email" id="invite-email" class="form-input" style="width:260px;" placeholder="teammate@example.com">'
           + '</div>'
           + '<div class="acct-invite-field">'
           + '<label class="acct-invite-label">Access level</label>'
-          + '<select id="invite-level" class="acct-invite-select">'
-          + '<option value="2">Manager</option>'
-          + '<option value="3">Staff</option>'
-          + '</select>'
+          + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager &#9662;</button>'
+          + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
+          + '<button type="button" class="lookback-dropdown-item active" data-value="2">Manager</button>'
+          + '<button type="button" class="lookback-dropdown-item" data-value="3">Staff</button>'
+          + '</div>'
+          + '</span>'
           + '</div>'
           + '<button class="btn-primary" id="invite-btn">Send Invite</button>'
           + '</div>'
@@ -226,6 +229,7 @@ window.ACCOUNT_LOGIC = {
       html += '</div>';
       body.innerHTML = html;
       self._wireTeamActions();
+      self._wireInviteLevelDropdown();
     });
   },
 
@@ -263,11 +267,39 @@ window.ACCOUNT_LOGIC = {
     if (inviteBtn) {
       inviteBtn.addEventListener('click', function() {
         var email = document.getElementById('invite-email').value.trim();
-        var level = parseInt(document.getElementById('invite-level').value);
+        var levelBtn = document.getElementById('invite-level-btn');
+        var level = parseInt(levelBtn ? levelBtn.getAttribute('data-value') : '2');
         if (!email) { window.showModalError('Please enter an email address.'); return; }
         self._sendInvite(email, level, false);
       });
     }
+  },
+
+  _wireInviteLevelDropdown: function() {
+    var btn = document.getElementById('invite-level-btn');
+    var menu = document.getElementById('invite-level-menu');
+    if (!btn || !menu) return;
+
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        var value = item.getAttribute('data-value');
+        var label = item.textContent;
+        btn.setAttribute('data-value', value);
+        btn.innerHTML = label + ' &#9662;';
+        menu.classList.remove('open');
+      });
+    });
+
+    document.addEventListener('click', function() {
+      menu.classList.remove('open');
+    });
   },
 
   _sendInvite: function(email, level, isResend) {
