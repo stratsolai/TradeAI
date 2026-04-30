@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 29, 2026
+# Updated: April 30, 2026
 
 ---
 
@@ -183,6 +183,30 @@ tasks as required.
 
 ## Known Issues & Notes
 
+- Stripe webhook events — now listening to 5 events:
+  checkout.session.completed, customer.subscription.deleted,
+  price.created, price.updated, price.deleted. Price events
+  auto-sync tool_prices table in Supabase.
+- Payment system fixed (April 2026) — Bundle purchases now
+  correctly save stripe_customer_id and mark is_trial=false.
+  Single tool purchases now activate the tool via activateTool().
+  Cancellation handling implemented in
+  customer.subscription.deleted event. subscription_data.metadata
+  added to checkouts so cancellation webhook has the data it
+  needs.
+- Dynamic pricing implemented (April 2026) — Tool prices fetched
+  from Supabase tool_prices table via api/get-prices.js (public,
+  cached 5 min). Account page shows user's actual subscription
+  prices via api/get-subscription-prices.js (authenticated).
+  Fallback to hardcoded prices (all-or-nothing) if API fails.
+- tool_prices table created (April 2026) — Maps Stripe price_id
+  to tool_id/bundle_tier and display_price. RLS enabled with
+  read access for authenticated users.
+- Account page rebuilt (April 2026) — Tabbed layout
+  (Subscriptions, Team, Account). Tab visibility based on user
+  role (Owner sees all, Manager sees Subscriptions + Account,
+  Staff sees Account only). Back link dynamically shows
+  referring page.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -211,10 +235,9 @@ tasks as required.
   content_library.content_text which contains the AI
   summary only.
 - dashboard.html install banner: the PWA install prompt
-  banner was added to dashboard.html during the PWA build
-  (April 2026). The banner markup and logic must be
-  properly reviewed and integrated during the Dashboard
-  rebuild — it should not be treated as final.
+  banner was added during the PWA build (April 2026).
+  Dashboard rebuild complete — banner integration should be
+  reviewed during UI polish pass.
 - Mobile vs desktop page split agreed April 2026. The
   following pages are confirmed mobile-capable (full access
   in PWA): dashboard.html, account.html, login.html,
@@ -315,6 +338,7 @@ tasks as required.
 - index.html has its own HERO_TOOLS array separate from tools-data.js. Update index.html as well as tools-data.js and tools.html when adding or changing a tool
 - index.html hero CSS classes must never be removed: .stax-stack, .stax-card, .stax-card-screenshot, .stax-card-info, .stax-tagline, .stax-tagline-pre, .stax-tagline-stax, .stax-tagline-post, .hero-stax-way
 - content-library.html has 5 dead modals with onclick handlers calling undefined functions. Do not attempt to wire these up — unbuilt features
+- dashboard-data.js has its own TOOLS array with tool definitions separate from tools-data.js. Both must be updated when changing tool prices or priceIds. Consider refactoring dashboard-data.js to read from window.CORE_TOOLS instead of maintaining its own copy.
 
 ### Database Rules
 - Every new Supabase table: RLS enabled before launch
