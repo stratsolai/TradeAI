@@ -864,44 +864,96 @@ window.ADMIN_LOGIC = {
   },
 
   // ── SECTION 7: INFRASTRUCTURE ──────────────────────────────────
+  // Fetches row counts (via admin-data) and live external service
+  // status (via admin-status) in parallel. Status maps the Atlassian
+  // Statuspage indicator to platform dot classes (up/warn/down).
   _renderInfrastructure: function() {
     var self = this;
     var container = document.getElementById('section-infrastructure');
     container.innerHTML = '<div class="admin-loading">Loading infrastructure…</div>';
 
-    self._fetchAdmin('admin-data?section=infrastructure').then(function(d) {
-      var counts = d.row_counts || {};
-      var html = '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Key Table Row Counts</div></div>';
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody>';
-      Object.keys(counts).forEach(function(t) {
-        var n = counts[t];
-        html += '<tr><td>' + self._esc(t) + '</td><td>' + (n == null ? '— (table missing)' : n.toLocaleString('en-AU')) + '</td></tr>';
-      });
-      html += '</tbody></table></div></div>';
-
-      // External services — manual indicators
-      html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">External Services</div><div class="settings-card-hint">Status indicators are manual placeholders. Update when a status-page integration is added.</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;">';
-      var services = [
-        { name: 'Stripe', dot: 'up', url: 'https://status.stripe.com/' },
-        { name: 'Supabase', dot: 'up', url: 'https://status.supabase.com/' },
-        { name: 'Anthropic', dot: 'up', url: 'https://status.anthropic.com/' },
-        { name: 'Vercel', dot: 'up', url: 'https://www.vercel-status.com/' }
-      ];
-      services.forEach(function(s) {
-        html += '<div class="admin-status-row">'
-          + '<span class="admin-status-dot ' + s.dot + '"></span>'
-          + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
-          + '<a href="' + self._esc(s.url) + '" target="_blank" rel="noopener noreferrer" class="topbar-link" style="font-size:var(--note-font-size);">Status page</a>'
-          + '</div>';
-      });
-      html += '</div></div>';
-
-      html += '<div class="admin-note">Storage usage and database size are not exposed via the Supabase JS client. Check the Supabase dashboard directly until a server-side integration is added.</div>';
-
-      container.innerHTML = html;
+    Promise.all([
+      self._fetchAdmin('admin-data?section=infrastructure'),
+      self._fetchAdmin('admin-status')
+    ]).then(function(results) {
+      var infra = results[0] || {};
+      var status = results[1] || {};
+      self._renderInfrastructureContent(container, infra, status);
     }).catch(function(err) {
       container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load infrastructure: ' + err.message) + '</div>';
     });
+  },
+
+  _renderInfrastructureContent: function(container, infra, status) {
+    var self = this;
+    var counts = infra.row_counts || {};
+    var html = '';
+
+    // Row counts
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Key Table Row Counts</div></div>';
+    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody>';
+    Object.keys(counts).forEach(function(t) {
+      var n = counts[t];
+      html += '<tr><td>' + self._esc(t) + '</td><td>' + (n == null ? '— (table missing)' : n.toLocaleString('en-AU')) + '</td></tr>';
+    });
+    html += '</tbody></table></div></div>';
+
+    // External services — live from each provider's Atlassian Statuspage
+    var services = status.services || [];
+    var lastChecked = self._timeAgo(status.checked_at);
+    var statusUrls = {
+      'Stripe': 'https://status.stripe.com/',
+      'Supabase': 'https://status.supabase.com/',
+      'Anthropic': 'https://status.anthropic.com/',
+      'Vercel': 'https://www.vercel-status.com/'
+    };
+
+    html += '<div class="settings-card"><div class="settings-card-header">'
+      + '<div class="settings-card-title">External Services</div>'
+      + '<div class="settings-card-hint">Live status from each provider\'s status page'
+      + (lastChecked ? ' — last checked ' + self._esc(lastChecked) : '')
+      + '. <button id="status-refresh" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:var(--note-font-size);padding:0;font-family:inherit;text-decoration:underline;">Refresh</button></div>'
+      + '</div>';
+    html += '<div class="settings-rows" style="padding:14px 20px;">';
+    if (services.length === 0) {
+      html += '<div class="admin-empty">Status not available.</div>';
+    } else {
+      services.forEach(function(s) {
+        var dotClass = '';
+        var label = '';
+        if (s.status === 'operational') { dotClass = 'up'; label = 'Operational'; }
+        else if (s.status === 'degraded') { dotClass = 'warn'; label = 'Degraded performance'; }
+        else if (s.status === 'major') { dotClass = 'down'; label = 'Major outage'; }
+        else if (s.status === 'critical') { dotClass = 'down'; label = 'Critical outage'; }
+        else { label = s.error ? 'Status unavailable' : 'Status unknown'; }
+
+        var url = statusUrls[s.name] || '';
+        html += '<div class="admin-status-row">'
+          + '<span class="admin-status-dot ' + dotClass + '"></span>'
+          + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
+          + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">' + self._esc(label) + '</span>'
+          + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" class="topbar-link" style="font-size:var(--note-font-size);">Status page</a>' : '')
+          + '</div>';
+      });
+    }
+    html += '</div></div>';
+
+    html += '<div class="admin-note">Storage usage and database size are not exposed via the Supabase JS client. Check the Supabase dashboard directly until a server-side integration is added.</div>';
+
+    container.innerHTML = html;
+
+    var refreshBtn = document.getElementById('status-refresh');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', function() {
+        // Front-end cache invalidate + re-fetch. The server-side cache
+        // (5 min) still applies, so a click within 5 min returns the
+        // same payload — that's acceptable for an admin tool.
+        refreshBtn.textContent = 'Refreshing…';
+        refreshBtn.disabled = true;
+        self._loaded['infrastructure'] = false;
+        self._renderInfrastructure();
+        self._loaded['infrastructure'] = true;
+      });
+    }
   }
 };
