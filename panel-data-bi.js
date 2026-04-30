@@ -11,7 +11,7 @@ window.PANEL_TOOL = {
     "Interactive mini-chat \u2014 ask questions about any insight and get tailored advice",
     "Strategic Plan integration \u2014 track progress and align operations with your goals"
   ],
-  price: "$89",
+  price: "$69",
   priceId: "price_1T4dClHnoVvjo5gxjSvoi4ky",
   status: "built",
   roi: {

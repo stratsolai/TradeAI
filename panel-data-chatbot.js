@@ -11,7 +11,7 @@ window.PANEL_TOOL = {
     "Every FAQ approved by you before it goes live",
     "Gets smarter with every customer interaction"
   ],
-  price: "$79",
+  price: "$69",
   priceId: "price_1TRlgkHnoVvjo5gxXR6NMrkR",
   status: "built",
   roi: {
