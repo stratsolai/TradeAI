@@ -207,12 +207,63 @@ async function vercelChargesSum(token, startIso, endIso, teamQuery) {
   const r = await fetch(url, {
     headers: { 'Authorization': 'Bearer ' + token }
   });
+  const text = await r.text().catch(function() { return ''; });
   if (!r.ok) {
-    const text = await r.text().catch(function() { return ''; });
     throw new Error('Vercel billing/charges ' + r.status + ': ' + text.slice(0, 200));
   }
-  const j = await r.json();
-  return sumVercelCharges(j);
+  // Read body as text first so we can log it, then try a sequence of
+  // parse strategies. The original .json() call threw "Unexpected
+  // non-whitespace character after JSON at position 438", which means
+  // the body is not a single JSON object — most likely NDJSON, or one
+  // JSON object followed by trailing data.
+  console.log('[admin-costs] Vercel raw response (first 500 chars):', text.slice(0, 500));
+  const parsed = parseVercelBody(text);
+  return sumVercelCharges(parsed);
+}
+
+function parseVercelBody(text) {
+  if (!text) return {};
+  const trimmed = text.replace(/^﻿/, '').trim();
+  if (!trimmed) return {};
+
+  // Try plain JSON first.
+  try {
+    return JSON.parse(trimmed);
+  } catch (e1) {
+    // fall through to NDJSON
+  }
+
+  // Try NDJSON — one JSON object per line. Combine into { items: [...] }
+  // so sumVercelCharges' existing j.items / j.charges / j.data path
+  // picks them up.
+  const lines = trimmed.split(/\r?\n/).map(function(s) { return s.trim(); }).filter(Boolean);
+  if (lines.length > 1) {
+    const items = [];
+    let allOk = true;
+    for (let i = 0; i < lines.length; i++) {
+      try { items.push(JSON.parse(lines[i])); }
+      catch (e2) { allOk = false; break; }
+    }
+    if (allOk && items.length > 0) {
+      console.log('[admin-costs] Vercel response parsed as NDJSON,', items.length, 'lines');
+      return { items: items };
+    }
+  }
+
+  // Last-ditch — extract just the first complete JSON object/array.
+  const m = trimmed.match(/^(\{[\s\S]*?\}|\[[\s\S]*?\])/);
+  if (m) {
+    try {
+      const obj = JSON.parse(m[1]);
+      console.log('[admin-costs] Vercel response parsed as first JSON object only; ignoring trailing', trimmed.length - m[1].length, 'chars');
+      return obj;
+    } catch (e3) {
+      // give up
+    }
+  }
+
+  console.error('[admin-costs] Vercel body is not valid JSON or NDJSON. First 500 chars:', trimmed.slice(0, 500));
+  throw new Error('Vercel response is not valid JSON: ' + trimmed.slice(0, 200));
 }
 
 function sumVercelCharges(j) {
