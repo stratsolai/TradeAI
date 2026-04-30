@@ -774,7 +774,11 @@ window.ADMIN_LOGIC = {
         rc.forEach(function(c) {
           var when = c.canceled_at ? new Date(c.canceled_at * 1000) : null;
           var label = c.metadata && c.metadata.tier ? c.metadata.tier : (c.metadata && c.metadata.toolId ? c.metadata.toolId : 'Subscription');
-          html += '<div class="admin-list-item"><span class="admin-list-item-label">' + self._esc(label) + ' &middot; ' + self._esc(c.customer || '—') + '</span><span class="admin-list-item-value">' + (when ? when.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '—') + '</span></div>';
+          // Prefer customer name → email → Stripe customer id, in that
+          // order, so deleted customers (where the expand returns a
+          // sentinel) still get something readable.
+          var who = c.customer_name || c.customer_email || c.customer_id || '—';
+          html += '<div class="admin-list-item"><span class="admin-list-item-label">' + self._esc(label) + ' &middot; ' + self._esc(who) + '</span><span class="admin-list-item-value">' + (when ? when.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '—') + '</span></div>';
         });
       }
       html += '</div></div>';

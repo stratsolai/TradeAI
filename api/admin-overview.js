@@ -121,15 +121,26 @@ export default async function handler(req, res) {
         const page = await stripe.subscriptions.list({
           status: 'canceled',
           limit: 100,
-          starting_after: starting
+          starting_after: starting,
+          expand: ['data.customer']
         });
         page.data.forEach(function(sub) {
           if (sub.canceled_at && sub.canceled_at >= startTs) {
             churnCount += 1;
             if (recentCancellations.length < 10) {
+              // With expand: ['data.customer'] sub.customer is the full
+              // Customer object, not just its id. Fall back to the id
+              // if a customer was deleted (Stripe returns a deleted
+              // sentinel { id, deleted: true } in that case).
+              const cust = (sub.customer && typeof sub.customer === 'object') ? sub.customer : null;
+              const customerId = cust ? cust.id : (typeof sub.customer === 'string' ? sub.customer : null);
+              const customerName = cust && !cust.deleted ? (cust.name || null) : null;
+              const customerEmail = cust && !cust.deleted ? (cust.email || null) : null;
               recentCancellations.push({
                 id: sub.id,
-                customer: sub.customer,
+                customer_id: customerId,
+                customer_name: customerName,
+                customer_email: customerEmail,
                 canceled_at: sub.canceled_at,
                 metadata: sub.metadata || {}
               });
