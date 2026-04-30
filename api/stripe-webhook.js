@@ -112,12 +112,17 @@ async function confirmSubscription(session) {
       console.error("confirmSubscription: no userId in session metadata");
       return;
     }
+    // Only write bundle_tier when this is a bundle purchase. For an
+    // individual tool purchase (tier null/undefined) leave the column
+    // alone — otherwise we'd wipe an existing bundle a user already has.
     var updatePayload = {
       is_trial: false,
       trial_expires_at: null,
-      bundle_tier: tier,
       stripe_customer_id: session.customer || null
     };
+    if (tier) {
+      updatePayload.bundle_tier = tier;
+    }
     var res = await fetch(
       process.env.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId,
       {

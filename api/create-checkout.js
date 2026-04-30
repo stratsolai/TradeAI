@@ -51,6 +51,7 @@ export default async function handler(req, res) {
       line_items: lineItems,
       client_reference_id: userId,
       metadata: metadata,
+      subscription_data: { metadata: metadata },
       success_url: process.env.NEXT_PUBLIC_BASE_URL + '/dashboard.html',
       cancel_url: process.env.NEXT_PUBLIC_BASE_URL + '/pricing-page.html',
     });
