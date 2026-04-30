@@ -66,7 +66,7 @@ export default async function handler(req, res) {
     }
     if (!profile.stripe_customer_id) {
       console.error('[billing-portal] profile.stripe_customer_id is null/empty for user', user.id);
-      return res.status(404).json({ error: 'No billing account found. Please activate a tool first.' });
+      return res.status(404).json({ error: 'Billing portal is available after your first payment.' });
     }
     console.log('[billing-portal] stripe_customer_id:', profile.stripe_customer_id);
 
