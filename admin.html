@@ -16,7 +16,7 @@
   <style>
     .admin-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    /* Section containers — empty for now, populated in later steps */
+    /* Section container */
     .admin-section { display: flex; flex-direction: column; gap: 16px; }
     .admin-section-placeholder {
       padding: 48px 24px;
@@ -27,6 +27,179 @@
       border: 1px solid var(--border);
       border-radius: var(--card-radius);
     }
+
+    /* Metric grids — used by Dashboard Overview and Revenue */
+    .admin-metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .admin-stat-trend { font-size: var(--note-font-size); color: var(--text-muted); margin-top: 4px; }
+    .admin-stat-trend.up { color: var(--green); }
+    .admin-stat-trend.down { color: var(--red); }
+
+    /* Quick lists — recent signups, top tools, industry breakdown */
+    .admin-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .admin-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: var(--note-font-size);
+    }
+    .admin-list-item:last-child { border-bottom: none; }
+    .admin-list-item-label { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .admin-list-item-value { color: var(--text-muted); font-weight: var(--font-weight-semibold); flex-shrink: 0; margin-left: 12px; }
+
+    /* Tables */
+    .admin-table-wrap {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      overflow: auto;
+    }
+    table.admin-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--note-font-size);
+      font-family: var(--body-font);
+    }
+    table.admin-table thead th {
+      text-align: left;
+      padding: 10px 14px;
+      background: var(--bg-subtle);
+      border-bottom: 1px solid var(--border);
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      white-space: nowrap;
+    }
+    table.admin-table tbody td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: top;
+    }
+    table.admin-table tbody tr:last-child td { border-bottom: none; }
+    table.admin-table tbody tr.clickable { cursor: pointer; }
+    table.admin-table tbody tr.clickable:hover { background: var(--bg-subtle); }
+
+    /* Filters bar — Customers tab */
+    .admin-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+    }
+    .admin-filters .form-input { width: auto; min-width: 160px; }
+    .admin-filter-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      align-self: center;
+      margin-right: 4px;
+    }
+
+    /* Manual entry form — API Cost Tracker */
+    .admin-entry-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+    }
+    .admin-entry-form .form-input { width: auto; min-width: 140px; }
+
+    /* Provider cards — API Cost Tracker */
+    .admin-provider-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .admin-provider-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: 16px 20px;
+    }
+    .admin-provider-card.warn { border-left-color: var(--orange); }
+    .admin-provider-name { font-size: var(--section-title-font-size); font-weight: var(--font-weight-semibold); color: var(--text); margin-bottom: 4px; }
+    .admin-provider-purpose { font-size: var(--note-font-size); color: var(--text-muted); margin-bottom: 12px; }
+    .admin-provider-row { display: flex; justify-content: space-between; font-size: var(--note-font-size); padding: 4px 0; }
+    .admin-provider-row .label { color: var(--text-muted); }
+
+    /* Service status row — Infrastructure */
+    .admin-status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .admin-status-name { flex: 1; }
+    .admin-status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--grey); }
+    .admin-status-dot.up { background: var(--green); }
+    .admin-status-dot.warn { background: var(--orange); }
+    .admin-status-dot.down { background: var(--red); }
+
+    /* Customer detail modal */
+    .admin-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--modal-overlay-bg);
+      z-index: 1000;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 20px;
+      overflow-y: auto;
+    }
+    .admin-modal-overlay.open { display: flex; }
+    .admin-modal-card {
+      background: var(--white);
+      border-radius: var(--card-radius);
+      max-width: 720px;
+      width: 100%;
+      box-shadow: 0 8px 32px var(--shadow-card);
+    }
+    .admin-modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .admin-modal-title { font-family: var(--heading-font); font-size: var(--heading-lg-size); font-weight: var(--heading-lg-weight); color: var(--text); }
+    .admin-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+    .admin-modal-body { padding: 18px 24px; }
+    .admin-detail-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: var(--note-font-size);
+    }
+    .admin-detail-row:last-child { border-bottom: none; }
+    .admin-detail-label { color: var(--text-muted); flex-shrink: 0; }
+    .admin-detail-value { color: var(--text); text-align: right; word-break: break-word; }
+
+    /* Note text — used when a feature isn't fully wired (tool_usage etc.) */
+    .admin-note { font-size: var(--note-font-size); color: var(--text-muted); padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--btn-radius); }
+
+    /* Loading / empty states */
+    .admin-loading { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
+    .admin-empty { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
   </style>
 </head>
 <body>
@@ -142,12 +315,24 @@
     </div>
   </div>
 
+  <!-- Customer detail modal — populated by admin-logic.js -->
+  <div class="admin-modal-overlay" id="customer-detail-overlay">
+    <div class="admin-modal-card">
+      <div class="admin-modal-header">
+        <div class="admin-modal-title" id="customer-detail-title">Customer detail</div>
+        <button class="admin-modal-close" id="customer-detail-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="admin-modal-body" id="customer-detail-body"></div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
   <script src="/topbar.js"></script>
   <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
+  <script src="/tools-data.js"></script>
   <script src="/admin-logic.js"></script>
   <script>
     (function() {
