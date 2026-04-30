@@ -46,17 +46,21 @@ async function fetchProviderStatus(p) {
   const t = setTimeout(function() { ctrl.abort(); }, FETCH_TIMEOUT_MS);
   try {
     const r = await fetch(p.url, { signal: ctrl.signal });
+    const text = await r.text().catch(function() { return ''; });
+    console.log('[admin-status]', p.name, 'HTTP', r.status, 'body first 300 chars:', text.slice(0, 300));
     if (!r.ok) {
       throw new Error('HTTP ' + r.status);
     }
-    const j = await r.json();
-    const indicator = (j && j.status && j.status.indicator) || 'unknown';
-    const description = (j && j.status && j.status.description) || '';
+    let j;
+    try { j = JSON.parse(text); }
+    catch (e) { throw new Error('Non-JSON response: ' + text.slice(0, 100)); }
+
+    const parsed = parseStatusBody(j);
     return {
       name: p.name,
-      status: indicatorToStatus(indicator),
-      indicator: indicator,
-      description: description
+      status: indicatorToStatus(parsed.indicator),
+      indicator: parsed.indicator,
+      description: parsed.description
     };
   } catch (e) {
     console.error('[admin-status]', p.name, 'fetch failed:', e && e.message);
@@ -70,6 +74,40 @@ async function fetchProviderStatus(p) {
   } finally {
     clearTimeout(t);
   }
+}
+
+// Try Atlassian Statuspage format first — { status: { indicator,
+// description } } — and fall back to Instatus's format, which is what
+// Stripe uses. Instatus exposes activeIncidents/activeMaintenances
+// arrays at the top level rather than a single rolled-up indicator.
+function parseStatusBody(j) {
+  // Atlassian
+  if (j && j.status && j.status.indicator) {
+    return {
+      indicator: j.status.indicator,
+      description: j.status.description || ''
+    };
+  }
+
+  // Instatus — derive indicator from active incidents/maintenances.
+  if (j && Array.isArray(j.activeIncidents)) {
+    const incidents = j.activeIncidents;
+    if (incidents.length === 0) {
+      return { indicator: 'none', description: (j.page && j.page.name) ? 'All systems operational' : '' };
+    }
+    // Map Instatus impact strings (uppercase enums) to the four
+    // Atlassian severity tiers we already understand downstream.
+    let worst = 'minor';
+    incidents.forEach(function(inc) {
+      const impact = String(inc.impact || '').toUpperCase();
+      if (impact.indexOf('CRITICAL') !== -1) worst = 'critical';
+      else if (impact.indexOf('MAJOR') !== -1 && worst !== 'critical') worst = 'major';
+      else if (impact.indexOf('PARTIAL') !== -1 && worst === 'minor') worst = 'minor';
+    });
+    return { indicator: worst, description: incidents[0].name || 'Incident in progress' };
+  }
+
+  return { indicator: 'unknown', description: '' };
 }
 
 // Atlassian Statuspage uses these indicator values:
