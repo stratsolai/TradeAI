@@ -655,7 +655,7 @@
     <p class="hero-sub">Subscribe individually or BUNDLE AND <span class="stax-tagline-stax">SAVE</span></p>
     <p class="hero-sub">Every plan includes a 14-day free trial</p>
     <a class="hero-cta" href="#bundles">See Plans and Pricing</a>
-    <p class="hero-note"><span class="tick">✓</span> From $59/mth per tool &nbsp;·&nbsp; <span class="tick">✓</span> Cancel anytime &nbsp;·&nbsp; <span class="tick">✓</span> Australian support</p>
+    <p class="hero-note"><span class="tick">✓</span> From <span class="hero-from-price">$59/mth</span> per tool &nbsp;·&nbsp; <span class="tick">✓</span> Cancel anytime &nbsp;·&nbsp; <span class="tick">✓</span> Australian support</p>
   </section>
 
   <!-- BUNDLE TIERS -->
@@ -820,7 +820,7 @@
     <h2>READY TO BUILD YOUR <span class="stax-tagline-stax">STAX</span></h2>
     <p>Every plan includes a 14-day free trial with full access to your chosen tools</p>
     <a class="hero-cta" href="#bundles">Start Your Free Trial</a>
-    <p class="hero-note"><span class="tick">✓</span> From $59/mth per tool &nbsp;·&nbsp; <span class="tick">✓</span> Cancel anytime &nbsp;·&nbsp; <span class="tick">✓</span> Australian support</p>
+    <p class="hero-note"><span class="tick">✓</span> From <span class="hero-from-price">$59/mth</span> per tool &nbsp;·&nbsp; <span class="tick">✓</span> Cancel anytime &nbsp;·&nbsp; <span class="tick">✓</span> Australian support</p>
   </section>
 
   <!-- FOOTER -->
@@ -900,6 +900,13 @@
             .map(function(t) { return parsePrice(prices[t.priceId]); })
             .filter(function(n) { return n > 0; })
             .sort(function(a, b) { return b - a; });
+
+          // Hero "From $X/mth per tool" — cheapest individual tool price
+          var minNum = toolPriceNums.length ? toolPriceNums[toolPriceNums.length - 1] : 0;
+          if (minNum > 0) {
+            var heroSpans = document.querySelectorAll('.hero-from-price');
+            heroSpans.forEach(function(s) { s.textContent = '$' + minNum + '/mth'; });
+          }
 
           BUNDLES.forEach(function(b) {
             var card = document.getElementById(b.cardId);

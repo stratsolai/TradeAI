@@ -271,7 +271,7 @@ window.ACCOUNT_LOGIC = {
           + '<div class="acct-invite-form">'
           + '<input type="email" id="invite-email" class="form-input acct-invite-email" placeholder="teammate@example.com">'
           + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager &#9662;</button>'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager</button>'
           + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
           + '<button type="button" class="lookback-dropdown-item active" data-value="2">Manager</button>'
           + '<button type="button" class="lookback-dropdown-item" data-value="3">Staff</button>'
@@ -306,7 +306,7 @@ window.ACCOUNT_LOGIC = {
         menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
         item.classList.add('active');
         btn.setAttribute('data-value', item.getAttribute('data-value'));
-        btn.innerHTML = item.textContent + ' &#9662;';
+        btn.textContent = item.textContent;
         menu.classList.remove('open');
       });
     });

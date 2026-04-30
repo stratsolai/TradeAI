@@ -1111,9 +1111,9 @@ footer {
   <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
     <span class="bundle-rotator-icon">&#128230;</span>
     <div class="bundle-rotator-track">
-      <div class="bundle-rotator-item active">STAX3 — any 3 tools $149/mth</div>
-      <div class="bundle-rotator-item">STAX6 — any 6 tools $299/mth</div>
-      <div class="bundle-rotator-item">STAX All — all tools $499/mth</div>
+      <div class="bundle-rotator-item active" data-bundle-priceid="price_1TEQc9HnoVvjo5gxHQ1CQYAT" data-bundle-prefix="STAX3 — any 3 tools ">STAX3 — any 3 tools $149/mth</div>
+      <div class="bundle-rotator-item" data-bundle-priceid="price_1TEQdAHnoVvjo5gxg6uwVWV1" data-bundle-prefix="STAX6 — any 6 tools ">STAX6 — any 6 tools $299/mth</div>
+      <div class="bundle-rotator-item" data-bundle-priceid="price_1TEQdoHnoVvjo5gxlNMGajr8" data-bundle-prefix="STAX All — all tools ">STAX All — all tools $499/mth</div>
     </div>
     <span class="bundle-rotator-cta" onclick="window.location.href='pricing-page.html'" style="cursor:pointer;">Bundle &#8594;</span>
   </div>
@@ -1270,6 +1270,27 @@ footer {
     s.src = 'panel-data-' + toolId + '.js?v=' + Date.now();
     s.onload = function() { if (window.PANEL_TOOL) renderPanel(window.PANEL_TOOL); };
     document.head.appendChild(s);
+  })();
+
+  // Bundle rotator banner — replace the hardcoded $149/$299/$499 with
+  // live values from /api/get-prices when available. All-or-nothing:
+  // if any bundle priceId is missing, leave the static markup alone.
+  (function() {
+    var items = document.querySelectorAll('.bundle-rotator-item[data-bundle-priceid]');
+    if (!items.length) return;
+    fetch('/api/get-prices')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) {
+        if (!d || !d.prices) return;
+        for (var i = 0; i < items.length; i++) {
+          if (!d.prices[items[i].getAttribute('data-bundle-priceid')]) return;
+        }
+        items.forEach(function(el) {
+          var prefix = el.getAttribute('data-bundle-prefix') || '';
+          el.textContent = prefix + d.prices[el.getAttribute('data-bundle-priceid')];
+        });
+      })
+      .catch(function() { /* keep hardcoded */ });
   })();
 
   // Rebuild the .price-inline structure so the dollar amount renders

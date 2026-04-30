@@ -94,6 +94,11 @@
     }
     .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .acct-invite-email { width: 260px; flex: 0 0 260px; }
+    /* Pin all three controls to exactly 40px so border-thickness and
+       browser default-button quirks cannot make them disagree. */
+    .acct-invite-form .form-input,
+    .acct-invite-form .lookback-dropdown,
+    .acct-invite-form .btn-outline { height: 40px; box-sizing: border-box; }
     .acct-invite-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
