@@ -852,6 +852,7 @@
 </footer>
 
   <script src="/industry-modal.js"></script>
+  <script src="/tools-data.js"></script>
   <script>
     function handlePromptParam() {
       var params = new URLSearchParams(window.location.search);
@@ -861,8 +862,72 @@
       }
     }
 
+    // Pull live bundle prices from /api/get-prices and recalculate the
+    // "Save up to $X/mth" copy. Falls back silently to the hardcoded
+    // numbers in the markup if the fetch fails or any priceId is missing.
+    function applyLiveBundlePricing() {
+      var BUNDLES = [
+        { cardId: 'card-stax3',    priceId: 'price_1TEQc9HnoVvjo5gxHQ1CQYAT', slots: 3,    savingPrefix: 'Save up to '   },
+        { cardId: 'card-stax6',    priceId: 'price_1TEQdAHnoVvjo5gxg6uwVWV1', slots: 6,    savingPrefix: 'Save up to '   },
+        { cardId: 'card-stax-all', priceId: 'price_1TEQdoHnoVvjo5gxlNMGajr8', slots: null, savingPrefix: 'Save over '    }
+      ];
+
+      function parsePrice(s) {
+        if (!s) return 0;
+        var m = String(s).match(/\$\s*([\d.]+)/);
+        return m ? parseFloat(m[1]) : 0;
+      }
+      function roundDownTo5(n) { return Math.max(0, Math.floor(n / 5) * 5); }
+
+      fetch('/api/get-prices')
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) {
+          if (!d || !d.prices) return;
+          var prices = d.prices;
+          var tools = window.CORE_TOOLS || [];
+
+          // Need every catalogue priceId in the live map and every bundle
+          // priceId too, otherwise we leave the hardcoded copy alone
+          // (all-or-nothing — never show a mix).
+          for (var i = 0; i < tools.length; i++) {
+            if (!prices[tools[i].priceId]) return;
+          }
+          for (var j = 0; j < BUNDLES.length; j++) {
+            if (!prices[BUNDLES[j].priceId]) return;
+          }
+
+          var toolPriceNums = tools
+            .map(function(t) { return parsePrice(prices[t.priceId]); })
+            .filter(function(n) { return n > 0; })
+            .sort(function(a, b) { return b - a; });
+
+          BUNDLES.forEach(function(b) {
+            var card = document.getElementById(b.cardId);
+            if (!card) return;
+            var amountEl = card.querySelector('.bundle-price .amount');
+            var periodEl = card.querySelector('.bundle-price .period');
+            var savingEl = card.querySelector('.bundle-saving');
+
+            var bundlePriceStr = prices[b.priceId];
+            var m = bundlePriceStr.match(/^(\$[\d.]+)(.*)$/);
+            if (m && amountEl) amountEl.textContent = m[1];
+            if (m && periodEl && m[2]) periodEl.textContent = m[2];
+
+            var bundlePriceNum = parsePrice(bundlePriceStr);
+            var slotCount = b.slots || toolPriceNums.length;
+            var sumTopN = toolPriceNums.slice(0, slotCount).reduce(function(s, n) { return s + n; }, 0);
+            var diff = sumTopN - bundlePriceNum;
+            if (savingEl && diff > 0) {
+              savingEl.textContent = b.savingPrefix + '$' + roundDownTo5(diff) + '/mth vs individual pricing';
+            }
+          });
+        })
+        .catch(function() { /* keep hardcoded values */ });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
       handlePromptParam();
+      applyLiveBundlePricing();
 
       var b3 = document.getElementById('btn-stax3');
       if (b3) b3.addEventListener('click', function() {

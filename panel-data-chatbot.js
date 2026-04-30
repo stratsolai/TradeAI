@@ -12,6 +12,7 @@ window.PANEL_TOOL = {
     "Gets smarter with every customer interaction"
   ],
   price: "$79",
+  priceId: "price_1TRlgkHnoVvjo5gxXR6NMrkR",
   status: "built",
   roi: {
     inputs: [

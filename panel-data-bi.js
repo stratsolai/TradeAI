@@ -12,6 +12,7 @@ window.PANEL_TOOL = {
     "Strategic Plan integration \u2014 track progress and align operations with your goals"
   ],
   price: "$89",
+  priceId: "price_1T4dClHnoVvjo5gxjSvoi4ky",
   status: "built",
   roi: {
     inputs: [

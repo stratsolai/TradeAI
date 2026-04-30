@@ -1113,6 +1113,31 @@
     document.head.appendChild(s);
   })();
 
+  // Rebuild the .price-inline structure so the dollar amount renders
+  // at the parent's font size and the trailing period text (/mth) renders
+  // inside a smaller-styled <span>. Uses textContent on each piece so
+  // there is no XSS surface from the live price string.
+  function setPriceDisplay(elId, fullPrice) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!fullPrice || fullPrice === 'Coming Soon') {
+      el.textContent = 'Coming Soon';
+      return;
+    }
+    var match = String(fullPrice).match(/^(\$[\d.]+)(.*)$/);
+    if (match) {
+      el.appendChild(document.createTextNode(match[1]));
+      if (match[2]) {
+        var span = document.createElement('span');
+        span.textContent = match[2];
+        el.appendChild(span);
+      }
+    } else {
+      el.textContent = fullPrice;
+    }
+  }
+
   // 2. renderPanel
   function renderPanel(tool) {
     var bc = document.getElementById('panel-breadcrumb');
@@ -1144,10 +1169,20 @@
         return '<li><span class="benefit-check">&#10003;</span>' + b + '</li>';
       }).join('');
     }
-    var priceEl = document.getElementById('panel-price');
-    if (priceEl) priceEl.textContent = tool.price || 'Coming Soon';
-    var priceFooter = document.getElementById('panel-price-footer');
-    if (priceFooter) priceFooter.textContent = tool.price || 'Coming Soon';
+    var hardcoded = (tool.status === 'built' && tool.price) ? (tool.price + '/mth') : 'Coming Soon';
+    setPriceDisplay('panel-price', hardcoded);
+    setPriceDisplay('panel-price-footer', hardcoded);
+    if (tool.priceId) {
+      fetch('/api/get-prices')
+        .then(function(r) { return r.ok ? r.json() : null; })
+        .then(function(d) {
+          if (d && d.prices && d.prices[tool.priceId]) {
+            setPriceDisplay('panel-price', d.prices[tool.priceId]);
+            setPriceDisplay('panel-price-footer', d.prices[tool.priceId]);
+          }
+        })
+        .catch(function() { /* keep hardcoded */ });
+    }
     var ctaBtn = document.getElementById('cta-btn');
     if (ctaBtn) {
       if (tool.status === 'built') {
