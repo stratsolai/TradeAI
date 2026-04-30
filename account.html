@@ -92,6 +92,11 @@
       color: var(--text);
       margin-bottom: 14px;
     }
+    /* Cards default to overflow:hidden (rounded corners), which clips
+       the .lookback-dropdown-menu when the trigger is at the bottom of
+       the card. Mirror the news-digest-settings pattern (line 14) and
+       open up overflow on the tab containing the dropdown. */
+    #tab-team .settings-card { overflow: visible; }
     .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .acct-invite-email { width: 260px; flex: 0 0 260px; }
     /* Pin all three controls to exactly 40px so border-thickness and
