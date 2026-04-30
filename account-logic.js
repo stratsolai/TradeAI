@@ -274,14 +274,11 @@ window.ACCOUNT_LOGIC = {
           + '<input type="email" id="invite-email" class="form-input" style="width:260px;" placeholder="teammate@example.com">'
           + '</div>'
           + '<div class="acct-invite-field">'
-          + '<label class="form-label" for="invite-level-btn">Access level</label>'
-          + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager</button>'
-          + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
-          + '<button type="button" class="lookback-dropdown-item active" data-value="2">Manager</button>'
-          + '<button type="button" class="lookback-dropdown-item" data-value="3">Staff</button>'
-          + '</div>'
-          + '</span>'
+          + '<label class="form-label" for="invite-level">Access level</label>'
+          + '<select id="invite-level" class="form-input" style="width:auto;">'
+          + '<option value="2">Manager</option>'
+          + '<option value="3">Staff</option>'
+          + '</select>'
           + '</div>'
           + '<button class="btn-outline" id="invite-btn">Send Invite</button>'
           + '</div>'
@@ -295,7 +292,6 @@ window.ACCOUNT_LOGIC = {
       html += '</div>';
       body.innerHTML = html;
       self._wireTeamActions();
-      self._wireInviteLevelDropdown();
     });
   },
 
@@ -333,39 +329,12 @@ window.ACCOUNT_LOGIC = {
     if (inviteBtn) {
       inviteBtn.addEventListener('click', function() {
         var email = document.getElementById('invite-email').value.trim();
-        var levelBtn = document.getElementById('invite-level-btn');
-        var level = parseInt(levelBtn ? levelBtn.getAttribute('data-value') : '2');
+        var levelEl = document.getElementById('invite-level');
+        var level = parseInt(levelEl ? levelEl.value : '2');
         if (!email) { window.showModalError('Please enter an email address.'); return; }
         self._sendInvite(email, level, false);
       });
     }
-  },
-
-  _wireInviteLevelDropdown: function() {
-    var btn = document.getElementById('invite-level-btn');
-    var menu = document.getElementById('invite-level-menu');
-    if (!btn || !menu) return;
-
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      menu.classList.toggle('open');
-    });
-
-    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
-      item.addEventListener('click', function() {
-        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
-        item.classList.add('active');
-        var value = item.getAttribute('data-value');
-        var label = item.textContent;
-        btn.setAttribute('data-value', value);
-        btn.textContent = label;
-        menu.classList.remove('open');
-      });
-    });
-
-    document.addEventListener('click', function() {
-      menu.classList.remove('open');
-    });
   },
 
   _sendInvite: function(email, level, isResend) {
