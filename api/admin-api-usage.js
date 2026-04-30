@@ -51,11 +51,14 @@ export default async function handler(req, res) {
         }
       });
 
-      // Active customer count for cost-per-customer
+      // Active customer count for cost-per-customer. Count any profile
+      // with at least one activated tool, regardless of trial status,
+      // to match what the Customers tab displays. Filtering trial
+      // users out gave 0 customers any time the only signups are on a
+      // 14-day trial — useless during pre-launch testing.
       const customerRes = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })
-        .eq('is_trial', false)
         .not('activated_tools', 'is', null);
       const activeCustomers = customerRes.count || 0;
       const totalThisMonth = totalThisMonthCents / 100;
