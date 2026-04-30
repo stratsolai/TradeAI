@@ -91,6 +91,15 @@
     table.admin-table tbody tr.clickable { cursor: pointer; }
     table.admin-table tbody tr.clickable:hover { background: var(--bg-subtle); }
 
+    /* Cards default to overflow:hidden so their rounded corners clip
+       child content. The Manual Tracking card on the API Cost Tracker
+       tab and the customer filter / customer detail flow on the
+       Customers tab all contain .lookback-dropdown menus that open
+       downward and would otherwise be clipped. Mirror the
+       news-digest-settings pattern used by #tab-team in this file. */
+    #tab-api-costs .settings-card,
+    #tab-customers .settings-card { overflow: visible; }
+
     /* Filters bar — Customers tab */
     .admin-filters {
       display: flex;
