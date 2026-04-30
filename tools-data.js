@@ -23,7 +23,7 @@ const CORE_TOOLS = [
     category: "marketing",
     title: ["Website", "Chatbot"],
     desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs - 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
-    price: "$79",
+    price: "$69",
     priceId: "price_1TRlgkHnoVvjo5gxXR6NMrkR",
   },
   {
@@ -33,7 +33,7 @@ const CORE_TOOLS = [
     category: "marketing",
     title: ["Marketing and", "Social Media Manager"],
     desc: "Describe your latest job, upload a photo, or let the AI pull from your content library - it creates professional social posts, AI-generated graphics, and full marketing campaigns. Promote new products and services, seasonal offers, or industry news. Auto-posts to Facebook and Instagram, or download for community groups, emails, and anywhere else.",
-    price: "$89",
+    price: "$69",
     priceId: "price_1TEQg8HnoVvjo5gxkxUaFrok",
   },
   {
@@ -43,7 +43,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["Email", "Assistant"],
     desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything - what is urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters.",
-    price: "$59",
+    price: "$39",
     priceId: "price_1TQLhHHnoVvjo5gxnwUQQYwM",
   },
   {
@@ -53,7 +53,7 @@ const CORE_TOOLS = [
     category: "intelligence",
     title: ["Strategic Plan and", "Operations Dashboard"],
     desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
-    price: "$89",
+    price: "$69",
     priceId: "price_1TB7DDHnoVvjo5gxgLzZbego",
   },
   {
@@ -63,7 +63,7 @@ const CORE_TOOLS = [
     category: "intelligence",
     title: ["Industry News and", "Updates Digest"],
     desc: "Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices - plus searches reputable online sources - then summarises everything on an interactive dashboard. It is personalised to your business, not generic news. Tap into any story to read more.",
-    price: "$59",
+    price: "$39",
     priceId: "price_1TQLehHnoVvjo5gxjv8cH40m",
   },
   {
@@ -73,7 +73,7 @@ const CORE_TOOLS = [
     category: "intelligence",
     title: ["Business Intelligence", "Dashboard"],
     desc: "Your AI business advisor. It analyses activity across all your tools, your content library, and your accounting software - then goes further. AI predicts opportunities for new products and services, analyses your local competitive landscape, and recommends how to stay ahead. The more tools you activate, the smarter it gets.",
-    price: "$89",
+    price: "$69",
     priceId: "price_1T4dClHnoVvjo5gxjSvoi4ky",
   },
   {
@@ -83,7 +83,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["Tender Response", "Generator"],
     desc: "Upload any RFT or RFQ - AI reads the requirements, searches your content library for relevant experience, certifications, and project history, then generates a professional tender response. Review it with AI-assisted editing - tap a button to expand sections, add detail, or adjust tone. Download as PDF or Word.",
-    price: "$89",
+    price: "$69",
     priceId: "price_1TEQjVHnoVvjo5gxfyLbHE3M",
   },
   {
@@ -93,7 +93,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["Quote", "Enhancer"],
     desc: "Enter your line items and prices - or import them from your quoting tool - and AI transforms them into a professional branded quote. Detailed scope of works, warranty terms, payment milestones, exclusions, and a cover page with your branding. Add project photos and concept renders. Download as PDF or Word, or send it straight to the customer.",
-    price: "$79",
+    price: "$59",
     priceId: "price_1TB8QZHnoVvjo5gxwL0GKduI",
   },
   {
@@ -103,7 +103,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["SWMS and", "Safety Docs"],
     desc: "Describe the job and AI generates a Safe Work Method Statement specific to the work, your trade, and your state - hazards, risks, controls, PPE, emergency procedures. Workers sign off on-site with digital signatures on their phone. Build a library of templates that get smarter with every job.",
-    price: "$79",
+    price: "$59",
     priceId: "price_1TB8RNHnoVvjo5gxPb5wxUuF",
   },
   {
@@ -113,7 +113,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["Customer Progress", "Updates"],
     desc: "Keep your customers in the loop without the hassle. Take photos on-site, tap send, and AI creates a professional branded progress update - what was done today, photos, and what is next. Your customer gets a clean update via email or a shareable link they can check anytime.",
-    price: "$69",
+    price: "$59",
     priceId: "price_1TB8S6HnoVvjo5gxVYoEezlN",
   },
   {
@@ -123,7 +123,7 @@ const CORE_TOOLS = [
     category: "operations",
     title: ["Handover", "Documentation"],
     desc: "Finish a job and hand your customer a professional branded pack - project summary, before and after photos, maintenance guide, warranty details - everything they need. Add key components like pumps or fixtures - AI searches the manufacturer and pulls real maintenance details and warranty terms into the document.",
-    price: "$79",
+    price: "$59",
     priceId: "price_1TB8ShHnoVvjo5gxrGBAMHZL",
   },
   {
@@ -133,7 +133,7 @@ const CORE_TOOLS = [
     category: "marketing",
     title: ["Review and Referral", "Booster"],
     desc: "Finish a job and a branded review request is automatically sent to your customer - or send one with a single tap. It follows up if they have not responded, and once they leave a review, it asks if they know someone who needs your services. Track every request, review, and referral on your dashboard.",
-    price: "$69",
+    price: "$39",
     priceId: "price_1TB8TFHnoVvjo5gxkF2QMzJa",
   },
   {
@@ -143,7 +143,7 @@ const CORE_TOOLS = [
     category: "marketing",
     title: ["Design", "Visualiser"],
     desc: "Upload a site photo, describe the project, and AI generates a professional concept visualisation. Request variations - different colours, materials, or layouts - until it is perfect. Use it in your quotes, tenders, and marketing. Activate it with your website chatbot and customers can generate their own renders.",
-    price: "$89",
+    price: "$69",
     priceId: "price_1TQLbEHnoVvjo5gxIuSSm7tH",
   }
 ];
