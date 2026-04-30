@@ -411,24 +411,30 @@ window.ADMIN_LOGIC = {
 
     // Filter bar — gather industries from existing CORE_TOOLS data
     var industries = ['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
+    var industryOptions = [{ value: '', label: 'Any' }].concat(industries.map(function(i) {
+      return { value: i, label: i };
+    }));
+    var bundleOptions = [
+      { value: '', label: 'Any' },
+      { value: 'stax3', label: 'STAX3' },
+      { value: 'stax6', label: 'STAX6' },
+      { value: 'stax-all', label: 'STAX All' }
+    ];
+    var trialOptions = [
+      { value: '', label: 'Any' },
+      { value: 'true', label: 'Trial' },
+      { value: 'false', label: 'Paid' }
+    ];
+
     var html = '<div class="admin-filters">'
       + '<span class="admin-filter-label">Search</span>'
       + '<input type="text" class="form-input" id="cust-search" placeholder="Email or business name">'
       + '<span class="admin-filter-label">Industry</span>'
-      + '<select class="form-input" id="cust-industry"><option value="">Any</option>'
-      + industries.map(function(i) { return '<option value="' + i + '">' + self._esc(i) + '</option>'; }).join('')
-      + '</select>'
+      + self._dropdownHtml('cust-industry', 'cust-industry-wrap', industryOptions)
       + '<span class="admin-filter-label">Plan</span>'
-      + '<select class="form-input" id="cust-bundle">'
-      + '<option value="">Any</option>'
-      + '<option value="stax3">STAX3</option>'
-      + '<option value="stax6">STAX6</option>'
-      + '<option value="stax-all">STAX All</option>'
-      + '</select>'
+      + self._dropdownHtml('cust-bundle', 'cust-bundle-wrap', bundleOptions)
       + '<span class="admin-filter-label">Trial</span>'
-      + '<select class="form-input" id="cust-trial">'
-      + '<option value="">Any</option><option value="true">Trial</option><option value="false">Paid</option>'
-      + '</select>'
+      + self._dropdownHtml('cust-trial', 'cust-trial-wrap', trialOptions)
       + '<span class="admin-filter-label">Signup after</span>'
       + '<input type="date" class="form-input" id="cust-after">'
       + '<span class="admin-filter-label">Min tools</span>'
@@ -455,6 +461,48 @@ window.ADMIN_LOGIC = {
         if (e.key === 'Enter') self._fetchCustomers();
       });
     }
+
+    self._wireDropdown('cust-industry');
+    self._wireDropdown('cust-bundle');
+    self._wireDropdown('cust-trial');
+  },
+
+  // Render a .lookback-dropdown trigger + menu. options is
+  // [{ value, label }, ...]. The first option is shown as the initial
+  // label and stored in data-value on the trigger.
+  _dropdownHtml: function(id, wrapClass, options) {
+    var self = this;
+    var first = options[0] || { value: '', label: '—' };
+    var html = '<span class="lookback-dropdown-wrap ' + self._esc(wrapClass) + '">'
+      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="' + self._esc(id) + '" data-value="' + self._esc(first.value) + '">' + self._esc(first.label) + '</button>'
+      + '<div class="lookback-dropdown-menu" id="' + self._esc(id) + '-menu">';
+    options.forEach(function(opt, i) {
+      html += '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(opt.value) + '">' + self._esc(opt.label) + '</button>';
+    });
+    html += '</div></span>';
+    return html;
+  },
+
+  // Wire a .lookback-dropdown trigger by id. Picking an item updates
+  // the trigger's data-value + visible label and closes the menu.
+  _wireDropdown: function(btnId) {
+    var btn = document.getElementById(btnId);
+    var menu = document.getElementById(btnId + '-menu');
+    if (!btn || !menu) return;
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
+      item.addEventListener('click', function() {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        btn.setAttribute('data-value', item.getAttribute('data-value'));
+        btn.textContent = item.textContent;
+        menu.classList.remove('open');
+      });
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _fetchCustomers: function() {
@@ -471,10 +519,14 @@ window.ADMIN_LOGIC = {
     var after = document.getElementById('cust-after');
     var minTools = document.getElementById('cust-min-tools');
 
+    var industryVal = industry ? industry.getAttribute('data-value') : '';
+    var bundleVal = bundle ? bundle.getAttribute('data-value') : '';
+    var trialVal = trial ? trial.getAttribute('data-value') : '';
+
     if (search && search.value.trim()) params.set('search', search.value.trim());
-    if (industry && industry.value) params.set('industry', industry.value);
-    if (bundle && bundle.value) params.set('bundle', bundle.value);
-    if (trial && trial.value) params.set('trial', trial.value);
+    if (industryVal) params.set('industry', industryVal);
+    if (bundleVal) params.set('bundle', bundleVal);
+    if (trialVal) params.set('trial', trialVal);
     if (after && after.value) params.set('signup_after', after.value);
     if (minTools && minTools.value) params.set('min_tools', minTools.value);
 
