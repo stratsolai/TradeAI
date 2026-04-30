@@ -230,11 +230,11 @@ window.ACCOUNT_LOGIC = {
           + '<div class="acct-invite-title">Invite Team Member</div>'
           + '<div class="acct-invite-form">'
           + '<div class="acct-invite-field">'
-          + '<label class="acct-invite-label">Email address</label>'
+          + '<label class="form-label" for="invite-email">Email address</label>'
           + '<input type="email" id="invite-email" class="form-input" style="width:260px;" placeholder="teammate@example.com">'
           + '</div>'
           + '<div class="acct-invite-field">'
-          + '<label class="acct-invite-label">Access level</label>'
+          + '<label class="form-label" for="invite-level-btn">Access level</label>'
           + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
           + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager</button>'
           + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
@@ -243,7 +243,7 @@ window.ACCOUNT_LOGIC = {
           + '</div>'
           + '</span>'
           + '</div>'
-          + '<button class="btn-outline btn-sm" id="invite-btn">Send Invite</button>'
+          + '<button class="btn-outline" id="invite-btn">Send Invite</button>'
           + '</div>'
           + '</div>';
       } else {
