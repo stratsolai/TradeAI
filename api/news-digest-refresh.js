@@ -67,6 +67,35 @@ function dedupByLink(items) {
 // Serper.dev news search
 // ---------------------------------------------------------------------------
 
+// Log a single Serper API call to api_usage so the Admin → API Cost
+// Tracker can aggregate monthly Serper spend. A logging failure must
+// not break the search itself.
+async function logSerperUsage() {
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
+  try {
+    var period = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+    await fetch(SUPABASE_URL + '/rest/v1/api_usage', {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({
+        provider: 'serper',
+        period: period,
+        usage_value: '1',
+        cost_estimate: 0.001,
+        notes: 'auto-logged',
+        entered_at: new Date().toISOString()
+      })
+    });
+  } catch (e) {
+    console.error('[news-digest] Failed to log Serper usage:', e && e.message);
+  }
+}
+
 async function serperNewsSearch(query) {
   if (!SERPER_API_KEY) {
     console.error('[news-digest] SERPER_API_KEY not configured');
@@ -86,6 +115,8 @@ async function serperNewsSearch(query) {
       console.error('[news-digest] Serper error:', response.status, 'query:', query, 'body:', errText.substring(0, 200));
       return [];
     }
+    // Successful Serper call — log usage for cost tracking.
+    await logSerperUsage();
     var data = await response.json();
     var results = Array.isArray(data.news) ? data.news : [];
     return results.map(function(r) {
