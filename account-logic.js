@@ -32,6 +32,9 @@ window.ACCOUNT_LOGIC = {
       if (subsCard) subsCard.style.display = 'none';
     }
 
+    self._wireTabs();
+    self._setTabVisibility(level);
+
     self._loadSubscriptions();
 
     if (level === 1) {
@@ -41,6 +44,29 @@ window.ACCOUNT_LOGIC = {
 
     self._wireChangePassword();
     self._wireSignOut();
+  },
+
+  _wireTabs: function() {
+    document.querySelectorAll('.ptab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('settings-active'); });
+        document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('settings-active');
+        var panel = document.getElementById('tab-' + btn.getAttribute('data-tab'));
+        if (panel) panel.classList.add('active');
+      });
+    });
+  },
+
+  _setTabVisibility: function(level) {
+    var subsBtn = document.getElementById('tab-btn-subscriptions');
+    var teamBtn = document.getElementById('tab-btn-team');
+    if (level !== 1 && teamBtn) teamBtn.style.display = 'none';
+    if (level === 3 && subsBtn) subsBtn.style.display = 'none';
+    if (level === 3) {
+      var defaultTab = document.getElementById('tab-btn-account');
+      if (defaultTab) defaultTab.click();
+    }
   },
 
   // ── SUBSCRIPTIONS ──
@@ -210,14 +236,14 @@ window.ACCOUNT_LOGIC = {
           + '<div class="acct-invite-field">'
           + '<label class="acct-invite-label">Access level</label>'
           + '<span class="lookback-dropdown-wrap acct-invite-level-wrap">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager &#9662;</button>'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="invite-level-btn" data-value="2">Manager</button>'
           + '<div class="lookback-dropdown-menu" id="invite-level-menu">'
           + '<button type="button" class="lookback-dropdown-item active" data-value="2">Manager</button>'
           + '<button type="button" class="lookback-dropdown-item" data-value="3">Staff</button>'
           + '</div>'
           + '</span>'
           + '</div>'
-          + '<button class="btn-primary" id="invite-btn">Send Invite</button>'
+          + '<button class="btn-outline btn-sm" id="invite-btn">Send Invite</button>'
           + '</div>'
           + '</div>';
       } else {
@@ -292,7 +318,7 @@ window.ACCOUNT_LOGIC = {
         var value = item.getAttribute('data-value');
         var label = item.textContent;
         btn.setAttribute('data-value', value);
-        btn.innerHTML = label + ' &#9662;';
+        btn.textContent = label;
         menu.classList.remove('open');
       });
     });
