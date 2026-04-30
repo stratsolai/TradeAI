@@ -361,9 +361,50 @@
         // Pre-populate selected tools from profile
         _selected = Array.isArray(pr.data.activated_tools) ? pr.data.activated_tools.slice() : [];
 
-        // Render tool grid
+        // Render tool grid (with hardcoded prices, then upgrade to live
+        // prices in place once /api/get-prices responds).
         renderGrid();
         updateCounts();
+        _loadLivePrices().then(function(map) {
+          var resolved = _resolveLivePrices(map);
+          if (resolved) {
+            _resolvedPrices = resolved;
+            renderGrid();
+          }
+        });
+      }
+
+      // ── LIVE PRICING ────────────────────────────────────────────
+      // _resolvedPrices: map of toolId → "$X/mth", or null if any built
+      // tool's priceId is missing from /api/get-prices. All-or-nothing.
+      var _resolvedPrices = null;
+
+      async function _loadLivePrices() {
+        try {
+          var r = await fetch('/api/get-prices');
+          if (!r.ok) return null;
+          var d = await r.json();
+          return d && d.prices ? d.prices : null;
+        } catch (e) { return null; }
+      }
+
+      function _resolveLivePrices(map) {
+        if (!map) return null;
+        var tools = window.CORE_TOOLS || [];
+        var resolved = {};
+        for (var i = 0; i < tools.length; i++) {
+          var t = tools[i];
+          if (t.status !== 'built') continue;
+          if (!t.priceId) return null;
+          if (!map[t.priceId]) return null;
+          resolved[t.id] = map[t.priceId];
+        }
+        return resolved;
+      }
+
+      function _displayPrice(tool) {
+        if (_resolvedPrices && _resolvedPrices[tool.id]) return _resolvedPrices[tool.id];
+        return (tool.price || '') + '/mth';
       }
 
       // ── RENDER GRID ─────────────────────────────────────────────
@@ -388,7 +429,7 @@
             '<div class="tool-card-icon">' + (tool.icon || '') + '</div>' +
             '<div class="tool-card-name">' + titleText + '</div>' +
             '<div class="tool-card-desc">' + (tool.desc || '') + '</div>' +
-            '<div class="tool-card-price">' + (tool.price || '') + '/mth</div>';
+            '<div class="tool-card-price">' + _displayPrice(tool) + '</div>';
 
           if (!isPending) {
             card.addEventListener('click', function() { toggleTool(tool.id); });

@@ -24,7 +24,7 @@ const CORE_TOOLS = [
     title: ["Website", "Chatbot"],
     desc: "An AI chatbot answers customer enquiries, qualifies leads, and books jobs - 24/7. It learns your business from your emails, your website, your content library, or FAQs you add yourself. Every answer goes through your approval before it goes live. It keeps learning as it goes.",
     price: "$79",
-    priceId: "price_1T4dAyHnoVvjo5gxMgLczawf",
+    priceId: "price_1TRlgkHnoVvjo5gxXR6NMrkR",
   },
   {
     id: "social",
@@ -44,7 +44,7 @@ const CORE_TOOLS = [
     title: ["Email", "Assistant"],
     desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything - what is urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters.",
     price: "$59",
-    priceId: "price_1T4dBcHnoVvjo5gx8EuxX5hL",
+    priceId: "price_1TQLhHHnoVvjo5gxnwUQQYwM",
   },
   {
     id: "strategic-plan",
@@ -54,7 +54,7 @@ const CORE_TOOLS = [
     title: ["Strategic Plan and", "Operations Dashboard"],
     desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
     price: "$89",
-    priceId: "price_1TEQiMHnoVvjo5gxbGu86saG",
+    priceId: "price_1TB7DDHnoVvjo5gxgLzZbego",
   },
   {
     id: "news-digest",
@@ -64,7 +64,7 @@ const CORE_TOOLS = [
     title: ["Industry News and", "Updates Digest"],
     desc: "Not another newsletter. AI scans your supplier emails, industry body updates, and regulator notices - plus searches reputable online sources - then summarises everything on an interactive dashboard. It is personalised to your business, not generic news. Tap into any story to read more.",
     price: "$59",
-    priceId: "price_1TB7IdHnoVvjo5gxTA1rOKRI",
+    priceId: "price_1TQLehHnoVvjo5gxjv8cH40m",
   },
   {
     id: "bi",

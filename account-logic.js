@@ -69,6 +69,42 @@ window.ACCOUNT_LOGIC = {
     }
   },
 
+  // ── PRICE LOADING ──
+  // Load both the user's actual subscription prices (preferred) and the
+  // catalogue price map. Returns { sub, cat } maps of priceId → display
+  // string, or null if both fetches fail. Tools fall back from sub → cat
+  // → hardcoded price + "/mth".
+  _loadAccountPrices: function() {
+    var self = this;
+    var token = self._session && self._session.access_token;
+    var subPromise = token
+      ? fetch('/api/get-subscription-prices', { headers: { 'Authorization': 'Bearer ' + token } })
+          .then(function(r) { return r.ok ? r.json() : null; })
+          .then(function(d) { return d && d.prices ? d.prices : null; })
+          .catch(function() { return null; })
+      : Promise.resolve(null);
+    var catPromise = fetch('/api/get-prices')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(d) { return d && d.prices ? d.prices : null; })
+      .catch(function() { return null; });
+    return Promise.all([subPromise, catPromise]).then(function(maps) {
+      var sub = maps[0];
+      var cat = maps[1];
+      if (!sub && !cat) return null;
+      return { sub: sub || {}, cat: cat || {} };
+    });
+  },
+
+  _priceForTool: function(tool, priceMaps) {
+    if (!tool) return '';
+    if (priceMaps) {
+      if (tool.priceId && priceMaps.sub[tool.priceId]) return priceMaps.sub[tool.priceId];
+      if (tool.priceId && priceMaps.cat[tool.priceId]) return priceMaps.cat[tool.priceId];
+    }
+    // Hardcoded fallback. Append /mth to match the live format.
+    return tool.price ? (tool.price + '/mth') : '';
+  },
+
   // ── SUBSCRIPTIONS ──
   _loadSubscriptions: function() {
     var self = this;
@@ -76,11 +112,15 @@ window.ACCOUNT_LOGIC = {
     var body = document.getElementById('subs-body');
     if (!body) return;
 
-    self._supabase.from('profiles')
+    var profilePromise = self._supabase.from('profiles')
       .select('activated_tools')
       .eq('id', ownerId)
-      .single()
-      .then(function(result) {
+      .single();
+
+    Promise.all([profilePromise, self._loadAccountPrices()])
+      .then(function(results) {
+        var result = results[0];
+        var priceMaps = results[1];
         if (result.error) {
           body.innerHTML = '<div style="padding:18px 24px;" class="list-empty">Could not load subscriptions.</div>';
           return;
@@ -97,13 +137,13 @@ window.ACCOUNT_LOGIC = {
           var t = coreTools.find(function(ct) { return ct.id === toolId; });
           var name = t ? (Array.isArray(t.title) ? t.title.join(' ') : (t.title || toolId)) : toolId;
           var icon = t ? (t.icon || '\ud83d\udd27') : '\ud83d\udd27';
-          var price = t ? (t.price || '') : '';
+          var price = self._priceForTool(t, priceMaps);
           html += '<div class="acct-sub-item">'
             + '<div class="acct-sub-icon">' + icon + '</div>'
             + '<div class="acct-sub-info">'
             + '<div class="acct-sub-name">' + window.escHtml(name) + '</div>'
             + '</div>'
-            + (price ? '<div class="acct-sub-price">' + window.escHtml(price) + '/mo</div>' : '')
+            + (price ? '<div class="acct-sub-price">' + window.escHtml(price) + '</div>' : '')
             + '</div>';
         });
         html += '</div></div>';

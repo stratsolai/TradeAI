@@ -94,6 +94,23 @@ export default async function handler(req, res) {
       }
       break;
 
+    case 'price.created':
+    case 'price.updated':
+      try {
+        await upsertPrice(event.data.object);
+      } catch (e) {
+        console.error('upsertPrice failed:', e && e.message);
+      }
+      break;
+
+    case 'price.deleted':
+      try {
+        await deletePrice(event.data.object && event.data.object.id);
+      } catch (e) {
+        console.error('deletePrice failed:', e && e.message);
+      }
+      break;
+
     default:
       console.log(`Unhandled event type: ${event.type}`);
   }
@@ -367,4 +384,67 @@ async function lookupUserByCustomerId(customerId) {
     console.error('lookupUserByCustomerId error:', err);
     return null;
   }
+}
+
+// Mirror Stripe price changes into the tool_prices table so the
+// app's live price endpoint reflects whatever is currently in Stripe.
+async function upsertPrice(price) {
+  if (!price || !price.id) {
+    console.warn('upsertPrice: missing price.id');
+    return;
+  }
+  const display = formatStripePrice(price.unit_amount);
+  console.log('upsertPrice:', price.id, '→', display);
+
+  const res = await fetch(
+    process.env.SUPABASE_URL + '/rest/v1/tool_prices?on_conflict=price_id',
+    {
+      method: 'POST',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({
+        price_id: price.id,
+        display_price: display
+      })
+    }
+  );
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('upsertPrice POST failed:', res.status, errText);
+  }
+}
+
+async function deletePrice(priceId) {
+  if (!priceId) {
+    console.warn('deletePrice: missing priceId');
+    return;
+  }
+  console.log('deletePrice:', priceId);
+
+  const res = await fetch(
+    process.env.SUPABASE_URL + '/rest/v1/tool_prices?price_id=eq.' + encodeURIComponent(priceId),
+    {
+      method: 'DELETE',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+        'Prefer': 'return=minimal'
+      }
+    }
+  );
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('deletePrice DELETE failed:', res.status, errText);
+  }
+}
+
+function formatStripePrice(unitAmountCents) {
+  if (typeof unitAmountCents !== 'number') return '';
+  const dollars = unitAmountCents / 100;
+  const formatted = dollars % 1 === 0 ? '$' + dollars : '$' + dollars.toFixed(2);
+  return formatted + '/mth';
 }

@@ -1,6 +1,10 @@
 window.DASH_DATA = (function() {
 
   var _supabase, _user, _profile, _activeTools;
+  // map: toolId → "$X/mth" — null when any built tool's priceId is missing
+  // from the live tool_prices map, in which case all tools fall back to
+  // the hardcoded `price` field below (all-or-nothing).
+  var _resolvedPrices = null;
 
   var TOOLS = [
     { id: 'social',         icon: '\ud83d\udcf1', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content \u2014 auto-posts to Facebook and Instagram', price: '$79',  status: 'built',   url: '/social',         settingsUrl: '/social-settings.html',            priceId: 'price_1T4dCEHnoVvjo5gxQysf0vQI', benefit: 'Works great with Content Library' },
@@ -18,10 +22,45 @@ window.DASH_DATA = (function() {
     { id: 'review-booster', icon: '\u2b50',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals \u2014 and writes the message',     price: 'TBC',  status: 'pending', url: '/panel?tool=review-booster', settingsUrl: null, priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa', benefit: '' }
   ];
 
+  async function loadLivePrices() {
+    try {
+      var r = await fetch('/api/get-prices');
+      if (!r.ok) return null;
+      var d = await r.json();
+      return d && d.prices ? d.prices : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // All-or-nothing: every built tool with a priceId must have a live
+  // price, otherwise return null and the caller falls back to hardcoded.
+  function resolveLivePrices(livePriceMap) {
+    if (!livePriceMap) return null;
+    var resolved = {};
+    for (var i = 0; i < TOOLS.length; i++) {
+      var t = TOOLS[i];
+      if (t.status !== 'built') continue;
+      if (!t.priceId) return null;
+      if (!livePriceMap[t.priceId]) return null;
+      resolved[t.id] = livePriceMap[t.priceId];
+    }
+    return resolved;
+  }
+
+  function getDisplayPrice(tool) {
+    if (_resolvedPrices && _resolvedPrices[tool.id]) {
+      return _resolvedPrices[tool.id];
+    }
+    return tool.price + '/mth';
+  }
+
   // ── INIT ──
   async function init(supabase, user) {
     _supabase = supabase;
     _user = user;
+
+    _resolvedPrices = resolveLivePrices(await loadLivePrices());
 
     var pr = await _supabase.from('profiles')
       .select('activated_tools, trial_expires_at, is_trial, bundle_tier, business_name')
@@ -396,7 +435,7 @@ window.DASH_DATA = (function() {
       + '</div>'
       + '</div>'
       + '<div class="dash-stax-meta">'
-      + '<span class="dash-stax-price">' + tool.price + '/month</span>'
+      + '<span class="dash-stax-price">' + getDisplayPrice(tool) + '</span>'
       + (tool.benefit ? '<span class="dash-stax-benefit">' + escHtml(tool.benefit) + '</span>' : '')
       + '</div>'
       + '<div class="dash-stax-card-actions">'
