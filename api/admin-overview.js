@@ -165,28 +165,57 @@ export default async function handler(req, res) {
       revenueByBundle[k] = Math.round(revenueByBundle[k] / 100);
     });
 
-    // Revenue by individual tool — translate priceId→toolId by reading
-    // tool_prices for tool_id mapping (best-effort).
+    // Revenue by individual tool — translate priceId→toolId via
+    // tool_prices.tool_id. tool_prices rows for bundles carry
+    // bundle_tier with tool_id null, so bundle subscriptions are
+    // intentionally skipped here (they appear in revenue_by_bundle
+    // above). Track a small diagnostic so the empty-state message
+    // can name the actual reason.
     let revenueByTool = [];
-    try {
-      const tpRes = await supabase
-        .from('tool_prices')
-        .select('price_id, tool_id');
+    let revenueByToolDiag = {
+      tool_prices_rows: 0,
+      tool_prices_with_tool_id: 0,
+      stripe_price_ids: Object.keys(revenueByPriceId).length,
+      mapped_count: 0,
+      unmatched_price_ids: [],
+      error: null
+    };
+
+    const tpRes = await supabase
+      .from('tool_prices')
+      .select('price_id, tool_id');
+
+    if (tpRes.error) {
+      console.error('[admin-overview] tool_prices SELECT error:', tpRes.error);
+      revenueByToolDiag.error = tpRes.error.message + (tpRes.error.code ? ' [' + tpRes.error.code + ']' : '');
+    } else {
+      const tpRows = tpRes.data || [];
+      revenueByToolDiag.tool_prices_rows = tpRows.length;
+
       const priceToTool = {};
-      (tpRes.data || []).forEach(function(row) {
+      tpRows.forEach(function(row) {
         if (row.price_id && row.tool_id) priceToTool[row.price_id] = row.tool_id;
       });
+      revenueByToolDiag.tool_prices_with_tool_id = Object.keys(priceToTool).length;
+
       const byTool = {};
+      const unmatched = [];
       Object.keys(revenueByPriceId).forEach(function(priceId) {
         const tid = priceToTool[priceId];
-        if (!tid) return;
+        if (!tid) {
+          unmatched.push(priceId);
+          return;
+        }
         byTool[tid] = (byTool[tid] || 0) + revenueByPriceId[priceId];
       });
+      revenueByToolDiag.mapped_count = Object.keys(revenueByPriceId).length - unmatched.length;
+      revenueByToolDiag.unmatched_price_ids = unmatched.slice(0, 10);
+
       revenueByTool = Object.keys(byTool).map(function(id) {
         return { tool_id: id, mrr_cents: byTool[id], mrr: Math.round(byTool[id] / 100) };
       }).sort(function(a, b) { return b.mrr - a.mrr; });
-    } catch (e) {
-      // tool_prices missing — leave empty
+
+      console.log('[admin-overview] revenue_by_tool diagnostic:', revenueByToolDiag);
     }
 
     return res.status(200).json({
@@ -206,6 +235,7 @@ export default async function handler(req, res) {
       industry_breakdown: industryBreakdown,
       revenue_by_bundle: revenueByBundle,
       revenue_by_tool: revenueByTool,
+      revenue_by_tool_diagnostic: revenueByToolDiag,
       recent_cancellations: recentCancellations
     });
   } catch (err) {

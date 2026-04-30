@@ -108,6 +108,25 @@ window.ADMIN_LOGIC = {
     } catch (e) { return '—'; }
   },
 
+  _explainEmptyToolRevenue: function(diag) {
+    if (!diag) return 'No tool revenue mapped.';
+    if (diag.error) return 'Could not read tool_prices: ' + diag.error;
+    if (diag.tool_prices_rows === 0) return 'tool_prices table is empty — populate it to map Stripe priceIds to tools.';
+    if (diag.tool_prices_with_tool_id === 0) return 'tool_prices has rows but none have tool_id set (only bundle_tier). Individual-tool revenue cannot be mapped without tool_id values.';
+    if (diag.stripe_price_ids === 0) return 'No active Stripe subscriptions. Once subscriptions exist they will appear here if their priceIds match tool_prices.';
+    // We have rows on both sides but nothing matched — the priceIds in
+    // active subscriptions are not present in tool_prices. Most often
+    // this means all current subscriptions are bundle subscriptions
+    // (their priceIds map to bundle_tier rows, which have no tool_id),
+    // OR Stripe price IDs were rotated without updating tool_prices.
+    if (diag.mapped_count === 0 && diag.unmatched_price_ids && diag.unmatched_price_ids.length > 0) {
+      return 'No Stripe subscription priceIds match a tool_prices row with a tool_id set. ' +
+             'If all current subscriptions are bundles, this is expected — bundle revenue is shown above. ' +
+             'Otherwise the priceIds in tool_prices need to match the live Stripe priceIds.';
+    }
+    return 'No tool revenue mapped.';
+  },
+
   _showError: function(msg) {
     if (typeof window.showModalError === 'function') {
       window.showModalError(msg);
@@ -572,16 +591,22 @@ window.ADMIN_LOGIC = {
 
       // Revenue by tool
       var rt = d.revenue_by_tool || [];
+      var diag = d.revenue_by_tool_diagnostic || {};
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Revenue by Tool</div></div>';
       html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tool</th><th>MRR</th></tr></thead><tbody>';
       if (rt.length === 0) {
-        html += '<tr><td colspan="2" class="admin-empty">No tool revenue mapped. Ensure tool_prices.tool_id is populated for each Stripe price.</td></tr>';
+        html += '<tr><td colspan="2" class="admin-empty">' + self._esc(self._explainEmptyToolRevenue(diag)) + '</td></tr>';
       } else {
         rt.forEach(function(t) {
           html += '<tr><td>' + self._esc(self._toolName(t.tool_id)) + '</td><td>' + self._formatMoney(t.mrr) + '/mth</td></tr>';
         });
       }
       html += '</tbody></table></div></div>';
+
+      // Diagnostic note when revenue_by_tool is empty but we have stripe data
+      if (rt.length === 0 && diag && diag.unmatched_price_ids && diag.unmatched_price_ids.length > 0) {
+        html += '<div class="admin-note" style="font-family:monospace;font-size:11px;">Stripe priceIds not matched in tool_prices: ' + self._esc(diag.unmatched_price_ids.join(', ')) + '</div>';
+      }
 
       // Recent cancellations
       var rc = d.recent_cancellations || [];
