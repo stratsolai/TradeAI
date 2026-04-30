@@ -510,10 +510,14 @@ window.BP_MARKETING = {
       el.innerHTML = '<div style="text-align:center;padding:20px">' +
         '<div style="color:var(--red);margin-bottom:16px">' + window.escHtml(err.message) + '</div>' +
         '<div style="display:flex;gap:12px;justify-content:center">' +
+          '<button class="perm-modal-cancel" id="prof-mkt-err-cancel">Cancel</button>' +
           '<button class="btn-back" id="prof-mkt-err-back">Back</button>' +
           '<button class="btn-primary" id="prof-mkt-err-retry">Try Again</button>' +
         '</div>' +
       '</div>';
+      document.getElementById('prof-mkt-err-cancel').addEventListener('click', function() {
+        self._closeModal();
+      });
       document.getElementById('prof-mkt-err-back').addEventListener('click', function() {
         self._topic = 5;
         self._renderTopic();
@@ -550,12 +554,16 @@ window.BP_MARKETING = {
     html += '</div>';
     html += pr._field('Tagline', '<input type="text" class="profile-input" id="prof-sum-tagline" value="' + window.escHtml(tag) + '" placeholder="(optional)">');
     html += '<div style="display:flex;gap:12px;margin-top:20px">';
+    html += '<button class="perm-modal-cancel" id="prof-mkt-review-cancel">Cancel</button>';
     html += '<button class="btn-outline" id="prof-mkt-redo">Start Over</button>';
     html += '<button class="btn-save" id="prof-mkt-save-final" style="margin-left:auto">Confirm &amp; Save</button>';
     html += '</div>';
 
     el.innerHTML = html;
 
+    document.getElementById('prof-mkt-review-cancel').addEventListener('click', function() {
+      self._closeModal();
+    });
     document.getElementById('prof-mkt-redo').addEventListener('click', function() {
       self._topic = 0;
       self._renderTopic();
@@ -565,11 +573,15 @@ window.BP_MARKETING = {
     });
   },
 
-  _saveFinal: function() {
+  _saveFinal: async function() {
     var self = this;
     var btn = document.getElementById('prof-mkt-save-final');
+    if (!btn || btn.disabled) return;
+    var label = btn.textContent;
+    btn.textContent = 'Saving...';
+    btn.disabled = true;
 
-    window.handleSave(btn, async function() {
+    try {
       var updates = {
         marketing_theme_differentiators: document.getElementById('prof-sum-diff').value.trim(),
         marketing_theme_awareness: document.getElementById('prof-sum-aware').value.trim(),
@@ -584,8 +596,11 @@ window.BP_MARKETING = {
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
 
-      self._closeModal();
-      self._renderPanel();
+      btn.textContent = 'Saved \u2713';
+      setTimeout(function() {
+        self._closeModal();
+        self._renderPanel();
+      }, 800);
 
       try {
         var sessionRes = await self._supabase.auth.getSession();
@@ -593,13 +608,14 @@ window.BP_MARKETING = {
         if (sess) {
           fetch('/api/predis-brand', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + sess.access_token
-            }
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sess.access_token }
           }).catch(function() {});
         }
       } catch (e) {}
-    }, document.getElementById('prof-save-msg'));
+    } catch (err) {
+      btn.textContent = label;
+      btn.disabled = false;
+      window.showModalError(err.message || 'Could not save. Please try again.');
+    }
   }
 };
