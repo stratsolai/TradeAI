@@ -204,7 +204,7 @@ window.BP_MARKETING = {
           if (attr === 'tone' || attr === 'specdur' || attr === 'tagline' || attr === 'custcount') {
             pill.parentElement.querySelectorAll('.filter-pill').forEach(function(s) { s.classList.remove('active'); });
           }
-          if (attr === 'feelingMax') {
+          if (attr === 'feeling') {
             var activeCount = pill.parentElement.querySelectorAll('.filter-pill.active').length;
             if (activeCount >= 2) return;
           }
@@ -358,7 +358,7 @@ window.BP_MARKETING = {
     ];
     var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">How do you want customers to feel?</div>';
     html += '<div class="profile-label" style="color:var(--text-muted);margin-bottom:12px">Select up to 2</div>';
-    html += this._pills(items, a.feeling, 'feelingMax');
+    html += this._pills(items, a.feeling, 'feeling');
     html += '<div class="profile-field-full" style="margin-top:8px"><label class="profile-label">Other (optional)</label>' +
       '<input type="text" class="profile-input" id="prof-mkt-feeling-other" value="' + window.escHtml(a.feeling_other) + '"></div>';
     return html;
@@ -459,8 +459,8 @@ window.BP_MARKETING = {
       if (awards) a.awards_text = awards.value;
     } else if (t === 2) {
       a.feeling = [];
-      document.querySelectorAll('[data-feeling-max].active, [data-feelingMax].active').forEach(function(p) {
-        a.feeling.push(p.dataset.feelingMax || p.dataset['feeling-max']);
+      document.querySelectorAll('[data-feeling].active').forEach(function(p) {
+        a.feeling.push(p.dataset.feeling);
       });
       var fother = document.getElementById('prof-mkt-feeling-other');
       if (fother) a.feeling_other = fother.value;
