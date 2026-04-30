@@ -46,33 +46,52 @@ export default async function handler(req, res) {
   switch (event.type) {
     case 'checkout.session.completed':
       const session = event.data.object;
-      
+
       console.log('Checkout completed!');
       console.log('Session metadata:', session.metadata);
       console.log('Client reference ID:', session.client_reference_id);
-      
+
       // Extract metadata
       const userId = session.metadata?.userId || session.client_reference_id;
       const toolId = session.metadata?.toolId;
+      const tier = session.metadata?.tier;
       const toolName = session.metadata?.toolName;
-      
+
       console.log('Extracted userId:', userId);
       console.log('Extracted toolId:', toolId);
+      console.log('Extracted tier:', tier);
       console.log('Extracted toolName:', toolName);
-      
-      if (userId && toolId) {
-        console.log(`Attempting to activate ${toolId} for user ${userId}`);
-        await confirmSubscription(session);
-        console.log(`Successfully activated ${toolId} for user ${userId}`);
-      } else {
-        console.error('Missing userId or toolId in webhook');
+
+      if (!userId) {
+        console.error('Missing userId in webhook session metadata');
+        break;
+      }
+
+      // Mark trial → paid and record stripe_customer_id. Runs for both
+      // bundle and single-tool purchases.
+      await confirmSubscription(session);
+
+      // For single-tool purchases, append the tool to activated_tools.
+      // Bundle tools are pre-set in subscribe-confirm.html before checkout.
+      if (toolId) {
+        try {
+          console.log('Adding tool to activated_tools:', toolId);
+          await activateTool(userId, toolId);
+        } catch (e) {
+          console.error('activateTool failed:', e && e.message);
+        }
       }
       break;
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
-      console.log('Subscription canceled:', subscription.id);
-      // TODO: Deactivate tool
+      console.log('Subscription deleted:', subscription.id);
+      console.log('Subscription metadata:', subscription.metadata);
+      try {
+        await deactivateSubscription(subscription);
+      } catch (e) {
+        console.error('deactivateSubscription failed:', e && e.message);
+      }
       break;
 
     default:
@@ -226,9 +245,121 @@ async function activateTool(userId, toolId) {
     });
 
     console.log('Tool activation complete!');
-    
+
   } catch (error) {
     console.error('Error in activateTool:', error);
     throw error;
+  }
+}
+
+// Remove tools from a user's activated_tools when their subscription is
+// deleted in Stripe. Reads userId/toolId/tier/tools from
+// subscription.metadata (which requires create-checkout.js to pass
+// subscription_data.metadata when creating the checkout session — see
+// note in PR for the companion change).
+async function deactivateSubscription(subscription) {
+  const meta = subscription.metadata || {};
+  let userId = meta.userId;
+  const toolId = meta.toolId;
+  const tier = meta.tier;
+  const toolsCsv = meta.tools;
+
+  console.log('deactivateSubscription metadata:', { userId, toolId, tier, toolsCsv });
+
+  if (!userId) {
+    console.log('No userId in subscription metadata; looking up by stripe_customer_id', subscription.customer);
+    userId = await lookupUserByCustomerId(subscription.customer);
+  }
+  if (!userId) {
+    console.error('deactivateSubscription: cannot determine userId, skipping', subscription.id);
+    return;
+  }
+
+  // Fetch current activated_tools
+  const profileRes = await fetch(
+    process.env.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + userId + '&select=activated_tools',
+    {
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+      }
+    }
+  );
+  if (!profileRes.ok) {
+    console.error('deactivateSubscription: profile fetch failed', profileRes.status, await profileRes.text());
+    return;
+  }
+  const profileData = await profileRes.json();
+  const current = (profileData[0] && Array.isArray(profileData[0].activated_tools)) ? profileData[0].activated_tools : [];
+  let updated = current.slice();
+
+  if (toolId) {
+    // Single tool subscription — remove just that tool
+    updated = updated.filter(function(t) { return t !== toolId; });
+    console.log('Removing single tool', toolId, 'for user', userId);
+  } else if (tier === 'stax-all') {
+    updated = [];
+    console.log('Removing all tools (stax-all canceled) for user', userId);
+  } else if (tier === 'stax3' || tier === 'stax6') {
+    if (toolsCsv) {
+      const tools = toolsCsv.split(',').map(function(t) { return t.trim(); }).filter(Boolean);
+      updated = updated.filter(function(t) { return tools.indexOf(t) === -1; });
+      console.log('Removing bundle tools', tools, '(' + tier + ') for user', userId);
+    } else {
+      console.warn('No tools list in metadata for tier', tier, '— clearing all activated_tools');
+      updated = [];
+    }
+  } else {
+    console.error('deactivateSubscription: no toolId or tier in metadata; skipping', subscription.id);
+    return;
+  }
+
+  const patchPayload = { activated_tools: updated };
+  if (updated.length === 0) {
+    patchPayload.bundle_tier = null;
+  }
+
+  const patchRes = await fetch(
+    process.env.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + userId,
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(patchPayload)
+    }
+  );
+  if (!patchRes.ok) {
+    const errText = await patchRes.text();
+    console.error('deactivateSubscription PATCH failed:', patchRes.status, errText);
+  } else {
+    console.log('deactivateSubscription: profiles updated for user', userId, '— now', updated.length, 'tools');
+  }
+}
+
+async function lookupUserByCustomerId(customerId) {
+  if (!customerId) return null;
+  try {
+    const res = await fetch(
+      process.env.SUPABASE_URL + '/rest/v1/profiles?stripe_customer_id=eq.' + encodeURIComponent(customerId) + '&select=id',
+      {
+        headers: {
+          'apikey': process.env.SUPABASE_SERVICE_KEY,
+          'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY
+        }
+      }
+    );
+    if (!res.ok) {
+      console.error('lookupUserByCustomerId failed:', res.status);
+      return null;
+    }
+    const rows = await res.json();
+    return rows && rows[0] ? rows[0].id : null;
+  } catch (err) {
+    console.error('lookupUserByCustomerId error:', err);
+    return null;
   }
 }
