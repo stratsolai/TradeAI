@@ -81,12 +81,14 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
-  // Area-chart-with-arrow trend graphic. The line traces through the values,
-  // the area underneath is filled with a top-heavy gradient (0.5 → 0 alpha)
-  // for clear "shaded area chart" appearance, and the line terminates in a
-  // visible arrow head in the trend direction.
-  //   values:    7-day series (oldest → newest)
-  //   direction: 'up' or 'down'
+  // Mini area chart with arrow head. The line is mapped into the upper
+  // ~45% of the chart so the filled area below is ALWAYS visible (even for
+  // sparse/zero data). The line terminates in an arrow tip; the area is
+  // closed back down to the baseline and filled with a vertical gradient
+  // (solid colour at the line, fading to faint at the baseline). Both line
+  // colour and area colour are green for good outcomes / red for bad.
+  //   values:    series (oldest → newest)
+  //   direction: 'up' | 'down'
   //   good:      true → green palette, false → red palette
   //   opts:      { width, height, pad, ahSize, stroke, klass }
   var _trendGradSeq = 0;
@@ -94,68 +96,84 @@ window.DASH_WIDGETS = (function() {
     opts = opts || {};
     var width = opts.width || 100;
     var height = opts.height || 36;
-    var pad = opts.pad || 4;
+    var pad = opts.pad || 3;
     var ahSize = opts.ahSize || 7;
-    var stroke = opts.stroke || 2.5;
+    var stroke = opts.stroke || 2.4;
     var klass = opts.klass || 'dash-bigtrend-graphic';
 
-    if (!values || !values.length) values = [0, 0];
-    if (values.length === 1) values = [values[0], values[0]];
+    var series = (values && values.length) ? values.slice() : [0, 0];
+    if (series.length === 1) series = [series[0], series[0]];
 
-    var max = Math.max.apply(null, values);
-    var min = Math.min.apply(null, values);
-    var range = (max - min) || 1;
+    // If the data is flat, synthesise a gentle slope in the trend direction
+    // so the chart still reads as up/down rather than a flat horizontal line.
+    var maxRaw = Math.max.apply(null, series);
+    var minRaw = Math.min.apply(null, series);
+    if (maxRaw === minRaw) {
+      for (var k = 0; k < series.length; k++) {
+        series[k] = direction === 'up' ? k : (series.length - 1 - k);
+      }
+      maxRaw = Math.max.apply(null, series);
+      minRaw = Math.min.apply(null, series);
+    }
+    var range = (maxRaw - minRaw) || 1;
+
+    // Geometry — line lives in the top ~50% of the chart, area fills the
+    // remaining ~50% down to the baseline.
+    var baseY = height - pad;                 // baseline (bottom of area fill)
+    var lineTopY = pad + 1;                   // highest the line can sit
+    var lineFloorY = pad + (height - pad * 2) * 0.55;  // lowest the line sits → area always ≥ ~45% tall
     var lineEndX = width - ahSize - 4;
-    var step = values.length > 1 ? (lineEndX - pad) / (values.length - 1) : 0;
+    var step = (lineEndX - pad) / (series.length - 1);
 
-    // Polyline through the data
     var pts = [];
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < series.length; i++) {
       var x = pad + i * step;
-      // Reserve a top buffer so the line doesn't bleed into the arrowhead
-      var y = (height - pad - 1) - ((values[i] - min) / range) * (height - pad * 2 - 2);
+      var t = (series[i] - minRaw) / range;        // 0 = lowest, 1 = highest
+      var y = lineFloorY - t * (lineFloorY - lineTopY);
       pts.push({ x: x, y: y });
     }
 
-    // Force trend direction visually by terminating into the arrow tip
+    // Force the visual trend direction by terminating into the arrow tip.
+    // tipY is constrained to the line's vertical range so it stays clean.
     var tipX = width - ahSize - 2;
-    var tipY = direction === 'up' ? (pad + 1) : (height - pad - 1);
+    var tipY = direction === 'up' ? lineTopY : lineFloorY;
     pts.push({ x: tipX, y: tipY });
 
-    var lineD = pts.map(function(p, i) {
-      return (i === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
+    var lineD = pts.map(function(p, idx) {
+      return (idx === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
     }).join(' ');
 
-    // Area = line + down to baseline at the right + back to baseline at the left + close
-    var bottom = (height - pad).toFixed(2);
+    // Area = line + drop to baseline at the tip x + back across to baseline
+    // at the start x + close. This ALWAYS produces a visible trapezoid/area.
     var areaD = lineD
-      + ' L' + tipX.toFixed(2) + ' ' + bottom
-      + ' L' + pad.toFixed(2) + ' ' + bottom
+      + ' L' + tipX.toFixed(2) + ' ' + baseY.toFixed(2)
+      + ' L' + pad.toFixed(2) + ' ' + baseY.toFixed(2)
       + ' Z';
 
     // Arrow head — solid filled triangle pointing in trend direction
     var ahPoints;
     if (direction === 'up') {
-      ahPoints = (tipX) + ',' + (tipY - 1) + ' '
-               + (tipX - ahSize) + ',' + (tipY + ahSize) + ' '
-               + (tipX + ahSize) + ',' + (tipY + ahSize);
+      ahPoints = (tipX) + ',' + (tipY - 2) + ' '
+               + (tipX - ahSize) + ',' + (tipY + ahSize - 1) + ' '
+               + (tipX + ahSize) + ',' + (tipY + ahSize - 1);
     } else {
-      ahPoints = (tipX) + ',' + (tipY + 1) + ' '
-               + (tipX - ahSize) + ',' + (tipY - ahSize) + ' '
-               + (tipX + ahSize) + ',' + (tipY - ahSize);
+      ahPoints = (tipX) + ',' + (tipY + 2) + ' '
+               + (tipX - ahSize) + ',' + (tipY - ahSize + 1) + ' '
+               + (tipX + ahSize) + ',' + (tipY - ahSize + 1);
     }
 
-    // Use literal hex so the linearGradient stop-color resolves cleanly in
-    // all browsers — CSS custom properties don't always resolve inside
-    // <stop> attributes.
+    // Literal hex stops so the linearGradient stop-color renders reliably
+    // across browsers. The gradient runs from the top of the chart (solid
+    // colour at the line) to the baseline (faint, but not fully invisible).
     var color = good ? '#28a745' : '#dc3545';
     var gradId = 'sg' + (++_trendGradSeq);
-    return '<svg class="' + klass + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true" preserveAspectRatio="none">'
+    return '<svg class="' + klass + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
       + '<defs><linearGradient id="' + gradId + '" x1="0" x2="0" y1="0" y2="1">'
-      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.5" />'
-      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0" />'
+      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.6" />'
+      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0.08" />'
       + '</linearGradient></defs>'
       + '<path d="' + areaD + '" fill="url(#' + gradId + ')" stroke="none" />'
+      + '<path d="' + areaD + '" fill="' + color + '" fill-opacity="0.18" stroke="none" />'
       + '<path d="' + lineD + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" />'
       + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
       + '</svg>';
@@ -717,9 +735,9 @@ window.DASH_WIDGETS = (function() {
   // Expanded: scheduled posts, recent post performance, drafts to review,
   // platforms connected.
   async function renderSocial() {
-    var draftCount = 0, scheduled = [], scheduledNext7 = [];
+    var draftCount = 0, scheduledNext7 = [];
     var weekPosts = [], priorPosts = [];
-    var fbConnected = false, igConnected = false;
+    var platformCounts = { facebook: 0, instagram: 0, linkedin: 0 };
 
     try {
       var draftRes = await _supabase.from('social_posts')
@@ -732,7 +750,7 @@ window.DASH_WIDGETS = (function() {
       var twoWeeksAgo = new Date(Date.now() - 14 * 86400000);
 
       var weekRes = await _supabase.from('social_posts')
-        .select('id, caption, reach, engagement, clicks, published_at, campaign_id')
+        .select('id, caption, reach, engagement, clicks, published_at, campaign_id, image_url, connections')
         .eq('user_id', _userId).eq('status', 'published')
         .gte('published_at', weekAgo.toISOString())
         .order('published_at', { ascending: false });
@@ -740,19 +758,12 @@ window.DASH_WIDGETS = (function() {
       weekPosts = weekRes.data || [];
 
       var priorRes = await _supabase.from('social_posts')
-        .select('reach, published_at')
+        .select('reach, engagement, published_at')
         .eq('user_id', _userId).eq('status', 'published')
         .gte('published_at', twoWeeksAgo.toISOString())
         .lt('published_at', weekAgo.toISOString());
       if (priorRes.error) console.error('[Dashboard] Social prior error:', priorRes.error.message || priorRes.error);
       priorPosts = priorRes.data || [];
-
-      var schedRes = await _supabase.from('social_posts')
-        .select('id, caption, scheduled_at')
-        .eq('user_id', _userId).eq('status', 'scheduled')
-        .order('scheduled_at', { ascending: true }).limit(3);
-      if (schedRes.error) console.error('[Dashboard] Social scheduled error:', schedRes.error.message || schedRes.error);
-      scheduled = schedRes.data || [];
 
       // All scheduled posts in the next 7 days — drives the week-strip
       var weekStartIso = (function() {
@@ -771,19 +782,23 @@ window.DASH_WIDGETS = (function() {
       if (sched7.error) console.error('[Dashboard] Social week-strip error:', sched7.error.message || sched7.error);
       scheduledNext7 = sched7.data || [];
 
-      var setRes = await _supabase.from('social_settings')
-        .select('meta_connected, instagram_account_id')
-        .eq('user_id', _userId).maybeSingle();
-      if (setRes.error) console.error('[Dashboard] Social settings error:', setRes.error.message || setRes.error);
-      if (setRes.data) {
-        fbConnected = !!setRes.data.meta_connected;
-        igConnected = !!setRes.data.instagram_account_id;
-      }
+      // Platform breakdown — count published posts per platform from the
+      // `connections` array. A single post can target multiple platforms,
+      // so each connection counts independently.
+      var platRes = await _supabase.from('social_posts')
+        .select('connections')
+        .eq('user_id', _userId).eq('status', 'published');
+      if (platRes.error) console.error('[Dashboard] Social platform error:', platRes.error.message || platRes.error);
+      (platRes.data || []).forEach(function(r) {
+        var conns = Array.isArray(r.connections) ? r.connections : [];
+        conns.forEach(function(c) {
+          var key = String(c).toLowerCase();
+          if (key in platformCounts) platformCounts[key] += 1;
+        });
+      });
     } catch (e) {
       console.error('[Dashboard] Social render error:', e.message || e);
     }
-
-    var connectedCount = (fbConnected ? 1 : 0) + (igConnected ? 1 : 0);
 
     // Build trend (daily reach + engagement last 7 days)
     var dailyReach = [0,0,0,0,0,0,0];
@@ -838,34 +853,64 @@ window.DASH_WIDGETS = (function() {
     // and link to the Scheduled tab pre-filtered to that date.
     summary += weekStripHtml(scheduledNext7);
 
-    // Expanded: campaign activity + scheduled + drafts/platforms
-    var detail = '';
-    detail += '<div class="section-label" style="margin:6px 0 4px">Upcoming Scheduled</div>';
-    if (scheduled.length) {
-      scheduled.forEach(function(s) {
-        var caption = (s.caption || '').slice(0, 60);
-        detail += tagRowHtml(fmtShort(s.scheduled_at), caption, '/social?id=' + s.id);
-      });
-    } else {
-      detail += emptyHtml('Nothing scheduled.');
-    }
+    // Expanded: tighter, post-performance with thumbnails + per-platform counts.
+    var detail = '<div class="dash-tile-detail-compact">';
 
-    detail += '<div class="section-label" style="margin:10px 0 4px">Recent Post Performance</div>';
+    // Recent Post Performance — last 3 published posts in the past 7 days.
+    detail += '<div class="section-label dash-detail-section-label">Recent Post Performance</div>';
     if (weekPosts.length) {
       weekPosts.slice(0, 3).forEach(function(p) {
-        var stats = (p.reach || 0) + ' Reach · ' + (p.engagement || 0) + ' Engaged · ' + (p.clicks || 0) + ' Clicks';
-        var dateLabel = fmtShort(p.published_at) || 'Post';
-        detail += tagRowHtml(dateLabel, stats, '/social?id=' + p.id);
+        detail += socialPostRowHtml(p);
       });
     } else {
       detail += emptyHtml('No published posts in the last 7 days.');
     }
 
-    detail += '<div class="section-label" style="margin:10px 0 4px">Workspace</div>';
+    // Per-platform published-post counts (replaces the single Platforms
+    // Connected number — gives a richer view of where output is going).
+    detail += '<div class="section-label dash-detail-section-label">Posts by Platform</div>';
+    detail += '<div class="dash-platform-row">';
+    detail += platformCellHtml('Facebook', platformCounts.facebook, '/social#published');
+    detail += platformCellHtml('Instagram', platformCounts.instagram, '/social#published');
+    detail += platformCellHtml('LinkedIn', platformCounts.linkedin, '/social#published');
+    detail += '</div>';
+
+    // Drafts to review still surfaces here so it's not lost from the tile.
+    detail += '<div class="section-label dash-detail-section-label">Workspace</div>';
     detail += rowHtml(draftCount, 'Draft' + (draftCount === 1 ? '' : 's') + ' to Review', '/social#drafts');
-    detail += rowHtml(connectedCount, 'Platform' + (connectedCount === 1 ? '' : 's') + ' Connected', '/social-settings.html');
+
+    detail += '</div>';
 
     return tileShell('social', '📱', 'Marketing & Social Media', '/social', '', summary, detail);
+  }
+
+  // Compact post-performance row used in the Social tile expanded section —
+  // thumbnail, reach / engagement / clicks, links to the post in /social.
+  function socialPostRowHtml(p) {
+    var thumb = p.image_url
+      ? '<img src="' + window.escHtml(p.image_url) + '" alt="" class="dash-post-thumb-img">'
+      : '<span class="dash-post-thumb-empty" aria-hidden="true">📝</span>';
+    var dateLabel = fmtShort(p.published_at) || 'Post';
+    var clicks = Number(p.clicks) || 0;
+    return '<a href="/social?id=' + window.escHtml(String(p.id)) + '" class="dash-post-row">'
+      + '<span class="dash-post-thumb">' + thumb + '</span>'
+      + '<span class="dash-post-info">'
+        + '<span class="dash-post-date">' + window.escHtml(dateLabel) + '</span>'
+        + '<span class="dash-post-stats">'
+          + '<span class="dash-post-stat"><strong>' + (Number(p.reach) || 0) + '</strong> Reach</span>'
+          + '<span class="dash-post-stat"><strong>' + (Number(p.engagement) || 0) + '</strong> Engaged</span>'
+          + (clicks > 0 ? '<span class="dash-post-stat"><strong>' + clicks + '</strong> Clicks</span>' : '')
+        + '</span>'
+      + '</span>'
+      + '</a>';
+  }
+
+  // One column of the per-platform breakdown in the Social tile expanded view.
+  function platformCellHtml(label, count, href) {
+    return '<a href="' + window.escHtml(href) + '" class="dash-platform-cell">'
+      + '<span class="dash-platform-count">' + count + '</span>'
+      + '<span class="dash-platform-label">' + window.escHtml(label) + '</span>'
+      + '</a>';
   }
 
   // ── Website Chatbot tile ──

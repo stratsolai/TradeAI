@@ -80,7 +80,82 @@
     /* ── Tile body sections ── */
     .dash-tile-summary { padding: 10px 14px; }
     .dash-tile-detail { display: none; padding: 0 14px 10px; border-top: 1px solid var(--border-light); }
-    .dash-tile-detail.open { display: block; }
+    .dash-tile-detail.open { display: block; flex: 1 1 auto; }
+
+    /* Compact detail layout — tighter padding so expanded content reads
+       densely and three tiles stay close to the same expanded height. */
+    .dash-tile-detail-compact .section-label { margin: 8px 0 4px; }
+    .dash-tile-detail-compact .dash-tile-row { padding: 6px 0; }
+
+    /* Detail section label — tighter top/bottom margins than the default. */
+    .dash-detail-section-label { margin: 8px 0 4px !important; }
+
+    /* Recent post performance row (Social tile expanded) */
+    .dash-post-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 6px 0; text-decoration: none; color: var(--text);
+      border-top: 1px solid var(--border-light);
+    }
+    .dash-post-row:first-of-type { border-top: none; }
+    .dash-post-row:hover { color: var(--blue); }
+    .dash-post-thumb {
+      width: 40px; height: 40px;
+      border-radius: var(--btn-radius);
+      background: var(--bg-subtle);
+      overflow: hidden; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: var(--text-muted);
+    }
+    .dash-post-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+    .dash-post-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+    .dash-post-date {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+    }
+    .dash-post-stats { display: flex; gap: 12px; flex-wrap: wrap; }
+    .dash-post-stat {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+    }
+    .dash-post-stat strong {
+      color: var(--text);
+      font-weight: var(--font-weight-semibold);
+      margin-right: 2px;
+    }
+
+    /* Per-platform breakdown row (Social tile expanded) */
+    .dash-platform-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 4px 0 8px;
+    }
+    .dash-platform-cell {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 8px 4px;
+      background: var(--bg-subtle);
+      border-radius: var(--btn-radius);
+      text-decoration: none; color: var(--text);
+      transition: background var(--btn-transition);
+    }
+    .dash-platform-cell:hover { background: var(--blue-light); color: var(--blue); }
+    .dash-platform-count {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      line-height: 1;
+    }
+    .dash-platform-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      margin-top: 2px;
+    }
 
     /* ── Tile expand/collapse toggle button (down-arrow in white circle per spec) ── */
     .dash-tile-toggle {

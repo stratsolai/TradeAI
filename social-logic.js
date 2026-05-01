@@ -439,47 +439,59 @@ window.SOCIAL_LOGIC = {
     setGraphic('sm-perf-rate-graphic', dailyRate, rateDir);
   },
 
-  // SVG trend graphic — area chart with a gradient-filled area below the
-  // line and an arrowhead at the end, sized for the social.html performance
-  // summary cards. Matches the dashboard tile style.
+  // SVG trend graphic — mini area chart that ends in an arrow head. The
+  // line is mapped into the upper portion of the chart so the filled area
+  // beneath it (gradient + flat fill overlay) is always clearly visible,
+  // even when the underlying data is sparse or zero.
   _trendGradSeq: 0,
   _buildTrendSvg: function(values, direction, good) {
-    var width = 90, height = 36, pad = 4, ahSize = 7, stroke = 2.5;
-    if (!values || !values.length) values = [0, 0];
-    if (values.length === 1) values = [values[0], values[0]];
-    var max = Math.max.apply(null, values);
-    var min = Math.min.apply(null, values);
-    var range = (max - min) || 1;
+    var width = 90, height = 36, pad = 3, ahSize = 7, stroke = 2.4;
+    var series = (values && values.length) ? values.slice() : [0, 0];
+    if (series.length === 1) series = [series[0], series[0]];
+    var maxRaw = Math.max.apply(null, series);
+    var minRaw = Math.min.apply(null, series);
+    if (maxRaw === minRaw) {
+      for (var k = 0; k < series.length; k++) {
+        series[k] = direction === 'up' ? k : (series.length - 1 - k);
+      }
+      maxRaw = Math.max.apply(null, series);
+      minRaw = Math.min.apply(null, series);
+    }
+    var range = (maxRaw - minRaw) || 1;
+    var baseY = height - pad;
+    var lineTopY = pad + 1;
+    var lineFloorY = pad + (height - pad * 2) * 0.55;
     var lineEndX = width - ahSize - 4;
-    var step = values.length > 1 ? (lineEndX - pad) / (values.length - 1) : 0;
+    var step = (lineEndX - pad) / (series.length - 1);
     var pts = [];
-    for (var i = 0; i < values.length; i++) {
+    for (var i = 0; i < series.length; i++) {
       var x = pad + i * step;
-      var y = (height - pad - 1) - ((values[i] - min) / range) * (height - pad * 2 - 2);
+      var t = (series[i] - minRaw) / range;
+      var y = lineFloorY - t * (lineFloorY - lineTopY);
       pts.push({ x: x, y: y });
     }
     var tipX = width - ahSize - 2;
-    var tipY = direction === 'up' ? (pad + 1) : (height - pad - 1);
+    var tipY = direction === 'up' ? lineTopY : lineFloorY;
     pts.push({ x: tipX, y: tipY });
-    var lineD = pts.map(function(p, i) {
-      return (i === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
+    var lineD = pts.map(function(p, idx) {
+      return (idx === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
     }).join(' ');
-    var bottom = (height - pad).toFixed(2);
     var areaD = lineD
-      + ' L' + tipX.toFixed(2) + ' ' + bottom
-      + ' L' + pad.toFixed(2) + ' ' + bottom
+      + ' L' + tipX.toFixed(2) + ' ' + baseY.toFixed(2)
+      + ' L' + pad.toFixed(2) + ' ' + baseY.toFixed(2)
       + ' Z';
     var ahPoints = direction === 'up'
-      ? (tipX) + ',' + (tipY - 1) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize)
-      : (tipX) + ',' + (tipY + 1) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize);
+      ? (tipX) + ',' + (tipY - 2) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize - 1) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize - 1)
+      : (tipX) + ',' + (tipY + 2) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize + 1) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize + 1);
     var color = good ? '#28a745' : '#dc3545';
     var gradId = 'smtg' + (++this._trendGradSeq);
     return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
       + '<defs><linearGradient id="' + gradId + '" x1="0" x2="0" y1="0" y2="1">'
-      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.5" />'
-      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0" />'
+      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.6" />'
+      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0.08" />'
       + '</linearGradient></defs>'
       + '<path d="' + areaD + '" fill="url(#' + gradId + ')" stroke="none" />'
+      + '<path d="' + areaD + '" fill="' + color + '" fill-opacity="0.18" stroke="none" />'
       + '<path d="' + lineD + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" />'
       + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
       + '</svg>';
