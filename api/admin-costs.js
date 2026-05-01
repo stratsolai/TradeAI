@@ -167,35 +167,23 @@ function parseAmount(a) {
 }
 
 // ── Vercel ───────────────────────────────────────────────────────
-// Vercel Billing API: GET /v1/billing/charges?from=ISO&to=ISO
-// Auth: Authorization: Bearer <token>
+// Vercel does not publish a public billing-as-dollars REST endpoint.
+// /v1/billing/charges (which the original automation spec named)
+// returns 404 "Costs not found" against Pro plans on personal
+// accounts. Until Vercel exposes one, surface a "manual" indicator
+// linking to the dashboard — same pattern Stripe uses for status.
+//
+// If Vercel ever publishes the endpoint, replace this body with the
+// real fetch (token via VERCEL_API_TOKEN, optional teamId via
+// VERCEL_TEAM_ID, parse via the parseVercelBody helper below which
+// is preserved for that future).
 async function fetchVercelCosts(periods) {
-  const token = process.env.VERCEL_API_TOKEN;
-  if (!token) {
-    return {
-      error: 'VERCEL_API_TOKEN env var not configured',
-      current_month: null,
-      previous_month: null,
-      trend_percent: null
-    };
-  }
-
-  const teamQuery = process.env.VERCEL_TEAM_ID ? '&teamId=' + encodeURIComponent(process.env.VERCEL_TEAM_ID) : '';
-
-  const [current, previous] = await Promise.all([
-    vercelChargesSum(token, periods.startCurrentISO, periods.endCurrentISO, teamQuery),
-    vercelChargesSum(token, periods.startPrevISO, periods.endPrevISO, teamQuery)
-  ]);
-
   return {
-    current_month: {
-      cost_usd: round2(current.total),
-      breakdown: current.breakdown
-    },
-    previous_month: {
-      cost_usd: round2(previous.total)
-    },
-    trend_percent: trendPercent(current.total, previous.total)
+    manual: true,
+    page_url: 'https://vercel.com/dashboard/usage',
+    current_month: null,
+    previous_month: null,
+    trend_percent: null
   };
 }
 

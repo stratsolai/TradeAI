@@ -387,6 +387,15 @@ window.ADMIN_LOGIC = {
     if (!data) {
       return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">No data</td></tr>';
     }
+    // Manual providers — no public billing API. Show a "Check
+    // dashboard" link instead of dollar values + trend.
+    if (data.manual) {
+      var url = data.page_url || '';
+      return '<tr><td>' + self._esc(name) + '</td>'
+        + '<td colspan="3"><span style="color:var(--text-muted);font-size:var(--note-font-size);">No public billing API</span>'
+        + (url ? ' &middot; <a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--blue);">Check dashboard &rarr;</a>' : '')
+        + '</td></tr>';
+    }
     if (data.error) {
       return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">' + self._esc(data.error) + '</td></tr>';
     }
