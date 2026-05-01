@@ -166,21 +166,52 @@ async function fetchSupplierLimits() {
   return r.data || [];
 }
 
+// Profiles do not carry email — that lives in auth.users and must be
+// merged via supabase.auth.admin.listUsers (same pattern as
+// api/admin-customers.js). Without the merge a profiles SELECT that
+// names "email" hits "column profiles.email does not exist".
 async function fetchActiveProfiles() {
   const r = await supabase
     .from('profiles')
-    .select('id, email, business_name, activated_tools, bundle_tier, is_trial, stripe_customer_id');
+    .select('id, business_name, activated_tools, bundle_tier, is_trial, stripe_customer_id');
   if (r.error) {
     console.error('[admin-profitability] profiles error:', r.error.message);
     return [];
   }
-  return r.data || [];
+  const rows = r.data || [];
+  const emailMap = await fetchEmailMap();
+  rows.forEach(function(p) { p.email = emailMap.get(p.id) || ''; });
+  return rows;
 }
 
+// Build Map<userId, email> from auth.users. Caps at 20k users — same
+// safety cap as admin-customers.js.
+async function fetchEmailMap() {
+  const map = new Map();
+  let page = 1;
+  const perPage = 1000;
+  for (;;) {
+    const r = await supabase.auth.admin.listUsers({ page: page, perPage: perPage });
+    if (r.error) {
+      console.error('[admin-profitability] listUsers error:', r.error.message);
+      break;
+    }
+    const users = (r.data && r.data.users) || [];
+    users.forEach(function(u) { map.set(u.id, u.email || ''); });
+    if (users.length < perPage) break;
+    page += 1;
+    if (page > 20) break;
+  }
+  return map;
+}
+
+// tool_prices uses `price_id` (matches the Stripe price ID), not
+// `stripe_price_id`. Cross-reference get-prices.js, admin-overview.js
+// and stripe-webhook.js — all use price_id.
 async function fetchToolPrices() {
   const r = await supabase
     .from('tool_prices')
-    .select('stripe_price_id, tool_id, bundle_tier, display_price');
+    .select('price_id, tool_id, bundle_tier, display_price');
   if (r.error) {
     console.error('[admin-profitability] tool_prices error:', r.error.message);
     return [];
@@ -212,7 +243,7 @@ function computeToolRevenue(stripeSubs, toolPrices) {
   // bundle rows are intentionally excluded from per-tool revenue).
   const priceMap = {};
   toolPrices.forEach(function(p) {
-    if (p.tool_id) priceMap[p.stripe_price_id] = { tool_id: p.tool_id, price: parseFloat(p.display_price) || 0 };
+    if (p.tool_id) priceMap[p.price_id] = { tool_id: p.tool_id, price: parseFloat(p.display_price) || 0 };
   });
 
   const byTool = {};
