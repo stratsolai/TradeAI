@@ -81,9 +81,16 @@ async function fetchAnthropicCosts(periods) {
     endPrevISO: periods.endPrevISO
   });
 
+  // For the current month we omit ending_at — Anthropic defaults it
+  // to "now" and that bypasses the date-range validation that has
+  // been rejecting May 1 → May 2 with "ending date must be after
+  // starting date" (their parser appears to read the explicit ending
+  // as an exclusive boundary that collapses the effective range to a
+  // single day equal to start). For the previous month we still send
+  // both bounds because the range is unambiguously past.
   const [currentTotal, currentBreakdown] = await Promise.all([
-    anthropicCostSum(key, periods.startCurrentISO, periods.endCurrentISO),
-    anthropicCostByModel(key, periods.startCurrentISO, periods.endCurrentISO)
+    anthropicCostSum(key, periods.startCurrentISO, null),
+    anthropicCostByModel(key, periods.startCurrentISO, null)
   ]);
   const previousTotal = await anthropicCostSum(key, periods.startPrevISO, periods.endPrevISO);
 
@@ -113,11 +120,12 @@ function isoToDateOnly(iso) {
 async function anthropicCostSum(key, startIso, endIso) {
   // bucket_width=1d pins the per-day bucketing on the wire. Date-only
   // params keep the request unambiguously a date range rather than a
-  // timestamp range.
-  const url = 'https://api.anthropic.com/v1/organizations/cost_report'
-    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso))
-    + '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso))
-    + '&bucket_width=1d';
+  // timestamp range. ending_at is optional — when null we skip it and
+  // let Anthropic default to "now".
+  let url = 'https://api.anthropic.com/v1/organizations/cost_report'
+    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso));
+  if (endIso) url += '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso));
+  url += '&bucket_width=1d';
   console.log('[admin-costs] Anthropic cost_report (sum) →', url);
   const r = await fetch(url, {
     headers: {
@@ -137,11 +145,10 @@ async function anthropicCostSum(key, startIso, endIso) {
 }
 
 async function anthropicCostByModel(key, startIso, endIso) {
-  const url = 'https://api.anthropic.com/v1/organizations/cost_report'
-    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso))
-    + '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso))
-    + '&bucket_width=1d'
-    + '&group_by[]=model';
+  let url = 'https://api.anthropic.com/v1/organizations/cost_report'
+    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso));
+  if (endIso) url += '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso));
+  url += '&bucket_width=1d&group_by[]=model';
   console.log('[admin-costs] Anthropic cost_report (by model) →', url);
   const r = await fetch(url, {
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
