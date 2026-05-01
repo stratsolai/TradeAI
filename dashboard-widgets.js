@@ -81,6 +81,62 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
+  // Small inline arrow used inside the news headline row.
+  // direction = 'up' or 'down', good = whether the trend is good for business.
+  function smallHeadlineArrow(direction, good) {
+    var color = good ? 'var(--green)' : 'var(--red)';
+    var pts = direction === 'up'
+      ? '7,2 13,9 9,9 9,14 5,14 5,9 1,9'
+      : '7,14 13,7 9,7 9,2 5,2 5,7 1,7';
+    return '<svg class="dash-headline-arrow" width="14" height="16" viewBox="0 0 14 16" aria-hidden="true">'
+      + '<polygon points="' + pts + '" fill="' + color + '" />'
+      + '</svg>';
+  }
+
+  // Big combined sparkline + arrow trend graphic for Social/Chatbot tiles.
+  // values: 7-day series. direction: 'up' or 'down'. good: whether outcome is
+  // good for business (decides green vs red colour). Returns ~100x36 SVG.
+  function bigTrendSvg(values, direction, good) {
+    var width = 100, height = 36, pad = 5, ahSize = 6;
+    if (!values || !values.length) values = [0, 0];
+    if (values.length === 1) values = [values[0], values[0]];
+
+    var max = Math.max.apply(null, values);
+    var min = Math.min.apply(null, values);
+    var range = (max - min) || 1;
+    var lineEndX = width - ahSize - 4;
+    var step = (lineEndX - pad) / (values.length - 1);
+
+    var pts = [];
+    for (var i = 0; i < values.length; i++) {
+      var x = pad + i * step;
+      var y = height - pad - ((values[i] - min) / range) * (height - pad * 2);
+      pts.push(x.toFixed(2) + ',' + y.toFixed(2));
+    }
+
+    // Anchor the line into the arrow tip so the arrow visibly points up/down
+    var tipX = width - ahSize - 1;
+    var tipY = direction === 'up' ? pad : (height - pad);
+    pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
+
+    var ahPoints;
+    if (direction === 'up') {
+      ahPoints = tipX + ',' + (tipY - 1) + ' '
+               + (tipX - ahSize) + ',' + (tipY + ahSize) + ' '
+               + (tipX + ahSize) + ',' + (tipY + ahSize);
+    } else {
+      ahPoints = tipX + ',' + (tipY + 1) + ' '
+               + (tipX - ahSize) + ',' + (tipY - ahSize) + ' '
+               + (tipX + ahSize) + ',' + (tipY - ahSize);
+    }
+
+    var color = good ? 'var(--green)' : 'var(--red)';
+    return '<svg class="dash-bigtrend-graphic" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
+      + '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
+      + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
+      + '</svg>';
+  }
+
   // Render the trend block: sparkline + block-style SVG arrow (green up / red down).
   function trendBlockHtml(values, recentSum, priorSum, label) {
     var direction = recentSum >= priorSum ? 'up' : 'down';
@@ -92,6 +148,18 @@ window.DASH_WIDGETS = (function() {
       + trendArrowSvg(direction)
       + '</div>'
       + '</div>';
+  }
+
+  // Build a centred "big trend" cell — large graphic above value/label.
+  // href makes the whole cell a link.
+  function bigTrendCellHtml(values, direction, good, value, label, href) {
+    var open = href ? ('<a href="' + window.escHtml(href) + '" class="dash-bigtrend-cell">') : '<div class="dash-bigtrend-cell">';
+    var close = href ? '</a>' : '</div>';
+    return open
+      + bigTrendSvg(values, direction, good)
+      + '<span class="dash-bigtrend-value">' + window.escHtml(String(value)) + '</span>'
+      + '<span class="dash-bigtrend-label">' + window.escHtml(label) + '</span>'
+      + close;
   }
 
   function dueLabel(dueDate) {
@@ -339,10 +407,68 @@ window.DASH_WIDGETS = (function() {
       + close;
   }
 
+  // Pill row with a coloured dot inside the badge. dotColour: 'red' or 'green'.
+  function pillRowHtml(label, headline, href, dotColour) {
+    var open = href ? ('<a href="' + window.escHtml(href) + '" class="dash-tile-row">') : '<div class="dash-tile-row">';
+    var close = href ? '</a>' : '</div>';
+    var dot = '<span class="dash-pill-dot ' + (dotColour || 'green') + '"></span>';
+    return open
+      + '<span class="badge badge-grey">' + dot + window.escHtml(label) + '</span>'
+      + '<span class="dash-tile-row-label">' + window.escHtml(headline) + '</span>'
+      + close;
+  }
+
+  // Decide whether a category's content reads as risk/warning (red) or
+  // opportunity/positive (green). Falls back to category default when
+  // no briefing text is available.
+  var NEWS_CATEGORY_DEFAULT_TONE = {
+    'regulatory': 'red',
+    'industry-news': 'green',
+    'suppliers': 'green',
+    'economic': 'red',
+    'technology': 'green',
+    'grants-tenders': 'green'
+  };
+  var NEWS_RISK_RX = /(risk|warn|fail|breach|fine|penalty|increas|rise|rising|surge|delay|shortage|cost|inflation|recession|decline|drop|fall|cut|tighten|restrict|threat|concern|crisis)/i;
+  var NEWS_GOOD_RX = /(opportunit|grant|tender|growth|expansion|innovat|hir|employ|boost|gain|launch|rebate|incentive|approve|partner)/i;
+
+  function categoryTone(briefing, categoryId) {
+    if (!briefing) return NEWS_CATEGORY_DEFAULT_TONE[categoryId] || 'green';
+    var bullets = Array.isArray(briefing.bullets) ? briefing.bullets.join(' ') : '';
+    var text = (briefing.headline || '') + ' ' + bullets;
+    var risky = NEWS_RISK_RX.test(text);
+    var good = NEWS_GOOD_RX.test(text);
+    if (risky && !good) return 'red';
+    if (good && !risky) return 'green';
+    return NEWS_CATEGORY_DEFAULT_TONE[categoryId] || 'green';
+  }
+
+  // Determine arrow direction (up/down) and good/bad outcome from briefing text.
+  function headlineTrend(briefing, categoryId) {
+    var bullets = (briefing && Array.isArray(briefing.bullets)) ? briefing.bullets.join(' ') : '';
+    var text = ((briefing && briefing.headline) || '') + ' ' + bullets;
+    var upRx = /\b(rise|rising|rises|increas|surge|grow|growth|gain|jump|climb|up\b|expand|boost)/i;
+    var downRx = /\b(fall|falling|falls|decreas|decline|drop|cut|ease|easing|reduce|down\b|shrink|contract)/i;
+    var dirUp = upRx.test(text);
+    var dirDown = downRx.test(text);
+    var direction = dirDown && !dirUp ? 'down' : 'up';
+
+    var topicBad = NEWS_RISK_RX.test(text) && !NEWS_GOOD_RX.test(text);
+    if (!topicBad) {
+      // category-default polarity
+      topicBad = (NEWS_CATEGORY_DEFAULT_TONE[categoryId] === 'red');
+    }
+    // Bad topic up = bad outcome (red). Bad topic down = good (green).
+    // Good topic up = good (green). Good topic down = bad (red).
+    var good = topicBad ? (direction === 'down') : (direction === 'up');
+    return { direction: direction, good: good };
+  }
+
   // ── Industry News Digest tile ──
-  // Collapsed: 3-stat trio (Last Refreshed | Categories Updated | Open Tenders)
-  // followed by the top 2 category briefings ranked by bullet count.
-  // Expanded: remaining category briefings.
+  // Collapsed: dynamic headline w/ trend arrow + 7-day news volume sparkline,
+  // 3-stat trio (Last Refreshed | Categories Updated | Open Tenders), then the
+  // top 2 category pills (each with a red/green dot reflecting tone).
+  // Expanded: remaining category pills.
   async function renderNews() {
     var ND_CATEGORIES = [
       { id: 'regulatory',     label: 'Rules' },
@@ -355,6 +481,7 @@ window.DASH_WIDGETS = (function() {
 
     var lastRefreshed = '', briefings = [], tenderCount = 0;
     var briefingByCat = {};
+    var newsItems = [];
 
     try {
       var briefRes = await _supabase.from('news_digest_briefings')
@@ -377,6 +504,16 @@ window.DASH_WIDGETS = (function() {
       if (setRes.data && setRes.data.summary_generated_at) {
         lastRefreshed = fmtShort(setRes.data.summary_generated_at);
       }
+
+      // 7-day volume — items in content_library tagged news-digest, by created_at.
+      var weekAgo = new Date(Date.now() - 7 * 86400000);
+      var clRes = await _supabase.from('content_library')
+        .select('id, created_at')
+        .eq('user_id', _userId)
+        .contains('tool_tags', ['news-digest'])
+        .gte('created_at', weekAgo.toISOString());
+      if (clRes.error) console.error('[Dashboard] News volume error:', clRes.error.message || clRes.error);
+      newsItems = clRes.data || [];
     } catch (e) {
       console.error('[Dashboard] News render error:', e.message || e);
     }
@@ -393,19 +530,43 @@ window.DASH_WIDGETS = (function() {
     withHeadlines.sort(function(a, b) { return b.count - a.count; });
     var briefingCount = withHeadlines.length;
 
-    // Collapsed: 3-stat trio + top 2 category headlines
+    // Build daily news volume sparkline + dynamic headline trend
+    var dailyVolume = dailyBuckets(newsItems, 'created_at', 7);
+    var top = withHeadlines[0];
+    var headlineHtml = '';
+    if (top) {
+      var trend = headlineTrend(top.briefing, top.cat.id);
+      var arrow = smallHeadlineArrow(trend.direction, trend.good);
+      var headlineText = top.briefing.headline;
+      headlineHtml = '<a href="/news#' + window.escHtml(top.cat.id) + '" class="dash-headline-row" title="' + window.escHtml(headlineText) + '">'
+        + '<span class="dash-headline-text">' + window.escHtml(headlineText) + '</span>'
+        + arrow
+        + '</a>';
+    }
+
+    // 7-day sparkline next to the trio (compact row above stats)
+    var sparkline = sparklineSvg(dailyVolume, { width: 160, height: 28 });
+    var sparkRow = '<div class="dash-trend-block">'
+      + '<div class="dash-trend-label">7-Day News Volume</div>'
+      + '<div class="dash-trend-row">' + sparkline + '</div>'
+      + '</div>';
+
+    // Click actions: Last Refreshed + Categories Updated → /news, Tenders → grants-tenders tab
     var summary = '';
+    summary += headlineHtml;
+    summary += sparkRow;
     summary += '<div class="dash-stat-trio">';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Last Refreshed</span><span class="dash-stat-trio-value">' + window.escHtml(lastRefreshed || '—') + '</span></div>';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Categories Updated</span><span class="dash-stat-trio-value">' + briefingCount + '</span></div>';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Open Tenders</span><span class="dash-stat-trio-value">' + tenderCount + '</span></div>';
+    summary += '<a href="/news" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Last Refreshed</span><span class="dash-stat-trio-value">' + window.escHtml(lastRefreshed || '—') + '</span></a>';
+    summary += '<a href="/news" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Categories Updated</span><span class="dash-stat-trio-value">' + briefingCount + '</span></a>';
+    summary += '<a href="/news#grants-tenders" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Open Tenders</span><span class="dash-stat-trio-value">' + tenderCount + '</span></a>';
     summary += '</div>';
 
     var topTwo = withHeadlines.slice(0, 2);
     if (topTwo.length) {
       summary += '<div class="dash-tile-divider"></div>';
       topTwo.forEach(function(x) {
-        summary += tagRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id);
+        var dot = categoryTone(x.briefing, x.cat.id);
+        summary += pillRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id, dot);
       });
     }
 
@@ -414,7 +575,8 @@ window.DASH_WIDGETS = (function() {
     var rest = withHeadlines.slice(2);
     if (rest.length) {
       rest.forEach(function(x) {
-        detail += tagRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id);
+        var dot2 = categoryTone(x.briefing, x.cat.id);
+        detail += pillRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id, dot2);
       });
     } else if (withHeadlines.length === 0) {
       detail = emptyHtml('No headlines yet — check back after the next digest run.');
@@ -482,9 +644,11 @@ window.DASH_WIDGETS = (function() {
 
     var connectedCount = (fbConnected ? 1 : 0) + (igConnected ? 1 : 0);
 
-    // Build trend (sparkline of daily reach last 7 days)
-    var dailyReach = (function() {
-      var buckets = [0,0,0,0,0,0,0];
+    // Build trend (daily reach + engagement last 7 days)
+    var dailyReach = [0,0,0,0,0,0,0];
+    var dailyEngagement = [0,0,0,0,0,0,0];
+    var dailyRate = [0,0,0,0,0,0,0];
+    (function() {
       var now = new Date();
       now.setHours(0, 0, 0, 0);
       weekPosts.forEach(function(p) {
@@ -493,23 +657,37 @@ window.DASH_WIDGETS = (function() {
         d.setHours(0, 0, 0, 0);
         var diffDays = Math.floor((now - d) / 86400000);
         if (diffDays < 0 || diffDays >= 7) return;
-        buckets[6 - diffDays] += Number(p.reach) || 0;
+        var idx = 6 - diffDays;
+        dailyReach[idx] += Number(p.reach) || 0;
+        dailyEngagement[idx] += Number(p.engagement) || 0;
       });
-      return buckets;
+      for (var i = 0; i < 7; i++) {
+        dailyRate[i] = dailyReach[i] > 0 ? (dailyEngagement[i] / dailyReach[i]) * 100 : 0;
+      }
     })();
 
     var weekReach = sumField(weekPosts, 'reach');
     var weekEngagement = sumField(weekPosts, 'engagement');
     var priorReach = sumField(priorPosts, 'reach');
+    var priorEngagement = sumField(priorPosts, 'engagement');
     var engagementRate = weekReach > 0 ? Math.round((weekEngagement / weekReach) * 100) : 0;
+    var priorEngagementRate = priorReach > 0 ? (priorEngagement / priorReach) * 100 : 0;
 
-    // Collapsed: trend block + 3 perf metrics
+    // For social: up = good, down = bad (more reach/engagement is better)
+    var reachDir = weekReach >= priorReach ? 'up' : 'down';
+    var reachGood = reachDir === 'up';
+    var engRateDir = engagementRate >= priorEngagementRate ? 'up' : 'down';
+    var engRateGood = engRateDir === 'up';
+
     var summary = '';
-    summary += trendBlockHtml(dailyReach, weekReach, priorReach, '7-Day Reach Trend');
+    summary += '<div class="dash-bigtrend-wrap">';
+    summary += bigTrendCellHtml(dailyReach, reachDir, reachGood, weekReach, 'Reach', '/social?range=7d');
+    summary += bigTrendCellHtml(dailyRate, engRateDir, engRateGood, engagementRate + '%', 'Engagement Rate', '/social?range=7d');
+    summary += '</div>';
     summary += '<div class="dash-stat-trio">';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Reach</span><span class="dash-stat-trio-value">' + weekReach + '</span></div>';
     summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Engagement</span><span class="dash-stat-trio-value">' + weekEngagement + '</span></div>';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Engagement Rate</span><span class="dash-stat-trio-value">' + engagementRate + '%</span></div>';
+    summary += '<a href="/social#drafts" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Drafts</span><span class="dash-stat-trio-value">' + draftCount + '</span></a>';
+    summary += '<a href="/social-settings.html" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Platforms</span><span class="dash-stat-trio-value">' + connectedCount + '</span></a>';
     summary += '</div>';
 
     // Expanded: campaign activity + scheduled + drafts/platforms
@@ -579,21 +757,47 @@ window.DASH_WIDGETS = (function() {
     weekRows.forEach(function(r) {
       if (Array.isArray(r.unanswered_questions)) weekUnanswered += r.unanswered_questions.length;
     });
+    var priorUnanswered = 0;
+    priorRows.forEach(function(r) {
+      if (Array.isArray(r.unanswered_questions)) priorUnanswered += r.unanswered_questions.length;
+    });
     var bookingRequests = weekLeads + weekAppointments;
 
-    // Trend (daily conversation count last 7 days vs prior 7)
+    // Daily series for sparkline trends
     var dailyConvs = dailyBuckets(weekRows, 'created_at', 7);
+    var dailyUnans = (function() {
+      var b = [0,0,0,0,0,0,0];
+      var now = new Date(); now.setHours(0, 0, 0, 0);
+      weekRows.forEach(function(r) {
+        if (!Array.isArray(r.unanswered_questions) || r.unanswered_questions.length === 0) return;
+        var d = new Date(r.created_at); d.setHours(0, 0, 0, 0);
+        var diffDays = Math.floor((now - d) / 86400000);
+        if (diffDays < 0 || diffDays >= 7) return;
+        b[6 - diffDays] += r.unanswered_questions.length;
+      });
+      return b;
+    })();
     var weekTotal = weekRows.length;
     var priorTotal = priorRows.length;
+
+    // Conversations: up = good, down = bad
+    var convDir = weekTotal >= priorTotal ? 'up' : 'down';
+    var convGood = convDir === 'up';
+    // Unanswered: up = bad (red), down = good (green)
+    var unansDir = weekUnanswered >= priorUnanswered ? 'up' : 'down';
+    var unansGood = unansDir === 'down';
 
     var statusChipHtml = '<span class="badge badge-green">Online</span>';
 
     var summary = '';
-    summary += trendBlockHtml(dailyConvs, weekTotal, priorTotal, '7-Day Conversation Trend');
+    summary += '<div class="dash-bigtrend-wrap">';
+    summary += bigTrendCellHtml(dailyConvs, convDir, convGood, weekTotal, 'Conversations', '/chatbot#conversations');
+    summary += bigTrendCellHtml(dailyUnans, unansDir, unansGood, weekUnanswered, 'Unanswered', '/chatbot#unanswered');
+    summary += '</div>';
     summary += '<div class="dash-stat-trio">';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Conversations</span><span class="dash-stat-trio-value">' + weekTotal + '</span></div>';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Booking Requests</span><span class="dash-stat-trio-value">' + bookingRequests + '</span></div>';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Unanswered</span><span class="dash-stat-trio-value">' + weekUnanswered + '</span></div>';
+    summary += '<a href="/chatbot#leads" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Booking Requests</span><span class="dash-stat-trio-value">' + bookingRequests + '</span></a>';
+    summary += '<a href="/chatbot#leads" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Leads</span><span class="dash-stat-trio-value">' + weekLeads + '</span></a>';
+    summary += '<a href="/chatbot#conversations" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Appointments</span><span class="dash-stat-trio-value">' + weekAppointments + '</span></a>';
     summary += '</div>';
 
     // Today breakdown
@@ -622,8 +826,8 @@ window.DASH_WIDGETS = (function() {
 
     detail += '<div class="section-label" style="margin:10px 0 4px">7-Day Performance</div>';
     detail += rowHtml(weekAppointments, 'Appointment' + (weekAppointments === 1 ? '' : 's') + ' Requested', '/chatbot#conversations');
-    detail += rowHtml(leadRate + '%', 'Lead Conversion Rate', null);
-    detail += rowHtml(answeredRate + '%', 'Answered Rate', null);
+    detail += rowHtml(leadRate + '%', 'Lead Conversion Rate', '/chatbot#leads');
+    detail += rowHtml(answeredRate + '%', 'Answered Rate', '/chatbot#unanswered');
 
     return tileShell('chatbot', '💬', 'Website Chatbot', '/chatbot', statusChipHtml, summary, detail);
   }

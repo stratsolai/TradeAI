@@ -321,6 +321,24 @@ tasks as required.
 
 ---
 
+## Help Bubbles — Metric Definitions
+
+These definitions are for Smart Help bubbles and contextual tooltips (pre-launch task).
+
+**Social Media Metrics:**
+- Reach: Total number of unique users who saw your posts
+- Engagement: Total interactions (likes, comments, shares, clicks)
+- Engagement Rate: (Engagement ÷ Reach) × 100 — shown as percentage
+
+**Chatbot Metrics:**
+- Conversations: Total chat sessions with website visitors
+- Booking Requests: Visitors who requested an appointment or callback
+- Lead Conversion Rate: (Booking Requests ÷ Conversations) × 100
+- Unanswered: Questions the chatbot couldn't answer
+- Answered Rate: ((Total Questions - Unanswered) ÷ Total Questions) × 100
+
+---
+
 ## Development Rules
 
 ### Code Standards

@@ -26,6 +26,16 @@ window.CB_LOGIC = {
     this._renderLeads();
     this._renderQuestions();
     this._updateStats();
+    this._applyInitialTab();
+  },
+
+  _applyInitialTab: function() {
+    var hash = (window.location.hash || '').replace('#', '');
+    if (!hash) return;
+    var allowed = ['conversations', 'leads', 'unanswered', 'test'];
+    if (allowed.indexOf(hash) === -1) return;
+    var btn = document.querySelector('.ptab[data-tab="' + hash + '"]');
+    if (btn) btn.click();
   },
 
   // ── DATA LOADING ──────────────────────────────────────────────────────

@@ -345,6 +345,43 @@
     .sm-week-card { margin-bottom: 16px; }
     .sm-extend-select { width: 200px; }
 
+    /* Performance summary (Reach / Engagement / Engagement Rate) */
+    .sm-perf-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--card-gap, 16px);
+      margin-bottom: var(--card-gap, 20px);
+    }
+    .sm-perf-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .sm-perf-info { flex: 1; min-width: 0; }
+    .sm-perf-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      margin-bottom: 4px;
+    }
+    .sm-perf-value {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      line-height: 1;
+    }
+    .sm-perf-graphic { flex-shrink: 0; }
+    @media (max-width: 700px) {
+      .sm-perf-summary { grid-template-columns: 1fr; }
+    }
+
     .sm-campaign-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--card-gap, 20px); }
     .sm-campaign-grid .sm-post-card { flex-direction: column; }
     .sm-campaign-grid .sm-post-thumb { width: 100%; min-height: 120px; }
@@ -453,6 +490,30 @@
       <div class="stat-card teal">
         <div class="stat-value" id="stat-published">0</div>
         <div class="stat-label">Published</div>
+      </div>
+    </div>
+
+    <div class="sm-perf-summary" id="sm-perf-summary">
+      <div class="sm-perf-card">
+        <div class="sm-perf-info">
+          <div class="sm-perf-label">Reach (7d)</div>
+          <div class="sm-perf-value" id="sm-perf-reach">0</div>
+        </div>
+        <div class="sm-perf-graphic" id="sm-perf-reach-graphic"></div>
+      </div>
+      <div class="sm-perf-card">
+        <div class="sm-perf-info">
+          <div class="sm-perf-label">Engagement (7d)</div>
+          <div class="sm-perf-value" id="sm-perf-engagement">0</div>
+        </div>
+        <div class="sm-perf-graphic" id="sm-perf-engagement-graphic"></div>
+      </div>
+      <div class="sm-perf-card">
+        <div class="sm-perf-info">
+          <div class="sm-perf-label">Engagement Rate (7d)</div>
+          <div class="sm-perf-value" id="sm-perf-rate">0%</div>
+        </div>
+        <div class="sm-perf-graphic" id="sm-perf-rate-graphic"></div>
       </div>
     </div>
 

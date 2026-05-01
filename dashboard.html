@@ -120,13 +120,14 @@
     }
     .dash-tile-row-label { font-size: var(--body-font-size); color: var(--text); flex: 1; }
 
-    /* ── Zone 1 grid (3 columns desktop, align top so tiles fit content) ── */
+    /* ── Zone 1 grid (3 columns desktop, stretch so CL/EA/BI all match height) ── */
     .dash-zone1-grid {
       display: grid;
       grid-template-columns: 1fr 1.5fr 1fr;
       gap: 16px;
-      align-items: start;
+      align-items: stretch;
     }
+    .dash-zone1-grid > .tile-card { height: 100%; }
 
     /* ── Per-row status dot (red/amber/green) inside CL tile rows ── */
     .dash-cl-dot {
@@ -196,6 +197,79 @@
     }
     .dash-trend-arrow.up { color: var(--green); }
     .dash-trend-arrow.down { color: var(--red); }
+
+    /* ── Big combined sparkline + arrow trend graphic (Social / Chatbot) ── */
+    .dash-bigtrend-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 0 4px;
+    }
+    .dash-bigtrend-cell {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 0 12px;
+      flex: 1;
+      min-width: 0;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .dash-bigtrend-cell + .dash-bigtrend-cell { border-left: 1px solid var(--border-light); }
+    .dash-bigtrend-cell:hover .dash-bigtrend-value { color: var(--blue); }
+    .dash-bigtrend-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      line-height: 1.1;
+    }
+    .dash-bigtrend-value {
+      font-family: var(--heading-font);
+      font-size: var(--stat-value-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--blue);
+      line-height: 1;
+      transition: color var(--btn-transition);
+    }
+    .dash-bigtrend-graphic { display: block; }
+
+    /* ── Headline trend row (News tile dynamic headline) ── */
+    .dash-headline-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+      text-decoration: none;
+      color: var(--text);
+    }
+    .dash-headline-row:last-child { border-bottom: none; }
+    .dash-headline-row:hover { color: var(--blue); }
+    .dash-headline-text {
+      flex: 1;
+      min-width: 0;
+      font-size: var(--body-font-size);
+      font-weight: var(--font-weight-semibold);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .dash-headline-arrow { flex-shrink: 0; display: block; }
+
+    /* ── Coloured dot inside category pills (News tile) ── */
+    .dash-pill-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .dash-pill-dot.green { background: var(--green); }
+    .dash-pill-dot.red { background: var(--red); }
 
     /* ── Light divider inside a tile body ── */
     .dash-tile-divider {
@@ -409,6 +483,10 @@
       color: var(--text-muted);
     }
 
+    /* ── Zone 2 grid: stretch tiles so expanded ones share consistent height ── */
+    #zone-2.tile-grid { align-items: stretch; }
+    #zone-2.tile-grid > .tile-card { height: 100%; }
+
     /* ── Zone 3: Your Stax cards ── */
     .dash-stax-grid {
       display: grid;
@@ -506,15 +584,10 @@
         <div class="tile-grid" id="zone-2"></div>
       </section>
 
-      <!-- Zone 3: More tools -->
+      <!-- Zone 3: More tools (Available grid only — Active/Available tab UI removed) -->
       <section class="dash-zone" id="zone-3-wrap">
         <h2 class="dash-heading">MORE <span class="accent">STAX</span></h2>
-        <div class="tab-nav">
-          <button class="ptab active" data-tab="active">Active Tools</button>
-          <button class="ptab" data-tab="available">Available Tools</button>
-        </div>
-        <div class="ptab-content active" id="dash-tab-active"></div>
-        <div class="ptab-content" id="dash-tab-available"></div>
+        <div id="dash-more-stax"></div>
       </section>
 
     </div>

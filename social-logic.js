@@ -196,6 +196,15 @@ window.SOCIAL_LOGIC = {
     this._renderGroups();
     await this._loadData();
     this._handlePhotoHandoff();
+    this._applyInitialTab();
+  },
+
+  // Open a specific tab from a deep link such as /social#drafts.
+  _applyInitialTab: function() {
+    var hash = (window.location.hash || '').replace('#', '');
+    if (!hash) return;
+    var allowed = ['create', 'campaign', 'drafts', 'scheduled', 'published'];
+    if (allowed.indexOf(hash) !== -1) this._switchTab(hash);
   },
 
   // ── Dashboard Photo Capture handoff ─────────────────────────
@@ -339,8 +348,111 @@ window.SOCIAL_LOGIC = {
     await Promise.all([
       this._loadSettings(),
       this._loadProfile(),
-      this._loadStats()
+      this._loadStats(),
+      this._loadPerfSummary()
     ]);
+  },
+
+  // 7-day Reach / Engagement / Engagement-Rate summary with trend graphics.
+  // Uses the same metric definitions as the dashboard tile so the two stay
+  // consistent: rolling 7 days vs prior 7 days, up = good for all three.
+  _loadPerfSummary: async function() {
+    var weekAgo = new Date(Date.now() - 7 * 86400000);
+    var twoWeeksAgo = new Date(Date.now() - 14 * 86400000);
+    var weekPosts = [], priorPosts = [];
+    try {
+      var w = await this._supabase
+        .from('social_posts')
+        .select('reach, engagement, published_at')
+        .eq('user_id', this._userId).eq('status', 'published')
+        .gte('published_at', weekAgo.toISOString());
+      if (w.error) console.error('[SM] perf week error:', w.error.message);
+      weekPosts = w.data || [];
+      var p = await this._supabase
+        .from('social_posts')
+        .select('reach, engagement, published_at')
+        .eq('user_id', this._userId).eq('status', 'published')
+        .gte('published_at', twoWeeksAgo.toISOString())
+        .lt('published_at', weekAgo.toISOString());
+      if (p.error) console.error('[SM] perf prior error:', p.error.message);
+      priorPosts = p.data || [];
+    } catch (e) {
+      console.error('[SM] perf load exception:', e.message);
+    }
+
+    var sumF = function(arr, f) { var s = 0; arr.forEach(function(x) { s += Number(x[f]) || 0; }); return s; };
+    var weekReach = sumF(weekPosts, 'reach');
+    var weekEng = sumF(weekPosts, 'engagement');
+    var priorReach = sumF(priorPosts, 'reach');
+    var priorEng = sumF(priorPosts, 'engagement');
+    var rate = weekReach > 0 ? Math.round((weekEng / weekReach) * 100) : 0;
+    var priorRate = priorReach > 0 ? (priorEng / priorReach) * 100 : 0;
+
+    // Daily series for sparklines
+    var dailyReach = [0,0,0,0,0,0,0];
+    var dailyEng = [0,0,0,0,0,0,0];
+    var dailyRate = [0,0,0,0,0,0,0];
+    var now = new Date(); now.setHours(0,0,0,0);
+    weekPosts.forEach(function(post) {
+      if (!post.published_at) return;
+      var d = new Date(post.published_at); d.setHours(0,0,0,0);
+      var diffDays = Math.floor((now - d) / 86400000);
+      if (diffDays < 0 || diffDays >= 7) return;
+      var idx = 6 - diffDays;
+      dailyReach[idx] += Number(post.reach) || 0;
+      dailyEng[idx] += Number(post.engagement) || 0;
+    });
+    for (var i = 0; i < 7; i++) {
+      dailyRate[i] = dailyReach[i] > 0 ? (dailyEng[i] / dailyReach[i]) * 100 : 0;
+    }
+
+    var reachDir = weekReach >= priorReach ? 'up' : 'down';
+    var engDir = weekEng >= priorEng ? 'up' : 'down';
+    var rateDir = rate >= priorRate ? 'up' : 'down';
+
+    var setEl = function(id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+    setEl('sm-perf-reach', weekReach);
+    setEl('sm-perf-engagement', weekEng);
+    setEl('sm-perf-rate', rate + '%');
+
+    var setGraphic = function(id, values, dir) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.innerHTML = window.SM_LOGIC._buildTrendSvg(values, dir, dir === 'up');
+    };
+    setGraphic('sm-perf-reach-graphic', dailyReach, reachDir);
+    setGraphic('sm-perf-engagement-graphic', dailyEng, engDir);
+    setGraphic('sm-perf-rate-graphic', dailyRate, rateDir);
+  },
+
+  // SVG trend graphic — sparkline that ends in an up/down arrow, sized for the
+  // social.html performance summary cards (90x36).
+  _buildTrendSvg: function(values, direction, good) {
+    var width = 90, height = 36, pad = 5, ahSize = 6;
+    if (!values || !values.length) values = [0, 0];
+    if (values.length === 1) values = [values[0], values[0]];
+    var max = Math.max.apply(null, values);
+    var min = Math.min.apply(null, values);
+    var range = (max - min) || 1;
+    var lineEndX = width - ahSize - 4;
+    var step = (lineEndX - pad) / (values.length - 1);
+    var pts = [];
+    for (var i = 0; i < values.length; i++) {
+      var x = pad + i * step;
+      var y = height - pad - ((values[i] - min) / range) * (height - pad * 2);
+      pts.push(x.toFixed(2) + ',' + y.toFixed(2));
+    }
+    var tipX = width - ahSize - 1;
+    var tipY = direction === 'up' ? pad : (height - pad);
+    pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
+    var ah = direction === 'up'
+      ? tipX + ',' + (tipY - 1) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize)
+      : tipX + ',' + (tipY + 1) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize);
+    var color = good ? 'var(--green)' : 'var(--red)';
+    return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
+      + '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
+      + '<polygon points="' + ah + '" fill="' + color + '" />'
+      + '</svg>';
   },
 
   _loadSettings: async function() {

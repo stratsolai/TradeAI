@@ -24,6 +24,14 @@ window.ND_LOGIC = {
     this._bindTabs();
     this._bindRefresh();
     await this._loadData();
+    this._applyInitialTab();
+  },
+
+  _applyInitialTab: function() {
+    var hash = (window.location.hash || '').replace('#', '');
+    if (!hash) return;
+    var allowed = ['summary', 'regulatory', 'industry-news', 'suppliers', 'economic', 'technology', 'grants-tenders'];
+    if (allowed.indexOf(hash) !== -1) this._switchTab(hash);
   },
 
   // ── TAB SWITCHING ────────────────────────────────────────────────────

@@ -335,7 +335,7 @@ window.DASH_DATA = (function() {
     // stay green regardless of count.
     var pendingDot = pendingCount >= 50 ? 'red' : (pendingCount >= 11 ? 'amber' : 'green');
 
-    var headerBadge = pendingCount >= 50
+    var headerBadge = pendingCount > 50
       ? '<span class="badge badge-red">Needs Attention</span>'
       : '';
 
@@ -619,40 +619,33 @@ window.DASH_DATA = (function() {
     reader.readAsDataURL(file);
   }
 
-  // ── ZONE 3: YOUR STAX ──
+  // ── ZONE 3: MORE STAX ──
+  // Active/Available tabs removed per spec — show only the inactive (available)
+  // tools as a single grid. Active tools already appear in YOUR STAX above.
   function renderYourStax(activeTools) {
-    var activeContainer = document.getElementById('dash-tab-active');
-    var availableContainer = document.getElementById('dash-tab-available');
-    if (!activeContainer || !availableContainer) return;
+    var container = document.getElementById('dash-more-stax');
+    if (!container) return;
 
-    var activeHtml = '', availableHtml = '';
-    var hasActive = false, hasAvailable = false;
+    var availableHtml = '';
+    var hasAvailable = false;
 
     TOOLS.forEach(function(tool) {
       var isActive = activeTools.indexOf(tool.id) !== -1;
-      var isPending = tool.status === 'pending';
-
-      if (isActive) {
-        hasActive = true;
-        activeHtml += activeCardHtml(tool);
-      } else if (isPending) {
-        hasAvailable = true;
+      if (isActive) return;
+      hasAvailable = true;
+      if (tool.status === 'pending') {
         availableHtml += comingSoonCardHtml(tool);
       } else {
-        hasAvailable = true;
         availableHtml += availableCardHtml(tool);
       }
     });
 
-    if (!hasActive) {
-      activeHtml = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No active tools yet</h3><p>Check out the Available Tools tab to get started.</p></div>';
-    }
     if (!hasAvailable) {
-      availableHtml = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>All tools activated</h3><p>You have access to every available tool.</p></div>';
+      container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>All tools activated</h3><p>You have access to every available tool.</p></div>';
+      return;
     }
 
-    activeContainer.innerHTML = '<div class="dash-stax-grid">' + activeHtml + '</div>';
-    availableContainer.innerHTML = '<div class="dash-stax-grid">' + availableHtml + '</div>';
+    container.innerHTML = '<div class="dash-stax-grid">' + availableHtml + '</div>';
   }
 
   function activeCardHtml(tool) {
@@ -709,15 +702,8 @@ window.DASH_DATA = (function() {
   }
 
   function wireTabSwitching() {
-    document.querySelectorAll('#zone-3-wrap .ptab[data-tab]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('#zone-3-wrap .ptab').forEach(function(b) { b.classList.remove('active'); });
-        document.querySelectorAll('#zone-3-wrap .ptab-content').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('active');
-        var panel = document.getElementById('dash-tab-' + btn.dataset.tab);
-        if (panel) panel.classList.add('active');
-      });
-    });
+    // Active/Available tabs removed — kept as no-op for callers that may still
+    // reference it. The MORE STAX section is now a single available-tools grid.
   }
 
   function activateTool(toolId) {
