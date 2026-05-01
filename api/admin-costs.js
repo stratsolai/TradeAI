@@ -74,6 +74,13 @@ async function fetchAnthropicCosts(periods) {
     };
   }
 
+  console.log('[admin-costs] Anthropic period inputs:', {
+    startCurrentISO: periods.startCurrentISO,
+    endCurrentISO: periods.endCurrentISO,
+    startPrevISO: periods.startPrevISO,
+    endPrevISO: periods.endPrevISO
+  });
+
   const [currentTotal, currentBreakdown] = await Promise.all([
     anthropicCostSum(key, periods.startCurrentISO, periods.endCurrentISO),
     anthropicCostByModel(key, periods.startCurrentISO, periods.endCurrentISO)
@@ -95,9 +102,15 @@ async function fetchAnthropicCosts(periods) {
 }
 
 async function anthropicCostSum(key, startIso, endIso) {
+  // bucket_width=1d makes the per-day bucketing explicit. Without it,
+  // Anthropic's cost_report has been observed to still complain about
+  // ranges that look 1-day-wide on the wire — pinning the bucket
+  // width removes that ambiguity.
   const url = 'https://api.anthropic.com/v1/organizations/cost_report'
     + '?starting_at=' + encodeURIComponent(startIso)
-    + '&ending_at=' + encodeURIComponent(endIso);
+    + '&ending_at=' + encodeURIComponent(endIso)
+    + '&bucket_width=1d';
+  console.log('[admin-costs] Anthropic cost_report (sum) →', url);
   const r = await fetch(url, {
     headers: {
       'x-api-key': key,
@@ -106,6 +119,7 @@ async function anthropicCostSum(key, startIso, endIso) {
   });
   if (!r.ok) {
     const text = await r.text().catch(function() { return ''; });
+    console.error('[admin-costs] Anthropic cost_report (sum) failed:', r.status, text.slice(0, 300));
     throw new Error('Anthropic cost_report ' + r.status + ': ' + text.slice(0, 200));
   }
   const j = await r.json();
@@ -118,7 +132,9 @@ async function anthropicCostByModel(key, startIso, endIso) {
   const url = 'https://api.anthropic.com/v1/organizations/cost_report'
     + '?starting_at=' + encodeURIComponent(startIso)
     + '&ending_at=' + encodeURIComponent(endIso)
+    + '&bucket_width=1d'
     + '&group_by[]=model';
+  console.log('[admin-costs] Anthropic cost_report (by model) →', url);
   const r = await fetch(url, {
     headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
   });
