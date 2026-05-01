@@ -100,17 +100,21 @@
     #tab-api-costs .settings-card,
     #tab-customers .settings-card { overflow: visible; }
 
-    /* Filters bar — Customers tab */
-    .admin-filters {
+    /* Filters — Customers tab. Mirrors the cl-review filter rhythm:
+       a search row at top, a row of toggle buttons + Clear All below
+       it, and a hidden pill row that the toggle buttons reveal. */
+    .admin-filter-search-row {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
+      align-items: center;
       padding: 14px 16px;
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: var(--card-radius);
     }
-    .admin-filters .form-input { width: auto; min-width: 160px; }
+    .admin-filter-search-row .form-input { width: auto; min-width: 160px; }
+    .admin-filter-search-row #cust-search { flex: 1 1 240px; min-width: 240px; }
     .admin-filter-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
@@ -120,6 +124,10 @@
       align-self: center;
       margin-right: 4px;
     }
+    .admin-filter-btns-row { display: flex; align-items: center; gap: 8px; padding: 12px 0 0 0; flex-wrap: wrap; }
+    .admin-filter-row { margin: 12px 0 0 0; padding: 12px 16px; background: var(--white); border: 1px solid var(--border); border-radius: var(--card-radius); }
+    .admin-filter-row > div { margin-bottom: 8px; }
+    .admin-filter-row > div:last-child { margin-bottom: 0; }
 
     /* Manual entry form — API Cost Tracker */
     .admin-entry-form {
@@ -134,9 +142,6 @@
     }
     .admin-entry-form .form-input { width: auto; min-width: 140px; }
     .api-provider-wrap .lookback-dropdown { min-width: 200px; }
-    .cust-industry-wrap .lookback-dropdown { min-width: 140px; }
-    .cust-bundle-wrap .lookback-dropdown { min-width: 110px; }
-    .cust-trial-wrap .lookback-dropdown { min-width: 90px; }
 
     /* Provider cards — API Cost Tracker */
     .admin-provider-grid {

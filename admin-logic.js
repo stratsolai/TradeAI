@@ -484,44 +484,46 @@ window.ADMIN_LOGIC = {
   },
 
   // ── SECTION 3: CUSTOMERS ───────────────────────────────────────
+  // Filters use the cl-review.js pill-toggle pattern:
+  //   - top row: search + signup-after + min-tools (free-text inputs)
+  //   - filter-btns row: Filter By Industry / Plan / Trial / Clear All
+  //   - hidden filter-row that reveals .filter-pill rows when a
+  //     toggle button is open
+  // All filters apply client-side against the loaded customer list,
+  // so toggling a pill is instant — no API round-trip per click.
   _renderCustomers: function() {
     var self = this;
     var container = document.getElementById('section-customers');
 
-    // Filter bar — gather industries from existing CORE_TOOLS data
-    var industries = ['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
-    var industryOptions = [{ value: '', label: 'Any' }].concat(industries.map(function(i) {
-      return { value: i, label: i };
-    }));
-    var bundleOptions = [
-      { value: '', label: 'Any' },
-      { value: 'stax3', label: 'STAX3' },
-      { value: 'stax6', label: 'STAX6' },
-      { value: 'stax-all', label: 'STAX All' }
-    ];
-    var trialOptions = [
-      { value: '', label: 'Any' },
-      { value: 'true', label: 'Trial' },
-      { value: 'false', label: 'Paid' }
-    ];
+    // Filter state — multi-select arrays per cl-review pattern.
+    self._customerFilters = self._customerFilters || {
+      industries: [],
+      plans: [],
+      trial: [],
+      search: '',
+      signupAfter: '',
+      minTools: ''
+    };
 
-    var html = '<div class="admin-filters">'
-      + '<span class="admin-filter-label">Search</span>'
-      + '<input type="text" class="form-input" id="cust-search" placeholder="Email or business name">'
-      + '<span class="admin-filter-label">Industry</span>'
-      + self._dropdownHtml('cust-industry', 'cust-industry-wrap', industryOptions)
-      + '<span class="admin-filter-label">Plan</span>'
-      + self._dropdownHtml('cust-bundle', 'cust-bundle-wrap', bundleOptions)
-      + '<span class="admin-filter-label">Trial</span>'
-      + self._dropdownHtml('cust-trial', 'cust-trial-wrap', trialOptions)
+    var html = '<div class="admin-filter-search-row">'
+      + '<input type="text" class="form-input" id="cust-search" placeholder="Search by email or business name">'
       + '<span class="admin-filter-label">Signup after</span>'
       + '<input type="date" class="form-input" id="cust-after">'
       + '<span class="admin-filter-label">Min tools</span>'
       + '<input type="number" min="0" class="form-input" id="cust-min-tools" style="min-width:80px;">'
-      + '<button class="btn-add-connection" id="cust-apply">Apply</button>'
-      + '</div>';
-
-    html += '<div id="cust-table-wrap"><div class="admin-loading">Loading customers…</div></div>';
+      + '</div>'
+      + '<div class="admin-filter-btns-row">'
+      + '<button class="filter-btn filter-industry-btn">&#9783; Filter By Industry</button>'
+      + '<button class="filter-btn filter-plan-btn">&#9776; Filter By Plan</button>'
+      + '<button class="filter-btn filter-trial-btn">&#9783; Filter By Trial</button>'
+      + '<button class="clear-filters-btn">&#10005; Clear All Filters</button>'
+      + '</div>'
+      + '<div id="cust-filter-row" class="admin-filter-row" style="display:none">'
+      + '<div id="cust-industry-pills-wrap" style="display:none"><div class="filter-section-label">Industry</div><div id="cust-industry-pills" class="review-pill-row"></div></div>'
+      + '<div id="cust-plan-pills-wrap" style="display:none"><div class="filter-section-label">Plan</div><div id="cust-plan-pills" class="review-pill-row"></div></div>'
+      + '<div id="cust-trial-pills-wrap" style="display:none"><div class="filter-section-label">Trial</div><div id="cust-trial-pills" class="review-pill-row"></div></div>'
+      + '</div>'
+      + '<div id="cust-table-wrap"><div class="admin-loading">Loading customers…</div></div>';
     container.innerHTML = html;
 
     self._wireCustomerFilters();
@@ -530,20 +532,143 @@ window.ADMIN_LOGIC = {
 
   _wireCustomerFilters: function() {
     var self = this;
-    var btn = document.getElementById('cust-apply');
-    if (!btn) return;
-    btn.addEventListener('click', function() { self._fetchCustomers(); });
-
     var search = document.getElementById('cust-search');
     if (search) {
-      search.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') self._fetchCustomers();
+      search.value = self._customerFilters.search || '';
+      search.addEventListener('input', function() {
+        self._customerFilters.search = this.value;
+        self._renderCustomerList();
+      });
+    }
+    var after = document.getElementById('cust-after');
+    if (after) {
+      after.value = self._customerFilters.signupAfter || '';
+      after.addEventListener('change', function() {
+        self._customerFilters.signupAfter = this.value;
+        self._renderCustomerList();
+      });
+    }
+    var minTools = document.getElementById('cust-min-tools');
+    if (minTools) {
+      minTools.value = self._customerFilters.minTools || '';
+      minTools.addEventListener('input', function() {
+        self._customerFilters.minTools = this.value;
+        self._renderCustomerList();
       });
     }
 
-    self._wireDropdown('cust-industry');
-    self._wireDropdown('cust-bundle');
-    self._wireDropdown('cust-trial');
+    var btnIndustry = document.querySelector('.filter-industry-btn');
+    var btnPlan = document.querySelector('.filter-plan-btn');
+    var btnTrial = document.querySelector('.filter-trial-btn');
+    var btnClear = document.querySelector('.clear-filters-btn');
+
+    function refreshFilterRow() {
+      var open = {
+        industry: btnIndustry && btnIndustry.classList.contains('open'),
+        plan: btnPlan && btnPlan.classList.contains('open'),
+        trial: btnTrial && btnTrial.classList.contains('open')
+      };
+      var iWrap = document.getElementById('cust-industry-pills-wrap');
+      var pWrap = document.getElementById('cust-plan-pills-wrap');
+      var tWrap = document.getElementById('cust-trial-pills-wrap');
+      if (iWrap) iWrap.style.display = open.industry ? '' : 'none';
+      if (pWrap) pWrap.style.display = open.plan ? '' : 'none';
+      if (tWrap) tWrap.style.display = open.trial ? '' : 'none';
+      var row = document.getElementById('cust-filter-row');
+      if (row) row.style.display = (open.industry || open.plan || open.trial) ? 'block' : 'none';
+    }
+
+    function makeToggle(btn, kind) {
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        var isOpen = btn.classList.contains('open');
+        btn.classList.toggle('open', !isOpen);
+        if (!isOpen) self._renderCustomerFilterPills();
+        refreshFilterRow();
+        self._updateCustomerFilterIndicators();
+      });
+    }
+    makeToggle(btnIndustry, 'industry');
+    makeToggle(btnPlan, 'plan');
+    makeToggle(btnTrial, 'trial');
+
+    if (btnClear) {
+      btnClear.addEventListener('click', function() {
+        self._customerFilters.industries = [];
+        self._customerFilters.plans = [];
+        self._customerFilters.trial = [];
+        self._customerFilters.search = '';
+        self._customerFilters.signupAfter = '';
+        self._customerFilters.minTools = '';
+        if (search) search.value = '';
+        if (after) after.value = '';
+        if (minTools) minTools.value = '';
+        if (btnIndustry) btnIndustry.classList.remove('open', 'active');
+        if (btnPlan) btnPlan.classList.remove('open', 'active');
+        if (btnTrial) btnTrial.classList.remove('open', 'active');
+        refreshFilterRow();
+        self._renderCustomerList();
+      });
+    }
+  },
+
+  _renderCustomerFilterPills: function() {
+    var self = this;
+    var industries = ['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
+    var plans = [
+      { value: 'stax3', label: 'STAX3' },
+      { value: 'stax6', label: 'STAX6' },
+      { value: 'stax-all', label: 'STAX All' },
+      { value: 'individual', label: 'Individual tools' }
+    ];
+    var trials = [
+      { value: 'true', label: 'Trial' },
+      { value: 'false', label: 'Paid' }
+    ];
+
+    function renderPills(containerId, items, getId, getLabel, activeArr) {
+      var el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = items.map(function(it) {
+        var id = getId(it);
+        var isActive = activeArr.indexOf(id) > -1;
+        return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-value="' + self._esc(id) + '">' + self._esc(getLabel(it)) + '</button>';
+      }).join('');
+      el.querySelectorAll('.filter-pill').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          var v = pill.getAttribute('data-value');
+          var idx = activeArr.indexOf(v);
+          if (idx > -1) activeArr.splice(idx, 1);
+          else activeArr.push(v);
+          self._renderCustomerFilterPills();
+          self._renderCustomerList();
+          self._updateCustomerFilterIndicators();
+        });
+      });
+    }
+
+    renderPills('cust-industry-pills', industries,
+      function(i) { return i; },
+      function(i) { return i; },
+      self._customerFilters.industries);
+    renderPills('cust-plan-pills', plans,
+      function(p) { return p.value; },
+      function(p) { return p.label; },
+      self._customerFilters.plans);
+    renderPills('cust-trial-pills', trials,
+      function(t) { return t.value; },
+      function(t) { return t.label; },
+      self._customerFilters.trial);
+  },
+
+  _updateCustomerFilterIndicators: function() {
+    var f = this._customerFilters;
+    var btnI = document.querySelector('.filter-industry-btn');
+    var btnP = document.querySelector('.filter-plan-btn');
+    var btnT = document.querySelector('.filter-trial-btn');
+    if (btnI && !btnI.classList.contains('open')) btnI.classList.toggle('active', f.industries.length > 0);
+    if (btnP && !btnP.classList.contains('open')) btnP.classList.toggle('active', f.plans.length > 0);
+    if (btnT && !btnT.classList.contains('open')) btnT.classList.toggle('active', f.trial.length > 0);
   },
 
   // Render a .lookback-dropdown trigger + menu. options is
@@ -590,61 +715,106 @@ window.ADMIN_LOGIC = {
     if (!wrap) return;
     wrap.innerHTML = '<div class="admin-loading">Loading customers…</div>';
 
-    var params = new URLSearchParams();
-    var search = document.getElementById('cust-search');
-    var industry = document.getElementById('cust-industry');
-    var bundle = document.getElementById('cust-bundle');
-    var trial = document.getElementById('cust-trial');
-    var after = document.getElementById('cust-after');
-    var minTools = document.getElementById('cust-min-tools');
-
-    var industryVal = industry ? industry.getAttribute('data-value') : '';
-    var bundleVal = bundle ? bundle.getAttribute('data-value') : '';
-    var trialVal = trial ? trial.getAttribute('data-value') : '';
-
-    if (search && search.value.trim()) params.set('search', search.value.trim());
-    if (industryVal) params.set('industry', industryVal);
-    if (bundleVal) params.set('bundle', bundleVal);
-    if (trialVal) params.set('trial', trialVal);
-    if (after && after.value) params.set('signup_after', after.value);
-    if (minTools && minTools.value) params.set('min_tools', minTools.value);
-
-    self._fetchAdmin('admin-customers?' + params.toString()).then(function(d) {
-      var rows = d.customers || [];
-      self._customers = rows;
-      var html = '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
-        + '<th>Email</th><th>Business</th><th>Industry</th><th>Tools</th><th>Plan</th><th>Trial</th><th>MRR</th><th>Signed up</th>'
-        + '</tr></thead><tbody>';
-      if (rows.length === 0) {
-        html += '<tr><td colspan="8" class="admin-empty">No customers match those filters.</td></tr>';
-      } else {
-        rows.forEach(function(c) {
-          var inds = Array.isArray(c.industry) ? c.industry.join(', ') : (c.industry || '—');
-          var tools = Array.isArray(c.activated_tools) ? c.activated_tools.length : 0;
-          var mrr = self._customerMrr(c);
-          html += '<tr class="clickable" data-id="' + self._esc(c.id) + '">'
-            + '<td>' + self._esc(c.email || '') + '</td>'
-            + '<td>' + self._esc(c.business_name || '—') + '</td>'
-            + '<td>' + self._esc(inds) + '</td>'
-            + '<td>' + tools + '</td>'
-            + '<td>' + self._esc(c.bundle_tier || (tools > 0 ? 'individual' : '—')) + '</td>'
-            + '<td>' + (c.is_trial ? 'Trial' : 'Paid') + '</td>'
-            + '<td>' + (mrr != null ? self._formatMoney(mrr) : '—') + '</td>'
-            + '<td>' + self._formatDate(c.created_at) + '</td>'
-            + '</tr>';
-        });
-      }
-      html += '</tbody></table></div>';
-      html += '<div class="admin-note" style="margin-top:8px;">Showing ' + rows.length + ' customer' + (rows.length === 1 ? '' : 's') + '. Click a row for full detail.</div>';
-      wrap.innerHTML = html;
-
-      wrap.querySelectorAll('tr.clickable').forEach(function(tr) {
-        tr.addEventListener('click', function() {
-          self._showCustomerDetail(tr.getAttribute('data-id'));
-        });
-      });
+    // Fetch the full list once (no server-side filter params) — all
+    // filter logic now runs client-side off self._customers, mirroring
+    // cl-review which also loads once and filters on render.
+    self._fetchAdmin('admin-customers').then(function(d) {
+      self._customers = d.customers || [];
+      self._renderCustomerList();
     }).catch(function(err) {
       wrap.innerHTML = '<div class="admin-empty">' + self._esc('Could not load customers: ' + err.message) + '</div>';
+    });
+  },
+
+  _renderCustomerList: function() {
+    var self = this;
+    var wrap = document.getElementById('cust-table-wrap');
+    if (!wrap) return;
+    var rows = self._filterCustomers(self._customers || []);
+    var html = '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      + '<th>Email</th><th>Business</th><th>Industry</th><th>Tools</th><th>Plan</th><th>Trial</th><th>MRR</th><th>Signed up</th>'
+      + '</tr></thead><tbody>';
+    if (rows.length === 0) {
+      html += '<tr><td colspan="8" class="admin-empty">No customers match those filters.</td></tr>';
+    } else {
+      rows.forEach(function(c) {
+        var inds = Array.isArray(c.industry) ? c.industry.join(', ') : (c.industry || '—');
+        var tools = Array.isArray(c.activated_tools) ? c.activated_tools.length : 0;
+        var mrr = self._customerMrr(c);
+        html += '<tr class="clickable" data-id="' + self._esc(c.id) + '">'
+          + '<td>' + self._esc(c.email || '') + '</td>'
+          + '<td>' + self._esc(c.business_name || '—') + '</td>'
+          + '<td>' + self._esc(inds) + '</td>'
+          + '<td>' + tools + '</td>'
+          + '<td>' + self._esc(c.bundle_tier || (tools > 0 ? 'individual' : '—')) + '</td>'
+          + '<td>' + (c.is_trial ? 'Trial' : 'Paid') + '</td>'
+          + '<td>' + (mrr != null ? self._formatMoney(mrr) : '—') + '</td>'
+          + '<td>' + self._formatDate(c.created_at) + '</td>'
+          + '</tr>';
+      });
+    }
+    html += '</tbody></table></div>';
+    var totalAvailable = (self._customers || []).length;
+    var showingNote = rows.length === totalAvailable
+      ? 'Showing ' + rows.length + ' customer' + (rows.length === 1 ? '' : 's') + '.'
+      : 'Showing ' + rows.length + ' of ' + totalAvailable + ' customers.';
+    html += '<div class="admin-note" style="margin-top:8px;">' + showingNote + ' Click a row for full detail.</div>';
+    wrap.innerHTML = html;
+
+    wrap.querySelectorAll('tr.clickable').forEach(function(tr) {
+      tr.addEventListener('click', function() {
+        self._showCustomerDetail(tr.getAttribute('data-id'));
+      });
+    });
+  },
+
+  _filterCustomers: function(rows) {
+    var f = this._customerFilters || {};
+    var search = (f.search || '').toLowerCase().trim();
+    var signupAfter = f.signupAfter || '';
+    var minTools = f.minTools !== '' && f.minTools != null ? parseInt(f.minTools, 10) : null;
+    var industryFilters = f.industries || [];
+    var planFilters = f.plans || [];
+    var trialFilters = f.trial || [];
+
+    return rows.filter(function(c) {
+      // Search — email or business name, case-insensitive contains.
+      if (search) {
+        var email = (c.email || '').toLowerCase();
+        var biz = (c.business_name || '').toLowerCase();
+        if (email.indexOf(search) === -1 && biz.indexOf(search) === -1) return false;
+      }
+      // Signup after — created_at >= date.
+      if (signupAfter) {
+        if (!c.created_at || c.created_at < signupAfter) return false;
+      }
+      // Min tools.
+      if (minTools != null && !isNaN(minTools)) {
+        var tcount = Array.isArray(c.activated_tools) ? c.activated_tools.length : 0;
+        if (tcount < minTools) return false;
+      }
+      // Industry — multi-select OR (any selected industry matches one
+      // of the customer's industries).
+      if (industryFilters.length > 0) {
+        var inds = Array.isArray(c.industry) ? c.industry : (c.industry ? [c.industry] : []);
+        var matches = industryFilters.some(function(i) { return inds.indexOf(i) > -1; });
+        if (!matches) return false;
+      }
+      // Plan — multi-select OR. "individual" matches any customer with
+      // activated_tools but no bundle_tier.
+      if (planFilters.length > 0) {
+        var plan = c.bundle_tier || (
+          (Array.isArray(c.activated_tools) && c.activated_tools.length > 0) ? 'individual' : null
+        );
+        if (planFilters.indexOf(plan) === -1) return false;
+      }
+      // Trial — multi-select OR ('true' / 'false' as strings to match
+      // the pill data-value).
+      if (trialFilters.length > 0) {
+        var v = c.is_trial ? 'true' : 'false';
+        if (trialFilters.indexOf(v) === -1) return false;
+      }
+      return true;
     });
   },
 
