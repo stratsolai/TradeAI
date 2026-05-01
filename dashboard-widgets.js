@@ -81,6 +81,33 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
+  // Layered sine wiggle so trend lines read as real activity data — not
+  // smooth curves or straight diagonals. Deterministic, so the shape is
+  // stable between renders for the same input.
+  function applyTrendWiggle(series, direction) {
+    var n = series.length;
+    if (n < 2) return series;
+    var max = Math.max.apply(null, series);
+    var min = Math.min.apply(null, series);
+    var range = max - min;
+    // Reference scale for jitter: real range when present, otherwise enough
+    // to make synthesised flat data look like activity instead of a line.
+    var jitterScale = range || Math.max(Math.abs(max), 1);
+    // Mix three sines at different frequencies so peaks fall in believable
+    // (non-grid-aligned) spots. The +0.7 offset shifts a tiny bit so the
+    // first/last samples don't land at zero.
+    return series.map(function(v, i) {
+      var t = i + 0.7;
+      var n1 = Math.sin(t * 1.35);
+      var n2 = Math.sin(t * 2.7 + 0.6);
+      var n3 = Math.sin(t * 0.55 + 1.2);
+      // Weight high-freq components down so the wiggle reads as natural
+      // variation rather than zigzag noise.
+      var noise = n1 * 0.55 + n2 * 0.25 + n3 * 0.20;
+      return v + noise * jitterScale * 0.22;
+    });
+  }
+
   // Mini area chart with arrow head. The line is mapped into the upper
   // ~45% of the chart so the filled area below is ALWAYS visible (even for
   // sparse/zero data). The line terminates in an arrow tip; the area is
@@ -104,7 +131,7 @@ window.DASH_WIDGETS = (function() {
     var series = (values && values.length) ? values.slice() : [0, 0];
     if (series.length === 1) series = [series[0], series[0]];
 
-    // If the data is flat, synthesise a gentle slope in the trend direction
+    // If the data is flat, synthesise a gentle trend in the chosen direction
     // so the chart still reads as up/down rather than a flat horizontal line.
     var maxRaw = Math.max.apply(null, series);
     var minRaw = Math.min.apply(null, series);
@@ -112,9 +139,13 @@ window.DASH_WIDGETS = (function() {
       for (var k = 0; k < series.length; k++) {
         series[k] = direction === 'up' ? k : (series.length - 1 - k);
       }
-      maxRaw = Math.max.apply(null, series);
-      minRaw = Math.min.apply(null, series);
     }
+
+    // Apply realistic wiggle so the line looks like real activity data, not
+    // a smooth curve. Wiggle is deterministic and stable across renders.
+    series = applyTrendWiggle(series, direction);
+    maxRaw = Math.max.apply(null, series);
+    minRaw = Math.min.apply(null, series);
     var range = (maxRaw - minRaw) || 1;
 
     // Geometry — line lives in the top ~50% of the chart, area fills the
@@ -925,7 +956,7 @@ window.DASH_WIDGETS = (function() {
       var twoWeeksAgo = new Date(Date.now() - 14 * 86400000);
 
       var weekRes = await _supabase.from('chatbot_conversations')
-        .select('id, is_lead, appointment_requested, unanswered_questions, created_at')
+        .select('id, is_lead, appointment_requested, unanswered_questions, created_at, status, transcript')
         .eq('user_id', _userId)
         .gte('created_at', weekAgo.toISOString())
         .order('created_at', { ascending: false });
@@ -993,8 +1024,8 @@ window.DASH_WIDGETS = (function() {
     var unansDir = pendingUnanswered >= priorPendingUnanswered ? 'up' : 'down';
     var unansGood = unansDir === 'down';
 
-    // 7-day totals used by the expanded performance metrics (kept for
-    // Lead Conversion Rate / Answered Rate calculations).
+    // 7-day totals used by both the collapsed stat-trio and the expanded
+    // performance metrics.
     var weekLeads = weekRows.filter(function(r) { return r.is_lead; }).length;
     var leadRate = weekTotal > 0 ? Math.round((weekLeads / weekTotal) * 100) : 0;
     var answeredCount = weekRows.filter(function(r) {
@@ -1002,10 +1033,38 @@ window.DASH_WIDGETS = (function() {
     }).length;
     var answeredRate = weekTotal > 0 ? Math.round((answeredCount / weekTotal) * 100) : 0;
 
+    // Average messages per conversation across the last 7 days. Each
+    // conversation's transcript is an array of {role, content, ...} entries,
+    // counting both user and bot turns.
+    var totalMessages = 0;
+    var convsWithTranscript = 0;
+    weekRows.forEach(function(r) {
+      if (Array.isArray(r.transcript)) {
+        totalMessages += r.transcript.length;
+        convsWithTranscript++;
+      }
+    });
+    var avgMessages = convsWithTranscript > 0
+      ? (totalMessages / convsWithTranscript).toFixed(1)
+      : '0';
+
+    // "Active Now" — conversations where the bot is mid-flow, defined as
+    // status='in_progress' OR no terminal status set yet AND created in
+    // the last hour. Provides a useful real-time signal in the collapsed
+    // view that doesn't duplicate any 7-day metric.
+    var hourAgo = Date.now() - 60 * 60 * 1000;
+    var activeNow = weekRows.filter(function(r) {
+      if (r.status === 'in_progress') return true;
+      if (!r.status && new Date(r.created_at).getTime() >= hourAgo) return true;
+      return false;
+    }).length;
+
     var statusChipHtml = '<span class="badge badge-green">Online</span>';
 
     // Collapsed: Conversations (graphic only — no number), Booking Requests
-    // (today's count), Unanswered (pending, with reversed-colour trend).
+    // (today's count), Unanswered (pending, with reversed-colour trend),
+    // followed by a stat-trio row that fills the visual weight to match
+    // the SM tile (which has a week-strip below its metrics).
     var summary = '';
     summary += '<div class="dash-bigtrend-wrap">';
     summary += bigTrendGraphicOnlyCellHtml(dailyConvs, convDir, convGood, 'Conversations', '/chatbot#conversations');
@@ -1014,6 +1073,12 @@ window.DASH_WIDGETS = (function() {
       + '<span class="dash-bigtrend-label">Booking Requests Today</span>'
       + '</a>';
     summary += bigTrendCellHtml(dailyPending, unansDir, unansGood, pendingUnanswered, 'Unanswered', '/chatbot#unanswered');
+    summary += '</div>';
+
+    summary += '<div class="dash-stat-trio dash-stat-trio-bordered">';
+    summary += '<a href="/chatbot#conversations" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Active Now</span><span class="dash-stat-trio-value">' + activeNow + '</span></a>';
+    summary += '<a href="/chatbot#leads" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Lead Rate</span><span class="dash-stat-trio-value">' + leadRate + '%</span></a>';
+    summary += '<a href="/chatbot#conversations" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Avg Messages</span><span class="dash-stat-trio-value">' + window.escHtml(String(avgMessages)) + '</span></a>';
     summary += '</div>';
 
     var detail = '';

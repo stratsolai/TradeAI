@@ -442,8 +442,25 @@ window.SOCIAL_LOGIC = {
   // SVG trend graphic — mini area chart that ends in an arrow head. The
   // line is mapped into the upper portion of the chart so the filled area
   // beneath it (gradient + flat fill overlay) is always clearly visible,
-  // even when the underlying data is sparse or zero.
+  // even when the underlying data is sparse or zero. A deterministic
+  // sine-based wiggle is added so lines read as real activity data.
   _trendGradSeq: 0,
+  _applyWiggle: function(series) {
+    var n = series.length;
+    if (n < 2) return series;
+    var max = Math.max.apply(null, series);
+    var min = Math.min.apply(null, series);
+    var range = max - min;
+    var scale = range || Math.max(Math.abs(max), 1);
+    return series.map(function(v, i) {
+      var t = i + 0.7;
+      var n1 = Math.sin(t * 1.35);
+      var n2 = Math.sin(t * 2.7 + 0.6);
+      var n3 = Math.sin(t * 0.55 + 1.2);
+      var noise = n1 * 0.55 + n2 * 0.25 + n3 * 0.20;
+      return v + noise * scale * 0.22;
+    });
+  },
   _buildTrendSvg: function(values, direction, good) {
     var width = 90, height = 36, pad = 3, ahSize = 7, stroke = 2.4;
     var series = (values && values.length) ? values.slice() : [0, 0];
@@ -454,9 +471,10 @@ window.SOCIAL_LOGIC = {
       for (var k = 0; k < series.length; k++) {
         series[k] = direction === 'up' ? k : (series.length - 1 - k);
       }
-      maxRaw = Math.max.apply(null, series);
-      minRaw = Math.min.apply(null, series);
     }
+    series = this._applyWiggle(series);
+    maxRaw = Math.max.apply(null, series);
+    minRaw = Math.min.apply(null, series);
     var range = (maxRaw - minRaw) || 1;
     var baseY = height - pad;
     var lineTopY = pad + 1;

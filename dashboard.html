@@ -222,6 +222,12 @@
       gap: 6px;
       padding: 4px 0;
     }
+    /* Variant used under the CB big-trend row — adds a top border so the
+       trio reads as a separate band, balancing the SM tile's week strip. */
+    .dash-stat-trio-bordered {
+      border-top: 1px solid var(--border-light);
+      padding: 8px 0 4px;
+    }
     .dash-stat-trio-cell {
       flex: 1;
       display: flex;
@@ -276,23 +282,27 @@
     /* ── Big combined sparkline + arrow trend graphic (Social / Chatbot) ── */
     .dash-bigtrend-wrap {
       display: flex;
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
-      padding: 8px 0 4px;
+      padding: 12px 0 6px;
     }
     .dash-bigtrend-cell {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 0 12px;
-      flex: 1;
+      justify-content: center;
+      gap: 6px;
+      padding: 4px 10px;
+      flex: 1 1 0;
       min-width: 0;
+      min-height: 86px;
       text-decoration: none;
       color: var(--text);
+      box-sizing: border-box;
     }
     .dash-bigtrend-cell + .dash-bigtrend-cell { border-left: 1px solid var(--border-light); }
     .dash-bigtrend-cell:hover .dash-bigtrend-value { color: var(--blue); }
+    .dash-bigtrend-cell:hover .dash-bigtrend-value-only { color: var(--blue); }
     .dash-bigtrend-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
@@ -300,6 +310,7 @@
       text-transform: uppercase;
       letter-spacing: var(--letter-spacing-label);
       line-height: 1.1;
+      text-align: center;
     }
     .dash-bigtrend-value {
       font-family: var(--heading-font);
@@ -310,16 +321,16 @@
       transition: color var(--btn-transition);
     }
     .dash-bigtrend-graphic { display: block; }
-    /* Value-only cell — used when a centred big-trend cell has no graphic
-       (e.g. Engagement on the Social tile collapsed view) so it still aligns
-       vertically with neighbouring graphic cells. */
+    /* Value-only cell — when a big-trend cell has no graphic (e.g. middle
+       Engagement cell on the Social tile) it still occupies the same
+       vertical footprint so all three cells align centred. */
     .dash-bigtrend-value-only {
       font-family: var(--heading-font);
       font-size: var(--heading-lg-size);
       font-weight: var(--heading-lg-weight);
       color: var(--text);
       line-height: 1;
-      padding: 8px 0;
+      transition: color var(--btn-transition);
     }
 
     /* ── Header-row trend pill (News tile shows topic + small graphic on heading row) ── */

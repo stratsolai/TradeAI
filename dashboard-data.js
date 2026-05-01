@@ -517,10 +517,13 @@ window.DASH_DATA = (function() {
     });
   }
 
-  // Generic tile expand/collapse toggle
-  // Tile expand/collapse — document-level delegation so it works for tiles in
-  // either Zone 1 (EA) or Zone 2 (News, Social, Chatbot), regardless of when
-  // they're added to the DOM. Wired once during init.
+  // Tile expand/collapse — document-level delegation so it works for tiles
+  // added to the DOM at any time. Behaviour differs by zone:
+  //   • Zone 2 (YOUR STAX — News, Social, Chatbot) toggles are GROUPED:
+  //     clicking any one of them expands or collapses all three together,
+  //     so the row stays visually balanced.
+  //   • Other tiles (Zone 1 EA tile, etc.) toggle individually.
+  // Wired once during init.
   function wireTileToggles() {
     if (window._stax_tileTogglesWired) return;
     window._stax_tileTogglesWired = true;
@@ -530,6 +533,25 @@ window.DASH_DATA = (function() {
       e.preventDefault();
       var tile = btn.closest('.tile-card');
       if (!tile) return;
+
+      var isInZone2 = !!tile.closest('#zone-2');
+      if (isInZone2) {
+        // Group toggle — flip every Zone-2 tile to the same target state.
+        var willOpen = !btn.classList.contains('open');
+        var zone2 = document.getElementById('zone-2');
+        if (!zone2) return;
+        zone2.querySelectorAll('.dash-tile-toggle').forEach(function(toggle) {
+          toggle.classList.toggle('open', willOpen);
+          toggle.setAttribute('aria-label', willOpen ? 'Collapse details' : 'Expand details');
+          toggle.setAttribute('title', willOpen ? 'Collapse' : 'Expand');
+        });
+        zone2.querySelectorAll('.tile-card .dash-tile-detail').forEach(function(d) {
+          d.classList.toggle('open', willOpen);
+        });
+        return;
+      }
+
+      // Individual toggle for non-Zone-2 tiles.
       var isOpen = btn.classList.toggle('open');
       btn.setAttribute('aria-label', isOpen ? 'Collapse details' : 'Expand details');
       btn.setAttribute('title', isOpen ? 'Collapse' : 'Expand');
