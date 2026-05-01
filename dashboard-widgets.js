@@ -69,17 +69,27 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
-  // Render the trend block: sparkline + arrow indicator (green ↑ / red ↓).
+  // Block-style SVG arrows (16x18). Fill via currentColor so .dash-trend-arrow.up
+  // (green) and .dash-trend-arrow.down (red) just need to set `color`.
+  function trendArrowSvg(direction) {
+    var points = direction === 'up'
+      ? '8,2 16,10 11,10 11,16 5,16 5,10 0,10'
+      : '8,16 16,8 11,8 11,2 5,2 5,8 0,8';
+    return '<svg class="dash-trend-arrow ' + direction + '" '
+      + 'width="16" height="18" viewBox="0 0 16 18" aria-hidden="true">'
+      + '<polygon points="' + points + '" fill="currentColor" />'
+      + '</svg>';
+  }
+
+  // Render the trend block: sparkline + block-style SVG arrow (green up / red down).
   function trendBlockHtml(values, recentSum, priorSum, label) {
     var direction = recentSum >= priorSum ? 'up' : 'down';
-    var arrow = direction === 'up' ? '↑' : '↓';
-    var arrowClass = 'dash-trend-arrow ' + direction;
     var spark = sparklineSvg(values, { width: 120, height: 32 });
     return '<div class="dash-trend-block">'
       + '<div class="dash-trend-label">' + window.escHtml(label || 'Trend') + '</div>'
       + '<div class="dash-trend-row">'
       + spark
-      + '<span class="' + arrowClass + '">' + arrow + '</span>'
+      + trendArrowSvg(direction)
       + '</div>'
       + '</div>';
   }

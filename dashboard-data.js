@@ -306,6 +306,7 @@ window.DASH_DATA = (function() {
   // CL tile — pending review count, new outputs this week, colour indicator
   async function renderCLTile(userId) {
     var pendingCount = 0, outputCount = 0;
+    var projectCount = 0;
     try {
       var pending = await _supabase.from('content_library')
         .select('id', { count: 'exact', head: true })
@@ -314,42 +315,51 @@ window.DASH_DATA = (function() {
         .select('id', { count: 'exact', head: true })
         .eq('user_id', userId).eq('source', 'tool')
         .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
+      var projects = await _supabase.from('cl_projects')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
 
       if (pending.error) console.error('[Dashboard] CL pending query error:', pending.error.message || pending.error);
       if (outputs.error) console.error('[Dashboard] CL outputs query error:', outputs.error.message || outputs.error);
+      if (projects.error) console.error('[Dashboard] CL projects query error:', projects.error.message || projects.error);
 
       pendingCount = pending.count || 0;
       outputCount = outputs.count || 0;
+      projectCount = projects.count || 0;
     } catch (e) {
       console.error('[Dashboard] CL tile error:', e.message || e);
     }
 
-    var indicatorClass = 'green';
-    var statusText = 'All Clear';
-    if (pendingCount >= 20) {
-      indicatorClass = 'red';
-      statusText = 'Backing Up';
-    } else if (pendingCount > 0) {
-      indicatorClass = 'amber';
-      statusText = 'Items Waiting';
-    }
+    // Per-row status dot. Only Pending Review can "back up" — the others
+    // stay green regardless of count.
+    var pendingDot = pendingCount >= 50 ? 'red' : (pendingCount >= 11 ? 'amber' : 'green');
 
-    var badgeColour = indicatorClass === 'green' ? 'green' : (indicatorClass === 'amber' ? 'orange' : 'red');
+    var headerBadge = pendingCount >= 50
+      ? '<span class="badge badge-red">Needs Attention</span>'
+      : '';
 
     var html = '<div class="tile-card">';
     html += '<a href="/content-library.html#review" class="dash-tile-header">';
     html += '<span class="profile-section-icon">📚</span>';
-    html += '<span class="profile-section-title" style="flex:1"><span class="dash-cl-dot ' + indicatorClass + '"></span>Content Library</span>';
-    html += '<span class="badge badge-' + badgeColour + '">' + window.escHtml(statusText) + '</span>';
+    html += '<span class="profile-section-title" style="flex:1">Content Library</span>';
+    html += headerBadge;
     html += '</a>';
     html += '<div class="dash-tile-summary">';
     html += '<a href="/content-library.html#review" class="dash-tile-row">';
+    html += '<span class="dash-cl-dot ' + pendingDot + '"></span>';
     html += '<span class="dash-tile-row-value">' + pendingCount + '</span>';
     html += '<span class="dash-tile-row-label">Pending Review</span>';
     html += '</a>';
     html += '<a href="/content-library.html#outputs" class="dash-tile-row">';
+    html += '<span class="dash-cl-dot green"></span>';
     html += '<span class="dash-tile-row-value">' + outputCount + '</span>';
     html += '<span class="dash-tile-row-label">New Output' + (outputCount === 1 ? '' : 's') + ' This Week</span>';
+    html += '</a>';
+    html += '<a href="/content-library.html#projects" class="dash-tile-row">';
+    html += '<span class="dash-cl-dot green"></span>';
+    html += '<span class="dash-tile-row-value">' + projectCount + '</span>';
+    html += '<span class="dash-tile-row-label">New Project' + (projectCount === 1 ? '' : 's') + ' This Week</span>';
     html += '</a>';
     html += '</div>';
     html += '</div>';
