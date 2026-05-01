@@ -85,6 +85,7 @@ window.DASH_DATA = (function() {
     showBPModal();
     await renderZone1(user.id, _activeTools);
     wirePhotoCapture();
+    wireTileToggles();
 
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
       await window.DASH_WIDGETS.renderAll(_supabase, user.id, _activeTools);
@@ -274,19 +275,32 @@ window.DASH_DATA = (function() {
     });
   }
 
-  // ── ZONE 1: Content Library + Email Assistant + Photo Capture ──
+  // ── ZONE 1: Content Library + Email Assistant + BI Dashboard placeholder ──
   async function renderZone1(userId, activeTools) {
     var container = document.getElementById('zone-1');
     if (!container) return;
 
     var clHtml = await renderCLTile(userId);
     var eaHtml = await renderEATile(userId, activeTools);
-    var photoHtml = renderPhotoTile();
+    var biHtml = renderBIPlaceholder();
 
-    container.innerHTML = clHtml + eaHtml + photoHtml;
+    container.innerHTML = clHtml + eaHtml + biHtml;
 
-    wireTileToggles(container);
     wireEATabs(container);
+  }
+
+  // BI Dashboard placeholder — shown in Zone 1 until test data is populated
+  function renderBIPlaceholder() {
+    var html = '<div class="tile-card" data-tile="bi">';
+    html += '<a href="/bi.html" class="dash-tile-header">';
+    html += '<span class="profile-section-icon">🧠</span>';
+    html += '<span class="profile-section-title" style="flex:1">Business Intelligence</span>';
+    html += '</a>';
+    html += '<div class="dash-tile-summary">';
+    html += '<div class="list-empty" style="padding:8px 0">Coming soon — populate test data to enable.</div>';
+    html += '</div>';
+    html += '</div>';
+    return html;
   }
 
   // CL tile — pending review count, new outputs this week, colour indicator
@@ -435,23 +449,23 @@ window.DASH_DATA = (function() {
     var paneClass = 'ptab-content' + (isActive ? ' active' : '');
     var html = '<div class="' + paneClass + '" data-tab-pane="' + window.escHtml(provider) + '">';
 
-    // Collapsed summary
-    html += '<div class="dash-tile-summary">';
-    html += '<a href="/email" class="dash-tile-row">';
-    html += '<span class="dash-tile-row-value">' + urgentCount + '</span>';
-    html += '<span class="dash-tile-row-label">urgent</span>';
+    // Collapsed summary — three metrics laid out horizontally (Urgent / Leads / Unhandled)
+    html += '<div class="dash-tile-summary dash-ea-metrics">';
+    html += '<a href="/email" class="dash-ea-metric">';
+    html += '<span class="dash-ea-metric-value">' + urgentCount + '</span>';
+    html += '<span class="dash-ea-metric-label">Urgent</span>';
     html += '</a>';
-    html += '<a href="/email" class="dash-tile-row">';
-    html += '<span class="dash-tile-row-value">' + leadCount + '</span>';
-    html += '<span class="dash-tile-row-label">lead' + (leadCount === 1 ? '' : 's') + '</span>';
+    html += '<a href="/email" class="dash-ea-metric">';
+    html += '<span class="dash-ea-metric-value">' + leadCount + '</span>';
+    html += '<span class="dash-ea-metric-label">Lead' + (leadCount === 1 ? '' : 's') + '</span>';
     html += '</a>';
-    html += '<a href="/email" class="dash-tile-row">';
-    html += '<span class="dash-tile-row-value">' + unhandledCount + '</span>';
-    html += '<span class="dash-tile-row-label">unhandled</span>';
+    html += '<a href="/email" class="dash-ea-metric">';
+    html += '<span class="dash-ea-metric-value">' + unhandledCount + '</span>';
+    html += '<span class="dash-ea-metric-label">Unhandled</span>';
     html += '</a>';
     html += '</div>';
 
-    // Expanded list
+    // Expanded list — sender + subject (no body-summary truncation)
     html += '<div class="dash-tile-detail">';
     if (listItems.length === 0) {
       html += '<div class="list-empty">No urgent emails or leads to show.</div>';
@@ -459,12 +473,11 @@ window.DASH_DATA = (function() {
       listItems.forEach(function(it) {
         var badgeColour = it.category === 'urgent' ? 'red' : 'green';
         var tagLabel = it.category === 'urgent' ? 'Urgent' : 'Lead';
-        var sourceText = it.summary || it.subject || '';
-        var summary = sourceText.split(/\s+/).slice(0, 5).join(' ');
+        var subject = it.subject || '(No subject)';
         html += '<a href="/email?id=' + window.escHtml(it.id) + '" class="dash-ea-email-row">';
         html += '<span class="badge badge-' + badgeColour + '">' + tagLabel + '</span>';
         html += '<span class="dash-ea-email-sender">' + window.escHtml(it.sender || it.sender_email || 'Unknown') + '</span>';
-        html += '<span class="text-preview">' + window.escHtml(summary) + '</span>';
+        html += '<span class="text-preview">' + window.escHtml(subject) + '</span>';
         html += '</a>';
       });
     }
@@ -495,30 +508,25 @@ window.DASH_DATA = (function() {
   }
 
   // Generic tile expand/collapse toggle
-  function wireTileToggles(container) {
-    var toggles = container.querySelectorAll('.dash-tile-toggle');
-    toggles.forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        var tile = btn.closest('.tile-card');
-        if (!tile) return;
-        var isOpen = btn.classList.toggle('open');
-        btn.setAttribute('aria-label', isOpen ? 'Collapse details' : 'Expand details');
-        btn.setAttribute('title', isOpen ? 'Collapse' : 'Expand');
-        tile.querySelectorAll('.dash-tile-detail').forEach(function(d) {
-          if (isOpen) d.classList.add('open'); else d.classList.remove('open');
-        });
+  // Tile expand/collapse — document-level delegation so it works for tiles in
+  // either Zone 1 (EA) or Zone 2 (News, Social, Chatbot), regardless of when
+  // they're added to the DOM. Wired once during init.
+  function wireTileToggles() {
+    if (window._stax_tileTogglesWired) return;
+    window._stax_tileTogglesWired = true;
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest && e.target.closest('.dash-tile-toggle');
+      if (!btn) return;
+      e.preventDefault();
+      var tile = btn.closest('.tile-card');
+      if (!tile) return;
+      var isOpen = btn.classList.toggle('open');
+      btn.setAttribute('aria-label', isOpen ? 'Collapse details' : 'Expand details');
+      btn.setAttribute('title', isOpen ? 'Collapse' : 'Expand');
+      tile.querySelectorAll('.dash-tile-detail').forEach(function(d) {
+        if (isOpen) d.classList.add('open'); else d.classList.remove('open');
       });
     });
-  }
-
-  // Photo Capture tile — distinctive gradient CTA per spec 4.3
-  function renderPhotoTile() {
-    return '<button type="button" class="dash-photo-tile" id="photo-tile-btn" aria-label="Take a photo">'
-      + '<span class="dash-photo-icon">📸</span>'
-      + '<span class="dash-photo-title">Take a Photo</span>'
-      + '<span class="dash-photo-subtitle">Capture and tag for any tool</span>'
-      + '</button>';
   }
 
   // Photo Capture flow — preset selection → camera → hand off to destination tool.
@@ -658,7 +666,7 @@ window.DASH_DATA = (function() {
   }
 
   function availableCardHtml(tool) {
-    return '<div class="dash-stax-card">'
+    return '<div class="dash-stax-card dash-stax-available">'
       + '<div class="dash-stax-card-top">'
       + '<span class="dash-stax-icon">' + tool.icon + '</span>'
       + '<div class="dash-stax-card-info">'

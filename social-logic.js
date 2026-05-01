@@ -195,6 +195,120 @@ window.SOCIAL_LOGIC = {
     this._bindManagementTabs();
     this._renderGroups();
     await this._loadData();
+    this._handlePhotoHandoff();
+  },
+
+  // ── Dashboard Photo Capture handoff ─────────────────────────
+  // Reads payload from sessionStorage 'stax_photo_handoff' (set by the dashboard),
+  // surfaces a confirmation modal showing the photo + preset tags, and on confirm
+  // saves to Content Library with tool_source='social-media' (Pattern B).
+  _handlePhotoHandoff: function() {
+    var raw;
+    try { raw = sessionStorage.getItem('stax_photo_handoff'); } catch (e) { return; }
+    if (!raw) return;
+    var payload;
+    try { payload = JSON.parse(raw); } catch (e) {
+      console.error('[SM] Photo handoff parse error:', e.message);
+      try { sessionStorage.removeItem('stax_photo_handoff'); } catch (err) {}
+      return;
+    }
+    if (!payload || !payload.dataUrl) {
+      try { sessionStorage.removeItem('stax_photo_handoff'); } catch (err) {}
+      return;
+    }
+    this._showPhotoHandoffModal(payload);
+  },
+
+  _showPhotoHandoffModal: function(payload) {
+    var self = this;
+    var modal = document.getElementById('sm-photo-handoff-modal');
+    if (!modal) return;
+    var img = document.getElementById('sm-photo-handoff-image');
+    var presetEl = document.getElementById('sm-photo-handoff-preset');
+    var tagsEl = document.getElementById('sm-photo-handoff-tags');
+    var addBtn = document.getElementById('sm-photo-handoff-add');
+    var cancelBtn = document.getElementById('sm-photo-handoff-cancel');
+    var msgEl = document.getElementById('sm-photo-handoff-msg');
+
+    if (img) img.src = payload.dataUrl;
+    if (presetEl) presetEl.textContent = payload.presetLabel || payload.preset || '';
+    if (tagsEl) {
+      var tags = Array.isArray(payload.tags) ? payload.tags : [];
+      tagsEl.textContent = tags.length ? tags.join(', ') : 'social-media';
+    }
+    if (msgEl) msgEl.textContent = '';
+
+    function close() {
+      modal.classList.remove('open');
+      try { sessionStorage.removeItem('stax_photo_handoff'); } catch (e) {}
+    }
+
+    if (cancelBtn) cancelBtn.addEventListener('click', close, { once: true });
+    modal.addEventListener('click', function(e) { if (e.target === modal) close(); }, { once: true });
+
+    if (addBtn) {
+      addBtn.addEventListener('click', async function() {
+        addBtn.disabled = true;
+        var origLabel = addBtn.textContent;
+        addBtn.textContent = 'Saving...';
+        try {
+          await self._savePhotoHandoffToCL(payload);
+          addBtn.textContent = 'Saved ✓';
+          if (msgEl) msgEl.textContent = 'Photo added to Content Library.';
+          setTimeout(close, 1200);
+        } catch (err) {
+          console.error('[SM] Photo handoff save error:', err.message || err);
+          addBtn.disabled = false;
+          addBtn.textContent = origLabel;
+          if (msgEl) msgEl.textContent = 'Could not save photo. Please try again.';
+        }
+      }, { once: true });
+    }
+
+    modal.classList.add('open');
+  },
+
+  _savePhotoHandoffToCL: async function(payload) {
+    if (!this._supabase || !this._userId) throw new Error('Session missing');
+    var dataUrl = payload.dataUrl || '';
+    var commaIdx = dataUrl.indexOf(',');
+    if (commaIdx < 0) throw new Error('Invalid photo data');
+    var b64 = dataUrl.substring(commaIdx + 1);
+    var binary = atob(b64);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    var blob = new Blob([bytes], { type: payload.contentType || 'image/jpeg' });
+
+    var ts = Date.now();
+    var safeName = (payload.fileName || 'photo.jpg').replace(/[^A-Za-z0-9._-]/g, '_');
+    var path = this._userId + '/social-media/' + ts + '_' + safeName;
+
+    var up = await this._supabase.storage.from('cl-assets').upload(path, blob, {
+      contentType: payload.contentType || 'image/jpeg',
+      upsert: false
+    });
+    if (up.error) throw new Error(up.error.message || 'Upload failed');
+
+    var pub = this._supabase.storage.from('cl-assets').getPublicUrl(path);
+    var publicUrl = (pub && pub.data) ? pub.data.publicUrl : null;
+
+    var tags = Array.isArray(payload.tags) && payload.tags.length ? payload.tags : ['social-media'];
+
+    var row = {
+      user_id: this._userId,
+      source: 'tool',
+      tool_source: 'social-media',
+      source_ref: path,
+      status: 'approved',
+      category: 'Photos',
+      tool_tags: tags,
+      content_type: 'image',
+      content_text: 'Photo captured for ' + (payload.presetLabel || 'Social Media'),
+      file_url: publicUrl
+    };
+    var ins = await this._supabase.from('content_library')
+      .upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
+    if (ins.error) throw new Error(ins.error.message || 'Save failed');
   },
 
   _bindTabs: function() {

@@ -469,23 +469,8 @@ window.DASH_WIDGETS = (function() {
     return tileShell('chatbot', '💬', 'Website Chatbot', '/chatbot', statusChipHtml, summary, detail);
   }
 
-  // Wire toggle buttons inside Zone 2 tiles
-  function wireToggles(container) {
-    container.querySelectorAll('.dash-tile-toggle').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        var tile = btn.closest('.dash-tile');
-        if (!tile) return;
-        var isOpen = btn.classList.toggle('open');
-        btn.setAttribute('aria-label', isOpen ? 'Collapse details' : 'Expand details');
-        btn.setAttribute('title', isOpen ? 'Collapse' : 'Expand');
-        var detail = tile.querySelector('.dash-tile-detail');
-        if (detail) {
-          if (isOpen) detail.classList.add('open'); else detail.classList.remove('open');
-        }
-      });
-    });
-  }
+  // Tile expand/collapse is handled by document-level delegation in dashboard-data.js
+  // (wireTileToggles), so no per-render wiring is needed here.
 
   // ── RENDER ALL ──
   async function renderAll(supabase, userId, activeTools) {
@@ -521,7 +506,6 @@ window.DASH_WIDGETS = (function() {
     }
 
     container.innerHTML = html;
-    wireToggles(container);
   }
 
   return { renderAll: renderAll };

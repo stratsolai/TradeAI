@@ -197,9 +197,13 @@ a:hover { opacity: 0.85; }
 /* ------------------------------------------------------------
    4. TOPBAR
    ------------------------------------------------------------ */
+body { padding-top: 68px; }
+
 .topbar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
@@ -1249,8 +1253,9 @@ a:hover { opacity: 0.85; }
    ------------------------------------------------------------ */
 .tile-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 16px;
+  align-items: start;
 }
 
 /* ------------------------------------------------------------

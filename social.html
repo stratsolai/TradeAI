@@ -624,6 +624,27 @@
       </div>
     </div>
 
+    <!-- Photo handoff from dashboard Capture button -->
+    <div class="perm-modal-overlay" id="sm-photo-handoff-modal" role="dialog" aria-labelledby="sm-photo-handoff-title">
+      <div class="perm-modal">
+        <div class="perm-modal-title" id="sm-photo-handoff-title">Add Captured Photo</div>
+        <div class="perm-modal-body">
+          <div style="display:flex;justify-content:center;margin-bottom:14px">
+            <img id="sm-photo-handoff-image" alt="Captured photo" style="max-width:100%;max-height:240px;border-radius:var(--card-radius);border:1px solid var(--border)">
+          </div>
+          <div style="font-size:var(--note-font-size);color:var(--text-secondary);line-height:1.6">
+            <div><strong>Preset:</strong> <span id="sm-photo-handoff-preset"></span></div>
+            <div><strong>Tags:</strong> <span id="sm-photo-handoff-tags"></span></div>
+          </div>
+          <div id="sm-photo-handoff-msg" style="margin-top:12px;font-size:var(--note-font-size);color:var(--text-muted)"></div>
+        </div>
+        <div class="perm-modal-actions">
+          <button type="button" class="perm-modal-cancel" id="sm-photo-handoff-cancel">Cancel</button>
+          <button type="button" class="perm-modal-continue" id="sm-photo-handoff-add">Add to Content Library</button>
+        </div>
+      </div>
+    </div>
+
     <div class="perm-modal-overlay" id="sm-confirm-modal">
       <div class="perm-modal">
         <div class="perm-modal-title" id="sm-confirm-title"></div>

@@ -17,17 +17,21 @@
     /* ── Dashboard container ── */
     .dash-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
-    /* ── Zone heading (YOUR TOOLS / YOUR STAX) — dashboard-specific large branded heading ── */
+    /* ── Zone heading (YOUR STAX / MORE STAX) — branded gradient text ── */
     .dash-heading {
       font-family: var(--heading-font);
       font-size: var(--page-title-font-size);
-      font-weight: 600;
-      color: var(--blue);
+      font-weight: 700;
+      color: var(--blue); /* fallback before gradient renders */
       text-transform: uppercase;
       letter-spacing: 0.04em;
       margin: 0 0 16px;
+      background: linear-gradient(135deg, var(--blue-accent-hover), var(--blue), var(--grey-accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
-    .dash-heading .accent { color: var(--blue); font-weight: 800; }
+    .dash-heading .accent { font-weight: 900; }
     .dash-zone { margin-bottom: 40px; }
 
     /* ── Trial banner ── */
@@ -74,7 +78,7 @@
     .dash-tile-header:hover { background: var(--blue-light); opacity: 1; }
 
     /* ── Tile body sections ── */
-    .dash-tile-summary { padding: 14px 16px; flex: 1; }
+    .dash-tile-summary { padding: 14px 16px; }
     .dash-tile-detail { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border-light); }
     .dash-tile-detail.open { display: block; }
 
@@ -116,11 +120,12 @@
     }
     .dash-tile-row-label { font-size: var(--body-font-size); color: var(--text); flex: 1; }
 
-    /* ── Zone 1 grid (3 columns desktop) ── */
+    /* ── Zone 1 grid (3 columns desktop, align top so tiles fit content) ── */
     .dash-zone1-grid {
       display: grid;
-      grid-template-columns: 1.2fr 1.6fr 1fr;
+      grid-template-columns: 1fr 1.5fr 1fr;
       gap: 16px;
+      align-items: start;
     }
 
     /* ── CL tile colour indicator dot (red/amber/green) ── */
@@ -135,6 +140,40 @@
     .dash-cl-dot.green { background: var(--green); }
     .dash-cl-dot.amber { background: var(--warning); }
     .dash-cl-dot.red   { background: var(--red); }
+
+    /* ── EA metrics row (Urgent / Leads / Unhandled — horizontal) ── */
+    .dash-ea-metrics {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+    }
+    .dash-ea-metric {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 10px 6px;
+      text-decoration: none;
+      color: var(--text);
+      border-radius: var(--btn-radius);
+      transition: background var(--btn-transition);
+    }
+    .dash-ea-metric:hover { background: var(--blue-light); color: var(--blue); opacity: 1; }
+    .dash-ea-metric-value {
+      font-family: var(--heading-font);
+      font-size: var(--stat-value-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--blue);
+      line-height: 1;
+    }
+    .dash-ea-metric-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+    }
 
     /* ── EA email rows inside expanded detail ── */
     .dash-ea-email-row {
@@ -154,39 +193,35 @@
       white-space: nowrap;
     }
 
-    /* ── Photo Capture tile (distinctive gradient — per spec 4.3) ── */
-    .dash-photo-tile {
-      background: linear-gradient(135deg, var(--blue) 0%, var(--blue-accent-hover) 100%);
-      color: var(--white);
-      border: none;
-      border-radius: var(--card-radius);
-      padding: 24px 20px;
-      cursor: pointer;
+    /* ── Page header with Capture button on the right ── */
+    .dash-page-header {
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      text-align: center;
-      gap: 12px;
-      min-height: 180px;
-      box-shadow: 0 2px 10px var(--shadow-card);
-      transition: box-shadow var(--btn-transition), transform var(--btn-transition);
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
     }
-    .dash-photo-tile:hover {
-      box-shadow: 0 6px 20px var(--shadow-hover);
-      transform: translateY(-2px);
+    .dash-capture-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--white);
+      color: var(--blue);
+      border: 2px solid var(--blue);
+      border-radius: var(--btn-radius);
+      padding: 8px 16px;
+      font-family: var(--body-font);
+      font-size: var(--btn-font-size);
+      font-weight: var(--font-weight-semibold);
+      cursor: pointer;
+      min-height: 40px;
+      transition: background var(--btn-transition), color var(--btn-transition);
     }
-    .dash-photo-icon { font-size: 44px; line-height: 1; }
-    .dash-photo-title {
-      font-family: var(--heading-font);
-      font-size: var(--heading-lg-size);
-      font-weight: var(--heading-lg-weight);
-      color: var(--white);
-      letter-spacing: 0.02em;
-    }
-    .dash-photo-subtitle {
-      font-size: var(--note-font-size);
-      color: rgba(255,255,255,0.85);
+    .dash-capture-btn:hover { background: var(--blue-light); }
+    .dash-capture-icon { font-size: 18px; line-height: 1; }
+    .dash-capture-label { font-size: var(--btn-font-size); }
+    @media (max-width: 600px) {
+      .dash-capture-btn { min-height: 44px; }
     }
 
     /* ── Photo preset buttons (in shared .perm-modal) ── */
@@ -323,7 +358,8 @@
     }
     .dash-stax-card:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
     .dash-stax-card.dash-stax-live { border-left: 4px solid var(--blue); }
-    .dash-stax-card.dash-stax-coming { opacity: 0.45; }
+    .dash-stax-card.dash-stax-available { border-left: 4px solid var(--teal); opacity: 1; }
+    .dash-stax-card.dash-stax-coming { border-left: 4px solid var(--border); opacity: 0.7; }
     .dash-stax-card-top { display: flex; align-items: flex-start; gap: 10px; }
     .dash-stax-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
     .dash-stax-card-info { flex: 1; min-width: 0; }
@@ -337,13 +373,11 @@
     /* ── Responsive ── */
     @media (max-width: 1100px) {
       .dash-zone1-grid { grid-template-columns: 1fr 1fr; }
-      .dash-zone1-grid > .dash-photo-tile { grid-column: 1 / -1; min-height: 140px; }
       .dash-stax-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 700px) {
       .dash-container { padding: var(--page-padding-mobile); }
       .dash-zone1-grid { grid-template-columns: 1fr; }
-      .dash-zone1-grid > .dash-photo-tile { grid-column: auto; }
       .dash-stax-grid { grid-template-columns: 1fr; }
       .dash-trial-banner { padding: 10px 16px; flex-wrap: wrap; }
       .dash-tile-header { padding: 14px 12px; }
@@ -379,8 +413,12 @@
   <div id="page-wrap" style="display:none">
     <div class="dash-container">
 
-      <div class="page-header">
+      <div class="page-header dash-page-header">
         <h1 class="page-title" id="dash-heading">Dashboard</h1>
+        <button type="button" class="dash-capture-btn" id="photo-tile-btn" aria-label="Capture a photo">
+          <span class="dash-capture-icon" aria-hidden="true">📸</span>
+          <span class="dash-capture-label">Capture</span>
+        </button>
       </div>
 
       <!-- Zone 1: CL + EA + Photo Capture -->
@@ -393,15 +431,15 @@
         <div id="sp-section-mount"></div>
       </section>
 
-      <!-- Zone 2: Tool tiles -->
+      <!-- Zone 2: Active tool tiles -->
       <section class="dash-zone" id="zone-2-wrap">
-        <h2 class="dash-heading">YOUR <span class="accent">TOOLS</span></h2>
+        <h2 class="dash-heading">YOUR <span class="accent">STAX</span></h2>
         <div class="tile-grid" id="zone-2"></div>
       </section>
 
-      <!-- Zone 3: Your Stax -->
+      <!-- Zone 3: More tools -->
       <section class="dash-zone" id="zone-3-wrap">
-        <h2 class="dash-heading">YOUR <span class="accent">STAX</span></h2>
+        <h2 class="dash-heading">MORE <span class="accent">STAX</span></h2>
         <div class="tab-nav">
           <button class="ptab active" data-tab="active">Active Tools</button>
           <button class="ptab" data-tab="available">Available Tools</button>
