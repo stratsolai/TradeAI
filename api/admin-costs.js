@@ -81,6 +81,40 @@ async function fetchAnthropicCosts(periods) {
     endPrevISO: periods.endPrevISO
   });
 
+  // ── DIAGNOSTICS — remove once cost_report is confirmed working.
+  // The 400 "Invalid date range: ending date must be after starting
+  // date" persists even with no ending_at in the request, which means
+  // Anthropic is computing a default and failing it server-side. These
+  // probes tell us:
+  //   1. is the Admin API key shape correct (sk-ant-admin…)
+  //   2. does the key authenticate against a non-cost endpoint
+  //   3. does a definitively-historical range (Apr 1 → Apr 30) work
+  // If (3) succeeds, the cost_report bug is "today's date is in the
+  // requested range" and we know to use yesterday-or-earlier bounds.
+  console.log('[admin-costs] ANTHROPIC_ADMIN_API_KEY starts with:',
+    key.length >= 12 ? key.slice(0, 12) + '…' : '(short value, length=' + key.length + ')');
+  try {
+    const meRes = await fetch('https://api.anthropic.com/v1/organizations/me', {
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
+    });
+    const meBody = await meRes.text().catch(function() { return ''; });
+    console.log('[admin-costs] /v1/organizations/me HTTP', meRes.status, 'body first 300:', meBody.slice(0, 300));
+  } catch (e) {
+    console.error('[admin-costs] /v1/organizations/me threw:', e && e.message);
+  }
+  try {
+    const histUrl = 'https://api.anthropic.com/v1/organizations/cost_report'
+      + '?starting_at=2026-04-01&ending_at=2026-04-30&bucket_width=1d';
+    const histRes = await fetch(histUrl, {
+      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
+    });
+    const histBody = await histRes.text().catch(function() { return ''; });
+    console.log('[admin-costs] historical Apr 1-30 HTTP', histRes.status, 'body first 300:', histBody.slice(0, 300));
+  } catch (e) {
+    console.error('[admin-costs] historical Apr 1-30 threw:', e && e.message);
+  }
+  // ── END DIAGNOSTICS
+
   // For the current month we omit ending_at — Anthropic defaults it
   // to "now" and that bypasses the date-range validation that has
   // been rejecting May 1 → May 2 with "ending date must be after
