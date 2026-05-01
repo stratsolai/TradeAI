@@ -27,6 +27,7 @@ export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -293,7 +294,7 @@ async function fetchPage(pageUrl) {
 // all reach the model, and max_tokens is 8,000 (raised from 4,000)
 // so the response can carry the full block-level extraction without
 // being truncated mid-array.
-async function runExtractionPrompt(content, sourceLabel) {
+async function runExtractionPrompt(content, sourceLabel, userId) {
   const userContent = 'SOURCE CONTENT (' + sourceLabel + '):\n' + (content || '').substring(0, 40000);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -310,6 +311,7 @@ async function runExtractionPrompt(content, sourceLabel) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -350,6 +352,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     var raw = data.content && data.content[0] ? data.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
@@ -404,7 +407,7 @@ async function processPage(supabase, userId, pageUrl, websiteHtml, hostname, saf
     console.error('cl-assets/cl_source_items save error:', e.message);
   }
 
-  var items = await runExtractionPrompt(pageText, hostname);
+  var items = await runExtractionPrompt(pageText, hostname, userId);
   if (!items || items.length === 0) {
     result.skipped = true;
     result.skipReason = 'no_extractable_content';

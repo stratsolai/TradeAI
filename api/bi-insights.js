@@ -5,6 +5,7 @@
 export const config = { maxDuration: 120 };
 
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -113,6 +114,7 @@ export default async function handler(req, res) {
     if (!claudeResp.ok) { console.error('[bi-insights] Claude HTTP error:', claudeResp.status); return res.status(502).json({ error: 'AI service unavailable. Please try again.' }); }
 
     var claudeData = await claudeResp.json();
+    logAnthropicUsage({ tool_id: 'bi', user_id: userId, model: 'claude-sonnet-4-6', usage: claudeData && claudeData.usage });
     if (claudeData.error) {
       console.error('[bi-insights] Claude API error:', JSON.stringify(claudeData.error));
       return res.status(500).json({ error: 'AI analysis failed. Please try again.' });

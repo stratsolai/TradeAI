@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { logAnthropicUsage } from "../lib/usage-logger.js";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -114,6 +115,7 @@ FEELING: [text]`;
     }
 
     const message = await response.json();
+    logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: message.usage });
     const raw = message.content[0].text;
     const lines = raw.split("\n").filter(l => l.trim());
     let differentiators = "";

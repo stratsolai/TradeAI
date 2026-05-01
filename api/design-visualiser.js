@@ -17,6 +17,7 @@
 import https from 'https';
 import http from 'http';
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -128,7 +129,7 @@ var INDUSTRY_CONTEXT = {
 
 // ── PROMPT BUILDER ───────────────────────────────────────────────────────────
 
-async function buildRenderPrompt(claudeKey, params) {
+async function buildRenderPrompt(claudeKey, params, userId) {
   var industryLines = (params.industries || [])
     .map(function(id) { return INDUSTRY_CONTEXT[id]; })
     .filter(Boolean)
@@ -180,6 +181,7 @@ async function buildRenderPrompt(claudeKey, params) {
   if (response.status !== 200) {
     throw new Error('Prompt generation failed: ' + JSON.stringify(response.body));
   }
+  logAnthropicUsage({ tool_id: 'design-viz', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: response.body && response.body.usage });
 
   var text = response.body.content && response.body.content[0] && response.body.content[0].text;
   return (text || '').trim();
@@ -305,7 +307,7 @@ export default async function handler(req, res) {
       industries: industries,
       mode: mode,
       previousDescription: previousDescription
-    });
+    }, user.id);
     console.log('[DV] Prompt:', renderPrompt);
 
     // Download source image from cl-assets via Supabase client

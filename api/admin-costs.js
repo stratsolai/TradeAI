@@ -207,46 +207,140 @@ function parseAmount(a) {
 }
 
 // ── Vercel ───────────────────────────────────────────────────────
-// Vercel does not publish a public billing-as-dollars REST endpoint.
-// /v1/billing/charges (which the original automation spec named)
-// returns 404 "Costs not found" against Pro plans on personal
-// accounts. Until Vercel exposes one, surface a "manual" indicator
-// linking to the dashboard — same pattern Stripe uses for status.
+// Vercel does not publish a billing-as-dollars REST endpoint we can
+// rely on (/v1/billing/charges 404s on Pro/personal accounts).
 //
-// If Vercel ever publishes the endpoint, replace this body with the
-// real fetch (token via VERCEL_API_TOKEN, optional teamId via
-// VERCEL_TEAM_ID, parse via the parseVercelBody helper below which
-// is preserved for that future).
+// Per the Profitability Dashboard Spec we use Path B+C:
+//   Path B: fetch raw usage counters from /v1/usage
+//   Path C: multiply each counter by the hardcoded Pro plan rate
+//           to estimate dollars
+//
+// Estimates are flagged with `estimated: true` so the UI can surface
+// the "Estimated — check dashboard for actual costs" disclaimer.
+//
+// VERCEL_PRO_PRICING values come from the Pro plan as of May 2026.
+// Vercel revisits its pricing every 12–18 months, so this table
+// must be reviewed at each rotation.
+const VERCEL_PRO_PRICING = {
+  function_invocations: { included: 1000000,  overage_per_unit: 0.60 / 1000000 },
+  function_duration:    { included: 1000,     overage_per_unit: 0.18 },           // GB-hr
+  bandwidth:            { included: 1024,     overage_per_unit: 0.15 },           // GB (1 TB)
+  edge_requests:        { included: 10000000, overage_per_unit: 2.00 / 1000000 }
+};
+
 async function fetchVercelCosts(periods) {
+  const token = process.env.VERCEL_API_TOKEN;
+  if (!token) {
+    return {
+      manual: true,
+      page_url: 'https://vercel.com/dashboard/usage',
+      error: 'VERCEL_API_TOKEN env var not configured',
+      current_month: null,
+      previous_month: null,
+      trend_percent: null
+    };
+  }
+
+  const teamQuery = process.env.VERCEL_TEAM_ID
+    ? '&teamId=' + encodeURIComponent(process.env.VERCEL_TEAM_ID)
+    : '';
+
+  // Both periods in parallel. Failures (e.g. /v1/usage missing on Pro)
+  // are caught so a transient Vercel issue does not break the whole
+  // admin-costs payload.
+  const [currentUsage, previousUsage] = await Promise.all([
+    fetchVercelUsageCounters(token, teamQuery, periods.startCurrentISO, periods.endCurrentISO || new Date().toISOString())
+      .catch(function(e) { console.error('[admin-costs] vercel current-month usage error:', e && e.message); return null; }),
+    fetchVercelUsageCounters(token, teamQuery, periods.startPrevISO, periods.endPrevISO)
+      .catch(function(e) { console.error('[admin-costs] vercel previous-month usage error:', e && e.message); return null; })
+  ]);
+
+  if (!currentUsage && !previousUsage) {
+    return {
+      manual: true,
+      page_url: 'https://vercel.com/dashboard/usage',
+      error: 'Vercel /v1/usage did not return data — check token scope or fall back to dashboard.',
+      current_month: null,
+      previous_month: null,
+      trend_percent: null
+    };
+  }
+
+  const currentEst = applyVercelPricing(currentUsage || {});
+  const previousEst = applyVercelPricing(previousUsage || {});
+
   return {
-    manual: true,
-    page_url: 'https://vercel.com/dashboard/usage',
-    current_month: null,
-    previous_month: null,
-    trend_percent: null
+    estimated: true,
+    current_month: {
+      cost_usd: round2(currentEst.total),
+      breakdown: currentEst.breakdown,
+      usage: currentUsage || null
+    },
+    previous_month: {
+      cost_usd: round2(previousEst.total),
+      breakdown: previousEst.breakdown,
+      usage: previousUsage || null
+    },
+    trend_percent: trendPercent(currentEst.total, previousEst.total)
   };
 }
 
-async function vercelChargesSum(token, startIso, endIso, teamQuery) {
-  const url = 'https://api.vercel.com/v1/billing/charges'
+// Fetch raw counters from /v1/usage. Vercel's response shape isn't a
+// stable public contract, so we walk a few candidate field names per
+// counter. If the endpoint returns 404 the call rejects and the caller
+// falls back to the manual link. Date-only params keep the request
+// unambiguous.
+async function fetchVercelUsageCounters(token, teamQuery, startIso, endIso) {
+  const url = 'https://api.vercel.com/v1/usage'
     + '?from=' + encodeURIComponent(startIso)
     + '&to=' + encodeURIComponent(endIso)
     + teamQuery;
-  const r = await fetch(url, {
-    headers: { 'Authorization': 'Bearer ' + token }
-  });
+  console.log('[admin-costs] Vercel /v1/usage →', url);
+  const r = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
   const text = await r.text().catch(function() { return ''; });
   if (!r.ok) {
-    throw new Error('Vercel billing/charges ' + r.status + ': ' + text.slice(0, 200));
+    throw new Error('Vercel /v1/usage ' + r.status + ': ' + text.slice(0, 200));
   }
-  // Read body as text first so we can log it, then try a sequence of
-  // parse strategies. The original .json() call threw "Unexpected
-  // non-whitespace character after JSON at position 438", which means
-  // the body is not a single JSON object — most likely NDJSON, or one
-  // JSON object followed by trailing data.
-  console.log('[admin-costs] Vercel raw response (first 500 chars):', text.slice(0, 500));
-  const parsed = parseVercelBody(text);
-  return sumVercelCharges(parsed);
+  const j = parseVercelBody(text);
+  return extractVercelCounters(j);
+}
+
+// Resolve the four counters the spec cares about from whatever shape
+// /v1/usage returns. We check both top-level fields and a `usage`
+// container, preferring numeric values and falling back to 0.
+function extractVercelCounters(j) {
+  if (!j || typeof j !== 'object') return null;
+  const src = j.usage || j.data || j;
+  function pick(keys) {
+    for (let i = 0; i < keys.length; i++) {
+      const v = src[keys[i]];
+      if (typeof v === 'number') return v;
+      if (typeof v === 'string' && v.trim() !== '' && !isNaN(parseFloat(v))) return parseFloat(v);
+    }
+    return 0;
+  }
+  return {
+    function_invocations: pick(['function_invocations', 'serverless_function_execution', 'functionInvocations']),
+    function_duration:    pick(['function_duration_gb_hr', 'function_duration', 'functionDurationGBHours']),
+    bandwidth:            pick(['bandwidth_gb', 'bandwidth', 'bandwidthGB']),
+    edge_requests:        pick(['edge_requests', 'edge_request_count', 'edgeRequests'])
+  };
+}
+
+// Path C — apply Pro plan pricing to the raw counters. Each resource
+// charges only on overage above the included quota.
+function applyVercelPricing(counters) {
+  const breakdown = {};
+  let total = 0;
+  Object.keys(VERCEL_PRO_PRICING).forEach(function(key) {
+    const rate = VERCEL_PRO_PRICING[key];
+    const used = typeof counters[key] === 'number' ? counters[key] : 0;
+    const overage = Math.max(0, used - rate.included);
+    const cost = round2(overage * rate.overage_per_unit);
+    breakdown[key] = cost;
+    total += cost;
+  });
+  return { total: total, breakdown: breakdown };
 }
 
 function parseVercelBody(text) {
@@ -262,8 +356,7 @@ function parseVercelBody(text) {
   }
 
   // Try NDJSON — one JSON object per line. Combine into { items: [...] }
-  // so sumVercelCharges' existing j.items / j.charges / j.data path
-  // picks them up.
+  // so the caller's downstream parsing can walk a uniform shape.
   const lines = trimmed.split(/\r?\n/).map(function(s) { return s.trim(); }).filter(Boolean);
   if (lines.length > 1) {
     const items = [];
@@ -292,21 +385,6 @@ function parseVercelBody(text) {
 
   console.error('[admin-costs] Vercel body is not valid JSON or NDJSON. First 500 chars:', trimmed.slice(0, 500));
   throw new Error('Vercel response is not valid JSON: ' + trimmed.slice(0, 200));
-}
-
-function sumVercelCharges(j) {
-  let total = 0;
-  const breakdown = {};
-  const items = (j && (j.charges || j.data || j.items || [])) || [];
-  items.forEach(function(c) {
-    const amt = parseAmount(c && (c.amount || c.cost || c.total));
-    total += amt;
-    const cat = (c && (c.resource || c.type || c.product)) || 'other';
-    breakdown[cat] = round2((breakdown[cat] || 0) + amt);
-  });
-  // Fallback to top-level total
-  if (total === 0 && j && j.total != null) total = parseAmount(j.total);
-  return { total: total, breakdown: breakdown };
 }
 
 // ── Serper (internal tracking from api_usage) ────────────────────

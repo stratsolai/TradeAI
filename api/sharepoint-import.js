@@ -28,6 +28,7 @@ export const config = { maxDuration: 300 };
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -370,7 +371,7 @@ function extractPptxText(buf) {
 // Extract text from a binary document. PDF goes to Claude document API.
 // DOCX, XLSX, PPTX are extracted locally from their ZIP archives.
 // Legacy Office formats use binary text extraction as a fallback.
-async function extractBinaryFileText(buffer, mimeType, fileName) {
+async function extractBinaryFileText(buffer, mimeType, fileName, userId) {
   // PDF: Claude document API (the only binary format it reliably accepts)
   if (mimeType === 'application/pdf') {
     var base64Data = buffer.toString('base64');
@@ -389,6 +390,7 @@ async function extractBinaryFileText(buffer, mimeType, fileName) {
     });
     console.log('[extractBinaryFileText] Claude API status:', response.status, 'file:', fileName);
     const data = await response.json();
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     if (data.content && data.content[0]) return data.content[0].text;
     console.error('[extractBinaryFileText] PDF FAILED — file:', fileName, 'error:', JSON.stringify(data.error || null));
     return null;
@@ -464,7 +466,7 @@ async function listAllSharePointLibraryFiles(siteId, libraryId, accessToken) {
 }
 
 // Resolve a SharePoint file to plain-text body suitable for the extraction prompt.
-async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, accessToken, fileName) {
+async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, accessToken, fileName, userId) {
   const buffer = await fetchSharePointFileBuffer(siteId, libraryId, itemId, accessToken);
   if (!buffer) {
     console.error('[fetchSharePointFileText] SKIP — file:', fileName, 'reason: buffer download returned null (download failed)');
@@ -472,7 +474,7 @@ async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, acce
   }
   console.log('[fetchSharePointFileText] Downloaded — file:', fileName, 'bufferSize:', buffer.length, 'mimeType:', mimeType);
   if (SHAREPOINT_BINARY_DOC_MIME.indexOf(mimeType) > -1) {
-    var extracted = await extractBinaryFileText(buffer, mimeType, fileName);
+    var extracted = await extractBinaryFileText(buffer, mimeType, fileName, userId);
     if (!extracted) {
       console.error('[fetchSharePointFileText] SKIP — file:', fileName, 'reason: Claude document API returned no text');
     }
@@ -488,7 +490,7 @@ async function fetchSharePointFileText(siteId, libraryId, itemId, mimeType, acce
 }
 
 // Run the fixed-18-category extraction prompt.
-async function runExtractionPrompt(content, fileName) {
+async function runExtractionPrompt(content, fileName, userId) {
   const userContent = 'SOURCE CONTENT (' + fileName + '):\n' + (content || '').substring(0, 8000);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -505,6 +507,7 @@ async function runExtractionPrompt(content, fileName) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -517,7 +520,7 @@ async function runExtractionPrompt(content, fileName) {
 }
 
 // Run image extraction via Claude Sonnet vision — single combined call.
-async function runImageExtraction(base64Data, mediaType) {
+async function runImageExtraction(base64Data, mediaType, userId) {
   var IMAGE_PROMPT = 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.';
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -537,6 +540,7 @@ async function runImageExtraction(base64Data, mediaType) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage });
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -577,6 +581,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     var raw = data.content && data.content[0] ? data.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
@@ -823,7 +828,7 @@ export default async function handler(req, res) {
           imageBuffer = await fetchSharePointFileBuffer(siteId, libraryId, file.id, accessToken);
           if (!imageBuffer) { skipped++; skipped_reasons.extraction_failed = (skipped_reasons.extraction_failed || 0) + 1; continue; }
         } else {
-          textContent = await fetchSharePointFileText(siteId, libraryId, file.id, mimeType, accessToken, file.name);
+          textContent = await fetchSharePointFileText(siteId, libraryId, file.id, mimeType, accessToken, file.name, userId);
           if (!textContent) { console.log('[import-all] SKIPPED — file:', file.name, 'id:', file.id, 'reason: text extraction returned null'); skipped++; skipped_reasons.extraction_failed = (skipped_reasons.extraction_failed || 0) + 1; continue; }
         }
 
@@ -859,7 +864,7 @@ export default async function handler(req, res) {
         // Images: run vision extraction via Claude Sonnet
         if (isImage) {
           var base64Data = imageBuffer.toString('base64');
-          var imgItems = await runImageExtraction(base64Data, mimeType);
+          var imgItems = await runImageExtraction(base64Data, mimeType, userId);
           if (!imgItems || imgItems.length === 0) { skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
           for (var imgIdx = 0; imgIdx < imgItems.length; imgIdx++) {
             var imgItem = imgItems[imgIdx];
@@ -918,7 +923,7 @@ export default async function handler(req, res) {
 
         // Text/document: run extraction prompt and insert one row per returned item
         console.log('[import-all] EXTRACTING — file:', file.name, 'id:', file.id, 'textContentLength:', textContent.length);
-        const items = await runExtractionPrompt(textContent, file.name);
+        const items = await runExtractionPrompt(textContent, file.name, userId);
         if (!items || items.length === 0) { console.log('[import-all] SKIPPED — file:', file.name, 'id:', file.id, 'reason: extraction prompt returned no items'); skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
 
         for (var itemIdx = 0; itemIdx < items.length; itemIdx++) {

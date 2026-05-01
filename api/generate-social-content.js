@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { logAnthropicUsage } from "../lib/usage-logger.js";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(
@@ -104,6 +105,7 @@ Tone: ${toneDesc}`;
       max_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }]
     });
+    logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: message.usage });
 
     const raw = message.content[0].text;
     const { caption, hashtags } = parseResponse(raw);
@@ -134,6 +136,7 @@ Australian English. No exclamation marks.`;
         max_tokens: 1024,
         messages: [{ role: "user", content: flyerPrompt }]
       });
+      logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: flyerMsg.usage });
       result.flyer = parseFlyerResponse(flyerMsg.content[0].text);
     }
 
@@ -155,6 +158,7 @@ Australian English. No exclamation marks.`;
         max_tokens: 256,
         messages: [{ role: "user", content: adPrompt }]
       });
+      logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: adMsg.usage });
       result.ad_graphic = parseAdGraphicResponse(adMsg.content[0].text);
     }
 

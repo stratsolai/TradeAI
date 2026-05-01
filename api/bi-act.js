@@ -4,6 +4,7 @@
 // in action_tracker. Returns contradiction info for SP rewrite flow.
 
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -136,6 +137,7 @@ export default async function handler(req, res) {
     }
 
     var claudeData = await claudeResp.json();
+    logAnthropicUsage({ tool_id: 'bi', user_id: userId, model: 'claude-sonnet-4-6', usage: claudeData && claudeData.usage });
     if (claudeData.error) {
       console.error('[bi-act] Claude error:', JSON.stringify(claudeData.error));
       return res.status(500).json({ error: 'Could not generate tasks.' });

@@ -3,6 +3,7 @@ export const config = { maxDuration: 300 };
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -188,7 +189,7 @@ function extractEmailBody(payload) {
 // Offers vs supplier promotions) can be applied — without it the
 // model has no way to tell a self-sent campaign from a received
 // supplier promotional email.
-async function runExtractionPrompt(emailBody, subject, sender) {
+async function runExtractionPrompt(emailBody, subject, sender, userId) {
   var userContent = 'SOURCE CONTENT (Email from ' + (sender || 'unknown sender') + ', subject: ' + subject + '):\n' + emailBody.substring(0, 6000);
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -206,6 +207,7 @@ async function runExtractionPrompt(emailBody, subject, sender) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in extraction prompt:', JSON.stringify(data.error));
     return [];
@@ -249,6 +251,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     if (data.error) {
       console.error('[CL Gmail] Claude API error in version match:', JSON.stringify(data.error));
       return null;
@@ -453,7 +456,7 @@ function extractPptxText(buf) {
 // Extract text from a binary document. PDF goes to Claude document API.
 // DOCX, XLSX, PPTX are extracted locally from their ZIP archives.
 // Legacy Office formats use binary text extraction as a fallback.
-async function extractBinaryFileText(buffer, mimeType) {
+async function extractBinaryFileText(buffer, mimeType, userId) {
   if (mimeType === 'application/pdf') {
     var base64Data = buffer.toString('base64');
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -469,6 +472,7 @@ async function extractBinaryFileText(buffer, mimeType) {
       }),
     });
     const data = await response.json();
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     if (data.error) {
       console.error('[CL Gmail] Claude API error in PDF extraction:', JSON.stringify(data.error));
       return null;
@@ -500,7 +504,7 @@ async function extractBinaryFileText(buffer, mimeType) {
 }
 
 // Run extraction prompt for attachment text content (same as file connectors)
-async function runAttachmentExtractionPrompt(content, fileName) {
+async function runAttachmentExtractionPrompt(content, fileName, userId) {
   var userContent = 'SOURCE CONTENT (' + fileName + '):\n' + (content || '').substring(0, 8000);
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -517,6 +521,7 @@ async function runAttachmentExtractionPrompt(content, fileName) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in attachment extraction:', JSON.stringify(data.error));
     return [];
@@ -533,7 +538,7 @@ async function runAttachmentExtractionPrompt(content, fileName) {
 }
 
 // Run image extraction via Claude Sonnet vision — single combined call.
-async function runImageExtraction(base64Data, mediaType) {
+async function runImageExtraction(base64Data, mediaType, userId) {
   var IMAGE_PROMPT = 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.';
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -553,6 +558,7 @@ async function runImageExtraction(base64Data, mediaType) {
     }),
   });
   const data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in image extraction:', JSON.stringify(data.error));
     return [];
@@ -763,7 +769,7 @@ export default async function handler(req, res) {
         console.error('cl-assets/cl_source_items save error:', e.message);
       }
 
-      const items = await runExtractionPrompt(emailBody, subject, sender);
+      const items = await runExtractionPrompt(emailBody, subject, sender, userId);
       console.log('CLAUDE RESPONSE — items:', Array.isArray(items) ? items.length : 'not array', 'raw:', JSON.stringify(items).substring(0, 500));
       if (!items || items.length === 0) { console.log('SKIPPED — no items from Claude'); skipped++; skipped_reasons.no_content = (skipped_reasons.no_content || 0) + 1; continue; }
 
@@ -935,16 +941,16 @@ export default async function handler(req, res) {
         var attItems = [];
         try {
           if (isImage) {
-            attItems = await runImageExtraction(attBase64, attMime);
+            attItems = await runImageExtraction(attBase64, attMime, userId);
           } else if (isText) {
             var textContent = attBuffer.toString('utf-8');
             if (textContent && textContent.trim().length >= 50) {
-              attItems = await runAttachmentExtractionPrompt(textContent, att.filename);
+              attItems = await runAttachmentExtractionPrompt(textContent, att.filename, userId);
             }
           } else if (isBinaryDoc) {
-            var extractedText = await extractBinaryFileText(attBuffer, attMime);
+            var extractedText = await extractBinaryFileText(attBuffer, attMime, userId);
             if (extractedText && extractedText.trim().length >= 50) {
-              attItems = await runAttachmentExtractionPrompt(extractedText, att.filename);
+              attItems = await runAttachmentExtractionPrompt(extractedText, att.filename, userId);
             }
           }
         } catch (extractErr) {

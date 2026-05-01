@@ -183,7 +183,6 @@ window.ADMIN_LOGIC = {
     this._loaded[tab] = true;
     switch (tab) {
       case 'overview': return this._renderOverview();
-      case 'api-costs': return this._renderApiCosts();
       case 'customers': return this._renderCustomers();
       case 'revenue': return this._renderRevenue();
       case 'usage': return this._renderUsage();
@@ -193,42 +192,70 @@ window.ADMIN_LOGIC = {
   },
 
   // ── SECTION 1: DASHBOARD OVERVIEW ──────────────────────────────
+  // Renders core platform metrics, the new Profitability & Costs
+  // section (per spec v1.0), and the existing quick-list cards.
   _renderOverview: function() {
     var self = this;
     var container = document.getElementById('section-overview');
     container.innerHTML = '<div class="admin-loading">Loading overview…</div>';
 
-    self._fetchAdmin('admin-overview').then(function(d) {
-      var m = d.metrics || {};
-      var html = '<div class="admin-metric-grid">'
-        + self._statCard('Total Customers', m.total_customers, '')
-        + self._statCard('Active Subscriptions', m.active_subscriptions, '')
-        + self._statCard('MRR', self._formatMoney(m.mrr), '/mth', 'green')
-        + self._statCard('Churn This Month', (m.churn_count || 0) + ' (' + (m.churn_rate || 0) + '%)', '', m.churn_count > 0 ? 'red' : '')
-        + self._statCard('New Signups (7 days)', m.new_signups_7d, '', 'orange')
-        + self._statCard('Trial Users', m.trial_users, '', 'orange')
-        + '</div>';
-
-      // Quick lists: Recent Signups, Top Tools, Industry Breakdown
-      html += '<div class="admin-list-grid">';
-      html += self._listCard('Recent Signups', (d.recent_signups || []).map(function(p) {
-        return {
-          label: self._esc(p.business_name || p.email || p.id),
-          value: self._formatDate(p.created_at)
-        };
-      }));
-      html += self._listCard('Top Tools', (d.top_tools || []).map(function(t) {
-        return { label: self._esc(self._toolName(t.id)), value: t.count + ' active' };
-      }));
-      html += self._listCard('Industry Breakdown', (d.industry_breakdown || []).map(function(i) {
-        return { label: self._esc(i.industry), value: i.count };
-      }));
-      html += '</div>';
-
-      container.innerHTML = html;
+    Promise.all([
+      self._fetchAdmin('admin-overview'),
+      self._fetchAdmin('admin-profitability').catch(function(e) {
+        console.error('[admin] profitability fetch failed:', e && e.message);
+        return { _error: e && e.message };
+      }),
+      self._fetchAdmin('admin-api-usage').catch(function() { return {}; })
+    ]).then(function(results) {
+      var d = results[0] || {};
+      var prof = results[1] || {};
+      var manual = results[2] || {};
+      self._renderOverviewContent(container, d, prof, manual);
     }).catch(function(err) {
       container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load overview: ' + err.message) + '</div>';
     });
+  },
+
+  _renderOverviewContent: function(container, d, prof, manual) {
+    var self = this;
+    var m = d.metrics || {};
+    var html = '<div class="admin-metric-grid">'
+      + self._statCard('Total Customers', m.total_customers, '')
+      + self._statCard('Active Subscriptions', m.active_subscriptions, '')
+      + self._statCard('MRR', self._formatMoney(m.mrr), '/mth', 'green')
+      + self._statCard('Churn This Month', (m.churn_count || 0) + ' (' + (m.churn_rate || 0) + '%)', '', m.churn_count > 0 ? 'red' : '')
+      + self._statCard('New Signups (7 days)', m.new_signups_7d, '', 'orange')
+      + self._statCard('Trial Users', m.trial_users, '', 'orange')
+      + '</div>';
+
+    // ── Profitability & Costs ──────────────────────────────────
+    html += self._buildProfitabilitySection(prof, manual);
+
+    // ── Quick lists ────────────────────────────────────────────
+    html += '<div class="admin-list-grid">';
+    html += self._listCard('Recent Signups', (d.recent_signups || []).map(function(p) {
+      return {
+        label: self._esc(p.business_name || p.email || p.id),
+        value: self._formatDate(p.created_at)
+      };
+    }));
+    html += self._listCard('Top Tools', (d.top_tools || []).map(function(t) {
+      return { label: self._esc(self._toolName(t.id)), value: t.count + ' active' };
+    }));
+    html += self._listCard('Industry Breakdown', (d.industry_breakdown || []).map(function(i) {
+      return { label: self._esc(i.industry), value: i.count };
+    }));
+    html += '</div>';
+
+    container.innerHTML = html;
+
+    // Wire interactivity for the profitability section after the
+    // DOM exists. _profData is stashed so the chart toggle handler
+    // and the manual-entry submit can read it back.
+    self._profData = prof;
+    self._wireProfitabilityChart();
+    self._wireProfManualForm();
+    self._wireProfManualDropdown();
   },
 
   _statCard: function(label, value, suffix, modifier) {
@@ -253,76 +280,111 @@ window.ADMIN_LOGIC = {
     return html;
   },
 
-  // ── SECTION 2: API COST TRACKER ────────────────────────────────
-  // Pulls automated cost data from /api/admin-costs (Anthropic +
-  // Vercel + Serper) and manual entries from /api/admin-api-usage
-  // (Predis + REimagine). Renders a per-customer summary, the
-  // automated cost table with month-over-month trend, and a
-  // Manual Tracking card with form + history filtered to the
-  // providers without usage APIs.
-  _renderApiCosts: function() {
+  // ── PROFITABILITY & COSTS — Dashboard Overview section ─────────
+  // Spec v1.0 — summary tiles, supplier status row, tool & customer
+  // profitability tables, 6-month margin trend chart (toggle Overall
+  // / By Tool / By Customer), and manual entry for providers without
+  // public usage APIs (Predis, REimagine).
+  _buildProfitabilitySection: function(prof, manual) {
     var self = this;
-    var container = document.getElementById('section-api-costs');
-    container.innerHTML = '<div class="admin-loading">Loading API usage…</div>';
+    if (prof && prof._error) {
+      return '<div class="admin-section-placeholder">'
+        + self._esc('Profitability data unavailable: ' + prof._error)
+        + '</div>';
+    }
+    if (!prof || !prof.summary) {
+      return '<div class="admin-section-placeholder">No profitability data yet — once api_usage rows exist for the current period this section will populate.</div>';
+    }
 
-    Promise.all([
-      self._fetchAdmin('admin-costs'),
-      self._fetchAdmin('admin-api-usage')
-    ]).then(function(results) {
-      var costs = results[0] || {};
-      var manual = results[1] || {};
-      self._renderApiCostsContent(container, costs, manual);
-    }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load API costs: ' + err.message) + '</div>';
+    var s = prof.summary || {};
+    var marginPct = s.overall_margin_percent;
+    var marginColour = marginPct == null ? '' : (marginPct >= 80 ? 'green' : (marginPct >= 60 ? 'orange' : 'red'));
+    var alertsCount = s.alerts_count || 0;
+
+    var html = '<div class="page-header" style="margin-top:24px;"><h2 class="page-title" style="font-size:var(--heading-md-size);">Profitability &amp; Costs</h2><p class="page-subtitle">Real-time margin and supplier health for ' + self._esc(prof.period || '') + '.</p></div>';
+
+    // Summary tiles
+    html += '<div class="prof-summary-grid">'
+      + self._statCard('Total Revenue', self._formatMoney(s.total_revenue), '/mth', 'green')
+      + self._statCard('Total Costs', self._formatMoney(s.total_costs), '/mth', s.total_costs > 0 ? 'orange' : '')
+      + self._statCard('Overall Margin', marginPct == null ? '—' : (marginPct + '%'), '', marginColour)
+      + self._statCard('Alerts', alertsCount, '', alertsCount > 0 ? 'red' : '')
+      + '</div>';
+
+    // Alert list — collapsed when zero, expanded when there are items.
+    if ((prof.alerts || []).length > 0) {
+      html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Alerts</div></div>';
+      html += '<div class="settings-rows" style="padding:14px 20px;">';
+      prof.alerts.forEach(function(a) {
+        var dotCls = a.severity === 'red' ? 'red' : (a.severity === 'amber' ? 'amber' : '');
+        html += '<div class="admin-list-item"><span class="admin-list-item-label"><span class="prof-status-dot ' + dotCls + '"></span>' + self._esc(a.message) + '</span><span class="admin-list-item-value">' + self._esc(a.kind.replace(/_/g, ' ')) + '</span></div>';
+      });
+      html += '</div></div>';
+    }
+
+    // Supplier status row
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Supplier Status</div><div class="settings-card-hint">Live spend and limit usage. Refreshed every 5 minutes.</div></div>';
+    html += '<div class="settings-rows" style="padding:14px 20px;"><div class="prof-supplier-row">';
+    (prof.suppliers || []).forEach(function(p) {
+      html += self._supplierCardHtml(p);
     });
-  },
+    html += '</div></div></div>';
 
-  _renderApiCostsContent: function(container, costs, manual) {
-    var self = this;
-    var html = '';
-
-    // Per-customer summary — automated total ÷ active paying customers.
-    // Health indicator: <$10 green, $10-30 orange, >$30 red. Spec asked
-    // for "% of average subscription" but that needs an extra Stripe
-    // pagination call; the dollar thresholds are a reasonable proxy
-    // until we wire ARPC through.
-    var totalCurrent = (costs.totals && costs.totals.current_month_usd) || 0;
-    var totalPrev = (costs.totals && costs.totals.previous_month_usd) || 0;
-    var activeCustomers = manual.active_customers || 0;
-    var costPerCustomer = activeCustomers > 0 ? +(totalCurrent / activeCustomers).toFixed(2) : 0;
-    var modifier = costPerCustomer > 30 ? 'red' : (costPerCustomer > 10 ? 'orange' : 'green');
-    var periodLabel = (costs.periods && costs.periods.current_month) || '';
-
-    html += '<div class="admin-metric-grid">'
-      + self._statCard('Total Spend (' + periodLabel + ')', self._formatMoney(totalCurrent))
-      + self._statCard('Active Customers', activeCustomers)
-      + self._statCard('Cost / Customer', self._formatMoney(costPerCustomer), '/mth', modifier)
-      + self._statCard('vs Last Month', self._formatTrendText(costs.totals && costs.totals.trend_percent))
-      + '</div>';
-
-    // Automated Costs table
-    var lastRefresh = self._timeAgo(costs.cached_at);
-    html += '<div class="settings-card"><div class="settings-card-header">'
-      + '<div class="settings-card-title">Automated Costs</div>'
-      + '<div class="settings-card-hint">Refreshed every 5 minutes' + (lastRefresh ? ' — last refresh ' + self._esc(lastRefresh) : '') + '</div>'
-      + '</div>';
+    // Tool profitability
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Tool Profitability</div></div>';
     html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
-      + '<th>Provider</th><th>This Month</th><th>Last Month</th><th>Trend</th>'
+      + '<th>Tool</th><th>Revenue</th><th>Cost</th><th>Margin</th><th>Target</th><th>Status</th>'
       + '</tr></thead><tbody>';
-    html += self._costRow('Anthropic Claude', costs.anthropic, false);
-    html += self._costRow('Vercel', costs.vercel, false);
-    html += self._costRow('Serper.dev', costs.serper, true);
-    if (costs.totals) {
-      html += '<tr style="font-weight:var(--font-weight-semibold);background:var(--bg-subtle);">'
-        + '<td>Total</td>'
-        + '<td>' + self._formatMoney(costs.totals.current_month_usd || 0) + '</td>'
-        + '<td>' + self._formatMoney(costs.totals.previous_month_usd || 0) + '</td>'
-        + '<td>' + self._formatTrend(costs.totals.trend_percent) + '</td>'
-        + '</tr>';
+    var tools = prof.tools || [];
+    if (tools.length === 0) {
+      html += '<tr><td colspan="6" class="admin-empty">No tool spend logged yet for this period.</td></tr>';
+    } else {
+      tools.forEach(function(t) {
+        html += '<tr>'
+          + '<td>' + self._esc(self._toolName(t.tool_id)) + '</td>'
+          + '<td>' + self._formatMoney(t.revenue) + '</td>'
+          + '<td>' + self._formatMoney(t.cost) + '</td>'
+          + '<td>' + (t.margin_percent == null ? '—' : t.margin_percent + '%') + '</td>'
+          + '<td>' + (t.target_percent != null ? t.target_percent + '%' : '—') + '</td>'
+          + '<td><span class="prof-status-dot ' + self._esc(t.status) + '"></span></td>'
+          + '</tr>';
+      });
     }
     html += '</tbody></table></div></div>';
 
-    // Manual Tracking — Predis.ai and REimagine Home only.
+    // Customer profitability — top 10 by margin (worst first).
+    var customers = (prof.customers || []).slice(0, 10);
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Customer Profitability</div><div class="settings-card-hint">Worst margins first. Top 10 shown.</div></div>';
+    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      + '<th>Customer</th><th>MRR</th><th>Cost</th><th>Margin</th><th>Threshold</th><th>Status</th>'
+      + '</tr></thead><tbody>';
+    if (customers.length === 0) {
+      html += '<tr><td colspan="6" class="admin-empty">No customer cost data yet.</td></tr>';
+    } else {
+      customers.forEach(function(c) {
+        var who = c.business_name || c.email || c.user_id;
+        html += '<tr>'
+          + '<td>' + self._esc(who) + '</td>'
+          + '<td>' + self._formatMoney(c.revenue) + '</td>'
+          + '<td>' + self._formatMoney(c.cost) + '</td>'
+          + '<td>' + (c.margin_percent == null ? '—' : c.margin_percent + '%') + '</td>'
+          + '<td>' + c.threshold_percent + '%</td>'
+          + '<td><span class="prof-status-dot ' + self._esc(c.status) + '"></span></td>'
+          + '</tr>';
+      });
+    }
+    html += '</tbody></table></div></div>';
+
+    // Trend chart
+    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Margin Trend (6 months)</div></div>';
+    html += '<div class="prof-chart-toggle-row">'
+      + '<button class="prof-chart-toggle active" data-mode="overall">Overall</button>'
+      + '<button class="prof-chart-toggle" data-mode="by_tool">By Tool</button>'
+      + '</div>';
+    html += '<div class="prof-chart-wrap"><canvas id="prof-trend-chart"></canvas></div>';
+    html += '</div>';
+
+    // Manual tracking — Predis & REimagine. Spec section 4.4 / 4.6.
     var manualProviders = [
       { id: 'predis', name: 'Predis.ai' },
       { id: 'reimagine', name: 'REimagine Home' }
@@ -331,34 +393,23 @@ window.ADMIN_LOGIC = {
       return e.provider === 'predis' || e.provider === 'reimagine';
     });
 
-    html += '<div class="settings-card"><div class="settings-card-header">'
-      + '<div class="settings-card-title">Manual Tracking</div>'
-      + '<div class="settings-card-hint">These providers do not expose usage APIs — enter monthly figures manually from each provider\'s dashboard.</div>'
-      + '</div>';
-    html += '<div class="admin-entry-form" id="api-usage-form">'
-      + '<span class="lookback-dropdown-wrap api-provider-wrap">'
-      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="api-usage-provider" data-value="' + self._esc(manualProviders[0].id) + '">' + self._esc(manualProviders[0].name) + '</button>'
-      + '<div class="lookback-dropdown-menu" id="api-usage-provider-menu">'
+    html += '<div class="settings-card prof-manual-card"><div class="settings-card-header"><div class="settings-card-title">Manual Tracking</div><div class="settings-card-hint">Providers without usage APIs. Enter monthly figures from each provider\'s dashboard.</div></div>';
+    html += '<div class="prof-manual-form" id="prof-manual-form">'
+      + '<span class="lookback-dropdown-wrap prof-manual-wrap">'
+      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="prof-manual-provider" data-value="' + self._esc(manualProviders[0].id) + '">' + self._esc(manualProviders[0].name) + '</button>'
+      + '<div class="lookback-dropdown-menu" id="prof-manual-provider-menu">'
       + manualProviders.map(function(p, i) {
         return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</button>';
       }).join('')
       + '</div>'
       + '</span>'
-      + '<input type="text" class="form-input" id="api-usage-period" placeholder="YYYY-MM" value="' + self._esc(manual.period || '') + '">'
-      + '<input type="text" class="form-input" id="api-usage-value" placeholder="Usage">'
-      + '<input type="number" step="0.01" class="form-input" id="api-usage-cost" placeholder="Cost AUD">'
-      + '<input type="text" class="form-input" id="api-usage-notes" placeholder="Notes (optional)">'
-      + '<button class="btn-add-connection" id="api-usage-submit">+ Add Entry</button>'
+      + '<input type="text" class="form-input" id="prof-manual-period" placeholder="YYYY-MM" value="' + self._esc(prof.period || '') + '">'
+      + '<input type="text" class="form-input" id="prof-manual-value" placeholder="Usage">'
+      + '<input type="number" step="0.01" class="form-input" id="prof-manual-cost" placeholder="Cost AUD">'
+      + '<input type="text" class="form-input" id="prof-manual-notes" placeholder="Notes (optional)">'
+      + '<button class="btn-add-connection" id="prof-manual-submit">+ Add Entry</button>'
       + '</div>';
-
-    if (manual.note) {
-      html += '<div class="admin-note" style="margin:0 16px 16px;">' + self._esc(manual.note) + '</div>';
-    }
-    html += '</div>';
-
-    // Manual entries history — filtered to manual providers only.
-    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Manual Entries — History</div></div>';
-    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+    html += '<div class="admin-table-wrap" style="margin-top:12px;"><table class="admin-table"><thead><tr>'
       + '<th>Provider</th><th>Period</th><th>Usage</th><th>Cost</th><th>Notes</th><th>Entered</th>'
       + '</tr></thead><tbody>';
     if (manualEntries.length === 0) {
@@ -377,82 +428,157 @@ window.ADMIN_LOGIC = {
     }
     html += '</tbody></table></div></div>';
 
-    container.innerHTML = html;
-    self._wireApiUsageForm();
-    self._wireApiProviderDropdown();
+    return html;
   },
 
-  _costRow: function(name, data, includeSearches) {
+  // Render a supplier card. Picks the limit with the highest used %
+  // to drive the bar — that's the limit the owner actually needs to
+  // see. Cards turn amber when any limit hits its alert threshold and
+  // red when any limit is at 95%+.
+  _supplierCardHtml: function(p) {
     var self = this;
-    if (!data) {
-      return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">No data</td></tr>';
+    var topLimit = null;
+    (p.limits || []).forEach(function(l) {
+      if (!topLimit || (l.used_percent != null && l.used_percent > (topLimit.used_percent || -1))) topLimit = l;
+    });
+    var pct = topLimit && topLimit.used_percent != null ? topLimit.used_percent : null;
+    var cls = '';
+    var barCls = '';
+    if (pct != null && pct >= 95) { cls = 'alert'; barCls = 'alert'; }
+    else if (pct != null && topLimit && pct >= (topLimit.alert_at_percent || 80)) { cls = 'warn'; barCls = 'warn'; }
+
+    var costLine = self._formatMoney(p.cost_this_month || 0);
+    var trendLine = '';
+    if (typeof p.cost_last_month === 'number' && p.cost_last_month > 0) {
+      var diff = ((p.cost_this_month || 0) - p.cost_last_month) / p.cost_last_month * 100;
+      var arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '→');
+      trendLine = arrow + ' ' + Math.abs(Math.round(diff * 10) / 10) + '% vs last month';
     }
-    // Manual providers — no public billing API. Show a "Check
-    // dashboard" link instead of dollar values + trend.
-    if (data.manual) {
-      var url = data.page_url || '';
-      return '<tr><td>' + self._esc(name) + '</td>'
-        + '<td colspan="3"><span style="color:var(--text-muted);font-size:var(--note-font-size);">No public billing API</span>'
-        + (url ? ' &middot; <a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="color:var(--blue);">Check dashboard &rarr;</a>' : '')
-        + '</td></tr>';
+
+    var html = '<div class="prof-supplier-card ' + cls + '">'
+      + '<div class="prof-supplier-name">' + self._esc(p.name) + '</div>'
+      + '<div class="prof-supplier-cost">' + costLine + '</div>'
+      + '<div class="prof-supplier-trend">' + self._esc(trendLine) + '</div>';
+
+    if (topLimit) {
+      var pctDisplay = pct == null ? '—' : pct + '%';
+      html += '<div class="prof-supplier-bar-wrap"><div class="prof-supplier-bar ' + barCls + '" style="width:' + (pct != null ? Math.min(100, pct) : 0) + '%;"></div></div>';
+      html += '<div class="prof-supplier-limit-line">' + self._esc(topLimit.limit_type) + ': ' + (topLimit.current_usage || 0) + ' / ' + (topLimit.limit_value || 0) + ' (' + pctDisplay + ')</div>';
+    } else if (p.name === 'vercel' && p.cost_this_month === 0) {
+      html += '<div class="prof-supplier-limit-line">No public dollar API — estimate from /v1/usage if VERCEL_API_TOKEN configured.</div>';
     }
-    if (data.error) {
-      return '<tr><td>' + self._esc(name) + '</td><td colspan="3" class="admin-empty">' + self._esc(data.error) + '</td></tr>';
+
+    html += '</div>';
+    return html;
+  },
+
+  // Build / rebuild the trend chart. Mode is 'overall' or 'by_tool'.
+  // Chart.js is loaded globally in admin.html so we reference it via
+  // window.Chart. The chart instance is stashed on self so toggling
+  // mode destroys the previous chart cleanly.
+  _wireProfitabilityChart: function() {
+    var self = this;
+    var canvas = document.getElementById('prof-trend-chart');
+    if (!canvas) return;
+    if (typeof window.Chart === 'undefined') {
+      canvas.parentElement.innerHTML = '<div class="admin-empty">Chart library not loaded.</div>';
+      return;
     }
-    var current = data.current_month;
-    var prev = data.previous_month;
-    var currentCost = current && typeof current.cost_usd === 'number' ? current.cost_usd : 0;
-    var prevCost = prev && typeof prev.cost_usd === 'number' ? prev.cost_usd : 0;
-    var currentLabel;
-    // When the API can't give a meaningful current-month figure
-    // (e.g. day 1 of the month for Anthropic) the endpoint returns
-    // a note alongside cost_usd: 0. Show the note in muted italics
-    // instead of the dollar value so it does not look like a real $0.
-    if (current && current.note) {
-      currentLabel = self._formatMoney(currentCost)
-        + ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);font-style:italic;">(' + self._esc(current.note) + ')</span>';
-    } else {
-      currentLabel = self._formatMoney(currentCost);
-      if (includeSearches && current && typeof current.searches === 'number') {
-        currentLabel += ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);">(' + current.searches.toLocaleString('en-AU') + ' searches)</span>';
+
+    function render(mode) {
+      if (self._profChart) { self._profChart.destroy(); self._profChart = null; }
+      var trend = (self._profData && self._profData.trend) || {};
+      var periods = trend.periods || [];
+      var datasets;
+      if (mode === 'by_tool') {
+        var byTool = trend.by_tool || {};
+        var palette = ['#4A6D8C','#E07A5F','#3D5A80','#81B29A','#F2CC8F','#B56576','#6D6875','#B5838D'];
+        var keys = Object.keys(byTool).slice(0, 8);
+        datasets = keys.map(function(tid, i) {
+          return {
+            label: self._toolName(tid),
+            data: byTool[tid].map(function(p) { return p.margin_percent; }),
+            borderColor: palette[i % palette.length],
+            backgroundColor: 'transparent',
+            tension: 0.2
+          };
+        });
+        if (datasets.length === 0) {
+          datasets = [{ label: 'No per-tool data', data: periods.map(function() { return null; }), borderColor: '#999' }];
+        }
+      } else {
+        var overall = trend.overall || [];
+        datasets = [{
+          label: 'Overall margin %',
+          data: overall.map(function(p) { return p.margin_percent; }),
+          borderColor: '#4A6D8C',
+          backgroundColor: 'rgba(74, 109, 140, 0.1)',
+          fill: true,
+          tension: 0.2
+        }];
       }
+
+      self._profChart = new window.Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: { labels: periods, datasets: datasets },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: datasets.length > 1, position: 'bottom' } },
+          scales: {
+            y: { beginAtZero: false, ticks: { callback: function(v) { return v + '%'; } } }
+          }
+        }
+      });
     }
-    return '<tr>'
-      + '<td>' + self._esc(name) + '</td>'
-      + '<td>' + currentLabel + '</td>'
-      + '<td>' + self._formatMoney(prevCost) + '</td>'
-      + '<td>' + self._formatTrend(data.trend_percent) + '</td>'
-      + '</tr>';
+
+    render('overall');
+
+    document.querySelectorAll('.prof-chart-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.prof-chart-toggle').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        render(btn.getAttribute('data-mode'));
+      });
+    });
   },
 
-  _formatTrend: function(pct) {
-    if (pct == null || isNaN(pct)) return '<span style="color:var(--text-muted);">—</span>';
-    var arrow = pct > 0 ? '↑' : (pct < 0 ? '↓' : '→');
-    var color = pct > 0 ? 'var(--red)' : (pct < 0 ? 'var(--green)' : 'var(--text-muted)');
-    return '<span style="color:' + color + ';">' + arrow + ' ' + Math.abs(pct).toFixed(1) + '%</span>';
+  _wireProfManualForm: function() {
+    var self = this;
+    var btn = document.getElementById('prof-manual-submit');
+    if (!btn) return;
+    btn.addEventListener('click', function() {
+      var providerBtn = document.getElementById('prof-manual-provider');
+      var provider = providerBtn ? providerBtn.getAttribute('data-value') : '';
+      var period = document.getElementById('prof-manual-period').value.trim();
+      var usage = document.getElementById('prof-manual-value').value.trim();
+      var cost = document.getElementById('prof-manual-cost').value.trim();
+      var notes = document.getElementById('prof-manual-notes').value.trim();
+      if (!provider || !period) { self._showError('Provider and period are required.'); return; }
+      btn.disabled = true; btn.textContent = 'Saving…';
+      self._postAdmin('admin-api-usage', {
+        provider: provider,
+        period: period,
+        usage_value: usage || null,
+        cost_estimate: cost ? parseFloat(cost) : null,
+        notes: notes || null
+      }).then(function() {
+        // Reload the overview so the entry shows in history. Force
+        // re-fetch by clearing the cache flag.
+        self._loaded['overview'] = false;
+        self._renderOverview();
+        self._loaded['overview'] = true;
+      }).catch(function(err) {
+        self._showError('Could not save entry: ' + err.message);
+      }).finally(function() {
+        btn.disabled = false; btn.textContent = '+ Add Entry';
+      });
+    });
   },
 
-  _formatTrendText: function(pct) {
-    if (pct == null || isNaN(pct)) return '—';
-    var arrow = pct > 0 ? '↑' : (pct < 0 ? '↓' : '→');
-    return arrow + ' ' + Math.abs(pct).toFixed(1) + '%';
-  },
-
-  _timeAgo: function(iso) {
-    if (!iso) return '';
-    var diffMs = Date.now() - new Date(iso).getTime();
-    if (isNaN(diffMs) || diffMs < 0) return '';
-    var minutes = Math.floor(diffMs / 60000);
-    if (minutes < 1) return 'just now';
-    if (minutes === 1) return '1 minute ago';
-    if (minutes < 60) return minutes + ' minutes ago';
-    var hours = Math.floor(minutes / 60);
-    return hours + ' hour' + (hours === 1 ? '' : 's') + ' ago';
-  },
-
-  _wireApiProviderDropdown: function() {
-    var btn = document.getElementById('api-usage-provider');
-    var menu = document.getElementById('api-usage-provider-menu');
+  _wireProfManualDropdown: function() {
+    var btn = document.getElementById('prof-manual-provider');
+    var menu = document.getElementById('prof-manual-provider-menu');
     if (!btn || !menu) return;
     btn.addEventListener('click', function(e) {
       e.stopPropagation();
@@ -470,36 +596,24 @@ window.ADMIN_LOGIC = {
     document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
-  _wireApiUsageForm: function() {
-    var self = this;
-    var btn = document.getElementById('api-usage-submit');
-    if (!btn) return;
-    btn.addEventListener('click', function() {
-      var providerBtn = document.getElementById('api-usage-provider');
-      var provider = providerBtn ? providerBtn.getAttribute('data-value') : '';
-      var period = document.getElementById('api-usage-period').value.trim();
-      var usage = document.getElementById('api-usage-value').value.trim();
-      var cost = document.getElementById('api-usage-cost').value.trim();
-      var notes = document.getElementById('api-usage-notes').value.trim();
-      if (!provider || !period) { self._showError('Provider and period are required.'); return; }
-      btn.disabled = true; btn.textContent = 'Saving…';
-      self._postAdmin('admin-api-usage', {
-        provider: provider,
-        period: period,
-        usage_value: usage || null,
-        cost_estimate: cost ? parseFloat(cost) : null,
-        notes: notes || null
-      }).then(function() {
-        // Reload section to reflect new entry.
-        self._loaded['api-costs'] = false;
-        self._renderApiCosts();
-        self._loaded['api-costs'] = true;
-      }).catch(function(err) {
-        self._showError('Could not save entry: ' + err.message);
-      }).finally(function() {
-        btn.disabled = false; btn.textContent = '+ Add Entry';
-      });
-    });
+  // ── API COST TRACKER (REMOVED) ─────────────────────────────────
+  // The standalone tab was removed in Profitability Dashboard Spec
+  // v1.0 — all cost data is now consolidated into the Profitability
+  // & Costs section on Dashboard Overview. Manual entry for Predis
+  // and REimagine moved to the same section. The api-costs endpoint
+  // (api/admin-costs.js) is still available for ad-hoc use but is
+  // no longer rendered as a tab.
+
+  _timeAgo: function(iso) {
+    if (!iso) return '';
+    var diffMs = Date.now() - new Date(iso).getTime();
+    if (isNaN(diffMs) || diffMs < 0) return '';
+    var minutes = Math.floor(diffMs / 60000);
+    if (minutes < 1) return 'just now';
+    if (minutes === 1) return '1 minute ago';
+    if (minutes < 60) return minutes + ' minutes ago';
+    var hours = Math.floor(minutes / 60);
+    return hours + ' hour' + (hours === 1 ? '' : 's') + ' ago';
   },
 
   // ── SECTION 3: CUSTOMERS ───────────────────────────────────────

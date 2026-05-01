@@ -3,6 +3,7 @@ import http from 'http';
 import zlib from 'zlib';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 function getSupabase() {
   return createClient(
@@ -116,7 +117,7 @@ const handler = async (req, res) => {
       sourceLabel = websiteUrl;
       sourceValue = 'website';
     } else if (fileType === 'pdf' && fileData) {
-      sourceText = await extractPDFText(fileData, claudeApiKey);
+      sourceText = await extractPDFText(fileData, claudeApiKey, userId);
       sourceValue = 'document';
     } else if (fileType === 'image' && fileData) {
       var imgExt = (fileName || '').toLowerCase().split('.').pop();
@@ -131,7 +132,7 @@ const handler = async (req, res) => {
       // Images use a single combined call — extraction prompt + vision
       // in one request — so sourceText is set to a placeholder and the
       // real extraction response is captured in imageExtractionResponse.
-      imageExtractionResponse = await extractImage(fileData, claudeApiKey, imgMediaType);
+      imageExtractionResponse = await extractImage(fileData, claudeApiKey, imgMediaType, userId);
       sourceText = '[image processed directly]';
       sourceValue = 'photo';
     } else if ((fileType === 'text' || fileType === 'html') && fileData) {
@@ -209,7 +210,7 @@ const handler = async (req, res) => {
         system: EXTRACTION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       });
-      var claudeResponse = await callClaude(requestBody, claudeApiKey);
+      var claudeResponse = await callClaude(requestBody, claudeApiKey, { tool_id: 'content-library', user_id: userId });
       responseText = (claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text) ? claudeResponse.content[0].text : '';
     }
 
@@ -350,7 +351,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category, a
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }]
     });
-    var response = await callClaude(body, apiKey);
+    var response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
     var raw = response.content && response.content[0] ? response.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
@@ -391,7 +392,7 @@ async function scrapeWebsite(url) {
 }
 
 // PDF TEXT EXTRACTOR
-async function extractPDFText(fileData, apiKey) {
+async function extractPDFText(fileData, apiKey, userId) {
   const body = JSON.stringify({
     model: 'claude-haiku-4-5-20251001',
     max_tokens: 2000,
@@ -400,7 +401,7 @@ async function extractPDFText(fileData, apiKey) {
       { type: 'text', text: 'Extract all text content from this PDF. Return only the raw text, preserving structure. No commentary.' }
     ]}]
   });
-  const response = await callClaude(body, apiKey);
+  const response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
   return (response.content && response.content[0]) ? response.content[0].text : '';
 }
 
@@ -592,7 +593,7 @@ async function extractDocText(fileData, mediaType, apiKey) {
 }
 
 // IMAGE EXTRACTOR — single combined vision + extraction call
-async function extractImage(fileData, apiKey, mediaType) {
+async function extractImage(fileData, apiKey, mediaType, userId) {
   const body = JSON.stringify({
     model: 'claude-sonnet-4-6',
     max_tokens: 4000,
@@ -602,11 +603,11 @@ async function extractImage(fileData, apiKey, mediaType) {
       { type: 'text', text: 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.' }
     ]}]
   });
-  return await callClaude(body, apiKey);
+  return await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
 }
 
 // CLAUDE API CALLER
-function callClaude(requestBody, apiKey) {
+function callClaude(requestBody, apiKey, meta) {
   return new Promise((resolve, reject) => {
     const options = {
       hostname: 'api.anthropic.com',
@@ -625,7 +626,18 @@ function callClaude(requestBody, apiKey) {
       res.on('end', () => {
         try {
           const parsed = JSON.parse(data);
-          if (parsed.error) { reject(new Error(parsed.error.message)); } else { resolve(parsed); }
+          if (parsed.error) { reject(new Error(parsed.error.message)); return; }
+          // Log usage. Model is read from the request body so the caller
+          // doesn't need to pass it in twice.
+          let model = null;
+          try { model = JSON.parse(requestBody).model; } catch (e) {}
+          logAnthropicUsage({
+            tool_id: (meta && meta.tool_id) || 'content-library',
+            user_id: meta && meta.user_id,
+            model: model,
+            usage: parsed.usage
+          });
+          resolve(parsed);
         } catch (e) { reject(e); }
       });
     });

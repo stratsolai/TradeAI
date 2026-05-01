@@ -92,12 +92,12 @@
     table.admin-table tbody tr.clickable:hover { background: var(--bg-subtle); }
 
     /* Cards default to overflow:hidden so their rounded corners clip
-       child content. The Manual Tracking card on the API Cost Tracker
-       tab and the customer filter / customer detail flow on the
+       child content. The Manual Tracking card on the Profitability
+       section and the customer filter / customer detail flow on the
        Customers tab all contain .lookback-dropdown menus that open
        downward and would otherwise be clipped. Mirror the
        news-digest-settings pattern used by #tab-team in this file. */
-    #tab-api-costs .settings-card,
+    #tab-overview .prof-manual-card,
     #tab-customers .settings-card { overflow: visible; }
 
     /* Filters — Customers tab. Mirrors the cl-review filter rhythm:
@@ -218,6 +218,99 @@
     /* Loading / empty states */
     .admin-loading { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
     .admin-empty { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
+
+    /* Profitability & Costs — Dashboard Overview section */
+    .prof-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .prof-supplier-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+    .prof-supplier-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 14px 16px;
+    }
+    .prof-supplier-card.warn { border-left: 4px solid var(--orange); }
+    .prof-supplier-card.alert { border-left: 4px solid var(--red); }
+    .prof-supplier-name {
+      font-weight: var(--font-weight-semibold);
+      font-size: var(--note-font-size);
+      color: var(--text);
+      text-transform: capitalize;
+      margin-bottom: 6px;
+    }
+    .prof-supplier-cost { font-size: var(--section-title-font-size); color: var(--text); font-weight: var(--font-weight-semibold); }
+    .prof-supplier-trend { font-size: var(--badge-font-size); color: var(--text-muted); margin-top: 2px; }
+    .prof-supplier-bar-wrap {
+      width: 100%;
+      height: 6px;
+      background: var(--bg-subtle);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+    .prof-supplier-bar {
+      height: 100%;
+      background: var(--green);
+      transition: width 0.2s ease;
+    }
+    .prof-supplier-bar.warn { background: var(--orange); }
+    .prof-supplier-bar.alert { background: var(--red); }
+    .prof-supplier-limit-line {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Trend chart wrapper */
+    .prof-chart-wrap { position: relative; height: 280px; padding: 12px; }
+    .prof-chart-toggle-row { display: flex; gap: 8px; padding: 0 16px 12px; flex-wrap: wrap; }
+    .prof-chart-toggle {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 4px 12px;
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--body-font);
+    }
+    .prof-chart-toggle.active { background: var(--stax-primary); color: var(--white); border-color: var(--stax-primary); }
+
+    /* Status pill in tool / customer tables */
+    .prof-status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--grey);
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+    .prof-status-dot.green { background: var(--green); }
+    .prof-status-dot.amber { background: var(--orange); }
+    .prof-status-dot.red { background: var(--red); }
+
+    /* Manual entry form for Predis / REimagine — moved out of removed
+       API Cost Tracker tab. Same shape as the old admin-entry-form. */
+    .prof-manual-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--card-radius);
+    }
+    .prof-manual-form .form-input { width: auto; min-width: 140px; }
+    .prof-manual-wrap .lookback-dropdown { min-width: 200px; }
   </style>
 </head>
 <body>
@@ -269,10 +362,11 @@
       <p class="page-subtitle">Platform health, cost tracking, customer management.</p>
     </div>
 
-    <!-- TAB NAV -->
+    <!-- TAB NAV — API Cost Tracker removed; consolidated into Dashboard
+         Overview's Profitability & Costs section per Profitability
+         Dashboard Spec v1.0. -->
     <div class="tab-nav">
       <button class="ptab settings-active" data-tab="overview">Dashboard Overview</button>
-      <button class="ptab" data-tab="api-costs">API Cost Tracker</button>
       <button class="ptab" data-tab="customers">Customers</button>
       <button class="ptab" data-tab="revenue">Revenue</button>
       <button class="ptab" data-tab="usage">Tool Usage</button>
@@ -284,12 +378,6 @@
     <div class="ptab-content active" id="tab-overview">
       <div class="admin-section" id="section-overview">
         <div class="admin-section-placeholder">Dashboard Overview — built in Step 2.</div>
-      </div>
-    </div>
-
-    <div class="ptab-content" id="tab-api-costs">
-      <div class="admin-section" id="section-api-costs">
-        <div class="admin-section-placeholder">API Cost Tracker — built in Step 3.</div>
       </div>
     </div>
 
@@ -345,6 +433,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
   <script src="/topbar.js"></script>

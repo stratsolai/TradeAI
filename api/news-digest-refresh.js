@@ -1,6 +1,7 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage, logSerperUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -67,36 +68,7 @@ function dedupByLink(items) {
 // Serper.dev news search
 // ---------------------------------------------------------------------------
 
-// Log a single Serper API call to api_usage so the Admin → API Cost
-// Tracker can aggregate monthly Serper spend. A logging failure must
-// not break the search itself.
-async function logSerperUsage() {
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return;
-  try {
-    var period = new Date().toISOString().slice(0, 7); // "YYYY-MM"
-    await fetch(SUPABASE_URL + '/rest/v1/api_usage', {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_SERVICE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_SERVICE_KEY,
-        'Content-Type': 'application/json',
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        provider: 'serper',
-        period: period,
-        usage_value: '1',
-        cost_estimate: 0.001,
-        notes: 'auto-logged',
-        entered_at: new Date().toISOString()
-      })
-    });
-  } catch (e) {
-    console.error('[news-digest] Failed to log Serper usage:', e && e.message);
-  }
-}
-
-async function serperNewsSearch(query) {
+async function serperNewsSearch(query, userId) {
   if (!SERPER_API_KEY) {
     console.error('[news-digest] SERPER_API_KEY not configured');
     return [];
@@ -116,7 +88,7 @@ async function serperNewsSearch(query) {
       return [];
     }
     // Successful Serper call — log usage for cost tracking.
-    await logSerperUsage();
+    await logSerperUsage({ tool_id: 'news-digest', user_id: userId || null });
     var data = await response.json();
     var results = Array.isArray(data.news) ? data.news : [];
     return results.map(function(r) {
@@ -140,7 +112,7 @@ async function serperNewsSearch(query) {
   }
 }
 
-async function runSerperSearches(industry, location, preferredSources) {
+async function runSerperSearches(industry, location, preferredSources, userId) {
   var state = extractState(location);
   var stateFull = state ? AUSTRALIAN_STATES[state] : null;
   var queries = [];
@@ -180,7 +152,7 @@ async function runSerperSearches(industry, location, preferredSources) {
   console.log('[news-digest] Running', queries.length, 'Serper searches');
   var out = [];
   for (var i = 0; i < queries.length; i++) {
-    var items = await serperNewsSearch(queries[i]);
+    var items = await serperNewsSearch(queries[i], userId);
     out.push.apply(out, items);
   }
   return out;
@@ -429,7 +401,7 @@ var BRIEFING_SYSTEM_PROMPT =
   '7. Filter for relevance to this industry but include general business news that affects all industries.\n' +
   '8. Return ONLY the JSON object. No other text.';
 
-async function buildBriefing(items, industry) {
+async function buildBriefing(items, industry, userId) {
   if (!items.length) return [];
   if (!ANTHROPIC_API_KEY) {
     console.error('[news-digest] ANTHROPIC_API_KEY not configured — skipping briefing');
@@ -468,6 +440,7 @@ async function buildBriefing(items, industry) {
       return [];
     }
     var data = await response.json();
+    logAnthropicUsage({ tool_id: 'news-digest', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
     if (data.error) {
       console.error('[news-digest] Claude API error:', JSON.stringify(data.error));
       return [];
@@ -572,7 +545,7 @@ export default async function handler(req, res) {
 
     // Fetch all sources — independent failures must not stop the rest
     var results = await Promise.all([
-      runSerperSearches(industry, location, preferredSources).catch(function(e) { console.error('[news-digest] Web search exception:', e.message); return []; }),
+      runSerperSearches(industry, location, preferredSources, userId).catch(function(e) { console.error('[news-digest] Web search exception:', e.message); return []; }),
       fetchAusTender(industry).catch(function(e) { console.error('[news-digest] AusTender exception:', e.message); return []; }),
       fetchNswEtendering(industry).catch(function(e) { console.error('[news-digest] NSW eTendering exception:', e.message); return []; }),
       getContentLibraryItems(userId, supabase).catch(function(e) { console.error('[news-digest] CL fetch exception:', e.message); return []; })
@@ -598,7 +571,7 @@ export default async function handler(req, res) {
     var newsItems = deduped.filter(function(item) { return item.source_origin !== 'tender'; });
 
     // Build briefing from non-tender items via Claude
-    var briefingCategories = await buildBriefing(newsItems, industry);
+    var briefingCategories = await buildBriefing(newsItems, industry, userId);
     console.log('[news-digest] Briefing categories returned:', briefingCategories.length);
 
     // Upsert each category briefing to news_digest_briefings

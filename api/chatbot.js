@@ -14,6 +14,7 @@
 
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 var SUPABASE_URL = process.env.SUPABASE_URL;
 var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -515,6 +516,7 @@ export default async function handler(req, res) {
       console.error('[CB] Claude API error:', response.body);
       return res.status(500).json({ error: 'Something went wrong. Please try again.' });
     }
+    logAnthropicUsage({ tool_id: 'chatbot', user_id: userId, model: 'claude-sonnet-4-6', usage: response.body && response.body.usage });
 
     var replyText = '';
     if (response.body.content && response.body.content[0]) {

@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { logAnthropicUsage } from "../lib/usage-logger.js";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(
@@ -107,6 +108,7 @@ The plan should feel achievable and practical for a busy business owner.`;
     max_tokens: 4096,
     messages: [{ role: "user", content: prompt }]
   });
+  logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: message.usage });
 
   const plan = message.content[0].text;
   return res.status(200).json({ plan });
@@ -147,6 +149,7 @@ No exclamation marks in captions. Australian English throughout.`;
     max_tokens: 8192,
     messages: [{ role: "user", content: prompt }]
   });
+  logAnthropicUsage({ tool_id: 'social', user_id: user.id, model: 'claude-sonnet-4-6', usage: message.usage });
 
   const raw = message.content[0].text;
   let posts = [];

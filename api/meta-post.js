@@ -14,6 +14,7 @@
 
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -288,6 +289,7 @@ Analyse these recent Facebook posts and identify the best candidates to boost as
 Respond ONLY with JSON: {"suggestions": [{"post_index": 0, "reason": "...", "suggested_budget_aud": 50, "suggested_duration_days": 7, "target_audience": "..."}]}`,
     `Recent posts:\n${postSummary}\n\nWhich 2-3 posts would perform best as paid ads and why?`
   );
+  logAnthropicUsage({ tool_id: 'social', user_id: userId, model: 'claude-sonnet-4-6', usage: response && response.usage });
 
   try {
     const text = response.content?.[0]?.text || '{}';

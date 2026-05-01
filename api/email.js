@@ -1,6 +1,7 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -113,7 +114,7 @@ var CL_EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a 
   "7. If no meaningful content can be extracted, return an empty array [].\n" +
   "8. Promotions & Offers is ONLY for promotions the user's own business is offering to its own customers. If the source is an inbound message, supplier email, vendor newsletter, or third-party promotional content advertising someone else's offer, do NOT classify it as Promotions & Offers. Inbound supplier promotional content belongs in Supplier Communications. Broader market or trade promotional news belongs in Industry News. Never put a received supplier or third-party promotion in Promotions & Offers, even when it uses promotional language like 'sale', 'discount', or 'limited time'. The email From header is included in the source content for this reason — use it to tell self-sent campaigns from received messages.";
 
-async function runClExtractionPrompt(emailBody, subject, sender) {
+async function runClExtractionPrompt(emailBody, subject, sender, userId) {
   var userContent = 'SOURCE CONTENT (Email from ' + (sender || 'unknown sender') + ', subject: ' + subject + '):\n' + emailBody.substring(0, 6000);
   var response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
@@ -130,6 +131,7 @@ async function runClExtractionPrompt(emailBody, subject, sender) {
     })
   });
   var data = await response.json();
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
   if (data.error) {
     console.error('[EA] CL extraction Claude API error:', JSON.stringify(data.error));
     return [];
@@ -209,7 +211,7 @@ var EA_SYSTEM_PROMPT = 'You are an email categorisation assistant for a business
   '3. If an email does not fit any category well, use the "other" category as the fallback.\n' +
   '4. Summary should capture what the email is about and any action required.';
 
-async function categoriseEmails(emails, categories, businessName, industry) {
+async function categoriseEmails(emails, categories, businessName, industry, userId) {
   if (!emails.length) return [];
 
   var categoryList = categories
@@ -244,6 +246,7 @@ async function categoriseEmails(emails, categories, businessName, industry) {
 
   var data = await response.json();
   console.log('[EA] Claude response status:', response.status, 'has content:', !!(data.content && data.content[0]));
+  logAnthropicUsage({ tool_id: 'email', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
 
   if (data.error) {
     console.error('[EA] Claude API error:', JSON.stringify(data.error));
@@ -479,7 +482,7 @@ export default async function handler(req, res) {
     }
 
     // Categorise
-    var categorised = await categoriseEmails(batch, categories, businessName, industry);
+    var categorised = await categoriseEmails(batch, categories, businessName, industry, userId);
     console.log('[EA] Categorised:', categorised.length, 'of', batch.length);
 
     // Build category ID lookup for normalisation
@@ -535,7 +538,7 @@ export default async function handler(req, res) {
       // ── CL Tool Outputs push — Newsletter / Marketing emails ──────────
       if (normCat === 'newsletters' && email.body) {
         try {
-          var clItems = await runClExtractionPrompt(email.body, email.subject, email.sender + ' <' + email.email + '>');
+          var clItems = await runClExtractionPrompt(email.body, email.subject, email.sender + ' <' + email.email + '>', userId);
           if (Array.isArray(clItems) && clItems.length > 0) {
             var clItem = clItems[0];
             var clNormCat = clItem.category ? (CL_CATEGORY_LOOKUP[String(clItem.category).toLowerCase()] || 'Industry News') : 'Industry News';

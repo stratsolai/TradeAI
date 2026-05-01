@@ -11,6 +11,7 @@ import { createClient } from '@supabase/supabase-js';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
   Header } from 'docx';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -20,7 +21,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 function _arr(v) { return Array.isArray(v) ? v.join(', ') : (v || 'Not specified'); }
 
-async function generatePlanContent(planData, clContext, biInsights) {
+async function generatePlanContent(planData, clContext, biInsights, userId) {
   var systemPrompt = 'You are an expert business plan writer specialising in Australian small and medium businesses.\n' +
     'Write professional, polished content suitable for banks, lenders, or investors.\n' +
     'Use plain language. Write in third person (e.g. "The business operates..." not "We operate...").\n' +
@@ -182,6 +183,7 @@ async function generatePlanContent(planData, clContext, biInsights) {
   }
 
   var data = await response.json();
+  logAnthropicUsage({ tool_id: 'strategic-plan', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage });
   var text = data.content && data.content[0] ? data.content[0].text : '{}';
   var clean = text.replace(/```json|```/g, '').trim();
 
@@ -477,7 +479,7 @@ export default async function handler(req, res) {
   try {
     // 1. Generate content with Claude
     console.log('[strategic-plan] Generating content for userId:', userId);
-    var content = await generatePlanContent(planData, clContext, biInsights);
+    var content = await generatePlanContent(planData, clContext, biInsights, userId);
 
     // 2. Generate both Word docs in-process
     console.log('[strategic-plan] Generating Strategy doc...');
