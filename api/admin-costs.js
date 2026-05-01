@@ -349,13 +349,24 @@ function round2(n) {
 // Calendar month boundaries — current month-to-date and full previous
 // month. Returns ISO strings (UTC) plus YYYY-MM labels for matching
 // the api_usage period column.
+//
+// Anthropic's cost_report rejects "same-day" ranges with "ending date
+// must be after starting date" — it compares on day boundaries, not
+// timestamps. So when today is the 1st of the month, startCurrent
+// (1st 00:00 UTC) and endCurrent (1st now) sit on the same day and
+// the API errors. Use start-of-tomorrow UTC as the exclusive upper
+// bound — guarantees the range is always at least one day wide and
+// today's spend is still included. Apply the same exclusive-end
+// convention to the previous-month range (start-of-current-month
+// rather than last-millisecond-of-previous-month).
 function monthBoundaries(now) {
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
+  const day = now.getUTCDate();
   const startCurrent = new Date(Date.UTC(year, month, 1, 0, 0, 0));
-  const endCurrent = now;
+  const endCurrent = new Date(Date.UTC(year, month, day + 1, 0, 0, 0));
   const startPrev = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
-  const endPrev = new Date(Date.UTC(year, month, 1, 0, 0, 0) - 1);
+  const endPrev = new Date(Date.UTC(year, month, 1, 0, 0, 0));
   function label(d) {
     return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
   }
