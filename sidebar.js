@@ -132,6 +132,20 @@
         if (window.innerWidth <= 900) closeMobile();
       });
     });
+
+    // Hover-expand on desktop — visually widens a collapsed sidebar while the
+    // cursor is over it, without changing body padding (content stays put).
+    // The persistent collapsed state from the toggle button is unaffected;
+    // hover is an additive transient override.
+    if (sb) {
+      sb.addEventListener('mouseenter', function() {
+        if (window.innerWidth <= 900) return;
+        sb.classList.add('hover-expanded');
+      });
+      sb.addEventListener('mouseleave', function() {
+        sb.classList.remove('hover-expanded');
+      });
+    }
   }
 
   function injectHamburger() {
