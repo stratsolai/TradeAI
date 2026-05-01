@@ -5,17 +5,12 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 const CACHE_TTL_MS = 5 * 60 * 1000;
 let _cache = { data: null, fetchedAt: 0 };
 
-// Each provider lists URLs in priority order — fetchProviderStatus
-// tries them in sequence and uses the first one that returns 200 +
-// parseable JSON. Stripe runs on Instatus, which historically uses
-// /summary.json at the page root. The other three are Atlassian
-// Statuspage and use /api/v2/status.json.
+// Each provider either lists URLs to fetch (Atlassian Statuspage
+// JSON, /api/v2/status.json) or sets manual:true to mean "no public
+// JSON endpoint, render a Check Status link in the UI". Stripe is
+// manual because their public status page does not expose JSON.
 const PROVIDERS = [
-  { name: 'Stripe', urls: [
-    'https://status.stripe.com/summary.json',
-    'https://status.stripe.com/api/v2/summary.json',
-    'https://status.stripe.com/api/v2/status.json'
-  ] },
+  { name: 'Stripe',    manual: true, page_url: 'https://status.stripe.com/' },
   { name: 'Supabase',  urls: ['https://status.supabase.com/api/v2/status.json'] },
   { name: 'Anthropic', urls: ['https://status.anthropic.com/api/v2/status.json'] },
   { name: 'Vercel',    urls: ['https://www.vercel-status.com/api/v2/status.json'] }
@@ -51,6 +46,19 @@ export default async function handler(req, res) {
 }
 
 async function fetchProviderStatus(p) {
+  // Manual providers — no public JSON endpoint, just emit a payload
+  // the UI renders as a "Check status" link to the human-readable
+  // page. Stripe is the only one in this category today.
+  if (p.manual) {
+    return {
+      name: p.name,
+      status: 'manual',
+      indicator: 'manual',
+      description: 'No public status JSON — check the status page directly.',
+      page_url: p.page_url || null
+    };
+  }
+
   const urls = Array.isArray(p.urls) ? p.urls : (p.url ? [p.url] : []);
   let lastError = null;
   for (let i = 0; i < urls.length; i++) {

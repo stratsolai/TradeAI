@@ -1093,6 +1093,19 @@ window.ADMIN_LOGIC = {
       html += '<div class="admin-empty">Status not available.</div>';
     } else {
       services.forEach(function(s) {
+        var url = (s.page_url) || statusUrls[s.name] || '';
+
+        // Manual providers (Stripe) — no JSON endpoint exists, so
+        // render a "Check status" link instead of a dot + label.
+        if (s.status === 'manual') {
+          html += '<div class="admin-status-row">'
+            + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
+            + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">No public status API</span>'
+            + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Check status &rarr;</a>' : '')
+            + '</div>';
+          return;
+        }
+
         var dotClass = '';
         var label = '';
         if (s.status === 'operational') { dotClass = 'up'; label = 'Operational'; }
@@ -1101,7 +1114,6 @@ window.ADMIN_LOGIC = {
         else if (s.status === 'critical') { dotClass = 'down'; label = 'Critical outage'; }
         else { label = s.error ? 'Status unavailable' : 'Status unknown'; }
 
-        var url = statusUrls[s.name] || '';
         html += '<div class="admin-status-row">'
           + '<span class="admin-status-dot ' + dotClass + '"></span>'
           + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
