@@ -101,14 +101,22 @@ async function fetchAnthropicCosts(periods) {
   };
 }
 
+// Anthropic cost_report's error message ("Invalid date range: ending
+// date must be after starting date") uses "date" not "datetime" — the
+// parser is treating the values as dates. Full ISO timestamps with
+// .000Z fractional seconds get accepted by some Anthropic endpoints
+// but were observed to fail validation here. Strip to YYYY-MM-DD.
+function isoToDateOnly(iso) {
+  return iso ? String(iso).slice(0, 10) : '';
+}
+
 async function anthropicCostSum(key, startIso, endIso) {
-  // bucket_width=1d makes the per-day bucketing explicit. Without it,
-  // Anthropic's cost_report has been observed to still complain about
-  // ranges that look 1-day-wide on the wire — pinning the bucket
-  // width removes that ambiguity.
+  // bucket_width=1d pins the per-day bucketing on the wire. Date-only
+  // params keep the request unambiguously a date range rather than a
+  // timestamp range.
   const url = 'https://api.anthropic.com/v1/organizations/cost_report'
-    + '?starting_at=' + encodeURIComponent(startIso)
-    + '&ending_at=' + encodeURIComponent(endIso)
+    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso))
+    + '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso))
     + '&bucket_width=1d';
   console.log('[admin-costs] Anthropic cost_report (sum) →', url);
   const r = await fetch(url, {
@@ -130,8 +138,8 @@ async function anthropicCostSum(key, startIso, endIso) {
 
 async function anthropicCostByModel(key, startIso, endIso) {
   const url = 'https://api.anthropic.com/v1/organizations/cost_report'
-    + '?starting_at=' + encodeURIComponent(startIso)
-    + '&ending_at=' + encodeURIComponent(endIso)
+    + '?starting_at=' + encodeURIComponent(isoToDateOnly(startIso))
+    + '&ending_at=' + encodeURIComponent(isoToDateOnly(endIso))
     + '&bucket_width=1d'
     + '&group_by[]=model';
   console.log('[admin-costs] Anthropic cost_report (by model) →', url);
