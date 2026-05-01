@@ -425,8 +425,9 @@ window.SOCIAL_LOGIC = {
     setGraphic('sm-perf-rate-graphic', dailyRate, rateDir);
   },
 
-  // SVG trend graphic — sparkline that ends in an up/down arrow, sized for the
-  // social.html performance summary cards (90x36).
+  // SVG trend graphic — area chart that ends in an up/down arrow, sized for
+  // the social.html performance summary cards (90x36). Matches the dashboard
+  // tile style: filled area below the line, line ends in an arrow head.
   _buildTrendSvg: function(values, direction, good) {
     var width = 90, height = 36, pad = 5, ahSize = 6;
     if (!values || !values.length) values = [0, 0];
@@ -445,11 +446,15 @@ window.SOCIAL_LOGIC = {
     var tipX = width - ahSize - 1;
     var tipY = direction === 'up' ? pad : (height - pad);
     pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
+    var firstX = pad.toFixed(2);
+    var bottom = (height - pad).toFixed(2);
+    var areaPoints = firstX + ',' + bottom + ' ' + pts.join(' ') + ' ' + tipX.toFixed(2) + ',' + bottom;
     var ah = direction === 'up'
       ? tipX + ',' + (tipY - 1) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize)
       : tipX + ',' + (tipY + 1) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize);
     var color = good ? 'var(--green)' : 'var(--red)';
     return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
+      + '<polygon points="' + areaPoints + '" fill="' + color + '" fill-opacity="0.22" />'
       + '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
       + '<polygon points="' + ah + '" fill="' + color + '" />'
       + '</svg>';

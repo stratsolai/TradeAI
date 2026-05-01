@@ -235,6 +235,37 @@
       transition: color var(--btn-transition);
     }
     .dash-bigtrend-graphic { display: block; }
+    /* Value-only cell — used when a centred big-trend cell has no graphic
+       (e.g. Engagement on the Social tile collapsed view) so it still aligns
+       vertically with neighbouring graphic cells. */
+    .dash-bigtrend-value-only {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      line-height: 1;
+      padding: 8px 0;
+    }
+
+    /* ── Header-row trend pill (News tile shows topic + small graphic on heading row) ── */
+    .dash-header-trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px 2px 10px;
+      border-radius: 999px;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .dash-header-trend-text {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    .dash-headline-trend { display: block; }
 
     /* ── Headline trend row (News tile dynamic headline) ── */
     .dash-headline-row {

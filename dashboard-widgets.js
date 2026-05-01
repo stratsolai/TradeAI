@@ -81,23 +81,24 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
-  // Small inline arrow used inside the news headline row.
-  // direction = 'up' or 'down', good = whether the trend is good for business.
-  function smallHeadlineArrow(direction, good) {
-    var color = good ? 'var(--green)' : 'var(--red)';
-    var pts = direction === 'up'
-      ? '7,2 13,9 9,9 9,14 5,14 5,9 1,9'
-      : '7,14 13,7 9,7 9,2 5,2 5,7 1,7';
-    return '<svg class="dash-headline-arrow" width="14" height="16" viewBox="0 0 14 16" aria-hidden="true">'
-      + '<polygon points="' + pts + '" fill="' + color + '" />'
-      + '</svg>';
-  }
+  // Area-chart-with-arrow trend graphic. The line goes through the values,
+  // the area below it is filled in a softened version of the chosen colour,
+  // and the line ends in an arrow head pointing up or down.
+  //   values:    7-day series (oldest → newest)
+  //   direction: 'up' or 'down' — controls where the line ends and which way
+  //              the arrowhead points
+  //   good:      true → green palette, false → red palette
+  //   opts:      { width, height, areaOpacity, klass }
+  function areaTrendSvg(values, direction, good, opts) {
+    opts = opts || {};
+    var width = opts.width || 100;
+    var height = opts.height || 36;
+    var pad = opts.pad || 5;
+    var ahSize = opts.ahSize || 6;
+    var stroke = opts.stroke || 2.5;
+    var areaOpacity = opts.areaOpacity != null ? opts.areaOpacity : 0.22;
+    var klass = opts.klass || 'dash-bigtrend-graphic';
 
-  // Big combined sparkline + arrow trend graphic for Social/Chatbot tiles.
-  // values: 7-day series. direction: 'up' or 'down'. good: whether outcome is
-  // good for business (decides green vs red colour). Returns ~100x36 SVG.
-  function bigTrendSvg(values, direction, good) {
-    var width = 100, height = 36, pad = 5, ahSize = 6;
     if (!values || !values.length) values = [0, 0];
     if (values.length === 1) values = [values[0], values[0]];
 
@@ -114,10 +115,17 @@ window.DASH_WIDGETS = (function() {
       pts.push(x.toFixed(2) + ',' + y.toFixed(2));
     }
 
-    // Anchor the line into the arrow tip so the arrow visibly points up/down
+    // Anchor the line into the arrow tip so the arrow direction is unambiguous
     var tipX = width - ahSize - 1;
     var tipY = direction === 'up' ? pad : (height - pad);
     pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
+
+    // Filled area below the line — closed back to the baseline at the bottom.
+    // Use the first point's x and the tip x as the baseline endpoints so the
+    // area sits cleanly underneath the line all the way to the arrow tip.
+    var firstX = pad.toFixed(2);
+    var bottom = (height - pad).toFixed(2);
+    var areaPoints = firstX + ',' + bottom + ' ' + pts.join(' ') + ' ' + tipX.toFixed(2) + ',' + bottom;
 
     var ahPoints;
     if (direction === 'up') {
@@ -131,10 +139,25 @@ window.DASH_WIDGETS = (function() {
     }
 
     var color = good ? 'var(--green)' : 'var(--red)';
-    return '<svg class="dash-bigtrend-graphic" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
-      + '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
+    return '<svg class="' + klass + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
+      + '<polygon points="' + areaPoints + '" fill="' + color + '" fill-opacity="' + areaOpacity + '" />'
+      + '<polyline fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
       + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
       + '</svg>';
+  }
+
+  // Compact area-chart-with-arrow used in the News tile header alongside the
+  // 1-2 word topic. Smaller dimensions but same visual language.
+  function headlineTrendSvg(values, direction, good) {
+    return areaTrendSvg(values, direction, good, {
+      width: 56, height: 22, pad: 3, ahSize: 4, stroke: 2,
+      klass: 'dash-headline-trend'
+    });
+  }
+
+  // Backwards-compatible alias — older renderers call bigTrendSvg.
+  function bigTrendSvg(values, direction, good) {
+    return areaTrendSvg(values, direction, good);
   }
 
   // Render the trend block: sparkline + block-style SVG arrow (green up / red down).
@@ -371,11 +394,14 @@ window.DASH_WIDGETS = (function() {
   }
 
   // ── ZONE 2 tile builder ──
-  function tileShell(toolId, icon, name, headerHref, statusChipHtml, summaryHtml, detailHtml) {
+  // headerExtraHtml lets a tile inject extra content into the right side of
+  // the header row (e.g. the News tile's dynamic headline + trend graphic).
+  function tileShell(toolId, icon, name, headerHref, statusChipHtml, summaryHtml, detailHtml, headerExtraHtml) {
     var html = '<div class="tile-card" data-tool-id="' + window.escHtml(toolId) + '">';
     html += '<a href="' + window.escHtml(headerHref) + '" class="dash-tile-header">';
     html += '<span class="profile-section-icon">' + icon + '</span>';
     html += '<span class="profile-section-title" style="flex:1">' + window.escHtml(name) + '</span>';
+    if (headerExtraHtml) html += headerExtraHtml;
     if (statusChipHtml) html += statusChipHtml;
     html += '</a>';
     html += '<div class="dash-tile-summary">' + summaryHtml + '</div>';
@@ -464,10 +490,44 @@ window.DASH_WIDGETS = (function() {
     return { direction: direction, good: good };
   }
 
+  // Pull a 1-2 word topic out of a headline so the News tile header can show
+  // a tight indicator like "Inflation ↑" instead of the full sentence.
+  // Strategy: prefer a known economic/regulatory keyword if the headline
+  // contains one; otherwise fall back to the first 1-2 capitalised words.
+  var NEWS_TOPIC_KEYWORDS = [
+    ['Material Costs', /\bmaterial(s)?\b.*\bcost|cost\b.*\bmaterial/i],
+    ['Material Costs', /\bsteel|timber|concrete|cement|copper|aluminium\b/i],
+    ['Inflation',      /\binflation|cpi\b/i],
+    ['Interest Rates', /\binterest rate|rba|cash rate\b/i],
+    ['Employment',     /\bemploy|jobs|hiring|unemployment\b/i],
+    ['Wages',          /\bwage|pay rise|enterprise agreement\b/i],
+    ['Housing',        /\bhousing|home build|dwelling|residential\b/i],
+    ['Construction',   /\bconstruction|builder|trade\b/i],
+    ['Compliance',     /\bcomplian|regulation|standard|code\b/i],
+    ['Safety',         /\bsafe|swms|whs\b/i],
+    ['Grants',         /\bgrant|rebate|incentive\b/i],
+    ['Tenders',        /\btender|procurement|rfx\b/i],
+    ['Supply Chain',   /\bsupply|shortage|delay|logistic\b/i],
+    ['Energy',         /\benergy|electricity|gas|fuel|petrol\b/i],
+    ['Technology',     /\btechnology|software|ai\b/i]
+  ];
+
+  function extractTopic(headline) {
+    if (!headline) return '';
+    for (var i = 0; i < NEWS_TOPIC_KEYWORDS.length; i++) {
+      if (NEWS_TOPIC_KEYWORDS[i][1].test(headline)) return NEWS_TOPIC_KEYWORDS[i][0];
+    }
+    // Fallback: first 1-2 leading words of the headline (cap length 18 chars)
+    var clean = String(headline).replace(/[^A-Za-z0-9 \-&]/g, '').trim();
+    var words = clean.split(/\s+/).slice(0, 2).join(' ');
+    if (words.length > 18) words = words.substring(0, 18);
+    return words || 'News';
+  }
+
   // ── Industry News Digest tile ──
-  // Collapsed: dynamic headline w/ trend arrow + 7-day news volume sparkline,
-  // 3-stat trio (Last Refreshed | Categories Updated | Open Tenders), then the
-  // top 2 category pills (each with a red/green dot reflecting tone).
+  // Header row carries a dynamic 1-2 word topic and a small trend graphic
+  // (e.g. "Inflation ↑" with a red area chart) on the right of the heading.
+  // Collapsed body: 3-stat trio + top 2 category pills.
   // Expanded: remaining category pills.
   async function renderNews() {
     var ND_CATEGORIES = [
@@ -530,31 +590,23 @@ window.DASH_WIDGETS = (function() {
     withHeadlines.sort(function(a, b) { return b.count - a.count; });
     var briefingCount = withHeadlines.length;
 
-    // Build daily news volume sparkline + dynamic headline trend
+    // Daily news volume drives the small header trend graphic (line shape) —
+    // direction & colour come from headlineTrend(top briefing).
     var dailyVolume = dailyBuckets(newsItems, 'created_at', 7);
     var top = withHeadlines[0];
-    var headlineHtml = '';
+    var headerExtraHtml = '';
     if (top) {
       var trend = headlineTrend(top.briefing, top.cat.id);
-      var arrow = smallHeadlineArrow(trend.direction, trend.good);
-      var headlineText = top.briefing.headline;
-      headlineHtml = '<a href="/news#' + window.escHtml(top.cat.id) + '" class="dash-headline-row" title="' + window.escHtml(headlineText) + '">'
-        + '<span class="dash-headline-text">' + window.escHtml(headlineText) + '</span>'
-        + arrow
-        + '</a>';
+      var topicText = extractTopic(top.briefing.headline);
+      var trendSvg = headlineTrendSvg(dailyVolume, trend.direction, trend.good);
+      headerExtraHtml = '<span class="dash-header-trend" title="' + window.escHtml(top.briefing.headline) + '">'
+        + '<span class="dash-header-trend-text">' + window.escHtml(topicText) + '</span>'
+        + trendSvg
+        + '</span>';
     }
-
-    // 7-day sparkline next to the trio (compact row above stats)
-    var sparkline = sparklineSvg(dailyVolume, { width: 160, height: 28 });
-    var sparkRow = '<div class="dash-trend-block">'
-      + '<div class="dash-trend-label">7-Day News Volume</div>'
-      + '<div class="dash-trend-row">' + sparkline + '</div>'
-      + '</div>';
 
     // Click actions: Last Refreshed + Categories Updated → /news, Tenders → grants-tenders tab
     var summary = '';
-    summary += headlineHtml;
-    summary += sparkRow;
     summary += '<div class="dash-stat-trio">';
     summary += '<a href="/news" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Last Refreshed</span><span class="dash-stat-trio-value">' + window.escHtml(lastRefreshed || '—') + '</span></a>';
     summary += '<a href="/news" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Categories Updated</span><span class="dash-stat-trio-value">' + briefingCount + '</span></a>';
@@ -584,7 +636,7 @@ window.DASH_WIDGETS = (function() {
       detail = emptyHtml('No additional categories to show.');
     }
 
-    return tileShell('news-digest', '📰', 'Industry News Digest', '/news', '', summary, detail);
+    return tileShell('news-digest', '📰', 'Industry News Digest', '/news', '', summary, detail, headerExtraHtml);
   }
 
   // ── Marketing & Social Media tile ──
@@ -679,15 +731,17 @@ window.DASH_WIDGETS = (function() {
     var engRateDir = engagementRate >= priorEngagementRate ? 'up' : 'down';
     var engRateGood = engRateDir === 'up';
 
+    // Collapsed view: Reach (with trend), Engagement (value only), Engagement
+    // Rate (with trend). Drafts and Platforms intentionally excluded — they
+    // surface in the expanded Workspace section below.
     var summary = '';
     summary += '<div class="dash-bigtrend-wrap">';
     summary += bigTrendCellHtml(dailyReach, reachDir, reachGood, weekReach, 'Reach', '/social?range=7d');
+    summary += '<div class="dash-bigtrend-cell">'
+      + '<span class="dash-bigtrend-value-only">' + window.escHtml(String(weekEngagement)) + '</span>'
+      + '<span class="dash-bigtrend-label">Engagement</span>'
+      + '</div>';
     summary += bigTrendCellHtml(dailyRate, engRateDir, engRateGood, engagementRate + '%', 'Engagement Rate', '/social?range=7d');
-    summary += '</div>';
-    summary += '<div class="dash-stat-trio">';
-    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Engagement</span><span class="dash-stat-trio-value">' + weekEngagement + '</span></div>';
-    summary += '<a href="/social#drafts" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Drafts</span><span class="dash-stat-trio-value">' + draftCount + '</span></a>';
-    summary += '<a href="/social-settings.html" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Platforms</span><span class="dash-stat-trio-value">' + connectedCount + '</span></a>';
     summary += '</div>';
 
     // Expanded: campaign activity + scheduled + drafts/platforms
@@ -789,15 +843,16 @@ window.DASH_WIDGETS = (function() {
 
     var statusChipHtml = '<span class="badge badge-green">Online</span>';
 
+    // Collapsed: Conversations (with trend), Booking Requests (number only),
+    // Unanswered (with trend, reversed colour logic).
     var summary = '';
     summary += '<div class="dash-bigtrend-wrap">';
     summary += bigTrendCellHtml(dailyConvs, convDir, convGood, weekTotal, 'Conversations', '/chatbot#conversations');
+    summary += '<a href="/chatbot#leads" class="dash-bigtrend-cell" style="text-decoration:none">'
+      + '<span class="dash-bigtrend-value-only">' + window.escHtml(String(bookingRequests)) + '</span>'
+      + '<span class="dash-bigtrend-label">Booking Requests</span>'
+      + '</a>';
     summary += bigTrendCellHtml(dailyUnans, unansDir, unansGood, weekUnanswered, 'Unanswered', '/chatbot#unanswered');
-    summary += '</div>';
-    summary += '<div class="dash-stat-trio">';
-    summary += '<a href="/chatbot#leads" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Booking Requests</span><span class="dash-stat-trio-value">' + bookingRequests + '</span></a>';
-    summary += '<a href="/chatbot#leads" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Leads</span><span class="dash-stat-trio-value">' + weekLeads + '</span></a>';
-    summary += '<a href="/chatbot#conversations" class="dash-stat-trio-cell" style="text-decoration:none;color:inherit"><span class="dash-stat-trio-label">Appointments</span><span class="dash-stat-trio-value">' + weekAppointments + '</span></a>';
     summary += '</div>';
 
     // Today breakdown
@@ -825,6 +880,7 @@ window.DASH_WIDGETS = (function() {
     detail += rowHtml(todayUnanswered, 'Unanswered Question' + (todayUnanswered === 1 ? '' : 's') + ' Today', '/chatbot#unanswered');
 
     detail += '<div class="section-label" style="margin:10px 0 4px">7-Day Performance</div>';
+    detail += rowHtml(weekLeads, 'Lead' + (weekLeads === 1 ? '' : 's') + ' Captured', '/chatbot#leads');
     detail += rowHtml(weekAppointments, 'Appointment' + (weekAppointments === 1 ? '' : 's') + ' Requested', '/chatbot#conversations');
     detail += rowHtml(leadRate + '%', 'Lead Conversion Rate', '/chatbot#leads');
     detail += rowHtml(answeredRate + '%', 'Answered Rate', '/chatbot#unanswered');
