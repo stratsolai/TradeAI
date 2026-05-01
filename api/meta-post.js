@@ -9,7 +9,7 @@
  *   'get-pages'     → return connected page + Instagram account details
  *
  * ENV: META_APP_ID, META_APP_SECRET, ANTHROPIC_API_KEY,
- *      SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+ *      SUPABASE_URL, SUPABASE_SERVICE_KEY
  */
 
 import https from 'https';
@@ -17,7 +17,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
+  process.env.SUPABASE_SERVICE_KEY
 );
 
 const GRAPH_VERSION = 'v19.0';
