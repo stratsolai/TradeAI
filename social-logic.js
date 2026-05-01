@@ -199,9 +199,23 @@ window.SOCIAL_LOGIC = {
     this._applyInitialTab();
   },
 
-  // Open a specific tab from a deep link such as /social#drafts.
+  // Open a specific tab from a deep link such as /social#drafts. Also reads
+  // ?date=YYYY-MM-DD from the query string and pre-filters the Scheduled tab
+  // to that single day (used by the dashboard week-strip).
   _applyInitialTab: function() {
     var hash = (window.location.hash || '').replace('#', '');
+    var qs = (window.location.search || '').replace(/^\?/, '');
+    var params = {};
+    qs.split('&').forEach(function(kv) {
+      if (!kv) return;
+      var eq = kv.indexOf('=');
+      var k = eq === -1 ? kv : kv.substring(0, eq);
+      var v = eq === -1 ? '' : decodeURIComponent(kv.substring(eq + 1));
+      params[k] = v;
+    });
+    if (params.date && /^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
+      this._scheduledDateFilter = params.date;
+    }
     if (!hash) return;
     var allowed = ['create', 'campaign', 'drafts', 'scheduled', 'published'];
     if (allowed.indexOf(hash) !== -1) this._switchTab(hash);
@@ -425,38 +439,49 @@ window.SOCIAL_LOGIC = {
     setGraphic('sm-perf-rate-graphic', dailyRate, rateDir);
   },
 
-  // SVG trend graphic — area chart that ends in an up/down arrow, sized for
-  // the social.html performance summary cards (90x36). Matches the dashboard
-  // tile style: filled area below the line, line ends in an arrow head.
+  // SVG trend graphic — area chart with a gradient-filled area below the
+  // line and an arrowhead at the end, sized for the social.html performance
+  // summary cards. Matches the dashboard tile style.
+  _trendGradSeq: 0,
   _buildTrendSvg: function(values, direction, good) {
-    var width = 90, height = 36, pad = 5, ahSize = 6;
+    var width = 90, height = 36, pad = 4, ahSize = 7, stroke = 2.5;
     if (!values || !values.length) values = [0, 0];
     if (values.length === 1) values = [values[0], values[0]];
     var max = Math.max.apply(null, values);
     var min = Math.min.apply(null, values);
     var range = (max - min) || 1;
     var lineEndX = width - ahSize - 4;
-    var step = (lineEndX - pad) / (values.length - 1);
+    var step = values.length > 1 ? (lineEndX - pad) / (values.length - 1) : 0;
     var pts = [];
     for (var i = 0; i < values.length; i++) {
       var x = pad + i * step;
-      var y = height - pad - ((values[i] - min) / range) * (height - pad * 2);
-      pts.push(x.toFixed(2) + ',' + y.toFixed(2));
+      var y = (height - pad - 1) - ((values[i] - min) / range) * (height - pad * 2 - 2);
+      pts.push({ x: x, y: y });
     }
-    var tipX = width - ahSize - 1;
-    var tipY = direction === 'up' ? pad : (height - pad);
-    pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
-    var firstX = pad.toFixed(2);
+    var tipX = width - ahSize - 2;
+    var tipY = direction === 'up' ? (pad + 1) : (height - pad - 1);
+    pts.push({ x: tipX, y: tipY });
+    var lineD = pts.map(function(p, i) {
+      return (i === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
+    }).join(' ');
     var bottom = (height - pad).toFixed(2);
-    var areaPoints = firstX + ',' + bottom + ' ' + pts.join(' ') + ' ' + tipX.toFixed(2) + ',' + bottom;
-    var ah = direction === 'up'
-      ? tipX + ',' + (tipY - 1) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize)
-      : tipX + ',' + (tipY + 1) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize);
-    var color = good ? 'var(--green)' : 'var(--red)';
+    var areaD = lineD
+      + ' L' + tipX.toFixed(2) + ' ' + bottom
+      + ' L' + pad.toFixed(2) + ' ' + bottom
+      + ' Z';
+    var ahPoints = direction === 'up'
+      ? (tipX) + ',' + (tipY - 1) + ' ' + (tipX - ahSize) + ',' + (tipY + ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY + ahSize)
+      : (tipX) + ',' + (tipY + 1) + ' ' + (tipX - ahSize) + ',' + (tipY - ahSize) + ' ' + (tipX + ahSize) + ',' + (tipY - ahSize);
+    var color = good ? '#28a745' : '#dc3545';
+    var gradId = 'smtg' + (++this._trendGradSeq);
     return '<svg width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
-      + '<polygon points="' + areaPoints + '" fill="' + color + '" fill-opacity="0.22" />'
-      + '<polyline fill="none" stroke="' + color + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
-      + '<polygon points="' + ah + '" fill="' + color + '" />'
+      + '<defs><linearGradient id="' + gradId + '" x1="0" x2="0" y1="0" y2="1">'
+      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.5" />'
+      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0" />'
+      + '</linearGradient></defs>'
+      + '<path d="' + areaD + '" fill="url(#' + gradId + ')" stroke="none" />'
+      + '<path d="' + lineD + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" />'
+      + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
       + '</svg>';
   },
 

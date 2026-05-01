@@ -290,6 +290,70 @@
     }
     .dash-headline-arrow { flex-shrink: 0; display: block; }
 
+    /* ── 7-day week strip (Social tile collapsed view) ── */
+    .dash-week-strip {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      padding: 8px 0 4px;
+    }
+    .dash-week-day {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      padding: 6px 2px 4px;
+      border-radius: var(--btn-radius);
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      text-decoration: none;
+      min-height: 52px;
+      box-sizing: border-box;
+      border: 1px solid transparent;
+      transition: background var(--btn-transition), color var(--btn-transition);
+    }
+    .dash-week-day:hover { background: var(--blue-light); color: var(--blue); opacity: 1; }
+    .dash-week-day.is-today { border-color: var(--blue); }
+    .dash-week-day.has-posts {
+      background: var(--blue-light);
+      color: var(--blue);
+    }
+    .dash-week-day-name {
+      font-size: 10px;
+      font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      line-height: 1;
+    }
+    .dash-week-day-num {
+      font-family: var(--heading-font);
+      font-size: 16px;
+      font-weight: var(--heading-lg-weight);
+      line-height: 1;
+    }
+    .dash-week-day-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 4px;
+      background: var(--blue);
+      color: var(--white);
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: var(--font-weight-semibold);
+      line-height: 1;
+    }
+    .dash-week-day-empty-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--border);
+      display: block;
+    }
+
     /* ── Coloured dot inside category pills (News tile) ── */
     .dash-pill-dot {
       display: inline-block;

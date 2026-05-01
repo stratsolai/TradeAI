@@ -81,22 +81,22 @@ window.DASH_WIDGETS = (function() {
       + '</svg>';
   }
 
-  // Area-chart-with-arrow trend graphic. The line goes through the values,
-  // the area below it is filled in a softened version of the chosen colour,
-  // and the line ends in an arrow head pointing up or down.
+  // Area-chart-with-arrow trend graphic. The line traces through the values,
+  // the area underneath is filled with a top-heavy gradient (0.5 → 0 alpha)
+  // for clear "shaded area chart" appearance, and the line terminates in a
+  // visible arrow head in the trend direction.
   //   values:    7-day series (oldest → newest)
-  //   direction: 'up' or 'down' — controls where the line ends and which way
-  //              the arrowhead points
+  //   direction: 'up' or 'down'
   //   good:      true → green palette, false → red palette
-  //   opts:      { width, height, areaOpacity, klass }
+  //   opts:      { width, height, pad, ahSize, stroke, klass }
+  var _trendGradSeq = 0;
   function areaTrendSvg(values, direction, good, opts) {
     opts = opts || {};
     var width = opts.width || 100;
     var height = opts.height || 36;
-    var pad = opts.pad || 5;
-    var ahSize = opts.ahSize || 6;
+    var pad = opts.pad || 4;
+    var ahSize = opts.ahSize || 7;
     var stroke = opts.stroke || 2.5;
-    var areaOpacity = opts.areaOpacity != null ? opts.areaOpacity : 0.22;
     var klass = opts.klass || 'dash-bigtrend-graphic';
 
     if (!values || !values.length) values = [0, 0];
@@ -106,51 +106,66 @@ window.DASH_WIDGETS = (function() {
     var min = Math.min.apply(null, values);
     var range = (max - min) || 1;
     var lineEndX = width - ahSize - 4;
-    var step = (lineEndX - pad) / (values.length - 1);
+    var step = values.length > 1 ? (lineEndX - pad) / (values.length - 1) : 0;
 
+    // Polyline through the data
     var pts = [];
     for (var i = 0; i < values.length; i++) {
       var x = pad + i * step;
-      var y = height - pad - ((values[i] - min) / range) * (height - pad * 2);
-      pts.push(x.toFixed(2) + ',' + y.toFixed(2));
+      // Reserve a top buffer so the line doesn't bleed into the arrowhead
+      var y = (height - pad - 1) - ((values[i] - min) / range) * (height - pad * 2 - 2);
+      pts.push({ x: x, y: y });
     }
 
-    // Anchor the line into the arrow tip so the arrow direction is unambiguous
-    var tipX = width - ahSize - 1;
-    var tipY = direction === 'up' ? pad : (height - pad);
-    pts.push(tipX.toFixed(2) + ',' + tipY.toFixed(2));
+    // Force trend direction visually by terminating into the arrow tip
+    var tipX = width - ahSize - 2;
+    var tipY = direction === 'up' ? (pad + 1) : (height - pad - 1);
+    pts.push({ x: tipX, y: tipY });
 
-    // Filled area below the line — closed back to the baseline at the bottom.
-    // Use the first point's x and the tip x as the baseline endpoints so the
-    // area sits cleanly underneath the line all the way to the arrow tip.
-    var firstX = pad.toFixed(2);
+    var lineD = pts.map(function(p, i) {
+      return (i === 0 ? 'M' : 'L') + p.x.toFixed(2) + ' ' + p.y.toFixed(2);
+    }).join(' ');
+
+    // Area = line + down to baseline at the right + back to baseline at the left + close
     var bottom = (height - pad).toFixed(2);
-    var areaPoints = firstX + ',' + bottom + ' ' + pts.join(' ') + ' ' + tipX.toFixed(2) + ',' + bottom;
+    var areaD = lineD
+      + ' L' + tipX.toFixed(2) + ' ' + bottom
+      + ' L' + pad.toFixed(2) + ' ' + bottom
+      + ' Z';
 
+    // Arrow head — solid filled triangle pointing in trend direction
     var ahPoints;
     if (direction === 'up') {
-      ahPoints = tipX + ',' + (tipY - 1) + ' '
+      ahPoints = (tipX) + ',' + (tipY - 1) + ' '
                + (tipX - ahSize) + ',' + (tipY + ahSize) + ' '
                + (tipX + ahSize) + ',' + (tipY + ahSize);
     } else {
-      ahPoints = tipX + ',' + (tipY + 1) + ' '
+      ahPoints = (tipX) + ',' + (tipY + 1) + ' '
                + (tipX - ahSize) + ',' + (tipY - ahSize) + ' '
                + (tipX + ahSize) + ',' + (tipY - ahSize);
     }
 
-    var color = good ? 'var(--green)' : 'var(--red)';
-    return '<svg class="' + klass + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
-      + '<polygon points="' + areaPoints + '" fill="' + color + '" fill-opacity="' + areaOpacity + '" />'
-      + '<polyline fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" points="' + pts.join(' ') + '" />'
+    // Use literal hex so the linearGradient stop-color resolves cleanly in
+    // all browsers — CSS custom properties don't always resolve inside
+    // <stop> attributes.
+    var color = good ? '#28a745' : '#dc3545';
+    var gradId = 'sg' + (++_trendGradSeq);
+    return '<svg class="' + klass + '" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true" preserveAspectRatio="none">'
+      + '<defs><linearGradient id="' + gradId + '" x1="0" x2="0" y1="0" y2="1">'
+      + '<stop offset="0%" stop-color="' + color + '" stop-opacity="0.5" />'
+      + '<stop offset="100%" stop-color="' + color + '" stop-opacity="0" />'
+      + '</linearGradient></defs>'
+      + '<path d="' + areaD + '" fill="url(#' + gradId + ')" stroke="none" />'
+      + '<path d="' + lineD + '" fill="none" stroke="' + color + '" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" />'
       + '<polygon points="' + ahPoints + '" fill="' + color + '" />'
       + '</svg>';
   }
 
   // Compact area-chart-with-arrow used in the News tile header alongside the
-  // 1-2 word topic. Smaller dimensions but same visual language.
+  // 1-2 word topic. Same visual language, scaled down for the header pill.
   function headlineTrendSvg(values, direction, good) {
     return areaTrendSvg(values, direction, good, {
-      width: 56, height: 22, pad: 3, ahSize: 4, stroke: 2,
+      width: 56, height: 22, pad: 2, ahSize: 5, stroke: 1.8,
       klass: 'dash-headline-trend'
     });
   }
@@ -181,6 +196,17 @@ window.DASH_WIDGETS = (function() {
     return open
       + bigTrendSvg(values, direction, good)
       + '<span class="dash-bigtrend-value">' + window.escHtml(String(value)) + '</span>'
+      + '<span class="dash-bigtrend-label">' + window.escHtml(label) + '</span>'
+      + close;
+  }
+
+  // Graphic-only big-trend cell — used when the trend graphic alone tells
+  // the story and a numeric value would be redundant (e.g. CB Conversations).
+  function bigTrendGraphicOnlyCellHtml(values, direction, good, label, href) {
+    var open = href ? ('<a href="' + window.escHtml(href) + '" class="dash-bigtrend-cell">') : '<div class="dash-bigtrend-cell">';
+    var close = href ? '</a>' : '</div>';
+    return open
+      + bigTrendSvg(values, direction, good)
       + '<span class="dash-bigtrend-label">' + window.escHtml(label) + '</span>'
       + close;
   }
@@ -433,6 +459,52 @@ window.DASH_WIDGETS = (function() {
       + close;
   }
 
+  // 7-day week strip used by the Social tile. Buckets `posts` (each with
+  // a `scheduled_at` ISO string) into the next 7 days starting today and
+  // renders a horizontal strip. Days with posts are highlighted and link
+  // to the Scheduled tab filtered to that date.
+  function weekStripHtml(posts) {
+    var WEEKDAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    var today = new Date(); today.setHours(0, 0, 0, 0);
+    var buckets = [0,0,0,0,0,0,0];
+    var dates = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(today.getTime() + i * 86400000);
+      dates.push(d);
+    }
+    (posts || []).forEach(function(p) {
+      if (!p.scheduled_at) return;
+      var d = new Date(p.scheduled_at); d.setHours(0, 0, 0, 0);
+      var diffDays = Math.floor((d - today) / 86400000);
+      if (diffDays >= 0 && diffDays < 7) buckets[diffDays] += 1;
+    });
+    var html = '<div class="dash-week-strip" aria-label="Scheduled posts this week">';
+    for (var j = 0; j < 7; j++) {
+      var dt = dates[j];
+      var iso = dt.getFullYear() + '-'
+              + String(dt.getMonth() + 1).padStart(2, '0') + '-'
+              + String(dt.getDate()).padStart(2, '0');
+      var count = buckets[j];
+      var hasPosts = count > 0;
+      var classes = 'dash-week-day';
+      if (j === 0) classes += ' is-today';
+      if (hasPosts) classes += ' has-posts';
+      var label = WEEKDAY[dt.getDay()];
+      var indicator = hasPosts
+        ? '<span class="dash-week-day-count">' + count + '</span>'
+        : '<span class="dash-week-day-empty-dot" aria-hidden="true"></span>';
+      var href = hasPosts ? ('/social?date=' + iso + '#scheduled') : '/social#scheduled';
+      html += '<a href="' + href + '" class="' + classes + '" title="' + label + ' ' + dt.getDate()
+            + (hasPosts ? ' — ' + count + ' scheduled' : ' — none scheduled') + '">';
+      html += '<span class="dash-week-day-name">' + label + '</span>';
+      html += '<span class="dash-week-day-num">' + dt.getDate() + '</span>';
+      html += indicator;
+      html += '</a>';
+    }
+    html += '</div>';
+    return html;
+  }
+
   // Pill row with a coloured dot inside the badge. dotColour: 'red' or 'green'.
   function pillRowHtml(label, headline, href, dotColour) {
     var open = href ? ('<a href="' + window.escHtml(href) + '" class="dash-tile-row">') : '<div class="dash-tile-row">';
@@ -645,7 +717,7 @@ window.DASH_WIDGETS = (function() {
   // Expanded: scheduled posts, recent post performance, drafts to review,
   // platforms connected.
   async function renderSocial() {
-    var draftCount = 0, scheduled = [], campaignActivity = [];
+    var draftCount = 0, scheduled = [], scheduledNext7 = [];
     var weekPosts = [], priorPosts = [];
     var fbConnected = false, igConnected = false;
 
@@ -681,6 +753,23 @@ window.DASH_WIDGETS = (function() {
         .order('scheduled_at', { ascending: true }).limit(3);
       if (schedRes.error) console.error('[Dashboard] Social scheduled error:', schedRes.error.message || schedRes.error);
       scheduled = schedRes.data || [];
+
+      // All scheduled posts in the next 7 days — drives the week-strip
+      var weekStartIso = (function() {
+        var d = new Date(); d.setHours(0, 0, 0, 0); return d.toISOString();
+      })();
+      var weekEndIso = (function() {
+        var d = new Date(); d.setHours(0, 0, 0, 0);
+        d.setTime(d.getTime() + 7 * 86400000);
+        return d.toISOString();
+      })();
+      var sched7 = await _supabase.from('social_posts')
+        .select('id, scheduled_at')
+        .eq('user_id', _userId).eq('status', 'scheduled')
+        .gte('scheduled_at', weekStartIso)
+        .lt('scheduled_at', weekEndIso);
+      if (sched7.error) console.error('[Dashboard] Social week-strip error:', sched7.error.message || sched7.error);
+      scheduledNext7 = sched7.data || [];
 
       var setRes = await _supabase.from('social_settings')
         .select('meta_connected, instagram_account_id')
@@ -744,6 +833,11 @@ window.DASH_WIDGETS = (function() {
     summary += bigTrendCellHtml(dailyRate, engRateDir, engRateGood, engagementRate + '%', 'Engagement Rate', '/social?range=7d');
     summary += '</div>';
 
+    // 7-day week strip showing scheduled posts. Each day in the next 7 days
+    // is a cell — empty cells are subtle; days with posts are highlighted
+    // and link to the Scheduled tab pre-filtered to that date.
+    summary += weekStripHtml(scheduledNext7);
+
     // Expanded: campaign activity + scheduled + drafts/platforms
     var detail = '';
     detail += '<div class="section-label" style="margin:6px 0 4px">Upcoming Scheduled</div>';
@@ -804,74 +898,78 @@ window.DASH_WIDGETS = (function() {
       console.error('[Dashboard] Chatbot render error:', e.message || e);
     }
 
-    // Collapsed metrics
-    var weekLeads = weekRows.filter(function(r) { return r.is_lead; }).length;
-    var weekAppointments = weekRows.filter(function(r) { return r.appointment_requested; }).length;
-    var weekUnanswered = 0;
-    weekRows.forEach(function(r) {
-      if (Array.isArray(r.unanswered_questions)) weekUnanswered += r.unanswered_questions.length;
-    });
-    var priorUnanswered = 0;
-    priorRows.forEach(function(r) {
-      if (Array.isArray(r.unanswered_questions)) priorUnanswered += r.unanswered_questions.length;
-    });
-    var bookingRequests = weekLeads + weekAppointments;
-
-    // Daily series for sparkline trends
-    var dailyConvs = dailyBuckets(weekRows, 'created_at', 7);
-    var dailyUnans = (function() {
-      var b = [0,0,0,0,0,0,0];
-      var now = new Date(); now.setHours(0, 0, 0, 0);
-      weekRows.forEach(function(r) {
-        if (!Array.isArray(r.unanswered_questions) || r.unanswered_questions.length === 0) return;
-        var d = new Date(r.created_at); d.setHours(0, 0, 0, 0);
-        var diffDays = Math.floor((now - d) / 86400000);
-        if (diffDays < 0 || diffDays >= 7) return;
-        b[6 - diffDays] += r.unanswered_questions.length;
-      });
-      return b;
-    })();
-    var weekTotal = weekRows.length;
-    var priorTotal = priorRows.length;
-
-    // Conversations: up = good, down = bad
-    var convDir = weekTotal >= priorTotal ? 'up' : 'down';
-    var convGood = convDir === 'up';
-    // Unanswered: up = bad (red), down = good (green)
-    var unansDir = weekUnanswered >= priorUnanswered ? 'up' : 'down';
-    var unansGood = unansDir === 'down';
-
-    var statusChipHtml = '<span class="badge badge-green">Online</span>';
-
-    // Collapsed: Conversations (with trend), Booking Requests (number only),
-    // Unanswered (with trend, reversed colour logic).
-    var summary = '';
-    summary += '<div class="dash-bigtrend-wrap">';
-    summary += bigTrendCellHtml(dailyConvs, convDir, convGood, weekTotal, 'Conversations', '/chatbot#conversations');
-    summary += '<a href="/chatbot#leads" class="dash-bigtrend-cell" style="text-decoration:none">'
-      + '<span class="dash-bigtrend-value-only">' + window.escHtml(String(bookingRequests)) + '</span>'
-      + '<span class="dash-bigtrend-label">Booking Requests</span>'
-      + '</a>';
-    summary += bigTrendCellHtml(dailyUnans, unansDir, unansGood, weekUnanswered, 'Unanswered', '/chatbot#unanswered');
-    summary += '</div>';
-
-    // Today breakdown
-    var today = new Date();
-    today.setHours(0, 0, 0, 0);
-    var todayRows = weekRows.filter(function(r) { return new Date(r.created_at) >= today; });
+    // Today snapshot
+    var todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    var todayRows = weekRows.filter(function(r) { return new Date(r.created_at) >= todayStart; });
     var todayLeads = todayRows.filter(function(r) { return r.is_lead; }).length;
+    var todayAppointments = todayRows.filter(function(r) { return r.appointment_requested; }).length;
+    var todayBookingRequests = todayLeads + todayAppointments;
     var todayUnanswered = 0;
     todayRows.forEach(function(r) {
       if (Array.isArray(r.unanswered_questions)) todayUnanswered += r.unanswered_questions.length;
     });
 
-    // Performance metrics — share of conversations that converted to a lead or
-    // appointment, plus answered share. (Resolution metrics not stored in schema.)
+    // Pending unanswered = questions logged in the last 7 days that have NOT
+    // been resolved (i.e. not yet added to the knowledge base). The
+    // chatbot-logic _markResolved flow stores resolved=true on each item.
+    var isPending = function(q) {
+      if (q && typeof q === 'object') return q.resolved !== true;
+      return true; // legacy string entries are always pending
+    };
+    var pendingUnanswered = 0;
+    var dailyPending = [0,0,0,0,0,0,0];
+    var nowMid = new Date(); nowMid.setHours(0, 0, 0, 0);
+    weekRows.forEach(function(r) {
+      if (!Array.isArray(r.unanswered_questions)) return;
+      var pendingInConv = r.unanswered_questions.filter(isPending).length;
+      pendingUnanswered += pendingInConv;
+      if (!pendingInConv) return;
+      var d = new Date(r.created_at); d.setHours(0, 0, 0, 0);
+      var diffDays = Math.floor((nowMid - d) / 86400000);
+      if (diffDays < 0 || diffDays >= 7) return;
+      dailyPending[6 - diffDays] += pendingInConv;
+    });
+    var priorPendingUnanswered = 0;
+    priorRows.forEach(function(r) {
+      if (!Array.isArray(r.unanswered_questions)) return;
+      priorPendingUnanswered += r.unanswered_questions.filter(isPending).length;
+    });
+
+    // Daily conversation counts → Conversations trend
+    var dailyConvs = dailyBuckets(weekRows, 'created_at', 7);
+    var weekTotal = weekRows.length;
+    var priorTotal = priorRows.length;
+
+    // Trend directions / colour outcomes.
+    // Conversations: up = good, down = bad.
+    var convDir = weekTotal >= priorTotal ? 'up' : 'down';
+    var convGood = convDir === 'up';
+    // Pending unanswered: up = bad (red), down = good (green).
+    var unansDir = pendingUnanswered >= priorPendingUnanswered ? 'up' : 'down';
+    var unansGood = unansDir === 'down';
+
+    // 7-day totals used by the expanded performance metrics (kept for
+    // Lead Conversion Rate / Answered Rate calculations).
+    var weekLeads = weekRows.filter(function(r) { return r.is_lead; }).length;
     var leadRate = weekTotal > 0 ? Math.round((weekLeads / weekTotal) * 100) : 0;
     var answeredCount = weekRows.filter(function(r) {
       return !Array.isArray(r.unanswered_questions) || r.unanswered_questions.length === 0;
     }).length;
     var answeredRate = weekTotal > 0 ? Math.round((answeredCount / weekTotal) * 100) : 0;
+
+    var statusChipHtml = '<span class="badge badge-green">Online</span>';
+
+    // Collapsed: Conversations (graphic only — no number), Booking Requests
+    // (today's count), Unanswered (pending, with reversed-colour trend).
+    var summary = '';
+    summary += '<div class="dash-bigtrend-wrap">';
+    summary += bigTrendGraphicOnlyCellHtml(dailyConvs, convDir, convGood, 'Conversations', '/chatbot#conversations');
+    summary += '<a href="/chatbot#leads" class="dash-bigtrend-cell" style="text-decoration:none">'
+      + '<span class="dash-bigtrend-value-only">' + window.escHtml(String(todayBookingRequests)) + '</span>'
+      + '<span class="dash-bigtrend-label">Booking Requests Today</span>'
+      + '</a>';
+    summary += bigTrendCellHtml(dailyPending, unansDir, unansGood, pendingUnanswered, 'Unanswered', '/chatbot#unanswered');
+    summary += '</div>';
 
     var detail = '';
     detail += '<div class="section-label" style="margin:6px 0 4px">Today</div>';
@@ -879,9 +977,9 @@ window.DASH_WIDGETS = (function() {
     detail += rowHtml(todayLeads, 'Lead' + (todayLeads === 1 ? '' : 's') + ' Captured Today', '/chatbot#leads');
     detail += rowHtml(todayUnanswered, 'Unanswered Question' + (todayUnanswered === 1 ? '' : 's') + ' Today', '/chatbot#unanswered');
 
+    // 7-Day Performance — keep only the rate metrics (counts already shown
+    // in the Today section / collapsed view).
     detail += '<div class="section-label" style="margin:10px 0 4px">7-Day Performance</div>';
-    detail += rowHtml(weekLeads, 'Lead' + (weekLeads === 1 ? '' : 's') + ' Captured', '/chatbot#leads');
-    detail += rowHtml(weekAppointments, 'Appointment' + (weekAppointments === 1 ? '' : 's') + ' Requested', '/chatbot#conversations');
     detail += rowHtml(leadRate + '%', 'Lead Conversion Rate', '/chatbot#leads');
     detail += rowHtml(answeredRate + '%', 'Answered Rate', '/chatbot#unanswered');
 

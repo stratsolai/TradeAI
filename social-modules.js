@@ -106,6 +106,22 @@
       });
     }
 
+    // Single-day date filter set by the dashboard week-strip via ?date=YYYY-MM-DD.
+    // Cleared after first use so user-driven filter changes work normally.
+    if (this._scheduledDateFilter && /^\d{4}-\d{2}-\d{2}$/.test(this._scheduledDateFilter)) {
+      var dateStr = this._scheduledDateFilter;
+      items = items.filter(function(item) {
+        var sp = item.scheduled_posts;
+        var schedDate = sp && sp.length > 0 ? new Date(sp[0].scheduled_for) : null;
+        if (!schedDate) return false;
+        var iso = schedDate.getFullYear() + '-'
+                + String(schedDate.getMonth() + 1).padStart(2, '0') + '-'
+                + String(schedDate.getDate()).padStart(2, '0');
+        return iso === dateStr;
+      });
+      this._scheduledDateFilter = null;
+    }
+
     var list = document.getElementById('sm-scheduled-list');
     var empty = document.getElementById('sm-scheduled-empty');
 
