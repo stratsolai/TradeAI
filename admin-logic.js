@@ -301,7 +301,7 @@ window.ADMIN_LOGIC = {
     var marginColour = marginPct == null ? '' : (marginPct >= 80 ? 'green' : (marginPct >= 60 ? 'orange' : 'red'));
     var alertsCount = s.alerts_count || 0;
 
-    var html = '<div class="page-header" style="margin-top:24px;"><h2 class="page-title" style="font-size:var(--heading-md-size);">Profitability &amp; Costs</h2><p class="page-subtitle">Real-time margin and supplier health for ' + self._esc(prof.period || '') + '.</p></div>';
+    var html = '<div class="settings-card-header" style="margin-top:24px;"><div class="settings-card-title">Profitability &amp; Costs</div><div class="settings-card-hint">Real-time margin and supplier health for ' + self._esc(prof.period || '') + '.</div></div>';
 
     // Summary tiles
     html += '<div class="prof-summary-grid">'
