@@ -43,14 +43,7 @@
       grid-column: 1 / -1;
     }
 
-    .bi-module-card {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      box-shadow: 0 2px 8px var(--shadow-card);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
+    /* Module cards now use the platform .tile-card class — see staxai-auth.css */
 
     .bi-module-header {
       display: flex;
@@ -700,7 +693,7 @@
   <div class="bi-module-grid">
 
     <!-- Module 6: Risk & Opportunity Alerts (full width, top) -->
-    <div class="bi-module-card bi-module-full" id="bi-mod-alerts">
+    <div class="tile-card bi-module-full" id="bi-mod-alerts">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#9888;</span>
         <span class="bi-module-title">Risk &amp; Opportunity Alerts</span>
@@ -714,7 +707,7 @@
     </div>
 
     <!-- Module 1: Financial Health -->
-    <div class="bi-module-card" id="bi-mod-financial">
+    <div class="tile-card" id="bi-mod-financial">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#128176;</span>
         <span class="bi-module-title">Financial Health</span>
@@ -735,7 +728,7 @@
     </div>
 
     <!-- Module 2: Customer & Revenue Analysis -->
-    <div class="bi-module-card" id="bi-mod-customers">
+    <div class="tile-card" id="bi-mod-customers">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#128101;</span>
         <span class="bi-module-title">Customer &amp; Revenue</span>
@@ -756,7 +749,7 @@
     </div>
 
     <!-- Module 3: Operational Performance -->
-    <div class="bi-module-card" id="bi-mod-operations">
+    <div class="tile-card" id="bi-mod-operations">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#9881;</span>
         <span class="bi-module-title">Operational Performance</span>
@@ -777,7 +770,7 @@
     </div>
 
     <!-- Module 4: Market Intelligence -->
-    <div class="bi-module-card" id="bi-mod-market">
+    <div class="tile-card" id="bi-mod-market">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#127758;</span>
         <span class="bi-module-title">Market Intelligence</span>
@@ -798,7 +791,7 @@
     </div>
 
     <!-- Module 5: Strategic Alignment -->
-    <div class="bi-module-card" id="bi-mod-strategic">
+    <div class="tile-card" id="bi-mod-strategic">
       <div class="bi-module-header">
         <span class="bi-module-icon">&#127919;</span>
         <span class="bi-module-title">Strategic Alignment</span>
@@ -833,6 +826,7 @@
 <script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>
 <script src="/topbar.js"></script>
+<script src="/sidebar.js"></script>
 <script src="/shared-utils.js"></script>
 <script src="/pwa.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>

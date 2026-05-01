@@ -1,25 +1,32 @@
 window.DASH_DATA = (function() {
 
   var _supabase, _user, _profile, _activeTools;
-  // map: toolId → "$X/mth" — null when any built tool's priceId is missing
-  // from the live tool_prices map, in which case all tools fall back to
-  // the hardcoded `price` field below (all-or-nothing).
   var _resolvedPrices = null;
 
+  // Tool catalog mirrors tools-data.js for the Your Stax section.
+  // Note: dashboard-data.js maintains its own copy per CLAUDE.md (codebase quirk).
   var TOOLS = [
-    { id: 'social',         icon: '\ud83d\udcf1', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content \u2014 auto-posts to Facebook and Instagram', price: '$69',  status: 'built',   url: '/social',         settingsUrl: '/social-settings.html',            priceId: 'price_1TEQg8HnoVvjo5gxkxUaFrok', benefit: 'Works great with Content Library' },
-    { id: 'email',          icon: '\ud83d\udce7', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook \u2014 summarised on one smart dashboard',                          price: '$39',  status: 'built',   url: '/email',          settingsUrl: '/email-assistant-settings.html',   priceId: 'price_1TQLhHHnoVvjo5gxnwUQQYwM', benefit: 'Feeds into BI insights' },
-    { id: 'chatbot',        icon: '\ud83d\udcac', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website \u2014 answers customers, qualifies leads, books jobs \u2014 24/7',     price: '$69',  status: 'built',   url: '/chatbot',        settingsUrl: '/chatbot-settings.html',           priceId: 'price_1TRlgkHnoVvjo5gxXR6NMrkR', benefit: 'Uses your Content Library' },
-    { id: 'news-digest',    icon: '\ud83d\udcf0', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates \u2014 AI-summarised on one dashboard',          price: '$39',  status: 'built',   url: '/news',           settingsUrl: '/news-digest-settings.html',       priceId: 'price_1TQLehHnoVvjo5gxjv8cH40m', benefit: 'Feeds into BI insights' },
-    { id: 'bi',             icon: '\ud83e\udde0', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                      price: '$69',  status: 'built',   url: '/bi.html',        settingsUrl: null,                               priceId: 'price_1T4dClHnoVvjo5gxjSvoi4ky', benefit: 'Uses your Content Library' },
-    { id: 'strategic-plan', icon: '\ud83d\uddfa\ufe0f', name: 'Strategic Plan & Operations', desc: 'Create your roadmap in minutes from a simple AI-guided interview',                                  price: '$69',  status: 'built',   url: '/strategy',       settingsUrl: null,                               priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego', benefit: 'Works great with BI Dashboard' },
-    { id: 'design-viz',     icon: '\ud83c\udfa8', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief \u2014 show customers what the finished job looks like',   price: '$69',  status: 'built',   url: '/design',         settingsUrl: '/design-viz-settings.html',        priceId: 'price_1TQLbEHnoVvjo5gxIuSSm7tH', benefit: 'Uses your Content Library' },
-    { id: 'tender',         icon: '\ud83d\udccb', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response \u2014 ready to submit',       price: '$69',  status: 'pending', url: '/panel?tool=tender',          settingsUrl: null, priceId: 'price_1TEQjVHnoVvjo5gxfyLbHE3M', benefit: '' },
-    { id: 'quote-enhancer', icon: '\ud83d\udcb0', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',                 price: '$59',  status: 'pending', url: '/panel?tool=quote-enhancer', settingsUrl: null, priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI', benefit: '' },
-    { id: 'swms',           icon: '\ud83e\uddba', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',                 price: '$59',  status: 'pending', url: '/panel?tool=swms',            settingsUrl: null, priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF', benefit: '' },
-    { id: 'customer-updates',icon:'\ud83d\udcf2', name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                      price: '$59',  status: 'pending', url: '/panel?tool=customer-updates', settingsUrl: null, priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN', benefit: '' },
-    { id: 'handover-docs',  icon: '\ud83d\udcc1', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data \u2014 warranties, compliance, sign-off',  price: '$59',  status: 'pending', url: '/panel?tool=handover-docs',  settingsUrl: null, priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL', benefit: '' },
-    { id: 'review-booster', icon: '\u2b50',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals \u2014 and writes the message',     price: '$39',  status: 'pending', url: '/panel?tool=review-booster', settingsUrl: null, priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa', benefit: '' }
+    { id: 'social',         icon: '📱', name: 'Marketing & Social Media Manager', desc: 'AI builds your posts, graphics and marketing content — auto-posts to Facebook and Instagram', price: '$69',  status: 'built',   url: '/social',         settingsUrl: '/social-settings.html',            priceId: 'price_1TEQg8HnoVvjo5gxkxUaFrok', benefit: 'Works great with Content Library' },
+    { id: 'email',          icon: '📧', name: 'AI Email Assistant',               desc: 'AI reads your Gmail and Outlook — summarised on one smart dashboard',                          price: '$39',  status: 'built',   url: '/email',          settingsUrl: '/email-assistant-settings.html',   priceId: 'price_1TQLhHHnoVvjo5gxnwUQQYwM', benefit: 'Feeds into BI insights' },
+    { id: 'chatbot',        icon: '💬', name: 'AI Website Chatbot',               desc: 'AI chatbot for your website — answers customers, qualifies leads, books jobs — 24/7',     price: '$69',  status: 'built',   url: '/chatbot',        settingsUrl: '/chatbot-settings.html',           priceId: 'price_1TRlgkHnoVvjo5gxXR6NMrkR', benefit: 'Uses your Content Library' },
+    { id: 'news-digest',    icon: '📰', name: 'Industry News Digest',             desc: 'Industry news, regulation changes, supplier updates — AI-summarised on one dashboard',          price: '$39',  status: 'built',   url: '/news',           settingsUrl: '/news-digest-settings.html',       priceId: 'price_1TQLehHnoVvjo5gxjv8cH40m', benefit: 'Feeds into BI insights' },
+    { id: 'bi',             icon: '🧠', name: 'Business Intelligence Dashboard',  desc: 'AI-powered insights driven by your business data, your industry, your region',                      price: '$69',  status: 'built',   url: '/bi.html',        settingsUrl: null,                               priceId: 'price_1T4dClHnoVvjo5gxjSvoi4ky', benefit: 'Uses your Content Library' },
+    { id: 'strategic-plan', icon: '🗺️', name: 'Strategic Plan & Operations', desc: 'Create your roadmap in minutes from a simple AI-guided interview',                                  price: '$69',  status: 'built',   url: '/strategy',       settingsUrl: null,                               priceId: 'price_1TB7DDHnoVvjo5gxgLzZbego', benefit: 'Works great with BI Dashboard' },
+    { id: 'design-viz',     icon: '🎨', name: 'Design Visualiser',                desc: 'AI-generated concept renders from a brief — show customers what the finished job looks like',   price: '$69',  status: 'built',   url: '/design',         settingsUrl: '/design-viz-settings.html',        priceId: 'price_1TQLbEHnoVvjo5gxIuSSm7tH', benefit: 'Uses your Content Library' },
+    { id: 'tender',         icon: '📋', name: 'Tender Response Generator',        desc: 'AI reads the tender brief and generates a full professional response — ready to submit',       price: '$69',  status: 'pending', url: '/panel?tool=tender',          settingsUrl: null, priceId: 'price_1TEQjVHnoVvjo5gxfyLbHE3M', benefit: '' },
+    { id: 'quote-enhancer', icon: '💰', name: 'Quote Enhancer',                   desc: 'Turn your prices into a professional branded quote with AI-written scope of works',                 price: '$59',  status: 'pending', url: '/panel?tool=quote-enhancer', settingsUrl: null, priceId: 'price_1TB8QZHnoVvjo5gxwL0GKduI', benefit: '' },
+    { id: 'swms',           icon: '🦺', name: 'SWMS & Safety Docs',               desc: 'AI generates compliant Safe Work Method Statements tailored to your trade and job',                 price: '$59',  status: 'pending', url: '/panel?tool=swms',            settingsUrl: null, priceId: 'price_1TB8RNHnoVvjo5gxPb5wxUuF', benefit: '' },
+    { id: 'customer-updates',icon:'📲', name: 'Customer Progress Updates',        desc: 'Keep customers informed automatically with AI-generated job progress updates',                      price: '$59',  status: 'pending', url: '/panel?tool=customer-updates', settingsUrl: null, priceId: 'price_1TB8S6HnoVvjo5gxVYoEezlN', benefit: '' },
+    { id: 'handover-docs',  icon: '📁', name: 'Handover Documentation',           desc: 'Professional handover packs generated from your job data — warranties, compliance, sign-off',  price: '$59',  status: 'pending', url: '/panel?tool=handover-docs',  settingsUrl: null, priceId: 'price_1TB8ShHnoVvjo5gxrGBAMHZL', benefit: '' },
+    { id: 'review-booster', icon: '⭐',       name: 'Review & Referral Booster',        desc: 'AI identifies the right moment to ask for reviews and referrals — and writes the message',     price: '$39',  status: 'pending', url: '/panel?tool=review-booster', settingsUrl: null, priceId: 'price_1TB8TFHnoVvjo5gxkF2QMzJa', benefit: '' }
+  ];
+
+  // Photo Capture preset → tool mapping (per Dashboard Redesign Spec 4.3)
+  var PHOTO_PRESETS = [
+    { id: 'social',           label: 'Job Completion — Social Media',     toolUrl: '/social',           tag: 'social' },
+    { id: 'customer-updates', label: 'Job Completion — Customer Progress', toolUrl: '/panel?tool=customer-updates', tag: 'customer-updates' },
+    { id: 'swms',             label: 'Site Issue — SWMS',                  toolUrl: '/panel?tool=swms',  tag: 'swms' },
+    { id: 'tender',           label: 'Job Completion — Tender Response',  toolUrl: '/panel?tool=tender', tag: 'tender' }
   ];
 
   async function loadLivePrices() {
@@ -28,13 +35,9 @@ window.DASH_DATA = (function() {
       if (!r.ok) return null;
       var d = await r.json();
       return d && d.prices ? d.prices : null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
-  // All-or-nothing: every built tool with a priceId must have a live
-  // price, otherwise return null and the caller falls back to hardcoded.
   function resolveLivePrices(livePriceMap) {
     if (!livePriceMap) return null;
     var resolved = {};
@@ -49,9 +52,7 @@ window.DASH_DATA = (function() {
   }
 
   function getDisplayPrice(tool) {
-    if (_resolvedPrices && _resolvedPrices[tool.id]) {
-      return _resolvedPrices[tool.id];
-    }
+    if (_resolvedPrices && _resolvedPrices[tool.id]) return _resolvedPrices[tool.id];
     return tool.price + '/mth';
   }
 
@@ -82,7 +83,8 @@ window.DASH_DATA = (function() {
     setHeading();
     renderTrialBanner(_profile);
     showBPModal();
-    await renderActionTiles(user.id, _activeTools);
+    await renderZone1(user.id, _activeTools);
+    wirePhotoCapture();
 
     if (window.DASH_WIDGETS && typeof window.DASH_WIDGETS.renderAll === 'function') {
       await window.DASH_WIDGETS.renderAll(_supabase, user.id, _activeTools);
@@ -92,16 +94,13 @@ window.DASH_DATA = (function() {
     wireTabSwitching();
     wireActivateButtons();
     wireToolBlocker();
-
-    hideEmptyZones();
   }
 
-  // ── PAGE HEADING ──
   function setHeading() {
     var el = document.getElementById('dash-heading');
     if (!el) return;
     var companyName = _profile.business_name || '';
-    el.textContent = companyName ? 'Dashboard \u2014 ' + companyName : 'Dashboard';
+    el.textContent = companyName ? 'Dashboard — ' + companyName : 'Dashboard';
   }
 
   // ── BP COMPLETION CHECK ──
@@ -126,9 +125,7 @@ window.DASH_DATA = (function() {
       }
       return false;
     };
-    var hasPhone = function() {
-      return Array.isArray(p.additional_phones) && p.additional_phones.length > 0;
-    };
+    var hasPhone = function() { return Array.isArray(p.additional_phones) && p.additional_phones.length > 0; };
 
     var checks = [
       { panel: 'Identity',                test: hasText('business_name'),       label: 'Business Name' },
@@ -166,7 +163,6 @@ window.DASH_DATA = (function() {
     return _bpMissing.length === 0;
   }
 
-  // ── BP COMPLETION MODAL (hard block) ──
   function showBPModal() {
     _bpComplete = checkBPComplete(_profile);
     if (_bpComplete) return;
@@ -199,9 +195,7 @@ window.DASH_DATA = (function() {
 
     var dismiss = document.getElementById('bp-modal-dismiss');
     if (dismiss) {
-      dismiss.addEventListener('click', function() {
-        modal.classList.remove('open');
-      });
+      dismiss.addEventListener('click', function() { modal.classList.remove('open'); });
     }
     var ctaBtn = document.getElementById('bp-modal-cta');
     if (ctaBtn) {
@@ -211,13 +205,10 @@ window.DASH_DATA = (function() {
       });
     }
     modal.addEventListener('click', function(e) {
-      if (e.target === modal) {
-        modal.classList.remove('open');
-      }
+      if (e.target === modal) modal.classList.remove('open');
     });
   }
 
-  // ── TOOL NAVIGATION BLOCKER ──
   function wireToolBlocker() {
     if (_bpComplete) return;
 
@@ -260,17 +251,11 @@ window.DASH_DATA = (function() {
     var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
     var bannerMsg;
 
-    if (daysLeft <= 0) {
-      bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
-    } else if (daysLeft <= 1) {
-      bannerMsg = 'Your free trial ends tomorrow.';
-    } else if (daysLeft <= 3) {
-      bannerMsg = daysLeft + ' days left on your free trial.';
-    } else if (daysLeft <= 7) {
-      bannerMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
-    } else {
-      return;
-    }
+    if (daysLeft <= 0) bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
+    else if (daysLeft <= 1) bannerMsg = 'Your free trial ends tomorrow.';
+    else if (daysLeft <= 3) bannerMsg = daysLeft + ' days left on your free trial.';
+    else if (daysLeft <= 7) bannerMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
+    else return;
 
     msg.textContent = bannerMsg;
     banner.classList.add('visible');
@@ -289,14 +274,24 @@ window.DASH_DATA = (function() {
     });
   }
 
-  // ── ZONE 1: ACTION TILES ──
-  async function renderActionTiles(userId, activeTools) {
+  // ── ZONE 1: Content Library + Email Assistant + Photo Capture ──
+  async function renderZone1(userId, activeTools) {
     var container = document.getElementById('zone-1');
     if (!container) return;
 
-    var tiles = [];
+    var clHtml = await renderCLTile(userId);
+    var eaHtml = await renderEATile(userId, activeTools);
+    var photoHtml = renderPhotoTile();
 
-    // CL tile — always first
+    container.innerHTML = clHtml + eaHtml + photoHtml;
+
+    wireTileToggles(container);
+    wireEATabs(container);
+  }
+
+  // CL tile — pending review count, new outputs this week, colour indicator
+  async function renderCLTile(userId) {
+    var pendingCount = 0, outputCount = 0;
     try {
       var pending = await _supabase.from('content_library')
         .select('id', { count: 'exact', head: true })
@@ -306,65 +301,304 @@ window.DASH_DATA = (function() {
         .eq('user_id', userId).eq('source', 'tool')
         .gte('created_at', new Date(Date.now() - 7 * 86400000).toISOString());
 
-      var pendingCount = (pending.count) || 0;
-      var outputCount = (outputs.count) || 0;
-      var summary = [];
-      if (pendingCount > 0) summary.push(pendingCount + ' pending review');
-      if (outputCount > 0) summary.push(outputCount + ' new output' + (outputCount !== 1 ? 's' : '') + ' this week');
-      if (summary.length === 0) summary.push('All clear');
+      if (pending.error) console.error('[Dashboard] CL pending query error:', pending.error.message || pending.error);
+      if (outputs.error) console.error('[Dashboard] CL outputs query error:', outputs.error.message || outputs.error);
 
-      tiles.push(tileHtml('\ud83d\udcda', 'Content Library', summary.join(' \u00b7 '), '/content-library.html#review', 'orange'));
+      pendingCount = pending.count || 0;
+      outputCount = outputs.count || 0;
     } catch (e) {
-      tiles.push(tileHtml('\ud83d\udcda', 'Content Library', 'All clear', '/content-library.html', 'orange'));
+      console.error('[Dashboard] CL tile error:', e.message || e);
     }
 
-    // Social — pending posts
-    if (activeTools.indexOf('social') !== -1) {
-      try {
-        var sp = await _supabase.from('social_posts')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).eq('status', 'pending_review');
-        if (sp.count && sp.count > 0) {
-          tiles.push(tileHtml('\ud83d\udcf1', 'Marketing & Social', sp.count + ' post' + (sp.count !== 1 ? 's' : '') + ' to approve', '/social', 'orange'));
-        }
-      } catch (e) {}
+    var indicatorClass = 'green';
+    var statusText = 'All clear';
+    if (pendingCount >= 20) {
+      indicatorClass = 'red';
+      statusText = 'Backing up';
+    } else if (pendingCount > 0) {
+      indicatorClass = 'amber';
+      statusText = 'Items waiting';
     }
 
-    // Chatbot — pending FAQs
-    if (activeTools.indexOf('chatbot') !== -1) {
-      try {
-        var fq = await _supabase.from('learned_faqs')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).eq('status', 'pending');
-        if (fq.count && fq.count > 0) {
-          tiles.push(tileHtml('\ud83d\udcac', 'Website Chatbot', fq.count + ' FAQ' + (fq.count !== 1 ? 's' : '') + ' to approve', '/chatbot', ''));
-        }
-      } catch (e) {}
-    }
+    var badgeColour = indicatorClass === 'green' ? 'green' : (indicatorClass === 'amber' ? 'orange' : 'red');
 
-    // Email — urgent emails
-    if (activeTools.indexOf('email') !== -1) {
-      try {
-        var ur = await _supabase.from('email_summaries')
-          .select('id', { count: 'exact', head: true })
-          .eq('user_id', userId).eq('urgency', 'high');
-        if (ur.count && ur.count > 0) {
-          tiles.push(tileHtml('\ud83d\udce7', 'Email Assistant', ur.count + ' urgent email' + (ur.count !== 1 ? 's' : ''), '/email', 'orange'));
-        }
-      } catch (e) {}
-    }
-
-    container.innerHTML = tiles.join('');
+    var html = '<div class="tile-card">';
+    html += '<a href="/content-library.html#review" class="dash-tile-header">';
+    html += '<span class="profile-section-icon">📚</span>';
+    html += '<span class="profile-section-title" style="flex:1"><span class="dash-cl-dot ' + indicatorClass + '"></span>Content Library</span>';
+    html += '<span class="badge badge-' + badgeColour + '">' + window.escHtml(statusText) + '</span>';
+    html += '</a>';
+    html += '<div class="dash-tile-summary">';
+    html += '<a href="/content-library.html#review" class="dash-tile-row">';
+    html += '<span class="dash-tile-row-value">' + pendingCount + '</span>';
+    html += '<span class="dash-tile-row-label">pending review</span>';
+    html += '</a>';
+    html += '<a href="/content-library.html#outputs" class="dash-tile-row">';
+    html += '<span class="dash-tile-row-value">' + outputCount + '</span>';
+    html += '<span class="dash-tile-row-label">new output' + (outputCount === 1 ? '' : 's') + ' this week</span>';
+    html += '</a>';
+    html += '</div>';
+    html += '</div>';
+    return html;
   }
 
-  function tileHtml(icon, name, summary, href, colourClass) {
-    return '<a href="' + href + '" class="stat-card ' + colourClass + ' dash-action-tile">'
-      + '<div class="dash-action-row">'
-      + '<span class="dash-action-icon">' + icon + '</span>'
-      + '<span class="dash-action-name">' + escHtml(name) + '</span>'
-      + '</div>'
-      + '<div class="stat-label">' + escHtml(summary) + '</div>'
-      + '</a>';
+  // EA tile — tabs per provider (Gmail/Outlook), urgent/leads/unhandled counts, expand for list.
+  // Accounts come from profiles.ea_connected_emails (JSON array). Filtering uses
+  // email_summaries.provider; "urgent" = category='urgent', "leads" = category='enquiries'.
+  async function renderEATile(userId, activeTools) {
+    var html = '<div class="tile-card" data-tile="ea">';
+    html += '<a href="/email" class="dash-tile-header">';
+    html += '<span class="profile-section-icon">📧</span>';
+    html += '<span class="profile-section-title" style="flex:1">Email Assistant</span>';
+    html += '</a>';
+
+    if (activeTools.indexOf('email') === -1) {
+      html += '<div class="dash-tile-summary"><div class="list-empty">Email Assistant is not yet active. <a href="/panel-auth.html?tool=email">Activate</a> to see your inbox summary here.</div></div>';
+      html += '</div>';
+      return html;
+    }
+
+    // Read connected accounts from profiles.ea_connected_emails (matches email-assistant-logic.js)
+    var connectedEmails = [];
+    try {
+      var pr = await _supabase.from('profiles')
+        .select('ea_connected_emails')
+        .eq('id', userId).single();
+      if (pr.error) console.error('[Dashboard] EA connected_emails query error:', pr.error.message || pr.error);
+      connectedEmails = (pr.data && Array.isArray(pr.data.ea_connected_emails)) ? pr.data.ea_connected_emails : [];
+    } catch (e) {
+      console.error('[Dashboard] EA tile error:', e.message || e);
+    }
+
+    if (connectedEmails.length === 0) {
+      html += '<div class="dash-tile-summary"><div class="list-empty">No email accounts connected yet. <a href="/email-assistant-settings.html">Connect an account</a>.</div></div>';
+      html += '</div>';
+      return html;
+    }
+
+    // Group by provider — one tab per provider regardless of how many addresses on it
+    var providersSet = {};
+    connectedEmails.forEach(function(acc) {
+      var p = (acc.provider === 'gmail' || acc.provider === 'google') ? 'gmail' : 'outlook';
+      if (!providersSet[p]) providersSet[p] = [];
+      providersSet[p].push(acc.email);
+    });
+    var providers = Object.keys(providersSet);
+
+    // Tabs row — uses platform .tab-nav / .ptab pattern
+    html += '<div class="tab-nav" data-ea-tabs>';
+    providers.forEach(function(provider, idx) {
+      var label = provider === 'gmail' ? 'Gmail' : 'Outlook';
+      var emails = providersSet[provider];
+      if (emails.length > 1) label += ' (' + emails.length + ')';
+      html += '<button type="button" class="ptab' + (idx === 0 ? ' active' : '') + '" data-tab="' + window.escHtml(provider) + '">' + window.escHtml(label) + '</button>';
+    });
+    html += '</div>';
+
+    // Provider panes — uses platform .ptab-content
+    for (var i = 0; i < providers.length; i++) {
+      var paneHtml = await renderEAProviderPane(userId, providers[i], i === 0);
+      html += paneHtml;
+    }
+
+    html += '<button type="button" class="dash-tile-toggle" aria-label="Expand details" title="Expand">▾</button>';
+    html += '</div>';
+    return html;
+  }
+
+  async function renderEAProviderPane(userId, provider, isActive) {
+    var urgentCount = 0, leadCount = 0, unhandledCount = 0, items = [];
+    try {
+      var sumRes = await _supabase.from('email_summaries')
+        .select('id, sender, sender_email, subject, summary, category, handled, received_at')
+        .eq('user_id', userId)
+        .eq('provider', provider)
+        .order('received_at', { ascending: false }).limit(100);
+
+      if (sumRes.error) console.error('[Dashboard] EA summaries query error:', sumRes.error.message || sumRes.error);
+      items = sumRes.data || [];
+
+      items.forEach(function(it) {
+        if (it.category === 'urgent' && !it.handled) urgentCount++;
+        if (it.category === 'enquiries' && !it.handled) leadCount++;
+        if (!it.handled) unhandledCount++;
+      });
+    } catch (e) {
+      console.error('[Dashboard] EA provider pane error:', e.message || e);
+    }
+
+    // Detail list — urgent + lead (enquiries) emails, sender + 5-word summary
+    var listItems = items.filter(function(it) {
+      return !it.handled && (it.category === 'urgent' || it.category === 'enquiries');
+    }).slice(0, 6);
+
+    var paneClass = 'ptab-content' + (isActive ? ' active' : '');
+    var html = '<div class="' + paneClass + '" data-tab-pane="' + window.escHtml(provider) + '">';
+
+    // Collapsed summary
+    html += '<div class="dash-tile-summary">';
+    html += '<a href="/email" class="dash-tile-row">';
+    html += '<span class="dash-tile-row-value">' + urgentCount + '</span>';
+    html += '<span class="dash-tile-row-label">urgent</span>';
+    html += '</a>';
+    html += '<a href="/email" class="dash-tile-row">';
+    html += '<span class="dash-tile-row-value">' + leadCount + '</span>';
+    html += '<span class="dash-tile-row-label">lead' + (leadCount === 1 ? '' : 's') + '</span>';
+    html += '</a>';
+    html += '<a href="/email" class="dash-tile-row">';
+    html += '<span class="dash-tile-row-value">' + unhandledCount + '</span>';
+    html += '<span class="dash-tile-row-label">unhandled</span>';
+    html += '</a>';
+    html += '</div>';
+
+    // Expanded list
+    html += '<div class="dash-tile-detail">';
+    if (listItems.length === 0) {
+      html += '<div class="list-empty">No urgent emails or leads to show.</div>';
+    } else {
+      listItems.forEach(function(it) {
+        var badgeColour = it.category === 'urgent' ? 'red' : 'green';
+        var tagLabel = it.category === 'urgent' ? 'Urgent' : 'Lead';
+        var sourceText = it.summary || it.subject || '';
+        var summary = sourceText.split(/\s+/).slice(0, 5).join(' ');
+        html += '<a href="/email?id=' + window.escHtml(it.id) + '" class="dash-ea-email-row">';
+        html += '<span class="badge badge-' + badgeColour + '">' + tagLabel + '</span>';
+        html += '<span class="dash-ea-email-sender">' + window.escHtml(it.sender || it.sender_email || 'Unknown') + '</span>';
+        html += '<span class="text-preview">' + window.escHtml(summary) + '</span>';
+        html += '</a>';
+      });
+    }
+    html += '</div>';
+
+    html += '</div>';
+    return html;
+  }
+
+  function wireEATabs(container) {
+    var tabSets = container.querySelectorAll('[data-ea-tabs]');
+    tabSets.forEach(function(set) {
+      var tile = set.closest('.tile-card');
+      if (!tile) return;
+      set.querySelectorAll('.ptab[data-tab]').forEach(function(tab) {
+        tab.addEventListener('click', function(e) {
+          e.preventDefault();
+          set.querySelectorAll('.ptab').forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          var pane = tab.getAttribute('data-tab');
+          tile.querySelectorAll('.ptab-content[data-tab-pane]').forEach(function(p) {
+            if (p.getAttribute('data-tab-pane') === pane) p.classList.add('active');
+            else p.classList.remove('active');
+          });
+        });
+      });
+    });
+  }
+
+  // Generic tile expand/collapse toggle
+  function wireTileToggles(container) {
+    var toggles = container.querySelectorAll('.dash-tile-toggle');
+    toggles.forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var tile = btn.closest('.tile-card');
+        if (!tile) return;
+        var isOpen = btn.classList.toggle('open');
+        btn.setAttribute('aria-label', isOpen ? 'Collapse details' : 'Expand details');
+        btn.setAttribute('title', isOpen ? 'Collapse' : 'Expand');
+        tile.querySelectorAll('.dash-tile-detail').forEach(function(d) {
+          if (isOpen) d.classList.add('open'); else d.classList.remove('open');
+        });
+      });
+    });
+  }
+
+  // Photo Capture tile — distinctive gradient CTA per spec 4.3
+  function renderPhotoTile() {
+    return '<button type="button" class="dash-photo-tile" id="photo-tile-btn" aria-label="Take a photo">'
+      + '<span class="dash-photo-icon">📸</span>'
+      + '<span class="dash-photo-title">Take a Photo</span>'
+      + '<span class="dash-photo-subtitle">Capture and tag for any tool</span>'
+      + '</button>';
+  }
+
+  // Photo Capture flow — preset selection → camera → hand off to destination tool.
+  // Photo is stashed in sessionStorage as a data URL with the chosen tags;
+  // the destination tool reads it and handles its own save with its own tool_source.
+  // Dashboard never writes to Content Library on its own.
+  function wirePhotoCapture() {
+    var btn = document.getElementById('photo-tile-btn');
+    var modal = document.getElementById('photo-preset-modal');
+    var list = document.getElementById('photo-preset-list');
+    var cancel = document.getElementById('photo-preset-cancel');
+    var input = document.getElementById('photo-capture-input');
+    if (!btn || !modal || !list || !cancel || !input) return;
+
+    list.innerHTML = '';
+    PHOTO_PRESETS.forEach(function(preset) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'dash-photo-preset-btn';
+      b.textContent = preset.label;
+      b.setAttribute('data-preset-id', preset.id);
+      b.addEventListener('click', function() { startCapture(preset); });
+      list.appendChild(b);
+    });
+
+    btn.addEventListener('click', function() { modal.classList.add('open'); });
+    cancel.addEventListener('click', function() { modal.classList.remove('open'); });
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) modal.classList.remove('open');
+    });
+
+    input.addEventListener('change', function() {
+      var file = input.files && input.files[0];
+      if (!file) return;
+      var preset = window._stax_pendingPreset;
+      if (!preset) return;
+      handoffPhotoToTool(file, preset);
+      input.value = '';
+      window._stax_pendingPreset = null;
+    });
+  }
+
+  function startCapture(preset) {
+    var modal = document.getElementById('photo-preset-modal');
+    var input = document.getElementById('photo-capture-input');
+    if (!input) return;
+    window._stax_pendingPreset = preset;
+    if (modal) modal.classList.remove('open');
+    input.click();
+  }
+
+  // Stashes the captured photo in sessionStorage and navigates to the destination tool.
+  // The destination tool is responsible for reading the payload, surfacing any
+  // tagging UI, and writing to Content Library with its own tool_source.
+  function handoffPhotoToTool(file, preset) {
+    if (!_user) { window.showModalError('Could not capture photo — session expired.'); return; }
+    var reader = new FileReader();
+    reader.onload = function() {
+      try {
+        var payload = {
+          dataUrl: reader.result,
+          fileName: file.name || 'photo.jpg',
+          contentType: file.type || 'image/jpeg',
+          preset: preset.id,
+          presetLabel: preset.label,
+          tags: [preset.tag],
+          capturedAt: new Date().toISOString()
+        };
+        sessionStorage.setItem('stax_photo_handoff', JSON.stringify(payload));
+        window.location.href = preset.toolUrl;
+      } catch (e) {
+        console.error('[Dashboard] Photo handoff error:', e.message || e);
+        window.showModalError('Could not prepare photo. Please try again.');
+      }
+    };
+    reader.onerror = function() {
+      console.error('[Dashboard] Photo read error:', reader.error && reader.error.message);
+      window.showModalError('Could not read photo. Please try again.');
+    };
+    reader.readAsDataURL(file);
   }
 
   // ── ZONE 3: YOUR STAX ──
@@ -373,10 +607,8 @@ window.DASH_DATA = (function() {
     var availableContainer = document.getElementById('dash-tab-available');
     if (!activeContainer || !availableContainer) return;
 
-    var activeHtml = '';
-    var availableHtml = '';
-    var hasActive = false;
-    var hasAvailable = false;
+    var activeHtml = '', availableHtml = '';
+    var hasActive = false, hasAvailable = false;
 
     TOOLS.forEach(function(tool) {
       var isActive = activeTools.indexOf(tool.id) !== -1;
@@ -395,10 +627,10 @@ window.DASH_DATA = (function() {
     });
 
     if (!hasActive) {
-      activeHtml = '<div class="empty-state"><div class="empty-state-icon">\ud83d\udce6</div><h3>No active tools yet</h3><p>Check out the Available Tools tab to get started.</p></div>';
+      activeHtml = '<div class="empty-state"><div class="empty-state-icon">📦</div><h3>No active tools yet</h3><p>Check out the Available Tools tab to get started.</p></div>';
     }
     if (!hasAvailable) {
-      availableHtml = '<div class="empty-state"><div class="empty-state-icon">\u2705</div><h3>All tools activated</h3><p>You have access to every available tool.</p></div>';
+      availableHtml = '<div class="empty-state"><div class="empty-state-icon">✅</div><h3>All tools activated</h3><p>You have access to every available tool.</p></div>';
     }
 
     activeContainer.innerHTML = '<div class="dash-stax-grid">' + activeHtml + '</div>';
@@ -413,12 +645,12 @@ window.DASH_DATA = (function() {
       + '<div class="dash-stax-card-top">'
       + '<span class="dash-stax-icon">' + tool.icon + '</span>'
       + '<div class="dash-stax-card-info">'
-      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
-      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '<span class="dash-stax-name">' + window.escHtml(tool.name) + '</span>'
+      + '<span class="profile-section-subtitle">' + window.escHtml(tool.desc) + '</span>'
       + '</div>'
       + '<span class="badge badge-green">Live</span>'
       + '</div>'
-      + '<div class="dash-stax-card-actions">'
+      + '<div class="action-row">'
       + '<a href="' + tool.url + '" class="btn-primary btn-sm">Open Tool</a>'
       + settingsLink
       + '</div>'
@@ -430,15 +662,15 @@ window.DASH_DATA = (function() {
       + '<div class="dash-stax-card-top">'
       + '<span class="dash-stax-icon">' + tool.icon + '</span>'
       + '<div class="dash-stax-card-info">'
-      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
-      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '<span class="dash-stax-name">' + window.escHtml(tool.name) + '</span>'
+      + '<span class="profile-section-subtitle">' + window.escHtml(tool.desc) + '</span>'
       + '</div>'
       + '</div>'
       + '<div class="dash-stax-meta">'
       + '<span class="dash-stax-price">' + getDisplayPrice(tool) + '</span>'
-      + (tool.benefit ? '<span class="dash-stax-benefit">' + escHtml(tool.benefit) + '</span>' : '')
+      + (tool.benefit ? '<span class="dash-stax-benefit">' + window.escHtml(tool.benefit) + '</span>' : '')
       + '</div>'
-      + '<div class="dash-stax-card-actions">'
+      + '<div class="action-row">'
       + '<a href="/panel-auth.html?tool=' + tool.id + '" class="btn-outline btn-sm">Learn More</a>'
       + '<button class="btn-orange btn-sm dash-activate-btn" data-toolid="' + tool.id + '">Activate</button>'
       + '</div>'
@@ -450,15 +682,14 @@ window.DASH_DATA = (function() {
       + '<div class="dash-stax-card-top">'
       + '<span class="dash-stax-icon">' + tool.icon + '</span>'
       + '<div class="dash-stax-card-info">'
-      + '<span class="dash-stax-name">' + escHtml(tool.name) + '</span>'
-      + '<span class="dash-stax-tagline">' + escHtml(tool.desc) + '</span>'
+      + '<span class="dash-stax-name">' + window.escHtml(tool.name) + '</span>'
+      + '<span class="profile-section-subtitle">' + window.escHtml(tool.desc) + '</span>'
       + '</div>'
       + '<span class="badge badge-grey">Coming Soon</span>'
       + '</div>'
       + '</div>';
   }
 
-  // ── TAB SWITCHING ──
   function wireTabSwitching() {
     document.querySelectorAll('#zone-3-wrap .ptab[data-tab]').forEach(function(btn) {
       btn.addEventListener('click', function() {
@@ -471,11 +702,10 @@ window.DASH_DATA = (function() {
     });
   }
 
-  // ── ACTIVATE TOOL ──
   function activateTool(toolId) {
     var tool = TOOLS.find(function(t) { return t.id === toolId; });
     if (!tool || !tool.priceId || tool.status === 'pending') {
-      window.showModalError('Coming Soon \u2014 this tool is not yet available for purchase.');
+      window.showModalError('Coming Soon — this tool is not yet available for purchase.');
       return;
     }
     if (!_user) { window.location.href = '/login'; return; }
@@ -489,8 +719,8 @@ window.DASH_DATA = (function() {
       return r.json();
     })
     .then(function(data) {
-      if (data.url) { window.location.href = data.url; }
-      else { window.showModalError('Could not start checkout. Please try again.'); }
+      if (data.url) window.location.href = data.url;
+      else window.showModalError('Could not start checkout. Please try again.');
     })
     .catch(function(e) {
       console.error('activateTool error:', e);
@@ -505,15 +735,6 @@ window.DASH_DATA = (function() {
       var toolId = btn.getAttribute('data-toolid');
       if (toolId) activateTool(toolId);
     });
-  }
-
-  // ── HIDE EMPTY ZONES ──
-  function hideEmptyZones() {
-    var zone2 = document.getElementById('zone-2');
-    var zone2Wrap = document.getElementById('zone-2-wrap');
-    if (zone2 && zone2Wrap && !zone2.innerHTML.trim()) {
-      zone2Wrap.style.display = 'none';
-    }
   }
 
   return { init: init, activateTool: activateTool };

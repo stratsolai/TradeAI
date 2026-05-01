@@ -42,19 +42,7 @@
       color: var(--text);
       margin-bottom: 4px;
     }
-    .sp-ops-progress-track {
-      height: 10px;
-      background: var(--border);
-      border-radius: 5px;
-      overflow: hidden;
-      margin-bottom: 8px;
-    }
-    .sp-ops-progress-fill {
-      height: 100%;
-      background: var(--blue);
-      border-radius: 5px;
-      transition: width 0.4s;
-    }
+    /* Plan-overview progress bar uses platform .progress-bar / .progress-fill */
     .sp-ops-progress-label {
       font-size: var(--label-font-size);
       color: var(--text-muted);
@@ -891,8 +879,8 @@
       <!-- Header: plan title, overall progress -->
       <div class="sp-ops-header" id="sp-ops-header">
         <div class="sp-ops-title" id="sp-ops-plan-title"></div>
-        <div class="sp-ops-progress-track">
-          <div class="sp-ops-progress-fill" id="sp-ops-progress-fill" style="width:0%"></div>
+        <div class="progress-bar" style="margin-bottom:8px">
+          <div class="progress-fill" id="sp-ops-progress-fill" style="width:0%"></div>
         </div>
         <div class="sp-ops-progress-label" id="sp-ops-progress-pct"></div>
       </div>
@@ -1037,6 +1025,7 @@
 <script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>
 <script src="/topbar.js"></script>
+<script src="/sidebar.js"></script>
 <script src="/shared-utils.js"></script>
 <script src="/pwa.js"></script>
 <script src="/strategic-plan-data.js"></script>

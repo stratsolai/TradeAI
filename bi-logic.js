@@ -350,7 +350,7 @@ window.BI_LOGIC = {
         '</div>';
     }
 
-    document.querySelectorAll('.bi-module-card').forEach(function(card) {
+    document.querySelectorAll('.bi-module-grid .tile-card').forEach(function(card) {
       card.classList.add('bi-sample-disabled');
     });
   },
@@ -593,7 +593,7 @@ window.BI_LOGIC = {
     }
     if (!targetCard) targetCard = document.getElementById('bi-mod-alerts');
     if (targetCard) {
-      var moduleCard = targetCard.closest('.bi-module-card');
+      var moduleCard = targetCard.closest('.tile-card');
       if (moduleCard) moduleCard.appendChild(panel);
       else targetCard.parentElement.appendChild(panel);
     }

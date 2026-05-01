@@ -29,23 +29,8 @@
       padding: var(--card-padding);
       min-height: var(--panel-min-height);
     }
-    .nd-tile-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
-    .nd-tile {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      border-radius: var(--card-radius);
-      padding: 20px 24px;
-      display: flex;
-      flex-direction: column;
-      transition: box-shadow var(--btn-transition);
-    }
-    .nd-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
-    .nd-tile.nd-tile-empty { border-left-color: var(--border); opacity: 0.65; }
+    /* Local tile padding — base shell comes from staxai-auth.css .tile-card */
+    .nd-tile { padding: 20px 24px; }
     .nd-tile-label {
       font-family: var(--body-font);
       font-size: var(--badge-font-size);
@@ -295,6 +280,7 @@
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
   <script src="/topbar.js"></script>
+  <script src="/sidebar.js"></script>
   <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
   <script src="/news-digest-logic.js"></script>

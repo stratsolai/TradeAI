@@ -210,7 +210,7 @@ window.ND_LOGIC = {
     if (empty) empty.hidden = true;
 
     var self = this;
-    var html = '<div class="nd-tile-grid">';
+    var html = '<div class="tile-grid">';
 
     this.CATEGORIES.forEach(function(cat) {
       var briefing = self._getBriefing(cat.id);
@@ -222,7 +222,7 @@ window.ND_LOGIC = {
     if (gtBriefing && gtBriefing.headline) {
       html += self._renderSummaryTile(gtCat, gtBriefing);
     } else if (hasTenders) {
-      html += '<div class="nd-tile">'
+      html += '<div class="tile-card nd-tile">'
         + '<div class="nd-tile-label">' + escHtml(gtCat.label) + '</div>'
         + '<div class="nd-tile-headline">' + self._tenders.length + ' active tender' + (self._tenders.length !== 1 ? 's' : '') + ' found</div>'
         + '<div class="nd-tile-footer">'
@@ -245,7 +245,7 @@ window.ND_LOGIC = {
 
   _renderSummaryTile: function(cat, briefing) {
     var hasBriefing = briefing && briefing.headline;
-    var tileClass = 'nd-tile' + (!hasBriefing ? ' nd-tile-empty' : '');
+    var tileClass = 'tile-card nd-tile' + (!hasBriefing ? ' tile-card-empty' : '');
     var html = '<div class="' + tileClass + '">'
       + '<div class="nd-tile-label">' + escHtml(cat.label) + '</div>';
 
@@ -296,7 +296,7 @@ window.ND_LOGIC = {
 
     var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
     var html = '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>'
-      + '<div class="nd-tile-grid">';
+      + '<div class="tile-grid">';
 
     for (var i = 0; i < bullets.length; i++) {
       var bullet = bullets[i];
@@ -305,7 +305,7 @@ window.ND_LOGIC = {
       var heading = bullet.title || this._fallbackHeading(bullet.text || '');
       var points = this._splitBullets(bullet.text || '');
 
-      html += '<div class="nd-tile">'
+      html += '<div class="tile-card nd-tile">'
         + '<div class="nd-tile-heading">' + escHtml(heading) + '</div>'
         + '<ul class="nd-tile-bullet-list">';
       for (var p = 0; p < points.length; p++) {
@@ -396,7 +396,7 @@ window.ND_LOGIC = {
     if (hasBriefing) {
       var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
       html += '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>'
-        + '<div class="nd-tile-grid">';
+        + '<div class="tile-grid">';
 
       for (var i = 0; i < bullets.length; i++) {
         var bullet = bullets[i];
@@ -405,7 +405,7 @@ window.ND_LOGIC = {
         var heading = bullet.title || this._fallbackHeading(bullet.text || '');
         var points = this._splitBullets(bullet.text || '');
 
-        html += '<div class="nd-tile">'
+        html += '<div class="tile-card nd-tile">'
           + '<div class="nd-tile-heading">' + escHtml(heading) + '</div>'
           + '<ul class="nd-tile-bullet-list">';
         for (var p = 0; p < points.length; p++) {

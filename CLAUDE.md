@@ -234,10 +234,11 @@ tasks as required.
   cl_source_items.file_url — not from
   content_library.content_text which contains the AI
   summary only.
-- dashboard.html install banner: the PWA install prompt
-  banner was added during the PWA build (April 2026).
-  Dashboard rebuild complete — banner integration should be
-  reviewed during UI polish pass.
+- PWA install prompt is handled by pwa.js, which is loaded
+  on every authenticated page. No dashboard-specific banner —
+  the prompt surfaces via the browser's beforeinstallprompt
+  event. Trial banner and PWA prompt are independent and do
+  not clash visually.
 - Mobile vs desktop page split agreed April 2026. The
   following pages are confirmed mobile-capable (full access
   in PWA): dashboard.html, account.html, login.html,
