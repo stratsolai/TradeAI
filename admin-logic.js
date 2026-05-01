@@ -403,9 +403,19 @@ window.ADMIN_LOGIC = {
     var prev = data.previous_month;
     var currentCost = current && typeof current.cost_usd === 'number' ? current.cost_usd : 0;
     var prevCost = prev && typeof prev.cost_usd === 'number' ? prev.cost_usd : 0;
-    var currentLabel = self._formatMoney(currentCost);
-    if (includeSearches && current && typeof current.searches === 'number') {
-      currentLabel += ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);">(' + current.searches.toLocaleString('en-AU') + ' searches)</span>';
+    var currentLabel;
+    // When the API can't give a meaningful current-month figure
+    // (e.g. day 1 of the month for Anthropic) the endpoint returns
+    // a note alongside cost_usd: 0. Show the note in muted italics
+    // instead of the dollar value so it does not look like a real $0.
+    if (current && current.note) {
+      currentLabel = self._formatMoney(currentCost)
+        + ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);font-style:italic;">(' + self._esc(current.note) + ')</span>';
+    } else {
+      currentLabel = self._formatMoney(currentCost);
+      if (includeSearches && current && typeof current.searches === 'number') {
+        currentLabel += ' <span style="color:var(--text-muted);font-size:var(--badge-font-size);">(' + current.searches.toLocaleString('en-AU') + ' searches)</span>';
+      }
     }
     return '<tr>'
       + '<td>' + self._esc(name) + '</td>'

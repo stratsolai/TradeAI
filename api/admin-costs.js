@@ -81,64 +81,39 @@ async function fetchAnthropicCosts(periods) {
     endPrevISO: periods.endPrevISO
   });
 
-  // ── DIAGNOSTICS — remove once cost_report is confirmed working.
-  // The 400 "Invalid date range: ending date must be after starting
-  // date" persists even with no ending_at in the request, which means
-  // Anthropic is computing a default and failing it server-side. These
-  // probes tell us:
-  //   1. is the Admin API key shape correct (sk-ant-admin…)
-  //   2. does the key authenticate against a non-cost endpoint
-  //   3. does a definitively-historical range (Apr 1 → Apr 30) work
-  // If (3) succeeds, the cost_report bug is "today's date is in the
-  // requested range" and we know to use yesterday-or-earlier bounds.
-  console.log('[admin-costs] ANTHROPIC_ADMIN_API_KEY starts with:',
-    key.length >= 12 ? key.slice(0, 12) + '…' : '(short value, length=' + key.length + ')');
-  try {
-    const meRes = await fetch('https://api.anthropic.com/v1/organizations/me', {
-      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
-    });
-    const meBody = await meRes.text().catch(function() { return ''; });
-    console.log('[admin-costs] /v1/organizations/me HTTP', meRes.status, 'body first 300:', meBody.slice(0, 300));
-  } catch (e) {
-    console.error('[admin-costs] /v1/organizations/me threw:', e && e.message);
-  }
-  try {
-    const histUrl = 'https://api.anthropic.com/v1/organizations/cost_report'
-      + '?starting_at=2026-04-01&ending_at=2026-04-30&bucket_width=1d';
-    const histRes = await fetch(histUrl, {
-      headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01' }
-    });
-    const histBody = await histRes.text().catch(function() { return ''; });
-    console.log('[admin-costs] historical Apr 1-30 HTTP', histRes.status, 'body first 300:', histBody.slice(0, 300));
-  } catch (e) {
-    console.error('[admin-costs] historical Apr 1-30 threw:', e && e.message);
-  }
-  // ── END DIAGNOSTICS
-
-  // For the current month we omit ending_at — Anthropic defaults it
-  // to "now" and that bypasses the date-range validation that has
-  // been rejecting May 1 → May 2 with "ending date must be after
-  // starting date" (their parser appears to read the explicit ending
-  // as an exclusive boundary that collapses the effective range to a
-  // single day equal to start). For the previous month we still send
-  // both bounds because the range is unambiguously past.
-  const [currentTotal, currentBreakdown] = await Promise.all([
-    anthropicCostSum(key, periods.startCurrentISO, null),
-    anthropicCostByModel(key, periods.startCurrentISO, null)
-  ]);
+  // Previous month is unambiguously past — fetch it unconditionally.
   const previousTotal = await anthropicCostSum(key, periods.startPrevISO, periods.endPrevISO);
 
-  const trend = trendPercent(currentTotal, previousTotal);
+  // Current month — Anthropic refuses to return data for in-progress
+  // (today's) days. periods.endCurrentISO is set to yesterday's date
+  // when there is at least one completed day this month, and null
+  // when today is day 1 (no completed days yet). When null we skip
+  // the API call and return $0 with a "Month just started" note.
+  let currentTotal = 0;
+  let currentBreakdown = {};
+  let currentNote = null;
+  if (periods.endCurrentISO) {
+    const results = await Promise.all([
+      anthropicCostSum(key, periods.startCurrentISO, periods.endCurrentISO),
+      anthropicCostByModel(key, periods.startCurrentISO, periods.endCurrentISO)
+    ]);
+    currentTotal = results[0];
+    currentBreakdown = results[1];
+  } else {
+    currentNote = 'Month just started — no completed days yet';
+    console.log('[admin-costs] Anthropic current-month skipped:', currentNote);
+  }
 
   return {
     current_month: {
       cost_usd: round2(currentTotal),
-      breakdown_by_model: currentBreakdown
+      breakdown_by_model: currentBreakdown,
+      note: currentNote
     },
     previous_month: {
       cost_usd: round2(previousTotal)
     },
-    trend_percent: trend
+    trend_percent: currentNote ? null : trendPercent(currentTotal, previousTotal)
   };
 }
 
@@ -399,33 +374,36 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-// Calendar month boundaries — current month-to-date and full previous
-// month. Returns ISO strings (UTC) plus YYYY-MM labels for matching
-// the api_usage period column.
+// Calendar month boundaries.
 //
-// Anthropic's cost_report rejects "same-day" ranges with "ending date
-// must be after starting date" — it compares on day boundaries, not
-// timestamps. So when today is the 1st of the month, startCurrent
-// (1st 00:00 UTC) and endCurrent (1st now) sit on the same day and
-// the API errors. Use start-of-tomorrow UTC as the exclusive upper
-// bound — guarantees the range is always at least one day wide and
-// today's spend is still included. Apply the same exclusive-end
-// convention to the previous-month range (start-of-current-month
-// rather than last-millisecond-of-previous-month).
+// Anthropic's cost_report only returns data for completed (past) UTC
+// days. Today is in progress, so the current-month range ends at
+// yesterday's UTC date. On day 1 of a month there is no completed
+// day yet — endCurrent is null and the caller skips the API call.
+//
+// Previous month is unambiguously past:
+//   start = first of previous month
+//   end   = last day of previous month (= today minus today's day,
+//           via Date.UTC(year, month, 0))
+//
+// All ISO strings are full timestamps; consumers that need date-only
+// (Anthropic) call isoToDateOnly() to slice off the time component.
 function monthBoundaries(now) {
   const year = now.getUTCFullYear();
   const month = now.getUTCMonth();
   const day = now.getUTCDate();
   const startCurrent = new Date(Date.UTC(year, month, 1, 0, 0, 0));
-  const endCurrent = new Date(Date.UTC(year, month, day + 1, 0, 0, 0));
+  const endCurrent = day > 1
+    ? new Date(Date.UTC(year, month, day - 1, 0, 0, 0))
+    : null;
   const startPrev = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0));
-  const endPrev = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+  const endPrev = new Date(Date.UTC(year, month, 0, 0, 0, 0));
   function label(d) {
     return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0');
   }
   return {
     startCurrentISO: startCurrent.toISOString(),
-    endCurrentISO: endCurrent.toISOString(),
+    endCurrentISO: endCurrent ? endCurrent.toISOString() : null,
     startPrevISO: startPrev.toISOString(),
     endPrevISO: endPrev.toISOString(),
     currentLabel: label(startCurrent),
