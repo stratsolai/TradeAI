@@ -98,7 +98,11 @@
     var btn = document.getElementById('stax-sidebar-toggle-btn');
     if (btn) {
       btn.addEventListener('click', function() {
-        var nowCollapsed = !document.getElementById('stax-sidebar').classList.contains('collapsed');
+        var sidebar = document.getElementById('stax-sidebar');
+        var nowCollapsed = !sidebar.classList.contains('collapsed');
+        // Clear transient hover state so the click result is authoritative —
+        // otherwise `hover-expanded` overrides can leave the visual stuck.
+        sidebar.classList.remove('hover-expanded');
         setCollapsed(nowCollapsed);
         applyCollapsed(nowCollapsed);
       });

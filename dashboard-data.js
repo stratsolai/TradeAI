@@ -325,13 +325,13 @@ window.DASH_DATA = (function() {
     }
 
     var indicatorClass = 'green';
-    var statusText = 'All clear';
+    var statusText = 'All Clear';
     if (pendingCount >= 20) {
       indicatorClass = 'red';
-      statusText = 'Backing up';
+      statusText = 'Backing Up';
     } else if (pendingCount > 0) {
       indicatorClass = 'amber';
-      statusText = 'Items waiting';
+      statusText = 'Items Waiting';
     }
 
     var badgeColour = indicatorClass === 'green' ? 'green' : (indicatorClass === 'amber' ? 'orange' : 'red');
@@ -345,11 +345,11 @@ window.DASH_DATA = (function() {
     html += '<div class="dash-tile-summary">';
     html += '<a href="/content-library.html#review" class="dash-tile-row">';
     html += '<span class="dash-tile-row-value">' + pendingCount + '</span>';
-    html += '<span class="dash-tile-row-label">pending review</span>';
+    html += '<span class="dash-tile-row-label">Pending Review</span>';
     html += '</a>';
     html += '<a href="/content-library.html#outputs" class="dash-tile-row">';
     html += '<span class="dash-tile-row-value">' + outputCount + '</span>';
-    html += '<span class="dash-tile-row-label">new output' + (outputCount === 1 ? '' : 's') + ' this week</span>';
+    html += '<span class="dash-tile-row-label">New Output' + (outputCount === 1 ? '' : 's') + ' This Week</span>';
     html += '</a>';
     html += '</div>';
     html += '</div>';

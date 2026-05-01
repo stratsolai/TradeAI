@@ -18,6 +18,72 @@ window.DASH_WIDGETS = (function() {
     return new Date(d).toLocaleDateString('en-AU', { day: 'numeric', month: 'short' });
   }
 
+  // Build daily count buckets for the last `days` days. items must have a date
+  // field accessible via dateKey. Returns an array of length `days` (oldest → newest).
+  function dailyBuckets(items, dateKey, days) {
+    var buckets = new Array(days);
+    for (var i = 0; i < days; i++) buckets[i] = 0;
+    var now = new Date();
+    now.setHours(0, 0, 0, 0);
+    items.forEach(function(it) {
+      var raw = it[dateKey];
+      if (!raw) return;
+      var d = new Date(raw);
+      d.setHours(0, 0, 0, 0);
+      var diffDays = Math.floor((now - d) / 86400000);
+      if (diffDays < 0 || diffDays >= days) return;
+      var idx = days - 1 - diffDays;
+      buckets[idx] += 1;
+    });
+    return buckets;
+  }
+
+  // Sum a numeric field across items.
+  function sumField(items, field) {
+    var s = 0;
+    items.forEach(function(it) { s += Number(it[field]) || 0; });
+    return s;
+  }
+
+  // Build a small inline SVG sparkline. values: array of numbers (oldest → newest).
+  function sparklineSvg(values, opts) {
+    opts = opts || {};
+    var width = opts.width || 120;
+    var height = opts.height || 32;
+    var pad = 2;
+    if (!values || values.length < 2) {
+      return '<svg class="dash-sparkline" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true"></svg>';
+    }
+    var max = Math.max.apply(null, values);
+    var min = Math.min.apply(null, values);
+    var range = (max - min) || 1;
+    var step = (width - pad * 2) / (values.length - 1);
+    var pts = values.map(function(v, i) {
+      var x = pad + i * step;
+      var y = height - pad - ((v - min) / range) * (height - pad * 2);
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    var stroke = opts.stroke || 'var(--blue)';
+    return '<svg class="dash-sparkline" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" aria-hidden="true">'
+      + '<polyline fill="none" stroke="' + stroke + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="' + pts + '" />'
+      + '</svg>';
+  }
+
+  // Render the trend block: sparkline + arrow indicator (green ↑ / red ↓).
+  function trendBlockHtml(values, recentSum, priorSum, label) {
+    var direction = recentSum >= priorSum ? 'up' : 'down';
+    var arrow = direction === 'up' ? '↑' : '↓';
+    var arrowClass = 'dash-trend-arrow ' + direction;
+    var spark = sparklineSvg(values, { width: 120, height: 32 });
+    return '<div class="dash-trend-block">'
+      + '<div class="dash-trend-label">' + window.escHtml(label || 'Trend') + '</div>'
+      + '<div class="dash-trend-row">'
+      + spark
+      + '<span class="' + arrowClass + '">' + arrow + '</span>'
+      + '</div>'
+      + '</div>';
+  }
+
   function dueLabel(dueDate) {
     if (!dueDate) return { text: 'No date', urgency: 'none' };
     var due = new Date(dueDate);
@@ -264,16 +330,17 @@ window.DASH_WIDGETS = (function() {
   }
 
   // ── Industry News Digest tile ──
-  // Sources: news_digest_briefings (one per category), news_digest_tenders (separate table),
-  // news_digest_settings.summary_generated_at for the last refresh timestamp.
-  // Categories match news-digest-logic.js CATEGORIES + grants-tenders.
+  // Collapsed: 3-stat trio (Last Refreshed | Categories Updated | Open Tenders)
+  // followed by the top 2 category briefings ranked by bullet count.
+  // Expanded: remaining category briefings.
   async function renderNews() {
     var ND_CATEGORIES = [
       { id: 'regulatory',     label: 'Rules' },
       { id: 'industry-news',  label: 'News' },
       { id: 'suppliers',      label: 'Supply' },
       { id: 'economic',       label: 'Markets' },
-      { id: 'technology',     label: 'Tech' }
+      { id: 'technology',     label: 'Tech' },
+      { id: 'grants-tenders', label: 'Tenders' }
     ];
 
     var lastRefreshed = '', briefings = [], tenderCount = 0;
@@ -281,7 +348,7 @@ window.DASH_WIDGETS = (function() {
 
     try {
       var briefRes = await _supabase.from('news_digest_briefings')
-        .select('id, category, headline')
+        .select('id, category, headline, bullets')
         .eq('user_id', _userId);
       if (briefRes.error) console.error('[Dashboard] News briefings error:', briefRes.error.message || briefRes.error);
       briefings = briefRes.data || [];
@@ -304,42 +371,58 @@ window.DASH_WIDGETS = (function() {
       console.error('[Dashboard] News render error:', e.message || e);
     }
 
-    var briefingCount = briefings.filter(function(b) { return !!b.headline; }).length;
+    var withHeadlines = ND_CATEGORIES
+      .map(function(cat) {
+        var b = briefingByCat[cat.id];
+        if (!b || !b.headline) return null;
+        var count = Array.isArray(b.bullets) ? b.bullets.length : 0;
+        return { cat: cat, briefing: b, count: count };
+      })
+      .filter(function(x) { return !!x; });
 
+    withHeadlines.sort(function(a, b) { return b.count - a.count; });
+    var briefingCount = withHeadlines.length;
+
+    // Collapsed: 3-stat trio + top 2 category headlines
     var summary = '';
-    summary += rowHtml(lastRefreshed || '—', 'last refreshed', '/news');
-    summary += rowHtml(briefingCount, 'categor' + (briefingCount === 1 ? 'y' : 'ies') + ' updated', '/news');
-    summary += rowHtml(tenderCount, 'open tender' + (tenderCount === 1 ? '' : 's'), '/news#grants-tenders');
+    summary += '<div class="dash-stat-trio">';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Last Refreshed</span><span class="dash-stat-trio-value">' + window.escHtml(lastRefreshed || '—') + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Categories Updated</span><span class="dash-stat-trio-value">' + briefingCount + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Open Tenders</span><span class="dash-stat-trio-value">' + tenderCount + '</span></div>';
+    summary += '</div>';
 
-    var detail = '';
-    var anyHeadlines = false;
-    ND_CATEGORIES.forEach(function(cat) {
-      var b = briefingByCat[cat.id];
-      if (!b || !b.headline) return;
-      anyHeadlines = true;
-      detail += tagRowHtml(cat.label, b.headline, '/news#' + cat.id);
-    });
-    var gt = briefingByCat['grants-tenders'];
-    if (gt && gt.headline) {
-      anyHeadlines = true;
-      detail += '<a href="/news#grants-tenders" class="dash-tile-row">';
-      detail += '<span class="badge badge-grey">Tenders</span>';
-      detail += '<span class="dash-tile-row-label">' + window.escHtml(gt.headline) + '</span>';
-      detail += '</a>';
+    var topTwo = withHeadlines.slice(0, 2);
+    if (topTwo.length) {
+      summary += '<div class="dash-tile-divider"></div>';
+      topTwo.forEach(function(x) {
+        summary += tagRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id);
+      });
     }
-    if (!anyHeadlines) {
+
+    // Expanded: remaining category headlines
+    var detail = '';
+    var rest = withHeadlines.slice(2);
+    if (rest.length) {
+      rest.forEach(function(x) {
+        detail += tagRowHtml(x.cat.label, x.briefing.headline, '/news#' + x.cat.id);
+      });
+    } else if (withHeadlines.length === 0) {
       detail = emptyHtml('No headlines yet — check back after the next digest run.');
+    } else {
+      detail = emptyHtml('No additional categories to show.');
     }
 
     return tileShell('news-digest', '📰', 'Industry News Digest', '/news', '', summary, detail);
   }
 
   // ── Marketing & Social Media tile ──
-  // social_posts statuses (per panel-data-social.js): draft, in_progress, scheduled, published.
-  // Metrics columns (per social-metrics-refresh.js): reach, engagement, clicks. No likes/comments/platform columns.
-  // Connections live on social_settings as flags (meta_connected, instagram_account_id).
+  // Collapsed: 7-day reach sparkline + trend arrow vs prior 7 days, plus
+  // Reach / Engagement / Engagement Rate stats.
+  // Expanded: scheduled posts, recent post performance, drafts to review,
+  // platforms connected.
   async function renderSocial() {
-    var draftCount = 0, publishedCount = 0, scheduled = [], recent = [];
+    var draftCount = 0, scheduled = [], campaignActivity = [];
+    var weekPosts = [], priorPosts = [];
     var fbConnected = false, igConnected = false;
 
     try {
@@ -349,30 +432,31 @@ window.DASH_WIDGETS = (function() {
       if (draftRes.error) console.error('[Dashboard] Social drafts error:', draftRes.error.message || draftRes.error);
       draftCount = draftRes.count || 0;
 
-      var monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
+      var weekAgo = new Date(Date.now() - 7 * 86400000);
+      var twoWeeksAgo = new Date(Date.now() - 14 * 86400000);
 
-      var pubRes = await _supabase.from('social_posts')
-        .select('id', { count: 'exact', head: true })
+      var weekRes = await _supabase.from('social_posts')
+        .select('id, caption, reach, engagement, clicks, published_at, campaign_id')
         .eq('user_id', _userId).eq('status', 'published')
-        .gte('published_at', monthStart.toISOString());
-      if (pubRes.error) console.error('[Dashboard] Social published error:', pubRes.error.message || pubRes.error);
-      publishedCount = pubRes.count || 0;
+        .gte('published_at', weekAgo.toISOString())
+        .order('published_at', { ascending: false });
+      if (weekRes.error) console.error('[Dashboard] Social week error:', weekRes.error.message || weekRes.error);
+      weekPosts = weekRes.data || [];
+
+      var priorRes = await _supabase.from('social_posts')
+        .select('reach, published_at')
+        .eq('user_id', _userId).eq('status', 'published')
+        .gte('published_at', twoWeeksAgo.toISOString())
+        .lt('published_at', weekAgo.toISOString());
+      if (priorRes.error) console.error('[Dashboard] Social prior error:', priorRes.error.message || priorRes.error);
+      priorPosts = priorRes.data || [];
 
       var schedRes = await _supabase.from('social_posts')
-        .select('id, caption, scheduled_at, connections')
+        .select('id, caption, scheduled_at')
         .eq('user_id', _userId).eq('status', 'scheduled')
         .order('scheduled_at', { ascending: true }).limit(3);
       if (schedRes.error) console.error('[Dashboard] Social scheduled error:', schedRes.error.message || schedRes.error);
       scheduled = schedRes.data || [];
-
-      var recRes = await _supabase.from('social_posts')
-        .select('id, caption, reach, engagement, clicks, published_at, metadata')
-        .eq('user_id', _userId).eq('status', 'published')
-        .order('published_at', { ascending: false }).limit(3);
-      if (recRes.error) console.error('[Dashboard] Social recent error:', recRes.error.message || recRes.error);
-      recent = recRes.data || [];
 
       var setRes = await _supabase.from('social_settings')
         .select('meta_connected, instagram_account_id')
@@ -388,13 +472,39 @@ window.DASH_WIDGETS = (function() {
 
     var connectedCount = (fbConnected ? 1 : 0) + (igConnected ? 1 : 0);
 
-    var summary = '';
-    summary += rowHtml(draftCount, 'draft' + (draftCount === 1 ? '' : 's') + ' to review', '/social#drafts');
-    summary += rowHtml(publishedCount, 'published this month', '/social#published');
-    summary += rowHtml(connectedCount, 'platform' + (connectedCount === 1 ? '' : 's') + ' connected', '/social-settings.html');
+    // Build trend (sparkline of daily reach last 7 days)
+    var dailyReach = (function() {
+      var buckets = [0,0,0,0,0,0,0];
+      var now = new Date();
+      now.setHours(0, 0, 0, 0);
+      weekPosts.forEach(function(p) {
+        if (!p.published_at) return;
+        var d = new Date(p.published_at);
+        d.setHours(0, 0, 0, 0);
+        var diffDays = Math.floor((now - d) / 86400000);
+        if (diffDays < 0 || diffDays >= 7) return;
+        buckets[6 - diffDays] += Number(p.reach) || 0;
+      });
+      return buckets;
+    })();
 
+    var weekReach = sumField(weekPosts, 'reach');
+    var weekEngagement = sumField(weekPosts, 'engagement');
+    var priorReach = sumField(priorPosts, 'reach');
+    var engagementRate = weekReach > 0 ? Math.round((weekEngagement / weekReach) * 100) : 0;
+
+    // Collapsed: trend block + 3 perf metrics
+    var summary = '';
+    summary += trendBlockHtml(dailyReach, weekReach, priorReach, '7-Day Reach Trend');
+    summary += '<div class="dash-stat-trio">';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Reach</span><span class="dash-stat-trio-value">' + weekReach + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Engagement</span><span class="dash-stat-trio-value">' + weekEngagement + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Engagement Rate</span><span class="dash-stat-trio-value">' + engagementRate + '%</span></div>';
+    summary += '</div>';
+
+    // Expanded: campaign activity + scheduled + drafts/platforms
     var detail = '';
-    detail += '<div class="section-label" style="margin:8px 0 4px">Upcoming scheduled</div>';
+    detail += '<div class="section-label" style="margin:6px 0 4px">Upcoming Scheduled</div>';
     if (scheduled.length) {
       scheduled.forEach(function(s) {
         var caption = (s.caption || '').slice(0, 60);
@@ -403,68 +513,107 @@ window.DASH_WIDGETS = (function() {
     } else {
       detail += emptyHtml('Nothing scheduled.');
     }
-    detail += '<div class="section-label" style="margin:12px 0 4px">Recent post performance</div>';
-    if (recent.length) {
-      recent.forEach(function(p) {
-        var stats = (p.reach || 0) + ' reach · ' + (p.engagement || 0) + ' engaged · ' + (p.clicks || 0) + ' clicks';
+
+    detail += '<div class="section-label" style="margin:10px 0 4px">Recent Post Performance</div>';
+    if (weekPosts.length) {
+      weekPosts.slice(0, 3).forEach(function(p) {
+        var stats = (p.reach || 0) + ' Reach · ' + (p.engagement || 0) + ' Engaged · ' + (p.clicks || 0) + ' Clicks';
         var dateLabel = fmtShort(p.published_at) || 'Post';
         detail += tagRowHtml(dateLabel, stats, '/social?id=' + p.id);
       });
     } else {
-      detail += emptyHtml('No published posts yet.');
+      detail += emptyHtml('No published posts in the last 7 days.');
     }
+
+    detail += '<div class="section-label" style="margin:10px 0 4px">Workspace</div>';
+    detail += rowHtml(draftCount, 'Draft' + (draftCount === 1 ? '' : 's') + ' to Review', '/social#drafts');
+    detail += rowHtml(connectedCount, 'Platform' + (connectedCount === 1 ? '' : 's') + ' Connected', '/social-settings.html');
 
     return tileShell('social', '📱', 'Marketing & Social Media', '/social', '', summary, detail);
   }
 
   // ── Website Chatbot tile ──
-  // Single table chatbot_conversations with columns:
-  // is_lead, appointment_requested, unanswered_questions (array), created_at, started_at.
-  // Unanswered questions are array entries, not a separate table.
+  // Collapsed: 7-day conversation count sparkline + trend arrow vs prior 7 days,
+  // Booking Requests (leads + appointments), Unanswered Questions.
+  // Expanded: this-week breakdown plus performance metrics.
   async function renderChatbot() {
-    var conversationsToday = 0, leadsCount = 0, unansweredCount = 0;
-    var weekConversations = 0, weekLeads = 0, weekAppointments = 0, weekUnanswered = 0;
+    var weekRows = [], priorRows = [];
 
     try {
-      var today = new Date();
-      today.setHours(0, 0, 0, 0);
       var weekAgo = new Date(Date.now() - 7 * 86400000);
+      var twoWeeksAgo = new Date(Date.now() - 14 * 86400000);
 
-      var convRes = await _supabase.from('chatbot_conversations')
+      var weekRes = await _supabase.from('chatbot_conversations')
         .select('id, is_lead, appointment_requested, unanswered_questions, created_at')
         .eq('user_id', _userId)
         .gte('created_at', weekAgo.toISOString())
         .order('created_at', { ascending: false });
-      if (convRes.error) console.error('[Dashboard] Chatbot convo error:', convRes.error.message || convRes.error);
-      var rows = convRes.data || [];
-      weekConversations = rows.length;
+      if (weekRes.error) console.error('[Dashboard] Chatbot week error:', weekRes.error.message || weekRes.error);
+      weekRows = weekRes.data || [];
 
-      rows.forEach(function(r) {
-        if (new Date(r.created_at) >= today) {
-          conversationsToday++;
-          if (r.is_lead) leadsCount++;
-          if (Array.isArray(r.unanswered_questions)) unansweredCount += r.unanswered_questions.length;
-        }
-        if (r.is_lead) weekLeads++;
-        if (r.appointment_requested) weekAppointments++;
-        if (Array.isArray(r.unanswered_questions)) weekUnanswered += r.unanswered_questions.length;
-      });
+      var priorRes = await _supabase.from('chatbot_conversations')
+        .select('id, created_at')
+        .eq('user_id', _userId)
+        .gte('created_at', twoWeeksAgo.toISOString())
+        .lt('created_at', weekAgo.toISOString());
+      if (priorRes.error) console.error('[Dashboard] Chatbot prior error:', priorRes.error.message || priorRes.error);
+      priorRows = priorRes.data || [];
     } catch (e) {
       console.error('[Dashboard] Chatbot render error:', e.message || e);
     }
 
+    // Collapsed metrics
+    var weekLeads = weekRows.filter(function(r) { return r.is_lead; }).length;
+    var weekAppointments = weekRows.filter(function(r) { return r.appointment_requested; }).length;
+    var weekUnanswered = 0;
+    weekRows.forEach(function(r) {
+      if (Array.isArray(r.unanswered_questions)) weekUnanswered += r.unanswered_questions.length;
+    });
+    var bookingRequests = weekLeads + weekAppointments;
+
+    // Trend (daily conversation count last 7 days vs prior 7)
+    var dailyConvs = dailyBuckets(weekRows, 'created_at', 7);
+    var weekTotal = weekRows.length;
+    var priorTotal = priorRows.length;
+
     var statusChipHtml = '<span class="badge badge-green">Online</span>';
 
     var summary = '';
-    summary += rowHtml(conversationsToday, 'conversation' + (conversationsToday === 1 ? '' : 's') + ' today', '/chatbot#conversations');
-    summary += rowHtml(leadsCount, 'lead' + (leadsCount === 1 ? '' : 's') + ' captured today', '/chatbot#leads');
-    summary += rowHtml(unansweredCount, 'unanswered question' + (unansweredCount === 1 ? '' : 's') + ' today', '/chatbot#unanswered');
+    summary += trendBlockHtml(dailyConvs, weekTotal, priorTotal, '7-Day Conversation Trend');
+    summary += '<div class="dash-stat-trio">';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Conversations</span><span class="dash-stat-trio-value">' + weekTotal + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Booking Requests</span><span class="dash-stat-trio-value">' + bookingRequests + '</span></div>';
+    summary += '<div class="dash-stat-trio-cell"><span class="dash-stat-trio-label">Unanswered</span><span class="dash-stat-trio-value">' + weekUnanswered + '</span></div>';
+    summary += '</div>';
+
+    // Today breakdown
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var todayRows = weekRows.filter(function(r) { return new Date(r.created_at) >= today; });
+    var todayLeads = todayRows.filter(function(r) { return r.is_lead; }).length;
+    var todayUnanswered = 0;
+    todayRows.forEach(function(r) {
+      if (Array.isArray(r.unanswered_questions)) todayUnanswered += r.unanswered_questions.length;
+    });
+
+    // Performance metrics — share of conversations that converted to a lead or
+    // appointment, plus answered share. (Resolution metrics not stored in schema.)
+    var leadRate = weekTotal > 0 ? Math.round((weekLeads / weekTotal) * 100) : 0;
+    var answeredCount = weekRows.filter(function(r) {
+      return !Array.isArray(r.unanswered_questions) || r.unanswered_questions.length === 0;
+    }).length;
+    var answeredRate = weekTotal > 0 ? Math.round((answeredCount / weekTotal) * 100) : 0;
 
     var detail = '';
-    detail += rowHtml(weekConversations, 'conversations this week', '/chatbot#conversations');
-    detail += rowHtml(weekLeads, 'lead' + (weekLeads === 1 ? '' : 's') + ' this week', '/chatbot#leads');
-    detail += rowHtml(weekAppointments, 'appointment' + (weekAppointments === 1 ? '' : 's') + ' requested', '/chatbot#conversations');
-    detail += rowHtml(weekUnanswered, 'unanswered this week', '/chatbot#unanswered');
+    detail += '<div class="section-label" style="margin:6px 0 4px">Today</div>';
+    detail += rowHtml(todayRows.length, 'Conversation' + (todayRows.length === 1 ? '' : 's') + ' Today', '/chatbot#conversations');
+    detail += rowHtml(todayLeads, 'Lead' + (todayLeads === 1 ? '' : 's') + ' Captured Today', '/chatbot#leads');
+    detail += rowHtml(todayUnanswered, 'Unanswered Question' + (todayUnanswered === 1 ? '' : 's') + ' Today', '/chatbot#unanswered');
+
+    detail += '<div class="section-label" style="margin:10px 0 4px">7-Day Performance</div>';
+    detail += rowHtml(weekAppointments, 'Appointment' + (weekAppointments === 1 ? '' : 's') + ' Requested', '/chatbot#conversations');
+    detail += rowHtml(leadRate + '%', 'Lead Conversion Rate', null);
+    detail += rowHtml(answeredRate + '%', 'Answered Rate', null);
 
     return tileShell('chatbot', '💬', 'Website Chatbot', '/chatbot', statusChipHtml, summary, detail);
   }

@@ -78,8 +78,8 @@
     .dash-tile-header:hover { background: var(--blue-light); opacity: 1; }
 
     /* ── Tile body sections ── */
-    .dash-tile-summary { padding: 14px 16px; }
-    .dash-tile-detail { display: none; padding: 0 16px 14px; border-top: 1px solid var(--border-light); }
+    .dash-tile-summary { padding: 10px 14px; }
+    .dash-tile-detail { display: none; padding: 0 14px 10px; border-top: 1px solid var(--border-light); }
     .dash-tile-detail.open { display: block; }
 
     /* ── Tile expand/collapse toggle button (down-arrow in white circle per spec) ── */
@@ -88,16 +88,16 @@
       background: var(--white);
       border: 1px solid var(--border);
       border-radius: 50%;
-      width: 28px;
-      height: 28px;
+      width: 24px;
+      height: 24px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       color: var(--text-secondary);
-      font-size: 12px;
+      font-size: 11px;
       line-height: 1;
-      margin: 8px auto 12px;
+      margin: 4px auto 8px;
       box-shadow: 0 1px 3px var(--shadow-card);
       transition: transform var(--btn-transition), background var(--btn-transition);
     }
@@ -141,19 +141,89 @@
     .dash-cl-dot.amber { background: var(--warning); }
     .dash-cl-dot.red   { background: var(--red); }
 
-    /* ── EA metrics row (Urgent / Leads / Unhandled — horizontal) ── */
+    /* ── 3-stat trio used in News / Social / Chatbot collapsed views ── */
+    .dash-stat-trio {
+      display: flex;
+      align-items: stretch;
+      gap: 6px;
+      padding: 4px 0;
+    }
+    .dash-stat-trio-cell {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 4px;
+      min-width: 0;
+      text-align: center;
+    }
+    .dash-stat-trio-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      line-height: 1.1;
+    }
+    .dash-stat-trio-value {
+      font-family: var(--heading-font);
+      font-size: var(--stat-value-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--blue);
+      line-height: 1;
+    }
+
+    /* ── Trend block: sparkline + arrow ── */
+    .dash-trend-block { padding: 4px 0; }
+    .dash-trend-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+      margin-bottom: 4px;
+    }
+    .dash-trend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .dash-sparkline { flex: 1; height: 32px; max-width: 160px; }
+    .dash-trend-arrow {
+      font-family: var(--heading-font);
+      font-size: 22px;
+      font-weight: var(--heading-lg-weight);
+      line-height: 1;
+    }
+    .dash-trend-arrow.up { color: var(--green); }
+    .dash-trend-arrow.down { color: var(--red); }
+
+    /* ── Light divider inside a tile body ── */
+    .dash-tile-divider {
+      height: 1px;
+      background: var(--border-light);
+      margin: 6px 0;
+    }
+
+    /* ── Compact .tab-nav / .ptab when used inside a tile-card (EA tile) ── */
+    .tile-card .tab-nav { margin-bottom: 0; }
+    .tile-card .ptab { padding: 8px 14px; font-size: var(--note-font-size); }
+
+    /* ── EA metrics row (Urgent / Leads / Unhandled — horizontal, compact) ── */
     .dash-ea-metrics {
       display: flex;
       align-items: stretch;
-      gap: 10px;
+      gap: 6px;
+      padding: 4px 0;
     }
     .dash-ea-metric {
       flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 10px 6px;
+      gap: 2px;
+      padding: 4px 4px;
       text-decoration: none;
       color: var(--text);
       border-radius: var(--btn-radius);
@@ -193,7 +263,7 @@
       white-space: nowrap;
     }
 
-    /* ── Page header with Capture button on the right ── */
+    /* ── Page header with Capture link on the right ── */
     .dash-page-header {
       display: flex;
       align-items: center;
@@ -203,25 +273,26 @@
     }
     .dash-capture-btn {
       display: inline-flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      background: var(--white);
-      color: var(--blue);
-      border: 2px solid var(--blue);
-      border-radius: var(--btn-radius);
-      padding: 8px 16px;
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
+      justify-content: center;
+      gap: 2px;
+      background: none;
+      border: none;
+      padding: 4px 8px;
       cursor: pointer;
-      min-height: 40px;
-      transition: background var(--btn-transition), color var(--btn-transition);
+      color: var(--blue);
+      font-family: var(--body-font);
+      transition: color var(--btn-transition);
+      min-height: 44px;
     }
-    .dash-capture-btn:hover { background: var(--blue-light); }
-    .dash-capture-icon { font-size: 18px; line-height: 1; }
-    .dash-capture-label { font-size: var(--btn-font-size); }
-    @media (max-width: 600px) {
-      .dash-capture-btn { min-height: 44px; }
+    .dash-capture-btn:hover { color: var(--blue-accent-hover); }
+    .dash-capture-icon { font-size: 22px; line-height: 1; }
+    .dash-capture-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
     }
 
     /* ── Photo preset buttons (in shared .perm-modal) ── */
@@ -359,7 +430,7 @@
     .dash-stax-card:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
     .dash-stax-card.dash-stax-live { border-left: 4px solid var(--blue); }
     .dash-stax-card.dash-stax-available { border-left: 4px solid var(--teal); opacity: 1; }
-    .dash-stax-card.dash-stax-coming { border-left: 4px solid var(--border); opacity: 0.7; }
+    .dash-stax-card.dash-stax-coming { border-left: 4px solid var(--grey); opacity: 1; }
     .dash-stax-card-top { display: flex; align-items: flex-start; gap: 10px; }
     .dash-stax-icon { font-size: 20px; line-height: 1; flex-shrink: 0; margin-top: 2px; }
     .dash-stax-card-info { flex: 1; min-width: 0; }
