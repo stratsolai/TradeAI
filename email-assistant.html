@@ -12,9 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/staxai-auth.css">
 <style>
-    /* ─── MAIN LAYOUT ─── */
-    .container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
-
     .stat-card[data-stat="unhandled"],
     .stat-card[data-stat="urgent"] { cursor: pointer; }
 
@@ -75,7 +72,6 @@
 
     /* ─── RESPONSIVE ─── */
     @media (max-width: 768px) {
-      .container { padding: var(--page-padding-mobile); }
       .ea-status-row { flex-wrap: wrap; }
       .filter-btns-row { flex-wrap: wrap; }
       .ea-search-input { width: 100%; max-width: 100%; margin-left: 0; font-size: var(--input-font-size-mobile); }
@@ -135,7 +131,7 @@
 </nav>
 
 <div id="page-wrap" style="display:none">
-<div class="container">
+<div class="tool-container">
   <div class="page-header">
     <h1 class="page-title">Email Assistant</h1>
     <p class="page-subtitle">Your Gmail and Outlook inbox &mdash; summarised and organised.</p>

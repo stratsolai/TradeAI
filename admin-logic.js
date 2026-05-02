@@ -536,8 +536,8 @@ window.ADMIN_LOGIC = {
     ];
     var html = '';
     rows.forEach(function(r) {
-      html += '<div class="admin-detail-row">'
-        + '<span class="admin-detail-label">' + window.escHtml(r[0]) + '</span>'
+      html += '<div class="settings-row settings-row-compact">'
+        + '<span class="text-muted">' + window.escHtml(r[0]) + '</span>'
         + '<span class="admin-detail-value">' + window.escHtml(r[1]) + '</span>'
         + '</div>';
     });

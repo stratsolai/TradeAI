@@ -95,6 +95,7 @@
   --badge-font-size:    12px;          /* Badge text size. Also used for stat labels and section labels */
   --stat-value-font-size: 22px;        /* Stat tile value font size */
   --modal-body-font-size: 14px;        /* Modal body text font size */
+  --price-font-size:    16px;          /* Price label font size. Used for subscription/tool price display in heading-font weight */
   --note-line-height:   1.5;           /* Line height for note and hint blocks */
   --modal-body-line-height: 1.6;       /* Modal body line height */
   --letter-spacing-label: 0.05em;      /* Letter spacing for uppercase section labels and stat labels */
@@ -1476,10 +1477,25 @@ body.stax-has-sidebar.stax-sidebar-collapsed { padding-left: 60px; }
    used across admin and other dense data pages.
    ------------------------------------------------------------ */
 
-/* Page wrapper — full-width tool/admin container. Same shape as the
-   page-local .admin-container; promoted so other dense data pages
-   can reuse without redefining. */
+/* Page wrapper — full-width tool/admin container. Used by every
+   tool page (dashboard, content-library, social, email-assistant,
+   chatbot, strategic-plan, news-digest, bi, design-viz, admin) plus
+   any other page that needs the wide 1400px content area. */
 .tool-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
+@media (max-width: 600px) {
+  .tool-container { padding: var(--page-padding-mobile); }
+}
+
+/* Settings-width wrapper — narrower 960px content area with extra
+   bottom breathing room. Used by account.html and any other page
+   that wants the settings-style layout. Note: existing settings
+   pages (cl-settings, news-digest-settings, etc.) use the older
+   .page-wrap class which has settings-width but page-padding —
+   .settings-container is the new canonical replacement. */
+.settings-container { max-width: var(--settings-max-width); margin: 0 auto; padding: var(--settings-page-padding); }
+@media (max-width: 600px) {
+  .settings-container { padding: var(--page-padding-mobile); }
+}
 
 /* Wide tile grid — auto-fit grid for 280px+ list/quick-list cards.
    Matches the rhythm used by admin Recent Signups / Top Tools /
@@ -1566,3 +1582,35 @@ body.stax-has-sidebar.stax-sidebar-collapsed { padding-left: 60px; }
 .detail-modal-title { font-family: var(--heading-font); font-size: var(--heading-lg-size); font-weight: var(--heading-lg-weight); color: var(--text); }
 .detail-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
 .detail-modal-body { padding: 18px 24px; }
+
+/* Icon square — small filled square holding an icon glyph or short
+   text. Used for tool/subscription icons, app shortcuts, etc. The
+   default fill is the brand blue with white glyph. Pair with a
+   colour-modifier helper if a different fill is needed. */
+.icon-square { width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: var(--blue); color: var(--white); border-radius: var(--btn-radius); font-size: 18px; }
+
+/* Avatar circle — round badge containing a user's initial letter.
+   Default uses brand blue with white initial. Apply .muted to grey
+   it out for inactive / pending / dismissed members. Size is fixed
+   at 36px — pages that need a different size override width/height
+   on a more specific selector. */
+.avatar-circle { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--blue); color: var(--white); display: flex; align-items: center; justify-content: center; font-family: var(--heading-font); font-size: var(--section-title-font-size); font-weight: var(--heading-lg-weight); }
+.avatar-circle.muted { background: var(--grey); }
+
+/* List item tile — bordered flex-row used for items inside a card
+   (subscriptions, team members, generic line entries). Background
+   is the soft page bg so the tile lifts slightly off a white card
+   surface. Combine with avatar-circle / icon-square + flex info
+   blocks. */
+.list-item-tile { display: flex; align-items: center; gap: 14px; padding: 14px 16px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--btn-radius); }
+
+/* Compact settings row — modifier on .settings-row that drops the
+   horizontal padding and trims the vertical padding to 14px 0 for
+   dense detail lists (account details, customer detail modal).
+   .settings-row's default 18px 24px is too heavy when nested in a
+   container that already supplies its own padding. */
+.settings-row.settings-row-compact { padding: 14px 0; }
+
+/* Text truncate — single-line ellipsis utility for inline use on
+   text that must fit a flex row without wrapping. */
+.text-truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

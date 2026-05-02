@@ -12,9 +12,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/staxai-auth.css">
 <style>
-    /* ─── MAIN LAYOUT ─── */
-    .container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
-
     .stat-card[data-status] { cursor: pointer; }
     .stat-card[data-status="all"] { cursor: default; }
 
@@ -63,10 +60,6 @@
     }
 
     textarea { resize: vertical; min-height: var(--textarea-min-height); }
-
-    @media (max-width: 768px) {
-      .container { padding: var(--page-padding-mobile); }
-    }
 
     /* ─── UPLOAD TAB ─── */
     .upload-section { margin-bottom: 28px; }
@@ -326,7 +319,7 @@
       </div>
     </nav>
 
-<div class="container">
+<div class="tool-container">
 
 <div class="page-header">
     <h1 class="page-title">Content Library</h1>

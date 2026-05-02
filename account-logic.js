@@ -144,8 +144,8 @@ window.ACCOUNT_LOGIC = {
           var name = t ? (Array.isArray(t.title) ? t.title.join(' ') : (t.title || toolId)) : toolId;
           var icon = t ? (t.icon || '\ud83d\udd27') : '\ud83d\udd27';
           var price = self._priceForTool(t, priceMaps);
-          html += '<div class="acct-sub-item">'
-            + '<div class="acct-sub-icon">' + icon + '</div>'
+          html += '<div class="list-item-tile">'
+            + '<div class="icon-square">' + icon + '</div>'
             + '<div class="acct-sub-info">'
             + '<div class="acct-sub-name">' + window.escHtml(name) + '</div>'
             + '</div>'
@@ -230,11 +230,11 @@ window.ACCOUNT_LOGIC = {
 
       // Owner row
       var ownerInitial = self._user.email.charAt(0).toUpperCase();
-      html += '<div class="acct-team-item">'
-        + '<div class="acct-avatar">' + ownerInitial + '</div>'
+      html += '<div class="list-item-tile">'
+        + '<div class="avatar-circle">' + ownerInitial + '</div>'
         + '<div class="acct-team-info">'
-        + '<div class="acct-team-email">' + window.escHtml(self._user.email) + '</div>'
-        + '<div class="acct-team-meta">You</div>'
+        + '<div class="acct-team-email text-truncate">' + window.escHtml(self._user.email) + '</div>'
+        + '<div class="text-muted">You</div>'
         + '</div>'
         + '<span class="badge badge-orange">Account Owner</span>'
         + '</div>';
@@ -245,11 +245,11 @@ window.ACCOUNT_LOGIC = {
         var levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
         var badgeClass = m.security_level === 2 ? 'badge-blue' : 'badge-grey';
         var joined = m.joined_at ? new Date(m.joined_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
-        html += '<div class="acct-team-item" data-member-id="' + m.id + '">'
-          + '<div class="acct-avatar">' + initial + '</div>'
+        html += '<div class="list-item-tile" data-member-id="' + m.id + '">'
+          + '<div class="avatar-circle">' + initial + '</div>'
           + '<div class="acct-team-info">'
-          + '<div class="acct-team-email">' + window.escHtml(m.email) + '</div>'
-          + '<div class="acct-team-meta">Joined ' + joined + '</div>'
+          + '<div class="acct-team-email text-truncate">' + window.escHtml(m.email) + '</div>'
+          + '<div class="text-muted">Joined ' + joined + '</div>'
           + '</div>'
           + '<span class="badge ' + badgeClass + '">' + levelLabel + '</span>'
           + '<div class="acct-team-actions">'
@@ -263,11 +263,11 @@ window.ACCOUNT_LOGIC = {
         var initial = m.email.charAt(0).toUpperCase();
         var levelLabel = m.security_level === 2 ? 'Manager' : 'Staff';
         var invited = m.invited_at ? new Date(m.invited_at).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' }) : '\u2014';
-        html += '<div class="acct-team-item" data-member-id="' + m.id + '">'
-          + '<div class="acct-avatar acct-avatar-muted">' + initial + '</div>'
+        html += '<div class="list-item-tile" data-member-id="' + m.id + '">'
+          + '<div class="avatar-circle muted">' + initial + '</div>'
           + '<div class="acct-team-info">'
-          + '<div class="acct-team-email">' + window.escHtml(m.email) + '</div>'
-          + '<div class="acct-team-meta">Invited ' + invited + ' \u00b7 ' + levelLabel + '</div>'
+          + '<div class="acct-team-email text-truncate">' + window.escHtml(m.email) + '</div>'
+          + '<div class="text-muted">Invited ' + invited + ' \u00b7 ' + levelLabel + '</div>'
           + '</div>'
           + '<span class="badge badge-orange">Pending</span>'
           + '<div class="acct-team-actions">'

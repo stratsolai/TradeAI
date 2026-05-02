@@ -14,8 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    .sm-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
-
     .sm-groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--card-gap, 20px); }
     .sm-group-tile {
       background: var(--white);
@@ -426,7 +424,6 @@
     .sm-calendar-today { background: var(--blue-light); }
 
     @media (max-width: 600px) {
-      .sm-container { padding: var(--page-padding-mobile); }
       .sm-groups-grid { grid-template-columns: 1fr; }
       .sm-post-card { flex-direction: column; }
       .sm-post-thumb { width: 100%; min-height: 150px; }
@@ -468,7 +465,7 @@
     </div>
   </nav>
 
-  <div class="sm-container" id="page-wrap" style="display:none">
+  <div class="tool-container" id="page-wrap" style="display:none">
     <div class="page-header">
       <h1 class="page-title">Marketing &amp; Social Media</h1>
       <p class="page-subtitle">Create, schedule, and publish marketing content across your social channels.</p>

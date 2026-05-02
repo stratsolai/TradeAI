@@ -73,20 +73,10 @@
     .admin-list-item-label { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .admin-list-item-value { color: var(--text-muted); font-weight: var(--font-weight-semibold); flex-shrink: 0; margin-left: 12px; }
 
-    /* Detail row — key/value pair inside the customer detail modal.
-       Wider gap and right-aligned value, used only by the customer
-       detail body — not a settings page row. */
-    .admin-detail-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 16px;
-      padding: 10px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: var(--note-font-size);
-    }
-    .admin-detail-row:last-child { border-bottom: none; }
-    .admin-detail-label { color: var(--text-muted); flex-shrink: 0; }
-    .admin-detail-value { color: var(--text); text-align: right; word-break: break-word; }
+    /* Customer detail value — right-aligned, wraps long IDs. The
+       row uses shared .settings-row.settings-row-compact; only the
+       value's text alignment + word-break is admin-specific. */
+    .admin-detail-value { text-align: right; word-break: break-word; }
 
     /* Profitability supplier row — auto-fit grid for supplier tiles. */
     .prof-supplier-row {

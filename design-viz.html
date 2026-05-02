@@ -14,7 +14,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
-    .dv-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
     .dv-action-row { display: flex; justify-content: flex-end; margin-bottom: 20px; }
     .dv-project-cards { display: flex; flex-direction: column; gap: 12px; }
     .dv-project-card { cursor: pointer; }
@@ -101,7 +100,6 @@
       border-radius: var(--card-radius);
     }
     @media (max-width: 600px) {
-      .dv-container { padding: var(--page-padding-mobile); }
       .dv-render-grid { grid-template-columns: 1fr; }
       .dv-refine-row { flex-direction: column; }
       .dv-detail-actions { margin-left: 0; width: 100%; }
@@ -130,7 +128,7 @@
     </div>
   </nav>
 
-  <div class="dv-container" id="page-wrap" style="display:none">
+  <div class="tool-container" id="page-wrap" style="display:none">
     <div class="page-header">
       <h1 class="page-title">Design Visualiser</h1>
       <p class="page-subtitle">Create AI-powered visual renders for quotes and customer engagement.</p>
