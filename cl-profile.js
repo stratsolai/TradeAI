@@ -237,9 +237,21 @@ window.CL_PROFILE = {
 
   _removeOtherChip: function(btn) { var c = btn.closest('.filter-pill'); if (c) c.remove(); },
   _triggerAutoSave: function(panel) {
+    // Auto-save is silent — it persists whatever the user has typed
+    // so far without running mandatory-field validation. Only the
+    // explicit Save button click should trigger validation. We call
+    // each save function directly with { autoSave: true } rather
+    // than invoking btn.click() so the autoSave flag actually
+    // reaches the validation step (a synchronous click() would
+    // race with the async handleSave callback).
     var btnIds = { identity: 'prof-id-save', location: 'prof-loc-save', services: 'prof-svc-save', products: 'prof-prod-save', credentials: 'prof-cred-save' };
     var btn = document.getElementById(btnIds[panel]);
-    if (btn && !btn.disabled) btn.click();
+    if (!btn || btn.disabled) return;
+    if (panel === 'identity') this._saveIdentity({ autoSave: true });
+    else if (panel === 'location') this._saveLocation({ autoSave: true });
+    else if (panel === 'services') this._saveMultiSelect('svc', 'bp_services', 'prof-svc-save', { autoSave: true });
+    else if (panel === 'products') this._saveMultiSelect('prod', 'bp_products', 'prof-prod-save', { autoSave: true });
+    else if (panel === 'credentials') this._saveCredentials({ autoSave: true });
   },
   _scheduleAutoSave: function(panel, delay) {
     var s = this; if (s._autoSaveTimer) clearTimeout(s._autoSaveTimer);
@@ -412,8 +424,9 @@ window.CL_PROFILE = {
     }
   },
 
-  _saveIdentity: function() {
+  _saveIdentity: function(opts) {
     var self = this;
+    var autoSave = !!(opts && opts.autoSave);
     var btn = document.getElementById('prof-id-save');
     window.handleSave(btn, async function() {
       var bizNameEl = document.getElementById('prof-biz-name');
@@ -422,14 +435,19 @@ window.CL_PROFILE = {
       var industriesEl = document.getElementById('prof-industries');
       var yearsEl = document.getElementById('prof-years');
       var logoEl = document.getElementById('prof-logo-img');
-      self._validateMandatory('prof-panel-identity', [
-        { test: function() { return bizNameEl.value.trim() !== ''; }, el: bizNameEl, label: 'Business Name' },
-        { test: function() { return abnEl.value.trim() !== ''; }, el: abnEl, label: 'ABN' },
-        { test: function() { return (structureEl.getAttribute('data-value') || '').trim() !== ''; }, el: structureEl, label: 'Business Structure' },
-        { test: function() { return self._getSelectedChips('prof-industries').length > 0; }, el: industriesEl, label: 'Industry (at least one)' },
-        { test: function() { return !!self._profile.logo_url; }, el: logoEl, label: 'Business Logo' },
-        { test: function() { return yearsEl.value.trim() !== '' && !isNaN(parseInt(yearsEl.value, 10)); }, el: yearsEl, label: 'Years in Business' }
-      ]);
+      // Validation only runs on an explicit Save click. Auto-save
+      // (panel switch / blur / chip click) silently persists partial
+      // data so the user doesn't lose work moving between fields.
+      if (!autoSave) {
+        self._validateMandatory('prof-panel-identity', [
+          { test: function() { return bizNameEl.value.trim() !== ''; }, el: bizNameEl, label: 'Business Name' },
+          { test: function() { return abnEl.value.trim() !== ''; }, el: abnEl, label: 'ABN' },
+          { test: function() { return (structureEl.getAttribute('data-value') || '').trim() !== ''; }, el: structureEl, label: 'Business Structure' },
+          { test: function() { return self._getSelectedChips('prof-industries').length > 0; }, el: industriesEl, label: 'Industry (at least one)' },
+          { test: function() { return !!self._profile.logo_url; }, el: logoEl, label: 'Business Logo' },
+          { test: function() { return yearsEl.value.trim() !== '' && !isNaN(parseInt(yearsEl.value, 10)); }, el: yearsEl, label: 'Years in Business' }
+        ]);
+      }
       var updates = {
         business_name: bizNameEl.value.trim(),
         trading_name: document.getElementById('prof-trading-name').value.trim(),
@@ -741,7 +759,8 @@ window.CL_PROFILE = {
     this._bindPhoneTypeDropdowns(wrap);
   },
 
-  _saveLocation: function() {
+  _saveLocation: function(opts) {
+    var autoSave = !!(opts && opts.autoSave);
     var pb = document.getElementById('loc-primary-block');
     var primaryPhones = Array.from(pb.querySelectorAll('#loc-p-phones .profile-repeating-row')).map(function(row) {
       return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Mobile', number: row.querySelector('.loc-phone-number').value.trim() };
@@ -782,16 +801,19 @@ window.CL_PROFILE = {
       var serviceAreaEl = document.getElementById('prof-service-area');
       var phonesEl = document.getElementById('loc-p-phones');
       var hoursEl = document.getElementById('prof-hours-grid');
-      self._validateMandatory('prof-panel-location', [
-        { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
-        { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
-        { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
-        { test: function() { return stateEl.value.trim() !== ''; }, el: stateEl, label: 'State' },
-        { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
-        { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
-        { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
-        { test: function() { return Array.isArray(tradingHours) && tradingHours.some(function(h) { return h.enabled; }); }, el: hoursEl, label: 'Trading Hours (at least one day)' }
-      ]);
+      // Skip validation on auto-save — see comment in _saveIdentity.
+      if (!autoSave) {
+        self._validateMandatory('prof-panel-location', [
+          { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
+          { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
+          { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
+          { test: function() { return stateEl.value.trim() !== ''; }, el: stateEl, label: 'State' },
+          { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
+          { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
+          { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
+          { test: function() { return Array.isArray(tradingHours) && tradingHours.some(function(h) { return h.enabled; }); }, el: hoursEl, label: 'Trading Hours (at least one day)' }
+        ]);
+      }
       var updates = {
         address_name: nameEl.value.trim(),
         address_unit: pb.querySelector('.loc-unit').value.trim(),
@@ -1078,17 +1100,21 @@ window.CL_PROFILE = {
     });
   },
 
-  _saveMultiSelect: function(prefix, profileKey, saveBtnId) {
+  _saveMultiSelect: function(prefix, profileKey, saveBtnId, opts) {
     var self = this;
+    var autoSave = !!(opts && opts.autoSave);
     var btn = document.getElementById(saveBtnId);
     window.handleSave(btn, async function() {
       var data = self._collectMultiSelectData(prefix);
-      var panelId = prefix === 'svc' ? 'prof-panel-services' : 'prof-panel-products';
-      var groupEl = document.getElementById('prof-' + prefix + '-pills');
-      var label = prefix === 'svc' ? 'Services (at least one)' : 'Products (at least one)';
-      self._validateMandatory(panelId, [
-        { test: function() { return Array.isArray(data) && data.length > 0; }, el: groupEl, label: label }
-      ]);
+      // Skip validation on auto-save — see comment in _saveIdentity.
+      if (!autoSave) {
+        var panelId = prefix === 'svc' ? 'prof-panel-services' : 'prof-panel-products';
+        var groupEl = document.getElementById('prof-' + prefix + '-pills');
+        var label = prefix === 'svc' ? 'Services (at least one)' : 'Products (at least one)';
+        self._validateMandatory(panelId, [
+          { test: function() { return Array.isArray(data) && data.length > 0; }, el: groupEl, label: label }
+        ]);
+      }
       var updates = {};
       updates[profileKey] = data;
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
@@ -1164,8 +1190,9 @@ window.CL_PROFILE = {
     }
   },
 
-  _saveCredentials: function() {
+  _saveCredentials: function(opts) {
     var self = this;
+    var autoSave = !!(opts && opts.autoSave);
     var btn = document.getElementById('prof-cred-save');
     window.handleSave(btn, async function() {
       var licences = self._getSelectedChips('prof-licences').concat(self._getOtherItems('prof-licences'));
@@ -1177,13 +1204,16 @@ window.CL_PROFILE = {
       var afterHoursEl = document.getElementById('prof-after-hours');
       var afterHoursType = afterHoursEl.getAttribute('data-value') || '';
       var afterHoursText = document.getElementById('prof-after-hours-text').value.trim();
-      self._validateMandatory('prof-panel-credentials', [
-        { test: function() { return payments.length > 0; }, el: paymentsEl, label: 'Payment Methods (at least one)' },
-        { test: function() { return (responseEl.getAttribute('data-value') || '').trim() !== ''; }, el: responseEl, label: 'Response Time' },
-        { test: function() { return warrantyEl.value.trim() !== ''; }, el: warrantyEl, label: 'Warranty / Guarantee' },
-        { test: function() { return complaintsEl.value.trim() !== ''; }, el: complaintsEl, label: 'Complaints Handling' },
-        { test: function() { return afterHoursType.trim() !== ''; }, el: afterHoursEl, label: 'After-Hours Support' }
-      ]);
+      // Skip validation on auto-save — see comment in _saveIdentity.
+      if (!autoSave) {
+        self._validateMandatory('prof-panel-credentials', [
+          { test: function() { return payments.length > 0; }, el: paymentsEl, label: 'Payment Methods (at least one)' },
+          { test: function() { return (responseEl.getAttribute('data-value') || '').trim() !== ''; }, el: responseEl, label: 'Response Time' },
+          { test: function() { return warrantyEl.value.trim() !== ''; }, el: warrantyEl, label: 'Warranty / Guarantee' },
+          { test: function() { return complaintsEl.value.trim() !== ''; }, el: complaintsEl, label: 'Complaints Handling' },
+          { test: function() { return afterHoursType.trim() !== ''; }, el: afterHoursEl, label: 'After-Hours Support' }
+        ]);
+      }
       var updates = {
         licences: licences,
         payment_methods: payments,
