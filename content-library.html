@@ -256,6 +256,19 @@
 .prof-custom-pill { position: relative; }
 .prof-pill-remove { margin-left: 4px; font-weight: 700; cursor: pointer; }
 
+/* BP mandatory-field error state — applied to elements that don't
+   have a default border (chip rows, lookback dropdowns, logo
+   placeholder, hours grid) so the .input-error class still gives
+   the user a visual cue when validation fails. The default
+   .input-error rule in staxai-auth.css already covers
+   .profile-input / .profile-textarea / standard inputs via
+   border-color. */
+.review-pill-row.input-error,
+.profile-hours-grid.input-error,
+#prof-hours-grid.input-error,
+.profile-logo-placeholder.input-error,
+.lookback-dropdown.input-error { outline: 2px solid var(--red); outline-offset: 2px; border-radius: var(--btn-radius); }
+
 .profile-svc-row { display: grid; grid-template-columns: 1fr 160px auto; gap: 8px; align-items: start; margin-bottom: 8px; }
 .profile-svc-row-range { grid-template-columns: 1fr 160px 100px 100px; }
 .profile-svc-amount { display: flex; gap: 6px; align-items: center; }

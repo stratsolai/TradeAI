@@ -176,6 +176,38 @@ window.CL_PROFILE = {
     });
   },
 
+  // Validate a panel's mandatory fields. Each field spec is
+  //   { test: function() bool, el: element|null, label: string }
+  // Adds .input-error to each missing element (red border on inputs/
+  // textareas/dropdowns, red outline on chip rows via the BP CSS),
+  // scrolls to the first missing element, and throws an Error with
+  // the full list of missing labels — handleSave catches the throw
+  // and surfaces it in the .save-msg modal so the user sees what
+  // still needs filling. Previous error markers in the panel scope
+  // are cleared on every call so fields fix themselves as the user
+  // resaves.
+  _validateMandatory: function(panelId, fields) {
+    var panel = document.getElementById(panelId);
+    if (panel) {
+      panel.querySelectorAll('.input-error').forEach(function(e) { e.classList.remove('input-error'); });
+    }
+    var firstMissing = null;
+    var missingLabels = [];
+    fields.forEach(function(f) {
+      if (!f.test()) {
+        if (f.el) f.el.classList.add('input-error');
+        if (!firstMissing && f.el) firstMissing = f.el;
+        missingLabels.push(f.label);
+      }
+    });
+    if (missingLabels.length > 0) {
+      if (firstMissing && typeof firstMissing.scrollIntoView === 'function') {
+        firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      throw new Error('Please complete: ' + missingLabels.join(', '));
+    }
+  },
+
   _getOtherItems: function(groupId) {
     var group = document.getElementById(groupId);
     if (!group) return [];
@@ -384,15 +416,27 @@ window.CL_PROFILE = {
     var self = this;
     var btn = document.getElementById('prof-id-save');
     window.handleSave(btn, async function() {
-      var industries = self._getSelectedChips('prof-industries');
-      if (industries.length === 0) throw new Error('Please select at least one industry.');
+      var bizNameEl = document.getElementById('prof-biz-name');
+      var abnEl = document.getElementById('prof-abn');
+      var structureEl = document.getElementById('prof-structure');
+      var industriesEl = document.getElementById('prof-industries');
+      var yearsEl = document.getElementById('prof-years');
+      var logoEl = document.getElementById('prof-logo-img');
+      self._validateMandatory('prof-panel-identity', [
+        { test: function() { return bizNameEl.value.trim() !== ''; }, el: bizNameEl, label: 'Business Name' },
+        { test: function() { return abnEl.value.trim() !== ''; }, el: abnEl, label: 'ABN' },
+        { test: function() { return (structureEl.getAttribute('data-value') || '').trim() !== ''; }, el: structureEl, label: 'Business Structure' },
+        { test: function() { return self._getSelectedChips('prof-industries').length > 0; }, el: industriesEl, label: 'Industry (at least one)' },
+        { test: function() { return !!self._profile.logo_url; }, el: logoEl, label: 'Business Logo' },
+        { test: function() { return yearsEl.value.trim() !== '' && !isNaN(parseInt(yearsEl.value, 10)); }, el: yearsEl, label: 'Years in Business' }
+      ]);
       var updates = {
-        business_name: document.getElementById('prof-biz-name').value.trim(),
+        business_name: bizNameEl.value.trim(),
         trading_name: document.getElementById('prof-trading-name').value.trim(),
-        abn: document.getElementById('prof-abn').value.trim(),
-        business_structure: document.getElementById('prof-structure').getAttribute('data-value') || '',
-        industry: industries,
-        years_in_business: parseInt(document.getElementById('prof-years').value) || null
+        abn: abnEl.value.trim(),
+        business_structure: structureEl.getAttribute('data-value') || '',
+        industry: self._getSelectedChips('prof-industries'),
+        years_in_business: parseInt(yearsEl.value) || null
       };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
@@ -730,13 +774,31 @@ window.CL_PROFILE = {
     var self = this;
     var btn = document.getElementById('prof-loc-save');
     window.handleSave(btn, async function() {
+      var nameEl = pb.querySelector('.loc-name');
+      var streetEl = pb.querySelector('.loc-street');
+      var suburbEl = pb.querySelector('.loc-suburb');
+      var stateEl = pb.querySelector('.loc-state');
+      var postcodeEl = pb.querySelector('.loc-postcode');
+      var serviceAreaEl = document.getElementById('prof-service-area');
+      var phonesEl = document.getElementById('loc-p-phones');
+      var hoursEl = document.getElementById('prof-hours-grid');
+      self._validateMandatory('prof-panel-location', [
+        { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
+        { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
+        { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
+        { test: function() { return stateEl.value.trim() !== ''; }, el: stateEl, label: 'State' },
+        { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
+        { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
+        { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
+        { test: function() { return Array.isArray(tradingHours) && tradingHours.some(function(h) { return h.enabled; }); }, el: hoursEl, label: 'Trading Hours (at least one day)' }
+      ]);
       var updates = {
-        address_name: pb.querySelector('.loc-name').value.trim(),
+        address_name: nameEl.value.trim(),
         address_unit: pb.querySelector('.loc-unit').value.trim(),
-        address_street: pb.querySelector('.loc-street').value.trim(),
-        address_suburb: pb.querySelector('.loc-suburb').value.trim(),
-        address_state: pb.querySelector('.loc-state').value.trim(),
-        address_postcode: pb.querySelector('.loc-postcode').value.trim(),
+        address_street: streetEl.value.trim(),
+        address_suburb: suburbEl.value.trim(),
+        address_state: stateEl.value.trim(),
+        address_postcode: postcodeEl.value.trim(),
         additional_phones: primaryPhones,
         additional_locations: locs,
         website_urls: sites,
@@ -1021,6 +1083,12 @@ window.CL_PROFILE = {
     var btn = document.getElementById(saveBtnId);
     window.handleSave(btn, async function() {
       var data = self._collectMultiSelectData(prefix);
+      var panelId = prefix === 'svc' ? 'prof-panel-services' : 'prof-panel-products';
+      var groupEl = document.getElementById('prof-' + prefix + '-pills');
+      var label = prefix === 'svc' ? 'Services (at least one)' : 'Products (at least one)';
+      self._validateMandatory(panelId, [
+        { test: function() { return Array.isArray(data) && data.length > 0; }, el: groupEl, label: label }
+      ]);
       var updates = {};
       updates[profileKey] = data;
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
@@ -1102,14 +1170,26 @@ window.CL_PROFILE = {
     window.handleSave(btn, async function() {
       var licences = self._getSelectedChips('prof-licences').concat(self._getOtherItems('prof-licences'));
       var payments = self._getSelectedChips('prof-payments');
-      var afterHoursType = document.getElementById('prof-after-hours').getAttribute('data-value') || '';
+      var paymentsEl = document.getElementById('prof-payments');
+      var responseEl = document.getElementById('prof-response-time');
+      var warrantyEl = document.getElementById('prof-warranty');
+      var complaintsEl = document.getElementById('prof-complaints');
+      var afterHoursEl = document.getElementById('prof-after-hours');
+      var afterHoursType = afterHoursEl.getAttribute('data-value') || '';
       var afterHoursText = document.getElementById('prof-after-hours-text').value.trim();
+      self._validateMandatory('prof-panel-credentials', [
+        { test: function() { return payments.length > 0; }, el: paymentsEl, label: 'Payment Methods (at least one)' },
+        { test: function() { return (responseEl.getAttribute('data-value') || '').trim() !== ''; }, el: responseEl, label: 'Response Time' },
+        { test: function() { return warrantyEl.value.trim() !== ''; }, el: warrantyEl, label: 'Warranty / Guarantee' },
+        { test: function() { return complaintsEl.value.trim() !== ''; }, el: complaintsEl, label: 'Complaints Handling' },
+        { test: function() { return afterHoursType.trim() !== ''; }, el: afterHoursEl, label: 'After-Hours Support' }
+      ]);
       var updates = {
         licences: licences,
         payment_methods: payments,
-        response_time: document.getElementById('prof-response-time').getAttribute('data-value') || '',
-        warranty_info: document.getElementById('prof-warranty').value.trim(),
-        complaints_handling: document.getElementById('prof-complaints').value.trim(),
+        response_time: responseEl.getAttribute('data-value') || '',
+        warranty_info: warrantyEl.value.trim(),
+        complaints_handling: complaintsEl.value.trim(),
         after_hours_support: { type: afterHoursType, hours_text: afterHoursText }
       };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);

@@ -695,6 +695,14 @@
     .dash-stax-settings-link { font-size: var(--badge-font-size); color: var(--blue); text-decoration: none; font-weight: var(--font-weight-semibold); }
     .dash-stax-settings-link:hover { opacity: 0.85; }
 
+    /* ── BP welcome modal — celebratory first-login screen.
+       Centres the title, body, and single CTA. The default
+       .perm-modal-actions justifies right and the title/body left;
+       this modifier overrides for the welcome treatment. ── */
+    .bp-modal-welcome .perm-modal-title { text-align: center; margin-bottom: 16px; }
+    .bp-modal-welcome .perm-modal-body { text-align: center; }
+    .bp-modal-welcome .perm-modal-actions { justify-content: center; }
+
     /* ── Responsive ── */
     @media (max-width: 1100px) {
       .dash-zone1-grid { grid-template-columns: 1fr 1fr; }
@@ -790,14 +798,17 @@
   <!-- Hidden file input for camera capture -->
   <input type="file" accept="image/*" capture="environment" id="photo-capture-input" style="display:none">
 
-  <!-- BP completion modal -->
+  <!-- BP completion modal — celebratory first-login experience.
+       Mandatory: no dismiss button, no backdrop close. The user must
+       click through to the Business Profile to proceed. Centred
+       layout via the .bp-modal-welcome modifier defined in the
+       page style block. -->
   <div class="perm-modal-overlay" id="bp-modal">
-    <div class="perm-modal">
-      <div class="perm-modal-title">Complete Your Business Profile</div>
-      <div class="perm-modal-body">Completing your Business Profile helps your tools personalise outputs for your business — better marketing copy, more relevant insights, and smarter recommendations.</div>
+    <div class="perm-modal bp-modal-welcome">
+      <div class="perm-modal-title">🎉 Congratulations — you're in!</div>
+      <div class="perm-modal-body">STAXAI adapts to your business so let's set up your Business Profile and unlock the platform ✨</div>
       <div class="perm-modal-actions">
-        <button type="button" class="perm-modal-cancel" id="bp-modal-dismiss">Dismiss</button>
-        <button type="button" class="perm-modal-continue" id="bp-modal-cta">Complete Now</button>
+        <button type="button" class="perm-modal-continue" id="bp-modal-cta">Complete Business Profile</button>
       </div>
     </div>
   </div>

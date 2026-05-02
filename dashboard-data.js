@@ -183,33 +183,11 @@ window.DASH_DATA = (function() {
     var modal = document.getElementById('bp-modal');
     if (!modal) return;
 
-    var bodyEl = modal.querySelector('.perm-modal-body');
-    if (bodyEl && _bpMissing.length > 0) {
-      var grouped = {};
-      for (var i = 0; i < _bpMissing.length; i++) {
-        var panel = _bpMissing[i].panel;
-        if (!grouped[panel]) grouped[panel] = [];
-        grouped[panel].push(_bpMissing[i].label);
-      }
-      var html = '<p style="margin-bottom:16px">To access your tools, please complete these required fields:</p>';
-      var panels = Object.keys(grouped);
-      for (var j = 0; j < panels.length; j++) {
-        html += '<div style="margin-bottom:12px"><div style="font-weight:var(--font-weight-semibold);font-size:var(--label-font-size);color:var(--text);margin-bottom:4px">' + window.escHtml(panels[j]) + '</div>';
-        html += '<ul style="margin:0;padding-left:20px;color:var(--text-secondary);font-size:var(--note-font-size);line-height:1.8">';
-        for (var k = 0; k < grouped[panels[j]].length; k++) {
-          html += '<li>' + window.escHtml(grouped[panels[j]][k]) + '</li>';
-        }
-        html += '</ul></div>';
-      }
-      bodyEl.innerHTML = html;
-    }
-
+    // Mandatory now — no dismiss button, no backdrop click handler.
+    // The static markup in dashboard.html is the celebratory welcome
+    // copy; we just open it and wire the CTA to the BP page.
     modal.classList.add('open');
 
-    var dismiss = document.getElementById('bp-modal-dismiss');
-    if (dismiss) {
-      dismiss.addEventListener('click', function() { modal.classList.remove('open'); });
-    }
     var ctaBtn = document.getElementById('bp-modal-cta');
     if (ctaBtn) {
       ctaBtn.addEventListener('click', function() {
@@ -217,9 +195,6 @@ window.DASH_DATA = (function() {
         window.location.href = '/content-library.html#profile';
       });
     }
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) modal.classList.remove('open');
-    });
   }
 
   function wireToolBlocker() {

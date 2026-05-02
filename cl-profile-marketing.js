@@ -582,17 +582,52 @@ window.BP_MARKETING = {
     var btn = document.getElementById('prof-mkt-save-final');
     if (!btn || btn.disabled) return;
     var label = btn.textContent;
+
+    var diffEl = document.getElementById('prof-sum-diff');
+    var awareEl = document.getElementById('prof-sum-aware');
+    var feelEl = document.getElementById('prof-sum-feel');
+    var toneEl = document.getElementById('prof-sum-tone');
+    var colour1El = document.getElementById('prof-sum-colour1');
+
+    // Validate the five marketing-theme mandatory fields. Mirrors the
+    // _validateMandatory helper on CL_PROFILE — uses the same
+    // .input-error class so the visual treatment matches the other
+    // panels. Throws so we can short-circuit before the supabase write.
+    var firstMissing = null;
+    var missingLabels = [];
+    [
+      { el: diffEl,    label: 'What Makes You Stand Out',  test: function() { return diffEl && diffEl.value.trim() !== ''; } },
+      { el: awareEl,   label: 'What Customers Should Know', test: function() { return awareEl && awareEl.value.trim() !== ''; } },
+      { el: feelEl,    label: 'How Customers Should Feel',  test: function() { return feelEl && feelEl.value.trim() !== ''; } },
+      { el: toneEl,    label: 'Tone of Voice',              test: function() { return toneEl && toneEl.value.trim() !== ''; } },
+      { el: colour1El, label: 'Primary Brand Colour',       test: function() { return colour1El && colour1El.value.trim() !== ''; } }
+    ].forEach(function(f) {
+      if (f.el) f.el.classList.remove('input-error');
+      if (!f.test()) {
+        if (f.el) f.el.classList.add('input-error');
+        if (!firstMissing && f.el) firstMissing = f.el;
+        missingLabels.push(f.label);
+      }
+    });
+    if (missingLabels.length > 0) {
+      if (firstMissing && typeof firstMissing.scrollIntoView === 'function') {
+        firstMissing.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      window.showModalError('Please complete: ' + missingLabels.join(', '));
+      return;
+    }
+
     btn.textContent = 'Saving...';
     btn.disabled = true;
 
     try {
       var updates = {
-        marketing_theme_differentiators: document.getElementById('prof-sum-diff').value.trim(),
-        marketing_theme_awareness: document.getElementById('prof-sum-aware').value.trim(),
-        marketing_theme_feeling: document.getElementById('prof-sum-feel').value.trim(),
+        marketing_theme_differentiators: diffEl.value.trim(),
+        marketing_theme_awareness: awareEl.value.trim(),
+        marketing_theme_feeling: feelEl.value.trim(),
         marketing_theme_extra: [JSON.stringify(self._answers)],
-        tone_of_voice: document.getElementById('prof-sum-tone').value.trim(),
-        primary_brand_colour: document.getElementById('prof-sum-colour1').value.trim() || null,
+        tone_of_voice: toneEl.value.trim(),
+        primary_brand_colour: colour1El.value.trim() || null,
         secondary_brand_colour: document.getElementById('prof-sum-colour2').value.trim() || null,
         tagline: document.getElementById('prof-sum-tagline').value.trim() || null
       };
