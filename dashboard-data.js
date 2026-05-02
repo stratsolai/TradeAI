@@ -3,6 +3,16 @@ window.DASH_DATA = (function() {
   var _supabase, _user, _profile, _activeTools;
   var _resolvedPrices = null;
 
+  // Canonical tool list for the stax-all bundle. Used both at signup
+  // (mirrored in login.html) and by the dashboard self-heal step that
+  // repairs profiles where bundle_tier='stax-all' but activated_tools
+  // is empty. Keep in sync with login.html stax-all activation.
+  var STAX_ALL_TOOLS = [
+    'chatbot', 'social', 'email', 'strategic-plan', 'news-digest', 'bi',
+    'tender', 'quote-enhancer', 'swms', 'customer-updates',
+    'handover-docs', 'review-booster', 'design-viz'
+  ];
+
   // Tool catalog mirrors tools-data.js for the Your Stax section.
   // Note: dashboard-data.js maintains its own copy per CLAUDE.md (codebase quirk).
   var TOOLS = [
@@ -72,6 +82,24 @@ window.DASH_DATA = (function() {
     }
     _profile = (pr.data) ? pr.data : {};
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
+
+    // Self-heal: if the user is on the stax-all bundle but their
+    // activated_tools is empty (signup raced sessionStorage, manual
+    // test-row edit, partial upsert, etc.), repopulate from the
+    // canonical bundle list and persist back to the row. Only stax-all
+    // is auto-healed because its tool list is fixed; stax3/stax6 lists
+    // are user-chosen and cannot be derived from bundle_tier alone.
+    if (_profile.bundle_tier === 'stax-all' && _activeTools.length === 0) {
+      _activeTools = STAX_ALL_TOOLS.slice();
+      _profile.activated_tools = _activeTools;
+      _supabase.from('profiles')
+        .update({ activated_tools: _activeTools })
+        .eq('id', user.id)
+        .then(function(res) {
+          if (res.error) console.error('[Dashboard] stax-all self-heal write error:', res.error.message || res.error);
+          else console.log('[Dashboard] Self-healed empty activated_tools for stax-all bundle');
+        });
+    }
 
     var bp = await _supabase.from('profiles')
       .select('abn, business_structure, industry, years_in_business, logo_url, address_name, address_street, address_suburb, address_state, address_postcode, additional_phones, service_area, trading_hours, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, after_hours_support, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling, tone_of_voice, primary_brand_colour')
@@ -243,7 +271,7 @@ window.DASH_DATA = (function() {
     else if (daysLeft <= 1) bannerMsg = 'Your free trial ends tomorrow.';
     else if (daysLeft <= 3) bannerMsg = daysLeft + ' days left on your free trial.';
     else if (daysLeft <= 7) bannerMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
-    else return;
+    else bannerMsg = 'You\'re on a free trial — ' + daysLeft + ' days left.';
 
     msg.textContent = bannerMsg;
     banner.classList.add('visible');

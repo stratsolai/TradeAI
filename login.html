@@ -391,10 +391,16 @@
       if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
       var result = await signUp(email, password, businessName, phone, industries);
       if (result.success) {
-        // Write trial activation to Supabase profiles
-        var trialTool = sessionStorage.getItem("trial_tool");
-        var trialTier = sessionStorage.getItem("trial_tier");
-        var trialTools = sessionStorage.getItem("trial_tools");
+        // Write trial activation to Supabase profiles. Read trial
+        // context from sessionStorage first, then fall back to URL
+        // params at submit time so a lost / cleared sessionStorage
+        // (private browsing, third-party cookie blocks, opening the
+        // signup link in a new tab) doesn't leave the user with an
+        // is_trial=true row but empty activated_tools.
+        var submitParams = new URLSearchParams(window.location.search);
+        var trialTool = sessionStorage.getItem("trial_tool") || submitParams.get("tool") || null;
+        var trialTier = sessionStorage.getItem("trial_tier") || submitParams.get("tier") || null;
+        var trialTools = sessionStorage.getItem("trial_tools") || submitParams.get("tools") || null;
         var userId = result.data && result.data.user ? result.data.user.id : null;
         var activatedTools = [];
         var bundleTier = null;
