@@ -81,12 +81,18 @@ window.ACCOUNT_LOGIC = {
       ? fetch('/api/get-subscription-prices', { headers: { 'Authorization': 'Bearer ' + token } })
           .then(function(r) { return r.ok ? r.json() : null; })
           .then(function(d) { return d && d.prices ? d.prices : null; })
-          .catch(function() { return null; })
+          .catch(function(err) {
+            console.error('[account] get-subscription-prices fetch error:', err && err.message);
+            return null;
+          })
       : Promise.resolve(null);
     var catPromise = fetch('/api/get-prices')
       .then(function(r) { return r.ok ? r.json() : null; })
       .then(function(d) { return d && d.prices ? d.prices : null; })
-      .catch(function() { return null; });
+      .catch(function(err) {
+        console.error('[account] get-prices fetch error:', err && err.message);
+        return null;
+      });
     return Promise.all([subPromise, catPromise]).then(function(maps) {
       var sub = maps[0];
       var cat = maps[1];
@@ -204,8 +210,17 @@ window.ACCOUNT_LOGIC = {
         .eq('status', 'pending')
         .order('invited_at', { ascending: false })
     ]).then(function(results) {
-      var active = (results[0].data) || [];
-      var pending = (results[1].data) || [];
+      // Surface query errors as an inline empty-state instead of
+      // silently rendering 0 of 4 — masking a load failure here means
+      // the owner can't tell whether they really have no team members
+      // or whether the read failed.
+      if (results[0].error || results[1].error) {
+        console.error('[account] _loadTeam error:', results[0].error || results[1].error);
+        body.innerHTML = '<div class="list-empty">Could not load team members. Refresh the page or check your sign-in.</div>';
+        return;
+      }
+      var active = results[0].data || [];
+      var pending = results[1].data || [];
       var total = active.length + pending.length;
 
       var countEl = document.getElementById('team-count');
@@ -379,7 +394,8 @@ window.ACCOUNT_LOGIC = {
         window.showModalError(res.data.error || 'Could not send invite. Please try again.');
       }
     })
-    .catch(function() {
+    .catch(function(err) {
+      console.error('[account] _sendInvite fetch error:', err && err.message);
       window.showModalError('Could not send invite. Please try again.');
     })
     .finally(function() {
@@ -391,25 +407,70 @@ window.ACCOUNT_LOGIC = {
     var self = this;
     var token = self._session && self._session.access_token;
     if (!token) return;
-    if (!confirm('Remove ' + email + ' from your team? They will lose access immediately.')) return;
-
-    fetch('/api/remove-user', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ team_member_id: id })
-    })
-    .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
-    .then(function(res) {
-      if (res.ok) {
-        window.showModalSuccess(email + ' has been removed from your team.');
-        self._loadTeam();
-      } else {
-        window.showModalError(res.data.error || 'Could not remove user. Please try again.');
+    self._confirm({
+      title: 'Remove team member',
+      body: 'Remove ' + email + ' from your team? They will lose access immediately.',
+      okLabel: 'Remove',
+      onConfirm: function() {
+        fetch('/api/remove-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({ team_member_id: id })
+        })
+        .then(function(r) { return r.json().then(function(d) { return { ok: r.ok, data: d }; }); })
+        .then(function(res) {
+          if (res.ok) {
+            window.showModalSuccess(email + ' has been removed from your team.');
+            self._loadTeam();
+          } else {
+            window.showModalError(res.data.error || 'Could not remove user. Please try again.');
+          }
+        })
+        .catch(function(err) {
+          console.error('[account] _removeMember fetch error:', err && err.message);
+          window.showModalError('Could not remove user. Please try again.');
+        });
       }
-    })
-    .catch(function() {
-      window.showModalError('Could not remove user. Please try again.');
     });
+  },
+
+  // Platform-standard confirm modal (replaces native confirm()).
+  // Uses .perm-modal-overlay markup defined in account.html. Each call
+  // installs single-use { once: true } listeners on the OK / Cancel /
+  // backdrop so a stale handler can't fire on a later confirmation.
+  _confirm: function(opts) {
+    var modal = document.getElementById('acct-confirm-modal');
+    var titleEl = document.getElementById('acct-confirm-title');
+    var bodyEl = document.getElementById('acct-confirm-body');
+    var okBtn = document.getElementById('acct-confirm-ok');
+    var cancelBtn = document.getElementById('acct-confirm-cancel');
+    if (!modal || !okBtn || !cancelBtn) return;
+    if (titleEl) titleEl.textContent = opts.title || 'Confirm';
+    if (bodyEl) bodyEl.textContent = opts.body || '';
+    okBtn.textContent = opts.okLabel || 'Confirm';
+    function close() { modal.classList.remove('open'); }
+    function onOk() {
+      close();
+      cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+      if (typeof opts.onConfirm === 'function') opts.onConfirm();
+    }
+    function onCancel() {
+      close();
+      okBtn.removeEventListener('click', onOk);
+      modal.removeEventListener('click', onBackdrop);
+    }
+    function onBackdrop(e) {
+      if (e.target === modal) {
+        close();
+        okBtn.removeEventListener('click', onOk);
+        cancelBtn.removeEventListener('click', onCancel);
+      }
+    }
+    okBtn.addEventListener('click', onOk, { once: true });
+    cancelBtn.addEventListener('click', onCancel, { once: true });
+    modal.addEventListener('click', onBackdrop, { once: true });
+    modal.classList.add('open');
   },
 
   _cancelInvite: function(id) {
@@ -438,10 +499,15 @@ window.ACCOUNT_LOGIC = {
       btn.disabled = true;
       self._supabase.auth.resetPasswordForEmail(self._user.email).then(function(result) {
         if (result.error) {
+          console.error('[account] resetPasswordForEmail error:', result.error);
           window.showModalError('Could not send reset email. Please try again.');
         } else {
           window.showModalSuccess('Password reset email sent to ' + self._user.email);
         }
+      }).catch(function(err) {
+        console.error('[account] resetPasswordForEmail exception:', err && err.message);
+        window.showModalError('Could not send reset email. Please try again.');
+      }).finally(function() {
         btn.textContent = 'Change Password';
         btn.disabled = false;
       });

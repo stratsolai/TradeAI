@@ -14,6 +14,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
+    /* Auth gate — hide topbar and page-wrap until the bootstrap IIFE
+       confirms the session and resolves the account owner. Mirrors the
+       admin.html pattern so non-authenticated users do not see a flash
+       of branded chrome before the redirect to /login. The PWA mobile
+       guard's own overlay still renders because it injects an explicit
+       override. */
+    body:not(.acct-authenticated) > nav.topbar,
+    body:not(.acct-authenticated) > #page-wrap { display: none; }
+
     .acct-container { max-width: var(--settings-max-width); margin: 0 auto; padding: var(--settings-page-padding); }
 
     /* ── Subscription cards ── */
@@ -103,11 +112,13 @@
     #tab-team .settings-card { overflow: visible; }
     .acct-invite-form { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
     .acct-invite-email { width: 260px; flex: 0 0 260px; }
-    /* Pin all three controls to exactly 40px so border-thickness and
-       browser default-button quirks cannot make them disagree. */
+    /* Box-sizing aligned across the three controls so border-thickness
+       differences don't make them disagree. Heights are intentionally
+       not pinned — the platform mobile rule (min-height: 44px on
+       .btn-outline at <=600px) needs to win for tap-target compliance. */
     .acct-invite-form .form-input,
     .acct-invite-form .lookback-dropdown,
-    .acct-invite-form .btn-outline { height: 40px; box-sizing: border-box; }
+    .acct-invite-form .btn-outline { box-sizing: border-box; }
     .acct-invite-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
@@ -115,20 +126,6 @@
       text-transform: uppercase;
       letter-spacing: var(--letter-spacing-label);
     }
-    .acct-invite-input {
-      height: 38px;
-      padding: 0 12px;
-      border: var(--input-border-width) solid var(--border);
-      border-radius: var(--input-radius);
-      font-family: var(--body-font);
-      font-size: var(--input-font-size);
-      color: var(--text);
-      background: var(--white);
-      outline: none;
-      width: 260px;
-      transition: border-color var(--btn-transition);
-    }
-    .acct-invite-input:focus { border-color: var(--blue); }
     .acct-invite-level-wrap .lookback-dropdown { min-width: 120px; }
     .acct-max-msg { font-size: var(--note-font-size); color: var(--text-muted); padding: 12px 0; }
 
@@ -188,7 +185,7 @@
     </div>
   </nav>
 
-  <div id="page-wrap" style="display:none">
+  <div id="page-wrap">
     <div class="acct-container">
 
       <div class="page-header">
@@ -281,6 +278,19 @@
     </div>
   </div>
 
+  <!-- Confirm modal — used by _removeMember to replace the native
+       confirm() dialog with the platform-standard .perm-modal pattern. -->
+  <div class="perm-modal-overlay" id="acct-confirm-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title" id="acct-confirm-title">Confirm</div>
+      <div class="perm-modal-body" id="acct-confirm-body"></div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="acct-confirm-cancel" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="acct-confirm-ok" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
   <script src="/supabase-client.js"></script>
   <script src="/auth.js"></script>
@@ -333,7 +343,7 @@
         var session = result.data && result.data.session;
         if (!session) { window.location.href = '/login'; return; }
         window.resolveAccountOwner(session.user.id).then(function() {
-          document.getElementById('page-wrap').style.display = 'block';
+          document.body.classList.add('acct-authenticated');
           if (window.ACCOUNT_LOGIC && window.ACCOUNT_LOGIC.init) {
             window.ACCOUNT_LOGIC.init(supabase, session.user);
           }

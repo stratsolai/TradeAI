@@ -288,8 +288,44 @@
     if (sm) { sm.textContent = msg; sm.style.display = 'block'; }
   }
   document.addEventListener("DOMContentLoaded", async function() {
-    showLogin();
     var params = new URLSearchParams(window.location.search);
+
+    // Handle email confirmation token from Supabase signup link.
+    // Supabase's default email template lands the user here with
+    // ?token_hash=...&type=signup — we exchange it for a session via
+    // verifyOtp (which marks email_confirmed_at), then sign out so the
+    // user has to enter their password to log in. Without this, the
+    // email is never marked confirmed and the user stays locked out.
+    var tokenHash = params.get('token_hash');
+    var tokenType = params.get('type');
+    if (tokenHash && tokenType && window.supabaseClient) {
+      try {
+        var verify = await window.supabaseClient.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: tokenType
+        });
+        // Strip the token params so a refresh doesn't retry a consumed token.
+        window.history.replaceState({}, '', window.location.pathname);
+        showLogin();
+        if (verify.error) {
+          console.error('[login] verifyOtp error:', verify.error);
+          showError('Email confirmation link is invalid or expired. Try signing up again or request a new link.');
+        } else {
+          // verifyOtp creates a session — sign out so the user logs in
+          // with their password rather than being silently signed in.
+          await window.supabaseClient.auth.signOut();
+          showSuccess('Email confirmed. Please sign in.');
+        }
+        return;
+      } catch (e) {
+        console.error('[login] verifyOtp exception:', e && e.message);
+        showLogin();
+        showError('Could not confirm email. Please try the link again or contact support.');
+        return;
+      }
+    }
+
+    showLogin();
     if (params.get("tab") === "signup") showSignup();
 
     // Store trial context from URL params into sessionStorage

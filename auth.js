@@ -20,7 +20,10 @@ async function signUp(email, password, businessName, phone, industry) {
 
     const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: email,
-      password: password
+      password: password,
+      options: {
+        emailRedirectTo: window.location.origin + '/login'
+      }
     });
 
     if (authError) throw authError;
