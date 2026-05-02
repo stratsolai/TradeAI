@@ -152,6 +152,16 @@
 </div>
 </div>
 
+<!-- Modal feedback container — used by shared-utils showModalError
+     when a flag/scan action fails. Required because shared-utils
+     looks up .save-msg and silently no-ops when missing. -->
+<div class="save-msg" id="ea-msg">
+  <div class="save-msg-card">
+    <div class="save-msg-text"></div>
+    <button type="button" class="save-msg-ok">OK</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <script src="/supabase-client.js"></script>
 <script src="/auth.js"></script>

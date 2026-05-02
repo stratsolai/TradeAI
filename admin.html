@@ -23,82 +23,10 @@
     body:not(.admin-authenticated) > nav.topbar,
     body:not(.admin-authenticated) > #page-wrap { display: none; }
 
-    .admin-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
-
-    /* Section container */
+    /* Section vertical rhythm — admin sections lay out as a vertical
+       stack with consistent gaps between cards/grids/tables. Page-local
+       because no other page composes a tab content container in this way. */
     .admin-section { display: flex; flex-direction: column; gap: 16px; }
-    .admin-section-placeholder {
-      padding: 48px 24px;
-      text-align: center;
-      color: var(--text-muted);
-      font-size: var(--note-font-size);
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-    }
-
-    /* Metric grids — used by Dashboard Overview and Revenue */
-    .admin-metric-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-    }
-    .admin-stat-trend { font-size: var(--note-font-size); color: var(--text-muted); margin-top: 4px; }
-    .admin-stat-trend.up { color: var(--green); }
-    .admin-stat-trend.down { color: var(--red); }
-
-    /* Quick lists — recent signups, top tools, industry breakdown */
-    .admin-list-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-    }
-    .admin-list-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--border);
-      font-size: var(--note-font-size);
-    }
-    .admin-list-item:last-child { border-bottom: none; }
-    .admin-list-item-label { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .admin-list-item-value { color: var(--text-muted); font-weight: var(--font-weight-semibold); flex-shrink: 0; margin-left: 12px; }
-
-    /* Tables */
-    .admin-table-wrap {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      overflow: auto;
-    }
-    table.admin-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: var(--note-font-size);
-      font-family: var(--body-font);
-    }
-    table.admin-table thead th {
-      text-align: left;
-      padding: 10px 14px;
-      background: var(--bg-subtle);
-      border-bottom: 1px solid var(--border);
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: var(--letter-spacing-label);
-      white-space: nowrap;
-    }
-    table.admin-table tbody td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      color: var(--text);
-      vertical-align: top;
-    }
-    table.admin-table tbody tr:last-child td { border-bottom: none; }
-    table.admin-table tbody tr.clickable { cursor: pointer; }
-    table.admin-table tbody tr.clickable:hover { background: var(--bg-subtle); }
 
     /* Cards default to overflow:hidden so their rounded corners clip
        child content. The Manual Tracking card on the Profitability
@@ -111,7 +39,9 @@
 
     /* Filters — Customers tab. Mirrors the cl-review filter rhythm:
        a search row at top, a row of toggle buttons + Clear All below
-       it, and a hidden pill row that the toggle buttons reveal. */
+       it, and a hidden pill row that the toggle buttons reveal.
+       Page-local because the layout is unique to admin's customer
+       filter combination. */
     .admin-filter-search-row {
       display: flex;
       flex-wrap: wrap;
@@ -124,58 +54,28 @@
     }
     .admin-filter-search-row .form-input { width: auto; min-width: 160px; }
     .admin-filter-search-row #cust-search { flex: 1 1 240px; min-width: 240px; }
-    .admin-filter-label {
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: var(--letter-spacing-label);
-      align-self: center;
-      margin-right: 4px;
-    }
-    .admin-filter-btns-row { display: flex; align-items: center; gap: 8px; padding: 12px 0 0 0; flex-wrap: wrap; }
     .admin-filter-row { margin: 12px 0 0 0; padding: 12px 16px; background: var(--white); border: 1px solid var(--border); border-radius: var(--card-radius); }
     .admin-filter-row > div { margin-bottom: 8px; }
     .admin-filter-row > div:last-child { margin-bottom: 0; }
 
-    /* Service status row — Infrastructure */
-    .admin-status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-    .admin-status-name { flex: 1; }
-    .admin-status-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--grey); }
-    .admin-status-dot.up { background: var(--green); }
-    .admin-status-dot.warn { background: var(--orange); }
-    .admin-status-dot.down { background: var(--red); }
-
-    /* Customer detail modal */
-    .admin-modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: var(--modal-overlay-bg);
-      z-index: 1000;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 40px 20px;
-      overflow-y: auto;
-    }
-    .admin-modal-overlay.open { display: flex; }
-    .admin-modal-card {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      max-width: 720px;
-      width: 100%;
-      box-shadow: 0 8px 32px var(--shadow-card);
-    }
-    .admin-modal-header {
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--border);
+    /* List item — compact key/value row inside .settings-row-padded
+       wrappers. Smaller padding than .settings-row because rows nest
+       inside a card body that already supplies its own padding. */
+    .admin-list-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: var(--note-font-size);
     }
-    .admin-modal-title { font-family: var(--heading-font); font-size: var(--heading-lg-size); font-weight: var(--heading-lg-weight); color: var(--text); }
-    .admin-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
-    .admin-modal-body { padding: 18px 24px; }
+    .admin-list-item:last-child { border-bottom: none; }
+    .admin-list-item-label { color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .admin-list-item-value { color: var(--text-muted); font-weight: var(--font-weight-semibold); flex-shrink: 0; margin-left: 12px; }
+
+    /* Detail row — key/value pair inside the customer detail modal.
+       Wider gap and right-aligned value, used only by the customer
+       detail body — not a settings page row. */
     .admin-detail-row {
       display: flex;
       justify-content: space-between;
@@ -188,93 +88,30 @@
     .admin-detail-label { color: var(--text-muted); flex-shrink: 0; }
     .admin-detail-value { color: var(--text); text-align: right; word-break: break-word; }
 
-    /* Note text — used when a feature isn't fully wired (tool_usage etc.) */
-    .admin-note { font-size: var(--note-font-size); color: var(--text-muted); padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--btn-radius); }
-
-    /* Loading / empty states */
-    .admin-loading { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
-    .admin-empty { padding: 24px; color: var(--text-muted); text-align: center; font-size: var(--note-font-size); }
-
-    /* Profitability & Costs — Dashboard Overview section */
-    .prof-summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-    }
+    /* Profitability supplier row — auto-fit grid for supplier tiles. */
     .prof-supplier-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 12px;
     }
-    .prof-supplier-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-      padding: 14px 16px;
-    }
-    .prof-supplier-card.warn { border-left: 4px solid var(--orange); }
-    .prof-supplier-card.alert { border-left: 4px solid var(--red); }
-    .prof-supplier-name {
-      font-weight: var(--font-weight-semibold);
-      font-size: var(--note-font-size);
-      color: var(--text);
-      text-transform: capitalize;
-      margin-bottom: 6px;
-    }
+
+    /* Supplier card internals — text styling unique to supplier tiles.
+       The card itself uses .tile-card / .tile-card-warn / .tile-card-alert
+       from staxai-auth.css. */
+    .prof-supplier-card { padding: 14px 16px; }
+    .prof-supplier-name { font-weight: var(--font-weight-semibold); font-size: var(--note-font-size); color: var(--text); text-transform: capitalize; margin-bottom: 6px; }
     .prof-supplier-cost { font-size: var(--section-title-font-size); color: var(--text); font-weight: var(--font-weight-semibold); }
     .prof-supplier-trend { font-size: var(--badge-font-size); color: var(--text-muted); margin-top: 2px; }
-    .prof-supplier-bar-wrap {
-      width: 100%;
-      height: 6px;
-      background: var(--bg-subtle);
-      border-radius: 3px;
-      overflow: hidden;
-      margin-top: 8px;
-    }
-    .prof-supplier-bar {
-      height: 100%;
-      background: var(--green);
-      transition: width 0.2s ease;
-    }
-    .prof-supplier-bar.warn { background: var(--orange); }
-    .prof-supplier-bar.alert { background: var(--red); }
-    .prof-supplier-limit-line {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
+    .prof-supplier-limit-line { font-size: var(--badge-font-size); color: var(--text-muted); margin-top: 4px; }
 
-    /* Trend chart wrapper */
+    /* Trend chart wrapper — sized canvas container. The toggle pills
+       use shared .filter-pill styling; only the wrapper geometry is
+       page-local. */
     .prof-chart-wrap { position: relative; height: 280px; padding: 12px; }
-    .prof-chart-toggle-row { display: flex; gap: 8px; padding: 0 16px 12px; flex-wrap: wrap; }
-    .prof-chart-toggle {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      padding: 4px 12px;
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-      cursor: pointer;
-      font-family: var(--body-font);
-    }
-    .prof-chart-toggle.active { background: var(--stax-primary); color: var(--white); border-color: var(--stax-primary); }
+    .prof-chart-toggle-row { padding: 0 16px 12px; }
 
-    /* Status pill in tool / customer tables */
-    .prof-status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--grey);
-      margin-right: 6px;
-      vertical-align: middle;
-    }
-    .prof-status-dot.green { background: var(--green); }
-    .prof-status-dot.amber { background: var(--orange); }
-    .prof-status-dot.red { background: var(--red); }
-
-    /* Manual entry form for Predis / REimagine — moved out of removed
-       API Cost Tracker tab. Same shape as the old admin-entry-form. */
+    /* Manual entry form — Predis / REimagine. Layout is unique
+       to the admin Profitability section. */
     .prof-manual-form {
       display: flex;
       flex-wrap: wrap;
@@ -287,6 +124,19 @@
     }
     .prof-manual-form .form-input { width: auto; min-width: 140px; }
     .prof-manual-wrap .lookback-dropdown { min-width: 200px; }
+
+    /* Progress-fill colour modifiers — supplier health bar uses the
+       shared .progress-bar / .progress-fill component with these
+       admin-specific modifiers. Default fill is var(--blue) on the
+       shared rule; admin paints green/orange/red to indicate health. */
+    .progress-fill.green { background: var(--green); }
+    .progress-fill.warn  { background: var(--orange); }
+    .progress-fill.alert { background: var(--red); }
+
+    /* Stat value suffix — small muted unit label trailing the stat
+       number (e.g. "/mth"). Page-local — no other page composes
+       stat values with inline suffix labels. */
+    .stat-value-suffix { font-size: var(--input-font-size); color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -331,7 +181,7 @@
   </nav>
 
   <!-- PAGE -->
-  <div id="page-wrap" class="admin-container">
+  <div id="page-wrap" class="tool-container">
 
     <div class="page-header">
       <h1 class="page-title">Admin</h1>
@@ -353,37 +203,37 @@
     <!-- SECTION CONTAINERS — populated by admin-logic.js in later build steps -->
     <div class="ptab-content active" id="tab-overview">
       <div class="admin-section" id="section-overview">
-        <div class="admin-section-placeholder">Dashboard Overview — built in Step 2.</div>
+        <div class="empty-state">Dashboard Overview — built in Step 2.</div>
       </div>
     </div>
 
     <div class="ptab-content" id="tab-customers">
       <div class="admin-section" id="section-customers">
-        <div class="admin-section-placeholder">Customers — built in Step 4.</div>
+        <div class="empty-state">Customers — built in Step 4.</div>
       </div>
     </div>
 
     <div class="ptab-content" id="tab-revenue">
       <div class="admin-section" id="section-revenue">
-        <div class="admin-section-placeholder">Revenue — built in Step 5.</div>
+        <div class="empty-state">Revenue — built in Step 5.</div>
       </div>
     </div>
 
     <div class="ptab-content" id="tab-usage">
       <div class="admin-section" id="section-usage">
-        <div class="admin-section-placeholder">Tool Usage — built in Step 6.</div>
+        <div class="empty-state">Tool Usage — built in Step 6.</div>
       </div>
     </div>
 
     <div class="ptab-content" id="tab-errors">
       <div class="admin-section" id="section-errors">
-        <div class="admin-section-placeholder">Error Monitor — built in Step 7.</div>
+        <div class="empty-state">Error Monitor — built in Step 7.</div>
       </div>
     </div>
 
     <div class="ptab-content" id="tab-infrastructure">
       <div class="admin-section" id="section-infrastructure">
-        <div class="admin-section-placeholder">Infrastructure — built in Step 8.</div>
+        <div class="empty-state">Infrastructure — built in Step 8.</div>
       </div>
     </div>
 
@@ -398,13 +248,13 @@
   </div>
 
   <!-- Customer detail modal — populated by admin-logic.js -->
-  <div class="admin-modal-overlay" id="customer-detail-overlay">
-    <div class="admin-modal-card">
-      <div class="admin-modal-header">
-        <div class="admin-modal-title" id="customer-detail-title">Customer detail</div>
-        <button class="admin-modal-close" id="customer-detail-close" aria-label="Close">&times;</button>
+  <div class="detail-modal-overlay" id="customer-detail-overlay">
+    <div class="detail-modal">
+      <div class="detail-modal-header">
+        <div class="detail-modal-title" id="customer-detail-title">Customer detail</div>
+        <button class="detail-modal-close" id="customer-detail-close" aria-label="Close">&times;</button>
       </div>
-      <div class="admin-modal-body" id="customer-detail-body"></div>
+      <div class="detail-modal-body" id="customer-detail-body"></div>
     </div>
   </div>
 

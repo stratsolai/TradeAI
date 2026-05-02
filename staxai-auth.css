@@ -136,6 +136,17 @@
   /* Modal */
   --modal-padding:      28px 24px;     /* Internal padding for modal dialogs */
   --actions-gap:        12px;          /* Gap between action buttons in modals and settings footers */
+
+  /* Chart palette — line/area chart series colours. Read by JS chart code via getComputedStyle, never hardcoded. */
+  --chart-palette-1:    #4A6D8C;       /* Chart series 1 — primary blue */
+  --chart-palette-2:    #E07A5F;       /* Chart series 2 — terracotta */
+  --chart-palette-3:    #3D5A80;       /* Chart series 3 — deep blue */
+  --chart-palette-4:    #81B29A;       /* Chart series 4 — sage */
+  --chart-palette-5:    #F2CC8F;       /* Chart series 5 — sand */
+  --chart-palette-6:    #B56576;       /* Chart series 6 — rose */
+  --chart-palette-7:    #6D6875;       /* Chart series 7 — slate */
+  --chart-palette-8:    #B5838D;       /* Chart series 8 — dusty pink */
+  --blue-fill-10:       rgba(74, 109, 140, 0.1); /* 10% transparent blue. Chart fill for area-under-line on blue series */
 }
 
 /* ------------------------------------------------------------
@@ -1457,3 +1468,101 @@ body.stax-has-sidebar.stax-sidebar-collapsed { padding-left: 60px; }
   .stax-sidebar-hamburger { display: inline-flex; align-items: center; justify-content: center; }
   .stax-sidebar-backdrop.open { display: block; }
 }
+
+/* ------------------------------------------------------------
+   26. SHARED ADMIN/TOOL UTILITIES
+   Generic page wrapper, data tables, status dots, note boxes,
+   detail modals, link-style buttons, and small layout helpers
+   used across admin and other dense data pages.
+   ------------------------------------------------------------ */
+
+/* Page wrapper — full-width tool/admin container. Same shape as the
+   page-local .admin-container; promoted so other dense data pages
+   can reuse without redefining. */
+.tool-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
+
+/* Wide tile grid — auto-fit grid for 280px+ list/quick-list cards.
+   Matches the rhythm used by admin Recent Signups / Top Tools /
+   Industry Breakdown rows. Wider min than .tile-grid (300px) on
+   purpose — different content density. */
+.tile-grid-wide { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+
+/* Tile card colour modifiers — extend .tile-card with warn / alert
+   left-border accents. Used by supplier tiles, provider health, etc. */
+.tile-card.tile-card-warn  { border-left-color: var(--orange); }
+.tile-card.tile-card-alert { border-left-color: var(--red); }
+
+/* Data table — generic dense table used for admin lists and reports.
+   .data-table-wrap gives the rounded card surround and horizontal
+   scroll on overflow; .data-table is the table itself. */
+.data-table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: var(--card-radius); overflow: auto; }
+.data-table { width: 100%; border-collapse: collapse; font-size: var(--note-font-size); font-family: var(--body-font); }
+.data-table thead th { text-align: left; padding: 10px 14px; background: var(--bg-subtle); border-bottom: 1px solid var(--border); font-size: var(--badge-font-size); font-weight: var(--font-weight-semibold); color: var(--text-muted); text-transform: uppercase; letter-spacing: var(--letter-spacing-label); white-space: nowrap; }
+.data-table tbody td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: top; }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.row-clickable { cursor: pointer; }
+.data-table tbody tr.row-clickable:hover { background: var(--bg-subtle); }
+
+/* Status dot — small coloured circle for service/health indicators.
+   Replaces the old .admin-status-dot and .prof-status-dot variants. */
+.status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--grey); margin-right: 6px; vertical-align: middle; flex-shrink: 0; }
+.status-dot.up,
+.status-dot.green   { background: var(--green); }
+.status-dot.warn,
+.status-dot.amber,
+.status-dot.orange  { background: var(--orange); }
+.status-dot.down,
+.status-dot.red     { background: var(--red); }
+
+/* Status row — flex row pairing status-dot + name + meta. Used by
+   the Infrastructure section of admin and any other service-status list. */
+.status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.status-row-name { flex: 1; }
+.status-row-meta { color: var(--text-muted); font-size: var(--note-font-size); margin-right: 12px; }
+
+/* Note box — muted info text in a soft pill background. Used for
+   inline diagnostic notes ("X not yet implemented", row counts, etc.). */
+.note-box { font-size: var(--note-font-size); color: var(--text-muted); padding: 8px 12px; background: var(--bg-subtle); border-radius: var(--btn-radius); }
+
+/* Filter button row — horizontal row of toggle filter buttons +
+   Clear All. Mirrors the cl-review filter rhythm. */
+.filter-btns-row { display: flex; align-items: center; gap: 8px; padding: 12px 0 0 0; flex-wrap: wrap; }
+
+/* Padded settings rows wrapper — variant of .settings-rows with
+   internal padding for compact list cards (Recent Signups,
+   Revenue by Bundle, Service status, etc.). */
+.settings-rows.settings-row-padded { padding: 14px 20px; }
+
+/* Compact form input — narrow variant of .form-input for short
+   numeric/labelled inputs (Min tools, etc.). Pairs with
+   .form-input on the same element. */
+.form-input.form-input-sm { width: auto; min-width: 80px; }
+
+/* Code text — monospace inline run. Used for diagnostic dumps of
+   priceIds, IDs, raw values. */
+.code-text { font-family: monospace; font-size: var(--badge-font-size); }
+
+/* Error pre — wrapped <pre> for exception details inside <details>
+   blocks. Forces wrap so long stack traces don't break the layout. */
+.error-pre { font-size: var(--badge-font-size); white-space: pre-wrap; word-break: break-word; margin: 0; font-family: monospace; }
+
+/* Link button — text-style button that looks like a hyperlink.
+   Used for inline Refresh / View / Status page actions in note rows. */
+.btn-link { background: none; border: none; color: var(--blue); cursor: pointer; font-size: var(--note-font-size); padding: 0; font-family: inherit; text-decoration: underline; }
+.btn-link:hover { opacity: 0.85; }
+
+/* Margin utilities — vertical spacing helpers for inline use. */
+.mt-sm { margin-top: 8px; }
+.mt-md { margin-top: 12px; }
+.mt-lg { margin-top: 24px; }
+
+/* Detail modal — generic centred dialog for read-only detail views
+   (customer detail, transaction detail, etc.). Larger than
+   .perm-modal — built for record detail rather than confirmation. */
+.detail-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--modal-overlay-bg); z-index: 1000; align-items: flex-start; justify-content: center; padding: 40px 20px; overflow-y: auto; }
+.detail-modal-overlay.open { display: flex; }
+.detail-modal { background: var(--white); border-radius: var(--card-radius); max-width: 720px; width: 100%; box-shadow: 0 8px 32px var(--shadow-card); }
+.detail-modal-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.detail-modal-title { font-family: var(--heading-font); font-size: var(--heading-lg-size); font-weight: var(--heading-lg-weight); color: var(--text); }
+.detail-modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); line-height: 1; }
+.detail-modal-body { padding: 18px 24px; }

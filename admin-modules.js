@@ -14,7 +14,7 @@
     _renderOverview: function() {
       var self = this;
       var container = document.getElementById('section-overview');
-      container.innerHTML = '<div class="admin-loading">Loading overview…</div>';
+      container.innerHTML = '<div class="list-loading">Loading overview…</div>';
 
       Promise.all([
         self._fetchAdmin('admin-overview'),
@@ -32,14 +32,15 @@
         var manual = results[2] || {};
         self._renderOverviewContent(container, d, prof, manual);
       }).catch(function(err) {
-        container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load overview: ' + err.message) + '</div>';
+        console.error('[admin] _renderOverview error:', err && err.message);
+        container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load overview: ' + err.message) + '</div>';
       });
     },
 
     _renderOverviewContent: function(container, d, prof, manual) {
       var self = this;
       var m = d.metrics || {};
-      var html = '<div class="admin-metric-grid">'
+      var html = '<div class="stats-bar">'
         + self._statCard('Total Customers', m.total_customers, '')
         + self._statCard('Active Subscriptions', m.active_subscriptions, '')
         + self._statCard('MRR', self._formatMoney(m.mrr), '/mth', 'green')
@@ -52,7 +53,7 @@
       html += self._buildProfitabilitySection(prof, manual);
 
       // ── Quick lists ────────────────────────────────────────────
-      html += '<div class="admin-list-grid">';
+      html += '<div class="tile-grid-wide">';
       html += self._listCard('Recent Signups', (d.recent_signups || []).map(function(p) {
         return {
           label: window.escHtml(p.business_name || p.email || p.id),
@@ -81,16 +82,16 @@
     _statCard: function(label, value, suffix, modifier) {
       var cls = 'stat-card' + (modifier ? ' ' + modifier : '');
       return '<div class="' + cls + '">'
-        + '<div class="stat-value">' + window.escHtml(value == null ? '—' : value) + (suffix ? '<span style="font-size:14px;color:var(--text-muted);"> ' + window.escHtml(suffix) + '</span>' : '') + '</div>'
+        + '<div class="stat-value">' + window.escHtml(value == null ? '—' : value) + (suffix ? '<span class="stat-value-suffix"> ' + window.escHtml(suffix) + '</span>' : '') + '</div>'
         + '<div class="stat-label">' + window.escHtml(label) + '</div>'
         + '</div>';
     },
 
     _listCard: function(title, items) {
       var html = '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">' + window.escHtml(title) + '</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;">';
+      html += '<div class="settings-rows settings-row-padded">';
       if (!items || items.length === 0) {
-        html += '<div class="admin-empty">No data.</div>';
+        html += '<div class="list-empty">No data.</div>';
       } else {
         items.forEach(function(it) {
           html += '<div class="admin-list-item"><span class="admin-list-item-label">' + (it.label || '—') + '</span><span class="admin-list-item-value">' + (it.value == null ? '—' : it.value) + '</span></div>';
@@ -108,12 +109,12 @@
     _buildProfitabilitySection: function(prof, manual) {
       var self = this;
       if (prof && prof._error) {
-        return '<div class="admin-section-placeholder">'
+        return '<div class="empty-state">'
           + window.escHtml('Profitability data unavailable: ' + prof._error)
           + '</div>';
       }
       if (!prof || !prof.summary) {
-        return '<div class="admin-section-placeholder">No profitability data yet — once api_usage rows exist for the current period this section will populate.</div>';
+        return '<div class="empty-state">No profitability data yet — once api_usage rows exist for the current period this section will populate.</div>';
       }
 
       var s = prof.summary || {};
@@ -121,10 +122,10 @@
       var marginColour = marginPct == null ? '' : (marginPct >= 80 ? 'green' : (marginPct >= 60 ? 'orange' : 'red'));
       var alertsCount = s.alerts_count || 0;
 
-      var html = '<div class="settings-card-header" style="margin-top:24px;"><div class="settings-card-title">Profitability &amp; Costs</div><div class="settings-card-hint">Real-time margin and supplier health for ' + window.escHtml(prof.period || '') + '.</div></div>';
+      var html = '<div class="settings-card-header mt-lg"><div class="settings-card-title">Profitability &amp; Costs</div><div class="settings-card-hint">Real-time margin and supplier health for ' + window.escHtml(prof.period || '') + '.</div></div>';
 
       // Summary tiles
-      html += '<div class="prof-summary-grid">'
+      html += '<div class="stats-bar">'
         + self._statCard('Total Revenue', self._formatMoney(s.total_revenue), '/mth', 'green')
         + self._statCard('Total Costs', self._formatMoney(s.total_costs), '/mth', s.total_costs > 0 ? 'orange' : '')
         + self._statCard('Overall Margin', marginPct == null ? '—' : (marginPct + '%'), '', marginColour)
@@ -134,17 +135,17 @@
       // Alert list — collapsed when zero, expanded when there are items.
       if ((prof.alerts || []).length > 0) {
         html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Alerts</div></div>';
-        html += '<div class="settings-rows" style="padding:14px 20px;">';
+        html += '<div class="settings-rows settings-row-padded">';
         prof.alerts.forEach(function(a) {
           var dotCls = a.severity === 'red' ? 'red' : (a.severity === 'amber' ? 'amber' : '');
-          html += '<div class="admin-list-item"><span class="admin-list-item-label"><span class="prof-status-dot ' + dotCls + '"></span>' + window.escHtml(a.message) + '</span><span class="admin-list-item-value">' + window.escHtml(a.kind.replace(/_/g, ' ')) + '</span></div>';
+          html += '<div class="admin-list-item"><span class="admin-list-item-label"><span class="status-dot ' + dotCls + '"></span>' + window.escHtml(a.message) + '</span><span class="admin-list-item-value">' + window.escHtml(a.kind.replace(/_/g, ' ')) + '</span></div>';
         });
         html += '</div></div>';
       }
 
       // Supplier status row
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Supplier Status</div><div class="settings-card-hint">Live spend and limit usage. Refreshed every 5 minutes.</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;"><div class="prof-supplier-row">';
+      html += '<div class="settings-rows settings-row-padded"><div class="prof-supplier-row">';
       (prof.suppliers || []).forEach(function(p) {
         html += self._supplierCardHtml(p);
       });
@@ -152,12 +153,12 @@
 
       // Tool profitability
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Tool Profitability</div></div>';
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      html += '<div class="data-table-wrap"><table class="data-table"><thead><tr>'
         + '<th>Tool</th><th>Revenue</th><th>Cost</th><th>Margin</th><th>Target</th><th>Status</th>'
         + '</tr></thead><tbody>';
       var tools = prof.tools || [];
       if (tools.length === 0) {
-        html += '<tr><td colspan="6" class="admin-empty">No tool spend logged yet for this period.</td></tr>';
+        html += '<tr><td colspan="6" class="list-empty">No tool spend logged yet for this period.</td></tr>';
       } else {
         tools.forEach(function(t) {
           html += '<tr>'
@@ -166,7 +167,7 @@
             + '<td>' + self._formatMoney(t.cost) + '</td>'
             + '<td>' + (t.margin_percent == null ? '—' : t.margin_percent + '%') + '</td>'
             + '<td>' + (t.target_percent != null ? t.target_percent + '%' : '—') + '</td>'
-            + '<td><span class="prof-status-dot ' + window.escHtml(t.status) + '"></span></td>'
+            + '<td><span class="status-dot ' + window.escHtml(t.status) + '"></span></td>'
             + '</tr>';
         });
       }
@@ -175,11 +176,11 @@
       // Customer profitability — top 10 by margin (worst first).
       var customers = (prof.customers || []).slice(0, 10);
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Customer Profitability</div><div class="settings-card-hint">Worst margins first. Top 10 shown.</div></div>';
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      html += '<div class="data-table-wrap"><table class="data-table"><thead><tr>'
         + '<th>Customer</th><th>MRR</th><th>Cost</th><th>Margin</th><th>Threshold</th><th>Status</th>'
         + '</tr></thead><tbody>';
       if (customers.length === 0) {
-        html += '<tr><td colspan="6" class="admin-empty">No customer cost data yet.</td></tr>';
+        html += '<tr><td colspan="6" class="list-empty">No customer cost data yet.</td></tr>';
       } else {
         customers.forEach(function(c) {
           var who = c.business_name || c.email || c.user_id;
@@ -189,7 +190,7 @@
             + '<td>' + self._formatMoney(c.cost) + '</td>'
             + '<td>' + (c.margin_percent == null ? '—' : c.margin_percent + '%') + '</td>'
             + '<td>' + c.threshold_percent + '%</td>'
-            + '<td><span class="prof-status-dot ' + window.escHtml(c.status) + '"></span></td>'
+            + '<td><span class="status-dot ' + window.escHtml(c.status) + '"></span></td>'
             + '</tr>';
         });
       }
@@ -197,9 +198,9 @@
 
       // Trend chart
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Margin Trend (6 months)</div></div>';
-      html += '<div class="prof-chart-toggle-row">'
-        + '<button class="prof-chart-toggle active" data-mode="overall">Overall</button>'
-        + '<button class="prof-chart-toggle" data-mode="by_tool">By Tool</button>'
+      html += '<div class="prof-chart-toggle-row review-pill-row">'
+        + '<button class="filter-pill active" data-mode="overall">Overall</button>'
+        + '<button class="filter-pill" data-mode="by_tool">By Tool</button>'
         + '</div>';
       html += '<div class="prof-chart-wrap"><canvas id="prof-trend-chart"></canvas></div>';
       html += '</div>';
@@ -229,11 +230,11 @@
         + '<input type="text" class="form-input" id="prof-manual-notes" placeholder="Notes (optional)">'
         + '<button class="btn-add-connection" id="prof-manual-submit">+ Add Entry</button>'
         + '</div>';
-      html += '<div class="admin-table-wrap" style="margin-top:12px;"><table class="admin-table"><thead><tr>'
+      html += '<div class="data-table-wrap mt-md"><table class="data-table"><thead><tr>'
         + '<th>Provider</th><th>Period</th><th>Usage</th><th>Cost</th><th>Notes</th><th>Entered</th>'
         + '</tr></thead><tbody>';
       if (manualEntries.length === 0) {
-        html += '<tr><td colspan="6" class="admin-empty">No manual entries yet.</td></tr>';
+        html += '<tr><td colspan="6" class="list-empty">No manual entries yet.</td></tr>';
       } else {
         manualEntries.forEach(function(e) {
           html += '<tr>'
@@ -262,10 +263,13 @@
         if (!topLimit || (l.used_percent != null && l.used_percent > (topLimit.used_percent || -1))) topLimit = l;
       });
       var pct = topLimit && topLimit.used_percent != null ? topLimit.used_percent : null;
-      var cls = '';
-      var barCls = '';
-      if (pct != null && pct >= 95) { cls = 'alert'; barCls = 'alert'; }
-      else if (pct != null && topLimit && pct >= (topLimit.alert_at_percent || 80)) { cls = 'warn'; barCls = 'warn'; }
+      // tile-card-warn / tile-card-alert paint the left border on the
+      // shared .tile-card; .progress-fill takes a green/warn/alert
+      // colour modifier — green default for healthy supplier usage.
+      var tileCls = '';
+      var fillCls = 'green';
+      if (pct != null && pct >= 95) { tileCls = 'tile-card-alert'; fillCls = 'alert'; }
+      else if (pct != null && topLimit && pct >= (topLimit.alert_at_percent || 80)) { tileCls = 'tile-card-warn'; fillCls = 'warn'; }
 
       var costLine = self._formatMoney(p.cost_this_month || 0);
       var trendLine = '';
@@ -275,14 +279,14 @@
         trendLine = arrow + ' ' + Math.abs(Math.round(diff * 10) / 10) + '% vs last month';
       }
 
-      var html = '<div class="prof-supplier-card ' + cls + '">'
+      var html = '<div class="tile-card prof-supplier-card ' + tileCls + '">'
         + '<div class="prof-supplier-name">' + window.escHtml(p.name) + '</div>'
         + '<div class="prof-supplier-cost">' + costLine + '</div>'
         + '<div class="prof-supplier-trend">' + window.escHtml(trendLine) + '</div>';
 
       if (topLimit) {
         var pctDisplay = pct == null ? '—' : pct + '%';
-        html += '<div class="prof-supplier-bar-wrap"><div class="prof-supplier-bar ' + barCls + '" style="width:' + (pct != null ? Math.min(100, pct) : 0) + '%;"></div></div>';
+        html += '<div class="progress-bar mt-sm"><div class="progress-fill ' + fillCls + '" style="width:' + (pct != null ? Math.min(100, pct) : 0) + '%;"></div></div>';
         html += '<div class="prof-supplier-limit-line">' + window.escHtml(topLimit.limit_type) + ': ' + (topLimit.current_usage || 0) + ' / ' + (topLimit.limit_value || 0) + ' (' + pctDisplay + ')</div>';
       } else if (p.name === 'vercel' && p.cost_this_month === 0) {
         html += '<div class="prof-supplier-limit-line">No public dollar API — estimate from /v1/usage if VERCEL_API_TOKEN configured.</div>';
@@ -301,9 +305,28 @@
       var canvas = document.getElementById('prof-trend-chart');
       if (!canvas) return;
       if (typeof window.Chart === 'undefined') {
-        canvas.parentElement.innerHTML = '<div class="admin-empty">Chart library not loaded.</div>';
+        canvas.parentElement.innerHTML = '<div class="list-empty">Chart library not loaded.</div>';
         return;
       }
+
+      // Read chart palette from CSS custom properties so colours stay
+      // in sync with the stylesheet — never hardcode hex values in JS
+      // (Cat 5 stylesheet compliance).
+      var rootStyles = window.getComputedStyle(document.documentElement);
+      function cssVar(name) { return (rootStyles.getPropertyValue(name) || '').trim(); }
+      var palette = [
+        cssVar('--chart-palette-1'),
+        cssVar('--chart-palette-2'),
+        cssVar('--chart-palette-3'),
+        cssVar('--chart-palette-4'),
+        cssVar('--chart-palette-5'),
+        cssVar('--chart-palette-6'),
+        cssVar('--chart-palette-7'),
+        cssVar('--chart-palette-8')
+      ];
+      var bluePrimary = cssVar('--blue');
+      var blueFill = cssVar('--blue-fill-10');
+      var greyHint = cssVar('--text-hint');
 
       function render(mode) {
         if (self._profChart) { self._profChart.destroy(); self._profChart = null; }
@@ -312,7 +335,6 @@
         var datasets;
         if (mode === 'by_tool') {
           var byTool = trend.by_tool || {};
-          var palette = ['#4A6D8C','#E07A5F','#3D5A80','#81B29A','#F2CC8F','#B56576','#6D6875','#B5838D'];
           var keys = Object.keys(byTool).slice(0, 8);
           datasets = keys.map(function(tid, i) {
             return {
@@ -324,15 +346,15 @@
             };
           });
           if (datasets.length === 0) {
-            datasets = [{ label: 'No per-tool data', data: periods.map(function() { return null; }), borderColor: '#999' }];
+            datasets = [{ label: 'No per-tool data', data: periods.map(function() { return null; }), borderColor: greyHint }];
           }
         } else {
           var overall = trend.overall || [];
           datasets = [{
             label: 'Overall margin %',
             data: overall.map(function(p) { return p.margin_percent; }),
-            borderColor: '#4A6D8C',
-            backgroundColor: 'rgba(74, 109, 140, 0.1)',
+            borderColor: bluePrimary,
+            backgroundColor: blueFill,
             fill: true,
             tension: 0.2
           }];
@@ -354,13 +376,19 @@
 
       render('overall');
 
-      document.querySelectorAll('.prof-chart-toggle').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          document.querySelectorAll('.prof-chart-toggle').forEach(function(b) { b.classList.remove('active'); });
-          btn.classList.add('active');
-          render(btn.getAttribute('data-mode'));
+      // Chart toggle pills are rendered with .filter-pill — scoped to
+      // the chart toggle row so we don't pick up other pill rows on
+      // the page.
+      var toggleRow = document.querySelector('.prof-chart-toggle-row');
+      if (toggleRow) {
+        toggleRow.querySelectorAll('.filter-pill').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            toggleRow.querySelectorAll('.filter-pill').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            render(btn.getAttribute('data-mode'));
+          });
         });
-      });
+      }
     },
 
     _wireProfManualForm: function() {

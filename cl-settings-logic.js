@@ -117,7 +117,11 @@ window.CL_SETTINGS_LOGIC = {
         .select('cl_connected_emails, cl_drive_accounts, website_urls, cl_onedrive_accounts, cl_sharepoint_accounts, cl_dropbox_accounts, cl_xero_accounts, cl_quickbooks_accounts, cl_servicem8_accounts, cl_fergus_accounts')
         .eq('id', self._userId)
         .maybeSingle();
-      if (res.error) { console.error('_loadConnections error:', res.error); return; }
+      if (res.error) {
+        console.error('_loadConnections error:', res.error);
+        self._renderConnectionsLoadError();
+        return;
+      }
       var data = res.data || {};
       self._emails = data.cl_connected_emails || [];
       // Defensive normalisation on read: filter out any null / falsy
@@ -149,7 +153,30 @@ window.CL_SETTINGS_LOGIC = {
       self._renderSharepointList();
       self._renderDropboxList();
       self._renderToolConnections();
-    } catch (e) { console.error('_loadConnections exception:', e); }
+    } catch (e) {
+      console.error('_loadConnections exception:', e);
+      self._renderConnectionsLoadError();
+    }
+  },
+
+  // Inline empty-state in each connection list container — surfaced when
+  // the profiles SELECT in _loadConnections fails (RLS error, network
+  // drop, etc.). Per platform error-handling standard: load-time errors
+  // render in the failed container, not as modals.
+  _renderConnectionsLoadError: function () {
+    var msg = '<div class="list-empty">Could not load connections. Refresh the page or check your sign-in.</div>';
+    var ids = [
+      'gmail-connections-list', 'outlook-connections-list',
+      'drive-connections-list', 'onedrive-connections-list',
+      'sharepoint-connections-list', 'dropbox-connections-list',
+      'website-urls-list',
+      'xero-connections-list', 'quickbooks-connections-list',
+      'servicem8-connections-list', 'fergus-connections-list'
+    ];
+    ids.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.innerHTML = msg;
+    });
   },
 
   _loadScanSettings: async function () {
@@ -491,9 +518,17 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update({ cl_connected_emails: self._emails })
         .eq('id', self._userId);
-      if (res.error) { console.error('_disconnectEmail error:', res.error); await self._loadConnections(); return; }
+      if (res.error) {
+        console.error('_disconnectEmail error:', res.error);
+        await self._loadConnections();
+        if (typeof window.showModalError === 'function') window.showModalError('Could not disconnect email account. Please try again.');
+        return;
+      }
       self._renderEmailList();
-    } catch (e) { console.error('_disconnectEmail exception:', e); }
+    } catch (e) {
+      console.error('_disconnectEmail exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not disconnect email account. Please try again.');
+    }
   },
 
   _disconnectDriveAccount: async function (accountEmail) {
@@ -504,9 +539,17 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update({ cl_drive_accounts: self._driveAccounts })
         .eq('id', self._userId);
-      if (res.error) { console.error('_disconnectDriveAccount error:', res.error); await self._loadConnections(); return; }
+      if (res.error) {
+        console.error('_disconnectDriveAccount error:', res.error);
+        await self._loadConnections();
+        if (typeof window.showModalError === 'function') window.showModalError('Could not disconnect Google Drive account. Please try again.');
+        return;
+      }
       self._renderDriveList();
-    } catch (e) { console.error('_disconnectDriveAccount exception:', e); }
+    } catch (e) {
+      console.error('_disconnectDriveAccount exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not disconnect Google Drive account. Please try again.');
+    }
   },
 
   _disconnectDriveFolder: async function (accountEmail, folderId) {
@@ -520,9 +563,17 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update({ cl_drive_accounts: self._driveAccounts })
         .eq('id', self._userId);
-      if (res.error) { console.error('_disconnectDriveFolder error:', res.error); await self._loadConnections(); return; }
+      if (res.error) {
+        console.error('_disconnectDriveFolder error:', res.error);
+        await self._loadConnections();
+        if (typeof window.showModalError === 'function') window.showModalError('Could not remove folder. Please try again.');
+        return;
+      }
       self._renderDriveList();
-    } catch (e) { console.error('_disconnectDriveFolder exception:', e); }
+    } catch (e) {
+      console.error('_disconnectDriveFolder exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not remove folder. Please try again.');
+    }
   },
 
   _changeLookback: async function (provider, accountEmail, value) {
@@ -547,8 +598,16 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update(update)
         .eq('id', self._userId);
-      if (res.error) { console.error('_changeLookback error:', res.error); await self._loadConnections(); return; }
-    } catch (e) { console.error('_changeLookback exception:', e); }
+      if (res.error) {
+        console.error('_changeLookback error:', res.error);
+        await self._loadConnections();
+        if (typeof window.showModalError === 'function') window.showModalError('Could not save lookback range. Please try again.');
+        return;
+      }
+    } catch (e) {
+      console.error('_changeLookback exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not save lookback range. Please try again.');
+    }
   },
 
   _validateUrl: function (raw) {
@@ -601,9 +660,16 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update({ website_urls: urls })
         .eq('id', self._userId);
-      if (res.error) { console.error('_saveWebsiteUrls error:', res.error); return; }
+      if (res.error) {
+        console.error('_saveWebsiteUrls error:', res.error);
+        if (typeof window.showModalError === 'function') window.showModalError('Could not save website URLs. Please try again.');
+        return;
+      }
       self._renderWebsiteList();
-    } catch (e) { console.error('_saveWebsiteUrls exception:', e); }
+    } catch (e) {
+      console.error('_saveWebsiteUrls exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not save website URLs. Please try again.');
+    }
   },
 
   _saveScanSettings: function () {
@@ -720,6 +786,7 @@ window.CL_SETTINGS_LOGIC = {
             console.error('Drive folder picker save error:', res.error);
             self._driveAccounts[entryIdx].folders = current;
             btn.disabled = false;
+            if (typeof window.showModalError === 'function') window.showModalError('Could not save folder selection. Please try again.');
             return;
           }
           if (isAdded) {
@@ -737,6 +804,7 @@ window.CL_SETTINGS_LOGIC = {
           console.error('Drive folder picker save exception:', saveErr);
           self._driveAccounts[entryIdx].folders = current;
           btn.disabled = false;
+          if (typeof window.showModalError === 'function') window.showModalError('Could not save folder selection. Please try again.');
         }
       };
     } catch (err) {
@@ -836,8 +904,16 @@ window.CL_SETTINGS_LOGIC = {
         .from('profiles')
         .update({ cl_connected_emails: arr })
         .eq('id', self._userId);
-      if (res.error) { console.error('_changeEmailLookback error:', res.error); await self._loadConnections(); return; }
-    } catch (e) { console.error('_changeEmailLookback exception:', e); }
+      if (res.error) {
+        console.error('_changeEmailLookback error:', res.error);
+        await self._loadConnections();
+        if (typeof window.showModalError === 'function') window.showModalError('Could not save email lookback. Please try again.');
+        return;
+      }
+    } catch (e) {
+      console.error('_changeEmailLookback exception:', e);
+      if (typeof window.showModalError === 'function') window.showModalError('Could not save email lookback. Please try again.');
+    }
   },
 
   // ── OneDrive — moved to cl-settings-onedrive.js (Task 27)

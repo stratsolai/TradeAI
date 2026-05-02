@@ -613,6 +613,7 @@ window.EA_LOGIC = {
 
     var result = await query;
     if (result.error) {
+      console.error('[EA] Email list load error:', result.error);
       if (listEl) listEl.innerHTML = '<div class="list-empty">Could not load emails.</div>';
       return;
     }
@@ -918,10 +919,16 @@ window.EA_LOGIC = {
         var errBody = await resp.text();
         console.error('[EA] Flag API error:', resp.status, errBody);
         revertFlag();
+        if (typeof window.showModalError === 'function') {
+          window.showModalError('Could not update flag. Please try again.');
+        }
       }
     } catch (e) {
       console.error('[EA] Flag error:', e.message);
       revertFlag();
+      if (typeof window.showModalError === 'function') {
+        window.showModalError('Could not update flag. Please try again.');
+      }
     }
   },
 
@@ -967,7 +974,10 @@ window.EA_LOGIC = {
         body: JSON.stringify({ sourceType: sourceType, sourceAccount: accountEmail })
       });
       var result;
-      try { result = await resp.json(); } catch (e) { result = { error: 'Server returned an invalid response' }; }
+      try { result = await resp.json(); } catch (e) {
+        console.error('[EA] Queue response parse error:', e && e.message);
+        result = { error: 'Server returned an invalid response' };
+      }
       if (!resp.ok || result.error) {
         console.error('[EA] Queue error for', accountEmail, ':', result.error || resp.status);
         return;

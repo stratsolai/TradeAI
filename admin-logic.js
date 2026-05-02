@@ -212,12 +212,12 @@ window.ADMIN_LOGIC = {
 
     var html = '<div class="admin-filter-search-row">'
       + '<input type="text" class="form-input" id="cust-search" placeholder="Search by email or business name">'
-      + '<span class="admin-filter-label">Signup after</span>'
+      + '<span class="filter-section-label">Signup after</span>'
       + '<input type="date" class="form-input" id="cust-after">'
-      + '<span class="admin-filter-label">Min tools</span>'
-      + '<input type="number" min="0" class="form-input" id="cust-min-tools" style="min-width:80px;">'
+      + '<span class="filter-section-label">Min tools</span>'
+      + '<input type="number" min="0" class="form-input form-input-sm" id="cust-min-tools">'
       + '</div>'
-      + '<div class="admin-filter-btns-row">'
+      + '<div class="filter-btns-row">'
       + '<button class="filter-btn filter-industry-btn">&#9783; Filter By Industry</button>'
       + '<button class="filter-btn filter-plan-btn">&#9776; Filter By Plan</button>'
       + '<button class="filter-btn filter-trial-btn">&#9783; Filter By Trial</button>'
@@ -228,7 +228,7 @@ window.ADMIN_LOGIC = {
       + '<div id="cust-plan-pills-wrap" style="display:none"><div class="filter-section-label">Plan</div><div id="cust-plan-pills" class="review-pill-row"></div></div>'
       + '<div id="cust-trial-pills-wrap" style="display:none"><div class="filter-section-label">Trial</div><div id="cust-trial-pills" class="review-pill-row"></div></div>'
       + '</div>'
-      + '<div id="cust-table-wrap"><div class="admin-loading">Loading customers…</div></div>';
+      + '<div id="cust-table-wrap"><div class="list-loading">Loading customers…</div></div>';
     container.innerHTML = html;
 
     self._wireCustomerFilters();
@@ -385,7 +385,7 @@ window.ADMIN_LOGIC = {
     var self = this;
     var wrap = document.getElementById('cust-table-wrap');
     if (!wrap) return;
-    wrap.innerHTML = '<div class="admin-loading">Loading customers…</div>';
+    wrap.innerHTML = '<div class="list-loading">Loading customers…</div>';
 
     // Fetch the full list once (no server-side filter params) — all
     // filter logic now runs client-side off self._customers, mirroring
@@ -398,7 +398,8 @@ window.ADMIN_LOGIC = {
       self._toolPricesByTool = d.tool_prices_by_tool || {};
       self._renderCustomerList();
     }).catch(function(err) {
-      wrap.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load customers: ' + err.message) + '</div>';
+      console.error('[admin] _fetchCustomers error:', err && err.message);
+      wrap.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load customers: ' + err.message) + '</div>';
     });
   },
 
@@ -407,17 +408,17 @@ window.ADMIN_LOGIC = {
     var wrap = document.getElementById('cust-table-wrap');
     if (!wrap) return;
     var rows = self._filterCustomers(self._customers || []);
-    var html = '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+    var html = '<div class="data-table-wrap"><table class="data-table"><thead><tr>'
       + '<th>Email</th><th>Business</th><th>Industry</th><th>Tools</th><th>Plan</th><th>Trial</th><th>MRR</th><th>Signed up</th>'
       + '</tr></thead><tbody>';
     if (rows.length === 0) {
-      html += '<tr><td colspan="8" class="admin-empty">No customers match those filters.</td></tr>';
+      html += '<tr><td colspan="8" class="list-empty">No customers match those filters.</td></tr>';
     } else {
       rows.forEach(function(c) {
         var inds = Array.isArray(c.industry) ? c.industry.join(', ') : (c.industry || '—');
         var tools = Array.isArray(c.activated_tools) ? c.activated_tools.length : 0;
         var mrr = self._customerMrr(c);
-        html += '<tr class="clickable" data-id="' + window.escHtml(c.id) + '">'
+        html += '<tr class="row-clickable" data-id="' + window.escHtml(c.id) + '">'
           + '<td>' + window.escHtml(c.email || '') + '</td>'
           + '<td>' + window.escHtml(c.business_name || '—') + '</td>'
           + '<td>' + window.escHtml(inds) + '</td>'
@@ -434,10 +435,10 @@ window.ADMIN_LOGIC = {
     var showingNote = rows.length === totalAvailable
       ? 'Showing ' + rows.length + ' customer' + (rows.length === 1 ? '' : 's') + '.'
       : 'Showing ' + rows.length + ' of ' + totalAvailable + ' customers.';
-    html += '<div class="admin-note" style="margin-top:8px;">' + showingNote + ' Click a row for full detail.</div>';
+    html += '<div class="note-box mt-sm">' + showingNote + ' Click a row for full detail.</div>';
     wrap.innerHTML = html;
 
-    wrap.querySelectorAll('tr.clickable').forEach(function(tr) {
+    wrap.querySelectorAll('tr.row-clickable').forEach(function(tr) {
       tr.addEventListener('click', function() {
         self._showCustomerDetail(tr.getAttribute('data-id'));
       });
@@ -565,11 +566,11 @@ window.ADMIN_LOGIC = {
   _renderRevenue: function() {
     var self = this;
     var container = document.getElementById('section-revenue');
-    container.innerHTML = '<div class="admin-loading">Loading revenue…</div>';
+    container.innerHTML = '<div class="list-loading">Loading revenue…</div>';
 
     self._fetchAdmin('admin-overview').then(function(d) {
       var m = d.metrics || {};
-      var html = '<div class="admin-metric-grid">'
+      var html = '<div class="stats-bar">'
         + self._statCard('MRR', self._formatMoney(m.mrr), '/mth', 'green')
         + self._statCard('ARR', self._formatMoney(m.arr), '/yr', 'green')
         + self._statCard('Avg Revenue / Customer', self._formatMoney(m.arpc), '/mth')
@@ -580,7 +581,7 @@ window.ADMIN_LOGIC = {
       // Revenue by bundle
       var rb = d.revenue_by_bundle || {};
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Revenue by Bundle</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;">';
+      html += '<div class="settings-rows settings-row-padded">';
       [
         ['STAX3', rb.stax3],
         ['STAX6', rb.stax6],
@@ -595,9 +596,9 @@ window.ADMIN_LOGIC = {
       var rt = d.revenue_by_tool || [];
       var diag = d.revenue_by_tool_diagnostic || {};
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Revenue by Tool</div></div>';
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tool</th><th>MRR</th></tr></thead><tbody>';
+      html += '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Tool</th><th>MRR</th></tr></thead><tbody>';
       if (rt.length === 0) {
-        html += '<tr><td colspan="2" class="admin-empty">' + window.escHtml(self._explainEmptyToolRevenue(diag)) + '</td></tr>';
+        html += '<tr><td colspan="2" class="list-empty">' + window.escHtml(self._explainEmptyToolRevenue(diag)) + '</td></tr>';
       } else {
         rt.forEach(function(t) {
           html += '<tr><td>' + window.escHtml(self._toolName(t.tool_id)) + '</td><td>' + self._formatMoney(t.mrr) + '/mth</td></tr>';
@@ -607,15 +608,15 @@ window.ADMIN_LOGIC = {
 
       // Diagnostic note when revenue_by_tool is empty but we have stripe data
       if (rt.length === 0 && diag && diag.unmatched_price_ids && diag.unmatched_price_ids.length > 0) {
-        html += '<div class="admin-note" style="font-family:monospace;font-size:11px;">Stripe priceIds not matched in tool_prices: ' + window.escHtml(diag.unmatched_price_ids.join(', ')) + '</div>';
+        html += '<div class="note-box code-text">Stripe priceIds not matched in tool_prices: ' + window.escHtml(diag.unmatched_price_ids.join(', ')) + '</div>';
       }
 
       // Recent cancellations
       var rc = d.recent_cancellations || [];
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Recent Cancellations (this month)</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;">';
+      html += '<div class="settings-rows settings-row-padded">';
       if (rc.length === 0) {
-        html += '<div class="admin-empty">No cancellations this month.</div>';
+        html += '<div class="list-empty">No cancellations this month.</div>';
       } else {
         rc.forEach(function(c) {
           var when = c.canceled_at ? new Date(c.canceled_at * 1000) : null;
@@ -629,11 +630,12 @@ window.ADMIN_LOGIC = {
       }
       html += '</div></div>';
 
-      html += '<div class="admin-note">12-month MRR trend chart not yet implemented — add when a charting library is selected.</div>';
+      html += '<div class="note-box">12-month MRR trend chart not yet implemented — add when a charting library is selected.</div>';
 
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load revenue: ' + err.message) + '</div>';
+      console.error('[admin] _renderRevenue error:', err && err.message);
+      container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load revenue: ' + err.message) + '</div>';
     });
   },
 
@@ -641,19 +643,19 @@ window.ADMIN_LOGIC = {
   _renderUsage: function() {
     var self = this;
     var container = document.getElementById('section-usage');
-    container.innerHTML = '<div class="admin-loading">Loading tool usage…</div>';
+    container.innerHTML = '<div class="list-loading">Loading tool usage…</div>';
 
     self._fetchAdmin('admin-data?section=usage').then(function(d) {
       var html = '';
       if (d.usage_note) {
-        html += '<div class="admin-note">' + window.escHtml(d.usage_note) + '</div>';
+        html += '<div class="note-box">' + window.escHtml(d.usage_note) + '</div>';
       }
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      html += '<div class="data-table-wrap"><table class="data-table"><thead><tr>'
         + '<th>Tool</th><th>Activations</th><th>Unique users (30d)</th><th>Total uses (30d)</th><th>Avg uses / user</th>'
         + '</tr></thead><tbody>';
       var tools = d.tools || [];
       if (tools.length === 0) {
-        html += '<tr><td colspan="5" class="admin-empty">No tools activated yet.</td></tr>';
+        html += '<tr><td colspan="5" class="list-empty">No tools activated yet.</td></tr>';
       } else {
         tools.forEach(function(t) {
           html += '<tr>'
@@ -668,7 +670,8 @@ window.ADMIN_LOGIC = {
       html += '</tbody></table></div>';
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load tool usage: ' + err.message) + '</div>';
+      console.error('[admin] _renderUsage error:', err && err.message);
+      container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load tool usage: ' + err.message) + '</div>';
     });
   },
 
@@ -676,19 +679,19 @@ window.ADMIN_LOGIC = {
   _renderErrors: function() {
     var self = this;
     var container = document.getElementById('section-errors');
-    container.innerHTML = '<div class="admin-loading">Loading errors…</div>';
+    container.innerHTML = '<div class="list-loading">Loading errors…</div>';
 
     self._fetchAdmin('admin-data?section=errors').then(function(d) {
       var html = '';
       if (d.note) {
-        html += '<div class="admin-note">' + window.escHtml(d.note) + '</div>';
+        html += '<div class="note-box">' + window.escHtml(d.note) + '</div>';
       }
-      html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
+      html += '<div class="data-table-wrap"><table class="data-table"><thead><tr>'
         + '<th>Time</th><th>Endpoint</th><th>User</th><th>Message</th><th>Details</th>'
         + '</tr></thead><tbody>';
       var errs = d.errors || [];
       if (errs.length === 0) {
-        html += '<tr><td colspan="5" class="admin-empty">No errors recorded.</td></tr>';
+        html += '<tr><td colspan="5" class="list-empty">No errors recorded.</td></tr>';
       } else {
         errs.forEach(function(e) {
           var details = '';
@@ -705,14 +708,15 @@ window.ADMIN_LOGIC = {
             + '<td>' + window.escHtml(e.endpoint || '—') + '</td>'
             + '<td>' + window.escHtml(e.user_id || '—') + '</td>'
             + '<td>' + window.escHtml(e.message || '—') + '</td>'
-            + '<td>' + (details ? '<details><summary>view</summary><pre style="font-size:11px;white-space:pre-wrap;word-break:break-word;">' + window.escHtml(details) + '</pre></details>' : '—') + '</td>'
+            + '<td>' + (details ? '<details><summary>view</summary><pre class="error-pre">' + window.escHtml(details) + '</pre></details>' : '—') + '</td>'
             + '</tr>';
         });
       }
       html += '</tbody></table></div>';
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load errors: ' + err.message) + '</div>';
+      console.error('[admin] _renderErrors error:', err && err.message);
+      container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load errors: ' + err.message) + '</div>';
     });
   },
 
@@ -723,7 +727,7 @@ window.ADMIN_LOGIC = {
   _renderInfrastructure: function() {
     var self = this;
     var container = document.getElementById('section-infrastructure');
-    container.innerHTML = '<div class="admin-loading">Loading infrastructure…</div>';
+    container.innerHTML = '<div class="list-loading">Loading infrastructure…</div>';
 
     Promise.all([
       self._fetchAdmin('admin-data?section=infrastructure'),
@@ -733,7 +737,8 @@ window.ADMIN_LOGIC = {
       var status = results[1] || {};
       self._renderInfrastructureContent(container, infra, status);
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load infrastructure: ' + err.message) + '</div>';
+      console.error('[admin] _renderInfrastructure error:', err && err.message);
+      container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load infrastructure: ' + err.message) + '</div>';
     });
   },
 
@@ -744,7 +749,7 @@ window.ADMIN_LOGIC = {
 
     // Row counts
     html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Key Table Row Counts</div></div>';
-    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody>';
+    html += '<div class="data-table-wrap"><table class="data-table"><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody>';
     Object.keys(counts).forEach(function(t) {
       var n = counts[t];
       html += '<tr><td>' + window.escHtml(t) + '</td><td>' + (n == null ? '— (table missing)' : n.toLocaleString('en-AU')) + '</td></tr>';
@@ -765,11 +770,11 @@ window.ADMIN_LOGIC = {
       + '<div class="settings-card-title">External Services</div>'
       + '<div class="settings-card-hint">Live status from each provider\'s status page'
       + (lastChecked ? ' — last checked ' + window.escHtml(lastChecked) : '')
-      + '. <button id="status-refresh" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:var(--note-font-size);padding:0;font-family:inherit;text-decoration:underline;">Refresh</button></div>'
+      + '. <button id="status-refresh" class="btn-link">Refresh</button></div>'
       + '</div>';
-    html += '<div class="settings-rows" style="padding:14px 20px;">';
+    html += '<div class="settings-rows settings-row-padded">';
     if (services.length === 0) {
-      html += '<div class="admin-empty">Status not available.</div>';
+      html += '<div class="list-empty">Status not available.</div>';
     } else {
       services.forEach(function(s) {
         var url = (s.page_url) || statusUrls[s.name] || '';
@@ -777,10 +782,10 @@ window.ADMIN_LOGIC = {
         // Manual providers (Stripe) — no JSON endpoint exists, so
         // render a "Check status" link instead of a dot + label.
         if (s.status === 'manual') {
-          html += '<div class="admin-status-row">'
-            + '<span class="admin-status-name">' + window.escHtml(s.name) + '</span>'
-            + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">No public status API</span>'
-            + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Check status &rarr;</a>' : '')
+          html += '<div class="status-row">'
+            + '<span class="status-row-name">' + window.escHtml(s.name) + '</span>'
+            + '<span class="status-row-meta">No public status API</span>'
+            + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn-link">Check status &rarr;</a>' : '')
             + '</div>';
           return;
         }
@@ -793,17 +798,17 @@ window.ADMIN_LOGIC = {
         else if (s.status === 'critical') { dotClass = 'down'; label = 'Critical outage'; }
         else { label = s.error ? 'Status unavailable' : 'Status unknown'; }
 
-        html += '<div class="admin-status-row">'
-          + '<span class="admin-status-dot ' + dotClass + '"></span>'
-          + '<span class="admin-status-name">' + window.escHtml(s.name) + '</span>'
-          + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">' + window.escHtml(label) + '</span>'
-          + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Status page</a>' : '')
+        html += '<div class="status-row">'
+          + '<span class="status-dot ' + dotClass + '"></span>'
+          + '<span class="status-row-name">' + window.escHtml(s.name) + '</span>'
+          + '<span class="status-row-meta">' + window.escHtml(label) + '</span>'
+          + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" class="btn-link">Status page</a>' : '')
           + '</div>';
       });
     }
     html += '</div></div>';
 
-    html += '<div class="admin-note">Storage usage and database size are not exposed via the Supabase JS client. Check the Supabase dashboard directly until a server-side integration is added.</div>';
+    html += '<div class="note-box">Storage usage and database size are not exposed via the Supabase JS client. Check the Supabase dashboard directly until a server-side integration is added.</div>';
 
     container.innerHTML = html;
 
