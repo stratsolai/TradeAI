@@ -146,18 +146,21 @@ AusTender RSS feed confirmed:
 - DV build and audit complete — API update required before
   testing
 
-### Task 26 — Dashboard Rebuild
-
-Dashboard rebuild complete. UI review required — main landing
-page looks flat and needs visual improvement.
-
-Status: waiting on UI review.
-
 ### Task 29 — Build Admin Page
 
-Status: Not started.
+Status: Audit in progress.
 
-Spec: StaxAI-Admin-Page-Spec-v1_0.docx in Project Knowledge.
+Admin page built. Platform Audit Standard v1.4 run — fixes in progress.
+
+Audit findings being addressed:
+- Cat 1: Split admin-logic.js (over 60K limit)
+- Cat 3: Fix auth gate flicker
+- Cat 5: Stylesheet compliance audit (hardcoded colours, inline styles)
+- Cat 6: Replace hardcoded industry list, fix silent catch blocks, fix MRR pricing
+- Cat 7: Error handling platform-wide audit
+- Cat 11: Remove redundant code (dead CSS, dead functions, orphaned api/admin-costs.js)
+- Cat 14: Component standards audit (~50 page-local classes)
+- Other: Change .ptab.settings-active to .ptab.active, refresh data on tab load, fix dashboard shell flicker
 
 ### Task 30 — Build Testing Environment
 
@@ -178,6 +181,28 @@ Status: Not started.
 
 Review StaxAI-Outstanding-Tasks-v1_3.docx and bring in additional
 tasks as required.
+
+### Task 33 — Page Load Speed & Shell Flicker
+
+Status: Not started.
+
+Platform-wide task to improve page load speeds and hide shell 
+elements until data is ready. Examples identified:
+- Dashboard YOUR STAX headings visible before data loads
+- Admin topbar flicker before auth check completes
+
+Review all authenticated pages and implement consistent 
+loading behaviour.
+
+### Task 34 — Error Handling Consistency
+
+Status: Not started.
+
+Platform-wide audit to establish consistent error handling 
+approach across all tools:
+- Modal errors vs inline errors — when to use each
+- Silent catch blocks — add console.error before fallback
+- Recommend and apply consistent pattern across all pages
 
 ---
 
@@ -318,6 +343,10 @@ tasks as required.
   authenticated pages.
 - Env var security fixed in Vercel — all sensitive keys
   marked as Sensitive.
+- Sidebar is platform-wide — .stax-sidebar-* classes are in 
+  staxai-auth.css and sidebar.js loads on all authenticated pages.
+  Hover expands as overlay, click locks open with smooth content 
+  shift.
 
 ---
 
@@ -425,7 +454,7 @@ Before starting any build work, Code must read these files in full:
 | Requirement | Detail |
 |---|---|
 | CSS source | staxai-auth.css is the single source of truth. Load it first. |
-| Colours | CSS variables only. Primary: var(--stax-primary) = #4A6D8C. Never hardcode colours. |
+| Colours | CSS variables only. Primary: var(--blue) = #4A6D8C. Never hardcode colours. |
 | New classes | DO NOT create new classes in staxai-auth.css without explicit owner permission. |
 | Missing styles | If a required style doesn't exist, STOP and report back. Do not invent classes. |
 | Component patterns | Match existing CL/EA/ID implementations exactly for dropdowns, tabs, cards, modals. |
