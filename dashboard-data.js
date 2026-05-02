@@ -89,15 +89,36 @@ window.DASH_DATA = (function() {
     // canonical bundle list and persist back to the row. Only stax-all
     // is auto-healed because its tool list is fixed; stax3/stax6 lists
     // are user-chosen and cannot be derived from bundle_tier alone.
-    if (_profile.bundle_tier === 'stax-all' && _activeTools.length === 0) {
+    //
+    // bundle_tier is normalised before comparison so a manually-entered
+    // test row with 'STAXALL' / 'stax_all' / 'Stax-All' / 'stax all'
+    // still triggers the heal. Diagnostic log fires unconditionally so
+    // we can see the raw values in the browser console when the heal
+    // doesn't fire as expected.
+    var rawTier = _profile.bundle_tier;
+    var normalisedTier = (typeof rawTier === 'string' ? rawTier : '')
+      .toLowerCase()
+      .replace(/[\s_]+/g, '-');
+    var isStaxAll = normalisedTier === 'stax-all' || normalisedTier === 'staxall';
+    console.log('[Dashboard] Profile state — bundle_tier:', JSON.stringify(rawTier),
+      '| normalised:', normalisedTier,
+      '| activated_tools:', JSON.stringify(_profile.activated_tools),
+      '| is_trial:', _profile.is_trial);
+
+    if (isStaxAll && _activeTools.length === 0) {
+      console.log('[Dashboard] Self-heal triggered — populating stax-all tools.');
       _activeTools = STAX_ALL_TOOLS.slice();
       _profile.activated_tools = _activeTools;
+      // Also normalise the tier value so the canonical 'stax-all'
+      // string lands in the row, preventing future ambiguity.
+      var healPayload = { activated_tools: _activeTools };
+      if (rawTier !== 'stax-all') healPayload.bundle_tier = 'stax-all';
       _supabase.from('profiles')
-        .update({ activated_tools: _activeTools })
+        .update(healPayload)
         .eq('id', user.id)
         .then(function(res) {
           if (res.error) console.error('[Dashboard] stax-all self-heal write error:', res.error.message || res.error);
-          else console.log('[Dashboard] Self-healed empty activated_tools for stax-all bundle');
+          else console.log('[Dashboard] Self-heal write succeeded.');
         });
     }
 
