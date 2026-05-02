@@ -759,14 +759,19 @@
         <div id="sp-section-mount"></div>
       </section>
 
-      <!-- Zone 2: Active tool tiles -->
-      <section class="dash-zone" id="zone-2-wrap">
+      <!-- Zone 2: Active tool tiles. Hidden until DASH_WIDGETS finishes
+           rendering — avoids a "YOUR STAX" heading appearing over an
+           empty tile grid while data loads. dashboard-data.js reveals
+           the section when the inner #zone-2 has been populated. -->
+      <section class="dash-zone" id="zone-2-wrap" style="display:none">
         <h2 class="dash-heading">YOUR <span class="accent">STAX</span></h2>
         <div class="tile-grid" id="zone-2"></div>
       </section>
 
-      <!-- Zone 3: More tools (Available grid only — Active/Available tab UI removed) -->
-      <section class="dash-zone" id="zone-3-wrap">
+      <!-- Zone 3: More tools (Available grid only — Active/Available tab
+           UI removed). Hidden until renderYourStax populates
+           #dash-more-stax, for the same reason as zone-2-wrap above. -->
+      <section class="dash-zone" id="zone-3-wrap" style="display:none">
         <h2 class="dash-heading">MORE <span class="accent">STAX</span></h2>
         <div id="dash-more-stax"></div>
       </section>

@@ -490,11 +490,6 @@ function round2(n) {
   return Math.round(n * 100) / 100;
 }
 
-function trendPercent(current, previous) {
-  if (!previous || previous === 0) return null;
-  return Math.round(((current - previous) / previous) * 1000) / 10;
-}
-
 // ── Auth ──────────────────────────────────────────────────────────
 async function requireAdmin(req) {
   const token = (req.headers.authorization || '').replace('Bearer ', '');

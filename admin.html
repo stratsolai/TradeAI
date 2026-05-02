@@ -14,6 +14,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
+    /* Hide topbar and page content until admin-logic.js confirms is_admin.
+       Pattern matches the auth gate on news-digest/content-library where
+       #page-wrap is display:none until session is confirmed — extended
+       here to also hide the topbar so non-admin users do not see a
+       branded page flash before redirect. The PWA mobile guard's own
+       overlay still renders because it injects an explicit override. */
+    body:not(.admin-authenticated) > nav.topbar,
+    body:not(.admin-authenticated) > #page-wrap { display: none; }
+
     .admin-container { max-width: var(--page-max-width); margin: 0 auto; padding: var(--page-padding); }
 
     /* Section container */
@@ -128,39 +137,6 @@
     .admin-filter-row { margin: 12px 0 0 0; padding: 12px 16px; background: var(--white); border: 1px solid var(--border); border-radius: var(--card-radius); }
     .admin-filter-row > div { margin-bottom: 8px; }
     .admin-filter-row > div:last-child { margin-bottom: 0; }
-
-    /* Manual entry form — API Cost Tracker */
-    .admin-entry-form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-      padding: 14px 16px;
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-radius: var(--card-radius);
-    }
-    .admin-entry-form .form-input { width: auto; min-width: 140px; }
-    .api-provider-wrap .lookback-dropdown { min-width: 200px; }
-
-    /* Provider cards — API Cost Tracker */
-    .admin-provider-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
-    }
-    .admin-provider-card {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      border-radius: var(--card-radius);
-      padding: 16px 20px;
-    }
-    .admin-provider-card.warn { border-left-color: var(--orange); }
-    .admin-provider-name { font-size: var(--section-title-font-size); font-weight: var(--font-weight-semibold); color: var(--text); margin-bottom: 4px; }
-    .admin-provider-purpose { font-size: var(--note-font-size); color: var(--text-muted); margin-bottom: 12px; }
-    .admin-provider-row { display: flex; justify-content: space-between; font-size: var(--note-font-size); padding: 4px 0; }
-    .admin-provider-row .label { color: var(--text-muted); }
 
     /* Service status row — Infrastructure */
     .admin-status-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
@@ -355,7 +331,7 @@
   </nav>
 
   <!-- PAGE -->
-  <div id="page-wrap" class="admin-container" style="display:none">
+  <div id="page-wrap" class="admin-container">
 
     <div class="page-header">
       <h1 class="page-title">Admin</h1>
@@ -366,7 +342,7 @@
          Overview's Profitability & Costs section per Profitability
          Dashboard Spec v1.0. -->
     <div class="tab-nav">
-      <button class="ptab settings-active" data-tab="overview">Dashboard Overview</button>
+      <button class="ptab active" data-tab="overview">Dashboard Overview</button>
       <button class="ptab" data-tab="customers">Customers</button>
       <button class="ptab" data-tab="revenue">Revenue</button>
       <button class="ptab" data-tab="usage">Tool Usage</button>
@@ -441,14 +417,20 @@
   <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
   <script src="/tools-data.js"></script>
+  <script src="/bp-industry-data.js"></script>
   <script src="/admin-logic.js"></script>
+  <script src="/admin-modules.js"></script>
   <script>
     (function() {
       var supabase = window.supabaseClient;
       if (!supabase) return;
-      if (window.ADMIN_LOGIC && typeof window.ADMIN_LOGIC.init === 'function') {
-        window.ADMIN_LOGIC.init(supabase);
-      }
+      supabase.auth.getSession().then(function(result) {
+        var session = result.data && result.data.session;
+        if (!session) { window.location.href = '/login'; return; }
+        if (window.ADMIN_LOGIC && typeof window.ADMIN_LOGIC.init === 'function') {
+          window.ADMIN_LOGIC.init(supabase, session.user);
+        }
+      });
     })();
   </script>
 </body>

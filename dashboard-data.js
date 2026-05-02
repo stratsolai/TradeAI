@@ -91,7 +91,19 @@ window.DASH_DATA = (function() {
       await window.DASH_WIDGETS.renderAll(_supabase, user.id, _activeTools);
     }
 
+    // Reveal YOUR STAX once tile content (or the empty-state placeholder)
+    // has been rendered into #zone-2 — the wrap is hidden in the shell
+    // so the heading does not flash over an empty grid.
+    var zone2Wrap = document.getElementById('zone-2-wrap');
+    if (zone2Wrap) zone2Wrap.style.display = '';
+
     renderYourStax(_activeTools);
+
+    // Reveal MORE STAX once renderYourStax has populated the available
+    // grid (or its "all activated" empty state).
+    var zone3Wrap = document.getElementById('zone-3-wrap');
+    if (zone3Wrap) zone3Wrap.style.display = '';
+
     wireTabSwitching();
     wireActivateButtons();
     wireToolBlocker();

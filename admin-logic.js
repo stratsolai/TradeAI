@@ -3,27 +3,19 @@ window.ADMIN_LOGIC = {
   _supabase: null,
   _user: null,
   _session: null,
-  _loaded: {},
+  _toolPricesByTool: {},
 
   // ── INIT ───────────────────────────────────────────────────────
-  init: async function(supabase) {
+  init: async function(supabase, user) {
     var self = this;
     self._supabase = supabase;
+    self._user = user || null;
 
     console.log('[admin] init started');
 
-    // Auth gate — redirects to /login if no session.
-    if (typeof window.requireAuth === 'function') {
-      var ok = await window.requireAuth();
-      if (!ok) {
-        console.log('[admin] requireAuth returned false — redirected to /login');
-        return;
-      }
-    }
-
     var sess = await supabase.auth.getSession();
     self._session = sess.data && sess.data.session;
-    self._user = self._session && self._session.user;
+    if (!self._user) self._user = self._session && self._session.user;
     if (!self._user) {
       console.error('[admin] No user in session — redirecting to /login');
       window.location.href = '/login';
@@ -71,7 +63,7 @@ window.ADMIN_LOGIC = {
     }
 
     console.log('[admin] is_admin check passed — revealing page');
-    document.getElementById('page-wrap').style.display = 'block';
+    document.body.classList.add('admin-authenticated');
 
     self._wireTabs();
     self._wireCustomerDetailClose();
@@ -79,16 +71,6 @@ window.ADMIN_LOGIC = {
   },
 
   // ── HELPERS ────────────────────────────────────────────────────
-  _esc: function(s) {
-    // shared-utils.escHtml does s.replace() without coercing first, so
-    // numbers, booleans, etc. throw. Always hand it a string.
-    var str = (s == null) ? '' : String(s);
-    if (typeof window.escHtml === 'function') return window.escHtml(str);
-    return str
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  },
-
   _toolName: function(id) {
     var tools = window.CORE_TOOLS || [];
     var t = tools.find(function(x) { return x.id === id; });
@@ -105,7 +87,10 @@ window.ADMIN_LOGIC = {
     if (!iso) return '—';
     try {
       return new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
-    } catch (e) { return '—'; }
+    } catch (e) {
+      console.error('[admin] _formatDate error:', e && e.message);
+      return '—';
+    }
   },
 
   _explainEmptyToolRevenue: function(diag) {
@@ -163,13 +148,15 @@ window.ADMIN_LOGIC = {
   },
 
   // ── TAB SWITCHING ──────────────────────────────────────────────
+  // Each click reloads the section data — no client-side caching, so the
+  // owner sees fresh figures on every click.
   _wireTabs: function() {
     var self = this;
     document.querySelectorAll('.ptab').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('settings-active'); });
+        document.querySelectorAll('.ptab').forEach(function(b) { b.classList.remove('active'); });
         document.querySelectorAll('.ptab-content').forEach(function(p) { p.classList.remove('active'); });
-        btn.classList.add('settings-active');
+        btn.classList.add('active');
         var tab = btn.getAttribute('data-tab');
         var panel = document.getElementById('tab-' + tab);
         if (panel) panel.classList.add('active');
@@ -179,8 +166,6 @@ window.ADMIN_LOGIC = {
   },
 
   _loadSection: function(tab) {
-    if (this._loaded[tab]) return; // cache — refresh requires reload
-    this._loaded[tab] = true;
     switch (tab) {
       case 'overview': return this._renderOverview();
       case 'customers': return this._renderCustomers();
@@ -190,419 +175,6 @@ window.ADMIN_LOGIC = {
       case 'infrastructure': return this._renderInfrastructure();
     }
   },
-
-  // ── SECTION 1: DASHBOARD OVERVIEW ──────────────────────────────
-  // Renders core platform metrics, the new Profitability & Costs
-  // section (per spec v1.0), and the existing quick-list cards.
-  _renderOverview: function() {
-    var self = this;
-    var container = document.getElementById('section-overview');
-    container.innerHTML = '<div class="admin-loading">Loading overview…</div>';
-
-    Promise.all([
-      self._fetchAdmin('admin-overview'),
-      self._fetchAdmin('admin-profitability').catch(function(e) {
-        console.error('[admin] profitability fetch failed:', e && e.message);
-        return { _error: e && e.message };
-      }),
-      self._fetchAdmin('admin-api-usage').catch(function() { return {}; })
-    ]).then(function(results) {
-      var d = results[0] || {};
-      var prof = results[1] || {};
-      var manual = results[2] || {};
-      self._renderOverviewContent(container, d, prof, manual);
-    }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load overview: ' + err.message) + '</div>';
-    });
-  },
-
-  _renderOverviewContent: function(container, d, prof, manual) {
-    var self = this;
-    var m = d.metrics || {};
-    var html = '<div class="admin-metric-grid">'
-      + self._statCard('Total Customers', m.total_customers, '')
-      + self._statCard('Active Subscriptions', m.active_subscriptions, '')
-      + self._statCard('MRR', self._formatMoney(m.mrr), '/mth', 'green')
-      + self._statCard('Churn This Month', (m.churn_count || 0) + ' (' + (m.churn_rate || 0) + '%)', '', m.churn_count > 0 ? 'red' : '')
-      + self._statCard('New Signups (7 days)', m.new_signups_7d, '', 'orange')
-      + self._statCard('Trial Users', m.trial_users, '', 'orange')
-      + '</div>';
-
-    // ── Profitability & Costs ──────────────────────────────────
-    html += self._buildProfitabilitySection(prof, manual);
-
-    // ── Quick lists ────────────────────────────────────────────
-    html += '<div class="admin-list-grid">';
-    html += self._listCard('Recent Signups', (d.recent_signups || []).map(function(p) {
-      return {
-        label: self._esc(p.business_name || p.email || p.id),
-        value: self._formatDate(p.created_at)
-      };
-    }));
-    html += self._listCard('Top Tools', (d.top_tools || []).map(function(t) {
-      return { label: self._esc(self._toolName(t.id)), value: t.count + ' active' };
-    }));
-    html += self._listCard('Industry Breakdown', (d.industry_breakdown || []).map(function(i) {
-      return { label: self._esc(i.industry), value: i.count };
-    }));
-    html += '</div>';
-
-    container.innerHTML = html;
-
-    // Wire interactivity for the profitability section after the
-    // DOM exists. _profData is stashed so the chart toggle handler
-    // and the manual-entry submit can read it back.
-    self._profData = prof;
-    self._wireProfitabilityChart();
-    self._wireProfManualForm();
-    self._wireProfManualDropdown();
-  },
-
-  _statCard: function(label, value, suffix, modifier) {
-    var cls = 'stat-card' + (modifier ? ' ' + modifier : '');
-    return '<div class="' + cls + '">'
-      + '<div class="stat-value">' + this._esc(value == null ? '—' : value) + (suffix ? '<span style="font-size:14px;color:var(--text-muted);"> ' + this._esc(suffix) + '</span>' : '') + '</div>'
-      + '<div class="stat-label">' + this._esc(label) + '</div>'
-      + '</div>';
-  },
-
-  _listCard: function(title, items) {
-    var html = '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">' + this._esc(title) + '</div></div>';
-    html += '<div class="settings-rows" style="padding:14px 20px;">';
-    if (!items || items.length === 0) {
-      html += '<div class="admin-empty">No data.</div>';
-    } else {
-      items.forEach(function(it) {
-        html += '<div class="admin-list-item"><span class="admin-list-item-label">' + (it.label || '—') + '</span><span class="admin-list-item-value">' + (it.value == null ? '—' : it.value) + '</span></div>';
-      });
-    }
-    html += '</div></div>';
-    return html;
-  },
-
-  // ── PROFITABILITY & COSTS — Dashboard Overview section ─────────
-  // Spec v1.0 — summary tiles, supplier status row, tool & customer
-  // profitability tables, 6-month margin trend chart (toggle Overall
-  // / By Tool / By Customer), and manual entry for providers without
-  // public usage APIs (Predis, REimagine).
-  _buildProfitabilitySection: function(prof, manual) {
-    var self = this;
-    if (prof && prof._error) {
-      return '<div class="admin-section-placeholder">'
-        + self._esc('Profitability data unavailable: ' + prof._error)
-        + '</div>';
-    }
-    if (!prof || !prof.summary) {
-      return '<div class="admin-section-placeholder">No profitability data yet — once api_usage rows exist for the current period this section will populate.</div>';
-    }
-
-    var s = prof.summary || {};
-    var marginPct = s.overall_margin_percent;
-    var marginColour = marginPct == null ? '' : (marginPct >= 80 ? 'green' : (marginPct >= 60 ? 'orange' : 'red'));
-    var alertsCount = s.alerts_count || 0;
-
-    var html = '<div class="settings-card-header" style="margin-top:24px;"><div class="settings-card-title">Profitability &amp; Costs</div><div class="settings-card-hint">Real-time margin and supplier health for ' + self._esc(prof.period || '') + '.</div></div>';
-
-    // Summary tiles
-    html += '<div class="prof-summary-grid">'
-      + self._statCard('Total Revenue', self._formatMoney(s.total_revenue), '/mth', 'green')
-      + self._statCard('Total Costs', self._formatMoney(s.total_costs), '/mth', s.total_costs > 0 ? 'orange' : '')
-      + self._statCard('Overall Margin', marginPct == null ? '—' : (marginPct + '%'), '', marginColour)
-      + self._statCard('Alerts', alertsCount, '', alertsCount > 0 ? 'red' : '')
-      + '</div>';
-
-    // Alert list — collapsed when zero, expanded when there are items.
-    if ((prof.alerts || []).length > 0) {
-      html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Alerts</div></div>';
-      html += '<div class="settings-rows" style="padding:14px 20px;">';
-      prof.alerts.forEach(function(a) {
-        var dotCls = a.severity === 'red' ? 'red' : (a.severity === 'amber' ? 'amber' : '');
-        html += '<div class="admin-list-item"><span class="admin-list-item-label"><span class="prof-status-dot ' + dotCls + '"></span>' + self._esc(a.message) + '</span><span class="admin-list-item-value">' + self._esc(a.kind.replace(/_/g, ' ')) + '</span></div>';
-      });
-      html += '</div></div>';
-    }
-
-    // Supplier status row
-    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Supplier Status</div><div class="settings-card-hint">Live spend and limit usage. Refreshed every 5 minutes.</div></div>';
-    html += '<div class="settings-rows" style="padding:14px 20px;"><div class="prof-supplier-row">';
-    (prof.suppliers || []).forEach(function(p) {
-      html += self._supplierCardHtml(p);
-    });
-    html += '</div></div></div>';
-
-    // Tool profitability
-    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Tool Profitability</div></div>';
-    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
-      + '<th>Tool</th><th>Revenue</th><th>Cost</th><th>Margin</th><th>Target</th><th>Status</th>'
-      + '</tr></thead><tbody>';
-    var tools = prof.tools || [];
-    if (tools.length === 0) {
-      html += '<tr><td colspan="6" class="admin-empty">No tool spend logged yet for this period.</td></tr>';
-    } else {
-      tools.forEach(function(t) {
-        html += '<tr>'
-          + '<td>' + self._esc(self._toolName(t.tool_id)) + '</td>'
-          + '<td>' + self._formatMoney(t.revenue) + '</td>'
-          + '<td>' + self._formatMoney(t.cost) + '</td>'
-          + '<td>' + (t.margin_percent == null ? '—' : t.margin_percent + '%') + '</td>'
-          + '<td>' + (t.target_percent != null ? t.target_percent + '%' : '—') + '</td>'
-          + '<td><span class="prof-status-dot ' + self._esc(t.status) + '"></span></td>'
-          + '</tr>';
-      });
-    }
-    html += '</tbody></table></div></div>';
-
-    // Customer profitability — top 10 by margin (worst first).
-    var customers = (prof.customers || []).slice(0, 10);
-    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Customer Profitability</div><div class="settings-card-hint">Worst margins first. Top 10 shown.</div></div>';
-    html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
-      + '<th>Customer</th><th>MRR</th><th>Cost</th><th>Margin</th><th>Threshold</th><th>Status</th>'
-      + '</tr></thead><tbody>';
-    if (customers.length === 0) {
-      html += '<tr><td colspan="6" class="admin-empty">No customer cost data yet.</td></tr>';
-    } else {
-      customers.forEach(function(c) {
-        var who = c.business_name || c.email || c.user_id;
-        html += '<tr>'
-          + '<td>' + self._esc(who) + '</td>'
-          + '<td>' + self._formatMoney(c.revenue) + '</td>'
-          + '<td>' + self._formatMoney(c.cost) + '</td>'
-          + '<td>' + (c.margin_percent == null ? '—' : c.margin_percent + '%') + '</td>'
-          + '<td>' + c.threshold_percent + '%</td>'
-          + '<td><span class="prof-status-dot ' + self._esc(c.status) + '"></span></td>'
-          + '</tr>';
-      });
-    }
-    html += '</tbody></table></div></div>';
-
-    // Trend chart
-    html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Margin Trend (6 months)</div></div>';
-    html += '<div class="prof-chart-toggle-row">'
-      + '<button class="prof-chart-toggle active" data-mode="overall">Overall</button>'
-      + '<button class="prof-chart-toggle" data-mode="by_tool">By Tool</button>'
-      + '</div>';
-    html += '<div class="prof-chart-wrap"><canvas id="prof-trend-chart"></canvas></div>';
-    html += '</div>';
-
-    // Manual tracking — Predis & REimagine. Spec section 4.4 / 4.6.
-    var manualProviders = [
-      { id: 'predis', name: 'Predis.ai' },
-      { id: 'reimagine', name: 'REimagine Home' }
-    ];
-    var manualEntries = (manual.entries || []).filter(function(e) {
-      return e.provider === 'predis' || e.provider === 'reimagine';
-    });
-
-    html += '<div class="settings-card prof-manual-card"><div class="settings-card-header"><div class="settings-card-title">Manual Tracking</div><div class="settings-card-hint">Providers without usage APIs. Enter monthly figures from each provider\'s dashboard.</div></div>';
-    html += '<div class="prof-manual-form" id="prof-manual-form">'
-      + '<span class="lookback-dropdown-wrap prof-manual-wrap">'
-      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="prof-manual-provider" data-value="' + self._esc(manualProviders[0].id) + '">' + self._esc(manualProviders[0].name) + '</button>'
-      + '<div class="lookback-dropdown-menu" id="prof-manual-provider-menu">'
-      + manualProviders.map(function(p, i) {
-        return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(p.id) + '">' + self._esc(p.name) + '</button>';
-      }).join('')
-      + '</div>'
-      + '</span>'
-      + '<input type="text" class="form-input" id="prof-manual-period" placeholder="YYYY-MM" value="' + self._esc(prof.period || '') + '">'
-      + '<input type="text" class="form-input" id="prof-manual-value" placeholder="Usage">'
-      + '<input type="number" step="0.01" class="form-input" id="prof-manual-cost" placeholder="Cost AUD">'
-      + '<input type="text" class="form-input" id="prof-manual-notes" placeholder="Notes (optional)">'
-      + '<button class="btn-add-connection" id="prof-manual-submit">+ Add Entry</button>'
-      + '</div>';
-    html += '<div class="admin-table-wrap" style="margin-top:12px;"><table class="admin-table"><thead><tr>'
-      + '<th>Provider</th><th>Period</th><th>Usage</th><th>Cost</th><th>Notes</th><th>Entered</th>'
-      + '</tr></thead><tbody>';
-    if (manualEntries.length === 0) {
-      html += '<tr><td colspan="6" class="admin-empty">No manual entries yet.</td></tr>';
-    } else {
-      manualEntries.forEach(function(e) {
-        html += '<tr>'
-          + '<td>' + self._esc(e.provider || '') + '</td>'
-          + '<td>' + self._esc(e.period || '') + '</td>'
-          + '<td>' + self._esc(e.usage_value || '—') + '</td>'
-          + '<td>' + (typeof e.cost_estimate === 'number' ? self._formatMoney(e.cost_estimate) : '—') + '</td>'
-          + '<td>' + self._esc(e.notes || '') + '</td>'
-          + '<td>' + self._formatDate(e.entered_at) + '</td>'
-          + '</tr>';
-      });
-    }
-    html += '</tbody></table></div></div>';
-
-    return html;
-  },
-
-  // Render a supplier card. Picks the limit with the highest used %
-  // to drive the bar — that's the limit the owner actually needs to
-  // see. Cards turn amber when any limit hits its alert threshold and
-  // red when any limit is at 95%+.
-  _supplierCardHtml: function(p) {
-    var self = this;
-    var topLimit = null;
-    (p.limits || []).forEach(function(l) {
-      if (!topLimit || (l.used_percent != null && l.used_percent > (topLimit.used_percent || -1))) topLimit = l;
-    });
-    var pct = topLimit && topLimit.used_percent != null ? topLimit.used_percent : null;
-    var cls = '';
-    var barCls = '';
-    if (pct != null && pct >= 95) { cls = 'alert'; barCls = 'alert'; }
-    else if (pct != null && topLimit && pct >= (topLimit.alert_at_percent || 80)) { cls = 'warn'; barCls = 'warn'; }
-
-    var costLine = self._formatMoney(p.cost_this_month || 0);
-    var trendLine = '';
-    if (typeof p.cost_last_month === 'number' && p.cost_last_month > 0) {
-      var diff = ((p.cost_this_month || 0) - p.cost_last_month) / p.cost_last_month * 100;
-      var arrow = diff > 0 ? '↑' : (diff < 0 ? '↓' : '→');
-      trendLine = arrow + ' ' + Math.abs(Math.round(diff * 10) / 10) + '% vs last month';
-    }
-
-    var html = '<div class="prof-supplier-card ' + cls + '">'
-      + '<div class="prof-supplier-name">' + self._esc(p.name) + '</div>'
-      + '<div class="prof-supplier-cost">' + costLine + '</div>'
-      + '<div class="prof-supplier-trend">' + self._esc(trendLine) + '</div>';
-
-    if (topLimit) {
-      var pctDisplay = pct == null ? '—' : pct + '%';
-      html += '<div class="prof-supplier-bar-wrap"><div class="prof-supplier-bar ' + barCls + '" style="width:' + (pct != null ? Math.min(100, pct) : 0) + '%;"></div></div>';
-      html += '<div class="prof-supplier-limit-line">' + self._esc(topLimit.limit_type) + ': ' + (topLimit.current_usage || 0) + ' / ' + (topLimit.limit_value || 0) + ' (' + pctDisplay + ')</div>';
-    } else if (p.name === 'vercel' && p.cost_this_month === 0) {
-      html += '<div class="prof-supplier-limit-line">No public dollar API — estimate from /v1/usage if VERCEL_API_TOKEN configured.</div>';
-    }
-
-    html += '</div>';
-    return html;
-  },
-
-  // Build / rebuild the trend chart. Mode is 'overall' or 'by_tool'.
-  // Chart.js is loaded globally in admin.html so we reference it via
-  // window.Chart. The chart instance is stashed on self so toggling
-  // mode destroys the previous chart cleanly.
-  _wireProfitabilityChart: function() {
-    var self = this;
-    var canvas = document.getElementById('prof-trend-chart');
-    if (!canvas) return;
-    if (typeof window.Chart === 'undefined') {
-      canvas.parentElement.innerHTML = '<div class="admin-empty">Chart library not loaded.</div>';
-      return;
-    }
-
-    function render(mode) {
-      if (self._profChart) { self._profChart.destroy(); self._profChart = null; }
-      var trend = (self._profData && self._profData.trend) || {};
-      var periods = trend.periods || [];
-      var datasets;
-      if (mode === 'by_tool') {
-        var byTool = trend.by_tool || {};
-        var palette = ['#4A6D8C','#E07A5F','#3D5A80','#81B29A','#F2CC8F','#B56576','#6D6875','#B5838D'];
-        var keys = Object.keys(byTool).slice(0, 8);
-        datasets = keys.map(function(tid, i) {
-          return {
-            label: self._toolName(tid),
-            data: byTool[tid].map(function(p) { return p.margin_percent; }),
-            borderColor: palette[i % palette.length],
-            backgroundColor: 'transparent',
-            tension: 0.2
-          };
-        });
-        if (datasets.length === 0) {
-          datasets = [{ label: 'No per-tool data', data: periods.map(function() { return null; }), borderColor: '#999' }];
-        }
-      } else {
-        var overall = trend.overall || [];
-        datasets = [{
-          label: 'Overall margin %',
-          data: overall.map(function(p) { return p.margin_percent; }),
-          borderColor: '#4A6D8C',
-          backgroundColor: 'rgba(74, 109, 140, 0.1)',
-          fill: true,
-          tension: 0.2
-        }];
-      }
-
-      self._profChart = new window.Chart(canvas.getContext('2d'), {
-        type: 'line',
-        data: { labels: periods, datasets: datasets },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: datasets.length > 1, position: 'bottom' } },
-          scales: {
-            y: { beginAtZero: false, ticks: { callback: function(v) { return v + '%'; } } }
-          }
-        }
-      });
-    }
-
-    render('overall');
-
-    document.querySelectorAll('.prof-chart-toggle').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.prof-chart-toggle').forEach(function(b) { b.classList.remove('active'); });
-        btn.classList.add('active');
-        render(btn.getAttribute('data-mode'));
-      });
-    });
-  },
-
-  _wireProfManualForm: function() {
-    var self = this;
-    var btn = document.getElementById('prof-manual-submit');
-    if (!btn) return;
-    btn.addEventListener('click', function() {
-      var providerBtn = document.getElementById('prof-manual-provider');
-      var provider = providerBtn ? providerBtn.getAttribute('data-value') : '';
-      var period = document.getElementById('prof-manual-period').value.trim();
-      var usage = document.getElementById('prof-manual-value').value.trim();
-      var cost = document.getElementById('prof-manual-cost').value.trim();
-      var notes = document.getElementById('prof-manual-notes').value.trim();
-      if (!provider || !period) { self._showError('Provider and period are required.'); return; }
-      btn.disabled = true; btn.textContent = 'Saving…';
-      self._postAdmin('admin-api-usage', {
-        provider: provider,
-        period: period,
-        usage_value: usage || null,
-        cost_estimate: cost ? parseFloat(cost) : null,
-        notes: notes || null
-      }).then(function() {
-        // Reload the overview so the entry shows in history. Force
-        // re-fetch by clearing the cache flag.
-        self._loaded['overview'] = false;
-        self._renderOverview();
-        self._loaded['overview'] = true;
-      }).catch(function(err) {
-        self._showError('Could not save entry: ' + err.message);
-      }).finally(function() {
-        btn.disabled = false; btn.textContent = '+ Add Entry';
-      });
-    });
-  },
-
-  _wireProfManualDropdown: function() {
-    var btn = document.getElementById('prof-manual-provider');
-    var menu = document.getElementById('prof-manual-provider-menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      menu.classList.toggle('open');
-    });
-    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
-      item.addEventListener('click', function() {
-        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
-        item.classList.add('active');
-        btn.setAttribute('data-value', item.getAttribute('data-value'));
-        btn.textContent = item.textContent;
-        menu.classList.remove('open');
-      });
-    });
-    document.addEventListener('click', function() { menu.classList.remove('open'); });
-  },
-
-  // ── API COST TRACKER (REMOVED) ─────────────────────────────────
-  // The standalone tab was removed in Profitability Dashboard Spec
-  // v1.0 — all cost data is now consolidated into the Profitability
-  // & Costs section on Dashboard Overview. Manual entry for Predis
-  // and REimagine moved to the same section. The api-costs endpoint
-  // (api/admin-costs.js) is still available for ad-hoc use but is
-  // no longer rendered as a tab.
 
   _timeAgo: function(iso) {
     if (!iso) return '';
@@ -745,9 +317,14 @@ window.ADMIN_LOGIC = {
     }
   },
 
+  // Industry options come from window.BP_INDUSTRY_DATA — the canonical
+  // industry list used by signup, BP, and every tool. Avoids hardcoding a
+  // separate list here and ensures filter values match what is stored on
+  // profiles.industry (which is the group's display name).
   _renderCustomerFilterPills: function() {
     var self = this;
-    var industries = ['pool','plumber','electrician','builder','hvac','fabricator','cleaner','landscaper','manufacturer','concreter','handyman'];
+    var industryGroups = (window.BP_INDUSTRY_DATA && window.BP_INDUSTRY_DATA.groups) || [];
+    var industries = industryGroups.map(function(g) { return g.name; });
     var plans = [
       { value: 'stax3', label: 'STAX3' },
       { value: 'stax6', label: 'STAX6' },
@@ -765,7 +342,7 @@ window.ADMIN_LOGIC = {
       el.innerHTML = items.map(function(it) {
         var id = getId(it);
         var isActive = activeArr.indexOf(id) > -1;
-        return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-value="' + self._esc(id) + '">' + self._esc(getLabel(it)) + '</button>';
+        return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-value="' + window.escHtml(id) + '">' + window.escHtml(getLabel(it)) + '</button>';
       }).join('');
       el.querySelectorAll('.filter-pill').forEach(function(pill) {
         pill.addEventListener('click', function() {
@@ -804,44 +381,6 @@ window.ADMIN_LOGIC = {
     if (btnT && !btnT.classList.contains('open')) btnT.classList.toggle('active', f.trial.length > 0);
   },
 
-  // Render a .lookback-dropdown trigger + menu. options is
-  // [{ value, label }, ...]. The first option is shown as the initial
-  // label and stored in data-value on the trigger.
-  _dropdownHtml: function(id, wrapClass, options) {
-    var self = this;
-    var first = options[0] || { value: '', label: '—' };
-    var html = '<span class="lookback-dropdown-wrap ' + self._esc(wrapClass) + '">'
-      + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="' + self._esc(id) + '" data-value="' + self._esc(first.value) + '">' + self._esc(first.label) + '</button>'
-      + '<div class="lookback-dropdown-menu" id="' + self._esc(id) + '-menu">';
-    options.forEach(function(opt, i) {
-      html += '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + self._esc(opt.value) + '">' + self._esc(opt.label) + '</button>';
-    });
-    html += '</div></span>';
-    return html;
-  },
-
-  // Wire a .lookback-dropdown trigger by id. Picking an item updates
-  // the trigger's data-value + visible label and closes the menu.
-  _wireDropdown: function(btnId) {
-    var btn = document.getElementById(btnId);
-    var menu = document.getElementById(btnId + '-menu');
-    if (!btn || !menu) return;
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      menu.classList.toggle('open');
-    });
-    menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
-      item.addEventListener('click', function() {
-        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
-        item.classList.add('active');
-        btn.setAttribute('data-value', item.getAttribute('data-value'));
-        btn.textContent = item.textContent;
-        menu.classList.remove('open');
-      });
-    });
-    document.addEventListener('click', function() { menu.classList.remove('open'); });
-  },
-
   _fetchCustomers: function() {
     var self = this;
     var wrap = document.getElementById('cust-table-wrap');
@@ -853,9 +392,13 @@ window.ADMIN_LOGIC = {
     // cl-review which also loads once and filters on render.
     self._fetchAdmin('admin-customers').then(function(d) {
       self._customers = d.customers || [];
+      // Tool prices map (tool_id → AUD/month) returned alongside the
+      // customer list. Used by _customerMrr to derive each customer's
+      // MRR contribution from their activated_tools array.
+      self._toolPricesByTool = d.tool_prices_by_tool || {};
       self._renderCustomerList();
     }).catch(function(err) {
-      wrap.innerHTML = '<div class="admin-empty">' + self._esc('Could not load customers: ' + err.message) + '</div>';
+      wrap.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load customers: ' + err.message) + '</div>';
     });
   },
 
@@ -874,12 +417,12 @@ window.ADMIN_LOGIC = {
         var inds = Array.isArray(c.industry) ? c.industry.join(', ') : (c.industry || '—');
         var tools = Array.isArray(c.activated_tools) ? c.activated_tools.length : 0;
         var mrr = self._customerMrr(c);
-        html += '<tr class="clickable" data-id="' + self._esc(c.id) + '">'
-          + '<td>' + self._esc(c.email || '') + '</td>'
-          + '<td>' + self._esc(c.business_name || '—') + '</td>'
-          + '<td>' + self._esc(inds) + '</td>'
+        html += '<tr class="clickable" data-id="' + window.escHtml(c.id) + '">'
+          + '<td>' + window.escHtml(c.email || '') + '</td>'
+          + '<td>' + window.escHtml(c.business_name || '—') + '</td>'
+          + '<td>' + window.escHtml(inds) + '</td>'
           + '<td>' + tools + '</td>'
-          + '<td>' + self._esc(c.bundle_tier || (tools > 0 ? 'individual' : '—')) + '</td>'
+          + '<td>' + window.escHtml(c.bundle_tier || (tools > 0 ? 'individual' : '—')) + '</td>'
           + '<td>' + (c.is_trial ? 'Trial' : 'Paid') + '</td>'
           + '<td>' + (mrr != null ? self._formatMoney(mrr) : '—') + '</td>'
           + '<td>' + self._formatDate(c.created_at) + '</td>'
@@ -951,19 +494,19 @@ window.ADMIN_LOGIC = {
     });
   },
 
-  // Approximate MRR from activated tools using the live tool_prices map
-  // would need an extra fetch; for now derive from CORE_TOOLS hardcoded prices.
+  // Approximate MRR by summing the customer's activated tool prices.
+  // Prices come from the tool_prices Supabase table via the admin-customers
+  // response (server-side fetch) — never from CORE_TOOLS, which is a
+  // hardcoded fallback only. Bundle-tier customers have their MRR
+  // calculated separately via the bundle priceId pipeline (admin-overview).
   _customerMrr: function(c) {
     if (c.is_trial) return 0;
-    var tools = window.CORE_TOOLS || [];
+    var prices = this._toolPricesByTool || {};
     var arr = Array.isArray(c.activated_tools) ? c.activated_tools : [];
     var sum = 0;
     arr.forEach(function(id) {
-      var t = tools.find(function(x) { return x.id === id; });
-      if (t && t.price) {
-        var match = String(t.price).match(/\$\s*([\d.]+)/);
-        if (match) sum += parseFloat(match[1]);
-      }
+      var p = prices[id];
+      if (typeof p === 'number' && !isNaN(p)) sum += p;
     });
     return Math.round(sum);
   },
@@ -993,8 +536,8 @@ window.ADMIN_LOGIC = {
     var html = '';
     rows.forEach(function(r) {
       html += '<div class="admin-detail-row">'
-        + '<span class="admin-detail-label">' + self._esc(r[0]) + '</span>'
-        + '<span class="admin-detail-value">' + self._esc(r[1]) + '</span>'
+        + '<span class="admin-detail-label">' + window.escHtml(r[0]) + '</span>'
+        + '<span class="admin-detail-value">' + window.escHtml(r[1]) + '</span>'
         + '</div>';
     });
     bodyEl.innerHTML = html;
@@ -1044,7 +587,7 @@ window.ADMIN_LOGIC = {
         ['STAX All', rb['stax-all']],
         ['Individual tools', rb.individual]
       ].forEach(function(r) {
-        html += '<div class="admin-list-item"><span class="admin-list-item-label">' + self._esc(r[0]) + '</span><span class="admin-list-item-value">' + self._formatMoney(r[1] || 0) + '/mth</span></div>';
+        html += '<div class="admin-list-item"><span class="admin-list-item-label">' + window.escHtml(r[0]) + '</span><span class="admin-list-item-value">' + self._formatMoney(r[1] || 0) + '/mth</span></div>';
       });
       html += '</div></div>';
 
@@ -1054,17 +597,17 @@ window.ADMIN_LOGIC = {
       html += '<div class="settings-card"><div class="settings-card-header"><div class="settings-card-title">Revenue by Tool</div></div>';
       html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Tool</th><th>MRR</th></tr></thead><tbody>';
       if (rt.length === 0) {
-        html += '<tr><td colspan="2" class="admin-empty">' + self._esc(self._explainEmptyToolRevenue(diag)) + '</td></tr>';
+        html += '<tr><td colspan="2" class="admin-empty">' + window.escHtml(self._explainEmptyToolRevenue(diag)) + '</td></tr>';
       } else {
         rt.forEach(function(t) {
-          html += '<tr><td>' + self._esc(self._toolName(t.tool_id)) + '</td><td>' + self._formatMoney(t.mrr) + '/mth</td></tr>';
+          html += '<tr><td>' + window.escHtml(self._toolName(t.tool_id)) + '</td><td>' + self._formatMoney(t.mrr) + '/mth</td></tr>';
         });
       }
       html += '</tbody></table></div></div>';
 
       // Diagnostic note when revenue_by_tool is empty but we have stripe data
       if (rt.length === 0 && diag && diag.unmatched_price_ids && diag.unmatched_price_ids.length > 0) {
-        html += '<div class="admin-note" style="font-family:monospace;font-size:11px;">Stripe priceIds not matched in tool_prices: ' + self._esc(diag.unmatched_price_ids.join(', ')) + '</div>';
+        html += '<div class="admin-note" style="font-family:monospace;font-size:11px;">Stripe priceIds not matched in tool_prices: ' + window.escHtml(diag.unmatched_price_ids.join(', ')) + '</div>';
       }
 
       // Recent cancellations
@@ -1081,7 +624,7 @@ window.ADMIN_LOGIC = {
           // order, so deleted customers (where the expand returns a
           // sentinel) still get something readable.
           var who = c.customer_name || c.customer_email || c.customer_id || '—';
-          html += '<div class="admin-list-item"><span class="admin-list-item-label">' + self._esc(label) + ' &middot; ' + self._esc(who) + '</span><span class="admin-list-item-value">' + (when ? when.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '—') + '</span></div>';
+          html += '<div class="admin-list-item"><span class="admin-list-item-label">' + window.escHtml(label) + ' &middot; ' + window.escHtml(who) + '</span><span class="admin-list-item-value">' + (when ? when.toLocaleDateString('en-AU', { day: 'numeric', month: 'short' }) : '—') + '</span></div>';
         });
       }
       html += '</div></div>';
@@ -1090,7 +633,7 @@ window.ADMIN_LOGIC = {
 
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load revenue: ' + err.message) + '</div>';
+      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load revenue: ' + err.message) + '</div>';
     });
   },
 
@@ -1103,7 +646,7 @@ window.ADMIN_LOGIC = {
     self._fetchAdmin('admin-data?section=usage').then(function(d) {
       var html = '';
       if (d.usage_note) {
-        html += '<div class="admin-note">' + self._esc(d.usage_note) + '</div>';
+        html += '<div class="admin-note">' + window.escHtml(d.usage_note) + '</div>';
       }
       html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
         + '<th>Tool</th><th>Activations</th><th>Unique users (30d)</th><th>Total uses (30d)</th><th>Avg uses / user</th>'
@@ -1114,7 +657,7 @@ window.ADMIN_LOGIC = {
       } else {
         tools.forEach(function(t) {
           html += '<tr>'
-            + '<td>' + self._esc(self._toolName(t.tool_id)) + '</td>'
+            + '<td>' + window.escHtml(self._toolName(t.tool_id)) + '</td>'
             + '<td>' + t.activations + '</td>'
             + '<td>' + t.unique_users_30d + '</td>'
             + '<td>' + t.total_uses_30d + '</td>'
@@ -1125,7 +668,7 @@ window.ADMIN_LOGIC = {
       html += '</tbody></table></div>';
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load tool usage: ' + err.message) + '</div>';
+      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load tool usage: ' + err.message) + '</div>';
     });
   },
 
@@ -1138,7 +681,7 @@ window.ADMIN_LOGIC = {
     self._fetchAdmin('admin-data?section=errors').then(function(d) {
       var html = '';
       if (d.note) {
-        html += '<div class="admin-note">' + self._esc(d.note) + '</div>';
+        html += '<div class="admin-note">' + window.escHtml(d.note) + '</div>';
       }
       html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr>'
         + '<th>Time</th><th>Endpoint</th><th>User</th><th>Message</th><th>Details</th>'
@@ -1152,21 +695,24 @@ window.ADMIN_LOGIC = {
           if (e.details) {
             try {
               details = typeof e.details === 'string' ? e.details : JSON.stringify(e.details);
-            } catch (ex) { details = ''; }
+            } catch (ex) {
+              console.error('[admin] _renderErrors stringify failed:', ex && ex.message);
+              details = '';
+            }
           }
           html += '<tr>'
-            + '<td>' + self._esc(e.created_at ? new Date(e.created_at).toLocaleString('en-AU') : '—') + '</td>'
-            + '<td>' + self._esc(e.endpoint || '—') + '</td>'
-            + '<td>' + self._esc(e.user_id || '—') + '</td>'
-            + '<td>' + self._esc(e.message || '—') + '</td>'
-            + '<td>' + (details ? '<details><summary>view</summary><pre style="font-size:11px;white-space:pre-wrap;word-break:break-word;">' + self._esc(details) + '</pre></details>' : '—') + '</td>'
+            + '<td>' + window.escHtml(e.created_at ? new Date(e.created_at).toLocaleString('en-AU') : '—') + '</td>'
+            + '<td>' + window.escHtml(e.endpoint || '—') + '</td>'
+            + '<td>' + window.escHtml(e.user_id || '—') + '</td>'
+            + '<td>' + window.escHtml(e.message || '—') + '</td>'
+            + '<td>' + (details ? '<details><summary>view</summary><pre style="font-size:11px;white-space:pre-wrap;word-break:break-word;">' + window.escHtml(details) + '</pre></details>' : '—') + '</td>'
             + '</tr>';
         });
       }
       html += '</tbody></table></div>';
       container.innerHTML = html;
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load errors: ' + err.message) + '</div>';
+      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load errors: ' + err.message) + '</div>';
     });
   },
 
@@ -1187,7 +733,7 @@ window.ADMIN_LOGIC = {
       var status = results[1] || {};
       self._renderInfrastructureContent(container, infra, status);
     }).catch(function(err) {
-      container.innerHTML = '<div class="admin-empty">' + self._esc('Could not load infrastructure: ' + err.message) + '</div>';
+      container.innerHTML = '<div class="admin-empty">' + window.escHtml('Could not load infrastructure: ' + err.message) + '</div>';
     });
   },
 
@@ -1201,7 +747,7 @@ window.ADMIN_LOGIC = {
     html += '<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>Table</th><th>Rows</th></tr></thead><tbody>';
     Object.keys(counts).forEach(function(t) {
       var n = counts[t];
-      html += '<tr><td>' + self._esc(t) + '</td><td>' + (n == null ? '— (table missing)' : n.toLocaleString('en-AU')) + '</td></tr>';
+      html += '<tr><td>' + window.escHtml(t) + '</td><td>' + (n == null ? '— (table missing)' : n.toLocaleString('en-AU')) + '</td></tr>';
     });
     html += '</tbody></table></div></div>';
 
@@ -1218,7 +764,7 @@ window.ADMIN_LOGIC = {
     html += '<div class="settings-card"><div class="settings-card-header">'
       + '<div class="settings-card-title">External Services</div>'
       + '<div class="settings-card-hint">Live status from each provider\'s status page'
-      + (lastChecked ? ' — last checked ' + self._esc(lastChecked) : '')
+      + (lastChecked ? ' — last checked ' + window.escHtml(lastChecked) : '')
       + '. <button id="status-refresh" style="background:none;border:none;color:var(--blue);cursor:pointer;font-size:var(--note-font-size);padding:0;font-family:inherit;text-decoration:underline;">Refresh</button></div>'
       + '</div>';
     html += '<div class="settings-rows" style="padding:14px 20px;">';
@@ -1232,9 +778,9 @@ window.ADMIN_LOGIC = {
         // render a "Check status" link instead of a dot + label.
         if (s.status === 'manual') {
           html += '<div class="admin-status-row">'
-            + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
+            + '<span class="admin-status-name">' + window.escHtml(s.name) + '</span>'
             + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">No public status API</span>'
-            + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Check status &rarr;</a>' : '')
+            + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Check status &rarr;</a>' : '')
             + '</div>';
           return;
         }
@@ -1249,9 +795,9 @@ window.ADMIN_LOGIC = {
 
         html += '<div class="admin-status-row">'
           + '<span class="admin-status-dot ' + dotClass + '"></span>'
-          + '<span class="admin-status-name">' + self._esc(s.name) + '</span>'
-          + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">' + self._esc(label) + '</span>'
-          + (url ? '<a href="' + self._esc(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Status page</a>' : '')
+          + '<span class="admin-status-name">' + window.escHtml(s.name) + '</span>'
+          + '<span style="color:var(--text-muted);font-size:var(--note-font-size);margin-right:12px;">' + window.escHtml(label) + '</span>'
+          + (url ? '<a href="' + window.escHtml(url) + '" target="_blank" rel="noopener noreferrer" style="font-size:var(--note-font-size);color:var(--blue);">Status page</a>' : '')
           + '</div>';
       });
     }
@@ -1264,14 +810,9 @@ window.ADMIN_LOGIC = {
     var refreshBtn = document.getElementById('status-refresh');
     if (refreshBtn) {
       refreshBtn.addEventListener('click', function() {
-        // Front-end cache invalidate + re-fetch. The server-side cache
-        // (5 min) still applies, so a click within 5 min returns the
-        // same payload — that's acceptable for an admin tool.
         refreshBtn.textContent = 'Refreshing…';
         refreshBtn.disabled = true;
-        self._loaded['infrastructure'] = false;
         self._renderInfrastructure();
-        self._loaded['infrastructure'] = true;
       });
     }
   }

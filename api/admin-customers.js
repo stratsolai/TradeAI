@@ -76,11 +76,44 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ customers: rows, total: rows.length });
+    // Tool prices map (tool_id → display_price as a number) for client-side
+    // MRR derivation. Replaces the previous regex-parse against CORE_TOOLS.
+    const toolPrices = await fetchToolPricesByToolId();
+
+    return res.status(200).json({
+      customers: rows,
+      total: rows.length,
+      tool_prices_by_tool: toolPrices
+    });
   } catch (err) {
     console.error('[admin-customers] error:', err && err.message);
     return res.status(500).json({ error: err && err.message ? err.message : 'Could not load customers' });
   }
+}
+
+// Returns { tool_id: monthly_price_aud_number }. Bundle rows (tool_id null)
+// are skipped — bundle MRR is handled by per-bundle revenue elsewhere.
+async function fetchToolPricesByToolId() {
+  const map = {};
+  const r = await supabase
+    .from('tool_prices')
+    .select('tool_id, display_price');
+  if (r.error) {
+    console.error('[admin-customers] tool_prices error:', r.error.message);
+    return map;
+  }
+  (r.data || []).forEach(function(row) {
+    if (!row.tool_id) return;
+    var raw = row.display_price;
+    var n = null;
+    if (typeof raw === 'number') n = raw;
+    else if (typeof raw === 'string') {
+      var match = raw.match(/[\d.]+/);
+      if (match) n = parseFloat(match[0]);
+    }
+    if (n != null && !isNaN(n)) map[row.tool_id] = n;
+  });
+  return map;
 }
 
 // Build a Map<userId, email> by paging through auth.users via the admin
