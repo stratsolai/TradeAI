@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <title>Choose Your Tools — StaxAI</title>
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/staxai-auth.css">
+  <style>
+    /* Page-local styles for the tool picker. Light theme, uses
+       staxai-auth.css design tokens. */
+    .tools-auth-container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 32px 32px 120px;
+    }
+    .picker-header { text-align: center; margin-bottom: 24px; }
+    .picker-header h1 { font-size: 32px; margin-bottom: 8px; }
+    .picker-header p { color: var(--text-muted); font-size: 16px; }
+
+    .picker-loading, .picker-error {
+      text-align: center; padding: 60px 24px;
+      font-size: 15px; color: var(--text-muted);
+    }
+    .picker-error { color: var(--red); }
+
+    .picker-counter {
+      background: var(--blue-light);
+      border: 1px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .picker-counter.over-limit {
+      background: #fef2f2; border-color: var(--red);
+    }
+    .picker-counter-status {
+      font-family: var(--heading-font); font-weight: 700;
+      font-size: 18px; color: var(--text); white-space: nowrap;
+    }
+    .picker-counter.over-limit .picker-counter-status { color: var(--red); }
+    .picker-counter-msg { font-size: 14px; color: var(--text-muted); }
+    .picker-counter.over-limit .picker-counter-msg { color: var(--red); font-weight: 500; }
+
+    .picker-grid {
+      display: grid; gap: 16px;
+      grid-template-columns: repeat(3, 1fr);
+    }
+    @media (max-width: 900px) { .picker-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .picker-grid { grid-template-columns: 1fr; } }
+
+    .picker-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: var(--card-radius);
+      padding: 16px 18px;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s, opacity 0.2s, background 0.2s;
+      display: flex; flex-direction: column; gap: 8px;
+      position: relative;
+      min-height: 160px;
+    }
+    .picker-card:hover { border-color: var(--blue); box-shadow: 0 4px 12px rgba(74,109,140,0.12); }
+    .picker-card.state-selected { border-color: var(--blue); background: var(--blue-light); }
+    .picker-card.state-retained { border-color: var(--orange); background: #fff8f0; }
+    .picker-card.state-removed { opacity: 0.55; background: var(--bg); }
+    .picker-card.state-removed .picker-card-name,
+    .picker-card.state-removed .picker-card-price { text-decoration: line-through; }
+    .picker-card.at-limit:not(.state-selected):not(.state-retained):not(.state-removed) {
+      opacity: 0.5; cursor: not-allowed;
+    }
+
+    .picker-card-tick {
+      display: none;
+      position: absolute; top: 12px; right: 12px;
+      width: 26px; height: 26px;
+      background: var(--blue); color: var(--white);
+      border-radius: 50%;
+      align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+    }
+    .picker-card.state-selected .picker-card-tick { display: flex; }
+
+    .picker-card-icon { font-size: 28px; line-height: 1; }
+    .picker-card-name {
+      font-family: var(--heading-font);
+      font-weight: 700; font-size: 17px;
+      color: var(--text); line-height: 1.2;
+      padding-right: 32px;
+    }
+    .picker-card-desc {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.45; flex: 1;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .picker-card-price {
+      font-family: var(--heading-font); font-weight: 700;
+      font-size: 18px; color: var(--blue);
+    }
+    .picker-card-status {
+      display: none;
+      font-size: 12px; font-weight: 600;
+      padding: 4px 8px; border-radius: 12px;
+      background: rgba(0,0,0,0.05);
+    }
+    .picker-card.state-retained .picker-card-status {
+      display: inline-block; color: var(--orange);
+      background: rgba(196,98,42,0.12);
+    }
+    .picker-card.state-removed .picker-card-status {
+      display: inline-block; color: var(--red);
+      background: rgba(220,53,69,0.10);
+    }
+
+    .picker-inline-choice { display: none; margin-top: 10px; flex-direction: column; gap: 8px; }
+    .picker-card.show-choice .picker-inline-choice { display: flex; }
+    .picker-inline-choice-prompt {
+      font-size: 12px; color: var(--text); font-weight: 600;
+    }
+    .picker-inline-choice-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .picker-inline-choice-btn {
+      flex: 1; min-width: 130px;
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 8px 10px;
+      font-family: var(--body-font);
+      font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--text);
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .picker-inline-choice-btn.retain { border-color: var(--orange); color: var(--orange); }
+    .picker-inline-choice-btn.retain:hover { background: #fff8f0; }
+    .picker-inline-choice-btn.remove { border-color: var(--red); color: var(--red); }
+    .picker-inline-choice-btn.remove:hover { background: #fef2f2; }
+
+    .confirm-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: var(--white);
+      border-top: 1px solid var(--border);
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
+      padding: 14px 24px;
+      z-index: 100;
+    }
+    .confirm-bar-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .confirm-bar-summary { font-size: 15px; font-weight: 500; color: var(--text); }
+    .confirm-bar-summary strong { color: var(--blue); }
+    .confirm-bar #confirm-btn { min-width: 220px; }
+    .confirm-bar #confirm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Auth gate — hide page-wrap and topbar until session is confirmed,
+       matching the pattern used by other authenticated pages. */
+    body:not(.tools-auth-ready) > #page-wrap { display: none; }
+    body:not(.tools-auth-ready) > .confirm-bar { display: none; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <a href="/dashboard.html" class="topbar-logo">
+    <img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;">
+  </a>
+  <nav class="topbar-nav">
+    <a href="/dashboard.html">Dashboard</a>
+    <a href="/account.html">Account</a>
+  </nav>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-account" id="account-menu">
+    <button class="account-btn" id="account-btn" aria-haspopup="true" aria-expanded="false">
+      <span id="account-email-short">Account</span> &#9660;
+    </button>
+    <div class="account-dropdown" id="account-dropdown" role="menu">
+      <a href="/account.html">My Account</a>
+      <button class="sign-out-btn" id="sign-out-btn">Sign Out</button>
+    </div>
+  </div>
+</header>
+
+<div id="page-wrap">
+  <div class="tools-auth-container">
+    <div class="picker-header">
+      <h1 class="page-title">Choose Your Tools</h1>
+      <p class="page-subtitle" id="picker-subtitle">Loading…</p>
+    </div>
+
+    <div class="picker-loading" id="picker-loading">Loading your tools…</div>
+    <div class="picker-error" id="picker-error" style="display:none">Could not load. Please refresh.</div>
+
+    <div class="picker-counter" id="picker-counter" style="display:none">
+      <div class="picker-counter-status" id="counter-status">0 of 3 selected</div>
+      <div class="picker-counter-msg" id="counter-msg">Select 3 tools to continue</div>
+    </div>
+
+    <div class="picker-grid" id="picker-grid"></div>
+  </div>
+</div>
+
+<div class="confirm-bar" id="confirm-bar">
+  <div class="confirm-bar-inner">
+    <div class="confirm-bar-summary"><strong id="bar-count">0</strong> of <strong id="bar-limit">3</strong> tools selected</div>
+    <button class="btn-primary" id="confirm-btn" disabled>Continue to Checkout</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
+<script src="/supabase-client.js"></script>
+<script src="/auth.js"></script>
+<script src="/shared-utils.js"></script>
+<script src="/tools-data.js"></script>
+<script>
+(function() {
+  var _supabase = window.supabaseClient;
+  var _user = null, _ownerId = null, _profile = null, _subs = null;
+  var _tier = null, _limit = 0;
+  // _state: { toolId → { tool, currentSub, fromBundle, state, showChoice } }
+  // state values: 'unselected' | 'selected' | 'retained' | 'removed'
+  var _state = {};
+
+  init();
+
+  async function init() {
+    if (!_supabase) { showError('Authentication system not loaded.'); return; }
+
+    // Auth check
+    var sessionRes = await _supabase.auth.getSession();
+    var session = sessionRes && sessionRes.data && sessionRes.data.session;
+    if (!session) { window.location.href = '/login'; return; }
+    _user = session.user;
+
+    // Tier from URL — only stax3 / stax6 valid here. STAXALL goes through
+    // a direct Stripe checkout from the activation modal, not this picker.
+    var params = new URLSearchParams(window.location.search);
+    _tier = params.get('tier');
+    if (_tier !== 'stax3' && _tier !== 'stax6') {
+      window.location.href = '/dashboard.html';
+      return;
+    }
+    _limit = _tier === 'stax3' ? 3 : 6;
+
+    document.getElementById('picker-subtitle').textContent =
+      'Select ' + _limit + ' tools for your ' + _tier.toUpperCase() + ' bundle';
+    document.getElementById('bar-limit').textContent = _limit;
+
+    // Resolve account owner — same pattern as checkToolAccess.
+    _ownerId = _user.id;
+    try {
+      var team = await _supabase
+        .from('team_members')
+        .select('account_owner_id')
+        .eq('user_id', _user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (team.data && team.data.account_owner_id) _ownerId = team.data.account_owner_id;
+    } catch (e) {
+      console.error('[tools-auth] team_members lookup failed:', e && e.message);
+    }
+
+    // Block team members from making billing changes (defence in depth;
+    // /api/switch-bundle also enforces this).
+    if (_ownerId !== _user.id) {
+      showError('Only the account owner can change subscriptions.');
+      document.body.classList.add('tools-auth-ready');
+      return;
+    }
+
+    // Reveal shell now that the auth/role checks have passed
+    document.body.classList.add('tools-auth-ready');
+    wireAccountDropdown();
+
+    try {
+      var profileRes = await _supabase
+        .from('profiles')
+        .select('activated_tools, bundle_tier, stripe_customer_id, is_trial')
+        .eq('id', _ownerId)
+        .single();
+      if (profileRes.error) throw new Error('Profile load failed');
+      _profile = profileRes.data || {};
+
+      _subs = await fetchSubscriptions(session.access_token);
+
+      buildState();
+      renderGrid();
+      updateCounter();
+
+      document.getElementById('picker-loading').style.display = 'none';
+      document.getElementById('picker-counter').style.display = '';
+    } catch (err) {
+      console.error('[tools-auth] init error:', err && err.message);
+      showError('Could not load your tools. Please refresh and try again.');
+    }
+
+    document.getElementById('confirm-btn').addEventListener('click', onConfirm);
+  }
+
+  async function fetchSubscriptions(token) {
+    try {
+      var r = await fetch('/api/get-user-subscriptions', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!r.ok) {
+        console.error('[tools-auth] subs fetch returned', r.status);
+        return { subscriptions: [] };
+      }
+      return await r.json();
+    } catch (e) {
+      console.error('[tools-auth] subs fetch error:', e && e.message);
+      return { subscriptions: [] };
+    }
+  }
+
+  function buildState() {
+    var tools = window.CORE_TOOLS || [];
+    var activated = (_profile && Array.isArray(_profile.activated_tools)) ? _profile.activated_tools : [];
+    var subsList = (_subs && Array.isArray(_subs.subscriptions)) ? _subs.subscriptions : [];
+    var isTrial = !!(_profile && _profile.is_trial);
+
+    tools.forEach(function(tool) {
+      // Find the individual (non-bundle) subscription that contains this tool's priceId
+      var indSub = subsList.find(function(s) {
+        return !s.tier && Array.isArray(s.priceIds) && s.priceIds.indexOf(tool.priceId) !== -1;
+      });
+      var owned = activated.indexOf(tool.id) !== -1;
+
+      _state[tool.id] = {
+        tool: tool,
+        currentSub: indSub ? indSub.subscription_id : null,
+        // True when the tool is in activated_tools but not via an individual
+        // sub — i.e. it's covered by the existing bundle subscription.
+        fromBundle: owned && !indSub,
+        // Trial users: nothing pre-selected (per owner decision). They pick
+        // fresh, and the trial converts to a paid bundle on confirm.
+        state: (!isTrial && owned) ? 'selected' : 'unselected',
+        showChoice: false
+      };
+    });
+  }
+
+  function renderGrid() {
+    var grid = document.getElementById('picker-grid');
+    var tools = window.CORE_TOOLS || [];
+    grid.innerHTML = tools.map(buildCardHtml).join('');
+    grid.addEventListener('click', onGridClick);
+  }
+
+  function buildCardHtml(tool) {
+    var s = _state[tool.id];
+    if (!s) return '';
+    var name = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.name || tool.id);
+    var price = tool.price ? tool.price + '/mth' : 'Coming Soon';
+    var statusLabel = '';
+    if (s.state === 'retained') statusLabel = 'Keeping separately';
+    else if (s.state === 'removed') statusLabel = 'Will be cancelled';
+
+    var atLimit = countSelected() >= _limit && s.state === 'unselected';
+    var showChoiceClass = s.showChoice ? ' show-choice' : '';
+    var atLimitClass = atLimit ? ' at-limit' : '';
+
+    return '<div class="picker-card state-' + s.state + showChoiceClass + atLimitClass + '" data-toolid="' + escAttr(tool.id) + '">' +
+      '<div class="picker-card-tick" aria-hidden="true">&#10003;</div>' +
+      '<div class="picker-card-icon" aria-hidden="true">' + (tool.icon || '') + '</div>' +
+      '<div class="picker-card-name">' + escHtml(name) + '</div>' +
+      '<div class="picker-card-desc">' + escHtml(tool.desc || tool.benefit || '') + '</div>' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">' +
+        '<span class="picker-card-price">' + escHtml(price) + '</span>' +
+        '<span class="picker-card-status">' + escHtml(statusLabel) + '</span>' +
+      '</div>' +
+      '<div class="picker-inline-choice">' +
+        '<div class="picker-inline-choice-prompt">You currently subscribe to this tool. What would you like to do?</div>' +
+        '<div class="picker-inline-choice-btns">' +
+          '<button type="button" class="picker-inline-choice-btn retain" data-action="retain">Keep separately ' + escHtml(price) + '</button>' +
+          '<button type="button" class="picker-inline-choice-btn remove" data-action="remove">Remove from account</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function onGridClick(e) {
+    var card = e.target.closest('.picker-card');
+    if (!card) return;
+    var toolId = card.getAttribute('data-toolid');
+    var s = _state[toolId];
+    if (!s) return;
+
+    // Inline choice button (retain / remove)
+    var actionBtn = e.target.closest('.picker-inline-choice-btn');
+    if (actionBtn) {
+      e.stopPropagation();
+      var action = actionBtn.getAttribute('data-action');
+      if (action === 'retain') s.state = 'retained';
+      else if (action === 'remove') s.state = 'removed';
+      s.showChoice = false;
+      rerenderAllCards();
+      updateCounter();
+      return;
+    }
+
+    // Card body click
+    handleCardToggle(toolId);
+  }
+
+  function handleCardToggle(toolId) {
+    var s = _state[toolId];
+    var selectedCount = countSelected();
+
+    if (s.state === 'unselected') {
+      if (selectedCount >= _limit) return;  // at limit, can't add more
+      s.state = 'selected';
+    } else if (s.state === 'selected') {
+      if (s.currentSub) {
+        // Has an individual subscription — show retain/remove inline choice
+        s.showChoice = true;
+      } else {
+        // Was from the existing bundle (or never paid) — simple toggle off
+        s.state = 'unselected';
+      }
+    } else if (s.state === 'retained' || s.state === 'removed') {
+      // Re-add to bundle, only if under the limit
+      if (selectedCount >= _limit) return;
+      s.state = 'selected';
+      s.showChoice = false;
+    }
+
+    rerenderAllCards();
+    updateCounter();
+  }
+
+  function rerenderAllCards() {
+    // Re-render every card so the .at-limit class refreshes correctly when
+    // the selected count crosses the limit boundary.
+    var grid = document.getElementById('picker-grid');
+    var tools = window.CORE_TOOLS || [];
+    grid.innerHTML = tools.map(buildCardHtml).join('');
+  }
+
+  function countSelected() {
+    var count = 0;
+    Object.keys(_state).forEach(function(id) {
+      if (_state[id].state === 'selected') count++;
+    });
+    return count;
+  }
+
+  function updateCounter() {
+    var count = countSelected();
+    var counter = document.getElementById('picker-counter');
+    var status = document.getElementById('counter-status');
+    var msg = document.getElementById('counter-msg');
+
+    status.textContent = count + ' of ' + _limit + ' selected';
+    document.getElementById('bar-count').textContent = count;
+
+    var overLimit = count > _limit;
+    counter.classList.toggle('over-limit', overLimit);
+
+    if (overLimit) {
+      var excess = count - _limit;
+      msg.textContent = 'You have ' + count + ' tools selected. ' + _tier.toUpperCase() +
+        ' includes ' + _limit + '. Please deselect ' + excess + ' tool' + (excess === 1 ? '' : 's') + ' to continue.';
+    } else if (count < _limit) {
+      var remaining = _limit - count;
+      msg.textContent = 'Select ' + remaining + ' more tool' + (remaining === 1 ? '' : 's');
+    } else {
+      msg.textContent = 'Ready to checkout';
+    }
+
+    document.getElementById('confirm-btn').disabled = count !== _limit;
+  }
+
+  async function onConfirm() {
+    var btn = document.getElementById('confirm-btn');
+    var origLabel = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Processing…';
+
+    var selected = [], retained = [], removed = [];
+    Object.keys(_state).forEach(function(id) {
+      var st = _state[id].state;
+      if (st === 'selected') selected.push(id);
+      else if (st === 'retained') retained.push(id);
+      else if (st === 'removed') removed.push(id);
+    });
+
+    if (selected.length !== _limit) {
+      btn.disabled = false;
+      btn.textContent = origLabel;
+      return;
+    }
+
+    try {
+      var sessionRes = await _supabase.auth.getSession();
+      var token = sessionRes.data && sessionRes.data.session ? sessionRes.data.session.access_token : null;
+      if (!token) throw new Error('Not authenticated');
+
+      var r = await fetch('/api/switch-bundle', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + token,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tier: _tier, selected: selected, retained: retained, removed: removed })
+      });
+      if (!r.ok) {
+        var errBody = await r.json().catch(function() { return {}; });
+        throw new Error(errBody.error || 'Could not start checkout');
+      }
+      var data = await r.json();
+      if (data && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error('No checkout URL returned');
+    } catch (err) {
+      console.error('[tools-auth] confirm error:', err && err.message);
+      if (window.showModalError) window.showModalError(err.message || 'Could not start checkout. Please try again.');
+      btn.disabled = false;
+      btn.textContent = origLabel;
+    }
+  }
+
+  function showError(msg) {
+    var loading = document.getElementById('picker-loading');
+    if (loading) loading.style.display = 'none';
+    var err = document.getElementById('picker-error');
+    if (err) { err.textContent = msg; err.style.display = 'block'; }
+    document.getElementById('picker-counter').style.display = 'none';
+    document.getElementById('confirm-bar').style.display = 'none';
+  }
+
+  function escHtml(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function escAttr(s) { return escHtml(s); }
+
+  function wireAccountDropdown() {
+    var btn = document.getElementById('account-btn');
+    var dropdown = document.getElementById('account-dropdown');
+    var signOut = document.getElementById('sign-out-btn');
+    var emailEl = document.getElementById('account-email-short');
+    if (emailEl && _user && _user.email) emailEl.textContent = _user.email.split('@')[0];
+
+    if (btn && dropdown) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var open = dropdown.classList.toggle('open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      document.addEventListener('click', function(e) {
+        if (!btn.contains(e.target) && !dropdown.contains(e.target)) {
+          dropdown.classList.remove('open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }
+    if (signOut) {
+      signOut.addEventListener('click', async function() {
+        await _supabase.auth.signOut();
+        window.location.href = '/login';
+      });
+    }
+  }
+})();
+</script>
+</body>
+</html>

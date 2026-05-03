@@ -6,8 +6,8 @@
 // is a custom shape (blue header bar + body + footer) per the v2.1 design spec.
 (function() {
   var BUNDLES = [
-    { tier: 'stax3',    priceId: 'price_1TEQc9HnoVvjo5gxHQ1CQYAT', name: 'STAX3',   desc: 'Pick any 3 tools',           defaultPrice: '$129/mth', comingSoon: true,  featured: false },
-    { tier: 'stax6',    priceId: 'price_1TEQdAHnoVvjo5gxg6uwVWV1', name: 'STAX6',   desc: 'Pick any 6 tools',           defaultPrice: '$249/mth', comingSoon: true,  featured: false },
+    { tier: 'stax3',    priceId: 'price_1TEQc9HnoVvjo5gxHQ1CQYAT', name: 'STAX3',   desc: 'Pick any 3 tools',           defaultPrice: '$129/mth', comingSoon: false, featured: false },
+    { tier: 'stax6',    priceId: 'price_1TEQdAHnoVvjo5gxg6uwVWV1', name: 'STAX6',   desc: 'Pick any 6 tools',           defaultPrice: '$249/mth', comingSoon: false, featured: false },
     { tier: 'stax-all', priceId: 'price_1TEQdoHnoVvjo5gxlNMGajr8', name: 'STAXALL', desc: 'All 13 tools — best value',  defaultPrice: '$449/mth', comingSoon: false, featured: true  }
   ];
 
@@ -103,8 +103,12 @@
     overlayEl.querySelectorAll('.activation-bundle').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var tier = btn.getAttribute('data-tier');
-        if (tier === 'stax-all') handleStaxAll();
-        // STAX3 / STAX6 are `disabled` so they can't fire — picker not built yet.
+        if (tier === 'stax-all') {
+          handleStaxAll();
+        } else if (tier === 'stax3' || tier === 'stax6') {
+          // STAX3 / STAX6 → redirect to the post-login tool picker
+          window.location.href = '/tools-auth.html?tier=' + encodeURIComponent(tier);
+        }
       });
     });
 

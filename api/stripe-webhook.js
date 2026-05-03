@@ -81,12 +81,53 @@ export default async function handler(req, res) {
           console.error('activateTool failed:', e && e.message);
         }
       }
+
+      // Bundle purchases initiated by /api/switch-bundle carry the exact
+      // tool list in metadata.tools — overwrite activated_tools to match
+      // (the user may be downgrading and shedding tools).
+      const bundleTools = session.metadata && session.metadata.tools;
+      if ((tier === 'stax3' || tier === 'stax6') && bundleTools) {
+        try {
+          const toolList = bundleTools.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+          await setActivatedTools(userId, toolList);
+        } catch (e) {
+          console.error('setActivatedTools failed:', e && e.message);
+        }
+      }
+
+      // Cancel-at-period-end the subscriptions superseded by this bundle.
+      // Mark each with metadata.superseded_by_bundle so the eventual
+      // customer.subscription.deleted event doesn't strip activated_tools.
+      const cancelSubsCsv = session.metadata && session.metadata.cancelSubsAfterPayment;
+      if (cancelSubsCsv) {
+        const cancelIds = cancelSubsCsv.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
+        for (const subId of cancelIds) {
+          try {
+            const existing = await stripe.subscriptions.retrieve(subId);
+            const newMeta = Object.assign({}, existing.metadata || {}, { superseded_by_bundle: 'true' });
+            await stripe.subscriptions.update(subId, {
+              cancel_at_period_end: true,
+              metadata: newMeta
+            });
+            console.log('[webhook] marked superseded sub for end-of-period cancel:', subId);
+          } catch (e) {
+            console.error('[webhook] failed to mark superseded sub', subId, ':', e && e.message);
+          }
+        }
+      }
       break;
 
     case 'customer.subscription.deleted':
       const subscription = event.data.object;
       console.log('Subscription deleted:', subscription.id);
       console.log('Subscription metadata:', subscription.metadata);
+      // Skip activated_tools cleanup for subscriptions superseded by a
+      // bundle — their tools are already covered by the new bundle's
+      // activated_tools list, so removing them would be wrong.
+      if (subscription.metadata && subscription.metadata.superseded_by_bundle === 'true') {
+        console.log('[webhook] superseded sub deleted; skipping activated_tools update');
+        break;
+      }
       try {
         await deactivateSubscription(subscription);
       } catch (e) {
@@ -447,4 +488,30 @@ function formatStripePrice(unitAmountCents) {
   const dollars = unitAmountCents / 100;
   const formatted = dollars % 1 === 0 ? '$' + dollars : '$' + dollars.toFixed(2);
   return formatted + '/mth';
+}
+
+// Overwrites a profile's activated_tools array. Used by the bundle-switch
+// flow where the new bundle's tool list replaces (rather than appends to)
+// whatever was there before.
+async function setActivatedTools(userId, toolIds) {
+  const safe = Array.isArray(toolIds) ? toolIds : [];
+  const res = await fetch(
+    process.env.SUPABASE_URL + '/rest/v1/profiles?id=eq.' + encodeURIComponent(userId),
+    {
+      method: 'PATCH',
+      headers: {
+        'apikey': process.env.SUPABASE_SERVICE_KEY,
+        'Authorization': 'Bearer ' + process.env.SUPABASE_SERVICE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ activated_tools: safe })
+    }
+  );
+  if (!res.ok) {
+    const errText = await res.text();
+    console.error('setActivatedTools PATCH failed:', res.status, errText);
+    throw new Error('setActivatedTools failed: ' + res.status);
+  }
+  console.log('setActivatedTools: profiles updated for userId', userId, 'tools', safe);
 }

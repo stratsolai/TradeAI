@@ -988,9 +988,14 @@ footer {
       var expanded = sec && sec.classList.contains('expanded');
       var oneSet = car.scrollWidth / 2;
       var hasOverflow = oneSet > car.clientWidth + 1;
+      // Suppress auto-rotate AND wrap while a manual smooth scroll is in
+      // flight. Modifying scrollLeft during a browser-driven smooth scroll
+      // cancels the animation, which is exactly what was breaking the arrow
+      // buttons before this fix.
+      var manualScrollActive = car._manualScrollUntil && now < car._manualScrollUntil;
 
       if (expanded && hasOverflow) {
-        if (!paused) {
+        if (!paused && !manualScrollActive) {
           accumulator += SPEED * dt / 1000;
           var pixels = Math.floor(accumulator);
           if (pixels > 0) {
@@ -998,11 +1003,12 @@ footer {
             car.scrollLeft += pixels;
           }
         }
-        // Wrap — handles auto-rotate AND user manual scroll past either
-        // boundary (via arrow buttons or trackpad). Invisible because the
-        // duplicated cards make X and X+oneSetWidth visually identical.
-        if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
-        else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
+        if (!manualScrollActive) {
+          // Wrap — invisible because duplicated cards make X and X+oneSet
+          // visually identical.
+          if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
+          else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
+        }
       } else {
         accumulator = 0;
       }
@@ -1034,7 +1040,10 @@ footer {
     });
 
     // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap).
-    // The rAF wrap logic in setupRibbon handles boundary crossings.
+    // Pre-wrap if the current position is at a boundary so the smooth-scroll
+    // target is in the same set as the start. Then mark a manual-scroll
+    // window (~600ms) so the rAF tick suspends auto-rotate + wrap until the
+    // browser's smooth-scroll animation has completed.
     document.querySelectorAll('.tool-accordion .carousel-arrow').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -1042,8 +1051,14 @@ footer {
         if (!sec) return;
         var car = sec.querySelector('.tool-carousel');
         if (!car) return;
+        var oneSet = car.scrollWidth / 2;
+        if (oneSet > 0) {
+          if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
+          else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
+        }
         var dir = btn.getAttribute('data-dir') === 'left' ? -1 : 1;
         car.scrollBy({ left: dir * 320, behavior: 'smooth' });
+        car._manualScrollUntil = performance.now() + 600;
       });
     });
 
