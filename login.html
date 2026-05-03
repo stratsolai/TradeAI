@@ -328,14 +328,6 @@
     showLogin();
     if (params.get("tab") === "signup") showSignup();
 
-    // Store trial context from URL params into sessionStorage
-    var toolParam = params.get("tool");
-    var tierParam = params.get("tier");
-    var toolsParam = params.get("tools");
-    if (toolParam) sessionStorage.setItem("trial_tool", toolParam);
-    if (tierParam) sessionStorage.setItem("trial_tier", tierParam);
-    if (toolsParam) sessionStorage.setItem("trial_tools", toolsParam);
-
     // Handle login
     document.getElementById("login-form").addEventListener("submit", async function(e) {
       e.preventDefault();
@@ -365,14 +357,10 @@
       }
     });
 
-    // Redirect guard: if signup mode with no tool context and no industries, send to pricing
-    if (params.get("tab") === "signup") {
-      var hasToolContext = params.get("tool") || params.get("tier") || sessionStorage.getItem("trial_tool") || sessionStorage.getItem("trial_tier");
-      var hasIndustries = sessionStorage.getItem("signup_industries");
-      if (!hasToolContext && !hasIndustries) {
-        window.location.href = "/pricing-page.html";
-        return;
-      }
+    // Redirect guard: signup requires industries selected upstream
+    if (params.get("tab") === "signup" && !sessionStorage.getItem("signup_industries")) {
+      window.location.href = "/pricing-page.html";
+      return;
     }
 
     // Handle signup
@@ -391,47 +379,27 @@
       if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
       var result = await signUp(email, password, businessName, phone, industries);
       if (result.success) {
-        // Write trial activation to Supabase profiles. Read trial
-        // context from sessionStorage first, then fall back to URL
-        // params at submit time so a lost / cleared sessionStorage
-        // (private browsing, third-party cookie blocks, opening the
-        // signup link in a new tab) doesn't leave the user with an
-        // is_trial=true row but empty activated_tools.
-        var submitParams = new URLSearchParams(window.location.search);
-        var trialTool = sessionStorage.getItem("trial_tool") || submitParams.get("tool") || null;
-        var trialTier = sessionStorage.getItem("trial_tier") || submitParams.get("tier") || null;
-        var trialTools = sessionStorage.getItem("trial_tools") || submitParams.get("tools") || null;
         var userId = result.data && result.data.user ? result.data.user.id : null;
-        var activatedTools = [];
-        var bundleTier = null;
-        if (trialTool) {
-          activatedTools = [trialTool];
-          bundleTier = null;
-        } else if (trialTier === "stax-all") {
-          activatedTools = ["chatbot","social","email","strategic-plan","news-digest","bi","tender","quote-enhancer","swms","customer-updates","handover-docs","review-booster","design-viz"];
-          bundleTier = "stax-all";
-        } else if (trialTier && trialTools) {
-          activatedTools = trialTools.split(",");
-          bundleTier = trialTier;
-        }
-        if (activatedTools.length > 0 && userId) {
-          var trialExpiresAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+        if (userId) {
+          // Every new signup is a STAXALL 14-day trial with all tools active.
+          // Trial gives 14 full days plus the signup day, so signing up Mon 5th
+          // expires at midnight Mon 19th → Tue 20th. (+15 + setHours(0) lands
+          // on the start-of-day-15 boundary in local time.)
+          var expiresAt = new Date();
+          expiresAt.setDate(expiresAt.getDate() + 15);
+          expiresAt.setHours(0, 0, 0, 0);
           await window.supabaseClient.from("profiles").upsert({
             id: userId,
-            activated_tools: activatedTools,
-            trial_expires_at: trialExpiresAt,
-            bundle_tier: bundleTier,
+            activated_tools: ["chatbot","social","email","strategic-plan","news-digest","bi","tender","quote-enhancer","swms","customer-updates","handover-docs","review-booster","design-viz"],
+            trial_expires_at: expiresAt.toISOString(),
+            bundle_tier: "stax-all",
             is_trial: true,
             trial_used: true
           });
         }
         sessionStorage.removeItem("signup_industries");
-        sessionStorage.removeItem("trial_tool");
-        sessionStorage.removeItem("trial_tier");
-        sessionStorage.removeItem("trial_tools");
         showSuccess("Account created. Please check your email to verify your account.");
-        var redirectParam = trialTool ? "?activated=" + trialTool : (trialTier ? "?tier=" + trialTier : "");
-        setTimeout(function() { window.location.href = "/dashboard.html" + redirectParam; }, 2000);
+        setTimeout(function() { window.location.href = "/dashboard.html"; }, 2000);
       } else {
         showError(result.error || "Signup failed. Please try again.");
       }
