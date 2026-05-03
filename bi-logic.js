@@ -11,36 +11,12 @@ window.BI_LOGIC = {
   _strategicData: null,
   _period: '12m',
 
-  _isActivated: false,
-
   init: async function(supabase, user) {
     if (!(await window.checkToolAccess('bi', supabase, user))) return;
     this._supabase = supabase;
     this._user = user;
     this._bindEvents();
-
-    // Resolve owner id — activated_tools lives on the owner's profile,
-    // not the team member's own row.
-    var ownerId = user.id;
-    try {
-      var team = await supabase
-        .from('team_members')
-        .select('account_owner_id')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .maybeSingle();
-      if (team.data && team.data.account_owner_id) ownerId = team.data.account_owner_id;
-    } catch (e) {
-      console.error('[BI] team_members lookup failed:', e && e.message);
-    }
-    var pr = await supabase.from('profiles').select('activated_tools').eq('id', ownerId).single();
-    if (pr.error) console.error('[BI] Profile check error:', pr.error.message);
-    if (pr.data && Array.isArray(pr.data.activated_tools) && pr.data.activated_tools.indexOf('bi') !== -1) {
-      this._isActivated = true;
-      this._loadAllModules();
-    } else {
-      this._renderSampleMode();
-    }
+    this._loadAllModules();
   },
 
   _calcDateRange: function() {
@@ -395,99 +371,6 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-dismiss-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._dismissInsight(btn.getAttribute('data-insight-id'), btn); });
     });
-  },
-
-  _renderSampleMode: function() {
-    var refreshRow = document.querySelector('.bi-refresh-row');
-    if (refreshRow) refreshRow.classList.add('bi-hidden');
-
-    var badge = document.createElement('div');
-    badge.className = 'bi-sample-banner';
-    badge.innerHTML = '<span class="bi-sample-label">SAMPLE DATA</span>' +
-      '<span class="bi-sample-text">This is a preview with sample data. Activate BI to see insights from your real business data.</span>' +
-      '<a href="/panel-auth.html?tool=bi" class="bi-sample-cta">Activate</a>';
-
-    var grid = document.querySelector('.bi-module-grid');
-    if (grid) grid.parentElement.insertBefore(badge, grid);
-
-    var sample = this._getSampleData();
-    var M = window.BI_MODULES;
-
-    M.renderFinancial(sample.financial, this._charts);
-    M.renderCustomers(sample.customers, this._charts);
-    M.renderOperations(sample.operations, this._charts);
-    M.renderMarket(sample.market);
-    M.renderStrategic(sample.strategic, this._charts);
-
-    var alertsEl = document.getElementById('bi-mod-alerts-content');
-    if (alertsEl) {
-      alertsEl.innerHTML = '<div class="bi-alerts-body">' +
-        '<div class="bi-alert-card severity-amber"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#9888;</span><span class="bi-alert-headline">Cash flow may be tight in 3 weeks based on upcoming bills</span></div></div>' +
-        '<div class="bi-alert-card severity-red"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#128176;</span><span class="bi-alert-headline">Top customer has not ordered in 60 days — unusual pattern</span></div></div>' +
-        '<div class="bi-alert-card severity-green"><div class="bi-alert-header"><span class="bi-alert-type-icon">&#128200;</span><span class="bi-alert-headline">Quote requests up 40% this month — capacity check needed</span></div></div>' +
-        '</div>';
-    }
-
-    document.querySelectorAll('.bi-module-grid .tile-card').forEach(function(card) {
-      card.classList.add('bi-sample-disabled');
-    });
-  },
-
-  _getSampleData: function() {
-    return {
-      financial: {
-        connected: true,
-        data: {
-          summary: { total_revenue: 245000, total_expenses: 189000, net_profit: 56000, profit_margin: 23, cash_balance: 42000, accounts_receivable: 38000, accounts_payable: 15000, overdue_receivable: 12000, invoice_count: 87, bill_count: 134, quote_count: 24 },
-          pl_summary: { income: 245000, expenses: 189000, net_profit: 56000 },
-          trend: [
-            { month: '2025-11', revenue: 18000, expenses: 14500, profit: 3500, margin: 19 },
-            { month: '2025-12', revenue: 16500, expenses: 13200, profit: 3300, margin: 20 },
-            { month: '2026-01', revenue: 21000, expenses: 15800, profit: 5200, margin: 25 },
-            { month: '2026-02', revenue: 22500, expenses: 17100, profit: 5400, margin: 24 },
-            { month: '2026-03', revenue: 24000, expenses: 18200, profit: 5800, margin: 24 },
-            { month: '2026-04', revenue: 19500, expenses: 16000, profit: 3500, margin: 18 }
-          ],
-          receivable_aging: { current: 18000, days_30: 8000, days_60: 6000, days_90_plus: 6000 },
-          payable_aging: { current: 10000, days_30: 3000, days_60: 1500, days_90_plus: 500 }
-        }
-      },
-      customers: {
-        connected: true,
-        data: {
-          summary: { total_customers: 34, total_revenue: 245000, avg_invoice_value: 2816, concentration_pct: 48, quote_count: 24, accepted_quotes: 11, conversion_rate: 46, inactive_count: 3 },
-          top_customers: [
-            { name: 'Metro Constructions', revenue: 52000, percentage: 21, invoice_count: 12 },
-            { name: 'Harbour Property Group', revenue: 38000, percentage: 16, invoice_count: 8 },
-            { name: 'Eastside Developments', revenue: 27000, percentage: 11, invoice_count: 6 },
-            { name: 'Summit Building Co', revenue: 19000, percentage: 8, invoice_count: 5 },
-            { name: 'Coastal Living Homes', revenue: 15000, percentage: 6, invoice_count: 4 }
-          ],
-          new_vs_repeat: [
-            { month: '2026-01', new_customers: 3, repeat_customers: 12 },
-            { month: '2026-02', new_customers: 2, repeat_customers: 14 },
-            { month: '2026-03', new_customers: 4, repeat_customers: 13 },
-            { month: '2026-04', new_customers: 1, repeat_customers: 11 }
-          ],
-          inactive_customers: [{ name: 'Greenfield Homes', revenue: 8500, last_invoice: '2026-02-10' }]
-        }
-      },
-      operations: {
-        connected: true,
-        data: {
-          summary: { total_jobs: 42, completed_jobs: 35, avg_duration_days: 4.2, avg_job_value: 5800, over_quote_count: 8, under_quote_count: 3, on_quote_count: 24, form_completion_rate: 78, total_forms: 33, total_quotes: 24 },
-          status_breakdown: { Completed: 35, 'In Progress': 4, Quoted: 3 },
-          monthly_jobs: [
-            { month: '2026-01', count: 9 },
-            { month: '2026-02', count: 11 },
-            { month: '2026-03', count: 12 },
-            { month: '2026-04', count: 10 }
-          ]
-        }
-      },
-      market: { briefings: [], tenders: [], hasNewsDigest: false },
-      strategic: { plan: null, tasks: [] }
-    };
   },
 
   _toggleHistory: async function(mod) {
