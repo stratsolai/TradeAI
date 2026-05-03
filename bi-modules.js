@@ -266,6 +266,14 @@ window.BI_MODULES = {
       return;
     }
 
+    if (!advisoryList) {
+      var secRestore = document.getElementById('bi-mod-operations-advisory');
+      if (secRestore) {
+        secRestore.innerHTML = '<div class="bi-advisory-label">AI Advisory</div><div id="bi-mod-operations-advisory-list"></div>';
+        advisoryList = document.getElementById('bi-mod-operations-advisory-list');
+      }
+    }
+
     var d = data.data; var s = d.summary;
     var fc = s.form_completion_rate >= 90 ? 'green' : s.form_completion_rate >= 70 ? 'orange' : 'red';
     this._renderKPIRow(kpisEl, [
