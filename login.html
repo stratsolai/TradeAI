@@ -271,6 +271,39 @@
 <script src="/auth.js"></script>
 
 <script>
+  // Post-auth intent dispatch — used by both login and signup success
+  // paths. If the user came from panel.html "Activate this tool", this
+  // sends them straight to a Stripe single-tool checkout. The intent key
+  // is consumed (cleared from sessionStorage) the first time it's read,
+  // whether or not the dispatch succeeds.
+  async function dispatchPostAuthAction(userId) {
+    var postActionRaw = sessionStorage.getItem("signup_post_action");
+    sessionStorage.removeItem("signup_post_action");
+    if (!postActionRaw || !userId) return false;
+    try {
+      var action = JSON.parse(postActionRaw);
+      if (action && action.type === "single_tool" && action.priceId) {
+        var checkoutRes = await fetch("/api/create-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userId,
+            toolId: action.toolId || null,
+            priceId: action.priceId
+          })
+        });
+        if (checkoutRes.ok) {
+          var checkoutData = await checkoutRes.json();
+          if (checkoutData && checkoutData.url) {
+            window.location.href = checkoutData.url;
+            return true;
+          }
+        }
+      }
+    } catch (e) { /* fall through to default redirect */ }
+    return false;
+  }
+
   function hideMessages() {
     var em = document.getElementById('error-message');
     var sm = document.getElementById('success-message');
@@ -346,6 +379,8 @@
         var timeout = new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Connection timed out. Please check your internet connection and try again.')); }, 15000); });
         var result = await Promise.race([signIn(email, password), timeout]);
         if (result.success) {
+          var loggedInUserId = result.data && result.data.user ? result.data.user.id : null;
+          if (await dispatchPostAuthAction(loggedInUserId)) return;
           window.location.href = "/dashboard.html";
         } else {
           showError(result.error || "Login failed. Please check your credentials.");
@@ -399,6 +434,9 @@
         }
         sessionStorage.removeItem("signup_industries");
         showSuccess("Account created. Please check your email to verify your account.");
+
+        if (await dispatchPostAuthAction(userId)) return;
+
         setTimeout(function() { window.location.href = "/dashboard.html"; }, 2000);
       } else {
         showError(result.error || "Signup failed. Please try again.");

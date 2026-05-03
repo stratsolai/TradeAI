@@ -1097,7 +1097,26 @@ footer {
     .footer-eyebrow { display:flex; align-items:center; gap:8px; font-size:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; letter-spacing:3px; text-transform:uppercase; background:linear-gradient(135deg,#d4844a,#d4a04a); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:10px; margin-left:-28px; }
     .footer-eyebrow::before { content:''; width:20px; height:1px; background:linear-gradient(90deg,transparent,#d4844a); flex-shrink:0; }
     .footer-eyebrow::after { content:''; width:20px; height:1px; background:linear-gradient(90deg,#d4844a,transparent); flex-shrink:0; }
-  
+
+/* ===== TOOL CTA MODAL — pre-login dark theme ===== */
+#tool-modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:500; align-items:center; justify-content:center; }
+#tool-modal-overlay.open { display:flex; }
+.tool-modal { background:#172035; border:1px solid rgba(255,255,255,0.16); border-radius:20px; max-width:520px; width:90%; max-height:90vh; overflow-y:auto; padding:32px; box-shadow:0 8px 32px rgba(0,0,0,0.4); position:relative; }
+.tool-modal-close { position:absolute; top:14px; right:16px; width:32px; height:32px; background:transparent; border:none; color:rgba(255,255,255,0.55); font-size:22px; cursor:pointer; border-radius:6px; line-height:1; transition:background 0.2s, color 0.2s; }
+.tool-modal-close:hover { background:rgba(255,255,255,0.08); color:#fff; }
+.tool-modal-title { font-family:'Barlow Condensed',sans-serif; font-size:24px; font-weight:800; color:#fff; margin-bottom:18px; letter-spacing:0.5px; text-transform:uppercase; padding-right:36px; }
+.tool-modal-options { display:flex; flex-direction:column; gap:10px; }
+.tool-modal-option { width:100%; text-align:left; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.18); border-radius:12px; padding:16px 18px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:border-color 0.2s, background 0.2s; }
+.tool-modal-option:hover { border-color:#c4622a; background:rgba(255,255,255,0.10); }
+.tool-modal-option-title { font-size:15px; font-weight:700; color:#fff; margin-bottom:4px; }
+.tool-modal-option-sub { font-size:13px; color:rgba(255,255,255,0.65); line-height:1.4; }
+.tool-modal-bundles { display:none; flex-direction:column; gap:8px; margin-top:4px; padding:0 0 0 14px; }
+.tool-modal-bundles.open { display:flex; }
+.tool-modal-bundle { width:100%; text-align:left; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.14); border-radius:10px; padding:12px 14px; cursor:pointer; font-family:'DM Sans',sans-serif; transition:border-color 0.2s, background 0.2s; }
+.tool-modal-bundle:hover { border-color:#c4622a; background:rgba(255,255,255,0.08); }
+.tool-modal-bundle-name { font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:800; color:#fff; letter-spacing:0.4px; margin-bottom:2px; }
+.tool-modal-bundle-desc { font-size:13px; color:rgba(255,255,255,0.7); }
+/* ===== END TOOL CTA MODAL ===== */
 </style>
 </head>
 <body>
@@ -1491,18 +1510,118 @@ footer {
     var indParam = new URLSearchParams(window.location.search).get('industry');
     var preSelectInd = indParam ? KEY_TO_INDUSTRY[indParam] || null : null;
 
-    function handleTrialClick(e) {
-      e.stopPropagation();
-      var opts = {
+    function startSignup(extraOpts) {
+      var opts = Object.assign({
         onContinue: function() { window.location.href = '/login?tab=signup'; }
-      };
-      if (preSelectInd) opts.preSelect = preSelectInd;
+      }, extraOpts || {});
+      if (preSelectInd && !opts.preSelect) opts.preSelect = preSelectInd;
       openIndustryModal(opts);
     }
+
+    function openToolModal() {
+      if (!window.PANEL_TOOL) return;
+      var tool = window.PANEL_TOOL;
+      var name = (tool.title || []).join(' ').trim() || 'this tool';
+      var titleEl = document.getElementById('tool-modal-title');
+      if (titleEl) titleEl.textContent = name;
+      // Read currently displayed price (already live-updated by renderPanel)
+      var priceEl = document.getElementById('panel-price');
+      var displayedPrice = priceEl ? priceEl.textContent.trim() : '';
+      var activateLabel = 'Activate ' + name + (displayedPrice ? ' — ' + displayedPrice : '');
+      var actEl = document.getElementById('tm-activate-title');
+      if (actEl) actEl.textContent = activateLabel;
+      // Reset bundle expansion to closed each time the modal opens
+      document.getElementById('tm-bundles').classList.remove('open');
+      document.getElementById('tm-option-bundle').setAttribute('aria-expanded', 'false');
+      document.getElementById('tool-modal-overlay').classList.add('open');
+    }
+    function closeToolModal() {
+      document.getElementById('tool-modal-overlay').classList.remove('open');
+    }
+
+    function handleCtaClick(e) {
+      e.stopPropagation();
+      var tool = window.PANEL_TOOL;
+      if (!tool) return;
+      // Coming Soon tools have a "Notify Me When Live" CTA — the
+      // three-option modal (activate / trial / bundle) doesn't apply.
+      // Fall through to the pre-Step-5 industry-modal-then-signup flow.
+      if (tool.status !== 'built') {
+        startSignup();
+        return;
+      }
+      openToolModal();
+    }
     var heroBtn = document.getElementById('cta-btn');
-    if (heroBtn) heroBtn.addEventListener('click', handleTrialClick);
+    if (heroBtn) heroBtn.addEventListener('click', handleCtaClick);
     var footerBtn = document.getElementById('cta-btn-footer');
-    if (footerBtn) footerBtn.addEventListener('click', handleTrialClick);
+    if (footerBtn) footerBtn.addEventListener('click', handleCtaClick);
+
+    // Modal interaction wiring
+    var overlay = document.getElementById('tool-modal-overlay');
+    if (overlay) overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) closeToolModal();
+    });
+    var closeBtn = document.getElementById('tool-modal-close');
+    if (closeBtn) closeBtn.addEventListener('click', closeToolModal);
+
+    // Option 1 — Activate single tool. The post-signup intent is stored
+    // only when the user completes the industry modal (Continue), so an
+    // abandoned Option 1 click leaves no stale state for later flows.
+    var optActivate = document.getElementById('tm-option-activate');
+    if (optActivate) optActivate.addEventListener('click', function() {
+      var tool = window.PANEL_TOOL || {};
+      var intent = JSON.stringify({
+        type: 'single_tool',
+        toolId: tool.id || new URLSearchParams(window.location.search).get('tool') || null,
+        priceId: tool.priceId || null
+      });
+      closeToolModal();
+      startSignup({
+        onContinue: function() {
+          sessionStorage.setItem('signup_post_action', intent);
+          window.location.href = '/login?tab=signup';
+        }
+      });
+    });
+
+    // Option 2 — Free 14-day trial with all tools. Default signup path.
+    var optTrial = document.getElementById('tm-option-trial');
+    if (optTrial) optTrial.addEventListener('click', function() {
+      closeToolModal();
+      startSignup();
+    });
+
+    // Option 3 — Expand bundle list inline.
+    var optBundle = document.getElementById('tm-option-bundle');
+    if (optBundle) optBundle.addEventListener('click', function() {
+      var bundles = document.getElementById('tm-bundles');
+      var isOpen = bundles.classList.toggle('open');
+      optBundle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    // Bundle option click — same signup path as Option 2 for now. Step 8's
+    // post-trial activation modal will let the user pick the actual bundle.
+    document.querySelectorAll('.tool-modal-bundle').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        closeToolModal();
+        startSignup();
+      });
+    });
+
+    // Live bundle prices for the modal (all-or-nothing — keep hardcoded
+    // values if any priceId is missing from /api/get-prices).
+    (function() {
+      var spans = document.querySelectorAll('.tool-modal-bundle-price[data-priceid]');
+      if (!spans.length) return;
+      fetch('/api/get-prices').then(function(r) { return r.ok ? r.json() : null; }).then(function(d) {
+        if (!d || !d.prices) return;
+        for (var i = 0; i < spans.length; i++) {
+          if (!d.prices[spans[i].getAttribute('data-priceid')]) return;
+        }
+        spans.forEach(function(el) { el.textContent = d.prices[el.getAttribute('data-priceid')]; });
+      }).catch(function() { /* keep hardcoded */ });
+    })();
 
     const rotatorItems = document.querySelectorAll('.bundle-rotator-item');
     let rotatorIndex = 0;
@@ -1565,6 +1684,42 @@ footer {
     setTimeout(function() { s3.classList.add("hiw-visible"); }, 1600);
   }
 </script>
+
+<!-- Tool page CTA modal — three-option chooser (activate / trial / bundle) -->
+<div id="tool-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="tool-modal-title">
+  <div class="tool-modal">
+    <button type="button" class="tool-modal-close" id="tool-modal-close" aria-label="Close">&times;</button>
+    <div class="tool-modal-title" id="tool-modal-title">Tool</div>
+    <div class="tool-modal-options">
+      <button type="button" class="tool-modal-option" id="tm-option-activate">
+        <div class="tool-modal-option-title" id="tm-activate-title">Activate this tool</div>
+        <div class="tool-modal-option-sub">Subscribe to this tool only — start using it straight away.</div>
+      </button>
+      <button type="button" class="tool-modal-option" id="tm-option-trial">
+        <div class="tool-modal-option-title">Start 14-day free trial with ALL tools</div>
+        <div class="tool-modal-option-sub">Try every tool free for 14 days. Choose what to keep at the end.</div>
+      </button>
+      <button type="button" class="tool-modal-option" id="tm-option-bundle" aria-expanded="false">
+        <div class="tool-modal-option-title">Choose a bundle and save</div>
+        <div class="tool-modal-option-sub">Pick from STAX3, STAX6, or STAXALL.</div>
+      </button>
+      <div class="tool-modal-bundles" id="tm-bundles">
+        <button type="button" class="tool-modal-bundle" data-tier="stax3">
+          <div class="tool-modal-bundle-name">STAX3</div>
+          <div class="tool-modal-bundle-desc">Pick any 3 tools — <span class="tool-modal-bundle-price" data-priceid="price_1TEQc9HnoVvjo5gxHQ1CQYAT">$129/mth</span></div>
+        </button>
+        <button type="button" class="tool-modal-bundle" data-tier="stax6">
+          <div class="tool-modal-bundle-name">STAX6</div>
+          <div class="tool-modal-bundle-desc">Pick any 6 tools — <span class="tool-modal-bundle-price" data-priceid="price_1TEQdAHnoVvjo5gxg6uwVWV1">$249/mth</span></div>
+        </button>
+        <button type="button" class="tool-modal-bundle" data-tier="stax-all">
+          <div class="tool-modal-bundle-name">STAXALL</div>
+          <div class="tool-modal-bundle-desc">All 13 tools — <span class="tool-modal-bundle-price" data-priceid="price_1TEQdoHnoVvjo5gxlNMGajr8">$449/mth</span></div>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="footer-inner">
