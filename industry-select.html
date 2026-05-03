@@ -722,7 +722,10 @@ window.addEventListener('resize', alignHIW);
   } else {
     cards.forEach(function(c,i){
       c.style.cursor='pointer';
-      c.addEventListener('click',function(){ window.location.href='/tools?industry='+ids[i]; });
+      c.addEventListener('click',function(){
+        sessionStorage.setItem('signup_industries', JSON.stringify([names[i]]));
+        window.location.href='/tools?industry='+ids[i];
+      });
     });
   }
 })();
