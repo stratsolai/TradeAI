@@ -289,11 +289,12 @@ approach across all tools:
   scope string confirmed from official documentation:
   openid profile email accounting.invoices.read
   accounting.contacts.read accounting.settings.read
-  accounting.transactions.read
   accounting.reports.profitandloss.read
   accounting.reports.balancesheet.read projects.read
   offline_access
-  accounting.transactions.read is required for /Quotes.
+  Note: accounting.transactions.read does NOT exist for
+  apps created after 2 March 2026. Quotes are covered by
+  accounting.invoices.read.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
