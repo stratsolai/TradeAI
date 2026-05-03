@@ -125,6 +125,18 @@
       </div>
 
       <div class="ptab-content active" id="tab-subscriptions">
+        <!-- Trial CTA — shown only while is_trial=true. Opens the
+             activation modal for early conversion. -->
+        <div class="settings-card" id="trial-cta-card" style="display:none">
+          <div style="padding:18px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+            <div>
+              <div class="settings-card-title">You're on a 14-day free trial</div>
+              <div class="settings-card-hint" id="trial-cta-hint">Subscribe to keep your tools when the trial ends.</div>
+            </div>
+            <button class="btn-primary" id="trial-cta-btn">Subscribe Now</button>
+          </div>
+        </div>
+
         <!-- Billing (Level 1 only) -->
         <div class="settings-card owner-only" id="billing-card">
           <div class="settings-card-header">
@@ -224,6 +236,7 @@
   <script src="/shared-utils.js"></script>
   <script src="/pwa.js"></script>
   <script src="/tools-data.js"></script>
+  <script src="/activation-modal.js"></script>
   <script src="/account-logic.js"></script>
   <script>
     // Set the topbar back link to the page the user came from, falling back

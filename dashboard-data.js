@@ -322,12 +322,9 @@ window.DASH_DATA = (function() {
 
     banner.classList.add('visible');
 
-    // Click handler is currently broken (GET to a POST-only endpoint) and
-    // will be replaced by the activation modal in Step 8 — left as-is
-    // pending that change.
-    var tier = profile.bundle_tier;
+    // Subscribe Now opens the activation modal for early conversion.
     cta.addEventListener('click', function() {
-      window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
+      if (typeof window.openActivationModal === 'function') window.openActivationModal();
     });
   }
 
@@ -368,25 +365,11 @@ window.DASH_DATA = (function() {
     modal.addEventListener('click', function(e) { if (e.target === modal) close(); }, { once: true });
 
     var activateBtn = document.getElementById('trial-expired-activate');
-    if (activateBtn) activateBtn.addEventListener('click', async function() {
-      if (!tool || !tool.priceId) { close(); return; }
-      try {
-        var u = await _supabase.auth.getUser();
-        var uid = u.data && u.data.user ? u.data.user.id : null;
-        if (!uid) { close(); return; }
-        var r = await fetch('/api/create-checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: uid, toolId: tool.id, priceId: tool.priceId })
-        });
-        if (r.ok) {
-          var d = await r.json();
-          if (d && d.url) { window.location.href = d.url; return; }
-        }
-      } catch (e) {
-        console.error('[trial-expired modal] checkout error:', e && e.message);
-      }
+    if (activateBtn) activateBtn.addEventListener('click', function() {
       close();
+      if (typeof window.openActivationModal === 'function') {
+        window.openActivationModal(tool && tool.id);
+      }
     }, { once: true });
   }
 
@@ -874,7 +857,9 @@ window.DASH_DATA = (function() {
       var btn = e.target.closest('.dash-activate-btn');
       if (!btn) return;
       var toolId = btn.getAttribute('data-toolid');
-      if (toolId) activateTool(toolId);
+      if (toolId && typeof window.openActivationModal === 'function') {
+        window.openActivationModal(toolId);
+      }
     });
   }
 

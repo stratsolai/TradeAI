@@ -119,7 +119,7 @@ window.ACCOUNT_LOGIC = {
     if (!body) return;
 
     var profilePromise = self._supabase.from('profiles')
-      .select('activated_tools')
+      .select('activated_tools, is_trial, trial_expires_at')
       .eq('id', ownerId)
       .single();
 
@@ -131,6 +131,27 @@ window.ACCOUNT_LOGIC = {
           body.innerHTML = '<div style="padding:18px 24px;" class="list-empty">Could not load subscriptions.</div>';
           return;
         }
+
+        // Trial CTA — only shown while is_trial=true. Opens the activation modal.
+        var trialCard = document.getElementById('trial-cta-card');
+        var trialBtn = document.getElementById('trial-cta-btn');
+        var trialHint = document.getElementById('trial-cta-hint');
+        if (trialCard && result.data && result.data.is_trial) {
+          if (result.data.trial_expires_at && trialHint) {
+            var expires = new Date(result.data.trial_expires_at);
+            var daysLeft = Math.ceil((expires - new Date()) / (1000 * 60 * 60 * 24));
+            if (daysLeft > 0) {
+              trialHint.textContent = (daysLeft === 1 ? '1 day' : daysLeft + ' days') + ' left. Subscribe to keep your tools when the trial ends.';
+            }
+          }
+          trialCard.style.display = '';
+          if (trialBtn) {
+            trialBtn.addEventListener('click', function() {
+              if (typeof window.openActivationModal === 'function') window.openActivationModal();
+            }, { once: true });
+          }
+        }
+
         var tools = (result.data && Array.isArray(result.data.activated_tools)) ? result.data.activated_tools : [];
         if (tools.length === 0) {
           body.innerHTML = '<div style="padding:18px 24px;" class="list-empty">No active subscriptions. <a href="/dashboard.html">Activate your first tool</a> from the Dashboard.</div>';
