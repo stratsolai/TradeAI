@@ -32,13 +32,10 @@
     .dash-zone { margin-bottom: 40px; }
 
     /* ── Trial banner ── */
-    /* Trial banner — platform blue tint background with the standard
-       text colour and a filled-orange CTA. Mandatory now (no dismiss
-       button), so the banner stays visible until the trial converts
-       or expires. CTA shape mirrors .btn-primary's padding/radius/
-       font-weight so it sits at platform button dimensions; the
-       filled-orange colour treatment is page-local because no
-       shared filled-orange button class exists in staxai-auth.css. */
+    /* Mandatory banner shown for every day of the trial. The CTA uses
+       the platform .btn-outline class (matches the CL "Connect Now"
+       button). The day count appears inside a small SVG calendar; the
+       number turns red at the 3-day-or-less threshold. */
     .dash-trial-banner {
       display: none;
       align-items: center;
@@ -52,22 +49,44 @@
       border-bottom: 1px solid var(--border);
     }
     .dash-trial-banner.visible { display: flex; }
-    .dash-trial-banner-msg { flex: 1; }
+    .dash-trial-banner-msg { flex: 1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .dash-trial-banner-actions { display: flex; align-items: center; gap: var(--actions-gap); flex-shrink: 0; }
-    .dash-trial-banner-cta {
-      background: var(--orange);
-      color: var(--white);
-      border: none;
-      border-radius: var(--btn-radius);
-      padding: var(--btn-padding);
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      cursor: pointer;
-      white-space: nowrap;
-      transition: opacity var(--btn-transition);
+
+    .trial-banner-active { display: inline-flex; align-items: center; gap: 10px; }
+    .trial-banner-label {
+      font-family: var(--heading-font);
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--text);
     }
-    .dash-trial-banner-cta:hover { opacity: 0.85; }
+    .trial-banner-suffix { font-weight: var(--font-weight-semibold); }
+
+    /* Calendar countdown widget — SVG frame with the day count layered on top */
+    .trial-cal-wrap {
+      position: relative;
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+    .trial-cal { width: 100%; height: 100%; display: block; }
+    .trial-cal-body { fill: var(--white); stroke: var(--text); stroke-width: 1.5; }
+    .trial-cal-header { fill: var(--blue); }
+    .trial-cal-loop { fill: var(--text); }
+    .trial-cal-num {
+      position: absolute;
+      top: 64%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: var(--heading-font);
+      font-weight: 800;
+      font-size: 13px;
+      line-height: 1;
+      color: var(--text);
+    }
+    .trial-cal-num.urgent { color: var(--red); }
 
     /* ── Tile header (clickable anchor variant of .tile-card header row) ── */
     .dash-tile-header {
@@ -545,7 +564,7 @@
       min-height: 44px;
     }
     .dash-capture-btn:hover { color: var(--blue-accent-hover); }
-    .dash-capture-icon { font-size: 22px; line-height: 1; }
+    .dash-capture-icon { font-size: 36px; line-height: 1; }
     .dash-capture-label {
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
@@ -743,9 +762,24 @@
   </nav>
 
   <div class="dash-trial-banner" id="trial-banner">
-    <span class="dash-trial-banner-msg" id="trial-banner-msg"></span>
+    <div class="dash-trial-banner-msg">
+      <span class="trial-banner-active" id="trial-banner-active">
+        <span class="trial-banner-label">TRIAL COUNTDOWN</span>
+        <span class="trial-cal-wrap" aria-hidden="true">
+          <svg class="trial-cal" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <rect class="trial-cal-body" x="3" y="7" width="26" height="22" rx="2.5"/>
+            <rect class="trial-cal-header" x="3" y="7" width="26" height="6"/>
+            <rect class="trial-cal-loop" x="9" y="4" width="2.5" height="6" rx="0.8"/>
+            <rect class="trial-cal-loop" x="20.5" y="4" width="2.5" height="6" rx="0.8"/>
+          </svg>
+          <span class="trial-cal-num" id="trial-cal-num">14</span>
+        </span>
+        <span class="trial-banner-suffix" id="trial-banner-suffix">days left</span>
+      </span>
+      <span class="trial-banner-expired" id="trial-banner-expired" hidden>Your trial has ended. Subscribe to reactivate your tools.</span>
+    </div>
     <div class="dash-trial-banner-actions">
-      <button class="dash-trial-banner-cta" id="trial-banner-cta">Subscribe Now</button>
+      <button class="btn-outline" id="trial-banner-cta">Subscribe Now</button>
     </div>
   </div>
 

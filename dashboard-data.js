@@ -279,7 +279,6 @@ window.DASH_DATA = (function() {
   // user converts (or the trial expires and the message switches).
   function renderTrialBanner(profile) {
     var banner = document.getElementById('trial-banner');
-    var msg = document.getElementById('trial-banner-msg');
     var cta = document.getElementById('trial-banner-cta');
     if (!banner || !profile) return;
     if (!profile.is_trial || !profile.trial_expires_at) return;
@@ -287,17 +286,30 @@ window.DASH_DATA = (function() {
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
     var daysLeft = Math.ceil((expires - now) / (1000 * 60 * 60 * 24));
-    var bannerMsg;
 
-    if (daysLeft <= 0) bannerMsg = 'Your trial has ended. Subscribe to reactivate your tools.';
-    else if (daysLeft <= 1) bannerMsg = 'Your free trial ends tomorrow.';
-    else if (daysLeft <= 3) bannerMsg = daysLeft + ' days left on your free trial.';
-    else if (daysLeft <= 7) bannerMsg = 'Your free trial ends in ' + daysLeft + ' days. Subscribe to keep your Stax.';
-    else bannerMsg = 'You\'re on a free trial — ' + daysLeft + ' days left.';
+    var active = document.getElementById('trial-banner-active');
+    var expired = document.getElementById('trial-banner-expired');
 
-    msg.textContent = bannerMsg;
+    if (daysLeft <= 0) {
+      if (active) active.hidden = true;
+      if (expired) expired.hidden = false;
+    } else {
+      if (active) active.hidden = false;
+      if (expired) expired.hidden = true;
+      var numEl = document.getElementById('trial-cal-num');
+      var suffixEl = document.getElementById('trial-banner-suffix');
+      if (numEl) {
+        numEl.textContent = daysLeft;
+        numEl.classList.toggle('urgent', daysLeft <= 3);
+      }
+      if (suffixEl) suffixEl.textContent = daysLeft === 1 ? 'day left' : 'days left';
+    }
+
     banner.classList.add('visible');
 
+    // Click handler is currently broken (GET to a POST-only endpoint) and
+    // will be replaced by the activation modal in Step 8 — left as-is
+    // pending that change.
     var tier = profile.bundle_tier;
     cta.addEventListener('click', function() {
       window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
