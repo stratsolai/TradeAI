@@ -146,22 +146,6 @@ AusTender RSS feed confirmed:
 - DV build and audit complete — API update required before
   testing
 
-### Task 29 — Build Admin Page
-
-Status: Audit in progress.
-
-Admin page built. Platform Audit Standard v1.4 run — fixes in progress.
-
-Audit findings being addressed:
-- Cat 1: Split admin-logic.js (over 60K limit)
-- Cat 3: Fix auth gate flicker
-- Cat 5: Stylesheet compliance audit (hardcoded colours, inline styles)
-- Cat 6: Replace hardcoded industry list, fix silent catch blocks, fix MRR pricing
-- Cat 7: Error handling platform-wide audit
-- Cat 11: Remove redundant code (dead CSS, dead functions, orphaned api/admin-costs.js)
-- Cat 14: Component standards audit (~50 page-local classes)
-- Other: Change .ptab.settings-active to .ptab.active, refresh data on tab load, fix dashboard shell flicker
-
 ### Task 30 — Build Testing Environment
 
 Status: Not started.
@@ -224,6 +208,22 @@ approach across all tools:
   cached 5 min). Account page shows user's actual subscription
   prices via api/get-subscription-prices.js (authenticated).
   Fallback to hardcoded prices (all-or-nothing) if API fails.
+- Bundle picker subscription audit (May 2026) —
+  api/get-user-subscriptions.js returns the user's active Stripe
+  subscriptions tagged as bundle (with tier) or individual (tier
+  null). Used by tools-auth.html to know which tools are backed
+  by individual subs (offering retain/remove on deselect) vs by
+  an existing bundle. Resolves account owner via team_members
+  for team accounts.
+- Bundle switch flow (May 2026) — api/switch-bundle.js stages a
+  STAX3/STAX6 bundle Stripe Checkout with cancelSubsAfterPayment
+  metadata listing existing subscriptions to cancel at period
+  end. After payment, the webhook calls subscriptions.update
+  with cancel_at_period_end=true and superseded_by_bundle=true.
+  The customer.subscription.deleted handler skips activated_tools
+  cleanup for superseded subs so the new bundle's tool list is
+  not rolled back when those individual subs eventually expire.
+  Owners only — team members get 403.
 - tool_prices table created (April 2026) — Maps Stripe price_id
   to tool_id/bundle_tier and display_price. RLS enabled with
   read access for authenticated users.
