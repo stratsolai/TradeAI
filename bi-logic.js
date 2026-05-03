@@ -180,21 +180,21 @@ window.BI_LOGIC = {
       var allValid = result.data.every(function(r) { return !r.expires_at || r.expires_at > now; });
       if (!forceRefresh && allValid) return;
 
-      this._refreshInsightsInBackground();
+      this._refreshInsightsInBackground(forceRefresh);
       return;
     }
 
     this._insights = {};
-    await this._callInsightsAPI();
+    await this._callInsightsAPI(forceRefresh);
   },
 
-  _refreshInsightsInBackground: function() {
+  _refreshInsightsInBackground: function(forceRefresh) {
     var self = this;
     var indicator = document.getElementById('bi-last-refreshed');
     var origText = indicator ? indicator.textContent : '';
     if (indicator) indicator.textContent = 'Updating insights...';
 
-    self._callInsightsAPI().then(function() {
+    self._callInsightsAPI(forceRefresh).then(function() {
       self._renderAlertsModule();
       if (indicator) {
         indicator.textContent = self._formatRefreshedAt(new Date());
@@ -204,7 +204,7 @@ window.BI_LOGIC = {
     });
   },
 
-  _callInsightsAPI: async function() {
+  _callInsightsAPI: async function(forceRefresh) {
     try {
       var sb = this._supabase;
       var session = await sb.auth.getSession();
@@ -214,7 +214,7 @@ window.BI_LOGIC = {
       var resp = await fetch('/api/bi-insights', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-        body: '{}'
+        body: JSON.stringify({ forceRefresh: !!forceRefresh })
       });
       if (!resp.ok) {
         console.error('[BI] Insights API failed:', resp.status);
