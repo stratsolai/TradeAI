@@ -52,23 +52,23 @@
     .dash-trial-banner-msg { flex: 1; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .dash-trial-banner-actions { display: flex; align-items: center; gap: var(--actions-gap); flex-shrink: 0; }
 
-    .trial-banner-active { display: inline-flex; align-items: center; gap: 10px; }
+    .trial-banner-active { display: inline-flex; align-items: center; gap: 14px; }
     .trial-banner-label {
       font-family: var(--heading-font);
-      font-weight: 800;
-      font-size: 15px;
-      letter-spacing: 1.2px;
+      font-weight: var(--heading-lg-weight);
+      font-size: 26px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       color: var(--text);
+      line-height: 1;
     }
-    .trial-banner-suffix { font-weight: var(--font-weight-semibold); }
 
     /* Calendar countdown widget — SVG frame with the day count layered on top */
     .trial-cal-wrap {
       position: relative;
       display: inline-block;
-      width: 32px;
-      height: 32px;
+      width: 48px;
+      height: 48px;
       flex-shrink: 0;
     }
     .trial-cal { width: 100%; height: 100%; display: block; }
@@ -81,8 +81,8 @@
       left: 50%;
       transform: translate(-50%, -50%);
       font-family: var(--heading-font);
-      font-weight: 800;
-      font-size: 13px;
+      font-weight: var(--heading-lg-weight);
+      font-size: 20px;
       line-height: 1;
       color: var(--text);
     }
@@ -774,7 +774,6 @@
           </svg>
           <span class="trial-cal-num" id="trial-cal-num">14</span>
         </span>
-        <span class="trial-banner-suffix" id="trial-banner-suffix">days left</span>
       </span>
       <span class="trial-banner-expired" id="trial-banner-expired" hidden>Your trial has ended. Subscribe to reactivate your tools.</span>
     </div>

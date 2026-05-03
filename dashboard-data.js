@@ -297,12 +297,10 @@ window.DASH_DATA = (function() {
       if (active) active.hidden = false;
       if (expired) expired.hidden = true;
       var numEl = document.getElementById('trial-cal-num');
-      var suffixEl = document.getElementById('trial-banner-suffix');
       if (numEl) {
         numEl.textContent = daysLeft;
         numEl.classList.toggle('urgent', daysLeft <= 3);
       }
-      if (suffixEl) suffixEl.textContent = daysLeft === 1 ? 'day left' : 'days left';
     }
 
     banner.classList.add('visible');
