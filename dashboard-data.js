@@ -73,9 +73,25 @@ window.DASH_DATA = (function() {
 
     _resolvedPrices = resolveLivePrices(await loadLivePrices());
 
+    // Team-member resolution: account-level fields (trial state,
+    // activated_tools, bundle_tier, business_name) live on the owner's
+    // profile row. For team members, follow the team_members link first.
+    var ownerId = user.id;
+    try {
+      var team = await _supabase
+        .from('team_members')
+        .select('account_owner_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (team.data && team.data.account_owner_id) ownerId = team.data.account_owner_id;
+    } catch (e) {
+      console.error('[Dashboard] team_members lookup failed:', e && e.message);
+    }
+
     var pr = await _supabase.from('profiles')
       .select('activated_tools, trial_expires_at, is_trial, bundle_tier, business_name')
-      .eq('id', user.id).single();
+      .eq('id', ownerId).single();
 
     if (pr.error) {
       console.error('[Dashboard] Profile query error:', pr.error.message || pr.error);
@@ -131,6 +147,7 @@ window.DASH_DATA = (function() {
 
     setHeading();
     renderTrialBanner(_profile);
+    wireTrialExpiredModal();
     showBPModal();
     await renderZone1(user.id, _activeTools);
     wirePhotoCapture();
@@ -312,6 +329,65 @@ window.DASH_DATA = (function() {
     cta.addEventListener('click', function() {
       window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
     });
+  }
+
+  // ── TRIAL-EXPIRED MODAL ──
+  // Shown when a tool page redirects here with ?expired=1&tool=X (set by
+  // window.checkToolAccess in shared-utils.js). Step 8's activation modal
+  // will replace the "Activate Now" behaviour with a multi-option picker;
+  // for now, fall through to a single-tool Stripe checkout when we know
+  // the priceId, otherwise just close the modal.
+  function wireTrialExpiredModal() {
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('expired') !== '1') return;
+    var modal = document.getElementById('trial-expired-modal');
+    if (!modal) return;
+
+    var toolId = params.get('tool');
+    var tool = toolId && Array.isArray(window.CORE_TOOLS)
+      ? window.CORE_TOOLS.find(function(t) { return t.id === toolId; })
+      : null;
+    var toolName = tool
+      ? (Array.isArray(tool.title) ? tool.title.join(' ') : tool.title || tool.name)
+      : '';
+    var body = document.getElementById('trial-expired-body');
+    if (body) {
+      body.textContent = toolName
+        ? 'Activate ' + toolName + ' to continue.'
+        : 'Activate this tool to continue.';
+    }
+
+    modal.classList.add('open');
+
+    function close() {
+      modal.classList.remove('open');
+      history.replaceState({}, '', window.location.pathname);
+    }
+    var cancelBtn = document.getElementById('trial-expired-cancel');
+    if (cancelBtn) cancelBtn.addEventListener('click', close, { once: true });
+    modal.addEventListener('click', function(e) { if (e.target === modal) close(); }, { once: true });
+
+    var activateBtn = document.getElementById('trial-expired-activate');
+    if (activateBtn) activateBtn.addEventListener('click', async function() {
+      if (!tool || !tool.priceId) { close(); return; }
+      try {
+        var u = await _supabase.auth.getUser();
+        var uid = u.data && u.data.user ? u.data.user.id : null;
+        if (!uid) { close(); return; }
+        var r = await fetch('/api/create-checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: uid, toolId: tool.id, priceId: tool.priceId })
+        });
+        if (r.ok) {
+          var d = await r.json();
+          if (d && d.url) { window.location.href = d.url; return; }
+        }
+      } catch (e) {
+        console.error('[trial-expired modal] checkout error:', e && e.message);
+      }
+      close();
+    }, { once: true });
   }
 
   // ── ZONE 1: Content Library + Email Assistant + BI Dashboard placeholder ──

@@ -57,6 +57,7 @@ window.DV_LOGIC = {
 
   init: async function(supabase, user) {
     if (!supabase || !user) return;
+    if (!(await window.checkToolAccess('design-viz', supabase, user))) return;
     this._supabase = supabase;
     this._userId = user.id;
 

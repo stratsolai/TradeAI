@@ -370,7 +370,6 @@
           window.location.href = '/login';
           return;
         }
-        document.getElementById('page-wrap').style.display = 'block';
         if (window.CB_SETTINGS_LOGIC && window.CB_SETTINGS_LOGIC.init) {
           window.CB_SETTINGS_LOGIC.init(supabase, resp.data.user);
         }

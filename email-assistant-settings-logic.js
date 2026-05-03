@@ -6,12 +6,12 @@ window.EA_SETTINGS = {
   _categories: [],
   _categoryShortcuts: ['enquiries', 'projects'],
 
-  init: function (supabase, user) {
+  init: async function (supabase, user) {
+    if (!(await window.checkToolAccess('email', supabase, user))) return;
     var self = this;
     self._supabase = supabase;
     self._userId = user.id;
     self._bindTabs();
-    document.getElementById('page-wrap').style.display = 'block';
     self._loadAll();
     self._bindEventDelegation();
     self._bindPermissionModal();

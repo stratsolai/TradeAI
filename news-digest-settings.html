@@ -164,7 +164,6 @@
           window.location.href = '/login';
           return;
         }
-        document.getElementById('page-wrap').style.display = 'block';
         if (window.ND_SETTINGS_LOGIC && window.ND_SETTINGS_LOGIC.init) {
           window.ND_SETTINGS_LOGIC.init(supabase, resp.data.user);
         }

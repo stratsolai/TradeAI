@@ -1518,7 +1518,7 @@
       });
   }
 
-  function init(supabase, user) {
+  async function init(supabase, user) {
     _supabase = supabase;
     _userId = user ? user.id : null;
 
@@ -1527,6 +1527,7 @@
       goToSection(0);
       return;
     }
+    if (!(await window.checkToolAccess('strategic-plan', supabase, user))) return;
 
     renderSections();
     goToSection(0);

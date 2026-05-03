@@ -11,6 +11,7 @@ window.CB_SETTINGS_LOGIC = {
 
   init: async function(supabase, user) {
     if (!supabase || !user) return;
+    if (!(await window.checkToolAccess('chatbot', supabase, user))) return;
     this._supabase = supabase;
     this._userId = user.id;
 

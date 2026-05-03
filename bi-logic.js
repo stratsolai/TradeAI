@@ -14,11 +14,26 @@ window.BI_LOGIC = {
   _isActivated: false,
 
   init: async function(supabase, user) {
+    if (!(await window.checkToolAccess('bi', supabase, user))) return;
     this._supabase = supabase;
     this._user = user;
     this._bindEvents();
 
-    var pr = await supabase.from('profiles').select('activated_tools').eq('id', user.id).single();
+    // Resolve owner id — activated_tools lives on the owner's profile,
+    // not the team member's own row.
+    var ownerId = user.id;
+    try {
+      var team = await supabase
+        .from('team_members')
+        .select('account_owner_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .maybeSingle();
+      if (team.data && team.data.account_owner_id) ownerId = team.data.account_owner_id;
+    } catch (e) {
+      console.error('[BI] team_members lookup failed:', e && e.message);
+    }
+    var pr = await supabase.from('profiles').select('activated_tools').eq('id', ownerId).single();
     if (pr.error) console.error('[BI] Profile check error:', pr.error.message);
     if (pr.data && Array.isArray(pr.data.activated_tools) && pr.data.activated_tools.indexOf('bi') !== -1) {
       this._isActivated = true;

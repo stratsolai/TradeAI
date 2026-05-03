@@ -123,7 +123,6 @@
           window.location.href = '/login';
           return;
         }
-        document.getElementById('page-wrap').style.display = 'block';
         if (window.DV_SETTINGS_LOGIC && window.DV_SETTINGS_LOGIC.init) {
           window.DV_SETTINGS_LOGIC.init(supabase, resp.data.user);
         }

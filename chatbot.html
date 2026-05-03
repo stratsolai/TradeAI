@@ -297,7 +297,6 @@
       supabase.auth.getSession().then(function(result) {
         var session = result.data && result.data.session;
         if (!session) { window.location.href = '/login'; return; }
-        document.getElementById('page-wrap').style.display = 'block';
         if (window.CB_LOGIC && window.CB_LOGIC.init) {
           window.CB_LOGIC.init(supabase, session.user);
         }

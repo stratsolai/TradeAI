@@ -186,6 +186,7 @@ window.SOCIAL_LOGIC = {
 
   init: async function(supabase, user) {
     if (!supabase || !user) return;
+    if (!(await window.checkToolAccess('social', supabase, user))) return;
     this._supabase = supabase;
     this._userId = user.id;
     this._bindTabs();

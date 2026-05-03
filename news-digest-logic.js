@@ -19,6 +19,7 @@ window.ND_LOGIC = {
       console.error('[ND] supabase client or user not provided');
       return;
     }
+    if (!(await window.checkToolAccess('news-digest', supabase, user))) return;
     this._supabase = supabase;
     this._userId = user.id;
     this._bindTabs();

@@ -9,6 +9,7 @@ window.DV_SETTINGS_LOGIC = {
       console.error('[DV Settings] supabase client or user not provided');
       return;
     }
+    if (!(await window.checkToolAccess('design-viz', supabase, user))) return;
     this._supabase = supabase;
     this._userId = user.id;
 

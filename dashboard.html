@@ -782,6 +782,21 @@
     </div>
   </div>
 
+  <!-- Trial-expired modal — opened by dashboard-data.js when redirected
+       here with ?expired=1&tool=X. "Activate Now" runs a single-tool
+       Stripe checkout for now; Step 8 will replace it with the full
+       activation modal (single tool / STAX3 / STAX6 / STAXALL). -->
+  <div class="perm-modal-overlay" id="trial-expired-modal" role="dialog" aria-labelledby="trial-expired-title">
+    <div class="perm-modal">
+      <div class="perm-modal-title" id="trial-expired-title">Your trial has ended</div>
+      <div class="perm-modal-body" id="trial-expired-body">Activate this tool to continue.</div>
+      <div class="perm-modal-actions">
+        <button type="button" class="perm-modal-cancel" id="trial-expired-cancel">Maybe Later</button>
+        <button type="button" class="perm-modal-continue" id="trial-expired-activate">Activate Now</button>
+      </div>
+    </div>
+  </div>
+
   <div id="page-wrap" style="display:none">
     <div class="tool-container">
 
