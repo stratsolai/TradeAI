@@ -95,6 +95,14 @@ window.BI_MODULES = {
       return;
     }
 
+    if (!advisoryList) {
+      var secRestore = document.getElementById('bi-mod-financial-advisory');
+      if (secRestore) {
+        secRestore.innerHTML = '<div class="bi-advisory-label">AI Advisory</div><div id="bi-mod-financial-advisory-list"></div>';
+        advisoryList = document.getElementById('bi-mod-financial-advisory-list');
+      }
+    }
+
     var d = data.data; var s = d.summary;
     var margin = s.profit_margin || 0;
     this._renderKPIRow(kpisEl, [
@@ -178,6 +186,14 @@ window.BI_MODULES = {
       var sec = document.getElementById('bi-mod-customers-advisory');
       if (sec) sec.innerHTML = '<div class="bi-module-prompt"><div class="bi-module-prompt-icon">&#128101;</div><h3>Customer Analysis</h3><p>Connect your accounting software to analyse your customer base, revenue concentration, and quote conversion rates.</p></div>';
       return;
+    }
+
+    if (!advisoryList) {
+      var secRestore = document.getElementById('bi-mod-customers-advisory');
+      if (secRestore) {
+        secRestore.innerHTML = '<div class="bi-advisory-label">AI Advisory</div><div id="bi-mod-customers-advisory-list"></div>';
+        advisoryList = document.getElementById('bi-mod-customers-advisory-list');
+      }
     }
 
     var d = data.data; var s = d.summary;
