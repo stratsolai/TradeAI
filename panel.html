@@ -1489,14 +1489,12 @@ footer {
       handyman:'Cleaning & Maintenance', service:'Service & Professional'
     };
     var indParam = new URLSearchParams(window.location.search).get('industry');
-    var toolParam = new URLSearchParams(window.location.search).get('tool');
     var preSelectInd = indParam ? KEY_TO_INDUSTRY[indParam] || null : null;
 
     function handleTrialClick(e) {
       e.stopPropagation();
-      if (!toolParam) return;
       var opts = {
-        onContinue: function() { window.location.href = '/login?tab=signup&tool=' + toolParam; }
+        onContinue: function() { window.location.href = '/login?tab=signup'; }
       };
       if (preSelectInd) opts.preSelect = preSelectInd;
       openIndustryModal(opts);

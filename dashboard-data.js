@@ -300,11 +300,7 @@ window.DASH_DATA = (function() {
 
     var tier = profile.bundle_tier;
     cta.addEventListener('click', function() {
-      if (tier === 'stax3' || tier === 'stax6') {
-        window.location.href = '/subscribe-confirm.html?tier=' + tier;
-      } else {
-        window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
-      }
+      window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
     });
   }
 

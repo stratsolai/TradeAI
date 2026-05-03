@@ -822,7 +822,6 @@ footer {
   var industryParam = params.get('industry');
   if (!industryParam) { var sar = document.querySelector('.see-all-row'); if (sar) sar.style.display='none'; var tg = document.querySelector('.tool-grid'); if (tg) tg.style.paddingBottom='62px'; }
   var workflowParam = params.get('workflow');
-  var tierParam = params.get('tier');
 
   // Industry name → tool-key mapping (from Industry Taxonomy Spec v1.1)
   var INDUSTRY_TO_KEYS = {
@@ -844,9 +843,9 @@ footer {
     try { signupIndustries = JSON.parse(signupIndustriesRaw); } catch(e) {}
   }
 
-  // If no industries in sessionStorage, redirect to pricing
+  // If no industries in sessionStorage, redirect back to industry selection
   if (signupIndustries.length === 0) {
-    window.location.href = '/pricing-page.html';
+    window.location.href = '/industry-select.html';
     return;
   }
 

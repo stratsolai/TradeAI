@@ -72,7 +72,7 @@ export default async function handler(req, res) {
       await confirmSubscription(session);
 
       // For single-tool purchases, append the tool to activated_tools.
-      // Bundle tools are pre-set in subscribe-confirm.html before checkout.
+      // Bundle tools are pre-set on the profile before checkout is initiated.
       if (toolId) {
         try {
           console.log('Adding tool to activated_tools:', toolId);
