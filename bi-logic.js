@@ -167,18 +167,22 @@ window.BI_LOGIC = {
   _setRefreshState: function(loading) {
     var btn = document.getElementById('bi-refresh-btn');
     if (!btn) return;
-    btn.textContent = loading ? 'Refreshing...' : 'Refresh Insights';
+    btn.textContent = loading ? 'Refreshing...' : 'Refresh Data';
     btn.disabled = loading;
+  },
+
+  _formatRefreshedAt: function(date) {
+    var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+    var h = date.getHours(); var m = date.getMinutes();
+    var ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12 || 12;
+    return date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear() + ', ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
   },
 
   _updateLastRefreshed: function() {
     var el = document.getElementById('bi-last-refreshed');
     if (!el) return;
-    var now = new Date();
-    var h = now.getHours(); var m = now.getMinutes();
-    var ampm = h >= 12 ? 'pm' : 'am';
-    h = h % 12 || 12;
-    el.textContent = 'Last refreshed: ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+    el.textContent = this._formatRefreshedAt(new Date());
   },
 
   _loadCachedInsights: async function(forceRefresh) {
@@ -217,11 +221,7 @@ window.BI_LOGIC = {
     self._callInsightsAPI().then(function() {
       self._renderAlertsModule();
       if (indicator) {
-        var now = new Date();
-        var h = now.getHours(); var m = now.getMinutes();
-        var ampm = h >= 12 ? 'pm' : 'am';
-        h = h % 12 || 12;
-        indicator.textContent = 'Last refreshed: ' + h + ':' + (m < 10 ? '0' : '') + m + ' ' + ampm;
+        indicator.textContent = self._formatRefreshedAt(new Date());
       }
     }).catch(function() {
       if (indicator) indicator.textContent = origText;
