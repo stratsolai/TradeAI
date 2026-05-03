@@ -14,6 +14,16 @@ const XERO_CLIENT_ID = process.env.XERO_CLIENT_ID;
 const XERO_CLIENT_SECRET = process.env.XERO_CLIENT_SECRET;
 const XERO_API_BASE = 'https://api.xero.com/api.xro/2.0';
 
+// Xero JSON API returns dates as "/Date(epochms+0000)/" rather than ISO.
+// Downstream BI code does string comparisons against ISO dates, so normalise
+// at the source.
+function xeroDate(s) {
+  if (!s) return '';
+  var m = /\/Date\((-?\d+)/.exec(s);
+  if (m) return new Date(parseInt(m[1], 10)).toISOString().substring(0, 10);
+  return (typeof s === 'string' && s.length >= 10) ? s.substring(0, 10) : '';
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -135,8 +145,8 @@ export default async function handler(req, res) {
       result = (data.Invoices || []).map(function (inv) {
         return {
           invoice_number: inv.InvoiceNumber || '',
-          date: inv.Date || '',
-          due_date: inv.DueDate || '',
+          date: xeroDate(inv.Date),
+          due_date: xeroDate(inv.DueDate),
           contact_name: (inv.Contact && inv.Contact.Name) || '',
           status: inv.Status || '',
           amount_excl_gst: inv.SubTotal || 0,
@@ -152,8 +162,8 @@ export default async function handler(req, res) {
       result = (data2.Invoices || []).map(function (inv) {
         return {
           invoice_number: inv.InvoiceNumber || '',
-          date: inv.Date || '',
-          due_date: inv.DueDate || '',
+          date: xeroDate(inv.Date),
+          due_date: xeroDate(inv.DueDate),
           contact_name: (inv.Contact && inv.Contact.Name) || '',
           status: inv.Status || '',
           amount_excl_gst: inv.SubTotal || 0,
@@ -199,7 +209,7 @@ export default async function handler(req, res) {
       result = (data5.Quotes || []).map(function (q) {
         return {
           quote_number: q.QuoteNumber || '',
-          date: q.Date || '',
+          date: xeroDate(q.Date),
           contact_name: (q.Contact && q.Contact.Name) || '',
           status: q.Status || '',
           amount_excl_gst: q.SubTotal || 0,
