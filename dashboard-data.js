@@ -274,14 +274,15 @@ window.DASH_DATA = (function() {
   }
 
   // ── TRIAL BANNER ──
+  // Mandatory now — no dismiss button, no sessionStorage dismissal.
+  // The banner stays visible for every day of the trial until the
+  // user converts (or the trial expires and the message switches).
   function renderTrialBanner(profile) {
     var banner = document.getElementById('trial-banner');
     var msg = document.getElementById('trial-banner-msg');
     var cta = document.getElementById('trial-banner-cta');
-    var dismiss = document.getElementById('trial-banner-dismiss');
     if (!banner || !profile) return;
     if (!profile.is_trial || !profile.trial_expires_at) return;
-    if (sessionStorage.getItem('trial_banner_dismissed') === 'true') return;
 
     var now = new Date();
     var expires = new Date(profile.trial_expires_at);
@@ -304,10 +305,6 @@ window.DASH_DATA = (function() {
       } else {
         window.location.href = '/api/create-checkout?tier=' + (tier || 'individual');
       }
-    });
-    dismiss.addEventListener('click', function() {
-      sessionStorage.setItem('trial_banner_dismissed', 'true');
-      banner.classList.remove('visible');
     });
   }
 
