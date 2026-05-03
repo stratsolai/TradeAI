@@ -89,7 +89,6 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .card-icon{font-size:20px;display:block;margin-bottom:5px;}
 .card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;color:rgba(255,255,255,0.75);filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
 
-.tool-card-desc{font-size:15px;color:rgba(232,213,184,0.85);line-height:1.4;max-height:42px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-overflow:ellipsis;margin-bottom:0;}.tool-card-desc.expanded{max-height:none;display:block;-webkit-line-clamp:unset;overflow:visible;}.card-desc-wrap{position:relative;padding-bottom:28px;margin-bottom:6px;}.card-desc-toggle{position:absolute;bottom:0;right:0;width:22px;height:22px;border-radius:50%;background:none;color:rgba(255,255,255,0.7);font-size:20px;line-height:22px;text-align:center;cursor:pointer;border:none;padding:0;font-weight:300;}.card-desc-toggle:hover{background:#d4844a;}
 .card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;}
 .card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;}
 .see-all-card{grid-column:1/-1;background:linear-gradient(135deg,rgba(196,98,42,0.1),rgba(44,90,130,0.09));border:1px dashed rgba(196,98,42,0.32);border-radius:14px;padding:16px 22px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all 0.3s;animation:cardIn 0.5s 0.5s cubic-bezier(0.16,1,0.3,1) both;}
@@ -265,196 +264,143 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   color: #fff;
   font-weight: 600;
 }
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  width: 100%;
-}
-.tool-card {
-  position: relative;
-  border-radius: 14px;
-  cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.10);
-  border-left: 4px solid #1A5490;
-  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1), box-shadow 0.3s, border-color 0.3s;
-  background-color: #2a3f5f;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.12'/%3E%3C/svg%3E"), linear-gradient(145deg, #2e4567 0%, #1f3252 100%);
-  background-blend-mode: overlay, normal;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
-  padding: 18px 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 160px;
-  text-decoration: none;
-}
-@property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
-.tool-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
-.tool-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}.tool-card:hover{background-color:#334a6e;border-left:4px solid #2a6db5;box-shadow:0 4px 20px rgba(0,0,0,0.35);}
-.tool-card:hover{border-color:transparent;transform:translateY(-3px);}
-.tool-card-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 10px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  position: absolute;
-  top: 12px;
-  right: 12px;
-}
-.badge-live {
-  background: #1A5490;
-  color: #fff;
-  border: none;
-}
-.badge-coming {
-  background: rgba(74,144,184,0.18);
-  color: #4a90b8;
-  border: 1px solid rgba(74,144,184,0.3);
-}
-.tool-card-icon {
-  font-size: 24px;
-  line-height: 1;
-  margin-bottom: 2px;
-}
-.tool-card-title {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-weight: 900;
-  font-size: 26px;
-  color: #ffffff;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  line-height: 26px;
-  min-height: 52px;
-  margin-bottom: 6px;
-}
-.tool-card-desc {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  color: rgba(255,255,255,0.92);
-  line-height: 21px;
-  flex: 1;
-}
-.tool-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 10px;
-}
-.tool-card-price {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: rgba(232,213,184,0.7);
-}
-.tool-card-cta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  color: rgba(255,255,255,0.6);
-  text-transform: uppercase;
-  letter-spacing: 1.6px;
-}
-.tool-card-cta .arrow {
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: #1A5490;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; color: #fff;
-  transition: transform 0.2s;
-  flex-shrink: 0;
-}
-.tool-card:hover .arrow { transform: translateX(3px); }
-.see-all-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 16px;
-  padding-bottom: 8px;
-}
-.btn-see-all-tools {
-  text-transform:none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: #c4622a;
-  color: #fff;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 10px 22px;
-  border-radius: 6px;
-  text-decoration: none;
+
+/* ===== ACCORDION + CAROUSEL (v2) ===== */
+.tool-accordions { display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; }
+
+.tool-accordion { background: #172035; border-radius: 12px; overflow: hidden; transition: background 0.2s; }
+.accordion-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 24px; cursor: pointer; user-select: none;
   transition: background 0.2s;
 }
-.btn-see-all-tools:hover {
-  background: #d4844a;
+.accordion-header:hover { background: rgba(255,255,255,0.03); }
+.accordion-arrow {
+  width: 16px; flex-shrink: 0; color: #4A6D8C;
+  font-size: 14px; line-height: 1;
+  transition: transform 0.25s ease;
 }
-
-/* PICK MODE */
-.pick-banner {
-  background: #1e2d47;
-  border: 1px solid #c4622a;
-  border-radius: 10px;
-  padding: 14px 20px;
-  margin: 0 auto 24px;
-  max-width: 760px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.tool-accordion:not(.expanded) .accordion-arrow { transform: rotate(-90deg); }
+.accordion-title-block { flex: 1; min-width: 0; }
+.accordion-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 600; color: #fff;
+  letter-spacing: 0.5px; line-height: 1.1;
+  text-transform: uppercase;
+}
+.accordion-tagline {
+  font-size: 13px; color: rgba(255,255,255,0.5);
+  margin-top: 4px; line-height: 1.4;
+}
+.accordion-count {
+  background: rgba(74,109,140,0.3); color: #7BA3C4;
   font-family: 'DM Sans', sans-serif;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 12px;
+  flex-shrink: 0;
 }
-.pick-banner-count { color: #c4622a; font-size: 18px; font-weight: 700; margin: 0 8px; }
-.tool-card.pick-selected {
-  border: 2px solid #c4622a;
-  background: rgba(196,98,42,0.12);
-  box-shadow: 0 0 0 2px rgba(196,98,42,0.3);
-}
-.tool-card.pick-disabled {
-  opacity: 0.35;
-  pointer-events: none;
-}
-.pick-confirm-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background: #1e2d47;
-  border-top: 2px solid #c4622a;
-  padding: 16px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  z-index: 500;
-  font-family: 'DM Sans', sans-serif;
-}
-.pick-confirm-bar .pick-summary { color: rgba(255,255,255,0.75); font-size: 15px; }
-.pick-confirm-btn {
-  background: #c4622a;
-  color: #fff;
-  border: none;
-  padding: 12px 28px;
+.accordion-arrows { display: flex; gap: 8px; flex-shrink: 0; }
+.carousel-arrow {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
+  color: #fff;
+  font-size: 18px; font-weight: 600; line-height: 1;
   cursor: pointer;
-  opacity: 0.4;
-  pointer-events: none;
-  transition: opacity 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.2s, border-color 0.2s;
 }
-.pick-confirm-btn.active { opacity: 1; pointer-events: auto; }
+.carousel-arrow:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); }
+.carousel-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.accordion-body { display: none; padding: 0 24px 24px; }
+.tool-accordion.expanded .accordion-body { display: block; }
+
+.tool-carousel {
+  display: flex; gap: 20px;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-behavior: smooth;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+.tool-carousel::-webkit-scrollbar { display: none; }
+
+.tool-card-v2 {
+  flex: 0 0 300px; min-width: 300px;
+  background: #1a2942; border-radius: 12px;
+  display: flex; flex-direction: column;
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.tool-card-v2:hover { transform: scale(1.03); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+.tool-card-v2.coming-soon { opacity: 0.85; }
+
+.tool-card-v2-shot {
+  position: relative; height: 140px;
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f1a2d 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 56px; line-height: 1;
+  color: rgba(255,255,255,0.45);
+}
+.tool-card-v2-badge {
+  position: absolute; top: 10px; right: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.6px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 12px;
+  color: #fff;
+}
+.tool-card-v2-badge.live { background: #1D9E75; }
+.tool-card-v2-badge.soon { background: #E8A54B; }
+
+.tool-card-v2-body {
+  padding: 16px 16px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 1;
+}
+.tool-card-v2-name {
+  font-family: 'DM Sans', sans-serif;
+  color: #fff; font-size: 16px; font-weight: 600;
+  line-height: 1.25;
+}
+.tool-card-v2-desc {
+  color: rgba(255,255,255,0.6);
+  font-size: 12px; line-height: 1.5;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.tool-card-v2-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-top: 4px;
+}
+.tool-card-v2-price {
+  color: #E8A54B; font-size: 16px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+}
+.tool-card-v2-cta {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 600;
+  padding: 8px 14px; border-radius: 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.tool-card-v2-cta.live {
+  background: #4A6D8C; color: #fff; border: 1px solid #4A6D8C;
+}
+.tool-card-v2-cta.soon {
+  background: transparent; color: rgba(255,255,255,0.55);
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.tool-card-v2:hover .tool-card-v2-cta.live { background: #3a5a75; }
+/* ===== END ACCORDION ===== */
+
 footer {
       background:#1a2f4a; padding:32px 48px 20px;
       border-top:1px solid rgba(255,255,255,0.08);
@@ -685,7 +631,7 @@ footer {
         <div class="hiw-step-num">1</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Choose Your Trade</div>
-          <div class="hiw-step-desc">Select from 12 industries — tools built around how your trade actually works.</div>
+          <div class="hiw-step-desc">Select from 12 industries — tools built around how your trade actually works</div>
         </div>
       </div>
       <div class="hiw-connector"></div>
@@ -693,7 +639,7 @@ footer {
         <div class="hiw-step-num">2</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Create Your <span class="word-accent">STAX</span></div>
-          <div class="hiw-step-desc">Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes.</div>
+          <div class="hiw-step-desc">Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes</div>
         </div>
       </div>
       <div class="hiw-connector"></div>
@@ -701,7 +647,7 @@ footer {
         <div class="hiw-step-num">3</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Your <span class="word-accent">STAX</span> is Live</div>
-          <div class="hiw-step-desc">Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with your trade.</div>
+          <div class="hiw-step-desc">Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with your trade</div>
         </div>
       </div>
     </div>
@@ -714,17 +660,14 @@ footer {
       <h1><span class="h-line" id="industry-heading">All Tools</span></h1>
       <div class="section-label">Choose Your Tool</div>
       <div class="filter-tabs">
-        <button class="filter-tab active" data-cat="all">All</button>
-        <button class="filter-tab" data-cat="marketing">Marketing</button>
-        <button class="filter-tab" data-cat="operations">Operations</button>
+        <button class="filter-tab" data-cat="all">All</button>
+        <button class="filter-tab active" data-cat="sales-marketing">Sales &amp; Marketing</button>
+        <button class="filter-tab" data-cat="customers-safety">Customers &amp; Safety</button>
         <button class="filter-tab" data-cat="intelligence">Business Intelligence</button>
       </div>
     </div>
-    <div class="tool-grid" id="tool-grid">
-      <!-- populated by JS -->
-    </div>
-    <div class="see-all-row">
-      <a href="/tools" class="btn-see-all-tools">See All Tools</a>
+    <div class="tool-accordions" id="tool-accordions">
+      <!-- populated by JS — one accordion per category, each with a horizontal carousel of tool cards -->
     </div>
     <div style="height:40px;"></div>
   </div>
@@ -820,21 +763,8 @@ footer {
   // Parse URL params
   var params = new URLSearchParams(window.location.search);
   var industryParam = params.get('industry');
-  if (!industryParam) { var sar = document.querySelector('.see-all-row'); if (sar) sar.style.display='none'; var tg = document.querySelector('.tool-grid'); if (tg) tg.style.paddingBottom='62px'; }
   var workflowParam = params.get('workflow');
 
-  // Industry name → tool-key mapping (from Industry Taxonomy Spec v1.1)
-  var INDUSTRY_TO_KEYS = {
-    'Building & Construction': ['builder'],
-    'Electrical & Solar': ['electrician'],
-    'Plumbing & Gas': ['plumber'],
-    'HVAC & Refrigeration': ['hvac'],
-    'Landscaping & Outdoor': ['landscaper', 'pool', 'concreter'],
-    'Painting & Finishing': [],
-    'Fabrication & Manufacturing': ['fabricator', 'manufacturer'],
-    'Cleaning & Maintenance': ['cleaner', 'handyman'],
-    'Service & Professional': ['service']
-  };
 
   // Read signup industries from sessionStorage
   var signupIndustries = [];
@@ -849,12 +779,6 @@ footer {
     return;
   }
 
-  // Build set of allowed industry tool keys from selected industries
-  var allowedIndustryKeys = {};
-  signupIndustries.forEach(function(name) {
-    var keys = INDUSTRY_TO_KEYS[name] || [];
-    keys.forEach(function(k) { allowedIndustryKeys[k] = true; });
-  });
 
   // Update heading and breadcrumb
   var industryNames = {
@@ -870,15 +794,16 @@ footer {
     if(bc) bc.textContent = name + ' Tools';
   }
 
-  // Tool data (mirrors tools-data.js CORE_TOOLS)
+  // Tool data (mirrors tools-data.js CORE_TOOLS). The `cat` field maps to
+  // the v2.1 categorisation: sales-marketing / customers-safety / intelligence.
   var TOOLS = [
-    { id:'chatbot', toolId:'chatbot', status:'built', icon:'💬', cat:'marketing',
+    { id:'chatbot', toolId:'chatbot', status:'built', icon:'💬', cat:'sales-marketing',
       title:'Website Chatbot', price:'$69', priceId:'price_1TRlgkHnoVvjo5gxXR6NMrkR',
       desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
-    { id:'social', toolId:'social', status:'built', icon:'📱', cat:'marketing',
+    { id:'social', toolId:'social', status:'built', icon:'📱', cat:'sales-marketing',
       title:'Marketing & Social Media Manager', price:'$69', priceId:'price_1TEQg8HnoVvjo5gxkxUaFrok',
       desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
-    { id:'email', toolId:'email', status:'built', icon:'📧', cat:'marketing',
+    { id:'email', toolId:'email', status:'built', icon:'📧', cat:'sales-marketing',
       title:'Email Assistant', price:'$39', priceId:'price_1TQLhHHnoVvjo5gxnwUQQYwM',
       desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
     { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
@@ -890,27 +815,34 @@ footer {
     { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'🗺', cat:'intelligence',
       title:'Strategic Plan & Operations Dashboard', price:'$69', priceId:'price_1TB7DDHnoVvjo5gxgLzZbego',
       desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
-    { id:'tender', toolId:'tender', status:'pending', icon:'📋', cat:'operations',
+    { id:'tender', toolId:'tender', status:'pending', icon:'📋', cat:'sales-marketing',
       title:'Tender Response Generator', price:'$69', priceId:'price_1TEQjVHnoVvjo5gxfyLbHE3M',
       desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
-    { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'operations',
+    { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'sales-marketing',
       title:'Quote Enhancer', price:'$59', priceId:'price_1TB8QZHnoVvjo5gxwL0GKduI',
       desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document — detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
-    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'operations',
+    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'customers-safety',
       title:'SWMS & Safety Docs', price:'$59', priceId:'price_1TB8RNHnoVvjo5gxPb5wxUuF',
       desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
-    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'operations',
+    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'customers-safety',
       title:'Customer Progress Updates', price:'$59', priceId:'price_1TB8S6HnoVvjo5gxVYoEezlN',
       desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
-    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'operations',
+    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'customers-safety',
       title:'Handover Documentation', price:'$59', priceId:'price_1TB8ShHnoVvjo5gxrGBAMHZL',
       desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
-    { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'marketing',
+    { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'sales-marketing',
       title:'Review & Referral Booster', price:'$39', priceId:'price_1TB8TFHnoVvjo5gxkF2QMzJa',
       desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they haven’t responded. Once they leave a review, it asks if they know someone who needs your services.' },
-    { id:'design-viz', toolId:'design-viz', status:'built', icon:'🎨', cat:'marketing',
+    { id:'design-viz', toolId:'design-viz', status:'built', icon:'🎨', cat:'sales-marketing',
       title:'Design Visualiser', price:'$69', priceId:'price_1TQLbEHnoVvjo5gxIuSSm7tH',
       desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' }
+  ];
+
+  // v2.1 categorisation — order, label, and tagline per spec section.
+  var CATEGORIES = [
+    { id: 'sales-marketing',  name: 'Sales & Marketing',     tagline: 'Get the Job — win more work with less effort' },
+    { id: 'customers-safety', name: 'Customers & Safety',    tagline: 'Do the Job — keep customers informed & stay compliant' },
+    { id: 'intelligence',     name: 'Business Intelligence', tagline: 'Opportunities and Risks — key insights, planning suggestions & news' }
   ];
 
   // Live prices: map of toolId → "$X/mth", or null if any built tool's
@@ -946,132 +878,165 @@ footer {
     return t.price + '/mth';
   }
 
-  // Filter state
-  var activeCat = 'all';
+  function escAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
 
-  function renderTools(cat) {
-    var grid = document.getElementById('tool-grid');
-    var filtered = cat === 'all' ? TOOLS : TOOLS.filter(function(t){ return t.cat === cat; });
-    var html = '';
-    filtered.forEach(function(t) {
-      var badge = t.status === 'built'
-        ? '<span class="tool-card-badge badge-live">&#9679; Live Now</span>'
-        : '<span class="tool-card-badge badge-coming">Coming Soon</span>';
-      var priceHtml = t.price !== 'Coming Soon' ? '<span class="tool-card-price">' + getDisplayPrice(t) + '</span>' : '<span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span>';
-      var dest = '/panel?tool=' + t.id + (workflowParam ? '&workflow=' + workflowParam : '') + (industryParam ? '&industry=' + industryParam : '');
-      html += '<a class="tool-card" href="' + dest + '" data-toolid="' + t.toolId + '" data-status="' + t.status + '">' +
+  function buildToolCard(t) {
+    var dest = '/panel?tool=' + t.id +
+      (workflowParam ? '&workflow=' + workflowParam : '') +
+      (industryParam ? '&industry=' + industryParam : '');
+    var isBuilt = t.status === 'built';
+    var badge = isBuilt
+      ? '<span class="tool-card-v2-badge live">Live</span>'
+      : '<span class="tool-card-v2-badge soon">Coming soon</span>';
+    var price = isBuilt ? getDisplayPrice(t) : 'Coming Soon';
+    var ctaText = isBuilt ? 'Explore →' : 'Notify me';
+    var ctaClass = isBuilt ? 'live' : 'soon';
+    var cardClass = 'tool-card-v2' + (isBuilt ? '' : ' coming-soon');
+    return '<a class="' + cardClass + '" href="' + escAttr(dest) + '" data-toolid="' + escAttr(t.toolId) + '" data-status="' + escAttr(t.status) + '">' +
+      '<div class="tool-card-v2-shot">' +
+        '<span aria-hidden="true">' + t.icon + '</span>' +
         badge +
-        '<div class="tool-card-icon">' + t.icon + '</div>' +
-        '<div class="tool-card-title">' + t.title + '</div>' +
-        '<div class="card-desc-wrap"><div class="tool-card-desc" id="desc-' + t.id + '">' + t.desc + '</div><button class="card-desc-toggle" data-desc-id="desc-' + t.id + '" title="Expand">+</button></div>' +
-        '<div class="tool-card-footer">' + priceHtml + '<div class="tool-card-cta">Explore Tool <div class="arrow">&#8594;</div></div></div>' +
-        '</a>';
-    });
-    // Build industry-specific tiles filtered by selected industries
-    var indTools = [];
-    var seen = {};
-    Object.keys(allowedIndustryKeys).forEach(function(key) {
-      if (INDUSTRY_SPECIFIC[key]) {
-        INDUSTRY_SPECIFIC[key].forEach(function(t) {
-          if (!seen[t.id]) { seen[t.id] = true; indTools.push(t); }
-        });
-      }
-    });
-    indTools.forEach(function(t) {
-      html += '<div class="tool-card" data-toolid="' + t.id + '" data-status="pending" data-industry-key="' + (t.industry || '') + '">' +
-        '<div class="tool-card-badge badge-coming">&#9679; Coming Soon</div>' +
-        '<div class="tool-card-icon">' + t.icon + '</div>' +
-        '<div class="tool-card-title">' + t.title + '</div>' +
-        '<div class="tool-card-desc">Industry-specific tool — coming soon</div>' +
-        '<div class="tool-card-footer"><span class="tool-card-price" style="color:rgba(255,255,255,0.4)">Coming Soon</span><div class="tool-card-cta">Explore <div class="arrow">&#8594;</div></div></div></div>';
-    });
-    grid.innerHTML = html;
+      '</div>' +
+      '<div class="tool-card-v2-body">' +
+        '<div class="tool-card-v2-name">' + t.title + '</div>' +
+        '<div class="tool-card-v2-desc">' + t.desc + '</div>' +
+        '<div class="tool-card-v2-foot">' +
+          '<span class="tool-card-v2-price">' + price + '</span>' +
+          '<span class="tool-card-v2-cta ' + ctaClass + '">' + ctaText + '</span>' +
+        '</div>' +
+      '</div>' +
+    '</a>';
   }
 
-  // Filter tab clicks
+  function renderAccordions() {
+    var container = document.getElementById('tool-accordions');
+    if (!container) return;
+    var html = CATEGORIES.map(function(cat) {
+      var tools = TOOLS.filter(function(t) { return t.cat === cat.id; });
+      var cardsHtml = tools.map(buildToolCard).join('');
+      var isExpanded = cat.id === 'sales-marketing';
+      return '<section class="tool-accordion' + (isExpanded ? ' expanded' : '') + '" data-cat="' + cat.id + '" id="accordion-' + cat.id + '">' +
+        '<div class="accordion-header" role="button" tabindex="0" aria-expanded="' + isExpanded + '">' +
+          '<span class="accordion-arrow" aria-hidden="true">&#9660;</span>' +
+          '<div class="accordion-title-block">' +
+            '<div class="accordion-title">' + cat.name + '</div>' +
+            '<div class="accordion-tagline">' + cat.tagline + '</div>' +
+          '</div>' +
+          '<span class="accordion-count">' + tools.length + ' tool' + (tools.length === 1 ? '' : 's') + '</span>' +
+          '<div class="accordion-arrows">' +
+            '<button type="button" class="carousel-arrow" data-dir="left" aria-label="Scroll left">&#8249;</button>' +
+            '<button type="button" class="carousel-arrow" data-dir="right" aria-label="Scroll right">&#8250;</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="accordion-body">' +
+          '<div class="tool-carousel">' + cardsHtml + '</div>' +
+        '</div>' +
+      '</section>';
+    }).join('');
+    container.innerHTML = html;
+    wireAccordionEvents();
+  }
+
+  function setExpanded(catId, expanded) {
+    var sec = document.getElementById('accordion-' + catId);
+    if (!sec) return;
+    sec.classList.toggle('expanded', expanded);
+    var hdr = sec.querySelector('.accordion-header');
+    if (hdr) hdr.setAttribute('aria-expanded', String(expanded));
+  }
+
+  // Module-level interval store so re-renders (e.g. after live prices
+  // arrive) don't leave orphaned timers running on detached DOM nodes.
+  var _autoRotateIntervals = [];
+
+  function wireAccordionEvents() {
+    // Header click → toggle that accordion
+    document.querySelectorAll('.tool-accordion .accordion-header').forEach(function(hdr) {
+      hdr.addEventListener('click', function(e) {
+        // Ignore clicks on the carousel arrow buttons inside the header
+        if (e.target.closest('.carousel-arrow')) return;
+        var sec = hdr.closest('.tool-accordion');
+        if (!sec) return;
+        var nowExpanded = !sec.classList.contains('expanded');
+        setExpanded(sec.getAttribute('data-cat'), nowExpanded);
+      });
+      hdr.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hdr.click(); }
+      });
+    });
+    // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap)
+    document.querySelectorAll('.tool-accordion .carousel-arrow').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        var sec = btn.closest('.tool-accordion');
+        if (!sec) return;
+        var car = sec.querySelector('.tool-carousel');
+        if (!car) return;
+        var dir = btn.getAttribute('data-dir') === 'left' ? -1 : 1;
+        car.scrollBy({ left: dir * 320, behavior: 'smooth' });
+      });
+    });
+
+    // Auto-rotate: each carousel scrolls one card every 4.5s. Pauses on
+    // hover, resumes on mouse leave. Skips ticks while the accordion is
+    // collapsed or the cards already fit without overflow.
+    _autoRotateIntervals.forEach(function(id) { clearInterval(id); });
+    _autoRotateIntervals = [];
+    document.querySelectorAll('.tool-carousel').forEach(function(car) {
+      var paused = false;
+      car.addEventListener('mouseenter', function() { paused = true; });
+      car.addEventListener('mouseleave', function() { paused = false; });
+      var id = setInterval(function() {
+        if (paused) return;
+        var sec = car.closest('.tool-accordion');
+        if (!sec || !sec.classList.contains('expanded')) return;
+        if (car.scrollWidth <= car.clientWidth + 1) return;
+        var maxScroll = car.scrollWidth - car.clientWidth;
+        if (car.scrollLeft + 320 >= maxScroll - 4) {
+          car.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          car.scrollBy({ left: 320, behavior: 'smooth' });
+        }
+      }, 4500);
+      _autoRotateIntervals.push(id);
+    });
+  }
+
+  // Filter tab clicks: expand the matching accordion (collapse others), or
+  // expand all when "All" is active. Then scroll the matching accordion
+  // into view.
   document.querySelectorAll('.filter-tab').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-tab').forEach(function(b){ b.classList.remove('active'); });
+      document.querySelectorAll('.filter-tab').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      activeCat = btn.dataset.cat;
-      renderTools(activeCat);
+      var cat = btn.getAttribute('data-cat');
+      if (cat === 'all') {
+        CATEGORIES.forEach(function(c) { setExpanded(c.id, true); });
+      } else {
+        CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === cat); });
+        var target = document.getElementById('accordion-' + cat);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   });
-
-  var INDUSTRY_SPECIFIC = {
-  pool: [
-    { id: "pool-chemistry", icon: "🧪", title: "Pool Chemistry Advisor", industry: "pool" },
-    { id: "warranty-tracker", icon: "🛡️", title: "Warranty Claim Manager", industry: "pool" },
-    { id: "seasonal-reminder", icon: "📅", title: "Seasonal Pool Care Reminders", industry: "pool" },
-    { id: "license-tracker", icon: "📋", title: "License & Compliance Tracker", industry: "pool" }
-  ],
-  plumber: [
-    { id: "emergency-router", icon: "🚨", title: "Emergency Job Router", industry: "plumber" },
-    { id: "backflow-scheduler", icon: "🔄", title: "Backflow Testing Scheduler", industry: "plumber" },
-    { id: "hot-water-selector", icon: "🚿", title: "Hot Water System Selector", industry: "plumber" }
-  ],
-  electrician: [
-    { id: "test-tag-manager", icon: "🔌", title: "Test & Tag Manager", industry: "electrician" },
-    { id: "compliance-cert-gen", icon: "📜", title: "Compliance Certificate Generator", industry: "electrician" },
-    { id: "emergency-dispatch", icon: "⚡", title: "Emergency Callout Dispatcher", industry: "electrician" }
-  ],
-  builder: [
-    { id: "subcontractor-coordinator", icon: "👷", title: "Subcontractor Coordinator", industry: "builder" },
-    { id: "site-diary", icon: "📓", title: "Digital Site Diary", industry: "builder" },
-    { id: "variation-tracker", icon: "📝", title: "Variation Order Manager", industry: "builder" },
-    { id: "rfi-manager", icon: "❓", title: "RFI & Query Manager", industry: "builder" }
-  ],
-  hvac: [
-    { id: "service-prioritiser", icon: "🌡️", title: "Service Call Prioritiser", industry: "hvac" },
-    { id: "refrigerant-tracker", icon: "❄️", title: "Refrigerant Gas Tracker", industry: "hvac" },
-    { id: "maintenance-scheduler-hvac", icon: "🔧", title: "Preventative Maintenance Scheduler", industry: "hvac" },
-    { id: "energy-calculator", icon: "💡", title: "Energy Efficiency Calculator", industry: "hvac" }
-  ],
-  fabricator: [
-    { id: "material-optimizer", icon: "✂️", title: "Material Cutting Optimiser", industry: "fabricator" },
-    { id: "weld-tracker", icon: "🔥", title: "Welder Qualification Tracker", industry: "fabricator" },
-    { id: "job-costing", icon: "📊", title: "Real-Time Job Costing", industry: "fabricator" },
-    { id: "quality-checklist", icon: "✅", title: "Quality Inspection Checklist", industry: "fabricator" }
-  ],
-  cleaner: [
-    { id: "roster-optimizer", icon: "📆", title: "Smart Roster Optimiser", industry: "cleaner" },
-    { id: "quality-audit", icon: "🔍", title: "Site Quality Audit System", industry: "cleaner" },
-    { id: "consumables-tracker", icon: "🧴", title: "Consumables Inventory Tracker", industry: "cleaner" }
-  ],
-  landscaper: [
-    { id: "plant-selector", icon: "🌿", title: "Smart Plant Selector", industry: "landscaper" },
-    { id: "seasonal-scheduler-land", icon: "🍂", title: "Seasonal Maintenance Scheduler", industry: "landscaper" },
-    { id: "irrigation-designer", icon: "💧", title: "Irrigation System Designer", industry: "landscaper" }
-  ],
-  manufacturer: [
-    { id: "production-scheduler", icon: "🏭", title: "Production Scheduler", industry: "manufacturer" },
-    { id: "quality-spc", icon: "📈", title: "Statistical Process Control (SPC)", industry: "manufacturer" },
-    { id: "inventory-forecaster", icon: "📦", title: "Smart Inventory Forecaster", industry: "manufacturer" },
-    { id: "oee-tracker", icon: "⚙️", title: "OEE Performance Tracker", industry: "manufacturer" }
-  ],
-  concreter: [
-    { id: "pour-scheduler", icon: "🌤️", title: "Smart Pour Scheduler", industry: "concreter" },
-    { id: "mix-designer", icon: "🪣", title: "Concrete Mix Designer", industry: "concreter" },
-    { id: "test-tracker", icon: "🧱", title: "Compressive Strength Test Tracker", industry: "concreter" }
-  ],
-  handyman: [
-    { id: "multi-trade-scheduler", icon: "🗓️", title: "Multi-Trade Job Scheduler", industry: "handyman" },
-    { id: "parts-finder", icon: "🔩", title: "Spare Parts Finder", industry: "handyman" },
-    { id: "job-cost-estimator", icon: "💰", title: "Job Cost Estimator", industry: "handyman" }
-  ],
-  service: []
-};
 
 
   // Initial render. Live prices are loaded asynchronously — render once
   // immediately with hardcoded prices so the page paints quickly, then
   // re-render once prices arrive (or stay on hardcoded if the fetch fails).
-  renderTools('all');
+  renderAccordions();
   loadLivePrices().then(function(map) {
     var resolved = resolveLivePrices(map);
     if (resolved) {
       _resolvedPrices = resolved;
-      renderTools(activeCat);
+      // Preserve expanded state across re-render
+      var prevExpanded = {};
+      CATEGORIES.forEach(function(c) {
+        var sec = document.getElementById('accordion-' + c.id);
+        prevExpanded[c.id] = sec ? sec.classList.contains('expanded') : (c.id === 'sales-marketing');
+      });
+      renderAccordions();
+      CATEGORIES.forEach(function(c) { setExpanded(c.id, prevExpanded[c.id]); });
     }
   });
 })();
@@ -1108,107 +1073,5 @@ window.addEventListener('resize', alignHIW);
 
 </script>
 
-<script>
-(function() {
-  var backBtn = document.getElementById('backBtn');
-  if (backBtn) backBtn.addEventListener('click', function() { history.back(); });
-
-  var params = new URLSearchParams(window.location.search);
-  var tier = params.get('tier');
-  var slotLimit = tier === 'stax3' ? 3 : tier === 'stax6' ? 6 : 0;
-
-  if (slotLimit > 0) {
-    var selected = [];
-
-    // Inject banner above grid
-    var grid = document.getElementById('tool-grid');
-    if (grid) {
-      var banner = document.createElement('div');
-      banner.className = 'pick-banner';
-      banner.id = 'pick-banner';
-      banner.innerHTML = '<span>Choose your <strong>' + slotLimit + ' tools</strong> to include in your bundle</span><span><span class="pick-banner-count" id="pick-count">0</span> of ' + slotLimit + ' selected</span>';
-      grid.parentNode.insertBefore(banner, grid);
-    }
-
-    // Inject confirm bar
-    var confirmBar = document.createElement('div');
-    confirmBar.className = 'pick-confirm-bar';
-    confirmBar.id = 'pick-confirm-bar';
-    confirmBar.innerHTML = '<span class="pick-summary" id="pick-summary">Select ' + slotLimit + ' tools to continue</span><button class="pick-confirm-btn" id="pick-confirm-btn">Continue to Sign Up</button>';
-    document.body.appendChild(confirmBar);
-
-    var confirmBtn = document.getElementById('pick-confirm-btn');
-
-    function updatePicker() {
-      var count = selected.length;
-      var countEl = document.getElementById('pick-count');
-      if (countEl) countEl.textContent = count;
-      var summaryEl = document.getElementById('pick-summary');
-      if (summaryEl) summaryEl.textContent = count + ' of ' + slotLimit + ' tools selected';
-      if (confirmBtn) {
-        if (count === slotLimit) { confirmBtn.classList.add('active'); }
-        else { confirmBtn.classList.remove('active'); }
-      }
-      // Update card states
-      var cards = document.querySelectorAll('.tool-card');
-      cards.forEach(function(card) {
-        var id = card.getAttribute('data-toolid');
-        var status = card.getAttribute('data-status');
-        if (status !== 'built') return;
-        if (selected.indexOf(id) > -1) {
-          card.classList.add('pick-selected');
-          card.classList.remove('pick-disabled');
-        } else if (count >= slotLimit) {
-          card.classList.remove('pick-selected');
-          card.classList.add('pick-disabled');
-        } else {
-          card.classList.remove('pick-selected');
-          card.classList.remove('pick-disabled');
-        }
-      });
-    }
-
-    // Wire card clicks
-    document.addEventListener('click', function(e) {
-      var card = e.target.closest('.tool-card');
-      if (!card) return;
-      var status = card.getAttribute('data-status');
-      if (status !== 'built') return;
-      e.preventDefault();
-      var id = card.getAttribute('data-toolid');
-      var idx = selected.indexOf(id);
-      if (idx > -1) {
-        selected.splice(idx, 1);
-      } else if (selected.length < slotLimit) {
-        selected.push(id);
-      }
-      updatePicker();
-    });
-
-    // Confirm button
-    if (confirmBtn) {
-      confirmBtn.addEventListener('click', function() {
-        if (selected.length === slotLimit) {
-          window.location.href = 'login.html?tab=signup&tier=' + tier + '&tools=' + selected.join(',');
-        }
-      });
-    }
-
-    updatePicker();
-  }
-})();
-
-document.addEventListener("click", function(e) {
-  if (e.target.classList.contains("card-desc-toggle")) {
-    e.stopPropagation();
-    e.preventDefault();
-    var id = e.target.getAttribute("data-desc-id");
-    var d = document.getElementById(id);
-    if (!d) return;
-    var exp = d.classList.toggle("expanded");
-    e.target.textContent = exp ? "-" : "+";
-    e.target.title = exp ? "Collapse" : "Expand";
-  }
-});
-</script></body>
+</body>
 </html>
