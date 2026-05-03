@@ -276,44 +276,107 @@ window.BI_LOGIC = {
     if (data.length === 0) {
       contentEl.innerHTML = '<div class="bi-module-prompt">' +
         '<div class="bi-module-prompt-icon">&#9888;</div>' +
-        '<h3>Risk &amp; Opportunity Alerts</h3>' +
+        '<h3>Risks &amp; Opportunities</h3>' +
         '<p>Alerts are based on available data. Connect more sources for richer, cross-referenced insights.</p>' +
         '</div>';
       return;
     }
 
-    var html = '<div class="bi-alerts-body">';
+    var risks = [];
+    var opps = [];
     for (var i = 0; i < data.length; i++) {
-      var item = data[i];
-      var d = item.insight_data || {};
-      var severity = d.severity || 'blue';
-      var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
-
-      html += '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
-      html += '<div class="bi-alert-header">';
-      html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
-      html += '<span class="bi-alert-headline">' + escHtml(d.headline || 'Alert') + '</span>';
-      html += '<button class="bi-alert-expand-btn" data-insight-id="' + escHtml(item.id) + '">&#9660;</button>';
-      html += '</div>';
-      html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(d.detail || '') + '</div>';
-      if (d.suggestion) {
-        html += '<div class="bi-alert-suggestion">' + escHtml(d.suggestion) + '</div>';
-      }
-      html += '<div class="bi-alert-actions">';
-      html += '<button class="bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Ask about this</button>';
-      html += '<button class="bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Act on this</button>';
-      html += '<button class="bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
-      html += '</div>';
-      html += '</div>';
+      var sev = (data[i].insight_data && data[i].insight_data.severity) || 'amber';
+      if (sev === 'green') opps.push(data[i]);
+      else risks.push(data[i]);
     }
+
+    var html = '<div class="bi-alerts-columns">';
+    html += this._renderAlertsColumn('Risks', risks);
+    html += this._renderAlertsColumn('Opportunities', opps);
     html += '</div>';
     contentEl.innerHTML = html;
 
     this._bindAlertEvents(contentEl);
   },
 
+  _ALERT_CATEGORIES: {
+    labels: { financial: 'Financial', customers: 'Customers', operations: 'Operations', market: 'Market', strategic: 'Strategic', general: 'General' },
+    order: ['financial', 'customers', 'operations', 'market', 'strategic', 'general']
+  },
+
+  _renderAlertsColumn: function(title, items) {
+    var self = this;
+    var emptyText = title === 'Risks' ? 'No risks identified' : 'No opportunities identified';
+    var html = '<div class="bi-alerts-column">';
+    html += '<h3 class="bi-alerts-column-title">' + escHtml(title) + '</h3>';
+
+    if (items.length === 0) {
+      html += '<div class="bi-alerts-empty">' + escHtml(emptyText) + '</div>';
+      html += '</div>';
+      return html;
+    }
+
+    var groups = {};
+    items.forEach(function(item) {
+      var cat = ((item.insight_data && item.insight_data.category) || 'general').toLowerCase();
+      if (!self._ALERT_CATEGORIES.labels[cat]) cat = 'general';
+      if (!groups[cat]) groups[cat] = [];
+      groups[cat].push(item);
+    });
+
+    var firstOpened = false;
+    self._ALERT_CATEGORIES.order.forEach(function(cat) {
+      var group = groups[cat];
+      if (!group || group.length === 0) return;
+      var openCls = firstOpened ? '' : ' open';
+      firstOpened = true;
+      html += '<div class="bi-accordion-group' + openCls + '">';
+      html += '<button class="bi-accordion-header" type="button">';
+      html += '<span class="bi-accordion-name">' + escHtml(self._ALERT_CATEGORIES.labels[cat]) + '</span>';
+      html += '<span class="bi-accordion-count">' + group.length + '</span>';
+      html += '<span class="bi-accordion-chevron">&#9662;</span>';
+      html += '</button>';
+      html += '<div class="bi-accordion-body">';
+      group.forEach(function(item) { html += self._renderAlertCard(item); });
+      html += '</div>';
+      html += '</div>';
+    });
+
+    html += '</div>';
+    return html;
+  },
+
+  _renderAlertCard: function(item) {
+    var d = item.insight_data || {};
+    var severity = d.severity || 'blue';
+    var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
+    var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
+    html += '<div class="bi-alert-header">';
+    html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
+    html += '<span class="bi-alert-headline">' + escHtml(d.headline || 'Alert') + '</span>';
+    html += '<button class="bi-alert-expand-btn" data-insight-id="' + escHtml(item.id) + '">&#9660;</button>';
+    html += '</div>';
+    html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(d.detail || '') + '</div>';
+    if (d.suggestion) {
+      html += '<div class="bi-alert-suggestion">' + escHtml(d.suggestion) + '</div>';
+    }
+    html += '<div class="bi-alert-actions">';
+    html += '<button class="bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Ask about this</button>';
+    html += '<button class="bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Act on this</button>';
+    html += '<button class="bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
+    html += '</div>';
+    html += '</div>';
+    return html;
+  },
+
   _bindAlertEvents: function(container) {
     var self = this;
+    container.querySelectorAll('.bi-accordion-header').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var group = btn.parentElement;
+        if (group) group.classList.toggle('open');
+      });
+    });
     container.querySelectorAll('.bi-alert-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var id = btn.getAttribute('data-insight-id');
