@@ -246,10 +246,11 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.18);
   color: rgba(255,255,255,0.75);
-  padding: 7px 18px;
-  border-radius: 20px;
+  padding: 8px 18px;
+  border-radius: 8px;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -913,7 +914,10 @@ footer {
     if (!container) return;
     var html = CATEGORIES.map(function(cat) {
       var tools = TOOLS.filter(function(t) { return t.cat === cat.id; });
-      var cardsHtml = tools.map(buildToolCard).join('');
+      // Render the card list twice so the auto-rotate can wrap seamlessly
+      // — when scrollLeft passes one set's width, we subtract that width
+      // and the user sees identical content (no visible jump).
+      var cardsHtml = tools.concat(tools).map(buildToolCard).join('');
       var isExpanded = cat.id === 'sales-marketing';
       return '<section class="tool-accordion' + (isExpanded ? ' expanded' : '') + '" data-cat="' + cat.id + '" id="accordion-' + cat.id + '">' +
         '<div class="accordion-header" role="button" tabindex="0" aria-expanded="' + isExpanded + '">' +
@@ -945,26 +949,92 @@ footer {
     if (hdr) hdr.setAttribute('aria-expanded', String(expanded));
   }
 
-  // Module-level interval store so re-renders (e.g. after live prices
-  // arrive) don't leave orphaned timers running on detached DOM nodes.
-  var _autoRotateIntervals = [];
+  function setActiveTab(catId) {
+    document.querySelectorAll('.filter-tab').forEach(function(b) {
+      b.classList.toggle('active', b.getAttribute('data-cat') === catId);
+    });
+  }
+
+  // Module-level stoppers so re-renders (e.g. after live prices arrive)
+  // can halt orphan rAF loops running on detached DOM nodes.
+  var _ribbonStoppers = [];
+
+  function clearRibbons() {
+    _ribbonStoppers.forEach(function(stop) { stop(); });
+    _ribbonStoppers = [];
+  }
+
+  function setupRibbon(car) {
+    // Each carousel renders its cards twice. The visible content at
+    // scrollLeft = X is identical to the content at scrollLeft = X +
+    // oneSetWidth, so when the auto-scroll passes oneSetWidth we instantly
+    // subtract oneSetWidth — invisible to the user, the ribbon never resets.
+    var paused = false;
+    var stopped = false;
+    var accumulator = 0;
+    var lastTime = 0;
+    var SPEED = 35; // pixels per second — slow ribbon drift
+
+    car.addEventListener('mouseenter', function() { paused = true; });
+    car.addEventListener('mouseleave', function() { paused = false; });
+
+    function tick(now) {
+      if (stopped) return;
+      if (!lastTime) lastTime = now;
+      var dt = now - lastTime;
+      lastTime = now;
+
+      var sec = car.closest('.tool-accordion');
+      var expanded = sec && sec.classList.contains('expanded');
+      var oneSet = car.scrollWidth / 2;
+      var hasOverflow = oneSet > car.clientWidth + 1;
+
+      if (expanded && hasOverflow) {
+        if (!paused) {
+          accumulator += SPEED * dt / 1000;
+          var pixels = Math.floor(accumulator);
+          if (pixels > 0) {
+            accumulator -= pixels;
+            car.scrollLeft += pixels;
+          }
+        }
+        // Wrap — handles auto-rotate AND user manual scroll past either
+        // boundary (via arrow buttons or trackpad). Invisible because the
+        // duplicated cards make X and X+oneSetWidth visually identical.
+        if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
+        else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
+      } else {
+        accumulator = 0;
+      }
+
+      requestAnimationFrame(tick);
+    }
+
+    requestAnimationFrame(tick);
+    _ribbonStoppers.push(function() { stopped = true; });
+  }
 
   function wireAccordionEvents() {
-    // Header click → toggle that accordion
+    // Header click → expand that accordion, collapse all others, sync the
+    // active tab. Doesn't toggle — clicking an already-open accordion has
+    // no visible effect (others were already collapsed, this one stays open).
     document.querySelectorAll('.tool-accordion .accordion-header').forEach(function(hdr) {
       hdr.addEventListener('click', function(e) {
         // Ignore clicks on the carousel arrow buttons inside the header
         if (e.target.closest('.carousel-arrow')) return;
         var sec = hdr.closest('.tool-accordion');
         if (!sec) return;
-        var nowExpanded = !sec.classList.contains('expanded');
-        setExpanded(sec.getAttribute('data-cat'), nowExpanded);
+        var catId = sec.getAttribute('data-cat');
+        CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === catId); });
+        setActiveTab(catId);
       });
       hdr.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hdr.click(); }
       });
     });
-    // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap)
+
+    // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap).
+    // The rAF wrap logic in setupRibbon handles boundary crossings.
     document.querySelectorAll('.tool-accordion .carousel-arrow').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -977,45 +1047,23 @@ footer {
       });
     });
 
-    // Auto-rotate: each carousel scrolls one card every 4.5s. Pauses on
-    // hover, resumes on mouse leave. Skips ticks while the accordion is
-    // collapsed or the cards already fit without overflow.
-    _autoRotateIntervals.forEach(function(id) { clearInterval(id); });
-    _autoRotateIntervals = [];
-    document.querySelectorAll('.tool-carousel').forEach(function(car) {
-      var paused = false;
-      car.addEventListener('mouseenter', function() { paused = true; });
-      car.addEventListener('mouseleave', function() { paused = false; });
-      var id = setInterval(function() {
-        if (paused) return;
-        var sec = car.closest('.tool-accordion');
-        if (!sec || !sec.classList.contains('expanded')) return;
-        if (car.scrollWidth <= car.clientWidth + 1) return;
-        var maxScroll = car.scrollWidth - car.clientWidth;
-        if (car.scrollLeft + 320 >= maxScroll - 4) {
-          car.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          car.scrollBy({ left: 320, behavior: 'smooth' });
-        }
-      }, 4500);
-      _autoRotateIntervals.push(id);
-    });
+    // Spin up the ribbon auto-rotate for each carousel. Cancel any prior
+    // rAF loops first so re-renders don't accumulate handlers.
+    clearRibbons();
+    document.querySelectorAll('.tool-carousel').forEach(setupRibbon);
   }
 
-  // Filter tab clicks: expand the matching accordion (collapse others), or
-  // expand all when "All" is active. Then scroll the matching accordion
-  // into view.
+  // Filter tab clicks: expand matching accordion (collapse others), or
+  // expand all when "All" is active. Page does NOT scroll — the user
+  // stays where they are; only accordion state and active-tab change.
   document.querySelectorAll('.filter-tab').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      document.querySelectorAll('.filter-tab').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
       var cat = btn.getAttribute('data-cat');
+      setActiveTab(cat);
       if (cat === 'all') {
         CATEGORIES.forEach(function(c) { setExpanded(c.id, true); });
       } else {
         CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === cat); });
-        var target = document.getElementById('accordion-' + cat);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
   });
