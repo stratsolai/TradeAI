@@ -316,7 +316,26 @@ export default async function handler(req, res) {
       '- Recognising that their geographic footprint and service mix positions them well to expand into an adjacent market showing growth\n' +
       '- Connecting their strong profit margins with acquisition opportunities in their region\n\n' +
       'These are examples of strategic thinking, not a checklist. Surface any insight at this level that the data supports. Cross-reference multiple sources where possible.\n\n' +
+      'SEVERITY ROUTING (strict):\n' +
+      '- red: urgent risk — output appears in Risks column\n' +
+      '- amber: risk to monitor — output appears in Risks column\n' +
+      '- green: opportunity — output appears in Opportunities column\n' +
+      'amber is NEVER an opportunity. If something is positive, it must be green. If something needs watching, it is amber and stays in Risks.\n\n' +
+      'DUAL-ASPECT RULE:\n' +
+      'When a single situation has both a downside and an upside (for example, customer concentration creates cash flow risk AND signals deep relationships you could expand), generate TWO separate insights:\n' +
+      '- one framed as the risk (severity red or amber) describing what could go wrong and how to mitigate\n' +
+      '- one framed as the opportunity (severity green) describing what could go right and how to capture it\n' +
+      'They must complement, not duplicate — different headline, different detail, different suggestion. Do not collapse a dual-aspect situation into a single amber insight.\n\n' +
       'Output must include both Risks AND Opportunities. If the data only shows problems, look harder for opportunities. If only positives, look harder for risks. A balanced view is essential.\n\n' +
+      'SOURCE ATTRIBUTION:\n' +
+      'For every insight, populate a "sources" array of 1-3 items naming the inputs you actually relied on. Use these labels exactly:\n' +
+      '- "Financial data" — the financial summary block above\n' +
+      '- "Customer data" — the customer summary block above\n' +
+      '- "Operations data" — the operations summary block above\n' +
+      '- "Content Library" — an item from the BI-tagged Content Library list\n' +
+      '- "Strategic Plan" — the current strategic plan\n' +
+      '- "Web research" — a result from the external research list (include the url if available)\n' +
+      'Each source must include a brief detail showing the specific evidence (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026"). Web research sources should include the link.\n\n' +
       'OUTPUT FORMAT:\n' +
       'Return ONLY a JSON array (no markdown, no commentary). Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
       'Each insight object:\n' +
@@ -325,12 +344,15 @@ export default async function handler(req, res) {
       '  "insight_type": "alert",\n' +
       '  "relevance_score": <integer 1-10, 10 = most important>,\n' +
       '  "insight_data": {\n' +
-      '    "severity": "red" | "amber" | "green",  // red = urgent risk, amber = risk to monitor, green = opportunity\n' +
+      '    "severity": "red" | "amber" | "green",\n' +
       '    "category": "financial" | "customers" | "operations" | "market" | "strategic",\n' +
       '    "icon": "<single emoji>",\n' +
       '    "headline": "<short headline, 8-12 words>",\n' +
       '    "detail": "<2-3 sentences explaining why this matters to THIS business, citing specific numbers or evidence from the input>",\n' +
-      '    "suggestion": "<concrete next step the owner should consider>"\n' +
+      '    "suggestion": "<concrete next step the owner should consider>",\n' +
+      '    "sources": [\n' +
+      '      { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<optional, web research only>" }\n' +
+      '    ]\n' +
       '  }\n' +
       '}'
     );

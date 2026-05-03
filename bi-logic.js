@@ -326,6 +326,8 @@ window.BI_LOGIC = {
     var d = item.insight_data || {};
     var severity = d.severity || 'blue';
     var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
+    var sources = Array.isArray(d.sources) ? d.sources : [];
+    var sourcesId = 'bi-alert-sources-' + escHtml(item.id);
     var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
     html += '<div class="bi-alert-header">';
     html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
@@ -339,8 +341,29 @@ window.BI_LOGIC = {
     html += '<div class="bi-alert-actions">';
     html += '<button class="bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Ask about this</button>';
     html += '<button class="bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Act on this</button>';
+    if (sources.length > 0) {
+      html += '<button class="source-btn bi-alert-source-btn" type="button" data-target="' + sourcesId + '">&#9654; Source (' + sources.length + ')</button>';
+    }
     html += '<button class="bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
     html += '</div>';
+    if (sources.length > 0) {
+      html += '<div class="bi-alert-sources-panel" id="' + sourcesId + '" hidden>';
+      for (var s = 0; s < sources.length; s++) {
+        var src = sources[s] || {};
+        var label = src.label || 'Source';
+        var detail = src.detail || '';
+        var url = src.url || '';
+        html += '<div class="bi-alert-source-row">';
+        if (url) {
+          html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="bi-alert-source-link">' + escHtml(label) + '</a>';
+        } else {
+          html += '<span class="bi-alert-source-name">' + escHtml(label) + '</span>';
+        }
+        if (detail) html += ' <span class="bi-alert-source-detail">— ' + escHtml(detail) + '</span>';
+        html += '</div>';
+      }
+      html += '</div>';
+    }
     html += '</div>';
     return html;
   },
@@ -367,6 +390,17 @@ window.BI_LOGIC = {
     });
     container.querySelectorAll('.bi-act-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._actOnInsight(btn.getAttribute('data-insight-id')); });
+    });
+    container.querySelectorAll('.bi-alert-source-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = document.getElementById(btn.getAttribute('data-target'));
+        if (!target) return;
+        var isOpen = !target.hidden;
+        target.hidden = isOpen;
+        btn.classList.toggle('open', !isOpen);
+        var count = target.querySelectorAll('.bi-alert-source-row').length;
+        btn.innerHTML = (!isOpen ? '&#9660;' : '&#9654;') + ' Source (' + count + ')';
+      });
     });
     container.querySelectorAll('.bi-dismiss-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._dismissInsight(btn.getAttribute('data-insight-id'), btn); });
