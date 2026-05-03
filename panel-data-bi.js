@@ -2,7 +2,7 @@ window.PANEL_TOOL = {
   id: "bi",
   icon: "\uD83D\uDCCA",
   title: ["Business", "Intelligence"],
-  tagline: "AI-powered business advisory \u2014 your virtual Board of Directors",
+  tagline: "AI-powered business advisory",
   description: "The Business Intelligence Dashboard analyses everything the platform knows about your business \u2014 Content Library items, accounting data, job management data, tool outputs, and your Business Profile \u2014 to produce actionable insights, risk alerts, and opportunity recommendations. This is not a dashboard of charts. It is an AI that thinks about your business and tells you what you need to know.",
   benefits: [
     "AI advisory across six business modules \u2014 financial health, customers, operations, market intelligence, strategy, and risk",
