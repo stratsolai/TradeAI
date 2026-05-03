@@ -131,7 +131,7 @@ export default async function handler(req, res) {
     var result;
 
     if (action === 'invoices') {
-      var data = await xeroGet('/Invoices?where=Type%3D%22ACCREC%22&order=Date%20DESC');
+      var data = await xeroGet('/Invoices?where=Type%3D%3D%22ACCREC%22&order=Date%20DESC');
       result = (data.Invoices || []).map(function (inv) {
         return {
           invoice_number: inv.InvoiceNumber || '',
@@ -148,7 +148,7 @@ export default async function handler(req, res) {
         };
       });
     } else if (action === 'bills') {
-      var data2 = await xeroGet('/Invoices?where=Type%3D%22ACCPAY%22&order=Date%20DESC');
+      var data2 = await xeroGet('/Invoices?where=Type%3D%3D%22ACCPAY%22&order=Date%20DESC');
       result = (data2.Invoices || []).map(function (inv) {
         return {
           invoice_number: inv.InvoiceNumber || '',
