@@ -1018,6 +1018,26 @@ footer {
     '</a>';
   }
 
+  // Daily-rotating window for the featured row. Up to 3 built tools are
+  // returned. With 4+ built tools the start index advances by one each
+  // local day, so every tool cycles through the featured row over time
+  // (e.g. 4 tools [A,B,C,D] → A-B-C, B-C-D, C-D-A, D-A-B, repeat).
+  // Local day rather than UTC so the rollover matches the viewer's
+  // calendar (e.g. midnight in Australia, not 10am AEST).
+  function pickFeaturedTools(builtTools) {
+    var n = builtTools.length;
+    if (n === 0) return [];
+    if (n <= 3) return builtTools;
+    var d = new Date();
+    var localDayIndex = Math.floor((d - d.getTimezoneOffset() * 60000) / 86400000);
+    var start = ((localDayIndex % n) + n) % n;
+    var picked = [];
+    for (var i = 0; i < 3; i++) {
+      picked.push(builtTools[(start + i) % n]);
+    }
+    return picked;
+  }
+
   function renderAccordions() {
     var container = document.getElementById('tool-accordions');
     if (!container) return;
@@ -1026,10 +1046,14 @@ footer {
       var builtTools = tools.filter(function(t) { return t.status === 'built'; });
       var otherTools = tools.filter(function(t) { return t.status !== 'built'; });
 
-      // Featured row — pinned, no scrolling, only rendered if there are
-      // built tools in this category. Each built tool appears once.
-      var featuredHtml = builtTools.length
-        ? '<div class="featured-row">' + builtTools.map(buildToolCard).join('') + '</div>'
+      // Featured row selection:
+      //   0 built       → no row
+      //   1-3 built     → all built tools, static
+      //   4+ built      → sliding window of 3, advancing one tool per local
+      //                   day so every built tool gets surfaced over time
+      var featuredTools = pickFeaturedTools(builtTools);
+      var featuredHtml = featuredTools.length
+        ? '<div class="featured-row">' + featuredTools.map(buildToolCard).join('') + '</div>'
         : '';
 
       // Carousel row — continuous ribbon for all non-built tools (pending,
