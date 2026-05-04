@@ -377,6 +377,135 @@ window.BI_MODULES = {
     }
   },
 
+  fetchProjects: async function(sb, dateRange) {
+    var session = await sb.auth.getSession();
+    var token = session.data && session.data.session && session.data.session.access_token;
+    if (!token) return null;
+    var body = dateRange ? { fromDate: dateRange.fromDate, toDate: dateRange.toDate } : {};
+    var resp = await fetch('/api/bi-projects', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify(body) });
+    if (!resp.ok) return null;
+    var json = await resp.json();
+    return json.success ? json : null;
+  },
+
+  renderProjects: function(data, charts) {
+    var kpisEl = document.getElementById('bi-mod-projects-kpis');
+    var chartArea = document.getElementById('bi-mod-projects-chart');
+    var advisoryList = document.getElementById('bi-mod-projects-advisory-list');
+    this._setTimestamp('bi-mod-projects-updated');
+
+    if (!data || !data.connected) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      if (chartArea) chartArea.style.display = 'none';
+      var sec = document.getElementById('bi-mod-projects-advisory');
+      if (sec) sec.innerHTML = '<div class="bi-module-prompt">' +
+        '<div class="bi-module-prompt-icon">&#128736;</div>' +
+        '<h3>Project Performance</h3>' +
+        '<p>Connect a project source to see job profitability, quote vs actual variance, completion rates, and durations. Supported today: ServiceM8, Fergus, and Xero Projects (job-tracking enabled). Coming soon: Buildxact and MYOB Jobs.</p>' +
+        '</div>';
+      return;
+    }
+
+    if (!advisoryList) {
+      var secRestore = document.getElementById('bi-mod-projects-advisory');
+      if (secRestore) {
+        secRestore.innerHTML = '<div class="bi-advisory-label">AI Advisory</div><div id="bi-mod-projects-advisory-list"></div>';
+        advisoryList = document.getElementById('bi-mod-projects-advisory-list');
+      }
+    }
+
+    var d = data.data; var s = d.summary;
+    var marginColour = s.avg_margin_pct >= 25 ? 'green' : s.avg_margin_pct >= 10 ? 'orange' : (s.avg_margin_pct > 0 ? 'red' : '');
+    var completionColour = s.completion_rate >= 75 ? 'green' : s.completion_rate >= 50 ? 'orange' : (s.completion_rate > 0 ? 'red' : '');
+    var totalQuotedAgainstActual = s.over_quote_count + s.under_quote_count + s.on_quote_count;
+    var overPct = totalQuotedAgainstActual > 0 ? Math.round((s.over_quote_count / totalQuotedAgainstActual) * 100) : 0;
+
+    this._renderKPIRow(kpisEl, [
+      { value: '' + s.total_jobs, label: 'Total Jobs', colour: '', trend: 'flat', trendText: s.completed_count + ' completed' },
+      { value: s.completion_rate + '%', label: 'Completion Rate', colour: completionColour, trend: completionColour === 'green' ? 'up' : 'flat', trendText: s.in_progress_count + ' in progress' },
+      { value: '$' + this._formatNum(s.avg_job_value), label: 'Avg Job Value', colour: 'orange', trend: 'flat', trendText: s.avg_duration_days + 'd avg duration' },
+      { value: s.avg_margin_pct + '%', label: 'Avg Margin', colour: marginColour, trend: marginColour === 'green' ? 'up' : marginColour === 'red' ? 'down' : 'flat', trendText: '$' + this._formatNum(s.total_profit) + ' total profit' }
+    ]);
+
+    this._renderProjectCharts(d, chartArea, charts);
+
+    var items = [];
+    if (s.avg_margin_pct >= 25) items.push({ icon: '&#9989;', text: 'Healthy average margin at ' + s.avg_margin_pct + '% across ' + s.total_jobs + ' jobs.' });
+    else if (s.avg_margin_pct > 0 && s.avg_margin_pct < 10) items.push({ icon: '&#9888;', text: 'Average margin only ' + s.avg_margin_pct + '% — review pricing or cost control.' });
+    if (s.completion_rate > 0 && s.completion_rate < 50) items.push({ icon: '&#9888;', text: 'Completion rate ' + s.completion_rate + '% — many jobs sitting open.' });
+    if (totalQuotedAgainstActual > 0 && overPct >= 30) items.push({ icon: '&#128201;', text: overPct + '% of quoted jobs ran over — quoting is consistently optimistic.' });
+    if (s.avg_duration_days > 0) items.push({ icon: '&#128197;', text: 'Average job duration ' + s.avg_duration_days + ' days.' });
+    var top = (d.top_by_profit || [])[0];
+    if (top && top.profit > 0) items.push({ icon: '&#128176;', text: 'Top job by profit: ' + top.job_name + ' — $' + this._formatNum(top.profit) + ' (' + top.margin_pct + '% margin).' });
+    if (items.length === 0) items.push({ icon: '&#128161;', text: 'Project data loaded.' });
+    this._renderAdvisoryList(advisoryList, items, 'projects');
+  },
+
+  _renderProjectCharts: function(d, chartArea, charts) {
+    if (!chartArea) return;
+    chartArea.style.display = 'block';
+    if (charts.projectsStatus) { charts.projectsStatus.destroy(); charts.projectsStatus = null; }
+    if (charts.projectsTopProfit) { charts.projectsTopProfit.destroy(); charts.projectsTopProfit = null; }
+    var primary = document.getElementById('bi-chart-projects');
+    if (!primary) return;
+    var statuses = d.status_breakdown || {};
+    var topByProfit = d.top_by_profit || [];
+    var statusKeys = Object.keys(statuses);
+    if (statusKeys.length === 0 && topByProfit.length === 0) {
+      chartArea.innerHTML = '<div class="bi-module-loading">No project data yet.</div>';
+      return;
+    }
+    var secondary = document.createElement('canvas');
+    chartArea.innerHTML = ''; chartArea.appendChild(primary); chartArea.appendChild(secondary);
+    var c = this._getCSS();
+
+    if (statusKeys.length > 0) {
+      var palette = [c.blue, c.green, c.orange, c.purple, c.grey, c.teal, c.red];
+      charts.projectsStatus = new Chart(primary, {
+        type: 'doughnut',
+        data: {
+          labels: statusKeys,
+          datasets: [{
+            data: statusKeys.map(function (k) { return statuses[k]; }),
+            backgroundColor: statusKeys.map(function (_, i) { return palette[i % palette.length]; })
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
+            title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: c.textMuted }
+          }
+        }
+      });
+    }
+
+    if (topByProfit.length > 0) {
+      charts.projectsTopProfit = new Chart(secondary, {
+        type: 'bar',
+        data: {
+          labels: topByProfit.map(function (j) { return (j.job_name || j.job_number || '').substring(0, 28); }),
+          datasets: [{
+            label: 'Profit',
+            data: topByProfit.map(function (j) { return j.profit; }),
+            backgroundColor: c.green + 'AA'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Top Jobs by Profit', font: { size: 13 }, color: c.textMuted }
+          },
+          scales: { x: { beginAtZero: true, ticks: { callback: function (v) { return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v); } } } }
+        }
+      });
+    }
+  },
+
   fetchMarket: async function(sb, userId) {
     var briefings = await sb.from('news_digest_briefings').select('id, title, summary, category, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
     if (briefings.error) console.error('[BI] Market briefings query error:', briefings.error.message);

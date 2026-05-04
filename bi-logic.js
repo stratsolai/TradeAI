@@ -134,6 +134,7 @@ window.BI_LOGIC = {
       M.fetchFinancial(self._supabase, dateRange).then(function(d) { self._financialData = d; }).catch(function(e) { console.error('[BI] Financial:', e.message); }),
       M.fetchCustomers(self._supabase, dateRange).then(function(d) { self._customerData = d; }).catch(function(e) { console.error('[BI] Customers:', e.message); }),
       M.fetchOperations(self._supabase, dateRange).then(function(d) { self._operationsData = d; }).catch(function(e) { console.error('[BI] Operations:', e.message); }),
+      M.fetchProjects(self._supabase, dateRange).then(function(d) { self._projectsData = d; }).catch(function(e) { console.error('[BI] Projects:', e.message); }),
       M.fetchMarket(self._supabase, self._user.id).then(function(d) { self._marketData = d; }).catch(function(e) { console.error('[BI] Market:', e.message); }),
       M.fetchStrategic(self._supabase, self._user.id).then(function(d) { self._strategicData = d; }).catch(function(e) { console.error('[BI] Strategic:', e.message); })
     ]).then(function() {
@@ -141,6 +142,7 @@ window.BI_LOGIC = {
       M.renderFinancial(self._financialData, self._charts);
       M.renderCustomers(self._customerData, self._charts);
       M.renderOperations(self._operationsData, self._charts);
+      M.renderProjects(self._projectsData, self._charts);
       M.renderMarket(self._marketData);
       M.renderStrategic(self._strategicData, self._charts);
       self._updateLastRefreshed();

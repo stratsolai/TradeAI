@@ -203,6 +203,7 @@ export default async function handler(req, res) {
       callInternal('bi-financial', {}),
       callInternal('bi-customers', {}),
       callInternal('bi-operations', {}),
+      callInternal('bi-projects', {}),
       loadCLContext(supabase, userId),
       loadSPContext(supabase, userId),
       runResearch(industry, location, userId)
@@ -210,9 +211,10 @@ export default async function handler(req, res) {
     var financial = parallel[0];
     var customers = parallel[1];
     var operations = parallel[2];
-    var clItems = parallel[3] || [];
-    var spContext = parallel[4];
-    var research = parallel[5] || [];
+    var projects = parallel[3];
+    var clItems = parallel[4] || [];
+    var spContext = parallel[5];
+    var research = parallel[6] || [];
 
     var contextParts = [];
 
@@ -272,6 +274,23 @@ export default async function handler(req, res) {
       }
       if (Array.isArray(opData.top_suppliers) && opData.top_suppliers.length > 0) {
         contextParts.push('- Top suppliers by spend: ' + opData.top_suppliers.slice(0, 5).map(function (s) { return s.name + ' $' + s.spend + ' (' + s.percentage + '%)'; }).join(', '));
+      }
+    }
+
+    if (projects) {
+      var ps = (projects.summary) || {};
+      contextParts.push('\nPROJECT / JOB DATA');
+      contextParts.push('- Total jobs: ' + (ps.total_jobs || 0) + ' (' + (ps.completed_count || 0) + ' completed, ' + (ps.in_progress_count || 0) + ' in progress, ' + (ps.quoted_count || 0) + ' quoted)');
+      contextParts.push('- Completion rate: ' + (ps.completion_rate || 0) + '%');
+      contextParts.push('- Average job value: $' + (ps.avg_job_value || 0));
+      contextParts.push('- Average margin: ' + (ps.avg_margin_pct || 0) + '% (total profit $' + (ps.total_profit || 0) + ')');
+      contextParts.push('- Average duration: ' + (ps.avg_duration_days || 0) + ' days');
+      if (ps.quote_variance_jobs > 0) {
+        contextParts.push('- Quote vs actual: ' + ps.over_quote_count + ' over, ' + ps.on_quote_count + ' on, ' + ps.under_quote_count + ' under (sample of ' + ps.quote_variance_jobs + ')');
+      }
+      var pData = projects || {};
+      if (Array.isArray(pData.top_by_profit) && pData.top_by_profit.length > 0) {
+        contextParts.push('- Top jobs by profit: ' + pData.top_by_profit.slice(0, 5).map(function (j) { return j.job_name + ' $' + j.profit + ' (' + j.margin_pct + '%)'; }).join(', '));
       }
     }
 
