@@ -285,13 +285,13 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .accordion-title-block { flex: 1; min-width: 0; }
 .accordion-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 20px; font-weight: 600; color: #fff;
+  font-size: 30px; font-weight: 700; color: #fff;
   letter-spacing: 0.5px; line-height: 1.1;
   text-transform: uppercase;
 }
 .accordion-tagline {
-  font-size: 13px; color: rgba(255,255,255,0.5);
-  margin-top: 4px; line-height: 1.4;
+  font-size: 15px; color: rgba(255,255,255,0.6);
+  margin-top: 6px; line-height: 1.4;
 }
 .accordion-count {
   background: rgba(74,109,140,0.3); color: #7BA3C4;
@@ -663,7 +663,8 @@ footer {
       <div class="filter-tabs">
         <button class="filter-tab" data-cat="all">All</button>
         <button class="filter-tab active" data-cat="sales-marketing">Sales &amp; Marketing</button>
-        <button class="filter-tab" data-cat="customers-safety">Customers &amp; Safety</button>
+        <button class="filter-tab" data-cat="customers-jobs">Customers &amp; Jobs</button>
+        <button class="filter-tab" data-cat="suppliers-materials">Suppliers &amp; Materials</button>
         <button class="filter-tab" data-cat="intelligence">Business Intelligence</button>
       </div>
     </div>
@@ -795,16 +796,22 @@ footer {
     if(bc) bc.textContent = name + ' Tools';
   }
 
-  // Tool data (mirrors tools-data.js CORE_TOOLS). The `cat` field maps to
-  // the v2.1 categorisation: sales-marketing / customers-safety / intelligence.
+  // Tool data. The `cat` field maps to the four-category structure:
+  // sales-marketing / customers-jobs / suppliers-materials / intelligence.
+  // Built tools have a real Stripe priceId. Pending, future and industry
+  // placeholders render as Coming Soon tiles with TBA pricing.
   var TOOLS = [
+    // ── BUILT ─────────────────────────────────────────────────────────────
     { id:'chatbot', toolId:'chatbot', status:'built', icon:'💬', cat:'sales-marketing',
       title:'Website Chatbot', price:'$69', priceId:'price_1TRlgkHnoVvjo5gxXR6NMrkR',
       desc:'Answers customer enquiries, qualifies leads and books jobs from your website — 24/7, even when you’re on the tools. Learns your business automatically and gets smarter with every interaction.' },
     { id:'social', toolId:'social', status:'built', icon:'📱', cat:'sales-marketing',
       title:'Marketing & Social Media Manager', price:'$69', priceId:'price_1TEQg8HnoVvjo5gxkxUaFrok',
       desc:'Describe a job, upload a photo, or let the AI pull from your content library — it creates professional posts, AI-generated graphics and full marketing campaigns. Auto-posts to Facebook and Instagram, or download for anywhere else.' },
-    { id:'email', toolId:'email', status:'built', icon:'📧', cat:'sales-marketing',
+    { id:'design-viz', toolId:'design-viz', status:'built', icon:'🎨', cat:'sales-marketing',
+      title:'Design Visualiser', price:'$69', priceId:'price_1TQLbEHnoVvjo5gxIuSSm7tH',
+      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' },
+    { id:'email', toolId:'email', status:'built', icon:'📧', cat:'intelligence',
       title:'Email Assistant', price:'$39', priceId:'price_1TQLhHHnoVvjo5gxnwUQQYwM',
       desc:'AI reads your Gmail or Outlook inbox and turns it into a smart dashboard — what’s urgent, what needs attention, what can wait. No more scrolling through hundreds of messages to find what matters.' },
     { id:'news-digest', toolId:'news-digest', status:'built', icon:'📰', cat:'intelligence',
@@ -816,34 +823,104 @@ footer {
     { id:'strategic-plan', toolId:'strategic-plan', status:'built', icon:'📝', cat:'intelligence',
       title:'Strategic Plan & Operations Dashboard', price:'$69', priceId:'price_1TB7DDHnoVvjo5gxgLzZbego',
       desc:'Create a strategic business plan and 90-day action plan in minutes from a simple AI-guided interview. Tracks your progress automatically so it doesn’t just sit in a drawer.' },
+
+    // ── PENDING (existing, on roadmap) ────────────────────────────────────
     { id:'tender', toolId:'tender', status:'pending', icon:'📋', cat:'sales-marketing',
       title:'Tender Response Generator', price:'$69', priceId:'price_1TEQjVHnoVvjo5gxfyLbHE3M',
       desc:'Upload any RFT or RFQ and AI reads the requirements, pulls relevant experience and certifications from your content library, and generates a professional tender response. Review it, edit it, download as PDF or Word — ready to submit.' },
     { id:'quote-enhancer', toolId:'quote-enhancer', status:'pending', icon:'💰', cat:'sales-marketing',
       title:'Quote Enhancer', price:'$59', priceId:'price_1TB8QZHnoVvjo5gxwL0GKduI',
       desc:'Import your existing quote or upload your line items and AI transforms them into a professional branded document — detailed scope of works, warranty terms, exclusions, payment milestones and a branded cover page. Download as PDF or Word, or send it straight to the customer.' },
-    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'customers-safety',
-      title:'SWMS & Safety Docs', price:'$59', priceId:'price_1TB8RNHnoVvjo5gxPb5wxUuF',
-      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
-    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'customers-safety',
-      title:'Customer Progress Updates', price:'$59', priceId:'price_1TB8S6HnoVvjo5gxVYoEezlN',
-      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
-    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'customers-safety',
-      title:'Handover Documentation', price:'$59', priceId:'price_1TB8ShHnoVvjo5gxrGBAMHZL',
-      desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
     { id:'review-booster', toolId:'review-booster', status:'pending', icon:'⭐', cat:'sales-marketing',
       title:'Review & Referral Booster', price:'$39', priceId:'price_1TB8TFHnoVvjo5gxkF2QMzJa',
       desc:'Automatically sends a branded Google review request when a job is complete, then follows up if they haven’t responded. Once they leave a review, it asks if they know someone who needs your services.' },
-    { id:'design-viz', toolId:'design-viz', status:'built', icon:'🎨', cat:'sales-marketing',
-      title:'Design Visualiser', price:'$69', priceId:'price_1TQLbEHnoVvjo5gxIuSSm7tH',
-      desc:'Upload a site photo, describe the project, and AI generates a professional concept render to show your customer what the finished result will look like. Use it in quotes, tenders and marketing — or let customers generate their own renders through your website chatbot.' }
+    { id:'swms', toolId:'swms', status:'pending', icon:'⛑', cat:'customers-jobs',
+      title:'SWMS & Safety Docs', price:'$59', priceId:'price_1TB8RNHnoVvjo5gxPb5wxUuF',
+      desc:'Describe the job and AI generates a Safe Work Method Statement specific to your trade, your work and your state — compliant with WHS requirements. Workers sign off on-site digitally, no paper needed.' },
+    { id:'customer-updates', toolId:'customer-updates', status:'pending', icon:'📸', cat:'customers-jobs',
+      title:'Customer Progress Updates', price:'$59', priceId:'price_1TB8S6HnoVvjo5gxVYoEezlN',
+      desc:'Take photos on-site, tap send, and AI writes a professional branded progress update for your customer — what was done, photos, what’s next. No more anxious calls asking what’s happening.' },
+    { id:'handover-docs', toolId:'handover-docs', status:'pending', icon:'📦', cat:'customers-jobs',
+      title:'Handover Documentation', price:'$59', priceId:'price_1TB8ShHnoVvjo5gxrGBAMHZL',
+      desc:'Finish a job and hand your customer a professional branded pack — project summary, before and after photos, maintenance guide and warranty details. AI even pulls real manufacturer data for key components you’ve installed.' },
+
+    // ── FUTURE (new on roadmap) ───────────────────────────────────────────
+    { id:'customer-faq', toolId:'customer-faq', status:'pending', icon:'📚', cat:'sales-marketing',
+      title:'Customer FAQ & Knowledge Base',
+      desc:'AI analyses your email and chatbot history to generate a structured FAQ document for your website or to share with customers.' },
+    { id:'contract-manager', toolId:'contract-manager', status:'pending', icon:'📑', cat:'customers-jobs',
+      title:'Contract & Scope Change Manager',
+      desc:'AI drafts variation notices with digital customer sign-off — full audit trail of all scope changes.' },
+    { id:'subcontractor-mgmt', toolId:'subcontractor-mgmt', status:'pending', icon:'👷', cat:'suppliers-materials',
+      title:'Subcontractor & Supplier Management',
+      desc:'Track subcontractor licences, insurance, and compliance — AI generates onboarding packs and expiry reminders.' },
+    { id:'staff-onboarding', toolId:'staff-onboarding', status:'pending', icon:'👋', cat:'intelligence',
+      title:'Staff Onboarding & Training Docs',
+      desc:'AI generates induction documents, training checklists, and site-specific procedures — workers sign off digitally.' },
+    { id:'job-debrief', toolId:'job-debrief', status:'pending', icon:'📋', cat:'intelligence',
+      title:'Job Debrief & Lessons Learned',
+      desc:'Quick AI-assisted debrief at job completion — captures what went well, cost variance, and lessons learned.' },
+    { id:'compliance-calendar', toolId:'compliance-calendar', status:'pending', icon:'📅', cat:'intelligence',
+      title:'Compliance Calendar',
+      desc:'AI builds your compliance calendar — licence renewals, insurance expiry, BAS deadlines — with proactive reminders.' },
+
+    // ── INDUSTRY-SPECIFIC PLACEHOLDERS (38) ───────────────────────────────
+    // Restored from commit db77b35 (id, icon, title only — no descriptions
+    // existed in source). Categorised per spec.
+
+    // Sales & Marketing (4)
+    { id:'hot-water-selector', toolId:'hot-water-selector', status:'pending', icon:'🚿', cat:'sales-marketing', title:'Hot Water System Selector', desc:'' },
+    { id:'pool-chemistry', toolId:'pool-chemistry', status:'pending', icon:'🧪', cat:'sales-marketing', title:'Pool Chemistry Advisor', desc:'' },
+    { id:'plant-selector', toolId:'plant-selector', status:'pending', icon:'🌿', cat:'sales-marketing', title:'Smart Plant Selector', desc:'' },
+    { id:'irrigation-designer', toolId:'irrigation-designer', status:'pending', icon:'💧', cat:'sales-marketing', title:'Irrigation System Designer', desc:'' },
+
+    // Customers & Jobs (19)
+    { id:'warranty-tracker', toolId:'warranty-tracker', status:'pending', icon:'🛡️', cat:'customers-jobs', title:'Warranty Claim Manager', desc:'' },
+    { id:'compliance-cert-gen', toolId:'compliance-cert-gen', status:'pending', icon:'📜', cat:'customers-jobs', title:'Compliance Certificate Generator', desc:'' },
+    { id:'site-diary', toolId:'site-diary', status:'pending', icon:'📓', cat:'customers-jobs', title:'Digital Site Diary', desc:'' },
+    { id:'variation-tracker', toolId:'variation-tracker', status:'pending', icon:'📝', cat:'customers-jobs', title:'Variation Order Manager', desc:'' },
+    { id:'rfi-manager', toolId:'rfi-manager', status:'pending', icon:'❓', cat:'customers-jobs', title:'RFI & Query Manager', desc:'' },
+    { id:'quality-checklist', toolId:'quality-checklist', status:'pending', icon:'✅', cat:'customers-jobs', title:'Quality Inspection Checklist', desc:'' },
+    { id:'quality-audit', toolId:'quality-audit', status:'pending', icon:'🔍', cat:'customers-jobs', title:'Site Quality Audit System', desc:'' },
+    { id:'test-tracker', toolId:'test-tracker', status:'pending', icon:'🧱', cat:'customers-jobs', title:'Compressive Strength Test Tracker', desc:'' },
+    { id:'emergency-router', toolId:'emergency-router', status:'pending', icon:'🚨', cat:'customers-jobs', title:'Emergency Job Router', desc:'' },
+    { id:'emergency-dispatch', toolId:'emergency-dispatch', status:'pending', icon:'⚡', cat:'customers-jobs', title:'Emergency Callout Dispatcher', desc:'' },
+    { id:'service-prioritiser', toolId:'service-prioritiser', status:'pending', icon:'🌡️', cat:'customers-jobs', title:'Service Call Prioritiser', desc:'' },
+    { id:'roster-optimizer', toolId:'roster-optimizer', status:'pending', icon:'📆', cat:'customers-jobs', title:'Smart Roster Optimiser', desc:'' },
+    { id:'production-scheduler', toolId:'production-scheduler', status:'pending', icon:'🏭', cat:'customers-jobs', title:'Production Scheduler', desc:'' },
+    { id:'multi-trade-scheduler', toolId:'multi-trade-scheduler', status:'pending', icon:'🗓️', cat:'customers-jobs', title:'Multi-Trade Job Scheduler', desc:'' },
+    { id:'backflow-scheduler', toolId:'backflow-scheduler', status:'pending', icon:'🔄', cat:'customers-jobs', title:'Backflow Testing Scheduler', desc:'' },
+    { id:'maintenance-scheduler-hvac', toolId:'maintenance-scheduler-hvac', status:'pending', icon:'🔧', cat:'customers-jobs', title:'Preventative Maintenance Scheduler', desc:'' },
+    { id:'seasonal-scheduler-land', toolId:'seasonal-scheduler-land', status:'pending', icon:'🍂', cat:'customers-jobs', title:'Seasonal Maintenance Scheduler', desc:'' },
+    { id:'seasonal-reminder', toolId:'seasonal-reminder', status:'pending', icon:'📅', cat:'customers-jobs', title:'Seasonal Pool Care Reminders', desc:'' },
+    { id:'pour-scheduler', toolId:'pour-scheduler', status:'pending', icon:'🌤️', cat:'customers-jobs', title:'Smart Pour Scheduler', desc:'' },
+
+    // Suppliers & Materials (8)
+    { id:'subcontractor-coordinator', toolId:'subcontractor-coordinator', status:'pending', icon:'👷', cat:'suppliers-materials', title:'Subcontractor Coordinator', desc:'' },
+    { id:'weld-tracker', toolId:'weld-tracker', status:'pending', icon:'🔥', cat:'suppliers-materials', title:'Welder Qualification Tracker', desc:'' },
+    { id:'material-optimizer', toolId:'material-optimizer', status:'pending', icon:'✂️', cat:'suppliers-materials', title:'Material Cutting Optimiser', desc:'' },
+    { id:'consumables-tracker', toolId:'consumables-tracker', status:'pending', icon:'🧴', cat:'suppliers-materials', title:'Consumables Inventory Tracker', desc:'' },
+    { id:'parts-finder', toolId:'parts-finder', status:'pending', icon:'🔩', cat:'suppliers-materials', title:'Spare Parts Finder', desc:'' },
+    { id:'inventory-forecaster', toolId:'inventory-forecaster', status:'pending', icon:'📦', cat:'suppliers-materials', title:'Smart Inventory Forecaster', desc:'' },
+    { id:'mix-designer', toolId:'mix-designer', status:'pending', icon:'🪣', cat:'suppliers-materials', title:'Concrete Mix Designer', desc:'' },
+    { id:'refrigerant-tracker', toolId:'refrigerant-tracker', status:'pending', icon:'❄️', cat:'suppliers-materials', title:'Refrigerant Gas Tracker', desc:'' },
+
+    // Business Intelligence (7)
+    { id:'license-tracker', toolId:'license-tracker', status:'pending', icon:'📋', cat:'intelligence', title:'License & Compliance Tracker', desc:'' },
+    { id:'test-tag-manager', toolId:'test-tag-manager', status:'pending', icon:'🔌', cat:'intelligence', title:'Test & Tag Manager', desc:'' },
+    { id:'job-costing', toolId:'job-costing', status:'pending', icon:'📊', cat:'intelligence', title:'Real-Time Job Costing', desc:'' },
+    { id:'job-cost-estimator', toolId:'job-cost-estimator', status:'pending', icon:'💰', cat:'intelligence', title:'Job Cost Estimator', desc:'' },
+    { id:'energy-calculator', toolId:'energy-calculator', status:'pending', icon:'💡', cat:'intelligence', title:'Energy Efficiency Calculator', desc:'' },
+    { id:'quality-spc', toolId:'quality-spc', status:'pending', icon:'📈', cat:'intelligence', title:'Statistical Process Control (SPC)', desc:'' },
+    { id:'oee-tracker', toolId:'oee-tracker', status:'pending', icon:'⚙️', cat:'intelligence', title:'OEE Performance Tracker', desc:'' }
   ];
 
-  // v2.1 categorisation — order, label, and tagline per spec section.
+  // Categorisation — order, label, and tagline per spec.
   var CATEGORIES = [
-    { id: 'sales-marketing',  name: 'Sales & Marketing',     tagline: 'Get the Job — win more work with less effort' },
-    { id: 'customers-safety', name: 'Customers & Safety',    tagline: 'Do the Job — keep customers informed & stay compliant' },
-    { id: 'intelligence',     name: 'Business Intelligence', tagline: 'Opportunities and Risks — key insights, planning suggestions & news' }
+    { id: 'sales-marketing',     name: 'Sales & Marketing',      tagline: 'Get the Job' },
+    { id: 'customers-jobs',      name: 'Customers & Jobs',       tagline: 'Deliver the Job' },
+    { id: 'suppliers-materials', name: 'Suppliers & Materials',  tagline: 'Manage the Job' },
+    { id: 'intelligence',        name: 'Business Intelligence',  tagline: 'Grow the Business' }
   ];
 
   // Live prices: map of toolId → "$X/mth", or null if any built tool's
@@ -889,7 +966,7 @@ footer {
     var badge = isBuilt
       ? '<span class="tool-card-v2-badge live">Live</span>'
       : '<span class="tool-card-v2-badge soon">Coming soon</span>';
-    var price = isBuilt ? getDisplayPrice(t) : 'Coming Soon';
+    var price = isBuilt ? getDisplayPrice(t) : 'TBA';
     var ctaText = isBuilt ? 'Explore →' : 'Notify me';
     var ctaClass = isBuilt ? 'live' : 'soon';
     var cardClass = 'tool-card-v2' + (isBuilt ? '' : ' coming-soon');
@@ -1040,10 +1117,18 @@ footer {
     });
 
     // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap).
-    // Pre-wrap if the current position is at a boundary so the smooth-scroll
-    // target is in the same set as the start. Then mark a manual-scroll
-    // window (~600ms) so the rAF tick suspends auto-rotate + wrap until the
-    // browser's smooth-scroll animation has completed.
+    // Continuous-loop behaviour:
+    //   • Right arrow at any position: scrollBy(+320). If this pushes us
+    //     past oneSet, the rAF tick wraps back after the manual-scroll
+    //     window expires (visually invisible — duplicated cards mean
+    //     position X and X+oneSet show identical content).
+    //   • Left arrow at scrollLeft ≈ 0: the browser would clamp a negative
+    //     scrollBy and nothing would happen, so we instantly jump to
+    //     scrollLeft = oneSet first (visually identical) and then
+    //     smooth-scroll left by 320 — the user perceives a continuous
+    //     leftward scroll into the previous cards.
+    // The 600ms manual-scroll lock keeps the auto-rotate from fighting the
+    // browser's smooth-scroll animation while it's running.
     document.querySelectorAll('.tool-accordion .carousel-arrow').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -1052,11 +1137,10 @@ footer {
         var car = sec.querySelector('.tool-carousel');
         if (!car) return;
         var oneSet = car.scrollWidth / 2;
-        if (oneSet > 0) {
-          if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
-          else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
-        }
         var dir = btn.getAttribute('data-dir') === 'left' ? -1 : 1;
+        if (dir < 0 && oneSet > 0 && car.scrollLeft < 1) {
+          car.scrollLeft = oneSet;
+        }
         car.scrollBy({ left: dir * 320, behavior: 'smooth' });
         car._manualScrollUntil = performance.now() + 600;
       });

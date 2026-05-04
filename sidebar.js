@@ -6,15 +6,20 @@
 (function() {
   'use strict';
 
+  // All four category sections are always rendered. When a category has no
+  // active tools for the user, the heading shows with a "No active tools"
+  // placeholder beneath it — see itemsHtmlOrEmpty().
   var SIDEBAR_NAV = [
     { type: 'standalone', id: 'cl', label: 'Content Library', icon: '📚', url: '/content-library.html' },
     { type: 'category', label: 'Sales & Marketing', items: [
       { id: 'chatbot',    label: 'Website Chatbot',    icon: '💬', url: '/chatbot' },
       { id: 'social',     label: 'Marketing & Social', icon: '📱', url: '/social' },
-      { id: 'email',      label: 'Email Assistant',    icon: '📧', url: '/email' },
       { id: 'design-viz', label: 'Design Visualiser',  icon: '🎨', url: '/design' }
     ]},
+    { type: 'category', label: 'Customers & Jobs', items: [] },
+    { type: 'category', label: 'Suppliers & Materials', items: [] },
     { type: 'category', label: 'Business Intelligence', items: [
+      { id: 'email',          label: 'Email Assistant',      icon: '📧', url: '/email' },
       { id: 'news-digest',    label: 'Industry News Digest', icon: '📰', url: '/news' },
       { id: 'bi',             label: 'BI Dashboard',         icon: '📊', url: '/bi.html' },
       { id: 'strategic-plan', label: 'Strategic Plan',       icon: '📝', url: '/strategy' }
@@ -56,7 +61,14 @@
         html += '<div class="stax-sidebar-divider"></div>';
       } else if (group.type === 'category') {
         html += '<div class="section-label">' + window.escHtml(group.label) + '</div>';
-        group.items.forEach(function(item) { html += itemHtml(item); });
+        if (group.items && group.items.length > 0) {
+          group.items.forEach(function(item) { html += itemHtml(item); });
+        } else {
+          // Empty-state placeholder. Inline style avoids adding a new class
+          // to staxai-auth.css; opacity adapts to whatever text colour the
+          // sidebar uses on the current page.
+          html += '<div class="stax-sidebar-empty" style="padding:8px 16px;opacity:0.45;font-style:italic;font-size:13px;">No active tools</div>';
+        }
       }
     });
 
