@@ -241,6 +241,22 @@ Single coordinated task across entire authenticated platform:
 - Hero screenshots
 - Demo videos
 
+**Help Bubbles — Metric Definitions**
+
+These definitions are for Smart Help bubbles and contextual tooltips.
+
+Social Media Metrics:
+- Reach: Total number of unique users who saw your posts
+- Engagement: Total interactions (likes, comments, shares, clicks)
+- Engagement Rate: (Engagement ÷ Reach) × 100 — shown as percentage
+
+Chatbot Metrics:
+- Conversations: Total chat sessions with website visitors
+- Booking Requests: Visitors who requested an appointment or callback
+- Lead Conversion Rate: (Booking Requests ÷ Conversations) × 100
+- Unanswered: Questions the chatbot couldn't answer
+- Answered Rate: ((Total Questions - Unanswered) ÷ Total Questions) × 100
+
 ### Task 39 — Marketing Messaging
 
 Status: Not started.
@@ -279,8 +295,17 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
 
 ---
 
-## Known Issues & Notes
+## Platform Facts
 
+- New tools needing Stripe payment: create a new Stripe product
+  and document the price ID in the Tool Specification Guide
+  before building.
+- Supabase anon key in supabase-client.js is intentional — RLS
+  is enabled.
+- widget.js is an embeddable chatbot for customers' own websites
+  — not an internal platform file.
+- Content Library available to all paying customers automatically
+  — no separate activation.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -340,24 +365,6 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   files at build time). Not a bug.
 - NSW eTendering API is publicly accessible with no API
   key — rate-limited by IP. No environment variable required.
-
----
-
-## Help Bubbles — Metric Definitions
-
-These definitions are for Smart Help bubbles and contextual tooltips (pre-launch task).
-
-**Social Media Metrics:**
-- Reach: Total number of unique users who saw your posts
-- Engagement: Total interactions (likes, comments, shares, clicks)
-- Engagement Rate: (Engagement ÷ Reach) × 100 — shown as percentage
-
-**Chatbot Metrics:**
-- Conversations: Total chat sessions with website visitors
-- Booking Requests: Visitors who requested an appointment or callback
-- Lead Conversion Rate: (Booking Requests ÷ Conversations) × 100
-- Unanswered: Questions the chatbot couldn't answer
-- Answered Rate: ((Total Questions - Unanswered) ÷ Total Questions) × 100
 
 ---
 
@@ -473,15 +480,6 @@ Before starting any build work, Code must read these files in full:
 | Schema documentation | Any new tables must be documented in this spec before creation |
 
 End of mandatory compliance section.
-
----
-
-## Important Platform Facts
-
-- New tools needing Stripe payment: create a new Stripe product and document the price ID in the Tool Specification Guide before building
-- Supabase anon key in supabase-client.js is intentional — RLS is enabled
-- widget.js is an embeddable chatbot for customers' own websites — not an internal platform file
-- Content Library available to all paying customers automatically — no separate activation
 
 ---
 
