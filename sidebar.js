@@ -8,18 +8,16 @@
 
   var SIDEBAR_NAV = [
     { type: 'standalone', id: 'cl', label: 'Content Library', icon: '📚', url: '/content-library.html' },
-    { type: 'category', label: 'Marketing', items: [
-      { id: 'social',     label: 'Marketing & Social', icon: '📱', url: '/social' },
+    { type: 'category', label: 'Sales & Marketing', items: [
       { id: 'chatbot',    label: 'Website Chatbot',    icon: '💬', url: '/chatbot' },
+      { id: 'social',     label: 'Marketing & Social', icon: '📱', url: '/social' },
+      { id: 'email',      label: 'Email Assistant',    icon: '📧', url: '/email' },
       { id: 'design-viz', label: 'Design Visualiser',  icon: '🎨', url: '/design' }
     ]},
-    { type: 'category', label: 'Operations', items: [
-      { id: 'email', label: 'Email Assistant', icon: '📧', url: '/email' }
-    ]},
     { type: 'category', label: 'Business Intelligence', items: [
-      { id: 'strategic-plan', label: 'Strategic Plan',         icon: '📝', url: '/strategy' },
-      { id: 'news-digest',    label: 'Industry News Digest',   icon: '📰', url: '/news' },
-      { id: 'bi',             label: 'BI Dashboard',           icon: '🧠', url: '/bi.html' }
+      { id: 'news-digest',    label: 'Industry News Digest', icon: '📰', url: '/news' },
+      { id: 'bi',             label: 'BI Dashboard',         icon: '🧠', url: '/bi.html' },
+      { id: 'strategic-plan', label: 'Strategic Plan',       icon: '📝', url: '/strategy' }
     ]}
   ];
 
