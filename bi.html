@@ -206,9 +206,9 @@
     }
     .bi-collapse-btn:hover { color: var(--text); }
 
-    .bi-tile-collapsed .bi-chart-area canvas:not(:first-of-type) { display: none; }
-    .bi-tile-collapsed .bi-advisory-section { display: none; }
-    .bi-tile-collapsed .bi-history-panel { display: none; }
+    .bi-tile-collapsed .bi-chart-area > *:not(:first-child) { display: none !important; }
+    .bi-tile-collapsed .bi-advisory-section { display: none !important; }
+    .bi-tile-collapsed .bi-history-panel { display: none !important; }
 
     .bi-alert-source-btn {
       margin-left: auto;
@@ -769,8 +769,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#9888;</span>
         <span class="bi-module-title">Risks &amp; Opportunities</span>
-        <span class="bi-module-updated" id="bi-mod-alerts-updated"></span>
-        <button class="bi-history-btn" data-module="alerts">History</button>
       </div>
       <div id="bi-mod-alerts-content">
         <div class="bi-module-loading">Loading alerts...</div>
@@ -783,8 +781,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#128176;</span>
         <span class="bi-module-title">Financial Health</span>
-        <span class="bi-module-updated" id="bi-mod-financial-updated"></span>
-        <button class="bi-history-btn" data-module="financial">History</button>
         <button class="bi-collapse-btn" data-module="financial" title="Collapse" aria-label="Collapse">&#9650;</button>
       </div>
       <div id="bi-mod-financial-kpis" class="bi-kpi-row"></div>
@@ -805,8 +801,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#128101;</span>
         <span class="bi-module-title">Customer &amp; Revenue</span>
-        <span class="bi-module-updated" id="bi-mod-customers-updated"></span>
-        <button class="bi-history-btn" data-module="customers">History</button>
         <button class="bi-collapse-btn" data-module="customers" title="Collapse" aria-label="Collapse">&#9650;</button>
       </div>
       <div id="bi-mod-customers-kpis" class="bi-kpi-row"></div>
@@ -827,8 +821,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#9881;</span>
         <span class="bi-module-title">Operational Performance</span>
-        <span class="bi-module-updated" id="bi-mod-operations-updated"></span>
-        <button class="bi-history-btn" data-module="operations">History</button>
         <button class="bi-collapse-btn" data-module="operations" title="Collapse" aria-label="Collapse">&#9650;</button>
       </div>
       <div id="bi-mod-operations-kpis" class="bi-kpi-row"></div>
@@ -849,8 +841,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#127758;</span>
         <span class="bi-module-title">Market Intelligence</span>
-        <span class="bi-module-updated" id="bi-mod-market-updated"></span>
-        <button class="bi-history-btn" data-module="market">History</button>
         <button class="bi-collapse-btn" data-module="market" title="Collapse" aria-label="Collapse">&#9650;</button>
       </div>
       <div id="bi-mod-market-kpis" class="bi-kpi-row"></div>
@@ -871,8 +861,6 @@
       <div class="bi-module-header">
         <span class="bi-module-icon">&#127919;</span>
         <span class="bi-module-title">Strategic Alignment</span>
-        <span class="bi-module-updated" id="bi-mod-strategic-updated"></span>
-        <button class="bi-history-btn" data-module="strategic">History</button>
         <button class="bi-collapse-btn" data-module="strategic" title="Collapse" aria-label="Collapse">&#9650;</button>
       </div>
       <div id="bi-mod-strategic-kpis" class="bi-kpi-row"></div>
