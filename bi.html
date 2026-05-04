@@ -388,8 +388,41 @@
       display: none;
     }
 
-    .bi-alert-detail.open {
+    .bi-alert-card.detail-open .bi-alert-detail {
       display: block;
+    }
+
+    /* 2x2 grid summary built from the existing detail text — sentences
+       split into bullets. Hides when the user expands the card so the
+       full paragraph version replaces it. */
+    .bi-alert-summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      margin: 0 0 8px 0;
+      padding: 0;
+      list-style: none;
+    }
+    .bi-alert-summary-grid li {
+      font-size: var(--label-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      position: relative;
+      padding-left: 14px;
+    }
+    .bi-alert-summary-grid li::before {
+      content: "\2022";
+      position: absolute;
+      left: 0;
+      color: var(--text-muted);
+      font-weight: bold;
+    }
+    .bi-alert-card.detail-open .bi-alert-summary-grid {
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .bi-alert-summary-grid { grid-template-columns: 1fr; }
     }
 
     .bi-alert-suggestion {

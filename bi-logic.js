@@ -334,19 +334,38 @@ window.BI_LOGIC = {
     return html;
   },
 
+  _splitDetailBullets: function(text) {
+    if (!text) return [];
+    // Split the detail paragraph on sentence-end punctuation. Falls back to
+    // a single bullet if there are no terminators. Capped at 4 to fit the
+    // 2x2 summary grid.
+    var matches = String(text).match(/[^.!?]+[.!?]+/g);
+    var parts = matches || [String(text)];
+    return parts.map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 4);
+  },
+
   _renderAlertCard: function(item) {
     var d = item.insight_data || {};
     var severity = d.severity || 'blue';
     var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
     var sources = Array.isArray(d.sources) ? d.sources : [];
     var sourcesId = 'bi-alert-sources-' + escHtml(item.id);
+    var detailText = d.detail || '';
+    var bullets = this._splitDetailBullets(detailText);
     var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
     html += '<div class="bi-alert-header">';
     html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
     html += '<span class="bi-alert-headline">' + escHtml(d.headline || 'Alert') + '</span>';
     html += '<button class="bi-alert-expand-btn" data-insight-id="' + escHtml(item.id) + '">&#9660;</button>';
     html += '</div>';
-    html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(d.detail || '') + '</div>';
+    if (bullets.length > 0) {
+      html += '<ul class="bi-alert-summary-grid">';
+      for (var b = 0; b < bullets.length; b++) {
+        html += '<li>' + escHtml(bullets[b]) + '</li>';
+      }
+      html += '</ul>';
+    }
+    html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(detailText) + '</div>';
     if (d.suggestion) {
       html += '<div class="bi-alert-suggestion">' + escHtml(d.suggestion) + '</div>';
     }
@@ -403,9 +422,8 @@ window.BI_LOGIC = {
     });
     container.querySelectorAll('.bi-alert-expand-btn').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        var id = btn.getAttribute('data-insight-id');
-        var detail = document.getElementById('bi-alert-detail-' + id);
-        if (detail) detail.classList.toggle('open');
+        var card = btn.closest('.bi-alert-card');
+        if (card) card.classList.toggle('detail-open');
       });
     });
     container.querySelectorAll('.bi-ask-btn').forEach(function(btn) {
