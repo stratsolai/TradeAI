@@ -433,7 +433,24 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error(`${provider} OAuth error:`, error);
+    // Recover the originating flow from state so CL / EA failures land back
+    // on the right settings page. Without this, all Microsoft errors (and
+    // any non-Gmail Google errors) bounce the user to chatbot-settings,
+    // which is the wrong page for a Content Library or Email Assistant
+    // connection attempt.
+    var catchFlow = '';
+    try {
+      var s = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
+      catchFlow = (s && s.flow) || '';
+    } catch (e) {}
+    const details = encodeURIComponent(error.message);
+    if (catchFlow === 'cl') {
+      return res.redirect(`/cl-settings.html?error=oauth_failed&details=${details}`);
+    }
+    if (catchFlow === 'ea') {
+      return res.redirect(`/email/settings?error=oauth_failed&details=${details}`);
+    }
     const redirectPage = provider === 'gmail' ? 'email-assistant' : 'chatbot-settings';
-    res.redirect(`/${redirectPage}.html?error=oauth_failed&details=${encodeURIComponent(error.message)}`);
+    res.redirect(`/${redirectPage}.html?error=oauth_failed&details=${details}`);
   }
 };
