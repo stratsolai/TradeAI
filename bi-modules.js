@@ -518,15 +518,19 @@ window.BI_MODULES = {
   },
 
   fetchMarket: async function(sb, userId) {
-    var briefings = await sb.from('news_digest_briefings').select('id, title, summary, category, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(5);
-    if (briefings.error) console.error('[BI] Market briefings query error:', briefings.error.message);
-    var tenders = await sb.from('news_digest_tenders').select('id, title, location, close_date, value_text').eq('user_id', userId).order('close_date', { ascending: true }).limit(5);
-    if (tenders.error) console.error('[BI] Market tenders query error:', tenders.error.message);
-    var hasID = false;
-    var tc = await sb.from('profiles').select('activated_tools').eq('id', userId).single();
-    if (tc.error) console.error('[BI] Market profile query error:', tc.error.message);
-    if (tc.data && Array.isArray(tc.data.activated_tools)) hasID = tc.data.activated_tools.indexOf('news-digest') !== -1;
-    return { briefings: briefings.data||[], tenders: tenders.data||[], hasNewsDigest: hasID };
+    // Source: Content Library rows produced by the Industry News Digest tool.
+    // tool_source = 'news-digest' marks an item as ID output. We pull the
+    // most recent approved entries; absence of any rows is what drives the
+    // value-prop prompt on the tile.
+    var resp = await sb.from('content_library')
+      .select('id, title, content_text, source_detail, created_at')
+      .eq('user_id', userId)
+      .eq('tool_source', 'news-digest')
+      .eq('status', 'approved')
+      .order('created_at', { ascending: false })
+      .limit(8);
+    if (resp.error) console.error('[BI] Market query error:', resp.error.message);
+    return { briefings: resp.data || [] };
   },
 
   renderMarket: function(data) {
@@ -534,26 +538,70 @@ window.BI_MODULES = {
     var chartArea = document.getElementById('bi-mod-market-chart');
     var advisoryList = document.getElementById('bi-mod-market-advisory-list');
     this._setTimestamp('bi-mod-market-updated');
-    if (!data) { if (kpisEl) kpisEl.innerHTML = ''; if (chartArea) chartArea.style.display = 'none'; return; }
-    var br = data.briefings||[], tn = data.tenders||[];
-    this._renderKPIRow(kpisEl, [
-      { value: ''+br.length, label: 'Recent Headlines', colour: '' },
-      { value: ''+tn.length, label: 'Open Tenders', colour: 'orange' }
-    ]);
     if (chartArea) chartArea.style.display = 'none';
-    if (!advisoryList) return;
-    var items = [];
-    for (var b = 0; b < Math.min(br.length, 3); b++) items.push({ icon: '&#128240;', text: (br[b].title||'Update')+(br[b].summary?' \u2014 '+br[b].summary.substring(0,120):'') });
-    var today = new Date().toISOString().split('T')[0];
-    var closing = tn.filter(function(t){return t.close_date&&t.close_date>=today;}).slice(0,2);
-    for (var t = 0; t < closing.length; t++) items.push({ icon: '&#128203;', text: 'Tender: '+(closing[t].title||'Opportunity')+(closing[t].location?' in '+closing[t].location:'')+(closing[t].close_date?' \u2014 closes '+closing[t].close_date:'') });
-    if (items.length === 0) items.push({ icon: '&#127758;', text: data.hasNewsDigest?'Check Industry News for full briefings.':'Activate Industry News & Updates for market insights.' });
-    var html = '';
-    for (var i = 0; i < items.length; i++) {
-      html += '<div class="bi-advisory-item"><span class="bi-advisory-icon">'+items[i].icon+'</span><span class="bi-advisory-text">'+escHtml(items[i].text)+'</span></div>';
+
+    var briefings = (data && data.briefings) || [];
+
+    // No-content state: show the value-prop prompt explaining what the
+    // Industry News Digest tool offers, with an Activate CTA.
+    if (briefings.length === 0) {
+      if (kpisEl) kpisEl.innerHTML = '';
+      var sec = document.getElementById('bi-mod-market-advisory');
+      if (sec) sec.innerHTML = '<div class="bi-module-prompt">' +
+        '<div class="bi-module-prompt-icon">&#127758;</div>' +
+        '<h3>Industry News &amp; Updates</h3>' +
+        '<p>Activate the full Industry News &amp; Updates tool to get:</p>' +
+        '<ul class="bi-module-prompt-list">' +
+        '<li>Full industry briefings</li>' +
+        '<li>Sector-wide and regionally specific news</li>' +
+        '<li>Comprehensive coverage beyond what BI surfaces here</li>' +
+        '</ul>' +
+        '<a class="btn-outline btn-sm bi-module-prompt-cta" href="/panel-auth.html?tool=news-digest">Activate Industry News &amp; Updates</a>' +
+        '</div>';
+      return;
     }
-    html += data.hasNewsDigest ? '<div class="bi-upsell-box">Powered by Industry News &amp; Updates \u2014 <a href="/news-digest.html">open full tool</a></div>' : '<div class="bi-upsell-box">This is a summary view. Activate Industry News &amp; Updates for full briefings, email scanning, supplier monitoring, and personalised industry intelligence.</div>';
-    advisoryList.innerHTML = html;
+
+    // Restore advisory section structure if a previous render replaced it
+    // with the prompt above.
+    if (!advisoryList) {
+      var secRestore = document.getElementById('bi-mod-market-advisory');
+      if (secRestore) {
+        secRestore.innerHTML = '<div class="bi-advisory-label">AI Advisory</div><div id="bi-mod-market-advisory-list"></div>';
+        advisoryList = document.getElementById('bi-mod-market-advisory-list');
+      }
+    }
+
+    // KPIs: number of recent briefings and the date of the most recent one.
+    var monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var latest = briefings[0].created_at ? new Date(briefings[0].created_at) : null;
+    var latestLabel = (latest && !isNaN(latest.getTime())) ? (latest.getDate() + ' ' + monthShort[latest.getMonth()]) : '\u2014';
+    this._renderKPIRow(kpisEl, [
+      { value: '' + briefings.length, label: 'Recent Briefings', colour: '', trend: 'flat', trendText: '' },
+      { value: latestLabel, label: 'Last Update', colour: '', trend: 'flat', trendText: '' }
+    ]);
+
+    // Render top 5 briefings as advisory rows (title + snippet of summary).
+    var items = briefings.slice(0, 5).map(function (b) {
+      var snippet = String(b.content_text || '').substring(0, 160).trim();
+      if (b.content_text && b.content_text.length > 160) snippet += '\u2026';
+      return {
+        icon: '&#128240;',
+        text: (b.title || 'Update') + (snippet ? ' \u2014 ' + snippet : '')
+      };
+    });
+    this._renderAdvisoryList(advisoryList, items, 'market');
+
+    // Append a small "open full tool" link beneath the items. Replace any
+    // existing upsell box first so re-renders don't stack copies.
+    var advisorySec = advisoryList.parentElement;
+    if (advisorySec) {
+      var existing = advisorySec.querySelector('.bi-upsell-box');
+      if (existing) existing.remove();
+      var upsell = document.createElement('div');
+      upsell.className = 'bi-upsell-box';
+      upsell.innerHTML = 'Powered by Industry News &amp; Updates \u2014 <a href="/news">open full tool</a>';
+      advisorySec.appendChild(upsell);
+    }
   },
 
   fetchStrategic: async function(sb, userId) {
