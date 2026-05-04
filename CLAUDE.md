@@ -223,50 +223,16 @@ Status: Not started. Complete after BI enhancement is finished.
 | Test BI with MYOB demo company | Verify MYOB data flows correctly through every BI tile once MYOB is reactivated |
 | Demo Company Switch feature | Add a "Switch Company" option that lets users explore the Coastal Built demo data as read-only. Benefits: onboarding, sales demos, training, trust. Considerations: data isolation, read-only enforcement, session handling, and a visual indicator that demo mode is active |
 
+### Task 36 — OAuth Consolidation
+
+Status: Not started.
+
+Consolidate api/cl-oauth-initiate.js and the three standalone callback files into api/auth/initiate.js and api/auth/oauth-callback.js. Redirect URIs in Azure and Dropbox will need updating at that time.
+
 ---
 
 ## Known Issues & Notes
 
-- Stripe webhook events — now listening to 5 events:
-  checkout.session.completed, customer.subscription.deleted,
-  price.created, price.updated, price.deleted. Price events
-  auto-sync tool_prices table in Supabase.
-- Payment system fixed (April 2026) — Bundle purchases now
-  correctly save stripe_customer_id and mark is_trial=false.
-  Single tool purchases now activate the tool via activateTool().
-  Cancellation handling implemented in
-  customer.subscription.deleted event. subscription_data.metadata
-  added to checkouts so cancellation webhook has the data it
-  needs.
-- Dynamic pricing implemented (April 2026) — Tool prices fetched
-  from Supabase tool_prices table via api/get-prices.js (public,
-  cached 5 min). Account page shows user's actual subscription
-  prices via api/get-subscription-prices.js (authenticated).
-  Fallback to hardcoded prices (all-or-nothing) if API fails.
-- Bundle picker subscription audit (May 2026) —
-  api/get-user-subscriptions.js returns the user's active Stripe
-  subscriptions tagged as bundle (with tier) or individual (tier
-  null). Used by tools-auth.html to know which tools are backed
-  by individual subs (offering retain/remove on deselect) vs by
-  an existing bundle. Resolves account owner via team_members
-  for team accounts.
-- Bundle switch flow (May 2026) — api/switch-bundle.js stages a
-  STAX3/STAX6 bundle Stripe Checkout with cancelSubsAfterPayment
-  metadata listing existing subscriptions to cancel at period
-  end. After payment, the webhook calls subscriptions.update
-  with cancel_at_period_end=true and superseded_by_bundle=true.
-  The customer.subscription.deleted handler skips activated_tools
-  cleanup for superseded subs so the new bundle's tool list is
-  not rolled back when those individual subs eventually expire.
-  Owners only — team members get 403.
-- tool_prices table created (April 2026) — Maps Stripe price_id
-  to tool_id/bundle_tier and display_price. RLS enabled with
-  read access for authenticated users.
-- Account page rebuilt (April 2026) — Tabbed layout
-  (Subscriptions, Team, Account). Tab visibility based on user
-  role (Owner sees all, Manager sees Subscriptions + Account,
-  Staff sees Account only). Back link dynamically shows
-  referring page.
 - Google OAuth consent screen in Testing mode — currently only
   designated test users can connect Gmail accounts. Must be
   published to In production before real users can connect.
@@ -276,15 +242,6 @@ Status: Not started. Complete after BI enhancement is finished.
   content-library.html — stylesheet always wins the cascade
   for any class defined in both. Known issue to resolve
   during stylesheet rollout.
-- OAuth consolidation — api/cl-oauth-initiate.js and the
-  three standalone callback files should be consolidated
-  into api/auth/initiate.js and api/auth/oauth-callback.js
-  in a dedicated session. Redirect URIs in Azure and Dropbox
-  will need updating at that time.
-- Extraction prompt duplicated across onedrive-import.js,
-  sharepoint-import.js, dropbox-import.js, cl-email-scan.js,
-  cl-outlook-scan.js, process-file.js. Consolidate into a
-  shared module during stylesheet rollout cleanup pass.
 - Pagination fixed at 200 items for OneDrive/SharePoint
   folder listings and SharePoint sites. Add pagination
   support if needed.
@@ -294,11 +251,6 @@ Status: Not started. Complete after BI enhancement is finished.
   cl_source_items.file_url — not from
   content_library.content_text which contains the AI
   summary only.
-- PWA install prompt is handled by pwa.js, which is loaded
-  on every authenticated page. No dashboard-specific banner —
-  the prompt surfaces via the browser's beforeinstallprompt
-  event. Trial banner and PWA prompt are independent and do
-  not clash visually.
 - Mobile vs desktop page split agreed April 2026. The
   following pages are confirmed mobile-capable (full access
   in PWA): dashboard.html, account.html, login.html,
@@ -338,53 +290,8 @@ Status: Not started. Complete after BI enhancement is finished.
   api/sharepoint-import.js (API copy, intentional — Vercel
   esbuild cannot resolve CJS modules from ES module API
   files at build time). Not a bug.
-- This platform is not live. There is only one user and
-  all data is test data. Decisions about database changes
-  do not require data-loss analysis.
-- Global session expiry handler added to shared-utils.js
-  April 2026. Uses onAuthStateChange to listen for the
-  SIGNED_OUT event and redirects to /login. Covers all
-  authenticated pages automatically because shared-utils.js
-  is loaded on every authenticated page. Safe alongside the
-  existing sign-out redirect in topbar.js — both target
-  /login so the first redirect wins.
 - NSW eTendering API is publicly accessible with no API
   key — rate-limited by IP. No environment variable required.
-- Serper.dev usage monitoring — review credit consumption
-  regularly via serper.dev dashboard. Usage tracking to be
-  added to admin page when built.
-- SMTP2Go is the platform email service. Env var SMTP2GO_API_KEY
-  in Vercel. From address: notifications@staxai.com.au. First
-  use is CB notification emails. Supabase Auth still handles
-  auth emails (password reset, signup) via its own SMTP.
-- DV switched from Ideogram to REimagine Home API (April 2026).
-  DV Spec v1.2 reflects this change. Pending API access.
-- CB notification emails have unsubscribe footer from SMTP2Go
-  API key settings — review appearance when testing.
-- Strategic Plan, News Digest, and Email Assistant builds
-  complete — all passed audit, integration test, and functional
-  review.
-- BI Dashboard build and audit complete. Integration test
-  waiting on demo data population.
-- Design Visualiser build and audit complete. API update
-  required before testing.
-- SM audit remediation completed April 2026 — full gap
-  analysis and fixes applied. File split created
-  (social-modules-2.js). Visual consistency fixes applied
-  (dropdowns now use .lookback-dropdown).
-- og:image added to 11 public pages. fb:app_id added to all
-  pages with og tags. April 2026.
-- Fergus integration structure built — OAuth callback, data
-  fetch endpoint, and UI integration in CL settings.
-  cl_fergus_accounts column added to profiles table.
-- Page titles fixed — removed "Mockup" references from all
-  authenticated pages.
-- Env var security fixed in Vercel — all sensitive keys
-  marked as Sensitive.
-- Sidebar is platform-wide — .stax-sidebar-* classes are in 
-  staxai-auth.css and sidebar.js loads on all authenticated pages.
-  Hover expands as overlay, click locks open with smooth content 
-  shift.
 
 ---
 
