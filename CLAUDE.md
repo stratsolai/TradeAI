@@ -183,13 +183,6 @@ Status: Blocked on Task 30.
 All tools require end-to-end testing using the test environment
 once populated.
 
-### Task 32 — Outstanding Tasks Review
-
-Status: Not started.
-
-Review StaxAI-Outstanding-Tasks-v1_3.docx and bring in additional
-tasks as required.
-
 ### Task 33 — Page Load Speed & Shell Flicker
 
 Status: Not started.
@@ -228,6 +221,61 @@ Status: Not started. Complete after BI enhancement is finished.
 Status: Not started.
 
 Consolidate api/cl-oauth-initiate.js and the three standalone callback files into api/auth/initiate.js and api/auth/oauth-callback.js. Redirect URIs in Azure and Dropbox will need updating at that time.
+
+### Task 37 — Panel & Panel-Auth Rebuild
+
+Status: Not started. Blocked on Task 31.
+
+First step: review and update Tool Specification Guide v2.5 in Project Knowledge.
+
+Rebuild panel.html and panel-auth.html to current platform standards. Includes panel data files for all tools and ROI calculator rebuild.
+
+### Task 38 — Pre-Launch UX Pass
+
+Status: Not started.
+
+Single coordinated task across entire authenticated platform:
+- Smart Help bubbles and contextual tooltips
+- How-To videos (1 minute per tool)
+- User Manual
+- Hero screenshots
+- Demo videos
+
+### Task 39 — Marketing Messaging
+
+Status: Not started.
+
+Review marketing doc in Project Knowledge and apply messaging updates to pre-login pages.
+
+### Task 40 — Mobile UX Audit
+
+Status: Not started.
+
+Full review of all authenticated pages on mobile devices.
+
+### Task 41 — Contact Page
+
+Status: Not started.
+
+Build contact page for the platform.
+
+### Task 42 — AI Disclaimer & Approval Workflow
+
+Status: Not started. Spec required before build.
+
+Add reminder/disclaimer in appropriate platform locations that AI can make mistakes. Users must approve AI-generated outputs before downloading, saving, or using.
+
+### Task 43 — Logo Final Selection
+
+Status: Not started.
+
+Choose from shortlisted logo versions.
+
+### Task 44 — Remaining Core Tool Builds
+
+Status: Not started.
+
+Approximately 9 tools still to be built (16 total, 7 done). Each tool requires spec approval before build.
 
 ---
 
