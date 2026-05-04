@@ -383,20 +383,33 @@ window.CB_LOGIC = {
 
     try {
       var sourceRef = 'cb-kb-' + Date.now() + '-' + this._userId;
-      var res = await this._supabase.from('content_library').insert({
-        user_id: this._userId,
-        source: 'tool',
-        tool_source: 'chatbot',
-        source_ref: sourceRef,
-        status: 'approved',
-        category: 'knowledge',
-        // Mirrors applyToolOutputMatrix('chatbot') in lib/cl-prompts.js.
-        // Browser code can't import the server-only module, so the array is
-        // hardcoded here. Keep these in sync if TOOL_OUTPUT_MATRIX changes.
-        tool_tags: ['chatbot', 'bi', 'strategic-plan', 'review-booster'],
-        content_text: 'Q: ' + questionText + '\nA: ' + answer.trim(),
-        content_type: 'text'
+      // Pattern B write — routed through api/cl-tool-write.js so the Tool
+      // Output Matrix runs server-side from the canonical source in
+      // lib/cl-prompts.js. Endpoint enforces source: 'tool' and
+      // status: 'approved'; user_id is taken from the JWT.
+      var sessionRes = await this._supabase.auth.getSession();
+      var jwt = sessionRes && sessionRes.data && sessionRes.data.session
+        ? sessionRes.data.session.access_token : null;
+      if (!jwt) {
+        this._showError('Could not create knowledge item — please refresh and sign in again.');
+        return;
+      }
+      var resp = await fetch('/api/cl-tool-write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+        body: JSON.stringify({
+          tool_source: 'chatbot',
+          source_ref: sourceRef,
+          category: 'knowledge',
+          content_text: 'Q: ' + questionText + '\nA: ' + answer.trim(),
+          content_type: 'text'
+        })
       });
+      var res = { error: null };
+      if (!resp.ok) {
+        var errBody = await resp.json().catch(function () { return {}; });
+        res.error = { message: errBody.error || ('HTTP ' + resp.status) };
+      }
 
       if (res.error) {
         console.error('[CB] Create KB item error:', res.error.message);

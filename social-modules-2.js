@@ -541,27 +541,37 @@
         title = journeyLabel || journeyType;
       }
 
-      var result = await this._supabase
-        .from('content_library')
-        .upsert({
-          source: 'tool',
+      // Pattern B write — routed through api/cl-tool-write.js so the Tool
+      // Output Matrix runs server-side. Endpoint enforces source: 'tool'
+      // and status: 'approved'; user_id is taken from the JWT. The
+      // journey-specific tagMap entries are passed as extra_tool_tags and
+      // unioned with the matrix output server-side.
+      var sessionRes = await this._supabase.auth.getSession();
+      var jwt = sessionRes && sessionRes.data && sessionRes.data.session
+        ? sessionRes.data.session.access_token : null;
+      if (!jwt) {
+        console.error('[SM] CL write-back error: no session');
+        return;
+      }
+      var nowIso = new Date().toISOString();
+      var resp = await fetch('/api/cl-tool-write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+        body: JSON.stringify({
           tool_source: 'social',
           source_ref: sourceRef,
-          status: 'approved',
           category: categoryMap[journeyType] || 'social_post',
-          // Mirrors applyToolOutputMatrix('social') in lib/cl-prompts.js.
-          // Unioned with the journey-specific tagMap so downstream
-          // consumers (bi, strategic-plan) are always tagged. Browser code
-          // can't import the server-only module — keep in sync if
-          // TOOL_OUTPUT_MATRIX changes.
-          tool_tags: Array.from(new Set((tagMap[journeyType] || ['social']).concat(['social', 'bi', 'strategic-plan']))),
           content_text: content.caption || '',
           title: title,
-          user_id: this._userId,
-          first_used_at: new Date().toISOString(),
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'source_ref', ignoreDuplicates: true });
+          first_used_at: nowIso,
+          extra_tool_tags: tagMap[journeyType] || []
+        })
+      });
+      var result = { error: null };
+      if (!resp.ok) {
+        var errBody = await resp.json().catch(function () { return {}; });
+        result.error = { message: errBody.error || ('HTTP ' + resp.status) };
+      }
 
       if (result.error) {
         console.error('[SM] CL write-back error:', result.error.message);

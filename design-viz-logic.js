@@ -384,29 +384,41 @@ window.DV_LOGIC = {
       var contentText = 'Design render: ' + (render.prompt_used || '');
       var projectName = this._currentProject ? this._currentProject.project_name : '';
 
-      var upsertRes = await this._supabase.from('content_library').upsert({
-        user_id: this._userId,
-        source: 'tool',
-        tool_source: 'design-viz',
-        source_ref: sourceRef,
-        status: 'approved',
-        category: 'image',
-        // Mirrors applyToolOutputMatrix('design-viz') in lib/cl-prompts.js.
-        // Browser code can't import the server-only module, so the array is
-        // hardcoded here. Keep these in sync if TOOL_OUTPUT_MATRIX changes.
-        tool_tags: ['design-viz', 'social', 'tender', 'quote-enhancer', 'customer-updates', 'handover-docs'],
-        content_text: contentText,
-        file_url: render.render_url,
-        content_type: 'image',
-        source_detail: {
-          project_name: projectName,
-          original_photo_url: render.original_photo_url,
-          render_prompt: render.prompt_used,
-          render_type: render.render_type,
-          source_context: 'tool'
-        },
-        first_used_at: new Date().toISOString()
-      }, { onConflict: 'source_ref', ignoreDuplicates: true });
+      // Pattern B write — routed through api/cl-tool-write.js so the Tool
+      // Output Matrix runs server-side. Endpoint enforces source: 'tool'
+      // and status: 'approved'; user_id is taken from the JWT.
+      var sessionRes = await this._supabase.auth.getSession();
+      var jwt = sessionRes && sessionRes.data && sessionRes.data.session
+        ? sessionRes.data.session.access_token : null;
+      if (!jwt) {
+        this._showError('Could not save to Content Library — please refresh and sign in again.');
+        return;
+      }
+      var resp = await fetch('/api/cl-tool-write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+        body: JSON.stringify({
+          tool_source: 'design-viz',
+          source_ref: sourceRef,
+          category: 'image',
+          content_text: contentText,
+          file_url: render.render_url,
+          content_type: 'image',
+          source_detail: {
+            project_name: projectName,
+            original_photo_url: render.original_photo_url,
+            render_prompt: render.prompt_used,
+            render_type: render.render_type,
+            source_context: 'tool'
+          },
+          first_used_at: new Date().toISOString()
+        })
+      });
+      var upsertRes = { error: null };
+      if (!resp.ok) {
+        var errBody = await resp.json().catch(function () { return {}; });
+        upsertRes.error = { message: errBody.error || ('HTTP ' + resp.status) };
+      }
 
       if (upsertRes.error) {
         console.error('[DV] CL upsert error:', upsertRes.error.message);

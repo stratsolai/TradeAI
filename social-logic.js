@@ -316,30 +316,34 @@ window.SOCIAL_LOGIC = {
     var pub = this._supabase.storage.from('cl-assets').getPublicUrl(path);
     var publicUrl = (pub && pub.data) ? pub.data.publicUrl : null;
 
-    var tags = Array.isArray(payload.tags) && payload.tags.length ? payload.tags : ['social-media'];
-    // Mirrors applyToolOutputMatrix('social') in lib/cl-prompts.js. Browser
-    // code can't import the server-only module so the array is hardcoded.
-    // Unioned with caller-supplied tags so downstream consumers (bi,
-    // strategic-plan) are always tagged. Keep in sync if TOOL_OUTPUT_MATRIX
-    // changes.
-    var SOCIAL_OUTPUT_TAGS = ['social', 'bi', 'strategic-plan'];
-    tags = Array.from(new Set(tags.concat(SOCIAL_OUTPUT_TAGS)));
+    // Caller-supplied tags carry through as extra_tool_tags — the Tool
+    // Output Matrix is applied server-side and unioned with these.
+    var extraTags = Array.isArray(payload.tags) && payload.tags.length ? payload.tags : [];
 
-    var row = {
-      user_id: this._userId,
-      source: 'tool',
-      tool_source: 'social',
-      source_ref: path,
-      status: 'approved',
-      category: 'Photos',
-      tool_tags: tags,
-      content_type: 'image',
-      content_text: 'Photo captured for ' + (payload.presetLabel || 'Social Media'),
-      file_url: publicUrl
-    };
-    var ins = await this._supabase.from('content_library')
-      .upsert(row, { onConflict: 'source_ref', ignoreDuplicates: true });
-    if (ins.error) throw new Error(ins.error.message || 'Save failed');
+    // Pattern B write — routed through api/cl-tool-write.js so the Tool
+    // Output Matrix runs server-side. Endpoint enforces source: 'tool' and
+    // status: 'approved'; user_id is taken from the JWT.
+    var sessionRes = await this._supabase.auth.getSession();
+    var jwt = sessionRes && sessionRes.data && sessionRes.data.session
+      ? sessionRes.data.session.access_token : null;
+    if (!jwt) throw new Error('Save failed — please refresh and sign in again');
+    var resp = await fetch('/api/cl-tool-write', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
+      body: JSON.stringify({
+        tool_source: 'social',
+        source_ref: path,
+        category: 'Photos',
+        content_type: 'image',
+        content_text: 'Photo captured for ' + (payload.presetLabel || 'Social Media'),
+        file_url: publicUrl,
+        extra_tool_tags: extraTags
+      })
+    });
+    if (!resp.ok) {
+      var errBody = await resp.json().catch(function () { return {}; });
+      throw new Error(errBody.error || 'Save failed');
+    }
   },
 
   _bindTabs: function() {
