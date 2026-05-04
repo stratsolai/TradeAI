@@ -49,7 +49,7 @@ const CORE_TOOLS = [
   {
     id: "strategic-plan",
     status: "built",
-    icon: "📋",
+    icon: "📝",
     category: "intelligence",
     title: ["Strategic Plan and", "Operations Dashboard"],
     desc: "Create your strategic business plan and 90-day interactive action plan in minutes from a simple AI-guided interview. Can be used to apply for finance.",
