@@ -29,6 +29,17 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import {
+  ALLOWED_TOOL_IDS,
+  ALL_CATEGORIES,
+  CATEGORY_LOOKUP,
+  DISCARD_CATEGORIES,
+  AUTO_ARCHIVE_CATEGORIES,
+  VERSION_MATCH_RULES,
+  IMAGE_PROMPT,
+  VERSION_MATCH_SYSTEM_PROMPT,
+  buildSingleItemPrompt
+} from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -36,79 +47,8 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MICROSOFT_CLIENT_ID = process.env.MICROSOFT_CLIENT_ID;
 const MICROSOFT_CLIENT_SECRET = process.env.MICROSOFT_CLIENT_SECRET;
 
-var DISCARD_CATEGORIES = ['Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'];
-var ALLOWED_TOOL_IDS = ['strategic-plan', 'news-digest', 'chatbot', 'social', 'bi', 'tender', 'quote-enhancer'];
-var ALL_CATEGORIES = [
-  'Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos',
-  'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News',
-  'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates',
-  'Safety & SWMS', 'Supplier Communications', 'Manual Upload',
-  'Legal', 'IT', 'Spam', 'Customer Enquiries', 'Complaints'
-];
-var CATEGORY_LOOKUP = {};
-ALL_CATEGORIES.forEach(function(c) { CATEGORY_LOOKUP[c.toLowerCase()] = c; });
+const EXTRACTION_SYSTEM_PROMPT = buildSingleItemPrompt({ source: 'file' });
 
-var AUTO_ARCHIVE_CATEGORIES = [
-  'Products & Services', 'Pricing', 'Company Information', 'Promotions & Offers',
-  'Supplier Communications', 'Compliance & Certificates', 'Safety & SWMS'
-];
-
-var VERSION_MATCH_RULES = {
-  'Products & Services': 'Match on similarity of title and subject matter.',
-  'Pricing': 'Match on similarity of title and subject matter.',
-  'Company Information': 'Match on subject — person name for bios, policy or subject for announcements. New person or new announcement is additive.',
-  'Promotions & Offers': 'Match on promotion name or subject — new promotion is additive.',
-  'Supplier Communications': 'Match on supplier name and subject — new communication is additive.',
-  'Compliance & Certificates': 'Match on title and subject — same licence or certificate type supersedes previous. Different licence types are additive.',
-  'Safety & SWMS': 'Match on title and subject — same work activity supersedes previous. Different activities are additive.',
-  'Financial Documents': 'Periodic documents (Profit & Loss Statement, Balance Sheet, Cash Flow Statement, Tax Return, BAS/GST Return, Payroll Summary) — match on document type and period. Transactional documents (Invoice, Receipt, Purchase Order, Bank Statement, Supplier Statement) — always additive, never supersede.'
-};
-
-var EXTRACTION_SYSTEM_PROMPT = "You are a content extraction assistant for a business content library. Treat the source material as a single item — produce exactly one summary representing the whole document, never multiple summaries by section.\n\n" +
-  "Return a JSON array containing exactly ONE object (or zero objects if no meaningful content can be extracted) with these fields:\n" +
-  "- \"title\": string, max 10 words, descriptive of the whole document\n" +
-  "- \"body\": string, concise plain text summary of the whole document in your own words — capture the key facts, main points, and important details. Do NOT reproduce the source content verbatim. Do NOT include long passages of original text. Do NOT include bullet point lists copied from the source. Summarise the document as a whole.\n" +
-  "- \"category\": string, must exactly match one category name from the CATEGORIES section — copy the name exactly including punctuation, capitalisation, and the trailing 's' on plural names\n" +
-  "- \"disposition\": string, \"keep\" or \"discard\" — must match the disposition listed for the assigned category\n" +
-  "- \"confidence\": string, \"confident\" or \"uncertain\" — confident when the category is clear, uncertain when the content could fit multiple categories\n" +
-  "- \"tool_tags\": array of tool ID strings from the TOOLS section — only tag tools whose description matches the content\n\n" +
-  "CATEGORIES:\n\nKeep:\n" +
-  "- Products & Services: Descriptions of what the business offers, sells, or delivers. Includes service descriptions, product information, and equipment or materials the business supplies to customers. Does not include pricing, promotions, or the business's own owned assets.\n" +
-  "- Pricing: What the business charges for its products and services. Includes rate cards, price lists, package pricing, and hourly or project rates. Does not include promotional or limited-time offers.\n" +
-  "- Company Information: Information that describes what the business is. Includes About Us content, business history, ownership, locations, team bios, staff profiles, culture, values, and business-owned assets such as equipment and vehicles. Does not include what the business offers or charges.\n" +
-  "- Jobs, Portfolio & Photos: Records of work the business has completed or is currently delivering. Includes job photos, project descriptions, before-and-after content, and case studies. Does not include general promotional content or testimonials.\n" +
-  "- Promotions & Offers: Time-limited or special pricing and deals created and offered by this business to its own customers. Includes seasonal promotions, discount offers, referral incentives, and limited-time packages the business is running. Does not include promotions or offers received from suppliers or third parties.\n" +
-  "- Customer Testimonials: Feedback and reviews provided by customers about their experience with the business. Includes written reviews, star ratings with comments, and case study quotes. Does not include general marketing copy written by the business itself.\n" +
-  "- Tips & How-To: Useful information the business shares to educate or help its customers. Includes how-to guides, maintenance tips, advice articles, and explainer content. Does not include promotional content or service descriptions.\n" +
-  "- Industry News: News, trends, and developments relevant to the business's industry or market. Includes trade publications, supplier announcements, regulatory changes, and market updates. Does not include content created by the business itself.\n" +
-  "- Tender & Proposal Documents: Formal documents prepared by the business to win work. Includes tender submissions, project proposals, scope of works, and quotes prepared for specific jobs. Does not include standard pricing or general service descriptions.\n" +
-  "- Financial Documents: Internal financial records and reporting. Includes invoices, statements, tax documents, profit and loss reports, and bank records. Does not include pricing guides or supplier quotes.\n" +
-  "- Compliance & Certificates: Licences, registrations, and certifications held by the business or its staff. Includes trade licences, insurance certificates, accreditations, and regulatory compliance documents. Does not include safety plans or method statements.\n" +
-  "- Safety & SWMS: Safety documentation for work activities. Includes Safe Work Method Statements, risk assessments, safety plans, and site-specific safety requirements. Does not include compliance certificates or licences.\n" +
-  "- Supplier Communications: Correspondence and documents received from suppliers and vendors. Includes supplier price lists, product catalogues, delivery notifications, and trade account correspondence. Does not include supplier statements or invoices (Financial Documents). Does not include industry news or market updates.\n\n" +
-  "Discard:\n" +
-  "- Legal: Legal correspondence, contracts, agreements, and notices.\n" +
-  "- IT: Technology and systems correspondence. Includes software licences, hosting invoices, IT support tickets.\n" +
-  "- Spam: Unsolicited or irrelevant content with no business value.\n" +
-  "- Customer Enquiries: Inbound messages from prospective or existing customers asking about services, availability, or pricing.\n" +
-  "- Complaints: Negative feedback or dispute correspondence from customers.\n\n" +
-  "TOOLS (only tag tools whose description matches the content):\n" +
-  "- strategic-plan: Helps create a strategic business plan and 90-day action plan. Needs content describing what the business does, charges, its market position, team, finances, and goals.\n" +
-  "- news-digest: Summarises industry news and regulatory changes. Needs content reporting on regulatory changes, market conditions, technology, and industry developments.\n" +
-  "- chatbot: Answers customer questions on the business website. Needs content about services, pricing, processes, and team.\n" +
-  "- social: Creates social posts and marketing content. Needs content about completed jobs, promotions, testimonials, tips, and material to promote.\n" +
-  "- bi: Provides AI business insights from business data and market context. Needs broad business content to identify patterns, opportunities, and risks.\n" +
-  "- tender: Generates tender and proposal documents. Needs content about capabilities, past work, team, certifications, and pricing.\n" +
-  "- quote-enhancer: Enhances quotes into professional branded documents. Needs company information, past jobs, testimonials, licences, and safety information.\n\n" +
-  "RULES:\n" +
-  "1. Treat the entire source as ONE item. Return a JSON array with exactly one element representing the whole source. Do NOT split the source into multiple items by section, heading, theme, or paragraph.\n" +
-  "2. Body must be a concise summary in your own words — capture the document's purpose and key facts without reproducing the source content. Never copy long passages or bullet lists from the source.\n" +
-  "3. Category must exactly match one name from the categories list — copy it character-for-character.\n" +
-  "4. Disposition must match the category's listed disposition.\n" +
-  "5. Only tag tools whose description specifically matches the content.\n" +
-  "6. Return a valid JSON array only. No preamble, no explanation, no markdown fences.\n" +
-  "7. If no meaningful content can be extracted, return an empty array [].\n" +
-  "8. Promotions & Offers is ONLY for promotions the user's own business is offering to its own customers. If the source is an inbound message, supplier email, vendor newsletter, or third-party promotional content advertising someone else's offer, do NOT classify it as Promotions & Offers. Inbound supplier promotional content belongs in Supplier Communications. Broader market or trade promotional news belongs in Industry News. Never put a received supplier or third-party promotion in Promotions & Offers, even when it uses promotional language like 'sale', 'discount', or 'limited time'.";
 
 // MIME types we can extract text from via Claude document API. The
 // modern Office Open XML formats (docx/xlsx/pptx) and PDF are the
@@ -521,7 +461,6 @@ async function runExtractionPrompt(content, fileName, userId) {
 
 // Run image extraction via Claude Sonnet vision — single combined call.
 async function runImageExtraction(base64Data, mediaType, userId) {
-  var IMAGE_PROMPT = 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.';
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -563,7 +502,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
     .eq('category', category);
   if (!existing.data || existing.data.length === 0) return null;
   var candidates = existing.data.map(function(e, i) { return (i + 1) + '. ID: ' + e.id + ' — Title: ' + e.title; }).join('\n');
-  var systemPrompt = 'You are a versioning matcher for a business content library. Given a new item and existing approved items in the same category, determine if the new item is a replacement of an existing item or is additive (should coexist). Return JSON only.';
+  var systemPrompt = VERSION_MATCH_SYSTEM_PROMPT;
   var userContent = 'CATEGORY: ' + category + '\nMATCH RULE: ' + VERSION_MATCH_RULES[category] + '\n\nNEW ITEM:\nTitle: ' + newTitle + '\nBody: ' + String(newBody || '').substring(0, 1000) + '\n\nEXISTING APPROVED ITEMS:\n' + candidates + '\n\nReturn JSON only: { "matched_id": "<existing item ID or null>" }';
   try {
     var response = await fetch('https://api.anthropic.com/v1/messages', {
