@@ -205,7 +205,7 @@ export default async function handler(req, res) {
         client_secret: clientSecret,
         redirect_uri: redirectUri,
         grant_type: 'authorization_code',
-        scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read'
+        scope: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access'
       }).toString();
 
       tokenData = await new Promise((resolve, reject) => {

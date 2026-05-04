@@ -10,19 +10,19 @@ export default async function handler(req, res) {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID,
       authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      scopes: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email',
+      scopes: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email',
       redirectUri: APP_BASE_URL + '/api/auth/google/callback'
     },
     gmail: {
       clientId: process.env.GOOGLE_CLIENT_ID,
       authUrl: 'https://accounts.google.com/o/oauth2/v2/auth',
-      scopes: 'https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/userinfo.email',
+      scopes: 'https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/userinfo.email',
       redirectUri: APP_BASE_URL + '/api/auth/google/callback'
     },
     microsoft: {
       clientId: process.env.MICROSOFT_CLIENT_ID,
       authUrl: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-      scopes: 'https://graph.microsoft.com/Mail.ReadWrite https://graph.microsoft.com/User.Read offline_access',
+      scopes: 'https://graph.microsoft.com/Mail.Read https://graph.microsoft.com/User.Read offline_access',
       redirectUri: APP_BASE_URL + '/api/auth/microsoft/callback'
     }
   };

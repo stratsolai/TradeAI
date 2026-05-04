@@ -56,6 +56,12 @@
     /* ─── EMAIL CARD ─── */
     .ea-flag-btn { background:none; border:none; cursor:pointer; font-size:var(--stat-value-font-size); line-height:1; padding:4px; flex-shrink:0; transition:opacity var(--btn-transition); }
     .ea-flag-btn:hover { opacity:0.7; }
+
+    /* Flag/star feature hidden — pending decision on Mail.ReadWrite scope.
+       OAuth is read-only (Mail.Read / gmail.readonly) so write-back to the
+       provider would 403. Restore by removing this block. */
+    .ea-flag-btn,
+    .status-btn[data-pill="flagged"] { display: none !important; }
     .ea-sender-name { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); flex:1; min-width:100px; }
     .ea-subject-inline { font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); min-width:0; flex:1; }
     /* ─── DETAIL VIEW ─── */
