@@ -251,7 +251,7 @@ async function runExtractionPrompt(content, sourceLabel, userId) {
     }),
   });
   const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'scrape-extraction' });
   const raw = data.content && data.content[0] ? data.content[0].text : '[]';
   try {
     const clean = raw.replace(/```json|```/g, '').trim();
@@ -292,7 +292,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
-    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'scrape-versioning' });
     var raw = data.content && data.content[0] ? data.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;

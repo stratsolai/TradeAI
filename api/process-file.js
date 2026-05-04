@@ -148,7 +148,7 @@ const handler = async (req, res) => {
         system: EXTRACTION_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userPrompt }]
       });
-      var claudeResponse = await callClaude(requestBody, claudeApiKey, { tool_id: 'content-library', user_id: userId });
+      var claudeResponse = await callClaude(requestBody, claudeApiKey, { tool_id: 'content-library', user_id: userId, subtype: 'upload-extraction' });
       responseText = (claudeResponse.content && claudeResponse.content[0] && claudeResponse.content[0].text) ? claudeResponse.content[0].text : '';
     }
 
@@ -289,7 +289,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category, a
       system: systemPrompt,
       messages: [{ role: 'user', content: userContent }]
     });
-    var response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
+    var response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId, subtype: 'upload-versioning' });
     var raw = response.content && response.content[0] ? response.content[0].text : '';
     var jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return null;
@@ -339,7 +339,7 @@ async function extractPDFText(fileData, apiKey, userId) {
       { type: 'text', text: 'Extract all text content from this PDF. Return only the raw text, preserving structure. No commentary.' }
     ]}]
   });
-  const response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
+  const response = await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId, subtype: 'upload-extraction' });
   return (response.content && response.content[0]) ? response.content[0].text : '';
 }
 
@@ -541,7 +541,7 @@ async function extractImage(fileData, apiKey, mediaType, userId) {
       { type: 'text', text: 'This is an image file. Look at it and decide which type it is, then follow ONLY the matching instructions below.\n\nTYPE A — PHOTO (a scene, people, objects, a job site, equipment, finished work, a selfie, a product, or anything that is not primarily text):\nWrite a plain English visual description of what is shown — what was done, the setting, visible quality or detail. Do not invent detail that cannot be seen. Do not attempt to read or extract text. Use your visual description as the body field. The category will almost always be Jobs, Portfolio & Photos for work photos, or Company Information for team or premises photos.\n\nTYPE B — DOCUMENT OR SCREENSHOT (an image whose primary content is readable text — a scanned page, a screenshot of a webpage or app, a photographed invoice, certificate, letter, or form):\nExtract all visible text accurately and completely. Use the extracted text as the body field verbatim. This is the one exception to the summary-only rule in the system prompt — for document images the extracted text IS the body because there is no other source to summarise from. Classify the content based on what the text says, not based on it being an image.\n\nAfter following the correct type above, return a JSON array with exactly one object containing title, body, category, disposition, confidence, and tool_tags — the same format as all other file types. Never return an empty array for an image that contains visible content or readable text.' }
     ]}]
   });
-  return await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId });
+  return await callClaude(body, apiKey, { tool_id: 'content-library', user_id: userId, subtype: 'upload-image' });
 }
 
 // CLAUDE API CALLER
@@ -573,7 +573,8 @@ function callClaude(requestBody, apiKey, meta) {
             tool_id: (meta && meta.tool_id) || 'content-library',
             user_id: meta && meta.user_id,
             model: model,
-            usage: parsed.usage
+            usage: parsed.usage,
+            subtype: meta && meta.subtype
           });
           resolve(parsed);
         } catch (e) { reject(e); }

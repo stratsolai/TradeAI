@@ -146,7 +146,7 @@ async function runExtractionPrompt(emailBody, subject, sender, userId) {
     }),
   });
   const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'gmail-extraction' });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in extraction prompt:', JSON.stringify(data.error));
     return [];
@@ -190,7 +190,7 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
       }),
     });
     var data = await response.json();
-    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'gmail-versioning' });
     if (data.error) {
       console.error('[CL Gmail] Claude API error in version match:', JSON.stringify(data.error));
       return null;
@@ -411,7 +411,7 @@ async function extractBinaryFileText(buffer, mimeType, userId) {
       }),
     });
     const data = await response.json();
-    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+    logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'gmail-extraction' });
     if (data.error) {
       console.error('[CL Gmail] Claude API error in PDF extraction:', JSON.stringify(data.error));
       return null;
@@ -460,7 +460,7 @@ async function runAttachmentExtractionPrompt(content, fileName, userId) {
     }),
   });
   const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'gmail-extraction' });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in attachment extraction:', JSON.stringify(data.error));
     return [];
@@ -496,7 +496,7 @@ async function runImageExtraction(base64Data, mediaType, userId) {
     }),
   });
   const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage, subtype: 'gmail-image' });
   if (data.error) {
     console.error('[CL Gmail] Claude API error in image extraction:', JSON.stringify(data.error));
     return [];

@@ -81,7 +81,7 @@ async function runClExtractionPrompt(emailBody, subject, sender, userId) {
     })
   });
   var data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'ea-extraction' });
   if (data.error) {
     console.error('[EA] CL extraction Claude API error:', JSON.stringify(data.error));
     return [];
