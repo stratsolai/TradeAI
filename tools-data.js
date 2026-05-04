@@ -224,7 +224,7 @@ const TOOLS = [
 
   // ── INDUSTRY — HVAC (4) ─────────────────────────────────────────────────
   {
-    id: "service-prioritizer", title: "Service Call Prioritiser", icon: "🌡️",
+    id: "service-prioritiser", title: "Service Call Prioritiser", icon: "🌡️",
     status: "pending", category: "customers-jobs", type: "industry", industryKey: "hvac",
     desc: "AI automatically triages incoming calls by urgency — no cooling in summer gets highest priority."
   },
