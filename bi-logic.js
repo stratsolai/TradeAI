@@ -385,7 +385,20 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-accordion-header').forEach(function(btn) {
       btn.addEventListener('click', function() {
         var group = btn.parentElement;
-        if (group) group.classList.toggle('open');
+        if (!group) return;
+        var wasOpen = group.classList.contains('open');
+        // Close every sibling group in the same column. Each column has
+        // its own .bi-alerts-accordion wrapper, so this stays scoped to
+        // one side of the layout.
+        var accordion = group.parentElement;
+        if (accordion) {
+          accordion.querySelectorAll(':scope > .bi-accordion-group').forEach(function(g) {
+            g.classList.remove('open');
+          });
+        }
+        // If the clicked group wasn't already open, open it; otherwise
+        // leave it closed (clicking an open group collapses it).
+        if (!wasOpen) group.classList.add('open');
       });
     });
     container.querySelectorAll('.bi-alert-expand-btn').forEach(function(btn) {
