@@ -318,14 +318,20 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .accordion-body { display: none; padding: 0 24px 24px; }
 .tool-accordion.expanded .accordion-body { display: block; }
 
+/* Carousel viewport — clips overflow so the inner track can be wider than the
+   viewport without producing a scrollbar. The track is positioned by JS via
+   transform: translateX(-offset). No native scrolling involved — that
+   approach previously fought scroll-behavior: smooth and produced visible
+   snap-backs on wrap. */
 .tool-carousel {
-  display: flex; gap: 20px;
-  overflow-x: auto; overflow-y: hidden;
-  scroll-behavior: smooth;
+  overflow: hidden;
   padding-bottom: 4px;
-  scrollbar-width: none;
 }
-.tool-carousel::-webkit-scrollbar { display: none; }
+.tool-carousel-track {
+  display: flex; gap: 20px;
+  width: max-content;
+  will-change: transform;
+}
 
 .tool-card-v2 {
   flex: 0 0 300px; min-width: 300px;
@@ -991,9 +997,10 @@ footer {
     if (!container) return;
     var html = CATEGORIES.map(function(cat) {
       var tools = TOOLS.filter(function(t) { return t.cat === cat.id; });
-      // Render the card list twice so the auto-rotate can wrap seamlessly
-      // — when scrollLeft passes one set's width, we subtract that width
-      // and the user sees identical content (no visible jump).
+      // Render the card list twice inside .tool-carousel-track. The track is
+      // translated leftward by JS; when the offset reaches one-set-width, we
+      // subtract that width — invisible because the second copy looks
+      // identical, so the ribbon flows continuously with no visible reset.
       var cardsHtml = tools.concat(tools).map(buildToolCard).join('');
       var isExpanded = cat.id === 'sales-marketing';
       return '<section class="tool-accordion' + (isExpanded ? ' expanded' : '') + '" data-cat="' + cat.id + '" id="accordion-' + cat.id + '">' +
@@ -1010,7 +1017,9 @@ footer {
           '</div>' +
         '</div>' +
         '<div class="accordion-body">' +
-          '<div class="tool-carousel">' + cardsHtml + '</div>' +
+          '<div class="tool-carousel">' +
+            '<div class="tool-carousel-track">' + cardsHtml + '</div>' +
+          '</div>' +
         '</div>' +
       '</section>';
     }).join('');
@@ -1042,52 +1051,58 @@ footer {
   }
 
   function setupRibbon(car) {
-    // Each carousel renders its cards twice. The visible content at
-    // scrollLeft = X is identical to the content at scrollLeft = X +
-    // oneSetWidth, so when the auto-scroll passes oneSetWidth we instantly
-    // subtract oneSetWidth — invisible to the user, the ribbon never resets.
-    var paused = false;
-    var stopped = false;
-    var accumulator = 0;
-    var lastTime = 0;
-    var SPEED = 35; // pixels per second — slow ribbon drift
+    // Conveyor-belt ribbon. The .tool-carousel-track is translated leftward
+    // every frame; when the cumulative offset reaches one-set-width we
+    // subtract that width (invisible because the duplicated card list makes
+    // offset X and offset X+oneSet visually identical). The user sees a
+    // continuous flow with no end and no reset.
+    //
+    // Arrow buttons don't change scrollLeft (there is no scrollLeft —
+    // overflow is hidden). They temporarily multiply the speed, then it
+    // returns to BASE. Right arrow speeds up the default direction; left
+    // arrow reverses momentarily.
+    var track = car.querySelector('.tool-carousel-track');
+    if (!track) return;
 
-    car.addEventListener('mouseenter', function() { paused = true; });
-    car.addEventListener('mouseleave', function() { paused = false; });
+    var stopped = false;
+    var offset = 0;
+    var lastTime = 0;
+    var BASE_SPEED = 30;       // px/s — slow ambient drift
+    var BOOST_SPEED = 380;     // px/s — speed during arrow press
+    var BOOST_DURATION = 700;  // ms each arrow click stays boosted
+    var boostUntil = 0;
+    var boostDir = 1;          // 1 = forward (default), -1 = reverse
+
+    var sec = car.closest('.tool-accordion');
+    if (sec) {
+      sec.querySelectorAll('.carousel-arrow').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          boostDir = btn.getAttribute('data-dir') === 'left' ? -1 : 1;
+          boostUntil = performance.now() + BOOST_DURATION;
+        });
+      });
+    }
 
     function tick(now) {
       if (stopped) return;
       if (!lastTime) lastTime = now;
-      var dt = now - lastTime;
+      var dt = (now - lastTime) / 1000;
       lastTime = now;
 
-      var sec = car.closest('.tool-accordion');
       var expanded = sec && sec.classList.contains('expanded');
-      var oneSet = car.scrollWidth / 2;
-      var hasOverflow = oneSet > car.clientWidth + 1;
-      // Suppress auto-rotate AND wrap while a manual smooth scroll is in
-      // flight. Modifying scrollLeft during a browser-driven smooth scroll
-      // cancels the animation, which is exactly what was breaking the arrow
-      // buttons before this fix.
-      var manualScrollActive = car._manualScrollUntil && now < car._manualScrollUntil;
+      if (expanded) {
+        var speed = (now < boostUntil) ? BOOST_SPEED * boostDir : BASE_SPEED;
+        offset += speed * dt;
 
-      if (expanded && hasOverflow) {
-        if (!paused && !manualScrollActive) {
-          accumulator += SPEED * dt / 1000;
-          var pixels = Math.floor(accumulator);
-          if (pixels > 0) {
-            accumulator -= pixels;
-            car.scrollLeft += pixels;
-          }
+        // scrollWidth is doubled (two card sets) — wrap on one set's width.
+        // Guard against measurement returning 0 (e.g. while hidden).
+        var oneSet = track.scrollWidth / 2;
+        if (oneSet > 0) {
+          offset = ((offset % oneSet) + oneSet) % oneSet;
         }
-        if (!manualScrollActive) {
-          // Wrap — invisible because duplicated cards make X and X+oneSet
-          // visually identical.
-          if (car.scrollLeft >= oneSet) car.scrollLeft -= oneSet;
-          else if (car.scrollLeft < 0) car.scrollLeft += oneSet;
-        }
-      } else {
-        accumulator = 0;
+
+        track.style.transform = 'translateX(' + (-offset).toFixed(2) + 'px)';
       }
 
       requestAnimationFrame(tick);
@@ -1116,38 +1131,10 @@ footer {
       });
     });
 
-    // Carousel arrow click → scroll one card width (320px = 300 card + 20 gap).
-    // Continuous-loop behaviour:
-    //   • Right arrow at any position: scrollBy(+320). If this pushes us
-    //     past oneSet, the rAF tick wraps back after the manual-scroll
-    //     window expires (visually invisible — duplicated cards mean
-    //     position X and X+oneSet show identical content).
-    //   • Left arrow at scrollLeft ≈ 0: the browser would clamp a negative
-    //     scrollBy and nothing would happen, so we instantly jump to
-    //     scrollLeft = oneSet first (visually identical) and then
-    //     smooth-scroll left by 320 — the user perceives a continuous
-    //     leftward scroll into the previous cards.
-    // The 600ms manual-scroll lock keeps the auto-rotate from fighting the
-    // browser's smooth-scroll animation while it's running.
-    document.querySelectorAll('.tool-accordion .carousel-arrow').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var sec = btn.closest('.tool-accordion');
-        if (!sec) return;
-        var car = sec.querySelector('.tool-carousel');
-        if (!car) return;
-        var oneSet = car.scrollWidth / 2;
-        var dir = btn.getAttribute('data-dir') === 'left' ? -1 : 1;
-        if (dir < 0 && oneSet > 0 && car.scrollLeft < 1) {
-          car.scrollLeft = oneSet;
-        }
-        car.scrollBy({ left: dir * 320, behavior: 'smooth' });
-        car._manualScrollUntil = performance.now() + 600;
-      });
-    });
-
-    // Spin up the ribbon auto-rotate for each carousel. Cancel any prior
-    // rAF loops first so re-renders don't accumulate handlers.
+    // Spin up the ribbon for each carousel. Each setupRibbon wires its own
+    // arrow buttons (the arrows just nudge the speed — there is no scrollLeft
+    // to drive). Cancel any prior rAF loops first so re-renders don't
+    // accumulate handlers on detached DOM.
     clearRibbons();
     document.querySelectorAll('.tool-carousel').forEach(setupRibbon);
   }
