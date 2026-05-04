@@ -334,11 +334,10 @@ window.BI_LOGIC = {
     return html;
   },
 
-  _splitDetailBullets: function(text) {
+  _splitTextBullets: function(text) {
     if (!text) return [];
-    // Split the detail paragraph on sentence-end punctuation. Falls back to
-    // a single bullet if there are no terminators. Capped at 4 to fit the
-    // 2x2 summary grid.
+    // Split a paragraph on sentence-end punctuation. Falls back to a single
+    // bullet if there are no terminators. Capped at 4 to fit the 2x2 grid.
     var matches = String(text).match(/[^.!?]+[.!?]+/g);
     var parts = matches || [String(text)];
     return parts.map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 4);
@@ -351,7 +350,8 @@ window.BI_LOGIC = {
     var sources = Array.isArray(d.sources) ? d.sources : [];
     var sourcesId = 'bi-alert-sources-' + escHtml(item.id);
     var detailText = d.detail || '';
-    var bullets = this._splitDetailBullets(detailText);
+    var suggestionText = d.suggestion || '';
+    var bullets = this._splitTextBullets(suggestionText);
     var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
     html += '<div class="bi-alert-header">';
     html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
@@ -366,9 +366,6 @@ window.BI_LOGIC = {
       html += '</ul>';
     }
     html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(detailText) + '</div>';
-    if (d.suggestion) {
-      html += '<div class="bi-alert-suggestion">' + escHtml(d.suggestion) + '</div>';
-    }
     html += '<div class="bi-alert-actions">';
     html += '<button class="btn-outline btn-sm bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Chat with AI</button>';
     html += '<button class="btn-outline btn-sm bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Add to Strategic Plan</button>';
