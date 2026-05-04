@@ -1153,9 +1153,10 @@ footer {
   }
 
   function wireAccordionEvents() {
-    // Header click → expand that accordion, collapse all others, sync the
-    // active tab. Doesn't toggle — clicking an already-open accordion has
-    // no visible effect (others were already collapsed, this one stays open).
+    // Header click toggles the accordion. Clicking a closed accordion
+    // opens it and collapses any other open one (single-open mutex).
+    // Clicking an already-open accordion collapses it — leaves all
+    // accordions closed, with the last-active tab still highlighted.
     document.querySelectorAll('.tool-accordion .accordion-header').forEach(function(hdr) {
       hdr.addEventListener('click', function(e) {
         // Ignore clicks on the carousel arrow buttons inside the header
@@ -1163,8 +1164,13 @@ footer {
         var sec = hdr.closest('.tool-accordion');
         if (!sec) return;
         var catId = sec.getAttribute('data-cat');
-        CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === catId); });
-        setActiveTab(catId);
+        var isOpen = sec.classList.contains('expanded');
+        if (isOpen) {
+          setExpanded(catId, false);
+        } else {
+          CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === catId); });
+          setActiveTab(catId);
+        }
       });
       hdr.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hdr.click(); }
