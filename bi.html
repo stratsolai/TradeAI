@@ -35,14 +35,29 @@
     }
 
     .bi-module-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-direction: column;
       gap: var(--card-padding);
-      align-items: start;
+    }
+
+    /* Two independent flex columns. Tiles in each column stack with no
+       cross-column row constraint, so collapsing a tile lets the ones
+       below slide upward and fill the space — no grid-row whitespace. */
+    .bi-modules-columns {
+      display: flex;
+      gap: var(--card-padding);
+      align-items: flex-start;
+    }
+    .bi-modules-col {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: var(--card-padding);
     }
 
     .bi-module-full {
-      grid-column: 1 / -1;
+      width: 100%;
     }
 
     /* Module cards now use the platform .tile-card class — see staxai-auth.css */
@@ -657,8 +672,8 @@
     }
 
     @media (max-width: 900px) {
-      .bi-module-grid {
-        grid-template-columns: 1fr;
+      .bi-modules-columns {
+        flex-direction: column;
       }
       .bi-kpi-row {
         grid-template-columns: repeat(2, 1fr);
@@ -777,104 +792,118 @@
       <div class="bi-history-panel" id="bi-history-alerts"></div>
     </div>
 
-    <!-- Module 1: Financial Health -->
-    <div class="tile-card bi-tile-collapsed" id="bi-mod-financial">
-      <div class="bi-module-header">
-        <span class="bi-module-icon">&#128176;</span>
-        <span class="bi-module-title">Financial Health</span>
-        <button class="bi-collapse-btn" data-module="financial" title="Expand" aria-label="Expand">&#9660;</button>
-      </div>
-      <div id="bi-mod-financial-kpis" class="bi-kpi-row"></div>
-      <div class="bi-chart-area" id="bi-mod-financial-chart">
-        <canvas id="bi-chart-financial"></canvas>
-      </div>
-      <div class="bi-advisory-section" id="bi-mod-financial-advisory">
-        <div class="bi-advisory-label">AI Advisory</div>
-        <div id="bi-mod-financial-advisory-list">
-          <div class="bi-module-loading">Loading insights...</div>
-        </div>
-      </div>
-      <div class="bi-history-panel" id="bi-history-financial"></div>
-    </div>
+    <div class="bi-modules-columns">
 
-    <!-- Module 2: Customer & Revenue Analysis -->
-    <div class="tile-card bi-tile-collapsed" id="bi-mod-customers">
-      <div class="bi-module-header">
-        <span class="bi-module-icon">&#128101;</span>
-        <span class="bi-module-title">Customer &amp; Revenue</span>
-        <button class="bi-collapse-btn" data-module="customers" title="Expand" aria-label="Expand">&#9660;</button>
-      </div>
-      <div id="bi-mod-customers-kpis" class="bi-kpi-row"></div>
-      <div class="bi-chart-area" id="bi-mod-customers-chart">
-        <canvas id="bi-chart-customers"></canvas>
-      </div>
-      <div class="bi-advisory-section" id="bi-mod-customers-advisory">
-        <div class="bi-advisory-label">AI Advisory</div>
-        <div id="bi-mod-customers-advisory-list">
-          <div class="bi-module-loading">Loading insights...</div>
-        </div>
-      </div>
-      <div class="bi-history-panel" id="bi-history-customers"></div>
-    </div>
+      <!-- Left column: Financial Health, Operational Performance, Strategic Alignment -->
+      <div class="bi-modules-col">
 
-    <!-- Module 3: Operational Performance -->
-    <div class="tile-card bi-tile-collapsed" id="bi-mod-operations">
-      <div class="bi-module-header">
-        <span class="bi-module-icon">&#9881;</span>
-        <span class="bi-module-title">Operational Performance</span>
-        <button class="bi-collapse-btn" data-module="operations" title="Expand" aria-label="Expand">&#9660;</button>
-      </div>
-      <div id="bi-mod-operations-kpis" class="bi-kpi-row"></div>
-      <div class="bi-chart-area" id="bi-mod-operations-chart">
-        <canvas id="bi-chart-operations"></canvas>
-      </div>
-      <div class="bi-advisory-section" id="bi-mod-operations-advisory">
-        <div class="bi-advisory-label">AI Advisory</div>
-        <div id="bi-mod-operations-advisory-list">
-          <div class="bi-module-loading">Loading insights...</div>
+        <!-- Module 1: Financial Health -->
+        <div class="tile-card bi-tile-collapsed" id="bi-mod-financial">
+          <div class="bi-module-header">
+            <span class="bi-module-icon">&#128176;</span>
+            <span class="bi-module-title">Financial Health</span>
+            <button class="bi-collapse-btn" data-module="financial" title="Expand" aria-label="Expand">&#9660;</button>
+          </div>
+          <div id="bi-mod-financial-kpis" class="bi-kpi-row"></div>
+          <div class="bi-chart-area" id="bi-mod-financial-chart">
+            <canvas id="bi-chart-financial"></canvas>
+          </div>
+          <div class="bi-advisory-section" id="bi-mod-financial-advisory">
+            <div class="bi-advisory-label">AI Advisory</div>
+            <div id="bi-mod-financial-advisory-list">
+              <div class="bi-module-loading">Loading insights...</div>
+            </div>
+          </div>
+          <div class="bi-history-panel" id="bi-history-financial"></div>
         </div>
-      </div>
-      <div class="bi-history-panel" id="bi-history-operations"></div>
-    </div>
 
-    <!-- Module 4: Market Intelligence -->
-    <div class="tile-card bi-tile-collapsed" id="bi-mod-market">
-      <div class="bi-module-header">
-        <span class="bi-module-icon">&#127758;</span>
-        <span class="bi-module-title">Market Intelligence</span>
-        <button class="bi-collapse-btn" data-module="market" title="Expand" aria-label="Expand">&#9660;</button>
-      </div>
-      <div id="bi-mod-market-kpis" class="bi-kpi-row"></div>
-      <div class="bi-chart-area" id="bi-mod-market-chart">
-        <canvas id="bi-chart-market"></canvas>
-      </div>
-      <div class="bi-advisory-section" id="bi-mod-market-advisory">
-        <div class="bi-advisory-label">AI Advisory</div>
-        <div id="bi-mod-market-advisory-list">
-          <div class="bi-module-loading">Loading insights...</div>
+        <!-- Module 3: Operational Performance -->
+        <div class="tile-card bi-tile-collapsed" id="bi-mod-operations">
+          <div class="bi-module-header">
+            <span class="bi-module-icon">&#9881;</span>
+            <span class="bi-module-title">Operational Performance</span>
+            <button class="bi-collapse-btn" data-module="operations" title="Expand" aria-label="Expand">&#9660;</button>
+          </div>
+          <div id="bi-mod-operations-kpis" class="bi-kpi-row"></div>
+          <div class="bi-chart-area" id="bi-mod-operations-chart">
+            <canvas id="bi-chart-operations"></canvas>
+          </div>
+          <div class="bi-advisory-section" id="bi-mod-operations-advisory">
+            <div class="bi-advisory-label">AI Advisory</div>
+            <div id="bi-mod-operations-advisory-list">
+              <div class="bi-module-loading">Loading insights...</div>
+            </div>
+          </div>
+          <div class="bi-history-panel" id="bi-history-operations"></div>
         </div>
-      </div>
-      <div class="bi-history-panel" id="bi-history-market"></div>
-    </div>
 
-    <!-- Module 5: Strategic Alignment -->
-    <div class="tile-card bi-tile-collapsed" id="bi-mod-strategic">
-      <div class="bi-module-header">
-        <span class="bi-module-icon">&#127919;</span>
-        <span class="bi-module-title">Strategic Alignment</span>
-        <button class="bi-collapse-btn" data-module="strategic" title="Expand" aria-label="Expand">&#9660;</button>
-      </div>
-      <div id="bi-mod-strategic-kpis" class="bi-kpi-row"></div>
-      <div class="bi-chart-area" id="bi-mod-strategic-chart">
-        <canvas id="bi-chart-strategic"></canvas>
-      </div>
-      <div class="bi-advisory-section" id="bi-mod-strategic-advisory">
-        <div class="bi-advisory-label">AI Advisory</div>
-        <div id="bi-mod-strategic-advisory-list">
-          <div class="bi-module-loading">Loading insights...</div>
+        <!-- Module 5: Strategic Alignment -->
+        <div class="tile-card bi-tile-collapsed" id="bi-mod-strategic">
+          <div class="bi-module-header">
+            <span class="bi-module-icon">&#127919;</span>
+            <span class="bi-module-title">Strategic Alignment</span>
+            <button class="bi-collapse-btn" data-module="strategic" title="Expand" aria-label="Expand">&#9660;</button>
+          </div>
+          <div id="bi-mod-strategic-kpis" class="bi-kpi-row"></div>
+          <div class="bi-chart-area" id="bi-mod-strategic-chart">
+            <canvas id="bi-chart-strategic"></canvas>
+          </div>
+          <div class="bi-advisory-section" id="bi-mod-strategic-advisory">
+            <div class="bi-advisory-label">AI Advisory</div>
+            <div id="bi-mod-strategic-advisory-list">
+              <div class="bi-module-loading">Loading insights...</div>
+            </div>
+          </div>
+          <div class="bi-history-panel" id="bi-history-strategic"></div>
         </div>
+
       </div>
-      <div class="bi-history-panel" id="bi-history-strategic"></div>
+
+      <!-- Right column: Customer & Revenue, Market Intelligence -->
+      <div class="bi-modules-col">
+
+        <!-- Module 2: Customer & Revenue Analysis -->
+        <div class="tile-card bi-tile-collapsed" id="bi-mod-customers">
+          <div class="bi-module-header">
+            <span class="bi-module-icon">&#128101;</span>
+            <span class="bi-module-title">Customer &amp; Revenue</span>
+            <button class="bi-collapse-btn" data-module="customers" title="Expand" aria-label="Expand">&#9660;</button>
+          </div>
+          <div id="bi-mod-customers-kpis" class="bi-kpi-row"></div>
+          <div class="bi-chart-area" id="bi-mod-customers-chart">
+            <canvas id="bi-chart-customers"></canvas>
+          </div>
+          <div class="bi-advisory-section" id="bi-mod-customers-advisory">
+            <div class="bi-advisory-label">AI Advisory</div>
+            <div id="bi-mod-customers-advisory-list">
+              <div class="bi-module-loading">Loading insights...</div>
+            </div>
+          </div>
+          <div class="bi-history-panel" id="bi-history-customers"></div>
+        </div>
+
+        <!-- Module 4: Market Intelligence -->
+        <div class="tile-card bi-tile-collapsed" id="bi-mod-market">
+          <div class="bi-module-header">
+            <span class="bi-module-icon">&#127758;</span>
+            <span class="bi-module-title">Market Intelligence</span>
+            <button class="bi-collapse-btn" data-module="market" title="Expand" aria-label="Expand">&#9660;</button>
+          </div>
+          <div id="bi-mod-market-kpis" class="bi-kpi-row"></div>
+          <div class="bi-chart-area" id="bi-mod-market-chart">
+            <canvas id="bi-chart-market"></canvas>
+          </div>
+          <div class="bi-advisory-section" id="bi-mod-market-advisory">
+            <div class="bi-advisory-label">AI Advisory</div>
+            <div id="bi-mod-market-advisory-list">
+              <div class="bi-module-loading">Loading insights...</div>
+            </div>
+          </div>
+          <div class="bi-history-panel" id="bi-history-market"></div>
+        </div>
+
+      </div>
+
     </div>
 
   </div>
