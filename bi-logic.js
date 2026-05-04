@@ -101,6 +101,18 @@ window.BI_LOGIC = {
         self._toggleHistory(mod);
       });
     });
+
+    document.querySelectorAll('.bi-collapse-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var mod = btn.getAttribute('data-module');
+        var tile = document.getElementById('bi-mod-' + mod);
+        if (!tile) return;
+        var collapsed = tile.classList.toggle('bi-tile-collapsed');
+        btn.innerHTML = collapsed ? '&#9660;' : '&#9650;';
+        btn.title = collapsed ? 'Expand' : 'Collapse';
+        btn.setAttribute('aria-label', collapsed ? 'Expand' : 'Collapse');
+      });
+    });
   },
 
   _showError: function(msg) {
