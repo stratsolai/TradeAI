@@ -278,14 +278,16 @@ export default async function handler(req, res) {
         platform: 'xero'
       };
     } else if (action === 'pl_breakdown') {
-      // Profit & Loss with monthly breakdown for the rolling 12 months
-      // ending in the current month. Returns income, cost-of-sales, and
-      // operating-expense rows broken out by account, each with a monthly
-      // total array, plus the column headers from the report.
+      // Profit & Loss with monthly breakdown for the rolling 11 months
+      // ending in the current month. Xero's periods parameter is capped
+      // at 11, which limits us to 11 monthly columns. Returns income,
+      // cost-of-sales, and operating-expense rows broken out by account,
+      // each with a monthly total array, plus the column headers from
+      // the report.
       var nowB = new Date();
-      var fromDateB = new Date(nowB.getFullYear(), nowB.getMonth() - 11, 1).toISOString().split('T')[0];
+      var fromDateB = new Date(nowB.getFullYear(), nowB.getMonth() - 10, 1).toISOString().split('T')[0];
       var toDateB = new Date(nowB.getFullYear(), nowB.getMonth() + 1, 0).toISOString().split('T')[0];
-      var monthsCount = 12;
+      var monthsCount = 11;
       var urlB = '/Reports/ProfitAndLoss?fromDate=' + fromDateB + '&toDate=' + toDateB + '&periods=' + monthsCount + '&timeframe=MONTH';
       var dataB = await xeroGet(urlB);
       var reportB = dataB.Reports && dataB.Reports[0];

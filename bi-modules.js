@@ -369,7 +369,7 @@ window.BI_MODULES = {
           maintainAspectRatio: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Rolling 12mth Expense Trend', font: { size: 13 }, color: c.textMuted }
+            title: { display: true, text: 'Rolling 11mth Expense Trend', font: { size: 13 }, color: c.textMuted }
           },
           scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v); } } } }
         }
