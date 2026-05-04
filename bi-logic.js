@@ -339,10 +339,12 @@ window.BI_LOGIC = {
   _splitTextBullets: function(text) {
     if (!text) return [];
     // Split a paragraph on sentence-end punctuation. Falls back to a single
-    // bullet if there are no terminators. Capped at 4 to fit the 2x2 grid.
+    // bullet if there are no terminators. Strip the trailing terminator so
+    // bullets read as fragments rather than full sentences. Capped at 4 to
+    // fit the 2x2 grid.
     var matches = String(text).match(/[^.!?]+[.!?]+/g);
     var parts = matches || [String(text)];
-    return parts.map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 4);
+    return parts.map(function (s) { return s.trim().replace(/[.!?]+$/, ''); }).filter(Boolean).slice(0, 4);
   },
 
   _renderAlertCard: function(item) {
