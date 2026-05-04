@@ -12,6 +12,7 @@ import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
   Header } from 'docx';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { applyToolOutputMatrix } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -518,7 +519,7 @@ export default async function handler(req, res) {
         source_ref: 'strategic-plan:strategy:' + userId + ':' + timestamp,
         status: 'approved',
         category: 'Strategic Plan',
-        tool_tags: ['strategic-plan']
+        tool_tags: applyToolOutputMatrix('strategic-plan')
       },
       {
         user_id: userId,
@@ -530,7 +531,7 @@ export default async function handler(req, res) {
         source_ref: 'strategic-plan:ops:' + userId + ':' + timestamp,
         status: 'approved',
         category: 'Strategic Plan',
-        tool_tags: ['strategic-plan']
+        tool_tags: applyToolOutputMatrix('strategic-plan')
       }
     ];
 

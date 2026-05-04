@@ -391,7 +391,10 @@ window.DV_LOGIC = {
         source_ref: sourceRef,
         status: 'approved',
         category: 'image',
-        tool_tags: ['DV'],
+        // Mirrors applyToolOutputMatrix('design-viz') in lib/cl-prompts.js.
+        // Browser code can't import the server-only module, so the array is
+        // hardcoded here. Keep these in sync if TOOL_OUTPUT_MATRIX changes.
+        tool_tags: ['design-viz', 'social', 'tender', 'quote-enhancer', 'customer-updates', 'handover-docs'],
         content_text: contentText,
         file_url: render.render_url,
         content_type: 'image',

@@ -390,7 +390,10 @@ window.CB_LOGIC = {
         source_ref: sourceRef,
         status: 'approved',
         category: 'knowledge',
-        tool_tags: ['CB'],
+        // Mirrors applyToolOutputMatrix('chatbot') in lib/cl-prompts.js.
+        // Browser code can't import the server-only module, so the array is
+        // hardcoded here. Keep these in sync if TOOL_OUTPUT_MATRIX changes.
+        tool_tags: ['chatbot', 'bi', 'strategic-plan', 'review-booster'],
         content_text: 'Q: ' + questionText + '\nA: ' + answer.trim(),
         content_type: 'text'
       });

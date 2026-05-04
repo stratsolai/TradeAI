@@ -2,6 +2,7 @@ export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage, logSerperUsage } from '../lib/usage-logger.js';
+import { applyToolOutputMatrix } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -650,7 +651,7 @@ export default async function handler(req, res) {
           title: String(bc.headline || bc.category || '').substring(0, 200),
           content_text: (bc.headline || '') + '\n\n' + bulletTexts,
           category: 'Industry News',
-          tool_tags: ['news-digest', 'bi', 'strategic-plan'],
+          tool_tags: applyToolOutputMatrix('news-digest'),
           status: 'approved',
           source: 'tool',
           tool_source: 'news-digest',
@@ -688,7 +689,7 @@ export default async function handler(req, res) {
           title: String(tender.title || '').substring(0, 200),
           content_text: contentParts.join('\n'),
           category: 'Industry News',
-          tool_tags: ['news-digest', 'bi', 'strategic-plan'],
+          tool_tags: applyToolOutputMatrix('news-digest'),
           status: 'approved',
           source: 'tool',
           tool_source: 'news-digest',

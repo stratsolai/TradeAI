@@ -317,6 +317,13 @@ window.SOCIAL_LOGIC = {
     var publicUrl = (pub && pub.data) ? pub.data.publicUrl : null;
 
     var tags = Array.isArray(payload.tags) && payload.tags.length ? payload.tags : ['social-media'];
+    // Mirrors applyToolOutputMatrix('social') in lib/cl-prompts.js. Browser
+    // code can't import the server-only module so the array is hardcoded.
+    // Unioned with caller-supplied tags so downstream consumers (bi,
+    // strategic-plan) are always tagged. Keep in sync if TOOL_OUTPUT_MATRIX
+    // changes.
+    var SOCIAL_OUTPUT_TAGS = ['social', 'bi', 'strategic-plan'];
+    tags = Array.from(new Set(tags.concat(SOCIAL_OUTPUT_TAGS)));
 
     var row = {
       user_id: this._userId,

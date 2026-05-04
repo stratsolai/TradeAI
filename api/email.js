@@ -8,7 +8,8 @@ import {
   CATEGORY_LOOKUP as CL_CATEGORY_LOOKUP,
   DISCARD_CATEGORIES as CL_DISCARD_CATEGORIES,
   buildSingleItemPrompt,
-  applyCategoryToolMatrix
+  applyCategoryToolMatrix,
+  applyToolOutputMatrix
 } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -531,6 +532,11 @@ export default async function handler(req, res) {
             var clStatus = clIsDiscard ? 'archived' : (clItem.disposition === 'discard' ? 'archived' : 'approved');
             var clToolTags = Array.isArray(clItem.tool_tags) ? clItem.tool_tags.filter(function(t) { return CL_ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
             clToolTags = applyCategoryToolMatrix(clNormCat, clToolTags);
+            // Pattern B write — also union in the Tool Output Matrix
+            // recipients for the email tool so downstream consumers
+            // (bi, strategic-plan, news-digest, chatbot, subcontractor-mgmt)
+            // get tagged regardless of how the AI categorised the email.
+            clToolTags = Array.from(new Set([...clToolTags, ...applyToolOutputMatrix('email')]));
             var clRow = {
               user_id: userId,
               title: String(clItem.title || email.subject || '(no subject)').substring(0, 200),

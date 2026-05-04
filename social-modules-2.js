@@ -549,7 +549,12 @@
           source_ref: sourceRef,
           status: 'approved',
           category: categoryMap[journeyType] || 'social_post',
-          tool_tags: tagMap[journeyType] || ['social'],
+          // Mirrors applyToolOutputMatrix('social') in lib/cl-prompts.js.
+          // Unioned with the journey-specific tagMap so downstream
+          // consumers (bi, strategic-plan) are always tagged. Browser code
+          // can't import the server-only module — keep in sync if
+          // TOOL_OUTPUT_MATRIX changes.
+          tool_tags: Array.from(new Set((tagMap[journeyType] || ['social']).concat(['social', 'bi', 'strategic-plan']))),
           content_text: content.caption || '',
           title: title,
           user_id: this._userId,
