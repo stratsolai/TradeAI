@@ -12,7 +12,8 @@ import {
   AUTO_ARCHIVE_CATEGORIES,
   VERSION_MATCH_RULES,
   VERSION_MATCH_SYSTEM_PROMPT,
-  buildSingleItemPrompt
+  buildSingleItemPrompt,
+  applyCategoryToolMatrix
 } from '../lib/cl-prompts.js';
 
 function getSupabase() {
@@ -179,6 +180,7 @@ const handler = async (req, res) => {
       var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
       var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
       var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+      toolTags = applyCategoryToolMatrix(normCat, toolTags);
       var itemSourceDetail = { filename: fileName || 'Unknown', file_type: fileType };
       if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 

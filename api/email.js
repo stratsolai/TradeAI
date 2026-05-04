@@ -7,7 +7,8 @@ import {
   ALL_CATEGORIES as CL_ALL_CATEGORIES,
   CATEGORY_LOOKUP as CL_CATEGORY_LOOKUP,
   DISCARD_CATEGORIES as CL_DISCARD_CATEGORIES,
-  buildSingleItemPrompt
+  buildSingleItemPrompt,
+  applyCategoryToolMatrix
 } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -495,6 +496,7 @@ export default async function handler(req, res) {
             var clIsDiscard = CL_DISCARD_CATEGORIES.indexOf(clNormCat) > -1;
             var clStatus = clIsDiscard ? 'archived' : (clItem.disposition === 'discard' ? 'archived' : 'approved');
             var clToolTags = Array.isArray(clItem.tool_tags) ? clItem.tool_tags.filter(function(t) { return CL_ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+            clToolTags = applyCategoryToolMatrix(clNormCat, clToolTags);
             var clRow = {
               user_id: userId,
               title: String(clItem.title || email.subject || '(no subject)').substring(0, 200),

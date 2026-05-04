@@ -13,7 +13,8 @@ import {
   VERSION_MATCH_RULES,
   IMAGE_PROMPT,
   VERSION_MATCH_SYSTEM_PROMPT,
-  buildSingleItemPrompt
+  buildSingleItemPrompt,
+  applyCategoryToolMatrix
 } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -628,6 +629,7 @@ export default async function handler(req, res) {
         var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
         var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
         var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+        toolTags = applyCategoryToolMatrix(normCat, toolTags);
         var itemSourceDetail = { sender: sender, subject: subject, account_email: accountEmail };
         if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
@@ -826,6 +828,7 @@ export default async function handler(req, res) {
           var attIsDiscard = DISCARD_CATEGORIES.indexOf(attNormCat) > -1;
           var attStatus = attIsDiscard ? 'rejected' : (attItem.confidence === 'confident' ? 'approved' : 'pending');
           var attToolTags = Array.isArray(attItem.tool_tags) ? attItem.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+          attToolTags = applyCategoryToolMatrix(attNormCat, attToolTags);
           var attItemSourceDetail = { sender: sender, subject: subject, account_email: accountEmail, attachment_filename: att.name, attachment_mime: attMime };
           if (attIsDiscard) attItemSourceDetail.rejection_source = 'auto';
 

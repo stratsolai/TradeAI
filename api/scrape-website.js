@@ -36,7 +36,8 @@ import {
   AUTO_ARCHIVE_CATEGORIES,
   VERSION_MATCH_RULES,
   VERSION_MATCH_SYSTEM_PROMPT,
-  buildMultiBlockPrompt
+  buildMultiBlockPrompt,
+  applyCategoryToolMatrix
 } from '../lib/cl-prompts.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -361,6 +362,7 @@ async function processPage(supabase, userId, pageUrl, websiteHtml, hostname, saf
     var isDiscard = DISCARD_CATEGORIES.indexOf(normCat) > -1;
     var status = isDiscard ? 'rejected' : (item.confidence === 'confident' ? 'approved' : 'pending');
     var toolTags = Array.isArray(item.tool_tags) ? item.tool_tags.filter(function(t) { return ALLOWED_TOOL_IDS.indexOf(t) > -1; }) : [];
+    toolTags = applyCategoryToolMatrix(normCat, toolTags);
     var itemSourceDetail = { url: pageUrl, hostname: hostname };
     if (isDiscard) itemSourceDetail.rejection_source = 'auto';
 
