@@ -349,7 +349,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
-.featured-row .tool-card-v2 { flex: 0 0 360px; min-width: 360px; }
+.featured-row .tool-card-v2 { flex: 0 0 360px; min-width: 360px; opacity: 0.85; }
 .featured-row .tool-card-v2-shot { height: 90px; font-size: 50px; }
 .featured-row .tool-card-v2-badge { top: 8px; right: 8px; font-size: 10px; padding: 4px 9px; }
 .featured-row .tool-card-v2-body { padding: 14px 18px 16px; gap: 10px; }
@@ -368,11 +368,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   border: 1px solid rgba(255,255,255,0.06);
 }
 .tool-card-v2:hover { transform: scale(1.03); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
-/* Coming-soon status is communicated by the orange "Coming soon" badge in
-   the corner of the shot. The previous 0.85 opacity also lightened the
-   tile background, which made carousel tiles read as a different colour
-   from the featured tiles on the light accordion bg — removed so the two
-   rows match visually. */
+.tool-card-v2.coming-soon { opacity: 0.85; }
 
 .tool-card-v2-shot {
   position: relative; height: 170px;
