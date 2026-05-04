@@ -339,18 +339,28 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   will-change: transform;
 }
 
-/* Featured row — pinned, non-scrolling. Sized so three tiles sit on a
-   single line within the centre column on standard desktop widths
-   (≥ ~1600px viewport). The min-width override is required because the
-   base .tool-card-v2 rule sets min-width: 360px, which would otherwise
-   stop the featured tiles from shrinking below the carousel size. The
-   row still has flex-wrap on as a safety net for narrower viewports. */
+/* Featured row — pinned, non-scrolling. Tiles are wider and shorter than
+   the carousel tiles (a more landscape proportion). Three tiles fit in a
+   single line on widescreen desktops (~1800px viewport and up); flex-wrap
+   stays on as a safety net for narrower viewports.
+   The min-width override is required because the base .tool-card-v2 rule
+   sets min-width: 360px, which would otherwise stop the featured tiles
+   from shrinking. The element overrides below trim the shot height,
+   description clamp and inner padding to deliver a noticeably shorter
+   card without changing the carousel tiles. */
 .featured-row {
   display: flex; gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
-.featured-row .tool-card-v2 { flex: 0 0 240px; min-width: 240px; }
+.featured-row .tool-card-v2 { flex: 0 0 300px; min-width: 300px; }
+.featured-row .tool-card-v2-shot { height: 90px; font-size: 50px; }
+.featured-row .tool-card-v2-badge { top: 8px; right: 8px; font-size: 10px; padding: 4px 9px; }
+.featured-row .tool-card-v2-body { padding: 14px 16px 16px; gap: 10px; }
+.featured-row .tool-card-v2-name { font-size: 16px; }
+.featured-row .tool-card-v2-desc { font-size: 12px; -webkit-line-clamp: 2; }
+.featured-row .tool-card-v2-price { font-size: 16px; }
+.featured-row .tool-card-v2-cta { font-size: 13px; padding: 7px 13px; }
 
 .tool-card-v2 {
   flex: 0 0 360px; min-width: 360px;
