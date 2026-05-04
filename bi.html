@@ -177,62 +177,19 @@
       align-items: center;
     }
 
-    .bi-ask-btn {
-      background: var(--white);
-      color: var(--blue);
-      border: 1px solid var(--blue);
-      border-radius: var(--btn-radius);
+    /* Action buttons inherit colour/border/hover from platform classes
+       (.btn-outline, .btn-dismiss). Override size only — current compact
+       sizing is intentional for this screen. */
+    .bi-alert-actions .bi-ask-btn,
+    .bi-alert-actions .bi-act-btn,
+    .bi-alert-actions .bi-dismiss-btn {
       padding: 4px 10px;
       font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background var(--btn-transition);
       white-space: nowrap;
-    }
-
-    .bi-ask-btn:hover {
-      background: var(--blue-light);
-    }
-
-    .bi-act-btn {
-      background: var(--white);
-      color: var(--green-dark);
-      border: 1px solid var(--green-dark);
-      border-radius: var(--btn-radius);
-      padding: 4px 10px;
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-      white-space: nowrap;
-    }
-
-    .bi-act-btn:hover {
-      background: var(--green-light);
-    }
-
-    .bi-dismiss-btn {
-      background: var(--white);
-      color: var(--text-muted);
-      border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      padding: 4px 10px;
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background var(--btn-transition), color var(--btn-transition);
-      white-space: nowrap;
-    }
-
-    .bi-dismiss-btn:hover {
-      background: var(--bg-subtle);
-      color: var(--text);
     }
 
     .bi-alert-source-btn {
+      margin-left: auto;
       padding: 4px 10px;
       font-size: var(--badge-font-size);
     }
@@ -407,6 +364,7 @@
     .bi-alert-actions {
       display: flex;
       align-items: center;
+      flex-wrap: wrap;
       gap: var(--btn-radius);
     }
 

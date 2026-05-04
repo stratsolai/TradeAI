@@ -339,12 +339,12 @@ window.BI_LOGIC = {
       html += '<div class="bi-alert-suggestion">' + escHtml(d.suggestion) + '</div>';
     }
     html += '<div class="bi-alert-actions">';
-    html += '<button class="bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Ask about this</button>';
-    html += '<button class="bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Act on this</button>';
+    html += '<button class="btn-outline btn-sm bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Chat with AI</button>';
+    html += '<button class="btn-outline btn-sm bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Add to Strategic Plan</button>';
+    html += '<button class="btn-dismiss bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
     if (sources.length > 0) {
       html += '<button class="source-btn bi-alert-source-btn" type="button" data-target="' + sourcesId + '">&#9654; Source (' + sources.length + ')</button>';
     }
-    html += '<button class="bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
     html += '</div>';
     if (sources.length > 0) {
       html += '<div class="bi-alert-sources-panel" id="' + sourcesId + '" hidden>';
