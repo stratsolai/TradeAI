@@ -227,8 +227,11 @@ export default async function handler(req, res) {
         result = [];
       } else {
         result = (projectsData.items || []).map(function (j) {
+          // Xero Projects v2 fields: totalInvoiced and totalExpenseAmount
+          // (the latter was previously read as j.totalExpense, which does
+          // not exist on the response and produced costs = 0 everywhere).
           var income = j.totalInvoiced || {};
-          var costs = j.totalExpense || {};
+          var costs = j.totalExpenseAmount || {};
           var incExcl = (income.value || 0);
           var costExcl = (costs.value || 0);
           return {

@@ -29,8 +29,7 @@ function daysBetween(a, b) {
 function isCompletedStatus(status) {
   if (!status) return false;
   var s = String(status).toLowerCase();
-  return s === 'completed' || s === 'complete' || s === 'closed' || s === 'finished'
-      || s === 'inprogress' && false; // explicit: in-progress is NOT completed
+  return s === 'completed' || s === 'complete' || s === 'closed' || s === 'finished';
 }
 
 export default async function handler(req, res) {

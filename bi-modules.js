@@ -441,6 +441,15 @@ window.BI_MODULES = {
     this._renderAdvisoryList(advisoryList, items, 'projects');
   },
 
+  _formatStatusLabel: function(s) {
+    if (!s) return 'Unknown';
+    var raw = String(s);
+    var specials = { INPROGRESS: 'In Progress', NOTSTARTED: 'Not Started', ONHOLD: 'On Hold' };
+    if (specials[raw]) return specials[raw];
+    // Default: lower-case then title-case each word
+    return raw.toLowerCase().replace(/\b\w/g, function (ch) { return ch.toUpperCase(); });
+  },
+
   _renderProjectCharts: function(d, chartArea, charts) {
     if (!chartArea) return;
     chartArea.style.display = 'block';
@@ -458,13 +467,14 @@ window.BI_MODULES = {
     var secondary = document.createElement('canvas');
     chartArea.innerHTML = ''; chartArea.appendChild(primary); chartArea.appendChild(secondary);
     var c = this._getCSS();
+    var self = this;
 
     if (statusKeys.length > 0) {
       var palette = [c.blue, c.green, c.orange, c.purple, c.grey, c.teal, c.red];
       charts.projectsStatus = new Chart(primary, {
         type: 'doughnut',
         data: {
-          labels: statusKeys,
+          labels: statusKeys.map(function (k) { return self._formatStatusLabel(k); }),
           datasets: [{
             data: statusKeys.map(function (k) { return statuses[k]; }),
             backgroundColor: statusKeys.map(function (_, i) { return palette[i % palette.length]; })
@@ -473,6 +483,7 @@ window.BI_MODULES = {
         options: {
           responsive: true,
           maintainAspectRatio: true,
+          aspectRatio: 2,
           plugins: {
             legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } },
             title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: c.textMuted }
