@@ -148,9 +148,33 @@ AusTender RSS feed confirmed:
 
 ### Task 30 — Build Testing Environment
 
-Status: Not started.
+Status: Phase 1 complete. Phase 2 not started.
 
-Spec: StaxAI-Test-Environment-Setup-v1_0.docx in Project Knowledge.
+Spec: StaxAI-Test-Environment-Setup-v1_2.docx in Project Knowledge.
+
+**Phase 1: Accounts — COMPLETE ✅**
+
+| Account | Status |
+|---------|--------|
+| Gmail (coastalbuilt.test@gmail.com) | ✅ Created |
+| Outlook (coastalbuilt.test@outlook.com) | ✅ Created |
+| Google Drive (8 folders created) | ✅ Done |
+| Xero Demo Company | ✅ Connected |
+| ServiceM8 | ✅ Created |
+| Facebook Page + Instagram Business | ✅ Created |
+| StaxAI test user (STAXAI TEST) | ✅ Exists |
+| Business Profile (Coastal Built) | ✅ Filled in |
+
+**Phase 2: Data Generation — NOT STARTED**
+
+Approach agreed: use the Xero Demo Company data as the
+foundation. Same customers/suppliers from Xero are used across
+ServiceM8, emails, and documents. Sequence: Customer List →
+Supplier List → Job History → Invoice/Bill Data → Email Content
+→ Drive Documents.
+
+Google Drive folders created: /Quotes, /Contracts, /Insurance,
+/Licences, /Safety, /Projects, /Suppliers, /Templates.
 
 ### Task 31 — Full Platform Testing
 
@@ -187,6 +211,17 @@ approach across all tools:
 - Modal errors vs inline errors — when to use each
 - Silent catch blocks — add console.error before fallback
 - Recommend and apply consistent pattern across all pages
+
+### Task 35 — BI Follow-up Items
+
+Status: Not started. Complete after BI enhancement is finished.
+
+| Item | Notes |
+|------|-------|
+| QuickBooks pl_breakdown support | QB-only customers see "No accounting software connected" for the Operational Performance tile until quickbooks-fetch gains a pl_breakdown action equivalent to the Xero one |
+| Single connection per category | Enforce one accounting system only (Xero/MYOB/QuickBooks) and one job system only (ServiceM8/Fergus/Buildxact/Tradify). Show a message if the user tries to connect a second provider in the same category |
+| Test BI with MYOB demo company | Verify MYOB data flows correctly through every BI tile once MYOB is reactivated |
+| Demo Company Switch feature | Add a "Switch Company" option that lets users explore the Coastal Built demo data as read-only. Benefits: onboarding, sales demos, training, trust. Considerations: data isolation, read-only enforcement, session handling, and a visual indicator that demo mode is active |
 
 ---
 
