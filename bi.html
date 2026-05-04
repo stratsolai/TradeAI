@@ -614,13 +614,12 @@
       color: var(--text);
     }
 
-    /* Sizing scoped to the dropdown button itself — not the wrap. The
-       earlier min-width on .bi-period-wrap left empty space inside the
-       wrap to the right of the button, which the eye reads as a wide gap
-       even though the flex gap is only 4px. Sizing the button instead
-       lets the wrap hug it, so the 4px gap is the real visual gap. */
+    /* Sizing scoped to the dropdown button itself — not the wrap, which
+       used to carry a 170px min-width that left empty space inside it.
+       Padding and font-size match .btn-outline.btn-sm so the dropdown
+       and Refresh Data button render at the same height. No min-width:
+       the button hugs whichever option label is currently selected. */
     .bi-period-wrap #bi-period-btn {
-      min-width: 170px;
       padding: 6px 28px 6px 14px;
       font-size: var(--status-font-size);
     }
