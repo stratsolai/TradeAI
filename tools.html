@@ -275,7 +275,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   padding: 20px 24px; cursor: pointer; user-select: none;
   transition: background 0.2s;
 }
-.accordion-header:hover { background: rgba(255,255,255,0.03); }
+.accordion-header:hover { background: rgba(74,109,140,0.1); }
 .accordion-arrow {
   width: 16px; flex-shrink: 0; color: #4A6D8C;
   font-size: 14px; line-height: 1;
@@ -285,20 +285,20 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .accordion-title-block { flex: 1; min-width: 0; }
 .accordion-title {
   font-family: 'Barlow Condensed', sans-serif;
-  font-size: 30px; font-weight: 700; color: #fff;
+  font-size: 30px; font-weight: 700; color: #1e3a5f;
   letter-spacing: 0.5px; line-height: 1.1;
   text-transform: uppercase;
 }
 .accordion-tagline {
-  font-size: 15px; color: rgba(255,255,255,0.6);
+  font-size: 15px; color: #4A6D8C;
   margin-top: 6px; line-height: 1.4;
 }
-/* Pill matches the active state of .filter-tab at the top of the page —
-   same shape, padding and font, brand-orange fill so the per-section count
-   reads as a counterpart to the global category tabs. */
+/* Pill — same shape and padding as .filter-tab at the top of the page,
+   filled with the platform blue so the per-section count reads as a
+   counterpart to the global category tabs on the light accordion bg. */
 .accordion-count {
-  background: #c4622a;
-  border: 1px solid #c4622a;
+  background: #4A6D8C;
+  border: 1px solid #4A6D8C;
   color: #fff;
   font-family: 'DM Sans', sans-serif;
   font-size: 13px; font-weight: 600;
@@ -309,8 +309,8 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .accordion-arrows { display: flex; gap: 8px; flex-shrink: 0; }
 .carousel-arrow {
   width: 36px; height: 36px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
+  background: #4A6D8C;
+  border: 1px solid #4A6D8C;
   border-radius: 8px;
   color: #fff;
   font-size: 18px; font-weight: 600; line-height: 1;
@@ -318,7 +318,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   display: flex; align-items: center; justify-content: center;
   transition: background 0.2s, border-color 0.2s;
 }
-.carousel-arrow:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.35); }
+.carousel-arrow:hover { background: #3a5a75; border-color: #3a5a75; }
 .carousel-arrow:disabled { opacity: 0.35; cursor: not-allowed; }
 
 .accordion-body { display: none; padding: 0 24px 24px; }
