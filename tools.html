@@ -293,12 +293,18 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   font-size: 15px; color: rgba(255,255,255,0.6);
   margin-top: 6px; line-height: 1.4;
 }
+/* Pill matches the active state of .filter-tab at the top of the page —
+   same shape, padding and font, brand-orange fill so the per-section count
+   reads as a counterpart to the global category tabs. */
 .accordion-count {
-  background: rgba(74,109,140,0.3); color: #7BA3C4;
+  background: #c4622a;
+  border: 1px solid #c4622a;
+  color: #fff;
   font-family: 'DM Sans', sans-serif;
-  font-size: 12px; font-weight: 600;
-  padding: 4px 12px; border-radius: 12px;
+  font-size: 13px; font-weight: 600;
+  padding: 8px 18px; border-radius: 8px;
   flex-shrink: 0;
+  line-height: 1;
 }
 .accordion-arrows { display: flex; gap: 8px; flex-shrink: 0; }
 .carousel-arrow {
@@ -328,13 +334,23 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   padding-bottom: 4px;
 }
 .tool-carousel-track {
-  display: flex; gap: 20px;
+  display: flex; gap: 24px;
   width: max-content;
   will-change: transform;
 }
 
+/* Featured row — pinned, non-scrolling. Renders only when a category has
+   one or more built tools. Wraps to a second line if the viewport is too
+   narrow for all featured tiles to sit side-by-side. */
+.featured-row {
+  display: flex; gap: 24px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.featured-row .tool-card-v2 { flex: 0 0 360px; }
+
 .tool-card-v2 {
-  flex: 0 0 300px; min-width: 300px;
+  flex: 0 0 360px; min-width: 360px;
   background: #1a2942; border-radius: 12px;
   display: flex; flex-direction: column;
   text-decoration: none;
@@ -346,36 +362,36 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .tool-card-v2.coming-soon { opacity: 0.85; }
 
 .tool-card-v2-shot {
-  position: relative; height: 140px;
+  position: relative; height: 170px;
   background: linear-gradient(135deg, #1e3a5f 0%, #0f1a2d 100%);
   display: flex; align-items: center; justify-content: center;
-  font-size: 56px; line-height: 1;
+  font-size: 70px; line-height: 1;
   color: rgba(255,255,255,0.45);
 }
 .tool-card-v2-badge {
-  position: absolute; top: 10px; right: 10px;
+  position: absolute; top: 12px; right: 12px;
   font-family: 'DM Sans', sans-serif;
-  font-size: 10px; font-weight: 700;
+  font-size: 11px; font-weight: 700;
   letter-spacing: 0.6px; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 12px;
+  padding: 5px 11px; border-radius: 12px;
   color: #fff;
 }
 .tool-card-v2-badge.live { background: #1D9E75; }
 .tool-card-v2-badge.soon { background: #E8A54B; }
 
 .tool-card-v2-body {
-  padding: 16px 16px 18px;
-  display: flex; flex-direction: column; gap: 10px;
+  padding: 20px 20px 22px;
+  display: flex; flex-direction: column; gap: 12px;
   flex: 1;
 }
 .tool-card-v2-name {
   font-family: 'DM Sans', sans-serif;
-  color: #fff; font-size: 16px; font-weight: 600;
+  color: #fff; font-size: 18px; font-weight: 600;
   line-height: 1.25;
 }
 .tool-card-v2-desc {
   color: rgba(255,255,255,0.6);
-  font-size: 12px; line-height: 1.5;
+  font-size: 13px; line-height: 1.5;
   flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 4;
@@ -384,16 +400,16 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 }
 .tool-card-v2-foot {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 10px; margin-top: 4px;
+  gap: 12px; margin-top: 4px;
 }
 .tool-card-v2-price {
-  color: #E8A54B; font-size: 16px; font-weight: 600;
+  color: #E8A54B; font-size: 18px; font-weight: 600;
   font-family: 'DM Sans', sans-serif;
 }
 .tool-card-v2-cta {
   font-family: 'DM Sans', sans-serif;
-  font-size: 13px; font-weight: 600;
-  padding: 8px 14px; border-radius: 8px;
+  font-size: 14px; font-weight: 600;
+  padding: 9px 16px; border-radius: 8px;
   display: inline-flex; align-items: center; gap: 6px;
   transition: background 0.2s, border-color 0.2s;
   flex-shrink: 0;
@@ -997,11 +1013,23 @@ footer {
     if (!container) return;
     var html = CATEGORIES.map(function(cat) {
       var tools = TOOLS.filter(function(t) { return t.cat === cat.id; });
-      // Render the card list twice inside .tool-carousel-track. The track is
-      // translated leftward by JS; when the offset reaches one-set-width, we
-      // subtract that width — invisible because the second copy looks
-      // identical, so the ribbon flows continuously with no visible reset.
-      var cardsHtml = tools.concat(tools).map(buildToolCard).join('');
+      var builtTools = tools.filter(function(t) { return t.status === 'built'; });
+      var otherTools = tools.filter(function(t) { return t.status !== 'built'; });
+
+      // Featured row — pinned, no scrolling, only rendered if there are
+      // built tools in this category. Each built tool appears once.
+      var featuredHtml = builtTools.length
+        ? '<div class="featured-row">' + builtTools.map(buildToolCard).join('') + '</div>'
+        : '';
+
+      // Carousel row — continuous ribbon for all non-built tools (pending,
+      // future, industry). Cards rendered twice for the seamless wrap.
+      var carouselHtml = otherTools.length
+        ? '<div class="tool-carousel"><div class="tool-carousel-track">' +
+            otherTools.concat(otherTools).map(buildToolCard).join('') +
+          '</div></div>'
+        : '';
+
       var isExpanded = cat.id === 'sales-marketing';
       return '<section class="tool-accordion' + (isExpanded ? ' expanded' : '') + '" data-cat="' + cat.id + '" id="accordion-' + cat.id + '">' +
         '<div class="accordion-header" role="button" tabindex="0" aria-expanded="' + isExpanded + '">' +
@@ -1017,9 +1045,8 @@ footer {
           '</div>' +
         '</div>' +
         '<div class="accordion-body">' +
-          '<div class="tool-carousel">' +
-            '<div class="tool-carousel-track">' + cardsHtml + '</div>' +
-          '</div>' +
+          featuredHtml +
+          carouselHtml +
         '</div>' +
       '</section>';
     }).join('');
