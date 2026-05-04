@@ -262,7 +262,7 @@ window.BI_MODULES = {
       if (kpisEl) kpisEl.innerHTML = '';
       if (chartArea) chartArea.style.display = 'none';
       var sec = document.getElementById('bi-mod-operations-advisory');
-      if (sec) sec.innerHTML = '<div class="bi-module-prompt"><div class="bi-module-prompt-icon">&#9881;</div><h3>Operational Insights</h3><p>Connect your job management system (ServiceM8, Buildxact, Fergus, or Tradify) to see operational insights, job profitability, and efficiency metrics.</p></div>';
+      if (sec) sec.innerHTML = '<div class="bi-module-prompt"><div class="bi-module-prompt-icon">&#9881;</div><h3>Operational Performance</h3><p>Connect your accounting software (Xero, QuickBooks, or MYOB) to see expense and cost analysis \u2014 spend by category, supplier concentration, labour cost ratio, and overhead trends.</p></div>';
       return;
     }
 
@@ -275,23 +275,30 @@ window.BI_MODULES = {
     }
 
     var d = data.data; var s = d.summary;
-    var fc = s.form_completion_rate >= 90 ? 'green' : s.form_completion_rate >= 70 ? 'orange' : 'red';
+    var supplierColour = s.supplier_concentration_pct >= 60 ? 'red' : s.supplier_concentration_pct >= 40 ? 'orange' : 'green';
+    var labourColour = s.labour_pct_revenue >= 50 ? 'red' : s.labour_pct_revenue >= 35 ? 'orange' : 'green';
+    var largestPct = s.largest_category_pct || 0;
+    var largestColour = largestPct >= 40 ? 'orange' : largestPct >= 25 ? '' : 'green';
+
     this._renderKPIRow(kpisEl, [
-      { value: ''+s.total_jobs, label: 'Total Jobs', colour: '', trend: 'flat', trendText: s.completed_jobs+' completed' },
-      { value: '$'+this._formatNum(s.avg_job_value), label: 'Avg Job Value', colour: 'orange', trend: 'flat', trendText: '' },
-      { value: s.avg_duration_days+'d', label: 'Avg Duration', colour: 'purple', trend: 'flat', trendText: '' },
-      { value: s.form_completion_rate+'%', label: 'Form Completion', colour: fc, trend: s.form_completion_rate>=80?'up':'down', trendText: s.total_forms+' forms' }
+      { value: '$' + this._formatNum(s.total_expenses), label: 'Total Expenses', colour: 'orange', trend: 'flat', trendText: s.expense_category_count + ' categories' },
+      { value: (s.largest_category || '\u2014'), label: 'Largest Cost Centre', colour: largestColour, trend: 'flat', trendText: largestPct + '% of expenses' },
+      { value: s.labour_pct_revenue + '%', label: 'Labour % of Revenue', colour: labourColour, trend: s.labour_pct_revenue >= 50 ? 'down' : 'flat', trendText: '$' + this._formatNum(s.labour_total) + ' labour' },
+      { value: s.supplier_concentration_pct + '%', label: 'Supplier Concentration', colour: supplierColour, trend: supplierColour === 'red' ? 'down' : 'up', trendText: 'Top 3 of ' + s.supplier_count + ' suppliers' }
     ]);
 
     this._renderOpsCharts(d, chartArea, charts);
 
     var items = [];
-    var tq = s.over_quote_count+s.under_quote_count+s.on_quote_count;
-    if (tq > 0 && s.over_quote_count > 0) items.push({ icon: '&#9888;', text: Math.round(s.over_quote_count/tq*100)+'% of jobs over quoted price \u2014 review estimation.' });
-    if (s.avg_duration_days > 0) items.push({ icon: '&#128197;', text: 'Average duration '+s.avg_duration_days+' days across '+s.completed_jobs+' completed jobs.' });
-    if (s.form_completion_rate < 80 && s.total_jobs > 0) items.push({ icon: '&#9888;', text: 'Forms on '+s.form_completion_rate+'% of jobs \u2014 compliance gap.' });
-    else if (s.form_completion_rate >= 90) items.push({ icon: '&#9989;', text: 'Strong form compliance at '+s.form_completion_rate+'%.' });
-    if (s.avg_job_value > 0) items.push({ icon: '&#128176;', text: 'Average job value $'+this._formatNum(s.avg_job_value)+'.' });
+    if (largestPct >= 40) items.push({ icon: '&#9888;', text: (s.largest_category || 'One category') + ' is ' + largestPct + '% of total expenses \u2014 worth scrutinising for savings.' });
+    if (s.labour_pct_revenue >= 50) items.push({ icon: '&#9888;', text: 'Labour at ' + s.labour_pct_revenue + '% of revenue \u2014 high relative to typical SME benchmarks. Review productivity and pricing.' });
+    else if (s.labour_pct_revenue > 0 && s.labour_pct_revenue < 25) items.push({ icon: '&#9989;', text: 'Labour cost at ' + s.labour_pct_revenue + '% of revenue \u2014 healthy ratio.' });
+    if (s.supplier_concentration_pct >= 60) items.push({ icon: '&#9888;', text: 'Top 3 suppliers absorb ' + s.supplier_concentration_pct + '% of bill spend \u2014 supply chain risk if one fails.' });
+    else if (s.supplier_concentration_pct > 0 && s.supplier_concentration_pct < 40 && s.supplier_count >= 5) items.push({ icon: '&#9989;', text: 'Supplier base diversified at ' + s.supplier_concentration_pct + '% top-3 concentration.' });
+    var topOverheads = d.top_overheads || [];
+    if (topOverheads.length > 0) {
+      items.push({ icon: '&#127970;', text: 'Top overhead: ' + topOverheads[0].name + ' at $' + this._formatNum(topOverheads[0].total) + '.' });
+    }
     if (items.length === 0) items.push({ icon: '&#128161;', text: 'Operations data loaded.' });
     this._renderAdvisoryList(advisoryList, items, 'operations');
   },
@@ -299,23 +306,67 @@ window.BI_MODULES = {
   _renderOpsCharts: function(d, chartArea, charts) {
     if (!chartArea) return;
     chartArea.style.display = 'block';
-    if (charts.opsStatus) { charts.opsStatus.destroy(); charts.opsStatus = null; }
+    if (charts.opsCategories) { charts.opsCategories.destroy(); charts.opsCategories = null; }
     if (charts.opsMonthly) { charts.opsMonthly.destroy(); charts.opsMonthly = null; }
-    var statusCanvas = document.getElementById('bi-chart-operations');
-    if (!statusCanvas) return;
-    var statuses = d.status_breakdown||{}, monthly = d.monthly_jobs||[];
-    var sk = Object.keys(statuses);
-    if (sk.length === 0 && monthly.length === 0) { chartArea.innerHTML = '<div class="bi-module-loading">No operations data yet.</div>'; return; }
-    var monthlyCanvas = document.createElement('canvas');
-    chartArea.innerHTML = ''; chartArea.appendChild(statusCanvas); chartArea.appendChild(monthlyCanvas);
-    var c = this._getCSS();
-    if (sk.length > 0) {
-      var cols = [c.blue, c.green, c.orange, c.purple, c.grey, c.teal, c.red];
-      charts.opsStatus = new Chart(statusCanvas, { type: 'doughnut', data: { labels: sk, datasets: [{ data: sk.map(function(k){return statuses[k];}), backgroundColor: sk.map(function(k,i){return cols[i%cols.length];}) }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, padding: 12 } }, title: { display: true, text: 'Jobs by Status', font: { size: 13 }, color: c.textMuted } } } });
+    var primaryCanvas = document.getElementById('bi-chart-operations');
+    if (!primaryCanvas) return;
+    var topCats = d.top_expense_categories || [];
+    var monthly = d.monthly_expenses || [];
+    if (topCats.length === 0 && monthly.length === 0) {
+      chartArea.innerHTML = '<div class="bi-module-loading">No expense data yet.</div>';
+      return;
     }
-    if (monthly.length > 0) {
-      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      charts.opsMonthly = new Chart(monthlyCanvas, { type: 'bar', data: { labels: monthly.map(function(m){var p=m.month.split('-');return months[parseInt(p[1],10)-1]+' '+p[0].substring(2);}), datasets: [{ label: 'Jobs', data: monthly.map(function(m){return m.count;}), backgroundColor: c.blue+'AA' }] }, options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false }, title: { display: true, text: 'Jobs by Month', font: { size: 13 }, color: c.textMuted } }, scales: { y: { beginAtZero: true } } } });
+    var trendCanvas = document.createElement('canvas');
+    chartArea.innerHTML = ''; chartArea.appendChild(primaryCanvas); chartArea.appendChild(trendCanvas);
+    var c = this._getCSS();
+    if (topCats.length > 0) {
+      charts.opsCategories = new Chart(primaryCanvas, {
+        type: 'bar',
+        data: {
+          labels: topCats.map(function (cat) { return cat.name; }),
+          datasets: [{
+            label: 'Spend',
+            data: topCats.map(function (cat) { return cat.total; }),
+            backgroundColor: c.blue + 'AA'
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Top Expense Categories', font: { size: 13 }, color: c.textMuted }
+          },
+          scales: { x: { beginAtZero: true, ticks: { callback: function (v) { return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v); } } } }
+        }
+      });
+    }
+    if (monthly.length > 1) {
+      charts.opsMonthly = new Chart(trendCanvas, {
+        type: 'line',
+        data: {
+          labels: monthly.map(function (m) { return m.month; }),
+          datasets: [{
+            label: 'Monthly Expenses',
+            data: monthly.map(function (m) { return m.total; }),
+            borderColor: c.orange,
+            backgroundColor: c.orange + '20',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Monthly Expense Trend', font: { size: 13 }, color: c.textMuted }
+          },
+          scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v); } } } }
+        }
+      });
     }
   },
 

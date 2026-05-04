@@ -257,12 +257,22 @@ export default async function handler(req, res) {
 
     if (operations) {
       var os = (operations.summary) || {};
-      contextParts.push('\nOPERATIONS DATA');
-      contextParts.push('- Jobs total/completed: ' + (os.total_jobs || 0) + '/' + (os.completed_jobs || 0));
-      contextParts.push('- Avg duration: ' + (os.avg_duration_days || 0) + ' days');
-      contextParts.push('- Avg job value: $' + (os.avg_job_value || 0));
-      contextParts.push('- Over-quote/under-quote: ' + (os.over_quote_count || 0) + '/' + (os.under_quote_count || 0));
-      contextParts.push('- Form completion: ' + (os.form_completion_rate || 0) + '%');
+      contextParts.push('\nEXPENSE & COST DATA');
+      contextParts.push('- Total expenses: $' + (os.total_expenses || 0));
+      contextParts.push('- Total cost of business (expenses + COGS): $' + (os.total_cost_of_business || 0));
+      contextParts.push('- Largest cost centre: ' + (os.largest_category || 'Unknown') + ' ($' + (os.largest_category_amount || 0) + ', ' + (os.largest_category_pct || 0) + '% of expenses)');
+      contextParts.push('- Labour cost: $' + (os.labour_total || 0) + ' (' + (os.labour_pct_revenue || 0) + '% of revenue)');
+      contextParts.push('- Supplier concentration: top 3 = ' + (os.supplier_concentration_pct || 0) + '% of bill spend (' + (os.supplier_count || 0) + ' suppliers)');
+      var opData = operations || {};
+      if (Array.isArray(opData.top_expense_categories) && opData.top_expense_categories.length > 0) {
+        contextParts.push('- Top expense categories: ' + opData.top_expense_categories.slice(0, 5).map(function (c) { return c.name + ' $' + c.total + ' (' + c.pct_of_total + '%)'; }).join(', '));
+      }
+      if (Array.isArray(opData.top_overheads) && opData.top_overheads.length > 0) {
+        contextParts.push('- Top overheads: ' + opData.top_overheads.slice(0, 4).map(function (c) { return c.name + ' $' + c.total; }).join(', '));
+      }
+      if (Array.isArray(opData.top_suppliers) && opData.top_suppliers.length > 0) {
+        contextParts.push('- Top suppliers by spend: ' + opData.top_suppliers.slice(0, 5).map(function (s) { return s.name + ' $' + s.spend + ' (' + s.percentage + '%)'; }).join(', '));
+      }
     }
 
     if (clItems.length > 0) {

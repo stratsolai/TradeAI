@@ -4,7 +4,7 @@
 // data normalisation. Never exposes tokens to the browser.
 //
 // Supported actions: invoices, bills, contacts, items, quotes, jobs,
-// pl_summary, balances
+// pl_summary, pl_breakdown, balances
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -275,6 +275,74 @@ export default async function handler(req, res) {
         total_income: totalIncome,
         total_expenses: totalExpenses,
         net_profit: totalIncome - totalExpenses,
+        platform: 'xero'
+      };
+    } else if (action === 'pl_breakdown') {
+      // Profit & Loss with monthly breakdown for current financial year.
+      // Returns income, cost-of-sales, and operating-expense rows broken
+      // out by account, each with a monthly total array, plus the column
+      // headers from the report.
+      var nowB = new Date();
+      var fyStartB = nowB.getMonth() >= 6
+        ? new Date(nowB.getFullYear(), 6, 1)
+        : new Date(nowB.getFullYear() - 1, 6, 1);
+      var fromDateB = fyStartB.toISOString().split('T')[0];
+      var toDateB = nowB.toISOString().split('T')[0];
+      var monthsCount = (nowB.getFullYear() - fyStartB.getFullYear()) * 12 + (nowB.getMonth() - fyStartB.getMonth()) + 1;
+      if (monthsCount < 1) monthsCount = 1;
+      if (monthsCount > 12) monthsCount = 12;
+      var urlB = '/Reports/ProfitAndLoss?fromDate=' + fromDateB + '&toDate=' + toDateB + '&periods=' + monthsCount + '&timeframe=MONTH';
+      var dataB = await xeroGet(urlB);
+      var reportB = dataB.Reports && dataB.Reports[0];
+
+      var monthLabels = [];
+      var income = { categories: [] };
+      var cogs = { categories: [] };
+      var expenses = { categories: [] };
+
+      if (reportB && Array.isArray(reportB.Rows)) {
+        // First pass: header row gives month labels (skip first cell = label, last cell = period total)
+        var headerRow = reportB.Rows.find(function (r) { return r.RowType === 'Header'; });
+        if (headerRow && Array.isArray(headerRow.Cells)) {
+          for (var hi = 1; hi < headerRow.Cells.length; hi++) {
+            monthLabels.push((headerRow.Cells[hi] && headerRow.Cells[hi].Value) || '');
+          }
+          // The final column when periods>1 is the period total — drop it
+          if (monthLabels.length > 1) monthLabels.pop();
+        }
+
+        reportB.Rows.forEach(function (section) {
+          if (section.RowType !== 'Section') return;
+          var bucket = null;
+          var title = section.Title || '';
+          if (title === 'Income') bucket = income;
+          else if (title.indexOf('Cost of Sales') !== -1) bucket = cogs;
+          else if (title.indexOf('Operating Expenses') !== -1) bucket = expenses;
+          else return;
+
+          (section.Rows || []).forEach(function (row) {
+            if (row.RowType !== 'Row' || !Array.isArray(row.Cells)) return;
+            var name = (row.Cells[0] && row.Cells[0].Value) || 'Unknown';
+            var monthly = [];
+            // Cells[1..n] are monthly amounts; if more than one month, the last cell is the period total
+            var amountCells = row.Cells.slice(1);
+            if (amountCells.length > 1) amountCells = amountCells.slice(0, -1);
+            for (var mi = 0; mi < amountCells.length; mi++) {
+              monthly.push(parseFloat(amountCells[mi].Value) || 0);
+            }
+            var rowTotal = monthly.reduce(function (s, v) { return s + v; }, 0);
+            bucket.categories.push({ name: name, total: rowTotal, monthly: monthly });
+          });
+        });
+      }
+
+      result = {
+        period_start: fromDateB,
+        period_end: toDateB,
+        months: monthLabels,
+        income: income,
+        cost_of_sales: cogs,
+        expenses: expenses,
         platform: 'xero'
       };
     } else if (action === 'balances') {
