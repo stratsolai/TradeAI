@@ -197,7 +197,7 @@ async function categoriseEmails(emails, categories, businessName, industry, user
 
   var data = await response.json();
   console.log('[EA] Claude response status:', response.status, 'has content:', !!(data.content && data.content[0]));
-  logAnthropicUsage({ tool_id: 'email', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage });
+  logAnthropicUsage({ tool_id: 'email', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'ea-summary' });
 
   if (data.error) {
     console.error('[EA] Claude API error:', JSON.stringify(data.error));
