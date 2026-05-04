@@ -237,13 +237,44 @@ export default async function handler(req, res) {
 
     var profileRes = await supabase
       .from('profiles')
-      .select('ea_connected_emails, business_name, industry')
+      .select('ea_connected_emails, cl_connected_emails, business_name, industry')
       .eq('id', userId)
       .single();
     if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
     var profile = profileRes.data;
 
     var eaEmails = Array.isArray(profile.ea_connected_emails) ? profile.ea_connected_emails : [];
+
+    // Build a (provider|email) lookup for accounts also connected in the
+    // Content Library. When the account being scanned is in this set, EA's
+    // CL writeback path skips — the CL email scanner is the authoritative
+    // ingestion source for that account, so EA pushing newsletters too
+    // would create cross-tool duplicates in content_library.
+    //
+    // Gmail-side: CL stores entries with provider 'gmail' or 'google';
+    // Outlook-side: 'microsoft' or 'outlook'. We normalise both sides to
+    // a canonical 'gmail' / 'outlook' key so the lookup works regardless
+    // of which historical naming a connection was saved under.
+    function canonicalEmailProvider(p) {
+      var s = String(p || '').toLowerCase();
+      if (s === 'gmail' || s === 'google') return 'gmail';
+      if (s === 'microsoft' || s === 'outlook') return 'outlook';
+      return s;
+    }
+    var clConnectedEmails = Array.isArray(profile.cl_connected_emails) ? profile.cl_connected_emails : [];
+    var clConnectedKeys = new Set(
+      clConnectedEmails
+        .filter(function(e) { return e && e.email; })
+        .map(function(e) {
+          return canonicalEmailProvider(e.provider) + '|' + String(e.email).toLowerCase();
+        })
+    );
+    var scanAccountKey = canonicalEmailProvider(provider) + '|' + String(accountEmail || '').toLowerCase();
+    var clWritebackEnabled = !clConnectedKeys.has(scanAccountKey);
+    if (!clWritebackEnabled) {
+      console.log('[EA] CL writeback disabled — account is also connected in CL email scan:', scanAccountKey);
+    }
+
     var entry = eaEmails.find(function(e) {
       return e && e.email === accountEmail && (
         (provider === 'gmail' && (e.provider === 'gmail' || e.provider === 'google')) ||
@@ -487,7 +518,10 @@ export default async function handler(req, res) {
       }
 
       // ── CL Tool Outputs push — Newsletter / Marketing emails ──────────
-      if (normCat === 'newsletters' && email.body) {
+      // Skipped when the same email account is also connected in CL's
+      // own email scanner (computed once at scan start as
+      // clWritebackEnabled). Avoids cross-tool duplicates in content_library.
+      if (normCat === 'newsletters' && email.body && clWritebackEnabled) {
         try {
           var clItems = await runClExtractionPrompt(email.body, email.subject, email.sender + ' <' + email.email + '>', userId);
           if (Array.isArray(clItems) && clItems.length > 0) {
