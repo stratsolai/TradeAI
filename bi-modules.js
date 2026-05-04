@@ -45,7 +45,7 @@ window.BI_MODULES = {
       html += '<span class="bi-advisory-icon">' + items[i].icon + '</span>';
       html += '<span class="bi-advisory-text">' + escHtml(items[i].text) + '</span>';
       html += '<div class="bi-advisory-actions">';
-      html += '<button class="bi-ask-btn" data-module="' + escHtml(mod) + '" data-insight-idx="' + i + '">Ask about this</button>';
+      html += '<button class="btn-outline btn-sm bi-ask-btn" data-module="' + escHtml(mod) + '" data-insight-idx="' + i + '">Chat with AI</button>';
       html += '</div></div>';
     }
     container.innerHTML = html;
@@ -343,10 +343,17 @@ window.BI_MODULES = {
       });
     }
     if (monthly.length > 1) {
+      var monthShort = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var formatMonth = function (raw) {
+        if (!raw) return '';
+        var d = new Date(raw);
+        if (!isNaN(d.getTime())) return monthShort[d.getMonth()] + ' ' + String(d.getFullYear()).substring(2);
+        return raw;
+      };
       charts.opsMonthly = new Chart(trendCanvas, {
         type: 'line',
         data: {
-          labels: monthly.map(function (m) { return m.month; }),
+          labels: monthly.map(function (m) { return formatMonth(m.month); }),
           datasets: [{
             label: 'Monthly Expenses',
             data: monthly.map(function (m) { return m.total; }),
@@ -362,7 +369,7 @@ window.BI_MODULES = {
           maintainAspectRatio: true,
           plugins: {
             legend: { display: false },
-            title: { display: true, text: 'Monthly Expense Trend', font: { size: 13 }, color: c.textMuted }
+            title: { display: true, text: 'Rolling 12mth Expense Trend', font: { size: 13 }, color: c.textMuted }
           },
           scales: { y: { beginAtZero: true, ticks: { callback: function (v) { return '$' + (v >= 1000 ? Math.round(v / 1000) + 'K' : v); } } } }
         }

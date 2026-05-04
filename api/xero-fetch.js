@@ -278,19 +278,14 @@ export default async function handler(req, res) {
         platform: 'xero'
       };
     } else if (action === 'pl_breakdown') {
-      // Profit & Loss with monthly breakdown for current financial year.
-      // Returns income, cost-of-sales, and operating-expense rows broken
-      // out by account, each with a monthly total array, plus the column
-      // headers from the report.
+      // Profit & Loss with monthly breakdown for the rolling 12 months
+      // ending in the current month. Returns income, cost-of-sales, and
+      // operating-expense rows broken out by account, each with a monthly
+      // total array, plus the column headers from the report.
       var nowB = new Date();
-      var fyStartB = nowB.getMonth() >= 6
-        ? new Date(nowB.getFullYear(), 6, 1)
-        : new Date(nowB.getFullYear() - 1, 6, 1);
-      var fromDateB = fyStartB.toISOString().split('T')[0];
-      var toDateB = nowB.toISOString().split('T')[0];
-      var monthsCount = (nowB.getFullYear() - fyStartB.getFullYear()) * 12 + (nowB.getMonth() - fyStartB.getMonth()) + 1;
-      if (monthsCount < 1) monthsCount = 1;
-      if (monthsCount > 12) monthsCount = 12;
+      var fromDateB = new Date(nowB.getFullYear(), nowB.getMonth() - 11, 1).toISOString().split('T')[0];
+      var toDateB = new Date(nowB.getFullYear(), nowB.getMonth() + 1, 0).toISOString().split('T')[0];
+      var monthsCount = 12;
       var urlB = '/Reports/ProfitAndLoss?fromDate=' + fromDateB + '&toDate=' + toDateB + '&periods=' + monthsCount + '&timeframe=MONTH';
       var dataB = await xeroGet(urlB);
       var reportB = dataB.Reports && dataB.Reports[0];

@@ -179,10 +179,12 @@
 
     /* Action buttons inherit colour/border/hover from platform classes
        (.btn-outline, .btn-dismiss). Override size only — current compact
-       sizing is intentional for this screen. */
+       sizing is intentional for this screen. Applies to alert cards in
+       Risks & Opportunities and to AI Advisory rows in every module. */
     .bi-alert-actions .bi-ask-btn,
     .bi-alert-actions .bi-act-btn,
-    .bi-alert-actions .bi-dismiss-btn {
+    .bi-alert-actions .bi-dismiss-btn,
+    .bi-advisory-actions .bi-ask-btn {
       padding: 4px 10px;
       font-size: var(--badge-font-size);
       white-space: nowrap;
