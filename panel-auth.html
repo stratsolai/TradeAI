@@ -1144,9 +1144,18 @@
 
   // 2. renderPanel
   function renderPanel(tool) {
+    // tools-data.js used to store title as a 2-element array (line 1, line 2).
+    // Section 1 of the CL prompt rewrite unified it to a single string. Handle
+    // both shapes so the panel renders correctly regardless of which form the
+    // tool record carries.
+    var titleStr = (typeof tool.title === 'string')
+      ? tool.title
+      : (Array.isArray(tool.title) ? tool.title.join(' ') : '');
+    var titleLine1 = Array.isArray(tool.title) ? (tool.title[0] || '') : titleStr;
+    var titleLine2 = Array.isArray(tool.title) ? (tool.title[1] || '') : '';
     var bc = document.getElementById('panel-breadcrumb');
-    if (bc) bc.textContent = tool.title ? tool.title[0] + ' ' + tool.title[1] : '';
-    document.title = tool.title ? tool.title[0] + ' ' + tool.title[1] + ' | StaxAI' : 'StaxAI';
+    if (bc) bc.textContent = titleStr;
+    document.title = titleStr ? titleStr + ' | StaxAI' : 'StaxAI';
     var ic = document.getElementById('panel-icon');
     if (ic) ic.textContent = tool.icon || '';
     var badge = document.getElementById('panel-live-badge');
@@ -1160,9 +1169,9 @@
       }
     }
     var t1 = document.getElementById('panel-title-line1');
-    if (t1) t1.textContent = tool.title ? tool.title[0] : '';
+    if (t1) t1.textContent = titleLine1;
     var t2 = document.getElementById('panel-title-line2');
-    if (t2) t2.textContent = tool.title ? tool.title[1] : '';
+    if (t2) t2.textContent = titleLine2;
     var tg = document.getElementById('panel-tagline');
     if (tg) tg.textContent = tool.tagline || '';
     var desc = document.getElementById('panel-desc');
