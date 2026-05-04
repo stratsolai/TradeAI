@@ -339,24 +339,20 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   will-change: transform;
 }
 
-/* Featured row — pinned, non-scrolling. Tiles are wider and shorter than
-   the carousel tiles (a more landscape proportion). Three tiles fit in a
-   single line on widescreen desktops (~1800px viewport and up); flex-wrap
-   stays on as a safety net for narrower viewports.
-   The min-width override is required because the base .tool-card-v2 rule
-   sets min-width: 360px, which would otherwise stop the featured tiles
-   from shrinking. The element overrides below trim the shot height,
-   description clamp and inner padding to deliver a noticeably shorter
-   card without changing the carousel tiles. */
+/* Featured row — pinned, non-scrolling. Tiles are the same width and gap
+   as the carousel tiles below so the columns line up vertically (featured
+   tile 1 sits above carousel tile 1, etc.). The element overrides below
+   keep the cards landscape-proportioned: shorter shot, two-line desc,
+   tighter inner padding, smaller fonts. */
 .featured-row {
-  display: flex; gap: 16px;
+  display: flex; gap: 24px;
   flex-wrap: wrap;
   margin-bottom: 24px;
 }
-.featured-row .tool-card-v2 { flex: 0 0 300px; min-width: 300px; }
+.featured-row .tool-card-v2 { flex: 0 0 360px; min-width: 360px; }
 .featured-row .tool-card-v2-shot { height: 90px; font-size: 50px; }
 .featured-row .tool-card-v2-badge { top: 8px; right: 8px; font-size: 10px; padding: 4px 9px; }
-.featured-row .tool-card-v2-body { padding: 14px 16px 16px; gap: 10px; }
+.featured-row .tool-card-v2-body { padding: 14px 18px 16px; gap: 10px; }
 .featured-row .tool-card-v2-name { font-size: 16px; }
 .featured-row .tool-card-v2-desc { font-size: 12px; -webkit-line-clamp: 2; }
 .featured-row .tool-card-v2-price { font-size: 16px; }
@@ -372,7 +368,11 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   border: 1px solid rgba(255,255,255,0.06);
 }
 .tool-card-v2:hover { transform: scale(1.03); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
-.tool-card-v2.coming-soon { opacity: 0.85; }
+/* Coming-soon status is communicated by the orange "Coming soon" badge in
+   the corner of the shot. The previous 0.85 opacity also lightened the
+   tile background, which made carousel tiles read as a different colour
+   from the featured tiles on the light accordion bg — removed so the two
+   rows match visually. */
 
 .tool-card-v2-shot {
   position: relative; height: 170px;
