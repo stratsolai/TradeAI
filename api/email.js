@@ -545,7 +545,7 @@ export default async function handler(req, res) {
               tool_tags: clToolTags,
               status: clStatus,
               source: 'tool',
-              tool_source: 'email-assistant',
+              tool_source: 'email',
               source_ref: 'ea-newsletter:' + email.id,
               source_detail: { sender: email.sender, sender_email: email.email, subject: email.subject, provider: email.provider, account_email: accountEmail }
             };

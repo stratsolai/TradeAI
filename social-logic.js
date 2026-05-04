@@ -225,7 +225,7 @@ window.SOCIAL_LOGIC = {
   // ── Dashboard Photo Capture handoff ─────────────────────────
   // Reads payload from sessionStorage 'stax_photo_handoff' (set by the dashboard),
   // surfaces a confirmation modal showing the photo + preset tags, and on confirm
-  // saves to Content Library with tool_source='social-media' (Pattern B).
+  // saves to Content Library with tool_source='social' (Pattern B).
   _handlePhotoHandoff: function() {
     var raw;
     try { raw = sessionStorage.getItem('stax_photo_handoff'); } catch (e) { return; }
@@ -328,7 +328,7 @@ window.SOCIAL_LOGIC = {
     var row = {
       user_id: this._userId,
       source: 'tool',
-      tool_source: 'social-media',
+      tool_source: 'social',
       source_ref: path,
       status: 'approved',
       category: 'Photos',
