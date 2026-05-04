@@ -614,8 +614,15 @@
       color: var(--text);
     }
 
-    .bi-period-wrap {
+    /* Sizing scoped to the dropdown button itself — not the wrap. The
+       earlier min-width on .bi-period-wrap left empty space inside the
+       wrap to the right of the button, which the eye reads as a wide gap
+       even though the flex gap is only 4px. Sizing the button instead
+       lets the wrap hug it, so the 4px gap is the real visual gap. */
+    .bi-period-wrap #bi-period-btn {
       min-width: 170px;
+      padding: 6px 28px 6px 14px;
+      font-size: var(--status-font-size);
     }
 
     .bi-history-btn {
