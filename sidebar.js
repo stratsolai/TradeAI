@@ -16,7 +16,7 @@
     ]},
     { type: 'category', label: 'Business Intelligence', items: [
       { id: 'news-digest',    label: 'Industry News Digest', icon: '📰', url: '/news' },
-      { id: 'bi',             label: 'BI Dashboard',         icon: '🧠', url: '/bi.html' },
+      { id: 'bi',             label: 'BI Dashboard',         icon: '📊', url: '/bi.html' },
       { id: 'strategic-plan', label: 'Strategic Plan',       icon: '📝', url: '/strategy' }
     ]}
   ];
