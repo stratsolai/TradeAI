@@ -182,11 +182,19 @@ export default async function handler(req, res) {
           var ph = c.Phones.find(function (p) { return p.PhoneNumber; });
           if (ph) phone = (ph.PhoneCountryCode ? '+' + ph.PhoneCountryCode + ' ' : '') + (ph.PhoneAreaCode || '') + ph.PhoneNumber;
         }
+        var isCustomer = !!c.IsCustomer;
+        var isSupplier = !!c.IsSupplier;
+        var contactType = 'other';
+        if (isCustomer && isSupplier) contactType = 'both';
+        else if (isCustomer) contactType = 'customer';
+        else if (isSupplier) contactType = 'supplier';
         return {
           contact_name: c.Name || '',
           email: c.EmailAddress || '',
           phone: phone,
-          contact_type: c.IsCustomer ? 'customer' : c.IsSupplier ? 'supplier' : 'other',
+          is_customer: isCustomer,
+          is_supplier: isSupplier,
+          contact_type: contactType,
           platform: 'xero'
         };
       });
