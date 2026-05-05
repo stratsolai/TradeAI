@@ -356,6 +356,7 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .featured-row .tool-card-v2-body { padding: 14px 18px 16px; gap: 10px; }
 .featured-row .tool-card-v2-name { font-size: 16px; }
 .featured-row .tool-card-v2-desc { font-size: 12px; -webkit-line-clamp: 2; }
+.featured-row .tool-card-v2-more { font-size: 11px; }
 .featured-row .tool-card-v2-price { font-size: 16px; }
 .featured-row .tool-card-v2-cta { font-size: 13px; padding: 7px 13px; }
 
@@ -399,14 +400,36 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   color: #fff; font-size: 18px; font-weight: 600;
   line-height: 1.25;
 }
+.tool-card-v2-desc-wrap {
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 6px;
+  flex: 1;
+}
 .tool-card-v2-desc {
   color: rgba(255,255,255,0.6);
   font-size: 13px; line-height: 1.5;
-  flex: 1;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.tool-card-v2-desc.expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+.tool-card-v2-more {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(255,255,255,0.4);
+  user-select: none;
+}
+.tool-card-v2-more:hover {
+  color: #fff;
+  text-decoration-color: rgba(255,255,255,0.7);
 }
 .tool-card-v2-foot {
   display: flex; align-items: center; justify-content: space-between;
@@ -901,7 +924,8 @@ footer {
 
   function escAttr(s) { return String(s == null ? '' : s).replace(/"/g, '&quot;'); }
 
-  function buildToolCard(t) {
+  function buildToolCard(t, opts) {
+    opts = opts || {};
     var dest = '/panel?tool=' + t.id +
       (workflowParam ? '&workflow=' + workflowParam : '') +
       (industryParam ? '&industry=' + industryParam : '');
@@ -913,6 +937,16 @@ footer {
     var ctaText = isBuilt ? 'Explore →' : 'Notify me';
     var ctaClass = isBuilt ? 'live' : 'soon';
     var cardClass = 'tool-card-v2' + (isBuilt ? '' : ' coming-soon');
+    // Featured cards clamp to 2 lines (smaller), carousel cards to 4 lines.
+    // Char thresholds chosen so descriptions that almost certainly fit
+    // skip the "more" affordance — short industry-tool blurbs stay clean.
+    var descLen = (t.desc || '').length;
+    var hasMore = opts.featured ? descLen > 70 : descLen > 150;
+    var descBlock =
+      '<div class="tool-card-v2-desc-wrap">' +
+        '<div class="tool-card-v2-desc">' + t.desc + '</div>' +
+        (hasMore ? '<span class="tool-card-v2-more">more</span>' : '') +
+      '</div>';
     return '<a class="' + cardClass + '" href="' + escAttr(dest) + '" data-toolid="' + escAttr(t.id) + '" data-status="' + escAttr(t.status) + '">' +
       '<div class="tool-card-v2-shot">' +
         '<span aria-hidden="true">' + t.icon + '</span>' +
@@ -920,7 +954,7 @@ footer {
       '</div>' +
       '<div class="tool-card-v2-body">' +
         '<div class="tool-card-v2-name">' + t.title + '</div>' +
-        '<div class="tool-card-v2-desc">' + t.desc + '</div>' +
+        descBlock +
         '<div class="tool-card-v2-foot">' +
           '<span class="tool-card-v2-price">' + price + '</span>' +
           '<span class="tool-card-v2-cta ' + ctaClass + '">' + ctaText + '</span>' +
@@ -964,7 +998,7 @@ footer {
       //                   day so every built tool gets surfaced over time
       var featuredTools = pickFeaturedTools(builtTools);
       var featuredHtml = featuredTools.length
-        ? '<div class="featured-row">' + featuredTools.map(buildToolCard).join('') + '</div>'
+        ? '<div class="featured-row">' + featuredTools.map(function(t) { return buildToolCard(t, { featured: true }); }).join('') + '</div>'
         : '';
 
       // Carousel row — continuous ribbon for all non-built tools (pending,
@@ -1116,6 +1150,22 @@ footer {
     clearRibbons();
     document.querySelectorAll('.tool-carousel').forEach(setupRibbon);
   }
+
+  // Description more/less toggle. Cards are anchors that navigate to the
+  // tool panel, so we preventDefault + stopPropagation here to keep the
+  // click confined to the desc expander. Listener is attached once at
+  // module load — it survives re-renders because cards are queried lazily
+  // via .closest() at click time.
+  document.addEventListener('click', function(e) {
+    var more = e.target.closest('.tool-card-v2-more');
+    if (!more) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var desc = more.parentElement && more.parentElement.querySelector('.tool-card-v2-desc');
+    if (!desc) return;
+    var expanded = desc.classList.toggle('expanded');
+    more.textContent = expanded ? 'less' : 'more';
+  });
 
   // Filter tab clicks: expand matching accordion (collapse others), or
   // expand all when "All" is active. Page does NOT scroll — the user
