@@ -53,32 +53,6 @@ The owner will push back when needed and should be encouraged to do so.
 
 ---
 
-## Tool Rebuild Process (Strategic, Chatbot, Social)
-
-**Phase 1: Assessment & Planning**
-1. **Structural audit** — Code reads all tool files and reports current state vs platform standards
-2. **Backend audit** — Code reads all API endpoints, database queries, OAuth flows and reports against current platform patterns (CL/EA/ID reference)
-3. **Database audit** — Code reviews all database tables/fields and reports any missing fields, incorrect setups, or unused references
-4. **Rebuild vs refactor analysis** — Code estimates effort to clean existing files vs starting fresh, recommends approach per tool
-5. **Gap analysis** — Code identifies what's missing vs functional requirements and current platform capabilities
-6. **Review findings together** — Decide rebuild approach and priorities per tool
-
-**Phase 2: Rebuild**
-7. **Backend fixes** — Bring all API endpoints, database patterns, OAuth flows up to platform standard
-8. **Structural rebuild** — Clean files, implement proper architecture (split files, topbar.js, shared-utils.js, etc.)
-9. **Stylesheet integration** — Implement all CSS variables, shared components, platform UI patterns
-10. **Missing features build** — Add any functionality that's missing vs requirements
-11. **Settings page rebuild** — Ensure settings follow the established pattern (CL/EA/ID style)
-
-**Phase 3: Validation**
-12. **Functional review** — Test tool end-to-end with real data against requirements
-13. **Cross-platform consistency check** — Ensure dropdowns, tabs, headings, etc. match CL/EA/ID exactly
-14. **Integration testing** — Confirm tool plays nicely with CL, topbar, other platform components
-15. **Browser & performance testing** — Visual/functional check across browsers
-16. **Final integration test** — Confirm OAuth, API connections, database operations all work correctly
-
----
-
 ## Active Tasks
 
 ### Task 13 — Integration Requirements
