@@ -311,7 +311,7 @@ window.CL_PROFILE = {
     '</div>' +
     '<div class="perm-modal-overlay" id="prof-industry-modal">' +
       '<div class="perm-modal">' +
-        '<div class="perm-modal-title">Remove Industry</div>' +
+        '<div class="perm-modal-title" id="prof-industry-modal-title">Remove Industry</div>' +
         '<div class="perm-modal-body" id="prof-industry-modal-body"></div>' +
         '<div class="perm-modal-actions">' +
           '<button type="button" class="perm-modal-cancel" id="prof-industry-modal-cancel">Cancel</button>' +
@@ -353,9 +353,63 @@ window.CL_PROFILE = {
     });
   },
 
+  // Maps BP industry names (BP_INDUSTRY_DATA.groups[].name) to the
+  // industryKey values used by tools-data.js for type:'industry' tools.
+  // Best-effort mapping based on current naming; may need owner
+  // refinement when industry-specific tools ship.
+  _BP_TO_TOOL_INDUSTRY: {
+    'Building & Construction':       ['builder', 'pool', 'concreter'],
+    'Electrical & Solar':            ['electrician'],
+    'Plumbing & Gas':                ['plumber'],
+    'HVAC & Refrigeration':          ['hvac'],
+    'Landscaping & Outdoor':         ['landscaper'],
+    'Painting & Finishing':          [],
+    'Fabrication & Manufacturing':   ['fabricator', 'manufacturer'],
+    'Cleaning & Maintenance':        ['cleaner'],
+    'Service & Professional':        []
+  },
+
+  _buildIndustryRemovalBody: function(industry) {
+    var esc = window.escHtml;
+    var profile = this._profile || {};
+    var activated = Array.isArray(profile.activated_tools) ? profile.activated_tools : [];
+
+    // Section 1: tools using industry context — fixed informational list
+    var contextTools = [
+      { id: 'chatbot',        label: 'Chatbot',                  use: 'system prompt' },
+      { id: 'design-viz',     label: 'Design Visualiser',        use: 'render types' },
+      { id: 'news-digest',    label: 'Industry News Digest',     use: 'news sources' },
+      { id: 'strategic-plan', label: 'Strategic Plan',           use: 'industry analysis' }
+    ];
+    var contextItems = contextTools.map(function(t) {
+      return '<li>' + esc(t.label) + ' — ' + esc(t.use) + '</li>';
+    }).join('');
+
+    // Section 2: industry-specific tools owned for this industry
+    var industryTools = [];
+    var keys = this._BP_TO_TOOL_INDUSTRY[industry] || [];
+    if (keys.length && Array.isArray(window.TOOLS) && activated.length) {
+      industryTools = window.TOOLS.filter(function(t) {
+        return t.type === 'industry' && keys.indexOf(t.industryKey) > -1 && activated.indexOf(t.id) > -1;
+      });
+    }
+    var industryToolsSection = '';
+    if (industryTools.length) {
+      industryToolsSection =
+        '<p style="margin-top:12px"><strong>' + esc(industry) + '</strong>-specific tools currently active:</p>' +
+        '<ul>' + industryTools.map(function(t) { return '<li>' + esc(t.title) + '</li>'; }).join('') + '</ul>';
+    }
+
+    return '<p>Removing <strong>' + esc(industry) + '</strong> will affect tools that use industry context:</p>' +
+      '<ul>' + contextItems + '</ul>' +
+      industryToolsSection +
+      '<p style="margin-top:12px;color:var(--text-muted)">Existing tool outputs will not be deleted but may reference the removed industry.</p>';
+  },
+
   _bindIndustryWarn: function(previousIndustries) {
     var group = document.getElementById('prof-industries');
     if (!group) return;
+    var self = this;
     var MAX_INDUSTRIES = 2;
 
     // Capture-phase: block selection of a third industry before
@@ -388,8 +442,10 @@ window.CL_PROFILE = {
       var isNowDeselected = !chip.classList.contains('active');
       if (wasSelected && isNowDeselected) {
         var modal = document.getElementById('prof-industry-modal');
+        var title = document.getElementById('prof-industry-modal-title');
         var body = document.getElementById('prof-industry-modal-body');
-        body.innerHTML = 'Removing <strong>' + window.escHtml(val) + '</strong> will disable it rather than delete it. Existing services, products, and tool outputs linked to this industry will remain intact.';
+        if (title) title.textContent = 'Remove ' + val + '?';
+        body.innerHTML = self._buildIndustryRemovalBody(val);
         modal.classList.add('open');
         var confirmBtn = document.getElementById('prof-industry-modal-confirm');
         var cancelBtn = document.getElementById('prof-industry-modal-cancel');
