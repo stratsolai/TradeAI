@@ -208,7 +208,16 @@
 .tool-pill-add-stax { font-size:11px; font-weight:var(--font-weight-semibold); color:var(--blue); white-space:nowrap; }
 .tool-pill-inactive:hover .tool-pill-add-stax { color:var(--blue-accent-hover); }
 
-/* Source detail — uses shared .source-detail and .source-detail-label from stylesheet */
+/* Source detail — uses shared .source-detail and .source-detail-label from stylesheet.
+   Each detail row is laid out as a 2-column grid (label + value) so values
+   align vertically across rows regardless of label length. The action row
+   (View Source Document link) and the empty-state row opt out via class. */
+.source-detail > div:not(.source-detail-action):not(.list-empty-detail) {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
 .review-empty-detail { color:var(--text-disabled); font-style:italic; }
 .list-empty-detail { color:var(--text-disabled); font-style:italic; }
 

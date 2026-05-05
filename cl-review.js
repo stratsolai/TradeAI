@@ -456,15 +456,21 @@ window.CL_REVIEW = {
     const detail = item.source_detail || {};
     const sourceDetailParts = [];
     var connectionLabel = this._connectionLabel(item);
-    if (connectionLabel) sourceDetailParts.push('<div><span class="source-detail-label">Connection:</span> ' + escHtml(connectionLabel) + '</div>');
-    if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span> ' + escHtml(detail.filename) + '</div>');
-    if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email account:</span> ' + escHtml(detail.account_email) + '</div>');
-    if (detail.sender) sourceDetailParts.push('<div><span class="source-detail-label">From:</span> ' + escHtml(detail.sender) + '</div>');
-    if (detail.subject) sourceDetailParts.push('<div><span class="source-detail-label">Subject:</span> ' + escHtml(detail.subject) + '</div>');
-    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span> ' + escHtml(detail.url) + '</div>');
-    if (detail.folder_name) sourceDetailParts.push('<div><span class="source-detail-label">Drive folder:</span> ' + escHtml(detail.folder_name) + '</div>');
+    if (connectionLabel) sourceDetailParts.push('<div><span class="source-detail-label">Connection:</span><span>' + escHtml(connectionLabel) + '</span></div>');
+    if (detail.filename) sourceDetailParts.push('<div><span class="source-detail-label">File:</span><span>' + escHtml(detail.filename) + '</span></div>');
+    if (detail.account_email) sourceDetailParts.push('<div><span class="source-detail-label">Email Account:</span><span>' + escHtml(detail.account_email) + '</span></div>');
+    if (detail.sender) sourceDetailParts.push('<div><span class="source-detail-label">From:</span><span>' + escHtml(detail.sender) + '</span></div>');
+    if (detail.subject) sourceDetailParts.push('<div><span class="source-detail-label">Subject:</span><span>' + escHtml(detail.subject) + '</span></div>');
+    if (detail.url) sourceDetailParts.push('<div><span class="source-detail-label">URL:</span><span>' + escHtml(detail.url) + '</span></div>');
+    if (detail.folder_name) sourceDetailParts.push('<div><span class="source-detail-label">Drive folder:</span><span>' + escHtml(detail.folder_name) + '</span></div>');
+    // Auto-rejected items carry the AI's classification in item.category —
+    // categories in DISCARD_CATEGORIES (Legal, IT, Spam, Customer Enquiries,
+    // Complaints) are what triggered the rejection on import.
+    if (this._status === 'rejected' && detail.rejection_source === 'auto' && item.category) {
+      sourceDetailParts.push('<div><span class="source-detail-label">Rejection Reason:</span><span>' + escHtml(item.category) + '</span></div>');
+    }
     if (item.source_item_id && detail.file_url) {
-      sourceDetailParts.push('<div><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
+      sourceDetailParts.push('<div class="source-detail-action"><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
     }
     const sourceDetailHtml = sourceDetailParts.length > 0 ? sourceDetailParts.join('') : '<div class="list-empty-detail">No source detail available.</div>';
     const aiRejectedPill = (this._status === 'rejected' && detail.rejection_source === 'auto')
