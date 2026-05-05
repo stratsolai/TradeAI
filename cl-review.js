@@ -9,10 +9,10 @@ window.CL_REVIEW = {
   _selected: new Set(),
   _filterState: { pending: { tools: [], cats: [], sources: [] }, approved: { tools: [], cats: [], sources: [] }, rejected: { tools: [], cats: [], sources: [] }, archived: { tools: [], cats: [], sources: [] } },
 
-  // Friendly source labels offered in the "Filter By Source" dropdown.
-  // Order matches the user-facing list. Mapped to item.source +
-  // item.tool_source via _sourceFilterLabel.
-  _SOURCE_FILTER_OPTIONS: ['Gmail', 'Outlook', 'Google Drive', 'OneDrive', 'SharePoint', 'Dropbox', 'Website', 'Upload'],
+  // Friendly source labels offered in the "Filter By Source" dropdown,
+  // alphabetised. Mapped to item.source + item.tool_source via
+  // _sourceFilterLabel.
+  _SOURCE_FILTER_OPTIONS: ['Dropbox', 'Gmail', 'Google Drive', 'OneDrive', 'Outlook', 'SharePoint', 'Upload', 'Website'],
 
   // Surfaced in the Source dropdown for AI-rejected items. Maps each
   // DISCARD category to a short user-facing explanation appended after
@@ -340,16 +340,15 @@ window.CL_REVIEW = {
     const self = this;
 
     var FIXED_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
-    const cats = FIXED_CATEGORIES;
+    const cats = FIXED_CATEGORIES.slice().sort(function(a, b) { return a.localeCompare(b); });
     catPillsEl.innerHTML = cats.map(function(cat) {
       const isActive = self._categoryFilter.indexOf(cat) > -1;
       const label = cat.charAt(0).toUpperCase() + cat.slice(1);
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-cat="' + escHtml(cat) + '">' + escHtml(label) + '</button>';
     }).join('');
 
-    const tools = window.CORE_TOOLS || [];
-    const relevantTools = tools;
-    toolPillsEl.innerHTML = relevantTools.map(function(tool) {
+    const tools = self._sortToolsActiveFirst(window.CORE_TOOLS || []);
+    toolPillsEl.innerHTML = tools.map(function(tool) {
       const isActive = self._toolFilters.indexOf(tool.id) > -1;
       var toolLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(toolLabel) + '</button>';
@@ -412,6 +411,22 @@ window.CL_REVIEW = {
         if ((item.title || '').toLowerCase().indexOf(self._searchTerm) === -1) return false;
       }
       return true;
+    });
+  },
+
+  // Sort a tools list (CORE_TOOLS shape) so the user's activated tools
+  // come first, alphabetically by display label, followed by the
+  // inactive tools also alphabetised. Used for both the filter dropdown
+  // and the per-card Tagged Tools row.
+  _sortToolsActiveFirst: function(tools) {
+    var activatedTools = window._activatedTools || [];
+    function tLabel(t) { return Array.isArray(t.title) ? t.title.join(' ') : (t.title || t.id); }
+    function isActivated(t) { return activatedTools.indexOf(t.id) > -1; }
+    return (tools || []).slice().sort(function(a, b) {
+      var aActive = isActivated(a);
+      var bActive = isActivated(b);
+      if (aActive !== bActive) return aActive ? -1 : 1;
+      return tLabel(a).localeCompare(tLabel(b));
     });
   },
 
@@ -521,7 +536,7 @@ window.CL_REVIEW = {
     const bodyPreview = escHtml(item.content_text || '');
     const isUsed = !!item.first_used_at;
     const checked = this._selected.has(item.id) ? ' checked' : '';
-    const tools = window.CORE_TOOLS || [];
+    const tools = this._sortToolsActiveFirst(window.CORE_TOOLS || []);
     const activatedTools = window._activatedTools || [];
     const toolTags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
     const toolPillsHtml = tools.map(function(tool) {
@@ -534,7 +549,7 @@ window.CL_REVIEW = {
       var tLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="tool-pill tool-pill-teal' + (isTagged ? ' tool-pill-tagged tagged' : '') + '" data-item-id="' + id + '" data-tool-id="' + escHtml(tool.id) + '">' + escHtml(tLabel) + '</button>';
     }).join('');
-    const DEFAULT_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
+    const DEFAULT_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'].slice().sort(function(a, b) { return a.localeCompare(b); });
     const catTags = Array.isArray(item.category_tags) && item.category_tags.length > 0 ? item.category_tags : (item.category ? [item.category] : []);
     const catPillsHtml = DEFAULT_CATEGORIES.map(function(cat) {
       const isTagged = catTags.indexOf(cat) > -1;
