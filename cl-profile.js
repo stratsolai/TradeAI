@@ -780,6 +780,7 @@ window.CL_PROFILE = {
     self._bindChipToggles(locPanel);
     self._bindHoursPresets();
     self._bindAutoSave('location', locPanel);
+    self._initStreetAutocomplete();
 
     document.addEventListener('click', function(e) {
       if (!e.target.closest('.lookback-dropdown-wrap')) {
@@ -966,6 +967,94 @@ window.CL_PROFILE = {
     wrap.appendChild(div.firstChild);
     this._wirePhoneFormat(wrap);
     this._bindPhoneTypeDropdowns(wrap);
+    this._initStreetAutocomplete();
+  },
+
+  // BP UX Improvements Spec v1.0 §3 — wire Google Places Autocomplete
+  // to every Street Address input. The widget handles its own session
+  // tokens, restricts results to AU addresses, and falls back silently
+  // to manual entry if the API key endpoint or Maps script can't load.
+  _initStreetAutocomplete: function() {
+    var self = this;
+    if (!self._supabase) return;
+    self._loadGoogleMapsPlaces().then(function() {
+      if (!window.google || !window.google.maps || !window.google.maps.places) return;
+      var inputs = document.querySelectorAll('#prof-panel-location .loc-street');
+      inputs.forEach(function(input) {
+        if (input.dataset.gmapAutocompleteBound) return;
+        input.dataset.gmapAutocompleteBound = '1';
+        var ac = new window.google.maps.places.Autocomplete(input, {
+          componentRestrictions: { country: 'au' },
+          fields: ['address_components'],
+          types: ['address']
+        });
+        ac.addListener('place_changed', function() {
+          var place = ac.getPlace();
+          if (!place || !place.address_components) return;
+          self._applyAutocompleteResult(input, place.address_components);
+        });
+      });
+    }).catch(function() { /* swallow — manual entry still works */ });
+  },
+
+  _loadGoogleMapsPlaces: function() {
+    if (window.google && window.google.maps && window.google.maps.places) {
+      return Promise.resolve();
+    }
+    if (window.__staxGmapPromise) return window.__staxGmapPromise;
+    var self = this;
+    window.__staxGmapPromise = (async function() {
+      var sessionRes = await self._supabase.auth.getSession();
+      var token = sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.access_token;
+      if (!token) throw new Error('No session');
+      var keyRes = await fetch('/api/places-key', { headers: { Authorization: 'Bearer ' + token } });
+      if (!keyRes.ok) throw new Error('Places key unavailable');
+      var keyJson = await keyRes.json();
+      if (!keyJson || !keyJson.key) throw new Error('Places key missing');
+      return new Promise(function(resolve, reject) {
+        var script = document.createElement('script');
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(keyJson.key) + '&libraries=places&loading=async';
+        script.async = true;
+        script.defer = true;
+        script.onload = function() { resolve(); };
+        script.onerror = function() { reject(new Error('Maps script failed to load')); };
+        document.head.appendChild(script);
+      });
+    })().catch(function(err) {
+      // Reset the cached promise so a later panel render can retry.
+      window.__staxGmapPromise = null;
+      throw err;
+    });
+    return window.__staxGmapPromise;
+  },
+
+  _applyAutocompleteResult: function(streetInput, components) {
+    var parsed = { street_number: '', route: '', subpremise: '', locality: '', state: '', postcode: '' };
+    components.forEach(function(c) {
+      if (c.types.indexOf('subpremise') > -1) parsed.subpremise = c.long_name;
+      else if (c.types.indexOf('street_number') > -1) parsed.street_number = c.long_name;
+      else if (c.types.indexOf('route') > -1) parsed.route = c.long_name;
+      else if (c.types.indexOf('locality') > -1) parsed.locality = c.long_name;
+      else if (c.types.indexOf('administrative_area_level_1') > -1) parsed.state = c.short_name;
+      else if (c.types.indexOf('postal_code') > -1) parsed.postcode = c.long_name;
+    });
+    var streetParts = [parsed.street_number, parsed.route].filter(Boolean);
+    streetInput.value = streetParts.join(' ').trim();
+    var block = streetInput.closest('.profile-location-block');
+    if (!block) return;
+    var unitEl = block.querySelector('.loc-unit');
+    if (unitEl && parsed.subpremise && !unitEl.value.trim()) {
+      unitEl.value = parsed.subpremise;
+    }
+    var suburbEl = block.querySelector('.loc-suburb');
+    if (suburbEl && parsed.locality) suburbEl.value = parsed.locality;
+    var stateEl = block.querySelector('.loc-state');
+    if (stateEl && parsed.state) stateEl.value = parsed.state;
+    var postEl = block.querySelector('.loc-postcode');
+    if (postEl && parsed.postcode) postEl.value = parsed.postcode;
+    // The location panel's auto-save listens for blur/change events;
+    // we set values programmatically so trigger an explicit save.
+    if (this._scheduleAutoSave) this._scheduleAutoSave('location', 300);
   },
 
   _saveLocation: function(opts) {
