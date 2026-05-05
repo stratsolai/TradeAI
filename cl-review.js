@@ -135,7 +135,7 @@ window.CL_REVIEW = {
         <div class="review-filter-btns-row">
           <button class="filter-btn filter-tools-btn">&#9783; Filter By Tools</button>
           <button class="filter-btn filter-cat-btn">&#9776; Filter By Category</button>
-          <button class="filter-btn filter-source-btn">&#128194; Filter By Source</button>
+          <button class="filter-btn filter-source-btn">&#9776; Filter By Source</button>
           <button class="clear-filters-btn">&#10005; Clear All Filters</button>
           <span class="review-filter-spacer"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn">&#10003; Approve All</button>
