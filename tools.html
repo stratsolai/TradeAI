@@ -1078,6 +1078,7 @@ footer {
     var BOOST_DURATION = 700;  // ms each arrow click stays boosted
     var boostUntil = 0;
     var boostDir = 1;          // 1 = forward (default), -1 = reverse
+    var hovered = false;       // pause drift while the cursor is on the ribbon
 
     var sec = car.closest('.tool-accordion');
     if (sec) {
@@ -1090,6 +1091,17 @@ footer {
       });
     }
 
+    // Pause on hover so the user can read / click more / less without
+    // chasing the tile across the screen. mouseenter/mouseleave don't
+    // bubble, so hovering a child card doesn't double-trigger.
+    car.addEventListener('mouseenter', function() { hovered = true; });
+    car.addEventListener('mouseleave', function() {
+      hovered = false;
+      // Reset lastTime so the resumed frame measures a fresh dt rather
+      // than the entire pause duration — prevents a sudden jump.
+      lastTime = 0;
+    });
+
     function tick(now) {
       if (stopped) return;
       if (!lastTime) lastTime = now;
@@ -1097,7 +1109,7 @@ footer {
       lastTime = now;
 
       var expanded = sec && sec.classList.contains('expanded');
-      if (expanded) {
+      if (expanded && !hovered) {
         var speed = (now < boostUntil) ? BOOST_SPEED * boostDir : BASE_SPEED;
         offset += speed * dt;
 
