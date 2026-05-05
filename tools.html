@@ -781,6 +781,7 @@ footer {
   </div>
 </footer>
 <script src="/industry-modal.js"></script>
+<script src="/tools-data.js"></script>
 <script>
 (function(){
   var items=document.querySelectorAll('.bundle-rotator-item'),idx=0;
@@ -811,6 +812,39 @@ footer {
   if (signupIndustries.length === 0) {
     window.location.href = '/industry-select.html';
     return;
+  }
+
+  // Map BP industry names → tools-data.js industryKey values used by
+  // type:'industry' tools. Mirrors panel.html's KEY_TO_INDUSTRY so the
+  // tools shown here match the industry context used elsewhere on the
+  // platform.
+  var BP_TO_TOOL_KEYS = {
+    'Building & Construction':       ['builder'],
+    'Electrical & Solar':            ['electrician'],
+    'Plumbing & Gas':                ['plumber'],
+    'HVAC & Refrigeration':          ['hvac'],
+    'Landscaping & Outdoor':         ['landscaper', 'pool', 'concreter'],
+    'Painting & Finishing':          [],
+    'Fabrication & Manufacturing':   ['fabricator', 'manufacturer'],
+    'Cleaning & Maintenance':        ['cleaner', 'handyman'],
+    'Service & Professional':        []
+  };
+  var allowedToolKeys = {};
+  signupIndustries.forEach(function(ind) {
+    (BP_TO_TOOL_KEYS[ind] || []).forEach(function(k) { allowedToolKeys[k] = true; });
+  });
+
+  // Look up type/industryKey from window.TOOLS (tools-data.js — single
+  // source of truth). The local TOOLS array below carries display data
+  // only; type/industryKey come from tools-data.js by id.
+  var TOOL_META_BY_ID = {};
+  if (Array.isArray(window.TOOLS)) {
+    window.TOOLS.forEach(function(t) { TOOL_META_BY_ID[t.id] = t; });
+  }
+  function isToolRelevant(t) {
+    var meta = TOOL_META_BY_ID[t.id];
+    if (!meta || meta.type !== 'industry') return true;
+    return !!allowedToolKeys[meta.industryKey];
   }
 
 
@@ -1042,7 +1076,7 @@ footer {
     var container = document.getElementById('tool-accordions');
     if (!container) return;
     var html = CATEGORIES.map(function(cat) {
-      var tools = TOOLS.filter(function(t) { return t.cat === cat.id; });
+      var tools = TOOLS.filter(function(t) { return t.cat === cat.id && isToolRelevant(t); });
       var builtTools = tools.filter(function(t) { return t.status === 'built'; });
       var otherTools = tools.filter(function(t) { return t.status !== 'built'; });
 
