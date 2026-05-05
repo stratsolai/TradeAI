@@ -15,9 +15,9 @@
 //   industryKey   (opt) — INDUSTRIES key — only for type 'industry'
 //
 // Backwards compatibility:
-//   window.CORE_TOOLS exports the core subset (18 entries) so existing
+//   window.CORE_TOOLS exports the core subset (19 entries) so existing
 //   consumers (filter chips, pricing-page, activation modal, etc.) keep
-//   working. window.TOOLS exports the full 56-entry catalogue for new
+//   working. window.TOOLS exports the full 57-entry catalogue for new
 //   consumers that need industry tools too.
 
 const INDUSTRIES = [
@@ -117,7 +117,12 @@ const TOOLS = [
     desc: "Finish a job and hand your customer a professional branded pack - project summary, before and after photos, maintenance guide, warranty details - everything they need. Add key components like pumps or fixtures - AI searches the manufacturer and pulls real maintenance details and warranty terms into the document."
   },
 
-  // ── CORE — PENDING (5 new — added per Section 1 of CL prompt rewrite) ───
+  // ── CORE — PENDING (6 new — added per Section 1 of CL prompt rewrite) ───
+  {
+    id: "customer-faq", title: "Customer FAQ & Knowledge Base", icon: "📚",
+    status: "pending", category: "sales-marketing", type: "core",
+    desc: "AI analyses your email and chatbot history to generate a structured FAQ document for your website or to share with customers."
+  },
   {
     id: "contract-manager", title: "Contract & Scope Change Manager", icon: "📑",
     status: "pending", category: "customers-jobs", type: "core",
@@ -388,8 +393,8 @@ window.BUNDLE_TIERS = {
 };
 
 // Browser exports.
-//   window.TOOLS — full 56-entry catalogue (core + industry).
-//   window.CORE_TOOLS — core-only subset (18 entries) for backwards
+//   window.TOOLS — full 57-entry catalogue (core + industry).
+//   window.CORE_TOOLS — core-only subset (19 entries) for backwards
 //     compatibility with consumers that enumerate the catalogue assuming
 //     it's core-only (filter chips, pricing-page priceId check, etc.).
 window.TOOLS = TOOLS;

@@ -356,17 +356,17 @@ window.CL_PROFILE = {
 
   // Maps BP industry names (BP_INDUSTRY_DATA.groups[].name) to the
   // industryKey values used by tools-data.js for type:'industry' tools.
-  // Best-effort mapping based on current naming; may need owner
-  // refinement when industry-specific tools ship.
+  // Mirrors panel.html's KEY_TO_INDUSTRY (canonical) so the modal
+  // matches the industry context used elsewhere on the platform.
   _BP_TO_TOOL_INDUSTRY: {
-    'Building & Construction':       ['builder', 'pool', 'concreter'],
+    'Building & Construction':       ['builder'],
     'Electrical & Solar':            ['electrician'],
     'Plumbing & Gas':                ['plumber'],
     'HVAC & Refrigeration':          ['hvac'],
-    'Landscaping & Outdoor':         ['landscaper'],
+    'Landscaping & Outdoor':         ['landscaper', 'pool', 'concreter'],
     'Painting & Finishing':          [],
     'Fabrication & Manufacturing':   ['fabricator', 'manufacturer'],
-    'Cleaning & Maintenance':        ['cleaner'],
+    'Cleaning & Maintenance':        ['cleaner', 'handyman'],
     'Service & Professional':        []
   },
 
