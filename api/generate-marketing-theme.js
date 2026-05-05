@@ -34,7 +34,7 @@ export default async function handler(req, res) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("business_name, industry")
+    .select("business_name, industry, years_in_business, licences, bp_services")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -51,9 +51,25 @@ export default async function handler(req, res) {
   const qualityDetail = (answers.quality_detail || []).join(", ");
   const serviceDetail = (answers.service_detail || []).join(", ");
   const affordableDetail = (answers.affordable_detail || []).join(", ");
-  const experienceYears = answers.experience_years || "";
-  const certifications = (answers.certifications || []).join(", ");
-  const specialiseServices = (answers.specialise_services || []).join(", ");
+
+  // BP UX Improvements Spec v1.0 §5.2.1 — these used to come from the
+  // wizard but now read directly from the BP panels. We only inject them
+  // into the prompt when the relevant standout pill is selected so the
+  // AI gets the same hint it had before.
+  const standoutPicked = answers.standout || [];
+  const profileLicences = Array.isArray(profile?.licences) ? profile.licences : [];
+  const profileServices = Array.isArray(profile?.bp_services)
+    ? profile.bp_services.map((s) => (s && s.name ? s.name : "")).filter(Boolean)
+    : [];
+  const experienceYears = standoutPicked.indexOf("More experienced or qualified") !== -1 && profile?.years_in_business
+    ? String(profile.years_in_business)
+    : "";
+  const certifications = standoutPicked.indexOf("More experienced or qualified") !== -1
+    ? profileLicences.join(", ")
+    : "";
+  const specialiseServices = standoutPicked.indexOf("We specialise in certain areas") !== -1
+    ? profileServices.join(", ")
+    : "";
 
   const awareness = (answers.awareness || []).join(", ");
   const awarenessOther = answers.awareness_other || "";

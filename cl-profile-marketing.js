@@ -33,9 +33,6 @@ window.BP_MARKETING = {
       service_other: hasSaved ? (saved.service_other || '') : '',
       affordable_detail: hasSaved ? (saved.affordable_detail || []) : [],
       affordable_other: hasSaved ? (saved.affordable_other || '') : '',
-      experience_years: hasSaved ? (saved.experience_years || '') : '',
-      certifications: hasSaved ? (saved.certifications || []) : [],
-      certifications_other: hasSaved ? (saved.certifications_other || '') : '',
       awareness: hasSaved ? (saved.awareness || []) : [],
       awareness_other: hasSaved ? (saved.awareness_other || '') : '',
       customer_count: hasSaved ? (saved.customer_count || '') : '',
@@ -45,8 +42,6 @@ window.BP_MARKETING = {
       tone: p.tone_of_voice || (hasSaved ? (saved.tone || 'friendly') : 'friendly'),
       primary_colour: p.primary_brand_colour || '', secondary_colour: p.secondary_brand_colour || '',
       tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no',
-      specialise_services: hasSaved ? (saved.specialise_services || []) : [],
-      specialise_duration: hasSaved ? (saved.specialise_duration || '') : '',
       // Preserved through the wizard so the panel-level "Additional
       // Theme Statements" UI doesn't get clobbered when the wizard saves.
       additional_statements: savedStatements
@@ -345,46 +340,11 @@ window.BP_MARKETING = {
       }
       html += '</div>';
     }
-    if (a.standout.indexOf('More experienced or qualified') !== -1) {
-      html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Years in business</label>' +
-        '<input type="text" class="profile-input" id="prof-mkt-exp-years" value="' + window.escHtml(a.experience_years || '') + '" style="width:120px"></div>';
-      var bp = this._profile || {};
-      var bpLicences = Array.isArray(bp.licences) ? bp.licences : [];
-      if (bpLicences.length > 0) {
-        var selectedCerts = a.certifications || [];
-        html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Qualifications and certifications</label>';
-        html += '<div class="review-pill-row" style="margin-bottom:8px">';
-        bpLicences.forEach(function(lic) {
-          var active = selectedCerts.indexOf(lic) !== -1 ? ' active' : '';
-          html += '<button class="filter-pill' + active + '" data-certpill="' + window.escHtml(lic) + '">' + window.escHtml(lic) + '</button>';
-        });
-        html += '</div></div>';
-      }
-      html += '<div class="profile-field-full" style="margin-top:8px"><label class="profile-label">Other certifications (optional)</label>' +
-        '<input type="text" class="profile-input" id="prof-mkt-cert-other" value="' + window.escHtml(a.certifications_other || '') + '" placeholder="Any other qualifications or certifications"></div>';
-    }
-    if (a.standout.indexOf('We specialise in certain areas') !== -1) {
-      var bp = this._profile || {};
-      var bpServices = Array.isArray(bp.bp_services) ? bp.bp_services : [];
-      var serviceNames = bpServices.map(function(s) { return s.name || s; }).filter(function(n) { return !!n; });
-      var selectedSpecialise = a.specialise_services || [];
-      html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Which services do you specialise in?</label>';
-      if (serviceNames.length > 0) {
-        html += '<div class="review-pill-row" style="margin-bottom:8px">';
-        serviceNames.forEach(function(svc) {
-          var active = selectedSpecialise.indexOf(svc) !== -1 ? ' active' : '';
-          html += '<button class="filter-pill' + active + '" data-specsvc="' + window.escHtml(svc) + '">' + window.escHtml(svc) + '</button>';
-        });
-        html += '</div>';
-      } else {
-        html += '<div style="color:var(--text-muted);font-size:var(--badge-font-size);margin-bottom:8px">No services found in your Business Profile. Add services to your profile to select them here.</div>';
-      }
-      html += '</div>';
-      var durationOptions = ['Less than 2 years', '2\u20135 years', '5\u201310 years', '10+ years'];
-      var currentDuration = a.specialise_duration ? [a.specialise_duration] : [];
-      html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">How long have you been specialising in this?</label>' +
-        this._pills(durationOptions, currentDuration, 'specdur') + '</div>';
-    }
+    // Years in business / certifications / specialisation are no longer
+    // asked here \u2014 BP UX Improvements Spec v1.0 \u00a75.2.1 removes them as
+    // duplicates of Panel 1, Panel 5, and Panel 3. The marketing-theme
+    // API now reads years_in_business, licences, and bp_services
+    // directly from the profile.
     return html;
   },
 
@@ -560,16 +520,6 @@ window.BP_MARKETING = {
       document.querySelectorAll('[data-affdetail].active').forEach(function(p) { a.affordable_detail.push(p.dataset.affdetail); });
       var affOther = document.getElementById('prof-mkt-affordable-other');
       if (affOther) a.affordable_other = affOther.value;
-      var expYears = document.getElementById('prof-mkt-exp-years');
-      if (expYears) a.experience_years = expYears.value;
-      a.certifications = [];
-      document.querySelectorAll('[data-certpill].active').forEach(function(p) { a.certifications.push(p.dataset.certpill); });
-      var certOther = document.getElementById('prof-mkt-cert-other');
-      if (certOther) a.certifications_other = certOther.value;
-      a.specialise_services = [];
-      document.querySelectorAll('[data-specsvc].active').forEach(function(p) { a.specialise_services.push(p.dataset.specsvc); });
-      a.specialise_duration = '';
-      document.querySelectorAll('[data-specdur].active').forEach(function(p) { a.specialise_duration = p.dataset.specdur; });
     } else if (t === 1) {
       a.awareness = [];
       document.querySelectorAll('[data-awareness].active').forEach(function(p) { a.awareness.push(p.dataset.awareness); });
