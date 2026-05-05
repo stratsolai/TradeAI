@@ -1107,10 +1107,12 @@ window.CL_PROFILE = {
   },
 
   _renderPricingRows: function(prefix, items, pricingTypes) {
+    var self = this;
     var container = document.getElementById('prof-' + prefix + '-pricing');
     if (!container) return;
     if (items.length === 0) {
       container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--note-font-size);padding:8px 0">No ' + (prefix === 'svc' ? 'services' : 'products') + ' selected yet. Click items above to add them.</div>';
+      this._bindPriceInputBehaviour(container);
       return;
     }
     var html = '';
@@ -1121,11 +1123,13 @@ window.CL_PROFILE = {
         return '<button type="button" class="lookback-dropdown-item' + (pt.value === pType ? ' active' : '') + '" data-value="' + pt.value + '">' + window.escHtml(pt.label) + '</button>';
       }).join('');
       var amountHtml = '';
+      // BP UX Improvements Spec v1.0 §4 — text input + thousand separators,
+      // wider fields so 7-digit prices fit without truncation.
       if (pType === 'hourly' || pType === 'fixed') {
-        amountHtml = '<input type="number" class="profile-input prof-svc-amount-val" value="' + (item.amount || '') + '" placeholder="$ Amount" min="0" style="max-width:120px" />';
+        amountHtml = '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-val" value="' + window.escHtml(self._formatPrice(item.amount)) + '" placeholder="$ Amount" style="max-width:160px" />';
       } else if (pType === 'range') {
-        amountHtml = '<input type="number" class="profile-input prof-svc-amount-min" value="' + (item.amount_min || '') + '" placeholder="$ Min" min="0" style="max-width:80px" />' +
-          '<input type="number" class="profile-input prof-svc-amount-max" value="' + (item.amount_max || '') + '" placeholder="$ Max" min="0" style="max-width:80px" />';
+        amountHtml = '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-min" value="' + window.escHtml(self._formatPrice(item.amount_min)) + '" placeholder="$ Min" style="max-width:110px" />' +
+          '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-max" value="' + window.escHtml(self._formatPrice(item.amount_max)) + '" placeholder="$ Max" style="max-width:110px" />';
       }
       var rowClass = 'profile-svc-row' + (pType === 'range' ? ' profile-svc-row-range' : '');
       html += '<div class="' + rowClass + '" data-svc-pricing="' + window.escHtml(item.name) + '" data-custom="' + (item.is_custom ? '1' : '0') + '">' +
@@ -1138,8 +1142,8 @@ window.CL_PROFILE = {
       '</div>';
     });
     container.innerHTML = html;
+    this._bindPriceInputBehaviour(container);
 
-    var self = this;
     container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
       var trigger = wrap.querySelector('.lookback-dropdown');
       var menu = wrap.querySelector('.lookback-dropdown-menu');
@@ -1216,6 +1220,7 @@ window.CL_PROFILE = {
     var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
     if (!pricingContainer) return;
 
+    var self = this;
     var existingPricing = {};
     pricingContainer.querySelectorAll('[data-svc-pricing]').forEach(function(row) {
       var name = row.getAttribute('data-svc-pricing');
@@ -1225,9 +1230,9 @@ window.CL_PROFILE = {
       var amountMax = row.querySelector('.prof-svc-amount-max');
       existingPricing[name] = {
         pricing_type: pTypeBtn ? pTypeBtn.getAttribute('data-value') : '',
-        amount: amountVal ? parseFloat(amountVal.value) || null : null,
-        amount_min: amountMin ? parseFloat(amountMin.value) || null : null,
-        amount_max: amountMax ? parseFloat(amountMax.value) || null : null,
+        amount: amountVal ? self._unformatPrice(amountVal.value) : null,
+        amount_min: amountMin ? self._unformatPrice(amountMin.value) : null,
+        amount_max: amountMax ? self._unformatPrice(amountMax.value) : null,
         is_custom: row.getAttribute('data-custom') === '1'
       };
     });
@@ -1254,38 +1259,70 @@ window.CL_PROFILE = {
     var existingAmounts = row.querySelectorAll('.prof-svc-amount-val, .prof-svc-amount-min, .prof-svc-amount-max');
     existingAmounts.forEach(function(el) { el.parentNode.removeChild(el); });
 
-    var lastChild = row.lastElementChild;
-    if (pType === 'hourly' || pType === 'fixed') {
+    function makePriceInput(cls, placeholder, width) {
       var inp = document.createElement('input');
-      inp.type = 'number';
-      inp.className = 'profile-input prof-svc-amount-val';
-      inp.placeholder = '$ Amount';
-      inp.min = '0';
-      inp.style.maxWidth = '120px';
-      row.appendChild(inp);
+      inp.type = 'text';
+      inp.inputMode = 'decimal';
+      inp.className = 'profile-input ' + cls;
+      inp.placeholder = placeholder;
+      inp.style.maxWidth = width;
+      return inp;
+    }
+
+    if (pType === 'hourly' || pType === 'fixed') {
+      row.appendChild(makePriceInput('prof-svc-amount-val', '$ Amount', '160px'));
       row.classList.remove('profile-svc-row-range');
     } else if (pType === 'range') {
-      var min = document.createElement('input');
-      min.type = 'number';
-      min.className = 'profile-input prof-svc-amount-min';
-      min.placeholder = '$ Min';
-      min.min = '0';
-      min.style.maxWidth = '80px';
-      var max = document.createElement('input');
-      max.type = 'number';
-      max.className = 'profile-input prof-svc-amount-max';
-      max.placeholder = '$ Max';
-      max.min = '0';
-      max.style.maxWidth = '80px';
-      row.appendChild(min);
-      row.appendChild(max);
+      row.appendChild(makePriceInput('prof-svc-amount-min', '$ Min', '110px'));
+      row.appendChild(makePriceInput('prof-svc-amount-max', '$ Max', '110px'));
       row.classList.add('profile-svc-row-range');
     } else {
       row.classList.remove('profile-svc-row-range');
     }
   },
 
+  // Format a numeric value as a thousand-separated string for display in
+  // a price input. Returns '' for null/undefined/0/NaN so empty inputs
+  // stay visually empty rather than showing "0". (BP UX Spec v1.0 §4.)
+  _formatPrice: function(num) {
+    if (num == null || num === '' || isNaN(num)) return '';
+    var n = Number(num);
+    if (n === 0) return '';
+    return n.toLocaleString('en-AU', { maximumFractionDigits: 2 });
+  },
+
+  // Inverse of _formatPrice — strip any non-numeric characters (commas,
+  // currency symbols, spaces) and parse to a Number. Returns null for
+  // empty/invalid input so "no value" round-trips cleanly.
+  _unformatPrice: function(str) {
+    if (str == null || str === '') return null;
+    var clean = String(str).replace(/[^\d.]/g, '');
+    if (!clean) return null;
+    var n = parseFloat(clean);
+    return isNaN(n) ? null : n;
+  },
+
+  _bindPriceInputBehaviour: function(container) {
+    if (!container || container.dataset.priceBehaviourBound) return;
+    container.dataset.priceBehaviourBound = '1';
+    var self = this;
+    var sel = '.prof-svc-amount-val, .prof-svc-amount-min, .prof-svc-amount-max';
+    container.addEventListener('focusin', function(e) {
+      var input = e.target;
+      if (!input.matches || !input.matches(sel)) return;
+      // Strip formatting and clear if zero so user can type immediately.
+      var raw = self._unformatPrice(input.value);
+      input.value = (raw == null || raw === 0) ? '' : String(raw);
+    });
+    container.addEventListener('focusout', function(e) {
+      var input = e.target;
+      if (!input.matches || !input.matches(sel)) return;
+      input.value = self._formatPrice(self._unformatPrice(input.value));
+    });
+  },
+
   _collectMultiSelectData: function(prefix) {
+    var self = this;
     var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
     if (!pricingContainer) return [];
     return Array.from(pricingContainer.querySelectorAll('[data-svc-pricing]')).map(function(row) {
@@ -1299,9 +1336,9 @@ window.CL_PROFILE = {
       return {
         name: name,
         pricing_type: pType,
-        amount: amountVal ? parseFloat(amountVal.value) || null : null,
-        amount_min: amountMin ? parseFloat(amountMin.value) || null : null,
-        amount_max: amountMax ? parseFloat(amountMax.value) || null : null,
+        amount: amountVal ? self._unformatPrice(amountVal.value) : null,
+        amount_min: amountMin ? self._unformatPrice(amountMin.value) : null,
+        amount_max: amountMax ? self._unformatPrice(amountMax.value) : null,
         is_custom: isCustom
       };
     });
