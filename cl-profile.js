@@ -1008,22 +1008,28 @@ window.CL_PROFILE = {
           return;
         }
         placeEl.classList.add('loc-street-autocomplete');
-        placeEl.setAttribute('placeholder', 'Start typing your street address');
         // Hide the canonical input — the new element is the visible one
         // but the input still drives _saveLocation via .value.
         input.type = 'hidden';
         parent.appendChild(placeEl);
 
-        // Best-effort pre-population of the visible field so users
-        // returning to a saved profile see what's already there.
-        if (existingValue) {
-          requestAnimationFrame(function() {
-            try {
-              var inner = placeEl.inputElement || placeEl.querySelector('input');
-              if (inner) inner.value = existingValue;
-            } catch (e) { /* ok — display only */ }
-          });
+        function getInner() {
+          return placeEl.inputElement || placeEl.querySelector('input');
         }
+        function setInnerValue(v) {
+          var inner = getInner();
+          if (inner) inner.value = v;
+        }
+
+        // Apply placeholder + pre-fill once the inner input is in the
+        // DOM (the element renders its child input asynchronously).
+        requestAnimationFrame(function() {
+          try {
+            var inner = getInner();
+            if (inner) inner.placeholder = 'Start typing your street address';
+            if (existingValue && inner) inner.value = existingValue;
+          } catch (e) { /* ok */ }
+        });
 
         // Current API event is gmp-select; gmp-placeselect is the older
         // name some preview builds still emit. Both call the handler.
@@ -1035,7 +1041,14 @@ window.CL_PROFILE = {
             await place.fetchFields({ fields: ['addressComponents'] });
             var components = place.addressComponents;
             if (!components) return;
-            self._applyAutocompleteResult(input, components);
+            var streetValue = self._applyAutocompleteResult(input, components);
+            // Replace whatever the element wrote into its visible input
+            // (Google defaults to the full formatted address) with just
+            // the street portion so we don't duplicate suburb/state/postcode.
+            if (streetValue) {
+              setInnerValue(streetValue);
+              requestAnimationFrame(function() { setInnerValue(streetValue); });
+            }
           } catch (e) {
             console.error('[BP autocomplete] place selection error:', e);
           }
@@ -1099,9 +1112,10 @@ window.CL_PROFILE = {
       else if (types.indexOf('postal_code') > -1) parsed.postcode = longText;
     });
     var streetParts = [parsed.street_number, parsed.route].filter(Boolean);
-    streetInput.value = streetParts.join(' ').trim();
+    var streetValue = streetParts.join(' ').trim();
+    streetInput.value = streetValue;
     var block = streetInput.closest('.profile-location-block');
-    if (!block) return;
+    if (!block) return streetValue;
     var unitEl = block.querySelector('.loc-unit');
     if (unitEl && parsed.subpremise && !unitEl.value.trim()) {
       unitEl.value = parsed.subpremise;
@@ -1115,6 +1129,7 @@ window.CL_PROFILE = {
     // The location panel's auto-save listens for blur/change events;
     // we set values programmatically so trigger an explicit save.
     if (this._scheduleAutoSave) this._scheduleAutoSave('location', 300);
+    return streetValue;
   },
 
   _saveLocation: function(opts) {
