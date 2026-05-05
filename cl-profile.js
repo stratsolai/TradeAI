@@ -580,7 +580,12 @@ window.CL_PROFILE = {
           '<input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /></div>' +
         '<div class="profile-field-full"><div class="profile-address-row">' +
           '<div><label class="profile-label">Suburb</label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
-          '<div><label class="profile-label">State</label><input type="text" class="profile-input loc-state" placeholder="State" value="' + window.escHtml(loc.state || '') + '" /></div>' +
+          '<div><label class="profile-label">State</label><select class="profile-input loc-state">' +
+            ['', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map(function(s) {
+              var lbl = s === '' ? 'Select state' : s;
+              return '<option value="' + s + '"' + (loc.state === s ? ' selected' : '') + '>' + lbl + '</option>';
+            }).join('') +
+          '</select></div>' +
           '<div><label class="profile-label">Postcode</label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
         '</div></div>' +
       '</div>' +
