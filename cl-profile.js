@@ -25,6 +25,7 @@ window.CL_PROFILE = {
       else if (action === 'upload-logo') { document.getElementById('prof-logo-file').click(); }
       else if (action === 'add-other-item') { self._addOtherItem(btn.dataset.target); }
       else if (action === 'remove-other') { self._removeOtherChip(btn); }
+      else if (action === 'add-theme-statement') { self._addThemeStatement(); }
     });
     container.addEventListener('change', function(e) {
       if (e.target.classList.contains('prof-hours-toggle')) {
@@ -1314,7 +1315,17 @@ window.CL_PROFILE = {
   },
 
   _renderMarketing: function() {
-    var body = '<div id="prof-mkt-guided"></div>';
+    var body =
+      '<div id="prof-mkt-guided"></div>' +
+      '<div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border)">' +
+        '<div class="profile-label profile-label-heading" style="margin-bottom:8px">Additional Theme Statements <span class="profile-optional">(optional)</span></div>' +
+        '<div style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Add separate theme statements to run alongside the marketing theme generated above.</div>' +
+        '<div id="prof-mkt-statements"></div>' +
+        '<button class="btn btn-outline profile-add-btn" data-action="add-theme-statement" type="button">+ Add Statement</button>' +
+        '<div class="profile-save-row" style="margin-top:16px">' +
+          '<button id="prof-mkt-statements-save" class="btn-save">Save Statements</button>' +
+        '</div>' +
+      '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'prof-mkt-save'
     );
@@ -1322,5 +1333,89 @@ window.CL_PROFILE = {
     if (window.BP_MARKETING) {
       window.BP_MARKETING.init(this._supabase, this._userId, this._profile, this);
     }
+    var statements = this._getAdditionalStatements();
+    this._renderThemeStatementRows(statements);
+    var self = this;
+    document.getElementById('prof-mkt-statements-save').addEventListener('click', function() {
+      self._saveThemeStatements();
+    });
+  },
+
+  // Additional Theme Statements \u2014 stored inside marketing_theme_extra
+  // alongside the wizard answers so a single column persists both.
+  _getAdditionalStatements: function() {
+    var mte = this._profile.marketing_theme_extra;
+    var parsed = null;
+    if (Array.isArray(mte) && mte.length === 1 && typeof mte[0] === 'string') {
+      try { parsed = JSON.parse(mte[0]); } catch (e) { parsed = null; }
+    } else if (mte && typeof mte === 'object' && !Array.isArray(mte)) {
+      parsed = mte;
+    }
+    return parsed && Array.isArray(parsed.additional_statements) ? parsed.additional_statements : [];
+  },
+
+  _renderThemeStatementRows: function(statements) {
+    var wrap = document.getElementById('prof-mkt-statements');
+    if (!wrap) return;
+    wrap.innerHTML = statements.map(function(s, i) {
+      var id = 'prof-mkt-stmt-' + i;
+      return '<div class="profile-repeating-row" id="' + id + '" style="margin-bottom:8px">' +
+        '<input type="text" class="profile-input prof-mkt-stmt-input" value="' + window.escHtml(s || '') + '" placeholder="Add a theme statement" />' +
+        '<button class="btn-dismiss" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>' +
+      '</div>';
+    }).join('');
+  },
+
+  _addThemeStatement: function() {
+    var wrap = document.getElementById('prof-mkt-statements');
+    if (!wrap) return;
+    var id = 'prof-mkt-stmt-' + Date.now();
+    var row = document.createElement('div');
+    row.className = 'profile-repeating-row';
+    row.id = id;
+    row.style.marginBottom = '8px';
+    row.innerHTML =
+      '<input type="text" class="profile-input prof-mkt-stmt-input" placeholder="Add a theme statement" />' +
+      '<button class="btn-dismiss" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>';
+    wrap.appendChild(row);
+    var inp = row.querySelector('input');
+    if (inp) inp.focus();
+  },
+
+  _collectThemeStatements: function() {
+    var inputs = document.querySelectorAll('#prof-mkt-statements .prof-mkt-stmt-input');
+    var arr = [];
+    inputs.forEach(function(inp) {
+      var v = inp.value.trim();
+      if (v) arr.push(v);
+    });
+    return arr;
+  },
+
+  _saveThemeStatements: function() {
+    var self = this;
+    var btn = document.getElementById('prof-mkt-statements-save');
+    window.handleSave(btn, async function() {
+      var statements = self._collectThemeStatements();
+      // Re-read from DB so we merge into the freshest wizard JSON,
+      // not whatever was cached when the panel last loaded.
+      var freshRes = await self._supabase.from('profiles')
+        .select('marketing_theme_extra').eq('id', self._userId).single();
+      if (freshRes.error) throw new Error(freshRes.error.message);
+      var existing = {};
+      var mte = freshRes.data ? freshRes.data.marketing_theme_extra : null;
+      if (Array.isArray(mte) && mte.length === 1 && typeof mte[0] === 'string') {
+        try { existing = JSON.parse(mte[0]) || {}; } catch (e) { existing = {}; }
+      } else if (mte && typeof mte === 'object' && !Array.isArray(mte)) {
+        existing = mte;
+      }
+      existing.additional_statements = statements;
+      var serialised = [JSON.stringify(existing)];
+      var res = await self._supabase.from('profiles')
+        .update({ marketing_theme_extra: serialised })
+        .eq('id', self._userId);
+      if (res.error) throw new Error(res.error.message);
+      self._profile.marketing_theme_extra = serialised;
+    }, document.getElementById('prof-save-msg'));
   }
 };

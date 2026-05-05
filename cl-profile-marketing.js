@@ -23,6 +23,7 @@ window.BP_MARKETING = {
       saved = mte;
     }
     var hasSaved = saved && Array.isArray(saved.standout);
+    var savedStatements = saved && Array.isArray(saved.additional_statements) ? saved.additional_statements : [];
     this._answers = {
       standout: hasSaved ? (saved.standout || []) : [],
       standout_other: hasSaved ? (saved.standout_other || '') : '',
@@ -45,7 +46,10 @@ window.BP_MARKETING = {
       primary_colour: p.primary_brand_colour || '', secondary_colour: p.secondary_brand_colour || '',
       tagline: p.tagline || '', has_tagline: p.tagline ? 'yes' : 'no',
       specialise_services: hasSaved ? (saved.specialise_services || []) : [],
-      specialise_duration: hasSaved ? (saved.specialise_duration || '') : ''
+      specialise_duration: hasSaved ? (saved.specialise_duration || '') : '',
+      // Preserved through the wizard so the panel-level "Additional
+      // Theme Statements" UI doesn't get clobbered when the wizard saves.
+      additional_statements: savedStatements
     };
     this._renderPanel();
   },
