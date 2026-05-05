@@ -136,20 +136,140 @@ window.CL_PROFILE = {
   _chipGroupWithOther: function(id, options, selected, customItems) {
     if (!Array.isArray(selected)) selected = [];
     if (!Array.isArray(customItems)) customItems = [];
+    var grouped = this._isGroupedOptions(options);
+
+    var customChipsHtml = customItems.map(function(item) {
+      return '<button type="button" class="filter-pill active prof-custom-pill" data-value="' + window.escHtml(item) + '" data-custom="1">' + window.escHtml(item) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + id + '">\u00D7</span></button>';
+    }).join('');
+
+    var otherInputBlock =
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:8px">' +
+        '<input type="text" class="profile-input" id="' + id + '-other-input" placeholder="Add custom entry" style="flex:1" />' +
+        '<button type="button" class="btn-outline btn-sm" data-action="add-other-item" data-target="' + id + '">Add</button>' +
+      '</div>';
+
+    if (grouped) {
+      return '<div id="' + id + '">' +
+        this._renderAccordionGroups(options, 'value', selected, id) +
+        '<div class="review-pill-row" data-custom-pill-row="1" style="margin-top:8px">' + customChipsHtml + '</div>' +
+      '</div>' + otherInputBlock;
+    }
+
     var standardChips = options.map(function(opt) {
       var isSelected = selected.indexOf(opt) > -1;
       return '<button type="button" class="filter-pill' + (isSelected ? ' active' : '') + '" data-value="' + window.escHtml(opt) + '">' + window.escHtml(opt) + '</button>';
     }).join('');
-    var otherChips = customItems.map(function(item) {
-      return '<button type="button" class="filter-pill active prof-custom-pill" data-value="' + window.escHtml(item) + '" data-custom="1">' + window.escHtml(item) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + id + '">\u00D7</span></button>';
-    }).join('');
     return '<div id="' + id + '" class="review-pill-row">' +
-      standardChips + otherChips +
-    '</div>' +
-    '<div style="display:flex;gap:8px;align-items:center;margin-top:8px">' +
-      '<input type="text" class="profile-input" id="' + id + '-other-input" placeholder="Add custom entry" style="flex:1" />' +
-      '<button type="button" class="btn-outline btn-sm" data-action="add-other-item" data-target="' + id + '">Add</button>' +
-    '</div>';
+      standardChips + customChipsHtml +
+    '</div>' + otherInputBlock;
+  },
+
+  _isGroupedOptions: function(options) {
+    return Array.isArray(options) && options.length > 0
+      && typeof options[0] === 'object'
+      && options[0] !== null
+      && Array.isArray(options[0].items);
+  },
+
+  // BP UX Improvements Spec v1.0 \u00A72.2 \u2014 render the standard chips for a
+  // grouped chip picker as collapsible accordion sections, alphabetised
+  // within each group. Selected chips remain visible when a section is
+  // collapsed; non-selected chips are hidden via inline display:none so
+  // we don't need to add new CSS classes.
+  _renderAccordionGroups: function(groups, dataAttr, selected, idPrefix) {
+    var self = this;
+    if (!Array.isArray(selected)) selected = [];
+    var selSet = {};
+    selected.forEach(function(s) { selSet[s] = true; });
+    var html = '<div data-chip-accordion="' + idPrefix + '">';
+    groups.forEach(function(group, groupIdx) {
+      var bodyId = idPrefix + '-acc-body-' + groupIdx;
+      var anyActive = group.items.some(function(item) { return selSet[item]; });
+      var pillsHtml = group.items.map(function(item) {
+        var active = selSet[item];
+        var hidden = active ? '' : 'display:none';
+        return '<button type="button" class="filter-pill' + (active ? ' active' : '') + '" data-' + dataAttr + '="' + window.escHtml(item) + '"' + (hidden ? ' style="' + hidden + '"' : '') + '>' + window.escHtml(item) + '</button>';
+      }).join('');
+      var countLabel = self._countLabel(group.items.filter(function(i) { return selSet[i]; }).length);
+      html +=
+        '<div data-chip-acc-section="' + window.escHtml(group.name) + '" data-chip-acc-expanded="0" style="margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)">' +
+          '<button type="button" data-chip-acc-toggle="1" data-chip-acc-target="' + bodyId + '" aria-expanded="false" style="width:100%;padding:10px 14px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-size:14px;font-weight:500;color:var(--text)">' +
+            '<span style="flex:1">' + window.escHtml(group.name) + '</span>' +
+            '<span data-chip-acc-count style="font-size:12px;color:var(--text-muted);min-width:75px;text-align:right">' + countLabel + '</span>' +
+            '<span data-chip-acc-chevron style="display:inline-block;transition:transform 0.2s;color:var(--text-muted);font-size:14px">\u25BE</span>' +
+          '</button>' +
+          '<div id="' + bodyId + '" data-chip-acc-body style="display:' + (anyActive ? 'block' : 'none') + ';padding:0 14px 12px 14px">' +
+            '<div class="review-pill-row" style="margin:0">' + pillsHtml + '</div>' +
+          '</div>' +
+        '</div>';
+    });
+    html += '</div>';
+    return html;
+  },
+
+  _countLabel: function(n) { return n > 0 ? n + ' selected' : ''; },
+
+  _setAccordionSectionState: function(section, expanded) {
+    section.dataset.chipAccExpanded = expanded ? '1' : '0';
+    var body = section.querySelector('[data-chip-acc-body]');
+    var pills = body ? body.querySelectorAll('.filter-pill') : [];
+    var toggle = section.querySelector('[data-chip-acc-toggle]');
+    var chevron = section.querySelector('[data-chip-acc-chevron]');
+    if (expanded) {
+      if (body) body.style.display = 'block';
+      pills.forEach(function(p) { p.style.display = ''; });
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+    } else {
+      var anyActive = false;
+      pills.forEach(function(p) {
+        var isActive = p.classList.contains('active');
+        p.style.display = isActive ? '' : 'none';
+        if (isActive) anyActive = true;
+      });
+      if (body) body.style.display = anyActive ? 'block' : 'none';
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      if (chevron) chevron.style.transform = 'rotate(0deg)';
+    }
+  },
+
+  _updateAccordionCount: function(section) {
+    var count = section.querySelector('[data-chip-acc-count]');
+    var body = section.querySelector('[data-chip-acc-body]');
+    if (!count || !body) return;
+    var n = body.querySelectorAll('.filter-pill.active').length;
+    count.textContent = this._countLabel(n);
+  },
+
+  _bindChipAccordion: function(container) {
+    if (!container || container.dataset.chipAccBound) return;
+    container.dataset.chipAccBound = '1';
+    var self = this;
+    container.addEventListener('click', function(e) {
+      var toggle = e.target.closest('[data-chip-acc-toggle]');
+      if (toggle) {
+        var section = toggle.closest('[data-chip-acc-section]');
+        if (section) {
+          var expanded = section.dataset.chipAccExpanded === '1';
+          self._setAccordionSectionState(section, !expanded);
+        }
+        return;
+      }
+      var pill = e.target.closest('.filter-pill');
+      if (pill) {
+        // _bindChipToggles / _bindMultiSelectPills toggles .active before
+        // this listener runs (innermost-first bubble); defer via rAF so
+        // we read the post-toggle state.
+        requestAnimationFrame(function() {
+          var section = pill.closest('[data-chip-acc-section]');
+          if (!section) return;
+          self._updateAccordionCount(section);
+          if (section.dataset.chipAccExpanded !== '1') {
+            self._setAccordionSectionState(section, false);
+          }
+        });
+      }
+    });
   },
 
   _removeRow: function(id) {
@@ -232,7 +352,10 @@ window.CL_PROFILE = {
     chip.setAttribute('data-value', val);
     chip.setAttribute('data-custom', '1');
     chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + groupId + '">\u00D7</span>';
-    group.appendChild(chip);
+    // Grouped layouts (services/products/licences) keep custom pills in
+    // a dedicated row below the accordion. Flat layouts just append.
+    var customRow = group.querySelector('[data-custom-pill-row="1"]');
+    (customRow || group).appendChild(chip);
     input.value = '';
   },
 
@@ -933,7 +1056,7 @@ window.CL_PROFILE = {
     var self = this;
     var items = this._vj(profileKey, []);
     var industries = this._va('industry');
-    var availableItems = window.BP_INDUSTRY_DATA
+    var availableGroups = window.BP_INDUSTRY_DATA
       ? (prefix === 'svc' ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : window.BP_INDUSTRY_DATA.getMergedProducts(industries))
       : [];
     var selectedNames = items.map(function(i) { return i.name || ''; }).filter(function(n) { return !!n; });
@@ -941,11 +1064,8 @@ window.CL_PROFILE = {
     var pricingTypes = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.pricingTypes : [];
 
     var pillsHtml = '<div class="profile-label" style="margin-bottom:8px">Select from your industry list</div>';
-    pillsHtml += '<div id="prof-' + prefix + '-pills" class="review-pill-row" style="margin-bottom:16px">';
-    availableItems.forEach(function(name) {
-      var active = selectedNames.indexOf(name) > -1 ? ' active' : '';
-      pillsHtml += '<button type="button" class="filter-pill' + active + '" data-svc-pill="' + window.escHtml(name) + '">' + window.escHtml(name) + '</button>';
-    });
+    pillsHtml += '<div id="prof-' + prefix + '-pills" style="margin-bottom:16px">';
+    pillsHtml += this._renderAccordionGroups(availableGroups, 'svc-pill', selectedNames, 'prof-' + prefix);
     pillsHtml += '</div>';
 
     var customHtml = '<div style="margin-bottom:16px">';
@@ -976,6 +1096,7 @@ window.CL_PROFILE = {
 
     this._renderPricingRows(prefix, items, pricingTypes);
     this._bindMultiSelectPills(prefix, profileKey, pricingTypes);
+    this._bindChipAccordion(document.getElementById('prof-' + prefix + '-pills'));
 
     var panelContainer = document.getElementById(panelId);
     this._bindAutoSave(prefix === 'svc' ? 'services' : 'products', panelContainer);
@@ -1218,7 +1339,12 @@ window.CL_PROFILE = {
     }
     var licenceOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedLicences(industries) : [];
     var selectedLicences = this._va('licences');
-    var customLicences = selectedLicences.filter(function(l) { return licenceOpts.indexOf(l) === -1; });
+    // licenceOpts is now an array of { name, items } groups; flatten to a
+    // membership set so we can detect saved values that don't match any
+    // standard chip and render them as custom pills instead.
+    var standardLicenceSet = {};
+    licenceOpts.forEach(function(g) { (g.items || []).forEach(function(i) { standardLicenceSet[i] = true; }); });
+    var customLicences = selectedLicences.filter(function(l) { return !standardLicenceSet[l]; });
     var licenceHtml = this._chipGroupWithOther('prof-licences', licenceOpts, selectedLicences, customLicences);
 
     var paymentOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.paymentMethodOptions : [];
@@ -1252,6 +1378,7 @@ window.CL_PROFILE = {
     var credPanel = document.getElementById('prof-panel-credentials');
     self._bindChipToggles(credPanel);
     self._bindPhoneTypeDropdowns(credPanel);
+    self._bindChipAccordion(document.getElementById('prof-licences'));
     self._bindAutoSave('credentials', credPanel);
 
     document.getElementById('prof-cred-save').addEventListener('click', function() { self._saveCredentials(); });
