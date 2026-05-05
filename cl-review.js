@@ -8,6 +8,17 @@ window.CL_REVIEW = {
   _selected: new Set(),
   _filterState: { pending: { tools: [], cats: [] }, approved: { tools: [], cats: [] }, rejected: { tools: [], cats: [] }, archived: { tools: [], cats: [] } },
 
+  // Surfaced in the Source dropdown for AI-rejected items. Maps each
+  // DISCARD category to a short user-facing explanation appended after
+  // the category name, so the user understands why the AI auto-rejected.
+  _REJECTION_REASON_TEXT: {
+    'Customer Enquiries': 'Customer Enquiries — only used in Email Assistant and should be connected directly in Email Assistant Settings',
+    'Complaints': 'Complaints — only used in Email Assistant and should be connected directly in Email Assistant Settings',
+    'Legal': 'Legal — for privacy STAXAI rejects all user legal content',
+    'IT': 'IT — internal IT content is not relevant to business tools',
+    'Spam': 'Spam — promotional or junk content'
+  },
+
   init: async function(supabase) {
     this._supabase = supabase;
     this._render();
@@ -465,9 +476,11 @@ window.CL_REVIEW = {
     if (detail.folder_name) sourceDetailParts.push('<div><span class="source-detail-label">Drive folder:</span><span>' + escHtml(detail.folder_name) + '</span></div>');
     // Auto-rejected items carry the AI's classification in item.category —
     // categories in DISCARD_CATEGORIES (Legal, IT, Spam, Customer Enquiries,
-    // Complaints) are what triggered the rejection on import.
+    // Complaints) are what triggered the rejection on import. _REJECTION_REASON_TEXT
+    // appends a short explanation; unknown categories fall back to bare name.
     if (this._status === 'rejected' && detail.rejection_source === 'auto' && item.category) {
-      sourceDetailParts.push('<div><span class="source-detail-label">Rejection Reason:</span><span>' + escHtml(item.category) + '</span></div>');
+      var rejectionText = this._REJECTION_REASON_TEXT[item.category] || item.category;
+      sourceDetailParts.push('<div><span class="source-detail-label">Rejection Reason:</span><span>' + escHtml(rejectionText) + '</span></div>');
     }
     if (item.source_item_id && detail.file_url) {
       sourceDetailParts.push('<div class="source-detail-action"><a href="' + escHtml(detail.file_url) + '" target="_blank" class="btn-link">View Source Document &rarr;</a></div>');
