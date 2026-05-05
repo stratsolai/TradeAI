@@ -3,10 +3,16 @@ window.CL_REVIEW = {
   _status: 'pending',
   _categoryFilter: [],
   _toolFilters: [],
+  _sourceFilters: [],
   _searchTerm: '',
   _items: [],
   _selected: new Set(),
-  _filterState: { pending: { tools: [], cats: [] }, approved: { tools: [], cats: [] }, rejected: { tools: [], cats: [] }, archived: { tools: [], cats: [] } },
+  _filterState: { pending: { tools: [], cats: [], sources: [] }, approved: { tools: [], cats: [], sources: [] }, rejected: { tools: [], cats: [], sources: [] }, archived: { tools: [], cats: [], sources: [] } },
+
+  // Friendly source labels offered in the "Filter By Source" dropdown.
+  // Order matches the user-facing list. Mapped to item.source +
+  // item.tool_source via _sourceFilterLabel.
+  _SOURCE_FILTER_OPTIONS: ['Gmail', 'Outlook', 'Google Drive', 'OneDrive', 'SharePoint', 'Dropbox', 'Website', 'Upload'],
 
   // Surfaced in the Source dropdown for AI-rejected items. Maps each
   // DISCARD category to a short user-facing explanation appended after
@@ -58,35 +64,48 @@ window.CL_REVIEW = {
   _closeFilterDropdowns: function() {
     var ftb = document.querySelector('.filter-tools-btn');
     var fcb = document.querySelector('.filter-cat-btn');
+    var fsb = document.querySelector('.filter-source-btn');
     if (ftb) ftb.classList.remove('open');
     if (fcb) fcb.classList.remove('open');
+    if (fsb) fsb.classList.remove('open');
     var filterRow = document.getElementById('review-filter-row');
     var toolWrap = document.getElementById('review-tool-pills-wrap');
     var catWrap = document.getElementById('review-cat-pills-wrap');
+    var srcWrap = document.getElementById('review-source-pills-wrap');
     if (toolWrap) toolWrap.style.display = 'none';
     if (catWrap) catWrap.style.display = 'none';
+    if (srcWrap) srcWrap.style.display = 'none';
     if (filterRow) filterRow.style.display = 'none';
     this._updateFilterBtnIndicators();
   },
 
   _saveFilterState: function() {
-    this._filterState[this._status] = { tools: this._toolFilters.slice(), cats: this._categoryFilter.slice() };
+    this._filterState[this._status] = {
+      tools: this._toolFilters.slice(),
+      cats: this._categoryFilter.slice(),
+      sources: this._sourceFilters.slice()
+    };
   },
 
   _restoreFilterState: function(status) {
     var s = this._filterState[status];
     this._toolFilters = s ? s.tools.slice() : [];
     this._categoryFilter = s ? s.cats.slice() : [];
+    this._sourceFilters = (s && s.sources) ? s.sources.slice() : [];
   },
 
   _updateFilterBtnIndicators: function() {
     var ftb = document.querySelector('.filter-tools-btn');
     var fcb = document.querySelector('.filter-cat-btn');
+    var fsb = document.querySelector('.filter-source-btn');
     if (ftb && !ftb.classList.contains('open')) {
       ftb.classList.toggle('active', this._toolFilters.length > 0);
     }
     if (fcb && !fcb.classList.contains('open')) {
       fcb.classList.toggle('active', this._categoryFilter.length > 0);
+    }
+    if (fsb && !fsb.classList.contains('open')) {
+      fsb.classList.toggle('active', this._sourceFilters.length > 0);
     }
   },
 
@@ -116,6 +135,7 @@ window.CL_REVIEW = {
         <div class="review-filter-btns-row">
           <button class="filter-btn filter-tools-btn">&#9783; Filter By Tools</button>
           <button class="filter-btn filter-cat-btn">&#9776; Filter By Category</button>
+          <button class="filter-btn filter-source-btn">&#128194; Filter By Source</button>
           <button class="clear-filters-btn">&#10005; Clear All Filters</button>
           <span class="review-filter-spacer"></span>
           <button class="btn-outline review-approve-all-btn" id="review-approve-all-btn">&#10003; Approve All</button>
@@ -124,6 +144,7 @@ window.CL_REVIEW = {
         <div id="review-filter-row" class="review-filter-row" style="display:none">
           <div id="review-tool-pills-wrap" style="display:none"><div class="filter-section-label">Tools</div><div id="review-tool-pills" class="review-pill-row"></div></div>
           <div id="review-cat-pills-wrap" style="display:none"><div class="filter-section-label">Categories</div><div id="review-cat-pills" class="review-pill-row"></div></div>
+          <div id="review-source-pills-wrap" style="display:none"><div class="filter-section-label">Sources</div><div id="review-source-pills" class="review-pill-row"></div></div>
         </div>
         <div id="review-bulk-bar" class="review-bulk-bar" style="display:none">
           <span id="review-bulk-count" class="review-bulk-label"></span>
@@ -170,16 +191,20 @@ window.CL_REVIEW = {
     });
     var filterToolsBtn = document.querySelector('.filter-tools-btn');
     var filterCatBtn = document.querySelector('.filter-cat-btn');
+    var filterSourceBtn = document.querySelector('.filter-source-btn');
     var clearBtn = document.querySelector('.clear-filters-btn');
     function updateFilterRow() {
       var filterRow = document.getElementById('review-filter-row');
       var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('open');
       var catsOpen = filterCatBtn && filterCatBtn.classList.contains('open');
+      var srcOpen = filterSourceBtn && filterSourceBtn.classList.contains('open');
       var toolWrap = document.getElementById('review-tool-pills-wrap');
       var catWrap = document.getElementById('review-cat-pills-wrap');
+      var srcWrap = document.getElementById('review-source-pills-wrap');
       if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
       if (catWrap) catWrap.style.display = catsOpen ? '' : 'none';
-      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
+      if (srcWrap) srcWrap.style.display = srcOpen ? '' : 'none';
+      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen || srcOpen) ? 'block' : 'none';
     }
     if (filterToolsBtn) {
       filterToolsBtn.addEventListener('click', function() {
@@ -199,13 +224,24 @@ window.CL_REVIEW = {
         self._updateFilterBtnIndicators();
       });
     }
+    if (filterSourceBtn) {
+      filterSourceBtn.addEventListener('click', function() {
+        var isOpen = filterSourceBtn.classList.contains('open');
+        filterSourceBtn.classList.toggle('open', !isOpen);
+        if (!isOpen) self._renderFilterRow();
+        updateFilterRow();
+        self._updateFilterBtnIndicators();
+      });
+    }
     if (clearBtn) {
       clearBtn.addEventListener('click', function() {
         self._toolFilters = [];
         self._categoryFilter = [];
+        self._sourceFilters = [];
         self._saveFilterState();
         if (filterToolsBtn) { filterToolsBtn.classList.remove('open', 'active'); }
         if (filterCatBtn) { filterCatBtn.classList.remove('open', 'active'); }
+        if (filterSourceBtn) { filterSourceBtn.classList.remove('open', 'active'); }
         updateFilterRow();
         self._renderFilterRow();
         self._renderList();
@@ -295,10 +331,12 @@ window.CL_REVIEW = {
     const filterRow = document.getElementById('review-filter-row');
     const catPillsEl = document.getElementById('review-cat-pills');
     const toolPillsEl = document.getElementById('review-tool-pills');
-    if (!filterRow || !catPillsEl || !toolPillsEl) return;
+    const sourcePillsEl = document.getElementById('review-source-pills');
+    if (!filterRow || !catPillsEl || !toolPillsEl || !sourcePillsEl) return;
     var _toolsActive = document.querySelector('.filter-tools-btn.open');
     var _catActive = document.querySelector('.filter-cat-btn.open');
-    filterRow.style.display = (_toolsActive || _catActive) ? 'block' : 'none';
+    var _srcActive = document.querySelector('.filter-source-btn.open');
+    filterRow.style.display = (_toolsActive || _catActive || _srcActive) ? 'block' : 'none';
     const self = this;
 
     var FIXED_CATEGORIES = ['Products & Services', 'Pricing', 'Company Information', 'Jobs, Portfolio & Photos', 'Promotions & Offers', 'Customer Testimonials', 'Tips & How-To', 'Industry News', 'Tender & Proposal Documents', 'Financial Documents', 'Compliance & Certificates', 'Safety & SWMS', 'Supplier Communications'];
@@ -317,6 +355,11 @@ window.CL_REVIEW = {
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(toolLabel) + '</button>';
     }).join('');
 
+    sourcePillsEl.innerHTML = self._SOURCE_FILTER_OPTIONS.map(function(src) {
+      const isActive = self._sourceFilters.indexOf(src) > -1;
+      return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-source="' + escHtml(src) + '">' + escHtml(src) + '</button>';
+    }).join('');
+
     catPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
         var id = pill.dataset.cat;
@@ -331,6 +374,15 @@ window.CL_REVIEW = {
         const id = pill.dataset.tool;
         const idx = self._toolFilters.indexOf(id);
         if (idx > -1) { self._toolFilters.splice(idx, 1); } else { self._toolFilters.push(id); }
+        self._renderFilterRow();
+        self._renderList();
+      });
+    });
+    sourcePillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
+      pill.addEventListener('click', function() {
+        const id = pill.dataset.source;
+        const idx = self._sourceFilters.indexOf(id);
+        if (idx > -1) { self._sourceFilters.splice(idx, 1); } else { self._sourceFilters.push(id); }
         self._renderFilterRow();
         self._renderList();
       });
@@ -352,11 +404,36 @@ window.CL_REVIEW = {
         const tags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
         if (!self._toolFilters.some(function(f) { return tags.indexOf(f) > -1; })) return false;
       }
+      if (self._sourceFilters.length > 0) {
+        var label = self._sourceFilterLabel(item);
+        if (!label || self._sourceFilters.indexOf(label) === -1) return false;
+      }
       if (self._searchTerm) {
         if ((item.title || '').toLowerCase().indexOf(self._searchTerm) === -1) return false;
       }
       return true;
     });
+  },
+
+  // Maps an item to one of the eight friendly source labels offered in
+  // the "Filter By Source" dropdown. Returns '' for items whose source
+  // doesn't map to any of the listed options (so they're filtered out
+  // when any source filter is active).
+  _sourceFilterLabel: function(item) {
+    if (!item) return '';
+    var srcVal = item.source || '';
+    if (srcVal === 'google-drive') return 'Google Drive';
+    if (srcVal === 'onedrive') return 'OneDrive';
+    if (srcVal === 'sharepoint') return 'SharePoint';
+    if (srcVal === 'dropbox') return 'Dropbox';
+    if (srcVal === 'website') return 'Website';
+    if (srcVal === 'document' || srcVal === 'photo') return 'Upload';
+    if (srcVal === 'email') {
+      var toolSrc = item.tool_source || '';
+      if (toolSrc === 'cl-outlook-scan') return 'Outlook';
+      if (toolSrc === 'cl-email-scan') return 'Gmail';
+    }
+    return '';
   },
 
   _renderList: function() {
