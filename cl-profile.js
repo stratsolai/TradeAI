@@ -971,34 +971,85 @@ window.CL_PROFILE = {
   },
 
   // BP UX Improvements Spec v1.0 §3 — wire Google Places Autocomplete
-  // to every Street Address input. The widget handles its own session
-  // tokens, restricts results to AU addresses, and falls back silently
-  // to manual entry if the API key endpoint or Maps script can't load.
+  // to every Street Address field. Uses the new PlaceAutocompleteElement
+  // web component (the legacy google.maps.places.Autocomplete widget was
+  // deprecated 1 March 2025 and stopped working for new API keys).
+  //
+  // Strategy: each .loc-street input rendered by _locationBlock stays in
+  // the DOM as the canonical value holder — _saveLocation reads from it
+  // unchanged. At init time we flip it to type=hidden and append the
+  // <gmp-place-autocomplete> custom element next to it. On selection we
+  // populate the hidden street input plus suburb / state / postcode.
+  // If the Maps script or component ctor fails, we restore the input to
+  // type=text so the user can still type manually.
   _initStreetAutocomplete: function() {
     var self = this;
     if (!self._supabase) return;
     self._loadGoogleMapsPlaces().then(function() {
       if (!window.google || !window.google.maps || !window.google.maps.places) return;
+      var PlaceAutocompleteElement = window.google.maps.places.PlaceAutocompleteElement;
+      if (!PlaceAutocompleteElement) {
+        console.error('[BP autocomplete] PlaceAutocompleteElement not available — Places API (New) not enabled?');
+        return;
+      }
       var inputs = document.querySelectorAll('#prof-panel-location .loc-street');
       inputs.forEach(function(input) {
         if (input.dataset.gmapAutocompleteBound) return;
         input.dataset.gmapAutocompleteBound = '1';
-        var ac = new window.google.maps.places.Autocomplete(input, {
-          componentRestrictions: { country: 'au' },
-          fields: ['address_components'],
-          types: ['address']
-        });
-        ac.addListener('place_changed', function() {
-          var place = ac.getPlace();
-          if (!place || !place.address_components) return;
-          self._applyAutocompleteResult(input, place.address_components);
-        });
+        var existingValue = input.value || '';
+        var parent = input.parentElement;
+        if (!parent) return;
+
+        var placeEl;
+        try {
+          placeEl = new PlaceAutocompleteElement({ includedRegionCodes: ['au'] });
+        } catch (e) {
+          console.error('[BP autocomplete] PlaceAutocompleteElement creation failed:', e);
+          return;
+        }
+        placeEl.classList.add('loc-street-autocomplete');
+        placeEl.setAttribute('placeholder', 'Start typing your street address');
+        // Hide the canonical input — the new element is the visible one
+        // but the input still drives _saveLocation via .value.
+        input.type = 'hidden';
+        parent.appendChild(placeEl);
+
+        // Best-effort pre-population of the visible field so users
+        // returning to a saved profile see what's already there.
+        if (existingValue) {
+          requestAnimationFrame(function() {
+            try {
+              var inner = placeEl.inputElement || placeEl.querySelector('input');
+              if (inner) inner.value = existingValue;
+            } catch (e) { /* ok — display only */ }
+          });
+        }
+
+        // Current API event is gmp-select; gmp-placeselect is the older
+        // name some preview builds still emit. Both call the handler.
+        var onSelect = async function(event) {
+          try {
+            var prediction = event.placePrediction;
+            if (!prediction) return;
+            var place = prediction.toPlace();
+            await place.fetchFields({ fields: ['addressComponents'] });
+            var components = place.addressComponents;
+            if (!components) return;
+            self._applyAutocompleteResult(input, components);
+          } catch (e) {
+            console.error('[BP autocomplete] place selection error:', e);
+          }
+        };
+        placeEl.addEventListener('gmp-select', onSelect);
+        placeEl.addEventListener('gmp-placeselect', onSelect);
       });
-    }).catch(function() { /* swallow — manual entry still works */ });
+    }).catch(function(err) {
+      console.error('[BP autocomplete] Maps load failed:', err && err.message ? err.message : err);
+    });
   },
 
   _loadGoogleMapsPlaces: function() {
-    if (window.google && window.google.maps && window.google.maps.places) {
+    if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.PlaceAutocompleteElement) {
       return Promise.resolve();
     }
     if (window.__staxGmapPromise) return window.__staxGmapPromise;
@@ -1013,7 +1064,10 @@ window.CL_PROFILE = {
       if (!keyJson || !keyJson.key) throw new Error('Places key missing');
       return new Promise(function(resolve, reject) {
         var script = document.createElement('script');
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(keyJson.key) + '&libraries=places&loading=async';
+        // v=weekly so we get the current PlaceAutocompleteElement build.
+        // libraries=places loads the Places library; loading=async lets
+        // Google paint the page first.
+        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(keyJson.key) + '&libraries=places&loading=async&v=weekly';
         script.async = true;
         script.defer = true;
         script.onload = function() { resolve(); };
@@ -1028,15 +1082,21 @@ window.CL_PROFILE = {
     return window.__staxGmapPromise;
   },
 
+  // PlaceAutocompleteElement returns Place.AddressComponent objects with
+  // longText / shortText / types — different shape from the legacy
+  // long_name / short_name on AutocompleteResult.
   _applyAutocompleteResult: function(streetInput, components) {
     var parsed = { street_number: '', route: '', subpremise: '', locality: '', state: '', postcode: '' };
     components.forEach(function(c) {
-      if (c.types.indexOf('subpremise') > -1) parsed.subpremise = c.long_name;
-      else if (c.types.indexOf('street_number') > -1) parsed.street_number = c.long_name;
-      else if (c.types.indexOf('route') > -1) parsed.route = c.long_name;
-      else if (c.types.indexOf('locality') > -1) parsed.locality = c.long_name;
-      else if (c.types.indexOf('administrative_area_level_1') > -1) parsed.state = c.short_name;
-      else if (c.types.indexOf('postal_code') > -1) parsed.postcode = c.long_name;
+      var types = c.types || [];
+      var longText = c.longText || c.long_name || '';
+      var shortText = c.shortText || c.short_name || '';
+      if (types.indexOf('subpremise') > -1) parsed.subpremise = longText;
+      else if (types.indexOf('street_number') > -1) parsed.street_number = longText;
+      else if (types.indexOf('route') > -1) parsed.route = longText;
+      else if (types.indexOf('locality') > -1) parsed.locality = longText;
+      else if (types.indexOf('administrative_area_level_1') > -1) parsed.state = shortText;
+      else if (types.indexOf('postal_code') > -1) parsed.postcode = longText;
     });
     var streetParts = [parsed.street_number, parsed.route].filter(Boolean);
     streetInput.value = streetParts.join(' ').trim();
