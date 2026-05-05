@@ -592,7 +592,8 @@ export default async function handler(req, res) {
       const sender = (msg.from && msg.from.emailAddress) ? (msg.from.emailAddress.name ? msg.from.emailAddress.name + ' <' + msg.from.emailAddress.address + '>' : msg.from.emailAddress.address) : '';
       const emailBody = extractOutlookBody(msg);
 
-      if (!emailBody || emailBody.trim().length < 50) { skipped++; skipped_reasons.body_too_short = (skipped_reasons.body_too_short || 0) + 1; continue; }
+      // Body length gate removed — the AI's no_content skip below
+      // handles emails it can't extract anything useful from.
 
       // Save source to cl-assets and create cl_source_items row
       var sourceItemId = null;

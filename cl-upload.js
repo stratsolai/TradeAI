@@ -577,7 +577,7 @@ window.CL_UPLOAD = {
     var line = tileName + " — " + label + " — " + (parts.length > 0 ? parts.join(", ") : "no new content");
     var ded = (row && row.deduped_count) || 0;
     if (ded > 0) line += " | " + ded + " already up to date";
-    if (sk > 0) line += " | " + sk + " skipped";
+    if (sk > 0) line += " | " + sk + " skipped — no usable content";
     var arch = (row && row.auto_archived_count) || 0;
     var paired = (row && row.fin_docs_paired_count) || 0;
     if (arch > 0) line += " | " + arch + " older version" + (arch !== 1 ? "s" : "") + " archived";

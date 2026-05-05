@@ -682,7 +682,8 @@ export default async function handler(req, res) {
       const emailBody = extractEmailBody(msgData.payload);
       console.log('BODY EXTRACT — subject:', subject, 'bodyLength:', emailBody.length, 'first100:', emailBody.substring(0, 100));
 
-      if (!emailBody || emailBody.trim().length < 50) { console.log('SKIPPED — body too short:', emailBody.length); skipped++; skipped_reasons.body_too_short = (skipped_reasons.body_too_short || 0) + 1; continue; }
+      // Body length gate removed — the AI's no_content skip below
+      // handles emails it can't extract anything useful from.
 
       // Save source to cl-assets and create cl_source_items row
       var sourceItemId = null;
