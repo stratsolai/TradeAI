@@ -157,6 +157,8 @@ Status: Blocked on Task 30.
 All tools require end-to-end testing using the test environment
 once populated.
 
+- BI → SP wiring — confirm "Add to Strategic Plan" button works
+
 ### Task 33 — Page Load Speed & Shell Flicker
 
 Status: Not started.
@@ -384,6 +386,13 @@ source = 'tool' must always be set on content_library rows written by a tool. Wi
 Pattern A — Scan-import (AI confidence-based status). Used when a tool is ingesting external content it did not create. The AI determines status based on confidence. Status is 'approved' if the AI is confident the content has value, 'archived' if the content should be discarded. Never 'pending' or 'rejected'. Use upsert with onConflict: 'source_ref', ignoreDuplicates: true. Required fields: source ('tool'), tool_source (tool ID), source_ref (unique dedup key), status, category, tool_tags, content_text, user_id.
 
 Pattern B — Tool-generated (always approved). Used when a tool has generated the content itself. Status is always forced to 'approved' regardless of AI confidence. Use upsert with onConflict: 'source_ref', ignoreDuplicates: true. Required fields: same as Pattern A with status always 'approved'.
+
+**Browser writers — centralised endpoint.** Tools that run in the browser and write to the Content Library (chatbot, design-viz, social) use the centralised /api/cl-tool-write endpoint. Tag definitions for each tool are in TOOL_OUTPUT_MATRIX in lib/cl-prompts.js. The endpoint handles auth, tags, dedup, and all required fields.
+
+To add a new browser writer:
+1. Add a row to TOOL_OUTPUT_MATRIX in lib/cl-prompts.js for the new tool
+2. From the browser, call fetch('/api/cl-tool-write', ...) with the tool's tool_source and content
+3. Done — the endpoint handles everything else
 
 Every future tool build must stamp first_used_at on content_library rows when content is used in a generated output. This controls edit and delete restrictions in Source Review.
 
