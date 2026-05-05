@@ -297,14 +297,15 @@ window.CL_PROFILE = {
       '<button class="btn btn-outline" data-action="upload-logo">Upload Logo</button>' +
     '</div>';
 
-    var industryChips = this._chipGroup('prof-industries', industries, selectedIndustries);
+    var industryChips = this._chipGroup('prof-industries', industries, selectedIndustries) +
+      '<div id="prof-industries-max-msg" style="display:none;color:var(--red);font-size:13px;margin-top:6px">Maximum 2 industries — remove one to select another</div>';
 
     var body = '<div class="profile-fields">' +
       this._field('Legal Business Name', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
       this._field2('Business Structure', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industries <span class="profile-optional">(select all that apply)</span>', industryChips) +
+      this._field('Industries <span class="profile-optional">(select up to 2)</span>', industryChips) +
       this._field('Business Logo', logoHtml) +
       this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
     '</div>' +
@@ -355,6 +356,29 @@ window.CL_PROFILE = {
   _bindIndustryWarn: function(previousIndustries) {
     var group = document.getElementById('prof-industries');
     if (!group) return;
+    var MAX_INDUSTRIES = 2;
+
+    // Capture-phase: block selection of a third industry before
+    // _bindChipToggles toggles the active state. Mirrors the cap
+    // behaviour in the pre-login industry-modal.js.
+    group.addEventListener('click', function(e) {
+      if (e.target.closest('.prof-pill-remove')) return;
+      var chip = e.target.closest('.filter-pill');
+      if (!chip || chip.dataset.custom) return;
+      if (chip.classList.contains('active')) return;
+      var activeCount = group.querySelectorAll('.filter-pill.active').length;
+      if (activeCount >= MAX_INDUSTRIES) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        var msg = document.getElementById('prof-industries-max-msg');
+        if (msg) {
+          msg.style.display = '';
+          if (msg._hideTimer) clearTimeout(msg._hideTimer);
+          msg._hideTimer = setTimeout(function() { msg.style.display = 'none'; }, 2500);
+        }
+      }
+    }, true);
+
     group.addEventListener('click', function(e) {
       if (e.target.closest('.prof-pill-remove')) return;
       var chip = e.target.closest('.filter-pill');
