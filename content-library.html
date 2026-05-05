@@ -233,65 +233,37 @@
 .profile-optional { font-weight: 400; color: var(--text-muted); }
 .profile-input { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; transition: border-color var(--btn-transition); }
 .profile-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus-ring); }
-/* Google PlaceAutocompleteElement renders <gmp-place-autocomplete> with
-   its own chrome — a search icon, clear button, and a styled wrapper
-   that doesn't match the platform inputs. Below: reset the host and
-   intermediate wrappers, hide the search/clear glyphs, and force the
-   inner <input> to look exactly like .profile-input. !important is
-   used because the element ships its own inline styles. ::part(input)
-   covers shadow-DOM builds; direct descendant selectors cover the
-   light-DOM build that ships today. */
-.loc-street-autocomplete {
-  display: block;
-  width: 100%;
-  background: transparent;
-  border: none;
-  box-shadow: none;
+/* Custom Google Places suggestion dropdown rendered below the Street
+   Address input. The .loc-street input itself uses the standard
+   .profile-input class — no overrides needed. The wrap is the
+   positioning context for the absolutely-positioned dropdown. */
+.loc-street-wrap { position: relative; }
+.loc-street-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin: 4px 0 0 0;
   padding: 0;
-  margin: 0;
-  min-height: 0;
+  list-style: none;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--input-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 240px;
+  overflow-y: auto;
+  z-index: 1000;
 }
-.loc-street-autocomplete > div,
-.loc-street-autocomplete > div > div,
-.loc-street-autocomplete > div > div > div {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-  display: block !important;
+.loc-street-suggestion-item {
+  padding: 10px 12px;
+  font-size: var(--btn-font-size);
+  color: var(--text);
+  font-family: var(--body-font);
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-light);
 }
-/* Hide the search icon, clear button, and any decorative glyphs Google
-   ships with the element. Targets generic descendants so the rule keeps
-   working if Google's class names change in a future weekly build. */
-.loc-street-autocomplete svg,
-.loc-street-autocomplete button,
-.loc-street-autocomplete [role="button"] {
-  display: none !important;
-}
-/* The actual input — styled to match .profile-input verbatim. */
-.loc-street-autocomplete input,
-.loc-street-autocomplete::part(input) {
-  width: 100% !important;
-  padding: var(--input-padding) !important;
-  border: var(--input-border-width) solid var(--border) !important;
-  border-radius: var(--input-radius) !important;
-  font-size: var(--btn-font-size) !important;
-  color: var(--text) !important;
-  background: var(--white) !important;
-  font-family: var(--body-font) !important;
-  box-sizing: border-box !important;
-  transition: border-color var(--btn-transition) !important;
-  height: auto !important;
-  margin: 0 !important;
-}
-.loc-street-autocomplete input:focus,
-.loc-street-autocomplete::part(input):focus {
-  outline: none !important;
-  border-color: var(--blue) !important;
-  box-shadow: 0 0 0 3px var(--focus-ring) !important;
-}
+.loc-street-suggestion-item:last-child { border-bottom: none; }
+.loc-street-suggestion-item:hover { background: var(--blue-light); }
 .profile-textarea { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; resize: vertical; }
 .profile-textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus-ring); }
 .profile-address-row { display: grid; grid-template-columns: 1fr 80px 100px; gap: 12px; }

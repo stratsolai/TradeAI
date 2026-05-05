@@ -970,99 +970,161 @@ window.CL_PROFILE = {
     this._initStreetAutocomplete();
   },
 
-  // BP UX Improvements Spec v1.0 §3 — wire Google Places Autocomplete
-  // to every Street Address field. Uses the new PlaceAutocompleteElement
-  // web component (the legacy google.maps.places.Autocomplete widget was
-  // deprecated 1 March 2025 and stopped working for new API keys).
+  // BP UX Improvements Spec v1.0 §3 — Google Places address suggestions
+  // for every Street Address field.
   //
-  // Strategy: each .loc-street input rendered by _locationBlock stays in
-  // the DOM as the canonical value holder — _saveLocation reads from it
-  // unchanged. At init time we flip it to type=hidden and append the
-  // <gmp-place-autocomplete> custom element next to it. On selection we
-  // populate the hidden street input plus suburb / state / postcode.
-  // If the Maps script or component ctor fails, we restore the input to
-  // type=text so the user can still type manually.
+  // Implementation note (2025): we drive a custom dropdown using the
+  // programmatic AutocompleteSuggestion / Place API instead of the
+  // <gmp-place-autocomplete> web component. The component renders its
+  // search icon and clear button inside a shadow root that exposes no
+  // CSS parts for them, so there's no way to make it match the
+  // platform .profile-input look. With AutocompleteSuggestion we keep
+  // the platform <input class="profile-input loc-street"> as-is and
+  // render our own suggestions <ul> below it — full styling control,
+  // no shadow DOM, no Google chrome.
   _initStreetAutocomplete: function() {
     var self = this;
     if (!self._supabase) return;
     self._loadGoogleMapsPlaces().then(function() {
       if (!window.google || !window.google.maps || !window.google.maps.places) return;
-      var PlaceAutocompleteElement = window.google.maps.places.PlaceAutocompleteElement;
-      if (!PlaceAutocompleteElement) {
-        console.error('[BP autocomplete] PlaceAutocompleteElement not available — Places API (New) not enabled?');
+      var AutocompleteSuggestion = window.google.maps.places.AutocompleteSuggestion;
+      var AutocompleteSessionToken = window.google.maps.places.AutocompleteSessionToken;
+      if (!AutocompleteSuggestion) {
+        console.error('[BP autocomplete] AutocompleteSuggestion not available — Places API (New) not enabled?');
         return;
       }
       var inputs = document.querySelectorAll('#prof-panel-location .loc-street');
       inputs.forEach(function(input) {
         if (input.dataset.gmapAutocompleteBound) return;
         input.dataset.gmapAutocompleteBound = '1';
-        var existingValue = input.value || '';
-        var parent = input.parentElement;
-        if (!parent) return;
-
-        var placeEl;
-        try {
-          placeEl = new PlaceAutocompleteElement({ includedRegionCodes: ['au'] });
-        } catch (e) {
-          console.error('[BP autocomplete] PlaceAutocompleteElement creation failed:', e);
-          return;
-        }
-        placeEl.classList.add('loc-street-autocomplete');
-        // Hide the canonical input — the new element is the visible one
-        // but the input still drives _saveLocation via .value.
-        input.type = 'hidden';
-        parent.appendChild(placeEl);
-
-        function getInner() {
-          return placeEl.inputElement || placeEl.querySelector('input');
-        }
-        function setInnerValue(v) {
-          var inner = getInner();
-          if (inner) inner.value = v;
-        }
-
-        // Apply placeholder + pre-fill once the inner input is in the
-        // DOM (the element renders its child input asynchronously).
-        requestAnimationFrame(function() {
-          try {
-            var inner = getInner();
-            if (inner) inner.placeholder = 'Start typing your street address';
-            if (existingValue && inner) inner.value = existingValue;
-          } catch (e) { /* ok */ }
-        });
-
-        // Current API event is gmp-select; gmp-placeselect is the older
-        // name some preview builds still emit. Both call the handler.
-        var onSelect = async function(event) {
-          try {
-            var prediction = event.placePrediction;
-            if (!prediction) return;
-            var place = prediction.toPlace();
-            await place.fetchFields({ fields: ['addressComponents'] });
-            var components = place.addressComponents;
-            if (!components) return;
-            var streetValue = self._applyAutocompleteResult(input, components);
-            // Replace whatever the element wrote into its visible input
-            // (Google defaults to the full formatted address) with just
-            // the street portion so we don't duplicate suburb/state/postcode.
-            if (streetValue) {
-              setInnerValue(streetValue);
-              requestAnimationFrame(function() { setInnerValue(streetValue); });
-            }
-          } catch (e) {
-            console.error('[BP autocomplete] place selection error:', e);
-          }
-        };
-        placeEl.addEventListener('gmp-select', onSelect);
-        placeEl.addEventListener('gmp-placeselect', onSelect);
+        self._attachStreetAutocomplete(input, AutocompleteSuggestion, AutocompleteSessionToken);
       });
     }).catch(function(err) {
       console.error('[BP autocomplete] Maps load failed:', err && err.message ? err.message : err);
     });
   },
 
+  _attachStreetAutocomplete: function(input, AutocompleteSuggestion, AutocompleteSessionToken) {
+    var self = this;
+
+    // Insert a wrapper around the input so the dropdown can be
+    // positioned absolutely relative to it. The label / .profile-field-full
+    // structure is untouched — the wrapper sits inside the field.
+    var parent = input.parentElement;
+    if (!parent) return;
+    var wrap = document.createElement('div');
+    wrap.className = 'loc-street-wrap';
+    parent.insertBefore(wrap, input);
+    wrap.appendChild(input);
+
+    var dropdown = document.createElement('ul');
+    dropdown.className = 'loc-street-suggestions';
+    dropdown.style.display = 'none';
+    wrap.appendChild(dropdown);
+
+    var sessionToken = AutocompleteSessionToken ? new AutocompleteSessionToken() : undefined;
+    var currentSuggestions = [];
+    var debounceTimer = null;
+    var lastQuery = '';
+
+    function hideDropdown() {
+      dropdown.style.display = 'none';
+    }
+    function showDropdown() {
+      if (dropdown.children.length > 0) dropdown.style.display = 'block';
+    }
+
+    function renderSuggestions() {
+      if (currentSuggestions.length === 0) {
+        dropdown.innerHTML = '';
+        hideDropdown();
+        return;
+      }
+      var html = currentSuggestions.map(function(s, i) {
+        var pred = s.placePrediction;
+        if (!pred) return '';
+        var text = '';
+        try { text = pred.text ? pred.text.toString() : (pred.mainText ? pred.mainText.toString() : ''); }
+        catch (e) { text = ''; }
+        return '<li data-idx="' + i + '" class="loc-street-suggestion-item">' + window.escHtml(text) + '</li>';
+      }).join('');
+      dropdown.innerHTML = html;
+      showDropdown();
+    }
+
+    async function fetchSuggestions(query) {
+      var trimmed = (query || '').trim();
+      if (trimmed.length < 3) {
+        currentSuggestions = [];
+        renderSuggestions();
+        return;
+      }
+      if (trimmed === lastQuery) return;
+      lastQuery = trimmed;
+      try {
+        var req = {
+          input: trimmed,
+          includedRegionCodes: ['au']
+        };
+        if (sessionToken) req.sessionToken = sessionToken;
+        var result = await AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
+        var suggestions = (result && result.suggestions) || [];
+        // Only addressed predictions — drop anything Google returns
+        // without a place prediction (e.g. query suggestions).
+        currentSuggestions = suggestions.filter(function(s) { return !!s.placePrediction; });
+        renderSuggestions();
+      } catch (e) {
+        console.error('[BP autocomplete] fetch error:', e && e.message ? e.message : e);
+      }
+    }
+
+    async function selectSuggestion(idx) {
+      var suggestion = currentSuggestions[idx];
+      if (!suggestion || !suggestion.placePrediction) return;
+      try {
+        var place = suggestion.placePrediction.toPlace();
+        await place.fetchFields({ fields: ['addressComponents'] });
+        var components = place.addressComponents;
+        if (!components) return;
+        var streetValue = self._applyAutocompleteResult(input, components);
+        if (streetValue) input.value = streetValue;
+      } catch (e) {
+        console.error('[BP autocomplete] select error:', e && e.message ? e.message : e);
+      } finally {
+        currentSuggestions = [];
+        dropdown.innerHTML = '';
+        hideDropdown();
+        // New session for the next address — billing groups suggestion
+        // fetches with the final fetchFields call into one transaction.
+        if (AutocompleteSessionToken) sessionToken = new AutocompleteSessionToken();
+      }
+    }
+
+    input.addEventListener('input', function() {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      var q = input.value;
+      debounceTimer = setTimeout(function() { fetchSuggestions(q); }, 250);
+    });
+    input.addEventListener('focus', function() {
+      if (currentSuggestions.length > 0) showDropdown();
+    });
+    // mousedown rather than click so the input's blur (which fires
+    // hideDropdown on a 200ms delay) doesn't race with the click.
+    dropdown.addEventListener('mousedown', function(e) {
+      var li = e.target.closest('.loc-street-suggestion-item');
+      if (!li) return;
+      e.preventDefault();
+      var idx = parseInt(li.dataset.idx, 10);
+      if (!isNaN(idx)) selectSuggestion(idx);
+    });
+    input.addEventListener('blur', function() {
+      // Delay so a click on a suggestion still registers before we hide.
+      setTimeout(hideDropdown, 200);
+    });
+  },
+
   _loadGoogleMapsPlaces: function() {
-    if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.PlaceAutocompleteElement) {
+    if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.AutocompleteSuggestion) {
       return Promise.resolve();
     }
     if (window.__staxGmapPromise) return window.__staxGmapPromise;
