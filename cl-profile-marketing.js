@@ -224,26 +224,85 @@ window.BP_MARKETING = {
   },
 
   _bindColourSync: function() {
-    var picker1 = document.getElementById('prof-mkt-colour1');
-    var hex1 = document.getElementById('prof-mkt-colour1-hex');
-    if (picker1 && hex1) {
-      picker1.addEventListener('input', function() { hex1.value = picker1.value; });
-      hex1.addEventListener('input', function() {
-        if (/^#[0-9a-fA-F]{6}$/.test(hex1.value)) picker1.value = hex1.value;
+    var self = this;
+    var container = document.getElementById('prof-mkt-modal-content');
+    if (!container) return;
+
+    container.querySelectorAll('[data-colour-swatch]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var key = btn.getAttribute('data-colour-swatch');
+        var hex = btn.getAttribute('data-hex');
+        self._answers[key + '_colour'] = hex;
+        var customHex = document.getElementById('prof-mkt-' + key + '-hex');
+        var customPicker = document.getElementById('prof-mkt-' + key + '-picker');
+        if (customHex) customHex.value = hex;
+        if (customPicker) customPicker.value = hex;
+        var note = document.getElementById('prof-mkt-' + key + '-none-note');
+        if (note) note.style.display = 'none';
+        self._refreshColourSwatches(key);
       });
-    }
-    var picker2 = document.getElementById('prof-mkt-colour2');
-    var hex2 = document.getElementById('prof-mkt-colour2-hex');
-    if (picker2 && hex2) {
-      picker2.addEventListener('input', function() { hex2.value = picker2.value; });
-      hex2.addEventListener('input', function() {
-        if (/^#[0-9a-fA-F]{6}$/.test(hex2.value)) picker2.value = hex2.value;
+    });
+
+    container.querySelectorAll('[data-colour-action="custom"]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var key = btn.getAttribute('data-colour-key');
+        var custom = document.getElementById('prof-mkt-' + key + '-custom');
+        if (!custom) return;
+        var willShow = custom.style.display === 'none';
+        custom.style.display = willShow ? 'flex' : 'none';
+        btn.textContent = willShow ? 'Hide custom' : 'Custom colour';
+        if (willShow) {
+          var hexInput = document.getElementById('prof-mkt-' + key + '-hex');
+          if (hexInput) hexInput.focus();
+        }
       });
-    }
-    var noColourBtn = document.getElementById('prof-mkt-no-colour');
-    if (noColourBtn && hex1) {
-      noColourBtn.addEventListener('click', function() { hex1.value = ''; });
-    }
+    });
+
+    container.querySelectorAll('[data-colour-action="none"]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var key = btn.getAttribute('data-colour-key');
+        self._answers[key + '_colour'] = self.PLATFORM_DEFAULT_COLOUR;
+        var hexInput = document.getElementById('prof-mkt-' + key + '-hex');
+        var picker = document.getElementById('prof-mkt-' + key + '-picker');
+        if (hexInput) hexInput.value = self.PLATFORM_DEFAULT_COLOUR;
+        if (picker) picker.value = self.PLATFORM_DEFAULT_COLOUR;
+        var note = document.getElementById('prof-mkt-' + key + '-none-note');
+        if (note) note.style.display = 'block';
+        self._refreshColourSwatches(key);
+      });
+    });
+
+    ['primary', 'secondary'].forEach(function(key) {
+      var picker = document.getElementById('prof-mkt-' + key + '-picker');
+      var hexInput = document.getElementById('prof-mkt-' + key + '-hex');
+      if (picker && hexInput) {
+        picker.addEventListener('input', function() {
+          hexInput.value = picker.value;
+          self._answers[key + '_colour'] = picker.value;
+          self._refreshColourSwatches(key);
+        });
+        hexInput.addEventListener('input', function() {
+          var v = hexInput.value.trim();
+          if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+            picker.value = v;
+            self._answers[key + '_colour'] = v;
+            self._refreshColourSwatches(key);
+          }
+        });
+      }
+    });
+  },
+
+  _refreshColourSwatches: function(key) {
+    var hex = (this._answers[key + '_colour'] || '').toLowerCase();
+    document.querySelectorAll('[data-colour-swatch="' + key + '"]').forEach(function(btn) {
+      var swatchHex = (btn.getAttribute('data-hex') || '').toLowerCase();
+      var ring = btn.querySelector('span');
+      if (!ring) return;
+      ring.style.boxShadow = swatchHex === hex
+        ? 'inset 0 0 0 3px var(--blue), 0 0 0 1px var(--border)'
+        : 'inset 0 0 0 1px var(--border)';
+    });
   },
 
   _topicStandout: function() {
@@ -391,21 +450,79 @@ window.BP_MARKETING = {
     return html;
   },
 
+  // BP UX Improvements Spec v1.0 §5.2.3 — preset palette for the
+  // colour picker so SME owners don't need to know hex codes.
+  PRESET_COLOURS: [
+    { name: 'Navy Blue',     hex: '#1F3864', use: 'Professional, corporate' },
+    { name: 'Ocean Blue',    hex: '#4A6D8C', use: 'Trustworthy, calm (platform primary)' },
+    { name: 'Sky Blue',      hex: '#5DADE2', use: 'Fresh, modern' },
+    { name: 'Forest Green',  hex: '#27AE60', use: 'Natural, eco-friendly' },
+    { name: 'Teal',          hex: '#17A589', use: 'Professional, healthcare' },
+    { name: 'Burnt Orange',  hex: '#C4622A', use: 'Bold, energetic (platform accent)' },
+    { name: 'Bright Orange', hex: '#E67E22', use: 'Friendly, approachable' },
+    { name: 'Deep Red',      hex: '#C0392B', use: 'Bold, urgent' },
+    { name: 'Royal Purple',  hex: '#8E44AD', use: 'Premium, creative' },
+    { name: 'Charcoal',      hex: '#2C3E50', use: 'Sophisticated, minimal' },
+    { name: 'Warm Grey',     hex: '#7F8C8D', use: 'Neutral, balanced' },
+    { name: 'Black',         hex: '#000000', use: 'Classic, formal' }
+  ],
+
+  PLATFORM_DEFAULT_COLOUR: '#4A6D8C',
+
   _topicColours: function() {
-    var a = this._answers;
-    var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">Brand Colours</div>';
-    html += '<div class="profile-field-full"><label class="profile-label">Main brand colour</label>' +
-      '<div style="display:flex;align-items:center;gap:12px">' +
-      '<input type="color" id="prof-mkt-colour1" value="' + (a.primary_colour || '#4A6D8C') + '" style="width:50px;height:36px;border:var(--input-border-width) solid var(--border);border-radius:var(--input-radius);cursor:pointer">' +
-      '<input type="text" class="profile-input" id="prof-mkt-colour1-hex" value="' + window.escHtml(a.primary_colour || '') + '" placeholder="#000000" style="width:120px">' +
-      '<button class="filter-pill" id="prof-mkt-no-colour">I don\'t have one</button>' +
-      '</div></div>';
-    html += '<div class="profile-field-full" style="margin-top:12px"><label class="profile-label">Secondary brand colour (optional)</label>' +
-      '<div style="display:flex;align-items:center;gap:12px">' +
-      '<input type="color" id="prof-mkt-colour2" value="' + (a.secondary_colour || '#FFFFFF') + '" style="width:50px;height:36px;border:var(--input-border-width) solid var(--border);border-radius:var(--input-radius);cursor:pointer">' +
-      '<input type="text" class="profile-input" id="prof-mkt-colour2-hex" value="' + window.escHtml(a.secondary_colour || '') + '" placeholder="#000000" style="width:120px">' +
-      '</div></div>';
+    var html = '<div class="profile-label" style="font-size:var(--section-title-font-size);font-weight:var(--heading-lg-weight);margin-bottom:12px">Brand Colours</div>' +
+      '<div class="profile-label" style="color:var(--text-muted);margin-bottom:12px">Pick a swatch — or click <strong>Custom colour</strong> to enter your own hex.</div>';
+    html += this._colourSelectorHtml('primary', 'Main brand colour', this._answers.primary_colour || '', true);
+    html += '<div style="height:24px"></div>';
+    html += this._colourSelectorHtml('secondary', 'Secondary brand colour (optional)', this._answers.secondary_colour || '', false);
     return html;
+  },
+
+  _colourSelectorHtml: function(key, label, currentHex, allowNone) {
+    var presets = this.PRESET_COLOURS;
+    var matched = null;
+    var lc = (currentHex || '').toLowerCase();
+    for (var i = 0; i < presets.length; i++) {
+      if (presets[i].hex.toLowerCase() === lc) { matched = presets[i]; break; }
+    }
+    var isCustom = !!(currentHex && !matched);
+
+    var swatchesHtml = '<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:8px">';
+    presets.forEach(function(p) {
+      var sel = matched && matched.hex === p.hex;
+      var ring = sel
+        ? 'inset 0 0 0 3px var(--blue), 0 0 0 1px var(--border)'
+        : 'inset 0 0 0 1px var(--border)';
+      swatchesHtml += '<button type="button" data-colour-swatch="' + key + '" data-hex="' + p.hex + '" title="' + window.escHtml(p.name + ' — ' + p.use) + '" ' +
+        'style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:0;border:none;background:transparent;cursor:pointer">' +
+        '<span style="display:block;width:100%;height:36px;background:' + p.hex + ';border-radius:8px;box-shadow:' + ring + '"></span>' +
+        '<span style="font-size:11px;color:var(--text-muted);text-align:center;line-height:1.2">' + window.escHtml(p.name) + '</span>' +
+      '</button>';
+    });
+    swatchesHtml += '</div>';
+
+    var actions = '<div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">' +
+      '<button type="button" class="btn-outline btn-sm" data-colour-action="custom" data-colour-key="' + key + '">' + (isCustom ? 'Hide custom' : 'Custom colour') + '</button>' +
+      (allowNone ? '<button type="button" class="btn-outline btn-sm" data-colour-action="none" data-colour-key="' + key + '">I don\'t have one</button>' : '') +
+    '</div>';
+
+    var customBlock =
+      '<div id="prof-mkt-' + key + '-custom" style="display:' + (isCustom ? 'flex' : 'none') + ';align-items:center;gap:12px;margin-top:12px">' +
+        '<input type="color" id="prof-mkt-' + key + '-picker" value="' + (currentHex || this.PLATFORM_DEFAULT_COLOUR) + '" style="width:50px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer">' +
+        '<input type="text" class="profile-input" id="prof-mkt-' + key + '-hex" value="' + window.escHtml(currentHex || '') + '" placeholder="#000000" style="width:140px">' +
+      '</div>';
+
+    var noneNote = allowNone
+      ? '<div id="prof-mkt-' + key + '-none-note" style="display:none;margin-top:8px;font-size:13px;color:var(--text-muted)">Using platform default — Ocean Blue. You can change this later.</div>'
+      : '';
+
+    return '<div class="profile-field-full">' +
+      '<label class="profile-label">' + label + '</label>' +
+      swatchesHtml +
+      actions +
+      customBlock +
+      noneNote +
+    '</div>';
   },
 
   _topicTagline: function() {
@@ -471,10 +588,10 @@ window.BP_MARKETING = {
     } else if (t === 3) {
       document.querySelectorAll('[data-tone].active').forEach(function(p) { a.tone = p.dataset.tone; });
     } else if (t === 4) {
-      var c1 = document.getElementById('prof-mkt-colour1-hex');
-      if (c1) a.primary_colour = c1.value;
-      var c2 = document.getElementById('prof-mkt-colour2-hex');
-      if (c2) a.secondary_colour = c2.value;
+      var pHex = document.getElementById('prof-mkt-primary-hex');
+      if (pHex && /^#[0-9a-fA-F]{6}$/.test(pHex.value.trim())) a.primary_colour = pHex.value.trim();
+      var sHex = document.getElementById('prof-mkt-secondary-hex');
+      if (sHex && /^#[0-9a-fA-F]{6}$/.test(sHex.value.trim())) a.secondary_colour = sHex.value.trim();
     } else if (t === 5) {
       document.querySelectorAll('[data-tagline].active').forEach(function(p) { a.has_tagline = p.dataset.tagline; });
       var tl = document.getElementById('prof-mkt-tagline');
