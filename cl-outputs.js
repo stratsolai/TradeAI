@@ -3,6 +3,7 @@ window.CL_OUTPUTS = {
   _status: 'approved',
   _toolFilters: [],
   _categoryFilter: [],
+  _sourceFilters: [],
   _searchTerm: '',
   _items: [],
   _selected: new Set(),
@@ -39,11 +40,13 @@ window.CL_OUTPUTS = {
       + '<div class="review-filter-btns-row">'
       + '<button class="filter-btn filter-tools-btn outputs-filter-tools-btn">&#9783; Filter By Tools</button>'
       + '<button class="filter-btn filter-cat-btn outputs-filter-cat-btn">&#9776; Filter By Category</button>'
+      + '<button class="filter-btn filter-source-btn outputs-filter-source-btn">&#9776; Filter By Source</button>'
       + '<button class="clear-filters-btn outputs-clear-btn">&#10005; Clear All Filters</button>'
       + '</div>'
       + '<div id="outputs-filter-row" class="review-filter-row" style="display:none">'
       + '<div id="outputs-tool-pills-wrap" style="display:none"><div class="filter-section-label">Tools</div><div id="outputs-tool-pills" class="review-pill-row"></div></div>'
       + '<div id="outputs-cat-pills-wrap" style="display:none"><div class="filter-section-label">Categories</div><div id="outputs-cat-pills" class="review-pill-row"></div></div>'
+      + '<div id="outputs-source-pills-wrap" style="display:none"><div class="filter-section-label">Sources</div><div id="outputs-source-pills" class="review-pill-row"></div></div>'
       + '</div>'
       + '<div id="outputs-list" class="review-list"></div>'
       + '</div>';
@@ -61,6 +64,7 @@ window.CL_OUTPUTS = {
         self._status = btn.dataset.status;
         self._toolFilters = [];
         self._categoryFilter = [];
+        self._sourceFilters = [];
         self._searchTerm = '';
         var searchEl = document.getElementById('outputs-search');
         if (searchEl) searchEl.value = '';
@@ -77,16 +81,20 @@ window.CL_OUTPUTS = {
     }
     var filterToolsBtn = container.querySelector('.outputs-filter-tools-btn');
     var filterCatBtn = container.querySelector('.outputs-filter-cat-btn');
+    var filterSourceBtn = container.querySelector('.outputs-filter-source-btn');
     var clearBtn = container.querySelector('.outputs-clear-btn');
     function updateFilterRow() {
       var filterRow = document.getElementById('outputs-filter-row');
       var toolsOpen = filterToolsBtn && filterToolsBtn.classList.contains('open');
       var catsOpen = filterCatBtn && filterCatBtn.classList.contains('open');
+      var srcOpen = filterSourceBtn && filterSourceBtn.classList.contains('open');
       var toolWrap = document.getElementById('outputs-tool-pills-wrap');
       var catWrap = document.getElementById('outputs-cat-pills-wrap');
+      var srcWrap = document.getElementById('outputs-source-pills-wrap');
       if (toolWrap) toolWrap.style.display = toolsOpen ? '' : 'none';
       if (catWrap) catWrap.style.display = catsOpen ? '' : 'none';
-      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen) ? 'block' : 'none';
+      if (srcWrap) srcWrap.style.display = srcOpen ? '' : 'none';
+      if (filterRow) filterRow.style.display = (toolsOpen || catsOpen || srcOpen) ? 'block' : 'none';
     }
     if (filterToolsBtn) {
       filterToolsBtn.addEventListener('click', function() {
@@ -106,12 +114,23 @@ window.CL_OUTPUTS = {
         self._updateFilterBtnIndicators();
       });
     }
+    if (filterSourceBtn) {
+      filterSourceBtn.addEventListener('click', function() {
+        var isOpen = filterSourceBtn.classList.contains('open');
+        filterSourceBtn.classList.toggle('open', !isOpen);
+        if (!isOpen) self._renderFilterRow();
+        updateFilterRow();
+        self._updateFilterBtnIndicators();
+      });
+    }
     if (clearBtn) {
       clearBtn.addEventListener('click', function() {
         self._toolFilters = [];
         self._categoryFilter = [];
+        self._sourceFilters = [];
         if (filterToolsBtn) { filterToolsBtn.classList.remove('open', 'active'); }
         if (filterCatBtn) { filterCatBtn.classList.remove('open', 'active'); }
+        if (filterSourceBtn) { filterSourceBtn.classList.remove('open', 'active'); }
         updateFilterRow();
         self._renderFilterRow();
         self._renderList();
@@ -124,13 +143,17 @@ window.CL_OUTPUTS = {
     if (!container) return;
     var ftb = container.querySelector('.outputs-filter-tools-btn');
     var fcb = container.querySelector('.outputs-filter-cat-btn');
+    var fsb = container.querySelector('.outputs-filter-source-btn');
     if (ftb) { ftb.classList.remove('open', 'active'); }
     if (fcb) { fcb.classList.remove('open', 'active'); }
+    if (fsb) { fsb.classList.remove('open', 'active'); }
     var filterRow = document.getElementById('outputs-filter-row');
     var toolWrap = document.getElementById('outputs-tool-pills-wrap');
     var catWrap = document.getElementById('outputs-cat-pills-wrap');
+    var srcWrap = document.getElementById('outputs-source-pills-wrap');
     if (toolWrap) toolWrap.style.display = 'none';
     if (catWrap) catWrap.style.display = 'none';
+    if (srcWrap) srcWrap.style.display = 'none';
     if (filterRow) filterRow.style.display = 'none';
   },
 
@@ -139,11 +162,15 @@ window.CL_OUTPUTS = {
     if (!container) return;
     var ftb = container.querySelector('.outputs-filter-tools-btn');
     var fcb = container.querySelector('.outputs-filter-cat-btn');
+    var fsb = container.querySelector('.outputs-filter-source-btn');
     if (ftb && !ftb.classList.contains('open')) {
       ftb.classList.toggle('active', this._toolFilters.length > 0);
     }
     if (fcb && !fcb.classList.contains('open')) {
       fcb.classList.toggle('active', this._categoryFilter.length > 0);
+    }
+    if (fsb && !fsb.classList.contains('open')) {
+      fsb.classList.toggle('active', this._sourceFilters.length > 0);
     }
   },
 
@@ -180,6 +207,7 @@ window.CL_OUTPUTS = {
   _renderFilterRow: function() {
     var catPillsEl = document.getElementById('outputs-cat-pills');
     var toolPillsEl = document.getElementById('outputs-tool-pills');
+    var sourcePillsEl = document.getElementById('outputs-source-pills');
     if (!catPillsEl || !toolPillsEl) return;
     var self = this;
 
@@ -195,6 +223,30 @@ window.CL_OUTPUTS = {
       var toolLabel = Array.isArray(tool.title) ? tool.title.join(' ') : (tool.title || tool.id);
       return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-tool="' + escHtml(tool.id) + '">' + escHtml(toolLabel) + '</button>';
     }).join('');
+
+    // Source pills — distinct tool_source values among loaded outputs,
+    // displayed via _connectionLabel so the user sees friendly tool names
+    // ("Social Media" rather than "social"). The list is data-driven so
+    // it only shows sources actually present in the current items.
+    if (sourcePillsEl) {
+      var labelByToolSource = {};
+      (this._items || []).forEach(function(item) {
+        var ts = (item && item.tool_source) || '';
+        if (!ts) return;
+        if (!labelByToolSource[ts]) labelByToolSource[ts] = self._connectionLabel(item) || ts;
+      });
+      var sourceKeys = Object.keys(labelByToolSource).sort(function(a, b) {
+        return labelByToolSource[a].localeCompare(labelByToolSource[b]);
+      });
+      if (sourceKeys.length === 0) {
+        sourcePillsEl.innerHTML = '<div class="filter-empty-note">No tool sources in the current outputs.</div>';
+      } else {
+        sourcePillsEl.innerHTML = sourceKeys.map(function(ts) {
+          var isActive = self._sourceFilters.indexOf(ts) > -1;
+          return '<button class="filter-pill' + (isActive ? ' active' : '') + '" data-source="' + escHtml(ts) + '">' + escHtml(labelByToolSource[ts]) + '</button>';
+        }).join('');
+      }
+    }
 
     catPillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
       pill.addEventListener('click', function() {
@@ -214,6 +266,17 @@ window.CL_OUTPUTS = {
         self._renderList();
       });
     });
+    if (sourcePillsEl) {
+      sourcePillsEl.querySelectorAll('.filter-pill').forEach(function(pill) {
+        pill.addEventListener('click', function() {
+          var id = pill.dataset.source;
+          var idx = self._sourceFilters.indexOf(id);
+          if (idx > -1) { self._sourceFilters.splice(idx, 1); } else { self._sourceFilters.push(id); }
+          self._renderFilterRow();
+          self._renderList();
+        });
+      });
+    }
     self._updateFilterBtnIndicators();
   },
 
@@ -229,6 +292,9 @@ window.CL_OUTPUTS = {
       if (self._toolFilters.length > 0) {
         var tags = Array.isArray(item.tool_tags) ? item.tool_tags : [];
         if (!self._toolFilters.some(function(f) { return tags.indexOf(f) > -1; })) return false;
+      }
+      if (self._sourceFilters.length > 0) {
+        if (self._sourceFilters.indexOf(item.tool_source || '') === -1) return false;
       }
       if (self._searchTerm) {
         if ((item.title || '').toLowerCase().indexOf(self._searchTerm) === -1) return false;
