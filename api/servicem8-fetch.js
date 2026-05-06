@@ -4,14 +4,32 @@
 // normalisation. Never exposes tokens to the browser.
 //
 // Supported actions: jobs, clients, staff, invoices, quotes, forms
+//
+// Caching, concurrency limit, 429 retry and in-flight dedup come from
+// lib/external-api-cache.js — same shape as quickbooks-fetch.js.
 
 import { createClient } from '@supabase/supabase-js';
+import {
+  acquireSlot,
+  releaseSlot,
+  fetchWithRetry,
+  readCache,
+  writeCache,
+  inflightKey,
+  getInflight,
+  setInflight,
+  deleteInflight
+} from '../lib/external-api-cache.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SERVICEM8_CLIENT_ID = process.env.SERVICEM8_CLIENT_ID;
 const SERVICEM8_CLIENT_SECRET = process.env.SERVICEM8_CLIENT_SECRET;
 const SM8_BASE = 'https://api.servicem8.com/api_1.0';
+
+const CACHE_TABLE = 'cl_servicem8_cache';
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const MAX_CONCURRENT_PER_ACCOUNT = 4;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -24,77 +42,105 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { action, accountEmail } = req.body || {};
+  const { action, accountEmail, bypassCache } = req.body || {};
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
   if (!accountEmail) return res.status(400).json({ error: 'Missing accountEmail parameter' });
 
-  // Load account entry
-  const profileRes = await supabase
-    .from('profiles')
-    .select('cl_servicem8_accounts')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
+  const cacheKeyCols = { user_id: user.id, account_email: accountEmail, action: action };
 
-  const accounts = Array.isArray(profileRes.data && profileRes.data.cl_servicem8_accounts)
-    ? profileRes.data.cl_servicem8_accounts : [];
-  const account = accounts.find(function (a) { return a && a.account_email === accountEmail; });
-  if (!account) return res.status(404).json({ error: 'ServiceM8 account not found' });
-
-  // Token refresh helper
-  async function refreshToken() {
-    if (!account.refresh_token) return false;
-    try {
-      const tokenRes = await fetch('https://go.servicem8.com/oauth/access_token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: SERVICEM8_CLIENT_ID,
-          client_secret: SERVICEM8_CLIENT_SECRET,
-          grant_type: 'refresh_token',
-          refresh_token: account.refresh_token,
-        }).toString(),
-      });
-      const tokenData = await tokenRes.json();
-      if (tokenData.error || !tokenData.access_token) return false;
-      account.access_token = tokenData.access_token;
-      if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
-      var idx = accounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
-      if (idx > -1) {
-        accounts[idx] = account;
-        await supabase.from('profiles').update({ cl_servicem8_accounts: accounts }).eq('id', user.id);
-      }
-      return true;
-    } catch (e) {
-      console.error('ServiceM8 token refresh failed:', e && e.message);
-      return false;
+  if (!bypassCache) {
+    const cached = await readCache(supabase, CACHE_TABLE, cacheKeyCols);
+    if (cached !== null) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
     }
   }
 
-  // API call helper with automatic token refresh on 401
-  async function sm8Get(path) {
-    var url = SM8_BASE + path;
-    var resp = await fetch(url, {
-      headers: {
+  const ikey = inflightKey(CACHE_TABLE, cacheKeyCols);
+  if (getInflight(ikey)) {
+    try {
+      const sharedResult = await getInflight(ikey);
+      return res.status(200).json({ success: true, data: sharedResult, deduped: true });
+    } catch (sharedErr) {
+      // The shared in-flight call failed. Fall through and try our own.
+    }
+  }
+
+  const workPromise = (async () => {
+    // Load account entry
+    const profileRes = await supabase
+      .from('profiles')
+      .select('cl_servicem8_accounts')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileRes.error) {
+      const e = new Error('Could not load profile'); e.status = 500; throw e;
+    }
+
+    const accounts = Array.isArray(profileRes.data && profileRes.data.cl_servicem8_accounts)
+      ? profileRes.data.cl_servicem8_accounts : [];
+    const account = accounts.find(function (a) { return a && a.account_email === accountEmail; });
+    if (!account) {
+      const e = new Error('ServiceM8 account not found'); e.status = 404; throw e;
+    }
+
+    // Token refresh helper
+    async function refreshToken() {
+      if (!account.refresh_token) return false;
+      try {
+        const tokenRes = await fetch('https://go.servicem8.com/oauth/access_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: SERVICEM8_CLIENT_ID,
+            client_secret: SERVICEM8_CLIENT_SECRET,
+            grant_type: 'refresh_token',
+            refresh_token: account.refresh_token,
+          }).toString(),
+        });
+        const tokenData = await tokenRes.json();
+        if (tokenData.error || !tokenData.access_token) return false;
+        account.access_token = tokenData.access_token;
+        if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
+        var idx = accounts.findIndex(function (a) { return a && a.account_email === accountEmail; });
+        if (idx > -1) {
+          accounts[idx] = account;
+          await supabase.from('profiles').update({ cl_servicem8_accounts: accounts }).eq('id', user.id);
+        }
+        return true;
+      } catch (e) {
+        console.error('ServiceM8 token refresh failed:', e && e.message);
+        return false;
+      }
+    }
+
+    function authHeaders() {
+      return {
         'Authorization': 'Bearer ' + account.access_token,
         'Accept': 'application/json',
-      },
-    });
-    if (resp.status === 401) {
-      var refreshed = await refreshToken();
-      if (!refreshed) throw new Error('Token expired and refresh failed');
-      resp = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + account.access_token,
-          'Accept': 'application/json',
-        },
-      });
+      };
     }
-    if (!resp.ok) throw new Error('ServiceM8 API error: ' + resp.status + ' ' + resp.statusText);
-    return resp.json();
-  }
 
-  try {
+    // Concurrency-limited GET with 401-driven token refresh and 429 retry.
+    async function sm8Get(path) {
+      var url = SM8_BASE + path;
+      await acquireSlot(accountEmail, MAX_CONCURRENT_PER_ACCOUNT);
+      try {
+        var resp = await fetchWithRetry(async function () {
+          var r = await fetch(url, { headers: authHeaders() });
+          if (r.status === 401) {
+            var refreshed = await refreshToken();
+            if (!refreshed) throw new Error('Token expired and refresh failed');
+            r = await fetch(url, { headers: authHeaders() });
+          }
+          return r;
+        }, { providerLabel: 'ServiceM8' });
+        if (!resp.ok) throw new Error('ServiceM8 API error: ' + resp.status + ' ' + resp.statusText);
+        return resp.json();
+      } finally {
+        releaseSlot(accountEmail);
+      }
+    }
+
     var result;
 
     if (action === 'jobs') {
@@ -217,12 +263,24 @@ export default async function handler(req, res) {
         };
       });
     } else {
-      return res.status(400).json({ error: 'Unknown action: ' + action });
+      const unknownErr = new Error('Unknown action: ' + action);
+      unknownErr.status = 400;
+      throw unknownErr;
     }
 
-    return res.status(200).json({ success: true, data: result });
+    await writeCache(supabase, CACHE_TABLE, cacheKeyCols, result, CACHE_TTL_MS);
+    return result;
+  })();
+
+  setInflight(ikey, workPromise);
+
+  try {
+    const result = await workPromise;
+    return res.status(200).json({ success: true, data: result, cached: false });
   } catch (err) {
     console.error('servicem8-fetch error:', action, err && err.message);
-    return res.status(500).json({ error: (err && err.message) || 'ServiceM8 API request failed' });
+    return res.status(err.status || 500).json({ error: (err && err.message) || 'ServiceM8 API request failed' });
+  } finally {
+    deleteInflight(ikey);
   }
 }

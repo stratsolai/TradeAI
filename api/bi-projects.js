@@ -107,11 +107,11 @@ export default async function handler(req, res) {
       if (!sa || !sa.account_email) continue;
       var email = sa.account_email;
       promises.push(
-        callFetch('servicem8-fetch', { action: 'jobs', accountEmail: email }).then(function (d) {
+        callFetch('servicem8-fetch', { action: 'jobs', accountEmail: email, bypassCache: bypassCache }).then(function (d) {
           if (Array.isArray(d) && d.length > 0) { sources.servicem8 = true; allJobs = allJobs.concat(d); }
         }),
-        callFetch('servicem8-fetch', { action: 'quotes', accountEmail: email }).then(function (d) { if (d) allQuotes = allQuotes.concat(d); }),
-        callFetch('servicem8-fetch', { action: 'invoices', accountEmail: email }).then(function (d) { if (d) allInvoices = allInvoices.concat(d); })
+        callFetch('servicem8-fetch', { action: 'quotes', accountEmail: email, bypassCache: bypassCache }).then(function (d) { if (d) allQuotes = allQuotes.concat(d); }),
+        callFetch('servicem8-fetch', { action: 'invoices', accountEmail: email, bypassCache: bypassCache }).then(function (d) { if (d) allInvoices = allInvoices.concat(d); })
       );
     }
 
