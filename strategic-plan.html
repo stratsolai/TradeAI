@@ -19,6 +19,21 @@
     #sp-section-nav { flex-wrap: nowrap; overflow-x: auto; }
     #sp-section-nav .profile-nav-chip { flex-shrink: 0; }
 
+    /* Readonly-pills (Licences / Services / Products) — match the
+       BP-prefilled input look: 1.5px solid grey border, light-blue
+       tint fill, secondary text colour. Same visual language as
+       .sp-from-profile so all BP-sourced fields read consistently. */
+    .sp-field .review-tool-pills .tool-pill {
+      background: var(--blue-light);
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      color: var(--text-secondary);
+      cursor: default;
+    }
+    .sp-field .review-tool-pills .tool-pill:hover {
+      background: var(--blue-light);
+    }
+
     /* ─── TAB 1: OPERATIONAL PLAN ─── */
 
     /* Header section */
