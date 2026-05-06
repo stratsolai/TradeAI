@@ -29,6 +29,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID, createHash } from 'crypto';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
 import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
+import { runExtractionPrompt as sharedRunExtractionPrompt } from '../lib/cl-extraction.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -238,31 +239,15 @@ async function fetchPage(pageUrl) {
 // being truncated mid-array.
 async function runExtractionPrompt(content, sourceLabel, userId) {
   const userContent = 'SOURCE CONTENT (' + sourceLabel + '):\n' + (content || '').substring(0, 40000);
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userContent }],
-    }),
+  return sharedRunExtractionPrompt({
+    apiKey: ANTHROPIC_API_KEY,
+    systemPrompt: EXTRACTION_SYSTEM_PROMPT,
+    userContent: userContent,
+    maxTokens: 8000,
+    userId: userId,
+    subtype: 'scrape-extraction',
+    errorScope: 'CL Scrape',
   });
-  const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'scrape-extraction' });
-  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
-  try {
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error('Extraction prompt JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
-    return [];
-  }
 }
 
 // VERSIONING — find an existing approved item the new one should auto-archive.
