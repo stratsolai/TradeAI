@@ -185,6 +185,15 @@
         input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="Add your own (comma-separated)" style="display:none;margin-top:8px">';
       }
       input += '<input type="hidden" id="' + field.id + '" value="">';
+    } else if (field.type === 'readonly-pills') {
+      // Readonly display of BP-sourced data — pills mirror the
+      // Source Review Tagged Categories component (same container
+      // class .review-tool-pills, same per-pill classes). Pills are
+      // rendered into the empty container by prefillFromProfile,
+      // and the hidden input carries the underlying value into
+      // collectSectionData so the AI prompt still receives it.
+      input = '<div class="review-tool-pills" id="' + field.id + '-pills"></div>';
+      input += '<input type="hidden" id="' + field.id + '" value="">';
     }
 
     return '<div class="sp-field">' + label + helpText + input + errorEl + '</div>';
@@ -561,6 +570,7 @@
     window.SP_SECTIONS.forEach(function(section) {
       section.fields.forEach(function(field) {
         var val = null;
+        var pillItems = null;
 
         if (field.profileKeys && Array.isArray(field.profileKeys)) {
           var parts = field.profileKeys.map(function(k) { return profile[k] || ''; }).filter(Boolean);
@@ -570,11 +580,30 @@
           if (field.profileKey === 'website_urls' && Array.isArray(raw)) {
             val = raw[0] || '';
           } else if (field.profileTransform === 'svc_list' && Array.isArray(raw)) {
-            val = raw.map(function(item) { return item.name || ''; }).filter(Boolean).join(', ');
+            pillItems = raw.map(function(item) { return item.name || ''; }).filter(Boolean);
+            val = pillItems.join(', ');
           } else if (Array.isArray(raw)) {
-            val = raw.join(', ');
+            pillItems = raw.slice().filter(Boolean);
+            val = pillItems.join(', ');
           } else {
             val = raw;
+          }
+        }
+
+        // readonly-pills: render each item as a tagged pill mirroring
+        // Source Review's Tagged Categories component. Falls back to
+        // the field's emptyHint when nothing came through.
+        if (field.type === 'readonly-pills') {
+          var pillsEl = document.getElementById(field.id + '-pills');
+          if (pillsEl) {
+            var items = Array.isArray(pillItems) ? pillItems : (val ? String(val).split(',').map(function(s) { return s.trim(); }).filter(Boolean) : []);
+            if (items.length === 0) {
+              pillsEl.innerHTML = '<span class="sp-label-hint">' + escHtml(field.emptyHint || 'No data in your Business Profile yet.') + '</span>';
+            } else {
+              pillsEl.innerHTML = items.map(function(item) {
+                return '<span class="cat-pill tool-pill tool-pill-purple cat-pill-tagged tagged">' + escHtml(item) + '</span>';
+              }).join('');
+            }
           }
         }
 
@@ -584,8 +613,13 @@
         if (val !== null && val !== undefined && val !== '') el.value = val;
 
         if (field.fromProfile) {
-          el.readOnly = true;
-          el.disabled = (el.tagName === 'SELECT');
+          // readonly-pills uses a hidden input — readOnly/disabled
+          // are no-ops there. The sp-from-profile marker still goes
+          // on so prefillFromPreviousPlan skips overwriting it.
+          if (field.type !== 'readonly-pills') {
+            el.readOnly = true;
+            el.disabled = (el.tagName === 'SELECT');
+          }
           el.classList.add('sp-from-profile');
         }
       });
