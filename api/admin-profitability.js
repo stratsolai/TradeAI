@@ -11,7 +11,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { ensureVercelBaseCost } from '../lib/supplier-usage.js';
+import { ensureVercelBaseCost, ensureSupabaseBaseCost, readSupabaseUsage } from '../lib/supplier-usage.js';
+
+const SUPABASE_PRO_DB_LIMIT_GB = 8;
+const SUPABASE_PRO_STORAGE_LIMIT_GB = 100;
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
@@ -32,11 +35,19 @@ export default async function handler(req, res) {
 
     // Ensure flat-fee suppliers have a current-period api_usage row
     // before we read usage. No-op when the row already exists for
-    // this period — the Vercel Pro plan is a known $30 AUD/month
-    // baseline (overages would need manual entry until Vercel ships
-    // a public billing-usage API).
+    // this period.
     await ensureVercelBaseCost(supabase).catch(function (e) {
       console.error('[admin-profitability] vercel base cost write failed:', e && e.message);
+    });
+    await ensureSupabaseBaseCost(supabase).catch(function (e) {
+      console.error('[admin-profitability] supabase base cost write failed:', e && e.message);
+    });
+
+    // Refresh Supabase live usage limits (DB size, storage). Stored
+    // in supplier_limits so the existing supplier-card progress bar
+    // and alert path picks them up without frontend changes.
+    await refreshSupabaseLimits(supabase).catch(function (e) {
+      console.error('[admin-profitability] supabase limits refresh failed:', e && e.message);
     });
 
     const period = currentPeriod();
@@ -163,6 +174,50 @@ async function fetchMarginTargets() {
     map[row.tool_id] = { target: parseFloat(row.target_margin) || 0, alertBelow: parseFloat(row.alert_below) || 0 };
   });
   return map;
+}
+
+// Read the live database + storage size from Supabase and upsert
+// matching rows into supplier_limits so they show up alongside any
+// manually configured limits on the admin supplier card. Falls back
+// silently when readSupabaseUsage cannot retrieve a value (e.g. the
+// get_db_size RPC has not been created yet).
+async function refreshSupabaseLimits(supabase) {
+  const usage = await readSupabaseUsage(supabase);
+  const updates = [];
+
+  if (typeof usage.db_bytes === 'number') {
+    const dbGb = Math.round((usage.db_bytes / (1024 * 1024 * 1024)) * 100) / 100;
+    updates.push({
+      provider: 'supabase',
+      limit_type: 'database_size_gb',
+      limit_value: SUPABASE_PRO_DB_LIMIT_GB,
+      current_usage: dbGb,
+      alert_at_percent: 80,
+      updated_at: new Date().toISOString(),
+    });
+  }
+  if (typeof usage.storage_bytes === 'number') {
+    const stGb = Math.round((usage.storage_bytes / (1024 * 1024 * 1024)) * 100) / 100;
+    updates.push({
+      provider: 'supabase',
+      limit_type: 'storage_size_gb',
+      limit_value: SUPABASE_PRO_STORAGE_LIMIT_GB,
+      current_usage: stGb,
+      alert_at_percent: 80,
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  for (let i = 0; i < updates.length; i++) {
+    const row = updates[i];
+    try {
+      await supabase
+        .from('supplier_limits')
+        .upsert(row, { onConflict: 'provider,limit_type' });
+    } catch (e) {
+      console.error('[admin-profitability] supplier_limits upsert error:', row.limit_type, e && e.message);
+    }
+  }
 }
 
 async function fetchSupplierLimits() {
