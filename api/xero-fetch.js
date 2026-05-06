@@ -31,6 +31,14 @@ const FALLBACK_RETRY_DELAY_MS = 2000;
 // instances. The 429 retry below is the real recovery path.
 const TENANT_SEMAPHORES = Object.create(null);
 
+// In-flight Promise map — when two parallel requests for the same
+// (user, tenant, action) land on this warm Vercel instance, the
+// second awaits the first's Promise instead of running its own fetch.
+// This is the parallel-burst counterpart to the cl_xero_cache table
+// (which dedupes sequential calls). Across instances, the cache is
+// the only mechanism — the Map only sees calls on this instance.
+const INFLIGHT = new Map();
+
 function acquireSlot(tenantId) {
   var sem = TENANT_SEMAPHORES[tenantId];
   if (!sem) {
@@ -99,6 +107,21 @@ export default async function handler(req, res) {
     } catch (e) {
       // Cache read errors are non-fatal — fall through to live fetch.
       console.error('[xero-fetch] cache read error:', e && e.message);
+    }
+  }
+
+  // ── In-flight dedup ────────────────────────────────────────────────
+  // If another request for the same (user, tenant, action) is already
+  // running on this warm instance, await its result instead of starting
+  // our own fetch. This is what stops bi-financial and bi-customers
+  // both fetching invoices in parallel from each round-tripping to Xero.
+  const inflightKey = user.id + ':' + tenantId + ':' + action;
+  if (INFLIGHT.has(inflightKey)) {
+    try {
+      const sharedResult = await INFLIGHT.get(inflightKey);
+      return res.status(200).json({ success: true, data: sharedResult, deduped: true });
+    } catch (sharedErr) {
+      // The shared in-flight call failed. Fall through and try our own.
     }
   }
 
@@ -211,7 +234,7 @@ export default async function handler(req, res) {
     return resp.json();
   }
 
-  try {
+  const workPromise = (async () => {
     var result;
 
     if (action === 'invoices') {
@@ -454,7 +477,9 @@ export default async function handler(req, res) {
         platform: 'xero'
       };
     } else {
-      return res.status(400).json({ error: 'Unknown action: ' + action });
+      var unknownActionErr = new Error('Unknown action: ' + action);
+      unknownActionErr.status = 400;
+      throw unknownActionErr;
     }
 
     // ── Cache write ──────────────────────────────────────────────────
@@ -477,9 +502,18 @@ export default async function handler(req, res) {
       console.error('[xero-fetch] cache write error:', e && e.message);
     }
 
+    return result;
+  })();
+
+  INFLIGHT.set(inflightKey, workPromise);
+
+  try {
+    const result = await workPromise;
     return res.status(200).json({ success: true, data: result, cached: false });
   } catch (err) {
     console.error('xero-fetch error:', action, err && err.message);
-    return res.status(500).json({ error: (err && err.message) || 'Xero API request failed' });
+    return res.status(err.status || 500).json({ error: (err && err.message) || 'Xero API request failed' });
+  } finally {
+    INFLIGHT.delete(inflightKey);
   }
 }
