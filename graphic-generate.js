@@ -23,6 +23,7 @@
 import https from 'https';
 import http from 'http';
 import { createClient } from '@supabase/supabase-js';
+import { logIdeogramUsage } from './lib/usage-logger.js';
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
 
@@ -316,6 +317,7 @@ export default async function handler(req, res) {
         formBody,
         ideogramKey
       );
+      await logIdeogramUsage({ tool_id: 'social', user_id: userId });
 
       if (remixResp.status !== 200) {
         console.error('[graphic-generate] Ideogram remix error:', remixResp.body);
@@ -344,6 +346,7 @@ export default async function handler(req, res) {
           num_images:           1
         }
       );
+      await logIdeogramUsage({ tool_id: 'social', user_id: userId });
 
       if (generateResp.status !== 200) {
         console.error('[graphic-generate] Ideogram generate error:', generateResp.body);

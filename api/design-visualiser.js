@@ -17,7 +17,7 @@
 import https from 'https';
 import http from 'http';
 import { createClient } from '@supabase/supabase-js';
-import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { logAnthropicUsage, logIdeogramUsage } from '../lib/usage-logger.js';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -343,6 +343,7 @@ export default async function handler(req, res) {
       formResult.body,
       ideogramKey
     );
+    await logIdeogramUsage({ tool_id: 'design-viz', user_id: user.id });
 
     if (remixResp.status !== 200) {
       console.error('[DV] Ideogram remix error:', remixResp.body);

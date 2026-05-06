@@ -1,3 +1,5 @@
+import { logIdeogramUsage } from '../lib/usage-logger.js';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -5,7 +7,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { prompt } = req.body || {};
+  const { prompt, userId } = req.body || {};
   if (!prompt) return res.status(400).json({ error: 'prompt required' });
 
   try {
@@ -26,6 +28,7 @@ export default async function handler(req, res) {
     });
     const data = await response.json();
     if (!response.ok) return res.status(500).json({ error: data });
+    await logIdeogramUsage({ tool_id: 'social', user_id: userId || null });
     const url = data?.data?.[0]?.url;
     return res.status(200).json({ url });
   } catch (err) {
