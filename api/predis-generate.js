@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { logPredisUsage } from "../lib/usage-logger.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -65,6 +66,7 @@ export default async function handler(req, res) {
     }
 
     const data = await predisRes.json();
+    await logPredisUsage({ tool_id: 'social', user_id: user.id, subtype: 'generate' });
     return res.status(200).json({
       generation_id: data.generation_id || data.id,
       status: data.status || "processing",
