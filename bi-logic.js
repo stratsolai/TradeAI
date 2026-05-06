@@ -131,10 +131,10 @@ window.BI_LOGIC = {
 
     Promise.all([
       self._loadCachedInsights(forceRefresh),
-      M.fetchFinancial(self._supabase, dateRange).then(function(d) { self._financialData = d; }).catch(function(e) { console.error('[BI] Financial:', e.message); }),
-      M.fetchCustomers(self._supabase, dateRange).then(function(d) { self._customerData = d; }).catch(function(e) { console.error('[BI] Customers:', e.message); }),
-      M.fetchOperations(self._supabase, dateRange).then(function(d) { self._operationsData = d; }).catch(function(e) { console.error('[BI] Operations:', e.message); }),
-      M.fetchProjects(self._supabase, dateRange).then(function(d) { self._projectsData = d; }).catch(function(e) { console.error('[BI] Projects:', e.message); }),
+      M.fetchFinancial(self._supabase, dateRange, forceRefresh).then(function(d) { self._financialData = d; }).catch(function(e) { console.error('[BI] Financial:', e.message); }),
+      M.fetchCustomers(self._supabase, dateRange, forceRefresh).then(function(d) { self._customerData = d; }).catch(function(e) { console.error('[BI] Customers:', e.message); }),
+      M.fetchOperations(self._supabase, dateRange, forceRefresh).then(function(d) { self._operationsData = d; }).catch(function(e) { console.error('[BI] Operations:', e.message); }),
+      M.fetchProjects(self._supabase, dateRange, forceRefresh).then(function(d) { self._projectsData = d; }).catch(function(e) { console.error('[BI] Projects:', e.message); }),
       M.fetchMarket(self._supabase, self._user.id).then(function(d) { self._marketData = d; }).catch(function(e) { console.error('[BI] Market:', e.message); }),
       M.fetchStrategic(self._supabase, self._user.id).then(function(d) { self._strategicData = d; }).catch(function(e) { console.error('[BI] Strategic:', e.message); })
     ]).then(function() {

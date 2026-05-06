@@ -20,7 +20,8 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { fromDate, toDate } = req.body || {};
+  const { fromDate, toDate, forceRefresh } = req.body || {};
+  const bypassCache = !!forceRefresh;
 
   var profileRes = await supabase
     .from('profiles')
@@ -79,11 +80,11 @@ export default async function handler(req, res) {
       if (!xa || !xa.tenant_id) continue;
       var tid = xa.tenant_id;
       fetchPromises.push(
-        callFetchEndpoint('xero-fetch', { action: 'invoices', tenantId: tid }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
-        callFetchEndpoint('xero-fetch', { action: 'bills', tenantId: tid }).then(function(d) { if (d) allBills = allBills.concat(d); }),
-        callFetchEndpoint('xero-fetch', { action: 'pl_summary', tenantId: tid }).then(function(d) { if (d) plSummaries.push(d); }),
-        callFetchEndpoint('xero-fetch', { action: 'balances', tenantId: tid }).then(function(d) { if (d) balances.push(d); }),
-        callFetchEndpoint('xero-fetch', { action: 'quotes', tenantId: tid }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); })
+        callFetchEndpoint('xero-fetch', { action: 'invoices', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
+        callFetchEndpoint('xero-fetch', { action: 'bills', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allBills = allBills.concat(d); }),
+        callFetchEndpoint('xero-fetch', { action: 'pl_summary', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) plSummaries.push(d); }),
+        callFetchEndpoint('xero-fetch', { action: 'balances', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) balances.push(d); }),
+        callFetchEndpoint('xero-fetch', { action: 'quotes', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); })
       );
     }
 

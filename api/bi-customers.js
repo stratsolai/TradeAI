@@ -20,7 +20,8 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { fromDate, toDate } = req.body || {};
+  const { fromDate, toDate, forceRefresh } = req.body || {};
+  const bypassCache = !!forceRefresh;
 
   var profileRes = await supabase
     .from('profiles')
@@ -70,9 +71,9 @@ export default async function handler(req, res) {
       if (!xa || !xa.tenant_id) continue;
       var tid = xa.tenant_id;
       promises.push(
-        callFetch('xero-fetch', { action: 'invoices', tenantId: tid }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
-        callFetch('xero-fetch', { action: 'quotes', tenantId: tid }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); }),
-        callFetch('xero-fetch', { action: 'contacts', tenantId: tid }).then(function(d) { if (d) allContacts = allContacts.concat(d); })
+        callFetch('xero-fetch', { action: 'invoices', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
+        callFetch('xero-fetch', { action: 'quotes', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); }),
+        callFetch('xero-fetch', { action: 'contacts', tenantId: tid, bypassCache: bypassCache }).then(function(d) { if (d) allContacts = allContacts.concat(d); })
       );
     }
 

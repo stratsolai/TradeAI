@@ -5,6 +5,11 @@
 //
 // Supported actions: invoices, bills, contacts, items, quotes, jobs,
 // pl_summary, pl_breakdown, balances
+//
+// Caching: responses are cached in cl_xero_cache for 15 minutes per
+// (user_id, tenant_id, action). Callers can pass bypassCache: true in
+// the request body to skip the cache (e.g. when the user clicks the
+// BI dashboard's Refresh Data button).
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,6 +18,7 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const XERO_CLIENT_ID = process.env.XERO_CLIENT_ID;
 const XERO_CLIENT_SECRET = process.env.XERO_CLIENT_SECRET;
 const XERO_API_BASE = 'https://api.xero.com/api.xro/2.0';
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 // Xero JSON API returns dates as "/Date(epochms+0000)/" rather than ISO.
 // Downstream BI code does string comparisons against ISO dates, so normalise
@@ -35,9 +41,30 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { action, tenantId } = req.body || {};
+  const { action, tenantId, bypassCache } = req.body || {};
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
   if (!tenantId) return res.status(400).json({ error: 'Missing tenantId parameter' });
+
+  // ── Cache lookup ───────────────────────────────────────────────────
+  // Skip when the caller passed bypassCache (Refresh Data button).
+  // Cache hits return immediately without touching Xero.
+  if (!bypassCache) {
+    try {
+      const cacheRes = await supabase
+        .from('cl_xero_cache')
+        .select('data, expires_at')
+        .eq('user_id', user.id)
+        .eq('tenant_id', tenantId)
+        .eq('action', action)
+        .maybeSingle();
+      if (cacheRes.data && cacheRes.data.expires_at && cacheRes.data.expires_at > new Date().toISOString()) {
+        return res.status(200).json({ success: true, data: cacheRes.data.data, cached: true });
+      }
+    } catch (e) {
+      // Cache read errors are non-fatal — fall through to live fetch.
+      console.error('[xero-fetch] cache read error:', e && e.message);
+    }
+  }
 
   // Load account entry
   const profileRes = await supabase
@@ -383,7 +410,27 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Unknown action: ' + action });
     }
 
-    return res.status(200).json({ success: true, data: result });
+    // ── Cache write ──────────────────────────────────────────────────
+    // Upsert on the (user_id, tenant_id, action) unique key so a fresh
+    // fetch overwrites any prior cached row. Failures here do not
+    // affect the response — the data was retrieved successfully.
+    try {
+      var expiresAt = new Date(Date.now() + CACHE_TTL_MS).toISOString();
+      await supabase
+        .from('cl_xero_cache')
+        .upsert({
+          user_id: user.id,
+          tenant_id: tenantId,
+          action: action,
+          data: result,
+          cached_at: new Date().toISOString(),
+          expires_at: expiresAt,
+        }, { onConflict: 'user_id,tenant_id,action' });
+    } catch (e) {
+      console.error('[xero-fetch] cache write error:', e && e.message);
+    }
+
+    return res.status(200).json({ success: true, data: result, cached: false });
   } catch (err) {
     console.error('xero-fetch error:', action, err && err.message);
     return res.status(500).json({ error: (err && err.message) || 'Xero API request failed' });

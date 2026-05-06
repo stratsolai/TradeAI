@@ -43,7 +43,8 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { fromDate, toDate } = req.body || {};
+  const { fromDate, toDate, forceRefresh } = req.body || {};
+  const bypassCache = !!forceRefresh;
 
   var profileRes = await supabase
     .from('profiles')
@@ -95,7 +96,7 @@ export default async function handler(req, res) {
       var xa = xeroAccounts[x];
       if (!xa || !xa.tenant_id) continue;
       var tid = xa.tenant_id;
-      promises.push(callFetch('xero-fetch', { action: 'jobs', tenantId: tid }).then(function (d) {
+      promises.push(callFetch('xero-fetch', { action: 'jobs', tenantId: tid, bypassCache: bypassCache }).then(function (d) {
         if (Array.isArray(d) && d.length > 0) { sources.xero = true; allJobs = allJobs.concat(d); }
       }));
     }
