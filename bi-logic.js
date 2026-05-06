@@ -190,9 +190,15 @@ window.BI_LOGIC = {
         this._insights[row.module].push(row);
       }
 
+      // Background-refresh only when no cached insights are still valid
+      // OR the user explicitly forced a refresh. Previously a single
+      // expired row triggered the full 11-call xero-fetch burst on
+      // every dashboard load — now any still-valid row is enough to
+      // skip the refresh and rely on what we have until the user clicks
+      // Refresh Data.
       var now = new Date().toISOString();
-      var allValid = result.data.every(function(r) { return !r.expires_at || r.expires_at > now; });
-      if (!forceRefresh && allValid) return;
+      var anyValid = result.data.some(function(r) { return !r.expires_at || r.expires_at > now; });
+      if (!forceRefresh && anyValid) return;
 
       this._refreshInsightsInBackground(forceRefresh);
       return;
