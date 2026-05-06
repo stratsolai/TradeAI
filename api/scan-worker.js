@@ -39,6 +39,22 @@ var HEARTBEAT_INTERVAL_MS = 30000;
 var WATCHDOG_STALE_MINUTES = 10;
 var JOB_TIMEOUT_MS = 240000;
 
+// Sum-merge two skipped_reasons objects from ingestion endpoints. Each is
+// an object of { reason: count } (e.g. { source_row_failed: 3, no_content:
+// 7 }). Used by the morePending and completed paths to accumulate per-batch
+// skipped breakdowns onto the cl_scan_jobs.skipped_reasons jsonb column.
+// The Admin Error Monitor reads this column to surface source_row_failed.
+function mergeSkippedReasons(existing, incoming) {
+  var merged = (existing && typeof existing === 'object') ? Object.assign({}, existing) : {};
+  if (incoming && typeof incoming === 'object') {
+    Object.keys(incoming).forEach(function(k) {
+      var add = Number(incoming[k]) || 0;
+      merged[k] = (Number(merged[k]) || 0) + add;
+    });
+  }
+  return merged;
+}
+
 // Build a mock req object for calling a scan endpoint handler directly.
 // The JWT-auth endpoints (drive, onedrive, sharepoint, dropbox) check
 // req.headers['x-cron-secret'] as alternative auth, so the mock includes
@@ -221,7 +237,7 @@ async function processJob(supabase, job, deadline) {
     // and requeue so the next worker invocation continues from the cursor.
     if (result.morePending) {
       // Read current counts from job row to accumulate
-      var currentJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count').eq('id', job.id).single();
+      var currentJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count, skipped_reasons').eq('id', job.id).single();
       var cur = currentJob.data || {};
       await supabase.from('cl_scan_jobs').update({
         status: 'queued',
@@ -233,6 +249,7 @@ async function processJob(supabase, job, deadline) {
         auto_archived_count: (cur.auto_archived_count || 0) + (result.auto_archived || 0),
         fin_docs_paired_count: (cur.fin_docs_paired_count || 0) + (result.fin_docs_paired || 0),
         deduped_count: (cur.deduped_count || 0) + (result.deduped || 0),
+        skipped_reasons: mergeSkippedReasons(cur.skipped_reasons, result.skipped_reasons),
       }).eq('id', job.id);
       console.log('[scan-worker] Job', job.id, 'batch complete — morePending, requeued. Batch imported:', result.imported || 0);
       return { jobId: job.id, outcome: 'morePending' };
@@ -243,7 +260,7 @@ async function processJob(supabase, job, deadline) {
     // all share the core shape. Missing fields fall back to 0.
     // For cursor-based scans the final batch counts are added to
     // any previously accumulated counts already on the job row.
-    var finalJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count').eq('id', job.id).single();
+    var finalJob = await supabase.from('cl_scan_jobs').select('imported_count, approved_count, pending_count, rejected_count, skipped_count, auto_archived_count, fin_docs_paired_count, deduped_count, skipped_reasons').eq('id', job.id).single();
     var prev = finalJob.data || {};
     await supabase.from('cl_scan_jobs').update({
       status: 'completed',
@@ -256,6 +273,7 @@ async function processJob(supabase, job, deadline) {
       auto_archived_count: (prev.auto_archived_count || 0) + (result.auto_archived || 0),
       fin_docs_paired_count: (prev.fin_docs_paired_count || 0) + (result.fin_docs_paired || 0),
       deduped_count: (prev.deduped_count || 0) + (result.deduped || 0),
+      skipped_reasons: mergeSkippedReasons(prev.skipped_reasons, result.skipped_reasons),
       pages_crawled: result.pages_crawled || 0,
       pages_skipped: result.pages_skipped || 0,
     }).eq('id', job.id);

@@ -681,8 +681,23 @@ window.ADMIN_LOGIC = {
     var container = document.getElementById('section-errors');
     container.innerHTML = '<div class="list-loading">Loading errors…</div>';
 
-    self._fetchAdmin('admin-data?section=errors').then(function(d) {
+    // Fetch ingestion health and the error log in parallel — the
+    // ingestion-health endpoint surfaces source_row_failed counts from
+    // cl_scan_jobs.skipped_reasons, set by the Ingestion Pipeline
+    // Unification spec's ensureSourceItem flow.
+    Promise.all([
+      self._fetchAdmin('admin-data?section=ingestion-health').catch(function(err) {
+        console.error('[admin] ingestion-health fetch failed:', err && err.message);
+        return { fetch_error: err && err.message ? err.message : 'unknown' };
+      }),
+      self._fetchAdmin('admin-data?section=errors')
+    ]).then(function(results) {
+      var ingestion = results[0] || {};
+      var d = results[1] || {};
+
       var html = '';
+      html += self._renderIngestionHealthHtml(ingestion);
+
       if (d.note) {
         html += '<div class="note-box">' + window.escHtml(d.note) + '</div>';
       }
@@ -718,6 +733,49 @@ window.ADMIN_LOGIC = {
       console.error('[admin] _renderErrors error:', err && err.message);
       container.innerHTML = '<div class="list-empty">' + window.escHtml('Could not load errors: ' + err.message) + '</div>';
     });
+  },
+
+  // Build the Ingestion Health panel at the top of the Error Monitor tab.
+  // Shows source_row_failed totals over a 7-day window (alerted in red
+  // when non-zero) and a 30-day trend window. source_row_failed counts
+  // come from the cl_scan_jobs.skipped_reasons jsonb column populated by
+  // scan-worker after every batch.
+  _renderIngestionHealthHtml: function(d) {
+    if (d && d.fetch_error) {
+      return '<div class="note-box">Ingestion Health unavailable — ' + window.escHtml(d.fetch_error) + '</div>';
+    }
+    var d7 = Number((d && d.source_row_failed_7d) || 0);
+    var d30 = Number((d && d.source_row_failed_30d) || 0);
+    var alertOn = !!(d && d.alert);
+    var byType7 = (d && d.by_source_type_7d) || {};
+
+    var heading = '<h3 class="section-title">Ingestion Health</h3>';
+    var sub = '<p class="section-sub">Counts source rows that ingestion endpoints could not create — when this is non-zero, content is being skipped instead of orphaned.</p>';
+
+    var tile7 = '<div class="stat-card ' + (alertOn ? 'red' : 'green') + '">'
+      + '<div class="stat-value">' + window.escHtml(String(d7)) + '</div>'
+      + '<div class="stat-label">source_row_failed (last 7 days)</div>'
+      + '</div>';
+    var tile30 = '<div class="stat-card grey">'
+      + '<div class="stat-value">' + window.escHtml(String(d30)) + '</div>'
+      + '<div class="stat-label">source_row_failed (last 30 days)</div>'
+      + '</div>';
+    var tile = '<div class="stat-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px;">' + tile7 + tile30 + '</div>';
+
+    var breakdown = '';
+    var keys = Object.keys(byType7);
+    if (keys.length > 0) {
+      breakdown += '<div class="data-table-wrap" style="margin-bottom:16px;"><table class="data-table"><thead><tr><th>Source type (last 7 days)</th><th>source_row_failed</th></tr></thead><tbody>';
+      keys.sort().forEach(function(k) {
+        breakdown += '<tr><td>' + window.escHtml(k) + '</td><td>' + window.escHtml(String(byType7[k])) + '</td></tr>';
+      });
+      breakdown += '</tbody></table></div>';
+    }
+
+    var noteHtml = '';
+    if (d && d.note) noteHtml = '<div class="note-box">' + window.escHtml(d.note) + '</div>';
+
+    return heading + sub + noteHtml + tile + breakdown;
   },
 
   // ── SECTION 7: INFRASTRUCTURE ──────────────────────────────────
