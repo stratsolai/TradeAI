@@ -1,5 +1,6 @@
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
+import { logMetaUsage } from '../lib/usage-logger.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -8,6 +9,10 @@ const supabase = createClient(
 
 const GRAPH_VERSION = 'v19.0';
 const CRON_SECRET = process.env.CRON_SECRET;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const REFRESH_RECENT_MS = 1 * DAY_MS;     // posts 0-7 days old: refresh once per day
+const REFRESH_OLDER_MS = 7 * DAY_MS;      // posts 8-30 days old: refresh once per week
 
 function graphGet(path, params, token) {
   const query = new URLSearchParams({ ...params, access_token: token }).toString();
@@ -32,7 +37,7 @@ export default async function handler(req, res) {
 
     const { data: recentPosts, error: postsError } = await supabase
       .from('social_posts')
-      .select('id, user_id, metadata, published_at')
+      .select('id, user_id, metadata, published_at, last_metrics_refresh')
       .eq('status', 'published')
       .gte('published_at', thirtyDaysAgo.toISOString())
       .not('metadata', 'is', null);
@@ -46,16 +51,18 @@ export default async function handler(req, res) {
       return res.status(200).json({ message: 'No recent posts to refresh', updated: 0 });
     }
 
+    // Tiered refresh — posts 0-7 days old refresh once per day, posts
+    // 8-30 days old refresh once per week. Skip any post whose
+    // last_metrics_refresh is more recent than its tier's interval.
     const postsByAge = recentPosts.filter(p => {
       const pubDate = new Date(p.published_at);
       const ageMs = now.getTime() - pubDate.getTime();
-      const ageDays = ageMs / (24 * 60 * 60 * 1000);
-      if (ageDays <= 7) return true;
-      if (ageDays <= 30) {
-        const hoursSinceLastRun = 24;
-        return true;
-      }
-      return false;
+      if (ageMs > 30 * DAY_MS) return false;
+
+      const minIntervalMs = ageMs <= 7 * DAY_MS ? REFRESH_RECENT_MS : REFRESH_OLDER_MS;
+      if (!p.last_metrics_refresh) return true; // never refreshed — always due
+      const sinceLast = now.getTime() - new Date(p.last_metrics_refresh).getTime();
+      return sinceLast >= minIntervalMs;
     });
 
     const userIds = [...new Set(postsByAge.map(p => p.user_id))];
@@ -95,6 +102,7 @@ export default async function handler(req, res) {
             { metric: 'post_impressions,post_engaged_users,post_clicks' },
             tokens.meta_page_token
           );
+          await logMetaUsage({ tool_id: 'social', user_id: post.user_id, subtype: 'metrics-facebook' });
 
           if (insights.data) {
             for (const metric of insights.data) {
@@ -112,6 +120,7 @@ export default async function handler(req, res) {
             { metric: 'reach,engagement' },
             tokens.meta_page_token
           );
+          await logMetaUsage({ tool_id: 'social', user_id: post.user_id, subtype: 'metrics-instagram' });
 
           if (igInsights.data) {
             for (const metric of igInsights.data) {
@@ -122,23 +131,26 @@ export default async function handler(req, res) {
           }
         }
 
+        // Always stamp last_metrics_refresh — even when the API returned
+        // zeroes — so the tiered filter doesn't keep re-fetching this
+        // post on every cron tick. Update reach/engagement/clicks only
+        // when at least one came back non-zero.
+        const updateRow = { last_metrics_refresh: new Date().toISOString(), updated_at: new Date().toISOString() };
         if (reach > 0 || engagement > 0 || clicks > 0) {
-          const { error: updateError } = await supabase
-            .from('social_posts')
-            .update({
-              reach: reach,
-              engagement: engagement,
-              clicks: clicks,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', post.id);
+          updateRow.reach = reach;
+          updateRow.engagement = engagement;
+          updateRow.clicks = clicks;
+        }
+        const { error: updateError } = await supabase
+          .from('social_posts')
+          .update(updateRow)
+          .eq('id', post.id);
 
-          if (updateError) {
-            console.error('[social-metrics-refresh] update error for post', post.id, updateError.message);
-            errors++;
-          } else {
-            updated++;
-          }
+        if (updateError) {
+          console.error('[social-metrics-refresh] update error for post', post.id, updateError.message);
+          errors++;
+        } else {
+          updated++;
         }
       } catch (err) {
         console.error('[social-metrics-refresh] fetch error for post', post.id, err.message);

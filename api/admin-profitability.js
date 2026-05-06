@@ -363,7 +363,7 @@ function buildSupplierStatus(usage, prevUsage, supplierLimits) {
     limitsByProvider[l.provider].push(l);
   });
 
-  const providers = ['anthropic', 'vercel', 'serper', 'predis', 'supabase', 'reimagine'];
+  const providers = ['anthropic', 'vercel', 'serper', 'predis', 'supabase', 'reimagine', 'meta', 'ideogram', 'smtp2go'];
   return providers.map(function(name) {
     const cur = usage.byProvider[name] || { cost: 0, tokens_in: 0, tokens_out: 0, usage: 0 };
     const prev = prevUsage.byProvider[name] || { cost: 0, usage: 0 };

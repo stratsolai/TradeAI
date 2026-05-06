@@ -71,7 +71,7 @@
     },
     {
       "path": "/api/social-metrics-refresh",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 3 * * *"
     }
   ],
   "rewrites": [

@@ -1,5 +1,6 @@
 import https from "https";
 import { createClient } from "@supabase/supabase-js";
+import { logMetaUsage } from "../lib/usage-logger.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -90,6 +91,7 @@ export default async function handler(req, res) {
         if (post.image_url) fbBody.url = post.image_url;
         const endpoint = post.image_url ? `${settings.meta_page_id}/photos` : `${settings.meta_page_id}/feed`;
         const result = await graphPost(endpoint, fbBody, settings.meta_page_token);
+        await logMetaUsage({ tool_id: 'social', user_id: post.user_id, subtype: 'publish-facebook' });
         if (result.error) {
           errors.push({ id: scheduledPost.id, error: "Facebook: " + result.error.message });
         } else {
@@ -104,12 +106,14 @@ export default async function handler(req, res) {
           { image_url: post.image_url, caption: caption },
           settings.meta_page_token
         );
+        await logMetaUsage({ tool_id: 'social', user_id: post.user_id, subtype: 'publish-instagram-container' });
         if (container.id) {
           const publish = await graphPost(
             `${settings.instagram_account_id}/media_publish`,
             { creation_id: container.id },
             settings.meta_page_token
           );
+          await logMetaUsage({ tool_id: 'social', user_id: post.user_id, subtype: 'publish-instagram-publish' });
           if (publish.id) {
             igResult = publish.id;
           }
