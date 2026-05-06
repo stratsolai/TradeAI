@@ -19,6 +19,42 @@ const XERO_CLIENT_ID = process.env.XERO_CLIENT_ID;
 const XERO_CLIENT_SECRET = process.env.XERO_CLIENT_SECRET;
 const XERO_API_BASE = 'https://api.xero.com/api.xro/2.0';
 const CACHE_TTL_MS = 15 * 60 * 1000;
+const MAX_CONCURRENT_PER_TENANT = 4;
+const MAX_429_RETRIES = 2;
+const FALLBACK_RETRY_DELAY_MS = 2000;
+
+// Per-tenant concurrency limiter — caps Xero calls at 4 in-flight per
+// tenant within this Vercel instance. Vercel runs multiple instances
+// in parallel under load, so this is best-effort: it keeps a single
+// warm function from blowing past Xero's 5-concurrent-per-tenant
+// limit when bi-* endpoints fan out, but does not coordinate across
+// instances. The 429 retry below is the real recovery path.
+const TENANT_SEMAPHORES = Object.create(null);
+
+function acquireSlot(tenantId) {
+  var sem = TENANT_SEMAPHORES[tenantId];
+  if (!sem) {
+    sem = TENANT_SEMAPHORES[tenantId] = { active: 0, queue: [] };
+  }
+  if (sem.active < MAX_CONCURRENT_PER_TENANT) {
+    sem.active++;
+    return Promise.resolve();
+  }
+  return new Promise(function (resolve) {
+    sem.queue.push(function () { sem.active++; resolve(); });
+  });
+}
+
+function releaseSlot(tenantId) {
+  var sem = TENANT_SEMAPHORES[tenantId];
+  if (!sem) return;
+  sem.active = Math.max(0, sem.active - 1);
+  if (sem.queue.length > 0) sem.queue.shift()();
+}
+
+function sleep(ms) {
+  return new Promise(function (r) { setTimeout(r, ms); });
+}
 
 // Xero JSON API returns dates as "/Date(epochms+0000)/" rather than ISO.
 // Downstream BI code does string comparisons against ISO dates, so normalise
@@ -112,52 +148,63 @@ export default async function handler(req, res) {
     }
   }
 
-  // API call helper with automatic token refresh on 401
-  async function xeroGet(path) {
-    var url = XERO_API_BASE + path;
-    var resp = await fetch(url, {
-      headers: {
-        'Authorization': 'Bearer ' + account.access_token,
-        'Xero-tenant-id': tenantId,
-        'Accept': 'application/json',
-      },
-    });
-    if (resp.status === 401) {
-      var refreshed = await refreshToken();
-      if (!refreshed) throw new Error('Token expired and refresh failed');
-      resp = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + account.access_token,
-          'Xero-tenant-id': tenantId,
-          'Accept': 'application/json',
-        },
-      });
+  // Build the standard Xero auth headers. Pulled out so retry attempts
+  // pick up a refreshed token without re-stating the header shape.
+  function authHeaders() {
+    return {
+      'Authorization': 'Bearer ' + account.access_token,
+      'Xero-tenant-id': tenantId,
+      'Accept': 'application/json',
+    };
+  }
+
+  // Single GET with concurrency-limited dispatch, 401-driven token
+  // refresh, and 429 retry honouring Xero's Retry-After header. Used
+  // by both the standard Xero API and the Projects API helpers.
+  async function xeroFetchWithRetry(url) {
+    await acquireSlot(tenantId);
+    try {
+      for (var attempt = 0; attempt <= MAX_429_RETRIES; attempt++) {
+        var resp = await fetch(url, { headers: authHeaders() });
+
+        if (resp.status === 401) {
+          var refreshed = await refreshToken();
+          if (!refreshed) throw new Error('Token expired and refresh failed');
+          resp = await fetch(url, { headers: authHeaders() });
+        }
+
+        if (resp.status === 429) {
+          if (attempt >= MAX_429_RETRIES) {
+            throw new Error('Xero API error: 429 Too Many Requests (retries exhausted)');
+          }
+          var retryAfter = resp.headers.get('Retry-After');
+          var waitMs = FALLBACK_RETRY_DELAY_MS;
+          if (retryAfter) {
+            var n = parseInt(retryAfter, 10);
+            if (!isNaN(n) && n > 0) waitMs = n * 1000;
+          }
+          console.warn('[xero-fetch] 429 received — waiting ' + waitMs + 'ms before retry', { tenantId: tenantId, attempt: attempt + 1 });
+          await sleep(waitMs);
+          continue;
+        }
+
+        return resp;
+      }
+    } finally {
+      releaseSlot(tenantId);
     }
+  }
+
+  // API call helper with automatic token refresh on 401 and 429 retry
+  async function xeroGet(path) {
+    var resp = await xeroFetchWithRetry(XERO_API_BASE + path);
     if (!resp.ok) throw new Error('Xero API error: ' + resp.status + ' ' + resp.statusText);
     return resp.json();
   }
 
   // Xero Projects API uses a different base URL
   async function xeroProjectsGet(path) {
-    var url = 'https://api.xero.com/projects.xro/2.0' + path;
-    var resp = await fetch(url, {
-      headers: {
-        'Authorization': 'Bearer ' + account.access_token,
-        'Xero-tenant-id': tenantId,
-        'Accept': 'application/json',
-      },
-    });
-    if (resp.status === 401) {
-      var refreshed = await refreshToken();
-      if (!refreshed) throw new Error('Token expired and refresh failed');
-      resp = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + account.access_token,
-          'Xero-tenant-id': tenantId,
-          'Accept': 'application/json',
-        },
-      });
-    }
+    var resp = await xeroFetchWithRetry('https://api.xero.com/projects.xro/2.0' + path);
     // 403 means Projects not enabled — return empty
     if (resp.status === 403 || resp.status === 404) return null;
     if (!resp.ok) throw new Error('Xero Projects API error: ' + resp.status);
