@@ -432,6 +432,7 @@ window.CL_PROFILE = {
       this._field('Industries <span class="profile-optional">(select up to 2)</span>', industryChips) +
       this._field('Business Logo', logoHtml) +
       this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
+      this._field2('Team Size', this._dropdown('prof-team-size', ['1', '2-5', '6-10', '11-20', '21-50', '50+'], this._v('employee_range'))) +
     '</div>' +
     '<div class="perm-modal-overlay" id="prof-industry-modal">' +
       '<div class="perm-modal">' +
@@ -652,13 +653,15 @@ window.CL_PROFILE = {
           { test: function() { return yearsEl.value.trim() !== '' && !isNaN(parseInt(yearsEl.value, 10)); }, el: yearsEl, label: 'Years in Business' }
         ]);
       }
+      var teamSizeEl = document.getElementById('prof-team-size');
       var updates = {
         business_name: bizNameEl.value.trim(),
         trading_name: document.getElementById('prof-trading-name').value.trim(),
         abn: abnEl.value.trim(),
         business_structure: structureEl.getAttribute('data-value') || '',
         industry: self._getSelectedChips('prof-industries'),
-        years_in_business: parseInt(yearsEl.value) || null
+        years_in_business: parseInt(yearsEl.value) || null,
+        employee_range: (teamSizeEl && teamSizeEl.getAttribute('data-value')) || ''
       };
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);

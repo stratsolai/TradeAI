@@ -80,7 +80,6 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Technology: ' + _arr(planData.technology) + '\n' +
     '- Technology maturity: ' + (planData.technologyMaturity || 'Not specified') + '\n' +
     '- Key roles: ' + _arr(planData.keyRoles) + '\n' +
-    '- Headcount: ' + (planData.currentHeadcount || 'Not specified') + '\n' +
     '- Compliance actions: ' + _arr(planData.complianceActions) + '\n\n' +
     'SECTION 5 \u2014 MARKET & COMPETITION:\n' +
     '- Market position: ' + (planData.marketPosition || 'Not specified') + '\n' +
