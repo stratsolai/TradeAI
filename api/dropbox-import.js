@@ -420,12 +420,15 @@ async function findVersionMatch(supabase, userId, newTitle, newBody, category) {
   if (!VERSION_MATCH_RULES[category]) return null;
   var existing = await supabase
     .from('content_library')
-    .select('id, title')
+    .select('id, title, content_text')
     .eq('user_id', userId)
     .eq('status', 'approved')
     .eq('category', category);
   if (!existing.data || existing.data.length === 0) return null;
-  var candidates = existing.data.map(function(e, i) { return (i + 1) + '. ID: ' + e.id + ' — Title: ' + e.title; }).join('\n');
+  var candidates = existing.data.map(function(e, i) {
+    var bodySnippet = String(e.content_text || '').substring(0, 500).replace(/\s+/g, ' ').trim();
+    return (i + 1) + '. ID: ' + e.id + '\n   Title: ' + e.title + '\n   Body: ' + bodySnippet;
+  }).join('\n\n');
   var systemPrompt = VERSION_MATCH_SYSTEM_PROMPT;
   var userContent = 'CATEGORY: ' + category + '\nMATCH RULE: ' + VERSION_MATCH_RULES[category] + '\n\nNEW ITEM:\nTitle: ' + newTitle + '\nBody: ' + String(newBody || '').substring(0, 1000) + '\n\nEXISTING APPROVED ITEMS:\n' + candidates + '\n\nReturn JSON only: { "matched_id": "<existing item ID or null>" }';
   try {
