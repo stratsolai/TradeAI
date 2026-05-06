@@ -287,10 +287,6 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   published to In production before real users can connect.
   May trigger Google's verification process for the
   gmail.readonly scope. Must be resolved before launch.
-- staxai-auth.css loads after the inline </style> block in
-  content-library.html — stylesheet always wins the cascade
-  for any class defined in both. Known issue to resolve
-  during stylesheet rollout.
 - Pagination fixed at 200 items for OneDrive/SharePoint
   folder listings and SharePoint sites. Add pagination
   support if needed.
@@ -369,11 +365,50 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
 - New schemas documented in spec before table is created
 - Column naming: snake_case. Booleans: is_[name]/has_[name]. Timestamps: created_at, updated_at
 - Never store sensitive data in Supabase tables
+- content_library.source is NOT NULL and the table has a CHECK constraint: `(source = 'tool' OR source_item_id IS NOT NULL)`. Any non-tool row written without a source_item_id pointing at cl_source_items is rejected by Postgres — orphan rows are schema-impossible. See the Source Ingestion Pattern section below.
 
 ### API Endpoints
 - All Claude API calls through Vercel serverless functions in api/ — never from the browser
 - Naming convention: api/[action-name].js
 - Supabase anon key in supabase-client.js is intentional — RLS must be enabled on any new table
+
+### Source Ingestion Pattern
+
+All 8 ingestion endpoints — cl-email-scan, cl-outlook-scan, drive-import, onedrive-import, sharepoint-import, dropbox-import, scrape-website, process-file — must use the shared cl_source_items helper. No endpoint inserts into cl_source_items directly.
+
+cl_source_items is the canonical record of every ingested artefact. Every non-tool content_library row references it via source_item_id, which the schema CHECK constraint enforces (see Database Rules above). The orphan content_library rows that the old per-endpoint logic could produce are now impossible by construction.
+
+**ensureSourceItem helper — lib/cl-source-items.js**
+
+Every ingestion endpoint follows the same flow:
+
+1. Build a source_unique_key with `buildSourceUniqueKey(sourceType, parts)` — the format is per-source-type (see table below) and is deterministic, so re-runs produce the same key.
+2. Pre-filter the work list against `cl_source_items.source_unique_key` so already-ingested items are not re-fetched or re-extracted.
+3. Upload the source bytes to cl-assets with `upsert: true` (idempotent — retries don't fail on existing objects).
+4. Call `ensureSourceItem(supabase, { user_id, source_unique_key, source_type, fields })` which finds-or-creates the row and returns its id (or null on failure). Race-safe: parallel calls with the same key recover via re-select rather than failing on the partial unique index.
+5. If `ensureSourceItem` returns null, **skip the artefact entirely** — no content_library write happens. Failures are counted under `skipped_reasons.source_row_failed` so the future Admin monitoring widget can surface them.
+
+**source_unique_key formats**
+
+| Source              | Format                                        |
+|---------------------|-----------------------------------------------|
+| Gmail body          | `gmail:<message_id>`                          |
+| Gmail attachment    | `gmail-att:<message_id>:<attachment_id>`      |
+| Outlook body        | `outlook:<message_id>`                        |
+| Outlook attachment  | `outlook-att:<message_id>:<attachment_id>`    |
+| Google Drive        | `drive:<drive_file_id>`                       |
+| OneDrive            | `onedrive:<onedrive_item_id>`                 |
+| SharePoint          | `sharepoint:<site_id>:<sharepoint_item_id>`   |
+| Dropbox             | `dropbox:<dropbox_file_id>`                   |
+| Document upload     | `upload:<storagePath>`                        |
+| Photo upload        | `photo:<storagePath>`                         |
+| Website             | `website:<scanTs>:<sha256(fullPageUrl)>`      |
+
+A partial unique index on `(user_id, source_unique_key) WHERE source_unique_key IS NOT NULL` backs the contract — duplicate keys per user can't be inserted.
+
+**Logging**
+
+Failure paths in ingestion follow the platform format `[Scope] Action — key: value`, e.g. `[Gmail] Source row failed — msgId: <id>`. Errors must not be silently swallowed — the original orphan bug came from a bare catch block.
 
 ### Tool to CL Write-back Patterns
 
