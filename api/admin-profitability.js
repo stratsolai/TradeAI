@@ -11,6 +11,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
+import { ensureVercelBaseCost } from '../lib/supplier-usage.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
@@ -28,6 +29,15 @@ export default async function handler(req, res) {
     if (_cache.data && Date.now() - _cache.fetchedAt < CACHE_TTL_MS) {
       return res.status(200).json(Object.assign({}, _cache.data, { from_cache: true }));
     }
+
+    // Ensure flat-fee suppliers have a current-period api_usage row
+    // before we read usage. No-op when the row already exists for
+    // this period — the Vercel Pro plan is a known $30 AUD/month
+    // baseline (overages would need manual entry until Vercel ships
+    // a public billing-usage API).
+    await ensureVercelBaseCost(supabase).catch(function (e) {
+      console.error('[admin-profitability] vercel base cost write failed:', e && e.message);
+    });
 
     const period = currentPeriod();
     const previousPeriod = priorPeriod(period);
