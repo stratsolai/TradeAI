@@ -78,8 +78,8 @@
     if (!sections || !sections.length) return;
 
     var navHtml = sections.map(function(s, i) {
-      var shortTitle = s.title.split('. ')[1] || s.title;
-      return '<button class="profile-nav-chip" data-section="' + i + '">' + (i + 1) + '. ' + escHtml(shortTitle) + '</button>';
+      var label = s.chipLabel || s.title.split('. ')[1] || s.title;
+      return '<button class="profile-nav-chip" data-section="' + i + '">' + escHtml(label) + '</button>';
     }).join('');
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) navEl.innerHTML = navHtml;

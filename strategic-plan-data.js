@@ -27,6 +27,7 @@ window.SP_SECTIONS = [
     id: 0,
     icon: "\u{1F3E2}",
     title: "1. Business Foundation",
+    chipLabel: "Foundation",
     subtitle: "Legal details, structure, history, and team. Most of this is prefilled from your Business Profile.",
     fields: [
       { id: "s1-business-name", apiKey: "businessName", valueType: "string", profileKey: "business_name", fromProfile: true, label: "Business Name", type: "text", required: true, placeholder: "e.g. Smith Plumbing Pty Ltd" },
@@ -52,6 +53,7 @@ window.SP_SECTIONS = [
     id: 1,
     icon: "\u{1F527}",
     title: "2. Products, Services & Customers",
+    chipLabel: "Products & Services",
     subtitle: "What you sell, who buys it, and how you price your work.",
     fields: [
       { id: "s2-services", apiKey: "services", valueType: "string", profileKey: "bp_services", fromProfile: true, profileTransform: "svc_list", label: "Core Services", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No services in your Business Profile yet." },
@@ -74,6 +76,7 @@ window.SP_SECTIONS = [
     id: 2,
     icon: "\u{1F4B0}",
     title: "3. Financial Position",
+    chipLabel: "Financial Position",
     subtitle: "Revenue, costs, margins, and cash flow. Approximate figures are fine.",
     infoBox: "This information builds your financial overview section. It is stored securely and never shared. If your accounting system is connected, some fields may be prefilled.",
     fields: [
@@ -97,6 +100,7 @@ window.SP_SECTIONS = [
     id: 3,
     icon: "\u2699",
     title: "4. Operations & Capacity",
+    chipLabel: "Operations & Capacity",
     subtitle: "How work gets done, your team, technology, suppliers, and constraints.",
     fields: [
       { id: "s4-lead-sources", apiKey: "leadSources", valueType: "array", label: "How do you get most work?", type: "chip-multi", group: "lead-chips", required: false, allowOther: true, options: [{ value: "word-of-mouth", label: "Word of mouth" },{ value: "google", label: "Google/search" },{ value: "social-media", label: "Social media" },{ value: "builder-rels", label: "Builder relationships" },{ value: "repeat", label: "Repeat customers" },{ value: "advertising", label: "Advertising" },{ value: "tenders", label: "Tenders" },{ value: "direct-sales", label: "Direct sales" }] },
@@ -120,6 +124,7 @@ window.SP_SECTIONS = [
     id: 4,
     icon: "\u{1F4CA}",
     title: "5. Market & Competition",
+    chipLabel: "Market & Competition",
     subtitle: "Your competitors, market position, industry trends, and regulatory environment.",
     fields: [
       { id: "s5-market-position", apiKey: "marketPosition", valueType: "string", label: "Market Position", type: "chip-single", group: "market-pos-chips", required: false, options: [{ value: "leader", label: "Market leader" },{ value: "strong", label: "Strong competitor" },{ value: "established", label: "Established player" },{ value: "challenger", label: "Growing challenger" },{ value: "new-entrant", label: "New entrant" }] },
@@ -140,6 +145,7 @@ window.SP_SECTIONS = [
     id: 5,
     icon: "\u{1F680}",
     title: "6. Growth & Transformation",
+    chipLabel: "Growth & Transformation",
     subtitle: "Goals, expansion plans, digital transformation, and process improvement. Your answers here drive your Operational Plan initiatives.",
     fields: [
       { id: "s6-revenue-target", apiKey: "revenueTarget", valueType: "string", label: "12-Month Revenue Target", type: "select", required: false, isDecision: true, decisionId: "revenue_target", options: [{ value: "", label: "Select..." },{ value: "maintain", label: "Maintain current" },{ value: "grow-1-10", label: "Grow 1-10%" },{ value: "grow-10-25", label: "Grow 10-25%" },{ value: "grow-25-50", label: "Grow 25-50%" },{ value: "grow-50+", label: "Grow 50%+" },{ value: "reduce", label: "Reduce/consolidate" }] },
@@ -169,6 +175,7 @@ window.SP_SECTIONS = [
     id: 6,
     icon: "\u{1F6E1}",
     title: "7. Risk & Resilience",
+    chipLabel: "Risk & Resilience",
     subtitle: "Business risks, insurance, compliance, contingency, and succession planning.",
     fields: [
       { id: "s7-risks", apiKey: "biggestRisks", valueType: "array", label: "Biggest Business Risks", type: "chip-multi", group: "risk-chips", required: false, allowOther: true, options: [{ value: "seasonal", label: "Seasonal slowdowns" },{ value: "key-person", label: "Key person dependency" },{ value: "late-payments", label: "Late payments / bad debts" },{ value: "client-concentration", label: "Customer concentration" },{ value: "material-costs", label: "Material cost increases" },{ value: "staff-shortage", label: "Staff availability" },{ value: "regulatory", label: "Regulatory changes" },{ value: "equipment", label: "Equipment breakdown" },{ value: "economic-downturn", label: "Economic downturn" },{ value: "competition", label: "Competition" },{ value: "tech-disruption", label: "Technology disruption" },{ value: "reputational", label: "Reputational risk" }] },
