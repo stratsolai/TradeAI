@@ -78,12 +78,16 @@ export default async function handler(req, res) {
     console.log('[scan-queue] Job queued — id:', jobId, 'sourceType:', sourceType, 'sourceAccount:', sourceAccount, 'sourcePath:', sourcePath);
 
     // ── Trigger scan-worker before returning ─────────────────────────
-    // The fetch must be awaited so the HTTP request is fully dispatched
-    // before Vercel freezes this function's runtime. Without the await,
-    // the runtime is torn down after res.json() and the fetch is
-    // silently dropped — jobs then sit in queued state until the next
-    // cron tick. We do not wait for the scan itself to finish — just for
-    // the worker to accept the request.
+    // We need the request to scan-worker to be dispatched (so it
+    // actually starts processing) but we must NOT wait for its
+    // response — scan-worker only returns once the entire scan is
+    // finished, and the browser is subscribed to Realtime updates on
+    // cl_scan_jobs to watch progress in the meantime. AbortSignal.
+    // timeout below unblocks the await once the request is on the
+    // wire (~hundreds of ms), without holding scan-queue open until
+    // the scan itself completes. If the trigger fetch genuinely fails
+    // before dispatch the cron tick picks the queued job up on the
+    // next pass.
     var workerHost = process.env.VERCEL_URL
       ? 'https://' + process.env.VERCEL_URL
       : 'https://' + (req.headers['host'] || 'staxai.com.au');
@@ -94,11 +98,16 @@ export default async function handler(req, res) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + (process.env.CRON_SECRET || '') },
         body: JSON.stringify({ triggerSource: 'scan-queue', jobId: jobId }),
+        signal: AbortSignal.timeout(500),
       });
     } catch (triggerErr) {
-      // Worker trigger failed — job will be picked up by the next cron
-      // tick. Log but do not fail the queue response.
-      console.error('[scan-queue] Worker trigger failed:', triggerErr.message);
+      // TimeoutError / AbortError is the success path — we aborted
+      // waiting for scan-worker's response so scan-queue can return
+      // immediately. Anything else is a real dispatch failure.
+      var errName = triggerErr && triggerErr.name;
+      if (errName !== 'TimeoutError' && errName !== 'AbortError') {
+        console.error('[scan-queue] Worker trigger failed:', (triggerErr && triggerErr.message) || triggerErr);
+      }
     }
 
     return res.status(200).json({ success: true, jobId: jobId });

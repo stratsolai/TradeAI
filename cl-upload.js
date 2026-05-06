@@ -448,50 +448,72 @@ window.CL_UPLOAD = {
         if (!self._activeJobs[source]) self._activeJobs[source] = [];
         self._activeJobs[source].push({ jobId: jobId, status: "queued" });
 
+        // Guard so terminal-state cleanup runs at most once per job —
+        // the self-priming SELECT below and a Realtime UPDATE could
+        // both observe the same completed/failed/cancelled row in a
+        // tight race.
+        var done = false;
+
+        function applyJobRow(row) {
+          if (!row || done) return;
+          var tracked = (self._activeJobs[source] || []).find(function(j) { return j.jobId === jobId; });
+          if (tracked) tracked.status = row.status;
+
+          if (row.status === "running") {
+            btn.textContent = "Scanning...";
+          } else if (row.status === "completed") {
+            done = true;
+            self._appendUploadMessage(formatJobCountsLine(label, row), "success");
+            finishScan();
+            if (window.loadStats) window.loadStats();
+            if (window.CL_REVIEW) window.CL_REVIEW._load();
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          } else if (row.status === "failed") {
+            done = true;
+            var errText = row.error_text || "Scan failed";
+            var tileName = SOURCE_NAMES[source] || source;
+            self._appendUploadMessage(tileName + " — " + label + " — error: " + errText, "error");
+            finishScan();
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          } else if (row.status === "cancelled") {
+            done = true;
+            var cancelTileName = SOURCE_NAMES[source] || source;
+            self._appendUploadMessage(cancelTileName + " — " + label + " — scan stopped", "error");
+            finishScan();
+            self._supabase.removeChannel(channel);
+            delete self._jobSubscriptions[jobId];
+            self._removeActiveJob(source, jobId);
+          }
+          // queued status after a retry — button stays in queued state
+        }
+
         var channel = self._supabase
           .channel("scan-job-" + jobId)
           .on(
             "postgres_changes",
             { event: "UPDATE", schema: "public", table: "cl_scan_jobs", filter: "id=eq." + jobId },
-            function(payload) {
-              var row = payload.new;
-              if (!row) return;
-              // Update tracked status
-              var tracked = (self._activeJobs[source] || []).find(function(j) { return j.jobId === jobId; });
-              if (tracked) tracked.status = row.status;
-
-              if (row.status === "running") {
-                btn.textContent = "Scanning...";
-              } else if (row.status === "completed") {
-                self._appendUploadMessage(formatJobCountsLine(label, row), "success");
-                finishScan();
-                if (window.loadStats) window.loadStats();
-                if (window.CL_REVIEW) window.CL_REVIEW._load();
-                // Unsubscribe and remove from active jobs — terminal state
-                self._supabase.removeChannel(channel);
-                delete self._jobSubscriptions[jobId];
-                self._removeActiveJob(source, jobId);
-              } else if (row.status === "failed") {
-                var errText = row.error_text || "Scan failed";
-                var tileName = SOURCE_NAMES[source] || source;
-                self._appendUploadMessage(tileName + " — " + label + " — error: " + errText, "error");
-                finishScan();
-                self._supabase.removeChannel(channel);
-                delete self._jobSubscriptions[jobId];
-                self._removeActiveJob(source, jobId);
-              } else if (row.status === "cancelled") {
-                var cancelTileName = SOURCE_NAMES[source] || source;
-                self._appendUploadMessage(cancelTileName + " — " + label + " — scan stopped", "error");
-                finishScan();
-                self._supabase.removeChannel(channel);
-                delete self._jobSubscriptions[jobId];
-                self._removeActiveJob(source, jobId);
-              }
-              // queued status after a retry — button stays in queued state
-            }
+            function(payload) { applyJobRow(payload.new); }
           )
           .subscribe();
         self._jobSubscriptions[jobId] = channel;
+
+        // Self-prime: fetch the row's current state immediately. Realtime
+        // only delivers events that fire AFTER subscription is up, so if
+        // the worker raced past 'queued' before we subscribed (e.g.
+        // because scan-queue's trigger fetch had returned), this one-shot
+        // SELECT lets the UI catch up.
+        self._supabase
+          .from("cl_scan_jobs")
+          .select("*")
+          .eq("id", jobId)
+          .maybeSingle()
+          .then(function(res) {
+            if (res && res.data) applyJobRow(res.data);
+          });
       }
       (async function() {
         try {
