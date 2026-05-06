@@ -529,18 +529,10 @@
     document.querySelectorAll('.profile-nav-chip').forEach(function(c, i) {
       c.classList.toggle('active', i === index);
     });
-
-    updateProgress(index);
   }
 
   function navigate(direction) {
     goToSection(currentSection + direction);
-  }
-
-  function updateProgress(index) {
-    var total = window.SP_SECTIONS.length;
-    var label = document.getElementById('sp-progress-label');
-    if (label) label.textContent = 'Section ' + (index + 1) + ' of ' + total + ' \u2014 ' + window.SP_SECTIONS[index].title;
   }
 
   function loadProfile() {

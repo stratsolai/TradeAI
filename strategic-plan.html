@@ -371,20 +371,6 @@
 
     /* ─── TAB 3: CREATE / UPDATE PLAN (interview form) ─── */
 
-    /* Section label — wraps the "Section X of 7 — Title" line above the wizard */
-    .sp-progress-wrap {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      border: 1px solid var(--border);
-      padding: var(--card-padding);
-      margin-bottom: var(--card-padding);
-    }
-    .sp-progress-label {
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text);
-    }
-
     /* Info box */
     .sp-info-box {
       background: var(--blue-hover-bg);
@@ -933,12 +919,7 @@
   <!-- ═══ TAB 3: CREATE / UPDATE PLAN ═══ -->
   <div class="ptab-content" id="tab-create-plan">
 
-    <!-- Section label — section navigation chips below show position -->
-    <div class="sp-progress-wrap" id="sp-progress-container">
-      <div class="sp-progress-label" id="sp-progress-label">Section 1 of 7</div>
-    </div>
-
-    <!-- Section navigation chips -->
+    <!-- Section navigation chips — show which section is active -->
     <div class="profile-nav-chips" id="sp-section-nav"></div>
 
     <!-- Interview sections — rendered dynamically by SP_LOGIC -->
