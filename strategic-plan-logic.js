@@ -600,8 +600,13 @@
             if (items.length === 0) {
               pillsEl.innerHTML = '<span class="sp-label-hint">' + escHtml(field.emptyHint || 'No data in your Business Profile yet.') + '</span>';
             } else {
+              // Match Source Review tagged categories markup exactly —
+              // <button> (not <span>) so default button styling provides
+              // the border/padding/radius the variant classes assume.
+              // tabindex=-1 + cursor:default + no click handler keeps it
+              // visually identical but non-interactive.
               pillsEl.innerHTML = items.map(function(item) {
-                return '<span class="cat-pill tool-pill tool-pill-purple cat-pill-tagged tagged">' + escHtml(item) + '</span>';
+                return '<button type="button" tabindex="-1" class="cat-pill tool-pill tool-pill-purple cat-pill-tagged tagged" style="cursor:default">' + escHtml(item) + '</button>';
               }).join('');
             }
           }
