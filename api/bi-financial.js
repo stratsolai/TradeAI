@@ -93,11 +93,11 @@ export default async function handler(req, res) {
       if (!qa || !qa.realm_id) continue;
       var rid = qa.realm_id;
       fetchPromises.push(
-        callFetchEndpoint('quickbooks-fetch', { action: 'invoices', realmId: rid }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
-        callFetchEndpoint('quickbooks-fetch', { action: 'bills', realmId: rid }).then(function(d) { if (d) allBills = allBills.concat(d); }),
-        callFetchEndpoint('quickbooks-fetch', { action: 'pl_summary', realmId: rid }).then(function(d) { if (d) plSummaries.push(d); }),
-        callFetchEndpoint('quickbooks-fetch', { action: 'balances', realmId: rid }).then(function(d) { if (d) balances.push(d); }),
-        callFetchEndpoint('quickbooks-fetch', { action: 'quotes', realmId: rid }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); })
+        callFetchEndpoint('quickbooks-fetch', { action: 'invoices', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
+        callFetchEndpoint('quickbooks-fetch', { action: 'bills', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allBills = allBills.concat(d); }),
+        callFetchEndpoint('quickbooks-fetch', { action: 'pl_summary', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) plSummaries.push(d); }),
+        callFetchEndpoint('quickbooks-fetch', { action: 'balances', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) balances.push(d); }),
+        callFetchEndpoint('quickbooks-fetch', { action: 'quotes', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); })
       );
     }
 

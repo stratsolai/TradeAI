@@ -82,9 +82,9 @@ export default async function handler(req, res) {
       if (!qa || !qa.realm_id) continue;
       var rid = qa.realm_id;
       promises.push(
-        callFetch('quickbooks-fetch', { action: 'invoices', realmId: rid }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
-        callFetch('quickbooks-fetch', { action: 'quotes', realmId: rid }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); }),
-        callFetch('quickbooks-fetch', { action: 'contacts', realmId: rid }).then(function(d) { if (d) allContacts = allContacts.concat(d); })
+        callFetch('quickbooks-fetch', { action: 'invoices', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allInvoices = allInvoices.concat(d); }),
+        callFetch('quickbooks-fetch', { action: 'quotes', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allQuotes = allQuotes.concat(d); }),
+        callFetch('quickbooks-fetch', { action: 'contacts', realmId: rid, bypassCache: bypassCache }).then(function(d) { if (d) allContacts = allContacts.concat(d); })
       );
     }
 

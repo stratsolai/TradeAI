@@ -5,13 +5,32 @@
 //
 // Supported actions: invoices, bills, contacts, items, quotes, jobs,
 // pl_summary, balances
+//
+// Caching, concurrency limit, 429 retry and in-flight dedup are
+// provided by lib/external-api-cache.js — same shape as the inline
+// implementation in api/xero-fetch.js.
 
 import { createClient } from '@supabase/supabase-js';
+import {
+  acquireSlot,
+  releaseSlot,
+  fetchWithRetry,
+  readCache,
+  writeCache,
+  inflightKey,
+  getInflight,
+  setInflight,
+  deleteInflight
+} from '../lib/external-api-cache.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const QUICKBOOKS_CLIENT_ID = process.env.QUICKBOOKS_CLIENT_ID;
 const QUICKBOOKS_CLIENT_SECRET = process.env.QUICKBOOKS_CLIENT_SECRET;
+
+const CACHE_TABLE = 'cl_quickbooks_cache';
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const MAX_CONCURRENT_PER_REALM = 4;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -24,87 +43,116 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { action, realmId } = req.body || {};
+  const { action, realmId, bypassCache } = req.body || {};
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
   if (!realmId) return res.status(400).json({ error: 'Missing realmId parameter' });
 
-  // Load account entry
-  const profileRes = await supabase
-    .from('profiles')
-    .select('cl_quickbooks_accounts')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
+  const cacheKeyCols = { user_id: user.id, realm_id: realmId, action: action };
 
-  const accounts = Array.isArray(profileRes.data && profileRes.data.cl_quickbooks_accounts)
-    ? profileRes.data.cl_quickbooks_accounts : [];
-  const account = accounts.find(function (a) { return a && a.realm_id === realmId; });
-  if (!account) return res.status(404).json({ error: 'QuickBooks account not found for this realm' });
-
-  const QB_BASE = 'https://quickbooks.api.intuit.com/v3/company/' + realmId;
-
-  // Token refresh helper
-  async function refreshToken() {
-    if (!account.refresh_token) return false;
-    try {
-      const basicAuth = Buffer.from(QUICKBOOKS_CLIENT_ID + ':' + QUICKBOOKS_CLIENT_SECRET).toString('base64');
-      const tokenRes = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json',
-          'Authorization': 'Basic ' + basicAuth,
-        },
-        body: new URLSearchParams({
-          grant_type: 'refresh_token',
-          refresh_token: account.refresh_token,
-        }).toString(),
-      });
-      const tokenData = await tokenRes.json();
-      if (tokenData.error || !tokenData.access_token) return false;
-      account.access_token = tokenData.access_token;
-      if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
-      var idx = accounts.findIndex(function (a) { return a && a.realm_id === realmId; });
-      if (idx > -1) {
-        accounts[idx] = account;
-        await supabase.from('profiles').update({ cl_quickbooks_accounts: accounts }).eq('id', user.id);
-      }
-      return true;
-    } catch (e) {
-      console.error('QuickBooks token refresh failed:', e && e.message);
-      return false;
+  // ── Cache lookup ───────────────────────────────────────────────────
+  if (!bypassCache) {
+    const cached = await readCache(supabase, CACHE_TABLE, cacheKeyCols);
+    if (cached !== null) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
     }
   }
 
-  // API call helper with automatic token refresh on 401
-  async function qbGet(path) {
-    var url = QB_BASE + path;
-    var resp = await fetch(url, {
-      headers: {
+  // ── In-flight dedup ────────────────────────────────────────────────
+  const ikey = inflightKey(CACHE_TABLE, cacheKeyCols);
+  if (getInflight(ikey)) {
+    try {
+      const sharedResult = await getInflight(ikey);
+      return res.status(200).json({ success: true, data: sharedResult, deduped: true });
+    } catch (sharedErr) {
+      // The shared in-flight call failed. Fall through and try our own.
+    }
+  }
+
+  const workPromise = (async () => {
+    // Load account entry
+    const profileRes = await supabase
+      .from('profiles')
+      .select('cl_quickbooks_accounts')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileRes.error) {
+      const e = new Error('Could not load profile'); e.status = 500; throw e;
+    }
+
+    const accounts = Array.isArray(profileRes.data && profileRes.data.cl_quickbooks_accounts)
+      ? profileRes.data.cl_quickbooks_accounts : [];
+    const account = accounts.find(function (a) { return a && a.realm_id === realmId; });
+    if (!account) {
+      const e = new Error('QuickBooks account not found for this realm'); e.status = 404; throw e;
+    }
+
+    const QB_BASE = 'https://quickbooks.api.intuit.com/v3/company/' + realmId;
+
+    // Token refresh helper
+    async function refreshToken() {
+      if (!account.refresh_token) return false;
+      try {
+        const basicAuth = Buffer.from(QUICKBOOKS_CLIENT_ID + ':' + QUICKBOOKS_CLIENT_SECRET).toString('base64');
+        const tokenRes = await fetch('https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'Authorization': 'Basic ' + basicAuth,
+          },
+          body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: account.refresh_token,
+          }).toString(),
+        });
+        const tokenData = await tokenRes.json();
+        if (tokenData.error || !tokenData.access_token) return false;
+        account.access_token = tokenData.access_token;
+        if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
+        var idx = accounts.findIndex(function (a) { return a && a.realm_id === realmId; });
+        if (idx > -1) {
+          accounts[idx] = account;
+          await supabase.from('profiles').update({ cl_quickbooks_accounts: accounts }).eq('id', user.id);
+        }
+        return true;
+      } catch (e) {
+        console.error('QuickBooks token refresh failed:', e && e.message);
+        return false;
+      }
+    }
+
+    function authHeaders() {
+      return {
         'Authorization': 'Bearer ' + account.access_token,
         'Accept': 'application/json',
-      },
-    });
-    if (resp.status === 401) {
-      var refreshed = await refreshToken();
-      if (!refreshed) throw new Error('Token expired and refresh failed');
-      resp = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + account.access_token,
-          'Accept': 'application/json',
-        },
-      });
+      };
     }
-    if (!resp.ok) throw new Error('QuickBooks API error: ' + resp.status + ' ' + resp.statusText);
-    return resp.json();
-  }
 
-  // QuickBooks query helper
-  async function qbQuery(query) {
-    return qbGet('/query?query=' + encodeURIComponent(query));
-  }
+    // Concurrency-limited GET with 401-driven token refresh and 429 retry.
+    async function qbGet(path) {
+      var url = QB_BASE + path;
+      await acquireSlot(realmId, MAX_CONCURRENT_PER_REALM);
+      try {
+        var resp = await fetchWithRetry(async function () {
+          var r = await fetch(url, { headers: authHeaders() });
+          if (r.status === 401) {
+            var refreshed = await refreshToken();
+            if (!refreshed) throw new Error('Token expired and refresh failed');
+            r = await fetch(url, { headers: authHeaders() });
+          }
+          return r;
+        }, { providerLabel: 'QuickBooks' });
+        if (!resp.ok) throw new Error('QuickBooks API error: ' + resp.status + ' ' + resp.statusText);
+        return resp.json();
+      } finally {
+        releaseSlot(realmId);
+      }
+    }
 
-  try {
+    function qbQuery(query) {
+      return qbGet('/query?query=' + encodeURIComponent(query));
+    }
+
     var result;
 
     if (action === 'invoices') {
@@ -282,12 +330,24 @@ export default async function handler(req, res) {
         platform: 'quickbooks'
       };
     } else {
-      return res.status(400).json({ error: 'Unknown action: ' + action });
+      var unknownErr = new Error('Unknown action: ' + action);
+      unknownErr.status = 400;
+      throw unknownErr;
     }
 
-    return res.status(200).json({ success: true, data: result });
+    await writeCache(supabase, CACHE_TABLE, cacheKeyCols, result, CACHE_TTL_MS);
+    return result;
+  })();
+
+  setInflight(ikey, workPromise);
+
+  try {
+    const result = await workPromise;
+    return res.status(200).json({ success: true, data: result, cached: false });
   } catch (err) {
     console.error('quickbooks-fetch error:', action, err && err.message);
-    return res.status(500).json({ error: (err && err.message) || 'QuickBooks API request failed' });
+    return res.status(err.status || 500).json({ error: (err && err.message) || 'QuickBooks API request failed' });
+  } finally {
+    deleteInflight(ikey);
   }
 }
