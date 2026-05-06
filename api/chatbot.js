@@ -14,7 +14,7 @@
 
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
-import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { logAnthropicUsage, logSmtp2goUsage } from '../lib/usage-logger.js';
 
 var SUPABASE_URL = process.env.SUPABASE_URL;
 var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -421,6 +421,7 @@ async function sendNotification(supabase, userId, details) {
 
     if (emailRes.status >= 200 && emailRes.status < 300 && emailRes.body && emailRes.body.data && emailRes.body.data.succeeded > 0) {
       console.log('[CB] Notification email sent to', notifEmail);
+      await logSmtp2goUsage({ tool_id: 'chatbot', user_id: userId || null });
     } else {
       console.error('[CB] SMTP2Go API error:', emailRes.status, emailRes.body);
     }
