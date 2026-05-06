@@ -22,6 +22,7 @@ import { randomUUID } from 'crypto';
 import zlib from 'zlib';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
 import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
+import { runExtractionPrompt as sharedRunExtractionPrompt, runImageExtraction as sharedRunImageExtraction } from '../lib/cl-extraction.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -385,63 +386,28 @@ async function fetchOneDriveFileText(itemId, mimeType, accessToken, userId) {
 // Run the fixed-18-category extraction prompt against text content.
 async function runExtractionPrompt(content, fileName, userId) {
   const userContent = 'SOURCE CONTENT (' + fileName + '):\n' + (content || '').substring(0, 8000);
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 4000,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: userContent }],
-    }),
+  return sharedRunExtractionPrompt({
+    apiKey: ANTHROPIC_API_KEY,
+    systemPrompt: EXTRACTION_SYSTEM_PROMPT,
+    userContent: userContent,
+    userId: userId,
+    subtype: 'onedrive-extraction',
+    errorScope: 'CL OneDrive',
   });
-  const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-haiku-4-5-20251001', usage: data && data.usage, subtype: 'onedrive-extraction' });
-  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
-  try {
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error('Extraction prompt JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
-    return [];
-  }
 }
 
 // Run image extraction via Claude Sonnet vision — single combined call.
 async function runImageExtraction(base64Data, mediaType, userId) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
-      system: EXTRACTION_SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: [
-        { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: base64Data } },
-        { type: 'text', text: IMAGE_PROMPT }
-      ]}],
-    }),
+  return sharedRunImageExtraction({
+    apiKey: ANTHROPIC_API_KEY,
+    systemPrompt: EXTRACTION_SYSTEM_PROMPT,
+    base64Data: base64Data,
+    mediaType: mediaType,
+    imagePrompt: IMAGE_PROMPT,
+    userId: userId,
+    subtype: 'onedrive-image',
+    errorScope: 'CL OneDrive',
   });
-  const data = await response.json();
-  logAnthropicUsage({ tool_id: 'content-library', user_id: userId || null, model: 'claude-sonnet-4-6', usage: data && data.usage, subtype: 'onedrive-image' });
-  const raw = data.content && data.content[0] ? data.content[0].text : '[]';
-  try {
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (e) {
-    console.error('Image extraction JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
-    return [];
-  }
 }
 
 // VERSIONING — find an existing approved item the new one should auto-archive.
