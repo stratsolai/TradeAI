@@ -19,6 +19,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -600,18 +601,28 @@ export default async function handler(req, res) {
       const filesData = await filesRes.json();
       const allFiles = filesData.files || [];
 
-      // Skip files that already have a cl_source_items row from a prior scan
-      const existingSI = await supabase
-        .from('cl_source_items')
-        .select('source_detail')
-        .eq('user_id', userId)
-        .eq('source_type', 'drive');
-      const scannedFileIds = new Set(
-        ((existingSI && existingSI.data) || [])
-          .map(function(r) { return r.source_detail && r.source_detail.drive_file_id; })
-          .filter(Boolean)
-      );
-      const files = allFiles.filter(function(f) { return !scannedFileIds.has(f.id); });
+      // Skip files that already have a cl_source_items row from a prior scan.
+      // Dedup runs on cl_source_items.source_unique_key (key format
+      // 'drive:<drive_file_id>'). Legacy rows with NULL source_unique_key
+      // won't match — those files will fall through and dedup again at the
+      // content_library row level until the Step 8 backfill runs.
+      var fileKeys = allFiles.map(function(f) { return buildSourceUniqueKey('drive', { drive_file_id: f.id }); });
+      var scannedKeys = new Set();
+      if (fileKeys.length > 0) {
+        const existingSI = await supabase
+          .from('cl_source_items')
+          .select('source_unique_key')
+          .eq('user_id', userId)
+          .in('source_unique_key', fileKeys);
+        if (existingSI && existingSI.error) {
+          console.error('[Drive] Pre-filter query error:', existingSI.error.message);
+        } else if (existingSI && existingSI.data) {
+          existingSI.data.forEach(function(r) { scannedKeys.add(r.source_unique_key); });
+        }
+      }
+      const files = allFiles.filter(function(f) {
+        return !scannedKeys.has(buildSourceUniqueKey('drive', { drive_file_id: f.id }));
+      });
       var deduped = allFiles.length - files.length;
 
       // ── Cursor batch processing ────────────────────────────────────
@@ -676,33 +687,52 @@ export default async function handler(req, res) {
           if (!textContent) { skipped++; skipped_reasons.extraction_failed = (skipped_reasons.extraction_failed || 0) + 1; continue; }
         }
 
-        // Save source bytes to cl-assets and create cl_source_items row
+        // Save source bytes to cl-assets, then find-or-create the cl_source_items row.
+        // content_library rows are only written when the source row exists — if
+        // either step fails we skip this file and the next scan will retry.
+        // Storage uses upsert: true (Section 2.1) so retries after a previous
+        // crash don't get blocked by the existing object.
         var sourceItemId = null;
         var fileItemCount = 0;
-        try {
-          var safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-          var storagePath = userId + '/drive/' + file.id + '_' + safeFileName;
-          if (isImage && imageBuffer) {
-            await supabase.storage.from('cl-assets').upload(storagePath, imageBuffer, { contentType: mimeType, upsert: false });
-          } else if (textContent) {
-            await supabase.storage.from('cl-assets').upload(storagePath, Buffer.from(textContent, 'utf-8'), { contentType: 'text/plain', upsert: false });
-          }
-          var siResult = await supabase
-            .from('cl_source_items')
-            .insert({
-              user_id: userId,
-              source_type: 'drive',
-              filename: file.name,
-              file_url: storagePath,
-              source_url: null,
-              source_detail: { drive_file_id: file.id, folder_id: folderId, folder_name: folderName, mime_type: mimeType, account_email: accountEmail },
-              item_count: 0,
-            })
-            .select('id')
-            .single();
-          if (siResult.data) sourceItemId = siResult.data.id;
-        } catch (e) {
-          console.error('cl-assets/cl_source_items save error:', e.message);
+        var safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        var storagePath = userId + '/drive/' + file.id + '_' + safeFileName;
+        var fileSourceKey = buildSourceUniqueKey('drive', { drive_file_id: file.id });
+
+        var uploadRes = null;
+        if (isImage && imageBuffer) {
+          uploadRes = await supabase.storage
+            .from('cl-assets')
+            .upload(storagePath, imageBuffer, { contentType: mimeType, upsert: true });
+        } else if (textContent) {
+          uploadRes = await supabase.storage
+            .from('cl-assets')
+            .upload(storagePath, Buffer.from(textContent, 'utf-8'), { contentType: 'text/plain', upsert: true });
+        }
+        if (uploadRes && uploadRes.error) {
+          console.error('[Drive] Storage upload failed — fileId:', file.id, 'error:', uploadRes.error.message);
+          skipped++;
+          skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+          continue;
+        }
+
+        sourceItemId = await ensureSourceItem(supabase, {
+          user_id: userId,
+          source_unique_key: fileSourceKey,
+          source_type: 'drive',
+          fields: {
+            source_type: 'drive',
+            filename: file.name,
+            file_url: storagePath,
+            source_url: null,
+            source_detail: { drive_file_id: file.id, folder_id: folderId, folder_name: folderName, mime_type: mimeType, account_email: accountEmail },
+            item_count: 0,
+          },
+        });
+        if (!sourceItemId) {
+          console.error('[Drive] Source row failed — fileId:', file.id);
+          skipped++;
+          skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+          continue;
         }
 
         // Images: run vision extraction via Claude Sonnet
