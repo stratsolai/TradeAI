@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'crypto';
 import zlib from 'zlib';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -591,7 +592,7 @@ export default async function handler(req, res) {
     }
 
     // Lookback window — always scan from today minus the user's lookback
-    // setting. Deduplication is handled by the source_ref UNIQUE constraint.
+    // setting. Deduplication is handled by cl_source_items.source_unique_key.
     const lookbackDays = parseInt(gmailEntry.lookback_days) || 30;
     const afterTimestamp = Math.floor((Date.now() - lookbackDays * 24 * 60 * 60 * 1000) / 1000);
     const query = 'after:' + afterTimestamp;
@@ -616,22 +617,28 @@ export default async function handler(req, res) {
       console.log('[Gmail] Page fetched — count:', (listData.messages || []).length, 'totalSoFar:', messages.length, 'hasNextPage:', !!pageToken);
     } while (pageToken);
 
-    // ── Pre-filter — skip emails already processed in previous scans ──
+    // ── Pre-filter — skip emails already ingested in previous scans ──
+    // Dedup now lives on cl_source_items.source_unique_key (key format
+    // 'gmail:<message_id>'). Legacy rows with a NULL source_unique_key
+    // won't match — those messages will fall through and dedup again at
+    // the content_library row level until the Step 8 backfill runs.
     if (messages.length > 0) {
-      var sourceRefs = messages.map(function(m) { return 'email:' + m.id + ':0'; });
+      var msgKeys = messages.map(function(m) { return buildSourceUniqueKey('gmail', { message_id: m.id }); });
       var existingRes = await supabase
-        .from('content_library')
-        .select('source_ref')
+        .from('cl_source_items')
+        .select('source_unique_key')
         .eq('user_id', userId)
-        .in('source_ref', sourceRefs);
+        .in('source_unique_key', msgKeys);
       if (existingRes.error) {
         console.error('[Gmail] Pre-filter query error:', existingRes.error.message);
       } else if (existingRes.data && existingRes.data.length > 0) {
-        var existingRefs = new Set();
-        existingRes.data.forEach(function(row) { existingRefs.add(row.source_ref); });
+        var existingKeys = new Set();
+        existingRes.data.forEach(function(row) { existingKeys.add(row.source_unique_key); });
         var beforeCount = messages.length;
-        messages = messages.filter(function(m) { return !existingRefs.has('email:' + m.id + ':0'); });
-        console.log('[Gmail] Pre-filtered — already in content_library:', beforeCount - messages.length, 'remaining:', messages.length);
+        messages = messages.filter(function(m) {
+          return !existingKeys.has(buildSourceUniqueKey('gmail', { message_id: m.id }));
+        });
+        console.log('[Gmail] Pre-filtered — already in cl_source_items:', beforeCount - messages.length, 'remaining:', messages.length);
       }
     }
 
@@ -685,28 +692,42 @@ export default async function handler(req, res) {
       // Body length gate removed — the AI's no_content skip below
       // handles emails it can't extract anything useful from.
 
-      // Save source to cl-assets and create cl_source_items row
+      // Save source bytes to cl-assets, then find-or-create the cl_source_items row.
+      // content_library rows are only written when the source row exists — if
+      // either step fails we skip this message and the next scan will retry.
       var sourceItemId = null;
       var msgItemCount = 0;
-      try {
-        var emailStoragePath = userId + '/email/' + msg.id + '.txt';
-        await supabase.storage.from('cl-assets').upload(emailStoragePath, Buffer.from(emailBody, 'utf-8'), { contentType: 'text/plain', upsert: false });
-        var siResult = await supabase
-          .from('cl_source_items')
-          .insert({
-            user_id: userId,
-            source_type: 'email',
-            filename: subject,
-            file_url: emailStoragePath,
-            source_url: null,
-            source_detail: { sender: sender, subject: subject, account_email: accountEmail, gmail_message_id: msg.id },
-            item_count: 0,
-          })
-          .select('id')
-          .single();
-        if (siResult.data) sourceItemId = siResult.data.id;
-      } catch (e) {
-        console.error('cl-assets/cl_source_items save error:', e.message);
+      var emailSourceKey = buildSourceUniqueKey('gmail', { message_id: msg.id });
+      var emailStoragePath = userId + '/email/' + msg.id + '.txt';
+
+      var uploadRes = await supabase.storage
+        .from('cl-assets')
+        .upload(emailStoragePath, Buffer.from(emailBody, 'utf-8'), { contentType: 'text/plain', upsert: true });
+      if (uploadRes && uploadRes.error) {
+        console.error('[Gmail] Storage upload failed — msgId:', msg.id, 'error:', uploadRes.error.message);
+        skipped++;
+        skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+        continue;
+      }
+
+      sourceItemId = await ensureSourceItem(supabase, {
+        user_id: userId,
+        source_unique_key: emailSourceKey,
+        source_type: 'email',
+        fields: {
+          source_type: 'email',
+          filename: subject,
+          file_url: emailStoragePath,
+          source_url: null,
+          source_detail: { sender: sender, subject: subject, account_email: accountEmail, gmail_message_id: msg.id },
+          item_count: 0,
+        },
+      });
+      if (!sourceItemId) {
+        console.error('[Gmail] Source row failed — msgId:', msg.id);
+        skipped++;
+        skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+        continue;
       }
 
       const items = await runExtractionPrompt(emailBody, subject, sender, userId);
@@ -853,29 +874,46 @@ export default async function handler(req, res) {
         var attBase64 = attBase64Url.replace(/-/g, '+').replace(/_/g, '/');
         var attBuffer = Buffer.from(attBase64, 'base64');
 
-        // Create cl_source_items row for this attachment
+        // Save attachment bytes, then find-or-create the cl_source_items row.
+        // Skip the attachment if either step fails — no content_library rows
+        // get written without a source row to attach them to.
         var attSourceItemId = null;
         var attItemCount = 0;
         var attStorageExt = att.filename.split('.').pop().toLowerCase() || 'bin';
         var attStoragePath = userId + '/email-attachment/' + msg.id + '_' + attIdx + '.' + attStorageExt;
-        try {
-          await supabase.storage.from('cl-assets').upload(attStoragePath, attBuffer, { contentType: attMime, upsert: false });
-          var attSiResult = await supabase
-            .from('cl_source_items')
-            .insert({
-              user_id: userId,
-              source_type: 'email-attachment',
-              filename: att.filename,
-              file_url: attStoragePath,
-              source_url: null,
-              source_detail: { sender: sender, subject: subject, account_email: accountEmail, gmail_message_id: msg.id, attachment_id: att.attachmentId, attachment_filename: att.filename, attachment_mime: attMime, attachment_size: att.size },
-              item_count: 0,
-            })
-            .select('id')
-            .single();
-          if (attSiResult.data) attSourceItemId = attSiResult.data.id;
-        } catch (attSaveErr) {
-          console.error('[Gmail Attachment] cl-assets/cl_source_items save error:', attSaveErr.message);
+        var attSourceKey = buildSourceUniqueKey('gmail-attachment', {
+          message_id: msg.id,
+          attachment_id: att.attachmentId,
+        });
+
+        var attUploadRes = await supabase.storage
+          .from('cl-assets')
+          .upload(attStoragePath, attBuffer, { contentType: attMime, upsert: true });
+        if (attUploadRes && attUploadRes.error) {
+          console.error('[Gmail Attachment] Storage upload failed — msgId:', msg.id, 'filename:', att.filename, 'error:', attUploadRes.error.message);
+          skipped++;
+          skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+          continue;
+        }
+
+        attSourceItemId = await ensureSourceItem(supabase, {
+          user_id: userId,
+          source_unique_key: attSourceKey,
+          source_type: 'email-attachment',
+          fields: {
+            source_type: 'email-attachment',
+            filename: att.filename,
+            file_url: attStoragePath,
+            source_url: null,
+            source_detail: { sender: sender, subject: subject, account_email: accountEmail, gmail_message_id: msg.id, attachment_id: att.attachmentId, attachment_filename: att.filename, attachment_mime: attMime, attachment_size: att.size },
+            item_count: 0,
+          },
+        });
+        if (!attSourceItemId) {
+          console.error('[Gmail Attachment] Source row failed — msgId:', msg.id, 'filename:', att.filename);
+          skipped++;
+          skipped_reasons.source_row_failed = (skipped_reasons.source_row_failed || 0) + 1;
+          continue;
         }
 
         // Extract content based on file type
@@ -1014,8 +1052,9 @@ export default async function handler(req, res) {
     }
 
     // last_scanned_at is no longer used for query filtering — the lookback
-    // window is the sole date bound and dedup is handled by source_ref.
-    // Stamp is kept for informational purposes only.
+    // window is the sole date bound and dedup is handled by
+    // cl_source_items.source_unique_key. Stamp is kept for informational
+    // purposes only.
     if (imported > 0) {
       gmailEntry.last_scanned_at = new Date().toISOString();
       await supabase.from('profiles').update({ cl_connected_emails: connectedEmails }).eq('id', userId);
