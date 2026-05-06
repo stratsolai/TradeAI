@@ -23,8 +23,6 @@
   }
 
   function switchTab(tabId) {
-    if (!hasPlan && (tabId === 'ops-plan' || tabId === 'strat-plan')) return;
-
     currentTab = tabId;
 
     document.querySelectorAll('#sp-tab-nav .ptab').forEach(function(btn) {
@@ -43,14 +41,10 @@
   }
 
   function updateTabStates() {
-    var tabs = document.querySelectorAll('#sp-tab-nav .ptab');
-    tabs.forEach(function(tab) {
-      var id = tab.dataset.tab;
-      if (id === 'ops-plan' || id === 'strat-plan') {
-        tab.classList.toggle('sp-tab-disabled', !hasPlan);
-      }
-    });
-
+    // Tabs are always navigable. The locked-content placeholders below
+    // are toggled instead — users can open Operational Plan / Strategic
+    // Plan tabs even before generating a plan and see the "Create your
+    // plan to unlock" message inside.
     var opsLocked = document.getElementById('sp-ops-locked');
     var opsContent = document.getElementById('sp-ops-content');
     var docLocked = document.getElementById('sp-doc-locked');
@@ -74,7 +68,7 @@
     if (!tabNav) return;
     tabNav.addEventListener('click', function(e) {
       var tab = e.target.closest('.ptab');
-      if (!tab || tab.classList.contains('sp-tab-disabled')) return;
+      if (!tab) return;
       switchTab(tab.dataset.tab);
     });
   }
