@@ -538,14 +538,7 @@
   }
 
   function updateProgress(index) {
-    var bar = document.getElementById('sp-progress-bar');
-    if (!bar) return;
     var total = window.SP_SECTIONS.length;
-    bar.innerHTML = window.SP_SECTIONS.map(function(s, i) {
-      var cls = i < index ? 'sp-progress-done' : i === index ? 'sp-progress-current' : 'sp-progress-pending';
-      return '<div class="sp-progress-seg ' + cls + '"></div>';
-    }).join('');
-
     var label = document.getElementById('sp-progress-label');
     if (label) label.textContent = 'Section ' + (index + 1) + ' of ' + total + ' \u2014 ' + window.SP_SECTIONS[index].title;
   }

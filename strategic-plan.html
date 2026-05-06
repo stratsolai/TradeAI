@@ -371,7 +371,7 @@
 
     /* ─── TAB 3: CREATE / UPDATE PLAN (interview form) ─── */
 
-    /* Progress bar */
+    /* Section label — wraps the "Section X of 7 — Title" line above the wizard */
     .sp-progress-wrap {
       background: var(--white);
       border-radius: var(--card-radius);
@@ -383,23 +383,7 @@
       font-size: var(--btn-font-size);
       font-weight: var(--font-weight-semibold);
       color: var(--text);
-      margin-bottom: var(--actions-gap);
     }
-    .sp-progress-bar {
-      display: flex;
-      gap: 6px;
-      height: 8px;
-      border-radius: 4px;
-      overflow: hidden;
-    }
-    .sp-progress-seg {
-      flex: 1;
-      border-radius: 4px;
-      transition: background 0.3s;
-    }
-    .sp-progress-done { background: var(--blue); }
-    .sp-progress-current { background: var(--orange); }
-    .sp-progress-pending { background: var(--border); }
 
     /* Info box */
     .sp-info-box {
@@ -949,10 +933,9 @@
   <!-- ═══ TAB 3: CREATE / UPDATE PLAN ═══ -->
   <div class="ptab-content" id="tab-create-plan">
 
-    <!-- Progress bar -->
+    <!-- Section label — section navigation chips below show position -->
     <div class="sp-progress-wrap" id="sp-progress-container">
       <div class="sp-progress-label" id="sp-progress-label">Section 1 of 7</div>
-      <div class="sp-progress-bar" id="sp-progress-bar"></div>
     </div>
 
     <!-- Section navigation chips -->
