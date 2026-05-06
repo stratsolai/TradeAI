@@ -191,13 +191,9 @@
 .review-scroll-highlight { outline:2px solid var(--blue); }
 
 
-/* Tool tag pills */
-.review-tool-pills { display:flex; flex-wrap:wrap; gap:8px; }
-.tool-pill {
-  padding:5px 14px; border-radius:var(--btn-radius);
-  border:1px solid var(--blue); background:var(--white); color:var(--blue);
-  font-size:var(--status-font-size); font-family:var(--body-font); cursor:pointer; transition:background var(--btn-transition),color var(--btn-transition);
-}
+/* Tool tag pills — .review-tool-pills and .tool-pill base rules live in
+   staxai-auth.css. The .tool-pill-inactive variant for unactivated tools
+   is page-specific and stays here. */
 .tool-pill-inactive {
   padding:5px 14px; border-radius:var(--btn-radius);
   border:1px solid var(--border); background:var(--bg); color:var(--text-disabled);

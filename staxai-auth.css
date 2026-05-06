@@ -1101,6 +1101,19 @@ body { padding-top: 68px; }
 /* Archived Item Link pill — small link to the archived version of an approved item */
 .review-archived-link-pill { display:inline-block; padding:2px 10px; border:1px solid var(--blue); border-radius:var(--btn-radius); background:var(--blue-light); color:var(--text); font-size:11px; font-weight:var(--font-weight-semibold); flex-shrink:0; text-decoration:none; cursor:pointer; }
 
+/* Tool pill row container — flex wrap with consistent gap between pills */
+.review-tool-pills { display:flex; flex-wrap:wrap; gap:8px; }
+
+/* Tool pill base — padding, radius, border width/style, font come from here.
+   Colour variants (.tool-pill-teal, .tool-pill-purple) and tagged states
+   (.tool-pill.tagged, .cat-pill.tagged) override only colours — they rely
+   on this rule to provide the structural pill look. */
+.tool-pill {
+  padding:5px 14px; border-radius:var(--btn-radius);
+  border:1px solid var(--blue); background:var(--white); color:var(--blue);
+  font-size:var(--status-font-size); font-family:var(--body-font); cursor:pointer; transition:background var(--btn-transition),color var(--btn-transition);
+}
+
 /* Tool pill tagged state — teal active background for tagged tool pills */
 .tool-pill-tagged { background:var(--teal-light); border-color:var(--teal); color:var(--pill-text); }
 
