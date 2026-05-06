@@ -26,8 +26,9 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -320,32 +321,62 @@ async function processPage(supabase, userId, pageUrl, websiteHtml, hostname, saf
     return result;
   }
 
-  // Save source HTML to cl-assets and create cl_source_items row
+  // Save source HTML to cl-assets, then find-or-create the cl_source_items row.
+  // content_library rows are only written when the source row exists — if
+  // either step fails the page is skipped under source_row_failed.
+  // Storage path includes a query-string-derived suffix (Section 3.1) so two
+  // pages on the same site with different query strings don't collide on
+  // upload. The fragment is excluded — it isn't sent to servers — and
+  // upsert: true (Section 2.1) makes retries idempotent.
   var sourceItemId = null;
   var pageItemCount = 0;
+  var pagePath = '';
+  var pageSearch = '';
+  try { pagePath = new URL(pageUrl).pathname.replace(/[^a-zA-Z0-9._/-]/g, '_'); } catch (e) {}
+  try { pageSearch = new URL(pageUrl).search || ''; } catch (e) {}
+  var searchSuffix = createHash('sha256').update(pageSearch).digest('hex').slice(0, 12);
+  var storagePath = userId + '/website/' + scanTs + '_' + safeHostname + (pagePath || '') + '_' + searchSuffix + '.html';
+  // Ensure no double slashes in storage path
+  storagePath = storagePath.replace(/\/\//g, '/');
+
+  var pageSourceKey;
   try {
-    var pagePath = '';
-    try { pagePath = new URL(pageUrl).pathname.replace(/[^a-zA-Z0-9._/-]/g, '_'); } catch (e) {}
-    var storagePath = userId + '/website/' + scanTs + '_' + safeHostname + (pagePath || '') + '.html';
-    // Ensure no double slashes in storage path
-    storagePath = storagePath.replace(/\/\//g, '/');
-    await supabase.storage.from('cl-assets').upload(storagePath, Buffer.from(websiteHtml, 'utf-8'), { contentType: 'text/html', upsert: false });
-    var siResult = await supabase
-      .from('cl_source_items')
-      .insert({
-        user_id: userId,
-        source_type: 'website',
-        filename: safeHostname + (pagePath || '/') + '.html',
-        file_url: storagePath,
-        source_url: pageUrl,
-        source_detail: { url: pageUrl, hostname: hostname },
-        item_count: 0,
-      })
-      .select('id')
-      .single();
-    if (siResult.data) sourceItemId = siResult.data.id;
-  } catch (e) {
-    console.error('cl-assets/cl_source_items save error:', e.message);
+    pageSourceKey = buildSourceUniqueKey('website', { scanTs: scanTs, fullPageUrl: pageUrl });
+  } catch (keyErr) {
+    console.error('[scrape-website] Source key build failed — pageUrl:', pageUrl, 'error:', keyErr.message);
+    result.skipped = true;
+    result.skipReason = 'source_row_failed';
+    return result;
+  }
+
+  var uploadRes = await supabase.storage
+    .from('cl-assets')
+    .upload(storagePath, Buffer.from(websiteHtml, 'utf-8'), { contentType: 'text/html', upsert: true });
+  if (uploadRes && uploadRes.error) {
+    console.error('[scrape-website] Storage upload failed — pageUrl:', pageUrl, 'error:', uploadRes.error.message);
+    result.skipped = true;
+    result.skipReason = 'source_row_failed';
+    return result;
+  }
+
+  sourceItemId = await ensureSourceItem(supabase, {
+    user_id: userId,
+    source_unique_key: pageSourceKey,
+    source_type: 'website',
+    fields: {
+      source_type: 'website',
+      filename: safeHostname + (pagePath || '/') + '.html',
+      file_url: storagePath,
+      source_url: pageUrl,
+      source_detail: { url: pageUrl, hostname: hostname },
+      item_count: 0,
+    },
+  });
+  if (!sourceItemId) {
+    console.error('[scrape-website] Source row failed — pageUrl:', pageUrl);
+    result.skipped = true;
+    result.skipReason = 'source_row_failed';
+    return result;
   }
 
   var items = await runExtractionPrompt(pageText, hostname, userId);
