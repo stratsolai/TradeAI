@@ -8,14 +8,33 @@
 // Note: Fergus API endpoints are based on their partner API documentation.
 // If endpoints return errors, the API base URL or paths may need updating
 // once Fergus confirms the exact API structure for this integration.
+//
+// Caching, concurrency limit, 429 retry and in-flight dedup come from
+// lib/external-api-cache.js — same shape as quickbooks-fetch.js and
+// servicem8-fetch.js.
 
 import { createClient } from '@supabase/supabase-js';
+import {
+  acquireSlot,
+  releaseSlot,
+  fetchWithRetry,
+  readCache,
+  writeCache,
+  inflightKey,
+  getInflight,
+  setInflight,
+  deleteInflight
+} from '../lib/external-api-cache.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const FERGUS_CLIENT_ID = process.env.FERGUS_CLIENT_ID;
 const FERGUS_CLIENT_SECRET = process.env.FERGUS_CLIENT_SECRET;
 const FERGUS_BASE = 'https://app.fergus.com/api/v2';
+
+const CACHE_TABLE = 'cl_fergus_cache';
+const CACHE_TTL_MS = 15 * 60 * 1000;
+const MAX_CONCURRENT_PER_ACCOUNT = 4;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -28,74 +47,102 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
 
-  const { action, accountName } = req.body || {};
+  const { action, accountName, bypassCache } = req.body || {};
   if (!action) return res.status(400).json({ error: 'Missing action parameter' });
   if (!accountName) return res.status(400).json({ error: 'Missing accountName parameter' });
 
-  const profileRes = await supabase
-    .from('profiles')
-    .select('cl_fergus_accounts')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (profileRes.error) return res.status(500).json({ error: 'Could not load profile' });
+  const cacheKeyCols = { user_id: user.id, account_name: accountName, action: action };
 
-  const accounts = Array.isArray(profileRes.data && profileRes.data.cl_fergus_accounts)
-    ? profileRes.data.cl_fergus_accounts : [];
-  const account = accounts.find(function (a) { return a && a.account_name === accountName; });
-  if (!account) return res.status(404).json({ error: 'Fergus account not found' });
-
-  async function refreshToken() {
-    if (!account.refresh_token) return false;
-    try {
-      const tokenRes = await fetch('https://app.fergus.com/oauth/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: FERGUS_CLIENT_ID,
-          client_secret: FERGUS_CLIENT_SECRET,
-          grant_type: 'refresh_token',
-          refresh_token: account.refresh_token,
-        }).toString(),
-      });
-      const tokenData = await tokenRes.json();
-      if (tokenData.error || !tokenData.access_token) return false;
-      account.access_token = tokenData.access_token;
-      if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
-      var idx = accounts.findIndex(function (a) { return a && a.account_name === accountName; });
-      if (idx > -1) {
-        accounts[idx] = account;
-        await supabase.from('profiles').update({ cl_fergus_accounts: accounts }).eq('id', user.id);
-      }
-      return true;
-    } catch (e) {
-      console.error('Fergus token refresh failed:', e && e.message);
-      return false;
+  if (!bypassCache) {
+    const cached = await readCache(supabase, CACHE_TABLE, cacheKeyCols);
+    if (cached !== null) {
+      return res.status(200).json({ success: true, data: cached, cached: true });
     }
   }
 
-  async function fergusGet(path) {
-    var url = FERGUS_BASE + path;
-    var resp = await fetch(url, {
-      headers: {
+  const ikey = inflightKey(CACHE_TABLE, cacheKeyCols);
+  if (getInflight(ikey)) {
+    try {
+      const sharedResult = await getInflight(ikey);
+      return res.status(200).json({ success: true, data: sharedResult, deduped: true });
+    } catch (sharedErr) {
+      // The shared in-flight call failed. Fall through and try our own.
+    }
+  }
+
+  const workPromise = (async () => {
+    const profileRes = await supabase
+      .from('profiles')
+      .select('cl_fergus_accounts')
+      .eq('id', user.id)
+      .maybeSingle();
+    if (profileRes.error) {
+      const e = new Error('Could not load profile'); e.status = 500; throw e;
+    }
+
+    const accounts = Array.isArray(profileRes.data && profileRes.data.cl_fergus_accounts)
+      ? profileRes.data.cl_fergus_accounts : [];
+    const account = accounts.find(function (a) { return a && a.account_name === accountName; });
+    if (!account) {
+      const e = new Error('Fergus account not found'); e.status = 404; throw e;
+    }
+
+    async function refreshToken() {
+      if (!account.refresh_token) return false;
+      try {
+        const tokenRes = await fetch('https://app.fergus.com/oauth/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: FERGUS_CLIENT_ID,
+            client_secret: FERGUS_CLIENT_SECRET,
+            grant_type: 'refresh_token',
+            refresh_token: account.refresh_token,
+          }).toString(),
+        });
+        const tokenData = await tokenRes.json();
+        if (tokenData.error || !tokenData.access_token) return false;
+        account.access_token = tokenData.access_token;
+        if (tokenData.refresh_token) account.refresh_token = tokenData.refresh_token;
+        var idx = accounts.findIndex(function (a) { return a && a.account_name === accountName; });
+        if (idx > -1) {
+          accounts[idx] = account;
+          await supabase.from('profiles').update({ cl_fergus_accounts: accounts }).eq('id', user.id);
+        }
+        return true;
+      } catch (e) {
+        console.error('Fergus token refresh failed:', e && e.message);
+        return false;
+      }
+    }
+
+    function authHeaders() {
+      return {
         'Authorization': 'Bearer ' + account.access_token,
         'Accept': 'application/json',
-      },
-    });
-    if (resp.status === 401) {
-      var refreshed = await refreshToken();
-      if (!refreshed) throw new Error('Token expired and refresh failed');
-      resp = await fetch(url, {
-        headers: {
-          'Authorization': 'Bearer ' + account.access_token,
-          'Accept': 'application/json',
-        },
-      });
+      };
     }
-    if (!resp.ok) throw new Error('Fergus API error: ' + resp.status + ' ' + resp.statusText);
-    return resp.json();
-  }
 
-  try {
+    async function fergusGet(path) {
+      var url = FERGUS_BASE + path;
+      await acquireSlot(accountName, MAX_CONCURRENT_PER_ACCOUNT);
+      try {
+        var resp = await fetchWithRetry(async function () {
+          var r = await fetch(url, { headers: authHeaders() });
+          if (r.status === 401) {
+            var refreshed = await refreshToken();
+            if (!refreshed) throw new Error('Token expired and refresh failed');
+            r = await fetch(url, { headers: authHeaders() });
+          }
+          return r;
+        }, { providerLabel: 'Fergus' });
+        if (!resp.ok) throw new Error('Fergus API error: ' + resp.status + ' ' + resp.statusText);
+        return resp.json();
+      } finally {
+        releaseSlot(accountName);
+      }
+    }
+
     var result;
 
     if (action === 'jobs') {
@@ -180,12 +227,24 @@ export default async function handler(req, res) {
         };
       });
     } else {
-      return res.status(400).json({ error: 'Unknown action: ' + action });
+      const unknownErr = new Error('Unknown action: ' + action);
+      unknownErr.status = 400;
+      throw unknownErr;
     }
 
-    return res.status(200).json({ success: true, data: result });
+    await writeCache(supabase, CACHE_TABLE, cacheKeyCols, result, CACHE_TTL_MS);
+    return result;
+  })();
+
+  setInflight(ikey, workPromise);
+
+  try {
+    const result = await workPromise;
+    return res.status(200).json({ success: true, data: result, cached: false });
   } catch (err) {
     console.error('fergus-fetch error:', action, err && err.message);
-    return res.status(500).json({ error: (err && err.message) || 'Fergus API request failed' });
+    return res.status(err.status || 500).json({ error: (err && err.message) || 'Fergus API request failed' });
+  } finally {
+    deleteInflight(ikey);
   }
 }

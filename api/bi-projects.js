@@ -120,11 +120,11 @@ export default async function handler(req, res) {
       var fa = fergusAccounts[f];
       if (!fa) continue;
       promises.push(
-        callFetch('fergus-fetch', { action: 'jobs' }).then(function (d) {
+        callFetch('fergus-fetch', { action: 'jobs', bypassCache: bypassCache }).then(function (d) {
           if (Array.isArray(d) && d.length > 0) { sources.fergus = true; allJobs = allJobs.concat(d); }
         }),
-        callFetch('fergus-fetch', { action: 'quotes' }).then(function (d) { if (d) allQuotes = allQuotes.concat(d); }),
-        callFetch('fergus-fetch', { action: 'invoices' }).then(function (d) { if (d) allInvoices = allInvoices.concat(d); })
+        callFetch('fergus-fetch', { action: 'quotes', bypassCache: bypassCache }).then(function (d) { if (d) allQuotes = allQuotes.concat(d); }),
+        callFetch('fergus-fetch', { action: 'invoices', bypassCache: bypassCache }).then(function (d) { if (d) allInvoices = allInvoices.concat(d); })
       );
     }
 
