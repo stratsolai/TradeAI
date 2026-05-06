@@ -4,6 +4,7 @@ import zlib from 'zlib';
 import { randomUUID } from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { buildSourceUniqueKey, ensureSourceItem } from '../lib/cl-source-items.js';
 import {
   ALLOWED_TOOL_IDS,
   ALL_CATEGORIES,
@@ -112,27 +113,52 @@ const handler = async (req, res) => {
       return res.status(400).json({ error: 'Could not extract content from source' });
     }
 
-    // 2b. CREATE CL_SOURCE_ITEMS ROW (file uploaded to cl-assets by browser)
+    // 2b. FIND-OR-CREATE CL_SOURCE_ITEMS ROW (file uploaded to cl-assets by browser).
+    // content_library rows are only written when the source row exists — we
+    // return a 4xx if the key can't be built or the row can't be written.
     var sourceItemId = null;
     var clSourceType = fileType === 'image' ? 'photo' : (fileType === 'website' ? 'website' : 'document');
     var storagePath = req.body.storagePath || null;
+
+    var sourceUniqueKey;
     try {
-      var siResult = await supabase
-        .from('cl_source_items')
-        .insert({
-          user_id: userId,
-          source_type: clSourceType,
-          filename: fileName || null,
-          file_url: storagePath,
-          source_url: fileType === 'website' ? websiteUrl : null,
-          source_detail: { file_type: fileType, original_filename: fileName || null },
-          item_count: 0,
-        })
-        .select('id')
-        .single();
-      if (siResult.data) sourceItemId = siResult.data.id;
-    } catch (e) {
-      console.error('cl_source_items save error:', e.message);
+      if (clSourceType === 'website') {
+        if (!websiteUrl) {
+          return res.status(400).json({ error: 'websiteUrl required for website source' });
+        }
+        sourceUniqueKey = buildSourceUniqueKey('website', { scanTs: Date.now(), fullPageUrl: websiteUrl });
+      } else if (clSourceType === 'photo') {
+        if (!storagePath) {
+          return res.status(400).json({ error: 'storagePath required for photo source' });
+        }
+        sourceUniqueKey = buildSourceUniqueKey('photo', { storagePath: storagePath });
+      } else {
+        if (!storagePath) {
+          return res.status(400).json({ error: 'storagePath required for document source' });
+        }
+        sourceUniqueKey = buildSourceUniqueKey('upload', { storagePath: storagePath });
+      }
+    } catch (keyErr) {
+      console.error('[process-file] Source key build failed — fileType:', fileType, 'error:', keyErr.message);
+      return res.status(400).json({ error: 'Could not build source_unique_key' });
+    }
+
+    sourceItemId = await ensureSourceItem(supabase, {
+      user_id: userId,
+      source_unique_key: sourceUniqueKey,
+      source_type: clSourceType,
+      fields: {
+        source_type: clSourceType,
+        filename: fileName || null,
+        file_url: storagePath,
+        source_url: fileType === 'website' ? websiteUrl : null,
+        source_detail: { file_type: fileType, original_filename: fileName || null },
+        item_count: 0,
+      },
+    });
+    if (!sourceItemId) {
+      console.error('[process-file] Source row failed — fileType:', fileType, 'fileName:', fileName);
+      return res.status(500).json({ error: 'Could not create source item', skip_reason: 'source_row_failed' });
     }
 
     // 3. BUILD AI PROMPT AND CALL CLAUDE
