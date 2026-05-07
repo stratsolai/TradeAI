@@ -622,18 +622,34 @@
     var input = document.getElementById(fieldId + '-other-input');
     var group = document.getElementById(fieldId + '-chips');
     if (!input || !group) return;
-    var val = input.value.trim();
-    if (!val) return;
+    var raw = input.value.trim();
+    if (!raw) return;
+
+    // Split on commas so "Lawyer, advisor" creates two chips.
+    var values = raw.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+
     // Skip duplicates against any existing chip (standard or custom).
-    var dup = Array.from(group.querySelectorAll('.filter-pill')).some(function(c) {
-      return c.getAttribute('data-value') === val;
+    var existing = {};
+    Array.from(group.querySelectorAll('.filter-pill')).forEach(function(c) {
+      var v = c.getAttribute('data-value');
+      if (v) existing[v] = true;
     });
-    if (dup) { input.value = ''; return; }
-    // chip-single is exclusive — clicking a new value unselects others.
+    var newValues = values.filter(function(v) { return !existing[v]; });
+    if (newValues.length === 0) { input.value = ''; return; }
+
+    // chip-single is exclusive — clear active state so only the last
+    // newly-added chip ends up selected.
     if (field.type === 'chip-single') {
       group.querySelectorAll('.filter-pill.active').forEach(function(c) { c.classList.remove('active'); });
     }
-    appendCustomChip(group, field, val, true);
+
+    newValues.forEach(function(val, idx) {
+      var isActive = field.type === 'chip-single'
+        ? idx === newValues.length - 1
+        : true;
+      appendCustomChip(group, field, val, isActive);
+    });
+
     input.value = '';
     updateHiddenFromChips(fieldId);
     if (typeof scheduleDraftSave === 'function') scheduleDraftSave();
