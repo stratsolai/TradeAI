@@ -186,11 +186,14 @@ window.CL_PROJECTS = {
     container.style.display = '';
 
     var html = '<button class="btn-outline btn-sm" id="clp-prev"' + (this._page === 0 ? ' disabled' : '') + '>Previous</button>';
-    html += '<select class="form-input" id="clp-page-jump" style="width:auto;padding:6px 10px;font-size:var(--badge-font-size)">';
+    var jumpLabel = 'Page ' + (this._page + 1);
+    html += '<span class="lookback-dropdown-wrap">'
+         +   '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="clp-page-jump" data-value="' + this._page + '">' + jumpLabel + '</button>'
+         +   '<div class="lookback-dropdown-menu" id="clp-page-jump-menu">';
     for (var i = 0; i < totalPages; i++) {
-      html += '<option value="' + i + '"' + (i === this._page ? ' selected' : '') + '>Page ' + (i + 1) + '</option>';
+      html += '<button type="button" class="lookback-dropdown-item' + (i === this._page ? ' active' : '') + '" data-value="' + i + '">Page ' + (i + 1) + '</button>';
     }
-    html += '</select>';
+    html += '  </div></span>';
     html += '<span class="sm-pagination-info">of ' + totalPages + '</span>';
     html += '<button class="btn-outline btn-sm" id="clp-next"' + (this._page >= totalPages - 1 ? ' disabled' : '') + '>Next</button>';
     container.innerHTML = html;
@@ -201,10 +204,37 @@ window.CL_PROJECTS = {
     document.getElementById('clp-next').addEventListener('click', function() {
       if (self._page < totalPages - 1) { self._page++; self._renderList(); }
     });
-    document.getElementById('clp-page-jump').addEventListener('change', function() {
-      self._page = parseInt(this.value, 10);
+    this._wireLookback('clp-page-jump', 'clp-page-jump-menu', function(value) {
+      self._page = parseInt(value, 10);
       self._renderList();
     });
+  },
+
+  // Inline lookback-dropdown wiring — mirrors the platform pattern
+  // used in account-logic.js / admin-modules.js. Trigger toggles
+  // the menu; item-click sets data-value + label and fires onSelect;
+  // outside-click closes the menu. Idempotent via dataset guard.
+  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _showForm: function(project) {
@@ -239,11 +269,19 @@ window.CL_PROJECTS = {
         '<div class="profile-field-full"><label class="profile-label">Services provided</label>' +
           '<input type="text" class="profile-input" id="clp-f-services" value="' + window.escHtml(p.services_provided || '') + '" placeholder="What you did for them"></div>' +
         '<div class="profile-field"><label class="profile-label">Project status</label>' +
-          '<select class="profile-input" id="clp-f-status">' +
-            '<option value="active"' + (p.project_status === 'active' ? ' selected' : '') + '>Active</option>' +
-            '<option value="completed"' + (p.project_status === 'completed' || !p.project_status ? ' selected' : '') + '>Completed</option>' +
-            '<option value="archived"' + (p.project_status === 'archived' ? ' selected' : '') + '>Archived</option>' +
-          '</select></div>' +
+          (function() {
+            var current = p.project_status === 'active' ? 'active'
+              : p.project_status === 'archived' ? 'archived'
+              : 'completed';
+            var label = current === 'active' ? 'Active' : current === 'archived' ? 'Archived' : 'Completed';
+            return '<span class="lookback-dropdown-wrap">'
+              + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="clp-f-status" data-value="' + current + '">' + label + '</button>'
+              + '<div class="lookback-dropdown-menu" id="clp-f-status-menu">'
+              + '<button type="button" class="lookback-dropdown-item' + (current === 'active' ? ' active' : '') + '" data-value="active">Active</button>'
+              + '<button type="button" class="lookback-dropdown-item' + (current === 'completed' ? ' active' : '') + '" data-value="completed">Completed</button>'
+              + '<button type="button" class="lookback-dropdown-item' + (current === 'archived' ? ' active' : '') + '" data-value="archived">Archived</button>'
+              + '</div></span>';
+          })() + '</div>' +
         '<div class="profile-field"><label class="profile-label">Project value</label>' +
           '<input type="text" class="profile-input" id="clp-f-value" value="' + window.escHtml(p.project_value || '') + '" placeholder="$"></div>' +
         '<div class="profile-field"><label class="profile-label">Completed date</label>' +
@@ -265,6 +303,7 @@ window.CL_PROJECTS = {
     document.getElementById('clp-form-back').addEventListener('click', function() { self._hideForm(); });
     document.getElementById('clp-f-cancel').addEventListener('click', function() { self._hideForm(); });
     document.getElementById('clp-f-save').addEventListener('click', function() { self._saveForm(); });
+    this._wireLookback('clp-f-status', 'clp-f-status-menu');
   },
 
   _hideForm: function() {
@@ -290,7 +329,7 @@ window.CL_PROJECTS = {
       customer_abn: (document.getElementById('clp-f-customer-abn').value || '').trim() || null,
       customer_website: (document.getElementById('clp-f-customer-website').value || '').trim() || null,
       services_provided: (document.getElementById('clp-f-services').value || '').trim() || null,
-      project_status: document.getElementById('clp-f-status').value || 'completed',
+      project_status: (document.getElementById('clp-f-status').getAttribute('data-value')) || 'completed',
       project_value: (document.getElementById('clp-f-value').value || '').trim() || null,
       completed_at: document.getElementById('clp-f-completed').value || null,
       logo_permission: document.getElementById('clp-f-logo-permission').checked,
