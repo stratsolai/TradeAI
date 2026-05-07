@@ -1028,12 +1028,19 @@ window.CL_PROFILE = {
     menu.addEventListener('click', function(e) {
       var item = e.target.closest('.lookback-dropdown-item');
       if (!item) return;
-      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
-      item.classList.add('active');
-      btn.setAttribute('data-value', item.getAttribute('data-value'));
-      btn.textContent = item.textContent;
+      var value = item.getAttribute('data-value');
+      // Sentinel values bypass the trigger update so callers can take
+      // over the click in onSelect (e.g. the Hours-of-Operation
+      // Custom… item swaps the cell to a free-text input mode and
+      // needs the trigger's prior data-value preserved for prefill).
+      if (value !== '__custom__') {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        btn.setAttribute('data-value', value);
+        btn.textContent = item.textContent;
+      }
       menu.classList.remove('open');
-      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+      if (typeof onSelect === 'function') onSelect(value, item.textContent);
     });
   },
 
@@ -1114,13 +1121,18 @@ window.CL_PROFILE = {
       var choices = kind === 'open' ? openChoices : closeChoices;
       var disabledAttr = isDisabled ? ' disabled' : '';
       var label = self._formatTime(currentValue);
+      // Custom row layout: HH:MM text input, AM/PM toggle button, ×
+      // cancel. The AM/PM is a separate control (not typed) so users
+      // can't fat-finger the period; the input is narrow and just
+      // accepts "H", "H:MM", or "HH:MM" — leading zeros optional.
       return '<div class="prof-hours-cell">'
         + '<span class="lookback-dropdown-wrap prof-hours-dropdown">'
           + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-' + kind + '" data-day="' + day + '" data-value="' + currentValue + '"' + disabledAttr + '>' + label + '</button>'
           + '<div class="lookback-dropdown-menu prof-hours-' + kind + '-menu">' + renderTimeMenu(choices, currentValue) + '</div>'
         + '</span>'
         + '<div class="prof-hours-custom" style="display:none">'
-          + '<input type="text" class="profile-input prof-hours-custom-input" placeholder="e.g. 9:15 AM"' + disabledAttr + ' />'
+          + '<input type="text" class="profile-input prof-hours-custom-time" placeholder="HH:MM" maxlength="5" inputmode="numeric"' + disabledAttr + ' />'
+          + '<button type="button" class="prof-hours-ampm" data-value="AM"' + disabledAttr + '>AM</button>'
           + '<button type="button" class="prof-hours-custom-cancel" title="Cancel and return to dropdown">×</button>'
         + '</div>'
       + '</div>';
@@ -1155,28 +1167,6 @@ window.CL_PROFILE = {
     return displayH + ':' + mm + ' ' + ampm;
   },
 
-  // Parse user-typed time strings into "HH:MM" 24-hour form. Accepts:
-  //   "9:15 AM" / "9:15am" / "9:15" / "9 AM" / "9am" / "9" / "21:30"
-  // Returns null when the input can't be coerced into a sensible time.
-  _parseTimeInput: function(raw) {
-    raw = (raw || '').trim().toUpperCase().replace(/\./g, '');
-    if (!raw) return null;
-    var match = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
-    if (!match) return null;
-    var h = parseInt(match[1], 10);
-    var m = match[2] ? parseInt(match[2], 10) : 0;
-    var ap = match[3];
-    if (isNaN(h) || h < 0 || h > 23) return null;
-    if (m < 0 || m > 59) return null;
-    if (ap === 'AM') {
-      if (h === 12) h = 0;
-      else if (h > 12) return null;
-    } else if (ap === 'PM') {
-      if (h < 12) h += 12;
-    }
-    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
-  },
-
   // Programmatic time set on a hours-picker trigger button. Updates
   // data-value, label, and active-class — works whether or not the
   // value lands on a curated item, so presets like 24/7 (00:00 /
@@ -1202,7 +1192,7 @@ window.CL_PROFILE = {
     // element type. Buttons that are .disabled don't fire click, so
     // the menu can't open while the day is unchecked.
     row.querySelectorAll('.lookback-dropdown-field').forEach(function(b) { b.disabled = !checkbox.checked; });
-    row.querySelectorAll('.prof-hours-custom-input').forEach(function(i) { i.disabled = !checkbox.checked; });
+    row.querySelectorAll('.prof-hours-custom-time, .prof-hours-ampm').forEach(function(i) { i.disabled = !checkbox.checked; });
     // If the user uncheck-s while a cell is mid-Custom-edit, drop
     // them back to the dropdown view so the disabled state is visible
     // and the input doesn't sit there enabled-looking.
@@ -1237,60 +1227,125 @@ window.CL_PROFILE = {
       });
     });
 
-    // Wire the custom-mode controls per cell (input commit + cancel).
-    // Each cell wraps both the dropdown and the hidden input/cancel
-    // pair; the data-attribute guard makes this safe to call on
-    // re-renders.
+    // Wire the custom-mode controls per cell. Each cell holds a
+    // dropdown row plus a custom row (input + AM/PM toggle + cancel)
+    // and we keep them in sync via element references. The dataset
+    // guard makes this safe to call repeatedly on re-renders.
     scope.querySelectorAll('.prof-hours-cell').forEach(function(cell) {
       if (cell.dataset.customWired === '1') return;
       cell.dataset.customWired = '1';
-      var input = cell.querySelector('.prof-hours-custom-input');
+      var input = cell.querySelector('.prof-hours-custom-time');
+      var ampmBtn = cell.querySelector('.prof-hours-ampm');
       var cancelBtn = cell.querySelector('.prof-hours-custom-cancel');
       var trigger = cell.querySelector('.prof-hours-open, .prof-hours-close');
-      if (input && trigger) {
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
-          else if (e.key === 'Escape') { e.preventDefault(); if (cancelBtn) cancelBtn.click(); }
-        });
-        input.addEventListener('blur', function() {
-          var raw = (input.value || '').trim();
-          if (!raw) { return; }
-          var parsed = self._parseTimeInput(raw);
-          if (parsed === null) {
-            input.classList.add('input-error');
-            return;
-          }
-          input.classList.remove('input-error');
-          self._setHoursValue(trigger, parsed);
-          self._exitHoursCustomMode(cell);
-          self._scheduleAutoSave('location', 300);
-        });
-      }
-      if (cancelBtn) {
-        cancelBtn.addEventListener('click', function(e) {
-          e.preventDefault();
-          if (input) { input.value = ''; input.classList.remove('input-error'); }
-          self._exitHoursCustomMode(cell);
-        });
-      }
+      if (!input || !ampmBtn || !cancelBtn || !trigger) return;
+
+      var commit = function() {
+        var raw = (input.value || '').trim();
+        if (!raw) return;
+        // Accept "H" / "HH" / "H:MM" / "HH:MM" — 12-hour. AM/PM is
+        // separate so we don't let the user type letters into the
+        // time input.
+        var match = raw.match(/^(\d{1,2})(?::(\d{2}))?$/);
+        if (!match) { input.classList.add('input-error'); return; }
+        var h12 = parseInt(match[1], 10);
+        var m = match[2] ? parseInt(match[2], 10) : 0;
+        if (isNaN(h12) || h12 < 1 || h12 > 12 || m < 0 || m > 59) {
+          input.classList.add('input-error'); return;
+        }
+        var ampm = ampmBtn.getAttribute('data-value');
+        var h24 = h12 === 12 ? (ampm === 'AM' ? 0 : 12) : (ampm === 'PM' ? h12 + 12 : h12);
+        var value = (h24 < 10 ? '0' : '') + h24 + ':' + (m < 10 ? '0' : '') + m;
+        input.classList.remove('input-error');
+        self._setHoursValue(trigger, value);
+        self._exitHoursCustomMode(cell);
+        self._scheduleAutoSave('location', 300);
+      };
+
+      input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { e.preventDefault(); cancelBtn.click(); }
+      });
+      input.addEventListener('blur', function() {
+        // Don't run commit if the user is still interacting with the
+        // AM/PM toggle or X button (their mousedown preventDefault
+        // keeps focus on the input, but a blur can still fire when
+        // the cell is being torn down via cancel).
+        if (cell.dataset.cancelling === '1') return;
+        commit();
+      });
+
+      // mousedown.preventDefault on the auxiliary controls so clicking
+      // them doesn't blur the input mid-edit; click handlers do the
+      // real work and then refocus the input.
+      ampmBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+      ampmBtn.addEventListener('click', function() {
+        var current = ampmBtn.getAttribute('data-value');
+        var next = current === 'AM' ? 'PM' : 'AM';
+        ampmBtn.setAttribute('data-value', next);
+        ampmBtn.textContent = next;
+        input.focus();
+      });
+
+      cancelBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
+      cancelBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Flag so the input's blur handler skips commit while we tear
+        // down the custom row. Cleared on the next tick.
+        cell.dataset.cancelling = '1';
+        input.value = '';
+        input.classList.remove('input-error');
+        self._exitHoursCustomMode(cell);
+        setTimeout(function() { delete cell.dataset.cancelling; }, 0);
+      });
     });
   },
 
-  // Hide the dropdown trigger, reveal the inline text input, prefill
-  // it with the current time, and focus + select for instant typing.
+  // Hide the dropdown trigger, reveal the HH:MM input + AM/PM toggle,
+  // and pre-fill both with either the current value (if it parses) or
+  // a sensible per-kind default — 8:00 AM for opens, 5:00 PM for
+  // closes. Focus + select the input so typing replaces the prefill
+  // immediately.
   _enterHoursCustomMode: function(trigger) {
     var cell = trigger.closest('.prof-hours-cell');
     if (!cell) return;
     var dropdown = cell.querySelector('.prof-hours-dropdown');
     var customWrap = cell.querySelector('.prof-hours-custom');
-    var input = cell.querySelector('.prof-hours-custom-input');
+    var input = cell.querySelector('.prof-hours-custom-time');
+    var ampmBtn = cell.querySelector('.prof-hours-ampm');
     if (dropdown) dropdown.style.display = 'none';
     if (customWrap) customWrap.style.display = 'flex';
+
+    var currentValue = trigger.getAttribute('data-value') || '';
+    var defaultValue = trigger.classList.contains('prof-hours-open') ? '08:00' : '17:00';
+    var sourceValue = (/^\d{2}:\d{2}$/.test(currentValue)) ? currentValue : defaultValue;
+    var split = this._splitHourValue(sourceValue);
     if (input) {
-      input.value = this._formatTime(trigger.getAttribute('data-value') || '');
+      input.value = split.display;
+      input.classList.remove('input-error');
       input.focus();
       input.select();
     }
+    if (ampmBtn) {
+      ampmBtn.setAttribute('data-value', split.ampm);
+      ampmBtn.textContent = split.ampm;
+    }
+  },
+
+  // Split an "HH:MM" 24-hour string into the parts the custom-mode
+  // input + AM/PM toggle expect: a "h:mm" 12-hour display string and
+  // the AM/PM string. Falls back to 8:00 AM if the input doesn't
+  // parse, so the caller always has a sane default to render.
+  _splitHourValue: function(value) {
+    var parts = (value || '').split(':');
+    var h = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10);
+    if (isNaN(h)) h = 8;
+    if (isNaN(m)) m = 0;
+    var displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    var ampm = h < 12 ? 'AM' : 'PM';
+    var mm = (m < 10 ? '0' : '') + m;
+    return { display: displayH + ':' + mm, ampm: ampm };
   },
 
   // Hide the input row and restore the dropdown trigger. Does not
