@@ -73,7 +73,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Lead conversion: ' + (planData.leadConversion || 'Not specified') + '\n' +
     '- Jobs/clients per month: ' + (planData.jobsPerMonth || 'Not specified') + '\n' +
     '- Capacity utilisation: ' + (planData.capacityUtilisation || 'Not specified') + '\n' +
-    '- Key suppliers: ' + (planData.keySuppliers || 'Not specified') + '\n' +
+    '- Key suppliers: ' + _arr(planData.keySuppliers) + '\n' +
     '- Supplier dependency: ' + (planData.supplierDependency || 'Not specified') + '\n' +
     '- Subcontractor use: ' + (planData.subcontractorUse || 'Not specified') + '\n' +
     '- Technology: ' + _arr(planData.technology) + '\n' +
