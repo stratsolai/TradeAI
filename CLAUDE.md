@@ -318,15 +318,20 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   previously scanned as stubs.
 - Xero OAuth scopes for new apps (created after 2 March
   2026) must use the new granular scope names. Correct
-  scope string confirmed from official documentation:
+  scope string (matches api/cl-oauth-initiate.js):
   openid profile email accounting.invoices.read
   accounting.contacts.read accounting.settings.read
   accounting.reports.profitandloss.read
-  accounting.reports.balancesheet.read projects.read
+  accounting.reports.balancesheet.read
+  accounting.reports.aged.read projects.read
   offline_access
   Note: accounting.transactions.read does NOT exist for
   apps created after 2 March 2026. Quotes are covered by
-  accounting.invoices.read.
+  accounting.invoices.read. The broad accounting.reports.read
+  is also unavailable to post-cutoff apps — granular per-
+  report names are the only path. Aged Receivables /
+  Aged Payables reports are gated behind
+  accounting.reports.aged.read specifically.
 - ServiceM8 OAuth scopes — correct scope string confirmed:
   read_jobs read_customers read_staff read_job_materials
   read_job_contacts read_forms
