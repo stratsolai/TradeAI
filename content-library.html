@@ -333,10 +333,29 @@
 .profile-hours-day { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
 .profile-hours-day input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
 .profile-hours-preset { display: flex; gap: 8px; margin-bottom: 12px; }
-/* Stretch the open/close lookback-dropdown triggers so each fills
-   its 1fr grid column the same way the previous <select>s did. */
+/* Stretch the open/close pickers so each fills its 1fr grid column
+   the same way the previous <select>s did. The .prof-hours-cell
+   wraps both the dropdown and the Custom-mode input row so the cell
+   slot is the layout owner; the dropdown wrap, custom row, and
+   trigger button each fill the cell's width. */
+.profile-hours-row .prof-hours-cell { width: 100%; }
 .profile-hours-row .lookback-dropdown-wrap { display: block; width: 100%; }
 .profile-hours-row .lookback-dropdown-field { width: 100%; box-sizing: border-box; text-align: left; }
+.prof-hours-custom { display: flex; align-items: stretch; gap: 6px; }
+.prof-hours-custom .prof-hours-custom-input { flex: 1; min-width: 0; }
+.prof-hours-custom-cancel {
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 10px;
+  border-radius: var(--input-radius);
+  font-size: 16px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.prof-hours-custom-cancel:hover { color: var(--red); border-color: var(--red); }
+.prof-hours-custom-input.input-error { border-color: var(--red); }
 
 .profile-field-full .lookback-dropdown-wrap { width: 100%; }
 .profile-field-full .lookback-dropdown { width: 100%; text-align: left; box-sizing: border-box; }

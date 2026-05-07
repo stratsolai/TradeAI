@@ -1070,25 +1070,38 @@ window.CL_PROFILE = {
     // scrolling. Late-night hospitality and cleaning businesses still
     // have access to the whole half-hourly grid — the post-midnight
     // hours just sit at the bottom of the list rather than at the top.
-    var timeChoices = [];
-    var addSlot = function(h, m) {
-      var hh = (h < 10 ? '0' : '') + h;
-      var mm = m === 0 ? '00' : '30';
-      var label = (h === 0 ? '12' : h > 12 ? (h - 12) : h) + ':' + mm + (h < 12 ? ' AM' : ' PM');
-      timeChoices.push({ value: hh + ':' + mm, label: label });
-    };
-    for (var h = 6; h < 24; h++) { addSlot(h, 0); addSlot(h, 30); }
-    for (var h = 0; h < 6; h++) { addSlot(h, 0); addSlot(h, 30); }
-    var renderTimeMenu = function(activeValue) {
-      return timeChoices.map(function(t) {
+    // Curated common opening / closing slots. Anything outside these
+    // goes through the Custom item, which swaps the dropdown for a
+    // free text input — the parser is forgiving on form, strict on
+    // value (HH:MM 24-hour out).
+    var openChoices = [
+      { value: '06:00', label: '6:00 AM' },
+      { value: '06:30', label: '6:30 AM' },
+      { value: '07:00', label: '7:00 AM' },
+      { value: '07:30', label: '7:30 AM' },
+      { value: '08:00', label: '8:00 AM' },
+      { value: '08:30', label: '8:30 AM' },
+      { value: '09:00', label: '9:00 AM' }
+    ];
+    var closeChoices = [
+      { value: '15:00', label: '3:00 PM' },
+      { value: '15:30', label: '3:30 PM' },
+      { value: '16:00', label: '4:00 PM' },
+      { value: '16:30', label: '4:30 PM' },
+      { value: '17:00', label: '5:00 PM' },
+      { value: '17:30', label: '5:30 PM' },
+      { value: '18:00', label: '6:00 PM' }
+    ];
+    var self = this;
+    var renderTimeMenu = function(choices, activeValue) {
+      var items = choices.map(function(t) {
         return '<button type="button" class="lookback-dropdown-item' + (t.value === activeValue ? ' active' : '') + '" data-value="' + t.value + '">' + t.label + '</button>';
       }).join('');
-    };
-    var labelFor = function(value) {
-      for (var i = 0; i < timeChoices.length; i++) {
-        if (timeChoices[i].value === value) return timeChoices[i].label;
-      }
-      return value;
+      // Custom item sits at the end. _wireHoursDropdowns catches the
+      // __custom__ sentinel in onSelect and swaps the cell to input
+      // mode rather than persisting it as a value.
+      items += '<button type="button" class="lookback-dropdown-item prof-hours-custom-item" data-value="__custom__">Custom…</button>';
+      return items;
     };
 
     var presetHtml = '<div class="profile-hours-preset">' +
@@ -1097,26 +1110,88 @@ window.CL_PROFILE = {
       '<button type="button" class="btn-outline btn-sm prof-hours-preset" data-preset="appointment">By Appointment</button>' +
     '</div>';
 
+    var renderPicker = function(kind, day, currentValue, isDisabled) {
+      var choices = kind === 'open' ? openChoices : closeChoices;
+      var disabledAttr = isDisabled ? ' disabled' : '';
+      var label = self._formatTime(currentValue);
+      return '<div class="prof-hours-cell">'
+        + '<span class="lookback-dropdown-wrap prof-hours-dropdown">'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-' + kind + '" data-day="' + day + '" data-value="' + currentValue + '"' + disabledAttr + '>' + label + '</button>'
+          + '<div class="lookback-dropdown-menu prof-hours-' + kind + '-menu">' + renderTimeMenu(choices, currentValue) + '</div>'
+        + '</span>'
+        + '<div class="prof-hours-custom" style="display:none">'
+          + '<input type="text" class="profile-input prof-hours-custom-input" placeholder="e.g. 9:15 AM"' + disabledAttr + ' />'
+          + '<button type="button" class="prof-hours-custom-cancel" title="Cancel and return to dropdown">×</button>'
+        + '</div>'
+      + '</div>';
+    };
+
     var rowsHtml = days.map(function(day) {
       var data = hoursMap[day] || { enabled: false, open: '08:00', close: '17:00' };
       var checked = data.enabled ? ' checked' : '';
       var openVal = data.open || '08:00';
       var closeVal = data.close || '17:00';
-      var disabledAttr = data.enabled ? '' : ' disabled';
       return '<div class="profile-hours-row">' +
         '<label class="profile-hours-day"><input type="checkbox" class="prof-hours-toggle" data-day="' + day + '"' + checked + ' /> ' + day + '</label>' +
-        '<span class="lookback-dropdown-wrap">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-open" data-day="' + day + '" data-value="' + openVal + '"' + disabledAttr + '>' + labelFor(openVal) + '</button>'
-          + '<div class="lookback-dropdown-menu prof-hours-open-menu">' + renderTimeMenu(openVal) + '</div>'
-        + '</span>' +
-        '<span class="lookback-dropdown-wrap">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-close" data-day="' + day + '" data-value="' + closeVal + '"' + disabledAttr + '>' + labelFor(closeVal) + '</button>'
-          + '<div class="lookback-dropdown-menu prof-hours-close-menu">' + renderTimeMenu(closeVal) + '</div>'
-        + '</span>' +
+        renderPicker('open', day, openVal, !data.enabled) +
+        renderPicker('close', day, closeVal, !data.enabled) +
       '</div>';
     }).join('');
 
     return presetHtml + '<div class="profile-hours-grid" id="prof-hours-grid">' + rowsHtml + '</div>';
+  },
+
+  // Format a "HH:MM" 24-hour string as a 12-hour label with AM/PM.
+  // Returns the input unchanged if it doesn't parse — keeps the UI
+  // resilient to legacy or malformed saved values.
+  _formatTime: function(value) {
+    var parts = (value || '').split(':');
+    if (parts.length !== 2) return value || '';
+    var h = parseInt(parts[0], 10);
+    var mm = parts[1];
+    if (isNaN(h) || mm.length !== 2) return value || '';
+    var displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
+    var ampm = h < 12 ? 'AM' : 'PM';
+    return displayH + ':' + mm + ' ' + ampm;
+  },
+
+  // Parse user-typed time strings into "HH:MM" 24-hour form. Accepts:
+  //   "9:15 AM" / "9:15am" / "9:15" / "9 AM" / "9am" / "9" / "21:30"
+  // Returns null when the input can't be coerced into a sensible time.
+  _parseTimeInput: function(raw) {
+    raw = (raw || '').trim().toUpperCase().replace(/\./g, '');
+    if (!raw) return null;
+    var match = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)?$/);
+    if (!match) return null;
+    var h = parseInt(match[1], 10);
+    var m = match[2] ? parseInt(match[2], 10) : 0;
+    var ap = match[3];
+    if (isNaN(h) || h < 0 || h > 23) return null;
+    if (m < 0 || m > 59) return null;
+    if (ap === 'AM') {
+      if (h === 12) h = 0;
+      else if (h > 12) return null;
+    } else if (ap === 'PM') {
+      if (h < 12) h += 12;
+    }
+    return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+  },
+
+  // Programmatic time set on a hours-picker trigger button. Updates
+  // data-value, label, and active-class — works whether or not the
+  // value lands on a curated item, so presets like 24/7 (00:00 /
+  // 23:30) outside the curated list still display correctly.
+  _setHoursValue: function(btn, value) {
+    if (!btn) return;
+    var menu = btn.parentNode.querySelector('.lookback-dropdown-menu');
+    btn.setAttribute('data-value', value);
+    btn.textContent = this._formatTime(value);
+    if (!menu) return;
+    var items = menu.querySelectorAll('.lookback-dropdown-item');
+    items.forEach(function(i) { i.classList.remove('active'); });
+    items.forEach(function(i) {
+      if (i.getAttribute('data-value') === value) i.classList.add('active');
+    });
   },
 
   _toggleHoursRow: function(checkbox) {
@@ -1127,22 +1202,105 @@ window.CL_PROFILE = {
     // element type. Buttons that are .disabled don't fire click, so
     // the menu can't open while the day is unchecked.
     row.querySelectorAll('.lookback-dropdown-field').forEach(function(b) { b.disabled = !checkbox.checked; });
+    row.querySelectorAll('.prof-hours-custom-input').forEach(function(i) { i.disabled = !checkbox.checked; });
+    // If the user uncheck-s while a cell is mid-Custom-edit, drop
+    // them back to the dropdown view so the disabled state is visible
+    // and the input doesn't sit there enabled-looking.
+    if (!checkbox.checked) {
+      var self = this;
+      row.querySelectorAll('.prof-hours-cell').forEach(function(cell) {
+        var customWrap = cell.querySelector('.prof-hours-custom');
+        if (customWrap && customWrap.style.display === 'flex') {
+          self._exitHoursCustomMode(cell);
+        }
+      });
+    }
   },
 
   // Wire every open/close lookback in the hours grid. Multiple
   // instances render (7 days × open + close = 14), so wiring is
   // class-based rather than ID-based: each trigger's sibling menu is
-  // found via parentNode + class. The onSelect callback fires the
-  // location-panel auto-save the same way native change events used
-  // to be picked up by _bindAutoSave's `select` selector.
+  // found via parentNode + class. The onSelect callback either swaps
+  // the cell to Custom (free-text) input mode or fires the location-
+  // panel auto-save the same way native change events used to be
+  // picked up by _bindAutoSave's `select` selector.
   _wireHoursDropdowns: function(scope) {
     var self = this;
     scope.querySelectorAll('.prof-hours-open, .prof-hours-close').forEach(function(btn) {
       var menu = btn.parentNode.querySelector('.lookback-dropdown-menu');
-      self._wireLookback(btn, menu, function() {
+      self._wireLookback(btn, menu, function(value) {
+        if (value === '__custom__') {
+          self._enterHoursCustomMode(btn);
+          return;
+        }
         self._scheduleAutoSave('location', 300);
       });
     });
+
+    // Wire the custom-mode controls per cell (input commit + cancel).
+    // Each cell wraps both the dropdown and the hidden input/cancel
+    // pair; the data-attribute guard makes this safe to call on
+    // re-renders.
+    scope.querySelectorAll('.prof-hours-cell').forEach(function(cell) {
+      if (cell.dataset.customWired === '1') return;
+      cell.dataset.customWired = '1';
+      var input = cell.querySelector('.prof-hours-custom-input');
+      var cancelBtn = cell.querySelector('.prof-hours-custom-cancel');
+      var trigger = cell.querySelector('.prof-hours-open, .prof-hours-close');
+      if (input && trigger) {
+        input.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+          else if (e.key === 'Escape') { e.preventDefault(); if (cancelBtn) cancelBtn.click(); }
+        });
+        input.addEventListener('blur', function() {
+          var raw = (input.value || '').trim();
+          if (!raw) { return; }
+          var parsed = self._parseTimeInput(raw);
+          if (parsed === null) {
+            input.classList.add('input-error');
+            return;
+          }
+          input.classList.remove('input-error');
+          self._setHoursValue(trigger, parsed);
+          self._exitHoursCustomMode(cell);
+          self._scheduleAutoSave('location', 300);
+        });
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (input) { input.value = ''; input.classList.remove('input-error'); }
+          self._exitHoursCustomMode(cell);
+        });
+      }
+    });
+  },
+
+  // Hide the dropdown trigger, reveal the inline text input, prefill
+  // it with the current time, and focus + select for instant typing.
+  _enterHoursCustomMode: function(trigger) {
+    var cell = trigger.closest('.prof-hours-cell');
+    if (!cell) return;
+    var dropdown = cell.querySelector('.prof-hours-dropdown');
+    var customWrap = cell.querySelector('.prof-hours-custom');
+    var input = cell.querySelector('.prof-hours-custom-input');
+    if (dropdown) dropdown.style.display = 'none';
+    if (customWrap) customWrap.style.display = 'flex';
+    if (input) {
+      input.value = this._formatTime(trigger.getAttribute('data-value') || '');
+      input.focus();
+      input.select();
+    }
+  },
+
+  // Hide the input row and restore the dropdown trigger. Does not
+  // touch the underlying value — the caller (Cancel button or
+  // successful blur commit) decides what to persist.
+  _exitHoursCustomMode: function(cell) {
+    var dropdown = cell.querySelector('.prof-hours-dropdown');
+    var customWrap = cell.querySelector('.prof-hours-custom');
+    if (dropdown) dropdown.style.display = '';
+    if (customWrap) customWrap.style.display = 'none';
   },
 
   _bindHoursPresets: function() {
@@ -1156,8 +1314,12 @@ window.CL_PROFILE = {
         var opens = grid.querySelectorAll('.prof-hours-open');
         var closes = grid.querySelectorAll('.prof-hours-close');
         var setTime = function(triggerBtn, value) {
-          var menu = triggerBtn.parentNode.querySelector('.lookback-dropdown-menu');
-          self._setLookbackValue(triggerBtn, menu, value);
+          // _setHoursValue handles values outside the curated list
+          // (00:00 / 23:30 from the 24/7 preset, etc.) by formatting
+          // the trigger label via _formatTime even when no menu item
+          // matches. _setLookbackValue would just early-return on a
+          // miss, leaving the trigger label stale.
+          self._setHoursValue(triggerBtn, value);
         };
         toggles.forEach(function(t, i) {
           if (preset === '24-7') {
