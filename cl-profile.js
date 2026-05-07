@@ -26,6 +26,7 @@ window.CL_PROFILE = {
       else if (action === 'add-other-item') { self._addOtherItem(btn.dataset.target); }
       else if (action === 'remove-other') { self._removeOtherChip(btn); }
       else if (action === 'add-theme-statement') { self._addThemeStatement(); }
+      else if (action === 'prof-prev' || action === 'prof-next') { self._goToPanel(btn.dataset.target); }
     });
     container.addEventListener('change', function(e) {
       if (e.target.classList.contains('prof-hours-toggle')) {
@@ -91,7 +92,12 @@ window.CL_PROFILE = {
     if (typeof v === 'string') { try { return JSON.parse(v); } catch(e) { return fallback || []; } }
     return v;
   },
-  _card: function(icon, title, subtitle, body, btnId) {
+  _panelOrder: ['identity', 'location', 'services', 'products', 'credentials', 'marketing'],
+
+  // The btn-save button is kept in the DOM but display:none so the
+  // existing handleSave-based autosave path keeps working — visually
+  // the user sees only the wizard nav row below.
+  _card: function(icon, title, subtitle, body, panelId, btnId) {
     return '<div class="profile-section-card">' +
       '<div class="profile-section-header">' +
         '<div class="profile-section-icon">' + icon + '</div>' +
@@ -101,10 +107,55 @@ window.CL_PROFILE = {
         '</div>' +
       '</div>' +
       body +
-      '<div class="profile-save-row">' +
-        '<button id="' + btnId + '" class="btn-save">Save</button>' +
-      '</div>' +
+      '<button id="' + btnId + '" class="btn-save" style="display:none" aria-hidden="true">Save</button>' +
+      this._navHtml(panelId) +
     '</div>';
+  },
+
+  // Wizard-style Back/Next nav rendered at the bottom of each BP panel.
+  // First panel has no Back, last panel has no Next. Saved ✓ indicator
+  // sits to the right of Back and fades after each successful autosave.
+  _navHtml: function(panelId) {
+    var idx = this._panelOrder.indexOf(panelId);
+    var hasBack = idx > 0;
+    var hasNext = idx >= 0 && idx < this._panelOrder.length - 1;
+    var backHtml = hasBack
+      ? '<button class="btn-back" data-action="prof-prev" data-target="' + window.escHtml(this._panelOrder[idx - 1]) + '">Back</button>'
+      : '';
+    var nextHtml = hasNext
+      ? '<button class="btn-back" data-action="prof-next" data-target="' + window.escHtml(this._panelOrder[idx + 1]) + '">Next</button>'
+      : '';
+    return '<div class="profile-nav-row" style="display:flex;align-items:center;gap:12px;margin-top:24px">' +
+      backHtml +
+      '<span id="prof-saved-' + window.escHtml(panelId) + '" class="profile-saved-indicator" style="color:var(--text-secondary);font-size:13px;opacity:0;transition:opacity 0.3s">Saved ✓</span>' +
+      '<span style="flex:1"></span>' +
+      nextHtml +
+    '</div>';
+  },
+
+  _showSaved: function(panelId) {
+    var el = document.getElementById('prof-saved-' + panelId);
+    if (!el) return;
+    el.style.opacity = '1';
+    if (el._fadeTimer) clearTimeout(el._fadeTimer);
+    el._fadeTimer = setTimeout(function() { el.style.opacity = '0'; }, 2000);
+  },
+
+  _goToPanel: function(panelKey) {
+    if (!panelKey) return;
+    this._triggerAutoSave(this._activePanel);
+    var wrap = document.getElementById('cl-tab-profile');
+    if (!wrap) return;
+    wrap.querySelectorAll('.profile-nav-chip').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.ptab === panelKey);
+    });
+    wrap.querySelectorAll('.profile-panel').forEach(function(p) { p.classList.remove('active'); });
+    var target = document.getElementById('prof-panel-' + panelKey);
+    if (target) target.classList.add('active');
+    this._activePanel = panelKey;
+    // Scroll back to the top of the panel so the Back/Next row isn't
+    // already in view when the user lands on a new panel.
+    if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
   _field: function(label, html) { return '<div class="profile-field-full"><label class="profile-label">' + label + '</label>' + html + '</div>'; },
@@ -445,7 +496,7 @@ window.CL_PROFILE = {
       '</div>' +
     '</div>';
 
-    document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'prof-id-save');
+    document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'identity', 'prof-id-save');
 
     var self = this;
     var idPanel = document.getElementById('prof-panel-identity');
@@ -666,6 +717,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
+      if (autoSave) self._showSaved('identity');
     }, document.getElementById('prof-save-msg'));
   },
 
@@ -772,7 +824,7 @@ window.CL_PROFILE = {
       '</div>';
 
     document.getElementById('prof-panel-location').innerHTML = this._card(
-      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'prof-loc-save'
+      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'location', 'prof-loc-save'
     );
 
     var self = this;
@@ -1268,6 +1320,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
+      if (autoSave) self._showSaved('location');
     }, document.getElementById('prof-save-msg'));
   },
 
@@ -1321,7 +1374,8 @@ window.CL_PROFILE = {
       '</div>' +
     '</div>';
 
-    document.getElementById(panelId).innerHTML = this._card(icon, title, subtitle, body, saveBtnId);
+    var panelKey = prefix === 'svc' ? 'services' : 'products';
+    document.getElementById(panelId).innerHTML = this._card(icon, title, subtitle, body, panelKey, saveBtnId);
 
     this._renderPricingRows(prefix, items, pricingTypes);
     this._bindMultiSelectPills(prefix, profileKey, pricingTypes);
@@ -1593,6 +1647,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
+      if (autoSave) self._showSaved(prefix === 'svc' ? 'services' : 'products');
     }, document.getElementById('prof-save-msg'));
   },
 
@@ -1637,7 +1692,7 @@ window.CL_PROFILE = {
     '</div>';
 
     document.getElementById('prof-panel-credentials').innerHTML = this._card(
-      '\uD83D\uDCDC', '5. Credentials &amp; Support', 'Licences, payment, response times, and support policies', body, 'prof-cred-save'
+      '\uD83D\uDCDC', '5. Credentials &amp; Support', 'Licences, payment, response times, and support policies', body, 'credentials', 'prof-cred-save'
     );
 
     var self = this;
@@ -1704,6 +1759,7 @@ window.CL_PROFILE = {
       var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       Object.assign(self._profile, updates);
+      if (autoSave) self._showSaved('credentials');
     }, document.getElementById('prof-save-msg'));
   },
 
@@ -1720,9 +1776,8 @@ window.CL_PROFILE = {
         '</div>' +
       '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
-      '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'prof-mkt-save'
+      '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'marketing', 'prof-mkt-save'
     );
-    document.getElementById('prof-mkt-save').style.display = 'none';
     if (window.BP_MARKETING) {
       window.BP_MARKETING.init(this._supabase, this._userId, this._profile, this);
     }
@@ -1809,6 +1864,7 @@ window.CL_PROFILE = {
         .eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       self._profile.marketing_theme_extra = serialised;
+      self._showSaved('marketing');
     }, document.getElementById('prof-save-msg'));
   }
 };
