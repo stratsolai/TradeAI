@@ -176,21 +176,39 @@
     } else if (field.type === 'textarea') {
       input = '<textarea id="' + field.id + '" class="sp-textarea" placeholder="' + escHtml(field.placeholder || '') + '" rows="4"></textarea>';
     } else if (field.type === 'select') {
-      var opts = (field.options || []).map(function(o) {
-        return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
+      // First option is the placeholder (default active). Rendered as a
+      // lookback-dropdown trigger button (id={field.id}) plus a sibling
+      // menu (id={field.id}-menu). Field reads/writes go through
+      // readFieldValue/writeFieldValue so the rest of the form code can
+      // stay element-type agnostic. Dynamic-from-profile selects render
+      // with a Loading placeholder until prefillFromProfile populates.
+      var firstOpt = (field.options && field.options[0]) || null;
+      var initialValue = firstOpt ? firstOpt.value : '';
+      var initialLabel = firstOpt ? firstOpt.label : (field.dynamicFromProfile ? 'Loading…' : '');
+      var menuItems = (field.options || []).map(function(o, i) {
+        return '<button type="button" class="lookback-dropdown-item' + (i === 0 ? ' active' : '') + '" data-value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</button>';
       }).join('');
-      // Dynamic-from-profile selects render with a loading placeholder
-      // until prefillFromProfile populates the real options.
-      if (!opts && field.dynamicFromProfile) {
-        opts = '<option value="">Loading…</option>';
+      if (!menuItems && field.dynamicFromProfile) {
+        menuItems = '<button type="button" class="lookback-dropdown-item active" data-value="">Loading…</button>';
       }
-      input = '<select id="' + field.id + '" class="form-input">' + opts + '</select>';
+      input = '<span class="lookback-dropdown-wrap">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="' + field.id + '" data-value="' + escHtml(initialValue) + '">' + escHtml(initialLabel) + '</button>'
+        + '<div class="lookback-dropdown-menu" id="' + field.id + '-menu">' + menuItems + '</div>'
+        + '</span>';
     } else if (field.type === 'select-or-text') {
-      var sOpts = (field.options || []).map(function(o) {
-        return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
+      // The select-or-text variant lets users pick from a list or type
+      // their own — the trigger button now mirrors a regular lookback
+      // and the "Other (specify)" item reveals a sp-input text field.
+      // The hidden input keeps carrying the resolved value into
+      // collectSectionData.
+      var sxItems = (field.options || []).map(function(o) {
+        return '<button type="button" class="lookback-dropdown-item" data-value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</button>';
       }).join('');
-      sOpts += '<option value="__other__">Other (specify)</option>';
-      input = '<select id="' + field.id + '-select" class="form-input sp-select-or-text" data-target="' + field.id + '">' + sOpts + '</select>';
+      sxItems += '<button type="button" class="lookback-dropdown-item" data-value="__other__">Other (specify)</button>';
+      input = '<span class="lookback-dropdown-wrap">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-select-or-text" id="' + field.id + '-select" data-target="' + field.id + '" data-value="">Select…</button>'
+        + '<div class="lookback-dropdown-menu" id="' + field.id + '-select-menu">' + sxItems + '</div>'
+        + '</span>';
       input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + escHtml(field.placeholder || '') + '" style="display:none;margin-top:8px">';
       input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
@@ -223,6 +241,7 @@
   }
 
   function bindFormEvents() {
+    wireInterviewSelects();
     var navEl = document.getElementById('sp-section-nav');
     if (navEl) {
       navEl.addEventListener('click', function(e) {
@@ -266,27 +285,13 @@
         }
       });
 
-      container.addEventListener('change', function(e) {
-        var sel = e.target.closest('.sp-select-or-text');
-        if (sel) {
-          var targetId = sel.dataset.target;
-          var otherInput = document.getElementById(targetId + '-other');
-          var hidden = document.getElementById(targetId);
-          if (sel.value === '__other__') {
-            if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); }
-            if (hidden) hidden.value = '';
-          } else {
-            if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
-            if (hidden) hidden.value = sel.value;
-          }
-          return;
-        }
-      });
-
       container.addEventListener('input', function(e) {
         // select-or-text "Other (specify)" still uses the inline hidden
         // input pattern; the chip-multi/chip-single Other path moved to
-        // the BP-style Add-button helper.
+        // the BP-style Add-button helper. Lookback-dropdown selections
+        // themselves are wired by wireInterviewSelects below — those
+        // emit no native change event, so the callback there is what
+        // schedules saves and drops sp-from-bi shading.
         var otherInput = e.target.closest('.sp-other-input');
         if (otherInput) {
           var fieldId = otherInput.id.replace('-other', '');
@@ -297,15 +302,11 @@
         scheduleDraftSave();
       });
 
-      // Catch every other input/select change in the section container
-      // so autosave fires whether the user is typing, picking a chip,
-      // or changing a dropdown.
+      // Catch every other input change in the section container so
+      // autosave fires whether the user is typing or blurring a text
+      // input. Lookback-dropdowns and chip groups schedule via their
+      // own click handlers.
       container.addEventListener('change', function(e) {
-        // User changed a BI-prefilled select — drop the shading so it
-        // reflects user-set state. No-op if the class wasn't there.
-        if (e.target && e.target.classList && e.target.classList.contains('sp-from-bi')) {
-          e.target.classList.remove('sp-from-bi');
-        }
         scheduleDraftSave();
       });
       container.addEventListener('click', function(e) {
@@ -357,7 +358,7 @@
       section.fields.forEach(function(field) {
         var el = document.getElementById(field.id);
         if (!el) return;
-        var raw = (el.value || '').trim();
+        var raw = (readFieldValue(el) || '').trim();
         if (!raw) return;
         var key = field.apiKey || field.id;
         if (field.valueType === 'array') {
@@ -664,6 +665,77 @@
     btn.textContent = target.textContent;
   }
 
+  // Element-type-agnostic value read. Lookback-dropdown trigger
+  // buttons stash their selection in data-value; everything else
+  // (text input, textarea, hidden input) uses .value. Lets the rest
+  // of the interview-form code read fields without caring whether
+  // they happen to be selects.
+  function readFieldValue(el) {
+    if (!el) return '';
+    if (el.classList && el.classList.contains('lookback-dropdown')) {
+      return el.getAttribute('data-value') || '';
+    }
+    return el.value || '';
+  }
+
+  // Element-type-agnostic value write. For lookback-dropdowns this
+  // looks up the matching menu item, sets data-value + label + active
+  // class. If no item matches (saved draft value falls outside the
+  // current option set, e.g. dynamicFromProfile hasn't populated yet),
+  // the value is still stashed on the button so a later re-population
+  // can resolve it; the raw value is shown as a fallback label.
+  function writeFieldValue(el, value) {
+    if (!el) return;
+    if (el.classList && el.classList.contains('lookback-dropdown')) {
+      var menu = document.getElementById(el.id + '-menu');
+      if (!menu) return;
+      var items = menu.querySelectorAll('.lookback-dropdown-item');
+      var target = null;
+      var v = String(value);
+      items.forEach(function(i) { if (i.getAttribute('data-value') === v) target = i; });
+      if (target) {
+        items.forEach(function(i) { i.classList.remove('active'); });
+        target.classList.add('active');
+        el.setAttribute('data-value', target.getAttribute('data-value'));
+        el.textContent = target.textContent;
+      } else {
+        el.setAttribute('data-value', v);
+        if (v) el.textContent = v;
+      }
+    } else {
+      el.value = value;
+    }
+  }
+
+  // Wire every interview-form lookback-dropdown after a section is
+  // rendered. The onSelect callback drops sp-from-bi shading (any
+  // user-set value is no longer "from BI"), schedules a draft save,
+  // and handles the select-or-text variant's Other (specify) reveal.
+  function wireInterviewSelects(scope) {
+    var root = scope || document.getElementById('sp-sections-container');
+    if (!root) return;
+    root.querySelectorAll('.lookback-dropdown').forEach(function(btn) {
+      var menu = document.getElementById(btn.id + '-menu');
+      if (!menu) return;
+      wireLookbackDropdown(btn, menu, function(value) {
+        btn.classList.remove('sp-from-bi');
+        if (btn.classList.contains('sp-select-or-text')) {
+          var targetId = btn.dataset.target;
+          var otherInput = document.getElementById(targetId + '-other');
+          var hidden = document.getElementById(targetId);
+          if (value === '__other__') {
+            if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); }
+            if (hidden) hidden.value = '';
+          } else {
+            if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
+            if (hidden) hidden.value = value;
+          }
+        }
+        scheduleDraftSave();
+      });
+    });
+  }
+
   function toggleChip(el, groupId, isMulti) {
     var group = document.getElementById(groupId + '-chips');
     if (!group) return;
@@ -875,16 +947,21 @@
           var srcNames = Array.isArray(srcRaw)
             ? srcRaw.map(function(item) { return (item && item.name) || ''; }).filter(Boolean)
             : [];
-          var sel = document.getElementById(field.id);
-          if (sel) {
+          var btn = document.getElementById(field.id);
+          var menu = document.getElementById(field.id + '-menu');
+          if (btn && menu) {
             if (srcNames.length === 0) {
-              sel.innerHTML = '<option value="">' + escHtml(field.emptyMessage || 'No options available') + '</option>';
-              sel.disabled = true;
+              btn.disabled = true;
+              btn.setAttribute('data-value', '');
+              btn.textContent = field.emptyMessage || 'No options available';
+              menu.innerHTML = '<button type="button" class="lookback-dropdown-item active" data-value="">' + escHtml(field.emptyMessage || 'No options available') + '</button>';
             } else {
-              sel.disabled = false;
-              sel.innerHTML = '<option value="">Select…</option>' +
+              btn.disabled = false;
+              btn.setAttribute('data-value', '');
+              btn.textContent = 'Select…';
+              menu.innerHTML = '<button type="button" class="lookback-dropdown-item active" data-value="">Select…</button>' +
                 srcNames.map(function(n) {
-                  return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>';
+                  return '<button type="button" class="lookback-dropdown-item" data-value="' + escHtml(n) + '">' + escHtml(n) + '</button>';
                 }).join('');
             }
           }
@@ -917,15 +994,21 @@
         var el = document.getElementById(field.id);
         if (!el) return;
 
-        if (val !== null && val !== undefined && val !== '') el.value = val;
+        if (val !== null && val !== undefined && val !== '') writeFieldValue(el, val);
 
         if (field.fromProfile) {
           // readonly-pills uses a hidden input — readOnly/disabled
           // are no-ops there. The sp-from-profile marker still goes
           // on so prefillFromPreviousPlan skips overwriting it.
           if (field.type !== 'readonly-pills') {
-            el.readOnly = true;
-            el.disabled = (el.tagName === 'SELECT');
+            // Lookback-dropdown trigger buttons accept disabled directly;
+            // text/textarea use readOnly. tagName check kept so the
+            // identity field-set still behaves correctly for inputs.
+            if (el.classList.contains('lookback-dropdown')) {
+              el.disabled = true;
+            } else {
+              el.readOnly = true;
+            }
           }
           el.classList.add('sp-from-profile');
         }
@@ -966,6 +1049,9 @@
     if (!fieldsContainer) return;
     fieldsContainer.innerHTML = section.fields.map(function(field) { return renderField(field); }).join('');
     _section3Rendered = true;
+    // Wire the lookback-dropdowns Section 3 just added — wireInterviewSelects
+    // is idempotent so calling it again won't double-bind earlier sections.
+    wireInterviewSelects();
     // Apply prefills synchronously — runs in the same frame as the
     // innerHTML write above so the user never sees an empty Section 3.
     // Priority order matches the rest of init: saved plan first
@@ -1006,8 +1092,27 @@
         }
       } else if (f.type === 'select-or-text') {
         var sel = document.getElementById(f.id + '-select');
-        if (sel) { var matched = Array.from(sel.options).some(function(o){return o.value===v}); if (matched) { sel.value = v; el.value = v; } else if (v) { sel.value='__other__'; var oi=document.getElementById(f.id+'-other'); if(oi){oi.value=v;oi.style.display='block'} el.value=v; } }
-      } else { el.value = typeof v === 'object' ? JSON.stringify(v) : v; }
+        var menu = document.getElementById(f.id + '-select-menu');
+        if (sel && menu) {
+          // Look for an item whose data-value matches the saved value;
+          // if there's a match, select it and copy into the hidden
+          // input. Otherwise fall back to the Other (specify) item and
+          // surface the raw value in the inline text input.
+          var matchItem = null;
+          menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) {
+            if (it.getAttribute('data-value') === v) matchItem = it;
+          });
+          if (matchItem) {
+            writeFieldValue(sel, v);
+            el.value = v;
+          } else if (v) {
+            writeFieldValue(sel, '__other__');
+            var oi = document.getElementById(f.id + '-other');
+            if (oi) { oi.value = v; oi.style.display = 'block'; }
+            el.value = v;
+          }
+        }
+      } else { writeFieldValue(el, typeof v === 'object' ? JSON.stringify(v) : v); }
     }); });
   }
 
@@ -1099,7 +1204,8 @@
       // If a draft restore (or anything else) already set a
       // different value, leave it and don't shade — the field
       // isn't from BI any more.
-      if (el.value && el.value !== v) return;
+      var current = readFieldValue(el);
+      if (current && current !== v) return;
       if (f.type === 'chip-single') {
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
@@ -1108,7 +1214,7 @@
           g.classList.add('sp-from-bi');
         }
       } else {
-        el.value = v;
+        writeFieldValue(el, v);
         el.classList.add('sp-from-bi');
       }
       applied++;
@@ -1123,7 +1229,7 @@
     window.SP_SECTIONS.forEach(function(section) {
       section.fields.forEach(function(field) {
         var el = document.getElementById(field.id);
-        var raw = el ? (el.value || '').trim() : '';
+        var raw = el ? (readFieldValue(el) || '').trim() : '';
 
         if (field.required && !raw) {
           valid = false;
@@ -1154,7 +1260,7 @@
       section.fields.forEach(function(field) {
         if (field.isDecision && field.decisionId) {
           var el = document.getElementById(field.id);
-          var val = el ? (el.value || '').trim() : '';
+          var val = el ? (readFieldValue(el) || '').trim() : '';
           if (val) decisions[field.decisionId] = val;
         }
       });
@@ -1172,7 +1278,8 @@
       var sections = window.SP_SECTIONS;
       for (var i = 0; i < sections.length; i++) {
         var hasError = sections[i].fields.some(function(f) {
-          return f.required && !(document.getElementById(f.id) || {}).value;
+          var fEl = document.getElementById(f.id);
+          return f.required && !readFieldValue(fEl);
         });
         if (hasError) { goToSection(i); break; }
       }

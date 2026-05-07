@@ -462,6 +462,14 @@
     .sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
     .sp-input-error { border-color: var(--red); }
 
+    /* Lookback-dropdown trigger inside an interview-form .sp-field
+       fills its grid cell so the dropdown sits flush with the
+       sibling text/textarea inputs — the wrap goes block-level and
+       the trigger button stretches to its width. text-align:left
+       keeps the label aligned with text inputs rather than centred. */
+    .sp-field .lookback-dropdown-wrap { display: block; width: 100%; }
+    .sp-field .lookback-dropdown-field { width: 100%; box-sizing: border-box; text-align: left; }
+
     /* Profile-sourced fields — flag auto-populated values with the
        light-blue fill the rest of the form uses for read-only data. */
     .sp-from-profile {
@@ -470,7 +478,10 @@
       cursor: default;
     }
     .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
-    select.sp-from-profile:disabled { opacity: 0.8; }
+    /* Element-agnostic — applies to disabled <select>s and to disabled
+       lookback-dropdown trigger <button>s now that interview selects
+       use the lookback pattern. */
+    .sp-from-profile:disabled { opacity: 0.8; }
 
     /* BI-sourced fields — same shaded background as profile-sourced
        so users see at a glance that the value was auto-populated.
