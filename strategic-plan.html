@@ -384,22 +384,11 @@
 
     /* ─── TAB 3: CREATE / UPDATE PLAN (interview form) ─── */
 
-    /* Info box — matches the Tab 1 .sp-profile-note shaded-note style
-       (blue-light fill, secondary text colour) so all SP page-level
-       notes read as one consistent component. Lightbulb icon kept. */
-    .sp-info-box {
-      background: var(--blue-light);
-      border-radius: var(--btn-radius);
-      padding: 8px 12px;
-      font-size: var(--note-font-size);
-      color: var(--text-secondary);
-      margin-bottom: var(--card-padding);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      line-height: var(--note-line-height);
-    }
-    .sp-info-icon { font-size: 16px; flex-shrink: 0; }
+    /* Tab 3 section-info wrapper — provides the bottom margin so the
+       inline .info-note still sits on its own visual row above the
+       form fields. The .info-note class itself (in staxai-auth.css)
+       handles the shaded-pill appearance and is shared with Tab 1. */
+    .sp-section-info { margin-bottom: var(--card-padding); }
 
     /* Fields grid */
     .sp-fields {
@@ -443,16 +432,6 @@
       font-size: var(--label-font-size);
       color: var(--red);
       display: none;
-    }
-
-    .sp-profile-note {
-      font-size: var(--note-font-size);
-      color: var(--text-secondary);
-      line-height: var(--note-line-height);
-      background: var(--blue-light);
-      padding: 8px 12px;
-      border-radius: var(--btn-radius);
-      margin-right: auto;
     }
 
     /* Inputs */

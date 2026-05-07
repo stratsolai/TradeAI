@@ -110,7 +110,7 @@
         : s.fields.map(function(field) { return renderField(field); }).join('');
 
       var infoBox = s.infoBox
-        ? '<div class="sp-info-box"><span class="sp-info-icon">&#x1F4A1;</span> ' + escHtml(s.infoBox) + '</div>'
+        ? '<div class="sp-section-info"><span class="info-note"><span class="info-note-icon">&#x1F4A1;</span>' + escHtml(s.infoBox) + '</span></div>'
         : '';
 
       var backBtn = s.id > 0
@@ -123,7 +123,7 @@
 
       var hasProfileFields = s.fields.some(function(f) { return f.fromProfile; });
       var profileNote = hasProfileFields
-        ? '<span class="sp-profile-note">Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</span>'
+        ? '<span class="info-note"><span class="info-note-icon">&#x1F4A1;</span>Shaded fields are populated from your Business Profile. To update them, edit your Business Profile in the Content Library.</span>'
         : '';
 
       var nextBtn = '';
