@@ -626,6 +626,24 @@
       group.querySelectorAll('.filter-pill').forEach(function(c) { c.classList.remove('active'); });
       if (!wasActive) el.classList.add('active');
     } else {
+      // Multi-select with an exclusive value (e.g. Key Roles "Just Me"):
+      // selecting the exclusive chip clears every other chip; selecting
+      // any other chip clears the exclusive one. Falls through to the
+      // normal toggle for fields without an exclusiveValue.
+      var field = findFieldById(groupId);
+      var exclusive = field && field.exclusiveValue;
+      if (exclusive) {
+        var clickedValue = el.getAttribute('data-value');
+        if (clickedValue === exclusive) {
+          group.querySelectorAll('.filter-pill').forEach(function(c) {
+            if (c !== el) c.classList.remove('active');
+          });
+        } else {
+          group.querySelectorAll('.filter-pill').forEach(function(c) {
+            if (c.getAttribute('data-value') === exclusive) c.classList.remove('active');
+          });
+        }
+      }
       el.classList.toggle('active');
     }
     // User has edited the value — drop the BI-prefill shading so the
@@ -698,6 +716,16 @@
     // newly-added chip ends up selected.
     if (field.type === 'chip-single') {
       group.querySelectorAll('.filter-pill.active').forEach(function(c) { c.classList.remove('active'); });
+    }
+
+    // chip-multi with an exclusiveValue (e.g. Key Roles "Just Me"):
+    // adding a non-exclusive chip should deselect the exclusive one
+    // so the same mutual-exclusivity rule from toggleChip applies to
+    // custom +Add chips too.
+    if (field.type === 'chip-multi' && field.exclusiveValue) {
+      group.querySelectorAll('.filter-pill').forEach(function(c) {
+        if (c.getAttribute('data-value') === field.exclusiveValue) c.classList.remove('active');
+      });
     }
 
     newValues.forEach(function(val, idx) {
