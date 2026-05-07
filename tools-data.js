@@ -253,7 +253,7 @@ const TOOLS = [
   {
     id: "material-optimizer", title: "Material Cutting Optimiser", icon: "✂️",
     status: "pending", category: "suppliers-materials", type: "industry", industryKey: "fabricator",
-    desc: "Input sheet/bar dimensions and required pieces — AI calculates optimal cutting pattern to minimise waste."
+    desc: "Input sheet / bar dimensions and required pieces — AI calculates optimal cutting pattern to minimise waste."
   },
   {
     id: "weld-tracker", title: "Welder Qualification Tracker", icon: "🔥",
@@ -292,7 +292,7 @@ const TOOLS = [
   {
     id: "plant-selector", title: "Smart Plant Selector", icon: "🌿",
     status: "pending", category: "sales-marketing", type: "industry", industryKey: "landscaper",
-    desc: "Customer enters location, sun/shade, soil type and budget — AI recommends suitable plants with care guides."
+    desc: "Customer enters location, sun / shade, soil type and budget — AI recommends suitable plants with care guides."
   },
   {
     id: "seasonal-scheduler-land", title: "Seasonal Maintenance Scheduler", icon: "🍂",

@@ -49,7 +49,7 @@ window.SM_CAMPAIGN = {
     'Special offer',
     'Event',
     'Seasonal moment',
-    'Product/service launch',
+    'Product / service launch',
     'Milestone or anniversary',
     'Award or recognition',
     'None of these'

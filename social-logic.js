@@ -900,7 +900,7 @@ window.SOCIAL_LOGIC = {
       html += '<div class="form-group"><label class="form-label">Anything special? (optional)</label>' +
         '<input type="text" class="form-input" id="sm-field-special" placeholder="e.g. Heritage-listed property, tight deadline..." value="' + window.escHtml(vals.special || '') + '"></div>';
     } else if (this._currentJourney === 'behind_scenes') {
-      html += '<div class="form-group"><label class="form-label">Who is in the photo/video?</label>' +
+      html += '<div class="form-group"><label class="form-label">Who is in the photo / video?</label>' +
         '<input type="text" class="form-input" id="sm-field-who" value="' + window.escHtml(vals.who || '') + '"></div>';
       html += '<div class="form-group"><label class="form-label">What are they doing?</label>' +
         '<textarea class="form-input" id="sm-field-description" rows="3">' + window.escHtml(vals.description || '') + '</textarea></div>';

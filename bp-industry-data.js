@@ -170,7 +170,7 @@ window.BP_INDUSTRY_DATA = {
       ],
       'Concreting': [
         'Concreting (Driveways)', 'Concreting (Paths & Slabs)',
-        'Concreting (Decorative/Stencil)'
+        'Concreting (Decorative / Stencil)'
       ],
       'Maintenance': [
         'Garden Maintenance (Regular)', 'Rubbish & Green Waste Removal'
@@ -184,7 +184,7 @@ window.BP_INDUSTRY_DATA = {
       ],
       'Exterior Painting': [
         'Exterior Painting (full house)', 'Exterior Painting (partial)',
-        'Commercial Painting', 'Deck Staining & Oiling', 'Fence Painting/Staining'
+        'Commercial Painting', 'Deck Staining & Oiling', 'Fence Painting / Staining'
       ],
       'Specialist Coatings': [
         'Spray Painting', 'Rendering (Cement)', 'Rendering (Acrylic)', 'Texture Coating'
@@ -241,12 +241,12 @@ window.BP_INDUSTRY_DATA = {
     'Cleaning & Maintenance': {
       'Commercial Cleaning': [
         'Commercial Office Cleaning', 'Commercial Retail Cleaning', 'Industrial Cleaning',
-        'Warehouse Cleaning', 'Strata Common Area Cleaning', 'Medical/Dental Cleaning',
-        'Gym/Fitness Cleaning', 'School/Childcare Cleaning'
+        'Warehouse Cleaning', 'Strata Common Area Cleaning', 'Medical / Dental Cleaning',
+        'Gym / Fitness Cleaning', 'School / Childcare Cleaning'
       ],
       'Residential Cleaning': [
         'Residential Cleaning (Regular)', 'Residential Cleaning (One-off)',
-        'Deep Cleaning', 'End of Lease Cleaning', 'Move In/Out Cleaning', 'Spring Cleaning'
+        'Deep Cleaning', 'End of Lease Cleaning', 'Move In / Out Cleaning', 'Spring Cleaning'
       ],
       'Window & Exterior': [
         'Window Cleaning (Interior)', 'Window Cleaning (Exterior)',
@@ -378,7 +378,7 @@ window.BP_INDUSTRY_DATA = {
     'Painting & Finishing': {
       'Paints & Coatings': [
         'Interior Paint (per litre)', 'Exterior Paint (per litre)',
-        'Deck Oil/Stain (per litre)'
+        'Deck Oil / Stain (per litre)'
       ],
       'Wall & Ceiling Materials': [
         'Wallpaper (per roll)', 'Plaster Compound', 'Render (per bag)',
@@ -441,8 +441,8 @@ window.BP_INDUSTRY_DATA = {
       'Electrical Licences': [
         'Electrical Licence (Full)', 'Electrical Licence (Restricted)',
         'Electrical Contractor Licence',
-        'Restricted Electrical Licence (Disconnect/Reconnect)',
-        'Disconnect/Reconnect Authorisation'
+        'Restricted Electrical Licence (Disconnect / Reconnect)',
+        'Disconnect / Reconnect Authorisation'
       ],
       'Solar & Battery (CEC) Accreditations': [
         'Clean Energy Council (CEC) Accreditation',
@@ -606,8 +606,8 @@ window.BP_INDUSTRY_DATA = {
   ],
 
   paymentMethodOptions: [
-    'Cash', 'Bank Transfer/EFT', 'Credit Card', 'Debit Card', 'EFTPOS',
-    'PayPal', 'Afterpay/Zip Pay', 'Invoice (payment terms)'
+    'Cash', 'Bank Transfer / EFT', 'Credit Card', 'Debit Card', 'EFTPOS',
+    'PayPal', 'Afterpay / Zip Pay', 'Invoice (payment terms)'
   ],
 
   responseTimeOptions: [

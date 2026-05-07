@@ -404,7 +404,7 @@
 
   _renderOfferTypePills: function() {
     var current = this._journeyInputs.what || '';
-    var types = ['Discount', 'Bundle deal', 'Free service/add-on', 'Seasonal offer', 'Loyalty reward', 'Other'];
+    var types = ['Discount', 'Bundle deal', 'Free service / add-on', 'Seasonal offer', 'Loyalty reward', 'Other'];
     var html = '<div class="sm-pills-wrap">';
     types.forEach(function(t) {
       var active = current === t ? ' active' : '';

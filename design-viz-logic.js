@@ -49,7 +49,7 @@ window.DV_LOGIC = {
       { value: 'product-viz', label: 'Product Visualisation' }
     ],
     'cleaning-maintenance': [
-      { value: 'before-after', label: 'Before/After Cleaning' }
+      { value: 'before-after', label: 'Before / After Cleaning' }
     ]
   },
 
