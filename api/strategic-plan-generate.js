@@ -168,14 +168,12 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      // The plan response carries 13 narrative sections (2-3 paragraphs
-      // each), a SWOT JSON block, and up to 35 initiative sub-tasks —
-      // measured at ~6-8K output tokens in practice. The previous
-      // 6000 limit was clipping the response mid-string, which made
-      // JSON.parse(clean) below throw "Unterminated string in JSON".
-      // 16000 gives comfortable headroom while staying well under
-      // Sonnet 4.6's 64K output cap.
-      max_tokens: 16000,
+      // Pinned at Sonnet 4.6's maximum output cap so the plan response
+      // — 13 narrative sections, a SWOT JSON block, and up to 35
+      // initiative sub-tasks — is never clipped mid-string. Truncation
+      // surfaces below as JSON.parse(clean) throwing "Unterminated
+      // string in JSON" and the user seeing a 500 on Generate My Plan.
+      max_tokens: 64000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     })
@@ -204,7 +202,21 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     clean = clean.substring(0, swotStart).trim();
   }
 
-  var parsed = JSON.parse(clean);
+  var parsed;
+  try {
+    parsed = JSON.parse(clean);
+  } catch (parseErr) {
+    // Almost always this means Claude's response hit the max_tokens cap
+    // and the JSON ended mid-string. Log enough detail to confirm that
+    // (response length + tail of the payload) so the next operator can
+    // see at a glance whether to bump max_tokens or chase a different
+    // cause, and surface a friendly message to the user.
+    console.error('[SP] Failed to parse plan response JSON —',
+      'parseError:', parseErr.message,
+      'responseLength:', clean.length,
+      'tail:', clean.slice(-200));
+    throw new Error('Plan response was truncated — try regenerating');
+  }
   parsed.__swotData = swotData;
   return parsed;
 }
