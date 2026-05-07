@@ -1214,19 +1214,23 @@ window.SM_CAMPAIGN = {
       '<div class="sm-step-content">' +
       '<div class="sm-step-hint">Add more posts to your running campaign.</div>' +
       '<div class="form-group"><label class="form-label">Additional weeks</label>' +
-      '<select class="form-input sm-extend-select" id="smc-extend-weeks">' +
-      '<option value="1">1 week</option>' +
-      '<option value="2" selected>2 weeks</option>' +
-      '<option value="3">3 weeks</option>' +
-      '<option value="4">4 weeks</option>' +
-      '</select></div>' +
+      '<span class="lookback-dropdown-wrap sm-extend-select">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="smc-extend-weeks" data-value="2">2 weeks</button>'
+        + '<div class="lookback-dropdown-menu" id="smc-extend-weeks-menu">'
+        + '<button type="button" class="lookback-dropdown-item" data-value="1">1 week</button>'
+        + '<button type="button" class="lookback-dropdown-item active" data-value="2">2 weeks</button>'
+        + '<button type="button" class="lookback-dropdown-item" data-value="3">3 weeks</button>'
+        + '<button type="button" class="lookback-dropdown-item" data-value="4">4 weeks</button>'
+        + '</div></span></div>' +
       '<div class="form-group"><label class="form-label">Posts per week</label>' +
-      '<select class="form-input sm-extend-select" id="smc-extend-ppw">' +
-      '<option value="2">2 per week</option>' +
-      '<option value="3" selected>3 per week</option>' +
-      '<option value="4">4 per week</option>' +
-      '<option value="5">5 per week</option>' +
-      '</select></div>' +
+      '<span class="lookback-dropdown-wrap sm-extend-select">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="smc-extend-ppw" data-value="3">3 per week</button>'
+        + '<div class="lookback-dropdown-menu" id="smc-extend-ppw-menu">'
+        + '<button type="button" class="lookback-dropdown-item" data-value="2">2 per week</button>'
+        + '<button type="button" class="lookback-dropdown-item active" data-value="3">3 per week</button>'
+        + '<button type="button" class="lookback-dropdown-item" data-value="4">4 per week</button>'
+        + '<button type="button" class="lookback-dropdown-item" data-value="5">5 per week</button>'
+        + '</div></span></div>' +
       '</div>' +
       '<div class="action-row sm-wizard-nav sm-edit-nav">' +
       '<button class="btn-primary" id="smc-extend-submit">Generate Extension Posts</button>' +
@@ -1238,10 +1242,37 @@ window.SM_CAMPAIGN = {
       self.renderActive(campaign.id);
     });
     document.getElementById('smc-extend-submit').addEventListener('click', function() {
-      var weeks = parseInt(document.getElementById('smc-extend-weeks').value, 10);
-      var ppw = parseInt(document.getElementById('smc-extend-ppw').value, 10);
+      var weeks = parseInt(document.getElementById('smc-extend-weeks').getAttribute('data-value'), 10);
+      var ppw = parseInt(document.getElementById('smc-extend-ppw').getAttribute('data-value'), 10);
       self._submitExtend(campaign, weeks, ppw);
     });
+    this._wireLookback('smc-extend-weeks', 'smc-extend-weeks-menu');
+    this._wireLookback('smc-extend-ppw', 'smc-extend-ppw-menu');
+  },
+
+  // Inline lookback-dropdown wiring — same pattern as
+  // CL_PROJECTS._wireLookback / account-logic._wireInviteLevelDropdown.
+  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _submitExtend: async function(campaign, weeks, postsPerWeek) {
