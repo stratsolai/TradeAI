@@ -447,7 +447,14 @@
       color: var(--text);
       background: var(--white);
       transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
+      /* Strip native select chrome on every engine — without the
+         standard `appearance: none` newer Chromium/Edge versions still
+         render the OS dropdown arrow alongside the SVG arrow we draw
+         via .sp-select's background-image, which made Tab 6's plain
+         (non-BI) selects look subtly unstyled vs the rest of the page. */
       -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
     }
     .sp-input:focus,
     .sp-textarea:focus,
