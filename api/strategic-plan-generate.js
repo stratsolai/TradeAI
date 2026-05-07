@@ -112,7 +112,6 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Biggest risks: ' + _arr(planData.biggestRisks) + '\n' +
     '- Contingency planning: ' + (planData.contingencyPlanning || 'Not specified') + '\n' +
     '- Insurance: ' + _arr(planData.insuranceCoverage) + '\n' +
-    '- Insurance review due: ' + (planData.insuranceReviewDue || 'Not specified') + '\n' +
     '- Succession planning: ' + (planData.successionPlanning || 'Not specified') + '\n' +
     '- Exit timeline: ' + (planData.exitTimeline || 'Not specified') + '\n' +
     '- Exit strategy: ' + (planData.exitStrategy || 'Not specified') + '\n' +
