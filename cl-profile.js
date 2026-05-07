@@ -154,11 +154,31 @@ window.CL_PROFILE = {
 
   _goToPanel: function(panelKey, shouldValidate) {
     if (!panelKey) return;
-    // Forward navigation (Next) runs the leaving panel's validator
-    // in warn mode — modal opens with missing fields, fields get a
-    // red outline and the page scrolls to the first miss, but
-    // navigation continues regardless. Back never validates.
-    if (shouldValidate) this._validatePanel(this._activePanel);
+    var self = this;
+    // Forward navigation (Next) validates the leaving panel. When
+    // validation fails the modal opens and we defer the navigation
+    // until the user dismisses it — so the red-outlined fields and
+    // the modal message stay visible together rather than the user
+    // landing on a new panel with the modal hovering over unrelated
+    // content. Back never validates.
+    if (shouldValidate && !this._validatePanel(this._activePanel)) {
+      var msgEl = document.getElementById('prof-save-msg');
+      if (msgEl) {
+        var navigateAfterDismiss = function() { self._performPanelChange(panelKey); };
+        var okBtn = msgEl.querySelector('.save-msg-ok');
+        if (okBtn) okBtn.addEventListener('click', navigateAfterDismiss, { once: true });
+        msgEl.addEventListener('click', function(e) {
+          if (e.target === msgEl) navigateAfterDismiss();
+        }, { once: true });
+        return;
+      }
+      // Fallback if the modal element is somehow missing — fall
+      // through to the immediate navigation below.
+    }
+    this._performPanelChange(panelKey);
+  },
+
+  _performPanelChange: function(panelKey) {
     this._triggerAutoSave(this._activePanel);
     var wrap = document.getElementById('cl-tab-profile');
     if (!wrap) return;
