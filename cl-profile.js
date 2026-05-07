@@ -942,7 +942,7 @@ window.CL_PROFILE = {
     var body =
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn-add-connection" data-action="add-location" style="margin-bottom:24px">+ Add Location</button>' +
+      '<button class="btn-add-connection profile-btn-add-location" data-action="add-location">+ Add Location</button>' +
       '<div class="profile-location-block profile-location-block-websites">' +
         '<div class="profile-label profile-label-heading">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input profile-input-mb" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" />' +
