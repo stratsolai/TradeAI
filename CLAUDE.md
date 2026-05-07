@@ -354,6 +354,7 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
 - No exclamation marks in UI copy
 - No hours/dollars saved messaging
 - Apostrophes in single-quoted JS strings must be escaped with \' or use double-quoted outer strings. For HTML attributes in JS strings use &apos; or &#39;
+- Before creating any new CSS class, search how other tool files style the same HTML element type. Grep for the element (e.g. `<select class=`) across existing tools to find the platform's established pattern.
 
 ### Pre-Login Files
 - Pre-login files are not to be touched unless explicitly instructed
