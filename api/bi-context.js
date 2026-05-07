@@ -50,6 +50,8 @@ export default async function handler(req, res) {
     var grossDenominator = 0;
     var hasCogs = false;
     var currentIncome = 0;
+    var currentExpenses = 0;
+    var currentMonths = 0;
     var priorIncome = 0;
     var debtorWeighted = 0;
     var debtorBalance = 0;
@@ -79,7 +81,19 @@ export default async function handler(req, res) {
         }
       }
 
-      if (plCurrent) currentIncome += plCurrent.total_income || 0;
+      if (plCurrent) {
+        currentIncome += plCurrent.total_income || 0;
+        currentExpenses += plCurrent.total_expenses || 0;
+        // pl_summary covers 1 Jul → today; convert to whole months for
+        // the cash-runway calculation. Always at least 1 to avoid
+        // dividing by zero on day 1 of the FY.
+        if (plCurrent.period_start && plCurrent.period_end) {
+          var ps = new Date(plCurrent.period_start);
+          var pe = new Date(plCurrent.period_end);
+          var months = (pe.getFullYear() - ps.getFullYear()) * 12 + (pe.getMonth() - ps.getMonth()) + 1;
+          if (months > currentMonths) currentMonths = months;
+        }
+      }
       if (plPrior) priorIncome += plPrior.total_income || 0;
 
       if (agedAR && agedAR.total_balance > 0 && agedAR.avg_debtor_days != null) {
@@ -102,10 +116,15 @@ export default async function handler(req, res) {
       ? Math.round(debtorWeighted / debtorBalance)
       : null;
 
+    var monthlyExpenses = (currentMonths > 0 && currentExpenses > 0)
+      ? Math.round(currentExpenses / currentMonths)
+      : null;
+
     return {
       gross_margin: grossMargin,
       revenue_trend_pct: revenueTrendPct,
-      avg_debtor_days: avgDebtorDays
+      avg_debtor_days: avgDebtorDays,
+      monthly_expenses: monthlyExpenses
     };
   }
 
@@ -119,7 +138,7 @@ export default async function handler(req, res) {
     var financial = results[0];
     var customers = results[1];
     var operations = results[2];
-    var xeroExtras = results[3] || { gross_margin: null, revenue_trend_pct: null, avg_debtor_days: null };
+    var xeroExtras = results[3] || { gross_margin: null, revenue_trend_pct: null, avg_debtor_days: null, monthly_expenses: null };
 
     var insightsRes = await supabase.from('bi_insights').select('module, insight_type, insight_data').eq('user_id', userId).eq('is_dismissed', false).eq('insight_type', 'advisory').order('relevance_score', { ascending: false }).limit(10);
     var advisories = insightsRes.data || [];
@@ -142,7 +161,8 @@ export default async function handler(req, res) {
         overdue_receivable: fs.overdue_receivable || 0,
         gross_margin: xeroExtras.gross_margin,
         revenue_trend_pct: xeroExtras.revenue_trend_pct,
-        avg_debtor_days: xeroExtras.avg_debtor_days
+        avg_debtor_days: xeroExtras.avg_debtor_days,
+        monthly_expenses: xeroExtras.monthly_expenses
       };
     } else if (xeroExtras.gross_margin != null || xeroExtras.revenue_trend_pct != null || xeroExtras.avg_debtor_days != null) {
       // bi-financial returned nothing (no accounting connection summary
@@ -157,7 +177,8 @@ export default async function handler(req, res) {
         overdue_receivable: 0,
         gross_margin: xeroExtras.gross_margin,
         revenue_trend_pct: xeroExtras.revenue_trend_pct,
-        avg_debtor_days: xeroExtras.avg_debtor_days
+        avg_debtor_days: xeroExtras.avg_debtor_days,
+        monthly_expenses: xeroExtras.monthly_expenses
       };
     }
 

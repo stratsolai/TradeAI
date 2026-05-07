@@ -638,11 +638,98 @@
     }); });
   }
 
+  // Section 3 bucketing — converts raw BI numbers to the option values
+  // defined in strategic-plan-data.js. Boundaries match the actual form
+  // options (verified at build time); the BI Prefill spec's proposed
+  // boundaries differed for revenue, gross margin, and net margin.
+
+  function bucketRevenue(amount) {
+    if (amount == null || isNaN(amount)) return null;
+    if (amount < 100000) return 'under-100k';
+    if (amount < 250000) return '100k-250k';
+    if (amount < 500000) return '250k-500k';
+    if (amount < 1000000) return '500k-1m';
+    if (amount < 2000000) return '1m-2m';
+    if (amount < 5000000) return '2m-5m';
+    return '5m+';
+  }
+
+  function bucketRevenueTrend(pctChange) {
+    if (pctChange == null || isNaN(pctChange)) return null;
+    if (pctChange >= 20) return 'growing-strongly';
+    if (pctChange >= 5) return 'growing';
+    if (pctChange >= -5) return 'stable';
+    return 'declining';
+  }
+
+  // Form options for gross margin: under-10 / 10-20 / 20-30 / 30-40 /
+  // 40-50 / 50+. All non-negative — a negative result (rare) maps to
+  // under-10 so the field still prefills with the closest available
+  // bucket rather than staying blank.
+  function bucketGrossMargin(pct) {
+    if (pct == null || isNaN(pct)) return null;
+    if (pct < 10) return 'under-10';
+    if (pct < 20) return '10-20';
+    if (pct < 30) return '20-30';
+    if (pct < 40) return '30-40';
+    if (pct < 50) return '40-50';
+    return '50+';
+  }
+
+  // Form options for net margin: loss / break-even / 1-5 / 5-10 / 10-15
+  // / 15-20 / 20+.
+  function bucketNetMargin(pct) {
+    if (pct == null || isNaN(pct)) return null;
+    if (pct < 0) return 'loss';
+    if (pct < 1) return 'break-even';
+    if (pct < 5) return '1-5';
+    if (pct < 10) return '5-10';
+    if (pct < 15) return '10-15';
+    if (pct < 20) return '15-20';
+    return '20+';
+  }
+
+  function bucketCashRunway(cashBalance, monthlyExpenses) {
+    if (cashBalance == null || monthlyExpenses == null || monthlyExpenses <= 0) return null;
+    var months = cashBalance / monthlyExpenses;
+    if (months < 1) return 'tight';
+    if (months < 3) return 'adequate';
+    if (months < 6) return 'comfortable';
+    return 'strong';
+  }
+
+  function bucketDebtorDays(days) {
+    if (days == null || isNaN(days)) return null;
+    if (days <= 7) return 'same-day';
+    if (days <= 14) return '7-days';
+    if (days <= 30) return '14-30-days';
+    if (days <= 60) return '30-60-days';
+    return '60+-days';
+  }
+
   function prefillFromBIContext(bi) {
-    if (!bi) return;
+    if (!bi || !bi.financial) return;
+    var fin = bi.financial;
+
+    // Map of form apiKey → bucketed value derived from the BI response.
+    // Gross margin falls back to operating margin (profit_margin) when
+    // Cost of Sales accounts are absent — the spec accepts that this
+    // mislabels the figure but ensures the field prefills.
+    var prefillValues = {
+      annualRevenue:    bucketRevenue(fin.revenue),
+      revenueTrend:     bucketRevenueTrend(fin.revenue_trend_pct),
+      grossMargin:      fin.gross_margin != null
+                          ? bucketGrossMargin(fin.gross_margin)
+                          : bucketGrossMargin(fin.profit_margin),
+      netProfitMargin:  bucketNetMargin(fin.profit_margin),
+      cashPosition:     bucketCashRunway(fin.cash_balance, fin.monthly_expenses),
+      avgPaymentTime:   bucketDebtorDays(fin.avg_debtor_days)
+    };
+
     window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
       if (!f.fromBI) return;
-      var v = bi[f.apiKey]; if (v == null) return;
+      var v = prefillValues[f.apiKey];
+      if (v == null) return;
       var el = document.getElementById(f.id); if (!el || el.value) return;
       if (f.type === 'chip-single') {
         el.value = v;
