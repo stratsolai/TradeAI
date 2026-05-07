@@ -616,7 +616,7 @@
       if (!jwt) return;
       fetch('/api/bi-context', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt} })
         .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(d) { if (d && d.context) prefillFromBIContext(d.context); })
+        .then(function(d) { if (d && d.data) prefillFromBIContext(d.data); })
         .catch(function(err) { console.error('[SP] BI context fetch error:', err.message || err); });
     });
   }

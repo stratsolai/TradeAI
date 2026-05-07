@@ -4,7 +4,8 @@
 // data normalisation. Never exposes tokens to the browser.
 //
 // Supported actions: invoices, bills, contacts, items, quotes, jobs,
-// pl_summary, pl_breakdown, balances
+// pl_summary, pl_summary_prior_year, pl_breakdown, balances,
+// aged_receivables
 //
 // Caching: responses are cached in cl_xero_cache for 15 minutes per
 // (user_id, tenant_id, action). Callers can pass bypassCache: true in
@@ -385,6 +386,48 @@ export default async function handler(req, res) {
         net_profit: totalIncome - totalExpenses,
         platform: 'xero'
       };
+    } else if (action === 'pl_summary_prior_year') {
+      // Profit & Loss for the prior financial year — same parser as
+      // pl_summary, used by BI to compute year-on-year revenue trend.
+      var nowPY = new Date();
+      var priorFyStart, priorFyEnd;
+      if (nowPY.getMonth() >= 6) {
+        // Current FY started 1 Jul of this calendar year — prior FY was
+        // 1 Jul (year-1) to 30 Jun (year).
+        priorFyStart = new Date(nowPY.getFullYear() - 1, 6, 1);
+        priorFyEnd = new Date(nowPY.getFullYear(), 5, 30);
+      } else {
+        // Current FY started 1 Jul of last calendar year — prior FY was
+        // 1 Jul (year-2) to 30 Jun (year-1).
+        priorFyStart = new Date(nowPY.getFullYear() - 2, 6, 1);
+        priorFyEnd = new Date(nowPY.getFullYear() - 1, 5, 30);
+      }
+      var fromDatePY = priorFyStart.toISOString().split('T')[0];
+      var toDatePY = priorFyEnd.toISOString().split('T')[0];
+      var dataPY = await xeroGet('/Reports/ProfitAndLoss?fromDate=' + fromDatePY + '&toDate=' + toDatePY);
+      var reportPY = dataPY.Reports && dataPY.Reports[0];
+      var totalIncomePY = 0;
+      var totalExpensesPY = 0;
+      if (reportPY && Array.isArray(reportPY.Rows)) {
+        reportPY.Rows.forEach(function (section) {
+          if (section.RowType === 'Section' && section.Title === 'Income') {
+            var summaryRowPY = (section.Rows || []).find(function (r) { return r.RowType === 'SummaryRow'; });
+            if (summaryRowPY && summaryRowPY.Cells && summaryRowPY.Cells[1]) totalIncomePY = parseFloat(summaryRowPY.Cells[1].Value) || 0;
+          }
+          if (section.RowType === 'Section' && section.Title === 'Less Operating Expenses') {
+            var summaryRowPY2 = (section.Rows || []).find(function (r) { return r.RowType === 'SummaryRow'; });
+            if (summaryRowPY2 && summaryRowPY2.Cells && summaryRowPY2.Cells[1]) totalExpensesPY = parseFloat(summaryRowPY2.Cells[1].Value) || 0;
+          }
+        });
+      }
+      result = {
+        period_start: fromDatePY,
+        period_end: toDatePY,
+        total_income: totalIncomePY,
+        total_expenses: totalExpensesPY,
+        net_profit: totalIncomePY - totalExpensesPY,
+        platform: 'xero'
+      };
     } else if (action === 'pl_breakdown') {
       // Profit & Loss with monthly breakdown for the rolling 11 months
       // ending in the current month. Xero's periods parameter is capped
@@ -473,6 +516,73 @@ export default async function handler(req, res) {
         cash_balance: cash,
         accounts_receivable: receivable,
         accounts_payable: payable,
+        as_at_date: new Date().toISOString().split('T')[0],
+        platform: 'xero'
+      };
+    } else if (action === 'aged_receivables') {
+      // Aged Receivables Report — parses the report's aging buckets and
+      // returns a weighted-average days-outstanding figure used by BI to
+      // populate the Strategic Plan "Average Time Customers Take to Pay"
+      // field. Requires accounting.reports.read scope.
+      var dataAR = await xeroGet('/Reports/AgedReceivablesByContact');
+      var reportAR = dataAR.Reports && dataAR.Reports[0];
+
+      // Map each aging bucket header to a midpoint (days outstanding).
+      // Match by substring so we tolerate Xero's various column-naming
+      // conventions ("Current", "1 Month", "1-30 Days", etc.).
+      function bucketMidpoint(label) {
+        var l = (label || '').toLowerCase();
+        if (l.indexOf('current') !== -1 || l.indexOf('not due') !== -1) return 0;
+        if (l.indexOf('< 1 month') !== -1 || l.indexOf('1-30') !== -1 || l.indexOf('< 30') !== -1) return 15;
+        if (l.indexOf('1 month') !== -1 || l.indexOf('31-60') !== -1) return 45;
+        if (l.indexOf('2 month') !== -1 || l.indexOf('61-90') !== -1) return 75;
+        if (l.indexOf('3+ month') !== -1 || l.indexOf('3 month') !== -1
+            || l.indexOf('91+') !== -1 || l.indexOf('older') !== -1
+            || l.indexOf('over 90') !== -1) return 120;
+        return null;
+      }
+
+      // Pull bucket midpoints from the header row, indexed by column.
+      var bucketDays = [];
+      var totalCol = -1;
+      if (reportAR && Array.isArray(reportAR.Rows)) {
+        var headerRowAR = reportAR.Rows.find(function (r) { return r.RowType === 'Header'; });
+        if (headerRowAR && Array.isArray(headerRowAR.Cells)) {
+          for (var ci = 0; ci < headerRowAR.Cells.length; ci++) {
+            var cellLabel = (headerRowAR.Cells[ci] && headerRowAR.Cells[ci].Value) || '';
+            var mid = bucketMidpoint(cellLabel);
+            bucketDays[ci] = mid;
+            if ((cellLabel || '').toLowerCase().indexOf('total') !== -1) totalCol = ci;
+          }
+        }
+      }
+
+      // Sum amount × midpoint across all data rows and bucket columns.
+      var weightedDays = 0;
+      var totalBalance = 0;
+      if (reportAR && Array.isArray(reportAR.Rows)) {
+        reportAR.Rows.forEach(function (section) {
+          if (section.RowType !== 'Section') return;
+          (section.Rows || []).forEach(function (row) {
+            if (row.RowType !== 'Row' || !Array.isArray(row.Cells)) return;
+            // Skip the per-row total column when summing buckets, otherwise
+            // the totalBalance double-counts.
+            for (var bi = 0; bi < row.Cells.length; bi++) {
+              if (bi === totalCol) continue;
+              var midD = bucketDays[bi];
+              if (midD == null) continue;
+              var amt = parseFloat(row.Cells[bi].Value) || 0;
+              if (!amt) continue;
+              weightedDays += amt * midD;
+              totalBalance += amt;
+            }
+          });
+        });
+      }
+
+      result = {
+        avg_debtor_days: totalBalance > 0 ? Math.round(weightedDays / totalBalance) : null,
+        total_balance: Math.round(totalBalance),
         as_at_date: new Date().toISOString().split('T')[0],
         platform: 'xero'
       };
