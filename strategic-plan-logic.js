@@ -278,7 +278,14 @@
       // Catch every other input/select change in the section container
       // so autosave fires whether the user is typing, picking a chip,
       // or changing a dropdown.
-      container.addEventListener('change', function() { scheduleDraftSave(); });
+      container.addEventListener('change', function(e) {
+        // User changed a BI-prefilled select — drop the shading so it
+        // reflects user-set state. No-op if the class wasn't there.
+        if (e.target && e.target.classList && e.target.classList.contains('sp-from-bi')) {
+          e.target.classList.remove('sp-from-bi');
+        }
+        scheduleDraftSave();
+      });
       container.addEventListener('click', function(e) {
         if (e.target.closest('.filter-pill') || e.target.closest('[data-nav]')) {
           scheduleDraftSave();
@@ -575,6 +582,10 @@
     } else {
       el.classList.toggle('active');
     }
+    // User has edited the value — drop the BI-prefill shading so the
+    // group reads as user-set, not auto-populated. No-op if the
+    // class wasn't there.
+    group.classList.remove('sp-from-bi');
     updateHiddenFromChips(groupId);
   }
 
@@ -912,13 +923,16 @@
       if (f.type === 'chip-single') {
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
-        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+        if (g) {
+          g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+          // Shade the chip group container to match the select fill
+          // — page-scoped CSS adds padding/radius so the area reads
+          // as a contained shaded box, not a thin tint behind chips.
+          g.classList.add('sp-from-bi');
+        }
       } else {
         el.value = v;
-        // Shade the select to signal "auto-populated" — same blue-
-        // light background as profile-sourced fields, but the field
-        // stays editable. Chip-single fields don't need this: the
-        // active chip already has the blue-light fill.
+        // Shade the select to signal "auto-populated".
         el.classList.add('sp-from-bi');
       }
     }); });

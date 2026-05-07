@@ -499,6 +499,13 @@
     .sp-from-bi {
       background: var(--blue-light);
     }
+    /* Chip-group shading — selects fill an opaque box, so the chip
+       group needs padding + radius to read as the same kind of
+       contained shaded area rather than a thin tint behind chips. */
+    .sp-chip-group.sp-from-bi {
+      padding: 6px;
+      border-radius: var(--input-radius);
+    }
 
     /* Form selection pills */
     .sp-chip-group {
