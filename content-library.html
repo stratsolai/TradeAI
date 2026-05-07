@@ -333,9 +333,18 @@
 .profile-hours-day { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text); }
 .profile-hours-day input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--blue); cursor: pointer; }
 .profile-hours-preset { display: flex; gap: 8px; margin-bottom: 12px; }
+/* Stretch the open/close lookback-dropdown triggers so each fills
+   its 1fr grid column the same way the previous <select>s did. */
+.profile-hours-row .lookback-dropdown-wrap { display: block; width: 100%; }
+.profile-hours-row .lookback-dropdown-field { width: 100%; box-sizing: border-box; text-align: left; }
 
 .profile-field-full .lookback-dropdown-wrap { width: 100%; }
 .profile-field-full .lookback-dropdown { width: 100%; text-align: left; box-sizing: border-box; }
+/* State picker sits in the 80px column of .profile-address-row; the
+   lookback trigger needs to stretch to that column rather than sit
+   content-sized so it lines up with the suburb + postcode siblings. */
+.profile-address-row .lookback-dropdown-wrap { display: block; width: 100%; }
+.profile-address-row .lookback-dropdown-field { width: 100%; box-sizing: border-box; text-align: left; }
 
     @media (max-width: 768px) {
       .profile-fields { grid-template-columns: 1fr; }

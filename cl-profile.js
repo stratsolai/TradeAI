@@ -981,6 +981,7 @@ window.CL_PROFILE = {
     self._bindHoursPresets();
     self._bindAutoSave('location', locPanel);
     self._wireStateDropdowns(locPanel);
+    self._wireHoursDropdowns(locPanel);
     self._initStreetAutocomplete();
 
     document.addEventListener('click', function(e) {
@@ -1055,15 +1056,30 @@ window.CL_PROFILE = {
     if (Array.isArray(hours)) {
       hours.forEach(function(h) { hoursMap[h.day] = h; });
     }
-    var timeOpts = '';
+    // Build the time-option list once and reuse for every open/close
+    // dropdown. The trigger button label uses the human-readable
+    // form ("8:00 AM"); the menu items carry the same label as their
+    // text, with the 24-hour value stashed in data-value.
+    var timeChoices = [];
     for (var h = 0; h < 24; h++) {
       for (var m = 0; m < 60; m += 30) {
         var hh = (h < 10 ? '0' : '') + h;
         var mm = m === 0 ? '00' : '30';
         var label = (h === 0 ? '12' : h > 12 ? (h - 12) : h) + ':' + mm + (h < 12 ? ' AM' : ' PM');
-        timeOpts += '<option value="' + hh + ':' + mm + '">' + label + '</option>';
+        timeChoices.push({ value: hh + ':' + mm, label: label });
       }
     }
+    var renderTimeMenu = function(activeValue) {
+      return timeChoices.map(function(t) {
+        return '<button type="button" class="lookback-dropdown-item' + (t.value === activeValue ? ' active' : '') + '" data-value="' + t.value + '">' + t.label + '</button>';
+      }).join('');
+    };
+    var labelFor = function(value) {
+      for (var i = 0; i < timeChoices.length; i++) {
+        if (timeChoices[i].value === value) return timeChoices[i].label;
+      }
+      return value;
+    };
 
     var presetHtml = '<div class="profile-hours-preset">' +
       '<button type="button" class="btn-outline btn-sm prof-hours-preset" data-preset="business">Mon\u2013Fri 8:00\u20135:00</button>' +
@@ -1074,10 +1090,19 @@ window.CL_PROFILE = {
     var rowsHtml = days.map(function(day) {
       var data = hoursMap[day] || { enabled: false, open: '08:00', close: '17:00' };
       var checked = data.enabled ? ' checked' : '';
+      var openVal = data.open || '08:00';
+      var closeVal = data.close || '17:00';
+      var disabledAttr = data.enabled ? '' : ' disabled';
       return '<div class="profile-hours-row">' +
         '<label class="profile-hours-day"><input type="checkbox" class="prof-hours-toggle" data-day="' + day + '"' + checked + ' /> ' + day + '</label>' +
-        '<select class="profile-input prof-hours-open" data-day="' + day + '"' + (data.enabled ? '' : ' disabled') + '>' + timeOpts.replace('value="' + (data.open || '08:00') + '"', 'value="' + (data.open || '08:00') + '" selected') + '</select>' +
-        '<select class="profile-input prof-hours-close" data-day="' + day + '"' + (data.enabled ? '' : ' disabled') + '>' + timeOpts.replace('value="' + (data.close || '17:00') + '"', 'value="' + (data.close || '17:00') + '" selected') + '</select>' +
+        '<span class="lookback-dropdown-wrap">'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-open" data-day="' + day + '" data-value="' + openVal + '"' + disabledAttr + '>' + labelFor(openVal) + '</button>'
+          + '<div class="lookback-dropdown-menu prof-hours-open-menu">' + renderTimeMenu(openVal) + '</div>'
+        + '</span>' +
+        '<span class="lookback-dropdown-wrap">'
+          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-close" data-day="' + day + '" data-value="' + closeVal + '"' + disabledAttr + '>' + labelFor(closeVal) + '</button>'
+          + '<div class="lookback-dropdown-menu prof-hours-close-menu">' + renderTimeMenu(closeVal) + '</div>'
+        + '</span>' +
       '</div>';
     }).join('');
 
@@ -1087,8 +1112,27 @@ window.CL_PROFILE = {
   _toggleHoursRow: function(checkbox) {
     var day = checkbox.dataset.day;
     var row = checkbox.closest('.profile-hours-row');
-    var selects = row.querySelectorAll('select');
-    selects.forEach(function(s) { s.disabled = !checkbox.checked; });
+    // Now operating on lookback-dropdown trigger buttons rather than
+    // native <select>s — same .disabled property, just on a different
+    // element type. Buttons that are .disabled don't fire click, so
+    // the menu can't open while the day is unchecked.
+    row.querySelectorAll('.lookback-dropdown-field').forEach(function(b) { b.disabled = !checkbox.checked; });
+  },
+
+  // Wire every open/close lookback in the hours grid. Multiple
+  // instances render (7 days × open + close = 14), so wiring is
+  // class-based rather than ID-based: each trigger's sibling menu is
+  // found via parentNode + class. The onSelect callback fires the
+  // location-panel auto-save the same way native change events used
+  // to be picked up by _bindAutoSave's `select` selector.
+  _wireHoursDropdowns: function(scope) {
+    var self = this;
+    scope.querySelectorAll('.prof-hours-open, .prof-hours-close').forEach(function(btn) {
+      var menu = btn.parentNode.querySelector('.lookback-dropdown-menu');
+      self._wireLookback(btn, menu, function() {
+        self._scheduleAutoSave('location', 300);
+      });
+    });
   },
 
   _bindHoursPresets: function() {
@@ -1101,13 +1145,17 @@ window.CL_PROFILE = {
         var toggles = grid.querySelectorAll('.prof-hours-toggle');
         var opens = grid.querySelectorAll('.prof-hours-open');
         var closes = grid.querySelectorAll('.prof-hours-close');
+        var setTime = function(triggerBtn, value) {
+          var menu = triggerBtn.parentNode.querySelector('.lookback-dropdown-menu');
+          self._setLookbackValue(triggerBtn, menu, value);
+        };
         toggles.forEach(function(t, i) {
           if (preset === '24-7') {
             t.checked = true;
             opens[i].disabled = false;
-            opens[i].value = '00:00';
+            setTime(opens[i], '00:00');
             closes[i].disabled = false;
-            closes[i].value = '23:30';
+            setTime(closes[i], '23:30');
           } else if (preset === 'appointment') {
             t.checked = false;
             opens[i].disabled = true;
@@ -1117,7 +1165,7 @@ window.CL_PROFILE = {
             t.checked = isWeekday;
             opens[i].disabled = !isWeekday;
             closes[i].disabled = !isWeekday;
-            if (isWeekday) { opens[i].value = '08:00'; closes[i].value = '17:00'; }
+            if (isWeekday) { setTime(opens[i], '08:00'); setTime(closes[i], '17:00'); }
           }
         });
       });
@@ -1134,8 +1182,8 @@ window.CL_PROFILE = {
       hours.push({
         day: toggle.dataset.day,
         enabled: toggle.checked,
-        open: row.querySelector('.prof-hours-open').value,
-        close: row.querySelector('.prof-hours-close').value
+        open: row.querySelector('.prof-hours-open').getAttribute('data-value') || '',
+        close: row.querySelector('.prof-hours-close').getAttribute('data-value') || ''
       });
     });
     return hours;
