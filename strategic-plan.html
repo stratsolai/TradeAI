@@ -495,9 +495,11 @@
     /* BI-sourced fields — same shaded background as profile-sourced
        so users see at a glance that the value was auto-populated.
        Unlike profile-sourced fields these stay editable, so we
-       don't override cursor or focus state. */
+       don't override cursor or focus state. Use background-color
+       (not the background shorthand) so the .sp-select rule's
+       SVG dropdown-arrow background-image is preserved. */
     .sp-from-bi {
-      background: var(--blue-light);
+      background-color: var(--blue-light);
     }
     /* Form selection pills.
        The 6px transparent border reserves space so the chip-group's

@@ -162,7 +162,13 @@
       var opts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
-      input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
+      // Optimistic .sp-from-bi shading at render time so users see
+      // the auto-populate cue immediately rather than waiting ~3s
+      // for the BI fetch. prefillFromBIContext clears the class
+      // when BI returns no value or the user has typed a different
+      // value first.
+      var biClass = field.fromBI ? ' sp-from-bi' : '';
+      input = '<select id="' + field.id + '" class="sp-select' + biClass + '">' + opts + '</select>';
     } else if (field.type === 'select-or-text') {
       var sOpts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
@@ -175,7 +181,10 @@
       var chips = (field.options || []).map(function(o) {
         return '<div class="filter-pill" data-value="' + escHtml(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + escHtml(o.label) + '</div>';
       }).join('');
-      input = '<div class="sp-chip-group" id="' + field.id + '-chips">' + chips + '</div>';
+      // Optimistic .sp-from-bi on chip-single fromBI groups — same
+      // reasoning as the select branch above.
+      var chipBiClass = (field.type === 'chip-single' && field.fromBI) ? ' sp-from-bi' : '';
+      input = '<div class="sp-chip-group' + chipBiClass + '" id="' + field.id + '-chips">' + chips + '</div>';
       if (field.allowOther) {
         // BP-style "Add" pattern: type a value, click Add, becomes a
         // removable chip. Replaces the older "Other" pill + comma-
@@ -915,36 +924,37 @@
       avgPaymentTime:   bucketDebtorDays(fin.avg_debtor_days)
     };
 
-    var applied = 0, skipped = 0;
+    var applied = 0, cleared = 0;
     window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
       if (!f.fromBI) return;
-      var v = prefillValues[f.apiKey];
-      if (v == null) return;
       var el = document.getElementById(f.id);
       if (!el) return;
-      // Skip only when the field already holds a *different* value
-      // (user-edited, or restored from a draft made when BI returned
-      // something else). When the existing value matches BI — most
-      // commonly because loadDraft restored what BI itself populated
-      // last session — we still need to apply sp-from-bi so the
-      // shading shows. The earlier `el.value &&` guard was returning
-      // before the class was added, which is why no shading showed
-      // after a draft restore.
-      if (el.value && el.value !== v) { skipped++; return; }
+      var target = (f.type === 'chip-single')
+        ? document.getElementById(f.id + '-chips')
+        : el;
+      var v = prefillValues[f.apiKey];
+      // BI returned nothing, or the user already has a different
+      // value: clear the optimistic .sp-from-bi shading that was
+      // pre-applied at render time. This is what makes the no-Xero
+      // (or Xero-but-no-data) case smoothly unshade.
+      if (v == null || (el.value && el.value !== v)) {
+        if (target) target.classList.remove('sp-from-bi');
+        cleared++;
+        return;
+      }
+      // BI provides v and either field is empty or matches v — set
+      // the value (no-op if already correct) and leave shading on
+      // (already pre-applied at render).
       if (f.type === 'chip-single') {
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
-        if (g) {
-          g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
-          g.classList.add('sp-from-bi');
-        }
+        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
       } else {
         el.value = v;
-        el.classList.add('sp-from-bi');
       }
       applied++;
     }); });
-    console.log('[SP] BI prefill — applied sp-from-bi to ' + applied + ' field(s), skipped ' + skipped);
+    console.log('[SP] BI prefill — kept sp-from-bi on ' + applied + ' field(s), cleared ' + cleared);
   }
 
   function collectSectionData() {
