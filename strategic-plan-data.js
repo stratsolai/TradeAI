@@ -172,7 +172,7 @@ window.SP_SECTIONS = [
   // ─────────────────────────────────────────────────────────────────────
   {
     id: 6,
-    icon: "\u{1F6E1}",
+    icon: "\u{1F6E1}\uFE0F",
     title: "7. Risk & Resilience",
     chipLabel: "Risk & Resilience",
     subtitle: "Business risks, insurance, compliance, contingency, and succession planning",
