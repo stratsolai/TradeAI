@@ -311,16 +311,12 @@
     }
   }
 
-  // Autosave the in-progress interview answers to localStorage so the
-  // user doesn't lose work if they navigate away mid-interview.
-  // localStorage chosen over a Supabase column to avoid a schema change
-  // (which would need its own approved spec). Trade-off: drafts are
-  // device-local and clear if the browser data is wiped.
+  // Autosave the in-progress interview answers to the
+  // strategic_plan_drafts Supabase table so the draft follows the
+  // user across devices/sessions. RLS on the table restricts each
+  // user to their own row; one row per user (UNIQUE on user_id).
+  // Migration: migrations/strategic-plan-drafts.sql.
   var _draftTimer = null;
-
-  function _draftKey() {
-    return _userId ? ('sp_draft_' + _userId) : null;
-  }
 
   function scheduleDraftSave() {
     if (_draftTimer) clearTimeout(_draftTimer);
@@ -328,15 +324,18 @@
   }
 
   function saveDraftNow() {
-    var key = _draftKey();
-    if (!key) return;
+    if (!_supabase || !_userId) return;
     var data = collectFieldValuesForDraft();
-    try {
-      localStorage.setItem(key, JSON.stringify({ data: data, savedAt: Date.now() }));
-      flashSavedIndicator(currentSection);
-    } catch (err) {
-      console.error('[SP] draft save error:', err.message || err);
-    }
+    _supabase
+      .from('strategic_plan_drafts')
+      .upsert({ user_id: _userId, draft_data: data }, { onConflict: 'user_id' })
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP] draft save error:', res.error.message || res.error);
+          return;
+        }
+        flashSavedIndicator(currentSection);
+      });
   }
 
   function collectFieldValuesForDraft() {
@@ -360,23 +359,36 @@
     return data;
   }
 
+  // Returns a Promise so init can chain BI prefill after the draft
+  // restore — that way prefillFromBIContext sees the post-draft
+  // field state and decides shading correctly.
   function loadDraft() {
-    var key = _draftKey();
-    if (!key) return;
-    try {
-      var raw = localStorage.getItem(key);
-      if (!raw) return;
-      var parsed = JSON.parse(raw);
-      if (parsed && parsed.data) prefillFromPreviousPlan(parsed.data);
-    } catch (err) {
-      console.error('[SP] draft load error:', err.message || err);
-    }
+    if (!_supabase || !_userId) return Promise.resolve();
+    return _supabase
+      .from('strategic_plan_drafts')
+      .select('draft_data')
+      .eq('user_id', _userId)
+      .maybeSingle()
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP] draft load error:', res.error.message || res.error);
+          return;
+        }
+        if (res.data && res.data.draft_data) {
+          prefillFromPreviousPlan(res.data.draft_data);
+        }
+      });
   }
 
   function clearDraft() {
-    var key = _draftKey();
-    if (!key) return;
-    try { localStorage.removeItem(key); } catch (e) {}
+    if (!_supabase || !_userId) return;
+    _supabase
+      .from('strategic_plan_drafts')
+      .delete()
+      .eq('user_id', _userId)
+      .then(function(res) {
+        if (res.error) console.error('[SP] draft clear error:', res.error.message || res.error);
+      });
   }
 
   // Set true on the first user interaction inside the SP container.
@@ -1861,15 +1873,17 @@
     bindDocEvents();
     bindModalEvents();
     loadProfile();
-    loadBIContext();
 
     checkPlanExists().then(function(exists) {
       updateTabStates();
 
-      // Apply any in-progress localStorage draft on top of the prefills
-      // above so the user's last-typed values win (BI/profile prefill
-      // already only fills empty fields, so this is safe).
-      loadDraft();
+      // Sequence: load the Supabase-backed draft first so any in-
+      // progress values are in place, then load BI context. BI
+      // prefill reads each field's current value to decide whether
+      // to keep or clear the optimistic .sp-from-bi shading, so it
+      // must run AFTER the draft restore — otherwise BI's shading
+      // decisions race with the draft's value-set.
+      loadDraft().then(function() { loadBIContext(); });
 
       var params = new URLSearchParams(window.location.search);
       if (params.get('rewrite') === 'true' && exists) {
