@@ -97,8 +97,12 @@
         : '';
 
       var backBtn = s.id > 0
-        ? '<button class="btn-outline" data-nav="-1">Back</button>'
+        ? '<button class="btn-back" data-nav="-1">Back</button>'
         : '<span></span>';
+
+      var savedIndicator = '<span id="sp-saved-' + s.id + '" class="sp-saved-indicator" ' +
+        'style="color:var(--text-secondary);font-size:13px;opacity:0;transition:opacity 0.3s;margin-left:12px">' +
+        'Saved ✓</span>';
 
       var hasProfileFields = s.fields.some(function(f) { return f.fromProfile; });
       var profileNote = hasProfileFields
@@ -107,7 +111,7 @@
 
       var nextBtn = '';
       if (s.id < sections.length - 1) {
-        nextBtn = '<button class="btn-primary" data-nav="1">Next</button>';
+        nextBtn = '<button class="btn-back" data-nav="1">Next</button>';
       } else {
         nextBtn = '<button class="btn-primary btn-sp-generate">Generate My Plan</button>';
       }
@@ -123,7 +127,7 @@
         infoBox +
         '<div class="sp-fields">' + fieldsHtml + '</div>' +
         '<div class="sp-nav-buttons">' +
-          '<div class="sp-nav-left">' + backBtn + '</div>' +
+          '<div class="sp-nav-left">' + backBtn + savedIndicator + '</div>' +
           '<div class="sp-nav-centre">' + profileNote + '</div>' +
           '<div class="sp-nav-right">' + nextBtn + '</div>' +
         '</div>' +
@@ -254,8 +258,96 @@
             updateChipHiddenWithOther(fieldId);
           }
         }
+        scheduleDraftSave();
       });
+
+      // Catch every other input/select change in the section container
+      // so autosave fires whether the user is typing, picking a chip,
+      // or changing a dropdown.
+      container.addEventListener('change', function() { scheduleDraftSave(); });
+      container.addEventListener('click', function(e) {
+        if (e.target.closest('.filter-pill') || e.target.closest('[data-nav]')) {
+          scheduleDraftSave();
+        }
+      });
+      container.addEventListener('blur', function() { scheduleDraftSave(); }, true);
     }
+  }
+
+  // Autosave the in-progress interview answers to localStorage so the
+  // user doesn't lose work if they navigate away mid-interview.
+  // localStorage chosen over a Supabase column to avoid a schema change
+  // (which would need its own approved spec). Trade-off: drafts are
+  // device-local and clear if the browser data is wiped.
+  var _draftTimer = null;
+
+  function _draftKey() {
+    return _userId ? ('sp_draft_' + _userId) : null;
+  }
+
+  function scheduleDraftSave() {
+    if (_draftTimer) clearTimeout(_draftTimer);
+    _draftTimer = setTimeout(saveDraftNow, 500);
+  }
+
+  function saveDraftNow() {
+    var key = _draftKey();
+    if (!key) return;
+    var data = collectFieldValuesForDraft();
+    try {
+      localStorage.setItem(key, JSON.stringify({ data: data, savedAt: Date.now() }));
+      flashSavedIndicator(currentSection);
+    } catch (err) {
+      console.error('[SP] draft save error:', err.message || err);
+    }
+  }
+
+  function collectFieldValuesForDraft() {
+    var data = {};
+    window.SP_SECTIONS.forEach(function(section) {
+      section.fields.forEach(function(field) {
+        var el = document.getElementById(field.id);
+        if (!el) return;
+        var raw = (el.value || '').trim();
+        if (!raw) return;
+        var key = field.apiKey || field.id;
+        if (field.valueType === 'array') {
+          data[key] = raw.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
+        } else if (field.valueType === 'number') {
+          data[key] = parseFloat(raw);
+        } else {
+          data[key] = raw;
+        }
+      });
+    });
+    return data;
+  }
+
+  function loadDraft() {
+    var key = _draftKey();
+    if (!key) return;
+    try {
+      var raw = localStorage.getItem(key);
+      if (!raw) return;
+      var parsed = JSON.parse(raw);
+      if (parsed && parsed.data) prefillFromPreviousPlan(parsed.data);
+    } catch (err) {
+      console.error('[SP] draft load error:', err.message || err);
+    }
+  }
+
+  function clearDraft() {
+    var key = _draftKey();
+    if (!key) return;
+    try { localStorage.removeItem(key); } catch (e) {}
+  }
+
+  function flashSavedIndicator(sectionId) {
+    var el = document.getElementById('sp-saved-' + sectionId);
+    if (!el) return;
+    el.style.opacity = '1';
+    if (el._fadeTimer) clearTimeout(el._fadeTimer);
+    el._fadeTimer = setTimeout(function() { el.style.opacity = '0'; }, 2000);
   }
 
   function updateChipHiddenWithOther(fieldId) {
@@ -865,6 +957,7 @@
   function onPlanGenerated(result) {
     hasPlan = true;
     _currentPlanData = result;
+    clearDraft();
     updateTabStates();
     switchTab('ops-plan');
   }
@@ -1646,6 +1739,11 @@
 
     checkPlanExists().then(function(exists) {
       updateTabStates();
+
+      // Apply any in-progress localStorage draft on top of the prefills
+      // above so the user's last-typed values win (BI/profile prefill
+      // already only fills empty fields, so this is safe).
+      loadDraft();
 
       var params = new URLSearchParams(window.location.search);
       if (params.get('rewrite') === 'true' && exists) {
