@@ -473,7 +473,7 @@ window.CL_PROFILE = {
       { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
       { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
       { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
-      { test: function() { return stateEl.value.trim() !== ''; }, el: stateEl, label: 'State' },
+      { test: function() { return (stateEl.getAttribute('data-value') || '').trim() !== ''; }, el: stateEl, label: 'State' },
       { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
       { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
       { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
@@ -896,12 +896,20 @@ window.CL_PROFILE = {
           '<input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /></div>' +
         '<div class="profile-field-full"><div class="profile-address-row">' +
           '<div><label class="profile-label">Suburb <span class="profile-required">*</span></label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
-          '<div><label class="profile-label">State <span class="profile-required">*</span></label><select class="profile-input loc-state">' +
-            ['', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map(function(s) {
+          '<div><label class="profile-label">State <span class="profile-required">*</span></label>' +
+          (function() {
+            var states = ['', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
+            var current = states.indexOf(loc.state) !== -1 ? loc.state : '';
+            var triggerLabel = current === '' ? 'Select state' : current;
+            var items = states.map(function(s) {
               var lbl = s === '' ? 'Select state' : s;
-              return '<option value="' + s + '"' + (loc.state === s ? ' selected' : '') + '>' + lbl + '</option>';
-            }).join('') +
-          '</select></div>' +
+              return '<button type="button" class="lookback-dropdown-item' + (s === current ? ' active' : '') + '" data-value="' + s + '">' + lbl + '</button>';
+            }).join('');
+            return '<span class="lookback-dropdown-wrap">'
+              + '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-state" data-value="' + window.escHtml(current) + '">' + window.escHtml(triggerLabel) + '</button>'
+              + '<div class="lookback-dropdown-menu loc-state-menu">' + items + '</div>'
+              + '</span>';
+          })() + '</div>' +
           '<div><label class="profile-label">Postcode <span class="profile-required">*</span></label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
         '</div></div>' +
       '</div>' +
@@ -972,6 +980,7 @@ window.CL_PROFILE = {
     self._bindChipToggles(locPanel);
     self._bindHoursPresets();
     self._bindAutoSave('location', locPanel);
+    self._wireStateDropdowns(locPanel);
     self._initStreetAutocomplete();
 
     document.addEventListener('click', function(e) {
@@ -980,6 +989,64 @@ window.CL_PROFILE = {
         document.querySelectorAll('#cl-tab-profile .lookback-dropdown.active').forEach(function(b) { b.classList.remove('active'); });
       }
     });
+  },
+
+  // Wire each .loc-state lookback-dropdown in the location panel
+  // (one per primary + per additional location). Outside-click close
+  // is handled by the existing global handler at the bottom of
+  // _renderLocation, so each per-instance wiring only needs to handle
+  // trigger toggle, item-click selection, and auto-save firing.
+  _wireStateDropdowns: function(scope) {
+    var self = this;
+    scope.querySelectorAll('.loc-state').forEach(function(btn) {
+      var menu = btn.parentNode.querySelector('.loc-state-menu');
+      self._wireLookback(btn, menu, function() {
+        self._scheduleAutoSave('location', 300);
+      });
+    });
+  },
+
+  // Inline lookback-dropdown wiring — same shape as the helpers in
+  // CL_PROJECTS / SM_LOGIC. Trigger toggles the menu; item-click sets
+  // data-value + label and fires onSelect; outside-click close is
+  // handled globally for #cl-tab-profile by the listener at the
+  // bottom of _renderLocation. Idempotent via dataset guard.
+  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+    });
+  },
+
+  // Programmatic value-set for a lookback-dropdown — mirrors what
+  // setting <select>.value used to do before the conversion. Used by
+  // the address-autocomplete path that fills the State picker from
+  // the parsed Google Places result.
+  _setLookbackValue: function(btn, menu, value) {
+    if (!btn || !menu) return;
+    var items = menu.querySelectorAll('.lookback-dropdown-item');
+    var target = null;
+    items.forEach(function(i) { if (i.getAttribute('data-value') === value) target = i; });
+    if (!target) return;
+    items.forEach(function(i) { i.classList.remove('active'); });
+    target.classList.add('active');
+    btn.setAttribute('data-value', target.getAttribute('data-value'));
+    btn.textContent = target.textContent;
   },
 
   _renderTradingHours: function(hours) {
@@ -1376,8 +1443,11 @@ window.CL_PROFILE = {
     }
     var suburbEl = block.querySelector('.loc-suburb');
     if (suburbEl && parsed.locality) suburbEl.value = parsed.locality;
-    var stateEl = block.querySelector('.loc-state');
-    if (stateEl && parsed.state) stateEl.value = parsed.state;
+    var stateBtn = block.querySelector('.loc-state');
+    if (stateBtn && parsed.state) {
+      var stateMenu = stateBtn.parentNode.querySelector('.loc-state-menu');
+      this._setLookbackValue(stateBtn, stateMenu, parsed.state);
+    }
     var postEl = block.querySelector('.loc-postcode');
     if (postEl && parsed.postcode) postEl.value = parsed.postcode;
     // The location panel's auto-save listens for blur/change events;
@@ -1403,7 +1473,7 @@ window.CL_PROFILE = {
         unit: b.querySelector('.loc-unit').value.trim(),
         street: b.querySelector('.loc-street').value.trim(),
         suburb: b.querySelector('.loc-suburb').value.trim(),
-        state: b.querySelector('.loc-state').value.trim(),
+        state: (b.querySelector('.loc-state').getAttribute('data-value') || '').trim(),
         postcode: b.querySelector('.loc-postcode').value.trim(),
         phones: phones
       };
@@ -1434,7 +1504,7 @@ window.CL_PROFILE = {
           { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
           { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
           { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
-          { test: function() { return stateEl.value.trim() !== ''; }, el: stateEl, label: 'State' },
+          { test: function() { return (stateEl.getAttribute('data-value') || '').trim() !== ''; }, el: stateEl, label: 'State' },
           { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
           { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
           { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
@@ -1446,7 +1516,7 @@ window.CL_PROFILE = {
         address_unit: pb.querySelector('.loc-unit').value.trim(),
         address_street: streetEl.value.trim(),
         address_suburb: suburbEl.value.trim(),
-        address_state: stateEl.value.trim(),
+        address_state: (stateEl.getAttribute('data-value') || '').trim(),
         address_postcode: postcodeEl.value.trim(),
         additional_phones: primaryPhones,
         additional_locations: locs,
