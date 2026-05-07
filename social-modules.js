@@ -839,19 +839,21 @@
     if (totalPages <= 1) { container.style.display = 'none'; return; }
     container.style.display = '';
 
+    var jumpLabel = 'Page ' + (currentPage + 1);
     var html = '<button class="btn-outline btn-sm" id="' + containerId + '-prev"' + (currentPage === 0 ? ' disabled' : '') + '>Previous</button>';
-    html += '<select class="form-input" id="' + containerId + '-jump" style="width:auto;padding:6px 10px;font-size:var(--badge-font-size)">';
+    html += '<span class="lookback-dropdown-wrap">'
+         +   '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="' + containerId + '-jump" data-value="' + currentPage + '">' + jumpLabel + '</button>'
+         +   '<div class="lookback-dropdown-menu" id="' + containerId + '-jump-menu">';
     for (var pg = 0; pg < totalPages; pg++) {
-      html += '<option value="' + pg + '"' + (pg === currentPage ? ' selected' : '') + '>Page ' + (pg + 1) + '</option>';
+      html += '<button type="button" class="lookback-dropdown-item' + (pg === currentPage ? ' active' : '') + '" data-value="' + pg + '">Page ' + (pg + 1) + '</button>';
     }
-    html += '</select>';
+    html += '  </div></span>';
     html += '<span class="sm-pagination-info">of ' + totalPages + '</span>';
     html += '<button class="btn-outline btn-sm" id="' + containerId + '-next"' + (currentPage >= totalPages - 1 ? ' disabled' : '') + '>Next</button>';
     container.innerHTML = html;
 
     var prevBtn = document.getElementById(containerId + '-prev');
     var nextBtn = document.getElementById(containerId + '-next');
-    var jumpSelect = document.getElementById(containerId + '-jump');
     if (prevBtn) {
       prevBtn.addEventListener('click', function() {
         if (self[pageField] > 0) { self[pageField]--; self[loadMethod](); }
@@ -862,12 +864,35 @@
         if (self[pageField] < totalPages - 1) { self[pageField]++; self[loadMethod](); }
       });
     }
-    if (jumpSelect) {
-      jumpSelect.addEventListener('change', function() {
-        self[pageField] = parseInt(jumpSelect.value, 10);
-        self[loadMethod]();
-      });
-    }
+    this._wireLookback(containerId + '-jump', containerId + '-jump-menu', function(value) {
+      self[pageField] = parseInt(value, 10);
+      self[loadMethod]();
+    });
+  },
+
+  // Inline lookback-dropdown wiring — same pattern as
+  // CL_PROJECTS._wireLookback / account-logic._wireInviteLevelDropdown.
+  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   _renderCalendar: function() {
@@ -1177,10 +1202,12 @@
       '<div class="form-group"><label class="form-label">Description (optional)</label>' +
       '<textarea class="form-input" id="sm-proj-new-desc" rows="2"></textarea></div>' +
       '<div class="form-group"><label class="form-label">Status</label>' +
-      '<select class="form-input sm-proj-status-select" id="sm-proj-new-status">' +
-      '<option value="completed">Completed</option>' +
-      '<option value="active">Active</option>' +
-      '</select></div>' +
+      '<span class="lookback-dropdown-wrap sm-proj-status-select">'
+        + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="sm-proj-new-status" data-value="completed">Completed</button>'
+        + '<div class="lookback-dropdown-menu" id="sm-proj-new-status-menu">'
+        + '<button type="button" class="lookback-dropdown-item active" data-value="completed">Completed</button>'
+        + '<button type="button" class="lookback-dropdown-item" data-value="active">Active</button>'
+        + '</div></span></div>' +
       '<div class="action-row">' +
       '<button class="btn-primary btn-sm" id="sm-proj-save-new">Save Project</button>' +
       '<button class="btn-outline btn-sm" id="sm-proj-cancel-new">Cancel</button>' +
@@ -1211,6 +1238,8 @@
       });
     }
 
+    this._wireLookback('sm-proj-new-status', 'sm-proj-new-status-menu');
+
     var saveNewBtn = document.getElementById('sm-proj-save-new');
     if (saveNewBtn) {
       saveNewBtn.addEventListener('click', async function() {
@@ -1218,7 +1247,7 @@
         var svc = (document.getElementById('sm-proj-new-service').value || '').trim();
         if (!name) { self._showError('Customer name is required.'); return; }
         var desc = (document.getElementById('sm-proj-new-desc').value || '').trim();
-        var status = document.getElementById('sm-proj-new-status').value || 'completed';
+        var status = (document.getElementById('sm-proj-new-status').getAttribute('data-value')) || 'completed';
         var proj = await self._addCLProject({
           customer_name: name,
           service_provided: svc,
