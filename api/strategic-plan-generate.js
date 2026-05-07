@@ -91,7 +91,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Barriers to entry: ' + _arr(planData.barriersToEntry) + '\n\n' +
     'SECTION 6 \u2014 GROWTH & TRANSFORMATION:\n' +
     '- 12-month revenue target: ' + (planData.revenueTarget || 'Not specified') + '\n' +
-    '- 12-month goals: ' + (planData.goals12Month || 'Not specified') + '\n' +
+    '- 12-month goals: ' + _arr(planData.goals12Month) + '\n' +
     '- 3-year vision: ' + (planData.vision3Year || 'Not specified') + '\n' +
     '- Growth strategies: ' + _arr(planData.growthStrategies) + '\n' +
     '- Geographic expansion: ' + (planData.geoExpansion || 'Not specified') + '\n' +
