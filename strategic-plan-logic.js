@@ -11,6 +11,19 @@
   var _userId = null;
   var _currentPlanData = null;
 
+  // Section 3 (Financial Position) — id 2 in SP_SECTIONS — holds
+  // its field render until the BI fetch returns so the user sees
+  // one final state with correct shading, not an optimistic-then-
+  // corrected render. The module-scoped flags below coordinate
+  // this: _cachedDraftData and _cachedBIData hold the data each
+  // async fetch produces, _section3Rendered guards against double
+  // renders when both fetches resolve out of order.
+  var SECTION_3_ID = 2;
+  var _cachedSavedPlanData = null;
+  var _cachedDraftData = null;
+  var _cachedBIData = null;
+  var _section3Rendered = false;
+
   function _showError(message) {
     var modal = document.getElementById('sp-error-msg');
     if (!modal) return;
@@ -88,9 +101,13 @@
     if (!container) return;
 
     container.innerHTML = sections.map(function(s) {
-      var fieldsHtml = s.fields.map(function(field) {
-        return renderField(field);
-      }).join('');
+      // Section 3 (Financial Position) holds its render until the
+      // BI fetch returns — see renderSection3Body. Renders here as
+      // a loading placeholder so the section card / nav exists at
+      // init but the BI-prefilled fields don't render-then-flicker.
+      var fieldsHtml = (s.id === SECTION_3_ID && !_section3Rendered)
+        ? '<div class="sp-section-loading">Loading from your accounting system…</div>'
+        : s.fields.map(function(field) { return renderField(field); }).join('');
 
       var infoBox = s.infoBox
         ? '<div class="sp-info-box"><span class="sp-info-icon">&#x1F4A1;</span> ' + escHtml(s.infoBox) + '</div>'
@@ -162,13 +179,7 @@
       var opts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
-      // Optimistic .sp-from-bi shading at render time so users see
-      // the auto-populate cue immediately rather than waiting ~3s
-      // for the BI fetch. prefillFromBIContext clears the class
-      // when BI returns no value or the user has typed a different
-      // value first.
-      var biClass = field.fromBI ? ' sp-from-bi' : '';
-      input = '<select id="' + field.id + '" class="sp-select' + biClass + '">' + opts + '</select>';
+      input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
     } else if (field.type === 'select-or-text') {
       var sOpts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
@@ -181,10 +192,7 @@
       var chips = (field.options || []).map(function(o) {
         return '<div class="filter-pill" data-value="' + escHtml(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + escHtml(o.label) + '</div>';
       }).join('');
-      // Optimistic .sp-from-bi on chip-single fromBI groups — same
-      // reasoning as the select branch above.
-      var chipBiClass = (field.type === 'chip-single' && field.fromBI) ? ' sp-from-bi' : '';
-      input = '<div class="sp-chip-group' + chipBiClass + '" id="' + field.id + '-chips">' + chips + '</div>';
+      input = '<div class="sp-chip-group" id="' + field.id + '-chips">' + chips + '</div>';
       if (field.allowOther) {
         // BP-style "Add" pattern: type a value, click Add, becomes a
         // removable chip. Replaces the older "Other" pill + comma-
@@ -361,7 +369,9 @@
 
   // Returns a Promise so init can chain BI prefill after the draft
   // restore — that way prefillFromBIContext sees the post-draft
-  // field state and decides shading correctly.
+  // field state and decides shading correctly. Also caches the
+  // draft data so renderSection3Body can re-apply it once Section 3
+  // fields finally render.
   function loadDraft() {
     if (!_supabase || !_userId) return Promise.resolve();
     return _supabase
@@ -375,6 +385,11 @@
           return;
         }
         if (res.data && res.data.draft_data) {
+          _cachedDraftData = res.data.draft_data;
+          // Apply to all currently-rendered sections. Section 3 is
+          // a loading placeholder at this point, so its fields are
+          // skipped here and re-applied later from the cached data
+          // inside renderSection3Body.
           prefillFromPreviousPlan(res.data.draft_data);
         }
       });
@@ -806,18 +821,53 @@
   }
 
   function loadBIContext() {
+    var doneLoading = function(biData) {
+      if (biData) _cachedBIData = biData;
+      // Section 3's render is gated on this fetch — render now (with
+      // BI data if we have it, without if we don't or it failed).
+      renderSection3Body();
+    };
     _getJwt().then(function(jwt) {
-      if (!jwt) return;
+      if (!jwt) { doneLoading(null); return; }
       fetch('/api/bi-context', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+jwt} })
         .then(function(r) { return r.ok ? r.json() : null; })
-        .then(function(d) { if (d && d.data) prefillFromBIContext(d.data); })
-        .catch(function(err) { console.error('[SP] BI context fetch error:', err.message || err); });
+        .then(function(d) { doneLoading(d && d.data ? d.data : null); })
+        .catch(function(err) {
+          console.error('[SP] BI context fetch error:', err.message || err);
+          doneLoading(null);
+        });
     });
   }
 
-  function prefillFromPreviousPlan(d) {
+  // Replaces the Section 3 loading placeholder with the actual fields
+  // and applies the cached draft + BI data synchronously so the user
+  // sees one final state (correct values + correct shading) on first
+  // paint of Section 3, with no render-then-flicker.
+  function renderSection3Body() {
+    if (_section3Rendered) return;
+    var sectionEl = document.getElementById('section-' + SECTION_3_ID);
+    if (!sectionEl) return;
+    var section = (window.SP_SECTIONS || []).find(function(s) { return s.id === SECTION_3_ID; });
+    if (!section) return;
+    var fieldsContainer = sectionEl.querySelector('.sp-fields');
+    if (!fieldsContainer) return;
+    fieldsContainer.innerHTML = section.fields.map(function(field) { return renderField(field); }).join('');
+    _section3Rendered = true;
+    // Apply prefills synchronously — runs in the same frame as the
+    // innerHTML write above so the user never sees an empty Section 3.
+    // Priority order matches the rest of init: saved plan first
+    // (baseline), draft on top (most recent user state), BI fills
+    // remaining empties and decides shading.
+    if (_cachedSavedPlanData) prefillFromPreviousPlan(_cachedSavedPlanData, SECTION_3_ID);
+    if (_cachedDraftData) prefillFromPreviousPlan(_cachedDraftData, SECTION_3_ID);
+    if (_cachedBIData) prefillFromBIContext(_cachedBIData);
+  }
+
+  function prefillFromPreviousPlan(d, sectionFilter) {
     if (!d) return;
-    window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
+    window.SP_SECTIONS.forEach(function(s) {
+      if (sectionFilter !== undefined && s.id !== sectionFilter) return;
+      s.fields.forEach(function(f) {
       var v = d[f.apiKey || f.id]; if (v == null) return;
       var el = document.getElementById(f.id); if (!el || el.classList.contains('sp-from-profile')) return;
       if (f.type === 'chip-single' || f.type === 'chip-multi') {
@@ -936,37 +986,31 @@
       avgPaymentTime:   bucketDebtorDays(fin.avg_debtor_days)
     };
 
-    var applied = 0, cleared = 0;
+    var applied = 0;
     window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
       if (!f.fromBI) return;
       var el = document.getElementById(f.id);
       if (!el) return;
-      var target = (f.type === 'chip-single')
-        ? document.getElementById(f.id + '-chips')
-        : el;
       var v = prefillValues[f.apiKey];
-      // BI returned nothing, or the user already has a different
-      // value: clear the optimistic .sp-from-bi shading that was
-      // pre-applied at render time. This is what makes the no-Xero
-      // (or Xero-but-no-data) case smoothly unshade.
-      if (v == null || (el.value && el.value !== v)) {
-        if (target) target.classList.remove('sp-from-bi');
-        cleared++;
-        return;
-      }
-      // BI provides v and either field is empty or matches v — set
-      // the value (no-op if already correct) and leave shading on
-      // (already pre-applied at render).
+      if (v == null) return;
+      // If a draft restore (or anything else) already set a
+      // different value, leave it and don't shade — the field
+      // isn't from BI any more.
+      if (el.value && el.value !== v) return;
       if (f.type === 'chip-single') {
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
-        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+        if (g) {
+          g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+          g.classList.add('sp-from-bi');
+        }
       } else {
         el.value = v;
+        el.classList.add('sp-from-bi');
       }
       applied++;
     }); });
-    console.log('[SP] BI prefill — kept sp-from-bi on ' + applied + ' field(s), cleared ' + cleared);
+    console.log('[SP] BI prefill — applied sp-from-bi to ' + applied + ' field(s)');
   }
 
   function collectSectionData() {
@@ -1846,6 +1890,7 @@
         if (res.data) {
           hasPlan = true;
           if (res.data.interview_data) {
+            _cachedSavedPlanData = res.data.interview_data;
             prefillFromPreviousPlan(res.data.interview_data);
           }
           return true;

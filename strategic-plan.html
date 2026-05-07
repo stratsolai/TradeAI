@@ -483,9 +483,11 @@
     }
     .sp-input-error { border-color: var(--red); }
 
-    /* Profile-sourced fields */
+    /* Profile-sourced fields. Use background-color (not the shorthand)
+       so the .sp-select dropdown-arrow background-image is preserved
+       — same fix already applied to .sp-from-bi below. */
     .sp-from-profile {
-      background: var(--blue-light);
+      background-color: var(--blue-light);
       color: var(--text-secondary);
       cursor: default;
     }
@@ -501,6 +503,18 @@
     .sp-from-bi {
       background-color: var(--blue-light);
     }
+    /* Section 3 (Financial Position) loading placeholder. The fields
+       hold their render until the BI fetch returns so the user sees
+       one final state with correct shading rather than render-then-
+       flicker. Subtle muted text, centred in the section card. */
+    .sp-section-loading {
+      padding: 24px 0;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: var(--label-font-size);
+      font-style: italic;
+    }
+
     /* Form selection pills.
        The 6px transparent border reserves space so the chip-group's
        box dimensions stay constant whether or not .sp-from-bi is
