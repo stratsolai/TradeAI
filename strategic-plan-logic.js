@@ -175,12 +175,15 @@
       var chips = (field.options || []).map(function(o) {
         return '<div class="filter-pill" data-value="' + escHtml(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + escHtml(o.label) + '</div>';
       }).join('');
-      if (field.allowOther) {
-        chips += '<div class="filter-pill sp-other-pill" data-value="__other__" data-group="' + field.id + '" data-multi="true">Other</div>';
-      }
       input = '<div class="sp-chip-group" id="' + field.id + '-chips">' + chips + '</div>';
       if (field.allowOther) {
-        input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="Add your own (comma-separated)" style="display:none;margin-top:8px">';
+        // BP-style "Add" pattern: type a value, click Add, becomes a
+        // removable chip. Replaces the older "Other" pill + comma-
+        // separated text input. Custom chips render with × remove.
+        input += '<div class="sp-add-other" style="display:flex;gap:8px;align-items:center;margin-top:10px">' +
+          '<input type="text" id="' + field.id + '-other-input" class="sp-input sp-add-other-input" data-target="' + field.id + '" placeholder="Add your own" style="flex:1">' +
+          '<button type="button" class="btn-back" data-action="sp-add-other" data-target="' + field.id + '">Add</button>' +
+        '</div>';
       }
       input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'readonly-pills') {
@@ -211,6 +214,19 @@
     var container = document.getElementById('sp-sections-container');
     if (container) {
       container.addEventListener('click', function(e) {
+        // Custom-chip × must be checked first — it sits inside a
+        // .filter-pill, so otherwise the chip-toggle path would steal
+        // the click and just toggle the chip instead of removing it.
+        var rmBtn = e.target.closest('[data-action="sp-remove-custom"]');
+        if (rmBtn) {
+          removeCustomChip(rmBtn);
+          return;
+        }
+        var addBtn = e.target.closest('[data-action="sp-add-other"]');
+        if (addBtn) {
+          addCustomChip(addBtn.dataset.target);
+          return;
+        }
         var chip = e.target.closest('.filter-pill');
         if (chip) {
           toggleChip(chip, chip.dataset.group, chip.dataset.multi === 'true');
@@ -246,17 +262,15 @@
       });
 
       container.addEventListener('input', function(e) {
+        // select-or-text "Other (specify)" still uses the inline hidden
+        // input pattern; the chip-multi/chip-single Other path moved to
+        // the BP-style Add-button helper.
         var otherInput = e.target.closest('.sp-other-input');
         if (otherInput) {
           var fieldId = otherInput.id.replace('-other', '');
           var hidden = document.getElementById(fieldId);
           var selectEl = document.getElementById(fieldId + '-select');
-          if (hidden && selectEl) {
-            hidden.value = otherInput.value.trim();
-          }
-          if (hidden && !selectEl) {
-            updateChipHiddenWithOther(fieldId);
-          }
+          if (hidden && selectEl) hidden.value = otherInput.value.trim();
         }
         scheduleDraftSave();
       });
@@ -348,24 +362,6 @@
     el.style.opacity = '1';
     if (el._fadeTimer) clearTimeout(el._fadeTimer);
     el._fadeTimer = setTimeout(function() { el.style.opacity = '0'; }, 2000);
-  }
-
-  function updateChipHiddenWithOther(fieldId) {
-    var group = document.getElementById(fieldId + '-chips');
-    var hidden = document.getElementById(fieldId);
-    var otherInput = document.getElementById(fieldId + '-other');
-    if (!group || !hidden) return;
-
-    var selected = Array.from(group.querySelectorAll('.filter-pill.active'))
-      .map(function(c) { return c.getAttribute('data-value'); })
-      .filter(function(v) { return v !== '__other__'; });
-
-    if (otherInput && otherInput.value.trim()) {
-      var customs = otherInput.value.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
-      selected = selected.concat(customs);
-    }
-
-    hidden.value = selected.join(',');
   }
 
   function bindOpsEvents() {
@@ -558,41 +554,83 @@
   function toggleChip(el, groupId, isMulti) {
     var group = document.getElementById(groupId + '-chips');
     if (!group) return;
-
-    var isOther = el.getAttribute('data-value') === '__other__';
-
     if (!isMulti) {
       group.querySelectorAll('.filter-pill').forEach(function(c) { c.classList.remove('active'); });
       el.classList.add('active');
     } else {
       el.classList.toggle('active');
     }
+    updateHiddenFromChips(groupId);
+  }
 
-    if (isOther) {
-      var otherInput = document.getElementById(groupId + '-other');
-      if (otherInput) {
-        if (el.classList.contains('active')) {
-          otherInput.style.display = 'block';
-          otherInput.focus();
-        } else {
-          otherInput.style.display = 'none';
-          otherInput.value = '';
-        }
+  // Sets the hidden input value from the active chips in the group —
+  // shared between toggleChip, addCustomChip, removeCustomChip, and
+  // the prefill paths so all writers go through one source of truth.
+  function updateHiddenFromChips(fieldId) {
+    var group = document.getElementById(fieldId + '-chips');
+    var hidden = document.getElementById(fieldId);
+    if (!group || !hidden) return;
+    var values = Array.from(group.querySelectorAll('.filter-pill.active'))
+      .map(function(c) { return c.getAttribute('data-value'); })
+      .filter(Boolean);
+    hidden.value = values.join(',');
+  }
+
+  function findFieldById(fieldId) {
+    var sections = window.SP_SECTIONS || [];
+    for (var s = 0; s < sections.length; s++) {
+      var fields = sections[s].fields || [];
+      for (var f = 0; f < fields.length; f++) {
+        if (fields[f].id === fieldId) return fields[f];
       }
     }
+    return null;
+  }
 
-    var selected = Array.from(group.querySelectorAll('.filter-pill.active'))
-      .map(function(c) { return c.getAttribute('data-value'); })
-      .filter(function(v) { return v !== '__other__'; });
+  // Build a removable custom chip in the BP "Add Phone" style — appended
+  // to the group with × that triggers data-action="sp-remove-custom".
+  function appendCustomChip(group, field, value, isActive) {
+    var chip = document.createElement('div');
+    chip.className = 'filter-pill sp-custom-pill' + (isActive ? ' active' : '');
+    chip.setAttribute('data-value', value);
+    chip.setAttribute('data-group', field.id);
+    chip.setAttribute('data-custom', '1');
+    chip.setAttribute('data-multi', field.type === 'chip-multi' ? 'true' : 'false');
+    chip.innerHTML = escHtml(value) + ' <span class="sp-pill-remove" data-action="sp-remove-custom" data-target="' + escHtml(field.id) + '" style="margin-left:6px;cursor:pointer">×</span>';
+    group.appendChild(chip);
+    return chip;
+  }
 
-    var otherInput = document.getElementById(groupId + '-other');
-    if (otherInput && otherInput.value.trim() && el.closest('.sp-chip-group').querySelector('.sp-other-pill.active')) {
-      var customs = otherInput.value.split(',').map(function(v) { return v.trim(); }).filter(Boolean);
-      selected = selected.concat(customs);
+  function addCustomChip(fieldId) {
+    var field = findFieldById(fieldId);
+    if (!field || !field.allowOther) return;
+    var input = document.getElementById(fieldId + '-other-input');
+    var group = document.getElementById(fieldId + '-chips');
+    if (!input || !group) return;
+    var val = input.value.trim();
+    if (!val) return;
+    // Skip duplicates against any existing chip (standard or custom).
+    var dup = Array.from(group.querySelectorAll('.filter-pill')).some(function(c) {
+      return c.getAttribute('data-value') === val;
+    });
+    if (dup) { input.value = ''; return; }
+    // chip-single is exclusive — clicking a new value unselects others.
+    if (field.type === 'chip-single') {
+      group.querySelectorAll('.filter-pill.active').forEach(function(c) { c.classList.remove('active'); });
     }
+    appendCustomChip(group, field, val, true);
+    input.value = '';
+    updateHiddenFromChips(fieldId);
+    if (typeof scheduleDraftSave === 'function') scheduleDraftSave();
+  }
 
-    var hidden = document.getElementById(groupId);
-    if (hidden) hidden.value = selected.join(',');
+  function removeCustomChip(btn) {
+    var chip = btn.closest('.filter-pill');
+    if (!chip) return;
+    var fieldId = chip.getAttribute('data-group');
+    if (chip.parentNode) chip.parentNode.removeChild(chip);
+    if (fieldId) updateHiddenFromChips(fieldId);
+    if (typeof scheduleDraftSave === 'function') scheduleDraftSave();
   }
 
   function goToSection(index) {
@@ -720,9 +758,25 @@
       var el = document.getElementById(f.id); if (!el || el.classList.contains('sp-from-profile')) return;
       if (f.type === 'chip-single' || f.type === 'chip-multi') {
         var vals = Array.isArray(v) ? v : (typeof v === 'string' ? v.split(',').map(function(x){return x.trim()}).filter(Boolean) : []);
-        el.value = vals.join(',');
         var g = document.getElementById(f.id + '-chips');
-        if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value !== '__other__' && vals.indexOf(c.dataset.value) !== -1) c.classList.add('active'); });
+        if (g) {
+          var standardSet = {};
+          g.querySelectorAll('.filter-pill').forEach(function(c) { standardSet[c.dataset.value] = true; });
+          // Activate standard chips that match a saved value.
+          g.querySelectorAll('.filter-pill').forEach(function(c) {
+            if (vals.indexOf(c.dataset.value) !== -1) c.classList.add('active');
+          });
+          // Saved values that don't match any standard option — recreate
+          // them as custom chips so the user sees what they typed last.
+          if (f.allowOther) {
+            vals.forEach(function(val) {
+              if (!standardSet[val]) appendCustomChip(g, f, val, true);
+            });
+          }
+          updateHiddenFromChips(f.id);
+        } else {
+          el.value = vals.join(',');
+        }
       } else if (f.type === 'select-or-text') {
         var sel = document.getElementById(f.id + '-select');
         if (sel) { var matched = Array.from(sel.options).some(function(o){return o.value===v}); if (matched) { sel.value = v; el.value = v; } else if (v) { sel.value='__other__'; var oi=document.getElementById(f.id+'-other'); if(oi){oi.value=v;oi.style.display='block'} el.value=v; } }
