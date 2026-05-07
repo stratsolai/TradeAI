@@ -179,13 +179,13 @@
       var opts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
-      input = '<select id="' + field.id + '" class="sp-select">' + opts + '</select>';
+      input = '<select id="' + field.id + '" class="form-input">' + opts + '</select>';
     } else if (field.type === 'select-or-text') {
       var sOpts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
       sOpts += '<option value="__other__">Other (specify)</option>';
-      input = '<select id="' + field.id + '-select" class="sp-select sp-select-or-text" data-target="' + field.id + '">' + sOpts + '</select>';
+      input = '<select id="' + field.id + '-select" class="form-input sp-select-or-text" data-target="' + field.id + '">' + sOpts + '</select>';
       input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + escHtml(field.placeholder || '') + '" style="display:none;margin-top:8px">';
       input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
@@ -1608,9 +1608,9 @@
     form.className = 'sp-add-task-form';
     var f = '<div class="sp-add-task-grid">';
     f += '<div class="sp-add-task-col-title"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
-    f += '<div class="sp-add-task-col-sm"><select class="sp-select sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
+    f += '<div class="sp-add-task-col-sm"><select class="form-input sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
     f += '<div class="sp-add-task-col-md"><input type="date" class="sp-input sp-add-task-due"></div>';
-    f += '<div class="sp-add-task-col-md"><select class="sp-select sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
+    f += '<div class="sp-add-task-col-md"><select class="form-input sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
     f += '</div><div class="sp-add-task-buttons">';
     f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + escHtml(parentId) + '" type="button">Add</button>';
     f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
