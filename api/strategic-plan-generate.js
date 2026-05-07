@@ -95,7 +95,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- 3-year vision: ' + (planData.vision3Year || 'Not specified') + '\n' +
     '- Growth strategies: ' + _arr(planData.growthStrategies) + '\n' +
     '- Geographic expansion: ' + (planData.geoExpansion || 'Not specified') + '\n' +
-    '- Target expansion areas: ' + (planData.targetExpansionAreas || 'Not specified') + '\n' +
+    '- Target expansion areas: ' + _arr(planData.targetExpansionAreas) + '\n' +
     '- New service lines: ' + (planData.newServiceLines || 'Not specified') + '\n' +
     '- Planned new services: ' + (planData.plannedNewServices || 'Not specified') + '\n' +
     '- Government tendering: ' + (planData.govTendering || 'Not specified') + '\n' +
