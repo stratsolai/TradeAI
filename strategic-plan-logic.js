@@ -613,8 +613,13 @@
     var group = document.getElementById(groupId + '-chips');
     if (!group) return;
     if (!isMulti) {
+      // Single-select: clicking the already-active chip deselects it
+      // in one click, matching standard chip-toggle behaviour. Without
+      // this, an active chip would re-activate on click and need a
+      // second action (selecting another chip) to clear.
+      var wasActive = el.classList.contains('active');
       group.querySelectorAll('.filter-pill').forEach(function(c) { c.classList.remove('active'); });
-      el.classList.add('active');
+      if (!wasActive) el.classList.add('active');
     } else {
       el.classList.toggle('active');
     }
