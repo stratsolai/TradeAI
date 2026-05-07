@@ -182,7 +182,7 @@
         // separated text input. Custom chips render with × remove.
         input += '<div class="sp-add-other" style="display:flex;gap:8px;align-items:center;margin-top:10px">' +
           '<input type="text" id="' + field.id + '-other-input" class="sp-input sp-add-other-input" data-target="' + field.id + '" placeholder="Add your own" style="flex:1">' +
-          '<button type="button" class="btn-back" data-action="sp-add-other" data-target="' + field.id + '">Add</button>' +
+          '<button type="button" class="btn-add-connection" data-action="sp-add-other" data-target="' + field.id + '">+ Add</button>' +
         '</div>';
       }
       input += '<input type="hidden" id="' + field.id + '" value="">';
@@ -740,13 +740,15 @@
             if (items.length === 0) {
               pillsEl.innerHTML = '<span class="sp-label-hint">' + escHtml(field.emptyHint || 'No data in your Business Profile yet.') + '</span>';
             } else {
-              // Use the .filter-pill base so every chip/pill in SP
-              // shares one class and one height. Page-scoped override
-              // in strategic-plan.html switches it to the readonly
-              // BP-prefilled look (light-blue fill, grey border,
-              // default cursor) without changing the structural height.
+              // Use a <div> with the same .filter-pill base as the
+              // selectable and custom chips so every pill in SP
+              // renders at exactly the same height — buttons pick up
+              // browser-default font/line-height that diverges from
+              // div, even when padding matches. The page-scoped
+              // override in strategic-plan.html switches the colour/
+              // cursor to the readonly BP-prefilled look.
               pillsEl.innerHTML = items.map(function(item) {
-                return '<button type="button" tabindex="-1" class="filter-pill sp-readonly-pill">' + escHtml(item) + '</button>';
+                return '<div class="filter-pill sp-readonly-pill">' + escHtml(item) + '</div>';
               }).join('');
             }
           }

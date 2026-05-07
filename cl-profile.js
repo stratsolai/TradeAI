@@ -753,7 +753,7 @@ window.CL_PROFILE = {
     var phonesHtml = phones.map(function(ph, pi) {
       var currentType = ph.type || 'Mobile';
       var typeSelect = '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + ' &#9662;</button>' +
+        '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + ' &#9662;</button>' +
         '<div class="lookback-dropdown-menu">' +
         typeOpts.map(function(t) {
           return '<button type="button" class="lookback-dropdown-item' + (t === currentType ? ' active' : '') + '" data-value="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
@@ -762,11 +762,11 @@ window.CL_PROFILE = {
       return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
         typeSelect +
         '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(window.formatPhoneNumber(ph.number || '')) + '" placeholder="Phone number" />' +
-        '<button class="btn-dismiss" data-action="remove-row" data-target="' + idPfx + '-ph-' + pi + '">Remove</button>' +
+        '<button class="btn-remove-url" data-action="remove-row" data-target="' + idPfx + '-ph-' + pi + '">Remove</button>' +
       '</div>';
     }).join('');
     var removeBtn = isPrimary ? '' :
-      '<button class="btn-dismiss" data-action="remove-row" data-target="loc-block-' + idx + '">Remove Location</button>';
+      '<button class="btn-remove-url" data-action="remove-row" data-target="loc-block-' + idx + '">Remove Location</button>';
     return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
       '<div class="profile-location-row-header">' +
         '<strong class="profile-location-title">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
@@ -792,7 +792,7 @@ window.CL_PROFILE = {
       '</div>' +
       '<div class="profile-label profile-label-heading">Phone Numbers</div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn btn-outline profile-add-btn" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
+      '<button class="btn-add-connection" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
     '</div>';
   },
 
@@ -818,7 +818,7 @@ window.CL_PROFILE = {
     var extraSitesHtml = sites.slice(1).map(function(u, i) {
       return '<div class="profile-repeating-row" id="prof-site-' + (i + 1) + '">' +
         '<input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" placeholder="https://yoursite.com.au" />' +
-        '<button class="btn-dismiss" data-action="remove-row" data-target="prof-site-' + (i + 1) + '">Remove</button>' +
+        '<button class="btn-remove-url" data-action="remove-row" data-target="prof-site-' + (i + 1) + '">Remove</button>' +
       '</div>';
     }).join('');
 
@@ -833,12 +833,12 @@ window.CL_PROFILE = {
     var body =
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn btn-outline profile-btn-add-location" data-action="add-location">+ Add Location</button>' +
+      '<button class="btn-add-connection" data-action="add-location">+ Add Location</button>' +
       '<div class="profile-location-block profile-location-block-websites">' +
         '<div class="profile-label profile-label-heading">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input profile-input-mb" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" />' +
         '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn btn-outline profile-btn-add-website" data-action="add-site">+ Add Website</button>' +
+        '<button class="btn-add-connection" data-action="add-site">+ Add Website</button>' +
       '</div>' +
       '<div class="profile-fields" style="margin-top:16px">' +
         this._field('Service Area', serviceAreaHtml) +
@@ -1009,14 +1009,14 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = idPfx + '-ph-' + i;
     d.innerHTML = '<span class="lookback-dropdown-wrap">' +
-      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Mobile">Mobile &#9662;</button>' +
+      '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-phone-type" data-value="Mobile">Mobile &#9662;</button>' +
       '<div class="lookback-dropdown-menu">' +
       typeOpts.map(function(t) {
         return '<button type="button" class="lookback-dropdown-item' + (t === 'Mobile' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
       }).join('') +
       '</div></span>' +
     '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
-    '<button class="btn-dismiss" data-action="remove-row" data-target="' + idPfx + '-ph-' + i + '">Remove</button>';
+    '<button class="btn-remove-url" data-action="remove-row" data-target="' + idPfx + '-ph-' + i + '">Remove</button>';
     wrap.appendChild(d);
     this._wirePhoneFormat(d);
     this._bindPhoneTypeDropdowns(d);
@@ -1030,7 +1030,7 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = 'prof-site-' + i;
     d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" />' +
-      '<button class="btn-dismiss" data-action="remove-row" data-target="prof-site-' + i + '">Remove</button>';
+      '<button class="btn-remove-url" data-action="remove-row" data-target="prof-site-' + i + '">Remove</button>';
     wrap.appendChild(d);
   },
 
@@ -1792,7 +1792,7 @@ window.CL_PROFILE = {
         '<div class="profile-label profile-label-heading" style="margin-bottom:8px">Additional Theme Statements <span class="profile-optional">(optional)</span></div>' +
         '<div style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Add separate theme statements to run alongside the marketing theme generated above.</div>' +
         '<div id="prof-mkt-statements"></div>' +
-        '<button class="btn btn-outline profile-add-btn" data-action="add-theme-statement" type="button">+ Add Statement</button>' +
+        '<button class="btn-add-connection" data-action="add-theme-statement" type="button">+ Add Statement</button>' +
       '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'marketing', 'prof-mkt-save'
@@ -1834,7 +1834,7 @@ window.CL_PROFILE = {
       var id = 'prof-mkt-stmt-' + i;
       return '<div class="profile-repeating-row" id="' + id + '" style="margin-bottom:8px">' +
         '<input type="text" class="profile-input prof-mkt-stmt-input" value="' + window.escHtml(s || '') + '" placeholder="Add a theme statement" />' +
-        '<button class="btn-dismiss" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>' +
+        '<button class="btn-remove-url" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>' +
       '</div>';
     }).join('');
   },
@@ -1849,7 +1849,7 @@ window.CL_PROFILE = {
     row.style.marginBottom = '8px';
     row.innerHTML =
       '<input type="text" class="profile-input prof-mkt-stmt-input" placeholder="Add a theme statement" />' +
-      '<button class="btn-dismiss" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>';
+      '<button class="btn-remove-url" data-action="remove-row" data-target="' + id + '" type="button">Remove</button>';
     wrap.appendChild(row);
     var inp = row.querySelector('input');
     if (inp) inp.focus();
