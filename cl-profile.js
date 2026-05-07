@@ -1191,11 +1191,19 @@ window.CL_PROFILE = {
 
   _bindPhoneTypeDropdowns: function(container) {
     container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
+      // Restrict to phone-type wraps. The function name suggests this
+      // already, but the original implementation grabbed every
+      // .lookback-dropdown-wrap in the container — which now picks up
+      // the new state and hours-of-operation lookbacks added in the
+      // platform-wide native-select sweep, double-binding their click
+      // toggles (one open + one close in the same event = no net
+      // change, so the menus appear not to open).
+      var trigger = wrap.querySelector('.loc-phone-type');
+      if (!trigger) return;
       if (wrap.dataset.phoneTypeBound) return;
       wrap.dataset.phoneTypeBound = '1';
-      var trigger = wrap.querySelector('.lookback-dropdown');
       var menu = wrap.querySelector('.lookback-dropdown-menu');
-      if (!trigger || !menu) return;
+      if (!menu) return;
       trigger.addEventListener('click', function(e) {
         e.stopPropagation();
         document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
