@@ -62,7 +62,6 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Revenue trend: ' + (planData.revenueTrend || 'Not specified') + '\n' +
     '- Gross margin: ' + (planData.grossMargin || 'Not specified') + '\n' +
     '- Net profit margin: ' + (planData.netProfitMargin || 'Not specified') + '\n' +
-    '- Cash position: ' + (planData.cashPosition || 'Not specified') + '\n' +
     '- Biggest costs: ' + _arr(planData.biggestCosts) + '\n' +
     '- Current finance: ' + (planData.currentFinance || 'None') + '\n' +
     '- Finance purpose: ' + _arr(planData.financePurpose) + '\n' +

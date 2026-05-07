@@ -954,15 +954,6 @@
     return '20+';
   }
 
-  function bucketCashRunway(cashBalance, monthlyExpenses) {
-    if (cashBalance == null || monthlyExpenses == null || monthlyExpenses <= 0) return null;
-    var months = cashBalance / monthlyExpenses;
-    if (months < 1) return 'tight';
-    if (months < 3) return 'adequate';
-    if (months < 6) return 'comfortable';
-    return 'strong';
-  }
-
   function bucketDebtorDays(days) {
     if (days == null || isNaN(days)) return null;
     if (days <= 7) return 'same-day';
@@ -987,7 +978,6 @@
                           ? bucketGrossMargin(fin.gross_margin)
                           : bucketGrossMargin(fin.profit_margin),
       netProfitMargin:  bucketNetMargin(fin.profit_margin),
-      cashPosition:     bucketCashRunway(fin.cash_balance, fin.monthly_expenses),
       avgPaymentTime:   bucketDebtorDays(fin.avg_debtor_days)
     };
 
