@@ -28,7 +28,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F3E2}",
     title: "1. Business Foundation",
     chipLabel: "Foundation",
-    subtitle: "Legal details, structure, history, and team. Most of this is prefilled from your Business Profile.",
+    subtitle: "Legal details, structure, history, and team. Most of this is prefilled from your Business Profile",
     fields: [
       { id: "s1-business-name", apiKey: "businessName", valueType: "string", profileKey: "business_name", fromProfile: true, label: "Business Name", type: "text", required: true, placeholder: "e.g. Smith Plumbing Pty Ltd" },
       { id: "s1-trading-name", apiKey: "tradingName", valueType: "string", profileKey: "trading_name", fromProfile: true, label: "Trading Name", labelHint: "(if different from legal name)", type: "text", required: false, placeholder: "e.g. Smith\u2019s Plumbing" },
@@ -54,7 +54,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F527}",
     title: "2. Products, Services & Customers",
     chipLabel: "Products & Services",
-    subtitle: "What you sell, who buys it, and how you price your work.",
+    subtitle: "What you sell, who buys it, and how you price your work",
     fields: [
       { id: "s2-services", apiKey: "services", valueType: "string", profileKey: "bp_services", fromProfile: true, profileTransform: "svc_list", label: "Core Services", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No services in your Business Profile yet." },
       { id: "s2-products", apiKey: "products", valueType: "string", profileKey: "bp_products", fromProfile: true, profileTransform: "svc_list", label: "Products Offered", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No products in your Business Profile yet." },
@@ -76,7 +76,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F4B0}",
     title: "3. Financial Position",
     chipLabel: "Financial Position",
-    subtitle: "Revenue, costs, margins, and cash flow. Approximate figures are fine.",
+    subtitle: "Revenue, costs, margins, and cash flow. Approximate figures are fine",
     infoBox: "This information builds your financial overview section. It is stored securely and never shared. If your accounting system is connected, some fields may be prefilled but can still be amended.",
     fields: [
       { id: "s3-revenue", apiKey: "annualRevenue", valueType: "string", label: "Annual Revenue", fromBI: true, type: "select", required: true, options: [{ value: "", label: "Select range..." },{ value: "under-100k", label: "Under $100K" },{ value: "100k-250k", label: "$100K-$250K" },{ value: "250k-500k", label: "$250K-$500K" },{ value: "500k-1m", label: "$500K-$1M" },{ value: "1m-2m", label: "$1M-$2M" },{ value: "2m-5m", label: "$2M-$5M" },{ value: "5m+", label: "$5M+" }] },
@@ -100,7 +100,7 @@ window.SP_SECTIONS = [
     icon: "\u2699",
     title: "4. Operations & Capacity",
     chipLabel: "Operations & Capacity",
-    subtitle: "How work gets done, your team, technology, suppliers, and constraints.",
+    subtitle: "How work gets done, your team, technology, suppliers, and constraints",
     fields: [
       { id: "s4-lead-sources", apiKey: "leadSources", valueType: "array", label: "How Do You Get Most Work?", type: "chip-multi", group: "lead-chips", required: false, allowOther: true, options: [{ value: "word-of-mouth", label: "Word of Mouth" },{ value: "industry-referrals", label: "Industry Referrals" },{ value: "repeat", label: "Repeat Customers" },{ value: "google", label: "Google/Search" },{ value: "social-media", label: "Social Media" },{ value: "website", label: "Website" },{ value: "advertising", label: "Advertising" },{ value: "tenders", label: "Tenders" },{ value: "commercial-contracts", label: "Commercial Contracts" }] },
       { id: "s4-conversion", apiKey: "leadConversion", valueType: "string", label: "Lead Conversion", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "excellent", label: "Excellent (Over 60%)" },{ value: "good", label: "Good (40-60%)" },{ value: "average", label: "Average (25-40%)" },{ value: "below-average", label: "Below Average (Under 25%)" },{ value: "dont-track", label: "Don\u2019t Track" }] },
@@ -124,7 +124,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F4CA}",
     title: "5. Market & Competition",
     chipLabel: "Market & Competition",
-    subtitle: "Your competitors, market position, industry trends, and regulatory environment.",
+    subtitle: "Your competitors, market position, industry trends, and regulatory environment",
     fields: [
       { id: "s5-market-position", apiKey: "marketPosition", valueType: "string", label: "Market Position", type: "chip-single", group: "market-pos-chips", required: false, options: [{ value: "leader", label: "Market Leader" },{ value: "strong", label: "Strong Competitor" },{ value: "established", label: "Established Player" },{ value: "challenger", label: "Growing Challenger" },{ value: "new-entrant", label: "New Entrant" }] },
       { id: "s5-competitive-adv", apiKey: "competitiveAdvantage", valueType: "array", label: "Competitive Advantage", type: "chip-multi", group: "comp-adv-chips", required: false, allowOther: true, options: [{ value: "price", label: "Price/Value" },{ value: "quality", label: "Quality" },{ value: "speed", label: "Speed" },{ value: "service", label: "Customer Service" },{ value: "expertise", label: "Expertise" },{ value: "reputation", label: "Reputation" },{ value: "geo-coverage", label: "Geographical Coverage" },{ value: "location", label: "Location" },{ value: "technology", label: "Technology" }] },
@@ -145,7 +145,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F680}",
     title: "6. Growth & Transformation",
     chipLabel: "Growth & Transformation",
-    subtitle: "Goals, expansion plans, digital transformation, and process improvement. Your answers here drive your Operational Plan initiatives.",
+    subtitle: "Goals, expansion plans, digital transformation, and process improvement. Your answers here drive your Operational Plan initiatives",
     fields: [
       { id: "s6-revenue-target", apiKey: "revenueTarget", valueType: "string", label: "12-Month Revenue Target", type: "select", required: false, isDecision: true, decisionId: "revenue_target", options: [{ value: "", label: "Select..." },{ value: "maintain", label: "Maintain Current" },{ value: "grow-1-10", label: "Grow 1-10%" },{ value: "grow-10-25", label: "Grow 10-25%" },{ value: "grow-25-50", label: "Grow 25-50%" },{ value: "grow-50+", label: "Grow 50%+" },{ value: "reduce", label: "Reduce/Consolidate" }] },
       { id: "s6-goals-12m", apiKey: "goals12Month", valueType: "string", label: "12-Month Goals", type: "textarea", required: false, placeholder: "Key objectives for the next year" },
@@ -175,7 +175,7 @@ window.SP_SECTIONS = [
     icon: "\u{1F6E1}",
     title: "7. Risk & Resilience",
     chipLabel: "Risk & Resilience",
-    subtitle: "Business risks, insurance, compliance, contingency, and succession planning.",
+    subtitle: "Business risks, insurance, compliance, contingency, and succession planning",
     fields: [
       { id: "s7-risks", apiKey: "biggestRisks", valueType: "array", label: "Biggest Business Risks", type: "chip-multi", group: "risk-chips", required: false, allowOther: true, options: [{ value: "seasonal", label: "Seasonal Slowdowns" },{ value: "key-person", label: "Key Person Dependency" },{ value: "late-payments", label: "Late Payments / Bad Debts" },{ value: "client-concentration", label: "Customer Concentration" },{ value: "material-costs", label: "Material Cost Increases" },{ value: "staff-shortage", label: "Staff Availability" },{ value: "regulatory", label: "Regulatory Changes" },{ value: "equipment", label: "Equipment Breakdown" },{ value: "economic-downturn", label: "Economic Downturn" },{ value: "competition", label: "Competition" },{ value: "tech-disruption", label: "Technology Disruption" },{ value: "reputational", label: "Reputational Risk" }] },
       { id: "s7-contingency", apiKey: "contingencyPlanning", valueType: "string", label: "Contingency Planning", type: "chip-single", group: "contingency-chips", required: false, options: [{ value: "no-plan", label: "No Plan" },{ value: "basic", label: "Basic Plan" },{ value: "documented", label: "Documented Plan" },{ value: "tested", label: "Tested Plan" }] },
