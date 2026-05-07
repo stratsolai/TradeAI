@@ -1132,7 +1132,7 @@
     var btn = document.querySelector('.btn-sp-generate');
     if (btn) {
       btn.disabled = true;
-      btn.textContent = 'Generating your plan...';
+      btn.textContent = 'Generating Your Plan...';
     }
 
     var clContext = null;
