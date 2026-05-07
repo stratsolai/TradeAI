@@ -607,13 +607,13 @@ window.CL_PROFILE = {
       '<div id="prof-industries-max-msg" style="display:none;color:var(--red);font-size:13px;margin-top:6px">Maximum 2 industries — remove one to select another</div>';
 
     var body = '<div class="profile-fields">' +
-      this._field('Legal Business Name', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
+      this._field('Legal Business Name <span class="profile-required">*</span>', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
-      this._field2('ABN', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
-      this._field2('Business Structure', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industries <span class="profile-optional">(select up to 2)</span>', industryChips) +
-      this._field('Business Logo', logoHtml) +
-      this._field2('Years in Business', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
+      this._field2('ABN <span class="profile-required">*</span>', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
+      this._field2('Business Structure <span class="profile-required">*</span>', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
+      this._field('Industries <span class="profile-required">*</span> <span class="profile-optional">(select up to 2)</span>', industryChips) +
+      this._field('Business Logo <span class="profile-required">*</span>', logoHtml) +
+      this._field2('Years in Business <span class="profile-required">*</span>', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
       this._field2('Team Size', this._dropdown('prof-team-size', ['1', '2-5', '6-10', '11-20', '21-50', '50+'], this._v('employee_range'))) +
     '</div>' +
     '<div class="perm-modal-overlay" id="prof-industry-modal">' +
@@ -882,24 +882,24 @@ window.CL_PROFILE = {
         removeBtn +
       '</div>' +
       '<div class="profile-fields profile-fields-compact">' +
-        '<div class="profile-field-full"><label class="profile-label">Location Name</label>' +
+        '<div class="profile-field-full"><label class="profile-label">Location Name <span class="profile-required">*</span></label>' +
           '<input type="text" class="profile-input loc-name" placeholder="e.g. Main Office, Warehouse, Bendigo Site" value="' + window.escHtml(nameVal) + '" /></div>' +
         '<div class="profile-field-full"><label class="profile-label">Suite / Level / Unit <span class="profile-optional">(optional)</span></label>' +
           '<input type="text" class="profile-input loc-unit" placeholder="e.g. Suite 4, Level 2, Shed 3" value="' + window.escHtml(loc.unit || '') + '" /></div>' +
-        '<div class="profile-field-full"><label class="profile-label">Street Address</label>' +
+        '<div class="profile-field-full"><label class="profile-label">Street Address <span class="profile-required">*</span></label>' +
           '<input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /></div>' +
         '<div class="profile-field-full"><div class="profile-address-row">' +
-          '<div><label class="profile-label">Suburb</label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
-          '<div><label class="profile-label">State</label><select class="profile-input loc-state">' +
+          '<div><label class="profile-label">Suburb <span class="profile-required">*</span></label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
+          '<div><label class="profile-label">State <span class="profile-required">*</span></label><select class="profile-input loc-state">' +
             ['', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map(function(s) {
               var lbl = s === '' ? 'Select state' : s;
               return '<option value="' + s + '"' + (loc.state === s ? ' selected' : '') + '>' + lbl + '</option>';
             }).join('') +
           '</select></div>' +
-          '<div><label class="profile-label">Postcode</label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
+          '<div><label class="profile-label">Postcode <span class="profile-required">*</span></label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
         '</div></div>' +
       '</div>' +
-      '<div class="profile-label profile-label-heading">Phone Numbers</div>' +
+      '<div class="profile-label profile-label-heading">Phone Numbers <span class="profile-required">*</span></div>' +
       '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
       '<button class="btn-add-connection" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
     '</div>';
@@ -950,8 +950,8 @@ window.CL_PROFILE = {
         '<button class="btn-add-connection" data-action="add-site">+ Add Website</button>' +
       '</div>' +
       '<div class="profile-fields" style="margin-top:16px">' +
-        this._field('Service Area', serviceAreaHtml) +
-        this._field('Trading Hours', hoursHtml) +
+        this._field('Service Area <span class="profile-required">*</span>', serviceAreaHtml) +
+        this._field('Trading Hours <span class="profile-required">*</span>', hoursHtml) +
       '</div>';
 
     document.getElementById('prof-panel-location').innerHTML = this._card(
@@ -1498,7 +1498,7 @@ window.CL_PROFILE = {
 
     var body = '<div class="profile-fields" style="display:block">' +
       '<div class="profile-field-full">' +
-        '<label class="profile-label">' + label + ' <span class="profile-optional">(select all that apply, then set pricing)</span></label>' +
+        '<label class="profile-label">' + label + ' <span class="profile-required">*</span> <span class="profile-optional">(select all that apply, then set pricing)</span></label>' +
         pillsHtml + customHtml +
         '<div class="profile-label" style="margin-bottom:8px;margin-top:16px;font-weight:var(--heading-lg-weight)">Pricing for selected ' + label.toLowerCase() + '</div>' +
         pricingHtml +
@@ -1815,11 +1815,11 @@ window.CL_PROFILE = {
 
     var body = '<div class="profile-fields">' +
       this._field('Licences &amp; Accreditations <span class="profile-optional">(optional)</span>', licenceHtml) +
-      this._field('Payment Methods Accepted', paymentHtml) +
-      this._field2('Typical Response Time', responseHtml) +
-      this._field2('After-Hours Support', afterHoursHtml) +
-      this._field('Warranty / Guarantee', this._textarea('prof-warranty', this._v('warranty_info'), 'e.g. 12-month warranty on all workmanship', 3)) +
-      this._field('Complaints Handling', this._textarea('prof-complaints', this._v('complaints_handling'), 'e.g. All complaints acknowledged within 24 hours, resolved within 5 business days', 3)) +
+      this._field('Payment Methods Accepted <span class="profile-required">*</span>', paymentHtml) +
+      this._field2('Typical Response Time <span class="profile-required">*</span>', responseHtml) +
+      this._field2('After-Hours Support <span class="profile-required">*</span>', afterHoursHtml) +
+      this._field('Warranty / Guarantee <span class="profile-required">*</span>', this._textarea('prof-warranty', this._v('warranty_info'), 'e.g. 12-month warranty on all workmanship', 3)) +
+      this._field('Complaints Handling <span class="profile-required">*</span>', this._textarea('prof-complaints', this._v('complaints_handling'), 'e.g. All complaints acknowledged within 24 hours, resolved within 5 business days', 3)) +
     '</div>';
 
     document.getElementById('prof-panel-credentials').innerHTML = this._card(
