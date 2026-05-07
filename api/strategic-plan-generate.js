@@ -83,7 +83,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     'SECTION 5 \u2014 MARKET & COMPETITION:\n' +
     '- Market position: ' + (planData.marketPosition || 'Not specified') + '\n' +
     '- Competitive advantage: ' + _arr(planData.competitiveAdvantage) + '\n' +
-    '- Top competitors: ' + (planData.topCompetitors || 'Not specified') + '\n' +
+    '- Top competitors: ' + _arr(planData.topCompetitors) + '\n' +
     '- Competitor threat: ' + (planData.competitorThreatLevel || 'Not specified') + '\n' +
     '- Industry outlook: ' + (planData.industryOutlook || 'Not specified') + '\n' +
     '- Market trends: ' + _arr(planData.marketTrends) + '\n' +
