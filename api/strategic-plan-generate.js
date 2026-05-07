@@ -168,7 +168,14 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      // The plan response carries 13 narrative sections (2-3 paragraphs
+      // each), a SWOT JSON block, and up to 35 initiative sub-tasks —
+      // measured at ~6-8K output tokens in practice. The previous
+      // 6000 limit was clipping the response mid-string, which made
+      // JSON.parse(clean) below throw "Unterminated string in JSON".
+      // 16000 gives comfortable headroom while staying well under
+      // Sonnet 4.6's 64K output cap.
+      max_tokens: 16000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     })
