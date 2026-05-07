@@ -78,8 +78,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Subcontractor use: ' + (planData.subcontractorUse || 'Not specified') + '\n' +
     '- Technology: ' + _arr(planData.technology) + '\n' +
     '- Technology maturity: ' + (planData.technologyMaturity || 'Not specified') + '\n' +
-    '- Key roles: ' + _arr(planData.keyRoles) + '\n' +
-    '- Compliance status: ' + (planData.complianceStatus || 'Not specified') + '\n\n' +
+    '- Key roles: ' + _arr(planData.keyRoles) + '\n\n' +
     'SECTION 5 \u2014 MARKET & COMPETITION:\n' +
     '- Market position: ' + (planData.marketPosition || 'Not specified') + '\n' +
     '- Competitive advantage: ' + _arr(planData.competitiveAdvantage) + '\n' +
@@ -108,6 +107,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Marketing budget: ' + (planData.marketingBudget || 'Not specified') + '\n' +
     '- Marketing challenges: ' + _arr(planData.marketingChallenges) + '\n\n' +
     'SECTION 7 \u2014 RISK & RESILIENCE:\n' +
+    '- Compliance status: ' + (planData.complianceStatus || 'Not specified') + '\n' +
     '- Biggest risks: ' + _arr(planData.biggestRisks) + '\n' +
     '- Contingency planning: ' + (planData.contingencyPlanning || 'Not specified') + '\n' +
     '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
