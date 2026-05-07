@@ -513,6 +513,12 @@
       border: 6px solid transparent;
       border-radius: var(--input-radius);
     }
+    /* Fields with allowOther but no preset options (Key Suppliers,
+       Top Competitors) start with an empty chip-group, and return to
+       empty whenever the user removes the last chip. The 6px transparent
+       reservation border would otherwise leave a phantom gap above the
+       +Add row — collapse the group entirely while it has no children. */
+    .sp-chip-group:empty { display: none; }
 
     /* Nav buttons */
     .sp-nav-buttons {
