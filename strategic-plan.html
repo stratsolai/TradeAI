@@ -176,15 +176,25 @@
       font-size: var(--badge-font-size);
       color: var(--text-muted);
     }
-    .sp-subtask-priority {
-      padding: 2px 8px;
+    /* Badge-style appearance for the per-task priority lookback —
+       overrides the default .lookback-dropdown chrome (blue border,
+       larger padding) with a smaller pill matching the original
+       <select> badge look. The chevron sits a bit closer to the edge
+       at this size. The colour-driven .sp-priority-* classes below
+       paint the badge and (now that they use background-color rather
+       than the shorthand) leave the .lookback-dropdown SVG arrow
+       in place. */
+    .sp-subtask-priority.lookback-dropdown {
+      padding: 2px 22px 2px 8px;
+      border: none;
       border-radius: 10px;
       font-size: var(--badge-font-size);
       font-weight: var(--font-weight-semibold);
-      border: none;
-      font-family: var(--body-font);
-      cursor: pointer;
+      background-position: right 6px center;
+      background-size: 8px 5px;
     }
+    .sp-subtask-priority-wrap { display: inline-block; }
+    .sp-subtask-priority-menu { min-width: 90px; }
     .sp-subtask-actions {
       display: flex;
       gap: 8px;
@@ -746,9 +756,11 @@
     /* ─── JS-BUILT ELEMENT CLASSES ─── */
     .sp-required { color: var(--red); }
     .sp-subtask-overdue { color: var(--red); font-weight: var(--font-weight-semibold); }
-    .sp-priority-high { background: var(--badge-red-bg); color: var(--badge-red-text); }
-    .sp-priority-medium { background: var(--badge-orange-bg); color: var(--badge-orange-text); }
-    .sp-priority-low { background: var(--badge-green-bg); color: var(--badge-green-text); }
+    /* background-color (not the shorthand) so the .lookback-dropdown
+       background-image — the SVG chevron — keeps drawing on top. */
+    .sp-priority-high { background-color: var(--badge-red-bg); color: var(--badge-red-text); }
+    .sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); }
+    .sp-priority-low { background-color: var(--badge-green-bg); color: var(--badge-green-text); }
     .sp-subtask-notes-text {
       display: none;
       font-size: var(--label-font-size);

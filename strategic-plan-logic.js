@@ -549,14 +549,30 @@
       }
     });
 
-    opsContent.addEventListener('change', function(e) {
-      // Priority change
-      var prioritySel = e.target.closest('.sp-subtask-priority');
-      if (prioritySel) {
-        var subtask = prioritySel.closest('.sp-subtask');
-        if (subtask) saveTaskField(subtask.dataset.id, 'priority', prioritySel.value);
-        return;
-      }
+    // Priority change is now handled by the lookback's onSelect
+    // callback bound in wireSubtaskPriorityLookbacks — native change
+    // events no longer fire from the converted button widget.
+  }
+
+  // Wire every per-task priority lookback after a render. The
+  // onSelect callback swaps the badge colour class on the trigger and
+  // persists the new priority. Runs after each render of the
+  // initiatives list (both the by-initiative and by-month-group
+  // groupings call this).
+  function wireSubtaskPriorityLookbacks() {
+    var listEl = document.getElementById('sp-initiatives-list');
+    if (!listEl) return;
+    listEl.querySelectorAll('.sp-subtask-priority').forEach(function(btn) {
+      var menu = btn.parentNode.querySelector('.sp-subtask-priority-menu');
+      if (!menu) return;
+      wireLookbackDropdown(btn, menu, function(value) {
+        btn.classList.remove('sp-priority-high', 'sp-priority-medium', 'sp-priority-low');
+        btn.classList.add(value === 'High' ? 'sp-priority-high'
+          : value === 'Low' ? 'sp-priority-low'
+          : 'sp-priority-medium');
+        var subtask = btn.closest('.sp-subtask');
+        if (subtask) saveTaskField(subtask.dataset.id, 'priority', value);
+      });
     });
   }
 
@@ -1476,6 +1492,7 @@
 
     var listEl = document.getElementById('sp-initiatives-list');
     if (listEl) listEl.innerHTML = html;
+    wireSubtaskPriorityLookbacks();
 
     var overallPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
     var fillEl = document.getElementById('sp-ops-progress-fill');
@@ -1510,6 +1527,7 @@
 
     var listEl = document.getElementById('sp-initiatives-list');
     if (listEl) listEl.innerHTML = html;
+    wireSubtaskPriorityLookbacks();
     var pct = rows.length > 0 ? Math.round((completedTasks / rows.length) * 100) : 0;
     var fillEl = document.getElementById('sp-ops-progress-fill');
     if (fillEl) fillEl.style.width = pct + '%';
@@ -1555,11 +1573,15 @@
     }
     html += '<span class="sp-subtask-due' + (isOverdue ? ' sp-subtask-overdue' : '') + '" title="Click to change">' + escHtml(dueDateDisplay) + '</span>';
     html += '<span class="sp-subtask-owner" title="Click to change">' + escHtml(owner || 'Owner') + '</span>';
-    html += '<select class="sp-subtask-priority ' + priorityClass + '">';
-    ['High', 'Medium', 'Low'].forEach(function(p) {
-      html += '<option value="' + p + '"' + (priority === p ? ' selected' : '') + '>' + p + '</option>';
-    });
-    html += '</select>';
+    var displayPriority = priority || 'Medium';
+    html += '<span class="lookback-dropdown-wrap sp-subtask-priority-wrap">'
+         +   '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-subtask-priority ' + priorityClass + '" data-value="' + escHtml(displayPriority) + '">' + escHtml(displayPriority) + '</button>'
+         +   '<div class="lookback-dropdown-menu sp-subtask-priority-menu">'
+         +     ['High', 'Medium', 'Low'].map(function(p) {
+                 return '<button type="button" class="lookback-dropdown-item' + (p === displayPriority ? ' active' : '') + '" data-value="' + p + '">' + p + '</button>';
+              }).join('')
+         +   '</div>'
+         + '</span>';
     if (notes) html += '<button class="sp-notes-toggle" type="button">Notes</button>';
     html += '</div>';
     if (notes) html += '<div class="sp-subtask-notes sp-subtask-notes-text">' + escHtml(notes) + '</div>';
