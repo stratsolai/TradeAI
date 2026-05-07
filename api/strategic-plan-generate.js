@@ -108,12 +108,12 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Marketing challenges: ' + _arr(planData.marketingChallenges) + '\n\n' +
     'SECTION 7 \u2014 RISK & RESILIENCE:\n' +
     '- Compliance status: ' + (planData.complianceStatus || 'Not specified') + '\n' +
+    '- Compliance calendar: ' + (planData.complianceCalendar || 'Not specified') + '\n' +
+    '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
     '- Biggest risks: ' + _arr(planData.biggestRisks) + '\n' +
     '- Contingency planning: ' + (planData.contingencyPlanning || 'Not specified') + '\n' +
-    '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
     '- Insurance: ' + _arr(planData.insuranceCoverage) + '\n' +
     '- Insurance review due: ' + (planData.insuranceReviewDue || 'Not specified') + '\n' +
-    '- Compliance calendar: ' + (planData.complianceCalendar || 'Not specified') + '\n' +
     '- Succession planning: ' + (planData.successionPlanning || 'Not specified') + '\n' +
     '- Exit timeline: ' + (planData.exitTimeline || 'Not specified') + '\n' +
     '- Exit strategy: ' + (planData.exitStrategy || 'Not specified') + '\n' +
