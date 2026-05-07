@@ -643,7 +643,18 @@ body { padding-top: 68px; }
 .info-note-icon { font-size: 16px; line-height: 1; flex-shrink: 0; }
 
 /* ------------------------------------------------------------
-   10. FORM INPUTS & SEARCH FIELDS
+   10. FORM CONTROLS & SEARCH FIELDS
+   .form-input is the canonical form-control class — apply to
+   every <input> (text, email, number, date, etc.), <textarea>,
+   AND <select>. The platform deliberately uses native browser
+   chrome (including the OS dropdown chevron on selects) rather
+   than a custom SVG arrow, so do NOT add appearance:none or a
+   custom background-image when applying to a <select>.
+   Examples in use:
+     - cl-projects.js — status filter and page-jump <select>
+     - design-viz.html — render-type <select>
+     - social-campaign.js / social-modules.js — extend-window
+       and project-status <select>s
    ------------------------------------------------------------ */
 .form-input {
   width: 100%;
