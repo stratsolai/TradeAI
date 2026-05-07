@@ -89,7 +89,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     'SECTION 6 \u2014 GROWTH & TRANSFORMATION:\n' +
     '- 12-month revenue target: ' + (planData.revenueTarget || 'Not specified') + '\n' +
     '- 12-month goals: ' + _arr(planData.goals12Month) + '\n' +
-    '- 3-year vision: ' + (planData.vision3Year || 'Not specified') + '\n' +
+    '- 3-year vision: ' + _arr(planData.vision3Year) + '\n' +
     '- Growth strategies: ' + _arr(planData.growthStrategies) + '\n' +
     '- Geographic expansion: ' + (planData.geoExpansion || 'Not specified') + '\n' +
     '- Target expansion areas: ' + _arr(planData.targetExpansionAreas) + '\n' +
