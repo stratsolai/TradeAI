@@ -434,12 +434,10 @@
       display: none;
     }
 
-    /* Inputs.
-       Dropdown styling lives on the shared .form-select class in
-       staxai-auth.css — SP renders <select> with that class so any
-       cross-tool changes happen in one place. */
+    /* Inputs */
     .sp-input,
-    .sp-textarea {
+    .sp-textarea,
+    .sp-select {
       width: 100%;
       padding: var(--input-padding);
       border: var(--input-border-width) solid var(--border);
@@ -449,12 +447,18 @@
       color: var(--text);
       background: var(--white);
       transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
+      /* Strip native select chrome on every engine — without the
+         standard `appearance: none` newer Chromium/Edge versions still
+         render the OS dropdown arrow alongside the SVG arrow we draw
+         via .sp-select's background-image, which made Tab 6's plain
+         (non-BI) selects look subtly unstyled vs the rest of the page. */
       -webkit-appearance: none;
       -moz-appearance: none;
       appearance: none;
     }
     .sp-input:focus,
-    .sp-textarea:focus {
+    .sp-textarea:focus,
+    .sp-select:focus {
       outline: none;
       border-color: var(--blue);
       box-shadow: 0 0 0 3px var(--focus-ring);
@@ -462,10 +466,17 @@
     .sp-input::placeholder,
     .sp-textarea::placeholder { color: var(--text-hint); }
     .sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
+    .sp-select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      padding-right: 36px;
+      cursor: pointer;
+    }
     .sp-input-error { border-color: var(--red); }
 
     /* Profile-sourced fields. Use background-color (not the shorthand)
-       so .form-select's dropdown-arrow background-image is preserved
+       so the .sp-select dropdown-arrow background-image is preserved
        — same fix already applied to .sp-from-bi below. */
     .sp-from-profile {
       background-color: var(--blue-light);
@@ -479,7 +490,7 @@
        so users see at a glance that the value was auto-populated.
        Unlike profile-sourced fields these stay editable, so we
        don't override cursor or focus state. Use background-color
-       (not the background shorthand) so .form-select's
+       (not the background shorthand) so the .sp-select rule's
        SVG dropdown-arrow background-image is preserved. */
     .sp-from-bi {
       background-color: var(--blue-light);
@@ -793,7 +804,7 @@
       .sp-nav-left .btn-outline, .sp-nav-right .btn-primary,
       .sp-nav-right .btn-sp-generate { width: 100%; justify-content: center; }
       .sp-nav-centre { width: 100%; order: 3; text-align: center; }
-      .sp-input, .sp-textarea, .form-select { font-size: var(--input-font-size-mobile); }
+      .sp-input, .sp-textarea, .sp-select { font-size: var(--input-font-size-mobile); }
     }
 
     @media print {
@@ -992,7 +1003,7 @@
         </div>
         <div class="sp-field">
           <label class="sp-field-label" for="sp-new-init-section">Related SP Section</label>
-          <select id="sp-new-init-section" class="form-select">
+          <select id="sp-new-init-section" class="sp-select">
             <option value="">Select...</option>
             <option value="business_foundation">Business Foundation</option>
             <option value="products_services">Products, Services &amp; Customers</option>

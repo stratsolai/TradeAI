@@ -662,38 +662,6 @@ body { padding-top: 68px; }
   border-color: var(--blue);
 }
 
-/* Native <select> styled to match .form-input. Self-contained — no
-   reliance on .form-input shared rules — so any tool can apply
-   class="form-select" to a <select> and get the platform dropdown
-   look in one place. SVG arrow draws on top of background-color, so
-   add .form-select-shaded (or any class that sets only background-
-   color, e.g. SP's .sp-from-bi / .sp-from-profile) without losing
-   the chevron. */
-.form-select {
-  width: 100%;
-  border: var(--input-border-width) solid var(--border);
-  border-radius: var(--input-radius);
-  padding: var(--input-padding);
-  padding-right: 36px;
-  font-family: var(--body-font);
-  font-size: var(--input-font-size);
-  color: var(--text);
-  background-color: var(--white);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  outline: none;
-  cursor: pointer;
-  transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
-.form-select:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
 .search-input {
   flex: 1;
   min-width: 200px;
