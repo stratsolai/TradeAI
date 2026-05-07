@@ -108,6 +108,7 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Compliance status: ' + (planData.complianceStatus || 'Not specified') + '\n' +
     '- Compliance calendar: ' + (planData.complianceCalendar || 'Not specified') + '\n' +
     '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
+    '- Revenue reliance on key customers: ' + (planData.revenueReliance || 'Not specified') + '\n' +
     '- Biggest risks: ' + _arr(planData.biggestRisks) + '\n' +
     '- Contingency planning: ' + (planData.contingencyPlanning || 'Not specified') + '\n' +
     '- Insurance: ' + _arr(planData.insuranceCoverage) + '\n' +
