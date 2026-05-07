@@ -230,6 +230,16 @@
 .profile-required { color: var(--red); margin-left: 2px; }
 .profile-input { width: 100%; padding: var(--input-padding); border: var(--input-border-width) solid var(--border); border-radius: var(--input-radius); font-size: var(--btn-font-size); color: var(--text); background: var(--white); font-family: var(--body-font); box-sizing: border-box; transition: border-color var(--btn-transition); }
 .profile-input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px var(--focus-ring); }
+/* BP form-field dropdowns (Business Structure, Team Size, Response
+   Time, After-Hours Support) sit alongside .profile-input text fields,
+   so normalise the .lookback-dropdown-field styling to match: thin
+   neutral border, normal text colour and weight. Scoped to
+   .profile-section-card so other lookback-dropdown-field instances
+   (Email Assistant, Social, Admin etc.) keep their default branded
+   look. The phone-type dropdown drops the -field modifier and isn't
+   affected. */
+.profile-section-card .lookback-dropdown-field { border: var(--input-border-width) solid var(--border); color: var(--text); font-weight: 400; }
+.profile-section-card .lookback-dropdown-field.active { border-color: var(--blue); background-color: var(--white); }
 /* Custom Google Places suggestion dropdown rendered below the Street
    Address input. The .loc-street input itself uses the standard
    .profile-input class — no overrides needed. The wrap is the
