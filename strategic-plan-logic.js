@@ -895,7 +895,14 @@
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
         if (g) g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
-      } else { el.value = v; }
+      } else {
+        el.value = v;
+        // Shade the select to signal "auto-populated" — same blue-
+        // light background as profile-sourced fields, but the field
+        // stays editable. Chip-single fields don't need this: the
+        // active chip already has the blue-light fill.
+        el.classList.add('sp-from-bi');
+      }
     }); });
   }
 

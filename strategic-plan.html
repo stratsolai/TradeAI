@@ -492,6 +492,14 @@
     .sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
     select.sp-from-profile:disabled { opacity: 0.8; }
 
+    /* BI-sourced fields — same shaded background as profile-sourced
+       so users see at a glance that the value was auto-populated.
+       Unlike profile-sourced fields these stay editable, so we
+       don't override cursor or focus state. */
+    .sp-from-bi {
+      background: var(--blue-light);
+    }
+
     /* Form selection pills */
     .sp-chip-group {
       display: flex;

@@ -77,7 +77,7 @@ window.SP_SECTIONS = [
     title: "3. Financial Position",
     chipLabel: "Financial Position",
     subtitle: "Revenue, costs, margins, and cash flow. Approximate figures are fine.",
-    infoBox: "This information builds your financial overview section. It is stored securely and never shared. If your accounting system is connected, some fields may be prefilled.",
+    infoBox: "This information builds your financial overview section. It is stored securely and never shared. If your accounting system is connected, some fields may be prefilled but can still be amended.",
     fields: [
       { id: "s3-revenue", apiKey: "annualRevenue", valueType: "string", label: "Annual Revenue", fromBI: true, type: "select", required: true, options: [{ value: "", label: "Select range..." },{ value: "under-100k", label: "Under $100K" },{ value: "100k-250k", label: "$100K-$250K" },{ value: "250k-500k", label: "$250K-$500K" },{ value: "500k-1m", label: "$500K-$1M" },{ value: "1m-2m", label: "$1M-$2M" },{ value: "2m-5m", label: "$2M-$5M" },{ value: "5m+", label: "$5M+" }] },
       { id: "s3-revenue-trend", apiKey: "revenueTrend", valueType: "string", label: "Revenue Trend", fromBI: true, type: "chip-single", group: "rev-trend-chips", required: false, options: [{ value: "growing-strongly", label: "Growing Strongly (Over 20%)" },{ value: "growing", label: "Growing (5-20%)" },{ value: "stable", label: "Stable" },{ value: "declining", label: "Declining" }] },
