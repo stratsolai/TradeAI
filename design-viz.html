@@ -217,9 +217,12 @@
 
           <div>
             <label class="form-label">Render type (optional)</label>
-            <select class="form-input" id="dv-render-type">
-              <option value="">Auto-detect</option>
-            </select>
+            <span class="lookback-dropdown-wrap">
+              <button type="button" class="lookback-dropdown lookback-dropdown-field" id="dv-render-type" data-value="">Auto-detect</button>
+              <div class="lookback-dropdown-menu" id="dv-render-type-menu">
+                <button type="button" class="lookback-dropdown-item active" data-value="">Auto-detect</button>
+              </div>
+            </span>
           </div>
 
           <div class="action-row">

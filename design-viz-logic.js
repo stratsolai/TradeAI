@@ -90,8 +90,8 @@ window.DV_LOGIC = {
   },
 
   _populateRenderTypes: function() {
-    var select = document.getElementById('dv-render-type');
-    if (!select) return;
+    var menu = document.getElementById('dv-render-type-menu');
+    if (!menu) return;
     var self = this;
     var added = {};
     this._industries.forEach(function(ind) {
@@ -100,12 +100,42 @@ window.DV_LOGIC = {
       types.forEach(function(t) {
         if (added[t.value]) return;
         added[t.value] = true;
-        var opt = document.createElement('option');
-        opt.value = t.value;
-        opt.textContent = t.label;
-        select.appendChild(opt);
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'lookback-dropdown-item';
+        item.setAttribute('data-value', t.value);
+        item.textContent = t.label;
+        menu.appendChild(item);
       });
     });
+    self._wireRenderTypeDropdown();
+  },
+
+  // Wire the lookback-dropdown trigger/menu pair the same way every
+  // other dropdown on the platform does — toggle on trigger click,
+  // set value + label + close on item click, close on outside click.
+  // Uses event delegation on the menu so options added dynamically by
+  // _populateRenderTypes pick up the click without per-item listeners.
+  _wireRenderTypeDropdown: function() {
+    var btn = document.getElementById('dv-render-type');
+    var menu = document.getElementById('dv-render-type-menu');
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
   },
 
   // ── EVENT BINDING ─────────────────────────────────────────────────────
@@ -271,9 +301,9 @@ window.DV_LOGIC = {
       if (!photoPath) throw new Error('Photo upload failed');
 
       var desc = document.getElementById('dv-description');
-      var typeSelect = document.getElementById('dv-render-type');
+      var typeBtn = document.getElementById('dv-render-type');
       var description = desc ? desc.value.trim() : '';
-      var renderType = typeSelect ? typeSelect.value : '';
+      var renderType = typeBtn ? (typeBtn.getAttribute('data-value') || '') : '';
 
       var sessionRes = await this._supabase.auth.getSession();
       var session = sessionRes.data && sessionRes.data.session;
