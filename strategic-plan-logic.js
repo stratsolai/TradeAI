@@ -179,6 +179,11 @@
       var opts = (field.options || []).map(function(o) {
         return '<option value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</option>';
       }).join('');
+      // Dynamic-from-profile selects render with a loading placeholder
+      // until prefillFromProfile populates the real options.
+      if (!opts && field.dynamicFromProfile) {
+        opts = '<option value="">Loading…</option>';
+      }
       input = '<select id="' + field.id + '" class="form-input">' + opts + '</select>';
     } else if (field.type === 'select-or-text') {
       var sOpts = (field.options || []).map(function(o) {
@@ -779,6 +784,31 @@
             val = pillItems.join(', ');
           } else {
             val = raw;
+          }
+        }
+
+        // Dynamic select options sourced from a BP service list — used
+        // by Tab 2 "Most Profitable Service" so the dropdown reflects
+        // whatever Core Services the user has in Business Profile. If
+        // BP has no services, fall back to a disabled placeholder so
+        // the field stays visible but unusable until BP is filled in.
+        if (field.type === 'select' && field.dynamicFromProfile) {
+          var srcRaw = profile[field.dynamicFromProfile];
+          var srcNames = Array.isArray(srcRaw)
+            ? srcRaw.map(function(item) { return (item && item.name) || ''; }).filter(Boolean)
+            : [];
+          var sel = document.getElementById(field.id);
+          if (sel) {
+            if (srcNames.length === 0) {
+              sel.innerHTML = '<option value="">' + escHtml(field.emptyMessage || 'No options available') + '</option>';
+              sel.disabled = true;
+            } else {
+              sel.disabled = false;
+              sel.innerHTML = '<option value="">Select…</option>' +
+                srcNames.map(function(n) {
+                  return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>';
+                }).join('');
+            }
           }
         }
 
