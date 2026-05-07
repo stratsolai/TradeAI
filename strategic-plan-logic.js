@@ -915,27 +915,36 @@
       avgPaymentTime:   bucketDebtorDays(fin.avg_debtor_days)
     };
 
+    var applied = 0, skipped = 0;
     window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
       if (!f.fromBI) return;
       var v = prefillValues[f.apiKey];
       if (v == null) return;
-      var el = document.getElementById(f.id); if (!el || el.value) return;
+      var el = document.getElementById(f.id);
+      if (!el) return;
+      // Skip only when the field already holds a *different* value
+      // (user-edited, or restored from a draft made when BI returned
+      // something else). When the existing value matches BI — most
+      // commonly because loadDraft restored what BI itself populated
+      // last session — we still need to apply sp-from-bi so the
+      // shading shows. The earlier `el.value &&` guard was returning
+      // before the class was added, which is why no shading showed
+      // after a draft restore.
+      if (el.value && el.value !== v) { skipped++; return; }
       if (f.type === 'chip-single') {
         el.value = v;
         var g = document.getElementById(f.id + '-chips');
         if (g) {
           g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
-          // Shade the chip group container to match the select fill
-          // — page-scoped CSS adds padding/radius so the area reads
-          // as a contained shaded box, not a thin tint behind chips.
           g.classList.add('sp-from-bi');
         }
       } else {
         el.value = v;
-        // Shade the select to signal "auto-populated".
         el.classList.add('sp-from-bi');
       }
+      applied++;
     }); });
+    console.log('[SP] BI prefill — applied sp-from-bi to ' + applied + ' field(s), skipped ' + skipped);
   }
 
   function collectSectionData() {

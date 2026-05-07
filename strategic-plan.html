@@ -499,19 +499,18 @@
     .sp-from-bi {
       background: var(--blue-light);
     }
-    /* Chip-group shading — selects fill an opaque box, so the chip
-       group needs padding + radius to read as the same kind of
-       contained shaded area rather than a thin tint behind chips. */
-    .sp-chip-group.sp-from-bi {
-      padding: 6px;
-      border-radius: var(--input-radius);
-    }
-
-    /* Form selection pills */
+    /* Form selection pills.
+       The 6px transparent border reserves space so the chip-group's
+       box dimensions stay constant whether or not .sp-from-bi is
+       applied — toggling the shaded background no longer shifts
+       chip positions. The base .sp-from-bi rule above fills the
+       reserved area with var(--blue-light) when the class is on. */
     .sp-chip-group {
       display: flex;
       flex-wrap: wrap;
       gap: var(--btn-radius);
+      border: 6px solid transparent;
+      border-radius: var(--input-radius);
     }
 
     /* Nav buttons */
