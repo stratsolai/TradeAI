@@ -8,6 +8,10 @@ window.CL_PROFILE = {
     container.innerHTML = this._shell();
     this._bindTabs();
     this._bindDelegatedEvents(container);
+    var self = this;
+    var markInteracted = function() { self._userInteracted = true; };
+    container.addEventListener('pointerdown', markInteracted, { capture: true, once: true });
+    container.addEventListener('keydown', markInteracted, { capture: true, once: true });
     this._load();
   },
 
@@ -133,7 +137,13 @@ window.CL_PROFILE = {
     '</div>';
   },
 
+  // Set on the first genuine user interaction inside the BP tab.
+  // Suppresses the spurious Saved ✓ flash that fires when init's
+  // prefill cascades debounce-trigger an autosave.
+  _userInteracted: false,
+
   _showSaved: function(panelId) {
+    if (!this._userInteracted) return;
     var el = document.getElementById('prof-saved-' + panelId);
     if (!el) return;
     el.style.opacity = '1';
@@ -325,7 +335,13 @@ window.CL_PROFILE = {
 
   _removeRow: function(id) {
     var el = document.getElementById(id);
+    // Theme-statement rows have no input blur to fall back on after
+    // removal, so schedule the marketing autosave explicitly. Other
+    // panels (phones, locations) already cover removal via blur on
+    // their remaining inputs and panel-switch autosave.
+    var wasMarketingStmt = el && typeof el.id === 'string' && el.id.indexOf('prof-mkt-stmt-') === 0;
     if (el) el.parentNode.removeChild(el);
+    if (wasMarketingStmt) this._scheduleAutoSave('marketing', 100);
   },
 
   _bindChipToggles: function(container) {
@@ -419,6 +435,12 @@ window.CL_PROFILE = {
     // than invoking btn.click() so the autoSave flag actually
     // reaches the validation step (a synchronous click() would
     // race with the async handleSave callback).
+    if (panel === 'marketing') {
+      // Marketing has no btn-save anchor — runs straight to the
+      // theme-statements writer.
+      this._saveThemeStatements();
+      return;
+    }
     var btnIds = { identity: 'prof-id-save', location: 'prof-loc-save', services: 'prof-svc-save', products: 'prof-prod-save', credentials: 'prof-cred-save' };
     var btn = document.getElementById(btnIds[panel]);
     if (!btn || btn.disabled) return;
@@ -1771,9 +1793,6 @@ window.CL_PROFILE = {
         '<div style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Add separate theme statements to run alongside the marketing theme generated above.</div>' +
         '<div id="prof-mkt-statements"></div>' +
         '<button class="btn btn-outline profile-add-btn" data-action="add-theme-statement" type="button">+ Add Statement</button>' +
-        '<div class="profile-save-row" style="margin-top:16px">' +
-          '<button id="prof-mkt-statements-save" class="btn-save">Save Statements</button>' +
-        '</div>' +
       '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
       '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'marketing', 'prof-mkt-save'
@@ -1783,10 +1802,16 @@ window.CL_PROFILE = {
     }
     var statements = this._getAdditionalStatements();
     this._renderThemeStatementRows(statements);
+    // Delegated autosave on theme statement inputs \u2014 covers both
+    // existing rows and any added later via _addThemeStatement
+    // without needing per-input rebinds.
     var self = this;
-    document.getElementById('prof-mkt-statements-save').addEventListener('click', function() {
-      self._saveThemeStatements();
-    });
+    var stmtsWrap = document.getElementById('prof-mkt-statements');
+    if (stmtsWrap && !stmtsWrap.dataset.autoSaveBound) {
+      stmtsWrap.dataset.autoSaveBound = '1';
+      stmtsWrap.addEventListener('input', function() { self._scheduleAutoSave('marketing', 500); });
+      stmtsWrap.addEventListener('blur', function() { self._scheduleAutoSave('marketing', 300); }, true);
+    }
   },
 
   // Additional Theme Statements \u2014 stored inside marketing_theme_extra
@@ -1842,8 +1867,7 @@ window.CL_PROFILE = {
 
   _saveThemeStatements: function() {
     var self = this;
-    var btn = document.getElementById('prof-mkt-statements-save');
-    window.handleSave(btn, async function() {
+    (async function() {
       var statements = self._collectThemeStatements();
       // Re-read from DB so we merge into the freshest wizard JSON,
       // not whatever was cached when the panel last loaded.
@@ -1864,7 +1888,10 @@ window.CL_PROFILE = {
         .eq('id', self._userId);
       if (res.error) throw new Error(res.error.message);
       self._profile.marketing_theme_extra = serialised;
+    })().then(function() {
       self._showSaved('marketing');
-    }, document.getElementById('prof-save-msg'));
+    }).catch(function(err) {
+      console.error('[CL Profile] marketing save error:', err.message || err);
+    });
   }
 };

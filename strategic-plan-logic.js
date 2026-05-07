@@ -285,6 +285,13 @@
         }
       });
       container.addEventListener('blur', function() { scheduleDraftSave(); }, true);
+
+      // First genuine user interaction inside the SP container —
+      // unlocks the Saved ✓ flash. Capture phase + once so each
+      // listener runs at most once.
+      var markInteracted = function() { _userInteracted = true; };
+      container.addEventListener('pointerdown', markInteracted, { capture: true, once: true });
+      container.addEventListener('keydown', markInteracted, { capture: true, once: true });
     }
   }
 
@@ -356,7 +363,15 @@
     try { localStorage.removeItem(key); } catch (e) {}
   }
 
+  // Set true on the first user interaction inside the SP container.
+  // Init-time prefill cascades can debounce-fire an autosave that
+  // otherwise flashes Saved ✓ before the user has done anything —
+  // we still write the draft, but skip the indicator until they've
+  // actually interacted.
+  var _userInteracted = false;
+
   function flashSavedIndicator(sectionId) {
+    if (!_userInteracted) return;
     var el = document.getElementById('sp-saved-' + sectionId);
     if (!el) return;
     el.style.opacity = '1';
