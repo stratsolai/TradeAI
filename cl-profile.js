@@ -898,12 +898,15 @@ window.CL_PROFILE = {
           '<div><label class="profile-label">Suburb <span class="profile-required">*</span></label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
           '<div><label class="profile-label">State <span class="profile-required">*</span></label>' +
           (function() {
-            var states = ['', 'NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
+            var states = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
             var current = states.indexOf(loc.state) !== -1 ? loc.state : '';
+            // "Select state" appears only on the trigger as a
+            // placeholder while nothing is picked — no matching menu
+            // item, so users can't re-select the empty state. Once a
+            // real state is set, the button label switches to it.
             var triggerLabel = current === '' ? 'Select state' : current;
             var items = states.map(function(s) {
-              var lbl = s === '' ? 'Select state' : s;
-              return '<button type="button" class="lookback-dropdown-item' + (s === current ? ' active' : '') + '" data-value="' + s + '">' + lbl + '</button>';
+              return '<button type="button" class="lookback-dropdown-item' + (s === current ? ' active' : '') + '" data-value="' + s + '">' + s + '</button>';
             }).join('');
             return '<span class="lookback-dropdown-wrap">'
               + '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-state" data-value="' + window.escHtml(current) + '">' + window.escHtml(triggerLabel) + '</button>'
@@ -1060,15 +1063,22 @@ window.CL_PROFILE = {
     // dropdown. The trigger button label uses the human-readable
     // form ("8:00 AM"); the menu items carry the same label as their
     // text, with the 24-hour value stashed in data-value.
+    //
+    // Order: 6:00 AM through 5:30 AM the following morning. Most SMEs
+    // open between 7-10 AM and close between 4-9 PM, so a typical
+    // selection lands inside the first ~22 items without any
+    // scrolling. Late-night hospitality and cleaning businesses still
+    // have access to the whole half-hourly grid — the post-midnight
+    // hours just sit at the bottom of the list rather than at the top.
     var timeChoices = [];
-    for (var h = 0; h < 24; h++) {
-      for (var m = 0; m < 60; m += 30) {
-        var hh = (h < 10 ? '0' : '') + h;
-        var mm = m === 0 ? '00' : '30';
-        var label = (h === 0 ? '12' : h > 12 ? (h - 12) : h) + ':' + mm + (h < 12 ? ' AM' : ' PM');
-        timeChoices.push({ value: hh + ':' + mm, label: label });
-      }
-    }
+    var addSlot = function(h, m) {
+      var hh = (h < 10 ? '0' : '') + h;
+      var mm = m === 0 ? '00' : '30';
+      var label = (h === 0 ? '12' : h > 12 ? (h - 12) : h) + ':' + mm + (h < 12 ? ' AM' : ' PM');
+      timeChoices.push({ value: hh + ':' + mm, label: label });
+    };
+    for (var h = 6; h < 24; h++) { addSlot(h, 0); addSlot(h, 30); }
+    for (var h = 0; h < 6; h++) { addSlot(h, 0); addSlot(h, 30); }
     var renderTimeMenu = function(activeValue) {
       return timeChoices.map(function(t) {
         return '<button type="button" class="lookback-dropdown-item' + (t.value === activeValue ? ' active' : '') + '" data-value="' + t.value + '">' + t.label + '</button>';
