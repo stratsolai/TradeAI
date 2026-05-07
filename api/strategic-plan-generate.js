@@ -51,7 +51,6 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '- Services: ' + (planData.services || 'Not specified') + '\n' +
     '- Products: ' + (planData.products || 'Not specified') + '\n' +
     '- Target customers: ' + _arr(planData.targetCustomers) + '\n' +
-    '- Customer concentration: ' + (planData.customerConcentration || 'Not specified') + '\n' +
     '- Service area: ' + _arr(planData.serviceArea) + '\n' +
     '- Pricing model: ' + _arr(planData.pricingModel) + '\n' +
     '- Avg job value: ' + (planData.avgJobValue || 'Not specified') + '\n' +
