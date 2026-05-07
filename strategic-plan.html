@@ -19,18 +19,18 @@
     #sp-section-nav { flex-wrap: nowrap; overflow-x: auto; }
     #sp-section-nav .profile-nav-chip { flex-shrink: 0; }
 
-    /* Readonly-pills (Licences / Services / Products) — match the
-       BP-prefilled input look: 1.5px solid grey border, light-blue
-       tint fill, secondary text colour. Same visual language as
-       .sp-from-profile so all BP-sourced fields read consistently. */
-    .sp-field .review-tool-pills .tool-pill {
+    /* Readonly-pills (Licences / Services / Products) — share the
+       .filter-pill structure so all SP chips render at one height,
+       then override colour/cursor here to match the BP-prefilled
+       input look (light-blue fill, grey border, default cursor)
+       so all BP-sourced fields read consistently. */
+    .sp-field .review-tool-pills .filter-pill.sp-readonly-pill {
       background: var(--blue-light);
-      border: var(--input-border-width) solid var(--border);
-      border-radius: var(--input-radius);
+      border-color: var(--border);
       color: var(--text-secondary);
       cursor: default;
     }
-    .sp-field .review-tool-pills .tool-pill:hover {
+    .sp-field .review-tool-pills .filter-pill.sp-readonly-pill:hover {
       background: var(--blue-light);
     }
 

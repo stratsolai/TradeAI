@@ -709,14 +709,13 @@
             if (items.length === 0) {
               pillsEl.innerHTML = '<span class="sp-label-hint">' + escHtml(field.emptyHint || 'No data in your Business Profile yet.') + '</span>';
             } else {
-              // Use only the .tool-pill base for structure — padding,
-              // border-width, radius, font. Colour and cursor come from
-              // the page-scoped readonly-pills override in
-              // strategic-plan.html, which mirrors the BP-prefilled
-              // input look (light-blue fill, grey border, default
-              // cursor) so all BP-sourced fields read consistently.
+              // Use the .filter-pill base so every chip/pill in SP
+              // shares one class and one height. Page-scoped override
+              // in strategic-plan.html switches it to the readonly
+              // BP-prefilled look (light-blue fill, grey border,
+              // default cursor) without changing the structural height.
               pillsEl.innerHTML = items.map(function(item) {
-                return '<button type="button" tabindex="-1" class="tool-pill">' + escHtml(item) + '</button>';
+                return '<button type="button" tabindex="-1" class="filter-pill sp-readonly-pill">' + escHtml(item) + '</button>';
               }).join('');
             }
           }
