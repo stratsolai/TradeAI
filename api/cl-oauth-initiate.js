@@ -58,7 +58,7 @@ export default async function handler(req, res) {
     xero: {
       clientId: process.env.XERO_CLIENT_ID,
       authUrl: 'https://login.xero.com/identity/connect/authorize',
-      scopes: 'openid profile email accounting.invoices.read accounting.contacts.read accounting.settings.read accounting.reports.profitandloss.read accounting.reports.balancesheet.read accounting.reports.read projects.read offline_access',
+      scopes: 'openid profile email accounting.invoices.read accounting.contacts.read accounting.settings.read accounting.reports.profitandloss.read accounting.reports.balancesheet.read accounting.reports.aged.read projects.read offline_access',
       redirectUri: APP_BASE_URL + '/api/cl-xero-callback',
       flavour: 'xero',
     },

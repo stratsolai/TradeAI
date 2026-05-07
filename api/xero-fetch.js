@@ -523,7 +523,7 @@ export default async function handler(req, res) {
       // Aged Receivables Report — parses the report's aging buckets and
       // returns a weighted-average days-outstanding figure used by BI to
       // populate the Strategic Plan "Average Time Customers Take to Pay"
-      // field. Requires accounting.reports.read scope.
+      // field. Requires accounting.reports.aged.read scope.
       var dataAR = await xeroGet('/Reports/AgedReceivablesByContact');
       var reportAR = dataAR.Reports && dataAR.Reports[0];
 
