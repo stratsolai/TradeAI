@@ -182,7 +182,7 @@
         // separated text input. Custom chips render with × remove.
         input += '<div class="sp-add-other" style="display:flex;gap:8px;align-items:center;margin-top:10px">' +
           '<input type="text" id="' + field.id + '-other-input" class="sp-input sp-add-other-input" data-target="' + field.id + '" placeholder="Add your own" style="flex:1">' +
-          '<button type="button" class="btn-add-connection" data-action="sp-add-other" data-target="' + field.id + '">+ Add</button>' +
+          '<button type="button" class="btn-outline btn-sm" data-action="sp-add-other" data-target="' + field.id + '">+ Add</button>' +
         '</div>';
       }
       input += '<input type="hidden" id="' + field.id + '" value="">';

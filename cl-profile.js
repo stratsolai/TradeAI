@@ -600,7 +600,7 @@ window.CL_PROFILE = {
     var logoHtml = '<div class="profile-logo-wrap">' +
       (p.logo_url ? '<img id="prof-logo-img" src="' + window.escHtml(p.logo_url) + '" class="profile-logo-preview" alt="Logo" />' : '<div id="prof-logo-img" class="profile-logo-placeholder">No logo</div>') +
       '<input id="prof-logo-file" type="file" accept="image/*" class="profile-file-input" />' +
-      '<button class="btn btn-outline" data-action="upload-logo">Upload Logo</button>' +
+      '<button class="btn-outline btn-sm" data-action="upload-logo">Upload Logo</button>' +
     '</div>';
 
     var industryChips = this._chipGroup('prof-industries', industries, selectedIndustries) +
@@ -862,7 +862,7 @@ window.CL_PROFILE = {
     var phonesHtml = phones.map(function(ph, pi) {
       var currentType = ph.type || 'Mobile';
       var typeSelect = '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + ' &#9662;</button>' +
+        '<button type="button" class="lookback-dropdown loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + '</button>' +
         '<div class="lookback-dropdown-menu">' +
         typeOpts.map(function(t) {
           return '<button type="button" class="lookback-dropdown-item' + (t === currentType ? ' active' : '') + '" data-value="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
@@ -942,7 +942,7 @@ window.CL_PROFILE = {
     var body =
       this._locationBlock(primaryLoc, 0, true) +
       '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn-add-connection" data-action="add-location">+ Add Location</button>' +
+      '<button class="btn-add-connection" data-action="add-location" style="margin-bottom:24px">+ Add Location</button>' +
       '<div class="profile-location-block profile-location-block-websites">' +
         '<div class="profile-label profile-label-heading">Website URL(s)</div>' +
         '<input type="url" id="prof-site-primary" class="profile-input profile-input-mb" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" />' +
@@ -1118,7 +1118,7 @@ window.CL_PROFILE = {
     d.className = 'profile-repeating-row';
     d.id = idPfx + '-ph-' + i;
     d.innerHTML = '<span class="lookback-dropdown-wrap">' +
-      '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-phone-type" data-value="Mobile">Mobile &#9662;</button>' +
+      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Mobile">Mobile</button>' +
       '<div class="lookback-dropdown-menu">' +
       typeOpts.map(function(t) {
         return '<button type="button" class="lookback-dropdown-item' + (t === 'Mobile' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
