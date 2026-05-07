@@ -987,16 +987,19 @@
         </div>
         <div class="sp-field">
           <label class="sp-field-label" for="sp-new-init-section">Related SP Section</label>
-          <select id="sp-new-init-section" class="form-input">
-            <option value="">Select...</option>
-            <option value="business_foundation">Business Foundation</option>
-            <option value="products_services">Products, Services &amp; Customers</option>
-            <option value="financial_position">Financial Position</option>
-            <option value="operations_capacity">Operations &amp; Capacity</option>
-            <option value="market_competition">Market &amp; Competition</option>
-            <option value="growth_transformation">Growth &amp; Transformation</option>
-            <option value="risk_resilience">Risk &amp; Resilience</option>
-          </select>
+          <span class="lookback-dropdown-wrap">
+            <button type="button" class="lookback-dropdown lookback-dropdown-field" id="sp-new-init-section" data-value="">Select...</button>
+            <div class="lookback-dropdown-menu" id="sp-new-init-section-menu">
+              <button type="button" class="lookback-dropdown-item active" data-value="">Select...</button>
+              <button type="button" class="lookback-dropdown-item" data-value="business_foundation">Business Foundation</button>
+              <button type="button" class="lookback-dropdown-item" data-value="products_services">Products, Services &amp; Customers</button>
+              <button type="button" class="lookback-dropdown-item" data-value="financial_position">Financial Position</button>
+              <button type="button" class="lookback-dropdown-item" data-value="operations_capacity">Operations &amp; Capacity</button>
+              <button type="button" class="lookback-dropdown-item" data-value="market_competition">Market &amp; Competition</button>
+              <button type="button" class="lookback-dropdown-item" data-value="growth_transformation">Growth &amp; Transformation</button>
+              <button type="button" class="lookback-dropdown-item" data-value="risk_resilience">Risk &amp; Resilience</button>
+            </div>
+          </span>
         </div>
       </div>
       <div class="perm-modal-actions" style="margin-top:var(--card-padding)">

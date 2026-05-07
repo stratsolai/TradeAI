@@ -606,12 +606,62 @@
       });
     }
 
+    wireLookbackDropdown('sp-new-init-section', 'sp-new-init-section-menu');
+
     // Close modals on overlay click
     document.querySelectorAll('.perm-modal-overlay').forEach(function(overlay) {
       overlay.addEventListener('click', function(e) {
         if (e.target === overlay) overlay.classList.remove('open');
       });
     });
+  }
+
+  // Wire a lookback-dropdown trigger / menu pair: trigger toggles the
+  // menu, item-click sets the trigger's data-value + label and closes
+  // the menu, document-level click closes when clicking outside.
+  // Idempotent — safe to call repeatedly. Event delegation on the
+  // menu means dynamically-added items pick up the click handler.
+  function wireLookbackDropdown(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      btn.setAttribute('data-value', item.getAttribute('data-value'));
+      btn.textContent = item.textContent;
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(item.getAttribute('data-value'), item.textContent);
+    });
+    document.addEventListener('click', function() { menu.classList.remove('open'); });
+  }
+
+  // Reset a lookback-dropdown to its first item (or to a specific
+  // value if provided). Mirrors the .value='' reset that <select>
+  // forms use to clear state when re-opening a modal.
+  function resetLookbackDropdown(triggerId, menuId, value) {
+    var btn = document.getElementById(triggerId);
+    var menu = document.getElementById(menuId);
+    if (!btn || !menu) return;
+    var items = menu.querySelectorAll('.lookback-dropdown-item');
+    var target = null;
+    if (value !== undefined) {
+      items.forEach(function(i) { if (i.getAttribute('data-value') === value) target = i; });
+    }
+    if (!target) target = items[0];
+    if (!target) return;
+    items.forEach(function(i) { i.classList.remove('active'); });
+    target.classList.add('active');
+    btn.setAttribute('data-value', target.getAttribute('data-value'));
+    btn.textContent = target.textContent;
   }
 
   function toggleChip(el, groupId, isMulti) {
@@ -1666,14 +1716,35 @@
     form.className = 'sp-add-task-form';
     var f = '<div class="sp-add-task-grid">';
     f += '<div class="sp-add-task-col-title"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
-    f += '<div class="sp-add-task-col-sm"><select class="form-input sp-add-task-priority"><option value="High">High</option><option value="Medium" selected>Medium</option><option value="Low">Low</option></select></div>';
+    f += '<div class="sp-add-task-col-sm">'
+       + '<span class="lookback-dropdown-wrap">'
+       + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-add-task-priority" data-value="Medium">Medium</button>'
+       + '<div class="lookback-dropdown-menu sp-add-task-priority-menu">'
+       + '<button type="button" class="lookback-dropdown-item" data-value="High">High</button>'
+       + '<button type="button" class="lookback-dropdown-item active" data-value="Medium">Medium</button>'
+       + '<button type="button" class="lookback-dropdown-item" data-value="Low">Low</button>'
+       + '</div></span></div>';
     f += '<div class="sp-add-task-col-md"><input type="date" class="sp-input sp-add-task-due"></div>';
-    f += '<div class="sp-add-task-col-md"><select class="form-input sp-add-task-owner"><option value="Owner">Owner</option><option value="Admin">Admin</option><option value="Office manager">Office mgr</option><option value="Project manager">Project mgr</option><option value="Other">Other</option></select></div>';
+    f += '<div class="sp-add-task-col-md">'
+       + '<span class="lookback-dropdown-wrap">'
+       + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-add-task-owner" data-value="Owner">Owner</button>'
+       + '<div class="lookback-dropdown-menu sp-add-task-owner-menu">'
+       + '<button type="button" class="lookback-dropdown-item active" data-value="Owner">Owner</button>'
+       + '<button type="button" class="lookback-dropdown-item" data-value="Admin">Admin</button>'
+       + '<button type="button" class="lookback-dropdown-item" data-value="Office manager">Office mgr</button>'
+       + '<button type="button" class="lookback-dropdown-item" data-value="Project manager">Project mgr</button>'
+       + '<button type="button" class="lookback-dropdown-item" data-value="Other">Other</button>'
+       + '</div></span></div>';
     f += '</div><div class="sp-add-task-buttons">';
     f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + escHtml(parentId) + '" type="button">Add</button>';
     f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
     form.innerHTML = f;
     row.appendChild(form);
+    // Wire the two lookback-dropdowns by element reference rather than
+    // ID — multiple Add Task forms can exist simultaneously (one per
+    // initiative the user has expanded), so unique IDs would clash.
+    wireLookbackDropdown(form.querySelector('.sp-add-task-priority'), form.querySelector('.sp-add-task-priority-menu'));
+    wireLookbackDropdown(form.querySelector('.sp-add-task-owner'), form.querySelector('.sp-add-task-owner-menu'));
     form.querySelector('.sp-add-task-title').focus();
   }
 
@@ -1686,9 +1757,9 @@
       form.querySelector('.sp-add-task-title').classList.add('sp-input-error');
       return;
     }
-    var priority = form.querySelector('.sp-add-task-priority').value;
+    var priority = form.querySelector('.sp-add-task-priority').getAttribute('data-value') || 'Medium';
     var dueDate = form.querySelector('.sp-add-task-due').value;
-    var owner = form.querySelector('.sp-add-task-owner').value;
+    var owner = form.querySelector('.sp-add-task-owner').getAttribute('data-value') || 'Owner';
 
     if (!_supabase || !_userId) return;
     _supabase
@@ -1765,13 +1836,13 @@
     var modal = document.getElementById('sp-add-init-modal');
     if (!modal) return;
     document.getElementById('sp-new-init-name').value = '';
-    document.getElementById('sp-new-init-section').value = '';
+    resetLookbackDropdown('sp-new-init-section', 'sp-new-init-section-menu');
     modal.classList.add('open');
   }
 
   function createInitiative() {
     var name = (document.getElementById('sp-new-init-name').value || '').trim();
-    var section = document.getElementById('sp-new-init-section').value;
+    var section = document.getElementById('sp-new-init-section').getAttribute('data-value') || '';
     if (!name) {
       _showError('Please enter an initiative name.');
       return;
