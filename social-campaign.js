@@ -71,7 +71,6 @@ window.SM_CAMPAIGN = {
     if (wizardEl) {
       wizardEl.classList.add('active');
       wizardEl.innerHTML = '<div class="sm-wizard-header">' +
-        '<button class="btn-back" id="smc-wizard-back">Back</button>' +
         '<div class="sm-wizard-title" id="smc-wizard-title">New Marketing Campaign</div>' +
         '</div>' +
         '<div class="sm-step-indicator" id="smc-step-indicator"></div>' +
@@ -79,7 +78,7 @@ window.SM_CAMPAIGN = {
         '<div class="action-row sm-wizard-nav">' +
         '<button class="btn-back" id="smc-prev-btn" style="display:none">Back</button>' +
         '<button class="btn-outline" id="smc-save-btn">Save &amp; Exit</button>' +
-        '<button class="btn-primary" id="smc-next-btn">Next</button>' +
+        '<button class="btn-back" id="smc-next-btn">Next</button>' +
         '</div>';
       this._bindWizardNav();
       this._renderStep();
@@ -88,9 +87,6 @@ window.SM_CAMPAIGN = {
 
   _bindWizardNav: function() {
     var self = this;
-    document.getElementById('smc-wizard-back').addEventListener('click', function() {
-      self._exitWizard();
-    });
     document.getElementById('smc-prev-btn').addEventListener('click', function() {
       if (self._campaignStep > 0) {
         self._saveStepData();
@@ -1190,7 +1186,6 @@ window.SM_CAMPAIGN = {
     if (wizardEl) {
       wizardEl.classList.add('active');
       wizardEl.innerHTML = '<div class="sm-wizard-header">' +
-        '<button class="btn-back" id="smc-wizard-back">Back</button>' +
         '<div class="sm-wizard-title">New Campaign (from previous)</div>' +
         '</div>' +
         '<div class="sm-step-indicator" id="smc-step-indicator"></div>' +
@@ -1198,7 +1193,7 @@ window.SM_CAMPAIGN = {
         '<div class="action-row sm-wizard-nav">' +
         '<button class="btn-back" id="smc-prev-btn" style="display:none">Back</button>' +
         '<button class="btn-outline" id="smc-save-btn">Save &amp; Exit</button>' +
-        '<button class="btn-primary" id="smc-next-btn">Next</button>' +
+        '<button class="btn-back" id="smc-next-btn">Next</button>' +
         '</div>';
       this._bindWizardNav();
       this._renderStep();
