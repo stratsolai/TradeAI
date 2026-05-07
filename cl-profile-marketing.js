@@ -158,9 +158,9 @@ window.BP_MARKETING = {
     else { this._generate(); return; }
 
     var nav = '<div style="display:flex;gap:12px;margin-top:20px">';
-    nav += '<button class="perm-modal-cancel" id="prof-mkt-cancel">Cancel</button>';
     if (t > 0) nav += '<button class="btn-back" id="prof-mkt-prev">Back</button>';
-    nav += '<button class="btn-primary" id="prof-mkt-next" style="margin-left:auto">' + (t < 5 ? 'Next' : 'Generate Summary') + '</button>';
+    nav += '<button class="perm-modal-cancel" id="prof-mkt-cancel">Cancel</button>';
+    nav += '<button class="btn-back" id="prof-mkt-next" style="margin-left:auto">' + (t < 5 ? 'Next' : 'Generate Summary') + '</button>';
     nav += '</div>';
 
     el.innerHTML = '<div style="margin-bottom:8px;font-size:var(--badge-font-size);color:var(--text-muted)">Topic ' + (t + 1) + ' of 6</div>' + html + nav;
