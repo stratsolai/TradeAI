@@ -381,10 +381,10 @@ window.DASH_WIDGETS = (function() {
     var html = '';
     categoryNames.forEach(function(cat) {
       var groupTasks = grouped[cat];
-      var groupHtml = '<div class="dash-sp-category" data-category="' + window.escHtml(cat) + '">';
-      groupHtml += '<div class="dash-sp-category-header">';
-      groupHtml += '<span><span class="dash-sp-category-name">' + window.escHtml(cat) + '</span> <span class="text-muted">' + groupTasks.length + ' task' + (groupTasks.length === 1 ? '' : 's') + '</span></span>';
-      groupHtml += '<span class="dash-sp-category-arrow">▾</span>';
+      var groupHtml = '<div class="expand-tile" data-category="' + window.escHtml(cat) + '">';
+      groupHtml += '<div class="expand-tile-header">';
+      groupHtml += '<span class="expand-tile-title">' + window.escHtml(cat) + '</span>';
+      groupHtml += '<span class="text-muted">' + groupTasks.length + ' task' + (groupTasks.length === 1 ? '' : 's') + '</span>';
       groupHtml += '</div>';
       groupHtml += '<div class="dash-sp-tasks collapsed-list">';
       groupTasks.forEach(function(t, idx) {
@@ -422,12 +422,14 @@ window.DASH_WIDGETS = (function() {
   }
 
   function wireSPCategoryToggles() {
-    document.querySelectorAll('.dash-sp-category-header').forEach(function(h) {
-      h.addEventListener('click', function() {
-        var cat = h.closest('.dash-sp-category');
-        if (!cat) return;
+    document.querySelectorAll('.dash-sp-categories .expand-tile').forEach(function(cat) {
+      cat.addEventListener('click', function(e) {
+        // Skip when the click landed on a task row — the tasks have
+        // their own checkbox + body click handlers and shouldn't
+        // collapse the parent category.
+        if (e.target.closest('.dash-sp-tasks')) return;
         var taskList = cat.querySelector('.dash-sp-tasks');
-        var isOpen = cat.classList.toggle('open');
+        var isOpen = cat.classList.toggle('expanded');
         if (taskList) {
           if (isOpen) taskList.classList.remove('collapsed-list');
           else taskList.classList.add('collapsed-list');

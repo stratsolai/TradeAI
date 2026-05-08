@@ -619,33 +619,24 @@
       white-space: nowrap;
     }
 
-    /* ── Strategic Plan task accordion (dashboard-specific accordion pattern) ── */
+    /* ── Strategic Plan task accordion ──
+       Each category is a platform .expand-tile (staxai-auth.css §22a).
+       The dashboard SP tile is a compact list, so we tighten padding
+       and trim the heading-font title back to body-font weight here —
+       the SM Create-tab cards' 24px padding and 20px Barlow title are
+       too heavy when many categories stack inside a dashboard tile. */
     .dash-sp-categories { display: flex; flex-direction: column; gap: 8px; }
-    .dash-sp-category {
-      border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      overflow: hidden;
-    }
-    .dash-sp-category-header {
-      display: flex; align-items: center; justify-content: space-between;
+    .dash-sp-categories .expand-tile { padding: 0; }
+    .dash-sp-categories .expand-tile-header {
       padding: 10px 14px;
-      background: var(--bg-subtle);
-      cursor: pointer;
-      user-select: none;
       min-height: 44px;
       box-sizing: border-box;
     }
-    .dash-sp-category-header:hover { background: var(--blue-light); }
-    .dash-sp-category-name {
-      font-weight: var(--font-weight-semibold);
+    .dash-sp-categories .expand-tile-title {
+      font-family: var(--body-font);
       font-size: var(--btn-font-size);
-      color: var(--text);
+      font-weight: var(--font-weight-semibold);
     }
-    .dash-sp-category-arrow {
-      font-size: 12px; color: var(--text-muted);
-      transition: transform var(--btn-transition);
-    }
-    .dash-sp-category.open .dash-sp-category-arrow { transform: rotate(180deg); }
     .dash-sp-tasks { display: block; padding: 4px 0; }
     .dash-sp-tasks.collapsed-list .dash-sp-task.hidden { display: none; }
     .dash-sp-task {
