@@ -852,6 +852,23 @@ Object.assign(window.SP_LOGIC, {
   // uses Add Goal via AI chat (handled in strategic-plan-review.js
   // for pending plans) instead of a manual Add Initiative.
 
+  // Sign one storage path on demand. SP docs live in cl-assets under
+  // an owner-only prefix, so getPublicUrl returns 403s — every read
+  // must go through createSignedUrl. Pattern matches cl-review.js:318
+  // and email-assistant-logic.js:1092. Returns '' on failure so the
+  // caller can omit the link rather than render a broken anchor.
+  _signSpDocPath: function(path) {
+    if (!path || !this._supabase) return Promise.resolve('');
+    return this._supabase.storage.from('cl-assets').createSignedUrl(path, 3600)
+      .then(function(res) {
+        if (res.error || !res.data || !res.data.signedUrl) {
+          console.error('[SP] Sign URL error:', (res.error && res.error.message) || 'no signedUrl returned');
+          return '';
+        }
+        return res.data.signedUrl;
+      });
+  },
+
   loadStrategicPlanView: function() {
     var self = this;
     if (!self._supabase || !self._userId) return;
@@ -872,18 +889,27 @@ Object.assign(window.SP_LOGIC, {
         var dateEl = document.getElementById('sp-doc-generated-date');
         if (dateEl) dateEl.textContent = 'Generated: ' + (plan.created_at ? plan.created_at.substring(0, 10) : '');
 
+        // document_1_url / document_2_url hold storage paths — sign them
+        // on demand each time the user views this tab. Both signs run
+        // in parallel so the render isn't bottlenecked on the slower
+        // one. If either fails the link is just omitted.
         var linksEl = document.getElementById('sp-download-links');
         if (linksEl) {
-          var dlHtml = '';
-          if (plan.document_1_url) {
-            dlHtml += '<a href="' + escHtml(plan.document_1_url) + '" class="btn-sp-download" download>Strategic Plan (Word)</a> ';
-          }
-          if (plan.document_2_url) {
-            dlHtml += '<a href="' + escHtml(plan.document_2_url) + '" class="btn-sp-download" download>Operational Plan (Word)</a> ';
-          }
-          dlHtml += '<button class="btn-sp-print" type="button">Print / Save as PDF</button>';
-          dlHtml += ' <button class="btn-outline btn-sm" id="sp-update-plan-btn" type="button">Update Plan</button>';
-          linksEl.innerHTML = dlHtml;
+          Promise.all([
+            self._signSpDocPath(plan.document_1_url),
+            self._signSpDocPath(plan.document_2_url)
+          ]).then(function(signed) {
+            var dlHtml = '';
+            if (signed[0]) {
+              dlHtml += '<a href="' + escHtml(signed[0]) + '" class="btn-sp-download" download>Strategic Plan (Word)</a> ';
+            }
+            if (signed[1]) {
+              dlHtml += '<a href="' + escHtml(signed[1]) + '" class="btn-sp-download" download>Operational Plan (Word)</a> ';
+            }
+            dlHtml += '<button class="btn-sp-print" type="button">Print / Save as PDF</button>';
+            dlHtml += ' <button class="btn-outline btn-sm" id="sp-update-plan-btn" type="button">Update Plan</button>';
+            linksEl.innerHTML = dlHtml;
+          });
         }
 
         if (plan.swot_data) self.renderSwot(plan.swot_data);
@@ -929,7 +955,23 @@ Object.assign(window.SP_LOGIC, {
       .order('version', { ascending: false })
       .then(function(res) {
         if (res.error) { console.error('[SP] Version history error:', res.error.message); return; }
-        if (res.data && res.data.length > 0) self.renderVersionHistory(res.data, el);
+        var versions = (res.data && res.data.length > 0) ? res.data : null;
+        if (!versions) return;
+        // document_1_url / document_2_url hold storage paths. Sign each
+        // version's pair in parallel before rendering so the row HTML
+        // can stay synchronous and href values are valid signed URLs.
+        var jobs = [];
+        versions.forEach(function(v) {
+          jobs.push(self._signSpDocPath(v.document_1_url));
+          jobs.push(self._signSpDocPath(v.document_2_url));
+        });
+        Promise.all(jobs).then(function(signed) {
+          versions.forEach(function(v, i) {
+            v._doc1Signed = signed[i * 2];
+            v._doc2Signed = signed[i * 2 + 1];
+          });
+          self.renderVersionHistory(versions, el);
+        });
       });
   },
 
@@ -940,8 +982,8 @@ Object.assign(window.SP_LOGIC, {
       var label = v.plan_name || ('Plan v' + v.version);
       var dateStr = v.created_at ? v.created_at.substring(0, 10) : '';
       var badge = v.is_current ? ' <span class="sp-current-badge">Current Plan</span>' : '';
-      var doc1 = v.document_1_url ? '<a href="' + escHtml(v.document_1_url) + '" class="sp-vh-link" download>Strategic Plan</a> ' : '';
-      var doc2 = v.document_2_url ? '<a href="' + escHtml(v.document_2_url) + '" class="sp-vh-link" download>Ops Plan</a> ' : '';
+      var doc1 = v._doc1Signed ? '<a href="' + escHtml(v._doc1Signed) + '" class="sp-vh-link" download>Strategic Plan</a> ' : '';
+      var doc2 = v._doc2Signed ? '<a href="' + escHtml(v._doc2Signed) + '" class="sp-vh-link" download>Ops Plan</a> ' : '';
       var useBtn = v.is_current ? '' : '<button class="btn-sp-use-template" data-plan-id="' + escHtml(v.id) + '" type="button">Use as Template</button>';
       html += '<div class="sp-version-row' + (v.is_current ? ' sp-version-current' : '') + '">';
       html += '<div class="sp-vh-label">' + escHtml(label) + badge + '</div>';

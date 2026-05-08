@@ -558,6 +558,12 @@ export default async function handler(req, res) {
       .upload(opsStoragePath, opsBuffer, { contentType: docxContentType, upsert: true });
     if (e2) throw new Error('Ops upload failed: ' + e2.message);
 
+    // SP docs are owner-only — the SP page signs the storage path on
+    // demand at view time (see strategic-plan-modules.js
+    // loadStrategicPlanView / loadVersionHistory). The public URL is
+    // still computed here only because Pattern B writes to
+    // content_library expect a clickable file_url; if Tool Outputs
+    // stops needing one, drop the getPublicUrl calls too.
     var strategyUrl = supabase.storage.from('cl-assets').getPublicUrl(strategyStoragePath).data.publicUrl;
     var opsUrl = supabase.storage.from('cl-assets').getPublicUrl(opsStoragePath).data.publicUrl;
 
@@ -625,8 +631,13 @@ export default async function handler(req, res) {
           interview_data: interviewDataWithDecisions,
           plan_data: content,
           swot_data: swotData,
-          document_1_url: strategyUrl,
-          document_2_url: opsUrl
+          // Storage paths (not URLs). loadStrategicPlanView and
+          // loadVersionHistory call createSignedUrl on these at read
+          // time — bucket prefix is owner-only, no public URL works.
+          // Column names kept as *_url for backwards compatibility with
+          // any external readers; treat the value as a path.
+          document_1_url: strategyStoragePath,
+          document_2_url: opsStoragePath
         })
         .select('id')
         .single();
