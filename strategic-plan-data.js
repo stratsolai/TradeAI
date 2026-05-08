@@ -26,7 +26,6 @@
 //
 // Field types:
 //   text, textarea, select, chip-single, chip-multi
-//   select-or-text — dropdown with an "Other" option that reveals a text input
 //   chip-multi-text — chip-multi with allowOther for custom entries
 
 window.SP_SECTIONS = [

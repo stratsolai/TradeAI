@@ -1061,6 +1061,11 @@ window.SOCIAL_LOGIC = {
 
   _bindStepEvents: function(step) {
     var self = this;
+    // Scope every chip / pill query to the wizard step body. Without
+    // this, document-wide .filter-pill / [data-*] selectors collide
+    // with any other pills that happen to be rendered elsewhere on
+    // the page (e.g. the Operational Tasks filter chips on SP).
+    var stepEl = document.getElementById('sm-step-content');
 
     if (step.id === 'media') {
       var dropArea = document.getElementById('sm-media-drop');
@@ -1097,32 +1102,32 @@ window.SOCIAL_LOGIC = {
       });
     }
 
-    if (step.id === 'tone') {
-      document.querySelectorAll('.filter-pill').forEach(function(pill) {
+    if (step.id === 'tone' && stepEl) {
+      stepEl.querySelectorAll('.filter-pill').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('.filter-pill').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.tone = pill.dataset.tone;
         });
       });
     }
 
-    if (step.id === 'story_type') {
-      document.querySelectorAll('[data-story]').forEach(function(pill) {
+    if (step.id === 'story_type' && stepEl) {
+      stepEl.querySelectorAll('[data-story]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-story]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-story]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.story_type = pill.dataset.story;
         });
       });
     }
 
-    if (step.id === 'output_type') {
-      document.querySelectorAll('[data-output]').forEach(function(pill) {
+    if (step.id === 'output_type' && stepEl) {
+      stepEl.querySelectorAll('[data-output]').forEach(function(pill) {
         pill.addEventListener('click', function() {
           pill.classList.toggle('active');
           var selected = [];
-          document.querySelectorAll('[data-output].active').forEach(function(p) {
+          stepEl.querySelectorAll('[data-output].active').forEach(function(p) {
             selected.push(p.dataset.output);
           });
           self._journeyInputs.output_types = selected;
@@ -1131,10 +1136,10 @@ window.SOCIAL_LOGIC = {
       });
     }
 
-    if (step.id === 'source') {
-      document.querySelectorAll('[data-source]').forEach(function(pill) {
+    if (step.id === 'source' && stepEl) {
+      stepEl.querySelectorAll('[data-source]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-source]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-source]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.source_type = pill.dataset.source;
           var ndContainer = document.getElementById('sm-nd-items-container');
@@ -1148,40 +1153,40 @@ window.SOCIAL_LOGIC = {
       });
     }
 
-    if (step.id === 'topic') {
-      document.querySelectorAll('[data-topic]').forEach(function(pill) {
+    if (step.id === 'topic' && stepEl) {
+      stepEl.querySelectorAll('[data-topic]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-topic]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-topic]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.topic_type = pill.dataset.topic;
         });
       });
     }
 
-    if (step.id === 'audience') {
-      document.querySelectorAll('[data-audience]').forEach(function(pill) {
+    if (step.id === 'audience' && stepEl) {
+      stepEl.querySelectorAll('[data-audience]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-audience]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-audience]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.audience = pill.dataset.audience;
         });
       });
     }
 
-    if (step.id === 'news_type') {
-      document.querySelectorAll('[data-newstype]').forEach(function(pill) {
+    if (step.id === 'news_type' && stepEl) {
+      stepEl.querySelectorAll('[data-newstype]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-newstype]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-newstype]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.news_type = pill.dataset.newstype;
         });
       });
     }
 
-    if (step.id === 'what' && this._currentJourney === 'event_promo') {
-      document.querySelectorAll('[data-eventtype]').forEach(function(pill) {
+    if (step.id === 'what' && this._currentJourney === 'event_promo' && stepEl) {
+      stepEl.querySelectorAll('[data-eventtype]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-eventtype]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-eventtype]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.what = pill.dataset.eventtype;
           var otherWrap = document.getElementById('sm-event-other-wrap');
@@ -1190,10 +1195,10 @@ window.SOCIAL_LOGIC = {
       });
     }
 
-    if (step.id === 'what' && this._currentJourney === 'offer_promo') {
-      document.querySelectorAll('[data-offertype]').forEach(function(pill) {
+    if (step.id === 'what' && this._currentJourney === 'offer_promo' && stepEl) {
+      stepEl.querySelectorAll('[data-offertype]').forEach(function(pill) {
         pill.addEventListener('click', function() {
-          document.querySelectorAll('[data-offertype]').forEach(function(p) { p.classList.remove('active'); });
+          stepEl.querySelectorAll('[data-offertype]').forEach(function(p) { p.classList.remove('active'); });
           pill.classList.add('active');
           self._journeyInputs.what = pill.dataset.offertype;
           var otherWrap = document.getElementById('sm-offer-other-wrap');
@@ -1287,10 +1292,13 @@ window.SOCIAL_LOGIC = {
     }
 
     if (step.id === 'output_type') {
+      var stepEl = document.getElementById('sm-step-content');
       var selected = [];
-      document.querySelectorAll('[data-output].active').forEach(function(p) {
-        selected.push(p.dataset.output);
-      });
+      if (stepEl) {
+        stepEl.querySelectorAll('[data-output].active').forEach(function(p) {
+          selected.push(p.dataset.output);
+        });
+      }
       if (selected.length > 0) {
         this._journeyInputs.output_types = selected;
         this._journeyInputs.output_type = selected[0];

@@ -232,22 +232,6 @@ Object.assign(window.SP_LOGIC, {
         + '<button type="button" class="lookback-dropdown lookback-dropdown-field" id="' + field.id + '" data-value="' + escHtml(initialValue) + '">' + escHtml(initialLabel) + '</button>'
         + '<div class="lookback-dropdown-menu" id="' + field.id + '-menu">' + menuItems + '</div>'
         + '</span>';
-    } else if (field.type === 'select-or-text') {
-      // The select-or-text variant lets users pick from a list or type
-      // their own — the trigger button now mirrors a regular lookback
-      // and the "Other (specify)" item reveals a sp-input text field.
-      // The hidden input keeps carrying the resolved value into
-      // collectSectionData.
-      var sxItems = (field.options || []).map(function(o) {
-        return '<button type="button" class="lookback-dropdown-item" data-value="' + escHtml(o.value) + '">' + escHtml(o.label) + '</button>';
-      }).join('');
-      sxItems += '<button type="button" class="lookback-dropdown-item" data-value="__other__">Other (specify)</button>';
-      input = '<span class="lookback-dropdown-wrap">'
-        + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-select-or-text" id="' + field.id + '-select" data-target="' + field.id + '" data-value="">Select…</button>'
-        + '<div class="lookback-dropdown-menu" id="' + field.id + '-select-menu">' + sxItems + '</div>'
-        + '</span>';
-      input += '<input type="text" id="' + field.id + '-other" class="sp-input sp-other-input" placeholder="' + escHtml(field.placeholder || '') + '" style="display:none;margin-top:8px">';
-      input += '<input type="hidden" id="' + field.id + '" value="">';
     } else if (field.type === 'chip-single' || field.type === 'chip-multi') {
       var chips = (field.options || []).map(function(o) {
         return '<div class="filter-pill" data-value="' + escHtml(o.value) + '" data-group="' + field.id + '" data-multi="' + (field.type === 'chip-multi') + '">' + escHtml(o.label) + '</div>';
@@ -323,20 +307,11 @@ Object.assign(window.SP_LOGIC, {
         }
       });
 
-      container.addEventListener('input', function(e) {
-        // select-or-text "Other (specify)" still uses the inline hidden
-        // input pattern; the chip-multi/chip-single Other path moved to
-        // the BP-style Add-button helper. Lookback-dropdown selections
-        // themselves are wired by wireInterviewSelects below — those
-        // emit no native change event, so the callback there is what
-        // schedules saves and drops sp-from-bi shading.
-        var otherInput = e.target.closest('.sp-other-input');
-        if (otherInput) {
-          var fieldId = otherInput.id.replace('-other', '');
-          var hidden = document.getElementById(fieldId);
-          var selectEl = document.getElementById(fieldId + '-select');
-          if (hidden && selectEl) hidden.value = otherInput.value.trim();
-        }
+      container.addEventListener('input', function() {
+        // Autosave-on-keystroke for text / textarea fields. Lookback-
+        // dropdown selections schedule via the wireInterviewSelects
+        // callback (no native change event); chip groups schedule via
+        // their own click handlers.
         self.scheduleDraftSave();
       });
 
@@ -607,8 +582,7 @@ Object.assign(window.SP_LOGIC, {
 
   // Wire every interview-form lookback-dropdown after a section is
   // rendered. The onSelect callback drops sp-from-bi shading (any
-  // user-set value is no longer "from BI"), schedules a draft save,
-  // and handles the select-or-text variant's Other (specify) reveal.
+  // user-set value is no longer "from BI") and schedules a draft save.
   wireInterviewSelects: function(scope) {
     var self = this;
     var root = scope || document.getElementById('sp-sections-container');
@@ -616,20 +590,8 @@ Object.assign(window.SP_LOGIC, {
     root.querySelectorAll('.lookback-dropdown').forEach(function(btn) {
       var menu = document.getElementById(btn.id + '-menu');
       if (!menu) return;
-      self.wireLookbackDropdown(btn, menu, function(value) {
+      self.wireLookbackDropdown(btn, menu, function() {
         btn.classList.remove('sp-from-bi');
-        if (btn.classList.contains('sp-select-or-text')) {
-          var targetId = btn.dataset.target;
-          var otherInput = document.getElementById(targetId + '-other');
-          var hidden = document.getElementById(targetId);
-          if (value === '__other__') {
-            if (otherInput) { otherInput.style.display = 'block'; otherInput.focus(); }
-            if (hidden) hidden.value = '';
-          } else {
-            if (otherInput) { otherInput.style.display = 'none'; otherInput.value = ''; }
-            if (hidden) hidden.value = value;
-          }
-        }
         self.scheduleDraftSave();
       });
     });
@@ -1003,28 +965,6 @@ Object.assign(window.SP_LOGIC, {
           self.updateHiddenFromChips(f.id);
         } else {
           el.value = vals.join(',');
-        }
-      } else if (f.type === 'select-or-text') {
-        var sel = document.getElementById(f.id + '-select');
-        var menu = document.getElementById(f.id + '-select-menu');
-        if (sel && menu) {
-          // Look for an item whose data-value matches the saved value;
-          // if there's a match, select it and copy into the hidden
-          // input. Otherwise fall back to the Other (specify) item and
-          // surface the raw value in the inline text input.
-          var matchItem = null;
-          menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) {
-            if (it.getAttribute('data-value') === v) matchItem = it;
-          });
-          if (matchItem) {
-            self.writeFieldValue(sel, v);
-            el.value = v;
-          } else if (v) {
-            self.writeFieldValue(sel, '__other__');
-            var oi = document.getElementById(f.id + '-other');
-            if (oi) { oi.value = v; oi.style.display = 'block'; }
-            el.value = v;
-          }
         }
       } else { self.writeFieldValue(el, typeof v === 'object' ? JSON.stringify(v) : v); }
     }); });
