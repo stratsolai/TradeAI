@@ -1315,6 +1315,81 @@ body { padding-top: 68px; }
 .tile-card.tile-card-empty { border-left-color: var(--border); opacity: 0.65; }
 
 /* ------------------------------------------------------------
+   22a. EXPAND TILE
+   White card with coloured left border. Click whole tile to
+   reveal nested content. Platform-standard accordion/expandable
+   pattern — used by BI Risks & Opportunities, Dashboard Strategic
+   Plan tile, BP grouped chip pickers, and the SM Create-tab
+   content groups. Visual based on social.html .sm-group-tile.
+   ------------------------------------------------------------ */
+.expand-tile {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  cursor: pointer;
+  transition: box-shadow var(--btn-transition);
+}
+.expand-tile:hover,
+.expand-tile.expanded { box-shadow: 0 4px 16px var(--shadow-hover); }
+
+/* Optional header row — flex container for icon + title + count.
+   Composed by the consumer; left as a plain flex row so consumers
+   can also include their own controls on the right (e.g. a search
+   field or filter chips inside the expanded content). */
+.expand-tile-header {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+}
+.expand-tile-icon {
+  font-size: var(--heading-lg-size);
+  line-height: 1;
+  flex-shrink: 0;
+}
+.expand-tile-title {
+  font-family: var(--heading-font);
+  font-size: 20px;
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+}
+.expand-tile-desc {
+  font-size: var(--note-font-size);
+  color: var(--text-muted);
+  line-height: var(--note-line-height);
+  margin-top: 4px;
+}
+.expand-tile-count {
+  background: var(--blue);
+  color: var(--white);
+  font-size: var(--badge-font-size);
+  font-weight: var(--font-weight-semibold);
+  border-radius: 10px;
+  padding: 2px 10px;
+  min-width: 22px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Nested content — hidden until parent has .expanded class.
+   Direct-child selector so a nested .expand-tile inside the
+   content (rare but legal) does not get prematurely revealed. */
+.expand-tile-content {
+  display: none;
+  margin-top: var(--actions-gap);
+}
+.expand-tile.expanded > .expand-tile-content { display: block; }
+
+/* Status modifiers — change the left-border colour to match
+   tile severity. Default is blue (set on .expand-tile above). */
+.expand-tile.status-amber { border-left-color: var(--orange); }
+.expand-tile.status-red   { border-left-color: var(--red); }
+.expand-tile.status-green { border-left-color: var(--green); }
+
+/* ------------------------------------------------------------
    23. TILE GRID
    Auto-fill grid used by tile collections across the platform.
    ------------------------------------------------------------ */
