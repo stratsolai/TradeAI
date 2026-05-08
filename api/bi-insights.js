@@ -339,6 +339,19 @@ export default async function handler(req, res) {
       'The legacy "strategic" and "general" categories are no longer valid. Anything that previously read as "strategic" should be classified as "growth" (forward-looking opportunity) or "risk" (defensive/continuity) depending on framing.\n\n'
     );
 
+    // Tactical vs strategic classification — drives SP/OT spec §7.2:
+    // Add to Plan creates a single Operational Task immediately for
+    // tactical items, but queues strategic items as suggestions for
+    // the next plan update. Claude makes the call per-insight from
+    // scope and effort.
+    var classificationGuide = (
+      'CLASSIFICATION (per insight):\n' +
+      'Mark each insight as either "tactical" or "strategic" via is_tactical:\n' +
+      '- is_tactical: true — actionable now, finite scope, fits as a single Operational Task. Examples: "Call overdue customers about $X in receivables", "Renew expiring liability insurance", "Switch from supplier A to supplier B for materials". The owner can complete it in days or weeks without rewriting their plan.\n' +
+      '- is_tactical: false — strategic. Requires planning, broader scope, would generate multiple tasks or a new strategic Goal. Examples: "Develop government tendering capability", "Expand into the Hunter region", "Acquire a competitor", "Pivot to subscription pricing model". The owner needs to decide direction first, then build out an execution plan.\n' +
+      'Include a classification_reason — one short sentence explaining why this insight is tactical or strategic. Helps the owner understand the routing.\n\n'
+    );
+
     var userPrompt = (
       'You are preparing a Risks & Opportunities briefing for the owner of ' + (profile.business_name || 'this business') +
       ', a ' + industry + ' business based in ' + (location || 'Australia') + '.\n\n' +
@@ -381,6 +394,7 @@ export default async function handler(req, res) {
       '- "Web research" — a result from the external research list (include the url if available)\n' +
       'Each source must include a brief detail showing the specific evidence (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026"). Web research sources should include the link.\n\n' +
       categoryGuide +
+      classificationGuide +
       'OUTPUT FORMAT:\n' +
       'Return ONLY a JSON array (no markdown, no commentary). Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
       'Each insight object:\n' +
@@ -388,6 +402,8 @@ export default async function handler(req, res) {
       '  "module": "alerts",\n' +
       '  "insight_type": "alert",\n' +
       '  "relevance_score": <integer 1-10, 10 = most important>,\n' +
+      '  "is_tactical": <boolean — true if a single Operational Task can resolve it, false if it needs strategic planning>,\n' +
+      '  "classification_reason": "<one short sentence — why tactical or strategic>",\n' +
       '  "insight_data": {\n' +
       '    "severity": "red" | "amber" | "green",\n' +
       '    "category": "financial" | "products" | "customers" | "operations" | "market" | "growth" | "risk",\n' +
@@ -446,12 +462,24 @@ export default async function handler(req, res) {
     await supabase.from('bi_insights').delete().eq('user_id', userId).eq('is_dismissed', false);
 
     var rows = insights.map(function(ins) {
+      // Stash classification_reason inside insight_data so the Add to
+      // Plan handler can copy it across to the action_tracker row
+      // without a second round-trip. is_tactical is a top-level column
+      // (see migrations/bi-sp-integration.sql) so the dashboard can
+      // route the toast and the badge without parsing JSON.
+      var insightData = ins.insight_data || {};
+      if (ins.classification_reason && !insightData.classification_reason) {
+        insightData.classification_reason = ins.classification_reason;
+      }
       return {
         user_id: userId,
         module: ins.module || 'alerts',
         insight_type: ins.insight_type || 'alert',
-        insight_data: ins.insight_data || {},
+        insight_data: insightData,
         relevance_score: ins.relevance_score || 5,
+        is_tactical: !!ins.is_tactical,
+        added_to_sp: false,
+        added_to_sp_at: null,
         generated_at: now,
         expires_at: expires,
         is_dismissed: false,
