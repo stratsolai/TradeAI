@@ -324,6 +324,21 @@ export default async function handler(req, res) {
       'Use real numbers and cite specific evidence. Each insight must explain WHY it matters to THIS business.'
     );
 
+    // Unified 7-category structure shared with SP wizard, SP plan
+    // presentation, and OT — see SP/OT Rebuild Spec §4. Older
+    // categories ('strategic', 'general') have been retired.
+    var categoryGuide = (
+      'CATEGORY (pick exactly one per insight):\n' +
+      '- "financial" — cash, profit, revenue, costs, pricing\n' +
+      '- "products" — what the business sells, service delivery, quality\n' +
+      '- "customers" — relationships, concentration, payment terms, supplier dependencies\n' +
+      '- "operations" — how the business delivers, systems, staff, processes, compliance\n' +
+      '- "market" — external environment, competitors, positioning\n' +
+      '- "growth" — expansion, new markets, acquisitions, strategic shifts\n' +
+      '- "risk" — threats, mitigation, business continuity\n' +
+      'The legacy "strategic" and "general" categories are no longer valid. Anything that previously read as "strategic" should be classified as "growth" (forward-looking opportunity) or "risk" (defensive/continuity) depending on framing.\n\n'
+    );
+
     var userPrompt = (
       'You are preparing a Risks & Opportunities briefing for the owner of ' + (profile.business_name || 'this business') +
       ', a ' + industry + ' business based in ' + (location || 'Australia') + '.\n\n' +
@@ -365,6 +380,7 @@ export default async function handler(req, res) {
       '- "Strategic Plan" — the current strategic plan\n' +
       '- "Web research" — a result from the external research list (include the url if available)\n' +
       'Each source must include a brief detail showing the specific evidence (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026"). Web research sources should include the link.\n\n' +
+      categoryGuide +
       'OUTPUT FORMAT:\n' +
       'Return ONLY a JSON array (no markdown, no commentary). Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
       'Each insight object:\n' +
@@ -374,7 +390,7 @@ export default async function handler(req, res) {
       '  "relevance_score": <integer 1-10, 10 = most important>,\n' +
       '  "insight_data": {\n' +
       '    "severity": "red" | "amber" | "green",\n' +
-      '    "category": "financial" | "customers" | "operations" | "market" | "strategic",\n' +
+      '    "category": "financial" | "products" | "customers" | "operations" | "market" | "growth" | "risk",\n' +
       '    "icon": "<single emoji>",\n' +
       '    "headline": "<short headline, 8-12 words>",\n' +
       '    "detail": "<2-3 sentences explaining why this matters to THIS business, citing specific numbers or evidence from the input>",\n' +

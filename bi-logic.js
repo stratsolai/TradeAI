@@ -295,9 +295,21 @@ window.BI_LOGIC = {
     this._bindAlertEvents(contentEl);
   },
 
+  // Unified 7-category structure shared with SP wizard, SP plan
+  // presentation, and OT — see SP/OT Rebuild Spec §4. The legacy
+  // 'strategic' and 'general' categories are retired; insights that
+  // would have been those are now classified as 'growth' or 'risk'.
   _ALERT_CATEGORIES: {
-    labels: { financial: 'Financial', customers: 'Customers', operations: 'Operations', market: 'Market', strategic: 'Strategic', general: 'General' },
-    order: ['financial', 'customers', 'operations', 'market', 'strategic', 'general']
+    labels: {
+      financial:  'Financial',
+      products:   'Products & Services',
+      customers:  'Customers & Suppliers',
+      operations: 'Operations & Capacity',
+      market:     'Market & Competition',
+      growth:     'Growth & Transformation',
+      risk:       'Risk & Resilience'
+    },
+    order: ['financial', 'products', 'customers', 'operations', 'market', 'growth', 'risk']
   },
 
   _renderAlertsColumn: function(title, items) {
@@ -314,8 +326,16 @@ window.BI_LOGIC = {
 
     var groups = {};
     items.forEach(function(item) {
-      var cat = ((item.insight_data && item.insight_data.category) || 'general').toLowerCase();
-      if (!self._ALERT_CATEGORIES.labels[cat]) cat = 'general';
+      var cat = ((item.insight_data && item.insight_data.category) || '').toLowerCase();
+      // Fallback for legacy insights with retired categories ('strategic',
+      // 'general') or anything Claude returns outside the unified set:
+      // route by severity — green ⇒ growth (opportunity), anything else
+      // ⇒ risk. Better than dropping the insight or showing a "General"
+      // bucket that no longer exists in the spec.
+      if (!self._ALERT_CATEGORIES.labels[cat]) {
+        var severity = item.insight_data && item.insight_data.severity;
+        cat = (severity === 'green') ? 'growth' : 'risk';
+      }
       if (!groups[cat]) groups[cat] = [];
       groups[cat].push(item);
     });
