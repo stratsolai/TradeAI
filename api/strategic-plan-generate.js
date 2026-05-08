@@ -640,6 +640,32 @@ export default async function handler(req, res) {
     if (planId) {
       try {
         var initiatives = content.strategicInitiatives || [];
+        // SP/OT Rebuild Phase 3 — the prompt now produces content.goals
+        // (a flat list, each tagged with its category). Build the
+        // initiative+sub-task pairs the storage loop expects from
+        // those when no strategicInitiatives field came back.
+        if (initiatives.length === 0 && Array.isArray(content.goals)) {
+          initiatives = content.goals.map(function(g) {
+            return {
+              name: g.title || 'Goal',
+              description: g.description || '',
+              sp_section: g.category || 'growth',
+              tasks: (Array.isArray(g.tasks) ? g.tasks : []).map(function(t) {
+                return {
+                  title: t.title || '',
+                  // The dueRelative timeframe (Week 1 / Month 2) is
+                  // kept verbatim in items.due_date here. The approve
+                  // endpoint rebases it to a calendar date anchored
+                  // to the day the owner clicks Approve.
+                  dueDate: t.dueRelative || t.dueDate || '',
+                  priority: t.priority || 'Medium',
+                  owner: t.owner || 'Owner',
+                  notes: t.description || t.notes || ''
+                };
+              })
+            };
+          });
+        }
         // Fallback: if AI returned old operationalActions format, wrap them
         if (initiatives.length === 0 && content.operationalActions) {
           var opActions = content.operationalActions || [];
@@ -662,7 +688,11 @@ export default async function handler(req, res) {
             .insert({
               user_id: userId,
               plan_id: planId,
-              items: { title: init.name || 'Initiative', status: 'pending' },
+              items: {
+                title: init.name || 'Initiative',
+                status: 'pending',
+                description: init.description || ''
+              },
               initiative_name: init.name || 'Initiative',
               sp_section: init.sp_section || null,
               source: 'sp_generated',
