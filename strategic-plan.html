@@ -1042,17 +1042,23 @@
 <script src="/shared-utils.js"></script>
 <script src="/pwa.js"></script>
 <script src="/strategic-plan-data.js"></script>
-<script src="/strategic-plan-logic.js"></script>
 <script>
 (function() {
   var supabase = window.supabaseClient;
   if (!supabase) return;
-  supabase.auth.getSession().then(function(result) {
-    var session = result.data && result.data.session;
+  Promise.all([
+    window.loadScriptAsync('/strategic-plan-logic.js'),
+    window.loadScriptAsync('/strategic-plan-modules.js')
+  ]).then(function() {
+    return supabase.auth.getSession();
+  }).then(function(result) {
+    var session = result && result.data && result.data.session;
     if (!session) { window.location.href = '/login'; return; }
     if (window.SP_LOGIC && window.SP_LOGIC.init) {
       window.SP_LOGIC.init(supabase, session.user);
     }
+  }).catch(function(err) {
+    console.error('[SP] Init error:', err && err.message);
   });
 })();
 </script>
