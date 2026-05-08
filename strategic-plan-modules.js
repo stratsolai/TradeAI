@@ -12,127 +12,108 @@ Object.assign(window.SP_LOGIC, {
     var self = this;
     var opsContent = document.getElementById('sp-ops-content');
     if (!opsContent) return;
+    if (opsContent.dataset.bound === '1') return;
+    opsContent.dataset.bound = '1';
 
     opsContent.addEventListener('click', function(e) {
-      // View filter pills
+      // Spec §9.3 filters
       var viewPill = e.target.closest('[data-view]');
       if (viewPill) {
-        document.querySelectorAll('#sp-ops-controls [data-view]').forEach(function(p) {
-          p.classList.remove('active');
-        });
+        document.querySelectorAll('#sp-ops-controls [data-view]').forEach(function(p) { p.classList.remove('active'); });
         viewPill.classList.add('active');
-        self.filterInitiatives(viewPill.dataset.view);
+        self._otCurrentFilter = viewPill.dataset.view;
+        self._applyOTFilter();
         return;
       }
-
-      // Expand all toggle
+      // Expand All / Collapse All
       var expandBtn = e.target.closest('[data-expand]');
-      if (expandBtn) {
-        self.toggleExpandAll();
+      if (expandBtn) { self.toggleExpandAll(); return; }
+      // View toggle (List / 90-Day Outlook)
+      var viewBtn = e.target.closest('[data-ops-view]');
+      if (viewBtn) { self.toggleOpsView(viewBtn.dataset.opsView); return; }
+      // View Archive
+      var archiveLink = e.target.closest('#sp-ops-archive-link');
+      if (archiveLink) { if (typeof self.openArchiveScreen === 'function') self.openArchiveScreen(); return; }
+
+      // Category accordion toggle — click anywhere on the tile that
+      // isn't inside the content area, mirroring BI / Review pattern.
+      var catTile = e.target.closest('.sp-ot-cat');
+      if (catTile && !e.target.closest('.expand-tile-content')) {
+        catTile.classList.toggle('expanded');
+        self.saveExpandState();
         return;
       }
 
-      // Initiative header (expand/collapse)
-      var initHeader = e.target.closest('.sp-initiative-header');
-      if (initHeader) {
-        var initiative = initHeader.closest('.sp-initiative');
-        if (initiative) {
-          initiative.classList.toggle('expanded');
-          self.saveExpandState();
-        }
+      // Task checkbox — fires off the toggle which routes through
+      // archive modal on completion (spec §5.2 step 3 / §9.6).
+      var taskCheck = e.target.closest('.sp-ot-task-check');
+      if (taskCheck) {
+        var task = taskCheck.closest('.sp-ot-task');
+        if (task) self.toggleSubtask(task.dataset.id);
         return;
       }
-
-      // Sub-task checkbox
-      var checkbox = e.target.closest('.sp-subtask-check');
-      if (checkbox) {
-        var subtask = checkbox.closest('.sp-subtask');
-        if (subtask) self.toggleSubtask(subtask.dataset.id);
+      // Task title click → expand/collapse description body
+      var titleEl = e.target.closest('.sp-ot-task-title');
+      if (titleEl) {
+        var task = titleEl.closest('.sp-ot-task');
+        if (task) task.classList.toggle('sp-ot-task-expanded');
         return;
       }
-
-      // Sub-task edit
-      var editBtn = e.target.closest('.edit-btn');
-      if (editBtn) {
-        var subtask = editBtn.closest('.sp-subtask');
-        if (subtask) self.editSubtaskTitle(subtask.dataset.id);
-        return;
-      }
-
-      // Sub-task delete
-      var deleteBtn = e.target.closest('.delete-btn');
-      if (deleteBtn) {
-        var subtask = deleteBtn.closest('.sp-subtask');
-        if (subtask) self.confirmDeleteTask(subtask.dataset.id);
-        return;
-      }
-
-      // Due date click
-      var dueEl = e.target.closest('.sp-subtask-due');
+      // Task due click → inline edit
+      var dueEl = e.target.closest('.sp-ot-task-due');
       if (dueEl) {
-        var subtask = dueEl.closest('.sp-subtask');
-        if (subtask) self.editDueDate(subtask.dataset.id, dueEl);
+        var task = dueEl.closest('.sp-ot-task');
+        if (task) self.editDueDate(task.dataset.id, dueEl);
         return;
       }
-
-      // Owner click
-      var ownerEl = e.target.closest('.sp-subtask-owner');
+      // Task owner click → inline edit
+      var ownerEl = e.target.closest('.sp-ot-task-owner');
       if (ownerEl) {
-        var subtask = ownerEl.closest('.sp-subtask');
-        if (subtask) self.editOwner(subtask.dataset.id, ownerEl);
+        var task = ownerEl.closest('.sp-ot-task');
+        if (task) self.editOwner(task.dataset.id, ownerEl);
         return;
       }
-
-      // Notes toggle
-      var notesBtn = e.target.closest('.sp-notes-toggle');
-      if (notesBtn) {
-        var notesEl = notesBtn.closest('.sp-subtask').querySelector('.sp-subtask-notes-text');
-        if (notesEl) notesEl.style.display = notesEl.style.display === 'none' ? 'block' : 'none';
+      // Task delete
+      var deleteBtn = e.target.closest('.sp-ot-task-delete-btn');
+      if (deleteBtn) {
+        var task = deleteBtn.closest('.sp-ot-task');
+        if (task) self.confirmDeleteTask(task.dataset.id);
         return;
       }
-
-      // Add task within initiative — show inline form
-      var addTaskBtn = e.target.closest('.btn-sp-add-task');
+      // Task archive button (spec §9.6 — keeps task visible after
+      // completion until the owner explicitly archives)
+      var archBtn = e.target.closest('.sp-ot-task-archive-btn');
+      if (archBtn) {
+        var task = archBtn.closest('.sp-ot-task');
+        if (task && typeof self.archiveTask === 'function') self.archiveTask(task.dataset.id);
+        return;
+      }
+      // Add Task — shows inline form for the goal
+      var addTaskBtn = e.target.closest('.sp-ot-add-task-btn');
       if (addTaskBtn) {
         self.showAddTaskForm(addTaskBtn);
         return;
       }
-
-      // Add task form submit
-      var addTaskSubmit = e.target.closest('.sp-add-task-submit');
-      if (addTaskSubmit) {
-        self.submitAddTaskForm(addTaskSubmit);
-        return;
-      }
-
-      // Add task form cancel
-      var addTaskCancel = e.target.closest('.sp-add-task-cancel');
+      // Add Task form submit / cancel
+      var addTaskSubmit = e.target.closest('.sp-ot-add-task-submit');
+      if (addTaskSubmit) { self.submitAddTaskForm(addTaskSubmit); return; }
+      var addTaskCancel = e.target.closest('.sp-ot-add-task-cancel');
       if (addTaskCancel) {
-        var form = addTaskCancel.closest('.sp-add-task-form');
+        var form = addTaskCancel.closest('.sp-ot-add-task-form');
         if (form) form.remove();
-        var btn = addTaskCancel.closest('.sp-add-task-row').querySelector('.btn-sp-add-task');
-        if (btn) btn.style.display = '';
-        return;
-      }
-
-      // Add initiative button
-      var addInitBtn = e.target.closest('#sp-add-initiative-btn');
-      if (addInitBtn) {
-        self.showAddInitiativeModal();
-        return;
-      }
-
-      // View toggle (list / outlook)
-      var viewBtn = e.target.closest('[data-ops-view]');
-      if (viewBtn) {
-        self.toggleOpsView(viewBtn.dataset.opsView);
         return;
       }
     });
 
-    // Priority change is now handled by the lookback's onSelect
-    // callback bound in wireSubtaskPriorityLookbacks — native change
-    // events no longer fire from the converted button widget.
+    // Notes textarea autosave — debounced. Lives in the expanded
+    // body of each task; saves to items.notes on blur.
+    opsContent.addEventListener('blur', function(e) {
+      var notesEl = e.target && e.target.closest && e.target.closest('.sp-ot-task-notes');
+      if (!notesEl) return;
+      var task = notesEl.closest('.sp-ot-task');
+      if (!task) return;
+      self.saveTaskField(task.dataset.id, 'notes', notesEl.value || '');
+    }, true);
   },
 
   bindDocEvents: function() {
@@ -197,37 +178,40 @@ Object.assign(window.SP_LOGIC, {
       });
   },
 
+  // Spec §9 — categories of Goals each carrying their tasks. Rows
+  // arrive flat from action_tracker; this groups them, drops
+  // archived rows out of the main view (status='archived' lives in
+  // the Archive screen), and emits one .expand-tile per category.
   renderInitiatives: function(rows) {
     var self = this;
-    var initiatives = [];
-    var subtaskMap = {};
+    self._otRows = rows;
 
+    var goals = [];
+    var taskMap = {};
     rows.forEach(function(row) {
+      var status = row.items && row.items.status;
+      if (status === 'archived') return;
       if (!row.parent_task_id) {
-        initiatives.push(row);
-        subtaskMap[row.id] = [];
+        goals.push(row);
+        taskMap[row.id] = [];
       }
     });
-
     rows.forEach(function(row) {
-      if (row.parent_task_id && subtaskMap[row.parent_task_id]) {
-        subtaskMap[row.parent_task_id].push(row);
+      var status = row.items && row.items.status;
+      if (status === 'archived') return;
+      if (row.parent_task_id && taskMap[row.parent_task_id]) {
+        taskMap[row.parent_task_id].push(row);
       }
     });
 
-    // If no hierarchical data yet, fall back to flat task rendering
-    if (initiatives.length === 0 && rows.length > 0) {
-      self.renderFlatTracker(rows);
-      return;
-    }
-
-    if (initiatives.length === 0) {
-      var listEl = document.getElementById('sp-initiatives-list');
-      if (listEl) {
-        listEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#x1F4CB;</div>' +
-          '<h3>No initiatives yet</h3><p>Generate your plan or add an initiative to get started.</p></div>';
+    if (goals.length === 0) {
+      var listElEmpty = document.getElementById('sp-initiatives-list');
+      if (listElEmpty) {
+        listElEmpty.innerHTML = '<div class="empty-state"><div class="empty-state-icon">&#x1F4CB;</div>' +
+          '<h3>No goals yet</h3><p>Generate or approve a Strategic Plan to populate your Operational Tasks.</p></div>';
       }
-      self.updateOpsStats(0, 0, 0, 0);
+      self.updateOpsStats(0, 0, 0, 0, 0);
+      self.renderOutlookView([], [], {});
       return;
     }
 
@@ -241,98 +225,183 @@ Object.assign(window.SP_LOGIC, {
     weekEnd.setDate(weekEnd.getDate() + 7);
     var allSubtasks = [];
 
-    var html = '';
-    initiatives.forEach(function(init) {
-      var subs = subtaskMap[init.id] || [];
-      var done = 0;
-      subs.forEach(function(s) {
-        var status = (s.items && s.items.status) || 'pending';
+    // Group goals by normalised category (spec §4 7 keys).
+    var goalsByCategory = {};
+    var categories = self._SP_REVIEW_CATEGORIES || [
+      { key: 'financial',  label: 'Financial',              icon: '\u{1F4B0}' },
+      { key: 'products',   label: 'Products & Services',     icon: '\u{1F527}' },
+      { key: 'customers',  label: 'Customers & Suppliers',   icon: '\u{1F465}' },
+      { key: 'operations', label: 'Operations & Capacity',   icon: '⚙' },
+      { key: 'market',     label: 'Market & Competition',    icon: '\u{1F4CA}' },
+      { key: 'growth',     label: 'Growth & Transformation', icon: '\u{1F680}' },
+      { key: 'risk',       label: 'Risk & Resilience',       icon: '\u{1F6E1}️' }
+    ];
+    goals.forEach(function(g) {
+      var cat = self._normaliseCategory(g.sp_section);
+      if (!goalsByCategory[cat]) goalsByCategory[cat] = [];
+      goalsByCategory[cat].push(g);
+      var tasks = taskMap[g.id] || [];
+      tasks.forEach(function(t) {
+        var status = (t.items && t.items.status) || 'pending';
         totalTasks++;
-        if (status === 'done') { done++; completedTasks++; }
+        if (status === 'done') { completedTasks++; }
         else {
-          var dd = s.items && s.items.due_date ? new Date(s.items.due_date) : null;
-          if (dd) {
+          var dd = t.items && t.items.due_date ? new Date(t.items.due_date) : null;
+          if (dd && !isNaN(dd.getTime())) {
             dd.setHours(0, 0, 0, 0);
             if (dd < today) overdueTasks++;
             if (dd >= today && dd < weekEnd) dueThisWeek++;
           }
         }
-        allSubtasks.push({ row: s, initName: init.initiative_name || (init.items && init.items.title) || '' });
+        allSubtasks.push({ row: t, initName: g.initiative_name || (g.items && g.items.title) || '' });
       });
-      var pct = subs.length > 0 ? Math.round((done / subs.length) * 100) : 0;
-
-      var statusClass = '';
-      if (subs.length > 0) {
-        if (pct === 100) statusClass = 'status-green';
-        else if (done < subs.length * 0.5) statusClass = 'status-amber';
-      }
-
-      var spBadge = init.sp_section ? ' <span class="badge badge-blue">' + escHtml(self.formatSectionName(init.sp_section)) + '</span>' : '';
-      var sourceBadge = init.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : init.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
-
-      var expanded = self.getExpandState(init.id);
-
-      html += '<div class="sp-initiative' + (statusClass ? ' ' + statusClass : '') + (expanded ? ' expanded' : '') + '" data-init-id="' + escHtml(init.id) + '">';
-      html += '<div class="sp-initiative-header">';
-      html += '<span class="sp-initiative-name">' + escHtml(init.initiative_name || (init.items && init.items.title) || 'Untitled Initiative') + spBadge + sourceBadge + '</span>';
-      html += '<div class="sp-initiative-progress"><div class="sp-initiative-progress-fill" style="width:' + pct + '%"></div></div>';
-      html += '<span class="sp-initiative-count">' + done + ' of ' + subs.length + ' tasks</span>';
-      html += '<span class="sp-initiative-chevron">&#9660;</span>';
-      html += '</div>';
-
-      html += '<div class="sp-initiative-body">';
-      subs.forEach(function(sub) {
-        html += self.renderSubtaskRow(sub);
-      });
-      html += '<div class="sp-add-task-row"><button class="btn-sp-add-task" data-parent-id="' + escHtml(init.id) + '" type="button">+ Add Task</button></div>';
-      html += '</div></div>';
-    });
-
-    var listEl = document.getElementById('sp-initiatives-list');
-    if (listEl) listEl.innerHTML = html;
-    self.wireSubtaskPriorityLookbacks();
-
-    var overallPct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-    var fillEl = document.getElementById('sp-ops-progress-fill');
-    if (fillEl) fillEl.style.width = overallPct + '%';
-    var pctLabel = document.getElementById('sp-ops-progress-pct');
-    if (pctLabel) pctLabel.textContent = overallPct + '% complete';
-
-    self.updateOpsStats(initiatives.length, completedTasks, overdueTasks, dueThisWeek);
-    self.renderOutlookView(allSubtasks, initiatives, subtaskMap);
-  },
-
-  renderFlatTracker: function(rows) {
-    var self = this;
-    var completedTasks = 0;
-    var groups = { 1: [], 2: [], 3: [], 0: [] };
-    rows.forEach(function(row) {
-      var g = row.month_group || 0;
-      if (!groups[g]) groups[g] = [];
-      groups[g].push(row);
-      if (row.items && row.items.status === 'done') completedTasks++;
     });
 
     var html = '';
-    [1, 2, 3, 0].forEach(function(g) {
-      if (!groups[g] || groups[g].length === 0) return;
-      var heading = g === 1 ? 'Month 1 (Days 1–30)' : g === 2 ? 'Month 2 (Days 31–60)' : g === 3 ? 'Month 3 (Days 61–90)' : 'General Tasks';
-      html += '<div class="sp-initiative expanded" data-month-group="' + g + '">';
-      html += '<div class="sp-initiative-header"><span class="sp-initiative-name">' + escHtml(heading) + '</span><span class="sp-initiative-chevron">&#9660;</span></div>';
-      html += '<div class="sp-initiative-body">';
-      groups[g].forEach(function(row) { html += self.renderSubtaskRow(row); });
-      html += '</div></div>';
+    categories.forEach(function(cat) {
+      var entries = goalsByCategory[cat.key] || [];
+      if (entries.length === 0) return;
+      var goalCount = entries.length;
+      var taskTotal = 0;
+      entries.forEach(function(g) { taskTotal += (taskMap[g.id] || []).length; });
+      var expanded = self.getExpandState('cat:' + cat.key);
+      html += '<div class="expand-tile sp-ot-cat' + (expanded ? ' expanded' : '') + '" data-category="' + escHtml(cat.key) + '">' +
+        '<div class="expand-tile-header">' +
+          '<span class="expand-tile-icon">' + cat.icon + '</span>' +
+          '<span class="expand-tile-title">' + escHtml(cat.label) + '</span>' +
+          '<span class="expand-tile-count">' + goalCount + (goalCount === 1 ? ' Goal' : ' Goals') + '</span>' +
+        '</div>' +
+        '<div class="expand-tile-content">' +
+          '<div class="sp-ot-goals">';
+      entries.forEach(function(g) {
+        html += self._renderOTGoalCard(g, taskMap[g.id] || []);
+      });
+      html += '</div></div></div>';
     });
 
     var listEl = document.getElementById('sp-initiatives-list');
     if (listEl) listEl.innerHTML = html;
     self.wireSubtaskPriorityLookbacks();
-    var pct = rows.length > 0 ? Math.round((completedTasks / rows.length) * 100) : 0;
-    var fillEl = document.getElementById('sp-ops-progress-fill');
-    if (fillEl) fillEl.style.width = pct + '%';
-    var pctLabel = document.getElementById('sp-ops-progress-pct');
-    if (pctLabel) pctLabel.textContent = pct + '% complete';
-    self.updateOpsStats(0, completedTasks, 0, 0);
+    self.updateOpsStats(goals.length, totalTasks, completedTasks, overdueTasks, dueThisWeek);
+    self.renderOutlookView(allSubtasks, goals, taskMap);
+
+    // Apply any persisted filter chip on first render.
+    if (self._otCurrentFilter && self._otCurrentFilter !== 'all') {
+      self._applyOTFilter();
+    }
+  },
+
+  _renderOTGoalCard: function(goal, tasks) {
+    var self = this;
+    var done = 0;
+    tasks.forEach(function(t) { if (t.items && t.items.status === 'done') done++; });
+    var pct = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
+    var sourceBadge = '';
+    if (goal.source === 'bi_action') sourceBadge = ' <span class="sp-ot-task-source-badge">BI</span>';
+    else if (goal.is_carried_forward) sourceBadge = ' <span class="sp-ot-task-source-badge">CF</span>';
+    var description = (goal.items && goal.items.description) || '';
+    var tasksHtml = tasks.length === 0
+      ? '<div class="sp-ot-task" style="padding:6px 10px;color:var(--text-muted);font-style:italic">No tasks for this goal yet.</div>'
+      : tasks.map(function(t) { return self._renderOTTaskRow(t); }).join('');
+    return '<div class="sp-ot-goal" data-goal-id="' + escHtml(goal.id) + '">' +
+      '<div class="sp-ot-goal-head">' +
+        '<span class="sp-ot-goal-title">' + escHtml(goal.initiative_name || (goal.items && goal.items.title) || 'Untitled goal') + sourceBadge + '</span>' +
+        '<span class="sp-ot-goal-progress">' +
+          '<span class="sp-ot-goal-progress-bar"><span class="sp-ot-goal-progress-fill" style="width:' + pct + '%"></span></span>' +
+          '<span>' + done + ' / ' + tasks.length + '</span>' +
+        '</span>' +
+      '</div>' +
+      (description ? '<div class="sp-ot-goal-desc">' + escHtml(description) + '</div>' : '') +
+      '<div class="sp-ot-tasks">' + tasksHtml + '</div>' +
+      '<button type="button" class="btn-outline btn-sm sp-ot-add-task-btn" data-goal-id="' + escHtml(goal.id) + '">+ Add Task</button>' +
+    '</div>';
+  },
+
+  _renderOTTaskRow: function(row) {
+    var items = row.items || {};
+    var done = items.status === 'done';
+    var title = items.title || '';
+    var description = items.description || '';
+    var notes = items.notes || '';
+    var priority = items.priority || 'Medium';
+    var dueDate = items.due_date || '';
+    var owner = row.owner || items.owner || 'Owner';
+    var pCls = priority === 'High' ? 'sp-priority-high' : priority === 'Low' ? 'sp-priority-low' : 'sp-priority-medium';
+    var sourceBadge = '';
+    if (row.source === 'bi_action') sourceBadge = ' <span class="sp-ot-task-source-badge">BI</span>';
+    else if (row.is_carried_forward) sourceBadge = ' <span class="sp-ot-task-source-badge">CF</span>';
+    var dueDisplay = dueDate ? this._formatDate(dueDate) : 'Set date';
+    var isOverdue = false;
+    if (dueDate && !done) {
+      var dd = new Date(dueDate);
+      if (!isNaN(dd.getTime())) {
+        dd.setHours(0, 0, 0, 0);
+        var now = new Date(); now.setHours(0, 0, 0, 0);
+        isOverdue = dd < now;
+      }
+    }
+    var dueCls = isOverdue ? 'sp-ot-task-due sp-ot-task-overdue' : 'sp-ot-task-due';
+    var prioOpts = ['High', 'Medium', 'Low'].map(function(p) {
+      return '<button type="button" class="lookback-dropdown-item' + (p === priority ? ' active' : '') + '" data-value="' + p + '">' + p + '</button>';
+    }).join('');
+    // Tasks marked done get an Archive button next to Delete, per
+    // spec §9.6 — completed but still visible until the owner
+    // chooses to archive.
+    var archiveBtn = done ? '<button class="sp-ot-task-action-btn sp-ot-task-archive-btn" type="button" title="Archive">Archive</button>' : '';
+    return '<div class="sp-ot-task' + (done ? ' sp-ot-task-done' : '') + '" data-id="' + escHtml(row.id) + '" data-status="' + (done ? 'done' : 'pending') + '"' + (isOverdue ? ' data-overdue="1"' : '') + (isDueThisWeek(dueDate, done) ? ' data-due-week="1"' : '') + '>' +
+      '<div class="sp-ot-task-row">' +
+        '<input type="checkbox" class="sp-ot-task-check"' + (done ? ' checked' : '') + ' aria-label="Mark task complete">' +
+        '<span class="sp-ot-task-title">' + escHtml(title) + sourceBadge + '</span>' +
+        '<span class="' + dueCls + '" title="Click to change">' + escHtml(dueDisplay) + '</span>' +
+        '<span class="lookback-dropdown-wrap sp-subtask-priority-wrap">' +
+          '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-subtask-priority sp-ot-task-prio ' + pCls + '" data-value="' + escHtml(priority) + '">' + escHtml(priority) + '</button>' +
+          '<div class="lookback-dropdown-menu sp-subtask-priority-menu">' + prioOpts + '</div>' +
+        '</span>' +
+        '<span class="sp-ot-task-owner" title="Click to change">' + escHtml(owner) + '</span>' +
+        '<span class="sp-ot-task-actions">' +
+          archiveBtn +
+          '<button class="sp-ot-task-action-btn sp-ot-task-delete-btn" type="button" title="Delete">×</button>' +
+        '</span>' +
+      '</div>' +
+      '<div class="sp-ot-task-body">' +
+        (description ? '<div class="sp-ot-task-desc">' + escHtml(description) + '</div>' : '') +
+        '<div class="sp-ot-task-notes-wrap">' +
+          '<label class="sp-ot-task-notes-label">Notes</label>' +
+          '<textarea class="sp-ot-task-notes" placeholder="Add notes…">' + escHtml(notes) + '</textarea>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+
+    // Helper closure to mark "due this week" filter.
+    function isDueThisWeek(d, isDone) {
+      if (!d || isDone) return false;
+      var dd = new Date(d);
+      if (isNaN(dd.getTime())) return false;
+      dd.setHours(0, 0, 0, 0);
+      var t = new Date(); t.setHours(0, 0, 0, 0);
+      var w = new Date(t); w.setDate(w.getDate() + 7);
+      return dd >= t && dd < w;
+    }
+  },
+
+  // Map any sp_section value (legacy long-form, new short-form, or
+  // missing) to one of the seven category keys from spec §4. Used
+  // by the OT tab to group goals into category accordions.
+  _normaliseCategory: function(spSection) {
+    if (!spSection) return 'risk';
+    var s = String(spSection).toLowerCase();
+    var legacy = {
+      business_foundation: 'risk',
+      products_services:   'products',
+      financial_position:  'financial',
+      operations_capacity: 'operations',
+      market_competition:  'market',
+      growth_transformation: 'growth',
+      risk_resilience:     'risk'
+    };
+    if (legacy[s]) return legacy[s];
+    var valid = ['financial', 'products', 'customers', 'operations', 'market', 'growth', 'risk'];
+    return valid.indexOf(s) !== -1 ? s : 'risk';
   },
 
   _formatDate: function(d) {
@@ -393,18 +462,17 @@ Object.assign(window.SP_LOGIC, {
     return html;
   },
 
-  updateOpsStats: function(initiatives, completed, overdue, dueThisWeek) {
+  // Spec §9.5 — five stats: Total Goals, Total Tasks, Tasks Complete,
+  // Overdue, Due This Week.
+  updateOpsStats: function(totalGoals, totalTasks, completed, overdue, dueThisWeek) {
     var statsEl = document.getElementById('sp-ops-stats');
     if (!statsEl) return;
     statsEl.innerHTML =
-      '<div class="stat-card"><div class="stat-value">' + initiatives + '</div><div class="stat-label">Initiatives</div></div>' +
-      '<div class="stat-card green"><div class="stat-value">' + completed + '</div><div class="stat-label">Tasks Complete</div></div>' +
-      '<div class="stat-card orange"><div class="stat-value">' + overdue + '</div><div class="stat-label">Overdue</div></div>' +
-      '<div class="stat-card"><div class="stat-value">' + dueThisWeek + '</div><div class="stat-label">Due This Week</div></div>';
-  },
-
-  formatSectionName: function(k) {
-    return {business_foundation:'Foundation',products_services:'Products',financial_position:'Financial',operations_capacity:'Operations',market_competition:'Market',growth_transformation:'Growth',risk_resilience:'Risk'}[k]||k;
+      '<div class="stat-card"><div class="stat-value">' + (totalGoals || 0) + '</div><div class="stat-label">Total Goals</div></div>' +
+      '<div class="stat-card teal"><div class="stat-value">' + (totalTasks || 0) + '</div><div class="stat-label">Total Tasks</div></div>' +
+      '<div class="stat-card green"><div class="stat-value">' + (completed || 0) + '</div><div class="stat-label">Tasks Complete</div></div>' +
+      '<div class="stat-card red"><div class="stat-value">' + (overdue || 0) + '</div><div class="stat-label">Overdue</div></div>' +
+      '<div class="stat-card orange"><div class="stat-value">' + (dueThisWeek || 0) + '</div><div class="stat-label">Due This Week</div></div>';
   },
 
   getExpandState: function(initId) {
@@ -436,19 +504,33 @@ Object.assign(window.SP_LOGIC, {
     self.saveExpandState();
   },
 
-  filterInitiatives: function(view) {
-    var initiatives = document.querySelectorAll('.sp-initiative');
-    initiatives.forEach(function(el) {
-      if (view === 'all') {
-        el.style.display = '';
-      } else if (view === 'completed') {
-        var isComplete = el.classList.contains('status-green');
-        el.style.display = isComplete ? '' : 'none';
-      } else if (view === 'active') {
-        var isComplete = el.classList.contains('status-green');
-        el.style.display = isComplete ? 'none' : '';
-      }
+  // Spec §9.3 — All / Active / Completed / Overdue / Due This Week.
+  // Filter pill toggles a data-* attribute on every task row in the
+  // OT list (set by _renderOTTaskRow). Rows that don't match the
+  // filter hide; goal cards / categories with no remaining visible
+  // tasks fade their content to a "no matching tasks" placeholder.
+  _applyOTFilter: function() {
+    var view = this._otCurrentFilter || 'all';
+    var listEl = document.getElementById('sp-initiatives-list');
+    if (!listEl) return;
+    listEl.querySelectorAll('.sp-ot-task').forEach(function(t) {
+      var status = t.getAttribute('data-status');
+      var overdue = t.getAttribute('data-overdue') === '1';
+      var dueWeek = t.getAttribute('data-due-week') === '1';
+      var show = true;
+      if (view === 'active') show = status !== 'done';
+      else if (view === 'completed') show = status === 'done';
+      else if (view === 'overdue') show = overdue;
+      else if (view === 'due-this-week') show = dueWeek;
+      t.style.display = show ? '' : 'none';
     });
+  },
+
+  // Legacy alias — older bindOpsEvents callers still reference
+  // filterInitiatives; route through to the new filter.
+  filterInitiatives: function(view) {
+    this._otCurrentFilter = view;
+    this._applyOTFilter();
   },
 
   toggleOpsView: function(viewId) {
@@ -642,80 +724,78 @@ Object.assign(window.SP_LOGIC, {
     select.addEventListener('change', function() { select.blur(); });
   },
 
+  // Spec §9.6 / §9.7 — Add Task inline form. Each Goal card has an
+  // Add Task button; clicking renders a form below the task list,
+  // submit creates the action_tracker row tied to the Goal.
   showAddTaskForm: function(btn) {
     var self = this;
-    var row = btn.closest('.sp-add-task-row');
-    if (!row || row.querySelector('.sp-add-task-form')) return;
+    var goalCard = btn.closest('.sp-ot-goal');
+    if (!goalCard) return;
+    if (goalCard.querySelector('.sp-ot-add-task-form')) return;
+    var goalId = btn.dataset.goalId || goalCard.dataset.goalId;
     btn.style.display = 'none';
-    var parentId = btn.dataset.parentId;
     var form = document.createElement('div');
-    form.className = 'sp-add-task-form';
-    var f = '<div class="sp-add-task-grid">';
-    f += '<div class="sp-add-task-col-title"><input type="text" class="sp-input sp-add-task-title" placeholder="Task title"></div>';
-    f += '<div class="sp-add-task-col-sm">'
-       + '<span class="lookback-dropdown-wrap">'
-       + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-add-task-priority" data-value="Medium">Medium</button>'
-       + '<div class="lookback-dropdown-menu sp-add-task-priority-menu">'
-       + '<button type="button" class="lookback-dropdown-item" data-value="High">High</button>'
-       + '<button type="button" class="lookback-dropdown-item active" data-value="Medium">Medium</button>'
-       + '<button type="button" class="lookback-dropdown-item" data-value="Low">Low</button>'
-       + '</div></span></div>';
-    f += '<div class="sp-add-task-col-md"><input type="date" class="sp-input sp-add-task-due"></div>';
-    f += '<div class="sp-add-task-col-md">'
-       + '<span class="lookback-dropdown-wrap">'
-       + '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-add-task-owner" data-value="Owner">Owner</button>'
-       + '<div class="lookback-dropdown-menu sp-add-task-owner-menu">'
-       + '<button type="button" class="lookback-dropdown-item active" data-value="Owner">Owner</button>'
-       + '<button type="button" class="lookback-dropdown-item" data-value="Admin">Admin</button>'
-       + '<button type="button" class="lookback-dropdown-item" data-value="Office manager">Office mgr</button>'
-       + '<button type="button" class="lookback-dropdown-item" data-value="Project manager">Project mgr</button>'
-       + '<button type="button" class="lookback-dropdown-item" data-value="Other">Other</button>'
-       + '</div></span></div>';
-    f += '</div><div class="sp-add-task-buttons">';
-    f += '<button class="btn-primary btn-sm sp-add-task-submit" data-parent-id="' + escHtml(parentId) + '" type="button">Add</button>';
-    f += '<button class="btn-outline btn-sm sp-add-task-cancel" type="button">Cancel</button></div>';
-    form.innerHTML = f;
-    row.appendChild(form);
-    // Wire the two lookback-dropdowns by element reference rather than
-    // ID — multiple Add Task forms can exist simultaneously (one per
-    // initiative the user has expanded), so unique IDs would clash.
-    self.wireLookbackDropdown(form.querySelector('.sp-add-task-priority'), form.querySelector('.sp-add-task-priority-menu'));
-    self.wireLookbackDropdown(form.querySelector('.sp-add-task-owner'), form.querySelector('.sp-add-task-owner-menu'));
-    form.querySelector('.sp-add-task-title').focus();
+    form.className = 'sp-ot-add-task-form';
+    form.innerHTML =
+      '<div class="sp-ot-add-task-row">' +
+        '<input type="text" class="sp-input sp-ot-add-task-title" placeholder="Task title">' +
+        '<input type="date" class="sp-input sp-ot-add-task-due" style="width:140px">' +
+        '<span class="lookback-dropdown-wrap">' +
+          '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-ot-add-task-prio" data-value="Medium">Medium</button>' +
+          '<div class="lookback-dropdown-menu sp-ot-add-task-prio-menu">' +
+            '<button type="button" class="lookback-dropdown-item" data-value="High">High</button>' +
+            '<button type="button" class="lookback-dropdown-item active" data-value="Medium">Medium</button>' +
+            '<button type="button" class="lookback-dropdown-item" data-value="Low">Low</button>' +
+          '</div>' +
+        '</span>' +
+        '<input type="text" class="sp-input sp-ot-add-task-owner" placeholder="Owner" value="Owner" style="width:120px">' +
+      '</div>' +
+      '<div class="sp-ot-add-task-row">' +
+        '<textarea class="sp-input sp-ot-add-task-desc" placeholder="Description (the what and the why)" rows="2" style="flex:1;min-width:280px"></textarea>' +
+      '</div>' +
+      '<div class="sp-ot-add-task-actions">' +
+        '<button type="button" class="btn-outline btn-sm sp-ot-add-task-cancel">Cancel</button>' +
+        '<button type="button" class="btn-primary btn-sm sp-ot-add-task-submit" data-goal-id="' + escHtml(goalId) + '">Add Task</button>' +
+      '</div>';
+    goalCard.appendChild(form);
+    self.wireLookbackDropdown(form.querySelector('.sp-ot-add-task-prio'), form.querySelector('.sp-ot-add-task-prio-menu'));
+    var titleInp = form.querySelector('.sp-ot-add-task-title');
+    if (titleInp) titleInp.focus();
   },
 
   submitAddTaskForm: function(btn) {
     var self = this;
-    var form = btn.closest('.sp-add-task-form');
+    var form = btn.closest('.sp-ot-add-task-form');
     if (!form) return;
-    var parentId = btn.dataset.parentId;
-    var title = (form.querySelector('.sp-add-task-title').value || '').trim();
-    if (!title) {
-      form.querySelector('.sp-add-task-title').classList.add('sp-input-error');
-      return;
-    }
-    var priority = form.querySelector('.sp-add-task-priority').getAttribute('data-value') || 'Medium';
-    var dueDate = form.querySelector('.sp-add-task-due').value;
-    var owner = form.querySelector('.sp-add-task-owner').getAttribute('data-value') || 'Owner';
-
-    if (!self._supabase || !self._userId) return;
+    var goalId = btn.dataset.goalId;
+    var title = (form.querySelector('.sp-ot-add-task-title').value || '').trim();
+    if (!title) { form.querySelector('.sp-ot-add-task-title').classList.add('sp-input-error'); return; }
+    var dueDate = form.querySelector('.sp-ot-add-task-due').value || '';
+    var priority = form.querySelector('.sp-ot-add-task-prio').getAttribute('data-value') || 'Medium';
+    var owner = (form.querySelector('.sp-ot-add-task-owner').value || 'Owner').trim();
+    var description = (form.querySelector('.sp-ot-add-task-desc').value || '').trim();
+    if (!self._supabase || !self._userId || !goalId) return;
     self._supabase
       .from('action_tracker')
       .insert({
         user_id: self._userId,
-        items: { title: title, status: 'pending', priority: priority, due_date: dueDate || null },
-        parent_task_id: parentId,
+        parent_task_id: goalId,
+        items: {
+          title: title,
+          description: description,
+          status: 'pending',
+          priority: priority,
+          due_date: dueDate || null,
+          owner: owner
+        },
         source: 'user_added',
         owner: owner,
-        plan_id: null
+        is_pending: false
       })
-      .select()
+      .select('id')
       .single()
       .then(function(res) {
-        if (res.error) {
-          self._showError('Could not add task. Please try again.');
-          return;
-        }
+        if (res.error) { self._showError('Could not add task. Please try again.'); return; }
         self.loadInitiatives();
       });
   },
@@ -772,46 +852,9 @@ Object.assign(window.SP_LOGIC, {
       });
   },
 
-  showAddInitiativeModal: function() {
-    var self = this;
-    var modal = document.getElementById('sp-add-init-modal');
-    if (!modal) return;
-    document.getElementById('sp-new-init-name').value = '';
-    self.resetLookbackDropdown('sp-new-init-section', 'sp-new-init-section-menu');
-    modal.classList.add('open');
-  },
-
-  createInitiative: function() {
-    var self = this;
-    var name = (document.getElementById('sp-new-init-name').value || '').trim();
-    var section = document.getElementById('sp-new-init-section').getAttribute('data-value') || '';
-    if (!name) {
-      self._showError('Please enter an initiative name.');
-      return;
-    }
-    if (!self._supabase || !self._userId) return;
-
-    self._supabase
-      .from('action_tracker')
-      .insert({
-        user_id: self._userId,
-        items: { title: name, status: 'pending' },
-        initiative_name: name,
-        sp_section: section || null,
-        source: 'user_added',
-        parent_task_id: null
-      })
-      .select()
-      .single()
-      .then(function(res) {
-        if (res.error) {
-          self._showError('Could not create initiative. Please try again.');
-          return;
-        }
-        document.getElementById('sp-add-init-modal').classList.remove('open');
-        self.loadInitiatives();
-      });
-  },
+  // showAddInitiativeModal / createInitiative removed — the spec
+  // uses Add Goal via AI chat (handled in strategic-plan-review.js
+  // for pending plans) instead of a manual Add Initiative.
 
   loadStrategicPlanView: function() {
     var self = this;

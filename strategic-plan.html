@@ -74,179 +74,6 @@
       gap: var(--actions-gap);
     }
 
-    /* Initiative cards */
-    .sp-initiative {
-      background: var(--white);
-      border-radius: var(--card-radius);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      margin-bottom: var(--actions-gap);
-      overflow: hidden;
-    }
-    .sp-initiative.status-amber { border-left-color: var(--orange); }
-    .sp-initiative.status-red { border-left-color: var(--red); }
-    .sp-initiative.status-green { border-left-color: var(--green); }
-    .sp-initiative-header {
-      display: flex;
-      align-items: center;
-      gap: var(--actions-gap);
-      padding: var(--actions-gap) var(--card-padding);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-    }
-    .sp-initiative-header:hover { background: var(--bg-subtle); }
-    .sp-initiative-name {
-      font-size: var(--section-title-font-size);
-      font-weight: var(--font-weight-semibold);
-      color: var(--text);
-      flex: 1;
-      min-width: 0;
-    }
-    .sp-initiative-progress {
-      width: 120px;
-      height: 6px;
-      background: var(--border);
-      border-radius: 3px;
-      overflow: hidden;
-      flex-shrink: 0;
-    }
-    .sp-initiative-progress-fill {
-      height: 100%;
-      background: var(--blue);
-      border-radius: 3px;
-      transition: width 0.3s;
-    }
-    .sp-initiative-count {
-      font-size: var(--label-font-size);
-      color: var(--text-muted);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-    .sp-initiative-chevron {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-      transition: transform 0.2s;
-      flex-shrink: 0;
-    }
-    .sp-initiative.expanded .sp-initiative-chevron { transform: rotate(180deg); }
-    .sp-initiative-body {
-      display: none;
-      padding: 0 var(--card-padding) var(--actions-gap);
-      border-top: 1px solid var(--border-light);
-    }
-    .sp-initiative.expanded .sp-initiative-body { display: block; }
-
-    /* Sub-task rows */
-    .sp-subtask {
-      display: flex;
-      align-items: flex-start;
-      gap: 14px;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-light);
-    }
-    .sp-subtask:last-of-type { border-bottom: none; }
-    .sp-subtask-done .sp-subtask-title { text-decoration: line-through; color: var(--text-hint); }
-    .sp-subtask-check {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--green);
-      cursor: pointer;
-      flex-shrink: 0;
-      margin-top: 2px;
-    }
-    .sp-subtask-body { flex: 1; min-width: 0; }
-    .sp-subtask-title {
-      font-size: var(--btn-font-size);
-      font-weight: 500;
-      color: var(--text);
-      line-height: 1.4;
-    }
-    .sp-subtask-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 4px;
-      flex-wrap: wrap;
-    }
-    .sp-subtask-due {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-    }
-    .sp-subtask-owner {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-    }
-    /* Badge-style appearance for the per-task priority lookback —
-       overrides the default .lookback-dropdown chrome (blue border,
-       larger padding) with a smaller pill matching the original
-       <select> badge look. The chevron sits a bit closer to the edge
-       at this size. The colour-driven .sp-priority-* classes below
-       paint the badge and (now that they use background-color rather
-       than the shorthand) leave the .lookback-dropdown SVG arrow
-       in place. */
-    .sp-subtask-priority.lookback-dropdown {
-      padding: 2px 22px 2px 8px;
-      border: none;
-      border-radius: 10px;
-      font-size: var(--badge-font-size);
-      font-weight: var(--font-weight-semibold);
-      background-position: right 6px center;
-      background-size: 8px 5px;
-    }
-    .sp-subtask-priority-wrap { display: inline-block; }
-    .sp-subtask-priority-menu { min-width: 90px; }
-    .sp-subtask-actions {
-      display: flex;
-      gap: 8px;
-      flex-shrink: 0;
-      align-self: center;
-    }
-    .sp-subtask-action-btn {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: var(--badge-font-size);
-      cursor: pointer;
-      font-family: var(--body-font);
-      padding: 2px 6px;
-      border-radius: 4px;
-      transition: color var(--btn-transition), background var(--btn-transition);
-    }
-    .sp-subtask-action-btn:hover { color: var(--text); background: var(--bg-subtle); }
-    .sp-subtask-action-btn.delete-btn:hover { color: var(--red); }
-
-    .sp-add-task-row {
-      padding: 8px 0;
-    }
-    .btn-sp-add-task {
-      padding: 8px 16px;
-      background: var(--white);
-      color: var(--blue);
-      border: 1px dashed var(--blue);
-      border-radius: var(--btn-radius);
-      font-size: var(--label-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-    }
-    .btn-sp-add-task:hover { background: var(--blue-hover-bg); }
-
-    .btn-sp-add-initiative {
-      padding: 10px 20px;
-      background: var(--white);
-      color: var(--blue);
-      border: 1px dashed var(--blue);
-      border-radius: var(--btn-radius);
-      font-size: var(--btn-font-size);
-      font-weight: var(--font-weight-semibold);
-      font-family: var(--body-font);
-      cursor: pointer;
-      transition: background var(--btn-transition);
-      margin-top: 8px;
-    }
-    .btn-sp-add-initiative:hover { background: var(--blue-hover-bg); }
-
     /* ─── TAB 2: STRATEGIC PLAN VIEW ─── */
     .sp-doc-card {
       background: var(--white);
@@ -759,6 +586,234 @@
     .sp-review-add-goal,
     .sp-review-add-task-btn { margin-top: 4px; }
 
+    /* OT tab — spec §9. */
+    .sp-ops-header {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-ops-title {
+      flex: 1;
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+    }
+    .sp-ops-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* Category accordion — .expand-tile + Goal cards inside content. */
+    .sp-ot-cat { margin-bottom: 12px; }
+    .sp-ot-cat .expand-tile-content { padding-top: 0; }
+    .sp-ot-goals { display: flex; flex-direction: column; gap: 10px; margin-top: var(--actions-gap); }
+
+    /* Goal card — read-only title + description, tasks, Add Task. */
+    .sp-ot-goal {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 10px 14px;
+    }
+    .sp-ot-goal-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 4px;
+      flex-wrap: wrap;
+    }
+    .sp-ot-goal-title {
+      flex: 1;
+      min-width: 200px;
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+    }
+    .sp-ot-goal-progress {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+    }
+    .sp-ot-goal-progress-bar {
+      width: 80px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .sp-ot-goal-progress-fill {
+      height: 100%;
+      background: var(--green);
+      border-radius: 3px;
+      transition: width 0.3s;
+    }
+    .sp-ot-goal-desc {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+    }
+    .sp-ot-tasks { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+
+    /* Task row — checkbox + meta + expand to show desc + notes. */
+    .sp-ot-task {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 8px 10px;
+    }
+    .sp-ot-task.sp-ot-task-done .sp-ot-task-title { text-decoration: line-through; color: var(--text-hint); }
+    .sp-ot-task-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sp-ot-task-check {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--green);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .sp-ot-task-title {
+      flex: 1;
+      min-width: 200px;
+      font-size: var(--btn-font-size);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .sp-ot-task-due,
+    .sp-ot-task-owner {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .sp-ot-task-due.sp-ot-task-overdue { color: var(--red); font-weight: var(--font-weight-semibold); }
+    .sp-ot-task-prio.lookback-dropdown {
+      padding: 3px 22px 3px 10px;
+      font-size: var(--badge-font-size);
+      background-position: right 8px center;
+      background-size: 8px 5px;
+    }
+    .sp-ot-task-prio.sp-priority-high   { background-color: var(--badge-red-bg);    color: var(--red-dark);          border-color: var(--red); }
+    .sp-ot-task-prio.sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); border-color: var(--orange); }
+    .sp-ot-task-prio.sp-priority-low    { background-color: var(--badge-green-bg);  color: var(--green-dark);        border-color: var(--green); }
+    .sp-ot-task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .sp-ot-task-action-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: var(--btn-font-size);
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .sp-ot-task-action-btn:hover { background: var(--blue-light); color: var(--blue); }
+    .sp-ot-task-action-btn.sp-ot-task-archive-btn { font-size: var(--badge-font-size); color: var(--text-muted); }
+    .sp-ot-task-action-btn.sp-ot-task-delete-btn:hover { background: var(--red-hover-bg); color: var(--red-dark); }
+    .sp-ot-task-source-badge {
+      padding: 1px 8px;
+      border-radius: var(--badge-radius);
+      background: var(--badge-orange-bg);
+      color: var(--badge-orange-text);
+      font-size: 11px;
+      font-weight: var(--font-weight-semibold);
+    }
+
+    /* Expanded body: description + notes editor */
+    .sp-ot-task-body {
+      display: none;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-light);
+    }
+    .sp-ot-task.sp-ot-task-expanded .sp-ot-task-body { display: block; }
+    .sp-ot-task-desc {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+      white-space: pre-wrap;
+    }
+    .sp-ot-task-notes-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .sp-ot-task-notes-label {
+      font-size: var(--badge-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: var(--letter-spacing-label);
+    }
+    .sp-ot-task-notes {
+      width: 100%;
+      min-height: 60px;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 6px 10px;
+      font-family: var(--body-font);
+      font-size: var(--note-font-size);
+      color: var(--text);
+      resize: vertical;
+      outline: none;
+    }
+    .sp-ot-task-notes:focus { border-color: var(--blue); }
+
+    /* Add Task inline form — sits at the bottom of a Goal card. */
+    .sp-ot-add-task-form {
+      background: var(--white);
+      border: 1px dashed var(--blue);
+      border-radius: var(--btn-radius);
+      padding: 10px;
+      margin-top: 4px;
+    }
+    .sp-ot-add-task-row {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .sp-ot-add-task-row input.sp-ot-add-task-title { flex: 1; min-width: 180px; }
+    .sp-ot-add-task-row .lookback-dropdown { font-size: var(--badge-font-size); }
+    .sp-ot-add-task-actions { display: flex; gap: 6px; justify-content: flex-end; }
+    .sp-ot-add-task-btn { margin-top: 4px; }
+
+    /* Archive screen — spec §9.7. */
+    .sp-ot-archive-head {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      margin-bottom: var(--actions-gap);
+      flex-wrap: wrap;
+    }
+    .sp-ot-archive-title {
+      flex: 1;
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+    }
+    .sp-ot-archive-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-ot-archive-search { min-width: 240px; flex: 1; }
+    .sp-ot-archive-group { margin-bottom: var(--card-padding); }
+    .sp-ot-archive-group-title {
+      font-size: var(--section-title-font-size);
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+    .sp-ot-archive-empty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
     /* BI Suggestions banner + review modal — spec §6.2. */
     .sp-review-bi-banner {
       display: flex;
@@ -1034,17 +1089,6 @@
       margin-top: 8px;
     }
 
-    /* Inline edit input */
-    .sp-inline-edit-input {
-      width: 100%;
-      padding: 4px 8px;
-      border: var(--input-border-width) solid var(--blue);
-      border-radius: 4px;
-      font-size: var(--btn-font-size);
-      font-family: var(--body-font);
-      color: var(--text);
-    }
-
     /* ─── LOCKED TAB OVERLAY ─── */
     .sp-tab-locked {
       text-align: center;
@@ -1067,33 +1111,6 @@
       font-size: var(--btn-font-size);
       color: var(--text-muted);
       margin-bottom: 0;
-    }
-
-    /* Add initiative modal */
-    .sp-add-init-form {
-      display: flex;
-      flex-direction: column;
-      gap: var(--actions-gap);
-    }
-
-    /* Inline add task form */
-    .sp-add-task-form {
-      background: var(--bg-subtle);
-      border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      padding: var(--actions-gap);
-      margin-top: var(--btn-radius);
-    }
-
-    /* Notes toggle */
-    .sp-notes-toggle {
-      background: none;
-      border: none;
-      color: var(--blue);
-      font-size: var(--badge-font-size);
-      cursor: pointer;
-      padding: 0;
-      font-family: var(--body-font);
     }
 
     /* View toggle */
@@ -1224,48 +1241,7 @@
       vertical-align: middle;
     }
 
-    /* Clickable meta elements */
-    .sp-subtask-due,
-    .sp-subtask-owner {
-      cursor: pointer;
-      border-bottom: 1px dashed var(--border);
-      padding-bottom: 1px;
-    }
-    .sp-subtask-due:hover,
-    .sp-subtask-owner:hover {
-      color: var(--blue);
-      border-bottom-color: var(--blue);
-    }
-
-    /* ─── JS-BUILT ELEMENT CLASSES ─── */
     .sp-required { color: var(--red); }
-    .sp-subtask-overdue { color: var(--red); font-weight: var(--font-weight-semibold); }
-    /* background-color (not the shorthand) so the .lookback-dropdown
-       background-image — the SVG chevron — keeps drawing on top. */
-    .sp-priority-high { background-color: var(--badge-red-bg); color: var(--badge-red-text); }
-    .sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); }
-    .sp-priority-low { background-color: var(--badge-green-bg); color: var(--badge-green-text); }
-    .sp-subtask-notes-text {
-      display: none;
-      font-size: var(--label-font-size);
-      color: var(--text-muted);
-      margin-top: 6px;
-      line-height: var(--note-line-height);
-    }
-    .sp-add-task-grid {
-      display: flex;
-      gap: var(--btn-radius);
-      flex-wrap: wrap;
-      align-items: flex-end;
-    }
-    .sp-add-task-col-title { flex: 1; min-width: 200px; }
-    .sp-add-task-col-sm { width: 120px; }
-    .sp-add-task-col-md { width: 140px; }
-    .sp-add-task-buttons {
-      display: flex;
-      gap: var(--btn-radius);
-      margin-top: var(--btn-radius);
-    }
     .sp-section-heading {
       font-family: var(--heading-font);
       font-size: var(--heading-lg-size);
@@ -1373,26 +1349,28 @@
       </div>
     </div>
 
-    <!-- Live content (shown when SP exists) -->
+    <!-- Live content (spec §9). Header / stats / filters / view
+         toggle / category accordions list / 90-Day Outlook view.
+         Archive screen lives below in its own swap. -->
     <div id="sp-ops-content" style="display:none">
 
-      <!-- Header: plan title, overall progress -->
       <div class="sp-ops-header" id="sp-ops-header">
         <div class="sp-ops-title" id="sp-ops-plan-title"></div>
-        <div class="progress-bar" style="margin-bottom:8px">
-          <div class="progress-fill" id="sp-ops-progress-fill" style="width:0%"></div>
+        <div class="sp-ops-header-actions">
+          <button class="btn-link sp-ops-archive-link" id="sp-ops-archive-link" type="button">View Archive</button>
         </div>
-        <div class="sp-ops-progress-label" id="sp-ops-progress-pct"></div>
       </div>
 
-      <!-- Quick stats -->
+      <!-- Spec §9.5 Stats: Total Goals / Total Tasks / Tasks Complete / Overdue / Due This Week -->
       <div class="stats-bar" id="sp-ops-stats"></div>
 
-      <!-- Filter/view controls -->
+      <!-- Spec §9.3 Filters + §9.4 View toggle -->
       <div class="sp-ops-controls" id="sp-ops-controls">
         <button class="filter-pill active" data-view="all">All</button>
         <button class="filter-pill" data-view="active">Active</button>
         <button class="filter-pill" data-view="completed">Completed</button>
+        <button class="filter-pill" data-view="overdue">Overdue</button>
+        <button class="filter-pill" data-view="due-this-week">Due This Week</button>
         <div class="sp-ops-controls-right">
           <div class="sp-view-toggle">
             <button class="sp-view-btn active" data-ops-view="list">List</button>
@@ -1402,15 +1380,20 @@
         </div>
       </div>
 
-      <!-- List view (initiative cards) -->
+      <!-- Spec §9.1 List view — Category accordions of Goal cards
+           and Task rows. Container id kept as #sp-initiatives-list
+           for backwards compatibility with the wireSubtaskPriority
+           lookup; the rebuild populates it with .expand-tile per
+           category. -->
       <div id="sp-initiatives-list"></div>
 
-      <!-- 90-Day Outlook view -->
+      <!-- 90-Day Outlook view (kept) -->
       <div id="sp-outlook-view" style="display:none"></div>
-
-      <!-- Add initiative button -->
-      <button class="btn-sp-add-initiative" id="sp-add-initiative-btn" type="button">+ Add Initiative</button>
     </div>
+
+    <!-- Spec §9.7 Archive screen — toggles in over the OT body when
+         the owner clicks View Archive. Filled by renderArchiveScreen. -->
+    <div id="sp-ops-archive" style="display:none"></div>
   </div>
 
   <!-- ═══ TAB 2: STRATEGIC PLAN VIEW ═══ -->
@@ -1564,38 +1547,6 @@
     </div>
   </div>
 
-  <!-- Add initiative modal -->
-  <div class="perm-modal-overlay" id="sp-add-init-modal">
-    <div class="perm-modal">
-      <div class="perm-modal-title">Add Strategic Initiative</div>
-      <div class="sp-add-init-form">
-        <div class="sp-field">
-          <label class="sp-field-label" for="sp-new-init-name">Initiative Name</label>
-          <input type="text" id="sp-new-init-name" class="sp-input" placeholder="e.g. Digital Transformation, Geographic Expansion">
-        </div>
-        <div class="sp-field">
-          <label class="sp-field-label" for="sp-new-init-section">Related SP Section</label>
-          <span class="lookback-dropdown-wrap">
-            <button type="button" class="lookback-dropdown lookback-dropdown-field" id="sp-new-init-section" data-value="">Select...</button>
-            <div class="lookback-dropdown-menu" id="sp-new-init-section-menu">
-              <button type="button" class="lookback-dropdown-item active" data-value="">Select...</button>
-              <button type="button" class="lookback-dropdown-item" data-value="business_foundation">Business Foundation</button>
-              <button type="button" class="lookback-dropdown-item" data-value="products_services">Products, Services &amp; Customers</button>
-              <button type="button" class="lookback-dropdown-item" data-value="financial_position">Financial Position</button>
-              <button type="button" class="lookback-dropdown-item" data-value="operations_capacity">Operations &amp; Capacity</button>
-              <button type="button" class="lookback-dropdown-item" data-value="market_competition">Market &amp; Competition</button>
-              <button type="button" class="lookback-dropdown-item" data-value="growth_transformation">Growth &amp; Transformation</button>
-              <button type="button" class="lookback-dropdown-item" data-value="risk_resilience">Risk &amp; Resilience</button>
-            </div>
-          </span>
-        </div>
-      </div>
-      <div class="perm-modal-actions" style="margin-top:var(--card-padding)">
-        <button class="perm-modal-cancel" id="sp-add-init-cancel" type="button">Cancel</button>
-        <button class="perm-modal-continue" id="sp-add-init-confirm" type="button">Add Initiative</button>
-      </div>
-    </div>
-  </div>
 
 </div>
 

@@ -506,23 +506,6 @@ Object.assign(window.SP_LOGIC, {
       });
     }
 
-    // Add initiative modal
-    var addInitCancel = document.getElementById('sp-add-init-cancel');
-    if (addInitCancel) {
-      addInitCancel.addEventListener('click', function() {
-        document.getElementById('sp-add-init-modal').classList.remove('open');
-      });
-    }
-
-    var addInitConfirm = document.getElementById('sp-add-init-confirm');
-    if (addInitConfirm) {
-      addInitConfirm.addEventListener('click', function() {
-        self.createInitiative();
-      });
-    }
-
-    self.wireLookbackDropdown('sp-new-init-section', 'sp-new-init-section-menu');
-
     // Close modals on overlay click
     document.querySelectorAll('.perm-modal-overlay').forEach(function(overlay) {
       overlay.addEventListener('click', function(e) {
