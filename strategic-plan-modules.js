@@ -178,10 +178,8 @@ Object.assign(window.SP_LOGIC, {
       });
   },
 
-  // Spec §9 — categories of Goals each carrying their tasks. Rows
-  // arrive flat from action_tracker; this groups them, drops
-  // archived rows out of the main view (status='archived' lives in
-  // the Archive screen), and emits one .expand-tile per category.
+  // Spec §9 — group goals by category, drop archived, render one
+  // .expand-tile per category with goal cards inside.
   renderInitiatives: function(rows) {
     var self = this;
     self._otRows = rows;
@@ -384,9 +382,7 @@ Object.assign(window.SP_LOGIC, {
     }
   },
 
-  // Map any sp_section value (legacy long-form, new short-form, or
-  // missing) to one of the seven category keys from spec §4. Used
-  // by the OT tab to group goals into category accordions.
+  // Map any sp_section to one of the seven category keys (spec §4).
   _normaliseCategory: function(spSection) {
     if (!spSection) return 'risk';
     var s = String(spSection).toLowerCase();
@@ -410,56 +406,6 @@ Object.assign(window.SP_LOGIC, {
     if (isNaN(dt.getTime())) return d;
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
-  },
-
-  renderSubtaskRow: function(row) {
-    var self = this;
-    var items = row.items || {};
-    var done = items.status === 'done';
-    var title = items.title || '';
-    var priority = items.priority || 'Medium';
-    var dueDate = items.due_date || '';
-    var owner = row.owner || items.owner || '';
-    var notes = items.notes || '';
-
-    var priorityClass = priority === 'High' ? 'sp-priority-high' :
-                        priority === 'Low' ? 'sp-priority-low' :
-                        'sp-priority-medium';
-
-    var sourceBadge = row.source === 'bi_action' ? ' <span class="badge badge-orange">BI</span>' : row.is_carried_forward ? ' <span class="badge badge-orange">CF</span>' : '';
-
-    var html = '<div class="sp-subtask' + (done ? ' sp-subtask-done' : '') + '" data-id="' + escHtml(row.id) + '">';
-    html += '<input type="checkbox" class="sp-subtask-check"' + (done ? ' checked' : '') + '>';
-    html += '<div class="sp-subtask-body">';
-    html += '<span class="sp-subtask-title">' + escHtml(title) + '</span>' + sourceBadge;
-    html += '<div class="sp-subtask-meta">';
-    var dueDateDisplay = dueDate ? self._formatDate(dueDate) : 'Set date';
-    var isOverdue = false;
-    if (dueDate && !done) {
-      var dd = new Date(dueDate); dd.setHours(0,0,0,0);
-      var now = new Date(); now.setHours(0,0,0,0);
-      isOverdue = dd < now;
-    }
-    html += '<span class="sp-subtask-due' + (isOverdue ? ' sp-subtask-overdue' : '') + '" title="Click to change">' + escHtml(dueDateDisplay) + '</span>';
-    html += '<span class="sp-subtask-owner" title="Click to change">' + escHtml(owner || 'Owner') + '</span>';
-    var displayPriority = priority || 'Medium';
-    html += '<span class="lookback-dropdown-wrap sp-subtask-priority-wrap">'
-         +   '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-subtask-priority ' + priorityClass + '" data-value="' + escHtml(displayPriority) + '">' + escHtml(displayPriority) + '</button>'
-         +   '<div class="lookback-dropdown-menu sp-subtask-priority-menu">'
-         +     ['High', 'Medium', 'Low'].map(function(p) {
-                 return '<button type="button" class="lookback-dropdown-item' + (p === displayPriority ? ' active' : '') + '" data-value="' + p + '">' + p + '</button>';
-              }).join('')
-         +   '</div>'
-         + '</span>';
-    if (notes) html += '<button class="sp-notes-toggle" type="button">Notes</button>';
-    html += '</div>';
-    if (notes) html += '<div class="sp-subtask-notes sp-subtask-notes-text">' + escHtml(notes) + '</div>';
-    html += '</div>';
-    html += '<div class="sp-subtask-actions">';
-    html += '<button class="sp-subtask-action-btn edit-btn" type="button" title="Edit">&#9998;</button>';
-    html += '<button class="sp-subtask-action-btn delete-btn" type="button" title="Delete">&#10005;</button>';
-    html += '</div></div>';
-    return html;
   },
 
   // Spec §9.5 — five stats: Total Goals, Total Tasks, Tasks Complete,
@@ -505,10 +451,6 @@ Object.assign(window.SP_LOGIC, {
   },
 
   // Spec §9.3 — All / Active / Completed / Overdue / Due This Week.
-  // Filter pill toggles a data-* attribute on every task row in the
-  // OT list (set by _renderOTTaskRow). Rows that don't match the
-  // filter hide; goal cards / categories with no remaining visible
-  // tasks fade their content to a "no matching tasks" placeholder.
   _applyOTFilter: function() {
     var view = this._otCurrentFilter || 'all';
     var listEl = document.getElementById('sp-initiatives-list');
@@ -624,6 +566,8 @@ Object.assign(window.SP_LOGIC, {
     });
   },
 
+  // Spec §5.2 step 3 / §9.6 — completing pops "Archive?" modal;
+  // unchecking (done → pending) skips the modal.
   toggleSubtask: function(taskId) {
     var self = this;
     if (!self._supabase) return;
@@ -635,13 +579,63 @@ Object.assign(window.SP_LOGIC, {
       .then(function(res) {
         if (res.error) return;
         var items = res.data.items || {};
-        items.status = items.status === 'done' ? 'pending' : 'done';
+        var wasDone = items.status === 'done';
+        items.status = wasDone ? 'pending' : 'done';
         self._supabase
           .from('action_tracker')
           .update({ items: items })
           .eq('id', taskId)
           .then(function(upRes) {
             if (upRes.error) { console.error('[SP] Toggle subtask update error:', upRes.error.message); return; }
+            self.loadInitiatives();
+            // Pending → done is the path that opens the archive
+            // modal. Done → pending (uncheck) just toggles silently.
+            if (!wasDone) self._showArchiveOnCompleteModal(taskId);
+          });
+      });
+  },
+
+  _showArchiveOnCompleteModal: function(taskId) {
+    var self = this;
+    var modal = document.getElementById('sp-ot-archive-modal');
+    if (!modal) return;
+    modal.classList.add('open');
+    var noBtn = document.getElementById('sp-ot-archive-no');
+    var yesBtn = document.getElementById('sp-ot-archive-yes');
+    var onNo, onYes, onBackdrop;
+    var cleanup = function() {
+      modal.classList.remove('open');
+      if (noBtn) noBtn.removeEventListener('click', onNo);
+      if (yesBtn) yesBtn.removeEventListener('click', onYes);
+      modal.removeEventListener('click', onBackdrop);
+    };
+    onNo = function() { cleanup(); };
+    onYes = function() { cleanup(); self.archiveTask(taskId); };
+    onBackdrop = function(e) { if (e.target === modal) cleanup(); };
+    if (noBtn) noBtn.addEventListener('click', onNo);
+    if (yesBtn) yesBtn.addEventListener('click', onYes);
+    modal.addEventListener('click', onBackdrop);
+  },
+
+  // Spec §9.7 — items.status = 'archived' moves the row to Archive.
+  archiveTask: function(taskId) {
+    var self = this;
+    if (!self._supabase || !taskId) return;
+    self._supabase
+      .from('action_tracker')
+      .select('items')
+      .eq('id', taskId)
+      .single()
+      .then(function(res) {
+        if (res.error || !res.data) return;
+        var items = res.data.items || {};
+        items.status = 'archived';
+        self._supabase
+          .from('action_tracker')
+          .update({ items: items })
+          .eq('id', taskId)
+          .then(function(upRes) {
+            if (upRes.error) { console.error('[SP] Archive task error:', upRes.error.message); return; }
             self.loadInitiatives();
           });
       });
@@ -724,9 +718,7 @@ Object.assign(window.SP_LOGIC, {
     select.addEventListener('change', function() { select.blur(); });
   },
 
-  // Spec §9.6 / §9.7 — Add Task inline form. Each Goal card has an
-  // Add Task button; clicking renders a form below the task list,
-  // submit creates the action_tracker row tied to the Goal.
+  // Spec §9.7 — Add Task inline form on each Goal card.
   showAddTaskForm: function(btn) {
     var self = this;
     var goalCard = btn.closest('.sp-ot-goal');
