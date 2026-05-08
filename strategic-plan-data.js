@@ -1,7 +1,18 @@
 // strategic-plan-data.js
-// Section definitions for the Strategic Plan tool (Redesign v1.0).
+// Section definitions for the Strategic Plan tool.
 // Defines window.SP_SECTIONS — read by strategic-plan-logic.js to render the interview form.
-// 7 sections aligned with strategic planning best practice.
+//
+// SP/OT Rebuild Spec §8.1 — wizard expands from 7 tabs to 9 tabs.
+// The unified 7-category structure (spec §4) is shared with BI and OT:
+//   1. Business Foundation       (feeds Executive Summary)
+//   2. Products & Services
+//   3. Customers & Suppliers     (NEW — moved fields + 3 new)
+//   4. Financial Position
+//   5. Operations & Capacity     (loses Key Suppliers + Supplier Dependency)
+//   6. Market & Competition
+//   7. Growth & Transformation
+//   8. Risk & Resilience
+//   9. BI Generated Items        (NEW — special section, see strategic-plan-logic.js)
 //
 // Each field includes:
 //   apiKey    — the property name the API expects in the planData payload
@@ -21,7 +32,7 @@
 window.SP_SECTIONS = [
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 1: Business Foundation
+  // SECTION 1: Business Foundation (Tab 1)
   // ─────────────────────────────────────────────────────────────────────
   {
     id: 0,
@@ -31,7 +42,7 @@ window.SP_SECTIONS = [
     subtitle: "Legal details, structure, history, and team. Most of this is prefilled from your Business Profile",
     fields: [
       { id: "s1-business-name", apiKey: "businessName", valueType: "string", profileKey: "business_name", fromProfile: true, label: "Business Name", type: "text", required: true, placeholder: "e.g. Smith Plumbing Pty Ltd" },
-      { id: "s1-trading-name", apiKey: "tradingName", valueType: "string", profileKey: "trading_name", fromProfile: true, label: "Trading Name", labelHint: "(if different from legal name)", type: "text", required: false, placeholder: "e.g. Smith\u2019s Plumbing" },
+      { id: "s1-trading-name", apiKey: "tradingName", valueType: "string", profileKey: "trading_name", fromProfile: true, label: "Trading Name", labelHint: "(if different from legal name)", type: "text", required: false, placeholder: "e.g. Smith’s Plumbing" },
       { id: "s1-abn", apiKey: "abn", valueType: "string", profileKey: "abn", fromProfile: true, label: "ABN", type: "text", required: false, placeholder: "e.g. 12 345 678 901" },
       { id: "s1-structure", apiKey: "structure", valueType: "string", profileKey: "business_structure", fromProfile: true, label: "Business Structure", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "Sole Trader", label: "Sole Trader" },{ value: "Partnership", label: "Partnership" },{ value: "Company", label: "Company" },{ value: "Trust", label: "Trust" },{ value: "Other", label: "Other" }] },
       { id: "s1-industry", apiKey: "industry", valueType: "array", profileKey: "industry", fromProfile: true, label: "Industry", type: "text", required: true, placeholder: "e.g. Plumbing, Commercial Law, Accounting" },
@@ -39,26 +50,27 @@ window.SP_SECTIONS = [
       { id: "s1-location", apiKey: "location", valueType: "string", profileKeys: ["address_suburb", "address_state"], fromProfile: true, label: "Location", type: "text", required: false, placeholder: "e.g. Melbourne, VIC" },
       { id: "s1-team-size", apiKey: "teamSize", valueType: "string", profileKey: "employee_range", fromProfile: true, label: "Team Size", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "1", label: "1" },{ value: "2-5", label: "2-5" },{ value: "6-10", label: "6-10" },{ value: "11-20", label: "11-20" },{ value: "21-50", label: "21-50" },{ value: "50+", label: "50+" }] },
       { id: "s1-licences", apiKey: "licences", valueType: "array", profileKey: "licences", fromProfile: true, label: "Licences and Certifications", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No licences in your Business Profile yet." },
-      { id: "s1-mission", apiKey: "missionStatement", valueType: "string", label: "Mission Statement", labelHint: "(optional)", type: "textarea", required: false, placeholder: "What is your business\u2019s core purpose?" },
+      { id: "s1-mission", apiKey: "missionStatement", valueType: "string", label: "Mission Statement", labelHint: "(optional)", type: "textarea", required: false, placeholder: "What is your business’s core purpose?" },
       { id: "s1-vision", apiKey: "visionStatement", valueType: "string", label: "Vision Statement", labelHint: "(optional)", type: "textarea", required: false, placeholder: "Where do you want to be in 5-10 years?" },
       { id: "s1-values", apiKey: "coreValues", valueType: "array", label: "Core Values", type: "chip-multi", group: "values-chips", required: false, allowOther: true, options: [{ value: "quality", label: "Quality" },{ value: "integrity", label: "Integrity" },{ value: "customer-focus", label: "Customer Focus" },{ value: "innovation", label: "Innovation" },{ value: "safety", label: "Safety" },{ value: "reliability", label: "Reliability" },{ value: "sustainability", label: "Sustainability" }] },
-      { id: "s1-key-person", apiKey: "keyPersonDependency", valueType: "string", label: "Key Person Dependency", type: "chip-single", group: "key-person-chips", required: false, helpText: "If you couldn\u2019t work for 2 weeks, what would happen to the business?", options: [{ value: "runs-fine", label: "Business Keeps Running" },{ value: "slows-down", label: "Would Slow Down" },{ value: "would-stop", label: "Would Stop Completely" }] }
+      { id: "s1-key-person", apiKey: "keyPersonDependency", valueType: "string", label: "Key Person Dependency", type: "chip-single", group: "key-person-chips", required: false, helpText: "If you couldn’t work for 2 weeks, what would happen to the business?", options: [{ value: "runs-fine", label: "Business Keeps Running" },{ value: "slows-down", label: "Would Slow Down" },{ value: "would-stop", label: "Would Stop Completely" }] }
     ]
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 2: Products, Services & Customers
+  // SECTION 2: Products & Services (Tab 2)
+  // Spec §8.1 — Target Customer Types moved out to new Tab 3.
+  // Spec §8.3 — 3 new fields land here in commit 2.
   // ─────────────────────────────────────────────────────────────────────
   {
     id: 1,
     icon: "\u{1F527}",
-    title: "2. Products, Services & Customers",
+    title: "2. Products & Services",
     chipLabel: "Products & Services",
-    subtitle: "What you sell, who buys it, and how you price your work",
+    subtitle: "What you sell, service delivery, and quality",
     fields: [
       { id: "s2-services", apiKey: "services", valueType: "string", profileKey: "bp_services", fromProfile: true, profileTransform: "svc_list", label: "Core Services", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No services in your Business Profile yet." },
       { id: "s2-products", apiKey: "products", valueType: "string", profileKey: "bp_products", fromProfile: true, profileTransform: "svc_list", label: "Products Offered", labelHint: "(from your Business Profile)", type: "readonly-pills", required: false, emptyHint: "No products in your Business Profile yet." },
-      { id: "s2-customers", apiKey: "targetCustomers", valueType: "array", label: "Target Customer Types", type: "chip-multi", group: "customer-chips", required: true, options: [{ value: "residential", label: "Residential" },{ value: "commercial", label: "Commercial" },{ value: "industrial", label: "Industrial" },{ value: "retail", label: "Retail" },{ value: "hospitality", label: "Hospitality" },{ value: "consumers", label: "Consumers" },{ value: "government", label: "Government" },{ value: "nfp", label: "Not-for-Profit" },{ value: "other-businesses", label: "Other Businesses" }], allowOther: true },
       { id: "s2-service-area", apiKey: "serviceArea", valueType: "array", profileKey: "service_area", fromProfile: true, label: "Service Area", type: "chip-multi", group: "area-chips", required: false, allowOther: true, options: [{ value: "local", label: "Local (Under 25km)" },{ value: "regional", label: "Regional (25-100km)" },{ value: "state-wide", label: "State-Wide" },{ value: "national", label: "National" },{ value: "international", label: "International" }] },
       { id: "s2-pricing", apiKey: "pricingModel", valueType: "array", label: "Pricing Model", type: "chip-multi", group: "pricing-chips", required: false, options: [{ value: "fixed-price", label: "Fixed Price" },{ value: "hourly", label: "Hourly" },{ value: "day-rate", label: "Day Rate" },{ value: "cost-plus", label: "Cost Plus" },{ value: "retainer", label: "Retainer" },{ value: "subscription", label: "Subscription" },{ value: "project-based", label: "Project-Based" }] },
       { id: "s2-avg-job", apiKey: "avgJobValue", valueType: "string", label: "Average Job / Engagement Value", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "under-500", label: "Under $500" },{ value: "500-1k", label: "$500-$1,000" },{ value: "1k-2.5k", label: "$1,000-$2,500" },{ value: "2.5k-5k", label: "$2,500-$5,000" },{ value: "5k-10k", label: "$5,000-$10,000" },{ value: "10k-25k", label: "$10,000-$25,000" },{ value: "25k-50k", label: "$25,000-$50,000" },{ value: "50k+", label: "$50,000+" }] },
@@ -68,20 +80,45 @@ window.SP_SECTIONS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 3: Financial Position
+  // SECTION 3: Customers & Suppliers (Tab 3) — NEW per spec §8.2
+  // Three fields move in: Target Customer Types from old Tab 2,
+  // Key Suppliers and Supplier Dependency from old Tab 4 (Operations).
+  // Three fields are introduced here for the first time. All chip-single
+  // unless flagged otherwise.
   // ─────────────────────────────────────────────────────────────────────
   {
     id: 2,
+    icon: "\u{1F465}",
+    title: "3. Customers & Suppliers",
+    chipLabel: "Customers & Suppliers",
+    subtitle: "Relationships, concentration, payment terms, and supplier dependencies",
+    fields: [
+      // Moved from old Tab 2 (Products, Services & Customers).
+      { id: "s2-customers", apiKey: "targetCustomers", valueType: "array", label: "Target Customer Types", type: "chip-multi", group: "customer-chips", required: true, options: [{ value: "residential", label: "Residential" },{ value: "commercial", label: "Commercial" },{ value: "industrial", label: "Industrial" },{ value: "retail", label: "Retail" },{ value: "hospitality", label: "Hospitality" },{ value: "consumers", label: "Consumers" },{ value: "government", label: "Government" },{ value: "nfp", label: "Not-for-Profit" },{ value: "other-businesses", label: "Other Businesses" }], allowOther: true },
+      // Moved from old Tab 4 (Operations & Capacity).
+      { id: "s4-suppliers", apiKey: "keySuppliers", valueType: "array", label: "Key Suppliers", type: "chip-multi", group: "suppliers-chips", required: false, allowOther: true, options: [] },
+      { id: "s4-supplier-dep", apiKey: "supplierDependency", valueType: "string", label: "Supplier Dependency", type: "chip-single", group: "supplier-dep-chips", required: false, options: [{ value: "diverse", label: "Diverse (Many Options)" },{ value: "moderate", label: "Moderate (Few Key)" },{ value: "concentrated", label: "Concentrated (1-2 Critical)" }] }
+    ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // SECTION 4: Financial Position (Tab 4)
+  // Was old id:2 — the Section 3 BI-prefill render gate is now keyed
+  // on this id (see strategic-plan-logic.js _SECTION_3_ID).
+  // Spec §8.4 — 2 new fields land here in commit 2.
+  // ─────────────────────────────────────────────────────────────────────
+  {
+    id: 3,
     icon: "\u{1F4B0}",
-    title: "3. Financial Position",
+    title: "4. Financial Position",
     chipLabel: "Financial Position",
     subtitle: "Revenue, costs, margins, and cash flow. Approximate figures are fine",
     infoBox: "This information builds your financial overview section. It is stored securely and never shared. If your accounting system is connected, some fields may be prefilled but can still be amended.",
     fields: [
       { id: "s3-revenue", apiKey: "annualRevenue", valueType: "string", label: "Annual Revenue", fromBI: true, type: "select", required: true, options: [{ value: "", label: "Select range..." },{ value: "under-100k", label: "Under $100K" },{ value: "100k-250k", label: "$100K-$250K" },{ value: "250k-500k", label: "$250K-$500K" },{ value: "500k-1m", label: "$500K-$1M" },{ value: "1m-2m", label: "$1M-$2M" },{ value: "2m-5m", label: "$2M-$5M" },{ value: "5m+", label: "$5M+" }] },
       { id: "s3-revenue-trend", apiKey: "revenueTrend", valueType: "string", label: "Revenue Trend", fromBI: true, type: "chip-single", group: "rev-trend-chips", required: false, options: [{ value: "growing-strongly", label: "Growing Strongly (Over 20%)" },{ value: "growing", label: "Growing (5-20%)" },{ value: "stable", label: "Stable" },{ value: "declining", label: "Declining" }] },
-      { id: "s3-gross-margin", apiKey: "grossMargin", valueType: "string", label: "Gross Margin", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "under-10", label: "Under 10%" },{ value: "10-20", label: "10-20%" },{ value: "20-30", label: "20-30%" },{ value: "30-40", label: "30-40%" },{ value: "40-50", label: "40-50%" },{ value: "50+", label: "50%+" },{ value: "dont-know", label: "Don\u2019t Know" }] },
-      { id: "s3-net-margin", apiKey: "netProfitMargin", valueType: "string", label: "Net Profit Margin", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "loss", label: "Loss-Making" },{ value: "break-even", label: "Break-Even" },{ value: "1-5", label: "1-5%" },{ value: "5-10", label: "5-10%" },{ value: "10-15", label: "10-15%" },{ value: "15-20", label: "15-20%" },{ value: "20+", label: "20%+" },{ value: "dont-know", label: "Don\u2019t Know" }] },
+      { id: "s3-gross-margin", apiKey: "grossMargin", valueType: "string", label: "Gross Margin", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "under-10", label: "Under 10%" },{ value: "10-20", label: "10-20%" },{ value: "20-30", label: "20-30%" },{ value: "30-40", label: "30-40%" },{ value: "40-50", label: "40-50%" },{ value: "50+", label: "50%+" },{ value: "dont-know", label: "Don’t Know" }] },
+      { id: "s3-net-margin", apiKey: "netProfitMargin", valueType: "string", label: "Net Profit Margin", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "loss", label: "Loss-Making" },{ value: "break-even", label: "Break-Even" },{ value: "1-5", label: "1-5%" },{ value: "5-10", label: "5-10%" },{ value: "10-15", label: "10-15%" },{ value: "15-20", label: "15-20%" },{ value: "20+", label: "20%+" },{ value: "dont-know", label: "Don’t Know" }] },
       { id: "s3-costs", apiKey: "biggestCosts", valueType: "array", label: "Biggest Cost Categories", type: "chip-multi", group: "cost-chips", required: false, allowOther: true, options: [{ value: "labour", label: "Labour" },{ value: "materials", label: "Materials" },{ value: "subcontractors", label: "Subcontractors" },{ value: "occupancy", label: "Occupancy" },{ value: "utilities", label: "Utilities" },{ value: "equipment", label: "Equipment" },{ value: "vehicles", label: "Vehicles" },{ value: "insurance", label: "Insurance" },{ value: "prof-services", label: "Professional Services" },{ value: "software", label: "Software" },{ value: "marketing", label: "Marketing" },{ value: "inventory", label: "Inventory" }] },
       { id: "s3-finance", apiKey: "currentFinance", valueType: "string", label: "Current Finance / Loans", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "none", label: "None" },{ value: "under-25k", label: "Under $25K" },{ value: "25k-50k", label: "$25K-$50K" },{ value: "50k-100k", label: "$50K-$100K" },{ value: "100k-250k", label: "$100K-$250K" },{ value: "250k-500k", label: "$250K-$500K" },{ value: "500k+", label: "$500K+" }] },
       { id: "s3-finance-purpose", apiKey: "financePurpose", valueType: "array", label: "Finance Purpose", type: "chip-multi", group: "fin-purpose-chips", required: false, options: [{ value: "vehicles", label: "Vehicles" },{ value: "equipment", label: "Equipment" },{ value: "property", label: "Property" },{ value: "working-capital", label: "Working Capital" },{ value: "expansion", label: "Expansion" }], allowOther: true },
@@ -91,21 +128,21 @@ window.SP_SECTIONS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 4: Operations & Capacity
+  // SECTION 5: Operations & Capacity (Tab 5)
+  // Was old id:3. Key Suppliers and Supplier Dependency moved to Tab 3.
+  // Spec §8.5 — 2 new fields land here in commit 2.
   // ─────────────────────────────────────────────────────────────────────
   {
-    id: 3,
-    icon: "\u2699",
-    title: "4. Operations & Capacity",
+    id: 4,
+    icon: "⚙",
+    title: "5. Operations & Capacity",
     chipLabel: "Operations & Capacity",
-    subtitle: "How work gets done, your team, technology, suppliers, and constraints",
+    subtitle: "How work gets done, your team, technology, and constraints",
     fields: [
       { id: "s4-lead-sources", apiKey: "leadSources", valueType: "array", label: "How Do You Get Most Work?", type: "chip-multi", group: "lead-chips", required: false, allowOther: true, options: [{ value: "word-of-mouth", label: "Word of Mouth" },{ value: "industry-referrals", label: "Industry Referrals" },{ value: "repeat", label: "Repeat Customers" },{ value: "google", label: "Google / Search" },{ value: "social-media", label: "Social Media" },{ value: "website", label: "Website" },{ value: "advertising", label: "Advertising" },{ value: "tenders", label: "Tenders" },{ value: "commercial-contracts", label: "Commercial Contracts" }] },
-      { id: "s4-conversion", apiKey: "leadConversion", valueType: "string", label: "Lead Conversion", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "excellent", label: "Excellent (Over 60%)" },{ value: "good", label: "Good (40-60%)" },{ value: "average", label: "Average (25-40%)" },{ value: "below-average", label: "Below Average (Under 25%)" },{ value: "dont-track", label: "Don\u2019t Track" }] },
+      { id: "s4-conversion", apiKey: "leadConversion", valueType: "string", label: "Lead Conversion", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "excellent", label: "Excellent (Over 60%)" },{ value: "good", label: "Good (40-60%)" },{ value: "average", label: "Average (25-40%)" },{ value: "below-average", label: "Below Average (Under 25%)" },{ value: "dont-track", label: "Don’t Track" }] },
       { id: "s4-jobs-month", apiKey: "jobsPerMonth", valueType: "string", label: "Jobs / Clients per Month", fromBI: true, type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "1-5", label: "1-5" },{ value: "6-10", label: "6-10" },{ value: "11-20", label: "11-20" },{ value: "21-50", label: "21-50" },{ value: "51-100", label: "51-100" },{ value: "100+", label: "100+" }] },
       { id: "s4-capacity", apiKey: "capacityUtilisation", valueType: "string", label: "Capacity Utilisation", type: "chip-single", group: "capacity-chips", required: false, options: [{ value: "underutilised", label: "Underutilised (Under 50%)" },{ value: "moderate", label: "Moderate (50-75%)" },{ value: "good", label: "Good (75-90%)" },{ value: "at-capacity", label: "At Capacity (Over 90%)" },{ value: "overloaded", label: "Overloaded" }] },
-      { id: "s4-suppliers", apiKey: "keySuppliers", valueType: "array", label: "Key Suppliers", type: "chip-multi", group: "suppliers-chips", required: false, allowOther: true, options: [] },
-      { id: "s4-supplier-dep", apiKey: "supplierDependency", valueType: "string", label: "Supplier Dependency", type: "chip-single", group: "supplier-dep-chips", required: false, options: [{ value: "diverse", label: "Diverse (Many Options)" },{ value: "moderate", label: "Moderate (Few Key)" },{ value: "concentrated", label: "Concentrated (1-2 Critical)" }] },
       { id: "s4-subcontractors", apiKey: "subcontractorUse", valueType: "string", label: "Subcontractor Use", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "none", label: "No Subcontractors" },{ value: "occasionally", label: "Occasionally" },{ value: "regularly", label: "Regularly" },{ value: "primarily", label: "Primarily Subcontractor Model" }] },
       { id: "s4-technology", apiKey: "technology", valueType: "array", label: "Technology and Software", type: "chip-multi", group: "tech-chips", required: false, allowOther: true, options: [{ value: "accounting", label: "Accounting" },{ value: "job-mgmt", label: "Job Management" },{ value: "quoting", label: "Quoting" },{ value: "crm", label: "CRM" },{ value: "scheduling", label: "Scheduling" },{ value: "project-mgmt", label: "Project Management" },{ value: "time-tracking", label: "Time Tracking" },{ value: "inventory-mgmt", label: "Inventory Management" },{ value: "fleet-tracking", label: "Fleet / Vehicle Tracking" },{ value: "design-cad", label: "Design / CAD" },{ value: "staxai", label: "StaxAI" },{ value: "none", label: "None" }] },
       { id: "s4-tech-maturity", apiKey: "technologyMaturity", valueType: "string", label: "Technology Maturity", type: "chip-single", group: "tech-maturity-chips", required: false, options: [{ value: "paper-based", label: "Paper-Based" },{ value: "basic-digital", label: "Basic Digital" },{ value: "integrated", label: "Integrated Systems" },{ value: "advanced", label: "Advanced / Automated" }] },
@@ -114,12 +151,12 @@ window.SP_SECTIONS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 5: Market & Competition
+  // SECTION 6: Market & Competition (Tab 6) — was old id:4
   // ─────────────────────────────────────────────────────────────────────
   {
-    id: 4,
+    id: 5,
     icon: "\u{1F4CA}",
-    title: "5. Market & Competition",
+    title: "6. Market & Competition",
     chipLabel: "Market & Competition",
     subtitle: "Your competitors, market position, industry trends, and regulatory environment",
     fields: [
@@ -135,12 +172,12 @@ window.SP_SECTIONS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 6: Growth & Transformation
+  // SECTION 7: Growth & Transformation (Tab 7) — was old id:5
   // ─────────────────────────────────────────────────────────────────────
   {
-    id: 5,
+    id: 6,
     icon: "\u{1F680}",
-    title: "6. Growth & Transformation",
+    title: "7. Growth & Transformation",
     chipLabel: "Growth & Transformation",
     subtitle: "Goals, expansion plans, digital transformation, and process improvement. Your answers here drive your Operational Plan initiatives",
     fields: [
@@ -160,17 +197,18 @@ window.SP_SECTIONS = [
       { id: "s6-investments", apiKey: "plannedInvestments", valueType: "array", label: "Planned Investments", type: "chip-multi", group: "invest-chips", required: false, isDecision: true, decisionId: "investments", options: [{ value: "vehicles", label: "Vehicles" },{ value: "equipment", label: "Equipment" },{ value: "technology", label: "Technology" },{ value: "property", label: "Property" },{ value: "fitout-renovations", label: "Fitout / Renovations" },{ value: "training", label: "Training" },{ value: "recruitment", label: "Recruitment" },{ value: "marketing", label: "Marketing" },{ value: "none", label: "None" }], allowOther: true },
       { id: "s6-invest-budget", apiKey: "investmentBudget", valueType: "string", label: "Investment Budget", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "under-10k", label: "Under $10K" },{ value: "10k-25k", label: "$10K-$25K" },{ value: "25k-50k", label: "$25K-$50K" },{ value: "50k-100k", label: "$50K-$100K" },{ value: "100k+", label: "$100K+" },{ value: "not-determined", label: "Not Determined" }] },
       { id: "s6-marketing-budget", apiKey: "marketingBudget", valueType: "string", label: "Marketing Budget (Monthly)", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "none", label: "None" },{ value: "under-500", label: "Under $500" },{ value: "500-1k", label: "$500-$1,000" },{ value: "1k-2k", label: "$1,000-$2,000" },{ value: "2k-5k", label: "$2,000-$5,000" },{ value: "5k+", label: "$5,000+" }] },
-      { id: "s6-marketing-challenges", apiKey: "marketingChallenges", valueType: "array", label: "Marketing Challenges", type: "chip-multi", group: "mktg-chips", required: false, allowOther: true, options: [{ value: "found-online", label: "Getting Found Online" },{ value: "referrals", label: "Getting Referrals" },{ value: "standing-out", label: "Standing Out" },{ value: "converting", label: "Converting Enquiries" },{ value: "no-time", label: "No Time" },{ value: "dont-know", label: "Don\u2019t Know What Works" },{ value: "budget", label: "Budget Constraints" },{ value: "measuring-roi", label: "Measuring Results / ROI" },{ value: "content-creation", label: "Content Creation" },{ value: "social-media-mgmt", label: "Social Media Management" },{ value: "consistency", label: "Consistency" }] }
+      { id: "s6-marketing-challenges", apiKey: "marketingChallenges", valueType: "array", label: "Marketing Challenges", type: "chip-multi", group: "mktg-chips", required: false, allowOther: true, options: [{ value: "found-online", label: "Getting Found Online" },{ value: "referrals", label: "Getting Referrals" },{ value: "standing-out", label: "Standing Out" },{ value: "converting", label: "Converting Enquiries" },{ value: "no-time", label: "No Time" },{ value: "dont-know", label: "Don’t Know What Works" },{ value: "budget", label: "Budget Constraints" },{ value: "measuring-roi", label: "Measuring Results / ROI" },{ value: "content-creation", label: "Content Creation" },{ value: "social-media-mgmt", label: "Social Media Management" },{ value: "consistency", label: "Consistency" }] }
     ]
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 7: Risk & Resilience
+  // SECTION 8: Risk & Resilience (Tab 8) — was old id:6
+  // Spec §8.6 — 3 new fields land here in commit 2.
   // ─────────────────────────────────────────────────────────────────────
   {
-    id: 6,
-    icon: "\u{1F6E1}\uFE0F",
-    title: "7. Risk & Resilience",
+    id: 7,
+    icon: "\u{1F6E1}️",
+    title: "8. Risk & Resilience",
     chipLabel: "Risk & Resilience",
     subtitle: "Business risks, insurance, compliance, contingency, and succession planning",
     fields: [

@@ -21,14 +21,15 @@ Object.assign(window.SP_LOGIC, {
   _userId: null,
   _currentPlanData: null,
 
-  // Section 3 (Financial Position) — id 2 in SP_SECTIONS — holds
-  // its field render until the BI fetch returns so the user sees
-  // one final state with correct shading, not an optimistic-then-
-  // corrected render. The flags below coordinate this:
-  // _cachedDraftData and _cachedBIData hold the data each async fetch
-  // produces, _section3Rendered guards against double renders when
-  // both fetches resolve out of order.
-  _SECTION_3_ID: 2,
+  // Financial Position — id 3 in SP_SECTIONS after the spec §8.1
+  // restructure (moved from id 2 once Customers & Suppliers landed
+  // in slot 2). Holds its field render until the BI fetch returns
+  // so the user sees one final state with correct shading, not an
+  // optimistic-then-corrected render. The flags below coordinate
+  // this: _cachedDraftData and _cachedBIData hold the data each
+  // async fetch produces, _section3Rendered guards against double
+  // renders when both fetches resolve out of order.
+  _SECTION_3_ID: 3,
   _cachedSavedPlanData: null,
   _cachedDraftData: null,
   _cachedBIData: null,
