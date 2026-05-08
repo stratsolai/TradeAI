@@ -240,6 +240,30 @@
    affected. */
 .profile-section-card .lookback-dropdown-field { border: var(--input-border-width) solid var(--border); color: var(--text); font-weight: 400; }
 .profile-section-card .lookback-dropdown-field.active { border-color: var(--blue); background-color: var(--white); }
+
+/* BP grouped chip accordion — uses platform .expand-tile but tightens
+   spacing for the dense form. The 24px default padding and 20px Barlow
+   title from .expand-tile would dominate the form; collapse to a
+   compact 10px 14px header with body-font weight, matching the
+   pre-migration look. The shared border + click-to-expand + count
+   badge behaviour all come from .expand-tile. */
+[data-chip-accordion] .expand-tile { padding: 0; margin-bottom: 8px; border-left-width: 1px; }
+[data-chip-accordion] .expand-tile-header { padding: 10px 14px; min-height: 0; }
+[data-chip-accordion] .expand-tile-title {
+  font-family: var(--body-font);
+  font-size: var(--btn-font-size);
+  font-weight: 500;
+}
+[data-chip-accordion] .expand-tile-count {
+  background: transparent;
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: var(--badge-font-size);
+  padding: 0;
+  min-width: 75px;
+  text-align: right;
+}
+[data-chip-accordion] [data-chip-acc-body] { padding: 0 14px 12px 14px; }
 /* Custom Google Places suggestion dropdown rendered below the Street
    Address input. The .loc-street input itself uses the standard
    .profile-input class — no overrides needed. The wrap is the

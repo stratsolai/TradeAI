@@ -257,10 +257,10 @@ Object.assign(window.CL_PROFILE, {
   },
 
   // BP UX Improvements Spec v1.0 §2.2 — render the standard chips for a
-  // grouped chip picker as collapsible accordion sections, alphabetised
-  // within each group. Selected chips remain visible when a section is
-  // collapsed; non-selected chips are hidden via inline display:none so
-  // we don't need to add new CSS classes.
+  // grouped chip picker as collapsible sections, alphabetised within
+  // each group. Selected chips remain visible when a section is
+  // collapsed; non-selected chips are hidden via inline display:none.
+  // Each section is a platform .expand-tile (staxai-auth.css §22a).
   _renderAccordionGroups: function(groups, dataAttr, selected, idPrefix) {
     var self = this;
     if (!Array.isArray(selected)) selected = [];
@@ -277,13 +277,12 @@ Object.assign(window.CL_PROFILE, {
       }).join('');
       var countLabel = self._countLabel(group.items.filter(function(i) { return selSet[i]; }).length);
       html +=
-        '<div data-chip-acc-section="' + window.escHtml(group.name) + '" data-chip-acc-expanded="0" style="margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden;background:var(--surface)">' +
-          '<button type="button" data-chip-acc-toggle="1" data-chip-acc-target="' + bodyId + '" aria-expanded="false" style="width:100%;padding:10px 14px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-size:14px;font-weight:500;color:var(--text)">' +
-            '<span style="flex:1">' + window.escHtml(group.name) + '</span>' +
-            '<span data-chip-acc-count style="font-size:12px;color:var(--text-muted);min-width:75px;text-align:right">' + countLabel + '</span>' +
-            '<span data-chip-acc-chevron style="display:inline-block;transition:transform 0.2s;color:var(--text-muted);font-size:14px">▾</span>' +
-          '</button>' +
-          '<div id="' + bodyId + '" data-chip-acc-body style="display:' + (anyActive ? 'block' : 'none') + ';padding:0 14px 12px 14px">' +
+        '<div class="expand-tile" data-chip-acc-section="' + window.escHtml(group.name) + '">' +
+          '<div class="expand-tile-header">' +
+            '<span class="expand-tile-title">' + window.escHtml(group.name) + '</span>' +
+            '<span class="expand-tile-count" data-chip-acc-count>' + countLabel + '</span>' +
+          '</div>' +
+          '<div id="' + bodyId + '" data-chip-acc-body style="display:' + (anyActive ? 'block' : 'none') + '">' +
             '<div class="review-pill-row" style="margin:0">' + pillsHtml + '</div>' +
           '</div>' +
         '</div>';
@@ -295,16 +294,13 @@ Object.assign(window.CL_PROFILE, {
   _countLabel: function(n) { return n > 0 ? n + ' selected' : ''; },
 
   _setAccordionSectionState: function(section, expanded) {
-    section.dataset.chipAccExpanded = expanded ? '1' : '0';
+    if (expanded) section.classList.add('expanded');
+    else section.classList.remove('expanded');
     var body = section.querySelector('[data-chip-acc-body]');
     var pills = body ? body.querySelectorAll('.filter-pill') : [];
-    var toggle = section.querySelector('[data-chip-acc-toggle]');
-    var chevron = section.querySelector('[data-chip-acc-chevron]');
     if (expanded) {
       if (body) body.style.display = 'block';
       pills.forEach(function(p) { p.style.display = ''; });
-      if (toggle) toggle.setAttribute('aria-expanded', 'true');
-      if (chevron) chevron.style.transform = 'rotate(180deg)';
     } else {
       var anyActive = false;
       pills.forEach(function(p) {
@@ -313,8 +309,6 @@ Object.assign(window.CL_PROFILE, {
         if (isActive) anyActive = true;
       });
       if (body) body.style.display = anyActive ? 'block' : 'none';
-      if (toggle) toggle.setAttribute('aria-expanded', 'false');
-      if (chevron) chevron.style.transform = 'rotate(0deg)';
     }
   },
 
@@ -331,11 +325,11 @@ Object.assign(window.CL_PROFILE, {
     container.dataset.chipAccBound = '1';
     var self = this;
     container.addEventListener('click', function(e) {
-      var toggle = e.target.closest('[data-chip-acc-toggle]');
-      if (toggle) {
-        var section = toggle.closest('[data-chip-acc-section]');
-        if (section) {
-          var expanded = section.dataset.chipAccExpanded === '1';
+      var header = e.target.closest('.expand-tile-header');
+      if (header) {
+        var section = header.closest('.expand-tile');
+        if (section && section.closest('[data-chip-accordion]')) {
+          var expanded = section.classList.contains('expanded');
           self._setAccordionSectionState(section, !expanded);
         }
         return;
@@ -349,7 +343,7 @@ Object.assign(window.CL_PROFILE, {
           var section = pill.closest('[data-chip-acc-section]');
           if (!section) return;
           self._updateAccordionCount(section);
-          if (section.dataset.chipAccExpanded !== '1') {
+          if (!section.classList.contains('expanded')) {
             self._setAccordionSectionState(section, false);
           }
         });
