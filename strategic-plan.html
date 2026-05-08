@@ -1579,7 +1579,8 @@
   Promise.all([
     window.loadScriptAsync('/strategic-plan-logic.js'),
     window.loadScriptAsync('/strategic-plan-modules.js'),
-    window.loadScriptAsync('/strategic-plan-review.js')
+    window.loadScriptAsync('/strategic-plan-review.js'),
+    window.loadScriptAsync('/strategic-plan-archive.js')
   ]).then(function() {
     return supabase.auth.getSession();
   }).then(function(result) {

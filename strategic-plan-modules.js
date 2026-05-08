@@ -617,6 +617,10 @@ Object.assign(window.SP_LOGIC, {
     modal.addEventListener('click', onBackdrop);
   },
 
+  // Archive screen methods (openArchiveScreen, loadArchiveScreen,
+  // _renderArchiveScreen and friends, _restoreArchivedTask) live in
+  // strategic-plan-archive.js so this module stays under 60K.
+
   // Spec §9.7 — items.status = 'archived' moves the row to Archive.
   archiveTask: function(taskId) {
     var self = this;
