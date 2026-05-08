@@ -512,6 +512,126 @@
       font-style: italic;
     }
 
+    /* ── Spec §6 Review screen ─────────────────────────────────
+       Layout for the pending_approval Strategic Plan view that
+       sits on the Strategic Plan tab between Create and Active
+       states. Header (editable plan name, DRAFT badge, action
+       buttons), Executive Summary, SWOT 4-quadrant grid, then the
+       category accordions / Goal cards / Task rows that land in
+       later commits. */
+    .sp-review-header { margin-bottom: var(--card-padding); }
+    .sp-review-header-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: var(--actions-gap);
+      flex-wrap: wrap;
+    }
+    .sp-review-header-left { flex: 1; min-width: 280px; }
+    .sp-review-plan-name {
+      width: 100%;
+      max-width: 560px;
+      font-family: var(--heading-font);
+      font-size: var(--page-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--btn-radius);
+      padding: 4px 8px;
+      margin-left: -8px;
+      transition: border-color var(--btn-transition), background var(--btn-transition);
+    }
+    .sp-review-plan-name:hover  { border-color: var(--border); }
+    .sp-review-plan-name:focus  { outline: none; border-color: var(--blue); background: var(--white); }
+    .sp-review-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .sp-review-meta-date {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+    }
+    .sp-review-header-actions {
+      display: flex;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .sp-review-section-title {
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      margin: 0 0 8px 0;
+    }
+    .sp-review-readonly-note {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-review-summary {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: var(--card-padding);
+      margin-bottom: var(--card-padding);
+    }
+    .sp-review-summary-body p {
+      margin-bottom: 12px;
+      line-height: var(--body-line-height);
+    }
+    .sp-review-summary-body p:last-child { margin-bottom: 0; }
+    .sp-review-empty {
+      padding: 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    .sp-review-swot { margin-bottom: var(--card-padding); }
+    .sp-review-swot-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--actions-gap);
+    }
+    .sp-review-swot-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: var(--actions-gap) var(--card-padding);
+    }
+    .sp-review-swot-card.sp-review-swot-strengths     { border-left-color: var(--green); }
+    .sp-review-swot-card.sp-review-swot-weaknesses    { border-left-color: var(--red); }
+    .sp-review-swot-card.sp-review-swot-opportunities { border-left-color: var(--blue); }
+    .sp-review-swot-card.sp-review-swot-threats       { border-left-color: var(--orange); }
+    .sp-review-swot-card-title {
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+      margin-bottom: 8px;
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+    }
+    .sp-review-swot-list {
+      margin: 0;
+      padding-left: 20px;
+      color: var(--text);
+      font-size: var(--btn-font-size);
+      line-height: var(--note-line-height);
+    }
+    .sp-review-swot-list li { margin-bottom: 4px; }
+    .sp-review-swot-empty {
+      font-size: var(--note-font-size);
+      color: var(--text-muted);
+      font-style: italic;
+    }
+    @media (max-width: 700px) {
+      .sp-review-swot-grid { grid-template-columns: 1fr; }
+    }
+
     /* Spec §8.8 — incomplete-field highlight applied when the user
        picks Review Fields from the incomplete-fields modal. Soft
        amber background drops back to default once the field has a
@@ -1032,6 +1152,19 @@
         Not happy with the output? Go to <strong>Create / Update Plan</strong> to adjust your answers and regenerate. Your previous version is always saved.
       </div>
     </div>
+
+    <!-- Pending-approval Review screen — spec §6. Visible while a
+         draft plan is awaiting Approve / Discard. Sub-sections fill
+         in subsequent commits: header + Executive Summary + SWOT
+         here, category accordions + Goals + Tasks + AI chat +
+         BI banner in later commits. -->
+    <div id="sp-doc-review" style="display:none">
+      <div id="sp-review-header" class="sp-review-header"></div>
+      <div id="sp-review-bi-banner" class="sp-review-bi-banner" style="display:none"></div>
+      <div id="sp-review-summary" class="sp-review-summary"></div>
+      <div id="sp-review-swot" class="sp-review-swot"></div>
+      <div id="sp-review-categories" class="sp-review-categories"></div>
+    </div>
   </div>
 
   <!-- ═══ TAB 3: CREATE / UPDATE PLAN ═══ -->
@@ -1134,7 +1267,8 @@
   if (!supabase) return;
   Promise.all([
     window.loadScriptAsync('/strategic-plan-logic.js'),
-    window.loadScriptAsync('/strategic-plan-modules.js')
+    window.loadScriptAsync('/strategic-plan-modules.js'),
+    window.loadScriptAsync('/strategic-plan-review.js')
   ]).then(function() {
     return supabase.auth.getSession();
   }).then(function(result) {

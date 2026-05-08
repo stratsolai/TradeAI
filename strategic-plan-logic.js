@@ -20,15 +20,14 @@ Object.assign(window.SP_LOGIC, {
   _supabase: null,
   _userId: null,
   _currentPlanData: null,
+  // Spec §6 — pending_approval plan; non-null = Review screen.
+  _pendingPlanId: null,
+  _pendingPlanData: null,
+  _pendingPlanRow: null,
 
-  // Financial Position — id 3 in SP_SECTIONS after the spec §8.1
-  // restructure (moved from id 2 once Customers & Suppliers landed
-  // in slot 2). Holds its field render until the BI fetch returns
-  // so the user sees one final state with correct shading, not an
-  // optimistic-then-corrected render. The flags below coordinate
-  // this: _cachedDraftData and _cachedBIData hold the data each
-  // async fetch produces, _section3Rendered guards against double
-  // renders when both fetches resolve out of order.
+  // Financial Position id (spec §8.1 restructure moved it from 2 to
+  // 3). Renders only after the BI fetch returns so prefilled fields
+  // don't render-then-flicker; the flags below coordinate that.
   _SECTION_3_ID: 3,
   _cachedSavedPlanData: null,
   _cachedDraftData: null,
@@ -75,25 +74,33 @@ Object.assign(window.SP_LOGIC, {
   },
 
   updateTabStates: function() {
-    // Tabs are always navigable. The locked-content placeholders below
-    // are toggled instead — users can open Operational Plan / Strategic
-    // Plan tabs even before generating a plan and see the "Create your
-    // plan to unlock" message inside.
+    // SP tab states: locked / review / content. OT stays locked
+    // unless an active plan exists (pending plan's tasks hidden
+    // until Approve).
     var opsLocked = document.getElementById('sp-ops-locked');
     var opsContent = document.getElementById('sp-ops-content');
     var docLocked = document.getElementById('sp-doc-locked');
     var docContent = document.getElementById('sp-doc-content');
+    var docReview = document.getElementById('sp-doc-review');
 
-    if (this._hasPlan) {
+    if (this._pendingPlanId) {
+      if (opsLocked) opsLocked.style.display = this._hasPlan ? 'none' : 'block';
+      if (opsContent) opsContent.style.display = this._hasPlan ? 'block' : 'none';
+      if (docLocked) docLocked.style.display = 'none';
+      if (docContent) docContent.style.display = 'none';
+      if (docReview) docReview.style.display = 'block';
+    } else if (this._hasPlan) {
       if (opsLocked) opsLocked.style.display = 'none';
       if (opsContent) opsContent.style.display = 'block';
       if (docLocked) docLocked.style.display = 'none';
       if (docContent) docContent.style.display = 'block';
+      if (docReview) docReview.style.display = 'none';
     } else {
       if (opsLocked) opsLocked.style.display = 'block';
       if (opsContent) opsContent.style.display = 'none';
       if (docLocked) docLocked.style.display = 'block';
       if (docContent) docContent.style.display = 'none';
+      if (docReview) docReview.style.display = 'none';
     }
   },
 
@@ -1244,11 +1251,22 @@ Object.assign(window.SP_LOGIC, {
 
   onPlanGenerated: function(result) {
     var self = this;
-    self._hasPlan = true;
     self._currentPlanData = result;
     self.clearDraft();
-    self.updateTabStates();
-    self.switchTab('ops-plan');
+    if (result && result.planId) {
+      // Spec §6 — pending_approval; route to the Review screen.
+      self._pendingPlanId = result.planId;
+      self._pendingPlanData = result.planData || null;
+      self.updateTabStates();
+      self.switchTab('strat-plan');
+      if (typeof self.loadReviewScreen === 'function') {
+        self.loadReviewScreen(result.planId);
+      }
+    } else {
+      self._hasPlan = true;
+      self.updateTabStates();
+      self.switchTab('ops-plan');
+    }
   },
 
   // ── Misc ─────────────────────────────────────────────────────────
@@ -1272,23 +1290,37 @@ Object.assign(window.SP_LOGIC, {
   checkPlanExists: function() {
     var self = this;
     if (!self._supabase || !self._userId) return Promise.resolve(false);
+    // Pull active + pending plans in one trip. Review screen wins
+    // if a pending plan exists; active.interview_data still prefills
+    // the wizard for an Update flow.
     return self._supabase
       .from('strategic_plans')
-      .select('id, interview_data')
+      .select('id, status, interview_data, plan_data')
       .eq('user_id', self._userId)
-      .eq('is_current', true)
-      .single()
+      .in('status', ['active', 'pending_approval'])
+      .order('created_at', { ascending: false })
+      .limit(2)
       .then(function(res) {
-        if (res.data) {
+        var rows = (res && res.data) || [];
+        var active = rows.find(function(p) { return p.status === 'active'; }) || null;
+        var pending = rows.find(function(p) { return p.status === 'pending_approval'; }) || null;
+        if (active) {
           self._hasPlan = true;
-          if (res.data.interview_data) {
-            self._cachedSavedPlanData = res.data.interview_data;
-            self.prefillFromPreviousPlan(res.data.interview_data);
+          if (active.interview_data) {
+            self._cachedSavedPlanData = active.interview_data;
+            self.prefillFromPreviousPlan(active.interview_data);
           }
-          return true;
+        } else {
+          self._hasPlan = false;
         }
-        self._hasPlan = false;
-        return false;
+        if (pending) {
+          self._pendingPlanId = pending.id;
+          self._pendingPlanData = pending.plan_data || null;
+        } else {
+          self._pendingPlanId = null;
+          self._pendingPlanData = null;
+        }
+        return !!active;
       });
   },
 
@@ -1334,6 +1366,13 @@ Object.assign(window.SP_LOGIC, {
           self.highlightDecisionSection(decisionId);
         }
         window.history.replaceState({}, '', window.location.pathname);
+      } else if (self._pendingPlanId) {
+        // Spec §6 — a draft awaits Approve / Discard. Route to the
+        // Strategic Plan tab and unfold the Review screen.
+        self.switchTab('strat-plan');
+        if (typeof self.loadReviewScreen === 'function') {
+          self.loadReviewScreen(self._pendingPlanId);
+        }
       } else if (exists) {
         self.switchTab('ops-plan');
       } else {
