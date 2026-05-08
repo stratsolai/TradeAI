@@ -49,7 +49,7 @@
   }
 
   function buildHtml() {
-    var html = '<aside class="stax-sidebar" id="stax-sidebar" aria-label="Tool navigation">';
+    var html = '<aside class="slide-panel left stax-sidebar" id="stax-sidebar" aria-label="Tool navigation">';
     html += '<div class="stax-sidebar-toggle">';
     html += '<button type="button" class="stax-sidebar-toggle-btn" id="stax-sidebar-toggle-btn" aria-label="Collapse sidebar" title="Collapse">&laquo;</button>';
     html += '</div>';

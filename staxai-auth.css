@@ -1343,22 +1343,70 @@ body { padding-top: 68px; }
 }
 
 /* ------------------------------------------------------------
-   25. PLATFORM SIDEBAR
-   Collapsible left sidebar shown on every authenticated page.
-   Built and managed by sidebar.js. Mobile: slides in over content.
+   25. SLIDE PANEL PRIMITIVE
+   Reusable chassis for fixed-position slide-in panels — the
+   platform left navigation sidebar, plus right-side overlays
+   such as the SP AI chat panel. Combine with .left or .right
+   for positioning, .wide for content-heavy panels, and toggle
+   .open / .closed to drive the on-screen transform animation.
+   The platform sidebar (.stax-sidebar, §26) extends
+   .slide-panel.left and adds nav-specific rules (default width,
+   collapse, hover-expand). Right-side overlays use .closed by
+   default and add .open to slide in.
    ------------------------------------------------------------ */
-.stax-sidebar {
+.slide-panel {
   position: fixed;
   top: 68px;
-  left: 0;
   bottom: 0;
-  width: 220px;
-  background: var(--white);
-  border-right: 1px solid var(--border);
   z-index: 90;
+  background: var(--white);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+}
+
+.slide-panel.left {
+  left: 0;
+  border-right: 1px solid var(--border);
+}
+
+.slide-panel.right {
+  right: 0;
+  left: auto;
+  border-left: 1px solid var(--border);
+}
+
+/* Wide variant — for content-heavy overlays such as the SP AI
+   chat panel, where 220px is too narrow for readable text. */
+.slide-panel.wide { width: 380px; }
+
+/* Off-screen state — combine with .left or .right to control
+   slide direction. The transition is set on .closed and .open
+   so the panel animates either way. */
+.slide-panel.closed { transition: transform 0.2s ease; }
+.slide-panel.closed.left  { transform: translateX(-100%); }
+.slide-panel.closed.right { transform: translateX(100%); }
+
+/* On-screen state — slides back in and lifts a shadow toward
+   the page content for visual separation. */
+.slide-panel.open {
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+}
+.slide-panel.open.left  { box-shadow: 2px 0 16px rgba(0,0,0,0.15); }
+.slide-panel.open.right { box-shadow: -2px 0 16px rgba(0,0,0,0.15); }
+
+/* ------------------------------------------------------------
+   26. PLATFORM SIDEBAR
+   Collapsible left sidebar shown on every authenticated page.
+   Built and managed by sidebar.js. Combines with .slide-panel
+   .left for the chassis (position, background, border-right,
+   etc.); the rules here add sidebar-specific behaviour: default
+   220px width, collapse to 60px, hover-expand, and the mobile
+   overlay slide-in.
+   ------------------------------------------------------------ */
+.stax-sidebar {
+  width: 220px;
   transition: width 0.25s ease-out, box-shadow 0.25s ease-out;
   font-family: var(--body-font);
 }
@@ -1526,7 +1574,7 @@ body.stax-has-sidebar.stax-sidebar-collapsed { padding-left: 60px; }
 }
 
 /* ------------------------------------------------------------
-   26. SHARED ADMIN/TOOL UTILITIES
+   27. SHARED ADMIN/TOOL UTILITIES
    Generic page wrapper, data tables, status dots, note boxes,
    detail modals, link-style buttons, and small layout helpers
    used across admin and other dense data pages.
