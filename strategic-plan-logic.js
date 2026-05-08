@@ -1252,9 +1252,9 @@ Object.assign(window.SP_LOGIC, {
   onPlanGenerated: function(result) {
     var self = this;
     self._currentPlanData = result;
-    self.clearDraft();
+    // Spec §6 — keep the wizard draft alive until Approve so a
+    // Discard returns the owner to a still-populated Create tab.
     if (result && result.planId) {
-      // Spec §6 — pending_approval; route to the Review screen.
       self._pendingPlanId = result.planId;
       self._pendingPlanData = result.planData || null;
       self.updateTabStates();
@@ -1264,6 +1264,7 @@ Object.assign(window.SP_LOGIC, {
       }
     } else {
       self._hasPlan = true;
+      self.clearDraft();
       self.updateTabStates();
       self.switchTab('ops-plan');
     }

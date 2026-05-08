@@ -1331,6 +1331,36 @@
     </div>
   </div>
 
+  <!-- Approve / Discard confirmation modals — spec §5.1 step 5
+       and §6.1. Approve activates the pending plan and pushes
+       its tasks into Operational Tasks; Discard deletes the
+       pending plan plus its is_pending action_tracker rows. -->
+  <div class="perm-modal-overlay" id="sp-review-approve-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title">Approve this plan?</div>
+      <div class="perm-modal-body">
+        Approving activates this plan and adds its tasks to your Operational Tasks tab. Any current plan you have will move into version history.
+      </div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="sp-review-approve-cancel" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="sp-review-approve-confirm" type="button">Approve Plan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="perm-modal-overlay" id="sp-review-discard-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title">Discard this draft?</div>
+      <div class="perm-modal-body">
+        Your generated plan will be deleted. Your wizard answers are saved, so you can regenerate when you are ready.
+      </div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="sp-review-discard-cancel" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="sp-review-discard-confirm" type="button">Discard Draft</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Incomplete fields modal — spec §8.8. Triggered by Generate
        Plan when one or more fields are still empty. The user can
        Review (jumps to the first incomplete field, highlights all

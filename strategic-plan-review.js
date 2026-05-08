@@ -429,8 +429,144 @@ Object.assign(window.SP_LOGIC, {
           });
       });
     }
-    // Discard / Approve handlers land in the next commit alongside
-    // the confirmation modals.
+    var approveBtn = document.getElementById('sp-review-approve-btn');
+    if (approveBtn && !approveBtn.dataset.bound) {
+      approveBtn.dataset.bound = '1';
+      approveBtn.addEventListener('click', function() { self._reviewOpenApproveModal(); });
+    }
+    var discardBtn = document.getElementById('sp-review-discard-btn');
+    if (discardBtn && !discardBtn.dataset.bound) {
+      discardBtn.dataset.bound = '1';
+      discardBtn.addEventListener('click', function() { self._reviewOpenDiscardModal(); });
+    }
+  },
+
+  // ── Approve flow — spec §5.1 step 5 / §6.1 ───────────────────────
+  _reviewOpenApproveModal: function() {
+    var self = this;
+    var modal = document.getElementById('sp-review-approve-modal');
+    if (!modal) return;
+    modal.classList.add('open');
+    var cancel = document.getElementById('sp-review-approve-cancel');
+    var confirm = document.getElementById('sp-review-approve-confirm');
+    var onCancel, onConfirm, onBackdrop;
+    var cleanup = function() {
+      modal.classList.remove('open');
+      if (cancel) cancel.removeEventListener('click', onCancel);
+      if (confirm) confirm.removeEventListener('click', onConfirm);
+      modal.removeEventListener('click', onBackdrop);
+    };
+    onCancel = function() { cleanup(); };
+    onConfirm = function() { cleanup(); self._reviewApprovePlan(); };
+    onBackdrop = function(e) { if (e.target === modal) cleanup(); };
+    if (cancel) cancel.addEventListener('click', onCancel);
+    if (confirm) confirm.addEventListener('click', onConfirm);
+    modal.addEventListener('click', onBackdrop);
+  },
+
+  _reviewApprovePlan: async function() {
+    var self = this;
+    if (!self._supabase || !self._userId || !self._pendingPlanId) return;
+    var approveBtn = document.getElementById('sp-review-approve-btn');
+    if (approveBtn) { approveBtn.disabled = true; approveBtn.textContent = 'Approving…'; }
+    try {
+      // Make sure the latest in-memory edits hit the row before we
+      // approve — _reviewSavePlanData debounces writes, so a quick
+      // edit before Approve might still be in flight.
+      if (self._pendingPlanData) {
+        await self._supabase
+          .from('strategic_plans')
+          .update({ plan_data: self._pendingPlanData, updated_at: new Date().toISOString() })
+          .eq('id', self._pendingPlanId)
+          .eq('user_id', self._userId);
+      }
+      var sess = await self._supabase.auth.getSession();
+      var token = sess && sess.data && sess.data.session && sess.data.session.access_token;
+      if (!token) throw new Error('Not signed in');
+      var resp = await fetch('/api/strategic-plan-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ planId: self._pendingPlanId })
+      });
+      var json = await resp.json();
+      if (!resp.ok || !json.success) throw new Error(json.error || 'Approve failed');
+
+      // Plan is now active. Clear pending state, clear the wizard
+      // draft (we kept it across pending_approval so Discard could
+      // bounce the owner back), refresh the OT tab, route there.
+      self._pendingPlanId = null;
+      self._pendingPlanData = null;
+      self._pendingPlanRow = null;
+      self._hasPlan = true;
+      if (typeof self.clearDraft === 'function') self.clearDraft();
+      self.updateTabStates();
+      self.switchTab('ops-plan');
+      if (typeof self.loadOperationalPlan === 'function') self.loadOperationalPlan();
+    } catch (err) {
+      console.error('[SP Review] approve error:', err && err.message);
+      if (approveBtn) { approveBtn.disabled = false; approveBtn.textContent = 'Approve Plan'; }
+      self._showError(err && err.message ? err.message : 'Could not approve plan. Please try again.');
+    }
+  },
+
+  // ── Discard flow ─────────────────────────────────────────────────
+  _reviewOpenDiscardModal: function() {
+    var self = this;
+    var modal = document.getElementById('sp-review-discard-modal');
+    if (!modal) return;
+    modal.classList.add('open');
+    var cancel = document.getElementById('sp-review-discard-cancel');
+    var confirm = document.getElementById('sp-review-discard-confirm');
+    var onCancel, onConfirm, onBackdrop;
+    var cleanup = function() {
+      modal.classList.remove('open');
+      if (cancel) cancel.removeEventListener('click', onCancel);
+      if (confirm) confirm.removeEventListener('click', onConfirm);
+      modal.removeEventListener('click', onBackdrop);
+    };
+    onCancel = function() { cleanup(); };
+    onConfirm = function() { cleanup(); self._reviewDiscardPlan(); };
+    onBackdrop = function(e) { if (e.target === modal) cleanup(); };
+    if (cancel) cancel.addEventListener('click', onCancel);
+    if (confirm) confirm.addEventListener('click', onConfirm);
+    modal.addEventListener('click', onBackdrop);
+  },
+
+  _reviewDiscardPlan: async function() {
+    var self = this;
+    if (!self._supabase || !self._userId || !self._pendingPlanId) return;
+    var discardBtn = document.getElementById('sp-review-discard-btn');
+    if (discardBtn) { discardBtn.disabled = true; discardBtn.textContent = 'Discarding…'; }
+    try {
+      var pendingId = self._pendingPlanId;
+      // Drop the is_pending action_tracker rows tied to this plan
+      // first so no orphans are left if the row delete races. Then
+      // delete the strategic_plans row itself.
+      await self._supabase
+        .from('action_tracker')
+        .delete()
+        .eq('user_id', self._userId)
+        .eq('plan_id', pendingId)
+        .eq('is_pending', true);
+      var planRes = await self._supabase
+        .from('strategic_plans')
+        .delete()
+        .eq('id', pendingId)
+        .eq('user_id', self._userId)
+        .eq('status', 'pending_approval');
+      if (planRes.error) throw new Error(planRes.error.message || 'Delete failed');
+      self._pendingPlanId = null;
+      self._pendingPlanData = null;
+      self._pendingPlanRow = null;
+      self.updateTabStates();
+      // Route based on whether an active plan still exists. If yes,
+      // back to Strategic Plan view; otherwise back to Create.
+      self.switchTab(self._hasPlan ? 'strat-plan' : 'create-plan');
+    } catch (err) {
+      console.error('[SP Review] discard error:', err && err.message);
+      if (discardBtn) { discardBtn.disabled = false; discardBtn.textContent = 'Discard Draft'; }
+      self._showError('Could not discard the draft. Please try again.');
+    }
   }
 
 });
