@@ -198,6 +198,37 @@ window.checkToolAccess = async function(toolId, supabase, user) {
   }
 };
 
+/**
+ * loadScriptAsync(url)
+ * Promise-based script loader. Resolves once the <script> tag has loaded;
+ * rejects on network/parse failure. Lets callers run multiple loads in
+ * parallel via Promise.all() instead of nested callbacks.
+ * Idempotent — repeat calls for the same URL reuse the same in-flight or
+ * resolved Promise so a script never loads twice.
+ */
+(function() {
+  var _cache = {};
+  window.loadScriptAsync = function(url) {
+    if (_cache[url]) return _cache[url];
+    _cache[url] = new Promise(function(resolve, reject) {
+      var existing = document.querySelector('script[src="' + url + '"]');
+      if (existing) {
+        if (existing.dataset.loaded === '1') { resolve(); return; }
+        existing.addEventListener('load', function() { resolve(); }, { once: true });
+        existing.addEventListener('error', function() { reject(new Error('Failed to load ' + url)); }, { once: true });
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = url;
+      s.async = false;
+      s.addEventListener('load', function() { s.dataset.loaded = '1'; resolve(); });
+      s.addEventListener('error', function() { reject(new Error('Failed to load ' + url)); });
+      document.head.appendChild(s);
+    });
+    return _cache[url];
+  };
+})();
+
 /* ── Global Session Expiry Handler (Task 30) ──
    Listens for Supabase SIGNED_OUT events and redirects to login.
    Covers session expiry, token refresh failure, and manual sign-out.
