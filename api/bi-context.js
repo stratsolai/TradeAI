@@ -200,14 +200,50 @@ export default async function handler(req, res) {
 
     if (operations && operations.summary) {
       var os = operations.summary;
+      // Estimated monthly job rate — bi-operations summarises a
+      // 12-month window by default, so total_jobs / 12 is a fair
+      // average. The SP prefill (spec §8.9) buckets it for the
+      // jobsPerMonth field in Operations & Capacity.
+      var jobsPerMonth = (os.total_jobs || 0) > 0 ? Math.round((os.total_jobs || 0) / 12) : 0;
       context.operations = {
         total_jobs: os.total_jobs || 0,
         completed_jobs: os.completed_jobs || 0,
         avg_duration_days: os.avg_duration_days || 0,
         avg_job_value: os.avg_job_value || 0,
+        jobs_per_month: jobsPerMonth,
         over_quote_pct: (os.over_quote_count + os.under_quote_count + os.on_quote_count) > 0
           ? Math.round(os.over_quote_count / (os.over_quote_count + os.under_quote_count + os.on_quote_count) * 100) : 0,
         form_completion_rate: os.form_completion_rate || 0
+      };
+    }
+
+    // Market signal — derived from the cached BI insights with
+    // category='market'. Used by the SP prefill (spec §8.9) to set
+    // the Industry Outlook chip and the Market Trends chip-multi
+    // without having to re-run the Serper research. Severity counts
+    // drive the outlook bucket; the headlines feed simple keyword
+    // matching for the trend chips.
+    var marketRes = await supabase.from('bi_insights')
+      .select('insight_data')
+      .eq('user_id', userId)
+      .eq('is_dismissed', false)
+      .gt('expires_at', new Date().toISOString());
+    var marketItems = (marketRes.data || []).filter(function(i) {
+      var cat = i.insight_data && i.insight_data.category;
+      return cat === 'market';
+    });
+    var sevCounts = { red: 0, amber: 0, green: 0 };
+    var marketHeadlines = [];
+    marketItems.forEach(function(item) {
+      var d = item.insight_data || {};
+      var sev = d.severity || 'amber';
+      if (sevCounts[sev] !== undefined) sevCounts[sev]++;
+      if (d.headline) marketHeadlines.push(d.headline);
+    });
+    if (marketItems.length > 0) {
+      context.market_signal = {
+        severity_counts: sevCounts,
+        headlines: marketHeadlines.slice(0, 12)
       };
     }
 

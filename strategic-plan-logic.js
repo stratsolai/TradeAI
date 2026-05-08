@@ -1099,52 +1099,9 @@ Object.assign(window.SP_LOGIC, {
     return '60+-days';
   },
 
-  prefillFromBIContext: function(bi) {
-    var self = this;
-    if (!bi || !bi.financial) return;
-    var fin = bi.financial;
-
-    // Map of form apiKey → bucketed value derived from the BI response.
-    // Gross margin falls back to operating margin (profit_margin) when
-    // Cost of Sales accounts are absent — the spec accepts that this
-    // mislabels the figure but ensures the field prefills.
-    var prefillValues = {
-      annualRevenue:    self.bucketRevenue(fin.revenue),
-      revenueTrend:     self.bucketRevenueTrend(fin.revenue_trend_pct),
-      grossMargin:      fin.gross_margin != null
-                          ? self.bucketGrossMargin(fin.gross_margin)
-                          : self.bucketGrossMargin(fin.profit_margin),
-      netProfitMargin:  self.bucketNetMargin(fin.profit_margin),
-      avgPaymentTime:   self.bucketDebtorDays(fin.avg_debtor_days)
-    };
-
-    var applied = 0;
-    window.SP_SECTIONS.forEach(function(s) { s.fields.forEach(function(f) {
-      if (!f.fromBI) return;
-      var el = document.getElementById(f.id);
-      if (!el) return;
-      var v = prefillValues[f.apiKey];
-      if (v == null) return;
-      // If a draft restore (or anything else) already set a
-      // different value, leave it and don't shade — the field
-      // isn't from BI any more.
-      var current = self.readFieldValue(el);
-      if (current && current !== v) return;
-      if (f.type === 'chip-single') {
-        el.value = v;
-        var g = document.getElementById(f.id + '-chips');
-        if (g) {
-          g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
-          g.classList.add('sp-from-bi');
-        }
-      } else {
-        self.writeFieldValue(el, v);
-        el.classList.add('sp-from-bi');
-      }
-      applied++;
-    }); });
-    console.log('[SP] BI prefill — applied sp-from-bi to ' + applied + ' field(s)');
-  },
+  // prefillFromBIContext lives in strategic-plan-modules.js — keeps
+  // logic.js under the 60K platform ceiling and groups the prefill
+  // code with the bucketers it depends on.
 
   // ── Plan generation ──────────────────────────────────────────────
   collectSectionData: function() {

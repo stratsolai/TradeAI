@@ -925,6 +925,159 @@ Object.assign(window.SP_LOGIC, {
       });
   },
 
+  // ── BI prefill orchestrator + bucketers ──────────────────────────
+  // prefillFromBIContext walks SP_SECTIONS and writes a bucketed
+  // value for every fromBI:true field that has a matching apiKey in
+  // the prefillValues map. Spec §8.9 wires five previously-dead
+  // flags here: avgJobValue, leadConversion, jobsPerMonth,
+  // industryOutlook, marketTrends.
+  prefillFromBIContext: function(bi) {
+    var self = this;
+    if (!bi) return;
+    var fin = bi.financial || {};
+    var ops = bi.operations || {};
+    var cust = bi.customers || {};
+    var market = bi.market_signal || null;
+
+    var prefillValues = {
+      annualRevenue:    self.bucketRevenue(fin.revenue),
+      revenueTrend:     self.bucketRevenueTrend(fin.revenue_trend_pct),
+      grossMargin:      fin.gross_margin != null
+                          ? self.bucketGrossMargin(fin.gross_margin)
+                          : self.bucketGrossMargin(fin.profit_margin),
+      netProfitMargin:  self.bucketNetMargin(fin.profit_margin),
+      avgPaymentTime:   self.bucketDebtorDays(fin.avg_debtor_days),
+      avgJobValue:      self.bucketAvgJobValue(ops.avg_job_value),
+      leadConversion:   self.bucketLeadConversion(cust.conversion_rate),
+      jobsPerMonth:     self.bucketJobsPerMonth(ops.jobs_per_month),
+      industryOutlook:  self.bucketIndustryOutlook(market),
+      marketTrends:     self.bucketMarketTrends(market)
+    };
+
+    var applied = 0;
+    window.SP_SECTIONS.forEach(function(s) { (s.fields || []).forEach(function(f) {
+      if (!f.fromBI) return;
+      var el = document.getElementById(f.id);
+      if (!el) return;
+      var v = prefillValues[f.apiKey];
+      if (v == null) return;
+      // If the user has set a different scalar value, leave it.
+      var current = self.readFieldValue(el);
+      if (current && current !== v && !Array.isArray(v)) return;
+      if (f.type === 'chip-single') {
+        el.value = v;
+        var g = document.getElementById(f.id + '-chips');
+        if (g) {
+          g.querySelectorAll('.filter-pill').forEach(function(c) { if (c.dataset.value === v) c.classList.add('active'); });
+          g.classList.add('sp-from-bi');
+        }
+      } else if (f.type === 'chip-multi') {
+        var vals = Array.isArray(v) ? v : (typeof v === 'string' ? v.split(',').map(function(x){return x.trim()}).filter(Boolean) : []);
+        if (vals.length === 0) return;
+        var group = document.getElementById(f.id + '-chips');
+        if (!group) return;
+        // Don't overwrite if the user has already picked any chip.
+        if (group.querySelector('.filter-pill.active')) return;
+        vals.forEach(function(val) {
+          var chip = group.querySelector('.filter-pill[data-value="' + val + '"]');
+          if (chip) chip.classList.add('active');
+        });
+        group.classList.add('sp-from-bi');
+        self.updateHiddenFromChips(f.id);
+      } else {
+        self.writeFieldValue(el, v);
+        el.classList.add('sp-from-bi');
+      }
+      applied++;
+    }); });
+    console.log('[SP] BI prefill — applied sp-from-bi to ' + applied + ' field(s)');
+  },
+
+  // ── BI prefill bucketers — spec §8.9 ─────────────────────────────
+  // Convert raw BI numbers / signals to the wizard's bucketed option
+  // values. Pure functions, called from prefillFromBIContext in
+  // strategic-plan-logic.js. Bucket boundaries match the actual
+  // option lists in strategic-plan-data.js — keep them in sync if
+  // the option sets change.
+
+  bucketAvgJobValue: function(amount) {
+    if (amount == null || isNaN(amount)) return null;
+    if (amount < 500) return 'under-500';
+    if (amount < 1000) return '500-1k';
+    if (amount < 2500) return '1k-2.5k';
+    if (amount < 5000) return '2.5k-5k';
+    if (amount < 10000) return '5k-10k';
+    if (amount < 25000) return '10k-25k';
+    if (amount < 50000) return '25k-50k';
+    return '50k+';
+  },
+
+  bucketLeadConversion: function(pct) {
+    if (pct == null || isNaN(pct)) return null;
+    if (pct >= 60) return 'excellent';
+    if (pct >= 40) return 'good';
+    if (pct >= 25) return 'average';
+    if (pct >= 0)  return 'below-average';
+    return null;
+  },
+
+  bucketJobsPerMonth: function(count) {
+    if (count == null || isNaN(count) || count <= 0) return null;
+    if (count <= 5) return '1-5';
+    if (count <= 10) return '6-10';
+    if (count <= 20) return '11-20';
+    if (count <= 50) return '21-50';
+    if (count <= 100) return '51-100';
+    return '100+';
+  },
+
+  // Industry outlook — derived from the severity distribution of
+  // cached BI market insights. Heavily-green ⇒ growth; heavily-red ⇒
+  // declining; mixed amber ⇒ uncertain; otherwise stable. Returns
+  // null when the user has no market insights yet so the field
+  // stays unset rather than guessing.
+  bucketIndustryOutlook: function(signal) {
+    if (!signal || !signal.severity_counts) return null;
+    var c = signal.severity_counts;
+    var total = (c.red || 0) + (c.amber || 0) + (c.green || 0);
+    if (total === 0) return null;
+    var greenPct = (c.green || 0) / total;
+    var redPct = (c.red || 0) / total;
+    if (greenPct >= 0.7) return 'strong-growth';
+    if (greenPct >= 0.5) return 'moderate-growth';
+    if (redPct >= 0.6) return 'declining';
+    if ((c.amber || 0) >= 2) return 'uncertain';
+    return 'stable';
+  },
+
+  // Market trends — match each trend chip's keywords against the
+  // joined market insight headlines. Returns an array of trend chip
+  // values (or null when no signal). The match list is intentionally
+  // conservative so we don't tag a trend off a single tangential
+  // word; tweak as the chip option set evolves.
+  bucketMarketTrends: function(signal) {
+    if (!signal || !Array.isArray(signal.headlines) || signal.headlines.length === 0) return null;
+    var lower = signal.headlines.join(' ').toLowerCase();
+    var keywords = {
+      'digital-transform': ['digital', 'automation', 'ai ', 'ai-', 'a.i.'],
+      'sustainability':    ['sustainab', 'environment', 'esg', 'net zero'],
+      'consolidation':     ['consolidat', 'merger', 'acquisition', 'roll-up'],
+      'skills-shortage':   ['shortage', 'skills gap', 'labour shortage', 'recruitment'],
+      'regulation':        ['regulat', 'complianc', 'legislation', 'licens'],
+      'material-costs':    ['material cost', 'commodity', 'inflation', 'supply chain'],
+      'customer-expect':   ['expectation', 'customer demand'],
+      'new-tech':          ['technology', 'innovation', 'platform']
+    };
+    var matched = [];
+    Object.keys(keywords).forEach(function(key) {
+      var kws = keywords[key];
+      for (var i = 0; i < kws.length; i++) {
+        if (lower.indexOf(kws[i]) !== -1) { matched.push(key); break; }
+      }
+    });
+    return matched.length > 0 ? matched : null;
+  },
+
   // ── Incomplete-fields modal — spec §8.8 ──────────────────────────
   // Counts every wizard field that is user-fillable but currently
   // empty (skips readonly-pills and the BI Generated Items tab). The
