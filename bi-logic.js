@@ -324,15 +324,14 @@ window.BI_LOGIC = {
     self._ALERT_CATEGORIES.order.forEach(function(cat) {
       var group = groups[cat];
       if (!group || group.length === 0) return;
-      var openCls = firstOpened ? '' : ' open';
+      var openCls = firstOpened ? '' : ' expanded';
       firstOpened = true;
-      html += '<div class="bi-accordion-group' + openCls + '">';
-      html += '<button class="bi-accordion-header" type="button">';
-      html += '<span class="bi-accordion-name">' + escHtml(self._ALERT_CATEGORIES.labels[cat]) + '</span>';
-      html += '<span class="bi-accordion-count">' + group.length + '</span>';
-      html += '<span class="bi-accordion-chevron">&#9662;</span>';
-      html += '</button>';
-      html += '<div class="bi-accordion-body">';
+      html += '<div class="expand-tile' + openCls + '">';
+      html += '<div class="expand-tile-header">';
+      html += '<span class="expand-tile-title">' + escHtml(self._ALERT_CATEGORIES.labels[cat]) + '</span>';
+      html += '<span class="expand-tile-count">' + group.length + '</span>';
+      html += '</div>';
+      html += '<div class="expand-tile-content">';
       group.forEach(function(item) { html += self._renderAlertCard(item); });
       html += '</div>';
       html += '</div>';
@@ -408,23 +407,25 @@ window.BI_LOGIC = {
 
   _bindAlertEvents: function(container) {
     var self = this;
-    container.querySelectorAll('.bi-accordion-header').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var group = btn.parentElement;
-        if (!group) return;
-        var wasOpen = group.classList.contains('open');
-        // Close every sibling group in the same column. Each column has
-        // its own .bi-alerts-accordion wrapper, so this stays scoped to
-        // one side of the layout.
-        var accordion = group.parentElement;
-        if (accordion) {
-          accordion.querySelectorAll(':scope > .bi-accordion-group').forEach(function(g) {
-            g.classList.remove('open');
+    container.querySelectorAll('.expand-tile').forEach(function(tile) {
+      tile.addEventListener('click', function(e) {
+        // Skip when the click landed inside the expanded content —
+        // alert cards have their own buttons (Chat with AI, Add to
+        // Plan, Dismiss, Source) and clicking those should not toggle
+        // the parent tile. Tapping the empty area inside an expanded
+        // tile also stays expanded.
+        if (e.target.closest('.expand-tile-content')) return;
+        var wasExpanded = tile.classList.contains('expanded');
+        // Close every sibling tile in the same column. Each column
+        // (.bi-alerts-column) holds one accordion's worth of tiles, so
+        // :scope > keeps the close-others scoped to one side.
+        var column = tile.parentElement;
+        if (column) {
+          column.querySelectorAll(':scope > .expand-tile').forEach(function(t) {
+            t.classList.remove('expanded');
           });
         }
-        // If the clicked group wasn't already open, open it; otherwise
-        // leave it closed (clicking an open group collapses it).
-        if (!wasOpen) group.classList.add('open');
+        if (!wasExpanded) tile.classList.add('expanded');
       });
     });
     container.querySelectorAll('.bi-alert-expand-btn').forEach(function(btn) {

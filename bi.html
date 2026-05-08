@@ -290,61 +290,12 @@
       text-align: center;
     }
 
-    .bi-accordion-group {
-      border: 1px solid var(--border);
-      border-radius: var(--btn-radius);
-      margin-bottom: var(--actions-gap);
-      overflow: hidden;
-      background: var(--white);
-    }
-
-    .bi-accordion-header {
-      display: flex;
-      align-items: center;
-      gap: var(--actions-gap);
-      width: 100%;
-      background: var(--bg-subtle);
-      border: none;
-      padding: var(--actions-gap) var(--input-padding);
-      cursor: pointer;
-      text-align: left;
-      font-family: var(--body-font);
-      font-size: var(--btn-font-size);
-      color: var(--text);
-      transition: background var(--btn-transition);
-    }
-
-    .bi-accordion-header:hover { background: var(--border); }
-
-    .bi-accordion-name {
-      flex: 1;
-      font-weight: var(--font-weight-semibold);
-    }
-
-    .bi-accordion-count {
-      background: var(--blue);
-      color: var(--white);
-      font-size: var(--badge-font-size);
-      border-radius: 10px;
-      padding: 2px 8px;
-      min-width: 22px;
-      text-align: center;
-    }
-
-    .bi-accordion-chevron {
-      font-size: var(--badge-font-size);
-      color: var(--text-muted);
-      transition: transform var(--btn-transition);
-    }
-
-    .bi-accordion-group.open .bi-accordion-chevron { transform: rotate(180deg); }
-
-    .bi-accordion-body {
-      display: none;
-      padding: var(--actions-gap);
-    }
-
-    .bi-accordion-group.open .bi-accordion-body { display: block; }
+    /* Risks & Opportunities category accordions use the platform
+       .expand-tile primitive (staxai-auth.css §22a). All chrome —
+       border, padding, hover/expanded shadow, header layout, count
+       badge — comes from there. Tile spacing within the column is
+       the only BI-specific bit kept here. */
+    .bi-alerts-column .expand-tile { margin-bottom: var(--actions-gap); }
 
     .bi-alert-card {
       background: var(--white);
@@ -355,7 +306,7 @@
       margin-bottom: var(--actions-gap);
     }
 
-    .bi-accordion-body .bi-alert-card:last-child { margin-bottom: 0; }
+    .bi-alerts-column .expand-tile-content .bi-alert-card:last-child { margin-bottom: 0; }
 
     .bi-alert-card.severity-red { border-left-color: var(--red); }
     .bi-alert-card.severity-amber { border-left-color: var(--warning); }
