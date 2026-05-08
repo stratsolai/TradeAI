@@ -180,10 +180,16 @@ Object.assign(window.SP_LOGIC, {
     var self = this;
     if (!self._supabase || !self._userId) return;
 
+    // Filter out is_pending = true rows. These belong to a draft
+    // plan that hasn't been approved yet; the Review screen owns
+    // them until Approve flips the flag (api/strategic-plan-
+    // approve.js). Older rows from before the column existed have
+    // is_pending = false by default, so they pass through unchanged.
     self._supabase
       .from('action_tracker')
       .select('id, items, month_group, is_carried_forward, owner, plan_id, parent_task_id, initiative_name, sp_section, source, bi_insight_id')
       .eq('user_id', self._userId)
+      .eq('is_pending', false)
       .order('created_at', { ascending: true })
       .then(function(res) {
         if (res.error) { console.error('[SP] Load initiatives error:', res.error); return; }

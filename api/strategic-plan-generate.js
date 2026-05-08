@@ -23,13 +23,23 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 function _arr(v) { return Array.isArray(v) ? v.join(', ') : (v || 'Not specified'); }
 
 async function generatePlanContent(planData, clContext, biInsights, userId) {
+  // SP/OT Rebuild Phase 3 \u2014 the prompt now produces a structured
+  // plan suitable for the Review screen (spec \u00a76): one Executive
+  // Summary, a SWOT array (max 10 words per point per spec \u00a76.4),
+  // a category summary per category in the unified 7-category
+  // structure, and a flat list of Goals tagged with their category.
+  // Each Goal carries its own description and its tasks. The
+  // legacy narrative sections (businessOverview, financialOverview,
+  // etc.) are kept on the response so the Word doc generator \u2014
+  // which still ships the same document layout \u2014 has its content,
+  // and so existing approve / docx code paths are unchanged.
   var systemPrompt = 'You are an expert business plan writer specialising in Australian small and medium businesses.\n' +
     'Write professional, polished content suitable for banks, lenders, or investors.\n' +
     'Use plain language. Write in third person (e.g. "The business operates..." not "We operate...").\n' +
     'All content must be specific to the business data provided, not generic filler.\n' +
     'Return ONLY a JSON object \u2014 no markdown, no preamble.\n' +
     'If BI Intelligence Insights are provided, incorporate them into relevant sections. Do not fabricate insights.\n' +
-    'Always include a SWOT Analysis with exactly 3\u20135 dot points each for Strengths, Weaknesses, Opportunities, Threats.\n' +
+    'Australian English (colour, organisation, recognised). No exclamation marks.\n' +
     'After the full content, append a JSON block delimited by ###SWOT_JSON_START### and ###SWOT_JSON_END### containing: {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]}.';
 
   var userPrompt = 'Generate comprehensive business plan content for this business:\n\n' +
@@ -124,6 +134,12 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '  "marketAnalysis": "2-3 paragraphs on the market, competition and opportunity",\n' +
     '  "competitorAnalysis": "3-5 sentences positioning the business vs competitors",\n' +
     '  "swotAnalysis": "STRENGTHS\\n- point\\n...\\n\\nWEAKNESSES\\n- ...\\n\\nOPPORTUNITIES\\n- ...\\n\\nTHREATS\\n- ...",\n' +
+    '  "swotPoints": {\n' +
+    '    "strengths":     ["short point — max 10 words", "..."],\n' +
+    '    "weaknesses":    ["short point — max 10 words", "..."],\n' +
+    '    "opportunities": ["short point — max 10 words", "..."],\n' +
+    '    "threats":       ["short point — max 10 words", "..."]\n' +
+    '  },\n' +
     '  "marketingStrategy": "2 paragraphs on customer attraction and retention",\n' +
     '  "operationsOverview": "2 paragraphs on day-to-day operations",\n' +
     '  "managementTeam": "1-2 paragraphs on leadership and key personnel",\n' +
@@ -131,25 +147,48 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '  "growthStrategy": "2-3 paragraphs on 12-month and 3-year plans",\n' +
     '  "riskManagement": "2 paragraphs on identified risks and mitigation",\n' +
     '  "conclusion": "1 strong closing paragraph",\n' +
-    '  "strategicInitiatives": [\n' +
+    '  "categorySummaries": {\n' +
+    '    "financial":  "2-3 paragraphs of business context for the Financial category",\n' +
+    '    "products":   "2-3 paragraphs of business context for the Products & Services category",\n' +
+    '    "customers":  "2-3 paragraphs of business context for the Customers & Suppliers category",\n' +
+    '    "operations": "2-3 paragraphs of business context for the Operations & Capacity category",\n' +
+    '    "market":     "2-3 paragraphs of business context for the Market & Competition category",\n' +
+    '    "growth":     "2-3 paragraphs of business context for the Growth & Transformation category",\n' +
+    '    "risk":       "2-3 paragraphs of business context for the Risk & Resilience category"\n' +
+    '  },\n' +
+    '  "goals": [\n' +
     '    {\n' +
-    '      "name": "Initiative name e.g. Digital Transformation",\n' +
-    '      "sp_section": "growth_transformation",\n' +
+    '      "category": "growth",\n' +
+    '      "title": "Goal name — short, action-oriented, max 60 chars",\n' +
+    '      "description": "1-2 sentences explaining what success looks like for this goal",\n' +
     '      "tasks": [\n' +
-    '        {"title":"...", "dueDate":"YYYY-MM-DD", "priority":"High", "owner":"Owner", "notes":"..."}\n' +
+    '        {\n' +
+    '          "title": "Short action statement",\n' +
+    '          "description": "Paragraph explaining what to do and why",\n' +
+    '          "dueRelative": "Week 1" | "Week 2" | "Month 1" | "Month 2" | "Month 3",\n' +
+    '          "priority": "High" | "Medium" | "Low",\n' +
+    '          "owner": "Owner or role from keyRoles"\n' +
+    '        }\n' +
     '      ]\n' +
     '    }\n' +
     '  ]\n' +
     '}\n\n' +
     'Today is ' + new Date().toISOString().substring(0, 10) + '.\n\n' +
-    'IMPORTANT INSTRUCTIONS FOR STRATEGIC INITIATIVES:\n' +
-    '- Generate 3-7 Strategic Initiatives based on the Growth & Transformation decisions.\n' +
-    '- Each initiative must have a clear name, an sp_section value (one of: business_foundation, products_services, financial_position, operations_capacity, market_competition, growth_transformation, risk_resilience), and 2-5 sub-tasks.\n' +
-    '- Each task needs title, dueDate (absolute date in YYYY-MM-DD format, spread across the next 90 days from today), priority ("High"/"Medium"/"Low"), owner (from key roles or "Owner"), and notes.\n' +
-    '- Generate 10-25 tasks total across all initiatives.\n' +
-    '- Spread tasks across the next 90 days using real calendar dates.\n' +
-    '- Always include a mid-point review checkpoint task.\n' +
-    '- Set owner to the relevant role from keyRoles if provided, otherwise use "Owner".';
+    'INSTRUCTIONS FOR SWOT (spec §6.4):\n' +
+    '- swotPoints must contain 3–5 items per quadrant.\n' +
+    '- Each point is at most 10 words. Dot points only — no full sentences, no paragraphs, no trailing punctuation.\n' +
+    '- swotAnalysis (the narrative version) is kept for the downloaded Word doc.\n\n' +
+    'INSTRUCTIONS FOR CATEGORY SUMMARIES (spec §6.5):\n' +
+    '- Provide a 2–3 paragraph summary for every one of the seven categories above.\n' +
+    '- Each summary is read-only context for the user, drawn from the ingested data — interpret what the data says about that area of the business.\n' +
+    '- Do not list the goals here; goals live separately in the goals array.\n\n' +
+    'INSTRUCTIONS FOR GOALS (spec §6.5 / §6.6):\n' +
+    '- Generate 8–14 Goals total, distributed across the seven categories. Every category must have at least one Goal unless the data genuinely doesn\'t support one.\n' +
+    '- category MUST be exactly one of: financial, products, customers, operations, market, growth, risk.\n' +
+    '- Each goal needs a title (short, max 60 chars), a 1–2 sentence description, and 2–5 tasks.\n' +
+    '- Tasks use a relative timeframe in dueRelative — Week 1, Week 2, Week 3, Month 1, Month 2, Month 3. The actual calendar dates are computed at approval, not now.\n' +
+    '- Each task carries its own short title and a paragraph description (the why + the what). Priority is High / Medium / Low. Owner defaults to "Owner" or maps to a role from keyRoles when relevant.\n' +
+    '- Always include at least one Risk & Resilience goal that addresses a meaningful risk for this business, even if Risk & Resilience answers were sparse.';
 
   if (clContext) {
     userPrompt += '\n\nADDITIONAL BUSINESS CONTEXT FROM CONTENT LIBRARY:\n' + clContext;
@@ -563,8 +602,10 @@ export default async function handler(req, res) {
     var interviewDataWithDecisions = Object.assign({}, planData, { decisions: decisions });
 
     try {
-      await supabase.from('strategic_plans').update({ is_current: false }).eq('user_id', userId);
-
+      // Phase 3 — the new plan lands as pending_approval. The
+      // existing current plan stays current until the owner clicks
+      // Approve on the Review screen; the demote-old-current step
+      // moves to api/strategic-plan-approve.js.
       var { data: priorPlans } = await supabase
         .from('strategic_plans')
         .select('version')
@@ -578,7 +619,8 @@ export default async function handler(req, res) {
         .insert({
           user_id: userId,
           version: nextVersion,
-          is_current: true,
+          is_current: false,
+          status: 'pending_approval',
           plan_name: (planData.businessName || 'Plan') + ' v' + nextVersion,
           interview_data: interviewDataWithDecisions,
           plan_data: content,
@@ -626,7 +668,8 @@ export default async function handler(req, res) {
               source: 'sp_generated',
               parent_task_id: null,
               owner: 'Owner',
-              is_carried_forward: false
+              is_carried_forward: false,
+              is_pending: true
             })
             .select('id')
             .single();
@@ -660,7 +703,8 @@ export default async function handler(req, res) {
               },
               owner: task.owner || 'Owner',
               source: 'sp_generated',
-              is_carried_forward: false
+              is_carried_forward: false,
+              is_pending: true
             };
           });
 
@@ -701,7 +745,8 @@ export default async function handler(req, res) {
                   items: { title: 'Carried Forward Tasks', status: 'pending' },
                   initiative_name: 'Carried Forward Tasks',
                   sp_section: null, source: 'sp_generated',
-                  parent_task_id: null, owner: 'Owner', is_carried_forward: true
+                  parent_task_id: null, owner: 'Owner', is_carried_forward: true,
+                  is_pending: true
                 }).select('id').single();
 
               var cfParentId = cfInit ? cfInit.id : null;
@@ -718,7 +763,8 @@ export default async function handler(req, res) {
                   },
                   month_group: r.month_group, due_day_offset: r.due_day_offset,
                   owner: r.owner || '', source: r.source || 'sp_generated',
-                  is_carried_forward: true
+                  is_carried_forward: true,
+                  is_pending: true
                 };
               });
               await supabase.from('action_tracker').insert(carried);
@@ -730,7 +776,15 @@ export default async function handler(req, res) {
       }
     }
 
-    return res.status(200).json({ success: true, strategyUrl: strategyUrl, opsUrl: opsUrl, swotData: swotData, planId: planId });
+    return res.status(200).json({
+      success: true,
+      planId: planId,
+      status: 'pending_approval',
+      strategyUrl: strategyUrl,
+      opsUrl: opsUrl,
+      swotData: swotData,
+      planData: content
+    });
 
   } catch (err) {
     console.error('[strategic-plan] Error:', err);
