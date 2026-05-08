@@ -125,14 +125,9 @@ Object.assign(window.SP_LOGIC, {
     if (!container) return;
 
     container.innerHTML = sections.map(function(s) {
-      // Three render branches per section:
-      // - bi-items (Tab 9, spec §8.7): a placeholder list that
-      //   loadBIQueueItems fills async with the queued strategic
-      //   insights. Not a form — has no fields.
-      // - Financial Position: holds its field render until the BI
-      //   fetch returns (see renderSection3Body) so prefilled fields
-      //   don't render-then-flicker.
-      // - Everything else: render fields the standard way.
+      // Render branches: BI Items (Tab 9 §8.7) → async queue list;
+      // Financial Position → loading placeholder until BI fetch
+      // returns (see renderSection3Body); everything else → fields.
       var fieldsHtml;
       if (s.type === 'bi-items') {
         fieldsHtml = '<div id="sp-bi-queue-list" class="sp-bi-queue-list">' +
@@ -370,7 +365,16 @@ Object.assign(window.SP_LOGIC, {
   scheduleDraftSave: function() {
     var self = this;
     if (self._draftTimer) clearTimeout(self._draftTimer);
-    self._draftTimer = setTimeout(function() { self.saveDraftNow(); }, 500);
+    self._draftTimer = setTimeout(function() {
+      self.saveDraftNow();
+      // Clear spec §8.8 incomplete highlights as fields fill.
+      document.querySelectorAll('.sp-field.sp-field-incomplete').forEach(function(fieldEl) {
+        var input = fieldEl.querySelector('[id]');
+        if (!input) return;
+        var v = self.readFieldValue(input);
+        if (v && String(v).trim()) fieldEl.classList.remove('sp-field-incomplete');
+      });
+    }, 500);
   },
 
   saveDraftNow: function() {
@@ -1197,6 +1201,8 @@ Object.assign(window.SP_LOGIC, {
     var self = this;
     var data = self.collectSectionData();
     if (!data) {
+      // Required-field gate — the spec §8.8 modal only fires when
+      // required fields pass but optional fields are still empty.
       self._showError('Please complete the required fields before generating your plan.');
       var sections = window.SP_SECTIONS;
       for (var i = 0; i < sections.length; i++) {
@@ -1209,6 +1215,16 @@ Object.assign(window.SP_LOGIC, {
       return;
     }
 
+    var incomplete = self._countIncompleteFields();
+    if (incomplete.length > 0) {
+      self._showIncompleteFieldsModal(incomplete, data);
+      return;
+    }
+    await self._performGeneration(data);
+  },
+
+  _performGeneration: async function(data) {
+    var self = this;
     var btn = document.querySelector('.btn-sp-generate');
     if (btn) {
       btn.disabled = true;

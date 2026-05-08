@@ -925,6 +925,97 @@ Object.assign(window.SP_LOGIC, {
       });
   },
 
+  // ── Incomplete-fields modal — spec §8.8 ──────────────────────────
+  // Counts every wizard field that is user-fillable but currently
+  // empty (skips readonly-pills and the BI Generated Items tab). The
+  // generate() flow calls this after the required-field gate passes;
+  // if the count is non-zero the user picks Review Fields (jumps to
+  // the first incomplete and amber-highlights all incompletes) or
+  // Generate Anyway (proceeds with the partial dataset).
+  _countIncompleteFields: function() {
+    var self = this;
+    var sections = window.SP_SECTIONS || [];
+    var incomplete = [];
+    sections.forEach(function(section) {
+      // BI Generated Items isn't a form. Skip it entirely.
+      if (section.type === 'bi-items') return;
+      (section.fields || []).forEach(function(field) {
+        // readonly-pills mirror Business Profile data — the user
+        // can't fill them from the wizard, so an empty value here
+        // means BP itself is empty and the SP wizard isn't the right
+        // place to flag it.
+        if (field.type === 'readonly-pills') return;
+        var el = document.getElementById(field.id);
+        if (!el) return;
+        var value = self.readFieldValue(el);
+        if (!value || !String(value).trim()) {
+          incomplete.push({ section: section, field: field });
+        }
+      });
+    });
+    return incomplete;
+  },
+
+  _showIncompleteFieldsModal: function(incomplete, data) {
+    var self = this;
+    var modal = document.getElementById('sp-incomplete-modal');
+    if (!modal) {
+      // Modal markup missing — fail open and proceed with generation
+      // so the user is never left stuck.
+      self._performGeneration(data);
+      return;
+    }
+    var countEl = document.getElementById('sp-incomplete-count');
+    var pluralEl = document.getElementById('sp-incomplete-plural');
+    if (countEl) countEl.textContent = incomplete.length;
+    if (pluralEl) pluralEl.textContent = incomplete.length === 1 ? '' : 's';
+    modal.classList.add('open');
+
+    var reviewBtn = document.getElementById('sp-incomplete-review');
+    var proceedBtn = document.getElementById('sp-incomplete-proceed');
+    var onReview, onProceed, onBackdrop;
+    var cleanup = function() {
+      modal.classList.remove('open');
+      if (reviewBtn) reviewBtn.removeEventListener('click', onReview);
+      if (proceedBtn) proceedBtn.removeEventListener('click', onProceed);
+      modal.removeEventListener('click', onBackdrop);
+    };
+    onReview = function() { cleanup(); self._highlightIncomplete(incomplete); };
+    onProceed = function() { cleanup(); self._performGeneration(data); };
+    onBackdrop = function(e) { if (e.target === modal) cleanup(); };
+    if (reviewBtn) reviewBtn.addEventListener('click', onReview);
+    if (proceedBtn) proceedBtn.addEventListener('click', onProceed);
+    modal.addEventListener('click', onBackdrop);
+  },
+
+  _highlightIncomplete: function(incomplete) {
+    var self = this;
+    // Drop any leftover highlights from a prior cycle.
+    document.querySelectorAll('.sp-field.sp-field-incomplete').forEach(function(el) {
+      el.classList.remove('sp-field-incomplete');
+    });
+    incomplete.forEach(function(entry) {
+      var el = document.getElementById(entry.field.id);
+      if (!el) return;
+      var fieldEl = el.closest('.sp-field');
+      if (fieldEl) fieldEl.classList.add('sp-field-incomplete');
+    });
+    if (incomplete.length === 0) return;
+    // Jump to the first section that has an incomplete field. The
+    // setTimeout gives goToSection's smooth-scroll a beat to land
+    // before we scroll the specific field into view.
+    var firstSectionId = incomplete[0].section.id;
+    self.goToSection(firstSectionId);
+    setTimeout(function() {
+      var firstFieldEl = document.getElementById(incomplete[0].field.id);
+      if (!firstFieldEl) return;
+      var wrapper = firstFieldEl.closest('.sp-field');
+      if (wrapper && wrapper.scrollIntoView) {
+        wrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 250);
+  },
+
   // ── BI Generated Items (Tab 9) — spec §8.7 ───────────────────────
   // Loads strategic insights queued from BI (Add to Plan in the
   // dashboard set added_to_sp = true on bi_insights, with

@@ -512,6 +512,19 @@
       font-style: italic;
     }
 
+    /* Spec §8.8 — incomplete-field highlight applied when the user
+       picks Review Fields from the incomplete-fields modal. Soft
+       amber background drops back to default once the field has a
+       value (cleared by bindFormEvents on the next change). */
+    .sp-field.sp-field-incomplete {
+      background: var(--warning-light);
+      border-radius: var(--btn-radius);
+      padding: 8px 10px;
+      margin-left: -10px;
+      margin-right: -10px;
+      transition: background var(--btn-transition);
+    }
+
     /* Tab 9: BI Generated Items — list of strategic insights queued
        from the BI dashboard for review. Each card holds a category
        badge, an optional decision badge (Approved / Held / Rejected),
@@ -1039,6 +1052,24 @@
     <div class="save-msg-card">
       <div class="save-msg-text"></div>
       <button type="button" class="save-msg-ok">OK</button>
+    </div>
+  </div>
+
+  <!-- Incomplete fields modal — spec §8.8. Triggered by Generate
+       Plan when one or more fields are still empty. The user can
+       Review (jumps to the first incomplete field, highlights all
+       incomplete fields amber) or Generate Anyway (proceeds with
+       the generation). -->
+  <div class="perm-modal-overlay" id="sp-incomplete-modal">
+    <div class="perm-modal">
+      <div class="perm-modal-title">Some fields are incomplete</div>
+      <div class="perm-modal-body">
+        You have <strong id="sp-incomplete-count">0</strong> field<span id="sp-incomplete-plural">s</span> that have not been completed. This may impact the usefulness of your Strategic Plan.
+      </div>
+      <div class="perm-modal-actions">
+        <button class="perm-modal-cancel" id="sp-incomplete-review" type="button">Review Fields</button>
+        <button class="perm-modal-continue" id="sp-incomplete-proceed" type="button">Generate Anyway</button>
+      </div>
     </div>
   </div>
 
