@@ -299,6 +299,9 @@ window.BI_LOGIC = {
   // presentation, and OT — see SP/OT Rebuild Spec §4. The legacy
   // 'strategic' and 'general' categories are retired; insights that
   // would have been those are now classified as 'growth' or 'risk'.
+  // Icons match strategic-plan-review.js _SP_REVIEW_CATEGORIES so
+  // the BI cards read against the same visual language used on the
+  // SP Review screen and in Operational Tasks.
   _ALERT_CATEGORIES: {
     labels: {
       financial:  'Financial',
@@ -308,6 +311,15 @@ window.BI_LOGIC = {
       market:     'Market & Competition',
       growth:     'Growth & Transformation',
       risk:       'Risk & Resilience'
+    },
+    icons: {
+      financial:  '\u{1F4B0}',
+      products:   '\u{1F527}',
+      customers:  '\u{1F465}',
+      operations: '⚙',
+      market:     '\u{1F4CA}',
+      growth:     '\u{1F680}',
+      risk:       '\u{1F6E1}️'
     },
     order: ['financial', 'products', 'customers', 'operations', 'market', 'growth', 'risk']
   },
@@ -346,8 +358,21 @@ window.BI_LOGIC = {
       if (!group || group.length === 0) return;
       var openCls = firstOpened ? '' : ' expanded';
       firstOpened = true;
-      html += '<div class="expand-tile' + openCls + '">';
+      // Spec §10.2 — coloured left border on the category card.
+      // Risks columns: red if any red-severity item; amber otherwise.
+      // Opportunities (all green): green. Uses the .expand-tile
+      // .status-* modifiers from staxai-auth.css §22a.
+      var statusCls = '';
+      if (title === 'Opportunities') {
+        statusCls = ' status-green';
+      } else {
+        var hasRed = group.some(function(i) { return i.insight_data && i.insight_data.severity === 'red'; });
+        statusCls = hasRed ? ' status-red' : ' status-amber';
+      }
+      var icon = self._ALERT_CATEGORIES.icons[cat] || '';
+      html += '<div class="expand-tile' + openCls + statusCls + '">';
       html += '<div class="expand-tile-header">';
+      if (icon) html += '<span class="expand-tile-icon">' + icon + '</span>';
       html += '<span class="expand-tile-title">' + escHtml(self._ALERT_CATEGORIES.labels[cat]) + '</span>';
       html += '<span class="expand-tile-count">' + group.length + '</span>';
       html += '</div>';
