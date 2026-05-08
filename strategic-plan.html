@@ -775,6 +775,128 @@
     .sp-review-add-goal,
     .sp-review-add-task-btn { margin-top: 4px; }
 
+    /* AI chat panel — spec §6.8 / §6.9. Uses the platform
+       .slide-panel.right.wide primitive (staxai-auth.css §25); the
+       rules below are SP-specific layout for header / messages /
+       composer / proposal preview. The backdrop is a separate
+       fixed-position overlay so clicking outside dismisses. */
+    .sp-goal-chat-backdrop {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--modal-overlay-bg);
+      z-index: 89;
+    }
+    .sp-goal-chat-backdrop.open { display: block; }
+    #sp-goal-chat-panel {
+      width: 380px;
+      max-width: 100%;
+      z-index: 95;
+    }
+    .sp-goal-chat-head {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-subtle);
+    }
+    .sp-goal-chat-title {
+      flex: 1;
+      font-family: var(--heading-font);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+    }
+    .sp-goal-chat-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .sp-goal-chat-close:hover { background: var(--white); color: var(--text); }
+    .sp-goal-chat-context {
+      padding: 10px 18px;
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light);
+      background: var(--white);
+    }
+    .sp-goal-chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--white);
+    }
+    .sp-goal-chat-msg {
+      padding: 8px 12px;
+      border-radius: var(--btn-radius);
+      font-size: var(--btn-font-size);
+      line-height: var(--note-line-height);
+      max-width: 88%;
+    }
+    .sp-goal-chat-msg.user      { background: var(--blue-light); color: var(--text); align-self: flex-end; }
+    .sp-goal-chat-msg.assistant { background: var(--bg-subtle);  color: var(--text); align-self: flex-start; }
+    .sp-goal-chat-msg.thinking  { font-style: italic; color: var(--text-muted); }
+    .sp-goal-chat-proposal {
+      padding: 14px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--blue-light);
+      max-height: 35vh;
+      overflow-y: auto;
+    }
+    .sp-goal-chat-proposal-title {
+      font-family: var(--heading-font);
+      font-weight: var(--heading-lg-weight);
+      font-size: var(--section-title-font-size);
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .sp-goal-chat-proposal-desc {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+    }
+    .sp-goal-chat-proposal-tasks {
+      margin: 0 0 10px 18px;
+      padding: 0;
+      font-size: var(--note-font-size);
+      color: var(--text);
+    }
+    .sp-goal-chat-proposal-tasks li { margin-bottom: 4px; }
+    .sp-goal-chat-proposal-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sp-goal-chat-composer {
+      display: flex;
+      gap: 8px;
+      padding: 12px 18px;
+      border-top: 1px solid var(--border);
+      background: var(--white);
+    }
+    .sp-goal-chat-composer textarea {
+      flex: 1;
+      border: var(--input-border-width) solid var(--border);
+      border-radius: var(--input-radius);
+      padding: 8px 10px;
+      font-family: var(--body-font);
+      font-size: var(--btn-font-size);
+      color: var(--text);
+      resize: none;
+      outline: none;
+      transition: border-color var(--btn-transition);
+    }
+    .sp-goal-chat-composer textarea:focus { border-color: var(--blue); }
+    @media (max-width: 700px) {
+      #sp-goal-chat-panel { width: 100%; }
+    }
+
     /* Spec §8.8 — incomplete-field highlight applied when the user
        picks Review Fields from the incomplete-fields modal. Soft
        amber background drops back to default once the field has a
@@ -1330,6 +1452,26 @@
       <button type="button" class="save-msg-ok">OK</button>
     </div>
   </div>
+
+  <!-- AI chat panel — spec §6.8 / §6.9. Slide-in overlay using
+       the platform .slide-panel.right.wide primitive. Opens for
+       Discuss with AI (edit mode) and Add Goal (create mode); the
+       owner converses with Claude until a proposedGoal lands and
+       Accept replaces / appends the goal in plan_data. -->
+  <aside class="slide-panel right wide closed" id="sp-goal-chat-panel" aria-label="Discuss goal with AI">
+    <div class="sp-goal-chat-head">
+      <span class="sp-goal-chat-title" id="sp-goal-chat-title">Discuss with AI</span>
+      <button type="button" class="sp-goal-chat-close" id="sp-goal-chat-close" aria-label="Close panel">×</button>
+    </div>
+    <div class="sp-goal-chat-context" id="sp-goal-chat-context"></div>
+    <div class="sp-goal-chat-messages" id="sp-goal-chat-messages"></div>
+    <div class="sp-goal-chat-proposal" id="sp-goal-chat-proposal" style="display:none"></div>
+    <div class="sp-goal-chat-composer">
+      <textarea id="sp-goal-chat-input" rows="2" placeholder="Type your message…"></textarea>
+      <button type="button" class="btn-primary btn-sm" id="sp-goal-chat-send">Send</button>
+    </div>
+  </aside>
+  <div class="sp-goal-chat-backdrop" id="sp-goal-chat-backdrop"></div>
 
   <!-- Approve / Discard confirmation modals — spec §5.1 step 5
        and §6.1. Approve activates the pending plan and pushes

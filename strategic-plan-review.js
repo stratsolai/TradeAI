@@ -197,10 +197,18 @@ Object.assign(window.SP_LOGIC, {
         if (taskEl) self._reviewDeleteTask(parseInt(taskEl.dataset.goalIdx, 10), parseInt(taskEl.dataset.taskIdx, 10));
         return;
       }
-      // Discuss with AI / Add Goal — wired in commit 5 alongside
-      // the slide-in chat panel.
-      if (e.target.closest('.sp-review-discuss-btn') || e.target.closest('.sp-review-add-goal')) {
+      // Discuss with AI — open chat panel in edit mode for this goal.
+      var discussBtn = e.target.closest('.sp-review-discuss-btn');
+      if (discussBtn) {
         e.stopPropagation();
+        self.openGoalChat({ mode: 'edit', goalIdx: parseInt(discussBtn.dataset.goalIdx, 10) });
+        return;
+      }
+      // Add Goal — open chat panel in create mode for the category.
+      var addGoalBtn = e.target.closest('.sp-review-add-goal');
+      if (addGoalBtn) {
+        e.stopPropagation();
+        self.openGoalChat({ mode: 'create', category: addGoalBtn.dataset.category });
         return;
       }
 
@@ -530,6 +538,219 @@ Object.assign(window.SP_LOGIC, {
     if (cancel) cancel.addEventListener('click', onCancel);
     if (confirm) confirm.addEventListener('click', onConfirm);
     modal.addEventListener('click', onBackdrop);
+  },
+
+  // ── AI chat panel — spec §6.8 / §6.9 ─────────────────────────────
+  // Slide-in panel on the right (.slide-panel.right.wide) that
+  // hosts a back-and-forth conversation with Claude about a single
+  // Goal. Two modes: 'edit' refines an existing Goal, 'create'
+  // shapes a new Goal in a category. The panel keeps the
+  // conversation in memory; api/sp-goal-chat.js returns a reply
+  // each turn plus an optional proposedGoal once Claude has enough
+  // alignment to commit to a shape.
+  _CHAT_CATEGORY_LABELS: {
+    financial: 'Financial', products: 'Products & Services',
+    customers: 'Customers & Suppliers', operations: 'Operations & Capacity',
+    market: 'Market & Competition', growth: 'Growth & Transformation',
+    risk: 'Risk & Resilience'
+  },
+
+  openGoalChat: function(opts) {
+    var self = this;
+    var panel = document.getElementById('sp-goal-chat-panel');
+    var backdrop = document.getElementById('sp-goal-chat-backdrop');
+    if (!panel) return;
+    self._chatState = {
+      mode: opts.mode || 'edit',
+      goalIdx: typeof opts.goalIdx === 'number' ? opts.goalIdx : null,
+      category: opts.category || null,
+      messages: [],
+      proposedGoal: null
+    };
+    var goal = null;
+    if (self._chatState.mode === 'edit' && self._pendingPlanData && Array.isArray(self._pendingPlanData.goals)) {
+      goal = self._pendingPlanData.goals[self._chatState.goalIdx] || null;
+      if (goal) self._chatState.category = goal.category || self._chatState.category;
+    }
+    var titleEl = document.getElementById('sp-goal-chat-title');
+    var contextEl = document.getElementById('sp-goal-chat-context');
+    var msgsEl = document.getElementById('sp-goal-chat-messages');
+    var proposalEl = document.getElementById('sp-goal-chat-proposal');
+    var inputEl = document.getElementById('sp-goal-chat-input');
+    if (titleEl) titleEl.textContent = self._chatState.mode === 'edit' ? 'Discuss with AI' : 'Add a Goal with AI';
+    var catLabel = self._CHAT_CATEGORY_LABELS[self._chatState.category] || 'Other';
+    var contextText = self._chatState.mode === 'edit'
+      ? 'Editing: ' + (goal && goal.title ? goal.title : 'this goal') + ' (' + catLabel + ')'
+      : 'New goal in ' + catLabel;
+    if (contextEl) contextEl.textContent = contextText;
+    if (msgsEl) msgsEl.innerHTML = '';
+    if (proposalEl) { proposalEl.style.display = 'none'; proposalEl.innerHTML = ''; }
+    if (inputEl) inputEl.value = '';
+
+    panel.classList.remove('closed');
+    panel.classList.add('open');
+    if (backdrop) backdrop.classList.add('open');
+    self._bindChatPanelEvents();
+
+    // Seed the conversation with an opening assistant turn so the
+    // user sees a prompt rather than an empty pane. For create mode
+    // we ask what they want; for edit mode we acknowledge the goal
+    // and invite a change.
+    var seed = self._chatState.mode === 'create'
+      ? 'What goal would you like to add to ' + catLabel + '?'
+      : 'What would you like to change about this goal? I can adjust the wording, regenerate the tasks, split or merge with another goal, suggest a different category, or recommend deletion.';
+    self._chatAppendMessage('assistant', seed);
+    if (inputEl) inputEl.focus();
+  },
+
+  closeGoalChat: function() {
+    var panel = document.getElementById('sp-goal-chat-panel');
+    var backdrop = document.getElementById('sp-goal-chat-backdrop');
+    if (panel) { panel.classList.remove('open'); panel.classList.add('closed'); }
+    if (backdrop) backdrop.classList.remove('open');
+    this._chatState = null;
+  },
+
+  _bindChatPanelEvents: function() {
+    var self = this;
+    var panel = document.getElementById('sp-goal-chat-panel');
+    var backdrop = document.getElementById('sp-goal-chat-backdrop');
+    if (panel && !panel.dataset.bound) {
+      panel.dataset.bound = '1';
+      var closeBtn = document.getElementById('sp-goal-chat-close');
+      var sendBtn = document.getElementById('sp-goal-chat-send');
+      var inputEl = document.getElementById('sp-goal-chat-input');
+      if (closeBtn) closeBtn.addEventListener('click', function() { self.closeGoalChat(); });
+      if (sendBtn) sendBtn.addEventListener('click', function() { self._chatSend(); });
+      if (inputEl) inputEl.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); self._chatSend(); }
+      });
+      var proposalEl = document.getElementById('sp-goal-chat-proposal');
+      if (proposalEl) {
+        proposalEl.addEventListener('click', function(e) {
+          var accept = e.target.closest('[data-chat-accept]');
+          if (accept) { self._chatAcceptProposal(); return; }
+          var keep = e.target.closest('[data-chat-keep]');
+          if (keep) {
+            // Hide the proposal and continue conversing — handy if
+            // the owner wants tweaks before accepting.
+            proposalEl.style.display = 'none';
+            proposalEl.innerHTML = '';
+            self._chatState.proposedGoal = null;
+          }
+        });
+      }
+    }
+    if (backdrop && !backdrop.dataset.bound) {
+      backdrop.dataset.bound = '1';
+      backdrop.addEventListener('click', function() { self.closeGoalChat(); });
+    }
+  },
+
+  _chatAppendMessage: function(role, content) {
+    var msgsEl = document.getElementById('sp-goal-chat-messages');
+    if (!msgsEl) return;
+    var div = document.createElement('div');
+    div.className = 'sp-goal-chat-msg ' + (role === 'user' ? 'user' : 'assistant');
+    div.textContent = content;
+    msgsEl.appendChild(div);
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  },
+
+  _chatSend: async function() {
+    var self = this;
+    if (!self._chatState) return;
+    var inputEl = document.getElementById('sp-goal-chat-input');
+    if (!inputEl) return;
+    var text = (inputEl.value || '').trim();
+    if (!text) return;
+    inputEl.value = '';
+    self._chatAppendMessage('user', text);
+    self._chatState.messages.push({ role: 'user', content: text });
+
+    // Show a thinking placeholder while Claude responds.
+    var msgsEl = document.getElementById('sp-goal-chat-messages');
+    var thinking = null;
+    if (msgsEl) {
+      thinking = document.createElement('div');
+      thinking.className = 'sp-goal-chat-msg assistant thinking';
+      thinking.textContent = 'Thinking…';
+      msgsEl.appendChild(thinking);
+      msgsEl.scrollTop = msgsEl.scrollHeight;
+    }
+
+    try {
+      var sess = await self._supabase.auth.getSession();
+      var token = sess && sess.data && sess.data.session && sess.data.session.access_token;
+      if (!token) throw new Error('Not signed in');
+      var resp = await fetch('/api/sp-goal-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          mode: self._chatState.mode,
+          planId: self._pendingPlanId,
+          goalIdx: self._chatState.goalIdx,
+          category: self._chatState.category,
+          messages: self._chatState.messages
+        })
+      });
+      var json = await resp.json();
+      if (thinking && thinking.parentNode) thinking.parentNode.removeChild(thinking);
+      if (!resp.ok) throw new Error(json.error || 'Chat failed');
+      var reply = json.reply || '';
+      if (reply) {
+        self._chatAppendMessage('assistant', reply);
+        self._chatState.messages.push({ role: 'assistant', content: reply });
+      }
+      if (json.proposedGoal) {
+        self._chatState.proposedGoal = json.proposedGoal;
+        self._renderChatProposal(json.proposedGoal);
+      }
+    } catch (err) {
+      if (thinking && thinking.parentNode) thinking.parentNode.removeChild(thinking);
+      console.error('[SP Review] chat error:', err && err.message);
+      self._chatAppendMessage('assistant', 'Sorry — I could not reach the AI just then. Please try sending again.');
+    }
+  },
+
+  _renderChatProposal: function(goal) {
+    var proposalEl = document.getElementById('sp-goal-chat-proposal');
+    if (!proposalEl) return;
+    var tasks = Array.isArray(goal.tasks) ? goal.tasks : [];
+    var tasksHtml = tasks.map(function(t) {
+      var bits = [];
+      if (t.dueRelative) bits.push(t.dueRelative);
+      if (t.priority) bits.push(t.priority);
+      if (t.owner) bits.push(t.owner);
+      var meta = bits.length ? ' <span class="text-muted">(' + escHtml(bits.join(' · ')) + ')</span>' : '';
+      return '<li>' + escHtml(t.title || '') + meta + '</li>';
+    }).join('');
+    proposalEl.innerHTML = '<div class="sp-goal-chat-proposal-title">Proposed: ' + escHtml(goal.title || '') + '</div>' +
+      (goal.description ? '<div class="sp-goal-chat-proposal-desc">' + escHtml(goal.description) + '</div>' : '') +
+      '<ul class="sp-goal-chat-proposal-tasks">' + tasksHtml + '</ul>' +
+      '<div class="sp-goal-chat-proposal-actions">' +
+        '<button type="button" class="btn-primary btn-sm" data-chat-accept>Accept</button>' +
+        '<button type="button" class="btn-outline btn-sm" data-chat-keep>Keep discussing</button>' +
+      '</div>';
+    proposalEl.style.display = 'block';
+  },
+
+  _chatAcceptProposal: function() {
+    var self = this;
+    if (!self._chatState || !self._chatState.proposedGoal) return;
+    if (!self._pendingPlanData) return;
+    if (!Array.isArray(self._pendingPlanData.goals)) self._pendingPlanData.goals = [];
+    var proposed = self._chatState.proposedGoal;
+    // Coerce category to the chat target if missing.
+    if (!proposed.category) proposed.category = self._chatState.category;
+    if (self._chatState.mode === 'edit' && typeof self._chatState.goalIdx === 'number') {
+      self._pendingPlanData.goals[self._chatState.goalIdx] = proposed;
+    } else {
+      self._pendingPlanData.goals.push(proposed);
+    }
+    self._reviewSavePlanData();
+    self._reviewRerenderCategories();
+    self.closeGoalChat();
   },
 
   _reviewDiscardPlan: async function() {
