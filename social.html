@@ -15,32 +15,20 @@
   <link rel="stylesheet" href="/staxai-auth.css">
   <style>
     .sm-groups-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--card-gap, 20px); }
-    .sm-group-tile {
-      background: var(--white);
-      border: 1px solid var(--border);
-      border-left: 4px solid var(--blue);
-      border-radius: var(--card-radius);
-      padding: var(--card-padding);
-      cursor: pointer;
-      transition: box-shadow var(--btn-transition);
-    }
-    .sm-group-tile:hover { box-shadow: 0 4px 16px var(--shadow-hover); }
-    .sm-group-tile.expanded { box-shadow: 0 4px 16px var(--shadow-hover); }
-    .sm-group-tile-icon { font-size: var(--heading-lg-size); margin-bottom: var(--btn-gap); }
-    .sm-group-tile-title {
-      font-family: var(--heading-font);
-      font-size: 20px;
-      font-weight: var(--heading-lg-weight);
-      color: var(--text);
-      margin-bottom: var(--btn-gap);
-    }
-    .sm-group-tile-desc {
-      font-size: var(--note-font-size);
-      color: var(--text-muted);
-      line-height: var(--note-line-height);
-    }
+    /* SM Create-tab tiles use the platform .expand-tile primitive
+       (staxai-auth.css §22a). Two SM-specific spacing rules kept
+       so the icon-title-desc stack reads with the same vertical
+       rhythm as before the migration; everything else (border,
+       padding, hover, expanded shadow) comes from .expand-tile. */
+    #sm-groups-grid .expand-tile-icon { margin-bottom: var(--btn-gap); }
+    #sm-groups-grid .expand-tile-title { margin-bottom: var(--btn-gap); }
+    /* Journey button list — SM-specific layout for the action
+       buttons revealed when a tile expands. Driven by the parent
+       tile's .expanded class rather than the generic
+       .expand-tile-content because the buttons need flex-column
+       layout, not block. */
     .sm-journey-list { display: none; flex-direction: column; gap: var(--btn-gap); margin-top: 16px; }
-    .sm-group-tile.expanded .sm-journey-list { display: flex; }
+    .expand-tile.expanded .sm-journey-list { display: flex; }
     .sm-journey-btn {
       display: flex;
       align-items: center;

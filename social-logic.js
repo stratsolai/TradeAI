@@ -596,10 +596,10 @@ window.SOCIAL_LOGIC = {
     if (!grid) return;
     var html = '';
     this.JOURNEY_GROUPS.forEach(function(g) {
-      html += '<div class="sm-group-tile" data-group="' + g.id + '">' +
-        '<div class="sm-group-tile-icon">' + g.icon + '</div>' +
-        '<div class="sm-group-tile-title">' + window.escHtml(g.title) + '</div>' +
-        '<div class="sm-group-tile-desc">' + window.escHtml(g.desc) + '</div>' +
+      html += '<div class="expand-tile" data-group="' + g.id + '">' +
+        '<div class="expand-tile-icon">' + g.icon + '</div>' +
+        '<div class="expand-tile-title">' + window.escHtml(g.title) + '</div>' +
+        '<div class="expand-tile-desc">' + window.escHtml(g.desc) + '</div>' +
         '<div class="sm-journey-list">';
       g.journeys.forEach(function(j) {
         html += '<button class="sm-journey-btn" data-journey="' + j.id + '">' +
@@ -610,11 +610,11 @@ window.SOCIAL_LOGIC = {
     });
     grid.innerHTML = html;
 
-    grid.querySelectorAll('.sm-group-tile').forEach(function(tile) {
+    grid.querySelectorAll('.expand-tile').forEach(function(tile) {
       tile.addEventListener('click', function(e) {
         if (e.target.closest('.sm-journey-btn')) return;
         var wasExpanded = tile.classList.contains('expanded');
-        grid.querySelectorAll('.sm-group-tile').forEach(function(t) { t.classList.remove('expanded'); });
+        grid.querySelectorAll('.expand-tile').forEach(function(t) { t.classList.remove('expanded'); });
         if (!wasExpanded) tile.classList.add('expanded');
       });
     });
