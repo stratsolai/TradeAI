@@ -25,8 +25,19 @@ setTimeout(() => {
     }
     loadScript("cl-upload.js", function() { if (window.CL_UPLOAD) window.CL_UPLOAD.init(s); });
     loadScript("cl-review.js", function() { if (window.CL_REVIEW) window.CL_REVIEW.init(s); });
-    loadScript("cl-profile-marketing.js", function() {
-      loadScript("cl-profile.js", function() { if (window.CL_PROFILE) window.CL_PROFILE.init(s); });
+    // CL_PROFILE is split across three files plus its marketing wizard
+    // — load all four in parallel via the platform's Promise-based
+    // script loader, then call init when every file has resolved.
+    var v = "?v=" + Date.now();
+    Promise.all([
+      window.loadScriptAsync("cl-profile-marketing.js" + v),
+      window.loadScriptAsync("cl-profile.js" + v),
+      window.loadScriptAsync("cl-profile-location.js" + v),
+      window.loadScriptAsync("cl-profile-products.js" + v)
+    ]).then(function() {
+      if (window.CL_PROFILE) window.CL_PROFILE.init(s);
+    }).catch(function(err) {
+      console.error("[CL] Profile load error:", err && err.message);
     });
     loadScript("cl-outputs.js", function() { if (window.CL_OUTPUTS) window.CL_OUTPUTS.init(s); });
     if (window.CL_PROJECTS) window.CL_PROJECTS.init(s);

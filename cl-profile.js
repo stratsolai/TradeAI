@@ -1,4 +1,15 @@
-window.CL_PROFILE = {
+/**
+ * cl-profile.js
+ * Business Profile tab — shell, panel routing, form primitives,
+ * validation, chip accordion, auto-save, Identity panel, Credentials
+ * panel, and Marketing wrapper. Pairs with cl-profile-location.js
+ * (Location panel) and cl-profile-products.js (Services & Products
+ * panels), both of which Object.assign into the same window.CL_PROFILE
+ * object so methods cross-reference each other freely. The marketing
+ * wizard itself lives in cl-profile-marketing.js as window.BP_MARKETING.
+ */
+window.CL_PROFILE = window.CL_PROFILE || {};
+Object.assign(window.CL_PROFILE, {
   _supabase: null, _userId: null, _profile: {},
   _autoSaveTimer: null, _activePanel: 'identity',
   init: function(supabase) {
@@ -180,6 +191,7 @@ window.CL_PROFILE = {
     if (target && target.scrollIntoView) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
 
+  // ── Form primitives ──────────────────────────────────────────────
   _field: function(label, html) { return '<div class="profile-field-full"><label class="profile-label">' + label + '</label>' + html + '</div>'; },
   _field2: function(label, html) { return '<div class="profile-field"><label class="profile-label">' + label + '</label>' + html + '</div>'; },
   _input: function(id, type, val, ph, extra) { return '<input id="' + id + '" type="' + type + '" class="profile-input" value="' + window.escHtml(String(val)) + '" placeholder="' + ph + '"' + (extra ? ' ' + extra : '') + ' />'; },
@@ -212,7 +224,7 @@ window.CL_PROFILE = {
     var grouped = this._isGroupedOptions(options);
 
     var customChipsHtml = customItems.map(function(item) {
-      return '<button type="button" class="filter-pill active prof-custom-pill" data-value="' + window.escHtml(item) + '" data-custom="1">' + window.escHtml(item) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + id + '">\u00D7</span></button>';
+      return '<button type="button" class="filter-pill active prof-custom-pill" data-value="' + window.escHtml(item) + '" data-custom="1">' + window.escHtml(item) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + id + '">×</span></button>';
     }).join('');
 
     var otherInputBlock =
@@ -244,7 +256,7 @@ window.CL_PROFILE = {
       && Array.isArray(options[0].items);
   },
 
-  // BP UX Improvements Spec v1.0 \u00A72.2 \u2014 render the standard chips for a
+  // BP UX Improvements Spec v1.0 §2.2 — render the standard chips for a
   // grouped chip picker as collapsible accordion sections, alphabetised
   // within each group. Selected chips remain visible when a section is
   // collapsed; non-selected chips are hidden via inline display:none so
@@ -269,7 +281,7 @@ window.CL_PROFILE = {
           '<button type="button" data-chip-acc-toggle="1" data-chip-acc-target="' + bodyId + '" aria-expanded="false" style="width:100%;padding:10px 14px;background:transparent;border:none;cursor:pointer;display:flex;align-items:center;gap:10px;text-align:left;font-size:14px;font-weight:500;color:var(--text)">' +
             '<span style="flex:1">' + window.escHtml(group.name) + '</span>' +
             '<span data-chip-acc-count style="font-size:12px;color:var(--text-muted);min-width:75px;text-align:right">' + countLabel + '</span>' +
-            '<span data-chip-acc-chevron style="display:inline-block;transition:transform 0.2s;color:var(--text-muted);font-size:14px">\u25BE</span>' +
+            '<span data-chip-acc-chevron style="display:inline-block;transition:transform 0.2s;color:var(--text-muted);font-size:14px">▾</span>' +
           '</button>' +
           '<div id="' + bodyId + '" data-chip-acc-body style="display:' + (anyActive ? 'block' : 'none') + ';padding:0 14px 12px 14px">' +
             '<div class="review-pill-row" style="margin:0">' + pillsHtml + '</div>' +
@@ -376,6 +388,7 @@ window.CL_PROFILE = {
     });
   },
 
+  // ── Validation ───────────────────────────────────────────────────
   // Validate a panel's mandatory fields. Each field spec is
   //   { test: function() bool, el: element|null, label: string }
   // Adds .input-error to each missing element (red border on inputs/
@@ -533,7 +546,7 @@ window.CL_PROFILE = {
     chip.className = 'filter-pill active prof-custom-pill';
     chip.setAttribute('data-value', val);
     chip.setAttribute('data-custom', '1');
-    chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + groupId + '">\u00D7</span>';
+    chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="' + groupId + '">×</span>';
     // Grouped layouts (services/products/licences) keep custom pills in
     // a dedicated row below the accordion. Flat layouts just append.
     var customRow = group.querySelector('[data-custom-pill-row="1"]');
@@ -542,6 +555,8 @@ window.CL_PROFILE = {
   },
 
   _removeOtherChip: function(btn) { var c = btn.closest('.filter-pill'); if (c) c.remove(); },
+
+  // ── Auto-save ────────────────────────────────────────────────────
   _triggerAutoSave: function(panel) {
     // Auto-save is silent — it persists whatever the user has typed
     // so far without running mandatory-field validation. Only the
@@ -592,8 +607,58 @@ window.CL_PROFILE = {
     });
   },
 
-  // Identity
+  // ── Shared lookback-dropdown helpers ─────────────────────────────
+  // Inline lookback-dropdown wiring — same shape as the helpers in
+  // CL_PROJECTS / SM_LOGIC. Trigger toggles the menu; item-click sets
+  // data-value + label and fires onSelect; outside-click close is
+  // handled globally for #cl-tab-profile by the listener at the
+  // bottom of _renderLocation. Idempotent via dataset guard.
+  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
+    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
+    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
+    if (!btn || !menu) return;
+    if (btn.dataset.lookbackBound === '1') return;
+    btn.dataset.lookbackBound = '1';
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      menu.classList.toggle('open');
+    });
+    menu.addEventListener('click', function(e) {
+      var item = e.target.closest('.lookback-dropdown-item');
+      if (!item) return;
+      var value = item.getAttribute('data-value');
+      // Sentinel values bypass the trigger update so callers can take
+      // over the click in onSelect (e.g. the Hours-of-Operation
+      // Custom… item swaps the cell to a free-text input mode and
+      // needs the trigger's prior data-value preserved for prefill).
+      if (value !== '__custom__') {
+        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
+        item.classList.add('active');
+        btn.setAttribute('data-value', value);
+        btn.textContent = item.textContent;
+      }
+      menu.classList.remove('open');
+      if (typeof onSelect === 'function') onSelect(value, item.textContent);
+    });
+  },
 
+  // Programmatic value-set for a lookback-dropdown — mirrors what
+  // setting <select>.value used to do before the conversion. Used by
+  // the address-autocomplete path that fills the State picker from
+  // the parsed Google Places result.
+  _setLookbackValue: function(btn, menu, value) {
+    if (!btn || !menu) return;
+    var items = menu.querySelectorAll('.lookback-dropdown-item');
+    var target = null;
+    items.forEach(function(i) { if (i.getAttribute('data-value') === value) target = i; });
+    if (!target) return;
+    items.forEach(function(i) { i.classList.remove('active'); });
+    target.classList.add('active');
+    btn.setAttribute('data-value', target.getAttribute('data-value'));
+    btn.textContent = target.textContent;
+  },
+
+  // ── Identity panel ───────────────────────────────────────────────
   _renderIdentity: function() {
     var p = this._profile;
     var structures = ['Sole Trader', 'Partnership', 'Company', 'Trust', 'Other'];
@@ -633,7 +698,7 @@ window.CL_PROFILE = {
       '</div>' +
     '</div>';
 
-    document.getElementById('prof-panel-identity').innerHTML = this._card('\uD83C\uDFE2', '1. Identity', 'Your registered business details', body, 'identity', 'prof-id-save');
+    document.getElementById('prof-panel-identity').innerHTML = this._card('🏢', '1. Identity', 'Your registered business details', body, 'identity', 'prof-id-save');
 
     var self = this;
     var idPanel = document.getElementById('prof-panel-identity');
@@ -858,1401 +923,13 @@ window.CL_PROFILE = {
     }, document.getElementById('prof-save-msg'));
   },
 
-  // Location
-
-  _locationBlock: function(loc, idx, isPrimary) {
-    var idPfx = isPrimary ? 'loc-p' : 'loc-' + idx;
-    var nameVal = loc.name || '';
-    var phones = Array.isArray(loc.phones) ? loc.phones : (loc.phone ? [{ type: 'Mobile', number: loc.phone }] : [{ type: 'Mobile', number: '' }]);
-    var typeOpts = ['Main', 'Mobile', 'Work', 'Fax'];
-    var phonesHtml = phones.map(function(ph, pi) {
-      var currentType = ph.type || 'Mobile';
-      var typeSelect = '<span class="lookback-dropdown-wrap">' +
-        '<button type="button" class="lookback-dropdown loc-phone-type" data-value="' + window.escHtml(currentType) + '">' + window.escHtml(currentType) + '</button>' +
-        '<div class="lookback-dropdown-menu">' +
-        typeOpts.map(function(t) {
-          return '<button type="button" class="lookback-dropdown-item' + (t === currentType ? ' active' : '') + '" data-value="' + window.escHtml(t) + '">' + window.escHtml(t) + '</button>';
-        }).join('') +
-        '</div></span>';
-      return '<div class="profile-repeating-row" id="' + idPfx + '-ph-' + pi + '">' +
-        typeSelect +
-        '<input type="text" class="profile-input loc-phone-number" value="' + window.escHtml(window.formatPhoneNumber(ph.number || '')) + '" placeholder="Phone number" />' +
-        '<button class="btn-remove-url" data-action="remove-row" data-target="' + idPfx + '-ph-' + pi + '">Remove</button>' +
-      '</div>';
-    }).join('');
-    var removeBtn = isPrimary ? '' :
-      '<button class="btn-remove-url" data-action="remove-row" data-target="loc-block-' + idx + '">Remove Location</button>';
-    return '<div class="profile-location-block" id="' + (isPrimary ? 'loc-primary-block' : 'loc-block-' + idx) + '">' +
-      '<div class="profile-location-row-header">' +
-        '<strong class="profile-location-title">' + (isPrimary ? 'Primary Location' : 'Location ' + (idx + 2)) + '</strong>' +
-        removeBtn +
-      '</div>' +
-      '<div class="profile-fields profile-fields-compact">' +
-        '<div class="profile-field-full"><label class="profile-label">Location Name <span class="profile-required">*</span></label>' +
-          '<input type="text" class="profile-input loc-name" placeholder="e.g. Main Office, Warehouse, Bendigo Site" value="' + window.escHtml(nameVal) + '" /></div>' +
-        '<div class="profile-field-full"><label class="profile-label">Suite / Level / Unit <span class="profile-optional">(optional)</span></label>' +
-          '<input type="text" class="profile-input loc-unit" placeholder="e.g. Suite 4, Level 2, Shed 3" value="' + window.escHtml(loc.unit || '') + '" /></div>' +
-        '<div class="profile-field-full"><label class="profile-label">Street Address <span class="profile-required">*</span></label>' +
-          '<input type="text" class="profile-input loc-street" placeholder="Street address" value="' + window.escHtml(loc.street || '') + '" /></div>' +
-        '<div class="profile-field-full"><div class="profile-address-row">' +
-          '<div><label class="profile-label">Suburb <span class="profile-required">*</span></label><input type="text" class="profile-input loc-suburb" placeholder="Suburb" value="' + window.escHtml(loc.suburb || '') + '" /></div>' +
-          '<div><label class="profile-label">State <span class="profile-required">*</span></label>' +
-          (function() {
-            var states = ['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'];
-            var current = states.indexOf(loc.state) !== -1 ? loc.state : '';
-            // "Select state" appears only on the trigger as a
-            // placeholder while nothing is picked — no matching menu
-            // item, so users can't re-select the empty state. Once a
-            // real state is set, the button label switches to it.
-            var triggerLabel = current === '' ? 'Select state' : current;
-            var items = states.map(function(s) {
-              return '<button type="button" class="lookback-dropdown-item' + (s === current ? ' active' : '') + '" data-value="' + s + '">' + s + '</button>';
-            }).join('');
-            return '<span class="lookback-dropdown-wrap">'
-              + '<button type="button" class="lookback-dropdown lookback-dropdown-field loc-state" data-value="' + window.escHtml(current) + '">' + window.escHtml(triggerLabel) + '</button>'
-              + '<div class="lookback-dropdown-menu loc-state-menu">' + items + '</div>'
-              + '</span>';
-          })() + '</div>' +
-          '<div><label class="profile-label">Postcode <span class="profile-required">*</span></label><input type="text" class="profile-input loc-postcode" placeholder="Postcode" value="' + window.escHtml(loc.postcode || '') + '" /></div>' +
-        '</div></div>' +
-      '</div>' +
-      '<div class="profile-label profile-label-heading">Phone Numbers <span class="profile-required">*</span></div>' +
-      '<div class="loc-phones-wrap" id="' + idPfx + '-phones">' + phonesHtml + '</div>' +
-      '<button class="btn-add-connection" data-action="add-phone" data-target="' + idPfx + '">+ Add Phone</button>' +
-    '</div>';
-  },
-
-  _renderLocation: function() {
-    var p = this._profile;
-    var primaryLoc = {
-      name: this._v('address_name'),
-      unit: this._v('address_unit'),
-      street: this._v('address_street'),
-      suburb: this._v('address_suburb'),
-      state: this._v('address_state'),
-      postcode: this._v('address_postcode'),
-      phones: Array.isArray(p.additional_phones) ? p.additional_phones.map(function(ph) {
-        if (typeof ph === 'string') { try { return JSON.parse(ph); } catch(e) { return { type: 'Mobile', number: ph }; } }
-        return ph;
-      }) : [{ type: 'Mobile', number: '' }]
-    };
-    var extraLocs = Array.isArray(p.additional_locations) ? p.additional_locations : [];
-    var sites = Array.isArray(p.website_urls) ? p.website_urls : [];
-    var extraLocsHtml = extraLocs.map(function(loc, i) {
-      return window.CL_PROFILE._locationBlock(loc, i, false);
-    }).join('');
-    var extraSitesHtml = sites.slice(1).map(function(u, i) {
-      return '<div class="profile-repeating-row" id="prof-site-' + (i + 1) + '">' +
-        '<input type="url" class="profile-input prof-add-site" value="' + window.escHtml(u) + '" placeholder="https://yoursite.com.au" />' +
-        '<button class="btn-remove-url" data-action="remove-row" data-target="prof-site-' + (i + 1) + '">Remove</button>' +
-      '</div>';
-    }).join('');
-
-    var serviceAreaOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.serviceAreaOptions : [];
-    var selectedArea = this._va('service_area');
-    var customAreas = selectedArea.filter(function(a) { return serviceAreaOpts.indexOf(a) === -1; });
-    var serviceAreaHtml = this._chipGroupWithOther('prof-service-area', serviceAreaOpts, selectedArea, customAreas);
-
-    var tradingHours = this._vj('trading_hours', []);
-    var hoursHtml = this._renderTradingHours(tradingHours);
-
-    var body =
-      this._locationBlock(primaryLoc, 0, true) +
-      '<div id="prof-extra-locs">' + extraLocsHtml + '</div>' +
-      '<button class="btn-add-connection profile-btn-add-location" data-action="add-location">+ Add Location</button>' +
-      '<div class="profile-location-block profile-location-block-websites">' +
-        '<div class="profile-label profile-label-heading">Website URL(s)</div>' +
-        '<input type="url" id="prof-site-primary" class="profile-input profile-input-mb" value="' + window.escHtml(sites[0] || '') + '" placeholder="https://yoursite.com.au" />' +
-        '<div id="prof-sites-extra">' + extraSitesHtml + '</div>' +
-        '<button class="btn-add-connection" data-action="add-site">+ Add Website</button>' +
-      '</div>' +
-      '<div class="profile-fields" style="margin-top:16px">' +
-        this._field('Service Area <span class="profile-required">*</span>', serviceAreaHtml) +
-        this._field('Trading Hours <span class="profile-required">*</span>', hoursHtml) +
-      '</div>';
-
-    document.getElementById('prof-panel-location').innerHTML = this._card(
-      '\uD83D\uDCCD', '2. Location &amp; Contact', 'Where you operate and how to reach you', body, 'location', 'prof-loc-save'
-    );
-
-    var self = this;
-    document.getElementById('prof-loc-save').addEventListener('click', function() { self._saveLocation(); });
-    var locPanel = document.getElementById('prof-panel-location');
-    self._wirePhoneFormat(locPanel);
-    self._bindPhoneTypeDropdowns(locPanel);
-    self._bindChipToggles(locPanel);
-    self._bindHoursPresets();
-    self._bindAutoSave('location', locPanel);
-    self._wireStateDropdowns(locPanel);
-    self._wireHoursDropdowns(locPanel);
-    self._initStreetAutocomplete();
-
-    document.addEventListener('click', function(e) {
-      if (!e.target.closest('.lookback-dropdown-wrap')) {
-        document.querySelectorAll('#cl-tab-profile .lookback-dropdown-menu.open').forEach(function(m) { m.classList.remove('open'); });
-        document.querySelectorAll('#cl-tab-profile .lookback-dropdown.active').forEach(function(b) { b.classList.remove('active'); });
-      }
-    });
-  },
-
-  // Wire each .loc-state lookback-dropdown in the location panel
-  // (one per primary + per additional location). Outside-click close
-  // is handled by the existing global handler at the bottom of
-  // _renderLocation, so each per-instance wiring only needs to handle
-  // trigger toggle, item-click selection, and auto-save firing.
-  _wireStateDropdowns: function(scope) {
-    var self = this;
-    scope.querySelectorAll('.loc-state').forEach(function(btn) {
-      var menu = btn.parentNode.querySelector('.loc-state-menu');
-      self._wireLookback(btn, menu, function() {
-        self._scheduleAutoSave('location', 300);
-      });
-    });
-  },
-
-  // Inline lookback-dropdown wiring — same shape as the helpers in
-  // CL_PROJECTS / SM_LOGIC. Trigger toggles the menu; item-click sets
-  // data-value + label and fires onSelect; outside-click close is
-  // handled globally for #cl-tab-profile by the listener at the
-  // bottom of _renderLocation. Idempotent via dataset guard.
-  _wireLookback: function(triggerOrId, menuOrId, onSelect) {
-    var btn = typeof triggerOrId === 'string' ? document.getElementById(triggerOrId) : triggerOrId;
-    var menu = typeof menuOrId === 'string' ? document.getElementById(menuOrId) : menuOrId;
-    if (!btn || !menu) return;
-    if (btn.dataset.lookbackBound === '1') return;
-    btn.dataset.lookbackBound = '1';
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      menu.classList.toggle('open');
-    });
-    menu.addEventListener('click', function(e) {
-      var item = e.target.closest('.lookback-dropdown-item');
-      if (!item) return;
-      var value = item.getAttribute('data-value');
-      // Sentinel values bypass the trigger update so callers can take
-      // over the click in onSelect (e.g. the Hours-of-Operation
-      // Custom… item swaps the cell to a free-text input mode and
-      // needs the trigger's prior data-value preserved for prefill).
-      if (value !== '__custom__') {
-        menu.querySelectorAll('.lookback-dropdown-item').forEach(function(i) { i.classList.remove('active'); });
-        item.classList.add('active');
-        btn.setAttribute('data-value', value);
-        btn.textContent = item.textContent;
-      }
-      menu.classList.remove('open');
-      if (typeof onSelect === 'function') onSelect(value, item.textContent);
-    });
-  },
-
-  // Programmatic value-set for a lookback-dropdown — mirrors what
-  // setting <select>.value used to do before the conversion. Used by
-  // the address-autocomplete path that fills the State picker from
-  // the parsed Google Places result.
-  _setLookbackValue: function(btn, menu, value) {
-    if (!btn || !menu) return;
-    var items = menu.querySelectorAll('.lookback-dropdown-item');
-    var target = null;
-    items.forEach(function(i) { if (i.getAttribute('data-value') === value) target = i; });
-    if (!target) return;
-    items.forEach(function(i) { i.classList.remove('active'); });
-    target.classList.add('active');
-    btn.setAttribute('data-value', target.getAttribute('data-value'));
-    btn.textContent = target.textContent;
-  },
-
-  _renderTradingHours: function(hours) {
-    var days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    var hoursMap = {};
-    if (Array.isArray(hours)) {
-      hours.forEach(function(h) { hoursMap[h.day] = h; });
-    }
-    // Build the time-option list once and reuse for every open/close
-    // dropdown. The trigger button label uses the human-readable
-    // form ("8:00 AM"); the menu items carry the same label as their
-    // text, with the 24-hour value stashed in data-value.
-    //
-    // Order: 6:00 AM through 5:30 AM the following morning. Most SMEs
-    // open between 7-10 AM and close between 4-9 PM, so a typical
-    // selection lands inside the first ~22 items without any
-    // scrolling. Late-night hospitality and cleaning businesses still
-    // have access to the whole half-hourly grid — the post-midnight
-    // hours just sit at the bottom of the list rather than at the top.
-    // Curated common opening / closing slots. Anything outside these
-    // goes through the Custom item, which swaps the dropdown for a
-    // free text input — the parser is forgiving on form, strict on
-    // value (HH:MM 24-hour out).
-    var openChoices = [
-      { value: '06:00', label: '6:00 AM' },
-      { value: '06:30', label: '6:30 AM' },
-      { value: '07:00', label: '7:00 AM' },
-      { value: '07:30', label: '7:30 AM' },
-      { value: '08:00', label: '8:00 AM' },
-      { value: '08:30', label: '8:30 AM' },
-      { value: '09:00', label: '9:00 AM' }
-    ];
-    var closeChoices = [
-      { value: '15:00', label: '3:00 PM' },
-      { value: '15:30', label: '3:30 PM' },
-      { value: '16:00', label: '4:00 PM' },
-      { value: '16:30', label: '4:30 PM' },
-      { value: '17:00', label: '5:00 PM' },
-      { value: '17:30', label: '5:30 PM' },
-      { value: '18:00', label: '6:00 PM' }
-    ];
-    var self = this;
-    var renderTimeMenu = function(choices, activeValue) {
-      var items = choices.map(function(t) {
-        return '<button type="button" class="lookback-dropdown-item' + (t.value === activeValue ? ' active' : '') + '" data-value="' + t.value + '">' + t.label + '</button>';
-      }).join('');
-      // Custom item sits at the end. _wireHoursDropdowns catches the
-      // __custom__ sentinel in onSelect and swaps the cell to input
-      // mode rather than persisting it as a value.
-      items += '<button type="button" class="lookback-dropdown-item prof-hours-custom-item" data-value="__custom__">Custom…</button>';
-      return items;
-    };
-
-    var presetHtml = '<div class="profile-hours-preset">' +
-      '<button type="button" class="btn-outline btn-sm prof-hours-preset" data-preset="business">Mon\u2013Fri 8:00\u20135:00</button>' +
-      '<button type="button" class="btn-outline btn-sm prof-hours-preset" data-preset="24-7">24/7</button>' +
-      '<button type="button" class="btn-outline btn-sm prof-hours-preset" data-preset="appointment">By Appointment</button>' +
-    '</div>';
-
-    var renderPicker = function(kind, day, currentValue, isDisabled) {
-      var choices = kind === 'open' ? openChoices : closeChoices;
-      var disabledAttr = isDisabled ? ' disabled' : '';
-      var label = self._formatTime(currentValue);
-      // Custom row layout: HH:MM text input, AM/PM toggle button, ×
-      // cancel. The AM/PM is a separate control (not typed) so users
-      // can't fat-finger the period; the input is narrow and just
-      // accepts "H", "H:MM", or "HH:MM" — leading zeros optional.
-      return '<div class="prof-hours-cell">'
-        + '<span class="lookback-dropdown-wrap prof-hours-dropdown">'
-          + '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-hours-' + kind + '" data-day="' + day + '" data-value="' + currentValue + '"' + disabledAttr + '>' + label + '</button>'
-          + '<div class="lookback-dropdown-menu prof-hours-' + kind + '-menu">' + renderTimeMenu(choices, currentValue) + '</div>'
-        + '</span>'
-        + '<div class="prof-hours-custom" style="display:none">'
-          + '<input type="text" class="profile-input prof-hours-custom-time" placeholder="HH:MM" maxlength="5" inputmode="numeric"' + disabledAttr + ' />'
-          + '<button type="button" class="prof-hours-ampm" data-value="AM"' + disabledAttr + '>AM</button>'
-          + '<button type="button" class="prof-hours-custom-cancel" title="Cancel and return to dropdown">×</button>'
-        + '</div>'
-      + '</div>';
-    };
-
-    var rowsHtml = days.map(function(day) {
-      var data = hoursMap[day] || { enabled: false, open: '08:00', close: '17:00' };
-      var checked = data.enabled ? ' checked' : '';
-      var openVal = data.open || '08:00';
-      var closeVal = data.close || '17:00';
-      return '<div class="profile-hours-row">' +
-        '<label class="profile-hours-day"><input type="checkbox" class="prof-hours-toggle" data-day="' + day + '"' + checked + ' /> ' + day + '</label>' +
-        renderPicker('open', day, openVal, !data.enabled) +
-        renderPicker('close', day, closeVal, !data.enabled) +
-      '</div>';
-    }).join('');
-
-    return presetHtml + '<div class="profile-hours-grid" id="prof-hours-grid">' + rowsHtml + '</div>';
-  },
-
-  // Format a "HH:MM" 24-hour string as a 12-hour label with AM/PM.
-  // Returns the input unchanged if it doesn't parse — keeps the UI
-  // resilient to legacy or malformed saved values.
-  _formatTime: function(value) {
-    var parts = (value || '').split(':');
-    if (parts.length !== 2) return value || '';
-    var h = parseInt(parts[0], 10);
-    var mm = parts[1];
-    if (isNaN(h) || mm.length !== 2) return value || '';
-    var displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    var ampm = h < 12 ? 'AM' : 'PM';
-    return displayH + ':' + mm + ' ' + ampm;
-  },
-
-  // Programmatic time set on a hours-picker trigger button. Updates
-  // data-value, label, and active-class — works whether or not the
-  // value lands on a curated item, so presets like 24/7 (00:00 /
-  // 23:30) outside the curated list still display correctly.
-  _setHoursValue: function(btn, value) {
-    if (!btn) return;
-    var menu = btn.parentNode.querySelector('.lookback-dropdown-menu');
-    btn.setAttribute('data-value', value);
-    btn.textContent = this._formatTime(value);
-    if (!menu) return;
-    var items = menu.querySelectorAll('.lookback-dropdown-item');
-    items.forEach(function(i) { i.classList.remove('active'); });
-    items.forEach(function(i) {
-      if (i.getAttribute('data-value') === value) i.classList.add('active');
-    });
-  },
-
-  _toggleHoursRow: function(checkbox) {
-    var day = checkbox.dataset.day;
-    var row = checkbox.closest('.profile-hours-row');
-    // Now operating on lookback-dropdown trigger buttons rather than
-    // native <select>s — same .disabled property, just on a different
-    // element type. Buttons that are .disabled don't fire click, so
-    // the menu can't open while the day is unchecked.
-    row.querySelectorAll('.lookback-dropdown-field').forEach(function(b) { b.disabled = !checkbox.checked; });
-    row.querySelectorAll('.prof-hours-custom-time, .prof-hours-ampm').forEach(function(i) { i.disabled = !checkbox.checked; });
-    // If the user uncheck-s while a cell is mid-Custom-edit, drop
-    // them back to the dropdown view so the disabled state is visible
-    // and the input doesn't sit there enabled-looking.
-    if (!checkbox.checked) {
-      var self = this;
-      row.querySelectorAll('.prof-hours-cell').forEach(function(cell) {
-        var customWrap = cell.querySelector('.prof-hours-custom');
-        if (customWrap && customWrap.style.display === 'flex') {
-          self._exitHoursCustomMode(cell);
-        }
-      });
-    }
-  },
-
-  // Wire every open/close lookback in the hours grid. Multiple
-  // instances render (7 days × open + close = 14), so wiring is
-  // class-based rather than ID-based: each trigger's sibling menu is
-  // found via parentNode + class. The onSelect callback either swaps
-  // the cell to Custom (free-text) input mode or fires the location-
-  // panel auto-save the same way native change events used to be
-  // picked up by _bindAutoSave's `select` selector.
-  _wireHoursDropdowns: function(scope) {
-    var self = this;
-    scope.querySelectorAll('.prof-hours-open, .prof-hours-close').forEach(function(btn) {
-      var menu = btn.parentNode.querySelector('.lookback-dropdown-menu');
-      self._wireLookback(btn, menu, function(value) {
-        if (value === '__custom__') {
-          self._enterHoursCustomMode(btn);
-          return;
-        }
-        self._scheduleAutoSave('location', 300);
-      });
-    });
-
-    // Wire the custom-mode controls per cell. Each cell holds a
-    // dropdown row plus a custom row (input + AM/PM toggle + cancel)
-    // and we keep them in sync via element references. The dataset
-    // guard makes this safe to call repeatedly on re-renders.
-    scope.querySelectorAll('.prof-hours-cell').forEach(function(cell) {
-      if (cell.dataset.customWired === '1') return;
-      cell.dataset.customWired = '1';
-      var input = cell.querySelector('.prof-hours-custom-time');
-      var ampmBtn = cell.querySelector('.prof-hours-ampm');
-      var cancelBtn = cell.querySelector('.prof-hours-custom-cancel');
-      var trigger = cell.querySelector('.prof-hours-open, .prof-hours-close');
-      if (!input || !ampmBtn || !cancelBtn || !trigger) return;
-
-      var commit = function() {
-        var raw = (input.value || '').trim();
-        if (!raw) return;
-        // Accept "H" / "HH" / "H:MM" / "HH:MM" — 12-hour. AM/PM is
-        // separate so we don't let the user type letters into the
-        // time input.
-        var match = raw.match(/^(\d{1,2})(?::(\d{2}))?$/);
-        if (!match) { input.classList.add('input-error'); return; }
-        var h12 = parseInt(match[1], 10);
-        var m = match[2] ? parseInt(match[2], 10) : 0;
-        if (isNaN(h12) || h12 < 1 || h12 > 12 || m < 0 || m > 59) {
-          input.classList.add('input-error'); return;
-        }
-        var ampm = ampmBtn.getAttribute('data-value');
-        var h24 = h12 === 12 ? (ampm === 'AM' ? 0 : 12) : (ampm === 'PM' ? h12 + 12 : h12);
-        var value = (h24 < 10 ? '0' : '') + h24 + ':' + (m < 10 ? '0' : '') + m;
-        input.classList.remove('input-error');
-        self._setHoursValue(trigger, value);
-        self._exitHoursCustomMode(cell);
-        self._scheduleAutoSave('location', 300);
-      };
-
-      input.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') { e.preventDefault(); commit(); }
-        else if (e.key === 'Escape') { e.preventDefault(); cancelBtn.click(); }
-      });
-      input.addEventListener('blur', function() {
-        // Don't run commit if the user is still interacting with the
-        // AM/PM toggle or X button (their mousedown preventDefault
-        // keeps focus on the input, but a blur can still fire when
-        // the cell is being torn down via cancel).
-        if (cell.dataset.cancelling === '1') return;
-        commit();
-      });
-
-      // mousedown.preventDefault on the auxiliary controls so clicking
-      // them doesn't blur the input mid-edit; click handlers do the
-      // real work and then refocus the input.
-      ampmBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
-      ampmBtn.addEventListener('click', function() {
-        var current = ampmBtn.getAttribute('data-value');
-        var next = current === 'AM' ? 'PM' : 'AM';
-        ampmBtn.setAttribute('data-value', next);
-        ampmBtn.textContent = next;
-        input.focus();
-      });
-
-      cancelBtn.addEventListener('mousedown', function(e) { e.preventDefault(); });
-      cancelBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        // Flag so the input's blur handler skips commit while we tear
-        // down the custom row. Cleared on the next tick.
-        cell.dataset.cancelling = '1';
-        input.value = '';
-        input.classList.remove('input-error');
-        self._exitHoursCustomMode(cell);
-        setTimeout(function() { delete cell.dataset.cancelling; }, 0);
-      });
-    });
-  },
-
-  // Hide the dropdown trigger, reveal the HH:MM input + AM/PM toggle,
-  // and pre-fill both with either the current value (if it parses) or
-  // a sensible per-kind default — 8:00 AM for opens, 5:00 PM for
-  // closes. Focus + select the input so typing replaces the prefill
-  // immediately.
-  _enterHoursCustomMode: function(trigger) {
-    var cell = trigger.closest('.prof-hours-cell');
-    if (!cell) return;
-    var dropdown = cell.querySelector('.prof-hours-dropdown');
-    var customWrap = cell.querySelector('.prof-hours-custom');
-    var input = cell.querySelector('.prof-hours-custom-time');
-    var ampmBtn = cell.querySelector('.prof-hours-ampm');
-    if (dropdown) dropdown.style.display = 'none';
-    if (customWrap) customWrap.style.display = 'flex';
-
-    var currentValue = trigger.getAttribute('data-value') || '';
-    var defaultValue = trigger.classList.contains('prof-hours-open') ? '08:00' : '17:00';
-    var sourceValue = (/^\d{2}:\d{2}$/.test(currentValue)) ? currentValue : defaultValue;
-    var split = this._splitHourValue(sourceValue);
-    if (input) {
-      input.value = split.display;
-      input.classList.remove('input-error');
-      input.focus();
-      input.select();
-    }
-    if (ampmBtn) {
-      ampmBtn.setAttribute('data-value', split.ampm);
-      ampmBtn.textContent = split.ampm;
-    }
-  },
-
-  // Split an "HH:MM" 24-hour string into the parts the custom-mode
-  // input + AM/PM toggle expect: a "h:mm" 12-hour display string and
-  // the AM/PM string. Falls back to 8:00 AM if the input doesn't
-  // parse, so the caller always has a sane default to render.
-  _splitHourValue: function(value) {
-    var parts = (value || '').split(':');
-    var h = parseInt(parts[0], 10);
-    var m = parseInt(parts[1], 10);
-    if (isNaN(h)) h = 8;
-    if (isNaN(m)) m = 0;
-    var displayH = h === 0 ? 12 : h > 12 ? h - 12 : h;
-    var ampm = h < 12 ? 'AM' : 'PM';
-    var mm = (m < 10 ? '0' : '') + m;
-    return { display: displayH + ':' + mm, ampm: ampm };
-  },
-
-  // Hide the input row and restore the dropdown trigger. Does not
-  // touch the underlying value — the caller (Cancel button or
-  // successful blur commit) decides what to persist.
-  _exitHoursCustomMode: function(cell) {
-    var dropdown = cell.querySelector('.prof-hours-dropdown');
-    var customWrap = cell.querySelector('.prof-hours-custom');
-    if (dropdown) dropdown.style.display = '';
-    if (customWrap) customWrap.style.display = 'none';
-  },
-
-  _bindHoursPresets: function() {
-    var self = this;
-    document.querySelectorAll('.prof-hours-preset').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var preset = btn.dataset.preset;
-        var grid = document.getElementById('prof-hours-grid');
-        if (!grid) return;
-        var toggles = grid.querySelectorAll('.prof-hours-toggle');
-        var opens = grid.querySelectorAll('.prof-hours-open');
-        var closes = grid.querySelectorAll('.prof-hours-close');
-        var setTime = function(triggerBtn, value) {
-          // _setHoursValue handles values outside the curated list
-          // (00:00 / 23:30 from the 24/7 preset, etc.) by formatting
-          // the trigger label via _formatTime even when no menu item
-          // matches. _setLookbackValue would just early-return on a
-          // miss, leaving the trigger label stale.
-          self._setHoursValue(triggerBtn, value);
-        };
-        toggles.forEach(function(t, i) {
-          if (preset === '24-7') {
-            t.checked = true;
-            opens[i].disabled = false;
-            setTime(opens[i], '00:00');
-            closes[i].disabled = false;
-            setTime(closes[i], '23:30');
-          } else if (preset === 'appointment') {
-            t.checked = false;
-            opens[i].disabled = true;
-            closes[i].disabled = true;
-          } else if (preset === 'business') {
-            var isWeekday = i < 5;
-            t.checked = isWeekday;
-            opens[i].disabled = !isWeekday;
-            closes[i].disabled = !isWeekday;
-            if (isWeekday) { setTime(opens[i], '08:00'); setTime(closes[i], '17:00'); }
-          }
-        });
-      });
-    });
-  },
-
-  _collectTradingHours: function() {
-    var grid = document.getElementById('prof-hours-grid');
-    if (!grid) return [];
-    var hours = [];
-    grid.querySelectorAll('.profile-hours-row').forEach(function(row) {
-      var toggle = row.querySelector('.prof-hours-toggle');
-      if (!toggle) return;
-      hours.push({
-        day: toggle.dataset.day,
-        enabled: toggle.checked,
-        open: row.querySelector('.prof-hours-open').getAttribute('data-value') || '',
-        close: row.querySelector('.prof-hours-close').getAttribute('data-value') || ''
-      });
-    });
-    return hours;
-  },
-
-  _bindPhoneTypeDropdowns: function(container) {
-    container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
-      // Restrict to phone-type wraps. The function name suggests this
-      // already, but the original implementation grabbed every
-      // .lookback-dropdown-wrap in the container — which now picks up
-      // the new state and hours-of-operation lookbacks added in the
-      // platform-wide native-select sweep, double-binding their click
-      // toggles (one open + one close in the same event = no net
-      // change, so the menus appear not to open).
-      var trigger = wrap.querySelector('.loc-phone-type');
-      if (!trigger) return;
-      if (wrap.dataset.phoneTypeBound) return;
-      wrap.dataset.phoneTypeBound = '1';
-      var menu = wrap.querySelector('.lookback-dropdown-menu');
-      if (!menu) return;
-      trigger.addEventListener('click', function(e) {
-        e.stopPropagation();
-        document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
-        document.querySelectorAll('.lookback-dropdown.active').forEach(function(b) { if (b !== trigger) b.classList.remove('active'); });
-        menu.classList.toggle('open');
-        trigger.classList.toggle('active');
-      });
-      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(item) {
-        item.addEventListener('click', function() {
-          trigger.setAttribute('data-value', item.getAttribute('data-value'));
-          trigger.innerHTML = window.escHtml(item.getAttribute('data-value')) + ' &#9662;';
-          menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) { it.classList.remove('active'); });
-          item.classList.add('active');
-          menu.classList.remove('open');
-          trigger.classList.remove('active');
-        });
-      });
-    });
-  },
-
-  _wirePhoneFormat: function(container) {
-    container.querySelectorAll('.loc-phone-number').forEach(function(input) {
-      if (input.dataset.phoneFormatted) return;
-      input.dataset.phoneFormatted = '1';
-      input.addEventListener('input', function() {
-        var pos = input.selectionStart;
-        var oldLen = input.value.length;
-        input.value = window.formatPhoneNumber(input.value);
-        var newLen = input.value.length;
-        input.setSelectionRange(pos + (newLen - oldLen), pos + (newLen - oldLen));
-      });
-    });
-  },
-
-  _addPhone: function(idPfx) {
-    var wrap = document.getElementById(idPfx + '-phones');
-    if (!wrap) return;
-    var i = wrap.querySelectorAll('.profile-repeating-row').length;
-    var typeOpts = ['Main', 'Mobile', 'Work', 'Fax'];
-    var d = document.createElement('div');
-    d.className = 'profile-repeating-row';
-    d.id = idPfx + '-ph-' + i;
-    d.innerHTML = '<span class="lookback-dropdown-wrap">' +
-      '<button type="button" class="lookback-dropdown loc-phone-type" data-value="Mobile">Mobile</button>' +
-      '<div class="lookback-dropdown-menu">' +
-      typeOpts.map(function(t) {
-        return '<button type="button" class="lookback-dropdown-item' + (t === 'Mobile' ? ' active' : '') + '" data-value="' + t + '">' + t + '</button>';
-      }).join('') +
-      '</div></span>' +
-    '<input type="text" class="profile-input loc-phone-number" placeholder="Phone number" />' +
-    '<button class="btn-remove-url" data-action="remove-row" data-target="' + idPfx + '-ph-' + i + '">Remove</button>';
-    wrap.appendChild(d);
-    this._wirePhoneFormat(d);
-    this._bindPhoneTypeDropdowns(d);
-  },
-
-  _addSite: function() {
-    var wrap = document.getElementById('prof-sites-extra');
-    if (!wrap) return;
-    var i = wrap.querySelectorAll('.profile-repeating-row').length + 1;
-    var d = document.createElement('div');
-    d.className = 'profile-repeating-row';
-    d.id = 'prof-site-' + i;
-    d.innerHTML = '<input type="url" class="profile-input prof-add-site" placeholder="https://yoursite.com.au" />' +
-      '<button class="btn-remove-url" data-action="remove-row" data-target="prof-site-' + i + '">Remove</button>';
-    wrap.appendChild(d);
-  },
-
-  _addLocation: function() {
-    var wrap = document.getElementById('prof-extra-locs');
-    if (!wrap) return;
-    var i = wrap.querySelectorAll('.profile-location-block').length;
-    var emptyLoc = { name: '', unit: '', street: '', suburb: '', state: '', postcode: '', phones: [{ type: 'Mobile', number: '' }] };
-    var div = document.createElement('div');
-    div.innerHTML = window.CL_PROFILE._locationBlock(emptyLoc, i, false);
-    wrap.appendChild(div.firstChild);
-    this._wirePhoneFormat(wrap);
-    this._bindPhoneTypeDropdowns(wrap);
-    this._initStreetAutocomplete();
-  },
-
-  // BP UX Improvements Spec v1.0 §3 — Google Places address suggestions
-  // for every Street Address field.
-  //
-  // Implementation note (2025): we drive a custom dropdown using the
-  // programmatic AutocompleteSuggestion / Place API instead of the
-  // <gmp-place-autocomplete> web component. The component renders its
-  // search icon and clear button inside a shadow root that exposes no
-  // CSS parts for them, so there's no way to make it match the
-  // platform .profile-input look. With AutocompleteSuggestion we keep
-  // the platform <input class="profile-input loc-street"> as-is and
-  // render our own suggestions <ul> below it — full styling control,
-  // no shadow DOM, no Google chrome.
-  _initStreetAutocomplete: function() {
-    var self = this;
-    if (!self._supabase) return;
-    self._loadGoogleMapsPlaces().then(function() {
-      if (!window.google || !window.google.maps || !window.google.maps.places) return;
-      var AutocompleteSuggestion = window.google.maps.places.AutocompleteSuggestion;
-      var AutocompleteSessionToken = window.google.maps.places.AutocompleteSessionToken;
-      if (!AutocompleteSuggestion) {
-        console.error('[BP autocomplete] AutocompleteSuggestion not available — Places API (New) not enabled?');
-        return;
-      }
-      var inputs = document.querySelectorAll('#prof-panel-location .loc-street');
-      inputs.forEach(function(input) {
-        if (input.dataset.gmapAutocompleteBound) return;
-        input.dataset.gmapAutocompleteBound = '1';
-        self._attachStreetAutocomplete(input, AutocompleteSuggestion, AutocompleteSessionToken);
-      });
-    }).catch(function(err) {
-      console.error('[BP autocomplete] Maps load failed:', err && err.message ? err.message : err);
-    });
-  },
-
-  _attachStreetAutocomplete: function(input, AutocompleteSuggestion, AutocompleteSessionToken) {
-    var self = this;
-
-    // Insert a wrapper around the input so the dropdown can be
-    // positioned absolutely relative to it. The label / .profile-field-full
-    // structure is untouched — the wrapper sits inside the field.
-    var parent = input.parentElement;
-    if (!parent) return;
-    var wrap = document.createElement('div');
-    wrap.className = 'loc-street-wrap';
-    parent.insertBefore(wrap, input);
-    wrap.appendChild(input);
-
-    var dropdown = document.createElement('ul');
-    dropdown.className = 'loc-street-suggestions';
-    dropdown.style.display = 'none';
-    wrap.appendChild(dropdown);
-
-    var sessionToken = AutocompleteSessionToken ? new AutocompleteSessionToken() : undefined;
-    var currentSuggestions = [];
-    var debounceTimer = null;
-    var lastQuery = '';
-
-    function hideDropdown() {
-      dropdown.style.display = 'none';
-    }
-    function showDropdown() {
-      if (dropdown.children.length > 0) dropdown.style.display = 'block';
-    }
-
-    function renderSuggestions() {
-      if (currentSuggestions.length === 0) {
-        dropdown.innerHTML = '';
-        hideDropdown();
-        return;
-      }
-      var html = currentSuggestions.map(function(s, i) {
-        var pred = s.placePrediction;
-        if (!pred) return '';
-        var text = '';
-        try { text = pred.text ? pred.text.toString() : (pred.mainText ? pred.mainText.toString() : ''); }
-        catch (e) { text = ''; }
-        return '<li data-idx="' + i + '" class="loc-street-suggestion-item">' + window.escHtml(text) + '</li>';
-      }).join('');
-      dropdown.innerHTML = html;
-      showDropdown();
-    }
-
-    async function fetchSuggestions(query) {
-      var trimmed = (query || '').trim();
-      if (trimmed.length < 3) {
-        currentSuggestions = [];
-        renderSuggestions();
-        return;
-      }
-      if (trimmed === lastQuery) return;
-      lastQuery = trimmed;
-      try {
-        var req = {
-          input: trimmed,
-          includedRegionCodes: ['au']
-        };
-        if (sessionToken) req.sessionToken = sessionToken;
-        var result = await AutocompleteSuggestion.fetchAutocompleteSuggestions(req);
-        var suggestions = (result && result.suggestions) || [];
-        // Only addressed predictions — drop anything Google returns
-        // without a place prediction (e.g. query suggestions).
-        currentSuggestions = suggestions.filter(function(s) { return !!s.placePrediction; });
-        renderSuggestions();
-      } catch (e) {
-        console.error('[BP autocomplete] fetch error:', e && e.message ? e.message : e);
-      }
-    }
-
-    async function selectSuggestion(idx) {
-      var suggestion = currentSuggestions[idx];
-      if (!suggestion || !suggestion.placePrediction) return;
-      try {
-        var place = suggestion.placePrediction.toPlace();
-        await place.fetchFields({ fields: ['addressComponents'] });
-        var components = place.addressComponents;
-        if (!components) return;
-        var streetValue = self._applyAutocompleteResult(input, components);
-        if (streetValue) input.value = streetValue;
-      } catch (e) {
-        console.error('[BP autocomplete] select error:', e && e.message ? e.message : e);
-      } finally {
-        currentSuggestions = [];
-        dropdown.innerHTML = '';
-        hideDropdown();
-        // New session for the next address — billing groups suggestion
-        // fetches with the final fetchFields call into one transaction.
-        if (AutocompleteSessionToken) sessionToken = new AutocompleteSessionToken();
-      }
-    }
-
-    input.addEventListener('input', function() {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      var q = input.value;
-      debounceTimer = setTimeout(function() { fetchSuggestions(q); }, 250);
-    });
-    input.addEventListener('focus', function() {
-      if (currentSuggestions.length > 0) showDropdown();
-    });
-    // mousedown rather than click so the input's blur (which fires
-    // hideDropdown on a 200ms delay) doesn't race with the click.
-    dropdown.addEventListener('mousedown', function(e) {
-      var li = e.target.closest('.loc-street-suggestion-item');
-      if (!li) return;
-      e.preventDefault();
-      var idx = parseInt(li.dataset.idx, 10);
-      if (!isNaN(idx)) selectSuggestion(idx);
-    });
-    input.addEventListener('blur', function() {
-      // Delay so a click on a suggestion still registers before we hide.
-      setTimeout(hideDropdown, 200);
-    });
-  },
-
-  _loadGoogleMapsPlaces: function() {
-    if (window.google && window.google.maps && window.google.maps.places && window.google.maps.places.AutocompleteSuggestion) {
-      return Promise.resolve();
-    }
-    if (window.__staxGmapPromise) return window.__staxGmapPromise;
-    var self = this;
-    window.__staxGmapPromise = (async function() {
-      var sessionRes = await self._supabase.auth.getSession();
-      var token = sessionRes && sessionRes.data && sessionRes.data.session && sessionRes.data.session.access_token;
-      if (!token) throw new Error('No session');
-      var keyRes = await fetch('/api/places-key', { headers: { Authorization: 'Bearer ' + token } });
-      if (!keyRes.ok) throw new Error('Places key unavailable');
-      var keyJson = await keyRes.json();
-      if (!keyJson || !keyJson.key) throw new Error('Places key missing');
-      return new Promise(function(resolve, reject) {
-        var script = document.createElement('script');
-        // v=weekly so we get the current PlaceAutocompleteElement build.
-        // libraries=places loads the Places library; loading=async lets
-        // Google paint the page first.
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + encodeURIComponent(keyJson.key) + '&libraries=places&loading=async&v=weekly';
-        script.async = true;
-        script.defer = true;
-        script.onload = function() { resolve(); };
-        script.onerror = function() { reject(new Error('Maps script failed to load')); };
-        document.head.appendChild(script);
-      });
-    })().catch(function(err) {
-      // Reset the cached promise so a later panel render can retry.
-      window.__staxGmapPromise = null;
-      throw err;
-    });
-    return window.__staxGmapPromise;
-  },
-
-  // PlaceAutocompleteElement returns Place.AddressComponent objects with
-  // longText / shortText / types — different shape from the legacy
-  // long_name / short_name on AutocompleteResult.
-  _applyAutocompleteResult: function(streetInput, components) {
-    var parsed = { street_number: '', route: '', subpremise: '', locality: '', state: '', postcode: '' };
-    components.forEach(function(c) {
-      var types = c.types || [];
-      var longText = c.longText || c.long_name || '';
-      var shortText = c.shortText || c.short_name || '';
-      if (types.indexOf('subpremise') > -1) parsed.subpremise = longText;
-      else if (types.indexOf('street_number') > -1) parsed.street_number = longText;
-      else if (types.indexOf('route') > -1) parsed.route = longText;
-      else if (types.indexOf('locality') > -1) parsed.locality = longText;
-      else if (types.indexOf('administrative_area_level_1') > -1) parsed.state = shortText;
-      else if (types.indexOf('postal_code') > -1) parsed.postcode = longText;
-    });
-    var streetParts = [parsed.street_number, parsed.route].filter(Boolean);
-    var streetValue = streetParts.join(' ').trim();
-    streetInput.value = streetValue;
-    var block = streetInput.closest('.profile-location-block');
-    if (!block) return streetValue;
-    var unitEl = block.querySelector('.loc-unit');
-    if (unitEl && parsed.subpremise && !unitEl.value.trim()) {
-      unitEl.value = parsed.subpremise;
-    }
-    var suburbEl = block.querySelector('.loc-suburb');
-    if (suburbEl && parsed.locality) suburbEl.value = parsed.locality;
-    var stateBtn = block.querySelector('.loc-state');
-    if (stateBtn && parsed.state) {
-      var stateMenu = stateBtn.parentNode.querySelector('.loc-state-menu');
-      this._setLookbackValue(stateBtn, stateMenu, parsed.state);
-    }
-    var postEl = block.querySelector('.loc-postcode');
-    if (postEl && parsed.postcode) postEl.value = parsed.postcode;
-    // The location panel's auto-save listens for blur/change events;
-    // we set values programmatically so trigger an explicit save.
-    if (this._scheduleAutoSave) this._scheduleAutoSave('location', 300);
-    return streetValue;
-  },
-
-  _saveLocation: function(opts) {
-    var autoSave = !!(opts && opts.autoSave);
-    var pb = document.getElementById('loc-primary-block');
-    var primaryPhones = Array.from(pb.querySelectorAll('#loc-p-phones .profile-repeating-row')).map(function(row) {
-      return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Mobile', number: row.querySelector('.loc-phone-number').value.trim() };
-    }).filter(function(ph) { return ph.number; });
-    var extraBlocks = document.querySelectorAll('#prof-extra-locs .profile-location-block');
-    var locs = Array.from(extraBlocks).map(function(b) {
-      var phonesWrap = b.querySelector('.loc-phones-wrap');
-      var phones = phonesWrap ? Array.from(phonesWrap.querySelectorAll('.profile-repeating-row')).map(function(row) {
-        return { type: row.querySelector('.loc-phone-type').getAttribute('data-value') || 'Mobile', number: row.querySelector('.loc-phone-number').value.trim() };
-      }).filter(function(ph) { return ph.number; }) : [];
-      return {
-        name: b.querySelector('.loc-name').value.trim(),
-        unit: b.querySelector('.loc-unit').value.trim(),
-        street: b.querySelector('.loc-street').value.trim(),
-        suburb: b.querySelector('.loc-suburb').value.trim(),
-        state: (b.querySelector('.loc-state').getAttribute('data-value') || '').trim(),
-        postcode: b.querySelector('.loc-postcode').value.trim(),
-        phones: phones
-      };
-    });
-    var sites = [];
-    var primary = document.getElementById('prof-site-primary');
-    if (primary && primary.value.trim()) sites.push(primary.value.trim());
-    Array.from(document.querySelectorAll('#prof-sites-extra .prof-add-site')).forEach(function(el) {
-      if (el.value.trim()) sites.push(el.value.trim());
-    });
-    var serviceArea = this._getSelectedChips('prof-service-area').concat(this._getOtherItems('prof-service-area'));
-    var tradingHours = this._collectTradingHours();
-
-    var self = this;
-    var btn = document.getElementById('prof-loc-save');
-    window.handleSave(btn, async function() {
-      var nameEl = pb.querySelector('.loc-name');
-      var streetEl = pb.querySelector('.loc-street');
-      var suburbEl = pb.querySelector('.loc-suburb');
-      var stateEl = pb.querySelector('.loc-state');
-      var postcodeEl = pb.querySelector('.loc-postcode');
-      var serviceAreaEl = document.getElementById('prof-service-area');
-      var phonesEl = document.getElementById('loc-p-phones');
-      var hoursEl = document.getElementById('prof-hours-grid');
-      // Skip validation on auto-save — see comment in _saveIdentity.
-      if (!autoSave) {
-        self._validateMandatory('prof-panel-location', [
-          { test: function() { return nameEl.value.trim() !== ''; }, el: nameEl, label: 'Location Name' },
-          { test: function() { return streetEl.value.trim() !== ''; }, el: streetEl, label: 'Street Address' },
-          { test: function() { return suburbEl.value.trim() !== ''; }, el: suburbEl, label: 'Suburb' },
-          { test: function() { return (stateEl.getAttribute('data-value') || '').trim() !== ''; }, el: stateEl, label: 'State' },
-          { test: function() { return postcodeEl.value.trim() !== ''; }, el: postcodeEl, label: 'Postcode' },
-          { test: function() { return primaryPhones.length > 0; }, el: phonesEl, label: 'Phone Number (at least one)' },
-          { test: function() { return serviceArea.length > 0; }, el: serviceAreaEl, label: 'Service Area (at least one)' },
-          { test: function() { return Array.isArray(tradingHours) && tradingHours.some(function(h) { return h.enabled; }); }, el: hoursEl, label: 'Trading Hours (at least one day)' }
-        ]);
-      }
-      var updates = {
-        address_name: nameEl.value.trim(),
-        address_unit: pb.querySelector('.loc-unit').value.trim(),
-        address_street: streetEl.value.trim(),
-        address_suburb: suburbEl.value.trim(),
-        address_state: (stateEl.getAttribute('data-value') || '').trim(),
-        address_postcode: postcodeEl.value.trim(),
-        additional_phones: primaryPhones,
-        additional_locations: locs,
-        website_urls: sites,
-        service_area: serviceArea,
-        trading_hours: tradingHours
-      };
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
-      Object.assign(self._profile, updates);
-      if (autoSave) self._showSaved('location');
-    }, document.getElementById('prof-save-msg'));
-  },
-
-  _renderServices: function() {
-    this._renderMultiSelect('svc', 'bp_services', 'Services', '\uD83D\uDEE0\uFE0F', '3. Services',
-      'What services your business provides with pricing', 'prof-panel-services', 'prof-svc-save');
-  },
-
-  _renderProducts: function() {
-    this._renderMultiSelect('prod', 'bp_products', 'Products', '\uD83D\uDCE6', '4. Products',
-      'What products your business sells with pricing', 'prof-panel-products', 'prof-prod-save');
-  },
-
-  _renderMultiSelect: function(prefix, profileKey, label, icon, title, subtitle, panelId, saveBtnId) {
-    var self = this;
-    var items = this._vj(profileKey, []);
-    var industries = this._va('industry');
-    var availableGroups = window.BP_INDUSTRY_DATA
-      ? (prefix === 'svc' ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : window.BP_INDUSTRY_DATA.getMergedProducts(industries))
-      : [];
-    var selectedNames = items.map(function(i) { return i.name || ''; }).filter(function(n) { return !!n; });
-    var customItems = items.filter(function(i) { return i.is_custom; });
-    var pricingTypes = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.pricingTypes : [];
-
-    var pillsHtml = '<div class="profile-label" style="margin-bottom:8px">Select from your industry list</div>';
-    pillsHtml += '<div id="prof-' + prefix + '-pills" style="margin-bottom:16px">';
-    pillsHtml += this._renderAccordionGroups(availableGroups, 'svc-pill', selectedNames, 'prof-' + prefix);
-    pillsHtml += '</div>';
-
-    var customHtml = '<div style="margin-bottom:16px">';
-    customHtml += '<div class="profile-label" style="margin-bottom:8px">Custom ' + label.toLowerCase() + '</div>';
-    customHtml += '<div id="prof-' + prefix + '-custom-pills" class="review-pill-row" style="margin-bottom:8px">';
-    customItems.forEach(function(item) {
-      customHtml += '<button type="button" class="filter-pill active prof-custom-pill" data-svc-custom="' + window.escHtml(item.name) + '">' +
-        window.escHtml(item.name) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="prof-' + prefix + '-custom-pills">\u00D7</span></button>';
-    });
-    customHtml += '</div>';
-    customHtml += '<div style="display:flex;gap:8px;align-items:center">';
-    customHtml += '<input type="text" class="profile-input" id="prof-' + prefix + '-other-input" placeholder="Add custom ' + label.toLowerCase().slice(0, -1) + '" style="flex:1" />';
-    customHtml += '<button type="button" class="btn-outline btn-sm" id="prof-' + prefix + '-add-other">Add</button>';
-    customHtml += '</div></div>';
-
-    var pricingHtml = '<div id="prof-' + prefix + '-pricing" style="margin-top:8px"></div>';
-
-    var body = '<div class="profile-fields" style="display:block">' +
-      '<div class="profile-field-full">' +
-        '<label class="profile-label">' + label + ' <span class="profile-required">*</span> <span class="profile-optional">(select all that apply, then set pricing)</span></label>' +
-        pillsHtml + customHtml +
-        '<div class="profile-label" style="margin-bottom:8px;margin-top:16px;font-weight:var(--heading-lg-weight)">Pricing for selected ' + label.toLowerCase() + '</div>' +
-        pricingHtml +
-      '</div>' +
-    '</div>';
-
-    var panelKey = prefix === 'svc' ? 'services' : 'products';
-    document.getElementById(panelId).innerHTML = this._card(icon, title, subtitle, body, panelKey, saveBtnId);
-
-    this._renderPricingRows(prefix, items, pricingTypes);
-    this._bindMultiSelectPills(prefix, profileKey, pricingTypes);
-    this._bindChipAccordion(document.getElementById('prof-' + prefix + '-pills'));
-
-    var panelContainer = document.getElementById(panelId);
-    this._bindAutoSave(prefix === 'svc' ? 'services' : 'products', panelContainer);
-
-    document.getElementById(saveBtnId).addEventListener('click', function() {
-      self._saveMultiSelect(prefix, profileKey, saveBtnId);
-    });
-  },
-
-  _renderPricingRows: function(prefix, items, pricingTypes) {
-    var self = this;
-    var container = document.getElementById('prof-' + prefix + '-pricing');
-    if (!container) return;
-    if (items.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:var(--note-font-size);padding:8px 0">No ' + (prefix === 'svc' ? 'services' : 'products') + ' selected yet. Click items above to add them.</div>';
-      this._bindPriceInputBehaviour(container);
-      return;
-    }
-    var html = '';
-    items.forEach(function(item, idx) {
-      var pType = item.pricing_type || '';
-      var pTypeLabel = pType ? (pricingTypes.find(function(pt) { return pt.value === pType; }) || {}).label || 'Pricing type...' : 'Pricing type...';
-      var pTypeOpts = pricingTypes.map(function(pt) {
-        return '<button type="button" class="lookback-dropdown-item' + (pt.value === pType ? ' active' : '') + '" data-value="' + pt.value + '">' + window.escHtml(pt.label) + '</button>';
-      }).join('');
-      var amountHtml = '';
-      // BP UX Improvements Spec v1.0 §4 — text input + thousand separators,
-      // wider fields so 7-digit prices fit without truncation.
-      if (pType === 'hourly' || pType === 'fixed') {
-        amountHtml = '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-val" value="' + window.escHtml(self._formatPrice(item.amount)) + '" placeholder="$ Amount" style="max-width:160px" />';
-      } else if (pType === 'range') {
-        amountHtml = '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-min" value="' + window.escHtml(self._formatPrice(item.amount_min)) + '" placeholder="$ Min" style="max-width:110px" />' +
-          '<input type="text" inputmode="decimal" class="profile-input prof-svc-amount-max" value="' + window.escHtml(self._formatPrice(item.amount_max)) + '" placeholder="$ Max" style="max-width:110px" />';
-      }
-      var rowClass = 'profile-svc-row' + (pType === 'range' ? ' profile-svc-row-range' : '');
-      html += '<div class="' + rowClass + '" data-svc-pricing="' + window.escHtml(item.name) + '" data-custom="' + (item.is_custom ? '1' : '0') + '">' +
-        '<div style="font-size:var(--btn-font-size);font-weight:500;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + window.escHtml(item.name) + '</div>' +
-        '<span class="lookback-dropdown-wrap">' +
-          '<button type="button" class="lookback-dropdown lookback-dropdown-field prof-svc-ptype" data-value="' + window.escHtml(pType) + '">' + window.escHtml(pTypeLabel) + '</button>' +
-          '<div class="lookback-dropdown-menu">' + pTypeOpts + '</div>' +
-        '</span>' +
-        amountHtml +
-      '</div>';
-    });
-    container.innerHTML = html;
-    this._bindPriceInputBehaviour(container);
-
-    container.querySelectorAll('.lookback-dropdown-wrap').forEach(function(wrap) {
-      var trigger = wrap.querySelector('.lookback-dropdown');
-      var menu = wrap.querySelector('.lookback-dropdown-menu');
-      if (!trigger || !menu) return;
-      trigger.addEventListener('click', function(e) {
-        e.stopPropagation();
-        document.querySelectorAll('.lookback-dropdown-menu.open').forEach(function(m) { if (m !== menu) m.classList.remove('open'); });
-        menu.classList.toggle('open');
-        trigger.classList.toggle('active');
-      });
-      menu.querySelectorAll('.lookback-dropdown-item').forEach(function(menuItem) {
-        menuItem.addEventListener('click', function() {
-          var val = menuItem.getAttribute('data-value');
-          trigger.setAttribute('data-value', val);
-          trigger.textContent = menuItem.textContent;
-          menu.querySelectorAll('.lookback-dropdown-item').forEach(function(it) { it.classList.remove('active'); });
-          menuItem.classList.add('active');
-          menu.classList.remove('open');
-          trigger.classList.remove('active');
-          self._updatePricingFields(trigger.closest('.profile-svc-row'), val);
-        });
-      });
-    });
-  },
-
-  _bindMultiSelectPills: function(prefix, profileKey, pricingTypes) {
-    var self = this;
-    var pillsContainer = document.getElementById('prof-' + prefix + '-pills');
-    if (pillsContainer) {
-      pillsContainer.addEventListener('click', function(e) {
-        var pill = e.target.closest('.filter-pill');
-        if (!pill) return;
-        pill.classList.toggle('active');
-        self._syncPricingFromPills(prefix, pricingTypes);
-      });
-    }
-
-    var customPillsContainer = document.getElementById('prof-' + prefix + '-custom-pills');
-    if (customPillsContainer) {
-      customPillsContainer.addEventListener('click', function(e) {
-        var removeSpan = e.target.closest('.prof-pill-remove');
-        if (removeSpan) {
-          var pill = removeSpan.closest('.filter-pill');
-          if (pill) pill.parentNode.removeChild(pill);
-          self._syncPricingFromPills(prefix, pricingTypes);
-        }
-      });
-    }
-
-    var addBtn = document.getElementById('prof-' + prefix + '-add-other');
-    if (addBtn) {
-      addBtn.addEventListener('click', function() {
-        var input = document.getElementById('prof-' + prefix + '-other-input');
-        var val = input ? input.value.trim() : '';
-        if (!val) return;
-        var customContainer = document.getElementById('prof-' + prefix + '-custom-pills');
-        var existing = Array.from(customContainer.querySelectorAll('.filter-pill')).map(function(p) { return p.getAttribute('data-svc-custom'); });
-        if (existing.indexOf(val) > -1) { input.value = ''; return; }
-        var chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'filter-pill active prof-custom-pill';
-        chip.setAttribute('data-svc-custom', val);
-        chip.innerHTML = window.escHtml(val) + ' <span class="prof-pill-remove" data-action="remove-other" data-group="prof-' + prefix + '-custom-pills">\u00D7</span>';
-        customContainer.appendChild(chip);
-        input.value = '';
-        self._syncPricingFromPills(prefix, pricingTypes);
-      });
-    }
-  },
-
-  _syncPricingFromPills: function(prefix, pricingTypes) {
-    var pillsContainer = document.getElementById('prof-' + prefix + '-pills');
-    var customContainer = document.getElementById('prof-' + prefix + '-custom-pills');
-    var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
-    if (!pricingContainer) return;
-
-    var self = this;
-    var existingPricing = {};
-    pricingContainer.querySelectorAll('[data-svc-pricing]').forEach(function(row) {
-      var name = row.getAttribute('data-svc-pricing');
-      var pTypeBtn = row.querySelector('.prof-svc-ptype');
-      var amountVal = row.querySelector('.prof-svc-amount-val');
-      var amountMin = row.querySelector('.prof-svc-amount-min');
-      var amountMax = row.querySelector('.prof-svc-amount-max');
-      existingPricing[name] = {
-        pricing_type: pTypeBtn ? pTypeBtn.getAttribute('data-value') : '',
-        amount: amountVal ? self._unformatPrice(amountVal.value) : null,
-        amount_min: amountMin ? self._unformatPrice(amountMin.value) : null,
-        amount_max: amountMax ? self._unformatPrice(amountMax.value) : null,
-        is_custom: row.getAttribute('data-custom') === '1'
-      };
-    });
-
-    var items = [];
-    if (pillsContainer) {
-      pillsContainer.querySelectorAll('.filter-pill.active').forEach(function(pill) {
-        var name = pill.getAttribute('data-svc-pill');
-        var existing = existingPricing[name] || {};
-        items.push({ name: name, pricing_type: existing.pricing_type || '', amount: existing.amount || null, amount_min: existing.amount_min || null, amount_max: existing.amount_max || null, is_custom: false });
-      });
-    }
-    if (customContainer) {
-      customContainer.querySelectorAll('.filter-pill').forEach(function(pill) {
-        var name = pill.getAttribute('data-svc-custom');
-        var existing = existingPricing[name] || {};
-        items.push({ name: name, pricing_type: existing.pricing_type || '', amount: existing.amount || null, amount_min: existing.amount_min || null, amount_max: existing.amount_max || null, is_custom: true });
-      });
-    }
-    this._renderPricingRows(prefix, items, pricingTypes);
-  },
-
-  _updatePricingFields: function(row, pType) {
-    var existingAmounts = row.querySelectorAll('.prof-svc-amount-val, .prof-svc-amount-min, .prof-svc-amount-max');
-    existingAmounts.forEach(function(el) { el.parentNode.removeChild(el); });
-
-    function makePriceInput(cls, placeholder, width) {
-      var inp = document.createElement('input');
-      inp.type = 'text';
-      inp.inputMode = 'decimal';
-      inp.className = 'profile-input ' + cls;
-      inp.placeholder = placeholder;
-      inp.style.maxWidth = width;
-      return inp;
-    }
-
-    if (pType === 'hourly' || pType === 'fixed') {
-      row.appendChild(makePriceInput('prof-svc-amount-val', '$ Amount', '160px'));
-      row.classList.remove('profile-svc-row-range');
-    } else if (pType === 'range') {
-      row.appendChild(makePriceInput('prof-svc-amount-min', '$ Min', '110px'));
-      row.appendChild(makePriceInput('prof-svc-amount-max', '$ Max', '110px'));
-      row.classList.add('profile-svc-row-range');
-    } else {
-      row.classList.remove('profile-svc-row-range');
-    }
-  },
-
-  // Format a numeric value as a thousand-separated string for display in
-  // a price input. Returns '' for null/undefined/0/NaN so empty inputs
-  // stay visually empty rather than showing "0". (BP UX Spec v1.0 §4.)
-  _formatPrice: function(num) {
-    if (num == null || num === '' || isNaN(num)) return '';
-    var n = Number(num);
-    if (n === 0) return '';
-    return n.toLocaleString('en-AU', { maximumFractionDigits: 2 });
-  },
-
-  // Inverse of _formatPrice — strip any non-numeric characters (commas,
-  // currency symbols, spaces) and parse to a Number. Returns null for
-  // empty/invalid input so "no value" round-trips cleanly.
-  _unformatPrice: function(str) {
-    if (str == null || str === '') return null;
-    var clean = String(str).replace(/[^\d.]/g, '');
-    if (!clean) return null;
-    var n = parseFloat(clean);
-    return isNaN(n) ? null : n;
-  },
-
-  _bindPriceInputBehaviour: function(container) {
-    if (!container || container.dataset.priceBehaviourBound) return;
-    container.dataset.priceBehaviourBound = '1';
-    var self = this;
-    var sel = '.prof-svc-amount-val, .prof-svc-amount-min, .prof-svc-amount-max';
-    container.addEventListener('focusin', function(e) {
-      var input = e.target;
-      if (!input.matches || !input.matches(sel)) return;
-      // Strip formatting and clear if zero so user can type immediately.
-      var raw = self._unformatPrice(input.value);
-      input.value = (raw == null || raw === 0) ? '' : String(raw);
-    });
-    container.addEventListener('focusout', function(e) {
-      var input = e.target;
-      if (!input.matches || !input.matches(sel)) return;
-      input.value = self._formatPrice(self._unformatPrice(input.value));
-    });
-  },
-
-  _collectMultiSelectData: function(prefix) {
-    var self = this;
-    var pricingContainer = document.getElementById('prof-' + prefix + '-pricing');
-    if (!pricingContainer) return [];
-    return Array.from(pricingContainer.querySelectorAll('[data-svc-pricing]')).map(function(row) {
-      var name = row.getAttribute('data-svc-pricing');
-      var isCustom = row.getAttribute('data-custom') === '1';
-      var pTypeBtn = row.querySelector('.prof-svc-ptype');
-      var pType = pTypeBtn ? pTypeBtn.getAttribute('data-value') : '';
-      var amountVal = row.querySelector('.prof-svc-amount-val');
-      var amountMin = row.querySelector('.prof-svc-amount-min');
-      var amountMax = row.querySelector('.prof-svc-amount-max');
-      return {
-        name: name,
-        pricing_type: pType,
-        amount: amountVal ? self._unformatPrice(amountVal.value) : null,
-        amount_min: amountMin ? self._unformatPrice(amountMin.value) : null,
-        amount_max: amountMax ? self._unformatPrice(amountMax.value) : null,
-        is_custom: isCustom
-      };
-    });
-  },
-
-  _saveMultiSelect: function(prefix, profileKey, saveBtnId, opts) {
-    var self = this;
-    var autoSave = !!(opts && opts.autoSave);
-    var btn = document.getElementById(saveBtnId);
-    window.handleSave(btn, async function() {
-      var data = self._collectMultiSelectData(prefix);
-      // Skip validation on auto-save — see comment in _saveIdentity.
-      if (!autoSave) {
-        var panelId = prefix === 'svc' ? 'prof-panel-services' : 'prof-panel-products';
-        var groupEl = document.getElementById('prof-' + prefix + '-pills');
-        var label = prefix === 'svc' ? 'Services (at least one)' : 'Products (at least one)';
-        self._validateMandatory(panelId, [
-          { test: function() { return Array.isArray(data) && data.length > 0; }, el: groupEl, label: label }
-        ]);
-      }
-      var updates = {};
-      updates[profileKey] = data;
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
-      Object.assign(self._profile, updates);
-      if (autoSave) self._showSaved(prefix === 'svc' ? 'services' : 'products');
-    }, document.getElementById('prof-save-msg'));
-  },
-
-  // Credentials
-
-  _renderCredentials: function() {
-    var industries = this._va('industry');
-    if (typeof this._v('industry') === 'string' && this._v('industry')) {
-      industries = [this._v('industry')];
-    }
-    var licenceOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedLicences(industries) : [];
-    var selectedLicences = this._va('licences');
-    // licenceOpts is now an array of { name, items } groups; flatten to a
-    // membership set so we can detect saved values that don't match any
-    // standard chip and render them as custom pills instead.
-    var standardLicenceSet = {};
-    licenceOpts.forEach(function(g) { (g.items || []).forEach(function(i) { standardLicenceSet[i] = true; }); });
-    var customLicences = selectedLicences.filter(function(l) { return !standardLicenceSet[l]; });
-    var licenceHtml = this._chipGroupWithOther('prof-licences', licenceOpts, selectedLicences, customLicences);
-
-    var paymentOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.paymentMethodOptions : [];
-    var selectedPayments = this._va('payment_methods');
-    var paymentHtml = this._chipGroup('prof-payments', paymentOpts, selectedPayments);
-
-    var responseOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.responseTimeOptions : [];
-    var responseHtml = this._dropdown('prof-response-time', responseOpts, this._v('response_time'));
-
-    var afterHoursOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.afterHoursOptions : [];
-    var ahData = this._vj('after_hours_support', { type: '', hours_text: '' });
-    var ahType = ahData.type || '';
-    var ahText = ahData.hours_text || '';
-    var afterHoursHtml = this._dropdown('prof-after-hours', afterHoursOpts, ahType) +
-      '<input type="text" id="prof-after-hours-text" class="profile-input" value="' + window.escHtml(ahText) + '" placeholder="e.g. Available 6pm\u201310pm weekdays" style="margin-top:8px;' + (ahType === 'Available' ? '' : 'display:none;') + '" />';
-
-    var body = '<div class="profile-fields">' +
-      this._field('Licences &amp; Accreditations <span class="profile-optional">(optional)</span>', licenceHtml) +
-      this._field('Payment Methods Accepted <span class="profile-required">*</span>', paymentHtml) +
-      this._field2('Typical Response Time <span class="profile-required">*</span>', responseHtml) +
-      this._field2('After-Hours Support <span class="profile-required">*</span>', afterHoursHtml) +
-      this._field('Warranty / Guarantee <span class="profile-required">*</span>', this._textarea('prof-warranty', this._v('warranty_info'), 'e.g. 12-month warranty on all workmanship', 3)) +
-      this._field('Complaints Handling <span class="profile-required">*</span>', this._textarea('prof-complaints', this._v('complaints_handling'), 'e.g. All complaints acknowledged within 24 hours, resolved within 5 business days', 3)) +
-    '</div>';
-
-    document.getElementById('prof-panel-credentials').innerHTML = this._card(
-      '\uD83D\uDCDC', '5. Credentials &amp; Support', 'Licences, payment, response times, and support policies', body, 'credentials', 'prof-cred-save'
-    );
-
-    var self = this;
-    var credPanel = document.getElementById('prof-panel-credentials');
-    self._bindChipToggles(credPanel);
-    self._bindPhoneTypeDropdowns(credPanel);
-    self._bindChipAccordion(document.getElementById('prof-licences'));
-    self._bindAutoSave('credentials', credPanel);
-
-    document.getElementById('prof-cred-save').addEventListener('click', function() { self._saveCredentials(); });
-
-    var afterHoursBtn = document.getElementById('prof-after-hours');
-    if (afterHoursBtn) {
-      var observer = new MutationObserver(function() {
-        var val = afterHoursBtn.getAttribute('data-value');
-        var textField = document.getElementById('prof-after-hours-text');
-        if (textField) textField.style.display = val === 'Available' ? '' : 'none';
-        self._scheduleAutoSave('credentials', 500);
-      });
-      observer.observe(afterHoursBtn, { attributes: true, attributeFilter: ['data-value'] });
-    }
-
-    var responseBtn = document.getElementById('prof-response-time');
-    if (responseBtn) {
-      var respObserver = new MutationObserver(function() {
-        self._scheduleAutoSave('credentials', 500);
-      });
-      respObserver.observe(responseBtn, { attributes: true, attributeFilter: ['data-value'] });
-    }
-  },
-
-  _saveCredentials: function(opts) {
-    var self = this;
-    var autoSave = !!(opts && opts.autoSave);
-    var btn = document.getElementById('prof-cred-save');
-    window.handleSave(btn, async function() {
-      var licences = self._getSelectedChips('prof-licences').concat(self._getOtherItems('prof-licences'));
-      var payments = self._getSelectedChips('prof-payments');
-      var paymentsEl = document.getElementById('prof-payments');
-      var responseEl = document.getElementById('prof-response-time');
-      var warrantyEl = document.getElementById('prof-warranty');
-      var complaintsEl = document.getElementById('prof-complaints');
-      var afterHoursEl = document.getElementById('prof-after-hours');
-      var afterHoursType = afterHoursEl.getAttribute('data-value') || '';
-      var afterHoursText = document.getElementById('prof-after-hours-text').value.trim();
-      // Skip validation on auto-save — see comment in _saveIdentity.
-      if (!autoSave) {
-        self._validateMandatory('prof-panel-credentials', [
-          { test: function() { return payments.length > 0; }, el: paymentsEl, label: 'Payment Methods (at least one)' },
-          { test: function() { return (responseEl.getAttribute('data-value') || '').trim() !== ''; }, el: responseEl, label: 'Response Time' },
-          { test: function() { return warrantyEl.value.trim() !== ''; }, el: warrantyEl, label: 'Warranty / Guarantee' },
-          { test: function() { return complaintsEl.value.trim() !== ''; }, el: complaintsEl, label: 'Complaints Handling' },
-          { test: function() { return afterHoursType.trim() !== ''; }, el: afterHoursEl, label: 'After-Hours Support' }
-        ]);
-      }
-      var updates = {
-        licences: licences,
-        payment_methods: payments,
-        response_time: responseEl.getAttribute('data-value') || '',
-        warranty_info: warrantyEl.value.trim(),
-        complaints_handling: complaintsEl.value.trim(),
-        after_hours_support: { type: afterHoursType, hours_text: afterHoursText }
-      };
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
-      Object.assign(self._profile, updates);
-      if (autoSave) self._showSaved('credentials');
-    }, document.getElementById('prof-save-msg'));
-  },
-
+  // ── Credentials panel — _renderCredentials / _saveCredentials live in
+  //    cl-profile-products.js (kept alongside the other smaller panels
+  //    so cl-profile.js stays under the 60K platform ceiling).
+
+  // ── Marketing panel wrapper ──────────────────────────────────────
+  // Hosts the BP_MARKETING wizard and the Additional Theme Statements
+  // helper. The wizard itself lives in cl-profile-marketing.js.
   _renderMarketing: function() {
     var body =
       '<div id="prof-mkt-guided"></div>' +
@@ -2263,14 +940,14 @@ window.CL_PROFILE = {
         '<button class="btn-add-connection" data-action="add-theme-statement" type="button">+ Add Statement</button>' +
       '</div>';
     document.getElementById('prof-panel-marketing').innerHTML = this._card(
-      '\uD83C\uDFA8', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'marketing', 'prof-mkt-save'
+      '🎨', '6. Marketing Theme', 'Answer a few questions and the AI will build your marketing theme', body, 'marketing', 'prof-mkt-save'
     );
     if (window.BP_MARKETING) {
       window.BP_MARKETING.init(this._supabase, this._userId, this._profile, this);
     }
     var statements = this._getAdditionalStatements();
     this._renderThemeStatementRows(statements);
-    // Delegated autosave on theme statement inputs \u2014 covers both
+    // Delegated autosave on theme statement inputs — covers both
     // existing rows and any added later via _addThemeStatement
     // without needing per-input rebinds.
     var self = this;
@@ -2282,7 +959,7 @@ window.CL_PROFILE = {
     }
   },
 
-  // Additional Theme Statements \u2014 stored inside marketing_theme_extra
+  // Additional Theme Statements — stored inside marketing_theme_extra
   // alongside the wizard answers so a single column persists both.
   _getAdditionalStatements: function() {
     var mte = this._profile.marketing_theme_extra;
@@ -2362,4 +1039,4 @@ window.CL_PROFILE = {
       console.error('[CL Profile] marketing save error:', err.message || err);
     });
   }
-};
+});
