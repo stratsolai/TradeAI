@@ -226,11 +226,8 @@
     .bi-tile-collapsed .bi-advisory-section { display: none !important; }
     .bi-tile-collapsed .bi-history-panel { display: none !important; }
 
-    .bi-alert-source-btn {
-      margin-left: auto;
-      padding: 4px 10px;
-      font-size: var(--badge-font-size);
-    }
+    /* .bi-alert-source-btn removed — sources now live inside the
+       expanded .bi-alert-detail block, no per-source toggle. */
 
     .bi-alert-sources-panel {
       padding-top: 10px;
@@ -343,38 +340,8 @@
       display: block;
     }
 
-    /* 2x2 grid of action bullets — built from the suggestion paragraph,
-       sentences split. Replaces the orange/blue suggestion paragraph
-       and inherits its emphasised treatment so the action items still
-       read as "this is what to do". Stays visible regardless of expand
-       state; the detail paragraph (the why) is the expand-only piece. */
-    .bi-alert-summary-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px 16px;
-      margin: 10px 0 14px 0;
-      padding: 0;
-      list-style: none;
-    }
-    .bi-alert-summary-grid li {
-      font-size: var(--label-font-size);
-      color: var(--blue);
-      font-weight: var(--font-weight-semibold);
-      line-height: var(--note-line-height);
-      position: relative;
-      padding-left: 14px;
-    }
-    .bi-alert-summary-grid li::before {
-      content: "\2022";
-      position: absolute;
-      left: 0;
-      color: var(--blue);
-      font-weight: bold;
-    }
-
-    @media (max-width: 600px) {
-      .bi-alert-summary-grid { grid-template-columns: 1fr; }
-    }
+    /* .bi-alert-summary-grid removed — sub-rows show headline only
+       per spec §10.3, no inline suggestion bullets. */
 
     .bi-alert-actions {
       display: flex;

@@ -386,70 +386,50 @@ window.BI_LOGIC = {
     return html;
   },
 
-  _splitTextBullets: function(text) {
-    if (!text) return [];
-    // Split a paragraph on sentence-end punctuation. Falls back to a single
-    // bullet if there are no terminators. Strip the trailing terminator so
-    // bullets read as fragments rather than full sentences. Capped at 4 to
-    // fit the 2x2 grid.
-    var matches = String(text).match(/[^.!?]+[.!?]+/g);
-    var parts = matches || [String(text)];
-    return parts.map(function (s) { return s.trim().replace(/[.!?]+$/, ''); }).filter(Boolean).slice(0, 4);
-  },
-
+  // Spec §10.3 — sub-row inside an expanded category card.
+  // Headline + Add to Plan / Dismiss / Added indicator sit on a
+  // single row; the detail paragraph and sources sit hidden behind
+  // a chevron so the scanner view stays clean while the owner can
+  // still drill in for context.
   _renderAlertCard: function(item) {
     var d = item.insight_data || {};
     var severity = d.severity || 'blue';
     var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
     var sources = Array.isArray(d.sources) ? d.sources : [];
-    var sourcesId = 'bi-alert-sources-' + escHtml(item.id);
     var detailText = d.detail || '';
-    var suggestionText = d.suggestion || '';
-    var bullets = this._splitTextBullets(suggestionText);
+    var hasDetail = !!detailText || sources.length > 0;
     var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
     html += '<div class="bi-alert-header">';
     html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
     html += '<span class="bi-alert-headline">' + escHtml(d.headline || 'Alert') + '</span>';
-    html += '<button class="bi-alert-expand-btn" data-insight-id="' + escHtml(item.id) + '">&#9660;</button>';
-    html += '</div>';
-    if (bullets.length > 0) {
-      html += '<ul class="bi-alert-summary-grid">';
-      for (var b = 0; b < bullets.length; b++) {
-        html += '<li>' + escHtml(bullets[b]) + '</li>';
-      }
-      html += '</ul>';
+    if (hasDetail) {
+      html += '<button class="bi-alert-expand-btn" data-insight-id="' + escHtml(item.id) + '" aria-label="Show details">&#9660;</button>';
     }
-    html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(detailText) + '</div>';
-    html += '<div class="bi-alert-actions">';
-    html += '<button class="btn-outline btn-sm bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Chat with AI</button>';
-    // SP/OT spec §7.2 — once an insight has been added to the plan
-    // the Add to Plan button is replaced with a green "Added" badge,
-    // but the Dismiss path stays available so the owner can clear
-    // the row from BI even after queueing it.
+    html += '<span class="bi-alert-actions">';
     if (item.added_to_sp) {
       html += '<span class="badge badge-green">Added</span>';
     } else {
       html += '<button class="btn-outline btn-sm bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Add to Plan</button>';
     }
     html += '<button class="btn-dismiss bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
-    if (sources.length > 0) {
-      html += '<button class="source-btn bi-alert-source-btn" type="button" data-target="' + sourcesId + '">&#9654; Source (' + sources.length + ')</button>';
-    }
+    html += '</span>';
     html += '</div>';
-    if (sources.length > 0) {
-      html += '<div class="bi-alert-sources-panel" id="' + sourcesId + '" hidden>';
-      for (var s = 0; s < sources.length; s++) {
-        var src = sources[s] || {};
-        var label = src.label || 'Source';
-        var detail = src.detail || '';
-        var url = src.url || '';
-        html += '<div class="bi-alert-source-row">';
-        if (url) {
-          html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="bi-alert-source-link">' + escHtml(label) + '</a>';
-        } else {
-          html += '<span class="bi-alert-source-name">' + escHtml(label) + '</span>';
+    if (hasDetail) {
+      html += '<div class="bi-alert-detail">';
+      if (detailText) html += '<p>' + escHtml(detailText) + '</p>';
+      if (sources.length > 0) {
+        html += '<div class="bi-alert-sources-panel">';
+        for (var s = 0; s < sources.length; s++) {
+          var src = sources[s] || {};
+          var label = src.label || 'Source';
+          var sd = src.detail || '';
+          var url = src.url || '';
+          html += '<div class="bi-alert-source-row">';
+          if (url) html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="bi-alert-source-link">' + escHtml(label) + '</a>';
+          else html += '<span class="bi-alert-source-name">' + escHtml(label) + '</span>';
+          if (sd) html += ' <span class="bi-alert-source-detail">— ' + escHtml(sd) + '</span>';
+          html += '</div>';
         }
-        if (detail) html += ' <span class="bi-alert-source-detail">— ' + escHtml(detail) + '</span>';
         html += '</div>';
       }
       html += '</div>';
@@ -495,17 +475,9 @@ window.BI_LOGIC = {
     container.querySelectorAll('.bi-act-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._actOnInsight(btn.getAttribute('data-insight-id')); });
     });
-    container.querySelectorAll('.bi-alert-source-btn').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var target = document.getElementById(btn.getAttribute('data-target'));
-        if (!target) return;
-        var isOpen = !target.hidden;
-        target.hidden = isOpen;
-        btn.classList.toggle('open', !isOpen);
-        var count = target.querySelectorAll('.bi-alert-source-row').length;
-        btn.innerHTML = (!isOpen ? '&#9660;' : '&#9654;') + ' Source (' + count + ')';
-      });
-    });
+    // .bi-alert-source-btn handler removed — sources now sit inside
+    // the .bi-alert-detail block that the headline chevron toggles,
+    // so no separate per-source toggle is needed.
     container.querySelectorAll('.bi-dismiss-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { self._dismissInsight(btn.getAttribute('data-insight-id'), btn); });
     });
