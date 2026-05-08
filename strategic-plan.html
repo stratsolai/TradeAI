@@ -512,6 +512,61 @@
       font-style: italic;
     }
 
+    /* Tab 9: BI Generated Items — list of strategic insights queued
+       from the BI dashboard for review. Each card holds a category
+       badge, an optional decision badge (Approved / Held / Rejected),
+       the headline + detail, the source attribution, and the three
+       action buttons. Layout-only — chrome (border, padding) sits on
+       the platform classes (.review-approve-btn, .btn-outline,
+       .btn-dismiss). */
+    .sp-bi-queue-list { display: flex; flex-direction: column; gap: 12px; }
+    .sp-bi-queue-empty {
+      padding: 32px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+    .sp-bi-queue-empty p { margin: 0; }
+    .sp-bi-queue-empty p + p { margin-top: 6px; }
+    .sp-bi-queue-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--card-radius);
+      padding: 14px 16px;
+    }
+    .sp-bi-queue-item-approved { border-left-color: var(--green); }
+    .sp-bi-queue-item-held { border-left-color: var(--orange); }
+    .sp-bi-queue-item-rejected { opacity: 0.55; }
+    .sp-bi-queue-item-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .sp-bi-queue-item-title {
+      flex: 1;
+      min-width: 200px;
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+    }
+    .sp-bi-queue-item-detail {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+    }
+    .sp-bi-queue-item-source {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .sp-bi-queue-item-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
     /* Form selection pills.
        The 6px transparent border reserves space so the chip-group's
        box dimensions stay constant whether or not .sp-from-bi is

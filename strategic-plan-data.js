@@ -242,5 +242,23 @@ window.SP_SECTIONS = [
       { id: "bp-supplier-alts", apiKey: "supplierAlternativesAvailable", valueType: "string", label: "Supplier Alternatives Available", helpText: "If a key supplier failed, how easily could you replace them?", type: "chip-single", group: "supplier-alts-chips", required: false, options: [{ value: "yes-all", label: "Yes for All" },{ value: "most", label: "Most" },{ value: "some", label: "Some" },{ value: "few", label: "Few" },{ value: "none", label: "None" }] },
       { id: "bp-safety-incidents", apiKey: "safetyIncidents12m", valueType: "string", label: "Safety Incidents (12 months)", type: "chip-single", group: "safety-chips", required: false, options: [{ value: "none", label: "None" },{ value: "minor-only", label: "Minor Only" },{ value: "some-recordable", label: "Some Recordable" },{ value: "serious", label: "Serious" }] }
     ]
+  },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // SECTION 9: BI Generated Items (Tab 9) — NEW per spec §8.7
+  // Special section — not a form. Custom rendering handled in
+  // strategic-plan-logic.js renderSections via the type marker.
+  // Lists strategic insights queued from BI (added_to_sp = true,
+  // is_tactical = false, not dismissed). Each has Approve / Hold /
+  // Reject actions stored on bi_insights.sp_queue_action.
+  // ─────────────────────────────────────────────────────────────────────
+  {
+    id: 8,
+    icon: "\u{1F4A1}",
+    title: "9. BI Generated Items",
+    chipLabel: "BI Items",
+    subtitle: "Strategic items queued from Business Intelligence. Approve to include in your plan, Hold to keep for next time, or Reject to dismiss.",
+    type: "bi-items",
+    fields: []
   }
 ];

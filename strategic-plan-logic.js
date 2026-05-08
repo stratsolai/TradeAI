@@ -125,13 +125,24 @@ Object.assign(window.SP_LOGIC, {
     if (!container) return;
 
     container.innerHTML = sections.map(function(s) {
-      // Section 3 (Financial Position) holds its render until the
-      // BI fetch returns — see renderSection3Body. Renders here as
-      // a loading placeholder so the section card / nav exists at
-      // init but the BI-prefilled fields don't render-then-flicker.
-      var fieldsHtml = (s.id === self._SECTION_3_ID && !self._section3Rendered)
-        ? '<div class="sp-section-loading">Loading from your accounting system…</div>'
-        : s.fields.map(function(field) { return self.renderField(field); }).join('');
+      // Three render branches per section:
+      // - bi-items (Tab 9, spec §8.7): a placeholder list that
+      //   loadBIQueueItems fills async with the queued strategic
+      //   insights. Not a form — has no fields.
+      // - Financial Position: holds its field render until the BI
+      //   fetch returns (see renderSection3Body) so prefilled fields
+      //   don't render-then-flicker.
+      // - Everything else: render fields the standard way.
+      var fieldsHtml;
+      if (s.type === 'bi-items') {
+        fieldsHtml = '<div id="sp-bi-queue-list" class="sp-bi-queue-list">' +
+          '<div class="sp-section-loading">Loading queued items…</div>' +
+        '</div>';
+      } else if (s.id === self._SECTION_3_ID && !self._section3Rendered) {
+        fieldsHtml = '<div class="sp-section-loading">Loading from your accounting system…</div>';
+      } else {
+        fieldsHtml = s.fields.map(function(field) { return self.renderField(field); }).join('');
+      }
 
       var infoBox = s.infoBox
         ? '<div class="sp-section-info"><span class="info-note"><span class="info-note-icon">&#x1F4A1;</span>' + escHtml(s.infoBox) + '</span></div>'
@@ -966,6 +977,10 @@ Object.assign(window.SP_LOGIC, {
     if (self._cachedBIData) self.prefillFromBIContext(self._cachedBIData);
   },
 
+  // BI Generated Items (Tab 9, spec §8.7) — methods live in
+  // strategic-plan-modules.js: loadBIQueueItems, _renderBIQueueEmpty,
+  // _renderBIQueueItem, bindBIQueueEvents, _setBIQueueAction.
+
   prefillFromPreviousPlan: function(d, sectionFilter) {
     var self = this;
     if (!d) return;
@@ -1323,7 +1338,9 @@ Object.assign(window.SP_LOGIC, {
     self.bindOpsEvents();
     self.bindDocEvents();
     self.bindModalEvents();
+    self.bindBIQueueEvents();
     self.loadProfile();
+    self.loadBIQueueItems();
 
     self.checkPlanExists().then(function(exists) {
       self.updateTabStates();

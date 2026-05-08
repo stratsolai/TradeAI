@@ -923,6 +923,128 @@ Object.assign(window.SP_LOGIC, {
           self.goToSection(0);
         }
       });
+  },
+
+  // ── BI Generated Items (Tab 9) — spec §8.7 ───────────────────────
+  // Loads strategic insights queued from BI (Add to Plan in the
+  // dashboard set added_to_sp = true on bi_insights, with
+  // is_tactical = false meaning the item needs strategic decision
+  // rather than an immediate task). Renders one card per item with
+  // Approve / Hold / Reject buttons. The action persists on
+  // bi_insights.sp_queue_action for the SP generator to read in a
+  // later phase.
+  loadBIQueueItems: function() {
+    var self = this;
+    var listEl = document.getElementById('sp-bi-queue-list');
+    if (!listEl) return;
+    if (!self._supabase || !self._userId) {
+      listEl.innerHTML = self._renderBIQueueEmpty();
+      return;
+    }
+    self._supabase
+      .from('bi_insights')
+      .select('id, insight_data, sp_queue_action, added_to_sp_at')
+      .eq('user_id', self._userId)
+      .eq('added_to_sp', true)
+      .eq('is_tactical', false)
+      .eq('is_dismissed', false)
+      .order('added_to_sp_at', { ascending: false })
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP] BI queue load error:', res.error.message || res.error);
+          listEl.innerHTML = self._renderBIQueueEmpty();
+          return;
+        }
+        var items = res.data || [];
+        if (items.length === 0) {
+          listEl.innerHTML = self._renderBIQueueEmpty();
+          return;
+        }
+        listEl.innerHTML = items.map(function(item) { return self._renderBIQueueItem(item); }).join('');
+      });
+  },
+
+  _renderBIQueueEmpty: function() {
+    return '<div class="sp-bi-queue-empty">' +
+      '<p>No items queued from Business Intelligence.</p>' +
+      '<p class="sp-label-hint">Strategic insights you add from the BI dashboard will appear here for review.</p>' +
+      '</div>';
+  },
+
+  _renderBIQueueItem: function(item) {
+    var d = item.insight_data || {};
+    var category = (d.category || '').toLowerCase();
+    var categoryLabels = {
+      financial: 'Financial', products: 'Products & Services',
+      customers: 'Customers & Suppliers', operations: 'Operations & Capacity',
+      market: 'Market & Competition', growth: 'Growth & Transformation',
+      risk: 'Risk & Resilience'
+    };
+    var catLabel = categoryLabels[category] || 'Other';
+    var action = item.sp_queue_action || '';
+    var actionBadge = '';
+    if (action === 'approved') actionBadge = '<span class="badge badge-green">Approved</span>';
+    else if (action === 'held') actionBadge = '<span class="badge badge-orange">Held</span>';
+    else if (action === 'rejected') actionBadge = '<span class="badge badge-red">Rejected</span>';
+
+    var headline = d.headline || 'Strategic suggestion';
+    var detail = d.detail || '';
+    return '<div class="sp-bi-queue-item' + (action ? ' sp-bi-queue-item-' + action : '') + '" data-id="' + escHtml(item.id) + '">' +
+      '<div class="sp-bi-queue-item-head">' +
+        '<span class="sp-bi-queue-item-title">' + escHtml(headline) + '</span>' +
+        '<span class="badge badge-blue">' + escHtml(catLabel) + '</span>' +
+        actionBadge +
+      '</div>' +
+      (detail ? '<div class="sp-bi-queue-item-detail">' + escHtml(detail) + '</div>' : '') +
+      '<div class="sp-bi-queue-item-source">From: BI Risks &amp; Opportunities</div>' +
+      '<div class="sp-bi-queue-item-actions">' +
+        '<button type="button" class="review-approve-btn btn-sm" data-action="approve">Approve</button>' +
+        '<button type="button" class="btn-outline btn-sm" data-action="hold">Hold</button>' +
+        '<button type="button" class="btn-dismiss btn-sm" data-action="reject">Reject</button>' +
+      '</div>' +
+    '</div>';
+  },
+
+  bindBIQueueEvents: function() {
+    var self = this;
+    var listEl = document.getElementById('sp-bi-queue-list');
+    if (!listEl || listEl.dataset.queueBound === '1') return;
+    listEl.dataset.queueBound = '1';
+    listEl.addEventListener('click', function(e) {
+      var btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      var item = btn.closest('.sp-bi-queue-item');
+      if (!item) return;
+      var insightId = item.getAttribute('data-id');
+      var action = btn.getAttribute('data-action');
+      self._setBIQueueAction(insightId, action);
+    });
+  },
+
+  _setBIQueueAction: function(insightId, action) {
+    var self = this;
+    if (!self._supabase || !self._userId || !insightId) return;
+    var actionMap = { approve: 'approved', hold: 'held', reject: 'rejected' };
+    var queueAction = actionMap[action];
+    if (!queueAction) return;
+    var nowIso = new Date().toISOString();
+    var updates = { sp_queue_action: queueAction, updated_at: nowIso };
+    // Reject also dismisses the insight from the BI dashboard so the
+    // owner doesn't see it on the next BI page load.
+    if (queueAction === 'rejected') updates.is_dismissed = true;
+    self._supabase
+      .from('bi_insights')
+      .update(updates)
+      .eq('id', insightId)
+      .eq('user_id', self._userId)
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP] BI queue update error:', res.error.message || res.error);
+          self._showError('Could not save your decision. Please try again.');
+          return;
+        }
+        self.loadBIQueueItems();
+      });
   }
 
 });
