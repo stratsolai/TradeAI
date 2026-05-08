@@ -63,6 +63,190 @@ Object.assign(window.SP_LOGIC, {
     if (categoriesEl) categoriesEl.innerHTML = self.renderReviewCategories(content);
     self.bindReviewHeaderEvents();
     self.bindReviewCategoryEvents();
+    self.loadReviewBIBanner();
+  },
+
+  // ── BI Suggestions banner — spec §6.2 ────────────────────────────
+  // Reads bi_insights for strategic queued items the owner hasn't
+  // decided on yet (added_to_sp = true, is_tactical = false,
+  // sp_queue_action IS NULL, not dismissed). When the count is non-
+  // zero, a banner mounts above the Executive Summary inviting the
+  // owner to Review. The Review modal lists each item with Approve
+  // / Hold / Reject; Approve appends a placeholder Goal the owner
+  // can refine via Discuss with AI before approving the plan.
+  loadReviewBIBanner: function() {
+    var self = this;
+    var bannerEl = document.getElementById('sp-review-bi-banner');
+    if (!bannerEl || !self._supabase || !self._userId) return;
+    self._supabase
+      .from('bi_insights')
+      .select('id, insight_data, sp_queue_action, added_to_sp_at')
+      .eq('user_id', self._userId)
+      .eq('added_to_sp', true)
+      .eq('is_tactical', false)
+      .eq('is_dismissed', false)
+      .is('sp_queue_action', null)
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP Review] BI banner load error:', res.error.message || res.error);
+          bannerEl.style.display = 'none';
+          return;
+        }
+        var items = res.data || [];
+        self._biBannerItems = items;
+        if (items.length === 0) {
+          bannerEl.style.display = 'none';
+          bannerEl.innerHTML = '';
+          return;
+        }
+        var label = items.length + ' new item' + (items.length === 1 ? '' : 's') + ' suggested from Business Intelligence';
+        bannerEl.innerHTML =
+          '<span class="sp-review-bi-banner-text">' + escHtml(label) + '</span>' +
+          '<button type="button" class="btn-outline btn-sm" id="sp-review-bi-banner-review">Review</button>';
+        bannerEl.style.display = 'flex';
+        var btn = document.getElementById('sp-review-bi-banner-review');
+        if (btn) btn.addEventListener('click', function() { self._openReviewBIModal(); });
+      });
+  },
+
+  _openReviewBIModal: function() {
+    var self = this;
+    var modal = document.getElementById('sp-review-bi-modal');
+    var body = document.getElementById('sp-review-bi-modal-body');
+    if (!modal || !body) return;
+    body.innerHTML = self._renderReviewBIList();
+    modal.classList.add('open');
+    self._bindReviewBIModalEvents();
+  },
+
+  _closeReviewBIModal: function() {
+    var modal = document.getElementById('sp-review-bi-modal');
+    if (modal) modal.classList.remove('open');
+  },
+
+  _renderReviewBIList: function() {
+    var self = this;
+    var items = self._biBannerItems || [];
+    if (items.length === 0) {
+      return '<div class="sp-review-empty">No queued items.</div>';
+    }
+    var labels = self._CHAT_CATEGORY_LABELS || {};
+    return '<div class="sp-review-bi-list">' + items.map(function(item) {
+      var d = item.insight_data || {};
+      var category = (d.category || '').toLowerCase();
+      var catLabel = labels[category] || 'Other';
+      var headline = d.headline || 'Strategic suggestion';
+      var detail = d.detail || '';
+      var action = item.sp_queue_action || '';
+      var actionCls = action ? ' sp-review-bi-' + action : '';
+      var actionBadge = '';
+      if (action === 'approved') actionBadge = '<span class="badge badge-green">Approved</span>';
+      else if (action === 'held') actionBadge = '<span class="badge badge-orange">Held</span>';
+      return '<div class="sp-review-bi-item' + actionCls + '" data-id="' + escHtml(item.id) + '">' +
+        '<div class="sp-review-bi-item-head">' +
+          '<span class="sp-review-bi-item-title">' + escHtml(headline) + '</span>' +
+          '<span class="badge badge-blue">' + escHtml(catLabel) + '</span>' +
+          actionBadge +
+        '</div>' +
+        (detail ? '<div class="sp-review-bi-item-detail">' + escHtml(detail) + '</div>' : '') +
+        '<div class="sp-review-bi-item-source">From: BI Risks &amp; Opportunities</div>' +
+        '<div class="sp-review-bi-item-actions">' +
+          '<button type="button" class="review-approve-btn btn-sm" data-action="approve">Approve</button>' +
+          '<button type="button" class="btn-outline btn-sm" data-action="hold">Hold</button>' +
+          '<button type="button" class="btn-dismiss btn-sm" data-action="reject">Reject</button>' +
+        '</div>' +
+      '</div>';
+    }).join('') + '</div>';
+  },
+
+  _bindReviewBIModalEvents: function() {
+    var self = this;
+    var modal = document.getElementById('sp-review-bi-modal');
+    var closeBtn = document.getElementById('sp-review-bi-modal-close');
+    var body = document.getElementById('sp-review-bi-modal-body');
+    if (modal && !modal.dataset.bound) {
+      modal.dataset.bound = '1';
+      modal.addEventListener('click', function(e) { if (e.target === modal) self._closeReviewBIModal(); });
+    }
+    if (closeBtn && !closeBtn.dataset.bound) {
+      closeBtn.dataset.bound = '1';
+      closeBtn.addEventListener('click', function() { self._closeReviewBIModal(); });
+    }
+    if (body && !body.dataset.bound) {
+      body.dataset.bound = '1';
+      body.addEventListener('click', function(e) {
+        var btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        var item = btn.closest('.sp-review-bi-item');
+        if (!item) return;
+        self._setReviewBIAction(item.getAttribute('data-id'), btn.getAttribute('data-action'));
+      });
+    }
+  },
+
+  _setReviewBIAction: function(insightId, action) {
+    var self = this;
+    if (!self._supabase || !self._userId || !insightId) return;
+    var actionMap = { approve: 'approved', hold: 'held', reject: 'rejected' };
+    var queueAction = actionMap[action];
+    if (!queueAction) return;
+    var nowIso = new Date().toISOString();
+    var updates = { sp_queue_action: queueAction, updated_at: nowIso };
+    if (queueAction === 'rejected') updates.is_dismissed = true;
+
+    // For Approve, append a placeholder Goal to the draft plan so
+    // the owner can refine it via Discuss with AI before approving.
+    // The placeholder pulls headline / detail / category from the
+    // insight and seeds a single suggestion task.
+    if (queueAction === 'approved' && self._pendingPlanData) {
+      var insight = (self._biBannerItems || []).find(function(i) { return i.id === insightId; });
+      if (insight) {
+        var d = insight.insight_data || {};
+        var category = (d.category || 'risk').toLowerCase();
+        if (!Array.isArray(self._pendingPlanData.goals)) self._pendingPlanData.goals = [];
+        self._pendingPlanData.goals.push({
+          category: category,
+          title: (d.headline || 'BI suggestion').substring(0, 60),
+          description: (d.detail || d.suggestion || '').substring(0, 240),
+          tasks: d.suggestion ? [{
+            title: d.suggestion.substring(0, 80),
+            description: d.detail || '',
+            dueRelative: 'Month 1',
+            priority: d.severity === 'red' ? 'High' : d.severity === 'green' ? 'Low' : 'Medium',
+            owner: 'Owner'
+          }] : []
+        });
+        self._reviewSavePlanData();
+      }
+    }
+
+    self._supabase
+      .from('bi_insights')
+      .update(updates)
+      .eq('id', insightId)
+      .eq('user_id', self._userId)
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP Review] BI action error:', res.error.message || res.error);
+          self._showError('Could not save your decision. Please try again.');
+          return;
+        }
+        // Rebuild the list-in-memory and the UI.
+        var items = self._biBannerItems || [];
+        var idx = items.findIndex(function(i) { return i.id === insightId; });
+        if (idx !== -1) {
+          items[idx].sp_queue_action = queueAction;
+          if (queueAction === 'rejected') items[idx].is_dismissed = true;
+        }
+        self._biBannerItems = items;
+        // Re-render the modal body with the updated states.
+        var body = document.getElementById('sp-review-bi-modal-body');
+        if (body) body.innerHTML = self._renderReviewBIList();
+        // Refresh the banner count and re-render category cards if
+        // we just appended a Goal.
+        self.loadReviewBIBanner();
+        if (queueAction === 'approved') self._reviewRerenderCategories();
+      });
   },
 
   // Category accordions — spec §6.5. One .expand-tile per category

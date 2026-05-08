@@ -512,13 +512,7 @@
       font-style: italic;
     }
 
-    /* ── Spec §6 Review screen ─────────────────────────────────
-       Layout for the pending_approval Strategic Plan view that
-       sits on the Strategic Plan tab between Create and Active
-       states. Header (editable plan name, DRAFT badge, action
-       buttons), Executive Summary, SWOT 4-quadrant grid, then the
-       category accordions / Goal cards / Task rows that land in
-       later commits. */
+    /* ── Spec §6 Review screen layout ── */
     .sp-review-header { margin-bottom: var(--card-padding); }
     .sp-review-header-row {
       display: flex;
@@ -632,12 +626,7 @@
       .sp-review-swot-grid { grid-template-columns: 1fr; }
     }
 
-    /* Category accordion + Goal cards + Task rows — spec §6.5 to
-       §6.7. Each category is a platform .expand-tile (left border
-       blue by default; the category icon and count badge come from
-       the primitive). Inside the content sits the AI-generated
-       category summary, a list of Goal cards, and an Add Goal
-       button. */
+    /* Category / Goal / Task — spec §6.5–§6.7. */
     .sp-review-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: var(--card-padding); }
     .sp-review-cat-summary {
       font-size: var(--btn-font-size);
@@ -660,9 +649,7 @@
       font-style: italic;
     }
 
-    /* Goal card — read-only title + description, action buttons,
-       nested task list, Add Task. Slightly lighter than the main
-       category tile so the hierarchy reads. */
+    /* Goal card — read-only title + description; nested tasks. */
     .sp-review-goal {
       background: var(--bg-subtle);
       border: 1px solid var(--border);
@@ -697,10 +684,7 @@
     }
     .sp-review-tasks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 
-    /* Task row — inline-editable title / description / due / prio /
-       owner. Title and description are contenteditable spans; due
-       and priority use the platform .lookback-dropdown trigger. The
-       row1 line holds metadata, row2 the description. */
+    /* Task row — inline-editable title / desc / due / prio / owner. */
     .sp-review-task {
       background: var(--white);
       border: 1px solid var(--border);
@@ -775,11 +759,58 @@
     .sp-review-add-goal,
     .sp-review-add-task-btn { margin-top: 4px; }
 
-    /* AI chat panel — spec §6.8 / §6.9. Uses the platform
-       .slide-panel.right.wide primitive (staxai-auth.css §25); the
-       rules below are SP-specific layout for header / messages /
-       composer / proposal preview. The backdrop is a separate
-       fixed-position overlay so clicking outside dismisses. */
+    /* BI Suggestions banner + review modal — spec §6.2. */
+    .sp-review-bi-banner {
+      display: flex;
+      align-items: center;
+      gap: var(--actions-gap);
+      padding: 12px 16px;
+      background: var(--blue-light);
+      border: 1px solid var(--blue);
+      border-radius: var(--btn-radius);
+      margin-bottom: var(--card-padding);
+      color: var(--text);
+    }
+    .sp-review-bi-banner-text { flex: 1; }
+    .sp-review-bi-modal-inner { max-width: 720px; }
+    .sp-review-bi-list { display: flex; flex-direction: column; gap: 10px; }
+    .sp-review-bi-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--blue);
+      border-radius: var(--btn-radius);
+      padding: 12px 14px;
+    }
+    .sp-review-bi-item-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .sp-review-bi-item-title {
+      flex: 1;
+      min-width: 200px;
+      font-weight: var(--font-weight-semibold);
+      color: var(--text);
+    }
+    .sp-review-bi-item-detail {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: 8px;
+    }
+    .sp-review-bi-item-source {
+      font-size: var(--badge-font-size);
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .sp-review-bi-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .sp-review-bi-item.sp-review-bi-approved { border-left-color: var(--green); opacity: 0.85; }
+    .sp-review-bi-item.sp-review-bi-held     { border-left-color: var(--orange); opacity: 0.85; }
+    .sp-review-bi-item.sp-review-bi-rejected { display: none; }
+
+    /* AI chat panel — spec §6.8 / §6.9. Uses .slide-panel.right.wide. */
     .sp-goal-chat-backdrop {
       display: none;
       position: fixed;
@@ -1418,11 +1449,7 @@
       </div>
     </div>
 
-    <!-- Pending-approval Review screen — spec §6. Visible while a
-         draft plan is awaiting Approve / Discard. Sub-sections fill
-         in subsequent commits: header + Executive Summary + SWOT
-         here, category accordions + Goals + Tasks + AI chat +
-         BI banner in later commits. -->
+    <!-- Pending-approval Review screen — spec §6. -->
     <div id="sp-doc-review" style="display:none">
       <div id="sp-review-header" class="sp-review-header"></div>
       <div id="sp-review-bi-banner" class="sp-review-bi-banner" style="display:none"></div>
@@ -1453,11 +1480,7 @@
     </div>
   </div>
 
-  <!-- AI chat panel — spec §6.8 / §6.9. Slide-in overlay using
-       the platform .slide-panel.right.wide primitive. Opens for
-       Discuss with AI (edit mode) and Add Goal (create mode); the
-       owner converses with Claude until a proposedGoal lands and
-       Accept replaces / appends the goal in plan_data. -->
+  <!-- AI chat panel — spec §6.8 / §6.9. -->
   <aside class="slide-panel right wide closed" id="sp-goal-chat-panel" aria-label="Discuss goal with AI">
     <div class="sp-goal-chat-head">
       <span class="sp-goal-chat-title" id="sp-goal-chat-title">Discuss with AI</span>
@@ -1473,10 +1496,18 @@
   </aside>
   <div class="sp-goal-chat-backdrop" id="sp-goal-chat-backdrop"></div>
 
-  <!-- Approve / Discard confirmation modals — spec §5.1 step 5
-       and §6.1. Approve activates the pending plan and pushes
-       its tasks into Operational Tasks; Discard deletes the
-       pending plan plus its is_pending action_tracker rows. -->
+  <!-- BI suggestions review modal — spec §6.2. -->
+  <div class="detail-modal-overlay" id="sp-review-bi-modal">
+    <div class="detail-modal sp-review-bi-modal-inner">
+      <div class="detail-modal-header">
+        <span class="detail-modal-title">BI suggestions for this plan</span>
+        <button type="button" class="detail-modal-close" id="sp-review-bi-modal-close" aria-label="Close">×</button>
+      </div>
+      <div class="detail-modal-body" id="sp-review-bi-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Approve / Discard confirmation modals — spec §5.1 step 5 / §6.1. -->
   <div class="perm-modal-overlay" id="sp-review-approve-modal">
     <div class="perm-modal">
       <div class="perm-modal-title">Approve this plan?</div>
