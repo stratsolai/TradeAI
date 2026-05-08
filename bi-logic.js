@@ -397,7 +397,15 @@ window.BI_LOGIC = {
     html += '<div class="bi-alert-detail" id="bi-alert-detail-' + escHtml(item.id) + '">' + escHtml(detailText) + '</div>';
     html += '<div class="bi-alert-actions">';
     html += '<button class="btn-outline btn-sm bi-ask-btn" data-insight-id="' + escHtml(item.id) + '" data-module="alerts">Chat with AI</button>';
-    html += '<button class="btn-outline btn-sm bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Add to Strategic Plan</button>';
+    // SP/OT spec §7.2 — once an insight has been added to the plan
+    // the Add to Plan button is replaced with a green "Added" badge,
+    // but the Dismiss path stays available so the owner can clear
+    // the row from BI even after queueing it.
+    if (item.added_to_sp) {
+      html += '<span class="badge badge-green">Added</span>';
+    } else {
+      html += '<button class="btn-outline btn-sm bi-act-btn" data-insight-id="' + escHtml(item.id) + '">Add to Plan</button>';
+    }
     html += '<button class="btn-dismiss bi-dismiss-btn" data-insight-id="' + escHtml(item.id) + '">Dismiss</button>';
     if (sources.length > 0) {
       html += '<button class="source-btn bi-alert-source-btn" type="button" data-target="' + sourcesId + '">&#9654; Source (' + sources.length + ')</button>';
@@ -883,9 +891,15 @@ window.BI_LOGIC = {
       var json = await resp.json();
 
       if (json.success) {
-        if (actBtn) {
-          actBtn.textContent = 'Added';
-          actBtn.disabled = true;
+        // Replace the Add to Plan button with the platform "Added"
+        // badge so the row stays visible (per spec §7.2) but reads as
+        // already actioned. The badge survives a page reload because
+        // bi-insights.added_to_sp is now set on the row.
+        if (actBtn && actBtn.parentNode) {
+          var badge = document.createElement('span');
+          badge.className = 'badge badge-green';
+          badge.textContent = 'Added';
+          actBtn.parentNode.replaceChild(badge, actBtn);
         }
 
         if (json.spRewriteRequired && json.contradiction) {
@@ -895,15 +909,22 @@ window.BI_LOGIC = {
           document.body.appendChild(rewriteNotification);
           setTimeout(function() { if (rewriteNotification.parentNode) rewriteNotification.parentNode.removeChild(rewriteNotification); }, 10000);
         } else {
+          // SP/OT spec §7.2 — different toast for tactical vs
+          // strategic so the owner knows where it landed. Tactical
+          // becomes an Operational Task immediately; strategic queues
+          // for the next plan update without creating tasks yet.
+          var toastText = (json.classification === 'strategic')
+            ? 'Added to Strategic Plan suggestions'
+            : 'Task added to Operational Tasks';
           var notification = document.createElement('div');
           notification.className = 'bi-toast';
-          notification.innerHTML = 'Added to your Operational Plan (' + (json.tasksCreated || 0) + ' tasks) <a href="/strategic-plan.html">View</a>';
+          notification.innerHTML = escHtml(toastText) + ' <a href="/strategic-plan.html">View</a>';
           document.body.appendChild(notification);
           setTimeout(function() { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 5000);
         }
       } else {
-        if (actBtn) { actBtn.textContent = 'Act on this'; actBtn.disabled = false; }
-        self._showError(json.error || 'Could not add to Operational Plan.');
+        if (actBtn) { actBtn.textContent = 'Add to Plan'; actBtn.disabled = false; }
+        self._showError(json.error || 'Could not add to plan.');
       }
     } catch (err) {
       console.error('[BI] Act error:', err.message || err);

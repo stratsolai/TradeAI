@@ -1,14 +1,18 @@
-// api/bi-act.js — BI Dashboard "Act on this" handler
-// Records decision in bi_decisions, checks for SP contradictions,
-// generates sub-tasks via Claude, creates hierarchical initiatives
-// in action_tracker. Returns contradiction info for SP rewrite flow.
+// api/bi-act.js — BI Dashboard "Add to Plan" handler.
+// Per SP/OT Rebuild Spec §7.2 the behaviour now splits on the
+// is_tactical flag set during BI generation:
+//   - tactical → create a single Operational Task immediately under
+//     the most relevant existing Goal (sp_section heuristic match).
+//   - strategic → mark the insight added_to_sp so it joins the next
+//     plan update's BI suggestions; do not create tasks yet.
+// Both paths still record the decision in bi_decisions, check the
+// stored Strategic Plan decisions for contradictions, and return
+// contradiction info for the SP rewrite flow.
 
 import { createClient } from '@supabase/supabase-js';
-import { logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // Decision IDs that can trigger contradictions
 var DECISION_KEYS = {
@@ -81,8 +85,26 @@ export default async function handler(req, res) {
   if (!insightId) return res.status(400).json({ error: 'Missing insightId' });
 
   try {
-    var profileRes = await supabase.from('profiles').select('business_name, industry').eq('id', userId).single();
-    var profile = profileRes.data || {};
+    // Re-fetch the insight from bi_insights so the is_tactical flag and
+    // classification_reason come from the persisted row, not whatever
+    // the browser sent. Falls back to the request's insightData if the
+    // row can't be loaded (legacy callers, race with delete, etc).
+    var insightRowRes = await supabase.from('bi_insights')
+      .select('is_tactical, insight_data, added_to_sp')
+      .eq('id', insightId).eq('user_id', userId).single();
+    var storedInsight = (insightRowRes && insightRowRes.data) || null;
+    var workingData = (storedInsight && storedInsight.insight_data) || insightData || {};
+    var isTactical = !!(storedInsight && storedInsight.is_tactical);
+    var classificationReason = workingData.classification_reason || '';
+
+    // Idempotent — clicking Add to Plan twice should not double-write.
+    if (storedInsight && storedInsight.added_to_sp) {
+      return res.status(200).json({
+        success: true,
+        classification: isTactical ? 'tactical' : 'strategic',
+        alreadyAdded: true
+      });
+    }
 
     var planRes = await supabase.from('strategic_plans')
       .select('id, interview_data')
@@ -90,138 +112,158 @@ export default async function handler(req, res) {
     var planId = (planRes.data) ? planRes.data.id : null;
     var spDecisions = (planRes.data && planRes.data.interview_data) ? planRes.data.interview_data.decisions : null;
 
-    // Step 22-23: Check for contradiction with stored SP decisions
-    var contradiction = detectContradiction(insightData, spDecisions);
+    // Check for contradiction with stored SP decisions. The keyword-
+    // based detection rarely fires for tactical items (their text
+    // describes operational actions, not strategic shifts) but we run
+    // it on both paths for safety.
+    var contradiction = detectContradiction(workingData, spDecisions);
     var isContradiction = !!contradiction;
 
-    var headline = (insightData && (insightData.headline || insightData.text)) || 'BI Recommendation';
-    var detail = (insightData && (insightData.detail || insightData.suggestion)) || '';
+    var nowIso = new Date().toISOString();
 
-    // Determine SP section for the initiative
-    var spSection = 'growth_transformation';
-    var insightText = ((insightData && insightData.insight_type) || '').toLowerCase();
-    if (insightText.indexOf('financial') !== -1 || insightText.indexOf('cash') !== -1) spSection = 'financial_position';
-    else if (insightText.indexOf('customer') !== -1 || insightText.indexOf('market') !== -1) spSection = 'market_competition';
-    else if (insightText.indexOf('operation') !== -1 || insightText.indexOf('capacity') !== -1) spSection = 'operations_capacity';
-    else if (insightText.indexOf('risk') !== -1) spSection = 'risk_resilience';
+    // ── Strategic branch — queue for the next plan update ────────
+    // No tasks created. The owner will see the queued items in the
+    // SP Update Plan flow's BI Generated Items tab (Phase 3+) and
+    // approve, hold, or reject each one.
+    if (!isTactical) {
+      var spUpdateRes = await supabase.from('bi_insights')
+        .update({ added_to_sp: true, added_to_sp_at: nowIso, updated_at: nowIso })
+        .eq('id', insightId).eq('user_id', userId);
+      if (spUpdateRes.error) console.error('[bi-act] bi_insights update error:', spUpdateRes.error);
 
-    // Generate sub-tasks via Claude
-    var prompt = 'Generate 2-5 practical action items for this business recommendation.\n\n';
-    prompt += 'Business: ' + (profile.business_name || 'Unknown') + ' (' + (profile.industry || 'SME') + ')\n';
-    prompt += 'Recommendation: ' + headline + '\n';
-    if (detail) prompt += 'Detail: ' + detail + '\n';
-    prompt += '\nReturn a JSON array of task objects. Each must have:\n';
-    prompt += '- title: short actionable task (under 80 chars)\n';
-    prompt += '- priority: "High", "Medium", or "Low"\n';
-    prompt += '- due_days: number of days from today (7 to 90)\n';
-    prompt += '- notes: one sentence of context (optional)\n';
-    prompt += '\nKeep tasks practical for an Australian small business. Return ONLY the JSON array.';
+      var stratDecRes = await supabase.from('bi_decisions').insert([{
+        user_id: userId,
+        bi_insight_id: insightId,
+        decision: 'act',
+        decision_date: nowIso,
+        sp_incorporated: false,
+        sp_rewrite_triggered: isContradiction,
+        initiative_id: null,
+        created_at: nowIso
+      }]);
+      if (stratDecRes.error) console.error('[bi-act] Strategic decision insert error:', stratDecRes.error);
 
-    var claudeResp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-
-    if (!claudeResp.ok) {
-      console.error('[bi-act] Claude HTTP error:', claudeResp.status);
-      return res.status(502).json({ error: 'AI service unavailable. Please try again.' });
+      return res.status(200).json({
+        success: true,
+        classification: 'strategic',
+        queued: true,
+        contradiction: contradiction,
+        spRewriteRequired: isContradiction,
+        planId: planId
+      });
     }
 
-    var claudeData = await claudeResp.json();
-    logAnthropicUsage({ tool_id: 'bi', user_id: userId, model: 'claude-sonnet-4-6', usage: claudeData && claudeData.usage });
-    if (claudeData.error) {
-      console.error('[bi-act] Claude error:', JSON.stringify(claudeData.error));
-      return res.status(500).json({ error: 'Could not generate tasks.' });
-    }
+    // ── Tactical branch — find the most relevant Goal, attach 1 task ──
+    // Map the unified BI category to its matching SP section. The
+    // section keys mirror the unified 7-category structure (spec §4).
+    var sectionMap = {
+      financial:  'financial_position',
+      products:   'products_services',
+      customers:  'customers_suppliers',
+      operations: 'operations_capacity',
+      market:     'market_competition',
+      growth:     'growth_transformation',
+      risk:       'risk_resilience'
+    };
+    var category = (workingData.category || '').toLowerCase();
+    var preferredSection = sectionMap[category] || 'growth_transformation';
 
-    var raw = claudeData.content && claudeData.content[0] ? claudeData.content[0].text : '[]';
-    var tasks;
-    try {
-      tasks = JSON.parse(raw.replace(/```json|```/g, '').trim());
-    } catch (e) {
-      console.error('[bi-act] Parse error:', e.message);
-      return res.status(500).json({ error: 'Could not parse generated tasks.' });
-    }
-    if (!Array.isArray(tasks)) tasks = [];
+    var initRes = await supabase.from('action_tracker')
+      .select('id, sp_section, initiative_name')
+      .eq('user_id', userId)
+      .is('parent_task_id', null)
+      .order('created_at', { ascending: false });
+    var initiatives = (initRes && initRes.data) || [];
 
-    // Create parent initiative
-    var initName = headline.length > 60 ? headline.substring(0, 57) + '...' : headline;
-    var { data: initRow, error: initErr } = await supabase
-      .from('action_tracker')
-      .insert({
+    var matchingInit = null;
+    var headline = (workingData.headline || workingData.text) || 'BI Recommendation';
+    var taskTitle = (workingData.suggestion || headline).toString();
+    if (taskTitle.length > 200) taskTitle = taskTitle.substring(0, 197) + '...';
+
+    if (initiatives.length === 0) {
+      // No Goals exist yet — create one from the insight so the
+      // tactical task has a parent. The owner's first plan generation
+      // will overwrite this; until then the standalone Goal keeps the
+      // OT tab valid.
+      var initName = headline.length > 60 ? headline.substring(0, 57) + '...' : headline;
+      var seedRes = await supabase.from('action_tracker').insert({
         user_id: userId,
         plan_id: planId,
         items: { title: initName, status: 'pending' },
         initiative_name: initName,
-        sp_section: spSection,
+        sp_section: preferredSection,
         source: 'bi_action',
         bi_insight_id: insightId,
         parent_task_id: null,
         owner: 'Owner',
         is_carried_forward: false
-      })
-      .select('id')
-      .single();
-
-    var initiativeId = (initRow && !initErr) ? initRow.id : null;
-
-    // Create sub-tasks under the initiative
-    if (initiativeId && tasks.length > 0) {
-      var now = new Date();
-      var subRows = tasks.map(function(t) {
-        var dueDate = new Date(now);
-        dueDate.setDate(dueDate.getDate() + (t.due_days || 14));
-        return {
-          user_id: userId,
-          plan_id: planId,
-          parent_task_id: initiativeId,
-          items: {
-            title: t.title || 'Action item',
-            status: 'pending',
-            priority: t.priority || 'Medium',
-            due_date: dueDate.toISOString().split('T')[0],
-            notes: t.notes || '',
-            owner: 'Owner'
-          },
-          month_group: 0,
-          due_day_offset: t.due_days || 14,
-          owner: 'Owner',
-          source: 'bi_action',
-          bi_insight_id: insightId,
-          is_carried_forward: false
-        };
-      });
-      var subRes = await supabase.from('action_tracker').insert(subRows);
-      if (subRes.error) console.error('[bi-act] Sub-task insert error:', subRes.error);
+      }).select('id, sp_section, initiative_name').single();
+      if (seedRes.error) {
+        console.error('[bi-act] Seed initiative error:', seedRes.error);
+        return res.status(500).json({ error: 'Could not create a Goal to attach this task to.' });
+      }
+      matchingInit = seedRes.data;
+    } else {
+      // Prefer a Goal whose sp_section matches the insight category;
+      // fall back to the most recent Goal so the task always lands
+      // somewhere visible.
+      matchingInit = initiatives.find(function(i) { return i.sp_section === preferredSection; }) || initiatives[0];
     }
 
-    // Record decision in bi_decisions
-    var decisionRow = {
+    var severity = workingData.severity || 'amber';
+    var priority = severity === 'red' ? 'High' : severity === 'green' ? 'Low' : 'Medium';
+    var dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 14);
+
+    var taskInsertRes = await supabase.from('action_tracker').insert({
+      user_id: userId,
+      plan_id: planId,
+      parent_task_id: matchingInit.id,
+      items: {
+        title: taskTitle,
+        status: 'pending',
+        priority: priority,
+        due_date: dueDate.toISOString().split('T')[0],
+        notes: workingData.detail || '',
+        owner: 'Owner'
+      },
+      month_group: 0,
+      due_day_offset: 14,
+      owner: 'Owner',
+      source: 'bi_action',
+      bi_insight_id: insightId,
+      is_tactical: true,
+      classification_reason: classificationReason,
+      is_carried_forward: false
+    }).select('id').single();
+    if (taskInsertRes.error) {
+      console.error('[bi-act] Task insert error:', taskInsertRes.error);
+      return res.status(500).json({ error: 'Could not add the task. Please try again.' });
+    }
+
+    var spUpdRes = await supabase.from('bi_insights')
+      .update({ added_to_sp: true, added_to_sp_at: nowIso, updated_at: nowIso })
+      .eq('id', insightId).eq('user_id', userId);
+    if (spUpdRes.error) console.error('[bi-act] bi_insights update error:', spUpdRes.error);
+
+    var tactDecRes = await supabase.from('bi_decisions').insert([{
       user_id: userId,
       bi_insight_id: insightId,
       decision: 'act',
-      decision_date: new Date().toISOString(),
+      decision_date: nowIso,
       sp_incorporated: !!planId && !isContradiction,
       sp_rewrite_triggered: isContradiction,
-      initiative_id: initiativeId,
-      created_at: new Date().toISOString()
-    };
-    var decRes = await supabase.from('bi_decisions').insert([decisionRow]);
-    if (decRes.error) console.error('[bi-act] Decision insert error:', decRes.error);
+      initiative_id: matchingInit.id,
+      created_at: nowIso
+    }]);
+    if (tactDecRes.error) console.error('[bi-act] Tactical decision insert error:', tactDecRes.error);
 
     return res.status(200).json({
       success: true,
-      tasksCreated: tasks.length,
-      initiativeId: initiativeId,
+      classification: 'tactical',
+      tasksCreated: 1,
+      initiativeId: matchingInit.id,
+      taskId: taskInsertRes.data ? taskInsertRes.data.id : null,
       planId: planId,
       contradiction: contradiction,
       spRewriteRequired: isContradiction
