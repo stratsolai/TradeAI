@@ -56,10 +56,284 @@ Object.assign(window.SP_LOGIC, {
     var headerEl = document.getElementById('sp-review-header');
     var summaryEl = document.getElementById('sp-review-summary');
     var swotEl = document.getElementById('sp-review-swot');
+    var categoriesEl = document.getElementById('sp-review-categories');
     if (headerEl) headerEl.innerHTML = self.renderReviewHeader(plan);
     if (summaryEl) summaryEl.innerHTML = self.renderReviewSummary(content);
     if (swotEl) swotEl.innerHTML = self.renderReviewSwot(content, plan);
+    if (categoriesEl) categoriesEl.innerHTML = self.renderReviewCategories(content);
     self.bindReviewHeaderEvents();
+    self.bindReviewCategoryEvents();
+  },
+
+  // Category accordions — spec §6.5. One .expand-tile per category
+  // in the unified 7-category structure. Each tile carries the
+  // category summary (read-only, AI-generated) and the Goal cards
+  // tagged with that category, plus an Add Goal button. Default
+  // state is .expanded so the owner can scan the whole plan
+  // without clicking through every section.
+  renderReviewCategories: function(content) {
+    var self = this;
+    var summaries = (content && content.categorySummaries) || {};
+    var goals = Array.isArray(content && content.goals) ? content.goals : [];
+    var goalsByCategory = {};
+    goals.forEach(function(goal, idx) {
+      var cat = (goal && goal.category) || 'risk';
+      if (!goalsByCategory[cat]) goalsByCategory[cat] = [];
+      // Stash the original index so renders can map back to
+      // self._pendingPlanData.goals for edit / delete.
+      goalsByCategory[cat].push({ goal: goal, idx: idx });
+    });
+    var html = '';
+    self._SP_REVIEW_CATEGORIES.forEach(function(cat, ci) {
+      var entries = goalsByCategory[cat.key] || [];
+      var summary = summaries[cat.key] || '';
+      var summaryHtml = summary
+        ? String(summary).split(/\n\n+/).map(function(p) { return '<p>' + escHtml(p.trim()) + '</p>'; }).join('')
+        : '<p class="sp-review-empty">No category summary generated.</p>';
+      var goalsHtml = entries.length === 0
+        ? '<div class="sp-review-empty sp-review-empty-goals">No goals in this category yet.</div>'
+        : entries.map(function(e) { return self.renderReviewGoalCard(e.goal, e.idx); }).join('');
+      html += '<div class="expand-tile expanded sp-review-cat" data-category="' + escHtml(cat.key) + '">' +
+        '<div class="expand-tile-header">' +
+          '<span class="expand-tile-icon">' + cat.icon + '</span>' +
+          '<span class="expand-tile-title">' + escHtml(cat.label) + '</span>' +
+          '<span class="expand-tile-count">' + entries.length + (entries.length === 1 ? ' Goal' : ' Goals') + '</span>' +
+        '</div>' +
+        '<div class="expand-tile-content">' +
+          '<div class="sp-review-cat-summary">' + summaryHtml + '</div>' +
+          '<div class="sp-review-goals">' + goalsHtml + '</div>' +
+          '<button type="button" class="btn-outline btn-sm sp-review-add-goal" data-category="' + escHtml(cat.key) + '">+ Add Goal</button>' +
+        '</div>' +
+      '</div>';
+    });
+    return html;
+  },
+
+  // Goal card — spec §6.6. Title and description are read-only
+  // (edit via the AI chat panel landing in commit 5); tasks are
+  // directly editable inline.
+  renderReviewGoalCard: function(goal, goalIdx) {
+    var self = this;
+    if (!goal) return '';
+    var tasks = Array.isArray(goal.tasks) ? goal.tasks : [];
+    var tasksHtml = tasks.length === 0
+      ? '<div class="sp-review-empty sp-review-empty-tasks">No tasks for this goal yet.</div>'
+      : tasks.map(function(task, ti) { return self.renderReviewTaskRow(task, goalIdx, ti); }).join('');
+    return '<div class="sp-review-goal" data-goal-idx="' + goalIdx + '">' +
+      '<div class="sp-review-goal-header">' +
+        '<div class="sp-review-goal-title">' + escHtml(goal.title || 'Untitled goal') + '</div>' +
+        '<div class="sp-review-goal-actions">' +
+          '<button type="button" class="btn-outline btn-sm sp-review-discuss-btn" data-goal-idx="' + goalIdx + '">Discuss with AI</button>' +
+          '<button type="button" class="btn-dismiss btn-sm sp-review-delete-goal-btn" data-goal-idx="' + goalIdx + '">Delete Goal</button>' +
+        '</div>' +
+      '</div>' +
+      (goal.description ? '<div class="sp-review-goal-desc">' + escHtml(goal.description) + '</div>' : '') +
+      '<div class="sp-review-tasks">' + tasksHtml + '</div>' +
+      '<button type="button" class="btn-outline btn-sm sp-review-add-task-btn" data-goal-idx="' + goalIdx + '">+ Add Task</button>' +
+    '</div>';
+  },
+
+  // Task row — spec §6.7. Title, description, due (relative
+  // timeframe), priority, owner are all editable inline. Delete
+  // button removes the task. The relative timeframe stays as a
+  // string until Approve, where api/strategic-plan-approve.js
+  // converts it to an absolute calendar date.
+  renderReviewTaskRow: function(task, goalIdx, taskIdx) {
+    if (!task) task = {};
+    var title = task.title || '';
+    var desc = task.description || task.notes || '';
+    var due = task.dueRelative || task.due_date || task.dueDate || '';
+    var priority = task.priority || 'Medium';
+    var owner = task.owner || 'Owner';
+    var pCls = priority === 'High' ? 'sp-priority-high' : priority === 'Low' ? 'sp-priority-low' : 'sp-priority-medium';
+    var dueOptions = ['Week 1','Week 2','Week 3','Month 1','Month 2','Month 3'];
+    var dueOptHtml = dueOptions.map(function(d) {
+      return '<button type="button" class="lookback-dropdown-item' + (d === due ? ' active' : '') + '" data-value="' + escHtml(d) + '">' + escHtml(d) + '</button>';
+    }).join('');
+    var prioOptHtml = ['High','Medium','Low'].map(function(p) {
+      return '<button type="button" class="lookback-dropdown-item' + (p === priority ? ' active' : '') + '" data-value="' + p + '">' + p + '</button>';
+    }).join('');
+    return '<div class="sp-review-task" data-goal-idx="' + goalIdx + '" data-task-idx="' + taskIdx + '">' +
+      '<div class="sp-review-task-row1">' +
+        '<span contenteditable="true" class="sp-review-task-title" data-field="title" placeholder="Task title">' + escHtml(title) + '</span>' +
+        '<span class="lookback-dropdown-wrap sp-review-task-due-wrap">' +
+          '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-review-task-due" data-field="dueRelative" data-value="' + escHtml(due) + '">' + escHtml(due || 'Set due') + '</button>' +
+          '<div class="lookback-dropdown-menu sp-review-task-due-menu">' + dueOptHtml + '</div>' +
+        '</span>' +
+        '<span class="lookback-dropdown-wrap sp-review-task-prio-wrap">' +
+          '<button type="button" class="lookback-dropdown lookback-dropdown-field sp-review-task-prio ' + pCls + '" data-field="priority" data-value="' + escHtml(priority) + '">' + escHtml(priority) + '</button>' +
+          '<div class="lookback-dropdown-menu sp-review-task-prio-menu">' + prioOptHtml + '</div>' +
+        '</span>' +
+        '<span contenteditable="true" class="sp-review-task-owner" data-field="owner" placeholder="Owner">' + escHtml(owner) + '</span>' +
+        '<button type="button" class="sp-review-task-delete" title="Delete task" aria-label="Delete task">×</button>' +
+      '</div>' +
+      '<div class="sp-review-task-row2">' +
+        '<span contenteditable="true" class="sp-review-task-desc" data-field="description" placeholder="Add a description (the what and the why)">' + escHtml(desc) + '</span>' +
+      '</div>' +
+    '</div>';
+  },
+
+  bindReviewCategoryEvents: function() {
+    var self = this;
+    var container = document.getElementById('sp-review-categories');
+    if (!container || container.dataset.bound === '1') return;
+    container.dataset.bound = '1';
+
+    // Click delegation for the .expand-tile category accordions plus
+    // every button inside them. Clicks inside .expand-tile-content
+    // shouldn't collapse the parent — same pattern as the BI cards.
+    container.addEventListener('click', function(e) {
+      // Add Task
+      var addTaskBtn = e.target.closest('.sp-review-add-task-btn');
+      if (addTaskBtn) { e.stopPropagation(); self._reviewAddTask(parseInt(addTaskBtn.dataset.goalIdx, 10)); return; }
+      // Delete Goal
+      var delGoalBtn = e.target.closest('.sp-review-delete-goal-btn');
+      if (delGoalBtn) { e.stopPropagation(); self._reviewDeleteGoal(parseInt(delGoalBtn.dataset.goalIdx, 10)); return; }
+      // Delete Task
+      var delTaskBtn = e.target.closest('.sp-review-task-delete');
+      if (delTaskBtn) {
+        e.stopPropagation();
+        var taskEl = delTaskBtn.closest('.sp-review-task');
+        if (taskEl) self._reviewDeleteTask(parseInt(taskEl.dataset.goalIdx, 10), parseInt(taskEl.dataset.taskIdx, 10));
+        return;
+      }
+      // Discuss with AI / Add Goal — wired in commit 5 alongside
+      // the slide-in chat panel.
+      if (e.target.closest('.sp-review-discuss-btn') || e.target.closest('.sp-review-add-goal')) {
+        e.stopPropagation();
+        return;
+      }
+
+      // Accordion toggle — click anywhere on the tile that ISN'T
+      // inside the content area.
+      var tile = e.target.closest('.sp-review-cat');
+      if (!tile) return;
+      if (e.target.closest('.expand-tile-content')) return;
+      tile.classList.toggle('expanded');
+    });
+
+    // Inline task edits — title / desc / owner via contenteditable,
+    // due / priority via the lookback dropdowns. blur saves; the
+    // dropdowns wire onSelect callbacks for click-to-set.
+    container.addEventListener('blur', function(e) {
+      var editable = e.target && e.target.closest && e.target.closest('[contenteditable="true"][data-field]');
+      if (!editable) return;
+      var taskEl = editable.closest('.sp-review-task');
+      if (!taskEl) return;
+      var goalIdx = parseInt(taskEl.dataset.goalIdx, 10);
+      var taskIdx = parseInt(taskEl.dataset.taskIdx, 10);
+      var field = editable.dataset.field;
+      var value = (editable.textContent || '').trim();
+      self._reviewUpdateTask(goalIdx, taskIdx, field, value);
+    }, true);
+
+    // Wire each due / priority lookback as it's encountered. Idempotent
+    // through the wireLookbackDropdown dataset guard.
+    container.querySelectorAll('.sp-review-task-due').forEach(function(btn) {
+      var menu = btn.parentNode.querySelector('.sp-review-task-due-menu');
+      self.wireLookbackDropdown(btn, menu, function(value) {
+        var taskEl = btn.closest('.sp-review-task');
+        if (!taskEl) return;
+        self._reviewUpdateTask(parseInt(taskEl.dataset.goalIdx, 10), parseInt(taskEl.dataset.taskIdx, 10), 'dueRelative', value);
+      });
+    });
+    container.querySelectorAll('.sp-review-task-prio').forEach(function(btn) {
+      var menu = btn.parentNode.querySelector('.sp-review-task-prio-menu');
+      self.wireLookbackDropdown(btn, menu, function(value) {
+        btn.classList.remove('sp-priority-high', 'sp-priority-medium', 'sp-priority-low');
+        btn.classList.add(value === 'High' ? 'sp-priority-high' : value === 'Low' ? 'sp-priority-low' : 'sp-priority-medium');
+        var taskEl = btn.closest('.sp-review-task');
+        if (!taskEl) return;
+        self._reviewUpdateTask(parseInt(taskEl.dataset.goalIdx, 10), parseInt(taskEl.dataset.taskIdx, 10), 'priority', value);
+      });
+    });
+  },
+
+  // ── Plan-data mutation helpers ───────────────────────────────────
+  // All edits go through these helpers so plan_data and the persisted
+  // strategic_plans row stay in sync. Save is debounced — multiple
+  // fast edits coalesce into one PATCH.
+  _reviewUpdateTask: function(goalIdx, taskIdx, field, value) {
+    var self = this;
+    if (!self._pendingPlanData) return;
+    var goals = self._pendingPlanData.goals;
+    if (!Array.isArray(goals) || !goals[goalIdx]) return;
+    var tasks = goals[goalIdx].tasks;
+    if (!Array.isArray(tasks) || !tasks[taskIdx]) return;
+    var current = tasks[taskIdx][field];
+    if (current === value) return;
+    tasks[taskIdx][field] = value;
+    self._reviewSavePlanData();
+  },
+
+  _reviewAddTask: function(goalIdx) {
+    var self = this;
+    if (!self._pendingPlanData) return;
+    var goals = self._pendingPlanData.goals;
+    if (!Array.isArray(goals) || !goals[goalIdx]) return;
+    if (!Array.isArray(goals[goalIdx].tasks)) goals[goalIdx].tasks = [];
+    goals[goalIdx].tasks.push({
+      title: '',
+      description: '',
+      dueRelative: 'Month 1',
+      priority: 'Medium',
+      owner: 'Owner'
+    });
+    self._reviewSavePlanData();
+    self._reviewRerenderCategories();
+  },
+
+  _reviewDeleteTask: function(goalIdx, taskIdx) {
+    var self = this;
+    if (!self._pendingPlanData) return;
+    var goals = self._pendingPlanData.goals;
+    if (!Array.isArray(goals) || !goals[goalIdx]) return;
+    var tasks = goals[goalIdx].tasks;
+    if (!Array.isArray(tasks) || !tasks[taskIdx]) return;
+    tasks.splice(taskIdx, 1);
+    self._reviewSavePlanData();
+    self._reviewRerenderCategories();
+  },
+
+  _reviewDeleteGoal: function(goalIdx) {
+    var self = this;
+    if (!self._pendingPlanData) return;
+    var goals = self._pendingPlanData.goals;
+    if (!Array.isArray(goals) || !goals[goalIdx]) return;
+    var goalTitle = goals[goalIdx].title || 'this goal';
+    var taskCount = (goals[goalIdx].tasks || []).length;
+    var msg = 'Delete "' + goalTitle + '"?';
+    if (taskCount > 0) msg += '\n\nThis goal has ' + taskCount + ' associated task' + (taskCount === 1 ? '' : 's') + ' that will also be removed.';
+    if (!window.confirm(msg)) return;
+    goals.splice(goalIdx, 1);
+    self._reviewSavePlanData();
+    self._reviewRerenderCategories();
+  },
+
+  _reviewRerenderCategories: function() {
+    var el = document.getElementById('sp-review-categories');
+    if (!el || !this._pendingPlanData) return;
+    el.innerHTML = this.renderReviewCategories(this._pendingPlanData);
+    // Reset the bound flag so bindReviewCategoryEvents rewires the
+    // newly-rendered nodes.
+    el.dataset.bound = '';
+    this.bindReviewCategoryEvents();
+  },
+
+  _reviewSavePlanData: function() {
+    var self = this;
+    if (!self._supabase || !self._userId || !self._pendingPlanId || !self._pendingPlanData) return;
+    if (self._reviewSaveTimer) clearTimeout(self._reviewSaveTimer);
+    self._reviewSaveTimer = setTimeout(function() {
+      self._supabase
+        .from('strategic_plans')
+        .update({ plan_data: self._pendingPlanData, updated_at: new Date().toISOString() })
+        .eq('id', self._pendingPlanId)
+        .eq('user_id', self._userId)
+        .then(function(res) {
+          if (res.error) console.error('[SP Review] save error:', res.error.message || res.error);
+        });
+    }, 400);
   },
 
   // Header — editable plan name, DRAFT banner, Discard / Approve.

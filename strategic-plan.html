@@ -632,6 +632,149 @@
       .sp-review-swot-grid { grid-template-columns: 1fr; }
     }
 
+    /* Category accordion + Goal cards + Task rows — spec §6.5 to
+       §6.7. Each category is a platform .expand-tile (left border
+       blue by default; the category icon and count badge come from
+       the primitive). Inside the content sits the AI-generated
+       category summary, a list of Goal cards, and an Add Goal
+       button. */
+    .sp-review-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: var(--card-padding); }
+    .sp-review-cat-summary {
+      font-size: var(--btn-font-size);
+      color: var(--text-secondary);
+      line-height: var(--body-line-height);
+      margin-bottom: var(--card-padding);
+    }
+    .sp-review-cat-summary p { margin-bottom: 10px; }
+    .sp-review-cat-summary p:last-child { margin-bottom: 0; }
+    .sp-review-goals { display: flex; flex-direction: column; gap: var(--actions-gap); margin-bottom: var(--actions-gap); }
+    .sp-review-empty.sp-review-empty-goals,
+    .sp-review-empty.sp-review-empty-tasks {
+      padding: 12px;
+      background: var(--bg-subtle);
+      border: 1px dashed var(--border);
+      border-radius: var(--btn-radius);
+      text-align: center;
+      color: var(--text-muted);
+      font-size: var(--note-font-size);
+      font-style: italic;
+    }
+
+    /* Goal card — read-only title + description, action buttons,
+       nested task list, Add Task. Slightly lighter than the main
+       category tile so the hierarchy reads. */
+    .sp-review-goal {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: var(--actions-gap) var(--card-padding);
+    }
+    .sp-review-goal-header {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--actions-gap);
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .sp-review-goal-title {
+      flex: 1;
+      min-width: 200px;
+      font-family: var(--heading-font);
+      font-size: var(--section-title-font-size);
+      font-weight: var(--heading-lg-weight);
+      color: var(--text);
+    }
+    .sp-review-goal-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .sp-review-goal-desc {
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      margin-bottom: var(--actions-gap);
+    }
+    .sp-review-tasks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+    /* Task row — inline-editable title / description / due / prio /
+       owner. Title and description are contenteditable spans; due
+       and priority use the platform .lookback-dropdown trigger. The
+       row1 line holds metadata, row2 the description. */
+    .sp-review-task {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: var(--btn-radius);
+      padding: 8px 10px;
+    }
+    .sp-review-task-row1 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .sp-review-task-row2 { margin-top: 6px; }
+    .sp-review-task-title {
+      flex: 1;
+      min-width: 200px;
+      font-size: var(--btn-font-size);
+      font-weight: 500;
+      color: var(--text);
+      outline: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 1px;
+    }
+    .sp-review-task-title:focus,
+    .sp-review-task-owner:focus,
+    .sp-review-task-desc:focus { border-bottom-color: var(--blue); }
+    .sp-review-task-title:empty:before,
+    .sp-review-task-owner:empty:before,
+    .sp-review-task-desc:empty:before {
+      content: attr(placeholder);
+      color: var(--text-hint);
+    }
+    .sp-review-task-due.lookback-dropdown,
+    .sp-review-task-prio.lookback-dropdown {
+      padding: 4px 24px 4px 10px;
+      font-size: var(--badge-font-size);
+      background-position: right 8px center;
+      background-size: 8px 5px;
+    }
+    .sp-review-task-prio.sp-priority-high   { background-color: var(--badge-red-bg);    color: var(--red-dark);   border-color: var(--red); }
+    .sp-review-task-prio.sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); border-color: var(--orange); }
+    .sp-review-task-prio.sp-priority-low    { background-color: var(--badge-green-bg);  color: var(--green-dark); border-color: var(--green); }
+    .sp-review-task-owner {
+      min-width: 80px;
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      outline: none;
+      border-bottom: 1px solid transparent;
+      padding-bottom: 1px;
+    }
+    .sp-review-task-desc {
+      display: block;
+      width: 100%;
+      font-size: var(--note-font-size);
+      color: var(--text-secondary);
+      line-height: var(--note-line-height);
+      outline: none;
+      border-bottom: 1px solid transparent;
+    }
+    .sp-review-task-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background var(--btn-transition), color var(--btn-transition);
+    }
+    .sp-review-task-delete:hover { background: var(--red-hover-bg); color: var(--red-dark); }
+    .sp-review-add-goal,
+    .sp-review-add-task-btn { margin-top: 4px; }
+
     /* Spec §8.8 — incomplete-field highlight applied when the user
        picks Review Fields from the incomplete-fields modal. Soft
        amber background drops back to default once the field has a
