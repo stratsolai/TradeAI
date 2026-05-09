@@ -119,25 +119,34 @@ Object.assign(window.SP_LOGIC, {
   bindDocEvents: function() {
     var self = this;
     var docContent = document.getElementById('sp-doc-content');
-    if (!docContent) return;
-
-    docContent.addEventListener('click', function(e) {
-      var templateBtn = e.target.closest('.btn-sp-use-template');
-      if (templateBtn) {
-        self.useAsTemplate(templateBtn.dataset.planId);
-        return;
-      }
-      var printBtn = e.target.closest('.btn-sp-print');
-      if (printBtn) {
-        window.print();
-        return;
-      }
-      var updateBtn = e.target.closest('#sp-update-plan-btn');
-      if (updateBtn) {
-        self.switchTab('create-plan');
-        return;
-      }
-    });
+    var docLocked = document.getElementById('sp-doc-locked');
+    if (docContent) {
+      docContent.addEventListener('click', function(e) {
+        var templateBtn = e.target.closest('.btn-sp-use-template');
+        if (templateBtn) {
+          self.useAsTemplate(templateBtn.dataset.planId);
+          return;
+        }
+        var printBtn = e.target.closest('.btn-sp-print');
+        if (printBtn) {
+          window.print();
+          return;
+        }
+        var updateBtn = e.target.closest('#sp-update-plan-btn');
+        if (updateBtn) {
+          self.switchTab('create-plan');
+          return;
+        }
+      });
+    }
+    // Spec §3.2 — Create Strategic Plan button on the empty state
+    // routes the owner into the wizard.
+    if (docLocked) {
+      docLocked.addEventListener('click', function(e) {
+        var createBtn = e.target.closest('#sp-doc-create-btn');
+        if (createBtn) self.switchTab('create-plan');
+      });
+    }
   },
 
   loadOperationalPlan: function() {

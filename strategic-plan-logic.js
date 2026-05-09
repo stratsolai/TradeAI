@@ -1300,7 +1300,10 @@ Object.assign(window.SP_LOGIC, {
       } else if (exists) {
         self.switchTab('ops-plan');
       } else {
-        self.switchTab('create-plan');
+        // Spec §3.2 — no plan yet: land on Strategic Plan tab and show
+        // the empty state with a Create Strategic Plan button. The
+        // wizard opens from the button click, not on first paint.
+        self.switchTab('strat-plan');
       }
     });
   }

@@ -1394,12 +1394,14 @@
   <!-- ═══ TAB 2: STRATEGIC PLAN VIEW ═══ -->
   <div class="ptab-content" id="tab-strat-plan">
 
-    <!-- Locked overlay -->
+    <!-- Locked overlay — spec §3.2: no plan yet, show empty state
+         with a Create Strategic Plan button. -->
     <div id="sp-doc-locked" style="display:none">
       <div class="sp-tab-locked">
         <div class="sp-tab-locked-icon">&#x1F4C4;</div>
-        <h3>Create your plan to unlock</h3>
-        <p>Complete the Create / Update Plan form to generate your Strategic Plan document.</p>
+        <h3>You do not have a Strategic Plan yet</h3>
+        <p>Build a tailored plan from your business data, the Content Library, and your Business Intelligence insights.</p>
+        <button type="button" class="btn-primary" id="sp-doc-create-btn" style="margin-top:16px">Create Strategic Plan</button>
       </div>
     </div>
 
