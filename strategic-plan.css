@@ -1,0 +1,1271 @@
+/* SP section nav — keep all 7 chips on a single line. Overrides
+   the global .profile-nav-chips wrap behaviour for this page only. */
+#sp-section-nav { flex-wrap: nowrap; overflow-x: auto; }
+#sp-section-nav .profile-nav-chip { flex-shrink: 0; }
+
+/* Readonly-pills (Licences / Services / Products) — share the
+   .filter-pill structure so all SP chips render at one height,
+   then override colour/cursor here to match the BP-prefilled
+   input look (light-blue fill, grey border, default cursor)
+   so all BP-sourced fields read consistently. */
+.sp-field .review-tool-pills .filter-pill.sp-readonly-pill {
+  background: var(--blue-light);
+  border-color: var(--border);
+  color: var(--text-secondary);
+  cursor: default;
+}
+.sp-field .review-tool-pills .filter-pill.sp-readonly-pill:hover {
+  background: var(--blue-light);
+}
+
+/* ─── TAB 1: OPERATIONAL PLAN ─── */
+
+/* Header section */
+.sp-ops-header {
+  background: var(--white);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  padding: var(--card-padding);
+  margin-bottom: var(--card-padding);
+}
+.sp-ops-title {
+  font-family: var(--heading-font);
+  font-size: var(--page-title-font-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  margin-bottom: 4px;
+}
+/* Plan-overview progress bar uses platform .progress-bar / .progress-fill */
+.sp-ops-progress-label {
+  font-size: var(--label-font-size);
+  color: var(--text-muted);
+  text-align: right;
+}
+
+/* Filter/view controls */
+.sp-ops-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  margin-bottom: var(--card-padding);
+  flex-wrap: wrap;
+}
+.sp-ops-controls-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+}
+
+/* ─── TAB 2: STRATEGIC PLAN VIEW ─── */
+.sp-doc-card {
+  background: var(--white);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--orange);
+  padding: var(--card-padding);
+  margin-bottom: var(--card-padding);
+}
+.sp-doc-title {
+  font-family: var(--heading-font);
+  font-size: var(--page-title-font-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.sp-doc-subtitle {
+  font-size: var(--btn-font-size);
+  color: var(--text-muted);
+  margin-bottom: var(--card-padding);
+}
+.sp-download-links {
+  display: flex;
+  gap: var(--actions-gap);
+  flex-wrap: wrap;
+}
+.btn-sp-download {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--btn-gap);
+  padding: 12px var(--card-padding);
+  background: var(--blue);
+  color: var(--white);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font-size);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--body-font);
+  text-decoration: none;
+  transition: background 0.2s;
+}
+.btn-sp-download:hover { background: var(--blue-accent-hover); color: var(--white); opacity: 1; }
+.btn-sp-print {
+  padding: 12px var(--card-padding);
+  background: var(--white);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font-size);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--body-font);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-sp-print:hover { background: var(--blue-hover-bg); }
+
+/* SWOT cards */
+.sp-swot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--actions-gap);
+  margin-top: var(--card-padding);
+}
+.sp-swot-card {
+  background: var(--white);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  padding: var(--card-padding);
+}
+.sp-swot-card.strengths { border-left: 4px solid var(--green); }
+.sp-swot-card.weaknesses { border-left: 4px solid var(--red); }
+.sp-swot-card.opportunities { border-left: 4px solid var(--blue); }
+.sp-swot-card.threats { border-left: 4px solid var(--orange); }
+.sp-swot-title {
+  font-size: var(--section-title-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.sp-swot-items {
+  font-size: var(--label-font-size);
+  color: var(--text-secondary);
+  line-height: var(--body-line-height);
+}
+
+/* Version history */
+.sp-version-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--actions-gap);
+}
+.sp-version-row {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: var(--input-padding);
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  flex-wrap: wrap;
+}
+.sp-version-current { border-left: 4px solid var(--blue); }
+.sp-vh-label { font-size: var(--btn-font-size); font-weight: var(--font-weight-semibold); color: var(--text); }
+.sp-current-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--badge-radius);
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
+  font-size: var(--badge-font-size);
+  font-weight: var(--font-weight-semibold);
+  margin-left: 8px;
+}
+.sp-vh-meta { font-size: var(--label-font-size); color: var(--text-muted); }
+.sp-vh-actions { margin-left: auto; display: flex; gap: var(--btn-radius); align-items: center; }
+.sp-vh-link {
+  font-size: var(--label-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--blue);
+}
+.btn-sp-use-template {
+  padding: 6px 14px;
+  background: var(--white);
+  color: var(--blue);
+  border: 1px solid var(--blue);
+  border-radius: var(--btn-radius);
+  font-size: var(--label-font-size);
+  font-weight: var(--font-weight-semibold);
+  font-family: var(--body-font);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-sp-use-template:hover { background: var(--blue-hover-bg); }
+
+/* Regen guidance */
+.sp-regen-guidance {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: var(--actions-gap) 16px;
+  font-size: var(--label-font-size);
+  color: var(--text-secondary);
+  margin-top: var(--card-padding);
+  line-height: var(--note-line-height);
+}
+
+/* ─── TAB 3: CREATE / UPDATE PLAN (interview form) ─── */
+
+/* Tab 3 section-info wrapper — provides the bottom margin so the
+   inline .info-note still sits on its own visual row above the
+   form fields. The .info-note class itself (in staxai-auth.css)
+   handles the shaded-pill appearance and is shared with Tab 1. */
+.sp-section-info { margin-bottom: var(--card-padding); }
+
+/* Fields grid */
+.sp-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--card-padding);
+}
+.sp-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--label-margin-bottom);
+  /* Default min-width:auto on grid items lets a long <select> option
+     label push its 1fr track wider than its sibling. min-width:0
+     forces both 1fr tracks to share the row equally so paired
+     dropdowns (e.g. Lead Conversion / Jobs per Month) line up. */
+  min-width: 0;
+}
+.sp-field:has(textarea),
+.sp-field:has(.sp-chip-group),
+.sp-field:has(.review-tool-pills),
+.sp-field:has(.sp-field-help) {
+  grid-column: 1 / -1;
+}
+.sp-field-label {
+  font-size: var(--btn-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+.sp-label-hint {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: var(--label-font-size);
+}
+.sp-field-help {
+  font-size: var(--label-font-size);
+  color: var(--text-muted);
+  margin: 0;
+  line-height: 1.4;
+}
+.sp-field-error {
+  font-size: var(--label-font-size);
+  color: var(--red);
+  display: none;
+}
+
+/* Inputs.
+   SP <select> elements use the platform .form-input class — same
+   as text inputs across the rest of the platform. The sp-input /
+   sp-textarea rules below cover the text-input + textarea variants
+   with focus + placeholder behaviour the form needs. */
+.sp-input,
+.sp-textarea {
+  width: 100%;
+  padding: var(--input-padding);
+  border: var(--input-border-width) solid var(--border);
+  border-radius: var(--input-radius);
+  font-size: var(--input-font-size);
+  font-family: var(--body-font);
+  color: var(--text);
+  background: var(--white);
+  transition: border-color var(--btn-transition), box-shadow var(--btn-transition);
+}
+.sp-input:focus,
+.sp-textarea:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+.sp-input::placeholder,
+.sp-textarea::placeholder { color: var(--text-hint); }
+.sp-textarea { resize: vertical; min-height: var(--textarea-min-height); }
+.sp-input-error { border-color: var(--red); }
+
+/* Lookback-dropdown trigger inside an interview-form .sp-field
+   fills its grid cell so the dropdown sits flush with the
+   sibling text/textarea inputs — the wrap goes block-level and
+   the trigger button stretches to its width. text-align:left
+   keeps the label aligned with text inputs rather than centred. */
+.sp-field .lookback-dropdown-wrap { display: block; width: 100%; }
+.sp-field .lookback-dropdown-field { width: 100%; box-sizing: border-box; text-align: left; }
+
+/* Profile-sourced fields — flag auto-populated values with the
+   light-blue fill the rest of the form uses for read-only data. */
+.sp-from-profile {
+  background-color: var(--blue-light);
+  color: var(--text-secondary);
+  cursor: default;
+}
+.sp-from-profile:focus { box-shadow: none; border-color: var(--border); }
+/* Element-agnostic — applies to disabled <select>s and to disabled
+   lookback-dropdown trigger <button>s now that interview selects
+   use the lookback pattern. */
+.sp-from-profile:disabled { opacity: 0.8; }
+
+/* BI-sourced fields — same shaded background as profile-sourced
+   so users see at a glance that the value was auto-populated.
+   Unlike profile-sourced fields these stay editable, so we
+   don't override cursor or focus state. */
+.sp-from-bi {
+  background-color: var(--blue-light);
+}
+/* Section 3 (Financial Position) loading placeholder. The fields
+   hold their render until the BI fetch returns so the user sees
+   one final state with correct shading rather than render-then-
+   flicker. Subtle muted text, centred in the section card. */
+.sp-section-loading {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--label-font-size);
+  font-style: italic;
+}
+
+/* ── Spec §6 Review screen layout ── */
+.sp-review-header { margin-bottom: var(--card-padding); }
+.sp-review-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--actions-gap);
+  flex-wrap: wrap;
+}
+.sp-review-header-left { flex: 1; min-width: 280px; }
+.sp-review-plan-name {
+  width: 100%;
+  max-width: 560px;
+  font-family: var(--heading-font);
+  font-size: var(--page-title-font-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--btn-radius);
+  padding: 4px 8px;
+  margin-left: -8px;
+  transition: border-color var(--btn-transition), background var(--btn-transition);
+}
+.sp-review-plan-name:hover  { border-color: var(--border); }
+.sp-review-plan-name:focus  { outline: none; border-color: var(--blue); background: var(--white); }
+.sp-review-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.sp-review-meta-date {
+  font-size: var(--note-font-size);
+  color: var(--text-muted);
+}
+.sp-review-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.sp-review-section-title {
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  margin: 0 0 8px 0;
+}
+.sp-review-readonly-note {
+  font-size: var(--note-font-size);
+  color: var(--text-muted);
+  margin-bottom: var(--actions-gap);
+}
+.sp-review-summary {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--card-radius);
+  padding: var(--card-padding);
+  margin-bottom: var(--card-padding);
+}
+.sp-review-summary-body p {
+  margin-bottom: 12px;
+  line-height: var(--body-line-height);
+}
+.sp-review-summary-body p:last-child { margin-bottom: 0; }
+.sp-review-empty {
+  padding: 16px;
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+}
+.sp-review-swot { margin-bottom: var(--card-padding); }
+.sp-review-swot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--actions-gap);
+}
+.sp-review-swot-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--card-radius);
+  padding: var(--actions-gap) var(--card-padding);
+}
+.sp-review-swot-card.sp-review-swot-strengths     { border-left-color: var(--green); }
+.sp-review-swot-card.sp-review-swot-weaknesses    { border-left-color: var(--red); }
+.sp-review-swot-card.sp-review-swot-opportunities { border-left-color: var(--blue); }
+.sp-review-swot-card.sp-review-swot-threats       { border-left-color: var(--orange); }
+.sp-review-swot-card-title {
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  margin-bottom: 8px;
+  font-family: var(--heading-font);
+  font-size: var(--section-title-font-size);
+}
+.sp-review-swot-list {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text);
+  font-size: var(--btn-font-size);
+  line-height: var(--note-line-height);
+}
+.sp-review-swot-list li { margin-bottom: 4px; }
+.sp-review-swot-empty {
+  font-size: var(--note-font-size);
+  color: var(--text-muted);
+  font-style: italic;
+}
+@media (max-width: 700px) {
+  .sp-review-swot-grid { grid-template-columns: 1fr; }
+}
+
+/* Category / Goal / Task — spec §6.5–§6.7. */
+.sp-review-categories { display: flex; flex-direction: column; gap: 12px; margin-bottom: var(--card-padding); }
+.sp-review-cat-summary {
+  font-size: var(--btn-font-size);
+  color: var(--text-secondary);
+  line-height: var(--body-line-height);
+  margin-bottom: var(--card-padding);
+}
+.sp-review-cat-summary p { margin-bottom: 10px; }
+.sp-review-cat-summary p:last-child { margin-bottom: 0; }
+.sp-review-goals { display: flex; flex-direction: column; gap: var(--actions-gap); margin-bottom: var(--actions-gap); }
+.sp-review-empty.sp-review-empty-goals,
+.sp-review-empty.sp-review-empty-tasks {
+  padding: 12px;
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border);
+  border-radius: var(--btn-radius);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--note-font-size);
+  font-style: italic;
+}
+
+/* Goal card — read-only title + description; nested tasks. */
+.sp-review-goal {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: var(--actions-gap) var(--card-padding);
+}
+.sp-review-goal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--actions-gap);
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sp-review-goal-title {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--heading-font);
+  font-size: var(--section-title-font-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+}
+.sp-review-goal-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.sp-review-goal-desc {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: var(--actions-gap);
+}
+.sp-review-tasks { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+
+/* Task row — inline-editable title / desc / due / prio / owner. */
+.sp-review-task {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: 8px 10px;
+}
+.sp-review-task-row1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-review-task-row2 { margin-top: 6px; }
+.sp-review-task-title {
+  flex: 1;
+  min-width: 200px;
+  font-size: var(--btn-font-size);
+  font-weight: 500;
+  color: var(--text);
+  outline: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+}
+.sp-review-task-title:focus,
+.sp-review-task-owner:focus,
+.sp-review-task-desc:focus { border-bottom-color: var(--blue); }
+.sp-review-task-title:empty:before,
+.sp-review-task-owner:empty:before,
+.sp-review-task-desc:empty:before {
+  content: attr(placeholder);
+  color: var(--text-hint);
+}
+.sp-review-task-due.lookback-dropdown,
+.sp-review-task-prio.lookback-dropdown {
+  padding: 4px 24px 4px 10px;
+  font-size: var(--badge-font-size);
+  background-position: right 8px center;
+  background-size: 8px 5px;
+}
+.sp-review-task-prio.sp-priority-high   { background-color: var(--badge-red-bg);    color: var(--red-dark);   border-color: var(--red); }
+.sp-review-task-prio.sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); border-color: var(--orange); }
+.sp-review-task-prio.sp-priority-low    { background-color: var(--badge-green-bg);  color: var(--green-dark); border-color: var(--green); }
+.sp-review-task-owner {
+  min-width: 80px;
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  outline: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+}
+.sp-review-task-desc {
+  display: block;
+  width: 100%;
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  outline: none;
+  border-bottom: 1px solid transparent;
+}
+.sp-review-task-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background var(--btn-transition), color var(--btn-transition);
+}
+.sp-review-task-delete:hover { background: var(--red-hover-bg); color: var(--red-dark); }
+.sp-review-add-goal,
+.sp-review-add-task-btn { margin-top: 4px; }
+
+/* OT tab — spec §9. */
+.sp-ops-header {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  margin-bottom: var(--actions-gap);
+}
+.sp-ops-title {
+  flex: 1;
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+}
+.sp-ops-header-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* Category accordion — .expand-tile + Goal cards inside content. */
+.sp-ot-cat { margin-bottom: 12px; }
+.sp-ot-cat .expand-tile-content { padding-top: 0; }
+.sp-ot-goals { display: flex; flex-direction: column; gap: 10px; margin-top: var(--actions-gap); }
+
+/* Goal card — read-only title + description, tasks, Add Task. */
+.sp-ot-goal {
+  background: var(--bg-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: 10px 14px;
+}
+.sp-ot-goal-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+.sp-ot-goal-title {
+  flex: 1;
+  min-width: 200px;
+  font-family: var(--heading-font);
+  font-size: var(--section-title-font-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+}
+.sp-ot-goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--badge-font-size);
+  color: var(--text-muted);
+}
+.sp-ot-goal-progress-bar {
+  width: 80px;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sp-ot-goal-progress-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+.sp-ot-goal-desc {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: 8px;
+}
+.sp-ot-tasks { display: flex; flex-direction: column; gap: 4px; margin-bottom: 6px; }
+
+/* Task row — checkbox + meta + expand to show desc + notes. */
+.sp-ot-task {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: 8px 10px;
+}
+.sp-ot-task.sp-ot-task-done .sp-ot-task-title { text-decoration: line-through; color: var(--text-hint); }
+.sp-ot-task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-ot-task-check {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--green);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sp-ot-task-title {
+  flex: 1;
+  min-width: 200px;
+  font-size: var(--btn-font-size);
+  color: var(--text);
+  cursor: pointer;
+}
+.sp-ot-task-due,
+.sp-ot-task-owner {
+  font-size: var(--badge-font-size);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.sp-ot-task-due.sp-ot-task-overdue { color: var(--red); font-weight: var(--font-weight-semibold); }
+.sp-ot-task-prio.lookback-dropdown {
+  padding: 3px 22px 3px 10px;
+  font-size: var(--badge-font-size);
+  background-position: right 8px center;
+  background-size: 8px 5px;
+}
+.sp-ot-task-prio.sp-priority-high   { background-color: var(--badge-red-bg);    color: var(--red-dark);          border-color: var(--red); }
+.sp-ot-task-prio.sp-priority-medium { background-color: var(--badge-orange-bg); color: var(--badge-orange-text); border-color: var(--orange); }
+.sp-ot-task-prio.sp-priority-low    { background-color: var(--badge-green-bg);  color: var(--green-dark);        border-color: var(--green); }
+.sp-ot-task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.sp-ot-task-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--btn-font-size);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.sp-ot-task-action-btn:hover { background: var(--blue-light); color: var(--blue); }
+.sp-ot-task-action-btn.sp-ot-task-archive-btn { font-size: var(--badge-font-size); color: var(--text-muted); }
+.sp-ot-task-action-btn.sp-ot-task-delete-btn:hover { background: var(--red-hover-bg); color: var(--red-dark); }
+.sp-ot-task-source-badge {
+  padding: 1px 8px;
+  border-radius: var(--badge-radius);
+  background: var(--badge-orange-bg);
+  color: var(--badge-orange-text);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Expanded body: description + notes editor */
+.sp-ot-task-body {
+  display: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+.sp-ot-task.sp-ot-task-expanded .sp-ot-task-body { display: block; }
+.sp-ot-task-desc {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+}
+.sp-ot-task-notes-wrap { display: flex; flex-direction: column; gap: 4px; }
+.sp-ot-task-notes-label {
+  font-size: var(--badge-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-label);
+}
+.sp-ot-task-notes {
+  width: 100%;
+  min-height: 60px;
+  border: var(--input-border-width) solid var(--border);
+  border-radius: var(--btn-radius);
+  padding: 6px 10px;
+  font-family: var(--body-font);
+  font-size: var(--note-font-size);
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+}
+.sp-ot-task-notes:focus { border-color: var(--blue); }
+
+/* Add Task inline form — sits at the bottom of a Goal card. */
+.sp-ot-add-task-form {
+  background: var(--white);
+  border: 1px dashed var(--blue);
+  border-radius: var(--btn-radius);
+  padding: 10px;
+  margin-top: 4px;
+}
+.sp-ot-add-task-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sp-ot-add-task-row input.sp-ot-add-task-title { flex: 1; min-width: 180px; }
+.sp-ot-add-task-row .lookback-dropdown { font-size: var(--badge-font-size); }
+.sp-ot-add-task-actions { display: flex; gap: 6px; justify-content: flex-end; }
+.sp-ot-add-task-btn { margin-top: 4px; }
+
+/* Archive screen — spec §9.7. */
+.sp-ot-archive-head {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  margin-bottom: var(--actions-gap);
+  flex-wrap: wrap;
+}
+.sp-ot-archive-title {
+  flex: 1;
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+}
+.sp-ot-archive-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--actions-gap);
+}
+.sp-ot-archive-search { min-width: 240px; flex: 1; }
+.sp-ot-archive-group { margin-bottom: var(--card-padding); }
+.sp-ot-archive-group-title {
+  font-size: var(--section-title-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.sp-ot-archive-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* BI Suggestions tile — Gap 2. */
+.sp-bi-tile { border-left-color:var(--blue); }
+.sp-bi-tile-header { display:flex; align-items:center; gap:var(--actions-gap); margin-bottom:10px; flex-wrap:wrap; }
+.sp-bi-tile-title { flex:1; font-family:var(--heading-font); font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
+.sp-bi-tile-list { display:flex; flex-direction:column; gap:6px; }
+.sp-bi-tile-item { display:flex; align-items:center; gap:10px; }
+.sp-bi-tile-item-summary { flex:1; font-size:var(--btn-font-size); color:var(--text); line-height:var(--note-line-height); }
+.sp-bi-tile-overflow { margin-top:8px; font-size:var(--note-font-size); color:var(--text-muted); font-style:italic; }
+
+/* Draft-Review BI banner — spec §6.2. */
+.sp-review-bi-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  padding: 12px 16px;
+  background: var(--blue-light);
+  border: 1px solid var(--blue);
+  border-radius: var(--btn-radius);
+  margin-bottom: var(--card-padding);
+  color: var(--text);
+}
+.sp-review-bi-banner-text { flex: 1; }
+.sp-review-bi-modal-inner { max-width: 720px; }
+.sp-review-bi-list { display: flex; flex-direction: column; gap: 10px; }
+.sp-review-bi-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--btn-radius);
+  padding: 12px 14px;
+}
+.sp-review-bi-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.sp-review-bi-item-title {
+  flex: 1;
+  min-width: 200px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+.sp-review-bi-item-detail {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: 8px;
+}
+.sp-review-bi-item-source {
+  font-size: var(--badge-font-size);
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.sp-review-bi-item-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-review-bi-item.sp-review-bi-approved { border-left-color: var(--green); opacity: 0.85; }
+.sp-review-bi-item.sp-review-bi-held     { border-left-color: var(--orange); opacity: 0.85; }
+.sp-review-bi-item.sp-review-bi-rejected { display: none; }
+
+/* AI chat panel — spec §6.8 / §6.9. Uses .slide-panel.right.wide. */
+.sp-goal-chat-backdrop {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: var(--modal-overlay-bg);
+  z-index: 89;
+}
+.sp-goal-chat-backdrop.open { display: block; }
+#sp-goal-chat-panel {
+  width: 380px;
+  max-width: 100%;
+  z-index: 95;
+}
+.sp-goal-chat-head {
+  display: flex;
+  align-items: center;
+  gap: var(--actions-gap);
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-subtle);
+}
+.sp-goal-chat-title {
+  flex: 1;
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+}
+.sp-goal-chat-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.sp-goal-chat-close:hover { background: var(--white); color: var(--text); }
+.sp-goal-chat-context {
+  padding: 10px 18px;
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--white);
+}
+.sp-goal-chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--white);
+}
+.sp-goal-chat-msg {
+  padding: 8px 12px;
+  border-radius: var(--btn-radius);
+  font-size: var(--btn-font-size);
+  line-height: var(--note-line-height);
+  max-width: 88%;
+}
+.sp-goal-chat-msg.user      { background: var(--blue-light); color: var(--text); align-self: flex-end; }
+.sp-goal-chat-msg.assistant { background: var(--bg-subtle);  color: var(--text); align-self: flex-start; }
+.sp-goal-chat-msg.thinking  { font-style: italic; color: var(--text-muted); }
+.sp-goal-chat-proposal {
+  padding: 14px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--blue-light);
+  max-height: 35vh;
+  overflow-y: auto;
+}
+.sp-goal-chat-proposal-title {
+  font-family: var(--heading-font);
+  font-weight: var(--heading-lg-weight);
+  font-size: var(--section-title-font-size);
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.sp-goal-chat-proposal-desc {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: 8px;
+}
+.sp-goal-chat-proposal-tasks {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  font-size: var(--note-font-size);
+  color: var(--text);
+}
+.sp-goal-chat-proposal-tasks li { margin-bottom: 4px; }
+.sp-goal-chat-proposal-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.sp-goal-chat-composer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+}
+.sp-goal-chat-composer textarea {
+  flex: 1;
+  border: var(--input-border-width) solid var(--border);
+  border-radius: var(--input-radius);
+  padding: 8px 10px;
+  font-family: var(--body-font);
+  font-size: var(--btn-font-size);
+  color: var(--text);
+  resize: none;
+  outline: none;
+  transition: border-color var(--btn-transition);
+}
+.sp-goal-chat-composer textarea:focus { border-color: var(--blue); }
+@media (max-width: 700px) {
+  #sp-goal-chat-panel { width: 100%; }
+}
+
+/* Spec §8.8 — incomplete-field highlight applied when the user
+   picks Review Fields from the incomplete-fields modal. Soft
+   amber background drops back to default once the field has a
+   value (cleared by bindFormEvents on the next change). */
+.sp-field.sp-field-incomplete {
+  background: var(--warning-light);
+  border-radius: var(--btn-radius);
+  padding: 8px 10px;
+  margin-left: -10px;
+  margin-right: -10px;
+  transition: background var(--btn-transition);
+}
+
+/* Tab 9: BI Generated Items — list of strategic insights queued
+   from the BI dashboard for review. Each card holds a category
+   badge, an optional decision badge (Approved / Held / Rejected),
+   the headline + detail, the source attribution, and the three
+   action buttons. Layout-only — chrome (border, padding) sits on
+   the platform classes (.review-approve-btn, .btn-outline,
+   .btn-dismiss). */
+.sp-bi-queue-list { display: flex; flex-direction: column; gap: 12px; }
+.sp-bi-queue-empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.sp-bi-queue-empty p { margin: 0; }
+.sp-bi-queue-empty p + p { margin-top: 6px; }
+.sp-bi-queue-item {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--card-radius);
+  padding: 14px 16px;
+}
+.sp-bi-queue-item-approved { border-left-color: var(--green); }
+.sp-bi-queue-item-held { border-left-color: var(--orange); }
+.sp-bi-queue-item-rejected { opacity: 0.55; }
+.sp-bi-queue-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.sp-bi-queue-item-title {
+  flex: 1;
+  min-width: 200px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+}
+.sp-bi-queue-item-detail {
+  font-size: var(--note-font-size);
+  color: var(--text-secondary);
+  line-height: var(--note-line-height);
+  margin-bottom: 8px;
+}
+.sp-bi-queue-item-source {
+  font-size: var(--badge-font-size);
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+.sp-bi-queue-item-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Form selection pills.
+   The 6px transparent border reserves space so the chip-group's
+   box dimensions stay constant whether or not .sp-from-bi is
+   applied — toggling the shaded background no longer shifts
+   chip positions. The base .sp-from-bi rule above fills the
+   reserved area with var(--blue-light) when the class is on. */
+.sp-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--btn-radius);
+  border: 6px solid transparent;
+  border-radius: var(--input-radius);
+}
+/* Fields with allowOther but no preset options (Key Suppliers,
+   Top Competitors) start with an empty chip-group, and return to
+   empty whenever the user removes the last chip. The 6px transparent
+   reservation border would otherwise leave a phantom gap above the
+   +Add row — collapse the group entirely while it has no children. */
+.sp-chip-group:empty { display: none; }
+
+/* Nav buttons */
+.sp-nav-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--card-padding);
+  gap: var(--actions-gap);
+}
+.sp-nav-left { flex-shrink: 0; }
+.sp-nav-centre { flex: 1; text-align: center; }
+.sp-nav-right { flex-shrink: 0; }
+.btn-sp-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ─── LOCKED TAB OVERLAY ─── */
+.sp-tab-locked {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.sp-tab-locked-icon {
+  font-size: 48px;
+  margin-bottom: var(--actions-gap);
+  opacity: 0.4;
+}
+.sp-tab-locked h3 {
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  margin-bottom: 8px;
+  color: var(--text);
+}
+.sp-tab-locked p {
+  font-size: var(--btn-font-size);
+  color: var(--text-muted);
+  margin-bottom: 0;
+}
+
+/* View toggle */
+.sp-view-toggle {
+  display: inline-flex;
+  border: 2px solid var(--blue);
+  border-radius: var(--btn-radius);
+  overflow: hidden;
+}
+.sp-view-btn {
+  background: var(--white);
+  color: var(--text-muted);
+  border: none;
+  font-family: var(--body-font);
+  font-size: var(--label-font-size);
+  font-weight: 500;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background var(--btn-transition), color var(--btn-transition);
+  border-right: 2px solid var(--blue);
+}
+.sp-view-btn:last-child { border-right: none; }
+.sp-view-btn:hover { background: var(--blue-light); color: var(--blue); }
+.sp-view-btn.active { background: var(--blue-light); color: var(--blue); }
+
+/* 90-Day Outlook timeline */
+.sp-outlook-wrap {
+  background: var(--white);
+  border-radius: var(--card-radius);
+  border: 1px solid var(--border);
+  padding: var(--card-padding);
+  margin-bottom: var(--card-padding);
+  overflow-x: auto;
+}
+.sp-outlook-header {
+  display: flex;
+  gap: 0;
+  margin-bottom: 4px;
+  min-width: 900px;
+}
+.sp-outlook-week {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--text-muted);
+  padding: 4px 2px;
+  border-right: 1px solid var(--border-light);
+}
+.sp-outlook-week:last-child { border-right: none; }
+.sp-outlook-week.current { background: var(--blue-light); border-radius: 4px; color: var(--blue); }
+.sp-outlook-track {
+  display: flex;
+  gap: 0;
+  min-width: 900px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.sp-outlook-track:last-child { border-bottom: none; }
+.sp-outlook-track-label {
+  width: 160px;
+  flex-shrink: 0;
+  font-size: var(--label-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--text);
+  padding: 4px 8px 4px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sp-outlook-cells {
+  display: flex;
+  flex: 1;
+  gap: 0;
+}
+.sp-outlook-cell {
+  flex: 1;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  flex-wrap: wrap;
+  border-right: 1px solid var(--border-light);
+  padding: 2px;
+}
+.sp-outlook-cell:last-child { border-right: none; }
+.sp-outlook-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform var(--btn-transition);
+  flex-shrink: 0;
+}
+.sp-outlook-dot:hover { transform: scale(1.6); }
+.sp-outlook-dot.high { background: var(--red); }
+.sp-outlook-dot.medium { background: var(--orange); }
+.sp-outlook-dot.low { background: var(--green); }
+.sp-outlook-dot.done { background: var(--grey); opacity: 0.5; }
+.sp-outlook-tooltip {
+  position: fixed;
+  background: var(--text-dark);
+  color: var(--white);
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: var(--label-font-size);
+  font-family: var(--body-font);
+  max-width: 280px;
+  z-index: 300;
+  pointer-events: none;
+  line-height: 1.4;
+}
+.sp-outlook-legend {
+  display: flex;
+  gap: var(--actions-gap);
+  margin-top: var(--actions-gap);
+  font-size: var(--badge-font-size);
+  color: var(--text-muted);
+  align-items: center;
+}
+.sp-outlook-legend-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.sp-required { color: var(--red); }
+.sp-section-heading {
+  font-family: var(--heading-font);
+  font-size: var(--heading-lg-size);
+  font-weight: var(--heading-lg-weight);
+  color: var(--text);
+  margin-bottom: var(--actions-gap);
+}
+.sp-version-history-wrap { margin-top: var(--card-padding); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .sp-fields { grid-template-columns: 1fr; }
+  .sp-field:has(textarea),
+  .sp-field:has(.sp-chip-group),
+  .sp-field:has(.review-tool-pills),
+  .sp-field:has(.sp-field-help) { grid-column: 1; }
+  .profile-section-card { padding: var(--card-padding) 20px; }
+  .sp-download-links { flex-direction: column; }
+  .sp-swot-grid { grid-template-columns: 1fr; }
+  .sp-ops-controls { flex-direction: column; align-items: flex-start; }
+  .sp-ops-controls-right { margin-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .sp-nav-buttons { flex-wrap: wrap; }
+  .sp-nav-left, .sp-nav-right { width: 100%; }
+  .sp-nav-left .btn-outline, .sp-nav-right .btn-primary,
+  .sp-nav-right .btn-sp-generate { width: 100%; justify-content: center; }
+  .sp-nav-centre { width: 100%; order: 3; text-align: center; }
+  .sp-input, .sp-textarea, .form-input { font-size: var(--input-font-size-mobile); }
+}
+
+@media print {
+  .topbar, .tab-nav, .sp-ops-controls, .btn-sp-add-task,
+  .btn-sp-add-initiative, .sp-subtask-actions,
+  .sp-subtask-priority, .sp-regen-guidance,
+  .btn-sp-download, .btn-sp-print { display: none !important; }
+  body { background: var(--white); color: #000; }
+}
