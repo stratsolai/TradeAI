@@ -226,6 +226,7 @@ Object.assign(window.SP_LOGIC, {
       }
       self.updateOpsStats(0, 0, 0, 0, 0);
       self.renderOutlookView([], [], {});
+      self.renderCategoryTiles();
       return;
     }
 
@@ -300,6 +301,7 @@ Object.assign(window.SP_LOGIC, {
     self.wireSubtaskPriorityLookbacks();
     self.updateOpsStats(goals.length, totalTasks, completedTasks, overdueTasks, dueThisWeek);
     self.renderOutlookView(allSubtasks, goals, taskMap);
+    self.renderCategoryTiles();
 
     // Apply any persisted filter chip on first render.
     if (self._otCurrentFilter && self._otCurrentFilter !== 'all') {
@@ -424,6 +426,96 @@ Object.assign(window.SP_LOGIC, {
     if (isNaN(dt.getTime())) return d;
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return dt.getDate() + ' ' + months[dt.getMonth()] + ' ' + dt.getFullYear();
+  },
+
+  // 7-category tile metadata. Same icons as bi-logic.js
+  // _ALERT_CATEGORIES so the SP/OT/BI surfaces share one visual
+  // language. Order matches spec §4.
+  _SP_CAT_TILES: [
+    { key: 'financial',  label: 'Financial',              icon: '\u{1F4B0}' },
+    { key: 'products',   label: 'Products & Services',     icon: '\u{1F527}' },
+    { key: 'customers',  label: 'Customers & Suppliers',   icon: '\u{1F465}' },
+    { key: 'operations', label: 'Operations & Capacity',   icon: '\u{2699}️' },
+    { key: 'market',     label: 'Market & Competition',    icon: '\u{1F4CA}' },
+    { key: 'growth',     label: 'Growth & Transformation', icon: '\u{1F680}' },
+    { key: 'risk',       label: 'Risk & Resilience',       icon: '\u{1F6E1}️' }
+  ],
+
+  // Render the 7 category tiles above the tab nav. Counts are
+  // derived from cached _otRows (populated by loadInitiatives) so
+  // tab switches re-render without an extra DB round-trip.
+  //   OT tab → active scope: in-progress goals/tasks (excludes archived).
+  //   SP tab → full plan scope: all goals/tasks including archived.
+  renderCategoryTiles: function() {
+    var self = this;
+    var statsEl = document.getElementById('sp-cat-stats');
+    if (!statsEl) return;
+    var rows = self._otRows || [];
+    if (!self._hasPlan || rows.length === 0) {
+      statsEl.style.display = 'none';
+      statsEl.innerHTML = '';
+      return;
+    }
+    var isOps = self._currentTab === 'ops-plan';
+    var counts = {};
+    self._SP_CAT_TILES.forEach(function(c) { counts[c.key] = { goals: 0, tasks: 0 }; });
+    rows.forEach(function(r) {
+      var status = r.items && r.items.status;
+      if (isOps && status === 'archived') return;
+      var cat = self._normaliseCategory(r.sp_section);
+      if (!counts[cat]) counts[cat] = { goals: 0, tasks: 0 };
+      if (!r.parent_task_id) counts[cat].goals++;
+      else counts[cat].tasks++;
+    });
+    var html = '';
+    self._SP_CAT_TILES.forEach(function(c) {
+      var k = c.key;
+      var g = counts[k] ? counts[k].goals : 0;
+      var t = counts[k] ? counts[k].tasks : 0;
+      html += '<button type="button" class="sp-cat-tile" data-category="' + escHtml(k) + '">' +
+        '<span class="sp-cat-tile-icon">' + c.icon + '</span>' +
+        '<span class="sp-cat-tile-name">' + escHtml(c.label) + '</span>' +
+        '<span class="sp-cat-tile-counts">' +
+          '<span><b>' + g + '</b> Goals</span>' +
+          '<span><b>' + t + '</b> Tasks</span>' +
+        '</span>' +
+      '</button>';
+    });
+    statsEl.innerHTML = html;
+    statsEl.style.display = '';
+  },
+
+  // Wire click → switch to OT tab if needed, then expand and scroll
+  // to the matching category accordion. SP tab has no categorised
+  // body content, so clicking from there transitions to OT first.
+  bindCategoryTileEvents: function() {
+    var self = this;
+    var statsEl = document.getElementById('sp-cat-stats');
+    if (!statsEl) return;
+    if (statsEl.dataset.bound === '1') return;
+    statsEl.dataset.bound = '1';
+    statsEl.addEventListener('click', function(e) {
+      var btn = e.target.closest('.sp-cat-tile');
+      if (!btn) return;
+      var cat = btn.getAttribute('data-category');
+      if (!cat) return;
+      var doScroll = function() {
+        var card = document.querySelector('.sp-ot-cat[data-category="' + cat + '"]');
+        if (!card) return;
+        if (!card.classList.contains('expanded')) {
+          var header = card.querySelector('.expand-tile-header');
+          if (header) header.click();
+        }
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+      if (self._currentTab !== 'ops-plan') {
+        self.switchTab('ops-plan');
+        // loadInitiatives repaints async — wait one paint before scrolling.
+        setTimeout(doScroll, 200);
+      } else {
+        doScroll();
+      }
+    });
   },
 
   // Spec §9.5 — five stats: Total Goals, Total Tasks, Tasks Complete,

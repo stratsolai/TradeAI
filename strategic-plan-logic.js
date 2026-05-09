@@ -91,6 +91,10 @@ Object.assign(window.SP_LOGIC, {
     } else if (tabId === 'strat-plan' && self._hasPlan && self._spDocState !== 'wizard') {
       self.loadStrategicPlanView();
     }
+
+    // Re-render category tiles so the OT/SP scope rule applies. Cheap
+    // — reads from cached _otRows; no DB round-trip.
+    if (typeof self.renderCategoryTiles === 'function') self.renderCategoryTiles();
   },
 
   updateTabStates: function() {
@@ -1306,6 +1310,15 @@ Object.assign(window.SP_LOGIC, {
 
     self.checkPlanExists().then(function(exists) {
       self.updateTabStates();
+
+      // Tile counts depend on action_tracker — load once at init so
+      // tiles populate even when the user lands on the SP tab first.
+      // loadInitiatives caches into _otRows and triggers
+      // renderCategoryTiles. bindCategoryTileEvents wires clicks once.
+      if (exists) {
+        self.loadInitiatives();
+      }
+      if (typeof self.bindCategoryTileEvents === 'function') self.bindCategoryTileEvents();
 
       // Sequence: load the Supabase-backed draft first so any in-
       // progress values are in place, then load BI context. BI
