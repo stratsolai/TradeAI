@@ -272,10 +272,15 @@
       .bi-alerts-columns { grid-template-columns: 1fr; }
     }
 
+    /* Risks / Opportunities column titles — sub-headings inside
+       the BI Risks & Opportunities module card. Use the platform's
+       heading-lg pair (matches .sp-section-heading and modal
+       titles); the previous --heading-md-* tokens don't exist in
+       staxai-auth.css and were resolving to inherited body styles. */
     .bi-alerts-column-title {
       font-family: var(--heading-font);
-      font-size: var(--heading-md-size);
-      font-weight: var(--heading-md-weight);
+      font-size: var(--heading-lg-size);
+      font-weight: var(--heading-lg-weight);
       color: var(--text);
       margin: 0 0 var(--actions-gap) 0;
     }
@@ -309,7 +314,13 @@
       background: var(--white);
       box-shadow: 0 4px 16px var(--shadow-hover);
     }
+    /* Category-card title font — switch to the body typeface (DM
+       Sans) at body size + semibold to match SM journey buttons.
+       The platform default for .expand-tile-title is heading-font
+       (Barlow Condensed), which is designed for 20px+ and renders
+       cramped at 14px. */
     .bi-alerts-column > .expand-tile .expand-tile-title {
+      font-family: var(--body-font);
       font-size: var(--body-font-size);
       font-weight: var(--font-weight-semibold);
     }

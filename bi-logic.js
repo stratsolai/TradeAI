@@ -316,7 +316,12 @@ window.BI_LOGIC = {
       financial:  '\u{1F4B0}',
       products:   '\u{1F527}',
       customers:  '\u{1F465}',
-      operations: '⚙',
+      // Gear is U+2699, a BMP codepoint with no default emoji
+      // presentation. The VS16 (️) forces the emoji glyph so
+      // it sizes to the same bounding box as the other icons —
+      // without it, the title for Operations sat further left
+      // than its peers.
+      operations: '\u{2699}️',
       market:     '\u{1F4CA}',
       growth:     '\u{1F680}',
       risk:       '\u{1F6E1}️'
