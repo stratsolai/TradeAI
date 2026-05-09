@@ -837,9 +837,15 @@ Object.assign(window.SP_LOGIC, {
     if (panel && !panel.dataset.bound) {
       panel.dataset.bound = '1';
       var closeBtn = document.getElementById('sp-goal-chat-close');
+      var cancelBtn = document.getElementById('sp-goal-chat-cancel');
       var sendBtn = document.getElementById('sp-goal-chat-send');
       var inputEl = document.getElementById('sp-goal-chat-input');
       if (closeBtn) closeBtn.addEventListener('click', function() { self.closeGoalChat(); });
+      // Spec §6.8 — explicit Cancel as a peer of Accept / Keep
+      // Discussing. Discards any in-flight proposal and closes the
+      // panel; the × button does the same thing but the spec calls
+      // for a labelled Cancel control too.
+      if (cancelBtn) cancelBtn.addEventListener('click', function() { self.closeGoalChat(); });
       if (sendBtn) sendBtn.addEventListener('click', function() { self._chatSend(); });
       if (inputEl) inputEl.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); self._chatSend(); }
@@ -856,7 +862,10 @@ Object.assign(window.SP_LOGIC, {
             proposalEl.style.display = 'none';
             proposalEl.innerHTML = '';
             self._chatState.proposedGoal = null;
+            return;
           }
+          var cancel = e.target.closest('[data-chat-cancel]');
+          if (cancel) { self.closeGoalChat(); return; }
         });
       }
     }
@@ -950,6 +959,7 @@ Object.assign(window.SP_LOGIC, {
       '<div class="sp-goal-chat-proposal-actions">' +
         '<button type="button" class="btn-primary btn-sm" data-chat-accept>Accept</button>' +
         '<button type="button" class="btn-outline btn-sm" data-chat-keep>Keep discussing</button>' +
+        '<button type="button" class="btn-dismiss btn-sm" data-chat-cancel>Cancel</button>' +
       '</div>';
     proposalEl.style.display = 'block';
   },
