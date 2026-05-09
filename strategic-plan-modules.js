@@ -467,14 +467,27 @@ Object.assign(window.SP_LOGIC, {
       if (!r.parent_task_id) counts[cat].goals++;
       else counts[cat].tasks++;
     });
-    var html = '';
+    // Executive Summary leads the row — 8 tiles total balance as 4+4.
+    // No goals/tasks counts apply, so render em-dashes for symmetry
+    // and route the click to the top of the page.
+    var html = '<button type="button" class="sp-cat-tile" data-category="__summary">' +
+      '<span class="sp-cat-tile-head">' +
+        '<span class="sp-cat-tile-icon">\u{1F4CB}</span>' +
+        '<span class="sp-cat-tile-name">Executive Summary</span>' +
+      '</span>' +
+      '<span class="sp-cat-tile-counts">' +
+        '<span>&mdash;</span>' +
+      '</span>' +
+    '</button>';
     self._SP_CAT_TILES.forEach(function(c) {
       var k = c.key;
       var g = counts[k] ? counts[k].goals : 0;
       var t = counts[k] ? counts[k].tasks : 0;
       html += '<button type="button" class="sp-cat-tile" data-category="' + escHtml(k) + '">' +
-        '<span class="sp-cat-tile-icon">' + c.icon + '</span>' +
-        '<span class="sp-cat-tile-name">' + escHtml(c.label) + '</span>' +
+        '<span class="sp-cat-tile-head">' +
+          '<span class="sp-cat-tile-icon">' + c.icon + '</span>' +
+          '<span class="sp-cat-tile-name">' + escHtml(c.label) + '</span>' +
+        '</span>' +
         '<span class="sp-cat-tile-counts">' +
           '<span><b>' + g + '</b> Goals</span>' +
           '<span><b>' + t + '</b> Tasks</span>' +
@@ -499,6 +512,12 @@ Object.assign(window.SP_LOGIC, {
       if (!btn) return;
       var cat = btn.getAttribute('data-category');
       if (!cat) return;
+      // Executive Summary tile — just scroll back to the top of the
+      // page; there's no per-category target to expand.
+      if (cat === '__summary') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
       var doScroll = function() {
         var card = document.querySelector('.sp-ot-cat[data-category="' + cat + '"]');
         if (!card) return;
