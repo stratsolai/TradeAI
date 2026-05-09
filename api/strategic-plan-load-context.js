@@ -54,22 +54,35 @@ export default async function handler(req, res) {
     clContext = null;
   }
 
-  // --- Query 2: BI insights with relevance_score >= 7 ---
+  // --- Query 2: BI insights the owner approved on the SP wizard's
+  // Tab 9 (BI Generated Items). Held / rejected / undecided items
+  // do NOT reach the generator — the spec routes the strategic ones
+  // through Approve so they ride along with the next plan. Tactical
+  // BI items have already become Operational Tasks via /api/bi-act
+  // and are not re-prompted here.
+  // Schema: bi_insights stores the headline / detail in insight_data
+  // (jsonb). Earlier code referenced flat title/summary columns that
+  // do not exist — those reads silently returned nothing.
   try {
     const { data: biRows, error: biError } = await supabase
       .from('bi_insights')
-      .select('insight_type, title, summary, relevance_score')
+      .select('id, insight_data, relevance_score, sp_queue_action')
       .eq('user_id', userId)
-      .gte('relevance_score', 7)
+      .eq('added_to_sp', true)
+      .eq('sp_queue_action', 'approved')
+      .eq('is_dismissed', false)
       .order('relevance_score', { ascending: false })
-      .limit(5);
+      .limit(15);
 
     if (!biError && biRows && biRows.length > 0) {
-      biInsights = biRows.map(r => ({
-        insight_type: r.insight_type,
-        title: r.title,
-        summary: r.summary
-      }));
+      biInsights = biRows.map(r => {
+        var d = r.insight_data || {};
+        return {
+          insight_type: 'alert',
+          title: d.headline || 'Strategic suggestion',
+          summary: d.detail || d.suggestion || ''
+        };
+      });
     }
   } catch (e) {
     biInsights = null;
