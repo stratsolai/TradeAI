@@ -692,7 +692,7 @@ export default async function handler(req, res) {
               plan_id: planId,
               items: {
                 title: init.name || 'Initiative',
-                status: 'pending',
+                status: 'in_progress',
                 description: init.description || ''
               },
               initiative_name: init.name || 'Initiative',
@@ -727,7 +727,7 @@ export default async function handler(req, res) {
               parent_task_id: parentId,
               items: {
                 title: task.title || '',
-                status: 'pending',
+                status: 'in_progress',
                 priority: task.priority || 'Medium',
                 due_date: dueDate,
                 notes: task.notes || '',
@@ -749,7 +749,13 @@ export default async function handler(req, res) {
         console.error('[strategic-plan] action_tracker error:', e.message);
       }
 
-      // Carry forward incomplete sub-tasks from prior plan
+      // Gap 4 — preserve every existing task on regeneration. Spec
+      // says: "All existing tasks are preserved and merged with new
+      // tasks. No tasks are replaced or removed by the AI." Archived
+      // rows stay where they are (they live on the Archive screen);
+      // every other task carries forward into the new plan under a
+      // "Carried Forward Tasks" initiative so the owner can re-home
+      // them or work them off as the new plan proceeds.
       try {
         var { data: priorPlanRows } = await supabase
           .from('strategic_plans')
@@ -761,20 +767,20 @@ export default async function handler(req, res) {
 
         if (priorPlanRows && priorPlanRows.length > 0) {
           var priorPlanId = priorPlanRows[0].id;
-          var { data: incompleteRows } = await supabase
+          var { data: priorRows } = await supabase
             .from('action_tracker')
             .select('items, month_group, due_day_offset, owner, parent_task_id, initiative_name, sp_section, source')
             .eq('plan_id', priorPlanId)
             .not('parent_task_id', 'is', null);
 
-          if (incompleteRows && incompleteRows.length > 0) {
-            var incomplete = incompleteRows.filter(function(r) { return r.items && r.items.status !== 'done'; });
-            if (incomplete.length > 0) {
+          if (priorRows && priorRows.length > 0) {
+            var preserved = priorRows.filter(function(r) { return r.items && r.items.status !== 'archived'; });
+            if (preserved.length > 0) {
               // Create a "Carried Forward" initiative
               var { data: cfInit } = await supabase.from('action_tracker')
                 .insert({
                   user_id: userId, plan_id: planId,
-                  items: { title: 'Carried Forward Tasks', status: 'pending' },
+                  items: { title: 'Carried Forward Tasks', status: 'in_progress' },
                   initiative_name: 'Carried Forward Tasks',
                   sp_section: null, source: 'sp_generated',
                   parent_task_id: null, owner: 'Owner', is_carried_forward: true,
@@ -782,12 +788,13 @@ export default async function handler(req, res) {
                 }).select('id').single();
 
               var cfParentId = cfInit ? cfInit.id : null;
-              var carried = incomplete.map(function(r) {
+              var carried = preserved.map(function(r) {
                 return {
                   user_id: userId, plan_id: planId,
                   parent_task_id: cfParentId,
                   items: {
-                    title: r.items.title || '', status: 'pending',
+                    title: r.items.title || '',
+                    status: r.items.status || 'in_progress',
                     priority: r.items.priority || 'Medium',
                     due_date: r.items.due_date || '',
                     notes: r.items.notes || '',

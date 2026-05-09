@@ -183,6 +183,9 @@ Object.assign(window.SP_LOGIC, {
       .order('created_at', { ascending: true })
       .then(function(res) {
         if (res.error) { console.error('[SP] Load initiatives error:', res.error); return; }
+        // Two-status model (Gap 4) — items.status is either
+        // 'in_progress' or 'archived'. Skip archived rows here; the
+        // Archive screen handles those.
         self.renderInitiatives(res.data || []);
       });
   },
@@ -249,8 +252,10 @@ Object.assign(window.SP_LOGIC, {
       goalsByCategory[cat].push(g);
       var tasks = taskMap[g.id] || [];
       tasks.forEach(function(t) {
-        var status = (t.items && t.items.status) || 'pending';
+        var status = (t.items && t.items.status) || 'in_progress';
         totalTasks++;
+        // Legacy 'done' rows (pre-Gap-4) still count as completed
+        // until they're archived. New rows never reach this state.
         if (status === 'done') { completedTasks++; }
         else {
           var dd = t.items && t.items.due_date ? new Date(t.items.due_date) : null;
@@ -355,7 +360,7 @@ Object.assign(window.SP_LOGIC, {
     // spec §9.6 — completed but still visible until the owner
     // chooses to archive.
     var archiveBtn = done ? '<button class="sp-ot-task-action-btn sp-ot-task-archive-btn" type="button" title="Archive">Archive</button>' : '';
-    return '<div class="sp-ot-task' + (done ? ' sp-ot-task-done' : '') + '" data-id="' + escHtml(row.id) + '" data-status="' + (done ? 'done' : 'pending') + '"' + (isOverdue ? ' data-overdue="1"' : '') + (isDueThisWeek(dueDate, done) ? ' data-due-week="1"' : '') + '>' +
+    return '<div class="sp-ot-task' + (done ? ' sp-ot-task-done' : '') + '" data-id="' + escHtml(row.id) + '" data-status="' + (done ? 'done' : 'in_progress') + '"' + (isOverdue ? ' data-overdue="1"' : '') + (isDueThisWeek(dueDate, done) ? ' data-due-week="1"' : '') + '>' +
       '<div class="sp-ot-task-row">' +
         '<input type="checkbox" class="sp-ot-task-check"' + (done ? ' checked' : '') + ' aria-label="Mark task complete">' +
         '<span class="sp-ot-task-title">' + escHtml(title) + sourceBadge + '</span>' +
@@ -575,33 +580,14 @@ Object.assign(window.SP_LOGIC, {
     });
   },
 
-  // Spec §5.2 step 3 / §9.6 — completing pops "Archive?" modal;
-  // unchecking (done → pending) skips the modal.
+  // Two-status model (Gap 4) — tasks live as 'in_progress' until
+  // the owner ticks the checkbox, which prompts an archive
+  // confirmation. Confirm flips status to 'archived' (visible only
+  // on the Archive screen); Cancel reverts the checkbox and the
+  // task stays In Progress. There is no persistent "done /
+  // completed but visible" state — completing IS archiving.
   toggleSubtask: function(taskId) {
-    var self = this;
-    if (!self._supabase) return;
-    self._supabase
-      .from('action_tracker')
-      .select('items')
-      .eq('id', taskId)
-      .single()
-      .then(function(res) {
-        if (res.error) return;
-        var items = res.data.items || {};
-        var wasDone = items.status === 'done';
-        items.status = wasDone ? 'pending' : 'done';
-        self._supabase
-          .from('action_tracker')
-          .update({ items: items })
-          .eq('id', taskId)
-          .then(function(upRes) {
-            if (upRes.error) { console.error('[SP] Toggle subtask update error:', upRes.error.message); return; }
-            self.loadInitiatives();
-            // Pending → done is the path that opens the archive
-            // modal. Done → pending (uncheck) just toggles silently.
-            if (!wasDone) self._showArchiveOnCompleteModal(taskId);
-          });
-      });
+    this._showArchiveOnCompleteModal(taskId);
   },
 
   _showArchiveOnCompleteModal: function(taskId) {
@@ -618,7 +604,12 @@ Object.assign(window.SP_LOGIC, {
       if (yesBtn) yesBtn.removeEventListener('click', onYes);
       modal.removeEventListener('click', onBackdrop);
     };
-    onNo = function() { cleanup(); };
+    onNo = function() {
+      cleanup();
+      // Cancel — the task stays In Progress. Re-render so the
+      // checkbox snaps back from its optimistic checked state.
+      self.loadInitiatives();
+    };
     onYes = function() { cleanup(); self.archiveTask(taskId); };
     onBackdrop = function(e) { if (e.target === modal) cleanup(); };
     if (noBtn) noBtn.addEventListener('click', onNo);
@@ -788,7 +779,7 @@ Object.assign(window.SP_LOGIC, {
         items: {
           title: title,
           description: description,
-          status: 'pending',
+          status: 'in_progress',
           priority: priority,
           due_date: dueDate || null,
           owner: owner

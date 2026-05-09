@@ -1487,16 +1487,18 @@
     </div>
   </div>
 
-  <!-- Archive-on-complete modal — spec §5.2 step 3 / §9.6. -->
+  <!-- Archive-on-complete modal — Gap 4 two-status model. Ticking
+       the checkbox on a task prompts this confirmation. Confirm
+       archives the task; Cancel keeps it In Progress. -->
   <div class="perm-modal-overlay" id="sp-ot-archive-modal">
     <div class="perm-modal">
-      <div class="perm-modal-title">Task complete</div>
+      <div class="perm-modal-title">This Task Will Now Be Archived</div>
       <div class="perm-modal-body">
-        Would you like to archive this task? Archived tasks move to the Archive screen and stop showing in your active list.
+        Confirming will move this task to the Archive screen. To leave it In Progress, choose Cancel.
       </div>
       <div class="perm-modal-actions">
-        <button class="perm-modal-cancel" id="sp-ot-archive-no" type="button">Keep visible</button>
-        <button class="perm-modal-continue" id="sp-ot-archive-yes" type="button">Archive</button>
+        <button class="perm-modal-cancel" id="sp-ot-archive-no" type="button">Cancel</button>
+        <button class="perm-modal-continue" id="sp-ot-archive-yes" type="button">Confirm</button>
       </div>
     </div>
   </div>

@@ -189,7 +189,7 @@ export default async function handler(req, res) {
       var seedRes = await supabase.from('action_tracker').insert({
         user_id: userId,
         plan_id: planId,
-        items: { title: initName, status: 'pending' },
+        items: { title: initName, status: 'in_progress' },
         initiative_name: initName,
         sp_section: preferredSection,
         source: 'bi_action',
@@ -221,7 +221,7 @@ export default async function handler(req, res) {
       parent_task_id: matchingInit.id,
       items: {
         title: taskTitle,
-        status: 'pending',
+        status: 'in_progress',
         priority: priority,
         due_date: dueDate.toISOString().split('T')[0],
         notes: workingData.detail || '',
