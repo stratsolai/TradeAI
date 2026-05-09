@@ -30,6 +30,7 @@ export default async function handler(req, res) {
 
   let clContext = null;
   let biInsights = null;
+  let currentPlan = null;
 
   // --- Query 1: Content Library items tagged for strategic-plan ---
   try {
@@ -88,5 +89,44 @@ export default async function handler(req, res) {
     biInsights = null;
   }
 
-  return res.status(200).json({ clContext, biInsights });
+  // --- Query 3: Active plan goals/tasks for change comparison
+  // (Gap 3 — Update Plan change indicators). Only included when
+  // the owner already has an active plan; the generator uses it to
+  // tag every Goal / Task it produces as new / updated / unchanged
+  // / removal_suggested. Trimmed to title + description + category
+  // + tasks.title/description so the prompt isn't padded with
+  // change_flag fields from a previous regeneration.
+  try {
+    const { data: activeRow, error: activeErr } = await supabase
+      .from('strategic_plans')
+      .select('plan_data')
+      .eq('user_id', userId)
+      .eq('is_current', true)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (!activeErr && activeRow && activeRow.plan_data) {
+      var goals = Array.isArray(activeRow.plan_data.goals) ? activeRow.plan_data.goals : [];
+      if (goals.length > 0) {
+        currentPlan = {
+          goals: goals.map(function(g) {
+            return {
+              title: g.title || '',
+              description: g.description || '',
+              category: g.category || '',
+              tasks: Array.isArray(g.tasks) ? g.tasks.map(function(t) {
+                return {
+                  title: t.title || '',
+                  description: t.description || ''
+                };
+              }) : []
+            };
+          })
+        };
+      }
+    }
+  } catch (e) {
+    currentPlan = null;
+  }
+
+  return res.status(200).json({ clContext, biInsights, currentPlan });
 }

@@ -1143,6 +1143,7 @@ Object.assign(window.SP_LOGIC, {
 
     var clContext = null;
     var biInsights = null;
+    var currentPlan = null;
     try {
       var jwt = await self._getJwt();
       if (jwt) {
@@ -1154,6 +1155,10 @@ Object.assign(window.SP_LOGIC, {
           var cd = await cr.json();
           clContext = cd.clContext || null;
           biInsights = cd.biInsights || null;
+          // Gap 3 — when an active plan exists the loader returns
+          // its goals + tasks so the generator can diff and tag
+          // change indicators on every Goal / Task it produces.
+          currentPlan = cd.currentPlan || null;
         }
       }
     } catch (e) { console.error('[SP] Context load error:', e.message || e); }
@@ -1169,7 +1174,8 @@ Object.assign(window.SP_LOGIC, {
         body: JSON.stringify({
           planData: data,
           clContext: clContext,
-          biInsights: biInsights
+          biInsights: biInsights,
+          currentPlan: currentPlan
         })
       });
       if (!r.ok) {

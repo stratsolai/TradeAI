@@ -22,7 +22,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 function _arr(v) { return Array.isArray(v) ? v.join(', ') : (v || 'Not specified'); }
 
-async function generatePlanContent(planData, clContext, biInsights, userId) {
+async function generatePlanContent(planData, clContext, biInsights, currentPlan, userId) {
   // SP/OT Rebuild Phase 3 \u2014 the prompt now produces a structured
   // plan suitable for the Review screen (spec \u00a76): one Executive
   // Summary, a SWOT array (max 10 words per point per spec \u00a76.4),
@@ -161,13 +161,19 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
     '      "category": "growth",\n' +
     '      "title": "Goal name — short, action-oriented, max 60 chars",\n' +
     '      "description": "1-2 sentences explaining what success looks like for this goal",\n' +
+    '      "change_flag": "new" | "updated" | "removal_suggested" | null,\n' +
+    '      "change_reason": "Short string when flagged, otherwise null",\n' +
+    '      "prior_version": null | { "title": "<original>", "description": "<original>" },\n' +
     '      "tasks": [\n' +
     '        {\n' +
     '          "title": "Short action statement",\n' +
     '          "description": "Paragraph explaining what to do and why",\n' +
     '          "dueRelative": "Week 1" | "Week 2" | "Month 1" | "Month 2" | "Month 3",\n' +
     '          "priority": "High" | "Medium" | "Low",\n' +
-    '          "owner": "Owner or role from keyRoles"\n' +
+    '          "owner": "Owner or role from keyRoles",\n' +
+    '          "change_flag": "new" | "updated" | "removal_suggested" | null,\n' +
+    '          "change_reason": "Short string when flagged, otherwise null",\n' +
+    '          "prior_version": null | { "title": "<original>", "description": "<original>" }\n' +
     '        }\n' +
     '      ]\n' +
     '    }\n' +
@@ -196,6 +202,26 @@ async function generatePlanContent(planData, clContext, biInsights, userId) {
   if (biInsights && biInsights.length > 0) {
     userPrompt += '\n\nBI INTELLIGENCE INSIGHTS (from Business Intelligence Dashboard):\n' +
       biInsights.map(function(i) { return i.insight_type + ': ' + i.title + ' --- ' + i.summary; }).join('\n');
+  }
+  // Gap 3 — Update Plan change indicators. When the owner already
+  // has an active plan, hand it to Claude so it can tag every Goal
+  // / Task as new / updated / unchanged / removal_suggested. The
+  // flags ride along on plan_data.goals[*] for the (later) Review
+  // UI to surface; on a fresh plan they stay null.
+  if (currentPlan && Array.isArray(currentPlan.goals) && currentPlan.goals.length > 0) {
+    userPrompt += '\n\nYou are updating an existing Strategic Plan. The user\'s current plan is provided below.\n\n' +
+      'CURRENT PLAN:\n' + JSON.stringify(currentPlan, null, 2) + '\n\n' +
+      'INSTRUCTIONS FOR COMPARISON:\n' +
+      '1. For each Goal and Task you generate, determine if it is:\n' +
+      '   - NEW: Does not exist in the current plan\n' +
+      '   - UPDATED: Exists but you are suggesting changes\n' +
+      '   - REMOVAL_SUGGESTED: Exists in current plan but should be removed\n' +
+      '   - UNCHANGED: Exists and should remain as-is\n\n' +
+      '2. For NEW, UPDATED, and REMOVAL_SUGGESTED items, provide a change_reason (max 15 words) explaining why.\n\n' +
+      '3. For UPDATED items, include prior_version with the original title and description.\n\n' +
+      '4. Return all items including UNCHANGED ones (with change_flag: null).\n\n' +
+      '5. Do not remove items without flagging them as REMOVAL_SUGGESTED — the user must approve removals.\n\n' +
+      'change_flag values must be lowercase strings: "new", "updated", "removal_suggested", or null. Match goals by title similarity, not exact equality.';
   }
 
   var response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -525,7 +551,7 @@ export default async function handler(req, res) {
   }
   var userId = userRes.data.user.id;
 
-  var { planData, clContext, biInsights } = req.body;
+  var { planData, clContext, biInsights, currentPlan } = req.body;
   if (!planData) return res.status(400).json({ error: 'planData required' });
 
   var businessSlug = (planData.businessName || 'business').replace(/[^a-z0-9]/gi, '-').toLowerCase();
@@ -534,7 +560,7 @@ export default async function handler(req, res) {
   try {
     // 1. Generate content with Claude
     console.log('[strategic-plan] Generating content for userId:', userId);
-    var content = await generatePlanContent(planData, clContext, biInsights, userId);
+    var content = await generatePlanContent(planData, clContext, biInsights, currentPlan, userId);
 
     // 2. Generate both Word docs in-process
     console.log('[strategic-plan] Generating Strategy doc...');
