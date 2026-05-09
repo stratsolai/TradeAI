@@ -494,12 +494,47 @@ Object.assign(window.SP_LOGIC, {
     if (!Array.isArray(goals) || !goals[goalIdx]) return;
     var goalTitle = goals[goalIdx].title || 'this goal';
     var taskCount = (goals[goalIdx].tasks || []).length;
-    var msg = 'Delete "' + goalTitle + '"?';
-    if (taskCount > 0) msg += '\n\nThis goal has ' + taskCount + ' associated task' + (taskCount === 1 ? '' : 's') + ' that will also be removed.';
-    if (!window.confirm(msg)) return;
-    goals.splice(goalIdx, 1);
-    self._reviewSavePlanData();
-    self._reviewRerenderCategories();
+    // Platform perm-modal — uses the shared sp-confirm-modal so the
+    // delete confirmation matches the rest of the platform's modal
+    // styling and respects the platform's overlay / focus behaviour.
+    var modal = document.getElementById('sp-confirm-modal');
+    var titleEl = document.getElementById('sp-confirm-title');
+    var bodyEl = document.getElementById('sp-confirm-body');
+    var okBtn = document.getElementById('sp-confirm-ok');
+    var cancelBtn = document.getElementById('sp-confirm-cancel');
+    if (!modal || !titleEl || !bodyEl || !okBtn) {
+      // Markup missing — fall back to the older path so the action is
+      // never silently swallowed.
+      goals.splice(goalIdx, 1);
+      self._reviewSavePlanData();
+      self._reviewRerenderCategories();
+      return;
+    }
+    titleEl.textContent = 'Delete this Goal?';
+    var msg = 'Delete "' + goalTitle + '". This cannot be undone.';
+    if (taskCount > 0) {
+      msg += ' This Goal has ' + taskCount + ' associated task' + (taskCount === 1 ? '' : 's') + ' that will also be removed.';
+    }
+    bodyEl.textContent = msg;
+    modal.classList.add('open');
+    var onConfirm, onCancel, onBackdrop;
+    var cleanup = function() {
+      modal.classList.remove('open');
+      okBtn.removeEventListener('click', onConfirm);
+      if (cancelBtn) cancelBtn.removeEventListener('click', onCancel);
+      modal.removeEventListener('click', onBackdrop);
+    };
+    onConfirm = function() {
+      cleanup();
+      goals.splice(goalIdx, 1);
+      self._reviewSavePlanData();
+      self._reviewRerenderCategories();
+    };
+    onCancel = function() { cleanup(); };
+    onBackdrop = function(e) { if (e.target === modal) cleanup(); };
+    okBtn.addEventListener('click', onConfirm);
+    if (cancelBtn) cancelBtn.addEventListener('click', onCancel);
+    modal.addEventListener('click', onBackdrop);
   },
 
   _reviewRerenderCategories: function() {
