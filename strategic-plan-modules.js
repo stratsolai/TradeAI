@@ -580,12 +580,8 @@ Object.assign(window.SP_LOGIC, {
     });
   },
 
-  // Two-status model (Gap 4) — tasks live as 'in_progress' until
-  // the owner ticks the checkbox, which prompts an archive
-  // confirmation. Confirm flips status to 'archived' (visible only
-  // on the Archive screen); Cancel reverts the checkbox and the
-  // task stays In Progress. There is no persistent "done /
-  // completed but visible" state — completing IS archiving.
+  // Two-status model (Gap 4) — checkbox click opens the archive
+  // confirmation; Confirm archives, Cancel reverts.
   toggleSubtask: function(taskId) {
     this._showArchiveOnCompleteModal(taskId);
   },
@@ -1375,6 +1371,9 @@ Object.assign(window.SP_LOGIC, {
           return;
         }
         self.loadBIQueueItems();
+        // The active-plan BI tile reads from the same query — refresh
+        // its cache so the count updates after a Tab 9 decision.
+        if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
       });
   }
 

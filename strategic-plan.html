@@ -814,7 +814,16 @@
       color: var(--text-muted);
     }
 
-    /* BI Suggestions banner + review modal — spec §6.2. */
+    /* BI Suggestions tile — Gap 2. */
+    .sp-bi-tile { border-left-color:var(--blue); }
+    .sp-bi-tile-header { display:flex; align-items:center; gap:var(--actions-gap); margin-bottom:10px; flex-wrap:wrap; }
+    .sp-bi-tile-title { flex:1; font-family:var(--heading-font); font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
+    .sp-bi-tile-list { display:flex; flex-direction:column; gap:6px; }
+    .sp-bi-tile-item { display:flex; align-items:center; gap:10px; }
+    .sp-bi-tile-item-summary { flex:1; font-size:var(--btn-font-size); color:var(--text); line-height:var(--note-line-height); }
+    .sp-bi-tile-overflow { margin-top:8px; font-size:var(--note-font-size); color:var(--text-muted); font-style:italic; }
+
+    /* Draft-Review BI banner — spec §6.2. */
     .sp-review-bi-banner {
       display: flex;
       align-items: center;
@@ -1324,6 +1333,9 @@
     <h1 class="page-title">Strategic Plan &amp; 90-Day Ops</h1>
     <p class="page-subtitle">Your strategic plan, operational tasks, and business goals in one place.</p>
   </div>
+
+  <!-- Active-plan BI Suggestions tile — Gap 2. -->
+  <div id="sp-bi-tile" class="sp-doc-card sp-bi-tile" style="display:none"></div>
 
   <!-- 2-tab navigation — spec §3. The wizard opens from inside the
        Strategic Plan tab as a state, not as a separate tab. -->

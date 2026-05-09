@@ -121,6 +121,10 @@ Object.assign(window.SP_LOGIC, {
     if (docWizard) docWizard.style.display = spState === 'wizard' ? 'block' : 'none';
     if (docContent) docContent.style.display = spState === 'content' ? 'block' : 'none';
     if (docReview) docReview.style.display = spState === 'review' ? 'block' : 'none';
+
+    // Active-plan BI Suggestions tile (Gap 2). Cheap re-render —
+    // reads cached items, decides visibility from the same state.
+    if (typeof this.renderBIActiveTile === 'function') this.renderBIActiveTile();
   },
 
   bindTabEvents: function() {
@@ -1289,6 +1293,10 @@ Object.assign(window.SP_LOGIC, {
     self.bindBIQueueEvents();
     self.loadProfile();
     self.loadBIQueueItems();
+    // Gap 2 — initial fetch for the active-plan BI tile. Cached
+    // items drive subsequent updateTabStates renders without re-
+    // querying Supabase.
+    if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
 
     self.checkPlanExists().then(function(exists) {
       self.updateTabStates();

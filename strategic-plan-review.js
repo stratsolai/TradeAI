@@ -10,6 +10,108 @@
 window.SP_LOGIC = window.SP_LOGIC || {};
 Object.assign(window.SP_LOGIC, {
 
+  // ── Active-plan BI Suggestions tile — Gap 2 ─────────────────────
+  // Full-width tile mounted above the tab nav. Visible only when an
+  // active plan exists and the owner isn't mid-wizard / mid-review
+  // (those flows already surface their own BI suggestions UI).
+  // Three render states based on the count of strategic suggestions
+  // pending decision (added_to_sp = true, is_tactical = false,
+  // sp_queue_action IS NULL):
+  //   0       → "No new suggestions" + Review Plan button
+  //   1–3     → All items listed (10-word headlines + category badge)
+  //   4+      → First three items + "Click Review Plan to view all X"
+  // The Review Plan button routes the owner into the SP wizard so
+  // they can step through Tab 9 (BI Generated Items).
+  _biActiveTileItems: null,
+
+  loadBIActiveTile: function() {
+    var self = this;
+    var tileEl = document.getElementById('sp-bi-tile');
+    if (!tileEl || !self._supabase || !self._userId) return;
+    self._supabase
+      .from('bi_insights')
+      .select('id, insight_data')
+      .eq('user_id', self._userId)
+      .eq('added_to_sp', true)
+      .eq('is_tactical', false)
+      .eq('is_dismissed', false)
+      .is('sp_queue_action', null)
+      .order('added_to_sp_at', { ascending: false })
+      .then(function(res) {
+        if (res.error) {
+          console.error('[SP] BI tile load error:', res.error.message || res.error);
+          self._biActiveTileItems = [];
+        } else {
+          self._biActiveTileItems = res.data || [];
+        }
+        self.renderBIActiveTile();
+      });
+  },
+
+  // Maps each unified category to a platform .badge-* colour. Two
+  // pairs share a colour where the platform doesn't have enough
+  // distinct classes (financial/growth → green; products/market →
+  // blue) — the label text still distinguishes them.
+  _BI_CAT_BADGE: {
+    financial: 'badge-green',
+    products:  'badge-blue',
+    customers: 'badge-orange',
+    operations:'badge-grey',
+    market:    'badge-purple',
+    growth:    'badge-green',
+    risk:      'badge-red'
+  },
+
+  renderBIActiveTile: function() {
+    var tileEl = document.getElementById('sp-bi-tile');
+    if (!tileEl) return;
+    // Visibility: only the active-plan content view shows the tile.
+    // Lock / wizard / review states each have their own surfaces.
+    var visible = !!(this._hasPlan && !this._pendingPlanId && this._spDocState !== 'wizard');
+    if (!visible) { tileEl.style.display = 'none'; return; }
+    var items = this._biActiveTileItems || [];
+    var count = items.length;
+    var bodyHtml;
+    if (count === 0) {
+      bodyHtml = '<p style="margin:0;color:var(--text-muted);font-style:italic">No new suggestions.</p>';
+    } else {
+      var visibleItems = items.slice(0, 3);
+      var listHtml = visibleItems.map(this._renderBIActiveItem, this).join('');
+      bodyHtml = '<div class="sp-bi-tile-list">' + listHtml + '</div>';
+      if (count > 3) {
+        bodyHtml += '<div class="sp-bi-tile-overflow">Click Review Plan to view all ' + count + ' items.</div>';
+      }
+    }
+    tileEl.innerHTML =
+      '<div class="sp-bi-tile-header">' +
+        '<span class="sp-bi-tile-title">Business Intelligence Suggestions</span>' +
+        '<button type="button" class="btn-primary btn-sm" id="sp-bi-tile-review">Review Plan</button>' +
+      '</div>' +
+      bodyHtml;
+    tileEl.style.display = 'block';
+    var btn = document.getElementById('sp-bi-tile-review');
+    if (btn) {
+      var self = this;
+      btn.addEventListener('click', function() { self.switchTab('create-plan'); });
+    }
+  },
+
+  _renderBIActiveItem: function(item) {
+    var d = item.insight_data || {};
+    var category = (d.category || 'risk').toLowerCase();
+    if (!this._BI_CAT_BADGE[category]) category = 'risk';
+    var labels = this._CHAT_CATEGORY_LABELS || {};
+    var label = labels[category] || 'Other';
+    var summary = (d.headline || d.suggestion || 'Strategic suggestion').toString();
+    // Cap at 10 words per spec.
+    var words = summary.split(/\s+/);
+    if (words.length > 10) summary = words.slice(0, 10).join(' ') + '…';
+    return '<div class="sp-bi-tile-item">' +
+      '<span class="badge ' + this._BI_CAT_BADGE[category] + '">' + escHtml(label) + '</span>' +
+      '<span class="sp-bi-tile-item-summary">' + escHtml(summary) + '</span>' +
+    '</div>';
+  },
+
   // Category metadata shared with the Review screen renders. Order
   // matches spec §4. Display labels and icons end up in section
   // headers on the Review screen and in chip rows where applicable.
@@ -246,6 +348,10 @@ Object.assign(window.SP_LOGIC, {
         // we just appended a Goal.
         self.loadReviewBIBanner();
         if (queueAction === 'approved') self._reviewRerenderCategories();
+        // The active-plan BI tile reads from the same query — refresh
+        // its cache so its count is in sync if the owner navigates
+        // back out without approving.
+        if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
       });
   },
 
@@ -729,6 +835,9 @@ Object.assign(window.SP_LOGIC, {
       self.updateTabStates();
       self.switchTab('ops-plan');
       if (typeof self.loadOperationalPlan === 'function') self.loadOperationalPlan();
+      // Refresh the active-plan BI tile so any items that landed
+      // mid-review are reflected in the count.
+      if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
     } catch (err) {
       console.error('[SP Review] approve error:', err && err.message);
       if (approveBtn) { approveBtn.disabled = false; approveBtn.textContent = 'Approve Plan'; }
