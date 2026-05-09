@@ -287,12 +287,32 @@
       text-align: center;
     }
 
-    /* Risks & Opportunities category accordions use the platform
-       .expand-tile primitive (staxai-auth.css §22a). All chrome —
-       border, padding, hover/expanded shadow, header layout, count
-       badge — comes from there. Tile spacing within the column is
-       the only BI-specific bit kept here. */
-    .bi-alerts-column .expand-tile { margin-bottom: var(--actions-gap); }
+    /* Risks & Opportunities category cards — restyled to match the
+       SM journey button pattern (bg-subtle ground, compact padding,
+       blue-light hover) while keeping the platform .expand-tile
+       expand mechanic and the severity left-border colour. The
+       direct-child selector keeps these overrides off any nested
+       .expand-tile that might appear inside the content area. */
+    .bi-alerts-column > .expand-tile {
+      background: var(--bg-subtle);
+      padding: var(--btn-padding);
+      border-radius: var(--btn-radius);
+      margin-bottom: var(--btn-gap);
+      box-shadow: none;
+      transition: background var(--btn-transition);
+    }
+    .bi-alerts-column > .expand-tile:hover {
+      background: var(--blue-light);
+      box-shadow: none;
+    }
+    .bi-alerts-column > .expand-tile.expanded {
+      background: var(--white);
+      box-shadow: 0 4px 16px var(--shadow-hover);
+    }
+    .bi-alerts-column > .expand-tile .expand-tile-title {
+      font-size: var(--body-font-size);
+      font-weight: var(--font-weight-semibold);
+    }
 
     .bi-alert-card {
       background: var(--white);
@@ -751,7 +771,10 @@
     <!-- Module 6: Risk & Opportunity Alerts (full width, top) -->
     <div class="tile-card bi-module-full" id="bi-mod-alerts">
       <div class="bi-module-header">
-        <span class="bi-module-icon">&#9888;</span>
+        <!-- Shield icon matches the SP wizard's Risk & Resilience
+             section so the same conceptual area uses the same
+             visual cue across both tools. -->
+        <span class="bi-module-icon">&#x1F6E1;&#xFE0F;</span>
         <span class="bi-module-title">Risks &amp; Opportunities</span>
       </div>
       <div id="bi-mod-alerts-content">
