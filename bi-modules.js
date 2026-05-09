@@ -609,7 +609,7 @@ window.BI_MODULES = {
   },
 
   fetchStrategic: async function(sb, userId) {
-    var pr = await sb.from('strategic_plans').select('id, swot_data, cycle_end_date, interview_data, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
+    var pr = await sb.from('strategic_plans').select('id, swot_data, interview_data, created_at').eq('user_id', userId).order('created_at', { ascending: false }).limit(1);
     var plan = (pr.data && pr.data.length > 0) ? pr.data[0] : null;
     var tasks = [];
     if (plan) {
@@ -639,13 +639,10 @@ window.BI_MODULES = {
     var completed = tasks.filter(function(t){return t.status==='completed'||t.status==='done';}).length;
     var overdue = tasks.filter(function(t){return t.due_date&&t.due_date<today&&t.status!=='completed'&&t.status!=='done';}).length;
     var pct = total > 0 ? Math.round(completed/total*100) : 0;
-    var cycleEnd = plan.cycle_end_date||'';
-    var daysLeft = cycleEnd ? Math.max(0, Math.ceil((new Date(cycleEnd)-new Date())/86400000)) : 0;
 
     this._renderKPIRow(kpisEl, [
       { value: pct+'%', label: '90-Day Progress', colour: pct>=70?'green':pct>=40?'orange':'red', trend: pct>=50?'up':'down', trendText: completed+' of '+total+' tasks' },
-      { value: ''+overdue, label: 'Overdue Tasks', colour: overdue>0?'red':'green', trend: overdue>0?'down':'up', trendText: overdue>0?'Action needed':'On track' },
-      { value: daysLeft+'d', label: 'Cycle Remaining', colour: daysLeft<=14?'orange':'purple', trend: 'flat', trendText: cycleEnd?'Ends '+cycleEnd:'' }
+      { value: ''+overdue, label: 'Overdue Tasks', colour: overdue>0?'red':'green', trend: overdue>0?'down':'up', trendText: overdue>0?'Action needed':'On track' }
     ]);
 
     if (chartArea) {
@@ -664,7 +661,6 @@ window.BI_MODULES = {
 
     var items = [];
     if (overdue > 0) items.push({ icon: '&#9888;', text: overdue+' of '+total+' strategic actions are overdue.' });
-    if (daysLeft > 0 && daysLeft <= 21) items.push({ icon: '&#128197;', text: '90-day cycle ends in '+daysLeft+' days \u2014 schedule a review.' });
     if (pct < 30 && total > 0) items.push({ icon: '&#9888;', text: 'Only '+pct+'% completed \u2014 consider reprioritising.' });
     else if (pct >= 75) items.push({ icon: '&#9989;', text: 'Strong progress at '+pct+'%.' });
     var swot = plan.swot_data;
