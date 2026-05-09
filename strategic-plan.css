@@ -3,12 +3,30 @@
 #sp-section-nav { flex-wrap: nowrap; overflow-x: auto; }
 #sp-section-nav .profile-nav-chip { flex-shrink: 0; }
 
-/* Category stats tiles — fixed 4-column grid so 7 tiles wrap as
-   4 (top) + 3 (bottom) at the same width per tile. The platform
+/* Category stats tiles — fixed 4-column grid so 8 tiles wrap as
+   4 (top) + 4 (bottom) at the same width per tile. The platform
    .stats-bar uses auto-fit which would resize tiles based on row
-   count; this overrides that for the SP page only. */
+   count; this overrides that for the SP page only.
+   Sticks below the platform topbar (fixed, 68px tall) so the
+   tiles stay usable as nav while scrolling long content. */
 .stats-bar.sp-cat-stats {
   grid-template-columns: repeat(4, 1fr);
+  position: sticky;
+  top: 68px;
+  z-index: 50;
+  background: var(--bg);
+  padding: 12px 0;
+  margin-top: -12px;
+  box-shadow: 0 6px 8px -6px rgba(0, 0, 0, 0.12);
+}
+
+/* Targets of category tile clicks need clearance above so they're
+   not hidden by the sticky tiles bar (~68px topbar + ~110px tiles
+   bar). scroll-margin-top only affects programmatic scrollIntoView
+   alignment — it doesn't move the element. */
+.sp-ot-cat,
+.sp-review-cat {
+  scroll-margin-top: 180px;
 }
 .sp-cat-tile {
   display: flex;

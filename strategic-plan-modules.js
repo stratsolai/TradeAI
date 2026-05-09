@@ -498,9 +498,12 @@ Object.assign(window.SP_LOGIC, {
     statsEl.style.display = '';
   },
 
-  // Wire click → switch to OT tab if needed, then expand and scroll
-  // to the matching category accordion. SP tab has no categorised
-  // body content, so clicking from there transitions to OT first.
+  // Wire click → scroll to the matching category within the current
+  // tab's content panel without switching tabs. OT exposes
+  // .sp-ot-cat[data-category=...] cards; SP exposes .sp-review-cat
+  // when reviewing a pending plan. If the current tab has no target
+  // for this category, do nothing — staying on the user's tab is the
+  // priority over forcing a navigation.
   bindCategoryTileEvents: function() {
     var self = this;
     var statsEl = document.getElementById('sp-cat-stats');
@@ -512,28 +515,23 @@ Object.assign(window.SP_LOGIC, {
       if (!btn) return;
       var cat = btn.getAttribute('data-category');
       if (!cat) return;
-      // Executive Summary tile — just scroll back to the top of the
-      // page; there's no per-category target to expand.
+      // Executive Summary tile — scroll back to the top of the page.
       if (cat === '__summary') {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         return;
       }
-      var doScroll = function() {
-        var card = document.querySelector('.sp-ot-cat[data-category="' + cat + '"]');
-        if (!card) return;
-        if (!card.classList.contains('expanded')) {
-          var header = card.querySelector('.expand-tile-header');
-          if (header) header.click();
-        }
-        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      };
-      if (self._currentTab !== 'ops-plan') {
-        self.switchTab('ops-plan');
-        // loadInitiatives repaints async — wait one paint before scrolling.
-        setTimeout(doScroll, 200);
-      } else {
-        doScroll();
+      var activePanel = document.querySelector('#page-wrap > .ptab-content.active');
+      if (!activePanel) return;
+      var target = activePanel.querySelector('[data-category="' + cat + '"]');
+      if (!target) return;
+      // OT category accordions collapse by default — open before scroll
+      // so the goals are visible at the destination. Review-screen
+      // cards are pre-expanded, so the class check keeps that no-op.
+      if (target.classList.contains('sp-ot-cat') && !target.classList.contains('expanded')) {
+        var header = target.querySelector('.expand-tile-header');
+        if (header) header.click();
       }
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   },
 
