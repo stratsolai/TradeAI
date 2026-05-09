@@ -395,8 +395,15 @@ export default async function handler(req, res) {
       'Each source must include a brief detail showing the specific evidence (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026"). Web research sources should include the link.\n\n' +
       categoryGuide +
       classificationGuide +
-      'OUTPUT FORMAT:\n' +
-      'Return ONLY a JSON array (no markdown, no commentary). Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
+      'OUTPUT FORMAT — CRITICAL, READ CAREFULLY:\n' +
+      'Your entire response must be a single JSON array and NOTHING ELSE.\n' +
+      '- The very first character of your response MUST be "[".\n' +
+      '- The very last character of your response MUST be "]".\n' +
+      '- Do NOT wrap the response in markdown code fences (no ```json, no ```, no triple backticks of any kind).\n' +
+      '- Do NOT include any preamble, explanation, header, or commentary before the array.\n' +
+      '- Do NOT include any text after the closing bracket.\n' +
+      '- Do NOT use single quotes — JSON requires double quotes for all keys and string values.\n' +
+      'Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
       'Each insight object:\n' +
       '{\n' +
       '  "module": "alerts",\n' +
@@ -448,7 +455,23 @@ export default async function handler(req, res) {
     var raw = claudeData.content && claudeData.content[0] ? claudeData.content[0].text : '[]';
     var insights;
     try {
-      var clean = raw.replace(/```json|```/g, '').trim();
+      var clean = raw.trim();
+      // Defensive: strip ```json ... ``` (or plain ``` ... ```) wrappers if the
+      // model returned them despite the prompt instructions. Handles fences at
+      // either end independently so a stray opening fence without a matching
+      // closer (e.g. truncated output) is still removed.
+      clean = clean.replace(/^```(?:json|JSON)?\s*\n?/, '');
+      clean = clean.replace(/\n?\s*```\s*$/, '');
+      // Last-resort extraction: if there's still preamble or trailing text,
+      // slice from the first '[' to the last ']' so JSON.parse sees just
+      // the array.
+      if (clean.charAt(0) !== '[') {
+        var firstBracket = clean.indexOf('[');
+        var lastBracket = clean.lastIndexOf(']');
+        if (firstBracket !== -1 && lastBracket > firstBracket) {
+          clean = clean.substring(firstBracket, lastBracket + 1);
+        }
+      }
       insights = JSON.parse(clean);
     } catch (e) {
       console.error('[bi-insights] JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
