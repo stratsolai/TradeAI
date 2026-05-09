@@ -560,14 +560,17 @@ export default async function handler(req, res) {
 
     // SP docs are owner-only — the SP page signs the storage path on
     // demand at view time (see strategic-plan-modules.js
-    // loadStrategicPlanView / loadVersionHistory). The public URL is
-    // still computed here only because Pattern B writes to
-    // content_library expect a clickable file_url; if Tool Outputs
-    // stops needing one, drop the getPublicUrl calls too.
+    // loadStrategicPlanView / loadVersionHistory). The Strategic Plan
+    // public URL is still computed here for the Pattern B
+    // content_library row's file_url; the Ops Plan no longer needs a
+    // public URL because it isn't written to content_library.
     var strategyUrl = supabase.storage.from('cl-assets').getPublicUrl(strategyStoragePath).data.publicUrl;
-    var opsUrl = supabase.storage.from('cl-assets').getPublicUrl(opsStoragePath).data.publicUrl;
 
     // 4. Write to content_library (Pattern B — tool-generated, always approved)
+    // Only the Strategic Plan document is published to the library.
+    // The Ops Plan is an interactive working document — it lives in
+    // the Operational Tasks tab + action_tracker rows and isn't
+    // static content suitable for the library's snapshot model.
     var clRows = [
       {
         user_id: userId,
@@ -577,18 +580,6 @@ export default async function handler(req, res) {
         source: 'tool',
         tool_source: 'strategic-plan',
         source_ref: 'strategic-plan:strategy:' + userId + ':' + timestamp,
-        status: 'approved',
-        category: 'Strategic Plan',
-        tool_tags: applyToolOutputMatrix('strategic-plan')
-      },
-      {
-        user_id: userId,
-        title: (planData.businessName || 'Business') + ' \u2014 Operational Plan',
-        content_text: 'Operational plan with 90-day action tracker. ' + ((content.operationalActions || []).reduce(function(sum, m) { return sum + (m.actions || []).length; }, 0)) + ' action items.',
-        file_url: opsUrl,
-        source: 'tool',
-        tool_source: 'strategic-plan',
-        source_ref: 'strategic-plan:ops:' + userId + ':' + timestamp,
         status: 'approved',
         category: 'Strategic Plan',
         tool_tags: applyToolOutputMatrix('strategic-plan')
