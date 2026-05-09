@@ -596,7 +596,10 @@ window.SOCIAL_LOGIC = {
     if (!grid) return;
     var html = '';
     this.JOURNEY_GROUPS.forEach(function(g) {
-      html += '<div class="expand-tile" data-group="' + g.id + '">' +
+      // Tiles default to expanded so the journey options are visible
+      // up-front — users can click a tile to collapse it individually
+      // (each tile toggles independently, no accordion exclusivity).
+      html += '<div class="expand-tile expanded" data-group="' + g.id + '">' +
         '<div class="expand-tile-icon">' + g.icon + '</div>' +
         '<div class="expand-tile-title">' + window.escHtml(g.title) + '</div>' +
         '<div class="expand-tile-desc">' + window.escHtml(g.desc) + '</div>' +
@@ -613,9 +616,7 @@ window.SOCIAL_LOGIC = {
     grid.querySelectorAll('.expand-tile').forEach(function(tile) {
       tile.addEventListener('click', function(e) {
         if (e.target.closest('.sm-journey-btn')) return;
-        var wasExpanded = tile.classList.contains('expanded');
-        grid.querySelectorAll('.expand-tile').forEach(function(t) { t.classList.remove('expanded'); });
-        if (!wasExpanded) tile.classList.add('expanded');
+        tile.classList.toggle('expanded');
       });
     });
 
