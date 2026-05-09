@@ -880,19 +880,8 @@
 .sp-bi-tile-item-summary { flex:1; font-size:var(--btn-font-size); color:var(--text); line-height:var(--note-line-height); }
 .sp-bi-tile-overflow { margin-top:8px; font-size:var(--note-font-size); color:var(--text-muted); font-style:italic; }
 
-/* Draft-Review BI banner — spec §6.2. */
-.sp-review-bi-banner {
-  display: flex;
-  align-items: center;
-  gap: var(--actions-gap);
-  padding: 12px 16px;
-  background: var(--blue-light);
-  border: 1px solid var(--blue);
-  border-radius: var(--btn-radius);
-  margin-bottom: var(--card-padding);
-  color: var(--text);
-}
-.sp-review-bi-banner-text { flex: 1; }
+/* Draft-Review BI banner consolidated into #sp-bi-tile (Gap 2)
+   above the tab nav — see strategic-plan-review.js renderBIActiveTile. */
 .sp-review-bi-modal-inner { max-width: 720px; }
 .sp-review-bi-list { display: flex; flex-direction: column; gap: 10px; }
 .sp-review-bi-item {

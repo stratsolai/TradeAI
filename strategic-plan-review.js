@@ -65,26 +65,26 @@ Object.assign(window.SP_LOGIC, {
   renderBIActiveTile: function() {
     var tileEl = document.getElementById('sp-bi-tile');
     if (!tileEl) return;
-    // Visibility: only the active-plan content view shows the tile.
-    // Lock / wizard / review states each have their own surfaces.
-    var visible = !!(this._hasPlan && !this._pendingPlanId && this._spDocState !== 'wizard');
-    if (!visible) { tileEl.style.display = 'none'; return; }
     var items = this._biActiveTileItems || [];
     var count = items.length;
-    var bodyHtml;
-    if (count === 0) {
-      bodyHtml = '<p style="margin:0;color:var(--text-muted);font-style:italic">No new suggestions.</p>';
-    } else {
-      var visibleItems = items.slice(0, 3);
-      var listHtml = visibleItems.map(this._renderBIActiveItem, this).join('');
-      bodyHtml = '<div class="sp-bi-tile-list">' + listHtml + '</div>';
-      if (count > 3) {
-        bodyHtml += '<div class="sp-bi-tile-overflow">Click Review Plan to view all ' + count + ' items.</div>';
-      }
+    // Empty state: hide entirely. The tile is purely informative —
+    // surfacing "No new suggestions" wastes vertical space above the
+    // tab nav for users with nothing to action.
+    if (count === 0 || !this._hasPlan || this._spDocState === 'wizard') {
+      tileEl.style.display = 'none';
+      tileEl.innerHTML = '';
+      return;
+    }
+    var label = count + ' new item' + (count === 1 ? '' : 's') + ' suggested from Business Intelligence';
+    var visibleItems = items.slice(0, 3);
+    var listHtml = visibleItems.map(this._renderBIActiveItem, this).join('');
+    var bodyHtml = '<div class="sp-bi-tile-list">' + listHtml + '</div>';
+    if (count > 3) {
+      bodyHtml += '<div class="sp-bi-tile-overflow">Click Review Plan to view all ' + count + ' items.</div>';
     }
     tileEl.innerHTML =
       '<div class="sp-bi-tile-header">' +
-        '<span class="sp-bi-tile-title">Business Intelligence Suggestions</span>' +
+        '<span class="sp-bi-tile-title">' + escHtml(label) + '</span>' +
         '<button type="button" class="btn-primary btn-sm" id="sp-bi-tile-review">Review Plan</button>' +
       '</div>' +
       bodyHtml;
@@ -92,7 +92,17 @@ Object.assign(window.SP_LOGIC, {
     var btn = document.getElementById('sp-bi-tile-review');
     if (btn) {
       var self = this;
-      btn.addEventListener('click', function() { self.switchTab('create-plan'); });
+      btn.addEventListener('click', function() {
+        // Pending-approval plan: open the per-item Approve/Hold/Reject
+        // modal so the owner can act on the queued suggestions before
+        // approving. Active plan: jump to the wizard so the owner can
+        // regenerate to incorporate the new items.
+        if (self._pendingPlanId && typeof self._openReviewBIModal === 'function') {
+          self._openReviewBIModal();
+        } else {
+          self.switchTab('create-plan');
+        }
+      });
     }
   },
 
@@ -169,46 +179,13 @@ Object.assign(window.SP_LOGIC, {
   },
 
   // ── BI Suggestions banner — spec §6.2 ────────────────────────────
-  // Reads bi_insights for strategic queued items the owner hasn't
-  // decided on yet (added_to_sp = true, is_tactical = false,
-  // sp_queue_action IS NULL, not dismissed). When the count is non-
-  // zero, a banner mounts above the Executive Summary inviting the
-  // owner to Review. The Review modal lists each item with Approve
-  // / Hold / Reject; Approve appends a placeholder Goal the owner
-  // can refine via Discuss with AI before approving the plan.
+  // The Review-screen banner has been consolidated into the global
+  // #sp-bi-tile above the tab nav (loadBIActiveTile / renderBIActiveTile).
+  // This thin alias preserves the existing call-site in loadReviewScreen
+  // and the modal action handlers — the underlying data and visibility
+  // logic now live in one place.
   loadReviewBIBanner: function() {
-    var self = this;
-    var bannerEl = document.getElementById('sp-review-bi-banner');
-    if (!bannerEl || !self._supabase || !self._userId) return;
-    self._supabase
-      .from('bi_insights')
-      .select('id, insight_data, sp_queue_action, added_to_sp_at')
-      .eq('user_id', self._userId)
-      .eq('added_to_sp', true)
-      .eq('is_tactical', false)
-      .eq('is_dismissed', false)
-      .is('sp_queue_action', null)
-      .then(function(res) {
-        if (res.error) {
-          console.error('[SP Review] BI banner load error:', res.error.message || res.error);
-          bannerEl.style.display = 'none';
-          return;
-        }
-        var items = res.data || [];
-        self._biBannerItems = items;
-        if (items.length === 0) {
-          bannerEl.style.display = 'none';
-          bannerEl.innerHTML = '';
-          return;
-        }
-        var label = items.length + ' new item' + (items.length === 1 ? '' : 's') + ' suggested from Business Intelligence';
-        bannerEl.innerHTML =
-          '<span class="sp-review-bi-banner-text">' + escHtml(label) + '</span>' +
-          '<button type="button" class="btn-outline btn-sm" id="sp-review-bi-banner-review">Review</button>';
-        bannerEl.style.display = 'flex';
-        var btn = document.getElementById('sp-review-bi-banner-review');
-        if (btn) btn.addEventListener('click', function() { self._openReviewBIModal(); });
-      });
+    if (typeof this.loadBIActiveTile === 'function') this.loadBIActiveTile();
   },
 
   _openReviewBIModal: function() {
@@ -228,7 +205,7 @@ Object.assign(window.SP_LOGIC, {
 
   _renderReviewBIList: function() {
     var self = this;
-    var items = self._biBannerItems || [];
+    var items = self._biActiveTileItems || [];
     if (items.length === 0) {
       return '<div class="sp-review-empty">No queued items.</div>';
     }
@@ -301,7 +278,7 @@ Object.assign(window.SP_LOGIC, {
     // The placeholder pulls headline / detail / category from the
     // insight and seeds a single suggestion task.
     if (queueAction === 'approved' && self._pendingPlanData) {
-      var insight = (self._biBannerItems || []).find(function(i) { return i.id === insightId; });
+      var insight = (self._biActiveTileItems || []).find(function(i) { return i.id === insightId; });
       if (insight) {
         var d = insight.insight_data || {};
         var category = (d.category || 'risk').toLowerCase();
@@ -333,25 +310,25 @@ Object.assign(window.SP_LOGIC, {
           self._showError('Could not save your decision. Please try again.');
           return;
         }
-        // Rebuild the list-in-memory and the UI.
-        var items = self._biBannerItems || [];
+        // Rebuild the list-in-memory and the UI. The query that
+        // populates _biActiveTileItems filters out rows where
+        // sp_queue_action IS NOT NULL, so the next loadBIActiveTile
+        // call will drop the row we just acted on — which is what
+        // makes the global tile's count tick down.
+        var items = self._biActiveTileItems || [];
         var idx = items.findIndex(function(i) { return i.id === insightId; });
         if (idx !== -1) {
           items[idx].sp_queue_action = queueAction;
           if (queueAction === 'rejected') items[idx].is_dismissed = true;
         }
-        self._biBannerItems = items;
+        self._biActiveTileItems = items;
         // Re-render the modal body with the updated states.
         var body = document.getElementById('sp-review-bi-modal-body');
         if (body) body.innerHTML = self._renderReviewBIList();
-        // Refresh the banner count and re-render category cards if
-        // we just appended a Goal.
-        self.loadReviewBIBanner();
-        if (queueAction === 'approved') self._reviewRerenderCategories();
-        // The active-plan BI tile reads from the same query — refresh
-        // its cache so its count is in sync if the owner navigates
-        // back out without approving.
+        // Refresh the global tile count (single source of truth) and
+        // re-render category cards if we just appended a Goal.
         if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
+        if (queueAction === 'approved') self._reviewRerenderCategories();
       });
   },
 
