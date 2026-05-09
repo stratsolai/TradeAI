@@ -314,20 +314,20 @@
       font-weight: var(--font-weight-semibold);
     }
 
+    /* Sub-row pill inside an expanded category card — flat
+       bg-subtle ground matching the collapsed category card so the
+       expanded white card's children read as a list of pills, not
+       sub-cards. The severity left-border lives on the category
+       card only; sub-rows have no left accent. */
     .bi-alert-card {
-      background: var(--white);
+      background: var(--bg-subtle);
       border-radius: var(--btn-radius);
-      border-left: 4px solid var(--blue);
       box-shadow: 0 1px 4px var(--shadow-card);
       padding: var(--input-padding);
       margin-bottom: var(--actions-gap);
     }
 
     .bi-alerts-column .expand-tile-content .bi-alert-card:last-child { margin-bottom: 0; }
-
-    .bi-alert-card.severity-red { border-left-color: var(--red); }
-    .bi-alert-card.severity-amber { border-left-color: var(--warning); }
-    .bi-alert-card.severity-green { border-left-color: var(--green); }
 
     .bi-alert-header {
       display: flex;

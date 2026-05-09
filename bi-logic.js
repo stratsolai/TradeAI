@@ -393,12 +393,10 @@ window.BI_LOGIC = {
   // still drill in for context.
   _renderAlertCard: function(item) {
     var d = item.insight_data || {};
-    var severity = d.severity || 'blue';
-    var sevClass = severity === 'red' ? 'severity-red' : severity === 'amber' ? 'severity-amber' : severity === 'green' ? 'severity-green' : '';
     var sources = Array.isArray(d.sources) ? d.sources : [];
     var detailText = d.detail || '';
     var hasDetail = !!detailText || sources.length > 0;
-    var html = '<div class="bi-alert-card ' + sevClass + '" data-insight-id="' + escHtml(item.id) + '">';
+    var html = '<div class="bi-alert-card" data-insight-id="' + escHtml(item.id) + '">';
     html += '<div class="bi-alert-header">';
     html += '<span class="bi-alert-type-icon">' + (d.icon || '&#9888;') + '</span>';
     html += '<span class="bi-alert-headline">' + escHtml(d.headline || 'Alert') + '</span>';
