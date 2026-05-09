@@ -1325,11 +1325,11 @@
     <p class="page-subtitle">Your strategic plan, operational tasks, and business goals in one place.</p>
   </div>
 
-  <!-- 3-tab navigation -->
+  <!-- 2-tab navigation — spec §3. The wizard opens from inside the
+       Strategic Plan tab as a state, not as a separate tab. -->
   <div class="tab-nav" id="sp-tab-nav">
     <button class="ptab" data-tab="ops-plan">Operational Tasks</button>
     <button class="ptab" data-tab="strat-plan">Strategic Plan</button>
-    <button class="ptab" data-tab="create-plan">Create / Update Plan</button>
   </div>
 
   <!-- ═══ TAB 1: OPERATIONAL PLAN ═══ -->
@@ -1340,7 +1340,7 @@
       <div class="sp-tab-locked">
         <div class="sp-tab-locked-icon">&#x1F4CB;</div>
         <h3>Create your plan to unlock</h3>
-        <p>Complete the Create / Update Plan form to generate your Operational Tasks.</p>
+        <p>Complete the Strategic Plan form to generate your Operational Tasks.</p>
       </div>
     </div>
 
@@ -1425,7 +1425,7 @@
       <div id="sp-version-history" class="sp-version-history-wrap" style="display:none"></div>
 
       <div class="sp-regen-guidance">
-        Not happy with the output? Go to <strong>Create / Update Plan</strong> to adjust your answers and regenerate. Your previous version is always saved.
+        Not happy with the output? Click <strong>Update Plan</strong> above to adjust your answers and regenerate. Your previous version is always saved.
       </div>
     </div>
 
@@ -1437,17 +1437,16 @@
       <div id="sp-review-swot" class="sp-review-swot"></div>
       <div id="sp-review-categories" class="sp-review-categories"></div>
     </div>
-  </div>
 
-  <!-- ═══ TAB 3: CREATE / UPDATE PLAN ═══ -->
-  <div class="ptab-content" id="tab-create-plan">
-
-    <!-- Section navigation chips — show which section is active -->
-    <div class="profile-nav-chips" id="sp-section-nav"></div>
-
-    <!-- Interview sections — rendered dynamically by SP_LOGIC -->
-    <div id="sp-sections-container"></div>
-
+    <!-- Wizard state — Create / Update Plan. Spec §3 — the wizard
+         opens from inside the Strategic Plan tab. Triggered by the
+         Create Strategic Plan button on the empty state, by the
+         Update Plan button on the active-plan view, or by the
+         rewrite query-param flow. -->
+    <div id="sp-doc-wizard" style="display:none">
+      <div class="profile-nav-chips" id="sp-section-nav"></div>
+      <div id="sp-sections-container"></div>
+    </div>
   </div>
 
   <!-- ═══ SHARED MODALS ═══ -->

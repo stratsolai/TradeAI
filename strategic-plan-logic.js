@@ -12,7 +12,13 @@ Object.assign(window.SP_LOGIC, {
 
   // ── State ────────────────────────────────────────────────────────
   _currentSection: 0,
-  _currentTab: 'create-plan',
+  _currentTab: 'strat-plan',
+  // Two-tab structure (spec §3): the Strategic Plan tab has four
+  // mutually-exclusive states. Three are data-driven (locked /
+  // review / content); 'wizard' is an explicit override set when
+  // the owner clicks Create or Update Plan and cleared when they
+  // navigate away. updateTabStates resolves which state shows.
+  _spDocState: null,
   _planData: {},
   _userProfile: null,
   _previousPlan: null,
@@ -54,8 +60,20 @@ Object.assign(window.SP_LOGIC, {
   },
 
   // ── Tabs ─────────────────────────────────────────────────────────
+  // Two tabs only — spec §3. The legacy 'create-plan' tab id is kept
+  // as a routing alias for the wizard sub-state inside the Strategic
+  // Plan tab, so existing callers (Update Plan, useAsTemplate, the
+  // rewrite query-param flow) keep working without churn.
   switchTab: function(tabId) {
     var self = this;
+    if (tabId === 'create-plan') {
+      self._spDocState = 'wizard';
+      tabId = 'strat-plan';
+    } else {
+      // Any other tab navigation drops the wizard override so the
+      // SP tab returns to its data-driven default state.
+      self._spDocState = null;
+    }
     self._currentTab = tabId;
 
     document.querySelectorAll('#sp-tab-nav .ptab').forEach(function(btn) {
@@ -66,42 +84,43 @@ Object.assign(window.SP_LOGIC, {
       panel.classList.toggle('active', panel.id === 'tab-' + tabId);
     });
 
+    self.updateTabStates();
+
     if (tabId === 'ops-plan' && self._hasPlan) {
       self.loadOperationalPlan();
-    } else if (tabId === 'strat-plan' && self._hasPlan) {
+    } else if (tabId === 'strat-plan' && self._hasPlan && self._spDocState !== 'wizard') {
       self.loadStrategicPlanView();
     }
   },
 
   updateTabStates: function() {
-    // SP tab states: locked / review / content. OT stays locked
-    // unless an active plan exists (pending plan's tasks hidden
-    // until Approve).
+    // OT stays locked unless an active plan exists. The Strategic
+    // Plan tab has four sub-states (spec §3):
+    //   locked   — no plan exists (default for new owners)
+    //   wizard   — Create / Update form (explicit override)
+    //   review   — pending_approval plan being reviewed
+    //   content  — active plan, read-only view
+    // wizard wins if set; otherwise the data-driven default applies.
     var opsLocked = document.getElementById('sp-ops-locked');
     var opsContent = document.getElementById('sp-ops-content');
     var docLocked = document.getElementById('sp-doc-locked');
+    var docWizard = document.getElementById('sp-doc-wizard');
     var docContent = document.getElementById('sp-doc-content');
     var docReview = document.getElementById('sp-doc-review');
 
-    if (this._pendingPlanId) {
-      if (opsLocked) opsLocked.style.display = this._hasPlan ? 'none' : 'block';
-      if (opsContent) opsContent.style.display = this._hasPlan ? 'block' : 'none';
-      if (docLocked) docLocked.style.display = 'none';
-      if (docContent) docContent.style.display = 'none';
-      if (docReview) docReview.style.display = 'block';
-    } else if (this._hasPlan) {
-      if (opsLocked) opsLocked.style.display = 'none';
-      if (opsContent) opsContent.style.display = 'block';
-      if (docLocked) docLocked.style.display = 'none';
-      if (docContent) docContent.style.display = 'block';
-      if (docReview) docReview.style.display = 'none';
-    } else {
-      if (opsLocked) opsLocked.style.display = 'block';
-      if (opsContent) opsContent.style.display = 'none';
-      if (docLocked) docLocked.style.display = 'block';
-      if (docContent) docContent.style.display = 'none';
-      if (docReview) docReview.style.display = 'none';
-    }
+    if (opsLocked) opsLocked.style.display = this._hasPlan ? 'none' : 'block';
+    if (opsContent) opsContent.style.display = this._hasPlan ? 'block' : 'none';
+
+    var spState;
+    if (this._spDocState === 'wizard') spState = 'wizard';
+    else if (this._pendingPlanId) spState = 'review';
+    else if (this._hasPlan) spState = 'content';
+    else spState = 'locked';
+
+    if (docLocked) docLocked.style.display = spState === 'locked' ? 'block' : 'none';
+    if (docWizard) docWizard.style.display = spState === 'wizard' ? 'block' : 'none';
+    if (docContent) docContent.style.display = spState === 'content' ? 'block' : 'none';
+    if (docReview) docReview.style.display = spState === 'review' ? 'block' : 'none';
   },
 
   bindTabEvents: function() {
