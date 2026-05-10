@@ -875,7 +875,7 @@
 
 /* BI Suggestions tile — Gap 2. */
 .sp-bi-tile { border-left-color:var(--blue); }
-.sp-bi-tile-header { display:flex; align-items:center; gap:var(--actions-gap); margin-bottom:10px; flex-wrap:wrap; }
+.sp-bi-tile-header { display:flex; align-items:baseline; gap:var(--actions-gap); margin-bottom:10px; flex-wrap:wrap; }
 .sp-bi-tile-title { flex:1; font-family:var(--heading-font); font-size:var(--section-title-font-size); font-weight:var(--font-weight-semibold); color:var(--text); }
 .sp-bi-tile-list { display:flex; flex-direction:column; gap:6px; }
 .sp-bi-tile-item { display:flex; align-items:center; gap:10px; }
