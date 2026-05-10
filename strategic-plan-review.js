@@ -656,8 +656,8 @@ Object.assign(window.SP_LOGIC, {
         '<div class="sp-review-header-actions">' +
           '<span class="badge badge-grey">DRAFT</span>' +
           (generated ? '<span class="sp-review-meta-date">Generated ' + escHtml(generated) + '</span>' : '') +
-          '<button type="button" class="review-reject-btn" id="sp-review-discard-btn">Discard Draft</button>' +
-          '<button type="button" class="review-approve-btn" id="sp-review-approve-btn">Approve Plan</button>' +
+          '<button type="button" class="review-reject-btn" id="sp-review-discard-btn">&#10007; Discard Draft</button>' +
+          '<button type="button" class="review-approve-btn" id="sp-review-approve-btn">&#10003; Approve Plan</button>' +
         '</div>' +
       '</div>';
   },
@@ -775,7 +775,7 @@ Object.assign(window.SP_LOGIC, {
     var self = this;
     if (!self._supabase || !self._userId || !self._pendingPlanId) return;
     var approveBtn = document.getElementById('sp-review-approve-btn');
-    if (approveBtn) { approveBtn.disabled = true; approveBtn.textContent = 'Approving…'; }
+    if (approveBtn) { approveBtn.disabled = true; approveBtn.innerHTML = '&#10003; Approving…'; }
     try {
       // Make sure the latest in-memory edits hit the row before we
       // approve — _reviewSavePlanData debounces writes, so a quick
@@ -814,7 +814,7 @@ Object.assign(window.SP_LOGIC, {
       if (typeof self.loadBIActiveTile === 'function') self.loadBIActiveTile();
     } catch (err) {
       console.error('[SP Review] approve error:', err && err.message);
-      if (approveBtn) { approveBtn.disabled = false; approveBtn.textContent = 'Approve Plan'; }
+      if (approveBtn) { approveBtn.disabled = false; approveBtn.innerHTML = '&#10003; Approve Plan'; }
       self._showError(err && err.message ? err.message : 'Could not approve plan. Please try again.');
     }
   },
@@ -1069,7 +1069,7 @@ Object.assign(window.SP_LOGIC, {
     var self = this;
     if (!self._supabase || !self._userId || !self._pendingPlanId) return;
     var discardBtn = document.getElementById('sp-review-discard-btn');
-    if (discardBtn) { discardBtn.disabled = true; discardBtn.textContent = 'Discarding…'; }
+    if (discardBtn) { discardBtn.disabled = true; discardBtn.innerHTML = '&#10007; Discarding…'; }
     try {
       var pendingId = self._pendingPlanId;
       // Drop the is_pending action_tracker rows tied to this plan
@@ -1097,7 +1097,7 @@ Object.assign(window.SP_LOGIC, {
       self.switchTab(self._hasPlan ? 'strat-plan' : 'create-plan');
     } catch (err) {
       console.error('[SP Review] discard error:', err && err.message);
-      if (discardBtn) { discardBtn.disabled = false; discardBtn.textContent = 'Discard Draft'; }
+      if (discardBtn) { discardBtn.disabled = false; discardBtn.innerHTML = '&#10007; Discard Draft'; }
       self._showError('Could not discard the draft. Please try again.');
     }
   }
