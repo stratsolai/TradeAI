@@ -23,6 +23,7 @@ import {
   normaliseIndustries,
   executeQueryWithCache,
   dedupByLink,
+  enrichDedupedWithPlan,
   stateFullName,
   runCuration,
   validateCuratedItems,
@@ -142,14 +143,16 @@ export default async function handler(req, res) {
     };
 
     for (const item of r.items) {
+      // plan_index is the single back-pointer kept through dedupe; every
+      // other attribution field (category, lens, query, industry) is
+      // recovered later via enrichDedupedWithPlan(). See Phase 3.1.
       taggedItems.push({
         title: item.title || '',
         snippet: item.snippet || '',
         link: item.link || '',
         source: item.source || '',
         date: item.date || null,
-        category: row.category,
-        lens: row.lens
+        plan_index: i
       });
     }
   }
@@ -160,7 +163,8 @@ export default async function handler(req, res) {
     await logSerperUsage({ tool_id: 'shared-research', user_id: userId });
   }
 
-  const deduped = dedupByLink(taggedItems);
+  const dedupedRaw = dedupByLink(taggedItems);
+  const deduped = enrichDedupedWithPlan(dedupedRaw, plan);
   const durationMs = Date.now() - t0;
 
   // -------------------------------------------------------------------------
@@ -169,14 +173,20 @@ export default async function handler(req, res) {
   // can inspect curation quality before Phase 4 enables live writes.
   // -------------------------------------------------------------------------
   if (dryRun) {
+    // raw_results no longer carries a singular `category` field — it
+    // was misleading because dedupe kept only the first-seen category
+    // when a URL was surfaced by queries in multiple categories. The
+    // authoritative attribution is now the source_categories array.
     const truncatedItems = deduped.map((it) => ({
       title: (it.title || '').slice(0, TRUNCATE_CHARS),
       snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS),
       link: it.link,
       source: it.source,
       date: it.date,
-      category: it.category,
-      lenses: it.lenses
+      lenses: it.lenses,
+      source_categories: it.source_categories,
+      source_queries: it.source_queries,
+      source_industries: it.source_industries
     }));
 
     // Curation pass — Section 9
@@ -209,7 +219,23 @@ export default async function handler(req, res) {
       && curation.items.length > 0
       && validated.accepted.length === 0;
 
-    const grouped = groupCuratedByCategory(validated.accepted);
+    // Join each curated item back to its originating plan rows via URL
+    // so source_queries and source_categories can be surfaced on the
+    // curated row. Critical for Phase 4 audit — without it, downstream
+    // tools can see the curated item's category but not which queries
+    // surfaced it.
+    const enrichedByUrl = new Map();
+    for (const d of deduped) enrichedByUrl.set(d.link, d);
+    const acceptedWithSource = validated.accepted.map((it) => {
+      const src = enrichedByUrl.get(it.url);
+      return Object.assign({}, it, {
+        source_queries: src ? src.source_queries : [],
+        source_categories: src ? src.source_categories : [],
+        source_industries: src ? src.source_industries : []
+      });
+    });
+
+    const grouped = groupCuratedByCategory(acceptedWithSource);
     const totalDuration = Date.now() - t0;
 
     return res.status(200).json({
