@@ -84,8 +84,8 @@ Object.assign(window.SP_LOGIC, {
     }
     tileEl.innerHTML =
       '<div class="sp-bi-tile-header">' +
-        '<span class="sp-bi-tile-title">' + escHtml(label) + '</span>' +
-        '<button type="button" class="btn-primary btn-sm" id="sp-bi-tile-review">Review Plan</button>' +
+        '<span class="expand-tile-title">' + escHtml(label) + '</span>' +
+        '<button type="button" class="btn-back" id="sp-bi-tile-review">Review Plan</button>' +
       '</div>' +
       bodyHtml;
     tileEl.style.display = 'block';
@@ -646,21 +646,18 @@ Object.assign(window.SP_LOGIC, {
     }, 400);
   },
 
-  // Header — editable plan name, DRAFT banner, Discard / Approve.
+  // Header — editable plan name on its own row; status, generated
+  // date, and Discard/Approve buttons on the action row beneath.
   renderReviewHeader: function(plan) {
     var name = plan.plan_name || 'Strategic Plan';
     var generated = plan.created_at ? plan.created_at.substring(0, 10) : '';
     return '<div class="sp-review-header-row">' +
-        '<div class="sp-review-header-left">' +
-          '<input type="text" id="sp-review-plan-name" class="sp-review-plan-name" value="' + escHtml(name) + '" maxlength="120" />' +
-          '<div class="sp-review-meta">' +
-            '<span class="badge badge-orange">DRAFT — Not yet approved</span>' +
-            (generated ? '<span class="sp-review-meta-date">Generated ' + escHtml(generated) + '</span>' : '') +
-          '</div>' +
-        '</div>' +
+        '<input type="text" id="sp-review-plan-name" class="sp-review-plan-name" value="' + escHtml(name) + '" maxlength="120" />' +
         '<div class="sp-review-header-actions">' +
-          '<button type="button" class="btn-back" id="sp-review-discard-btn">Discard Draft</button>' +
-          '<button type="button" class="btn-primary" id="sp-review-approve-btn">Approve Plan</button>' +
+          '<span class="badge badge-grey">DRAFT</span>' +
+          (generated ? '<span class="sp-review-meta-date">Generated ' + escHtml(generated) + '</span>' : '') +
+          '<button type="button" class="review-reject-btn" id="sp-review-discard-btn">Discard Draft</button>' +
+          '<button type="button" class="review-approve-btn" id="sp-review-approve-btn">Approve Plan</button>' +
         '</div>' +
       '</div>';
   },
