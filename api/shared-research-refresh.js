@@ -23,13 +23,17 @@ import {
   normaliseIndustries,
   executeQueryWithCache,
   dedupByLink,
-  stateFullName
+  stateFullName,
+  runCuration,
+  validateCuratedItems,
+  groupCuratedByCategory
 } from '../lib/shared-research.js';
-import { logSerperUsage } from '../lib/usage-logger.js';
+import { logSerperUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
 // Soft cap on parallel Serper calls. 51 queries at 6 lanes finish in well
 // under the 60-second function maxDuration. Set conservatively to keep
@@ -71,7 +75,7 @@ export default async function handler(req, res) {
   // -------------------------------------------------------------------------
   const profileRes = await supabase
     .from('profiles')
-    .select('business_name, industry, address_state, address_suburb, address_postcode')
+    .select('business_name, industry, address_state, address_suburb, address_postcode, employee_range')
     .eq('id', userId)
     .single();
 
@@ -160,7 +164,9 @@ export default async function handler(req, res) {
   const durationMs = Date.now() - t0;
 
   // -------------------------------------------------------------------------
-  // Dry-run response — no writes
+  // Dry-run response — no writes; runs the full pipeline including
+  // Haiku curation and the Section 9.5 validation layer so the owner
+  // can inspect curation quality before Phase 4 enables live writes.
   // -------------------------------------------------------------------------
   if (dryRun) {
     const truncatedItems = deduped.map((it) => ({
@@ -173,16 +179,54 @@ export default async function handler(req, res) {
       lenses: it.lenses
     }));
 
+    // Curation pass — Section 9
+    const curation = await runCuration({
+      profile,
+      dedupedItems: deduped,
+      anthropicKey: ANTHROPIC_API_KEY
+    });
+
+    // Log Haiku usage for cost attribution. logAnthropicUsage swallows
+    // its own errors so logging failures never break the response.
+    if (curation.usage) {
+      await logAnthropicUsage({
+        tool_id: 'shared-research',
+        user_id: userId,
+        model: 'claude-haiku-4-5-20251001',
+        usage: curation.usage
+      });
+    }
+
+    // Validation pass — Section 9.5
+    const validated = curation.ok
+      ? validateCuratedItems(curation.items, deduped)
+      : { accepted: [], rejected: [] };
+
+    // Section 9.5 bottom rule: if Haiku returned items and every one
+    // failed validation, that is "the entire curation output fails
+    // validation" and the run is treated as a curation failure.
+    const totalCurationFailure = curation.ok
+      && curation.items.length > 0
+      && validated.accepted.length === 0;
+
+    const grouped = groupCuratedByCategory(validated.accepted);
+    const totalDuration = Date.now() - t0;
+
     return res.status(200).json({
       success: true,
       dry_run: true,
+      curation_ok: curation.ok && !totalCurationFailure,
+      curation_error: curation.ok
+        ? (totalCurationFailure ? 'all curated items failed validation' : null)
+        : (curation.error || 'unknown curation error'),
       profile_summary: {
         industries,
         state: stateAbbr,
         state_full: stateFull,
         region: region ? region.region_name : null,
         region_resolved: !!region,
-        postcode: profile.address_postcode || null
+        postcode: profile.address_postcode || null,
+        business_size: profile.employee_range || null
       },
       stats: {
         total_queries: plan.length,
@@ -190,10 +234,15 @@ export default async function handler(req, res) {
         fresh_queries: queriesRun,
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
-        duration_ms: durationMs
+        haiku_returned: curation.items.length,
+        curated_items: validated.accepted.length,
+        rejected_items: validated.rejected.length,
+        duration_ms: totalDuration
       },
       query_plan: queryStats,
-      raw_results: truncatedItems
+      raw_results: truncatedItems,
+      curated_items: grouped,
+      rejected_items: validated.rejected
     });
   }
 
