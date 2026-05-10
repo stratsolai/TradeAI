@@ -46,6 +46,9 @@
     },
     "api/generate-flyer-pdf.js": {
       "maxDuration": 30
+    },
+    "api/shared-research-refresh.js": {
+      "maxDuration": 60
     }
   },
   "crons": [
