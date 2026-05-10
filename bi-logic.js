@@ -310,7 +310,7 @@ window.BI_LOGIC = {
       operations: 'Operations & Capacity',
       market:     'Market & Competition',
       growth:     'Growth & Transformation',
-      risk:       'Risk & Resilience'
+      risk:       'Continuity & Resilience'
     },
     icons: {
       financial:  '\u{1F4B0}',

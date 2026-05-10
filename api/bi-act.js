@@ -163,7 +163,7 @@ export default async function handler(req, res) {
       operations: 'operations_capacity',
       market:     'market_competition',
       growth:     'growth_transformation',
-      risk:       'risk_resilience'
+      risk:       'continuity_resilience'
     };
     var category = (workingData.category || '').toLowerCase();
     var preferredSection = sectionMap[category] || 'growth_transformation';
