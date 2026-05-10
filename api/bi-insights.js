@@ -482,7 +482,19 @@ export default async function handler(req, res) {
     var now = new Date().toISOString();
     var expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
-    await supabase.from('bi_insights').delete().eq('user_id', userId).eq('is_dismissed', false);
+    // Wipe the user's existing non-dismissed insights before inserting
+    // the freshly generated set, BUT preserve any row the owner has
+    // already triaged in the SP wizard / Review BI modal. A non-null
+    // sp_queue_action means the owner has approved/held/rejected this
+    // suggestion and it's queued to influence the next plan. Deleting
+    // it here would silently throw away their decision the next time
+    // BI runs. (Chunk B will extend this to also preserve archived
+    // historical decisions.)
+    await supabase.from('bi_insights')
+      .delete()
+      .eq('user_id', userId)
+      .eq('is_dismissed', false)
+      .is('sp_queue_action', null);
 
     var rows = insights.map(function(ins) {
       // Stash classification_reason inside insight_data so the Add to
