@@ -51,12 +51,15 @@ function dedupByLink(items) {
   return out;
 }
 
-async function serperSearch(query, type, userId) {
+async function serperSearch(query, type, userId, tbs) {
   if (!SERPER_API_KEY) return [];
   try {
     var endpoint = type === 'search' ? 'https://google.serper.dev/search' : 'https://google.serper.dev/news';
     var body = { q: query, gl: 'au', hl: 'en', num: 8 };
-    if (type === 'news') body.tbs = 'qdr:m';
+    // Recency window per spec §6.4: caller-provided tbs wins; otherwise
+    // news defaults to qdr:m (1 month) to drop aggregator/SEO chaff.
+    if (tbs) body.tbs = tbs;
+    else if (type === 'news') body.tbs = 'qdr:m';
     var resp = await fetch(endpoint, {
       method: 'POST',
       headers: { 'X-API-KEY': SERPER_API_KEY, 'Content-Type': 'application/json' },
@@ -92,16 +95,20 @@ async function runResearch(industry, location, userId) {
   var stateForQuery = stateFull || 'Australia';
   var year = new Date().getFullYear();
 
+  // Recency tightening per spec §6.4:
+  //   compliance/regulatory  → 3 months  (qdr:m3)
+  //   industry / competitor / expansion (market activity) → 1 month (qdr:m)
+  //   acquisitions (listings remain valid until sold)     → no restriction
   var queries = [
-    { type: 'news',   topic: 'industry',     q: industry + ' industry trends Australia ' + year },
-    { type: 'news',   topic: 'compliance',   q: industry + ' regulatory compliance legislation Australia ' + year },
-    { type: 'news',   topic: 'competitor',   q: industry + ' ' + stateForQuery + ' market and competitor activity' },
-    { type: 'news',   topic: 'expansion',    q: stateForQuery + ' business growth opportunities ' + industry },
-    { type: 'search', topic: 'acquisitions', q: '"businesses for sale" ' + industry + ' ' + stateForQuery + ' (site:seekbusiness.com.au OR site:businessesforsale.com.au)' }
+    { type: 'news',   topic: 'industry',     tbs: 'qdr:m',  q: industry + ' industry trends Australia ' + year },
+    { type: 'news',   topic: 'compliance',   tbs: 'qdr:m3', q: industry + ' regulatory compliance legislation Australia ' + year },
+    { type: 'news',   topic: 'competitor',   tbs: 'qdr:m',  q: industry + ' ' + stateForQuery + ' market and competitor activity' },
+    { type: 'news',   topic: 'expansion',    tbs: 'qdr:m',  q: stateForQuery + ' business growth opportunities ' + industry },
+    { type: 'search', topic: 'acquisitions', tbs: null,     q: '"businesses for sale" ' + industry + ' ' + stateForQuery + ' (site:seekbusiness.com.au OR site:businessesforsale.com.au)' }
   ];
 
   var bundles = await Promise.all(queries.map(function(q) {
-    return serperSearch(q.q, q.type, userId).then(function(items) {
+    return serperSearch(q.q, q.type, userId, q.tbs).then(function(items) {
       return { topic: q.topic, items: items };
     });
   }));
@@ -110,7 +117,22 @@ async function runResearch(industry, location, userId) {
   bundles.forEach(function(b) {
     b.items.forEach(function(item) { item._topic = b.topic; combined.push(item); });
   });
-  return dedupByLink(combined);
+
+  // Return both the deduped item list and per-query metadata. The
+  // metadata is surfaced by dry-run mode so the owner can see what
+  // evidence reached the prompt.
+  return {
+    items: dedupByLink(combined),
+    queries: queries.map(function(q, i) {
+      return {
+        topic: q.topic,
+        type: q.type,
+        q: q.q,
+        tbs: q.tbs || (q.type === 'news' ? 'qdr:m' : null),
+        result_count: bundles[i].items.length
+      };
+    })
+  };
 }
 
 async function loadCLContext(supabase, userId) {
@@ -133,6 +155,119 @@ async function loadCLContext(supabase, userId) {
   } catch (e) {
     return [];
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Validation + matrix rating helpers (spec §4, §6.2, §6.3)
+// ─────────────────────────────────────────────────────────────────────
+
+const VALID_CATEGORIES = ['financial','products','customers','operations','market','growth','risk'];
+const VALID_KINDS = ['risk','opportunity'];
+const VALID_LIKELIHOOD = ['Rare','Unlikely','Likely','Almost Certain'];
+const VALID_CONSEQUENCE = ['Minor','Moderate','Major','Severe'];
+const VALID_EFFORT = ['Quick Win','Modest','Significant','Major'];
+const VALID_VALUE_ADD = ['Marginal','Useful','Substantial','Transformational'];
+const VALID_SOURCE_LABELS = ['Financial data','Customer data','Operations data','Content Library','Strategic Plan','Web research'];
+
+// Risk matrix per spec §4.1 — Consequence (rows) × Likelihood (columns).
+const RISK_MATRIX = {
+  'Minor':    { 'Rare': 'Low',    'Unlikely': 'Low',    'Likely': 'Medium', 'Almost Certain': 'Medium' },
+  'Moderate': { 'Rare': 'Low',    'Unlikely': 'Medium', 'Likely': 'High',   'Almost Certain': 'High' },
+  'Major':    { 'Rare': 'Medium', 'Unlikely': 'High',   'Likely': 'High',   'Almost Certain': 'Extreme' },
+  'Severe':   { 'Rare': 'High',   'Unlikely': 'High',   'Likely': 'Extreme','Almost Certain': 'Extreme' }
+};
+
+// Opportunity matrix per spec §4.2 — Value (rows) × Effort (columns).
+const OPPORTUNITY_MATRIX = {
+  'Marginal':         { 'Quick Win': 'Medium',   'Modest': 'Low',      'Significant': 'Low',    'Major': 'Low' },
+  'Useful':           { 'Quick Win': 'High',     'Modest': 'Medium',   'Significant': 'Medium', 'Major': 'Low' },
+  'Substantial':      { 'Quick Win': 'Priority', 'Modest': 'High',     'Significant': 'High',   'Major': 'Medium' },
+  'Transformational': { 'Quick Win': 'Priority', 'Modest': 'Priority', 'Significant': 'High',   'Major': 'High' }
+};
+
+function computeRating(finding) {
+  if (!finding) return null;
+  if (finding.kind === 'risk') {
+    var row = RISK_MATRIX[finding.consequence];
+    return row ? (row[finding.likelihood] || null) : null;
+  }
+  if (finding.kind === 'opportunity') {
+    var row2 = OPPORTUNITY_MATRIX[finding.value_add];
+    return row2 ? (row2[finding.effort] || null) : null;
+  }
+  return null;
+}
+
+// Map the new finding shape down to the legacy severity used by the
+// current bi.html / bi-logic.js routing (red/amber → Risks column,
+// green → Opportunities column). Phase 3B will remove this once the
+// dashboard reads `kind` directly. Until then, severity is computed
+// from kind + rating so the live UI keeps working unchanged.
+function mapToSeverity(finding) {
+  if (finding.kind === 'opportunity') return 'green';
+  var rating = computeRating(finding);
+  return (rating === 'Extreme' || rating === 'High') ? 'red' : 'amber';
+}
+
+function ratingToScore(rating) {
+  var map = { 'Extreme': 10, 'Priority': 10, 'High': 8, 'Medium': 5, 'Low': 3 };
+  return map[rating] || 5;
+}
+
+// Validation layer per spec §6.2. Each finding is checked against the
+// rule set; failures are logged in the platform format and collected
+// into `rejected` with a reason. The caller decides whether to abort
+// (entire batch failed) or proceed with whatever survived.
+function validateFindings(findings, allowedUrls) {
+  var valid = [];
+  var rejected = [];
+
+  function reject(finding, reason) {
+    var headline = (finding && typeof finding.headline === 'string') ? finding.headline : '(no headline)';
+    console.error('[BI] Finding rejected — reason: ' + reason + ', headline: ' + headline);
+    rejected.push({ reason: reason, headline: headline, finding: finding || null });
+  }
+
+  for (var i = 0; i < findings.length; i++) {
+    var f = findings[i];
+    if (!f || typeof f !== 'object') { reject(f, 'Finding is not an object'); continue; }
+    if (VALID_KINDS.indexOf(f.kind) === -1) { reject(f, 'Invalid kind: ' + f.kind); continue; }
+    if (VALID_CATEGORIES.indexOf(f.category) === -1) { reject(f, 'Invalid category: ' + f.category); continue; }
+    if (!f.headline || typeof f.headline !== 'string') { reject(f, 'Missing headline'); continue; }
+    if (!f.detail || typeof f.detail !== 'string') { reject(f, 'Missing detail'); continue; }
+    if (!f.suggestion || typeof f.suggestion !== 'string') { reject(f, 'Missing suggestion'); continue; }
+    if (!Array.isArray(f.sources) || f.sources.length < 1) { reject(f, 'Missing sources (need at least 1)'); continue; }
+    if (f.sources.length > 3) { reject(f, 'Too many sources (max 3)'); continue; }
+
+    var sourceFail = null;
+    for (var j = 0; j < f.sources.length; j++) {
+      var s = f.sources[j];
+      if (!s || !s.label) { sourceFail = 'Source missing label'; break; }
+      if (VALID_SOURCE_LABELS.indexOf(s.label) === -1) { sourceFail = 'Invalid source label: ' + s.label; break; }
+      if (!s.detail || typeof s.detail !== 'string') { sourceFail = 'Source missing detail'; break; }
+      if (s.label === 'Web research') {
+        if (!s.url) { sourceFail = 'Web research source missing url'; break; }
+        if (!allowedUrls.has(s.url)) { sourceFail = 'Fabricated url not in Serper results: ' + s.url; break; }
+      }
+    }
+    if (sourceFail) { reject(f, sourceFail); continue; }
+
+    if (f.kind === 'risk') {
+      if (VALID_LIKELIHOOD.indexOf(f.likelihood) === -1) { reject(f, 'Invalid likelihood: ' + f.likelihood); continue; }
+      if (VALID_CONSEQUENCE.indexOf(f.consequence) === -1) { reject(f, 'Invalid consequence: ' + f.consequence); continue; }
+      if (!f.likelihood_reasoning || typeof f.likelihood_reasoning !== 'string') { reject(f, 'Missing likelihood_reasoning'); continue; }
+      if (!f.consequence_reasoning || typeof f.consequence_reasoning !== 'string') { reject(f, 'Missing consequence_reasoning'); continue; }
+    } else {
+      if (VALID_EFFORT.indexOf(f.effort) === -1) { reject(f, 'Invalid effort: ' + f.effort); continue; }
+      if (VALID_VALUE_ADD.indexOf(f.value_add) === -1) { reject(f, 'Invalid value_add: ' + f.value_add); continue; }
+      if (!f.effort_reasoning || typeof f.effort_reasoning !== 'string') { reject(f, 'Missing effort_reasoning'); continue; }
+      if (!f.value_reasoning || typeof f.value_reasoning !== 'string') { reject(f, 'Missing value_reasoning'); continue; }
+    }
+
+    valid.push(f);
+  }
+
+  return { valid: valid, rejected: rejected };
 }
 
 async function loadSPContext(supabase, userId) {
@@ -162,10 +297,18 @@ export default async function handler(req, res) {
   const userId = user.id;
 
   const { forceRefresh } = req.body || {};
+  // Dry-run mode (spec §3A) — runs Step 1 (generation + validation)
+  // and returns the validated + rejected findings plus the Serper
+  // metadata, without writing to bi_insights or any other table. Lets
+  // the owner inspect the new prompt's output before Phase 3B wires up
+  // the live concept-matching path.
+  const dryRun = req.query && (req.query.dry === 'true' || req.query.dry === '1');
 
   // Cost cap: serve cached insights if any are still inside their 24h
   // window, unless the caller explicitly asked for a fresh regeneration.
-  if (!forceRefresh) {
+  // Dry-run always bypasses the cache — the whole point is to inspect
+  // a fresh Step 1 run.
+  if (!forceRefresh && !dryRun) {
     var cachedRes = await supabase
       .from('bi_insights')
       .select('*')
@@ -214,7 +357,15 @@ export default async function handler(req, res) {
     var projects = parallel[3];
     var clItems = parallel[4] || [];
     var spContext = parallel[5];
-    var research = parallel[6] || [];
+    var researchBundle = parallel[6] || { items: [], queries: [] };
+    var research = researchBundle.items || [];
+    var serperRuns = researchBundle.queries || [];
+
+    // Set of URLs that actually appeared in Serper results — used by
+    // the validation layer (spec §6.2) to reject any "Web research"
+    // citation whose URL the model invented.
+    var allowedSerperUrls = new Set();
+    research.forEach(function(r) { if (r && r.link) allowedSerperUrls.add(r.link); });
 
     var contextParts = [];
 
@@ -365,34 +516,54 @@ export default async function handler(req, res) {
       'INPUT:\n\n' +
       contextParts.join('\n') + '\n\n' +
       'TASK:\n' +
-      'Identify Risks and Opportunities that matter to THIS business specifically. Do not simply restate the numbers — interpret what they mean for the owner\'s situation and what action they should consider.\n\n' +
-      'Quality bar — examples of the calibre of insight expected:\n' +
+      'Identify Risks and Opportunities that matter to THIS business specifically. Each finding must articulate a risk or opportunity statement, not a data observation. Do not simply restate the numbers — interpret what they mean for the owner\'s situation and what action they should consider.\n\n' +
+      'Bad headline: "Cash balance is $12k". Good headline: "Cash flow continuity risk — reserve covers under one month of operating costs".\n\n' +
+      'Quality bar — examples of the calibre of finding expected:\n' +
       '- Noticing that a key supplier mentioned in their documents has been in the news for financial trouble, creating supply chain risk\n' +
       '- Identifying that customer concentration combined with overdue receivables from their largest client creates existential cash flow risk\n' +
       '- Spotting that industry news about new compliance requirements will affect their business within a specific timeframe\n' +
       '- Recognising that their geographic footprint and service mix positions them well to expand into an adjacent market showing growth\n' +
       '- Connecting their strong profit margins with acquisition opportunities in their region\n\n' +
-      'These are examples of strategic thinking, not a checklist. Surface any insight at this level that the data supports. Cross-reference multiple sources where possible.\n\n' +
-      'SEVERITY ROUTING (strict):\n' +
-      '- red: urgent risk — output appears in Risks column\n' +
-      '- amber: risk to monitor — output appears in Risks column\n' +
-      '- green: opportunity — output appears in Opportunities column\n' +
-      'amber is NEVER an opportunity. If something is positive, it must be green. If something needs watching, it is amber and stays in Risks.\n\n' +
+      'These are examples of strategic thinking, not a checklist. Surface any finding at this level that the data supports. Cross-reference multiple sources where possible.\n\n' +
+      'CONSOLIDATION (important):\n' +
+      'A finding represents a concept, not a data point. Group related evidence into a single conceptual finding rather than emitting one finding per data point. For example, "overdue receivables of $X" + "low cash balance of $Y" + "recent late payment from top customer" combine into a SINGLE Cash Flow Continuity risk citing all three pieces of evidence — not three separate findings.\n\n' +
+      'KIND (each finding is exactly one):\n' +
+      '- "risk" — a downside concept the owner needs to defend against\n' +
+      '- "opportunity" — an upside concept the owner could capture\n' +
+      'Watching-brief items are still risks; rate them with lower Likelihood or Consequence so they sit at the bottom of the priority list, but they remain risks. Do not classify a positive item as a risk to be safe.\n\n' +
       'DUAL-ASPECT RULE:\n' +
-      'When a single situation has both a downside and an upside (for example, customer concentration creates cash flow risk AND signals deep relationships you could expand), generate TWO separate insights:\n' +
-      '- one framed as the risk (severity red or amber) describing what could go wrong and how to mitigate\n' +
-      '- one framed as the opportunity (severity green) describing what could go right and how to capture it\n' +
-      'They must complement, not duplicate — different headline, different detail, different suggestion. Do not collapse a dual-aspect situation into a single amber insight.\n\n' +
+      'When a single situation has both a downside and an upside (for example, customer concentration creates cash flow risk AND signals deep relationships you could expand), generate TWO separate findings:\n' +
+      '- one with kind = "risk" describing what could go wrong and how to mitigate\n' +
+      '- one with kind = "opportunity" describing what could be captured\n' +
+      'The two findings must have different headlines, different details, and different suggestions. They are not linked or paired — each stands alone as its own concept. Do not collapse a dual-aspect situation into one finding.\n\n' +
       'Output must include both Risks AND Opportunities. If the data only shows problems, look harder for opportunities. If only positives, look harder for risks. A balanced view is essential.\n\n' +
+      'MATRIX DIMENSIONS (each finding rates two axes):\n' +
+      'For risks (kind = "risk"):\n' +
+      '- "likelihood" — how likely is this to happen? Pick exactly one of: "Rare", "Unlikely", "Likely", "Almost Certain".\n' +
+      '- "consequence" — if it happened, how serious would the impact be? Pick exactly one of: "Minor", "Moderate", "Major", "Severe".\n' +
+      'For opportunities (kind = "opportunity"):\n' +
+      '- "effort" — how much effort to capture this? Pick exactly one of: "Quick Win", "Modest", "Significant", "Major".\n' +
+      '- "value_add" — how much value would capture deliver? Pick exactly one of: "Marginal", "Useful", "Substantial", "Transformational".\n' +
+      'For each dimension, include a one-sentence reasoning string explaining your call:\n' +
+      '- risks need both "likelihood_reasoning" and "consequence_reasoning"\n' +
+      '- opportunities need both "effort_reasoning" and "value_reasoning"\n' +
+      'Reasoning must reference specific evidence from the input where possible. Generic justifications such as "this is moderately likely" are not acceptable.\n\n' +
       'SOURCE ATTRIBUTION:\n' +
-      'For every insight, populate a "sources" array of 1-3 items naming the inputs you actually relied on. Use these labels exactly:\n' +
+      'For every finding, populate a "sources" array of 1-3 items naming the inputs you actually relied on. Use these labels exactly:\n' +
       '- "Financial data" — the financial summary block above\n' +
       '- "Customer data" — the customer summary block above\n' +
       '- "Operations data" — the operations summary block above\n' +
       '- "Content Library" — an item from the BI-tagged Content Library list\n' +
       '- "Strategic Plan" — the current strategic plan\n' +
-      '- "Web research" — a result from the external research list (include the url if available)\n' +
-      'Each source must include a brief detail showing the specific evidence (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026"). Web research sources should include the link.\n\n' +
+      '- "Web research" — a result from the external research list (URL is mandatory and must be one of the URLs that appeared in the research list above)\n' +
+      'Each source must include a brief "detail" field showing the specific evidence used (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026").\n' +
+      'Do not invent or guess URLs. Web research URLs must be copied verbatim from the research list above. Any URL not in that list will be rejected by validation and the entire finding will be dropped.\n\n' +
+      'SOURCE QUALITY:\n' +
+      'Prefer high-trust sources for evidence:\n' +
+      '- Government and regulatory sources (.gov.au, ATO, ASIC, Fair Work, state revenue offices)\n' +
+      '- Established Australian news outlets (AFR, ABC News, SMH, The Australian, industry trade publications)\n' +
+      '- Industry associations and professional bodies\n' +
+      'Lower-trust sources (unknown blogs, content farms, listicles) may be supporting context but should not be the primary evidence for high-stakes claims. For high-stakes claims (compliance changes, regulatory deadlines, financial threats), require either one government source or two established sources. For lower-stakes claims (market trends, opportunities), one source is sufficient.\n\n' +
       categoryGuide +
       classificationGuide +
       'OUTPUT FORMAT — CRITICAL, READ CAREFULLY:\n' +
@@ -402,26 +573,43 @@ export default async function handler(req, res) {
       '- Do NOT wrap the response in markdown code fences (no ```json, no ```, no triple backticks of any kind).\n' +
       '- Do NOT include any preamble, explanation, header, or commentary before the array.\n' +
       '- Do NOT include any text after the closing bracket.\n' +
-      '- Do NOT use single quotes — JSON requires double quotes for all keys and string values.\n' +
-      'Generate 8-15 insights. At least 3 should be Risks (severity red or amber) and at least 3 should be Opportunities (severity green).\n\n' +
-      'Each insight object:\n' +
+      '- Do NOT use single quotes — JSON requires double quotes for all keys and string values.\n\n' +
+      'Generate as many findings as the data and research support, applying a quality threshold. There is no maximum. Aim for at least 4 risks and at least 4 opportunities if the data supports a balanced view.\n\n' +
+      'Each finding object — RISKS:\n' +
       '{\n' +
-      '  "module": "alerts",\n' +
-      '  "insight_type": "alert",\n' +
-      '  "relevance_score": <integer 1-10, 10 = most important>,\n' +
+      '  "kind": "risk",\n' +
+      '  "category": "financial" | "products" | "customers" | "operations" | "market" | "growth" | "risk",\n' +
+      '  "icon": "<single emoji>",\n' +
+      '  "headline": "<short headline, 8-12 words, articulating the risk — not a data observation>",\n' +
+      '  "detail": "<2-3 sentences explaining why this matters to THIS business, citing specific numbers or evidence from the input>",\n' +
+      '  "suggestion": "<concrete next step the owner should consider>",\n' +
       '  "is_tactical": <boolean — true if a single Operational Task can resolve it, false if it needs strategic planning>,\n' +
       '  "classification_reason": "<one short sentence — why tactical or strategic>",\n' +
-      '  "insight_data": {\n' +
-      '    "severity": "red" | "amber" | "green",\n' +
-      '    "category": "financial" | "products" | "customers" | "operations" | "market" | "growth" | "risk",\n' +
-      '    "icon": "<single emoji>",\n' +
-      '    "headline": "<short headline, 8-12 words>",\n' +
-      '    "detail": "<2-3 sentences explaining why this matters to THIS business, citing specific numbers or evidence from the input>",\n' +
-      '    "suggestion": "<concrete next step the owner should consider>",\n' +
-      '    "sources": [\n' +
-      '      { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<optional, web research only>" }\n' +
-      '    ]\n' +
-      '  }\n' +
+      '  "likelihood": "Rare" | "Unlikely" | "Likely" | "Almost Certain",\n' +
+      '  "consequence": "Minor" | "Moderate" | "Major" | "Severe",\n' +
+      '  "likelihood_reasoning": "<one sentence — why that Likelihood level, citing evidence>",\n' +
+      '  "consequence_reasoning": "<one sentence — why that Consequence level, citing evidence>",\n' +
+      '  "sources": [\n' +
+      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for Web research, omit otherwise>" }\n' +
+      '  ]\n' +
+      '}\n\n' +
+      'Each finding object — OPPORTUNITIES:\n' +
+      '{\n' +
+      '  "kind": "opportunity",\n' +
+      '  "category": "financial" | "products" | "customers" | "operations" | "market" | "growth" | "risk",\n' +
+      '  "icon": "<single emoji>",\n' +
+      '  "headline": "<short headline, 8-12 words, articulating the opportunity>",\n' +
+      '  "detail": "<2-3 sentences>",\n' +
+      '  "suggestion": "<concrete next step>",\n' +
+      '  "is_tactical": <boolean>,\n' +
+      '  "classification_reason": "<short sentence>",\n' +
+      '  "effort": "Quick Win" | "Modest" | "Significant" | "Major",\n' +
+      '  "value_add": "Marginal" | "Useful" | "Substantial" | "Transformational",\n' +
+      '  "effort_reasoning": "<one sentence — why that Effort level, citing evidence>",\n' +
+      '  "value_reasoning": "<one sentence — why that Value level, citing evidence>",\n' +
+      '  "sources": [\n' +
+      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for Web research, omit otherwise>" }\n' +
+      '  ]\n' +
       '}'
     );
 
@@ -453,7 +641,7 @@ export default async function handler(req, res) {
     }
 
     var raw = claudeData.content && claudeData.content[0] ? claudeData.content[0].text : '[]';
-    var insights;
+    var findings;
     try {
       var clean = raw.trim();
       // Defensive: strip ```json ... ``` (or plain ``` ... ```) wrappers if the
@@ -472,12 +660,70 @@ export default async function handler(req, res) {
           clean = clean.substring(firstBracket, lastBracket + 1);
         }
       }
-      insights = JSON.parse(clean);
+      findings = JSON.parse(clean);
     } catch (e) {
       console.error('[bi-insights] JSON parse error:', e.message, 'raw:', raw.substring(0, 500));
       return res.status(500).json({ error: 'Could not parse AI response. Please try again.' });
     }
-    if (!Array.isArray(insights)) insights = [];
+    if (!Array.isArray(findings)) findings = [];
+
+    // Validation layer (spec §6.2). Each finding is checked against
+    // the rule set before it's allowed near the database. Failures
+    // are logged in the platform format and collected separately so
+    // the dry-run response can show the owner what passed and what
+    // didn't.
+    var validation = validateFindings(findings, allowedSerperUrls);
+    var validFindings = validation.valid;
+    var rejectedFindings = validation.rejected;
+
+    // Enrich each valid finding with the computed matrix rating and
+    // the legacy severity (red/amber/green) used by the current BI
+    // dashboard routing. Phase 3B will write these to the new
+    // bi_insights columns; Phase 3A only surfaces them in dry-run
+    // output and uses severity to keep the live UI working.
+    var enrichedFindings = validFindings.map(function(f) {
+      var rating = computeRating(f);
+      return Object.assign({}, f, {
+        rating: rating,
+        severity: mapToSeverity(f)
+      });
+    });
+
+    // Whole-batch failure (spec §6.5) — if zero findings survived
+    // validation, the generation is treated as a failure. Dry-run
+    // still returns 200 with the rejected list so the owner can see
+    // what went wrong; live mode returns an error and leaves any
+    // existing rows untouched.
+    if (enrichedFindings.length === 0) {
+      console.error('[BI] Generation failed — all ' + findings.length + ' findings rejected by validation');
+      if (dryRun) {
+        return res.status(200).json({
+          success: true,
+          dry: true,
+          valid_findings: [],
+          rejected_findings: rejectedFindings,
+          serper_runs: serperRuns,
+          message: 'All findings failed validation — see rejected_findings for reasons.'
+        });
+      }
+      return res.status(500).json({ error: 'AI analysis produced no usable findings. Please try Refresh Data again.' });
+    }
+
+    // Dry-run short-circuit (spec §3A). No database writes, no state
+    // changes — just hand back the validated findings, the rejected
+    // findings with reasons, and the Serper run metadata so the
+    // owner can audit what evidence reached the prompt.
+    if (dryRun) {
+      return res.status(200).json({
+        success: true,
+        dry: true,
+        valid_findings: enrichedFindings,
+        rejected_findings: rejectedFindings,
+        serper_runs: serperRuns,
+        generated: enrichedFindings.length,
+        rejected_count: rejectedFindings.length
+      });
+    }
 
     var now = new Date().toISOString();
     var expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -496,23 +742,31 @@ export default async function handler(req, res) {
       .eq('is_dismissed', false)
       .is('sp_queue_action', null);
 
-    var rows = insights.map(function(ins) {
-      // Stash classification_reason inside insight_data so the Add to
-      // Plan handler can copy it across to the action_tracker row
-      // without a second round-trip. is_tactical is a top-level column
-      // (see migrations/bi-sp-integration.sql) so the dashboard can
-      // route the toast and the badge without parsing JSON.
-      var insightData = ins.insight_data || {};
-      if (ins.classification_reason && !insightData.classification_reason) {
-        insightData.classification_reason = ins.classification_reason;
-      }
+    // Map each validated finding to the legacy bi_insights row shape.
+    // Phase 3A keeps the existing write logic intact — the new
+    // dimension fields (kind, likelihood, consequence, effort,
+    // value_add, rating, *_reasoning) are NOT written yet; that lands
+    // in Phase 3B once the matching pipeline is in place. Severity is
+    // derived from kind + rating so the current bi.html / bi-logic.js
+    // routing keeps working.
+    var rows = enrichedFindings.map(function(f) {
+      var insightData = {
+        severity: f.severity,
+        category: f.category,
+        icon: f.icon || '',
+        headline: f.headline,
+        detail: f.detail,
+        suggestion: f.suggestion,
+        sources: f.sources,
+        classification_reason: f.classification_reason || ''
+      };
       return {
         user_id: userId,
-        module: ins.module || 'alerts',
-        insight_type: ins.insight_type || 'alert',
+        module: 'alerts',
+        insight_type: 'alert',
         insight_data: insightData,
-        relevance_score: ins.relevance_score || 5,
-        is_tactical: !!ins.is_tactical,
+        relevance_score: ratingToScore(f.rating),
+        is_tactical: !!f.is_tactical,
         added_to_sp: false,
         added_to_sp_at: null,
         generated_at: now,
