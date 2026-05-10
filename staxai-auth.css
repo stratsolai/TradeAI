@@ -1349,9 +1349,9 @@ body { padding-top: 68px; }
   flex-shrink: 0;
 }
 .expand-tile-title {
-  font-family: var(--heading-font);
-  font-size: 20px;
-  font-weight: var(--heading-lg-weight);
+  font-family: var(--body-font);
+  font-size: var(--body-font-size);
+  font-weight: var(--font-weight-semibold);
   color: var(--text);
   flex: 1;
   min-width: 0;
