@@ -313,7 +313,7 @@ Object.assign(window.SP_LOGIC, {
       financial: 'Financial', products: 'Products & Services',
       customers: 'Customers & Suppliers', operations: 'Operations & Capacity',
       market: 'Market & Competition', growth: 'Growth & Transformation',
-      risk: 'Risk & Resilience'
+      risk: 'Continuity & Resilience'
     };
     var catLabel = categoryLabels[category] || 'Other';
     var action = item.sp_queue_action || '';

@@ -132,7 +132,7 @@ Object.assign(window.SP_LOGIC, {
     { key: 'operations', label: 'Operations & Capacity',   icon: '⚙'    },
     { key: 'market',     label: 'Market & Competition',    icon: '\u{1F4CA}' },
     { key: 'growth',     label: 'Growth & Transformation', icon: '\u{1F680}' },
-    { key: 'risk',       label: 'Risk & Resilience',       icon: '\u{1F6E1}️' }
+    { key: 'risk',       label: 'Continuity & Resilience',       icon: '\u{1F6E1}️' }
   ],
 
   // Loads a pending_approval plan from strategic_plans and renders
@@ -854,7 +854,7 @@ Object.assign(window.SP_LOGIC, {
     financial: 'Financial', products: 'Products & Services',
     customers: 'Customers & Suppliers', operations: 'Operations & Capacity',
     market: 'Market & Competition', growth: 'Growth & Transformation',
-    risk: 'Risk & Resilience'
+    risk: 'Continuity & Resilience'
   },
 
   openGoalChat: function(opts) {

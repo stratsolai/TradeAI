@@ -11,7 +11,7 @@
 //   5. Operations & Capacity     (loses Key Suppliers + Supplier Dependency)
 //   6. Market & Competition
 //   7. Growth & Transformation
-//   8. Risk & Resilience
+//   8. Continuity & Resilience
 //   9. BI Generated Items        (NEW — special section, see strategic-plan-logic.js)
 //
 // Each field includes:
@@ -215,14 +215,14 @@ window.SP_SECTIONS = [
   },
 
   // ─────────────────────────────────────────────────────────────────────
-  // SECTION 8: Risk & Resilience (Tab 8) — was old id:6
+  // SECTION 8: Continuity & Resilience (Tab 8) — was old id:6
   // Spec §8.6 — 3 new fields land here in commit 2.
   // ─────────────────────────────────────────────────────────────────────
   {
     id: 7,
     icon: "\u{1F6E1}️",
-    title: "8. Risk & Resilience",
-    chipLabel: "Risk & Resilience",
+    title: "8. Continuity & Resilience",
+    chipLabel: "Continuity & Resilience",
     subtitle: "Business risks, insurance, compliance, contingency, and succession planning",
     fields: [
       { id: "s7-compliance-status", apiKey: "complianceStatus", valueType: "string", label: "Compliance Status", type: "chip-single", group: "compliance-chips", required: false, options: [{ value: "all-up-to-date", label: "All Up To Date" },{ value: "mostly", label: "Mostly — Occasional Lapses" },{ value: "behind", label: "Behind — Regularly Catching Up" },{ value: "not-sure", label: "Not Sure" }] },
@@ -236,7 +236,7 @@ window.SP_SECTIONS = [
       { id: "s7-exit-timeline", apiKey: "exitTimeline", valueType: "string", label: "Exit Timeline", type: "select", required: false, options: [{ value: "", label: "Select..." },{ value: "no-plans", label: "No Plans" },{ value: "under-1-year", label: "Under 1 Year" },{ value: "1-3-years", label: "1-3 Years" },{ value: "3-5-years", label: "3-5 Years" },{ value: "5+-years", label: "5+ Years" }] },
       { id: "s7-exit-strategy", apiKey: "exitStrategy", valueType: "string", label: "Exit Strategy", type: "chip-single", group: "exit-chips", required: false, options: [{ value: "sell", label: "Sell Business" },{ value: "family", label: "Transition to Family" },{ value: "wind-down", label: "Wind Down" }], allowOther: true },
       { id: "s7-additional", apiKey: "additionalContext", valueType: "string", label: "Additional Context", labelHint: "(anything else the AI should consider)", type: "textarea", required: false, placeholder: "e.g. Major contract coming up, planning a second location, specific challenge to address..." },
-      // Spec §8.6 — three new Risk & Resilience fields.
+      // Spec §8.6 — three new Continuity & Resilience fields.
       { id: "bp-key-cust-risk", apiKey: "keyCustomerRelationshipsAtRisk", valueType: "string", label: "Key Customer Relationships at Risk", helpText: "Are any major customer relationships unstable or up for renewal?", type: "chip-single", group: "key-cust-risk-chips", required: false, options: [{ value: "none", label: "None" },{ value: "one-or-two", label: "One or Two" },{ value: "several", label: "Several" },{ value: "major-concern", label: "Major Concern" }] },
       { id: "bp-supplier-alts", apiKey: "supplierAlternativesAvailable", valueType: "string", label: "Supplier Alternatives Available", helpText: "If a key supplier failed, how easily could you replace them?", type: "chip-single", group: "supplier-alts-chips", required: false, options: [{ value: "yes-all", label: "Yes for All" },{ value: "most", label: "Most" },{ value: "some", label: "Some" },{ value: "few", label: "Few" },{ value: "none", label: "None" }] },
       { id: "bp-safety-incidents", apiKey: "safetyIncidents12m", valueType: "string", label: "Safety Incidents (12 months)", type: "chip-single", group: "safety-chips", required: false, options: [{ value: "none", label: "None" },{ value: "minor-only", label: "Minor Only" },{ value: "some-recordable", label: "Some Recordable" },{ value: "serious", label: "Serious" }] }

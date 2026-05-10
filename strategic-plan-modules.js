@@ -249,7 +249,7 @@ Object.assign(window.SP_LOGIC, {
       { key: 'operations', label: 'Operations & Capacity',   icon: '⚙' },
       { key: 'market',     label: 'Market & Competition',    icon: '\u{1F4CA}' },
       { key: 'growth',     label: 'Growth & Transformation', icon: '\u{1F680}' },
-      { key: 'risk',       label: 'Risk & Resilience',       icon: '\u{1F6E1}️' }
+      { key: 'risk',       label: 'Continuity & Resilience',       icon: '\u{1F6E1}️' }
     ];
     goals.forEach(function(g) {
       var cat = self._normaliseCategory(g.sp_section);
@@ -413,7 +413,7 @@ Object.assign(window.SP_LOGIC, {
       operations_capacity: 'operations',
       market_competition:  'market',
       growth_transformation: 'growth',
-      risk_resilience:     'risk'
+      continuity_resilience: 'risk'
     };
     if (legacy[s]) return legacy[s];
     var valid = ['financial', 'products', 'customers', 'operations', 'market', 'growth', 'risk'];
@@ -438,7 +438,7 @@ Object.assign(window.SP_LOGIC, {
     { key: 'operations', label: 'Operations & Capacity',   icon: '\u{2699}️' },
     { key: 'market',     label: 'Market & Competition',    icon: '\u{1F4CA}' },
     { key: 'growth',     label: 'Growth & Transformation', icon: '\u{1F680}' },
-    { key: 'risk',       label: 'Risk & Resilience',       icon: '\u{1F6E1}️' }
+    { key: 'risk',       label: 'Continuity & Resilience',       icon: '\u{1F6E1}️' }
   ],
 
   // Render the 7 category tiles above the tab nav. Counts are

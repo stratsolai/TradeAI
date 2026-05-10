@@ -114,7 +114,7 @@ async function generatePlanContent(planData, clContext, biInsights, currentPlan,
     '- Investment budget: ' + (planData.investmentBudget || 'Not specified') + '\n' +
     '- Marketing budget: ' + (planData.marketingBudget || 'Not specified') + '\n' +
     '- Marketing challenges: ' + _arr(planData.marketingChallenges) + '\n\n' +
-    'SECTION 7 \u2014 RISK & RESILIENCE:\n' +
+    'SECTION 7 \u2014 CONTINUITY & RESILIENCE:\n' +
     '- Compliance status: ' + (planData.complianceStatus || 'Not specified') + '\n' +
     '- Compliance calendar: ' + (planData.complianceCalendar || 'Not specified') + '\n' +
     '- Cash reserve: ' + (planData.cashReserve || 'Not specified') + '\n' +
@@ -154,7 +154,7 @@ async function generatePlanContent(planData, clContext, biInsights, currentPlan,
     '    "operations": "2-3 paragraphs of business context for the Operations & Capacity category",\n' +
     '    "market":     "2-3 paragraphs of business context for the Market & Competition category",\n' +
     '    "growth":     "2-3 paragraphs of business context for the Growth & Transformation category",\n' +
-    '    "risk":       "2-3 paragraphs of business context for the Risk & Resilience category"\n' +
+    '    "risk":       "2-3 paragraphs of business context for the Continuity & Resilience category"\n' +
     '  },\n' +
     '  "goals": [\n' +
     '    {\n' +
@@ -194,7 +194,7 @@ async function generatePlanContent(planData, clContext, biInsights, currentPlan,
     '- Each goal needs a title (short, max 60 chars), a 1–2 sentence description, and 2–5 tasks.\n' +
     '- Tasks use a relative timeframe in dueRelative — Week 1, Week 2, Week 3, Month 1, Month 2, Month 3. The actual calendar dates are computed at approval, not now.\n' +
     '- Each task carries its own short title and a paragraph description (the why + the what). Priority is High / Medium / Low. Owner defaults to "Owner" or maps to a role from keyRoles when relevant.\n' +
-    '- Always include at least one Risk & Resilience goal that addresses a meaningful risk for this business, even if Risk & Resilience answers were sparse.';
+    '- Always include at least one Continuity & Resilience goal that addresses a meaningful risk for this business, even if Continuity & Resilience answers were sparse.';
 
   if (clContext) {
     userPrompt += '\n\nADDITIONAL BUSINESS CONTEXT FROM CONTENT LIBRARY:\n' + clContext;

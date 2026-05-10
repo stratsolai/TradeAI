@@ -38,7 +38,7 @@ var CATEGORY_LABELS = {
   operations: 'Operations & Capacity',
   market:     'Market & Competition',
   growth:     'Growth & Transformation',
-  risk:       'Risk & Resilience'
+  risk:       'Continuity & Resilience'
 };
 
 function summariseGoal(goal) {
