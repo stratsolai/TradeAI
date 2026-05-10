@@ -440,6 +440,15 @@
   flex-shrink: 0;
   flex-wrap: wrap;
 }
+/* Tighten the inline-element line-boxes inside the action row so
+   the DRAFT pill text sits in the centre of the pill rather than
+   the top, and the Generated date glyphs sit on the same visual
+   line as the buttons. The platform .badge class inherits the
+   body 1.6 line-height which leaves dead space above the glyphs. */
+.sp-review-header-actions .badge,
+.sp-review-header-actions .sp-review-meta-date {
+  line-height: 1;
+}
 .sp-review-section-title {
   font-family: var(--heading-font);
   font-size: var(--heading-lg-size);
