@@ -43,20 +43,31 @@ export default async function handler(req, res) {
   for (const t of TESTS) {
     const payload = { q: t.q, gl: 'au', hl: 'en', num: 8 };
     if (t.tbs) payload.tbs = t.tbs;
+    const bodyString = JSON.stringify(payload);
+
+    // Wire-level diagnostic log — captures the exact byte sequence we send,
+    // so it can be compared verbatim with the platform's PLATFORM-SERPER-CALL
+    // log for the same query. Format intentionally single-line and keyed so
+    // Vercel's log search can pull them out by prefix.
+    console.log(`[DIAG-SERPER-CALL] endpoint: ${t.endpoint} | query: ${t.q} | body: ${bodyString}`);
 
     let status = 0;
     let body = null;
+    let rawText = '';
     let fetchError = null;
     try {
       const resp = await fetch(t.endpoint, {
         method: 'POST',
         headers: { 'X-API-KEY': SERPER_API_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: bodyString
       });
       status = resp.status;
-      try { body = await resp.json(); } catch (e) { body = null; }
+      try { rawText = await resp.text(); } catch (e) { rawText = ''; }
+      console.log(`[DIAG-SERPER-CALL] status: ${status} | query: ${t.q} | raw_first_500: ${rawText.slice(0, 500)}`);
+      try { body = rawText ? JSON.parse(rawText) : null; } catch (e) { body = null; }
     } catch (e) {
       fetchError = (e && e.message) || 'fetch exception';
+      console.log(`[DIAG-SERPER-CALL] fetch_error: ${fetchError} | query: ${t.q}`);
     }
 
     const isNews = t.endpoint.endsWith('/news');
