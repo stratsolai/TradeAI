@@ -124,14 +124,11 @@ export default async function handler(req, res) {
   const refreshId = crypto.randomUUID();
   const accessEvents = [];
 
-  // Issue 1 follow-up: audit-write failures (Phase 3 bulk cache-access
-  // insert AND Phase 4 shared_research_write insert) used to log only
-  // to Vercel and were invisible to the caller. The first owner test
-  // surfaced this when 'shared_research_write' rows never appeared in
-  // the audit table — the access_type CHECK/enum constraint silently
-  // rejected the new value. This array collects any audit-write
-  // failures so they appear in response.audit_warnings, alongside the
-  // [SharedResearch] console.error lines that already exist.
+  // Audit-write failures from either insert path (Phase 3 bulk
+  // cache-access insert and Phase 4 shared_research_write insert)
+  // accumulate here and surface in response.audit_warnings so silent
+  // audit-layer drops are visible to the caller, not just to the
+  // [SharedResearch] console.error lines.
   const auditWarnings = [];
 
   // -------------------------------------------------------------------------
@@ -607,16 +604,12 @@ export default async function handler(req, res) {
   recordTiming('refresh_row_insert', tRefreshRow);
 
   // shared_research_write audit event (success path only). One row
-  // per refresh, separate insert from the Phase 3 cache_access bulk
-  // load further up so that bulk-insert path stays untouched.
-  //
-  // Issue 1 fix: writes use access_type='write' with cache_key set to
-  // the 'shared_research:<refreshId>' sentinel (see
-  // lib/shared-research-writes.js — recordSharedResearchWriteEvent).
-  // The earlier value 'shared_research_write' was being rejected by
-  // the access_type CHECK/enum constraint on the table and never
-  // landed. Any future failure here is surfaced in response.
-  // audit_warnings so the same silent-drop pattern can't recur.
+  // per refresh — access_type='shared_research_write' with cache_key
+  // set to the refresh_id (see lib/shared-research-writes.js —
+  // recordSharedResearchWriteEvent). Separate insert from the Phase
+  // 3 cache_access bulk load further up so that bulk-insert path
+  // stays untouched. Any insert failure surfaces in
+  // response.audit_warnings via auditWarnings below.
   if (writeAccessEvents.length > 0) {
     const tWriteAudit = Date.now();
     try {
