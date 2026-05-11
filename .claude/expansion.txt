@@ -1,0 +1,383 @@
+StaxAI
+BUSINESS PROFILE EXPANSION SPEC
+BP restructure, multi-industry support, and CB/DV day-one readiness
+Document
+StaxAI-BP-Expansion-Spec-v1_1
+Version
+v1.1 — April 2026
+Status
+Approved — implemented
+Purpose
+Restructure Business Profile in CL to support multi-industry selection (max 2), integrated services/products with pricing, and day-one Chatbot/Design Visualiser readiness.
+Reference
+Industry Taxonomy Spec v1.2, Signup Workflow Spec v1.0, Rules &amp; Instructions v2.9, Project Brief v12.23
+Scope
+cl-profile.js, login.html, industry-modal.js, pricing.html, tools.html, auth.js, profiles table schema
+1. Overview
+This spec defines the expanded Business Profile structure in the Content Library. The expansion serves three purposes:
+Enable multi-industry selection (max 2) for businesses that operate across sectors
+Capture services and products with integrated pricing for Chatbot responses
+Ensure day-one readiness for Chatbot and Design Visualiser tools
+The Business Profile becomes mandatory for first-time users before any tools can be activated. This is enforced at the Dashboard level.
+2. Panel Structure
+The Business Profile is reorganised into 6 panels:
+#
+Panel Name
+Purpose
+1
+Identity
+Business name, ABN, structure, industries (max 2), logo, years
+2
+Location &amp; Contact
+Addresses, phones, websites, service area, trading hours
+3
+Services
+Services with integrated pricing
+4
+Products
+Products with integrated pricing
+5
+Credentials &amp; Support
+Licences, payment methods, response time, warranty, complaints, after-hours
+6
+Marketing Theme
+Customer messaging, differentiators, feeling
+3. Field Specifications
+3.1 Panel 1: Identity
+#
+Field
+Input Type
+Required
+Status
+1
+Legal Business Name
+text
+Yes
+Current
+2
+Trading Name
+text
+No
+Current
+3
+ABN
+text (formatted xx xxx xxx xxx)
+Yes
+Current
+4
+Business Structure
+dropdown
+Yes
+Current
+5
+Industries
+multi-select chips (max 2)
+Yes (min 1)
+Updated
+6
+Business Logo
+file upload
+Yes
+Current
+7
+Years in Business
+number
+Yes
+Moved
+Industries field behaviour:
+Multi-select from the 9 industry groups defined in Industry Taxonomy Spec v1.2. Maximum 2 industries per account.
+Pre-fill: Industry is pre-filled from signup selection via sessionStorage
+Adding: Users can add a second industry at any time (if currently at 1)
+Max enforcement: Third click attempt shows message, does not select
+Removing: Modal warning shown (see Section 3.1.1). User must confirm removal.
+UI: Uses .filter-pill / .active pattern from staxai-auth.css
+3.1.1 Industry Removal Warning Modal
+When a user clicks to deselect an industry, a modal warning appears using the .perm-modal-overlay / .perm-modal pattern.
+Modal content:
+Heading: &quot;Remove [Industry Name]?&quot;
+Warning text explaining consequences
+List of industry-specific tools owned for that industry (if any)
+List of tools using industry context: CB (system prompt), DV (render types), ID (news sources), SP (industry analysis)
+Note: &quot;Existing tool outputs will not be deleted but may reference the removed industry&quot;
+Buttons: Cancel (re-selects the chip) / Confirm Removal (leaves deselected)
+3.2 Panel 2: Location &amp; Contact
+#
+Field
+Input Type
+Required
+Status
+8
+Location Name
+text
+Yes
+Current
+9
+Suite/Level/Unit
+text
+No
+Current
+10
+Street Address
+text
+Yes
+Current
+11
+Suburb
+text
+Yes
+Current
+12
+State
+dropdown
+Yes
+Current
+13
+Postcode
+text
+Yes
+Current
+14
+Phone Numbers
+repeating (type dropdown + number)
+Yes (min 1)
+Current
+15
+Additional Locations
+repeating block
+No
+Current
+16
+Website URL(s)
+repeating url
+No
+Current
+17
+Service Area
+multi-select chips + Other
+Yes
+New
+18
+Trading Hours
+structured (days + times)
+Yes
+New
+Service Area options:
+Local (under 25km), Regional (25-100km), State-wide, National, International, Other (free text). Uses .filter-pill / .active pattern.
+Trading Hours structure:
+Day toggles (Mon-Sun) with open/close time dropdowns for each enabled day. Option for 24/7 or By Appointment.
+3.3 Panel 3: Services
+#
+Field
+Input Type
+Required
+Status
+19
+Services
+repeating rows (see structure below)
+Yes (min 1)
+New
+Service row structure:
+Service: dropdown from industry-specific list (merged from selected industries) + Other option
+Pricing Type: dropdown (Hourly Rate, Fixed Price, Price Range, Quote Required)
+Amount: conditional field — single number for Hourly Rate/Fixed Price, min-max for Price Range, hidden for Quote Required
+Service lists are defined in the Services &amp; Products Reference appendix, organised by industry group.
+3.4 Panel 4: Products
+#
+Field
+Input Type
+Required
+Status
+20
+Products
+repeating rows (same structure as Services)
+Yes (min 1)
+New
+Product row structure is identical to Service row structure. Product lists are defined in the Services &amp; Products Reference appendix.
+3.5 Panel 5: Credentials &amp; Support
+#
+Field
+Input Type
+Required
+Status
+21
+Licences &amp; Accreditations
+multi-select chips + Other
+No
+New
+22
+Payment Methods Accepted
+multi-select chips
+Yes
+New
+23
+Typical Response Time
+dropdown
+Yes
+New
+24
+Warranty/Guarantee
+textarea
+Yes
+New
+25
+Complaints Handling
+textarea
+Yes
+New
+26
+After-Hours Support
+dropdown + text
+Yes
+New
+Payment Methods options:
+Cash, Bank Transfer/EFT, Credit Card, Debit Card, EFTPOS, PayPal, Afterpay/Zip Pay, Invoice (payment terms), Other.
+Response Time options:
+Same day, Within 24 hours, Within 48 hours, Within 1 week, Varies — contact us.
+After-Hours Support options:
+Not available, Emergency only, Available (with hours text field).
+3.6 Panel 6: Marketing Theme
+#
+Field
+Input Type
+Required
+Status
+27
+What do you want customers to know?
+textarea
+Yes
+Current
+28
+What sets you apart?
+textarea
+Yes
+Current
+29
+What feeling do you want customers to have?
+textarea
+Yes
+Current
+30
+Additional Theme Statements
+repeating text
+No
+Current
+4. Signup Process Changes
+Industry selection during signup is now captured via a pre-login industry modal, before tool selection. See Signup Workflow Spec v1.0 for the complete flow.
+4.1 Key Changes
+Industry is captured in industry modal (max 2) before tool picker
+Industries stored in sessionStorage.signup_industries during pre-login flow
+login.html reads sessionStorage on signup submit, writes to profiles.industry
+No industry field on login.html signup form — already captured
+4.2 Files to Update
+File
+Change
+New: industry-modal.js
+Reusable modal for industry selection, max 2, pre-select logic, sessionStorage write
+pricing.html
+STAX3/6/All buttons trigger industry modal
+tools.html
+Read sessionStorage, filter grid; tool clicks trigger modal
+login.html
+Remove industry chips; redirect if no tool params; read sessionStorage
+auth.js
+Read industry from sessionStorage; validate tool selection
+4.3 Database
+profiles.industry column is text[] (array). Migration already complete:
+ALTER TABLE profiles ALTER COLUMN industry TYPE text[] USING ARRAY[industry];
+5. Strategic Plan Integration
+Several SP input fields currently duplicate data that should come from BP. These fields need updating.
+5.1 Fields to Pull from BP
+SP Field
+SP Section
+BP Source
+Service Area
+Section 2
+Panel 2: Service Area
+Licences &amp; Certifications
+Section 1
+Panel 5: Licences &amp; Accreditations
+Industry
+Section 1
+Panel 1: Industries (handle array, max 2)
+Core Services
+Section 2
+Panel 3: Services (new structure)
+Products Offered
+Section 2
+Panel 4: Products (new structure)
+5.2 Placeholder Text Bug Fix
+Current issue: BP fields with placeholder/guidance text are being pulled into SP as actual content.
+Fix required:
+SP prefill must check for empty string or null values. Placeholder text must remain in the placeholder attribute only and never be stored as field values. SP displays empty field if BP value is empty, not placeholder text.
+6. Chatbot Integration
+The expanded Business Profile provides day-one knowledge for the Chatbot without requiring manual FAQ entry.
+6.1 CB Knowledge Sources
+The Chatbot system prompt draws from:
+Business Profile (all panels)
+Content Library items tagged CB with status Approved
+Tool Outputs in CL tagged CB
+6.2 Pricing Disclosure Setting
+CB Settings (not BP) includes a pricing disclosure control:
+Share actual prices (uses price data from BP)
+Share price ranges only
+Don&apos;t discuss pricing — direct customers to request a quote
+7. Design Visualiser Integration
+DV render types are restricted based on the user&apos;s selected industries. Users who select multiple industries (max 2) have access to render types from all selected industries.
+Render types per industry are defined in Industry Taxonomy Spec v1.2.
+8. Mandatory BP Completion
+⚠️ Business Profile completion is mandatory before any tools can be activated. This is enforced at the Dashboard level.
+On first login, users are directed to complete BP before accessing tools. The Dashboard displays a completion prompt until all mandatory fields are populated.
+Mandatory fields are marked &quot;Yes&quot; in the Required column in Section 3. Total: 25 mandatory fields, 5 optional fields.
+9. &quot;Other&quot; Option UI Component
+Fields with &quot;Other&quot; options (Services, Products, Licences, Service Area) use a consistent add/remove UI pattern.
+Behaviour:
+When user types a custom entry and clicks Add, the entry appears as a .filter-pill with an × remove button in the same row as the standard options. This is not a separate component — custom entries are rendered alongside standard pills.
+Uses .filter-pill[data-custom] with inline × span for remove button.
+10. Migration Tasks
+#
+Task
+Detail
+1
+Update profiles.industry column
+Convert from text to text[] array — DONE
+2
+Create industry-modal.js
+Reusable modal, max 2, sessionStorage write
+3
+Update pricing.html
+Trigger industry modal from STAX buttons
+4
+Update tools.html
+Filter grid by industries, trigger modal
+5
+Update login.html
+Remove industry chips, read sessionStorage
+6
+Rebuild cl-profile.js
+6-panel structure, max 2 industries, .filter-pill pattern — DONE
+7
+Create Services/Products lists
+Industry-specific dropdowns per taxonomy — DONE
+8
+Update SP data integration
+Pull from new BP structure, fix placeholder bug
+9
+Add BP completion check to Dashboard
+Enforce mandatory completion before tool access — Task 26
+11. Related Documents
+Industry Taxonomy Spec v1.2 — industry groups, 2-industry limit, DV render types
+Signup Workflow Spec v1.0 — complete pre-login flow with industry modal
+Services &amp; Products Reference v1.0 — industry-specific lists
+CB Rebuild Spec v1.1 — full Chatbot specification
+DV Spec v1.1 — full Design Visualiser specification
+Dashboard Spec v3.2 — BP completion enforcement
+12. Version History
+Version
+Date
+Changes
+v1.0
+April 2026
+Initial version — 6-panel structure, 30 fields, multi-industry support, integrated pricing
+v1.1
+April 2026
+Added 2-industry limit. Added Section 3.1.1 for industry removal warning modal. Updated signup process to use pre-login industry modal and sessionStorage. Updated Section 9 to use .filter-pill pattern for Other entries. Added references to Signup Workflow Spec v1.0, CB Rebuild Spec v1.1, DV Spec v1.1. Updated migration tasks with completion status.
