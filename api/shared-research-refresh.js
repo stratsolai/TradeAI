@@ -154,7 +154,7 @@ export default async function handler(req, res) {
   // Execute the plan with the cache layer + throttled dispatcher
   // -------------------------------------------------------------------------
   const tPlanExec = Date.now();
-  const planResults = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
+  const { results: planResults, queueWaitSumMs } = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
     return executeQueryWithCache({
       supabase,
       userId,
@@ -187,6 +187,15 @@ export default async function handler(req, res) {
   console.log(`[SharedResearch] Phase timing — phase: cache_lookup_sum, ms: ${sumCacheLookup}`);
   console.log(`[SharedResearch] Phase timing — phase: serper_sum, ms: ${sumSerper}`);
   console.log(`[SharedResearch] Phase timing — phase: cache_write_sum, ms: ${sumCacheWrite}`);
+
+  // Phase 3.6 instrumentation: differentiate dispatcher queue-wait
+  // from actual Supabase call time. If queue wait dominates, the
+  // throttle is gating cache hits unnecessarily. If supabase sum
+  // dominates, the Supabase calls themselves are the bottleneck.
+  timings.cache_call_queue_wait_sum_ms = queueWaitSumMs;
+  timings.cache_call_supabase_sum_ms = sumCacheLookup + sumCacheWrite;
+  console.log(`[SharedResearch] Phase timing — phase: cache_call_queue_wait_sum, ms: ${queueWaitSumMs}`);
+  console.log(`[SharedResearch] Phase timing — phase: cache_call_supabase_sum, ms: ${timings.cache_call_supabase_sum_ms}`);
 
   // Bulk-insert all access events for this refresh in one round-trip.
   // Failures here are logged but never break the refresh response —
@@ -304,11 +313,20 @@ export default async function handler(req, res) {
 
     if (curation.per_category) {
       const perCategoryMs = {};
+      const breakdown = {};
       for (const [cat, info] of Object.entries(curation.per_category)) {
         perCategoryMs[cat] = info.duration_ms;
-        console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}`);
+        breakdown[cat] = {
+          ms: info.duration_ms,
+          items_in: info.items_in || 0,
+          items_out: info.items_out || 0,
+          input_tokens: info.input_tokens || 0,
+          output_tokens: info.output_tokens || 0
+        };
+        console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}`);
       }
       timings.curation_per_category_ms = perCategoryMs;
+      timings.curation_per_category_breakdown = breakdown;
     }
 
     // Log Haiku usage for cost attribution. logAnthropicUsage swallows
@@ -486,6 +504,7 @@ async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) 
   const results = new Array(items.length);
   let cursor = 0;
   let nextSlot = Date.now();
+  let queueWaitSumMs = 0; // Phase 3.6 instrumentation
   const gap = minDispatchGapMs || 0;
 
   async function lane() {
@@ -493,12 +512,17 @@ async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) 
       const i = cursor++;
       if (i >= items.length) return;
 
+      let dispatchWaitMs = 0;
       if (gap > 0) {
         const now = Date.now();
         const waitMs = Math.max(0, nextSlot - now);
         nextSlot = Math.max(nextSlot, now) + gap;
-        if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
+        if (waitMs > 0) {
+          await new Promise((r) => setTimeout(r, waitMs));
+          dispatchWaitMs = waitMs;
+        }
       }
+      queueWaitSumMs += dispatchWaitMs;
 
       try {
         results[i] = await worker(items[i]);
@@ -511,5 +535,5 @@ async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) 
 
   const lanes = Math.min(maxParallel, items.length);
   await Promise.all(Array.from({ length: lanes }, () => lane()));
-  return results;
+  return { results, queueWaitSumMs };
 }
