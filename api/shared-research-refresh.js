@@ -124,6 +124,16 @@ export default async function handler(req, res) {
   const refreshId = crypto.randomUUID();
   const accessEvents = [];
 
+  // Issue 1 follow-up: audit-write failures (Phase 3 bulk cache-access
+  // insert AND Phase 4 shared_research_write insert) used to log only
+  // to Vercel and were invisible to the caller. The first owner test
+  // surfaced this when 'shared_research_write' rows never appeared in
+  // the audit table — the access_type CHECK/enum constraint silently
+  // rejected the new value. This array collects any audit-write
+  // failures so they appear in response.audit_warnings, alongside the
+  // [SharedResearch] console.error lines that already exist.
+  const auditWarnings = [];
+
   // -------------------------------------------------------------------------
   // Business Profile load + region resolution
   // -------------------------------------------------------------------------
@@ -226,8 +236,9 @@ export default async function handler(req, res) {
   console.log(`[SharedResearch] Phase timing — phase: cache_call_supabase_sum, ms: ${timings.cache_call_supabase_sum_ms}`);
 
   // Bulk-insert all access events for this refresh in one round-trip.
-  // Failures here are logged but never break the refresh response —
-  // the data has already been served by the time we get to audit.
+  // Failures here are logged AND surfaced in response.audit_warnings
+  // so silent audit-layer drops can't recur (see Issue 1 follow-up
+  // note above).
   const tAccessLog = Date.now();
   if (accessEvents.length > 0) {
     try {
@@ -236,9 +247,12 @@ export default async function handler(req, res) {
         .insert(accessEvents);
       if (ins.error) {
         console.error('[SharedResearch] Bulk access log error —', 'count:', accessEvents.length, 'message:', ins.error.message);
+        auditWarnings.push({ scope: 'cache_access_bulk', count: accessEvents.length, message: ins.error.message });
       }
     } catch (e) {
-      console.error('[SharedResearch] Bulk access log exception —', 'count:', accessEvents.length, 'message:', e && e.message);
+      const msg = e && e.message;
+      console.error('[SharedResearch] Bulk access log exception —', 'count:', accessEvents.length, 'message:', msg);
+      auditWarnings.push({ scope: 'cache_access_bulk', count: accessEvents.length, message: msg || 'exception' });
     }
   }
   recordTiming('access_log_bulk_insert', tAccessLog);
@@ -460,7 +474,8 @@ export default async function handler(req, res) {
       query_plan: queryStats,
       raw_results: truncatedItems,
       curated_items: grouped,
-      rejected_items: validated.rejected
+      rejected_items: validated.rejected,
+      audit_warnings: auditWarnings
     });
   }
 
@@ -594,6 +609,14 @@ export default async function handler(req, res) {
   // shared_research_write audit event (success path only). One row
   // per refresh, separate insert from the Phase 3 cache_access bulk
   // load further up so that bulk-insert path stays untouched.
+  //
+  // Issue 1 fix: writes use access_type='write' with cache_key set to
+  // the 'shared_research:<refreshId>' sentinel (see
+  // lib/shared-research-writes.js — recordSharedResearchWriteEvent).
+  // The earlier value 'shared_research_write' was being rejected by
+  // the access_type CHECK/enum constraint on the table and never
+  // landed. Any future failure here is surfaced in response.
+  // audit_warnings so the same silent-drop pattern can't recur.
   if (writeAccessEvents.length > 0) {
     const tWriteAudit = Date.now();
     try {
@@ -602,9 +625,12 @@ export default async function handler(req, res) {
         .insert(writeAccessEvents);
       if (insAudit.error) {
         console.error('[SharedResearch] shared_research_write audit error —', 'message:', insAudit.error.message);
+        auditWarnings.push({ scope: 'shared_research_write', count: writeAccessEvents.length, message: insAudit.error.message });
       }
     } catch (e) {
-      console.error('[SharedResearch] shared_research_write audit exception —', 'message:', e && e.message);
+      const msg = e && e.message;
+      console.error('[SharedResearch] shared_research_write audit exception —', 'message:', msg);
+      auditWarnings.push({ scope: 'shared_research_write', count: writeAccessEvents.length, message: msg || 'exception' });
     }
     recordTiming('shared_research_write_audit', tWriteAudit);
   }
@@ -654,7 +680,8 @@ export default async function handler(req, res) {
       profile_summary: profileSummary,
       stats,
       timings,
-      rejected_items: validated.rejected
+      rejected_items: validated.rejected,
+      audit_warnings: auditWarnings
     });
   }
 
@@ -667,7 +694,8 @@ export default async function handler(req, res) {
       error: liveError,
       profile_summary: profileSummary,
       stats,
-      timings
+      timings,
+      audit_warnings: auditWarnings
     });
   }
 
@@ -683,7 +711,8 @@ export default async function handler(req, res) {
     profile_summary: profileSummary,
     stats,
     timings,
-    items: grouped
+    items: grouped,
+    audit_warnings: auditWarnings
   });
 }
 
