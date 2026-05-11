@@ -1,138 +1,228 @@
 // api/bi-insights.js — BI Dashboard main AI analysis endpoint
+//
 // Generates Risks & Opportunities by combining:
 //  - Internal data (Xero/MYOB financial + customer summaries, ServiceM8 ops)
 //  - Content Library items tagged for BI (tool_tags contains 'bi')
 //  - The current Strategic Plan (interview_data)
-//  - External web research via Serper.dev (industry, regulatory, market,
-//    geographic, acquisition opportunities)
-// Caches results in bi_insights for 24 hours; the expensive Claude+Serper
-// pipeline only runs when the cache is stale or forceRefresh is true.
+//  - Curated external research from the Shared Research Layer
+//    (shared_research rows tagged is_current = true)
+//
+// Phase 6 of the Shared Research Layer build (StaxAI-Shared-Research-
+// Layer-Spec-v1_0 §13.2 + §18.6) replaces the legacy in-handler
+// Serper research path with a call to api/shared-research-refresh
+// followed by a read from the shared_research table. The Sonnet
+// analysis prompt now consumes lens-tagged, category-grouped curated
+// evidence with rendered URLs and source_type metadata.
+//
+// The bi_insights cache continues to live in the bi_insights table.
+// The cache-decision rule moved from "is the cache younger than 24h?"
+// to "is the cached analysis at least as new as the latest shared
+// research?" — per the Phase 6 brief, the bi_insights cache is now an
+// inputs-unchanged optimisation, not a 24-hour gate.
 
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
-import { logAnthropicUsage, logSerperUsage } from '../lib/usage-logger.js';
+import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { normaliseUrlForMatch } from '../lib/shared-research.js';
+import sharedResearchRefreshHandler from './shared-research-refresh.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const SERPER_API_KEY = process.env.SERPER_API_KEY;
-const SITE_URL = 'https://staxai.com.au';
 
-const AUSTRALIAN_STATES = {
-  NSW: 'New South Wales', VIC: 'Victoria', QLD: 'Queensland',
-  SA: 'South Australia', WA: 'Western Australia', TAS: 'Tasmania',
-  NT: 'Northern Territory', ACT: 'Australian Capital Territory'
+// ─────────────────────────────────────────────────────────────────────
+// Shared Research Layer evidence rendering
+// ─────────────────────────────────────────────────────────────────────
+
+// Lens key → human-readable label for the Sonnet prompt. The stored
+// lens values are tokens (national-smes, region-industry, etc.) — the
+// prompt needs them in natural language so the AI weighs geographic +
+// industry scope correctly.
+const LENS_LABELS = {
+  'national-smes': 'national (all SMEs)',
+  'national-industry': 'national (industry-specific)',
+  'state-smes': 'state (all SMEs)',
+  'state-industry': 'state (industry-specific)',
+  'region-smes': 'region (all SMEs)',
+  'region-industry': 'region (industry-specific)'
 };
 
-function extractState(location) {
-  if (!location) return null;
-  var upper = String(location).toUpperCase();
-  for (var abbr in AUSTRALIAN_STATES) {
-    if (new RegExp('\\b' + abbr + '\\b').test(upper)) return abbr;
-  }
-  var lower = String(location).toLowerCase();
-  for (var key in AUSTRALIAN_STATES) {
-    if (lower.indexOf(AUSTRALIAN_STATES[key].toLowerCase()) !== -1) return key;
-  }
-  return null;
+// One block per Shared Research Layer source category. The `label`
+// values are the source-attribution labels Sonnet must use in the
+// `sources` array on each finding — they extend the previous single
+// "Web research" label into five category-specific buckets.
+const SRL_CATEGORY_SECTIONS = [
+  { key: 'regulatory',    heading: 'REGULATORY & COMPLIANCE', label: 'Web research — Regulatory' },
+  { key: 'industry-news', heading: 'INDUSTRY NEWS',           label: 'Web research — Industry News' },
+  { key: 'suppliers',     heading: 'SUPPLIER & MATERIALS',    label: 'Web research — Suppliers' },
+  { key: 'economic',      heading: 'ECONOMIC & MARKET',       label: 'Web research — Economic' },
+  { key: 'technology',    heading: 'TECHNOLOGY & INNOVATION', label: 'Web research — Technology' }
+];
+
+// Set of the five category-specific Web research labels. Used by the
+// validator to recognise web-evidence sources for the URL fab-check —
+// any source whose label is in this set must include a URL that appears
+// in the allow-set built from shared_research items.
+const WEB_RESEARCH_LABELS = new Set(SRL_CATEGORY_SECTIONS.map(function(s) { return s.label; }));
+
+function renderLens(lensArr) {
+  if (!Array.isArray(lensArr) || lensArr.length === 0) return '(no lens)';
+  return lensArr.map(function(l) { return LENS_LABELS[l] || l; }).join(', ');
 }
 
-function dedupByLink(items) {
-  var seen = new Set();
-  var out = [];
-  for (var i = 0; i < items.length; i++) {
-    var key = items[i].link;
-    if (!key) { out.push(items[i]); continue; }
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(items[i]);
+// Build the EXTERNAL RESEARCH block for the Sonnet prompt. Items are
+// grouped by SRL category in the fixed §4 order, then rendered as
+// per-item blocks carrying title, source name + source_type, published
+// date if present, the lens(es) the item surfaced from, the curated
+// summary, and the URL verbatim. The URL is in the block specifically
+// so Sonnet can copy it verbatim into the `sources` array — the legacy
+// prompt told Sonnet to copy URLs that weren't actually rendered into
+// the input (Pass 1 finding 8).
+function renderEvidenceBlock(items) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return 'EXTERNAL RESEARCH\n(No curated research items available for this user. Findings should rely on internal data, Content Library, and Strategic Plan context.)';
   }
-  return out;
-}
-
-async function serperSearch(query, type, userId, tbs) {
-  if (!SERPER_API_KEY) return [];
-  try {
-    var endpoint = type === 'search' ? 'https://google.serper.dev/search' : 'https://google.serper.dev/news';
-    var body = { q: query, gl: 'au', hl: 'en', num: 8 };
-    // Recency window per spec §6.4: caller-provided tbs wins; otherwise
-    // news defaults to qdr:m (1 month) to drop aggregator/SEO chaff.
-    if (tbs) body.tbs = tbs;
-    else if (type === 'news') body.tbs = 'qdr:m';
-    var resp = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'X-API-KEY': SERPER_API_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!resp.ok) {
-      console.error('[bi-insights] Serper non-OK:', resp.status, 'query:', query);
-      return [];
+  var byCategory = Object.create(null);
+  for (var i = 0; i < SRL_CATEGORY_SECTIONS.length; i++) {
+    byCategory[SRL_CATEGORY_SECTIONS[i].key] = [];
+  }
+  for (var j = 0; j < items.length; j++) {
+    var it = items[j];
+    if (it && it.category && byCategory[it.category]) byCategory[it.category].push(it);
+  }
+  var lines = ['EXTERNAL RESEARCH (Shared Research Layer — curated, lens-tagged)'];
+  lines.push('Each item is tagged with lens(es) describing the geographic + industry scope it surfaced from, and a source_type: primary (government/regulator), association (industry body), or secondary (trade press, general media, bank economics teams).');
+  for (var k = 0; k < SRL_CATEGORY_SECTIONS.length; k++) {
+    var section = SRL_CATEGORY_SECTIONS[k];
+    var sectionItems = byCategory[section.key];
+    if (!sectionItems || sectionItems.length === 0) continue;
+    lines.push('');
+    lines.push(section.heading);
+    for (var n = 0; n < sectionItems.length; n++) {
+      var item = sectionItems[n];
+      lines.push('[' + section.key + '-' + (n + 1) + ']');
+      lines.push('  Title: ' + (item.title || ''));
+      var srcLine = '  Source: ' + (item.source_name || '(unknown)');
+      if (item.source_type) srcLine += ' [' + item.source_type + ']';
+      lines.push(srcLine);
+      if (item.published_date) lines.push('  Published: ' + item.published_date);
+      lines.push('  Lens: ' + renderLens(item.lens));
+      lines.push('  Summary: ' + (item.summary || ''));
+      lines.push('  URL: ' + (item.url || ''));
     }
-    await logSerperUsage({ tool_id: 'bi', user_id: userId || null });
-    var data = await resp.json();
-    var raw = type === 'search' ? (data.organic || []) : (data.news || []);
-    return raw.slice(0, 8).map(function(r) {
-      var src = r.source || '';
-      if (!src && r.link) { try { src = new URL(r.link).hostname.replace(/^www\./, ''); } catch (e) {} }
-      return {
-        title: r.title || '',
-        snippet: r.snippet || '',
-        link: r.link || '',
-        source: src
-      };
+  }
+  return lines.join('\n');
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Shared Research Layer trigger + read
+// ─────────────────────────────────────────────────────────────────────
+
+// Trigger a shared research refresh via module-import alt-auth.
+// Mirrors api/news-digest-worker.js — builds a mock req/res pair that
+// puts the SRL handler on its x-cron-secret path with the BI user's
+// id in the body and triggered_by_tool = 'bi' for the audit trail.
+// SRL handles its own 24-hour cache internally; we just need to make
+// sure SRL has had a chance to update shared_research before we read
+// it for this analysis.
+async function callSharedResearch(userId) {
+  if (!process.env.CRON_SECRET) {
+    console.error('[bi-insights] SRL trigger skipped — CRON_SECRET not configured');
+    return { statusCode: 0, data: { error: 'CRON_SECRET not configured' } };
+  }
+  const mockReq = {
+    method: 'POST',
+    query: {},
+    headers: {
+      'content-type': 'application/json',
+      'x-cron-secret': process.env.CRON_SECRET
+    },
+    body: { userId: userId, triggered_by_tool: 'bi' }
+  };
+  var statusCode = 200;
+  var resolved = false;
+  var resolveFn;
+  const promise = new Promise(function(r) { resolveFn = r; });
+  const mockRes = {
+    status: function(c) { statusCode = c; return mockRes; },
+    json: function(data) {
+      if (resolved) return;
+      resolved = true;
+      resolveFn({ statusCode: statusCode, data: data });
+    }
+  };
+  try {
+    sharedResearchRefreshHandler(mockReq, mockRes).catch(function(err) {
+      if (!resolved) {
+        resolved = true;
+        resolveFn({ statusCode: 500, data: { error: (err && err.message) || 'SRL handler threw' } });
+      }
     });
   } catch (e) {
-    console.error('[bi-insights] Serper exception:', e && e.message, 'query:', query);
-    return [];
+    if (!resolved) {
+      resolved = true;
+      resolveFn({ statusCode: 500, data: { error: (e && e.message) || 'SRL invocation failed' } });
+    }
+  }
+  return promise;
+}
+
+// Read the user's current curated research from shared_research.
+// Returns the rows (already filtered to is_current = true) and the
+// latest created_at across them — the latter is the comparator the
+// bi_insights cache decision uses to detect "research is newer than
+// the cached analysis".
+async function fetchCurrentSharedResearch(supabase, userId) {
+  try {
+    var resp = await supabase
+      .from('shared_research')
+      .select('title, summary, url, source_name, source_domain, source_type, lens, category, published_date, created_at')
+      .eq('user_id', userId)
+      .eq('is_current', true)
+      .order('created_at', { ascending: false });
+    if (resp.error) {
+      console.error('[bi-insights] shared_research read error:', resp.error.message);
+      return { items: [], latest_created_at: null };
+    }
+    var rows = resp.data || [];
+    var latest = rows.length > 0 ? rows[0].created_at : null;
+    return { items: rows, latest_created_at: latest };
+  } catch (e) {
+    console.error('[bi-insights] shared_research read exception:', e && e.message);
+    return { items: [], latest_created_at: null };
   }
 }
 
-async function runResearch(industry, location, userId) {
-  if (!industry) industry = 'small business';
-  var state = extractState(location);
-  var stateFull = state ? AUSTRALIAN_STATES[state] : null;
-  var stateForQuery = stateFull || 'Australia';
-  var year = new Date().getFullYear();
+// Build the URL allow-set the validator uses to reject fabricated web
+// citations. URLs are normalised via the SRL helper so trivial cosmetic
+// differences (trailing slash, http vs https, www, tracking params,
+// fragments) between Sonnet's output and the stored shared_research
+// URL don't false-positive as fabrication — Pass 1 finding 4.
+function buildAllowedUrlSet(items) {
+  var set = new Set();
+  for (var i = 0; i < items.length; i++) {
+    var u = items[i] && items[i].url;
+    if (!u) continue;
+    var norm = normaliseUrlForMatch(u);
+    if (norm) set.add(norm);
+  }
+  return set;
+}
 
-  // Recency tightening per spec §6.4:
-  //   compliance/regulatory  → 3 months  (qdr:m3)
-  //   industry / competitor / expansion (market activity) → 1 month (qdr:m)
-  //   acquisitions (listings remain valid until sold)     → no restriction
-  var queries = [
-    { type: 'news',   topic: 'industry',     tbs: 'qdr:m',  q: industry + ' industry trends Australia ' + year },
-    { type: 'news',   topic: 'compliance',   tbs: 'qdr:m3', q: industry + ' regulatory compliance legislation Australia ' + year },
-    { type: 'news',   topic: 'competitor',   tbs: 'qdr:m',  q: industry + ' ' + stateForQuery + ' market and competitor activity' },
-    { type: 'news',   topic: 'expansion',    tbs: 'qdr:m',  q: stateForQuery + ' business growth opportunities ' + industry },
-    { type: 'search', topic: 'acquisitions', tbs: null,     q: '"businesses for sale" ' + industry + ' ' + stateForQuery + ' (site:seekbusiness.com.au OR site:businessesforsale.com.au)' }
-  ];
-
-  var bundles = await Promise.all(queries.map(function(q) {
-    return serperSearch(q.q, q.type, userId, q.tbs).then(function(items) {
-      return { topic: q.topic, items: items };
-    });
-  }));
-
-  var combined = [];
-  bundles.forEach(function(b) {
-    b.items.forEach(function(item) { item._topic = b.topic; combined.push(item); });
-  });
-
-  // Return both the deduped item list and per-query metadata. The
-  // metadata is surfaced by dry-run mode so the owner can see what
-  // evidence reached the prompt.
-  return {
-    items: dedupByLink(combined),
-    queries: queries.map(function(q, i) {
-      return {
-        topic: q.topic,
-        type: q.type,
-        q: q.q,
-        tbs: q.tbs || (q.type === 'news' ? 'qdr:m' : null),
-        result_count: bundles[i].items.length
-      };
-    })
-  };
+// Count items per category — used in the dry-run response to show the
+// owner what evidence reached Sonnet, broken down the same way the
+// prompt's evidence block is.
+function itemsByCategoryCounts(items) {
+  var counts = {};
+  for (var i = 0; i < SRL_CATEGORY_SECTIONS.length; i++) {
+    counts[SRL_CATEGORY_SECTIONS[i].key] = 0;
+  }
+  for (var j = 0; j < items.length; j++) {
+    var c = items[j] && items[j].category;
+    if (c && counts.hasOwnProperty(c)) counts[c]++;
+  }
+  return counts;
 }
 
 async function loadCLContext(supabase, userId) {
@@ -167,7 +257,22 @@ const VALID_LIKELIHOOD = ['Rare','Unlikely','Likely','Almost Certain'];
 const VALID_CONSEQUENCE = ['Minor','Moderate','Major','Severe'];
 const VALID_EFFORT = ['Quick Win','Modest','Significant','Major'];
 const VALID_VALUE_ADD = ['Marginal','Useful','Substantial','Transformational'];
-const VALID_SOURCE_LABELS = ['Financial data','Customer data','Operations data','Content Library','Strategic Plan','Web research'];
+
+// Phase 6: the single 'Web research' label is replaced by five
+// category-specific labels matching the SRL source categories. Any
+// label in WEB_RESEARCH_LABELS triggers the URL fab-check.
+const VALID_SOURCE_LABELS = [
+  'Financial data',
+  'Customer data',
+  'Operations data',
+  'Content Library',
+  'Strategic Plan',
+  'Web research — Regulatory',
+  'Web research — Industry News',
+  'Web research — Suppliers',
+  'Web research — Economic',
+  'Web research — Technology'
+];
 
 // Risk matrix per spec §4.1 — Consequence (rows) × Likelihood (columns).
 const RISK_MATRIX = {
@@ -218,7 +323,14 @@ function ratingToScore(rating) {
 // rule set; failures are logged in the platform format and collected
 // into `rejected` with a reason. The caller decides whether to abort
 // (entire batch failed) or proceed with whatever survived.
-function validateFindings(findings, allowedUrls) {
+//
+// Phase 6 changes:
+//   - Source labels: the single 'Web research' is replaced by the
+//     five category-specific labels in WEB_RESEARCH_LABELS.
+//   - URL check: the allow-set is keyed on normalised URLs (via
+//     normaliseUrlForMatch) so cosmetic differences between Sonnet's
+//     output and shared_research.url don't false-positive.
+function validateFindings(findings, allowedNormalisedUrls) {
   var valid = [];
   var rejected = [];
 
@@ -245,9 +357,13 @@ function validateFindings(findings, allowedUrls) {
       if (!s || !s.label) { sourceFail = 'Source missing label'; break; }
       if (VALID_SOURCE_LABELS.indexOf(s.label) === -1) { sourceFail = 'Invalid source label: ' + s.label; break; }
       if (!s.detail || typeof s.detail !== 'string') { sourceFail = 'Source missing detail'; break; }
-      if (s.label === 'Web research') {
+      if (WEB_RESEARCH_LABELS.has(s.label)) {
         if (!s.url) { sourceFail = 'Web research source missing url'; break; }
-        if (!allowedUrls.has(s.url)) { sourceFail = 'Fabricated url not in Serper results: ' + s.url; break; }
+        var norm = normaliseUrlForMatch(s.url);
+        if (!norm || !allowedNormalisedUrls.has(norm)) {
+          sourceFail = 'Fabricated url not in shared_research items: ' + s.url;
+          break;
+        }
       }
     }
     if (sourceFail) { reject(f, sourceFail); continue; }
@@ -298,26 +414,58 @@ export default async function handler(req, res) {
 
   const { forceRefresh } = req.body || {};
   // Dry-run mode (spec §3A) — runs Step 1 (generation + validation)
-  // and returns the validated + rejected findings plus the Serper
-  // metadata, without writing to bi_insights or any other table. Lets
-  // the owner inspect the new prompt's output before Phase 3B wires up
-  // the live concept-matching path.
+  // and returns the validated + rejected findings plus SRL audit
+  // metadata, without writing to bi_insights or any other BI table.
+  // SRL still runs (so the owner can see what evidence reached the
+  // prompt) and SRL still writes shared_research per its own rules —
+  // that's the Shared Research Layer's own behaviour, not BI's.
   const dryRun = req.query && (req.query.dry === 'true' || req.query.dry === '1');
 
-  // Cost cap: serve cached insights if any are still inside their 24h
-  // window, unless the caller explicitly asked for a fresh regeneration.
-  // Dry-run always bypasses the cache — the whole point is to inspect
-  // a fresh Step 1 run.
+  // Phase 6 flow — SRL first, then cache check.
+  //   1. Trigger SRL (so the user's shared research has the most
+  //      recent refresh attempt before we make any cache decision).
+  //   2. Read shared_research is_current = true for this user. This
+  //      is the canonical view of what's available; we use the
+  //      timestamp on the freshest row as the inputs-unchanged
+  //      comparator below.
+  //   3. If not forceRefresh and not dryRun: compare against the
+  //      cached bi_insights.generated_at. Cached analysis at least
+  //      as new as the latest research → serve cached.
+  //   4. Otherwise: build the evidence block, fetch the rest of
+  //      the BI inputs, run Sonnet, validate, write.
+  var srlResult = await callSharedResearch(userId);
+  if (srlResult && srlResult.data && srlResult.data.error) {
+    console.error('[bi-insights] SRL trigger reported error:', srlResult.data.error);
+  }
+  var sharedResearch = await fetchCurrentSharedResearch(supabase, userId);
+  var researchItems = sharedResearch.items;
+  var researchLatestAt = sharedResearch.latest_created_at;
+
   if (!forceRefresh && !dryRun) {
     var cachedRes = await supabase
       .from('bi_insights')
       .select('*')
       .eq('user_id', userId)
       .eq('is_dismissed', false)
-      .gt('expires_at', new Date().toISOString())
-      .order('relevance_score', { ascending: false });
+      .order('generated_at', { ascending: false });
     if (!cachedRes.error && cachedRes.data && cachedRes.data.length > 0) {
-      return res.status(200).json({ success: true, data: cachedRes.data, cached: true, generated: 0 });
+      var cachedRows = cachedRes.data;
+      var cacheGeneratedAt = cachedRows[0].generated_at;
+      // The cache is valid when either there is no shared research
+      // yet for this user (nothing to compare against) or the cached
+      // analysis is at least as new as the latest research row. The
+      // 24-hour expires_at column is no longer part of the cache
+      // decision — Phase 6 brief is explicit on that.
+      var cacheIsValid = !researchLatestAt
+        || (cacheGeneratedAt && cacheGeneratedAt >= researchLatestAt);
+      if (cacheIsValid) {
+        // Order by relevance_score for the response, matching the
+        // pre-Phase-6 behaviour the dashboard already expects.
+        cachedRows.sort(function(a, b) {
+          return (b.relevance_score || 0) - (a.relevance_score || 0);
+        });
+        return res.status(200).json({ success: true, data: cachedRows, cached: true, generated: 0 });
+      }
     }
   }
 
@@ -330,7 +478,7 @@ export default async function handler(req, res) {
 
   async function callInternal(endpoint, body) {
     try {
-      var r = await fetch(SITE_URL + '/api/' + endpoint, {
+      var r = await fetch('https://staxai.com.au/api/' + endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwt },
         body: JSON.stringify(body || {})
@@ -348,8 +496,7 @@ export default async function handler(req, res) {
       callInternal('bi-operations', {}),
       callInternal('bi-projects', {}),
       loadCLContext(supabase, userId),
-      loadSPContext(supabase, userId),
-      runResearch(industry, location, userId)
+      loadSPContext(supabase, userId)
     ]);
     var financial = parallel[0];
     var customers = parallel[1];
@@ -357,15 +504,12 @@ export default async function handler(req, res) {
     var projects = parallel[3];
     var clItems = parallel[4] || [];
     var spContext = parallel[5];
-    var researchBundle = parallel[6] || { items: [], queries: [] };
-    var research = researchBundle.items || [];
-    var serperRuns = researchBundle.queries || [];
 
-    // Set of URLs that actually appeared in Serper results — used by
-    // the validation layer (spec §6.2) to reject any "Web research"
-    // citation whose URL the model invented.
-    var allowedSerperUrls = new Set();
-    research.forEach(function(r) { if (r && r.link) allowedSerperUrls.add(r.link); });
+    // Allow-set for the validator's fabricated-URL check. Built from
+    // every shared_research item's url, normalised via the SRL helper
+    // so http/https, www/no-www, trailing slashes, tracking params,
+    // and fragments don't false-positive as fabrication.
+    var allowedNormalisedUrls = buildAllowedUrlSet(researchItems);
 
     var contextParts = [];
 
@@ -458,15 +602,8 @@ export default async function handler(req, res) {
       contextParts.push(spSummary);
     }
 
-    if (research.length > 0) {
-      contextParts.push('\nEXTERNAL RESEARCH (recent web results — industry, regulatory, market, geographic, acquisitions)');
-      research.slice(0, 25).forEach(function(r) {
-        var line = '- [' + (r._topic || 'general') + '] ' + r.title;
-        if (r.source) line += ' (' + r.source + ')';
-        if (r.snippet) line += ': ' + r.snippet.substring(0, 220);
-        contextParts.push(line);
-      });
-    }
+    var evidenceBlock = renderEvidenceBlock(researchItems);
+    contextParts.push('\n' + evidenceBlock);
 
     var systemPrompt = (
       'You are a trusted business advisor preparing a strategic briefing for the owner of an Australian small business. ' +
@@ -499,7 +636,7 @@ export default async function handler(req, res) {
       'CLASSIFICATION (per insight):\n' +
       'Mark each insight as either "tactical" or "strategic" via is_tactical:\n' +
       '- is_tactical: true — actionable now, finite scope, fits as a single Operational Task. Examples: "Call overdue customers about $X in receivables", "Renew expiring liability insurance", "Switch from supplier A to supplier B for materials". The owner can complete it in days or weeks without rewriting their plan.\n' +
-      '- is_tactical: false — strategic. Requires planning, broader scope, would generate multiple tasks or a new strategic Goal. Examples: "Develop government tendering capability", "Expand into the Hunter region", "Acquire a competitor", "Pivot to subscription pricing model". The owner needs to decide direction first, then build out an execution plan.\n' +
+      '- is_tactical: false — strategic. Requires planning, broader scope, would generate multiple tasks or a new strategic Goal. Examples: "Develop government tendering capability", "Expand into the Hunter region", "Pivot to subscription pricing model". The owner needs to decide direction first, then build out an execution plan.\n' +
       'Include a classification_reason — one short sentence explaining why this insight is tactical or strategic. Helps the owner understand the routing.\n\n'
     );
 
@@ -512,7 +649,7 @@ export default async function handler(req, res) {
       '- Documents, supplier information, contracts and research the owner has tagged for BI review in their Content Library\n' +
       '- Their current Strategic Plan (if one exists)\n' +
       '- Their business profile\n' +
-      '- Current industry news, compliance changes, market activity, geographic expansion signals, and acquisition listings (web research)\n\n' +
+      '- Curated external research from the Shared Research Layer, grouped by source category (Regulatory & Compliance, Industry News, Supplier & Materials, Economic & Market, Technology & Innovation) and tagged with lens metadata + source_type\n\n' +
       'INPUT:\n\n' +
       contextParts.join('\n') + '\n\n' +
       'TASK:\n' +
@@ -522,8 +659,7 @@ export default async function handler(req, res) {
       '- Noticing that a key supplier mentioned in their documents has been in the news for financial trouble, creating supply chain risk\n' +
       '- Identifying that customer concentration combined with overdue receivables from their largest client creates existential cash flow risk\n' +
       '- Spotting that industry news about new compliance requirements will affect their business within a specific timeframe\n' +
-      '- Recognising that their geographic footprint and service mix positions them well to expand into an adjacent market showing growth\n' +
-      '- Connecting their strong profit margins with acquisition opportunities in their region\n\n' +
+      '- Recognising that their geographic footprint and service mix positions them well to expand into an adjacent market showing growth\n\n' +
       'These are examples of strategic thinking, not a checklist. Surface any finding at this level that the data supports. Cross-reference multiple sources where possible.\n\n' +
       'CONSOLIDATION (important):\n' +
       'A finding represents a concept, not a data point. Group related evidence into a single conceptual finding rather than emitting one finding per data point. For example, "overdue receivables of $X" + "low cash balance of $Y" + "recent late payment from top customer" combine into a SINGLE Cash Flow Continuity risk citing all three pieces of evidence — not three separate findings.\n\n' +
@@ -537,6 +673,8 @@ export default async function handler(req, res) {
       '- one with kind = "opportunity" describing what could be captured\n' +
       'The two findings must have different headlines, different details, and different suggestions. They are not linked or paired — each stands alone as its own concept. Do not collapse a dual-aspect situation into one finding.\n\n' +
       'Output must include both Risks AND Opportunities. If the data only shows problems, look harder for opportunities. If only positives, look harder for risks. A balanced view is essential.\n\n' +
+      'USING THE EXTERNAL RESEARCH:\n' +
+      'Each item in the EXTERNAL RESEARCH block carries lens metadata describing the geographic + industry scope it surfaced from — for example, "state (industry-specific)" means the item is about this business\'s industry within their state. Weigh lens scope when assessing relevance: an item from "region (industry-specific)" is directly local; one from "national (all SMEs)" applies broadly. Cite items by URL exactly as rendered.\n\n' +
       'MATRIX DIMENSIONS (each finding rates two axes):\n' +
       'For risks (kind = "risk"):\n' +
       '- "likelihood" — how likely is this to happen? Pick exactly one of: "Rare", "Unlikely", "Likely", "Almost Certain".\n' +
@@ -555,15 +693,19 @@ export default async function handler(req, res) {
       '- "Operations data" — the operations summary block above\n' +
       '- "Content Library" — an item from the BI-tagged Content Library list\n' +
       '- "Strategic Plan" — the current strategic plan\n' +
-      '- "Web research" — a result from the external research list (URL is mandatory and must be one of the URLs that appeared in the research list above)\n' +
+      '- "Web research — Regulatory" — an item from the REGULATORY & COMPLIANCE section\n' +
+      '- "Web research — Industry News" — an item from the INDUSTRY NEWS section\n' +
+      '- "Web research — Suppliers" — an item from the SUPPLIER & MATERIALS section\n' +
+      '- "Web research — Economic" — an item from the ECONOMIC & MARKET section\n' +
+      '- "Web research — Technology" — an item from the TECHNOLOGY & INNOVATION section\n' +
       'Each source must include a brief "detail" field showing the specific evidence used (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026").\n' +
-      'Do not invent or guess URLs. Web research URLs must be copied verbatim from the research list above. Any URL not in that list will be rejected by validation and the entire finding will be dropped.\n\n' +
+      'For any Web research source, the "url" field is mandatory and must be copied verbatim from the URL line of an item in the EXTERNAL RESEARCH block. Do not invent or paraphrase URLs. Any URL not present in that block will be rejected by validation and the entire finding will be dropped.\n\n' +
       'SOURCE QUALITY:\n' +
-      'Prefer high-trust sources for evidence:\n' +
-      '- Government and regulatory sources (.gov.au, ATO, ASIC, Fair Work, state revenue offices)\n' +
-      '- Established Australian news outlets (AFR, ABC News, SMH, The Australian, industry trade publications)\n' +
-      '- Industry associations and professional bodies\n' +
-      'Lower-trust sources (unknown blogs, content farms, listicles) may be supporting context but should not be the primary evidence for high-stakes claims. For high-stakes claims (compliance changes, regulatory deadlines, financial threats), require either one government source or two established sources. For lower-stakes claims (market trends, opportunities), one source is sufficient.\n\n' +
+      'Every item in the EXTERNAL RESEARCH block carries a source_type tag in square brackets next to the Source line. Weigh items by source_type:\n' +
+      '- primary — government bodies, regulators, and official agencies. Highest weight. Required as at least one source for high-stakes regulatory or compliance claims.\n' +
+      '- association — industry, peak, or trade associations. Medium weight. Treat as authoritative on industry practice; less authoritative on policy or macroeconomics.\n' +
+      '- secondary — trade press, general media, and bank or economics commentary. Useful supporting context. For high-stakes claims, prefer pairing a secondary source with either a primary source or a second corroborating secondary source.\n' +
+      'Where the input contains both higher- and lower-weight sources on the same topic, cite the higher-weight item.\n\n' +
       categoryGuide +
       classificationGuide +
       'OUTPUT FORMAT — CRITICAL, READ CAREFULLY:\n' +
@@ -590,7 +732,7 @@ export default async function handler(req, res) {
       '  "likelihood_reasoning": "<one sentence — why that Likelihood level, citing evidence>",\n' +
       '  "consequence_reasoning": "<one sentence — why that Consequence level, citing evidence>",\n' +
       '  "sources": [\n' +
-      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for Web research, omit otherwise>" }\n' +
+      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for any Web research label, omit otherwise>" }\n' +
       '  ]\n' +
       '}\n\n' +
       'Each finding object — OPPORTUNITIES:\n' +
@@ -608,7 +750,7 @@ export default async function handler(req, res) {
       '  "effort_reasoning": "<one sentence — why that Effort level, citing evidence>",\n' +
       '  "value_reasoning": "<one sentence — why that Value level, citing evidence>",\n' +
       '  "sources": [\n' +
-      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for Web research, omit otherwise>" }\n' +
+      '    { "label": "<one of the source labels above>", "detail": "<specific evidence>", "url": "<required for any Web research label, omit otherwise>" }\n' +
       '  ]\n' +
       '}'
     );
@@ -668,11 +810,11 @@ export default async function handler(req, res) {
     if (!Array.isArray(findings)) findings = [];
 
     // Validation layer (spec §6.2). Each finding is checked against
-    // the rule set before it's allowed near the database. Failures
-    // are logged in the platform format and collected separately so
-    // the dry-run response can show the owner what passed and what
-    // didn't.
-    var validation = validateFindings(findings, allowedSerperUrls);
+    // the rule set before it's allowed near the database. The URL
+    // allow-set uses normalised matching against shared_research
+    // items; the Web research labels are now five category-specific
+    // entries (see VALID_SOURCE_LABELS).
+    var validation = validateFindings(findings, allowedNormalisedUrls);
     var validFindings = validation.valid;
     var rejectedFindings = validation.rejected;
 
@@ -689,6 +831,15 @@ export default async function handler(req, res) {
       });
     });
 
+    var srlSummary = {
+      refresh_id: (srlResult && srlResult.data && srlResult.data.refresh_id) || null,
+      outcome: (srlResult && srlResult.data && srlResult.data.outcome) || null,
+      status_code: srlResult ? srlResult.statusCode : null,
+      items_total: researchItems.length,
+      items_by_category: itemsByCategoryCounts(researchItems),
+      latest_created_at: researchLatestAt
+    };
+
     // Whole-batch failure (spec §6.5) — if zero findings survived
     // validation, the generation is treated as a failure. Dry-run
     // still returns 200 with the rejected list so the owner can see
@@ -702,7 +853,8 @@ export default async function handler(req, res) {
           dry: true,
           valid_findings: [],
           rejected_findings: rejectedFindings,
-          serper_runs: serperRuns,
+          srl: srlSummary,
+          evidence_block: evidenceBlock,
           message: 'All findings failed validation — see rejected_findings for reasons.'
         });
       }
@@ -711,15 +863,16 @@ export default async function handler(req, res) {
 
     // Dry-run short-circuit (spec §3A). No database writes, no state
     // changes — just hand back the validated findings, the rejected
-    // findings with reasons, and the Serper run metadata so the
-    // owner can audit what evidence reached the prompt.
+    // findings with reasons, and the SRL evidence summary so the
+    // owner can audit what reached the prompt.
     if (dryRun) {
       return res.status(200).json({
         success: true,
         dry: true,
         valid_findings: enrichedFindings,
         rejected_findings: rejectedFindings,
-        serper_runs: serperRuns,
+        srl: srlSummary,
+        evidence_block: evidenceBlock,
         generated: enrichedFindings.length,
         rejected_count: rejectedFindings.length
       });
