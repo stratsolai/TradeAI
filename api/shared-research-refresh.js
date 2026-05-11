@@ -16,6 +16,7 @@
 // No Haiku curation in this phase. Tool integration (ID/BI swap-outs) is
 // Phase 5 and Phase 6.
 
+import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 import {
   buildQueryPlan,
@@ -36,10 +37,19 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Soft cap on parallel Serper calls. 51 queries at 6 lanes finish in well
-// under the 60-second function maxDuration. Set conservatively to keep
-// well clear of Serper rate limits during a single refresh.
-const SERPER_MAX_PARALLEL = 6;
+// Phase 3.4 throttling. Serper's documented limit on our tier is 5 req/s.
+// The dispatcher uses 4 lanes (latency hiding) with a 250 ms minimum gap
+// between dispatches (~4 req/s steady-state — 80% of the documented limit,
+// leaves headroom for response variance). Retries inside runSerperQuery
+// add jittered backoff to spread re-fires across lanes; that handles the
+// edge case where four lanes 429 simultaneously and all wake up to retry
+// at the same instant.
+//
+// At 4 req/s a 55-query refresh dispatches in ~14 seconds; with Serper
+// response latency layered on, real refreshes complete inside the
+// vercel.json maxDuration of 60 s comfortably.
+const SERPER_MAX_PARALLEL = 4;
+const SERPER_DISPATCH_GAP_MS = 250;
 
 // Per-result snippet truncation in dry-run output (Phase 2 instruction #6).
 const TRUNCATE_CHARS = 500;
@@ -70,6 +80,16 @@ export default async function handler(req, res) {
   const triggeredBy = body.triggered_by_tool || null;
   const forceRefresh = !!body.force_refresh;
   const dryRun = req.query && (req.query.dry === 'true' || req.query.dry === '1');
+
+  // Refresh-scoped UUID. Used to:
+  //   1. Tag every shared_research_cache_access row written during this
+  //      refresh so audit events can be grouped by refresh
+  //   2. Set the id of the shared_research_refreshes row (live mode only)
+  //      so the access-event refresh_id correlates with the refresh row
+  //   3. Surface to the caller in the response so the owner can join
+  //      dry-run output to audit rows
+  const refreshId = crypto.randomUUID();
+  const accessEvents = [];
 
   // -------------------------------------------------------------------------
   // Business Profile load
@@ -108,7 +128,7 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
-  // Execute the plan with the cache layer
+  // Execute the plan with the cache layer + throttled dispatcher
   // -------------------------------------------------------------------------
   const planResults = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
     return executeQueryWithCache({
@@ -116,19 +136,41 @@ export default async function handler(req, res) {
       userId,
       planRow,
       apiKey: SERPER_API_KEY,
-      forceRefresh
+      forceRefresh,
+      accessEvents,
+      refreshId
     });
-  });
+  }, SERPER_DISPATCH_GAP_MS);
+
+  // Bulk-insert all access events for this refresh in one round-trip.
+  // Failures here are logged but never break the refresh response —
+  // the data has already been served by the time we get to audit.
+  if (accessEvents.length > 0) {
+    try {
+      const ins = await supabase
+        .from('shared_research_cache_access')
+        .insert(accessEvents);
+      if (ins.error) {
+        console.error('[SharedResearch] Bulk access log error —', 'count:', accessEvents.length, 'message:', ins.error.message);
+      }
+    } catch (e) {
+      console.error('[SharedResearch] Bulk access log exception —', 'count:', accessEvents.length, 'message:', e && e.message);
+    }
+  }
 
   let cacheHits = 0;
   let queriesRun = 0;
+  let failedQueries = 0;
   const queryStats = new Array(plan.length);
   const taggedItems = [];
 
   for (let i = 0; i < plan.length; i++) {
     const row = plan[i];
-    const r = planResults[i] || { items: [], cache_hit: false, cache_age_hours: null };
-    if (r.cache_hit) cacheHits++; else queriesRun++;
+    const r = planResults[i] || { items: [], cache_hit: false, cache_age_hours: null, status: 'error' };
+    const status = r.status || 'ok';
+    if (status === 'ok' && r.cache_hit) cacheHits++;
+    else if (status === 'ok') queriesRun++;
+    else failedQueries++;
 
     queryStats[i] = {
       category: row.category,
@@ -139,7 +181,8 @@ export default async function handler(req, res) {
       recency: row.recency,
       cache_hit: r.cache_hit,
       cache_age_hours: r.cache_age_hours,
-      result_count: r.items.length
+      result_count: r.items.length,
+      status
     };
 
     for (const item of r.items) {
@@ -241,6 +284,7 @@ export default async function handler(req, res) {
     return res.status(200).json({
       success: true,
       dry_run: true,
+      refresh_id: refreshId,
       curation_ok: curation.ok && !totalCurationFailure,
       curation_error: curation.ok
         ? (totalCurationFailure ? 'all curated items failed validation' : null)
@@ -258,6 +302,7 @@ export default async function handler(req, res) {
         total_queries: plan.length,
         cache_hits: cacheHits,
         fresh_queries: queriesRun,
+        failed_queries: failedQueries,
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
         haiku_returned: curation.items.length,
@@ -275,10 +320,16 @@ export default async function handler(req, res) {
   // -------------------------------------------------------------------------
   // Live mode — write a refresh row (Phase 2). Curation + shared_research
   // writes land in Phases 3/4.
+  //
+  // Phase 3.4: id is the pre-generated refreshId so the cache_access
+  // rows already tagged with this UUID correlate with the refreshes
+  // row. If the insert fails (e.g. RLS or transient error), we still
+  // return the refresh_id to the caller — the access rows for this
+  // refresh are already written and queryable by it.
   // -------------------------------------------------------------------------
-  let refreshId = null;
   try {
     const refreshRow = {
+      id: refreshId,
       user_id: userId,
       triggered_by_tool: triggeredBy,
       queries_run: queriesRun,
@@ -290,12 +341,8 @@ export default async function handler(req, res) {
     };
     const ins = await supabase
       .from('shared_research_refreshes')
-      .insert(refreshRow)
-      .select('id')
-      .single();
-    if (!ins.error && ins.data) {
-      refreshId = ins.data.id;
-    } else if (ins.error) {
+      .insert(refreshRow);
+    if (ins.error) {
       console.error('[SharedResearch] Refresh row write failed —', 'message:', ins.error.message);
     }
   } catch (e) {
@@ -317,6 +364,7 @@ export default async function handler(req, res) {
       total_queries: plan.length,
       cache_hits: cacheHits,
       fresh_queries: queriesRun,
+      failed_queries: failedQueries,
       raw_items: taggedItems.length,
       deduped_items: deduped.length,
       duration_ms: durationMs,
@@ -329,26 +377,46 @@ export default async function handler(req, res) {
 }
 
 // ---------------------------------------------------------------------------
-// Concurrency limiter
+// Throttled concurrency limiter
 // ---------------------------------------------------------------------------
 //
-// Promise.all with a fixed number of lanes. Workers pull the next index off
-// the cursor and keep going until the plan is exhausted. Keeps the load on
-// Serper bounded so a single refresh never approaches their rate limit.
+// Promise.all with a fixed number of lanes that pull from a shared cursor,
+// plus a shared "next-dispatch-slot" timestamp that gates how often a lane
+// can start a new worker call. Together they enforce both a parallelism
+// cap (latency hiding) and a global rate cap (Serper rate-limit safety).
+//
+// minDispatchGapMs sets the minimum spacing between any two dispatch
+// starts across all lanes. With gap=250ms and lanes=4, steady-state
+// throughput is 1000/250 = 4 calls/s regardless of how fast individual
+// calls complete.
+//
+// The slot reservation happens AFTER the cursor check so a lane that's
+// exiting (because the cursor is exhausted) doesn't burn a slot it never
+// uses.
 
-async function runWithConcurrency(items, maxParallel, worker) {
+async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) {
   const results = new Array(items.length);
   let cursor = 0;
+  let nextSlot = Date.now();
+  const gap = minDispatchGapMs || 0;
 
   async function lane() {
     while (true) {
       const i = cursor++;
       if (i >= items.length) return;
+
+      if (gap > 0) {
+        const now = Date.now();
+        const waitMs = Math.max(0, nextSlot - now);
+        nextSlot = Math.max(nextSlot, now) + gap;
+        if (waitMs > 0) await new Promise((r) => setTimeout(r, waitMs));
+      }
+
       try {
         results[i] = await worker(items[i]);
       } catch (e) {
         console.error('[SharedResearch] Worker exception —', 'index:', i, 'message:', e && e.message);
-        results[i] = { items: [], cache_hit: false, cache_age_hours: null };
+        results[i] = { items: [], cache_hit: false, cache_age_hours: null, status: 'error' };
       }
     }
   }
