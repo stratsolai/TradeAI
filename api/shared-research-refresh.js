@@ -23,6 +23,7 @@ import {
   resolveRegion,
   normaliseIndustries,
   executeQueryWithCache,
+  makeSerperRateGate,
   dedupByLink,
   enrichDedupedWithPlan,
   stateFullName,
@@ -37,17 +38,23 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 const SERPER_API_KEY = process.env.SERPER_API_KEY;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 
-// Phase 3.4 throttling. Serper's documented limit on our tier is 5 req/s.
-// The dispatcher uses 4 lanes (latency hiding) with a 250 ms minimum gap
-// between dispatches (~4 req/s steady-state — 80% of the documented limit,
-// leaves headroom for response variance). Retries inside runSerperQuery
-// add jittered backoff to spread re-fires across lanes; that handles the
-// edge case where four lanes 429 simultaneously and all wake up to retry
-// at the same instant.
+// Phase 3.4 throttling, updated in Phase 3.7. Serper's documented limit
+// on our tier is 5 req/s. 4 lanes give us latency hiding (one slow
+// Serper response doesn't stall the others) and a 250 ms minimum gap
+// between Serper dispatches gives ~4 req/s steady-state — 80% of the
+// documented limit, with headroom for response variance.
 //
-// At 4 req/s a 55-query refresh dispatches in ~14 seconds; with Serper
-// response latency layered on, real refreshes complete inside the
-// vercel.json maxDuration of 60 s comfortably.
+// The gap now lives in a per-refresh rate gate (makeSerperRateGate)
+// awaited inside executeQueryWithCache only on the cache-miss path,
+// so cache-hit dispatches don't queue against the Serper ceiling.
+// Retries inside runSerperQuery add jittered backoff (1–2.5s) to
+// spread re-fires across lanes — handles the edge case where four
+// lanes 429 simultaneously and all wake up to retry at the same
+// instant.
+//
+// At 4 req/s a fully-fresh 55-query refresh dispatches in ~14 seconds;
+// with Serper response latency layered on, real refreshes complete
+// inside the vercel.json maxDuration of 60 s comfortably.
 const SERPER_MAX_PARALLEL = 4;
 const SERPER_DISPATCH_GAP_MS = 250;
 
@@ -151,10 +158,17 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
-  // Execute the plan with the cache layer + throttled dispatcher
+  // Execute the plan with the cache layer + Serper-only rate gate
   // -------------------------------------------------------------------------
+  //
+  // Phase 3.7: the rate gate now lives inside executeQueryWithCache —
+  // it's only awaited on the cache-miss path, right before the Serper
+  // call. Cache-hit dispatches no longer queue against the Serper
+  // 5 req/s ceiling. The dispatcher itself is back to a plain
+  // concurrency limiter with no rate logic.
+  const serperGate = makeSerperRateGate(SERPER_DISPATCH_GAP_MS);
   const tPlanExec = Date.now();
-  const { results: planResults, queueWaitSumMs } = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
+  const planResults = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
     return executeQueryWithCache({
       supabase,
       userId,
@@ -162,10 +176,12 @@ export default async function handler(req, res) {
       apiKey: SERPER_API_KEY,
       forceRefresh,
       accessEvents,
-      refreshId
+      refreshId,
+      serperGate
     });
-  }, SERPER_DISPATCH_GAP_MS);
+  });
   recordTiming('plan_execution_total', tPlanExec);
+  const queueWaitSumMs = serperGate.getQueueWaitSumMs();
 
   // Aggregate per-call sub-timings into handler-level phase numbers.
   // These are SUMS across calls; with 4 parallel lanes the wall-clock
@@ -188,10 +204,11 @@ export default async function handler(req, res) {
   console.log(`[SharedResearch] Phase timing — phase: serper_sum, ms: ${sumSerper}`);
   console.log(`[SharedResearch] Phase timing — phase: cache_write_sum, ms: ${sumCacheWrite}`);
 
-  // Phase 3.6 instrumentation: differentiate dispatcher queue-wait
-  // from actual Supabase call time. If queue wait dominates, the
-  // throttle is gating cache hits unnecessarily. If supabase sum
-  // dominates, the Supabase calls themselves are the bottleneck.
+  // Phase 3.6 instrumentation, refined in Phase 3.7: queue_wait now
+  // counts ONLY the time spent waiting at the Serper rate gate, since
+  // the gate only triggers on cache-miss dispatches. supabase_call_sum
+  // is the wall-clock spent in actual Supabase round-trips (reads +
+  // writes) and is independent of the rate gate.
   timings.cache_call_queue_wait_sum_ms = queueWaitSumMs;
   timings.cache_call_supabase_sum_ms = sumCacheLookup + sumCacheWrite;
   console.log(`[SharedResearch] Phase timing — phase: cache_call_queue_wait_sum, ms: ${queueWaitSumMs}`);
@@ -483,47 +500,24 @@ export default async function handler(req, res) {
 }
 
 // ---------------------------------------------------------------------------
-// Throttled concurrency limiter
+// Concurrency limiter (Phase 3.7: plain lane-based, no rate gate)
 // ---------------------------------------------------------------------------
 //
-// Promise.all with a fixed number of lanes that pull from a shared cursor,
-// plus a shared "next-dispatch-slot" timestamp that gates how often a lane
-// can start a new worker call. Together they enforce both a parallelism
-// cap (latency hiding) and a global rate cap (Serper rate-limit safety).
-//
-// minDispatchGapMs sets the minimum spacing between any two dispatch
-// starts across all lanes. With gap=250ms and lanes=4, steady-state
-// throughput is 1000/250 = 4 calls/s regardless of how fast individual
-// calls complete.
-//
-// The slot reservation happens AFTER the cursor check so a lane that's
-// exiting (because the cursor is exhausted) doesn't burn a slot it never
-// uses.
+// Promise.all with a fixed number of lanes that pull from a shared
+// cursor. Each lane runs the worker to completion before picking the
+// next index. The Serper rate gate used to live here but moved into
+// the cache layer in Phase 3.7 — only Serper-bound dispatches (cache
+// misses) wait for a slot, so the dispatcher itself is back to being
+// a generic parallelism cap.
 
-async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) {
+async function runWithConcurrency(items, maxParallel, worker) {
   const results = new Array(items.length);
   let cursor = 0;
-  let nextSlot = Date.now();
-  let queueWaitSumMs = 0; // Phase 3.6 instrumentation
-  const gap = minDispatchGapMs || 0;
 
   async function lane() {
     while (true) {
       const i = cursor++;
       if (i >= items.length) return;
-
-      let dispatchWaitMs = 0;
-      if (gap > 0) {
-        const now = Date.now();
-        const waitMs = Math.max(0, nextSlot - now);
-        nextSlot = Math.max(nextSlot, now) + gap;
-        if (waitMs > 0) {
-          await new Promise((r) => setTimeout(r, waitMs));
-          dispatchWaitMs = waitMs;
-        }
-      }
-      queueWaitSumMs += dispatchWaitMs;
-
       try {
         results[i] = await worker(items[i]);
       } catch (e) {
@@ -535,5 +529,5 @@ async function runWithConcurrency(items, maxParallel, worker, minDispatchGapMs) 
 
   const lanes = Math.min(maxParallel, items.length);
   await Promise.all(Array.from({ length: lanes }, () => lane()));
-  return { results, queueWaitSumMs };
+  return results;
 }
