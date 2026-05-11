@@ -3,8 +3,17 @@ window.ND_LOGIC = {
   _supabase: null,
   _userId: null,
   _briefings: [],
+  _curatedItems: {},
   _tenders: [],
   _lastRefreshed: null,
+
+  // _briefings (old) feeds Summary only — that tab is out of scope
+  // for Phase 5 and continues to render against the soon-to-be-empty
+  // briefing source.
+  // _curatedItems (new) feeds the five category tabs. Keyed by
+  // category (regulatory / industry-news / suppliers / economic /
+  // technology), each value is an array of shared_research rows
+  // for this user where is_current = true.
 
   CATEGORIES: [
     { id: 'regulatory', label: 'Rules' },
@@ -68,37 +77,122 @@ window.ND_LOGIC = {
   },
 
   _refresh: async function() {
-    var btn = document.getElementById('nd-refresh-btn');
-    if (btn) { btn.textContent = 'Refreshing...'; btn.disabled = true; }
-    try {
-      var sessionRes = await this._supabase.auth.getSession();
-      var session = sessionRes.data && sessionRes.data.session;
-      if (!session || !session.access_token) {
-        this._showError('Could not verify your session. Please refresh the page and try again.');
-        if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
-        return;
-      }
-      var res = await fetch('/api/news-digest-refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + session.access_token
-        },
-        body: JSON.stringify({})
-      });
-      if (!res.ok) {
-        var errBody = await res.json().catch(function() { return {}; });
-        var msg = errBody.error || 'Something went wrong while refreshing your briefing. Please try again.';
-        this._showError(msg);
-        if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
-        return;
-      }
-      await this._loadData();
-    } catch (e) {
-      console.error('[ND] Refresh error:', e.message);
-      this._showError('Could not refresh your briefing. Please check your connection and try again.');
+    var self = this;
+    this._setRefreshButton(true);
+
+    var sessionRes = await this._supabase.auth.getSession();
+    var session = sessionRes.data && sessionRes.data.session;
+    if (!session || !session.access_token) {
+      this._showError('Could not verify your session. Please refresh the page and try again.');
+      this._setRefreshButton(false);
+      return;
     }
-    if (btn) { btn.textContent = 'Refresh Now'; btn.disabled = false; }
+    var token = session.access_token;
+
+    // Progressive rendering — tender fetch (~few seconds) and the
+    // Shared Research Layer refresh (~17-35s) fire in parallel. Each
+    // one renders its own portion as soon as it returns. The five
+    // news tabs show a loading placeholder until the shared refresh
+    // completes; the Grants & Tenders tab populates on the tender
+    // call's return.
+    this._showNewsTabsLoading();
+
+    var tenderPromise = this._refreshTenders(token).catch(function(e) {
+      console.error('[ND] Tender refresh error:', e && e.message);
+      self._showError('Could not refresh tenders. Please try again.');
+    });
+    var sharedPromise = this._refreshSharedResearch(token).catch(function(e) {
+      console.error('[ND] Shared research refresh error:', e && e.message);
+      self._showNewsTabsError('Could not refresh news. Please try again.');
+    });
+
+    await Promise.allSettled([tenderPromise, sharedPromise]);
+    this._setRefreshButton(false);
+  },
+
+  _setRefreshButton: function(busy) {
+    var btn = document.getElementById('nd-refresh-btn');
+    if (!btn) return;
+    btn.textContent = busy ? 'Refreshing...' : 'Refresh Now';
+    btn.disabled = !!busy;
+  },
+
+  _refreshTenders: async function(token) {
+    var res = await fetch('/api/news-digest-refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({})
+    });
+    if (!res.ok) {
+      var errBody = await res.json().catch(function() { return {}; });
+      throw new Error(errBody.error || ('Tender refresh returned ' + res.status));
+    }
+    // Re-read tenders + settings (for timestamp) from the DB and
+    // rerender the Grants & Tenders tab. Don't rerender Summary or
+    // category tabs here — Grants & Tenders is the only thing this
+    // call updates.
+    await this._loadTenders();
+    await this._loadSettings();
+    this._renderTimestamp();
+    this._renderGrantsTenders();
+  },
+
+  _refreshSharedResearch: async function(token) {
+    // No force_refresh: the spec mandates ID respects the shared
+    // 24-hour cache. force_refresh is diagnostic-only.
+    var res = await fetch('/api/shared-research-refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({ triggered_by_tool: 'id' })
+    });
+    if (!res.ok) {
+      var errBody = await res.json().catch(function() { return {}; });
+      throw new Error(errBody.error || ('Shared research returned ' + res.status));
+    }
+    var body = await res.json();
+    // Spec §12.1 — response.items is grouped by category. Empty
+    // object on no_results / zero-curated outcomes; either way it's
+    // the correct shape for the category render.
+    this._curatedItems = (body && body.items) || {};
+    this._renderAllNewsCategories();
+  },
+
+  _showNewsTabsLoading: function() {
+    var self = this;
+    this.CATEGORIES.forEach(function(cat) {
+      var content = document.getElementById('nd-content-' + cat.id);
+      var empty = document.getElementById('nd-empty-' + cat.id);
+      if (empty) empty.hidden = true;
+      if (content) {
+        content.innerHTML = '<div class="nd-tab-loading">Loading latest ' + self._escSafe(cat.label.toLowerCase()) + ' updates&hellip;</div>';
+      }
+    });
+  },
+
+  _showNewsTabsError: function(message) {
+    this.CATEGORIES.forEach(function(cat) {
+      var content = document.getElementById('nd-content-' + cat.id);
+      var empty = document.getElementById('nd-empty-' + cat.id);
+      if (empty) empty.hidden = true;
+      if (content) {
+        content.innerHTML = '<div class="nd-tab-loading">' + (window.escHtml ? window.escHtml(message) : message) + '</div>';
+      }
+    });
+  },
+
+  _escSafe: function(s) {
+    return window.escHtml ? window.escHtml(s) : String(s == null ? '' : s);
+  },
+
+  _renderAllNewsCategories: function() {
+    var self = this;
+    this.CATEGORIES.forEach(function(cat) { self._renderCategory(cat.id); });
   },
 
   _showError: function(message) {
@@ -117,10 +211,42 @@ window.ND_LOGIC = {
   _loadData: async function() {
     await Promise.all([
       this._loadBriefings(),
+      this._loadCuratedItems(),
       this._loadTenders(),
       this._loadSettings()
     ]);
     this._renderAll();
+  },
+
+  _loadCuratedItems: async function() {
+    // Initial page load: read shared_research rows for this user
+    // where is_current = true. Group by category in JS. The Refresh
+    // button uses the endpoint response directly (see
+    // _refreshSharedResearch) and doesn't re-read the DB.
+    try {
+      var res = await this._supabase
+        .from('shared_research')
+        .select('title, summary, url, source_name, source_domain, source_type, lens, category, published_date')
+        .eq('user_id', this._userId)
+        .eq('is_current', true);
+      if (res.error) {
+        console.error('[ND] Load curated items error:', res.error.message);
+        this._curatedItems = {};
+        return;
+      }
+      var grouped = {};
+      var rows = res.data || [];
+      for (var i = 0; i < rows.length; i++) {
+        var c = rows[i].category;
+        if (!c) continue;
+        if (!grouped[c]) grouped[c] = [];
+        grouped[c].push(rows[i]);
+      }
+      this._curatedItems = grouped;
+    } catch (e) {
+      console.error('[ND] Load curated items exception:', e.message);
+      this._curatedItems = {};
+    }
   },
 
   _loadBriefings: async function() {
@@ -295,44 +421,82 @@ window.ND_LOGIC = {
     var empty = document.getElementById('nd-empty-' + categoryId);
     if (!content) return;
 
-    var briefing = this._getBriefing(categoryId);
-    if (!briefing || !briefing.headline) {
+    // Phase 5 — data source switched from news_digest_briefings to
+    // shared_research (curated items grouped by category). Each
+    // shared_research item renders as one tile. No category-level
+    // headline — the curation layer produces individual items, not
+    // synthesised category summaries.
+    var items = (this._curatedItems && this._curatedItems[categoryId]) || [];
+    if (items.length === 0) {
       if (empty) empty.hidden = false;
       content.innerHTML = '';
       return;
     }
     if (empty) empty.hidden = true;
 
-    var bullets = Array.isArray(briefing.bullets) ? briefing.bullets : [];
-    var html = '<div class="nd-detail-headline">' + escHtml(briefing.headline) + '</div>'
-      + '<div class="tile-grid">';
+    var html = '<div class="tile-grid">';
+    for (var i = 0; i < items.length; i++) {
+      html += this._renderCuratedItemTile(items[i]);
+    }
+    html += '</div>';
+    content.innerHTML = html;
+  },
 
-    for (var i = 0; i < bullets.length; i++) {
-      var bullet = bullets[i];
-      var sources = Array.isArray(bullet.sources) ? bullet.sources : [];
-      var bulletId = categoryId + '-bullet-' + i;
-      var heading = bullet.title || this._fallbackHeading(bullet.text || '');
-      var points = this._splitBullets(bullet.text || '');
+  _renderCuratedItemTile: function(item) {
+    var title = escHtml(item.title || '');
+    var summary = escHtml(item.summary || '');
+    var sourceName = item.source_name || '';
+    var sourceDomain = item.source_domain || '';
+    var url = item.url || '';
+    var type = item.source_type || 'secondary';
 
-      html += '<div class="tile-card nd-tile">'
-        + '<div class="nd-tile-heading">' + escHtml(heading) + '</div>'
-        + '<ul class="nd-tile-bullet-list">';
-      for (var p = 0; p < points.length; p++) {
-        html += '<li>' + escHtml(points[p]) + '</li>';
+    // Source-type badge — maps shared_research source_type to the
+    // existing badge palette in staxai-auth.css.
+    //   primary     -> green  (government / regulator)
+    //   association -> purple (industry body / peak association)
+    //   secondary   -> grey   (trade press / general media)
+    // 'association' uses badge-purple, which already exists on the
+    // platform (currently used for the NSW tender source tag); no
+    // new CSS classes are introduced.
+    var badgeClass = type === 'primary' ? 'badge-green'
+      : type === 'association' ? 'badge-purple'
+      : 'badge-grey';
+    var badgeLabel = type === 'primary' ? 'Primary'
+      : type === 'association' ? 'Association'
+      : 'Secondary';
+
+    var dateDisplay = '';
+    if (item.published_date) {
+      var d = new Date(item.published_date);
+      if (!isNaN(d.getTime())) {
+        dateDisplay = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
       }
-      html += '</ul>'
-        + '<div class="nd-tile-footer">'
-        + '<button class="source-btn nd-toggle-sources" data-target="' + bulletId + '">&#9654; Sources (' + sources.length + ')</button>'
-        + '</div>'
-        + '<div class="nd-source-panel" id="' + bulletId + '" hidden>'
-        + this._renderSources(sources)
-        + '</div>'
-        + '</div>';
+    }
+
+    var html = '<div class="tile-card nd-tile">'
+      + '<div class="nd-tile-heading">' + title + '</div>';
+
+    if (summary) {
+      html += '<div class="nd-tile-summary">' + summary + '</div>';
+    }
+
+    html += '<div class="nd-tile-footer">';
+    if (url) {
+      html += '<a href="' + escHtml(url) + '" target="_blank" rel="noopener" class="nd-source-link">'
+        + escHtml(sourceName || sourceDomain || 'View source')
+        + '</a>';
+    } else if (sourceName) {
+      html += '<span class="nd-source-plain">' + escHtml(sourceName) + '</span>';
+    }
+    html += '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>';
+    html += '</div>';
+
+    if (dateDisplay) {
+      html += '<div class="nd-tile-date">' + escHtml(dateDisplay) + '</div>';
     }
 
     html += '</div>';
-    content.innerHTML = html;
-    this._bindSourceToggles(content);
+    return html;
   },
 
   _renderSources: function(sources) {

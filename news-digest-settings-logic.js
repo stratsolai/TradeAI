@@ -28,7 +28,6 @@ window.ND_SETTINGS_LOGIC = {
     this._bindTabs();
     this._bindCadence();
     this._bindLookback();
-    this._bindSources();
   },
 
   _saveToSettings: async function(payload) {
@@ -141,31 +140,10 @@ window.ND_SETTINGS_LOGIC = {
     });
   },
 
-  // ── SOURCE PREFERENCES ───────────────────────────────────────────────
-
-  _bindSources: function() {
-    var self = this;
-    var sourcePrefsEl = document.getElementById('source-prefs');
-    if (sourcePrefsEl && Array.isArray(this._settings.preferred_sources) && this._settings.preferred_sources.length > 0) {
-      sourcePrefsEl.value = this._settings.preferred_sources.join(', ');
-    } else if (sourcePrefsEl && typeof this._settings.preferred_sources === 'string' && this._settings.preferred_sources) {
-      sourcePrefsEl.value = this._settings.preferred_sources;
-    }
-
-    var saveBtn = document.getElementById('save-settings-btn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function() {
-        var msgEl = document.getElementById('save-settings-msg');
-        window.handleSave(saveBtn, async function() {
-          var raw = sourcePrefsEl ? sourcePrefsEl.value.trim() : '';
-          var preferred = raw ? raw.split(',').map(function(s) { return s.trim(); }).filter(Boolean) : [];
-          await self._saveToSettings({
-            preferred_sources: preferred,
-            updated_at: new Date().toISOString()
-          });
-        }, msgEl);
-      });
-    }
-  }
+  // Source Preferences UI was removed in Phase 5 — the Shared
+  // Research Layer curates against its own validation rules and no
+  // longer accepts user-supplied source domains (spec §16.1). The
+  // existing news_digest_settings.preferred_sources column is left
+  // untouched in the database; the owner can drop it separately.
 
 };
