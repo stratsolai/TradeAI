@@ -94,16 +94,39 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
-  // Auth
+  // Auth — JWT Bearer (browser) OR x-cron-secret + body.userId (cron worker)
   // -------------------------------------------------------------------------
+  //
+  // The platform's established alt-auth pattern for cron-triggered
+  // calls (see api/drive-import.js, dropbox-import.js, onedrive-import.js,
+  // sharepoint-import.js) — when a service-to-service caller presents a
+  // valid x-cron-secret header, the userId is read from the body instead
+  // of being decoded from a user JWT. The cron worker can't hold a user
+  // session, so this is how api/news-digest-worker.js (Phase 5.5)
+  // dispatches scheduled refreshes per user without modifying the
+  // downstream pipeline.
+  //
+  // The JWT path is the primary path and is unchanged for browser
+  // callers — Refresh Now from the ID page, dry-run inspection, and any
+  // future user-driven trigger all go down this branch byte-for-byte
+  // identically to Phase 5. CRON_SECRET must match exactly; an empty
+  // x-cron-secret falls through to the JWT path (so browsers that don't
+  // send the header aren't accidentally bounced).
   const tAuth = Date.now();
-  const authHeader = req.headers.authorization || '';
-  const jwt = authHeader.replace('Bearer ', '');
-  if (!jwt) return res.status(401).json({ error: 'Missing authorisation token' });
+  let userId;
+  const cronSecret = req.headers['x-cron-secret'];
+  if (cronSecret && process.env.CRON_SECRET && cronSecret === process.env.CRON_SECRET) {
+    userId = (req.body || {}).userId;
+    if (!userId) return res.status(400).json({ error: 'userId required for worker calls' });
+  } else {
+    const authHeader = req.headers.authorization || '';
+    const jwt = authHeader.replace('Bearer ', '');
+    if (!jwt) return res.status(401).json({ error: 'Missing authorisation token' });
 
-  const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
-  if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
-  const userId = user.id;
+    const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
+    if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
+    userId = user.id;
+  }
   recordTiming('auth', tAuth);
 
   // -------------------------------------------------------------------------
