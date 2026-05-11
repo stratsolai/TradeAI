@@ -103,6 +103,18 @@ export default async function handler(req, res) {
   const forceRefresh = !!body.force_refresh;
   const dryRun = req.query && (req.query.dry === 'true' || req.query.dry === '1');
 
+  // Phase 3.8 investigation switch. Dry-run only. When set, the
+  // endpoint runs an isolated 10-read latency probe after the main
+  // pipeline and surfaces the results under `debug_cache_latency`
+  // in the response. Two probes are run side-by-side:
+  //   - supabase-js sequential: 10 reads via the platform client
+  //   - raw-fetch sequential:   10 reads via plain fetch to PostgREST,
+  //                             split into network / body / parse ms
+  // The raw-fetch path is what lets us distinguish network RTT from
+  // JSON-deserialise cost, which supabase-js doesn't expose
+  // separately. To be removed once the investigation is settled.
+  const debugCacheLatency = dryRun && req.query && req.query.debug_cache_latency === 'true';
+
   // Refresh-scoped UUID. Used to:
   //   1. Tag every shared_research_cache_access row written during this
   //      refresh so audit events can be grouped by refresh
@@ -393,6 +405,20 @@ export default async function handler(req, res) {
     const grouped = groupCuratedByCategory(acceptedWithSource);
     recordTiming('group_and_attribute_curated', tGroup);
 
+    // Phase 3.8: optional cache-latency probe. Runs after the main
+    // pipeline so it doesn't perturb the production timings, and only
+    // when the owner explicitly opts in. Picks the first cache_key
+    // from the plan results so the probe hits a real row.
+    let debugInfo = null;
+    if (debugCacheLatency) {
+      const sampleKey = (planResults[0] && planResults[0].cache_key) || null;
+      if (sampleKey) {
+        debugInfo = await runCacheLatencyProbe(supabase, sampleKey, SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      } else {
+        debugInfo = { skipped: 'no sample cache key in plan results' };
+      }
+    }
+
     const totalDuration = Date.now() - t0;
     timings.total_ms = totalDuration;
     console.log(`[SharedResearch] Phase timing — phase: total, ms: ${totalDuration}`);
@@ -430,7 +456,8 @@ export default async function handler(req, res) {
       query_plan: queryStats,
       raw_results: truncatedItems,
       curated_items: grouped,
-      rejected_items: validated.rejected
+      rejected_items: validated.rejected,
+      debug_cache_latency: debugInfo
     });
   }
 
@@ -530,4 +557,139 @@ async function runWithConcurrency(items, maxParallel, worker) {
   const lanes = Math.min(maxParallel, items.length);
   await Promise.all(Array.from({ length: lanes }, () => lane()));
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// Cache latency probe — Phase 3.8 investigation (temporary)
+// ---------------------------------------------------------------------------
+//
+// Two sequential 10-read loops against shared_research_cache, each
+// reading the same cache_key (so all 10 are cache hits if the row
+// exists, all return null if it doesn't — the round-trip cost is the
+// same shape either way).
+//
+// Loop 1 uses the supabase-js client we built at the top of the
+// handler — the same client the rest of the refresh uses. Captures
+// total per-call ms. Lets us see if the per-call cost in sequential
+// load matches the ~230 ms we measured in parallel-55 load
+// (sequential = no pool contention; if it's still ~230 ms, the
+// per-call cost is the floor, not contention).
+//
+// Loop 2 uses raw fetch to the PostgREST endpoint with the same
+// service-role auth. Captures four points per call:
+//   network_ms — fetch() resolved (response headers received)
+//   body_ms    — response.text() resolved (body fully read)
+//   parse_ms   — JSON.parse() returned (local CPU)
+//   total_ms   — sum of the three
+// This splits network RTT from JSON deserialisation, which
+// supabase-js doesn't expose separately. If network_ms dominates,
+// the cost is on the wire. If parse_ms dominates, the client/CPU
+// is the issue.
+//
+// Comparing Loop 1's total_ms against Loop 2's total_ms shows
+// whether supabase-js adds meaningful overhead over the bare PostgREST
+// call.
+
+async function runCacheLatencyProbe(supabase, sampleCacheKey, supabaseUrl, serviceKey) {
+  const N = 10;
+
+  // Loop 1: supabase-js sequential
+  const supabaseJsMs = [];
+  for (let i = 0; i < N; i++) {
+    const t0 = Date.now();
+    try {
+      await supabase
+        .from('shared_research_cache')
+        .select('result_payload, expires_at, created_at')
+        .eq('cache_key', sampleCacheKey)
+        .maybeSingle();
+    } catch (e) {
+      supabaseJsMs.push({ error: e && e.message });
+      continue;
+    }
+    supabaseJsMs.push(Date.now() - t0);
+  }
+
+  // Loop 2: raw fetch to PostgREST sequential
+  const rawFetch = [];
+  const url = supabaseUrl
+    + '/rest/v1/shared_research_cache'
+    + '?cache_key=eq.' + encodeURIComponent(sampleCacheKey)
+    + '&select=result_payload,expires_at,created_at'
+    + '&limit=1';
+  const headers = {
+    'apikey': serviceKey,
+    'Authorization': 'Bearer ' + serviceKey,
+    'Accept': 'application/json'
+  };
+  for (let i = 0; i < N; i++) {
+    const t0 = Date.now();
+    let resp;
+    try {
+      resp = await fetch(url, { method: 'GET', headers });
+    } catch (e) {
+      rawFetch.push({ error: e && e.message });
+      continue;
+    }
+    const t1 = Date.now();
+    let text = '';
+    try { text = await resp.text(); } catch (e) { /* noop */ }
+    const t2 = Date.now();
+    try { JSON.parse(text); } catch (e) { /* row may be missing */ }
+    const t3 = Date.now();
+    rawFetch.push({
+      total_ms: t3 - t0,
+      network_ms: t1 - t0,
+      body_ms: t2 - t1,
+      parse_ms: t3 - t2,
+      status: resp.status,
+      body_bytes: text.length
+    });
+  }
+
+  return {
+    sample_cache_key: sampleCacheKey,
+    iterations: N,
+    supabase_js: {
+      per_call_ms: supabaseJsMs,
+      summary: summariseSimpleMs(supabaseJsMs)
+    },
+    raw_fetch: {
+      per_call: rawFetch,
+      summary: summariseRawFetch(rawFetch)
+    }
+  };
+}
+
+function summariseSimpleMs(arr) {
+  const nums = arr.filter((v) => typeof v === 'number');
+  if (!nums.length) return null;
+  const rest = nums.slice(1);
+  return {
+    first: nums[0],
+    rest_avg: rest.length ? Math.round(rest.reduce((a, b) => a + b, 0) / rest.length) : null,
+    min: Math.min(...nums),
+    max: Math.max(...nums)
+  };
+}
+
+function summariseRawFetch(rows) {
+  const valid = rows.filter((r) => !r.error && typeof r.total_ms === 'number');
+  if (!valid.length) return null;
+  const rest = valid.slice(1);
+  const avgField = (field, set) => {
+    if (!set.length) return null;
+    return Math.round(set.reduce((a, b) => a + b[field], 0) / set.length);
+  };
+  return {
+    first: valid[0],
+    rest_avg: {
+      total_ms: avgField('total_ms', rest),
+      network_ms: avgField('network_ms', rest),
+      body_ms: avgField('body_ms', rest),
+      parse_ms: avgField('parse_ms', rest)
+    },
+    min_total_ms: Math.min(...valid.map((r) => r.total_ms)),
+    max_total_ms: Math.max(...valid.map((r) => r.total_ms))
+  };
 }
