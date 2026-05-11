@@ -62,9 +62,23 @@ export default async function handler(req, res) {
   const t0 = Date.now();
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+  // Phase 3.4-followup timing instrumentation. Captures wall-clock per
+  // phase so the post-Serper portion of the pipeline can be diagnosed
+  // — 504s in cache-miss mode and ~40s of unaccounted time in
+  // cache-hit mode point at Haiku curation as a suspect but no
+  // numbers existed before this. Pure instrumentation; no logic
+  // changes. Will be removed once the question is settled.
+  const timings = {};
+  function recordTiming(phase, tStart) {
+    const ms = Date.now() - tStart;
+    timings[phase + '_ms'] = ms;
+    console.log(`[SharedResearch] Phase timing — phase: ${phase}, ms: ${ms}`);
+  }
+
   // -------------------------------------------------------------------------
   // Auth
   // -------------------------------------------------------------------------
+  const tAuth = Date.now();
   const authHeader = req.headers.authorization || '';
   const jwt = authHeader.replace('Bearer ', '');
   if (!jwt) return res.status(401).json({ error: 'Missing authorisation token' });
@@ -72,6 +86,7 @@ export default async function handler(req, res) {
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
   const userId = user.id;
+  recordTiming('auth', tAuth);
 
   // -------------------------------------------------------------------------
   // Request parameters
@@ -92,8 +107,9 @@ export default async function handler(req, res) {
   const accessEvents = [];
 
   // -------------------------------------------------------------------------
-  // Business Profile load
+  // Business Profile load + region resolution
   // -------------------------------------------------------------------------
+  const tProfile = Date.now();
   const profileRes = await supabase
     .from('profiles')
     .select('business_name, industry, address_state, address_suburb, address_postcode, employee_range')
@@ -109,8 +125,14 @@ export default async function handler(req, res) {
   const region = resolveRegion(profile);
   const stateAbbr = profile.address_state || null;
   const stateFull = stateFullName(stateAbbr);
+  recordTiming('profile_and_region', tProfile);
 
+  // -------------------------------------------------------------------------
+  // Query plan generation
+  // -------------------------------------------------------------------------
+  const tPlanBuild = Date.now();
   const plan = buildQueryPlan(profile);
+  recordTiming('plan_build', tPlanBuild);
 
   if (plan.length === 0) {
     return res.status(200).json({
@@ -123,13 +145,15 @@ export default async function handler(req, res) {
         state_full: stateFull,
         region: region ? region.region_name : null,
         region_resolved: !!region
-      }
+      },
+      timings
     });
   }
 
   // -------------------------------------------------------------------------
   // Execute the plan with the cache layer + throttled dispatcher
   // -------------------------------------------------------------------------
+  const tPlanExec = Date.now();
   const planResults = await runWithConcurrency(plan, SERPER_MAX_PARALLEL, async (planRow) => {
     return executeQueryWithCache({
       supabase,
@@ -141,10 +165,33 @@ export default async function handler(req, res) {
       refreshId
     });
   }, SERPER_DISPATCH_GAP_MS);
+  recordTiming('plan_execution_total', tPlanExec);
+
+  // Aggregate per-call sub-timings into handler-level phase numbers.
+  // These are SUMS across calls; with 4 parallel lanes the wall-clock
+  // contribution to plan_execution_total_ms is roughly sum/lanes, but
+  // the raw sums tell us where time is being spent inside each call.
+  let sumCacheLookup = 0;
+  let sumSerper = 0;
+  let sumCacheWrite = 0;
+  for (const r of planResults) {
+    if (r && r.timings) {
+      sumCacheLookup += r.timings.cache_lookup_ms || 0;
+      sumSerper += r.timings.serper_ms || 0;
+      sumCacheWrite += r.timings.cache_write_ms || 0;
+    }
+  }
+  timings.cache_lookup_sum_ms = sumCacheLookup;
+  timings.serper_sum_ms = sumSerper;
+  timings.cache_write_sum_ms = sumCacheWrite;
+  console.log(`[SharedResearch] Phase timing — phase: cache_lookup_sum, ms: ${sumCacheLookup}`);
+  console.log(`[SharedResearch] Phase timing — phase: serper_sum, ms: ${sumSerper}`);
+  console.log(`[SharedResearch] Phase timing — phase: cache_write_sum, ms: ${sumCacheWrite}`);
 
   // Bulk-insert all access events for this refresh in one round-trip.
   // Failures here are logged but never break the refresh response —
   // the data has already been served by the time we get to audit.
+  const tAccessLog = Date.now();
   if (accessEvents.length > 0) {
     try {
       const ins = await supabase
@@ -157,7 +204,9 @@ export default async function handler(req, res) {
       console.error('[SharedResearch] Bulk access log exception —', 'count:', accessEvents.length, 'message:', e && e.message);
     }
   }
+  recordTiming('access_log_bulk_insert', tAccessLog);
 
+  const tStatsAgg = Date.now();
   let cacheHits = 0;
   let queriesRun = 0;
   let failedQueries = 0;
@@ -199,15 +248,20 @@ export default async function handler(req, res) {
       });
     }
   }
+  recordTiming('stats_aggregation', tStatsAgg);
 
   // Log Serper usage once per refresh that actually fired any fresh queries.
   // Cache hits are not Serper calls and are not logged.
+  const tLogSerper = Date.now();
   if (queriesRun > 0) {
     await logSerperUsage({ tool_id: 'shared-research', user_id: userId });
   }
+  recordTiming('log_serper_usage', tLogSerper);
 
+  const tDedupe = Date.now();
   const dedupedRaw = dedupByLink(taggedItems);
   const deduped = enrichDedupedWithPlan(dedupedRaw, plan);
+  recordTiming('dedupe_and_enrich', tDedupe);
   const durationMs = Date.now() - t0;
 
   // -------------------------------------------------------------------------
@@ -220,6 +274,7 @@ export default async function handler(req, res) {
     // was misleading because dedupe kept only the first-seen category
     // when a URL was surfaced by queries in multiple categories. The
     // authoritative attribution is now the source_categories array.
+    const tTruncate = Date.now();
     const truncatedItems = deduped.map((it) => ({
       title: (it.title || '').slice(0, TRUNCATE_CHARS),
       snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS),
@@ -231,16 +286,23 @@ export default async function handler(req, res) {
       source_queries: it.source_queries,
       source_industries: it.source_industries
     }));
+    recordTiming('truncate_raw_results', tTruncate);
 
-    // Curation pass — Section 9
+    // Curation pass — Section 9.
+    // runCuration makes a SINGLE Haiku call with all deduped items in one
+    // request — no per-category batching. If we ever introduce batching
+    // this timing call needs to capture each batch separately.
+    const tCuration = Date.now();
     const curation = await runCuration({
       profile,
       dedupedItems: deduped,
       anthropicKey: ANTHROPIC_API_KEY
     });
+    recordTiming('curation', tCuration);
 
     // Log Haiku usage for cost attribution. logAnthropicUsage swallows
     // its own errors so logging failures never break the response.
+    const tLogAnthropic = Date.now();
     if (curation.usage) {
       await logAnthropicUsage({
         tool_id: 'shared-research',
@@ -249,11 +311,14 @@ export default async function handler(req, res) {
         usage: curation.usage
       });
     }
+    recordTiming('log_anthropic_usage', tLogAnthropic);
 
     // Validation pass — Section 9.5
+    const tValidate = Date.now();
     const validated = curation.ok
       ? validateCuratedItems(curation.items, deduped)
       : { accepted: [], rejected: [] };
+    recordTiming('validation', tValidate);
 
     // Section 9.5 bottom rule: if Haiku returned items and every one
     // failed validation, that is "the entire curation output fails
@@ -267,6 +332,7 @@ export default async function handler(req, res) {
     // curated row. Critical for Phase 4 audit — without it, downstream
     // tools can see the curated item's category but not which queries
     // surfaced it.
+    const tGroup = Date.now();
     const enrichedByUrl = new Map();
     for (const d of deduped) enrichedByUrl.set(d.link, d);
     const acceptedWithSource = validated.accepted.map((it) => {
@@ -279,7 +345,11 @@ export default async function handler(req, res) {
     });
 
     const grouped = groupCuratedByCategory(acceptedWithSource);
+    recordTiming('group_and_attribute_curated', tGroup);
+
     const totalDuration = Date.now() - t0;
+    timings.total_ms = totalDuration;
+    console.log(`[SharedResearch] Phase timing — phase: total, ms: ${totalDuration}`);
 
     return res.status(200).json({
       success: true,
@@ -310,6 +380,7 @@ export default async function handler(req, res) {
         rejected_items: validated.rejected.length,
         duration_ms: totalDuration
       },
+      timings,
       query_plan: queryStats,
       raw_results: truncatedItems,
       curated_items: grouped,
@@ -327,6 +398,7 @@ export default async function handler(req, res) {
   // return the refresh_id to the caller — the access rows for this
   // refresh are already written and queryable by it.
   // -------------------------------------------------------------------------
+  const tRefreshRow = Date.now();
   try {
     const refreshRow = {
       id: refreshId,
@@ -348,6 +420,10 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error('[SharedResearch] Refresh row exception —', 'message:', e && e.message);
   }
+  recordTiming('refresh_row_insert', tRefreshRow);
+
+  timings.total_ms = Date.now() - t0;
+  console.log(`[SharedResearch] Phase timing — phase: total, ms: ${timings.total_ms}`);
 
   return res.status(200).json({
     success: true,
@@ -371,6 +447,7 @@ export default async function handler(req, res) {
       curated_items: 0,
       rejected_items: 0
     },
+    timings,
     items: deduped,
     note: 'Curation lands in Phase 3. Items are raw Serper results, deduped by URL.'
   });
