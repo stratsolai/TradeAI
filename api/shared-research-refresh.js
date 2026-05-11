@@ -1,20 +1,22 @@
-// api/shared-research-refresh.js — Phase 2 endpoint shell
+// api/shared-research-refresh.js — Shared Research Layer endpoint
 //
-// Implements Section 12 of StaxAI-Shared-Research-Layer-Spec-v1_0 in the
-// shape required by Phase 2:
+// Implements Section 12 of StaxAI-Shared-Research-Layer-Spec-v1_0
+// across Phases 2–4 of the build:
 //
-//   - JWT auth + supabase.auth.getUser() (Section 2.4)
-//   - Build the query plan from the Business Profile via lib/shared-research.js
-//   - Run every query through the 24-hour Serper cache layer (Section 8)
-//   - Dedup raw results by URL (Section 12.1)
-//   - Live mode: write a refresh row to shared_research_refreshes with
-//     curated_items=0, rejected_items=0 (curation lands in Phase 3)
-//   - Live mode does NOT write to shared_research yet — Phase 4 wires those
-//   - Dry-run mode (?dry=true): runs everything except writes, returns the
-//     full plan + truncated raw results so the owner can inspect
+//   Phase 2 — JWT auth, Business Profile load, query plan, 24-hour
+//             Serper cache layer, dedupe, dry-run preview.
+//   Phase 3 — Haiku curation (per-category parallel fan-out),
+//             Section 9.5 validation, dry-run curated preview,
+//             timings instrumentation, access audit table writes
+//             (read_hit / read_miss / write).
+//   Phase 4 — Live writes to shared_research, is_current flip with
+//             snapshot-based rollback, shared_research_refreshes row
+//             with outcome column (success / validation_failed /
+//             no_results / error), and the shared_research_write
+//             access audit event so each refresh's full lifecycle
+//             can be traced by refresh_id.
 //
-// No Haiku curation in this phase. Tool integration (ID/BI swap-outs) is
-// Phase 5 and Phase 6.
+// Tool integration (ID/BI swap-outs) is Phase 5 and Phase 6.
 
 import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
@@ -29,7 +31,16 @@ import {
   stateFullName,
   runCuration,
   validateCuratedItems,
-  groupCuratedByCategory
+  groupCuratedByCategory,
+  // Phase 4 — live writes + is_current flip + audit
+  snapshotCurrentRowIds,
+  flipIsCurrentFalse,
+  restoreIsCurrent,
+  buildSharedResearchRow,
+  insertSharedResearchRows,
+  deleteRowsByRefreshId,
+  writeRefreshRow,
+  recordSharedResearchWriteEvent
 } from '../lib/shared-research.js';
 import { logSerperUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 
@@ -288,12 +299,110 @@ export default async function handler(req, res) {
   const dedupedRaw = dedupByLink(taggedItems);
   const deduped = enrichDedupedWithPlan(dedupedRaw, plan);
   recordTiming('dedupe_and_enrich', tDedupe);
-  const durationMs = Date.now() - t0;
 
   // -------------------------------------------------------------------------
-  // Dry-run response — no writes; runs the full pipeline including
-  // Haiku curation and the Section 9.5 validation layer so the owner
-  // can inspect curation quality before Phase 4 enables live writes.
+  // Curation + validation — Section 9 + 9.5
+  // -------------------------------------------------------------------------
+  //
+  // Phase 4 moves curation + validation out of the dry-run-only path
+  // and runs them in both modes. Live mode needs the validated set to
+  // write to shared_research; dry-run mode keeps the same response
+  // shape Phase 3 returned so the inspection path doesn't change.
+  //
+  // Phase 3.5: runCuration fans out across the five source categories
+  // and runs them as five concurrent Haiku calls. The curation_ms
+  // below is the wall-clock of the whole fan-out (≈ max of the five
+  // batch durations). Per-category durations come back in
+  // curation.per_category and are surfaced separately below.
+  //
+  // raw_items=0 (Section: 'no_results') still calls runCuration, but
+  // runCuration short-circuits to ok=true with zero items on an empty
+  // input list, so no Haiku call is made and the timing is effectively
+  // a no-op. That keeps the timing instrumentation present in every
+  // mode without forking the code path.
+  const tCuration = Date.now();
+  const curation = await runCuration({
+    profile,
+    dedupedItems: deduped,
+    anthropicKey: ANTHROPIC_API_KEY
+  });
+  recordTiming('curation', tCuration);
+
+  if (curation.per_category) {
+    const perCategoryMs = {};
+    const breakdown = {};
+    for (const [cat, info] of Object.entries(curation.per_category)) {
+      perCategoryMs[cat] = info.duration_ms;
+      breakdown[cat] = {
+        ms: info.duration_ms,
+        items_in: info.items_in || 0,
+        items_out: info.items_out || 0,
+        input_tokens: info.input_tokens || 0,
+        output_tokens: info.output_tokens || 0
+      };
+      console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}`);
+    }
+    timings.curation_per_category_ms = perCategoryMs;
+    timings.curation_per_category_breakdown = breakdown;
+  }
+
+  // Log Haiku usage for cost attribution. logAnthropicUsage swallows
+  // its own errors so logging failures never break the response.
+  const tLogAnthropic = Date.now();
+  if (curation.usage) {
+    await logAnthropicUsage({
+      tool_id: 'shared-research',
+      user_id: userId,
+      model: 'claude-haiku-4-5-20251001',
+      usage: curation.usage
+    });
+  }
+  recordTiming('log_anthropic_usage', tLogAnthropic);
+
+  // Validation pass — Section 9.5
+  const tValidate = Date.now();
+  const validated = curation.ok
+    ? validateCuratedItems(curation.items, deduped)
+    : { accepted: [], rejected: [] };
+  recordTiming('validation', tValidate);
+
+  // Section 9.5 bottom rule: if Haiku returned items and every one
+  // failed validation, that is "the entire curation output fails
+  // validation" and the run is treated as a whole-batch failure.
+  // Live mode maps this to outcome='validation_failed' below.
+  const totalCurationFailure = curation.ok
+    && curation.items.length > 0
+    && validated.accepted.length === 0;
+
+  // Join each accepted item back to its originating plan rows via URL
+  // so source_queries / source_categories / source_industries can be
+  // surfaced on the curated row in the response. These attribution
+  // arrays are NOT persisted to shared_research (Section 11.1 doesn't
+  // include them) — they're for the inspection path and downstream
+  // tools that want to see which queries surfaced an item.
+  const tGroup = Date.now();
+  const enrichedByUrl = new Map();
+  for (const d of deduped) enrichedByUrl.set(d.link, d);
+  const acceptedWithSource = validated.accepted.map((it) => {
+    const src = enrichedByUrl.get(it.url);
+    return Object.assign({}, it, {
+      source_queries: src ? src.source_queries : [],
+      source_categories: src ? src.source_categories : [],
+      source_industries: src ? src.source_industries : []
+    });
+  });
+  const grouped = groupCuratedByCategory(acceptedWithSource);
+  recordTiming('group_and_attribute_curated', tGroup);
+
+  // -------------------------------------------------------------------------
+  // Dry-run response — non-destructive across all three tables.
+  //   - No writes to shared_research
+  //   - No is_current flip
+  //   - No write to shared_research_refreshes
+  //   - No shared_research_write audit event
+  // Phase 3 cache access events (read_hit / read_miss / write) ARE
+  // still persisted in dry-run — that behaviour is Phase 3 structural
+  // instrumentation and must not regress.
   // -------------------------------------------------------------------------
   if (dryRun) {
     // raw_results no longer carries a singular `category` field — it
@@ -313,85 +422,6 @@ export default async function handler(req, res) {
       source_industries: it.source_industries
     }));
     recordTiming('truncate_raw_results', tTruncate);
-
-    // Curation pass — Section 9.
-    // Phase 3.5: runCuration fans out across the five source categories
-    // and runs them in parallel as five concurrent Haiku calls. The
-    // curation_ms below is the wall-clock of the whole fan-out (≈ max
-    // of the five batch durations). per-category durations come back
-    // in curation.per_category and are surfaced separately below.
-    const tCuration = Date.now();
-    const curation = await runCuration({
-      profile,
-      dedupedItems: deduped,
-      anthropicKey: ANTHROPIC_API_KEY
-    });
-    recordTiming('curation', tCuration);
-
-    if (curation.per_category) {
-      const perCategoryMs = {};
-      const breakdown = {};
-      for (const [cat, info] of Object.entries(curation.per_category)) {
-        perCategoryMs[cat] = info.duration_ms;
-        breakdown[cat] = {
-          ms: info.duration_ms,
-          items_in: info.items_in || 0,
-          items_out: info.items_out || 0,
-          input_tokens: info.input_tokens || 0,
-          output_tokens: info.output_tokens || 0
-        };
-        console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}`);
-      }
-      timings.curation_per_category_ms = perCategoryMs;
-      timings.curation_per_category_breakdown = breakdown;
-    }
-
-    // Log Haiku usage for cost attribution. logAnthropicUsage swallows
-    // its own errors so logging failures never break the response.
-    const tLogAnthropic = Date.now();
-    if (curation.usage) {
-      await logAnthropicUsage({
-        tool_id: 'shared-research',
-        user_id: userId,
-        model: 'claude-haiku-4-5-20251001',
-        usage: curation.usage
-      });
-    }
-    recordTiming('log_anthropic_usage', tLogAnthropic);
-
-    // Validation pass — Section 9.5
-    const tValidate = Date.now();
-    const validated = curation.ok
-      ? validateCuratedItems(curation.items, deduped)
-      : { accepted: [], rejected: [] };
-    recordTiming('validation', tValidate);
-
-    // Section 9.5 bottom rule: if Haiku returned items and every one
-    // failed validation, that is "the entire curation output fails
-    // validation" and the run is treated as a curation failure.
-    const totalCurationFailure = curation.ok
-      && curation.items.length > 0
-      && validated.accepted.length === 0;
-
-    // Join each curated item back to its originating plan rows via URL
-    // so source_queries and source_categories can be surfaced on the
-    // curated row. Critical for Phase 4 audit — without it, downstream
-    // tools can see the curated item's category but not which queries
-    // surfaced it.
-    const tGroup = Date.now();
-    const enrichedByUrl = new Map();
-    for (const d of deduped) enrichedByUrl.set(d.link, d);
-    const acceptedWithSource = validated.accepted.map((it) => {
-      const src = enrichedByUrl.get(it.url);
-      return Object.assign({}, it, {
-        source_queries: src ? src.source_queries : [],
-        source_categories: src ? src.source_categories : [],
-        source_industries: src ? src.source_industries : []
-      });
-    });
-
-    const grouped = groupCuratedByCategory(acceptedWithSource);
-    recordTiming('group_and_attribute_curated', tGroup);
 
     const totalDuration = Date.now() - t0;
     timings.total_ms = totalDuration;
@@ -435,67 +465,225 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
-  // Live mode — write a refresh row (Phase 2). Curation + shared_research
-  // writes land in Phases 3/4.
-  //
-  // Phase 3.4: id is the pre-generated refreshId so the cache_access
-  // rows already tagged with this UUID correlate with the refreshes
-  // row. If the insert fails (e.g. RLS or transient error), we still
-  // return the refresh_id to the caller — the access rows for this
-  // refresh are already written and queryable by it.
+  // Live mode — Phase 4 writes
   // -------------------------------------------------------------------------
-  const tRefreshRow = Date.now();
-  try {
-    const refreshRow = {
-      id: refreshId,
-      user_id: userId,
-      triggered_by_tool: triggeredBy,
-      queries_run: queriesRun,
-      cache_hits: cacheHits,
-      raw_items: taggedItems.length,
-      curated_items: 0,
-      rejected_items: 0,
-      duration_ms: durationMs
-    };
-    const ins = await supabase
-      .from('shared_research_refreshes')
-      .insert(refreshRow);
-    if (ins.error) {
-      console.error('[SharedResearch] Refresh row write failed —', 'message:', ins.error.message);
+  //
+  // Outcome ladder (per spec brief):
+  //   raw_items=0                                 -> 'no_results'
+  //   curation.ok=false                           -> 'error'
+  //   Section 9.5 whole-batch validation failure  -> 'validation_failed'
+  //   accepted.length > 0                         -> 'success'
+  //   accepted=0 AND rejected=0 (legitimate zero) -> 'success' with
+  //     curated_items=0, no flip, no insert (existing batch left intact)
+  //
+  // 'success' is the only branch that flips is_current and writes to
+  // shared_research. The other three outcomes leave existing
+  // is_current=true rows untouched. The refresh row is written in
+  // EVERY outcome (best effort) — the audit trail must not have
+  // invisible failures.
+
+  let liveOutcome;
+  let liveError = null;
+  let writtenCount = 0;
+  const writeAccessEvents = [];
+
+  if (taggedItems.length === 0) {
+    liveOutcome = 'no_results';
+    console.log('[SharedResearch] Live outcome — no_results, raw_items: 0');
+  } else if (!curation.ok) {
+    liveOutcome = 'error';
+    liveError = curation.error || 'curation failed';
+    console.log(`[SharedResearch] Live outcome — error, reason: ${liveError}`);
+  } else if (totalCurationFailure) {
+    liveOutcome = 'validation_failed';
+    liveError = 'all curated items failed validation';
+    console.log(`[SharedResearch] Live outcome — validation_failed, rejected: ${validated.rejected.length}`);
+  } else if (acceptedWithSource.length === 0) {
+    // Haiku returned zero items legitimately (and zero rejections).
+    // Nothing to write; existing batch stays as-is.
+    liveOutcome = 'success';
+    console.log('[SharedResearch] Live outcome — success (zero curated items, no flip)');
+  } else {
+    // Success path — flip is_current, then insert. Snapshot-first so
+    // the flip is reversible if the insert fails (see header on
+    // lib/shared-research-writes.js for the rationale). If the
+    // snapshot read fails we abort BEFORE flipping — without a
+    // snapshot we have no rollback anchor, and a one-way flip with no
+    // anchor could leave the user with no current rows if the
+    // subsequent insert also fails.
+    const tSnapshot = Date.now();
+    const snap = await snapshotCurrentRowIds(supabase, userId);
+    recordTiming('is_current_snapshot', tSnapshot);
+
+    if (!snap.ok) {
+      liveOutcome = 'error';
+      liveError = 'is_current snapshot failed: ' + (snap.error || 'unknown');
+      console.error(`[SharedResearch] Live outcome — error (aborted before flip), reason: ${liveError}`);
+      // Fall through to refresh-row write below — no flip happened.
+    } else {
+
+    const tFlip = Date.now();
+    const flip = await flipIsCurrentFalse(supabase, userId);
+    recordTiming('is_current_flip', tFlip);
+
+    if (!flip.ok) {
+      liveOutcome = 'error';
+      liveError = 'is_current flip failed: ' + (flip.error || 'unknown');
+      console.error(`[SharedResearch] Live outcome — error, reason: ${liveError}`);
+    } else {
+      const tBuildRows = Date.now();
+      const rowsToInsert = acceptedWithSource.map((it) => buildSharedResearchRow(userId, refreshId, it));
+      recordTiming('shared_research_rows_build', tBuildRows);
+
+      const tInsert = Date.now();
+      const ins = await insertSharedResearchRows(supabase, rowsToInsert);
+      recordTiming('shared_research_insert', tInsert);
+
+      if (ins.ok) {
+        liveOutcome = 'success';
+        writtenCount = ins.count;
+        // Audit event for the shared_research write. Recorded into a
+        // separate array (NOT accessEvents) so we can write it after
+        // the bulk cache-events insert without re-touching that path.
+        recordSharedResearchWriteEvent(writeAccessEvents, { userId, refreshId });
+        console.log(`[SharedResearch] Live outcome — success, written: ${writtenCount}`);
+      } else {
+        // Insert failed — roll back. Two clean-up steps:
+        //   1. Restore is_current=true on the previously-current rows
+        //      so consumers see the old batch again.
+        //   2. Delete any partial inserts under the new refresh_id
+        //      (Postgres bulk inserts are all-or-nothing per call, but
+        //      the delete is cheap insurance against driver-level
+        //      partial state).
+        const tRollback = Date.now();
+        await restoreIsCurrent(supabase, userId, snap.ids);
+        await deleteRowsByRefreshId(supabase, refreshId);
+        recordTiming('shared_research_rollback', tRollback);
+        liveOutcome = 'error';
+        liveError = 'shared_research insert failed: ' + (ins.error || 'unknown');
+        console.error(`[SharedResearch] Live outcome — error (rolled back), reason: ${liveError}`);
+      }
     }
-  } catch (e) {
-    console.error('[SharedResearch] Refresh row exception —', 'message:', e && e.message);
+    } // end of snap.ok else-block
   }
+
+  // Compute duration_ms BEFORE writing the refresh row so the audit
+  // table reflects the actual work time, not the audit-write overhead
+  // on top of it. The brief is explicit on this for validation_failed
+  // ("duration_ms reflecting how long the refresh ran before failing");
+  // applying the same rule uniformly across outcomes keeps the column
+  // semantics consistent.
+  const durationMs = Date.now() - t0;
+
+  // shared_research_refreshes — written for EVERY outcome.
+  const tRefreshRow = Date.now();
+  await writeRefreshRow(supabase, {
+    id: refreshId,
+    user_id: userId,
+    triggered_by_tool: triggeredBy,
+    queries_run: queriesRun,
+    cache_hits: cacheHits,
+    raw_items: taggedItems.length,
+    curated_items: writtenCount,
+    rejected_items: validated.rejected.length,
+    duration_ms: durationMs,
+    outcome: liveOutcome
+  });
   recordTiming('refresh_row_insert', tRefreshRow);
+
+  // shared_research_write audit event (success path only). One row
+  // per refresh, separate insert from the Phase 3 cache_access bulk
+  // load further up so that bulk-insert path stays untouched.
+  if (writeAccessEvents.length > 0) {
+    const tWriteAudit = Date.now();
+    try {
+      const insAudit = await supabase
+        .from('shared_research_cache_access')
+        .insert(writeAccessEvents);
+      if (insAudit.error) {
+        console.error('[SharedResearch] shared_research_write audit error —', 'message:', insAudit.error.message);
+      }
+    } catch (e) {
+      console.error('[SharedResearch] shared_research_write audit exception —', 'message:', e && e.message);
+    }
+    recordTiming('shared_research_write_audit', tWriteAudit);
+  }
 
   timings.total_ms = Date.now() - t0;
   console.log(`[SharedResearch] Phase timing — phase: total, ms: ${timings.total_ms}`);
 
+  // -------------------------------------------------------------------------
+  // Live response shape
+  // -------------------------------------------------------------------------
+  //
+  // Success: 200 with items grouped by category, per Section 12.1.
+  // validation_failed: 422 with success=false + error, per Section 9.5
+  // ("the refresh returns an error"). Refresh row IS still written
+  // above with outcome='validation_failed', curated_items=0.
+  // error: 500 with success=false + error. Refresh row IS still
+  // written with outcome='error'.
+  // no_results: 200 with success=true, empty items, raw_items=0.
+
+  const stats = {
+    total_queries: plan.length,
+    cache_hits: cacheHits,
+    fresh_queries: queriesRun,
+    failed_queries: failedQueries,
+    raw_items: taggedItems.length,
+    deduped_items: deduped.length,
+    haiku_returned: curation.items.length,
+    curated_items: writtenCount,
+    rejected_items: validated.rejected.length,
+    duration_ms: durationMs
+  };
+  const profileSummary = {
+    industries,
+    state: stateAbbr,
+    state_full: stateFull,
+    region: region ? region.region_name : null,
+    region_resolved: !!region
+  };
+
+  if (liveOutcome === 'validation_failed') {
+    return res.status(422).json({
+      success: false,
+      dry_run: false,
+      refresh_id: refreshId,
+      outcome: liveOutcome,
+      error: liveError,
+      profile_summary: profileSummary,
+      stats,
+      timings,
+      rejected_items: validated.rejected
+    });
+  }
+
+  if (liveOutcome === 'error') {
+    return res.status(500).json({
+      success: false,
+      dry_run: false,
+      refresh_id: refreshId,
+      outcome: liveOutcome,
+      error: liveError,
+      profile_summary: profileSummary,
+      stats,
+      timings
+    });
+  }
+
+  // 'success' or 'no_results' — both return 200 success=true. For
+  // 'no_results' the items object is just {} (no categories present)
+  // and curated_items is 0; consumers can detect via stats.raw_items
+  // or by the outcome field.
   return res.status(200).json({
     success: true,
     dry_run: false,
     refresh_id: refreshId,
-    profile_summary: {
-      industries,
-      state: stateAbbr,
-      state_full: stateFull,
-      region: region ? region.region_name : null,
-      region_resolved: !!region
-    },
-    stats: {
-      total_queries: plan.length,
-      cache_hits: cacheHits,
-      fresh_queries: queriesRun,
-      failed_queries: failedQueries,
-      raw_items: taggedItems.length,
-      deduped_items: deduped.length,
-      duration_ms: durationMs,
-      curated_items: 0,
-      rejected_items: 0
-    },
+    outcome: liveOutcome,
+    profile_summary: profileSummary,
+    stats,
     timings,
-    items: deduped,
-    note: 'Curation lands in Phase 3. Items are raw Serper results, deduped by URL.'
+    items: grouped
   });
 }
 
