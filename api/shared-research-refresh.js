@@ -289,9 +289,11 @@ export default async function handler(req, res) {
     recordTiming('truncate_raw_results', tTruncate);
 
     // Curation pass — Section 9.
-    // runCuration makes a SINGLE Haiku call with all deduped items in one
-    // request — no per-category batching. If we ever introduce batching
-    // this timing call needs to capture each batch separately.
+    // Phase 3.5: runCuration fans out across the five source categories
+    // and runs them in parallel as five concurrent Haiku calls. The
+    // curation_ms below is the wall-clock of the whole fan-out (≈ max
+    // of the five batch durations). per-category durations come back
+    // in curation.per_category and are surfaced separately below.
     const tCuration = Date.now();
     const curation = await runCuration({
       profile,
@@ -299,6 +301,15 @@ export default async function handler(req, res) {
       anthropicKey: ANTHROPIC_API_KEY
     });
     recordTiming('curation', tCuration);
+
+    if (curation.per_category) {
+      const perCategoryMs = {};
+      for (const [cat, info] of Object.entries(curation.per_category)) {
+        perCategoryMs[cat] = info.duration_ms;
+        console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}`);
+      }
+      timings.curation_per_category_ms = perCategoryMs;
+    }
 
     // Log Haiku usage for cost attribution. logAnthropicUsage swallows
     // its own errors so logging failures never break the response.
