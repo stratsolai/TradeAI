@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: April 30, 2026
+# Updated: May 12, 2026
 
 ---
 
@@ -316,6 +316,65 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   cl_source_items will block reprocessing via dedup. Clear
   these rows before rescanning folders that contain images
   previously scanned as stubs.
+- Shared Research Layer tables: shared_research,
+  shared_research_refreshes, shared_research_cache, and
+  shared_research_cache_access. shared_research holds curated
+  research items with an is_current flag marking the most
+  recent batch per user; rows are written by
+  /api/shared-research-refresh after curation and validation
+  pass. shared_research_refreshes tracks every refresh run with
+  an outcome column constrained to ('success',
+  'validation_failed', 'no_results', 'error').
+  shared_research_cache_access is the audit trail for cache
+  reads, cache writes, and live writes to shared_research.
+- shared_research_cache is SHARED across users, not per-user.
+  A single cached Serper response can serve any user whose
+  query plan generates the same query — caching is keyed by the
+  query string + query_type + recency hash, independent of
+  user_id. Per-user audit lives in shared_research_cache_access,
+  not on the cache row.
+- /api/shared-research-refresh accepts two auth paths: JWT
+  Bearer for browser callers, and x-cron-secret + body.userId
+  for cron workers. The alt-auth pattern mirrors
+  api/drive-import.js, api/dropbox-import.js,
+  api/onedrive-import.js, and api/sharepoint-import.js — when
+  the x-cron-secret header matches process.env.CRON_SECRET, the
+  userId is read from the body instead of decoded from a JWT.
+- Industry News & Updates (ID) consumes the Shared Research
+  Layer. The five category tabs (Regulatory & Compliance,
+  Industry News, Supplier & Materials, Economic & Market,
+  Technology & Innovation) render items pulled directly from
+  shared_research where is_current = true.
+  /api/news-digest-refresh handles only the tender flow now —
+  AusTender + NSW eTendering writes to news_digest_tenders.
+  The browser fires /api/news-digest-refresh and
+  /api/shared-research-refresh in parallel and renders
+  progressively: tenders populate the Grants & Tenders tab on
+  return, the news tabs show a loading state until the shared
+  refresh completes.
+- ID has a daily/weekly cadence scheduler. news_digest_scan_jobs
+  is the queue table. api/news-digest-scheduler.js (daily cron
+  at 02:00 UTC) reads news_digest_settings.cadence
+  (daily/weekly/manual), checks each user's most recent
+  shared_research_refreshes.created_at as the due anchor, and
+  enqueues rows for due users. api/news-digest-worker.js (cron
+  every 5 minutes) drains the queue by importing
+  /api/shared-research-refresh as a module and invoking it via
+  x-cron-secret alt-auth with triggered_by_tool = 'cron'. Both
+  endpoints auth via CRON_SECRET in the Authorization Bearer
+  header.
+- The shared_research_cache_access.access_type column accepts
+  four values: 'read_hit', 'read_miss', and 'write' for
+  shared_research_cache events, plus 'shared_research_write'
+  for live writes to shared_research. On shared_research_write
+  rows the cache_key holds the refresh_id UUID directly, one
+  row per successful refresh.
+- /api/shared-research-refresh response includes an
+  audit_warnings array. Audit-insert failures from either the
+  bulk cache_access write OR the shared_research_write event
+  insert push into that array so the caller sees them — silent
+  audit-layer drops are visible in the response, not just in
+  Vercel logs.
 - Xero OAuth scopes for new apps (created after 2 March
   2026) must use the new granular scope names. Correct
   scope string (matches api/cl-oauth-initiate.js):
