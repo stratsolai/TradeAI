@@ -344,7 +344,8 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   Layer. The five category tabs (Regulatory & Compliance,
   Industry News, Supplier & Materials, Economic & Market,
   Technology & Innovation) render items pulled directly from
-  shared_research where is_current = true.
+  shared_research where is_current = true and
+  item_type = 'content'.
   /api/news-digest-refresh handles only the tender flow now —
   AusTender + NSW eTendering writes to news_digest_tenders.
   The browser fires /api/news-digest-refresh and
@@ -375,6 +376,43 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   insert push into that array so the caller sees them — silent
   audit-layer drops are visible in the response, not just in
   Vercel logs.
+- shared_research has an item_type column (text NOT NULL
+  DEFAULT 'content', CHECK item_type IN ('content', 'listing')).
+  'content' rows are factual research items (news, regulation,
+  supplier, economic, or technology updates); 'listing' rows
+  are marketplace listings offering a specific business for
+  sale. The validator enforces that any item_type = 'listing'
+  row carries category = 'economic' — listings live only under
+  the economic category.
+- BI consumes shared_research without an item_type predicate —
+  both content and listings flow into its evidence. Any future
+  consumer that should only see content (the way ID does) must
+  declare the item_type = 'content' filter on its read path
+  explicitly; consumers that want both omit the filter.
+- Curation cap per category is 20 content items, enforced as a
+  soft instruction in the Haiku curation prompt
+  (ITEMS_PER_CATEGORY_CAP in lib/shared-research-curation.js).
+  The economic category additionally retains up to 5 listing
+  items as a separate quota over and above the 20-content cap.
+  Both caps are soft prompt instructions, not code-enforced.
+- /api/shared-research-refresh.js Vercel function timeout is
+  90 seconds (vercel.json maxDuration: 90). The endpoint
+  regularly runs at ~50-55s under the current cap settings;
+  90s gives comfortable headroom over ordinary variance.
+- The curation prompt teaches Haiku all five categories and
+  allows it to reassign an item's category on output based on
+  content — an item routed to one per-category batch by its
+  source_category can be returned tagged with a different
+  category if Haiku judges the content fits better. This is
+  intentional; see the runCuration comment block in
+  lib/shared-research-curation.js. It explains why
+  timings.curation_per_category_breakdown.items_out
+  (per-batch returned count) can differ from
+  data.curated_items[category].length (per-stored-category
+  count) — two valid measurements at different pipeline stages,
+  not a discrepancy. Listings remain constrained to
+  category = 'economic' by the validator and do not participate
+  in this reassignment.
 - Xero OAuth scopes for new apps (created after 2 March
   2026) must use the new granular scope names. Correct
   scope string (matches api/cl-oauth-initiate.js):
