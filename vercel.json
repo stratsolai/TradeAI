@@ -48,7 +48,7 @@
       "maxDuration": 30
     },
     "api/shared-research-refresh.js": {
-      "maxDuration": 60
+      "maxDuration": 90
     },
     "api/news-digest-scheduler.js": {
       "maxDuration": 60
