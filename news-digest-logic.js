@@ -159,7 +159,21 @@ window.ND_LOGIC = {
     // Spec §12.1 — response.items is grouped by category. Empty
     // object on no_results / zero-curated outcomes; either way it's
     // the correct shape for the category render.
-    this._curatedItems = (body && body.items) || {};
+    //
+    // Listings Addendum §6.1 — drop any item_type = 'listing' rows
+    // from each category bucket before populating the tabs. Mirrors
+    // the item_type = 'content' predicate added to _loadCuratedItems
+    // so the initial-load path and the Refresh path agree.
+    var rawItems = (body && body.items) || {};
+    var filteredItems = {};
+    for (var catKey in rawItems) {
+      if (!Object.prototype.hasOwnProperty.call(rawItems, catKey)) continue;
+      var bucket = rawItems[catKey] || [];
+      filteredItems[catKey] = bucket.filter(function(it) {
+        return it && it.item_type === 'content';
+      });
+    }
+    this._curatedItems = filteredItems;
     this._renderAllNewsCategories();
   },
 
@@ -223,12 +237,18 @@ window.ND_LOGIC = {
     // where is_current = true. Group by category in JS. The Refresh
     // button uses the endpoint response directly (see
     // _refreshSharedResearch) and doesn't re-read the DB.
+    //
+    // Listings Addendum §6.1 — ID renders factual briefings only and
+    // must not show marketplace listings. The third predicate filters
+    // listings out at the DB read; the Refresh response path applies
+    // the same filter in JS (see _refreshSharedResearch).
     try {
       var res = await this._supabase
         .from('shared_research')
         .select('title, summary, url, source_name, source_domain, source_type, lens, category, published_date')
         .eq('user_id', this._userId)
-        .eq('is_current', true);
+        .eq('is_current', true)
+        .eq('item_type', 'content');
       if (res.error) {
         console.error('[ND] Load curated items error:', res.error.message);
         this._curatedItems = {};
