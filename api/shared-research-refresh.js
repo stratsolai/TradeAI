@@ -299,6 +299,10 @@ export default async function handler(req, res) {
       query: row.query,
       query_type: row.query_type,
       recency: row.recency,
+      // Phase 6 Pass 4 — distinguishes listings queries from news
+      // queries in the dry-run inspection without forcing the caller
+      // to reparse query strings.
+      intent: row.intent || 'news',
       cache_hit: r.cache_hit,
       cache_age_hours: r.cache_age_hours,
       result_count: r.items.length,
