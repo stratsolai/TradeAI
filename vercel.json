@@ -81,14 +81,6 @@
     {
       "path": "/api/social-metrics-refresh",
       "schedule": "0 3 * * *"
-    },
-    {
-      "path": "/api/news-digest-scheduler",
-      "schedule": "0 2 * * *"
-    },
-    {
-      "path": "/api/news-digest-worker",
-      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [
