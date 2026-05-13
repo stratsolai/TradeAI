@@ -44,6 +44,14 @@ export default async function handler(req, res) {
       metadata.tier = null;
     }
 
+    // The NEXT_PUBLIC_BASE_URL env var is a leftover from a Next.js
+    // template — this platform isn't Next.js and the var is unset on
+    // Vercel. Concatenating undefined produced 'undefined/dashboard.html'
+    // which Stripe rejected with "Invalid URL: An explicit scheme...".
+    // Fall back to the production URL when the env var isn't set,
+    // matching api/switch-bundle.js's existing pattern.
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://staxai.com.au';
+
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'subscription',
@@ -52,8 +60,8 @@ export default async function handler(req, res) {
       client_reference_id: userId,
       metadata: metadata,
       subscription_data: { metadata: metadata },
-      success_url: process.env.NEXT_PUBLIC_BASE_URL + '/dashboard.html',
-      cancel_url: process.env.NEXT_PUBLIC_BASE_URL + '/pricing-page.html',
+      success_url: baseUrl + '/dashboard.html',
+      cancel_url: baseUrl + '/pricing-page.html',
     });
 
     return res.status(200).json({ url: session.url });
