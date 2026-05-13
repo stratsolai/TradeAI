@@ -271,38 +271,14 @@
 <script src="/auth.js"></script>
 
 <script>
-  // Post-auth intent dispatch — used by both login and signup success
-  // paths. If the user came from panel.html "Activate this tool", this
-  // sends them straight to a Stripe single-tool checkout. The intent key
-  // is consumed (cleared from sessionStorage) the first time it's read,
-  // whether or not the dispatch succeeds.
-  async function dispatchPostAuthAction(userId) {
-    var postActionRaw = sessionStorage.getItem("signup_post_action");
-    sessionStorage.removeItem("signup_post_action");
-    if (!postActionRaw || !userId) return false;
-    try {
-      var action = JSON.parse(postActionRaw);
-      if (action && action.type === "single_tool" && action.priceId) {
-        var checkoutRes = await fetch("/api/create-checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId: userId,
-            toolId: action.toolId || null,
-            priceId: action.priceId
-          })
-        });
-        if (checkoutRes.ok) {
-          var checkoutData = await checkoutRes.json();
-          if (checkoutData && checkoutData.url) {
-            window.location.href = checkoutData.url;
-            return true;
-          }
-        }
-      }
-    } catch (e) { /* fall through to default redirect */ }
-    return false;
-  }
+  // Note: dispatchPostAuthAction was removed as part of the
+  // signup_pending fix. Path A's Stripe checkout now fires from the
+  // post-confirmation handler (verifyOtp block) directly using the
+  // post_action JSON read from the signup_pending row. The sign-in
+  // handler no longer dispatches Stripe — users who reach sign-in
+  // either had a successful post-confirmation (no further action
+  // needed) or are recovering from a failed one (handled by the
+  // safety-net trial-setup logic below).
 
   function hideMessages() {
     var em = document.getElementById('error-message');
@@ -344,105 +320,157 @@
           console.error('[login] verifyOtp error:', verify.error);
           showError('Email confirmation link is invalid or expired. Try signing up again or request a new link.');
         } else {
-          // verifyOtp creates a transient session — use it to land the
-          // BP fields and (for trial paths) the trial state before
-          // signing the user out. The writes that the signup form
-          // couldn't perform (session was null after auth.signUp under
-          // email confirmation) happen here instead, against the same
-          // user id, with a valid JWT.
+          // verifyOtp creates a transient session — use it to land
+          // the BP fields and the trial state (Path B/C) OR redirect
+          // to Stripe checkout (Path A) before signing the user out.
+          // The signup form already wrote business_name / phone /
+          // industries / signup_path / post_action to the
+          // signup_pending Supabase table; this handler consumes that
+          // row via /api/signup-pending-read and acts accordingly.
           //
-          // sessionStorage reads tolerate missing keys (fresh-tab
-          // scenario where the email link opened in a different tab):
-          //   - missing BP fields → skip profile-save (user fills BP
-          //     at first login via the existing first-login BP modal)
-          //   - missing signup_path → default to 'trial' (the majority
-          //     case; Path A users in a fresh tab degrade to trial,
-          //     documented edge)
+          // 404 / no row is the soft-degraded path: no BP fields to
+          // write, default to firing trial-setup, BP modal handles
+          // completion at first login. Same outcome as the old
+          // sessionStorage-missing branch.
           //
-          // Both endpoints are idempotent — the sign-in handler below
-          // also fires /api/trial-setup as a safety net for users
-          // whose post-confirmation handler failed mid-flight.
+          // The sign-in handler safety net re-fires trial-setup if
+          // the post-confirmation flow didn't complete (read returns
+          // 404 at sign-in time too because the row is consumed
+          // here — trial-setup is idempotent so the safety net is a
+          // no-op in the happy path).
           var finaliseError = null;
+          var pathATakingOver = false; // suppresses signOut + success message below when Path A redirects to Stripe
           try {
             var sessRes = await window.supabaseClient.auth.getSession();
             var session = sessRes.data && sessRes.data.session;
-            if (!session || !session.access_token) throw new Error('No transient session after verifyOtp');
+            if (!session || !session.access_token || !session.user) throw new Error('No transient session after verifyOtp');
             var token = session.access_token;
+            var userId = session.user.id;
 
-            var bpBody = {};
-            var bn = sessionStorage.getItem('signup_business_name');
-            var ph = sessionStorage.getItem('signup_phone');
-            var indRaw = sessionStorage.getItem('signup_industries');
-            if (bn && bn.trim()) bpBody.business_name = bn.trim();
-            // Phone collected at signup goes into the primary location's
-            // additional_phones array — the shape the BP Location panel
-            // reads (cl-profile-location.js renders from
-            // _profile.additional_phones, not from profiles.phone).
-            // Writing the top-level `phone` column would store the value
-            // but it would not pre-fill in BP, defeating the purpose.
-            if (ph && ph.trim()) {
-              bpBody.additional_phones = [{ type: 'Mobile', number: ph.trim() }];
+            // Read signup_pending. Returns { found: false } on 404
+            // rather than a 4xx, so the soft-degraded path is just a
+            // branch on `found`.
+            var pendingRes = await fetch('/api/signup-pending-read', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: '{}'
+            });
+            var pendingData = await pendingRes.json().catch(function() { return {}; });
+            if (!pendingRes.ok) {
+              throw new Error(pendingData.error || ('signup_pending read failed: ' + pendingRes.status));
             }
-            if (indRaw) {
-              try {
-                var indParsed = JSON.parse(indRaw);
-                if (Array.isArray(indParsed) && indParsed.length > 0) bpBody.industry = indParsed;
-              } catch (e) { /* malformed — skip industry */ }
-            }
-            if (Object.keys(bpBody).length > 0) {
-              var bpRes = await fetch('/api/profile-save', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-                body: JSON.stringify(bpBody)
-              });
-              var bpData = await bpRes.json().catch(function() { return {}; });
-              if (!bpRes.ok || !bpData.success) {
-                console.error('[login] BP save failed:', bpData.error || bpRes.status);
-                finaliseError = bpData.error || ('Profile save failed: ' + bpRes.status);
+
+            if (pendingData.found) {
+              // BP write — only the fields that are present in the row.
+              // Phone goes into additional_phones (the shape BP Location
+              // panel reads); top-level profiles.phone is left null.
+              var bpBody = {};
+              if (pendingData.business_name) bpBody.business_name = pendingData.business_name;
+              if (pendingData.phone) {
+                bpBody.additional_phones = [{ type: 'Mobile', number: pendingData.phone }];
               }
-            }
+              if (Array.isArray(pendingData.industries) && pendingData.industries.length > 0) {
+                bpBody.industry = pendingData.industries;
+              }
+              if (Object.keys(bpBody).length > 0) {
+                var bpRes = await fetch('/api/profile-save', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                  body: JSON.stringify(bpBody)
+                });
+                var bpData = await bpRes.json().catch(function() { return {}; });
+                if (!bpRes.ok || !bpData.success) {
+                  console.error('[login] BP save failed:', bpData.error || bpRes.status);
+                  finaliseError = bpData.error || ('Profile save failed: ' + bpRes.status);
+                }
+              }
 
-            // Default to 'trial' when signup_path is missing — Path A
-            // users carry signup_path='single_tool' in their tab and
-            // only skip trial-setup when that value is present.
-            var signupPath = sessionStorage.getItem('signup_path') || 'trial';
-            if (signupPath === 'trial') {
-              var tsRes = await fetch('/api/trial-setup', {
+              // Path A vs Path B/C: parse post_action JSON. A valid
+              // single_tool intent with toolId+priceId triggers the
+              // Stripe redirect; anything else (null, malformed,
+              // missing toolId/priceId) falls through to trial-setup.
+              var paParsed = null;
+              if (pendingData.post_action) {
+                try {
+                  paParsed = JSON.parse(pendingData.post_action);
+                } catch (e) { /* malformed post_action — treat as Path B/C */ }
+              }
+              var isPathA = !!(paParsed && paParsed.type === 'single_tool' && paParsed.toolId && paParsed.priceId);
+
+              if (isPathA) {
+                // Fire Stripe checkout. No trial-setup. No signOut —
+                // the Supabase session persists across the Stripe
+                // roundtrip; after success_url the user lands on
+                // /dashboard.html already signed in.
+                var checkoutRes = await fetch('/api/create-checkout', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId: userId,
+                    toolId: paParsed.toolId,
+                    priceId: paParsed.priceId
+                  })
+                });
+                var checkoutData = await checkoutRes.json().catch(function() { return {}; });
+                if (checkoutRes.ok && checkoutData.url) {
+                  pathATakingOver = true;
+                  window.location.href = checkoutData.url;
+                  return;
+                }
+                console.error('[login] Path A checkout failed:', checkoutData.error || checkoutRes.status);
+                finaliseError = 'Email confirmed, but we could not start checkout. Please sign in — you can activate the tool from the dashboard.';
+                // Fall through to signOut + soft error message below.
+              } else {
+                // Path B/C: fire trial-setup.
+                var tsRes = await fetch('/api/trial-setup', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                  body: '{}'
+                });
+                var tsData = await tsRes.json().catch(function() { return {}; });
+                if (!tsRes.ok || !tsData.success) {
+                  console.error('[login] Trial setup failed:', tsData.error || tsRes.status);
+                  if (!finaliseError) finaliseError = tsData.error || ('Trial setup failed: ' + tsRes.status);
+                }
+              }
+            } else {
+              // 404 — soft-degraded path. No BP fields available
+              // (signup_pending row was missing — most likely the
+              // signup form's write didn't land). Default to trial
+              // path: fire trial-setup, BP modal handles BP completion.
+              var tsRes2 = await fetch('/api/trial-setup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
                 body: '{}'
               });
-              var tsData = await tsRes.json().catch(function() { return {}; });
-              if (!tsRes.ok || !tsData.success) {
-                console.error('[login] Trial setup failed:', tsData.error || tsRes.status);
-                if (!finaliseError) finaliseError = tsData.error || ('Trial setup failed: ' + tsRes.status);
+              var tsData2 = await tsRes2.json().catch(function() { return {}; });
+              if (!tsRes2.ok || !tsData2.success) {
+                console.error('[login] Trial setup (no signup_pending) failed:', tsData2.error || tsRes2.status);
+                if (!finaliseError) finaliseError = tsData2.error || ('Trial setup failed: ' + tsRes2.status);
               }
             }
-
-            // Clear consumed signup keys. signup_post_action stays —
-            // it's read by dispatchPostAuthAction at first sign-in to
-            // fire Path A's Stripe checkout.
-            sessionStorage.removeItem('signup_industries');
-            sessionStorage.removeItem('signup_business_name');
-            sessionStorage.removeItem('signup_phone');
-            sessionStorage.removeItem('signup_path');
           } catch (e) {
             console.error('[login] Post-confirmation finalise exception:', e && e.message);
             finaliseError = e && e.message;
           }
 
-          // Sign out regardless — the transient session was a means to
-          // an end. The user must sign in with their password.
-          await window.supabaseClient.auth.signOut();
-
-          if (finaliseError) {
-            // Soft error: the email IS confirmed; the account exists;
-            // missing pieces can be recovered. The sign-in handler
-            // re-fires trial-setup if trial_used is still false, and
-            // BP can be completed via the first-login BP modal.
-            showError('Email confirmed, but we could not finish setting up your account just now. Please sign in to continue — we will finish setup automatically on sign-in.');
-          } else {
-            showSuccess('Email confirmed. Please sign in.');
+          // Sign out + show message — unless Path A is mid-redirect
+          // to Stripe (in which case we keep the session and let the
+          // navigation happen).
+          if (!pathATakingOver) {
+            await window.supabaseClient.auth.signOut();
+            if (finaliseError) {
+              // Soft error: the email IS confirmed; the account
+              // exists; missing pieces can be recovered. The sign-in
+              // handler re-fires trial-setup if trial_used is still
+              // false, and BP can be completed via the first-login
+              // BP modal.
+              showError(typeof finaliseError === 'string' && finaliseError.indexOf('Email confirmed') === 0
+                ? finaliseError
+                : 'Email confirmed, but we could not finish setting up your account just now. Please sign in to continue — we will finish setup automatically on sign-in.');
+            } else {
+              showSuccess('Email confirmed. Please sign in.');
+            }
           }
         }
         return;
@@ -475,37 +503,74 @@
         var timeout = new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Connection timed out. Please check your internet connection and try again.')); }, 15000); });
         var result = await Promise.race([signIn(email, password), timeout]);
         if (result.success) {
-          var loggedInUserId = result.data && result.data.user ? result.data.user.id : null;
-
           // Trial-setup safety net. If the post-confirmation handler
-          // failed (network glitch, transient server error, fresh-tab
-          // sessionStorage loss for a Path A user, etc.), the user
-          // signs in with trial_used still false. Re-fire trial-setup
-          // here — the endpoint is idempotent and no-ops if trial_used
-          // is already true. The Path A check guards against giving a
-          // trial to a user mid-Stripe-checkout: signup_post_action
-          // present in this tab means we're about to redirect to
-          // Stripe; trial-setup is skipped so the webhook can write
-          // bundle/activation state cleanly.
+          // failed (network glitch, transient server error, etc.) the
+          // signup_pending row was never consumed and trial_used is
+          // still false. Re-fire trial-setup here for Path B/C users;
+          // skip for Path A users so a recovery flow stays viable
+          // through the activation modal.
+          //
+          // Decision tree on /api/signup-pending-read:
+          //   - 404 (row consumed by post-confirmation, expected in
+          //     the happy path) → fire trial-setup. Idempotent —
+          //     no-op if trial_used is already true.
+          //   - Row returned with post_action indicating
+          //     stripe-checkout (Path A; post-confirmation didn't
+          //     complete) → skip trial-setup. User reaches dashboard;
+          //     can use the activation modal to recover.
+          //   - Row returned with post_action absent or not
+          //     stripe-checkout (Path B/C; post-confirmation didn't
+          //     complete) → fire trial-setup.
           try {
-            var hasPathAIntent = !!sessionStorage.getItem('signup_post_action');
-            if (!hasPathAIntent && result.data && result.data.session && result.data.session.access_token) {
-              var ts = await fetch('/api/trial-setup', {
+            if (result.data && result.data.session && result.data.session.access_token) {
+              var signInToken = result.data.session.access_token;
+
+              var pendingRes = await fetch('/api/signup-pending-read', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + result.data.session.access_token },
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + signInToken },
                 body: '{}'
               });
-              if (!ts.ok) {
-                var tsErr = await ts.json().catch(function() { return {}; });
-                console.error('[login] sign-in trial-setup safety net failed:', tsErr.error || ts.status);
+              var pendingData = await pendingRes.json().catch(function() { return {}; });
+
+              var shouldFireTrialSetup = false;
+              if (pendingRes.ok && pendingData.found) {
+                // Row was still pending — post-confirmation didn't
+                // consume. Check post_action.
+                var isPathA = false;
+                if (pendingData.post_action) {
+                  try {
+                    var parsedPa = JSON.parse(pendingData.post_action);
+                    if (parsedPa && parsedPa.type === 'single_tool') isPathA = true;
+                  } catch (e) { /* malformed — treat as Path B/C */ }
+                }
+                if (!isPathA) shouldFireTrialSetup = true;
+              } else if (pendingRes.ok && !pendingData.found) {
+                // Happy path — row was consumed by post-confirmation.
+                // Trial-setup as idempotent safety net.
+                shouldFireTrialSetup = true;
+              } else {
+                // Read error — don't guess; skip the safety net so we
+                // don't accidentally trial-up a Path A recovery.
+                console.error('[login] sign-in signup-pending-read error:', pendingData.error || pendingRes.status);
+              }
+
+              if (shouldFireTrialSetup) {
+                var ts = await fetch('/api/trial-setup', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + signInToken },
+                  body: '{}'
+                });
+                if (!ts.ok) {
+                  var tsErr = await ts.json().catch(function() { return {}; });
+                  console.error('[login] sign-in trial-setup safety net failed:', tsErr.error || ts.status);
+                }
               }
             }
           } catch (e) {
-            console.error('[login] sign-in trial-setup safety net exception:', e && e.message);
+            console.error('[login] sign-in safety net exception:', e && e.message);
             // Non-fatal — dashboard render handles missing trial state.
           }
 
-          if (await dispatchPostAuthAction(loggedInUserId)) return;
           window.location.href = "/dashboard.html";
         } else {
           showError(result.error || "Login failed. Please check your credentials.");
@@ -538,38 +603,34 @@
       }
       if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
 
-      // Stash BP fields and signup-path indicator for the post-confirmation
-      // handler. supabase.auth.signUp returns session: null when email
-      // confirmation is enabled, so the browser cannot write profiles
-      // here — RLS rejects writes with no auth.uid(). Instead, the
-      // verifyOtp handler picks these up after the user clicks the
-      // confirmation link and forwards them to the server-side
-      // /api/profile-save and /api/trial-setup endpoints.
+      // Determine signup_path and post_action from the panel.html-
+      // stashed signup_post_action key. Path A (single-tool activate)
+      // stashes a JSON intent {type:'single_tool', toolId, priceId}
+      // before navigating here; all other paths leave it absent.
       //
-      // signup_path tells the post-confirmation handler whether to fire
-      // trial setup. Path A (single-tool activate from panel.html) sets
-      // signup_post_action with type=single_tool — those users go to
-      // Stripe checkout, no trial. All other paths trial.
-      //
-      // Fresh-tab caveat: sessionStorage doesn't survive across browser
-      // tabs. A user who opens the email link in a fresh tab loses these
-      // values. The post-confirmation handler defaults to 'trial' when
-      // signup_path is missing (safest behaviour for the majority case)
-      // and skips the BP write when the BP fields are absent (the user
-      // still completes BP via the dashboard's first-login modal).
+      // These five keys (signup_business_name, signup_phone,
+      // signup_path, signup_post_action, signup_industries) used to
+      // travel through sessionStorage to the post-confirmation handler
+      // and were lost when the user opened the email link in a new
+      // tab. They now flow through the signup_pending Supabase table
+      // — written here via /api/signup-pending-write immediately after
+      // supabase.auth.signUp succeeds, read at email confirmation by
+      // the verifyOtp handler. signup_industries is consumed by the
+      // industry validation a few lines up.
+      var postActionFromPanel = null;
+      var signupPath = "trial";
       try {
-        sessionStorage.setItem("signup_business_name", businessName || "");
-        sessionStorage.setItem("signup_phone", phone || "");
-        var postAction = sessionStorage.getItem("signup_post_action");
-        var signupPath = "trial";
-        if (postAction) {
+        var pa = sessionStorage.getItem("signup_post_action");
+        if (pa) {
           try {
-            var parsed = JSON.parse(postAction);
-            if (parsed && parsed.type === "single_tool") signupPath = "single_tool";
-          } catch (e) { /* malformed; fall through to default 'trial' */ }
+            var parsed = JSON.parse(pa);
+            if (parsed && parsed.type === "single_tool" && parsed.toolId && parsed.priceId) {
+              signupPath = "single_tool";
+              postActionFromPanel = pa; // store the full JSON for the API write
+            }
+          } catch (e) { /* malformed — treat as trial */ }
         }
-        sessionStorage.setItem("signup_path", signupPath);
-      } catch (e) { /* sessionStorage unavailable — handler falls back to defaults */ }
+      } catch (e) { /* sessionStorage unavailable — defaults stand */ }
 
       // Defensive: clear any pre-existing session before creating the
       // new account. If a logged-in user lands on /login?tab=signup via
@@ -584,16 +645,67 @@
       } catch (e) { /* no existing session — ignore */ }
 
       var result = await signUp(email, password);
-      if (result.success) {
-        // Email confirmation is on. supabase.auth.signUp returns
-        // session: null, so there is nothing to navigate to yet — the
-        // user must click their email link, which triggers the
-        // verifyOtp handler above. Keep them on /login with the
-        // success message; no redirect.
-        showSuccess("Account created. Please check your email to verify your account.");
-      } else {
+      if (!result.success) {
         showError(result.error || "Signup failed. Please try again.");
+        return;
       }
+
+      var newUserId = result.data && result.data.user ? result.data.user.id : null;
+      if (!newUserId) {
+        // supabase.auth.signUp succeeded but returned no user — this
+        // shouldn't happen but if it does, the row write below would
+        // fail anyway. Surface as a soft error.
+        console.error('[login] signUp succeeded but returned no user id');
+        showError("Signup succeeded but user details are missing. Please try signing in.");
+        return;
+      }
+
+      // Write the signup_pending row server-side. The endpoint
+      // validates user_id existence, no email_confirmed_at, and a
+      // recent created_at window — same security boundary as
+      // /api/create-checkout. Non-fatal on failure: the auth.users
+      // row exists, the user can confirm their email; BP fields just
+      // won't pre-fill at first BP visit.
+      try {
+        var writeRes = await fetch("/api/signup-pending-write", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: newUserId,
+            business_name: businessName,
+            phone: phone,
+            signup_path: signupPath,
+            post_action: postActionFromPanel,
+            industries: industries
+          })
+        });
+        if (!writeRes.ok) {
+          var writeErr = await writeRes.json().catch(function() { return {}; });
+          console.error('[login] signup-pending-write failed:', writeErr.error || writeRes.status);
+        }
+      } catch (e) {
+        console.error('[login] signup-pending-write exception:', e && e.message);
+      }
+
+      // Clear all five signup sessionStorage keys regardless of which
+      // were present. signup_industries was set by industry-modal.js;
+      // signup_post_action was set by panel.html (Path A); the other
+      // three are pre-Fix-3 leftovers that may exist in some users'
+      // localStorage if they had testing state lingering. Remove all.
+      try {
+        sessionStorage.removeItem("signup_industries");
+        sessionStorage.removeItem("signup_business_name");
+        sessionStorage.removeItem("signup_phone");
+        sessionStorage.removeItem("signup_path");
+        sessionStorage.removeItem("signup_post_action");
+      } catch (e) { /* ignore */ }
+
+      // Email confirmation is on. supabase.auth.signUp returns
+      // session: null, so there is nothing to navigate to yet — the
+      // user must click their email link, which triggers the
+      // verifyOtp handler above. Keep them on /login with the
+      // success message; no redirect.
+      showSuccess("Account created. Please check your email to verify your account.");
     });
   });
 
