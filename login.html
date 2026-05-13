@@ -130,17 +130,17 @@
     
 
     /* Messages */
-    /* Message modal — replaces the old .error / .success inline divs
-       per the platform's perm-modal pattern (white card on a dim
-       overlay, OK to acknowledge). Classes are local to login.html
+    /* Message modal — pre-login dark theme. Mirrors the .tool-modal
+       pattern from panel.html which has the canonical pre-auth modal
+       styling (dark navy card on a dim overlay, white text, Barlow
+       Condensed title in caps). Classes are local to login.html
        because the page is self-contained and intentionally does not
-       load staxai-auth.css; visual treatment mirrors the platform
-       perm-modal classes but does not depend on them. */
+       load staxai-auth.css. */
     .msg-modal-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 500;
       align-items: center;
       justify-content: center;
@@ -148,27 +148,32 @@
     }
     .msg-modal-overlay.open { display: flex; }
     .msg-modal-card {
-      background: #ffffff;
-      color: #1f2937;
-      border-radius: 16px;
-      padding: 28px 28px 20px;
+      background: #172035;
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 20px;
+      padding: 32px;
       max-width: 460px;
-      width: 100%;
-      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
       font-family: var(--body-font);
     }
     .msg-modal-title {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 12px;
-      color: var(--blue-dark);
+      font-size: 24px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 18px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
     .msg-modal-body {
       font-size: 14px;
       line-height: 1.6;
       margin-bottom: 22px;
-      color: #1f2937;
+      color: rgba(255, 255, 255, 0.85);
     }
     .msg-modal-actions {
       display: flex;
