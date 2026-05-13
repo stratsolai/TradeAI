@@ -9,7 +9,19 @@
   function initSupabase() {
     if (typeof window.supabase !== 'undefined') {
       try {
-        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // detectSessionInUrl: false — our signup-confirmation flow
+        // calls supabase.auth.verifyOtp() explicitly in login.html
+        // (the page that receives ?token_hash=...&type=signup links).
+        // Leaving the default `true` causes the supabase-js client to
+        // ALSO auto-process the URL on every page init, doubling the
+        // verify calls. The first one consumes the single-use token,
+        // the second returns otp_expired. Disabling auto-detection
+        // makes the explicit verifyOtp call the single source of
+        // truth. OAuth and password flows are unaffected — those use
+        // exchangeCodeForSession / signInWithPassword, not URL detect.
+        window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+          auth: { detectSessionInUrl: false }
+        });
       } catch (e) {
         console.error('Supabase createClient failed:', e);
       }
