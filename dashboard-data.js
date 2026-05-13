@@ -3,10 +3,10 @@ window.DASH_DATA = (function() {
   var _supabase, _user, _profile, _activeTools;
   var _resolvedPrices = null;
 
-  // Canonical tool list for the stax-all bundle. Used both at signup
-  // (mirrored in login.html) and by the dashboard self-heal step that
-  // repairs profiles where bundle_tier='stax-all' but activated_tools
-  // is empty. Keep in sync with login.html stax-all activation.
+  // Canonical tool list for the stax-all bundle. Mirrored in
+  // api/trial-setup.js. Trial signups land this list via the
+  // post-confirmation handler; the dashboard reads it directly from
+  // profiles.activated_tools and no longer self-heals.
   var STAX_ALL_TOOLS = [
     'chatbot', 'social', 'email', 'strategic-plan', 'news-digest', 'bi',
     'tender', 'quote-enhancer', 'swms', 'customer-updates',
@@ -98,45 +98,6 @@ window.DASH_DATA = (function() {
     }
     _profile = (pr.data) ? pr.data : {};
     _activeTools = Array.isArray(_profile.activated_tools) ? _profile.activated_tools : [];
-
-    // Self-heal: if the user is on the stax-all bundle but their
-    // activated_tools is empty (signup raced sessionStorage, manual
-    // test-row edit, partial upsert, etc.), repopulate from the
-    // canonical bundle list and persist back to the row. Only stax-all
-    // is auto-healed because its tool list is fixed; stax3/stax6 lists
-    // are user-chosen and cannot be derived from bundle_tier alone.
-    //
-    // bundle_tier is normalised before comparison so a manually-entered
-    // test row with 'STAXALL' / 'stax_all' / 'Stax-All' / 'stax all'
-    // still triggers the heal. Diagnostic log fires unconditionally so
-    // we can see the raw values in the browser console when the heal
-    // doesn't fire as expected.
-    var rawTier = _profile.bundle_tier;
-    var normalisedTier = (typeof rawTier === 'string' ? rawTier : '')
-      .toLowerCase()
-      .replace(/[\s_]+/g, '-');
-    var isStaxAll = normalisedTier === 'stax-all' || normalisedTier === 'staxall';
-    console.log('[Dashboard] Profile state — bundle_tier:', JSON.stringify(rawTier),
-      '| normalised:', normalisedTier,
-      '| activated_tools:', JSON.stringify(_profile.activated_tools),
-      '| is_trial:', _profile.is_trial);
-
-    if (isStaxAll && _activeTools.length === 0) {
-      console.log('[Dashboard] Self-heal triggered — populating stax-all tools.');
-      _activeTools = STAX_ALL_TOOLS.slice();
-      _profile.activated_tools = _activeTools;
-      // Also normalise the tier value so the canonical 'stax-all'
-      // string lands in the row, preventing future ambiguity.
-      var healPayload = { activated_tools: _activeTools };
-      if (rawTier !== 'stax-all') healPayload.bundle_tier = 'stax-all';
-      _supabase.from('profiles')
-        .update(healPayload)
-        .eq('id', user.id)
-        .then(function(res) {
-          if (res.error) console.error('[Dashboard] stax-all self-heal write error:', res.error.message || res.error);
-          else console.log('[Dashboard] Self-heal write succeeded.');
-        });
-    }
 
     var bp = await _supabase.from('profiles')
       .select('abn, business_structure, industry, years_in_business, logo_url, address_name, address_street, address_suburb, address_state, address_postcode, additional_phones, service_area, trading_hours, bp_services, bp_products, payment_methods, response_time, warranty_info, complaints_handling, after_hours_support, marketing_theme_awareness, marketing_theme_differentiators, marketing_theme_feeling, tone_of_voice, primary_brand_colour')
