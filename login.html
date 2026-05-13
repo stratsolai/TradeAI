@@ -571,10 +571,26 @@
         sessionStorage.setItem("signup_path", signupPath);
       } catch (e) { /* sessionStorage unavailable — handler falls back to defaults */ }
 
+      // Defensive: clear any pre-existing session before creating the
+      // new account. If a logged-in user lands on /login?tab=signup via
+      // the footer "Sign Up" link (or any other path), supabase.auth.signUp
+      // does not automatically sign them out — their existing localStorage
+      // token would silently coexist with the just-created auth.users
+      // row. signOut here guarantees a clean slate. Errors ignored: if
+      // there is nothing to sign out of, signOut resolves with no
+      // session and a benign error which we don't act on.
+      try {
+        await window.supabaseClient.auth.signOut();
+      } catch (e) { /* no existing session — ignore */ }
+
       var result = await signUp(email, password);
       if (result.success) {
+        // Email confirmation is on. supabase.auth.signUp returns
+        // session: null, so there is nothing to navigate to yet — the
+        // user must click their email link, which triggers the
+        // verifyOtp handler above. Keep them on /login with the
+        // success message; no redirect.
         showSuccess("Account created. Please check your email to verify your account.");
-        setTimeout(function() { window.location.href = "/dashboard.html"; }, 2000);
       } else {
         showError(result.error || "Signup failed. Please try again.");
       }
