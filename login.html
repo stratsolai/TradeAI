@@ -446,7 +446,7 @@
         sessionStorage.setItem("signup_path", signupPath);
       } catch (e) { /* sessionStorage unavailable — handler falls back to defaults */ }
 
-      var result = await signUp(email, password, businessName, phone, industries);
+      var result = await signUp(email, password);
       if (result.success) {
         showSuccess("Account created. Please check your email to verify your account.");
         setTimeout(function() { window.location.href = "/dashboard.html"; }, 2000);

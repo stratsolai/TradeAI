@@ -6,18 +6,15 @@ async function checkAuth() {
   return session;
 }
 
-// Sign up new user
-async function signUp(email, password, businessName, phone, industry) {
+// Sign up new user. With email confirmation enabled the returned
+// authData.session is null, so this function cannot write profile
+// fields here — RLS rejects writes with no auth.uid(). The BP fields
+// (industry, business_name, phone) are stashed in sessionStorage by
+// the signup form and landed via /api/profile-save in the
+// post-confirmation handler (login.html verifyOtp block), once the
+// transient session created by verifyOtp gives us a valid JWT.
+async function signUp(email, password) {
   try {
-    // Read industries from sessionStorage as fallback
-    var industryArr = Array.isArray(industry) ? industry : (industry ? [industry] : []);
-    if (industryArr.length === 0) {
-      var stored = sessionStorage.getItem('signup_industries');
-      if (stored) {
-        try { industryArr = JSON.parse(stored); } catch(e) {}
-      }
-    }
-
     const { data: authData, error: authError } = await supabaseClient.auth.signUp({
       email: email,
       password: password,
@@ -25,39 +22,7 @@ async function signUp(email, password, businessName, phone, industry) {
         emailRedirectTo: window.location.origin + '/login'
       }
     });
-
     if (authError) throw authError;
-
-    if (authData.user) {
-      // SRL Cohort Architecture Addendum v1.2 — signup writes `industry`,
-      // a cohort-determining field. Route through api/profile-save so
-      // cohort_id and the new-cohort enqueue check run server-side.
-      // Note: at signup the user has only supplied industry — state and
-      // postcode come later via the Location panel — so cohort_id will
-      // resolve to null on this call and no enqueue happens here. The
-      // first enqueue typically fires from the Location-panel save.
-      const session = authData.session;
-      if (!session || !session.access_token) {
-        throw new Error('Signup succeeded but session is unavailable; please log in to complete your profile.');
-      }
-      const apiRes = await fetch('/api/profile-save', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
-        body: JSON.stringify({
-          business_name: businessName,
-          phone: phone,
-          industry: industryArr
-        })
-      });
-      const apiData = await apiRes.json().catch(function() { return {}; });
-      if (!apiRes.ok || !apiData.success) {
-        throw new Error(apiData.error || ('Profile save failed: ' + apiRes.status));
-      }
-    }
-
-    // Clear signup sessionStorage after successful signup
-    sessionStorage.removeItem('signup_industries');
-
     return { success: true, data: authData };
   } catch (error) {
     return { success: false, error: error.message };
