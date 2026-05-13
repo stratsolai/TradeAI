@@ -764,34 +764,42 @@
       }
       if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
 
-      // Determine signup_path and post_action from the panel.html-
-      // stashed signup_post_action key. Path A (single-tool activate)
-      // stashes a JSON intent {type:'single_tool', toolId, priceId}
-      // before navigating here; all other paths leave it absent.
+      // Determine signup_path and post_action from URL intent params.
+      // Path A entry points (panel.html "Activate") navigate to
+      //   /login?tab=signup&intent=activate&tool=<id>&price=<id>
+      // Path B entry points (pricing page, etc.) navigate to
+      //   /login?tab=signup
+      // with no intent param. The signup form treats absent / invalid
+      // intent as trial.
       //
-      // These five keys (signup_business_name, signup_phone,
-      // signup_path, signup_post_action, signup_industries) used to
-      // travel through sessionStorage to the post-confirmation handler
-      // and were lost when the user opened the email link in a new
-      // tab. They now flow through the signup_pending Supabase table
-      // — written here via /api/signup-pending-write immediately after
-      // supabase.auth.signUp succeeds, read at email confirmation by
-      // the verifyOtp handler. signup_industries is consumed by the
-      // industry validation a few lines up.
+      // URL-bound intent replaces the previous sessionStorage
+      // (signup_post_action) approach. The old approach persisted
+      // across navigations in the same tab — an abandoned Path A
+      // click could contaminate a subsequent Path B attempt. URL
+      // params are re-set on every navigation and don't have this
+      // problem.
+      //
+      // signup_path remains the discriminator we send to
+      // /api/signup-pending-write; post_action stores the same
+      // {type, toolId, priceId} JSON the database column has always
+      // held, so the schema and the post-confirmation read path
+      // don't change.
       var postActionFromPanel = null;
       var signupPath = "trial";
       try {
-        var pa = sessionStorage.getItem("signup_post_action");
-        if (pa) {
-          try {
-            var parsed = JSON.parse(pa);
-            if (parsed && parsed.type === "single_tool" && parsed.toolId && parsed.priceId) {
-              signupPath = "single_tool";
-              postActionFromPanel = pa; // store the full JSON for the API write
-            }
-          } catch (e) { /* malformed — treat as trial */ }
+        var urlParams = new URLSearchParams(window.location.search);
+        var urlIntent = urlParams.get('intent');
+        var urlTool = urlParams.get('tool');
+        var urlPrice = urlParams.get('price');
+        if (urlIntent === 'activate' && urlTool && urlPrice) {
+          signupPath = "single_tool";
+          postActionFromPanel = JSON.stringify({
+            type: 'single_tool',
+            toolId: urlTool,
+            priceId: urlPrice
+          });
         }
-      } catch (e) { /* sessionStorage unavailable — defaults stand */ }
+      } catch (e) { /* URLSearchParams unavailable — defaults stand */ }
 
       // Defensive: clear any pre-existing session before creating the
       // new account. If a logged-in user lands on /login?tab=signup via
@@ -848,11 +856,12 @@
         console.error('[login] signup-pending-write exception:', e && e.message);
       }
 
-      // Clear all five signup sessionStorage keys regardless of which
-      // were present. signup_industries was set by industry-modal.js;
-      // signup_post_action was set by panel.html (Path A); the other
-      // three are pre-Fix-3 leftovers that may exist in some users'
-      // localStorage if they had testing state lingering. Remove all.
+      // Clear the signup sessionStorage keys regardless of which were
+      // present. signup_industries was set by industry-modal.js
+      // (intra-tab handoff from industry selection to the signup
+      // form). The other three (signup_business_name, signup_phone,
+      // signup_path) are pre-Fix-3 leftovers; signup_post_action is
+      // a pre-URL-intent leftover. None are used after this point.
       try {
         sessionStorage.removeItem("signup_industries");
         sessionStorage.removeItem("signup_business_name");

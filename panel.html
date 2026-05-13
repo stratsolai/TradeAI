@@ -1565,22 +1565,33 @@ footer {
     var closeBtn = document.getElementById('tool-modal-close');
     if (closeBtn) closeBtn.addEventListener('click', closeToolModal);
 
-    // Option 1 — Activate single tool. The post-signup intent is stored
-    // only when the user completes the industry modal (Continue), so an
-    // abandoned Option 1 click leaves no stale state for later flows.
+    // Option 1 — Activate single tool. Path A intent travels via URL
+    // params on the /login navigation rather than sessionStorage.
+    // URL-bound intent is scoped to this specific navigation: an
+    // abandoned Option 1 click leaves no stale marker behind to
+    // contaminate a later Path B signup in the same tab. The signup
+    // form reads `intent` / `tool` / `price` from the URL on submit;
+    // a Path B entry (pricing page, etc.) navigates without these
+    // params and the form treats the signup as a trial.
     var optActivate = document.getElementById('tm-option-activate');
     if (optActivate) optActivate.addEventListener('click', function() {
       var tool = window.PANEL_TOOL || {};
-      var intent = JSON.stringify({
-        type: 'single_tool',
-        toolId: tool.id || new URLSearchParams(window.location.search).get('tool') || null,
-        priceId: tool.priceId || null
-      });
+      var toolId = tool.id || new URLSearchParams(window.location.search).get('tool') || null;
+      var priceId = tool.priceId || null;
       closeToolModal();
       startSignup({
         onContinue: function() {
-          sessionStorage.setItem('signup_post_action', intent);
-          window.location.href = '/login?tab=signup';
+          var qs = ['tab=signup'];
+          // Only attach the intent triplet when BOTH toolId and
+          // priceId are present — without priceId the signup form
+          // cannot build a valid Stripe checkout, so the safest
+          // fallback is to treat the signup as Path B trial.
+          if (toolId && priceId) {
+            qs.push('intent=activate');
+            qs.push('tool=' + encodeURIComponent(toolId));
+            qs.push('price=' + encodeURIComponent(priceId));
+          }
+          window.location.href = '/login?' + qs.join('&');
         }
       });
     });
