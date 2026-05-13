@@ -374,7 +374,15 @@
             var ph = sessionStorage.getItem('signup_phone');
             var indRaw = sessionStorage.getItem('signup_industries');
             if (bn && bn.trim()) bpBody.business_name = bn.trim();
-            if (ph && ph.trim()) bpBody.phone = ph.trim();
+            // Phone collected at signup goes into the primary location's
+            // additional_phones array — the shape the BP Location panel
+            // reads (cl-profile-location.js renders from
+            // _profile.additional_phones, not from profiles.phone).
+            // Writing the top-level `phone` column would store the value
+            // but it would not pre-fill in BP, defeating the purpose.
+            if (ph && ph.trim()) {
+              bpBody.additional_phones = [{ type: 'Mobile', number: ph.trim() }];
+            }
             if (indRaw) {
               try {
                 var indParsed = JSON.parse(indRaw);
