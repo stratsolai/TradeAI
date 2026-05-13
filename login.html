@@ -391,13 +391,87 @@
     var tokenType = params.get('type');
     if (tokenHash && tokenType && window.supabaseClient) {
       try {
-        var verify = await window.supabaseClient.auth.verifyOtp({
-          token_hash: tokenHash,
-          type: tokenType
-        });
+        // ── Idempotency guard ───────────────────────────────────
+        // The email-link URL gets fetched multiple times per single
+        // user click for reasons outside our code (email-scanner
+        // pre-fetch, browser speculative load, etc.). Each fetch runs
+        // this handler in its own JS context and would otherwise call
+        // verifyOtp again — the token is single-use server-side, so
+        // the second call returns otp_expired and the user sees the
+        // soft-error path even though confirmation succeeded.
+        //
+        // Strategy: flag the token_hash in localStorage before the
+        // verifyOtp call. Subsequent loads find the flag and SKIP the
+        // call entirely; they read the active session instead, which
+        // supabase-js persisted from the prior load's successful call.
+        // Race-safe fallback for parallel loads that both see no flag:
+        // when verifyOtp fails, check getSession() — a parallel load
+        // may have just succeeded — and treat the error as benign if
+        // a session is now present (Fix 2).
+        //
+        // Flag carries a timestamp; 1-hour TTL keeps stale flags from
+        // breaking real-world replay (e.g., owner deletes the user
+        // and re-signs-up with the same email much later).
+        var otpStorageKey = 'signup_otp_consumed:' + tokenHash;
+        var otpAlreadyConsumed = false;
+        try {
+          var rawFlag = localStorage.getItem(otpStorageKey);
+          if (rawFlag) {
+            var flagObj = JSON.parse(rawFlag);
+            if (flagObj && flagObj.ts && (Date.now() - flagObj.ts < 60 * 60 * 1000)) {
+              otpAlreadyConsumed = true;
+            }
+          }
+        } catch (e) { /* malformed flag — treat as not consumed */ }
+
+        var verify;
+        if (otpAlreadyConsumed) {
+          // A previous load on this token already ran verifyOtp.
+          // Read the persisted session and proceed as if verification
+          // succeeded. If somehow no session is present, fall through
+          // to the verify call (it will likely 403 and the
+          // post-error session check below will handle it).
+          var sessPreRes = await window.supabaseClient.auth.getSession();
+          if (sessPreRes.data && sessPreRes.data.session) {
+            verify = { data: sessPreRes.data, error: null };
+          } else {
+            verify = await window.supabaseClient.auth.verifyOtp({
+              token_hash: tokenHash,
+              type: tokenType
+            });
+          }
+        } else {
+          // Set the flag BEFORE the call so parallel loads see it as
+          // soon as it's written. Even if our verifyOtp ultimately
+          // fails (network glitch), subsequent loads will pick up
+          // wherever it landed via the session check below.
+          try {
+            localStorage.setItem(otpStorageKey, JSON.stringify({ ts: Date.now() }));
+          } catch (e) { /* localStorage unavailable — proceed without guard */ }
+
+          verify = await window.supabaseClient.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: tokenType
+          });
+        }
         // Strip the token params so a refresh doesn't retry a consumed token.
         window.history.replaceState({}, '', window.location.pathname);
         showLogin();
+
+        // ── Fix 2: treat otp_expired as benign if a session exists ─
+        // If verifyOtp returned an error, a parallel page load may
+        // have just consumed the token and established a session for
+        // this user. Check getSession() before deciding it's a real
+        // failure — if a session exists, the error is collateral
+        // damage from the multi-load issue and we proceed normally.
+        if (verify && verify.error) {
+          var sessAfterRes = await window.supabaseClient.auth.getSession();
+          if (sessAfterRes.data && sessAfterRes.data.session && sessAfterRes.data.session.user) {
+            console.log('[login] verifyOtp returned error but session is present; treating as already-confirmed:', verify.error.message || verify.error);
+            verify = { data: sessAfterRes.data, error: null };
+          }
+        }
+
         if (verify.error) {
           console.error('[login] verifyOtp error:', verify.error);
           showError('Email confirmation link is invalid or expired. Try signing up again or request a new link.');
