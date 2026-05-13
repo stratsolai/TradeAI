@@ -29,16 +29,30 @@ async function signUp(email, password, businessName, phone, industry) {
     if (authError) throw authError;
 
     if (authData.user) {
-      const { error: profileError } = await supabaseClient
-        .from('profiles')
-        .update({
+      // SRL Cohort Architecture Addendum v1.2 — signup writes `industry`,
+      // a cohort-determining field. Route through api/profile-save so
+      // cohort_id and the new-cohort enqueue check run server-side.
+      // Note: at signup the user has only supplied industry — state and
+      // postcode come later via the Location panel — so cohort_id will
+      // resolve to null on this call and no enqueue happens here. The
+      // first enqueue typically fires from the Location-panel save.
+      const session = authData.session;
+      if (!session || !session.access_token) {
+        throw new Error('Signup succeeded but session is unavailable; please log in to complete your profile.');
+      }
+      const apiRes = await fetch('/api/profile-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify({
           business_name: businessName,
           phone: phone,
           industry: industryArr
         })
-        .eq('id', authData.user.id);
-
-      if (profileError) throw profileError;
+      });
+      const apiData = await apiRes.json().catch(function() { return {}; });
+      if (!apiRes.ok || !apiData.success) {
+        throw new Error(apiData.error || ('Profile save failed: ' + apiRes.status));
+      }
     }
 
     // Clear signup sessionStorage after successful signup
