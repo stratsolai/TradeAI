@@ -130,14 +130,64 @@
     
 
     /* Messages */
-    .error {
-      background:rgba(220,50,50,0.15); border:1px solid rgba(220,50,50,0.3);
-      color:#ff8a8a; padding:11px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none;
+    /* Message modal — replaces the old .error / .success inline divs
+       per the platform's perm-modal pattern (white card on a dim
+       overlay, OK to acknowledge). Classes are local to login.html
+       because the page is self-contained and intentionally does not
+       load staxai-auth.css; visual treatment mirrors the platform
+       perm-modal classes but does not depend on them. */
+    .msg-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
     }
-    .success {
-      background:rgba(16,185,129,0.12); border:1px solid rgba(16,185,129,0.3);
-      color:#6ee7b7; padding:11px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; display:none;
+    .msg-modal-overlay.open { display: flex; }
+    .msg-modal-card {
+      background: #ffffff;
+      color: #1f2937;
+      border-radius: 16px;
+      padding: 28px 28px 20px;
+      max-width: 460px;
+      width: 100%;
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.35);
+      font-family: var(--body-font);
     }
+    .msg-modal-title {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--blue-dark);
+    }
+    .msg-modal-body {
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+      color: #1f2937;
+    }
+    .msg-modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    .msg-modal-ok {
+      background: var(--blue);
+      color: #ffffff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--body-font);
+      transition: background 0.18s ease;
+    }
+    .msg-modal-ok:hover { background: var(--blue-dark); }
 
     #login-form { display:block; }
     
@@ -208,9 +258,6 @@
     <button class="tab" onclick="showSignup()">Sign Up</button>
   </div>
 
-  <div class="error" id="error-message"></div>
-  <div class="success" id="success-message"></div>
-
   <!-- Login Form -->
   <form id="login-form">
     <div class="form-group">
@@ -263,6 +310,19 @@
 
 </div>
 
+<!-- Signup-flow message modal — single reusable modal used by
+     showError and showSuccess to display confirmation, error, and
+     status messages on this page. Click OK or backdrop to dismiss. -->
+<div class="msg-modal-overlay" id="signup-msg-modal" role="dialog" aria-modal="true" aria-labelledby="signup-msg-modal-title">
+  <div class="msg-modal-card">
+    <div class="msg-modal-title" id="signup-msg-modal-title">Notice</div>
+    <div class="msg-modal-body" id="signup-msg-modal-body"></div>
+    <div class="msg-modal-actions">
+      <button type="button" class="msg-modal-ok" id="signup-msg-modal-ok">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- Supabase JS SDK -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js"></script>
 <!-- Our Supabase client -->
@@ -280,21 +340,43 @@
   // needed) or are recovering from a failed one (handled by the
   // safety-net trial-setup logic below).
 
+  // Message modal helpers — render to the #signup-msg-modal overlay
+  // rather than the old inline error/success divs. The owner-confirmed
+  // pattern is "modal that requires a click to acknowledge", matching
+  // the perm-modal pattern used elsewhere on the platform.
+  //
+  // showError(msg, title?) and showSuccess(msg, title?) both render to
+  // the same modal — the visual treatment is identical (white card on
+  // a dim backdrop, single OK button). The optional title lets call
+  // sites surface a meaningful heading (e.g., "Email confirmed",
+  // "Account created"); a sensible default is used otherwise.
+  function _showMsgModal(title, body) {
+    var modal = document.getElementById('signup-msg-modal');
+    if (!modal) return;
+    var titleEl = document.getElementById('signup-msg-modal-title');
+    var bodyEl = document.getElementById('signup-msg-modal-body');
+    var btnEl = document.getElementById('signup-msg-modal-ok');
+    if (titleEl) titleEl.textContent = title || 'Notice';
+    if (bodyEl) bodyEl.textContent = body || '';
+    modal.classList.add('open');
+
+    function close() { modal.classList.remove('open'); }
+
+    // Direct-assignment overrides any prior handler from earlier
+    // openings of the same modal — the modal element is reused.
+    if (btnEl) btnEl.onclick = close;
+    modal.onclick = function(e) { if (e.target === modal) close(); };
+  }
+
   function hideMessages() {
-    var em = document.getElementById('error-message');
-    var sm = document.getElementById('success-message');
-    if (em) { em.style.display = 'none'; em.textContent = ''; }
-    if (sm) { sm.style.display = 'none'; sm.textContent = ''; }
+    var modal = document.getElementById('signup-msg-modal');
+    if (modal) modal.classList.remove('open');
   }
-  function showError(msg) {
-    hideMessages();
-    var em = document.getElementById('error-message');
-    if (em) { em.textContent = msg; em.style.display = 'block'; }
+  function showError(msg, title) {
+    _showMsgModal(title || 'Heads up', msg);
   }
-  function showSuccess(msg) {
-    hideMessages();
-    var sm = document.getElementById('success-message');
-    if (sm) { sm.textContent = msg; sm.style.display = 'block'; }
+  function showSuccess(msg, title) {
+    _showMsgModal(title || 'All set', msg);
   }
   document.addEventListener("DOMContentLoaded", async function() {
     var params = new URLSearchParams(window.location.search);
@@ -469,7 +551,7 @@
                 ? finaliseError
                 : 'Email confirmed, but we could not finish setting up your account just now. Please sign in to continue — we will finish setup automatically on sign-in.');
             } else {
-              showSuccess('Email confirmed. Please sign in.');
+              showSuccess('Email confirmed. Please sign in.', 'Email confirmed');
             }
           }
         }
@@ -705,7 +787,7 @@
       // user must click their email link, which triggers the
       // verifyOtp handler above. Keep them on /login with the
       // success message; no redirect.
-      showSuccess("Account created. Please check your email to verify your account.");
+      showSuccess("Account created. Please check your email to verify your account.", "Account created");
     });
   });
 
