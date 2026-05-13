@@ -412,31 +412,43 @@
         try { industries = JSON.parse(storedIndustries); } catch(e) {}
       }
       if (industries.length === 0) { showError("No industries selected. Please go back and select your industries."); return; }
+
+      // Stash BP fields and signup-path indicator for the post-confirmation
+      // handler. supabase.auth.signUp returns session: null when email
+      // confirmation is enabled, so the browser cannot write profiles
+      // here — RLS rejects writes with no auth.uid(). Instead, the
+      // verifyOtp handler picks these up after the user clicks the
+      // confirmation link and forwards them to the server-side
+      // /api/profile-save and /api/trial-setup endpoints.
+      //
+      // signup_path tells the post-confirmation handler whether to fire
+      // trial setup. Path A (single-tool activate from panel.html) sets
+      // signup_post_action with type=single_tool — those users go to
+      // Stripe checkout, no trial. All other paths trial.
+      //
+      // Fresh-tab caveat: sessionStorage doesn't survive across browser
+      // tabs. A user who opens the email link in a fresh tab loses these
+      // values. The post-confirmation handler defaults to 'trial' when
+      // signup_path is missing (safest behaviour for the majority case)
+      // and skips the BP write when the BP fields are absent (the user
+      // still completes BP via the dashboard's first-login modal).
+      try {
+        sessionStorage.setItem("signup_business_name", businessName || "");
+        sessionStorage.setItem("signup_phone", phone || "");
+        var postAction = sessionStorage.getItem("signup_post_action");
+        var signupPath = "trial";
+        if (postAction) {
+          try {
+            var parsed = JSON.parse(postAction);
+            if (parsed && parsed.type === "single_tool") signupPath = "single_tool";
+          } catch (e) { /* malformed; fall through to default 'trial' */ }
+        }
+        sessionStorage.setItem("signup_path", signupPath);
+      } catch (e) { /* sessionStorage unavailable — handler falls back to defaults */ }
+
       var result = await signUp(email, password, businessName, phone, industries);
       if (result.success) {
-        var userId = result.data && result.data.user ? result.data.user.id : null;
-        if (userId) {
-          // Every new signup is a STAXALL 14-day trial with all tools active.
-          // Trial gives 14 full days plus the signup day, so signing up Mon 5th
-          // expires at midnight Mon 19th → Tue 20th. (+15 + setHours(0) lands
-          // on the start-of-day-15 boundary in local time.)
-          var expiresAt = new Date();
-          expiresAt.setDate(expiresAt.getDate() + 15);
-          expiresAt.setHours(0, 0, 0, 0);
-          await window.supabaseClient.from("profiles").upsert({
-            id: userId,
-            activated_tools: ["chatbot","social","email","strategic-plan","news-digest","bi","tender","quote-enhancer","swms","customer-updates","handover-docs","review-booster","design-viz"],
-            trial_expires_at: expiresAt.toISOString(),
-            bundle_tier: "stax-all",
-            is_trial: true,
-            trial_used: true
-          });
-        }
-        sessionStorage.removeItem("signup_industries");
         showSuccess("Account created. Please check your email to verify your account.");
-
-        if (await dispatchPostAuthAction(userId)) return;
-
         setTimeout(function() { window.location.href = "/dashboard.html"; }, 2000);
       } else {
         showError(result.error || "Signup failed. Please try again.");
