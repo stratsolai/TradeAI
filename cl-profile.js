@@ -910,8 +910,21 @@ Object.assign(window.CL_PROFILE, {
         years_in_business: parseInt(yearsEl.value) || null,
         employee_range: (teamSizeEl && teamSizeEl.getAttribute('data-value')) || ''
       };
-      var res = await self._supabase.from('profiles').update(updates).eq('id', self._userId);
-      if (res.error) throw new Error(res.error.message);
+      // SRL Cohort Architecture Addendum v1.2 — Identity panel writes
+      // `industry`, which is a cohort-determining field. Route through
+      // api/profile-save so cohort_id is recomputed and any new-cohort
+      // SRL refresh is enqueued server-side. Browser no longer writes
+      // profiles directly for this panel.
+      var sessionRes = await self._supabase.auth.getSession();
+      var session = sessionRes.data && sessionRes.data.session;
+      if (!session || !session.access_token) throw new Error('No active session');
+      var apiRes = await fetch('/api/profile-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + session.access_token },
+        body: JSON.stringify(updates)
+      });
+      var apiData = await apiRes.json().catch(function() { return {}; });
+      if (!apiRes.ok || !apiData.success) throw new Error(apiData.error || ('Profile save failed: ' + apiRes.status));
       Object.assign(self._profile, updates);
       if (autoSave) self._showSaved('identity');
     }, document.getElementById('prof-save-msg'));
