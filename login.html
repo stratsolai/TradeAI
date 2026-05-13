@@ -344,10 +344,98 @@
           console.error('[login] verifyOtp error:', verify.error);
           showError('Email confirmation link is invalid or expired. Try signing up again or request a new link.');
         } else {
-          // verifyOtp creates a session — sign out so the user logs in
-          // with their password rather than being silently signed in.
+          // verifyOtp creates a transient session — use it to land the
+          // BP fields and (for trial paths) the trial state before
+          // signing the user out. The writes that the signup form
+          // couldn't perform (session was null after auth.signUp under
+          // email confirmation) happen here instead, against the same
+          // user id, with a valid JWT.
+          //
+          // sessionStorage reads tolerate missing keys (fresh-tab
+          // scenario where the email link opened in a different tab):
+          //   - missing BP fields → skip profile-save (user fills BP
+          //     at first login via the existing first-login BP modal)
+          //   - missing signup_path → default to 'trial' (the majority
+          //     case; Path A users in a fresh tab degrade to trial,
+          //     documented edge)
+          //
+          // Both endpoints are idempotent — the sign-in handler below
+          // also fires /api/trial-setup as a safety net for users
+          // whose post-confirmation handler failed mid-flight.
+          var finaliseError = null;
+          try {
+            var sessRes = await window.supabaseClient.auth.getSession();
+            var session = sessRes.data && sessRes.data.session;
+            if (!session || !session.access_token) throw new Error('No transient session after verifyOtp');
+            var token = session.access_token;
+
+            var bpBody = {};
+            var bn = sessionStorage.getItem('signup_business_name');
+            var ph = sessionStorage.getItem('signup_phone');
+            var indRaw = sessionStorage.getItem('signup_industries');
+            if (bn && bn.trim()) bpBody.business_name = bn.trim();
+            if (ph && ph.trim()) bpBody.phone = ph.trim();
+            if (indRaw) {
+              try {
+                var indParsed = JSON.parse(indRaw);
+                if (Array.isArray(indParsed) && indParsed.length > 0) bpBody.industry = indParsed;
+              } catch (e) { /* malformed — skip industry */ }
+            }
+            if (Object.keys(bpBody).length > 0) {
+              var bpRes = await fetch('/api/profile-save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: JSON.stringify(bpBody)
+              });
+              var bpData = await bpRes.json().catch(function() { return {}; });
+              if (!bpRes.ok || !bpData.success) {
+                console.error('[login] BP save failed:', bpData.error || bpRes.status);
+                finaliseError = bpData.error || ('Profile save failed: ' + bpRes.status);
+              }
+            }
+
+            // Default to 'trial' when signup_path is missing — Path A
+            // users carry signup_path='single_tool' in their tab and
+            // only skip trial-setup when that value is present.
+            var signupPath = sessionStorage.getItem('signup_path') || 'trial';
+            if (signupPath === 'trial') {
+              var tsRes = await fetch('/api/trial-setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+                body: '{}'
+              });
+              var tsData = await tsRes.json().catch(function() { return {}; });
+              if (!tsRes.ok || !tsData.success) {
+                console.error('[login] Trial setup failed:', tsData.error || tsRes.status);
+                if (!finaliseError) finaliseError = tsData.error || ('Trial setup failed: ' + tsRes.status);
+              }
+            }
+
+            // Clear consumed signup keys. signup_post_action stays —
+            // it's read by dispatchPostAuthAction at first sign-in to
+            // fire Path A's Stripe checkout.
+            sessionStorage.removeItem('signup_industries');
+            sessionStorage.removeItem('signup_business_name');
+            sessionStorage.removeItem('signup_phone');
+            sessionStorage.removeItem('signup_path');
+          } catch (e) {
+            console.error('[login] Post-confirmation finalise exception:', e && e.message);
+            finaliseError = e && e.message;
+          }
+
+          // Sign out regardless — the transient session was a means to
+          // an end. The user must sign in with their password.
           await window.supabaseClient.auth.signOut();
-          showSuccess('Email confirmed. Please sign in.');
+
+          if (finaliseError) {
+            // Soft error: the email IS confirmed; the account exists;
+            // missing pieces can be recovered. The sign-in handler
+            // re-fires trial-setup if trial_used is still false, and
+            // BP can be completed via the first-login BP modal.
+            showError('Email confirmed, but we could not finish setting up your account just now. Please sign in to continue — we will finish setup automatically on sign-in.');
+          } else {
+            showSuccess('Email confirmed. Please sign in.');
+          }
         }
         return;
       } catch (e) {
@@ -380,6 +468,35 @@
         var result = await Promise.race([signIn(email, password), timeout]);
         if (result.success) {
           var loggedInUserId = result.data && result.data.user ? result.data.user.id : null;
+
+          // Trial-setup safety net. If the post-confirmation handler
+          // failed (network glitch, transient server error, fresh-tab
+          // sessionStorage loss for a Path A user, etc.), the user
+          // signs in with trial_used still false. Re-fire trial-setup
+          // here — the endpoint is idempotent and no-ops if trial_used
+          // is already true. The Path A check guards against giving a
+          // trial to a user mid-Stripe-checkout: signup_post_action
+          // present in this tab means we're about to redirect to
+          // Stripe; trial-setup is skipped so the webhook can write
+          // bundle/activation state cleanly.
+          try {
+            var hasPathAIntent = !!sessionStorage.getItem('signup_post_action');
+            if (!hasPathAIntent && result.data && result.data.session && result.data.session.access_token) {
+              var ts = await fetch('/api/trial-setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + result.data.session.access_token },
+                body: '{}'
+              });
+              if (!ts.ok) {
+                var tsErr = await ts.json().catch(function() { return {}; });
+                console.error('[login] sign-in trial-setup safety net failed:', tsErr.error || ts.status);
+              }
+            }
+          } catch (e) {
+            console.error('[login] sign-in trial-setup safety net exception:', e && e.message);
+            // Non-fatal — dashboard render handles missing trial state.
+          }
+
           if (await dispatchPostAuthAction(loggedInUserId)) return;
           window.location.href = "/dashboard.html";
         } else {
