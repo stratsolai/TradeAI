@@ -44,13 +44,13 @@ export default async function handler(req, res) {
       metadata.tier = null;
     }
 
-    // The NEXT_PUBLIC_BASE_URL env var is a leftover from a Next.js
-    // template — this platform isn't Next.js and the var is unset on
-    // Vercel. Concatenating undefined produced 'undefined/dashboard.html'
-    // which Stripe rejected with "Invalid URL: An explicit scheme...".
-    // Fall back to the production URL when the env var isn't set,
-    // matching api/switch-bundle.js's existing pattern.
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://staxai.com.au';
+    // Platform URL used for Stripe success/cancel redirects. Single
+    // env-var SITE_URL with a hardcoded production fallback — matches
+    // the SITE_URL constant pattern in api/bi-context.js,
+    // api/bi-operations.js, api/bi-projects.js. The previous name
+    // (NEXT_PUBLIC_BASE_URL) was a Next.js template leftover; this
+    // platform is vanilla HTML/CSS/JS + Vercel serverless functions.
+    const baseUrl = process.env.SITE_URL || 'https://staxai.com.au';
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],

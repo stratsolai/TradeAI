@@ -99,7 +99,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://staxai.com.au';
+    const baseUrl = process.env.SITE_URL || 'https://staxai.com.au';
     const sharedMeta = {
       userId: user.id,
       tier: tier,
