@@ -8,6 +8,29 @@
  * object so methods cross-reference each other freely. The marketing
  * wizard itself lives in cl-profile-marketing.js as window.BP_MARKETING.
  */
+
+// @BP_FIELDS:identity — single source of truth for the fields this
+// panel writes to profiles via /api/profile-save. Read by the
+// endpoint at module load time (fs.readFileSync on this file +
+// regex extract) to derive its allow-list. To add a new BP field:
+// add it here, add its UI element below, add it to the updates
+// object in _saveIdentity. The endpoint accepts it automatically
+// on the next deploy with no separate sync. Do not rename the
+// `window.BP_FIELDS_IDENTITY` identifier — the endpoint parser
+// anchors on it.
+window.BP_FIELDS_IDENTITY = [
+  'business_name',
+  'trading_name',
+  'phone',
+  'abn',
+  'business_structure',
+  'industry',
+  'years_in_business',
+  'employee_range',
+  'logo_url',
+  'marketing_theme_extra'
+];
+
 window.CL_PROFILE = window.CL_PROFILE || {};
 Object.assign(window.CL_PROFILE, {
   _supabase: null, _userId: null, _profile: {},

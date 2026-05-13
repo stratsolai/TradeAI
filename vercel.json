@@ -50,6 +50,9 @@
     "api/shared-research-refresh.js": {
       "maxDuration": 90
     },
+    "api/profile-save.js": {
+      "includeFiles": "cl-profile*.js"
+    },
     "api/news-digest-scheduler.js": {
       "maxDuration": 60
     },

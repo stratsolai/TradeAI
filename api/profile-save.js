@@ -30,30 +30,109 @@
 //   - cohort_id non-null, cohort has no current rows AND no
 //     pending job                                          → enqueue
 
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
-// Allowed profile fields. Curated against the fields written by
-// cl-profile.js, cl-profile-location.js, and auth.js — the three
-// files in Pass B's switchover scope. Other profile writers
-// (cl-profile-products.js, cl-profile-marketing.js) continue to
-// write profiles directly; their fields are intentionally absent
-// from this allow-list and would be rejected if a future caller
-// tried to route them through here.
-const ALLOWED_FIELDS = new Set([
-  // Identity panel + signup
-  'business_name', 'trading_name', 'phone', 'abn',
-  'business_structure', 'industry', 'years_in_business',
-  'employee_range', 'logo_url', 'marketing_theme_extra',
-  // Location panel
-  'address_name', 'address_unit', 'address_street', 'address_suburb',
-  'address_state', 'address_postcode',
-  'additional_phones', 'additional_locations',
-  'website_urls', 'service_area', 'trading_hours'
-]);
+// ---------------------------------------------------------------------------
+// Allow-list — derived from the BP UI source files at module load
+// ---------------------------------------------------------------------------
+//
+// Single source of truth for the field list lives in the BP UI files:
+//   cl-profile.js          → window.BP_FIELDS_IDENTITY = [...]
+//   cl-profile-location.js → window.BP_FIELDS_LOCATION = [...]
+//
+// This endpoint reads those files at module load time and extracts
+// the arrays. Adding a field in the BP UI automatically makes the
+// endpoint accept it on the next deploy. Removing or renaming a
+// field in the BP UI automatically tightens the allow-list.
+//
+// vercel.json's `includeFiles` for this function pulls those source
+// files into the function bundle so fs.readFileSync resolves on the
+// deployed lambda.
+//
+// PROTECTED_COLUMNS lists profile columns that must NEVER be writable
+// via this endpoint regardless of what the UI declares. A module-load
+// assertion fails the deploy if the UI ever names one of these by
+// mistake, rather than silently allowing the write.
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = path.join(__dirname, '..');
+
+// Files containing window.BP_FIELDS_* declarations. Order doesn't
+// matter — the resulting allow-list is the union.
+const BP_FIELD_SOURCES = [
+  path.join(REPO_ROOT, 'cl-profile.js'),
+  path.join(REPO_ROOT, 'cl-profile-location.js')
+];
+
+// Profile columns that must remain server-controlled regardless of
+// what the UI files name. The module-load assertion below fails if
+// any of these slip into a BP_FIELDS_* declaration by mistake.
+const PROTECTED_COLUMNS = [
+  'id', 'cohort_id', 'created_at', 'updated_at',
+  'is_admin',
+  'is_trial', 'trial_used', 'trial_expires_at', 'activated_tools', 'bundle_tier',
+  'stripe_customer_id', 'stripe_subscription_id'
+];
+
+// Extract every `window.BP_FIELDS_<NAME> = [ ... ]` array from a
+// JS source file. Returns the merged array of field names; logs and
+// returns [] on read failure or parser miss so a stale path / moved
+// file surfaces in deployment logs rather than silently producing
+// an empty allow-list.
+function readBpFields(filePath) {
+  let src;
+  try {
+    src = fs.readFileSync(filePath, 'utf8');
+  } catch (e) {
+    console.error('[BPSave] Could not read BP fields source — path: ' + filePath + ', message: ' + (e && e.message));
+    return [];
+  }
+  // The regex matches `window.BP_FIELDS_X = [` then captures everything
+  // up to the next `]`. The `g` flag means we pick up every declaration
+  // in the file (today there's one per file, but the parser doesn't
+  // assume that).
+  const re = /window\.BP_FIELDS_[A-Z_]+\s*=\s*\[([\s\S]*?)\]/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(src)) !== null) {
+    const body = m[1];
+    // Body is a comma-separated list of quoted strings (possibly
+    // multi-line, possibly with inline comments). Pull out each
+    // quoted token.
+    const tokenRe = /['"]([a-zA-Z_][a-zA-Z0-9_]*)['"]/g;
+    let t;
+    while ((t = tokenRe.exec(body)) !== null) {
+      out.push(t[1]);
+    }
+  }
+  if (out.length === 0) {
+    console.error('[BPSave] BP_FIELDS marker not found or empty — path: ' + filePath);
+  }
+  return out;
+}
+
+const ALLOWED_FIELDS = new Set();
+for (const filePath of BP_FIELD_SOURCES) {
+  for (const f of readBpFields(filePath)) ALLOWED_FIELDS.add(f);
+}
+
+// Module-load deny-list assertion. If any BP UI file declares a
+// protected column, fail fast at deploy rather than silently
+// allowing the write.
+for (const col of PROTECTED_COLUMNS) {
+  if (ALLOWED_FIELDS.has(col)) {
+    throw new Error('[BPSave] Protected column appears in BP_FIELDS declarations — refusing to start: ' + col);
+  }
+}
+
+console.log('[BPSave] Allow-list initialised — fields: ' + ALLOWED_FIELDS.size);
 
 // ---------------------------------------------------------------------------
 // cohort_id computation

@@ -6,6 +6,28 @@
  * so methods cross-call freely with the shell, form primitives, and
  * validation helpers in cl-profile.js.
  */
+
+// @BP_FIELDS:location — single source of truth for the fields this
+// panel writes to profiles via /api/profile-save. Read by the
+// endpoint at module load time (fs.readFileSync on this file +
+// regex extract) to derive its allow-list. See cl-profile.js for
+// the maintenance contract. Do not rename the
+// `window.BP_FIELDS_LOCATION` identifier — the endpoint parser
+// anchors on it.
+window.BP_FIELDS_LOCATION = [
+  'address_name',
+  'address_unit',
+  'address_street',
+  'address_suburb',
+  'address_state',
+  'address_postcode',
+  'additional_phones',
+  'additional_locations',
+  'website_urls',
+  'service_area',
+  'trading_hours'
+];
+
 window.CL_PROFILE = window.CL_PROFILE || {};
 Object.assign(window.CL_PROFILE, {
 
