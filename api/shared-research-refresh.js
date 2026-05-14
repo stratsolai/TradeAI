@@ -426,9 +426,15 @@ export default async function handler(req, res) {
         items_in: info.items_in || 0,
         items_out: info.items_out || 0,
         input_tokens: info.input_tokens || 0,
-        output_tokens: info.output_tokens || 0
+        output_tokens: info.output_tokens || 0,
+        // Pass D.10 — per-batch ok/error surfaced so silent batch
+        // failures (e.g. JSON parse failure where output_tokens look
+        // normal but items_out is 0) are visible in the dry-run
+        // response, not only in Vercel function logs.
+        ok: info.ok,
+        error: info.error || null
       };
-      console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}`);
+      console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}, ok: ${info.ok}`);
     }
     timings.curation_per_category_ms = perCategoryMs;
     timings.curation_per_category_breakdown = breakdown;
