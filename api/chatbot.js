@@ -103,7 +103,6 @@ async function buildSystemPrompt(supabase, userId, settings) {
   if (p.address_state) location += p.address_state + ' ';
   if (p.address_postcode) location += p.address_postcode;
   if (location) parts.push('Location: ' + location.trim() + '.');
-  if (p.phone) parts.push('Phone: ' + p.phone + '.');
   if (p.additional_phones && p.additional_phones.length > 0) {
     parts.push('Additional phones: ' + p.additional_phones.map(function(ph) { return (ph.label || '') + ' ' + (ph.number || ''); }).join(', ') + '.');
   }

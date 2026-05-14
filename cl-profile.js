@@ -21,7 +21,6 @@
 window.BP_FIELDS_IDENTITY = [
   'business_name',
   'trading_name',
-  'phone',
   'abn',
   'business_structure',
   'industry',
