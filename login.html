@@ -394,6 +394,8 @@
     // email is never marked confirmed and the user stays locked out.
     var tokenHash = params.get('token_hash');
     var tokenType = params.get('type');
+    // [signin-debug] TEMP — remove after Issue 3 diagnosed
+    console.log('[signin-debug] DOMContentLoaded entered — has_token_hash:', !!tokenHash, 'pathname:', window.location.pathname, 'ts:', Date.now());
     if (tokenHash && tokenType && window.supabaseClient) {
       try {
         // ── Idempotency guard ───────────────────────────────────
@@ -634,6 +636,8 @@
             }
           }
         }
+        // [signin-debug] TEMP — remove after Issue 3 diagnosed
+        console.log('[signin-debug] verifyOtp block returning EARLY from DOMContentLoaded — login/signup form handlers WILL NOT be attached this page load, ts:', Date.now());
         return;
       } catch (e) {
         console.error('[login] verifyOtp exception:', e && e.message);
@@ -646,8 +650,12 @@
     showLogin();
     if (params.get("tab") === "signup") showSignup();
 
+    // [signin-debug] TEMP — remove after Issue 3 diagnosed
+    console.log('[signin-debug] reached login-form addEventListener attach line — handler about to be wired, ts:', Date.now());
     // Handle login
     document.getElementById("login-form").addEventListener("submit", async function(e) {
+      // [signin-debug] TEMP — remove after Issue 3 diagnosed
+      console.log('[signin-debug] LOGIN FORM SUBMIT HANDLER FIRED — first line, before preventDefault, ts:', Date.now());
       e.preventDefault();
       hideMessages();
       var btn = e.target.querySelector('button[type="submit"]');
