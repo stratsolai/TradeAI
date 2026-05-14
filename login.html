@@ -113,6 +113,19 @@
       border-color:var(--blue-light); background:rgba(255,255,255,0.1);
       box-shadow:0 0 0 3px rgba(26,84,144,0.25);
     }
+    /* Suppress browser autofill yellow/cream background on dark theme.
+       -webkit-box-shadow inset is the only way to override the user-agent
+       autofill paint; -webkit-text-fill-color forces text colour because
+       autofill ignores plain `color`. */
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 1000px #252D41 inset;
+      -webkit-text-fill-color: #fff;
+      caret-color: #fff;
+      transition: background-color 5000s ease-in-out 0s;
+    }
     select option { background:#1a2a4a; color:white; }
 
     /* Forgot link */
