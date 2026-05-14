@@ -3,7 +3,8 @@
 // SRL Cohort Architecture Addendum v1.2:
 //   §4.1 — shared_research is cohort-scoped (cohort_id, not user_id)
 //   §4.2 — shared_research_refreshes is cohort-scoped; triggered_by_tool
-//          CHECK constraint narrowed to 'cron'
+//          CHECK constraint admits 'cron' (cron pipeline + BP-save
+//          enqueue) and 'admin' (JWT diagnostic path)
 //   §7.1 — Endpoint body shape: { cohort_id, force_refresh, dry }
 //   §7.2 — Auth: x-cron-secret (production) OR JWT (administrators only)
 //   §7.3 — Response shape: profile_summary renamed cohort_summary
@@ -641,11 +642,12 @@ export default async function handler(req, res) {
   const durationMs = Date.now() - t0;
 
   // shared_research_refreshes — written for EVERY outcome. The
-  // triggered_by_tool column's CHECK constraint accepts only 'cron'
-  // (Addendum §4.2), so both the cron path and the admin-diagnostic
-  // path tag the row 'cron'. Admin-triggered diagnostics remain
-  // distinguishable in logs and via the userId on the cache_access
-  // rows that the admin path produces.
+  // triggered_by_tool column's CHECK constraint now admits 'cron'
+  // and 'admin' (Phase 7 schema change). Cron-triggered refreshes
+  // (scheduler, worker, BP-save enqueue) write 'cron'; admin
+  // diagnostic refreshes via the JWT path write 'admin' so the two
+  // are distinguishable on the audit row itself, not just via the
+  // userId on cache_access rows.
   //
   // Column shape (Addendum §4.2): the six per-refresh stats values
   // (queries_run, cache_hits, raw_items, curated_items,
@@ -657,7 +659,7 @@ export default async function handler(req, res) {
   const refreshRowRes = await writeRefreshRow(supabase, {
     id: refreshId,
     cohort_id: cohortId,
-    triggered_by_tool: 'cron',
+    triggered_by_tool: usingCron ? 'cron' : 'admin',
     stats: {
       queries_run: queriesRun,
       cache_hits: cacheHits,
