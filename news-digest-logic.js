@@ -10,10 +10,14 @@ window.ND_LOGIC = {
   // _briefings (old) feeds Summary only — that tab is out of scope
   // for Phase 5 and continues to render against the soon-to-be-empty
   // briefing source.
-  // _curatedItems (new) feeds the five category tabs. Keyed by
-  // category (regulatory / industry-news / suppliers / economic /
-  // technology), each value is an array of shared_research rows
-  // for this user where is_current = true.
+  // _curatedItems feeds the five category tabs. Keyed by category
+  // (regulatory / industry-news / suppliers / economic / technology),
+  // each value is an array of shared_research rows. Starts and stays
+  // empty after the SRL Cohort Architecture migration — the cohort-
+  // aware page-load read is ID's tool review work (Addendum §13 out
+  // of scope for the SRL rebuild). _renderCategory handles the
+  // empty case by showing the per-tab empty-state element, so the
+  // page loads cleanly with no news items rendered.
 
   CATEGORIES: [
     { id: 'regulatory', label: 'Rules' },
@@ -90,12 +94,13 @@ window.ND_LOGIC = {
     var token = session.access_token;
 
     // The Refresh button now only refreshes the Grants & Tenders
-    // tab. SRL Cohort Architecture Addendum v1.2 §12 removed the
-    // _refreshSharedResearch path; the five news tabs stay rendered
-    // from the initial page load (see _loadCuratedItems) until ID's
-    // tool review redesigns the cohort-aware re-read flow (§13 out
-    // of scope for the SRL rebuild). The button is intentionally
-    // left visible so the tender refresh continues to work.
+    // tab. SRL Cohort Architecture Addendum v1.2 §12 removed both
+    // the _refreshSharedResearch trigger and the page-load
+    // _loadCuratedItems read; the five news tabs render their
+    // empty-state elements until ID's tool review wires a cohort-
+    // aware read + re-read flow (§13 out of scope for the SRL
+    // rebuild). The button is intentionally left visible so the
+    // tender refresh continues to work.
     var tenderPromise = this._refreshTenders(token).catch(function(e) {
       console.error('[ND] Tender refresh error:', e && e.message);
       self._showError('Could not refresh tenders. Please try again.');
@@ -159,52 +164,18 @@ window.ND_LOGIC = {
   _loadData: async function() {
     await Promise.all([
       this._loadBriefings(),
-      this._loadCuratedItems(),
       this._loadTenders(),
       this._loadSettings()
     ]);
     this._renderAll();
   },
 
-  _loadCuratedItems: async function() {
-    // Page-load read of curated research from shared_research. The
-    // .eq('user_id', ...) predicate is broken after the SRL Cohort
-    // Architecture migration — shared_research is now cohort-scoped
-    // (Addendum §4.1) — and the Supabase query will return an error
-    // when the column doesn't resolve. That's caught below and falls
-    // through to an empty grouped object, so the news tabs render
-    // empty until ID's tool review redesigns the cohort-aware read
-    // (Addendum §13 out of scope for the SRL rebuild).
-    //
-    // Listings Addendum §6.1 — ID renders factual briefings only and
-    // must not show marketplace listings. The item_type predicate
-    // stays so it's ready when the tool review wires this back up.
-    try {
-      var res = await this._supabase
-        .from('shared_research')
-        .select('title, summary, url, source_name, source_domain, source_type, lens, category, published_date')
-        .eq('user_id', this._userId)
-        .eq('is_current', true)
-        .eq('item_type', 'content');
-      if (res.error) {
-        console.error('[ND] Load curated items error:', res.error.message);
-        this._curatedItems = {};
-        return;
-      }
-      var grouped = {};
-      var rows = res.data || [];
-      for (var i = 0; i < rows.length; i++) {
-        var c = rows[i].category;
-        if (!c) continue;
-        if (!grouped[c]) grouped[c] = [];
-        grouped[c].push(rows[i]);
-      }
-      this._curatedItems = grouped;
-    } catch (e) {
-      console.error('[ND] Load curated items exception:', e.message);
-      this._curatedItems = {};
-    }
-  },
+  // _loadCuratedItems removed — SRL Cohort Architecture Addendum
+  // v1.2 §12 retired the per-user shared_research read. The
+  // cohort-aware page-load read is ID's tool review (§13 out of
+  // scope). _curatedItems stays as its initial {} so the news tabs
+  // render their empty-state elements via _renderCategory until
+  // the tool review wires the new read.
 
   _loadBriefings: async function() {
     try {
