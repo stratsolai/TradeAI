@@ -74,34 +74,43 @@ export default async function handler(req, res) {
   const userId = user.id;
 
   // ── Idempotency check ────────────────────────────────────────
+  // maybeSingle() returns data: null when the row doesn't exist
+  // (no error). This endpoint can be the first writer to profiles
+  // in the post-confirmation flow (the soft-degraded path where
+  // signup_pending was missing skips profile-save and lands here
+  // first) — the handle_new_user trigger has been removed, so
+  // profile row creation is now the upsert below. A null read
+  // means "trial not yet initialised, proceed".
   const profRes = await supabase
     .from('profiles')
     .select('trial_used')
     .eq('id', userId)
-    .single();
-  if (profRes.error || !profRes.data) {
-    console.error('[TrialSetup] Profile read failed — userId: ' + userId + ', message: ' + (profRes.error && profRes.error.message));
+    .maybeSingle();
+  if (profRes.error) {
+    console.error('[TrialSetup] Profile read failed — userId: ' + userId + ', message: ' + profRes.error.message);
     return res.status(500).json({ error: 'Could not load profile' });
   }
-  if (profRes.data.trial_used === true) {
+  if (profRes.data && profRes.data.trial_used === true) {
     console.log('[TrialSetup] No-op — trial already initialised, userId: ' + userId);
     return res.status(200).json({ success: true, already_initialised: true });
   }
 
   // ── Write trial fields ───────────────────────────────────────
+  // upsert with onConflict: 'id' so the row is created when this
+  // endpoint is the first writer in the post-confirmation flow.
   const trialExpiresAt = computeTrialExpiresAtIso();
   const upd = await supabase
     .from('profiles')
-    .update({
+    .upsert({
+      id: userId,
       bundle_tier: 'stax-all',
       is_trial: true,
       trial_expires_at: trialExpiresAt,
       trial_used: true,
       activated_tools: STAX_ALL_TOOLS
-    })
-    .eq('id', userId);
+    }, { onConflict: 'id' });
   if (upd.error) {
-    console.error('[TrialSetup] Update failed — userId: ' + userId + ', message: ' + upd.error.message);
+    console.error('[TrialSetup] Upsert failed — userId: ' + userId + ', message: ' + upd.error.message);
     return res.status(500).json({ error: upd.error.message });
   }
 
