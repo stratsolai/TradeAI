@@ -111,31 +111,13 @@ function buildMockRes() {
 }
 
 async function processJob(supabase, job) {
-  const startedAt = new Date().toISOString();
-  const nextAttempts = (job.attempts || 0) + 1;
-
-  // queued → in_progress with attempts incremented. Single
-  // statement covers the watchdog: stale rows still in_progress
-  // past the cutoff get re-queued by the watchdog block, with
-  // attempts incremented again.
-  //
-  // If this UPDATE fails the worker cannot reliably track the
-  // job — abort processing before firing the refresh handler so
-  // we don't run a refresh whose completion state we can't
-  // record. The row stays in its current state (typically still
-  // queued) and the next worker tick re-attempts the claim.
-  const claimRes = await supabase
-    .from('srl_cron_jobs')
-    .update({
-      status: 'in_progress',
-      started_at: startedAt,
-      attempts: nextAttempts
-    })
-    .eq('id', job.id);
-  if (claimRes.error) {
-    console.error('[srl-worker] Claim UPDATE failed — job:', job.id, 'cohort_id:', job.cohort_id, 'message:', claimRes.error.message);
-    return { jobId: job.id, outcome: 'claim_failed' };
-  }
+  // Job is already claimed: the handler's atomic-claim block flipped
+  // status to in_progress and incremented attempts before calling
+  // processJob. See the claim block in the main handler for the
+  // race-safety reasoning. job.attempts is the post-increment value
+  // — nextAttempts here just preserves the name used by the retry
+  // check below and the requeue log line.
+  const nextAttempts = job.attempts || 0;
 
   try {
     const mockReq = buildMockReq(job.cohort_id);
@@ -352,17 +334,51 @@ export default async function handler(req, res) {
     // ── Claim up to MAX_CONCURRENT_JOBS queued jobs ──────────────
     // FIFO by enqueued_at so brand-new-cohort enqueues from the BP
     // save endpoint don't starve behind the scheduler's daily wave.
-    const queuedRes = await supabase
+    //
+    // Phase 7 Finding 3 — atomic claim. The previous SELECT-then-
+    // UPDATE pattern was vulnerable to two overlapping cron ticks
+    // both reading the same queued row and both running the refresh.
+    // The fix: the UPDATE itself is the claim. .eq('status',
+    // 'queued') on the UPDATE means only rows still queued get
+    // flipped, and .select() returns the rows actually updated. If a
+    // worker reads a candidate but loses the race to flip, .select()
+    // returns an empty array and the candidate is skipped. Pure
+    // Supabase JS — no stored procedure required (FOR UPDATE SKIP
+    // LOCKED isn't expressible through the REST client).
+    const candidateRes = await supabase
       .from('srl_cron_jobs')
       .select('id, cohort_id, attempts')
       .eq('status', 'queued')
       .order('enqueued_at', { ascending: true })
       .limit(MAX_CONCURRENT_JOBS);
-    if (queuedRes.error) {
-      console.error('[srl-worker] Claim error:', queuedRes.error.message);
-      return res.status(500).json({ error: 'Failed to claim jobs' });
+    if (candidateRes.error) {
+      console.error('[srl-worker] Candidate read error:', candidateRes.error.message);
+      return res.status(500).json({ error: 'Failed to load candidate jobs' });
     }
-    const jobs = queuedRes.data || [];
+    const candidates = candidateRes.data || [];
+
+    const jobs = [];
+    for (const c of candidates) {
+      const claimRes = await supabase
+        .from('srl_cron_jobs')
+        .update({
+          status: 'in_progress',
+          started_at: new Date().toISOString(),
+          attempts: (c.attempts || 0) + 1
+        })
+        .eq('id', c.id)
+        .eq('status', 'queued')
+        .select('id, cohort_id, attempts');
+      if (claimRes.error) {
+        console.error('[srl-worker] Claim UPDATE error — job:', c.id, 'cohort_id:', c.cohort_id, 'message:', claimRes.error.message);
+        continue;
+      }
+      if (!claimRes.data || claimRes.data.length === 0) {
+        // Lost the race to another worker — skip silently.
+        continue;
+      }
+      jobs.push(claimRes.data[0]);
+    }
 
     // No work — run housekeeping if the queue is fully drained.
     // The "fully drained" check covers the case where another
