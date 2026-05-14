@@ -94,6 +94,14 @@
     {
       "path": "/api/signup-pending-cleanup",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/srl-scheduler",
+      "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/srl-worker",
+      "schedule": "*/5 * * * *"
     }
   ],
   "rewrites": [
