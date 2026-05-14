@@ -58,6 +58,12 @@
     },
     "api/news-digest-worker.js": {
       "maxDuration": 60
+    },
+    "api/srl-scheduler.js": {
+      "maxDuration": 60
+    },
+    "api/srl-worker.js": {
+      "maxDuration": 120
     }
   },
   "crons": [
