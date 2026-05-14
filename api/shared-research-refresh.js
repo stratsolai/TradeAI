@@ -103,6 +103,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Fail loudly if CRON_SECRET is unset. Without it the cron-secret
+  // path silently falls through to JWT auth — a deployment hazard
+  // we'd rather surface as a hard 500 than a quiet auth misroute.
+  if (!process.env.CRON_SECRET) {
+    console.error('[SharedResearch] CRON_SECRET not configured — refusing request');
+    return res.status(500).json({ error: 'Server misconfigured: CRON_SECRET not set' });
+  }
+
   const t0 = Date.now();
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 

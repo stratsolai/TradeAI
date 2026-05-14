@@ -323,9 +323,15 @@ export default async function handler(req, res) {
   }
 
   // ── CRON_SECRET auth ─────────────────────────────────────────────
+  // Missing env var is a deployment hazard, not an auth failure —
+  // return 500 so a misconfigured environment surfaces visibly.
   const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error('[srl-worker] CRON_SECRET not configured — refusing request');
+    return res.status(500).json({ error: 'Server misconfigured: CRON_SECRET not set' });
+  }
   const authHeader = req.headers['authorization'] || '';
-  if (!cronSecret || authHeader !== 'Bearer ' + cronSecret) {
+  if (authHeader !== 'Bearer ' + cronSecret) {
     return res.status(401).json({ error: 'Unauthorised' });
   }
 
