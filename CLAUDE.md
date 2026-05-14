@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: May 12, 2026
+# Updated: May 14, 2026
 
 ---
 
@@ -291,23 +291,6 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
 
 ## Platform Facts
 
-- New tools needing Stripe payment: create a new Stripe product
-  and document the price ID in the Tool Specification Guide
-  before building.
-- Supabase anon key in supabase-client.js is intentional — RLS
-  is enabled.
-- widget.js is an embeddable chatbot for customers' own websites
-  — not an internal platform file.
-- Content Library available to all paying customers automatically
-  — no separate activation.
-- Google OAuth consent screen in Testing mode — currently only
-  designated test users can connect Gmail accounts. Must be
-  published to In production before real users can connect.
-  May trigger Google's verification process for the
-  gmail.readonly scope. Must be resolved before launch.
-- Pagination fixed at 200 items for OneDrive/SharePoint
-  folder listings and SharePoint sites. Add pagination
-  support if needed.
 - Email body stored as .txt in cl-assets. Website content
   stored as .html in cl-assets. Tools must retrieve
   original content from cl-assets via
@@ -329,95 +312,21 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   falls back to source_detail.file_type for these rows. New
   image rows have content_type: 'image' set correctly going
   forward.
-- Folder scan connectors processed images as stub rows before
-  the Task 12 build — pre-existing stub rows in
-  cl_source_items will block reprocessing via dedup. Clear
-  these rows before rescanning folders that contain images
-  previously scanned as stubs.
-- Shared Research Layer tables: shared_research,
-  shared_research_refreshes, shared_research_cache, and
-  shared_research_cache_access. shared_research holds curated
-  research items with an is_current flag marking the most
-  recent batch per user; rows are written by
-  /api/shared-research-refresh after curation and validation
-  pass. shared_research_refreshes tracks every refresh run with
-  an outcome column constrained to ('success',
-  'validation_failed', 'no_results', 'error').
-  shared_research_cache_access is the audit trail for cache
-  reads, cache writes, and live writes to shared_research.
-- shared_research_cache is SHARED across users, not per-user.
-  A single cached Serper response can serve any user whose
-  query plan generates the same query — caching is keyed by the
-  query string + query_type + recency hash, independent of
-  user_id. Per-user audit lives in shared_research_cache_access,
-  not on the cache row.
-- /api/shared-research-refresh accepts two auth paths: JWT
-  Bearer for browser callers, and x-cron-secret + body.userId
-  for cron workers. The alt-auth pattern mirrors
-  api/drive-import.js, api/dropbox-import.js,
-  api/onedrive-import.js, and api/sharepoint-import.js — when
-  the x-cron-secret header matches process.env.CRON_SECRET, the
-  userId is read from the body instead of decoded from a JWT.
-- Industry News & Updates (ID) consumes the Shared Research
-  Layer. The five category tabs (Regulatory & Compliance,
-  Industry News, Supplier & Materials, Economic & Market,
-  Technology & Innovation) render items pulled directly from
-  shared_research where is_current = true. ID's tool review
-  will redesign the cohort-aware page-load read.
-  /api/news-digest-refresh handles only the tender flow —
-  AusTender + NSW eTendering writes to news_digest_tenders.
-  The browser-side SRL refresh trigger was removed in SRL
-  Cohort Architecture Addendum v1.2 §12; the Refresh button
-  refreshes the Grants & Tenders tab only.
-- api/news-digest-scheduler.js and api/news-digest-worker.js are
-  currently dormant authed stubs. Their pre-rebuild role (per-user
-  SRL refresh scheduling and dispatch) was removed in SRL Cohort
-  Architecture Addendum v1.2 §6.1 + §12; the files stay in place
-  for repurposing under ID's future tool-side cadence workstream.
-  The crons are not in vercel.json's crons array — see the
-  dormant-marker comment in each file for re-enable rules.
-- The shared_research_cache_access.access_type column accepts
-  four values: 'read_hit', 'read_miss', and 'write' for
-  shared_research_cache events, plus 'shared_research_write'
-  for live writes to shared_research. On shared_research_write
-  rows the cache_key holds the refresh_id UUID directly, one
-  row per successful refresh.
-- /api/shared-research-refresh response includes an
-  audit_warnings array. Audit-insert failures from either the
-  bulk cache_access write OR the shared_research_write event
-  insert push into that array so the caller sees them — silent
-  audit-layer drops are visible in the response, not just in
-  Vercel logs.
-- shared_research rows are factual research items only — news,
-  regulation, supplier, economic, or technology updates. The
-  listings feature (marketplace business-for-sale entries) was
-  removed end-to-end in Pass D.8 of the SRL rebuild after
-  cohort-shared retention measurements showed marginal output
-  and poor geographic adherence; the item_type column is gone
-  from the schema and the dedicated economic-industry listings
-  queries are gone from the plan.
-- Curation cap per category is 20 items, enforced as a soft
-  instruction in the curation prompt (ITEMS_PER_CATEGORY_CAP
-  in lib/shared-research-curation.js). Cap is a soft prompt
-  instruction, not code-enforced.
-- /api/shared-research-refresh.js Vercel function timeout is
-  90 seconds (vercel.json maxDuration: 90). The endpoint
-  regularly runs at ~50-55s under the current cap settings;
-  90s gives comfortable headroom over ordinary variance.
-- The curation prompt teaches Haiku all five categories and
-  allows it to reassign an item's category on output based on
-  content — an item routed to one per-category batch by its
-  source_category can be returned tagged with a different
-  category if Haiku judges the content fits better. This is
-  intentional; see the runCuration comment block in
-  lib/shared-research-curation.js. It explains why
-  timings.curation_per_category_breakdown.items_out
-  (per-batch returned count) can differ from
-  data.curated_items[category].length (per-stored-category
-  count) — two valid measurements at different pipeline stages,
-  not a discrepancy. Listings remain constrained to
-  category = 'economic' by the validator and do not participate
-  in this reassignment.
+- The Shared Research Layer is cohort-shared, not per-user.
+  Cohorts are keyed by industries|sorted-slug::state-abbrev::region-slug
+  — for example, 'building-and-construction|landscaping-and-outdoor::nsw::mid-north-coast'.
+  All users in the same cohort read the same shared_research rows.
+- SRL refresh is cron-only. The active cron pair is
+  api/srl-scheduler.js (daily at 04:00 UTC) and api/srl-worker.js
+  (every 5 minutes). No browser-side or user-activity trigger.
+  api/news-digest-scheduler.js and api/news-digest-worker.js are
+  dormant authed stubs reserved for ID's future tool-side cadence
+  workstream — see the dormant-marker comment in each file for
+  re-enable rules.
+- shared_research_cache is shared across users — caching is
+  keyed by the query string + query_type + recency hash,
+  independent of user_id. Per-user audit lives in
+  shared_research_cache_access.
 - Xero OAuth scopes for new apps (created after 2 March
   2026) must use the new granular scope names. Correct
   scope string (matches api/cl-oauth-initiate.js):
@@ -462,11 +371,9 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
 - Pre-login files are not to be touched unless explicitly instructed
 
 ### Codebase Quirks
-- tools.html has its own hardcoded copy of all tool data separate from tools-data.js. Update BOTH when changing any tool ID or property
-- index.html has its own HERO_TOOLS array separate from tools-data.js. Update index.html as well as tools-data.js and tools.html when adding or changing a tool
+- Tool data is duplicated across four files: tools-data.js (canonical), tools.html (hardcoded copy), index.html (HERO_TOOLS array), and dashboard-data.js (TOOLS array). When changing any tool ID, property, price, or priceId, update all four. Refactor target: have the three consumers read from window.CORE_TOOLS instead of holding their own copies.
 - index.html hero CSS classes must never be removed: .stax-stack, .stax-card, .stax-card-screenshot, .stax-card-info, .stax-tagline, .stax-tagline-pre, .stax-tagline-stax, .stax-tagline-post, .hero-stax-way
 - content-library.html has 5 dead modals with onclick handlers calling undefined functions. Do not attempt to wire these up — unbuilt features
-- dashboard-data.js has its own TOOLS array with tool definitions separate from tools-data.js. Both must be updated when changing tool prices or priceIds. Consider refactoring dashboard-data.js to read from window.CORE_TOOLS instead of maintaining its own copy.
 
 ### Database Rules
 - Every new Supabase table: RLS enabled before launch
@@ -631,9 +538,11 @@ StaxAI is an AI-powered SaaS platform for Australian SME businesses. It gives bu
 | Auth        | Supabase Auth — email/password + session management      |
 | Email       | SMTP2Go — transactional emails via REST API.             |
 |             | Env var: SMTP2GO_API_KEY. From: notifications@staxai.com.au |
-| AI          | Anthropic Claude API — claude-haiku-4-5 for internal     |
-|             | tools, claude-sonnet-4-6 for customer-facing outputs.    |
-|             | Never exposed to browser.                                |
+| AI          | Anthropic Claude API — claude-haiku-4-5-20251001 for     |
+|             | content extraction and versioning across the Content     |
+|             | Library and tools, claude-sonnet-4-6 for customer-       |
+|             | facing outputs and SRL curation. Never exposed to        |
+|             | browser.                                                 |
 | AI Graphics | Ideogram API (Social Media). REimagine Home API (DV — pending). |
 | Payments    | Stripe — LIVE MODE for testing. Real money handling.     |
 | Social      | Meta Graph API v19.0                                     |
