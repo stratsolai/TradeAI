@@ -4,28 +4,32 @@
 //  - Internal data (Xero/MYOB financial + customer summaries, ServiceM8 ops)
 //  - Content Library items tagged for BI (tool_tags contains 'bi')
 //  - The current Strategic Plan (interview_data)
-//  - Curated external research from the Shared Research Layer
-//    (shared_research rows tagged is_current = true)
+//  - (Future) Curated external research from the Shared Research Layer
 //
-// Phase 6 of the Shared Research Layer build (StaxAI-Shared-Research-
-// Layer-Spec-v1_0 §13.2 + §18.6) replaces the legacy in-handler
-// Serper research path with a call to api/shared-research-refresh
-// followed by a read from the shared_research table. The Sonnet
-// analysis prompt now consumes lens-tagged, category-grouped curated
-// evidence with rendered URLs and source_type metadata.
+// SRL Cohort Architecture Addendum v1.2 §12 — the per-user SRL trigger
+// (callSharedResearch) and the per-user shared_research read
+// (fetchCurrentSharedResearch via .eq('user_id', ...)) are both
+// removed. shared_research is now cohort-scoped (Addendum §4.1) and
+// BI's read path needs to be redesigned around profiles.cohort_id
+// before external research can flow back into the analysis prompt.
+// That redesign is BI's own tool review (Addendum §13 out of scope
+// for the rebuild). Until then, the analysis runs without external
+// research — researchItems stays empty, the EXTERNAL RESEARCH block
+// renders its "no curated research items available" fallback, the
+// validator's URL allow-set is empty, and any web-research-tagged
+// findings Sonnet returns are rejected as fabricated.
 //
 // The bi_insights cache continues to live in the bi_insights table.
-// The cache-decision rule moved from "is the cache younger than 24h?"
-// to "is the cached analysis at least as new as the latest shared
-// research?" — per the Phase 6 brief, the bi_insights cache is now an
-// inputs-unchanged optimisation, not a 24-hour gate.
+// With researchLatestAt always null in this dormant state, the
+// "cached analysis at least as new as latest research" rule
+// degrades to "cached analysis is always valid" — acceptable until
+// the redesign lands.
 
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
 import { normaliseUrlForMatch } from '../lib/shared-research.js';
-import sharedResearchRefreshHandler from './shared-research-refresh.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -116,83 +120,16 @@ function renderEvidenceBlock(items) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// Shared Research Layer trigger + read
+// Shared Research Layer integration — removed pending BI tool review
 // ─────────────────────────────────────────────────────────────────────
-
-// Trigger a shared research refresh via module-import alt-auth.
-// Mirrors api/news-digest-worker.js — builds a mock req/res pair that
-// puts the SRL handler on its x-cron-secret path with the BI user's
-// id in the body and triggered_by_tool = 'bi' for the audit trail.
-// SRL handles its own 24-hour cache internally; we just need to make
-// sure SRL has had a chance to update shared_research before we read
-// it for this analysis.
-async function callSharedResearch(userId) {
-  if (!process.env.CRON_SECRET) {
-    console.error('[bi-insights] SRL trigger skipped — CRON_SECRET not configured');
-    return { statusCode: 0, data: { error: 'CRON_SECRET not configured' } };
-  }
-  const mockReq = {
-    method: 'POST',
-    query: {},
-    headers: {
-      'content-type': 'application/json',
-      'x-cron-secret': process.env.CRON_SECRET
-    },
-    body: { userId: userId, triggered_by_tool: 'bi' }
-  };
-  var statusCode = 200;
-  var resolved = false;
-  var resolveFn;
-  const promise = new Promise(function(r) { resolveFn = r; });
-  const mockRes = {
-    status: function(c) { statusCode = c; return mockRes; },
-    json: function(data) {
-      if (resolved) return;
-      resolved = true;
-      resolveFn({ statusCode: statusCode, data: data });
-    }
-  };
-  try {
-    sharedResearchRefreshHandler(mockReq, mockRes).catch(function(err) {
-      if (!resolved) {
-        resolved = true;
-        resolveFn({ statusCode: 500, data: { error: (err && err.message) || 'SRL handler threw' } });
-      }
-    });
-  } catch (e) {
-    if (!resolved) {
-      resolved = true;
-      resolveFn({ statusCode: 500, data: { error: (e && e.message) || 'SRL invocation failed' } });
-    }
-  }
-  return promise;
-}
-
-// Read the user's current curated research from shared_research.
-// Returns the rows (already filtered to is_current = true) and the
-// latest created_at across them — the latter is the comparator the
-// bi_insights cache decision uses to detect "research is newer than
-// the cached analysis".
-async function fetchCurrentSharedResearch(supabase, userId) {
-  try {
-    var resp = await supabase
-      .from('shared_research')
-      .select('title, summary, url, source_name, source_domain, source_type, lens, category, published_date, created_at')
-      .eq('user_id', userId)
-      .eq('is_current', true)
-      .order('created_at', { ascending: false });
-    if (resp.error) {
-      console.error('[bi-insights] shared_research read error:', resp.error.message);
-      return { items: [], latest_created_at: null };
-    }
-    var rows = resp.data || [];
-    var latest = rows.length > 0 ? rows[0].created_at : null;
-    return { items: rows, latest_created_at: latest };
-  } catch (e) {
-    console.error('[bi-insights] shared_research read exception:', e && e.message);
-    return { items: [], latest_created_at: null };
-  }
-}
+//
+// SRL Cohort Architecture Addendum v1.2 §12 removed the per-user
+// SRL trigger (callSharedResearch) and the per-user shared_research
+// read (fetchCurrentSharedResearch). Both used user_id, which no
+// longer scopes shared_research after Addendum §4.1's migration.
+// The replacement read by cohort_id is BI's own tool review work
+// (Addendum §13 out of scope). Until that review lands, BI runs
+// with no external research — researchItems is always [] below.
 
 // Build the URL allow-set the validator uses to reject fabricated web
 // citations. URLs are normalised via the SRL helper so trivial cosmetic
@@ -421,25 +358,15 @@ export default async function handler(req, res) {
   // that's the Shared Research Layer's own behaviour, not BI's.
   const dryRun = req.query && (req.query.dry === 'true' || req.query.dry === '1');
 
-  // Phase 6 flow — SRL first, then cache check.
-  //   1. Trigger SRL (so the user's shared research has the most
-  //      recent refresh attempt before we make any cache decision).
-  //   2. Read shared_research is_current = true for this user. This
-  //      is the canonical view of what's available; we use the
-  //      timestamp on the freshest row as the inputs-unchanged
-  //      comparator below.
-  //   3. If not forceRefresh and not dryRun: compare against the
-  //      cached bi_insights.generated_at. Cached analysis at least
-  //      as new as the latest research → serve cached.
-  //   4. Otherwise: build the evidence block, fetch the rest of
-  //      the BI inputs, run Sonnet, validate, write.
-  var srlResult = await callSharedResearch(userId);
-  if (srlResult && srlResult.data && srlResult.data.error) {
-    console.error('[bi-insights] SRL trigger reported error:', srlResult.data.error);
-  }
-  var sharedResearch = await fetchCurrentSharedResearch(supabase, userId);
-  var researchItems = sharedResearch.items;
-  var researchLatestAt = sharedResearch.latest_created_at;
+  // SRL integration is removed pending BI tool review (Addendum §12
+  // + §13). researchItems is always empty here; researchLatestAt is
+  // always null. With null latest_at the cache-validity check below
+  // degrades to "cached analysis is always valid", which is the
+  // intended dormant behaviour until BI's read path is redesigned
+  // around cohort_id.
+  var srlResult = null;
+  var researchItems = [];
+  var researchLatestAt = null;
 
   if (!forceRefresh && !dryRun) {
     var cachedRes = await supabase
