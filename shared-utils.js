@@ -239,11 +239,8 @@ window.checkToolAccess = async function(toolId, supabase, user) {
   function attach() {
     var sb = window.supabaseClient;
     if (!sb) { setTimeout(attach, 150); return; }
-    sb.auth.onAuthStateChange(function(event, session) {
-      // [signin-debug] TEMP — remove after Issue 3 diagnosed
-      console.log('[signin-debug] onAuthStateChange — event:', event, 'has_session:', !!session, 'page:', window.location.pathname, 'ts:', Date.now());
+    sb.auth.onAuthStateChange(function(event) {
       if (event === 'SIGNED_OUT') {
-        console.log('[signin-debug] SIGNED_OUT → redirecting to /login, ts:', Date.now());
         window.location.href = '/login';
       }
     });

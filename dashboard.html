@@ -882,10 +882,7 @@
       if (!supabase) return;
       supabase.auth.getSession().then(function(result) {
         var session = result.data && result.data.session;
-        // [signin-debug] TEMP — remove after Issue 3 diagnosed
-        console.log('[signin-debug] dashboard auth-check — has_session:', !!session, 'user_id:', session && session.user && session.user.id, 'ts:', Date.now());
         if (!session) {
-          console.log('[signin-debug] dashboard bouncing to /login — no session, ts:', Date.now());
           window.location.href = '/login'; return;
         }
         document.getElementById('page-wrap').style.display = 'block';

@@ -402,8 +402,6 @@
     // email is never marked confirmed and the user stays locked out.
     var tokenHash = params.get('token_hash');
     var tokenType = params.get('type');
-    // [signin-debug] TEMP — remove after Issue 3 diagnosed
-    console.log('[signin-debug] DOMContentLoaded entered — has_token_hash:', !!tokenHash, 'pathname:', window.location.pathname, 'ts:', Date.now());
     if (tokenHash && tokenType && window.supabaseClient) {
       try {
         // ── Idempotency guard ───────────────────────────────────
@@ -644,8 +642,6 @@
             }
           }
         }
-        // [signin-debug] TEMP — remove after Issue 3 diagnosed
-        console.log('[signin-debug] verifyOtp block returning EARLY from DOMContentLoaded — login/signup form handlers WILL NOT be attached this page load, ts:', Date.now());
         return;
       } catch (e) {
         console.error('[login] verifyOtp exception:', e && e.message);
@@ -658,12 +654,8 @@
     showLogin();
     if (params.get("tab") === "signup") showSignup();
 
-    // [signin-debug] TEMP — remove after Issue 3 diagnosed
-    console.log('[signin-debug] reached login-form addEventListener attach line — handler about to be wired, ts:', Date.now());
     // Login form submit handler — attached at the top of DOMContentLoaded above
     async function handleLoginSubmit(e) {
-      // [signin-debug] TEMP — remove after Issue 3 diagnosed
-      console.log('[signin-debug] LOGIN FORM SUBMIT HANDLER FIRED — first line, before preventDefault, ts:', Date.now());
       e.preventDefault();
       hideMessages();
       var btn = e.target.querySelector('button[type="submit"]');
@@ -680,8 +672,6 @@
         var timeout = new Promise(function(_, reject) { setTimeout(function() { reject(new Error('Connection timed out. Please check your internet connection and try again.')); }, 15000); });
         var result = await Promise.race([signIn(email, password), timeout]);
         if (result.success) {
-          // [signin-debug] TEMP — remove after Issue 3 diagnosed
-          console.log('[signin-debug] signIn success — user_id:', result.data && result.data.user && result.data.user.id, 'has_session:', !!(result.data && result.data.session), 'has_token:', !!(result.data && result.data.session && result.data.session.access_token), 'ts:', Date.now());
           // Trial-setup safety net. If the post-confirmation handler
           // failed (network glitch, transient server error, etc.) the
           // signup_pending row was never consumed and trial_used is
@@ -750,13 +740,6 @@
             // Non-fatal — dashboard render handles missing trial state.
           }
 
-          // [signin-debug] TEMP — remove after Issue 3 diagnosed
-          try {
-            var preNavSess = await window.supabaseClient.auth.getSession();
-            console.log('[signin-debug] about to redirect to /dashboard.html — has_session_in_localStorage:', !!(preNavSess && preNavSess.data && preNavSess.data.session), 'ts:', Date.now());
-          } catch (e) {
-            console.log('[signin-debug] pre-nav getSession threw:', e && e.message, 'ts:', Date.now());
-          }
           window.location.href = "/dashboard.html";
         } else {
           showError(result.error || "Login failed. Please check your credentials.");
