@@ -362,26 +362,20 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   Layer. The five category tabs (Regulatory & Compliance,
   Industry News, Supplier & Materials, Economic & Market,
   Technology & Innovation) render items pulled directly from
-  shared_research where is_current = true and
-  item_type = 'content'.
-  /api/news-digest-refresh handles only the tender flow now —
+  shared_research where is_current = true. ID's tool review
+  will redesign the cohort-aware page-load read.
+  /api/news-digest-refresh handles only the tender flow —
   AusTender + NSW eTendering writes to news_digest_tenders.
-  The browser fires /api/news-digest-refresh and
-  /api/shared-research-refresh in parallel and renders
-  progressively: tenders populate the Grants & Tenders tab on
-  return, the news tabs show a loading state until the shared
-  refresh completes.
-- ID has a daily/weekly cadence scheduler. news_digest_scan_jobs
-  is the queue table. api/news-digest-scheduler.js (daily cron
-  at 02:00 UTC) reads news_digest_settings.cadence
-  (daily/weekly/manual), checks each user's most recent
-  shared_research_refreshes.created_at as the due anchor, and
-  enqueues rows for due users. api/news-digest-worker.js (cron
-  every 5 minutes) drains the queue by importing
-  /api/shared-research-refresh as a module and invoking it via
-  x-cron-secret alt-auth with triggered_by_tool = 'cron'. Both
-  endpoints auth via CRON_SECRET in the Authorization Bearer
-  header.
+  The browser-side SRL refresh trigger was removed in SRL
+  Cohort Architecture Addendum v1.2 §12; the Refresh button
+  refreshes the Grants & Tenders tab only.
+- api/news-digest-scheduler.js and api/news-digest-worker.js are
+  currently dormant authed stubs. Their pre-rebuild role (per-user
+  SRL refresh scheduling and dispatch) was removed in SRL Cohort
+  Architecture Addendum v1.2 §6.1 + §12; the files stay in place
+  for repurposing under ID's future tool-side cadence workstream.
+  The crons are not in vercel.json's crons array — see the
+  dormant-marker comment in each file for re-enable rules.
 - The shared_research_cache_access.access_type column accepts
   four values: 'read_hit', 'read_miss', and 'write' for
   shared_research_cache events, plus 'shared_research_write'
@@ -394,25 +388,18 @@ Approximately 9 tools still to be built (16 total, 7 done). Each tool requires s
   insert push into that array so the caller sees them — silent
   audit-layer drops are visible in the response, not just in
   Vercel logs.
-- shared_research has an item_type column (text NOT NULL
-  DEFAULT 'content', CHECK item_type IN ('content', 'listing')).
-  'content' rows are factual research items (news, regulation,
-  supplier, economic, or technology updates); 'listing' rows
-  are marketplace listings offering a specific business for
-  sale. The validator enforces that any item_type = 'listing'
-  row carries category = 'economic' — listings live only under
-  the economic category.
-- BI consumes shared_research without an item_type predicate —
-  both content and listings flow into its evidence. Any future
-  consumer that should only see content (the way ID does) must
-  declare the item_type = 'content' filter on its read path
-  explicitly; consumers that want both omit the filter.
-- Curation cap per category is 20 content items, enforced as a
-  soft instruction in the Haiku curation prompt
-  (ITEMS_PER_CATEGORY_CAP in lib/shared-research-curation.js).
-  The economic category additionally retains up to 5 listing
-  items as a separate quota over and above the 20-content cap.
-  Both caps are soft prompt instructions, not code-enforced.
+- shared_research rows are factual research items only — news,
+  regulation, supplier, economic, or technology updates. The
+  listings feature (marketplace business-for-sale entries) was
+  removed end-to-end in Pass D.8 of the SRL rebuild after
+  cohort-shared retention measurements showed marginal output
+  and poor geographic adherence; the item_type column is gone
+  from the schema and the dedicated economic-industry listings
+  queries are gone from the plan.
+- Curation cap per category is 20 items, enforced as a soft
+  instruction in the curation prompt (ITEMS_PER_CATEGORY_CAP
+  in lib/shared-research-curation.js). Cap is a soft prompt
+  instruction, not code-enforced.
 - /api/shared-research-refresh.js Vercel function timeout is
   90 seconds (vercel.json maxDuration: 90). The endpoint
   regularly runs at ~50-55s under the current cap settings;
