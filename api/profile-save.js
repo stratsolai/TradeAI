@@ -243,16 +243,20 @@ export default async function handler(req, res) {
   }
 
   // ── Read current cohort-determining fields ───────────────────
+  // maybeSingle() returns data: null when the row doesn't exist
+  // (no error). This endpoint can be the first writer to profiles
+  // in the post-confirmation flow — the handle_new_user trigger
+  // was removed, so profile row creation is now the upsert below.
   const profRes = await supabase
     .from('profiles')
     .select('industry, address_state, address_postcode, cohort_id')
     .eq('id', userId)
-    .single();
-  if (profRes.error || !profRes.data) {
-    console.error('[BPSave] Profile read failed — userId:', userId, 'message:', profRes.error && profRes.error.message);
+    .maybeSingle();
+  if (profRes.error) {
+    console.error('[BPSave] Profile read failed — userId:', userId, 'message:', profRes.error.message);
     return res.status(500).json({ error: 'Could not load profile' });
   }
-  const prev = profRes.data;
+  const prev = profRes.data || {};
   const prevCohortId = prev.cohort_id || null;
 
   // ── Compute cohort_id from post-write profile state ──────────
@@ -264,18 +268,20 @@ export default async function handler(req, res) {
   const newCohortId = computeCohortId(postWriteProfile);
   const cohortChanged = newCohortId !== prevCohortId;
 
-  // ── Single UPDATE: fields + cohort_id ────────────────────────
+  // ── Upsert: fields + cohort_id ───────────────────────────────
   // cohort_id is included on every call so the profile field write
   // and the cohort_id write happen as one statement. When the
   // cohort hasn't changed in substance, newCohortId === prevCohortId
-  // and the write is a no-op on that column.
-  const updateRow = Object.assign({}, updates, { cohort_id: newCohortId });
+  // and the write is a no-op on that column. id is included so the
+  // row is created when this endpoint is the first writer in the
+  // post-confirmation flow (handle_new_user trigger has been
+  // removed — see comment in pre-read above).
+  const upsertRow = Object.assign({ id: userId }, updates, { cohort_id: newCohortId });
   const upd = await supabase
     .from('profiles')
-    .update(updateRow)
-    .eq('id', userId);
+    .upsert(upsertRow, { onConflict: 'id' });
   if (upd.error) {
-    console.error('[BPSave] Profile update failed — userId:', userId, 'message:', upd.error.message);
+    console.error('[BPSave] Profile upsert failed — userId:', userId, 'message:', upd.error.message);
     return res.status(500).json({ error: upd.error.message });
   }
 
