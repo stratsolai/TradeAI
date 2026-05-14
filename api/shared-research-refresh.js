@@ -61,6 +61,7 @@ import {
   executeQueryWithCache,
   makeSerperRateGate,
   dedupByLink,
+  dedupBySyndicationPath,
   enrichDedupedWithPlan,
   stateFullName,
   runCuration,
@@ -410,7 +411,15 @@ export default async function handler(req, res) {
 
   const tDedupe = Date.now();
   const dedupedRaw = dedupByLink(taggedItems);
-  const deduped = enrichDedupedWithPlan(dedupedRaw, plan);
+  // Cross-domain syndication dedup — collapses items that share a
+  // URL path across different domains (e.g. Nine Entertainment's
+  // The Age / SMH twin publishing). Merges plan_indices into the
+  // surviving item so attribution downstream covers every query
+  // that surfaced the article across any masthead. The drop count
+  // is surfaced in the response stats as cross_domain_dropped.
+  const crossDomainResult = dedupBySyndicationPath(dedupedRaw);
+  const crossDomainDropped = crossDomainResult.droppedCount;
+  const deduped = enrichDedupedWithPlan(crossDomainResult.items, plan);
   recordTiming('dedupe_and_enrich', tDedupe);
 
   // -------------------------------------------------------------------------
@@ -535,6 +544,7 @@ export default async function handler(req, res) {
         failed_queries: failedQueries,
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
+        cross_domain_dropped: crossDomainDropped,
         curation_returned: curation.items.length,
         curated_items: validated.accepted.length,
         rejected_items: validated.rejected.length,
@@ -686,6 +696,7 @@ export default async function handler(req, res) {
         failed_queries: failedQueries,
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
+        cross_domain_dropped: crossDomainDropped,
         curation_returned: curation.items.length,
         curated_items: 0,
         rejected_items: validated.rejected.length,
@@ -784,6 +795,7 @@ export default async function handler(req, res) {
     failed_queries: failedQueries,
     raw_items: taggedItems.length,
     deduped_items: deduped.length,
+    cross_domain_dropped: crossDomainDropped,
     curation_returned: curation.items.length,
     curated_items: writtenCount,
     rejected_items: validated.rejected.length,
