@@ -176,7 +176,26 @@ function resolveSa4(rawPostcode) {
   return entry.sa4;
 }
 
-function computeCohortId(profile) {
+// Returns { cohort_id, industries, state, region } when the BP is
+// complete enough to compute a cohort, or null otherwise.
+//
+// The component shape matches what api/srl-scheduler.js writes into
+// the cohorts table during its Step A rebuild (Addendum §5.2):
+//   - industries: sorted, deduped, normalised slug array (same
+//     normalisation as the cohort_id's industries segment)
+//   - state:      uppercased state abbreviation (e.g. "NSW")
+//   - region:     SA4 name from postcode lookup (e.g. "Mid North
+//                 Coast") or null. The cohort_id itself encodes the
+//                 literal 'no-region' in its region segment when
+//                 postcode does not resolve, but the cohorts.region
+//                 column holds the SA4 display name or NULL — keying
+//                 contract is in cohort_id, display contract is in
+//                 cohorts.
+//
+// Used by computeCohortId (cohort_id string only) and by the cohorts
+// upsert step in the handler when ensuring the FK parent for a new-
+// cohort srl_cron_jobs enqueue (Addendum §5.3).
+function deriveCohortParts(profile) {
   if (!profile) return null;
 
   let rawList = [];
@@ -184,23 +203,33 @@ function computeCohortId(profile) {
   else if (typeof profile.industry === 'string' && profile.industry.trim()) rawList = [profile.industry];
 
   const seen = new Set();
-  const normalised = [];
+  const industries = [];
   for (const item of rawList) {
     const norm = normaliseComponent(item);
     if (!norm || seen.has(norm)) continue;
     seen.add(norm);
-    normalised.push(norm);
+    industries.push(norm);
   }
-  if (normalised.length === 0) return null;
-  normalised.sort();
+  if (industries.length === 0) return null;
+  industries.sort();
 
   const statePart = normaliseComponent(profile.address_state);
   if (!statePart) return null;
 
   const sa4 = resolveSa4(profile.address_postcode);
-  const regionPart = sa4 ? normaliseComponent(sa4) : 'no-region';
+  const regionSlug = sa4 ? normaliseComponent(sa4) : 'no-region';
 
-  return normalised.join('|') + '::' + statePart + '::' + regionPart;
+  return {
+    cohort_id: industries.join('|') + '::' + statePart + '::' + regionSlug,
+    industries: industries,
+    state: String(profile.address_state).toUpperCase(),
+    region: sa4 || null
+  };
+}
+
+function computeCohortId(profile) {
+  const parts = deriveCohortParts(profile);
+  return parts ? parts.cohort_id : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -289,49 +318,101 @@ export default async function handler(req, res) {
     console.log('[BPSave] cohort_id updated — userId: ' + userId + ', cohort_id: ' + newCohortId + ', previous: ' + (prevCohortId || '(none)'));
   }
 
-  // ── Enqueue check ────────────────────────────────────────────
-  // Skip entirely if cohort_id is null (BP not complete enough).
-  // Otherwise: cohort already populated → no enqueue. Cohort empty
-  // but a job is already pending → no enqueue (the pending job
-  // will populate). Cohort empty and no pending job → enqueue.
-  // Failures in either check log but do NOT fail the save — the
-  // daily SRL cron eventually picks up the cohort even without
-  // a one-off enqueue.
+  // ── Ensure cohorts row exists, then enqueue check ─────────────
+  // srl_cron_jobs has an FK to cohorts(cohort_id), so the parent
+  // row must be in place before any enqueue. The daily scheduler
+  // does this as Step A of its run (Addendum §5.2); this endpoint
+  // is the second writer to the cohorts table — it covers the
+  // brand-new-cohort lifecycle in Addendum §5.3 where a user's BP
+  // save creates a cohort the scheduler has not yet seen.
+  //
+  // Cohorts row policy:
+  //   - missing or is_active = false → upsert with is_active = true.
+  //     Re-activation is immediate so worker housekeeping (which
+  //     deletes shared_research rows for is_active = false cohorts)
+  //     does not race against the new member.
+  //   - already exists with is_active = true → no write. An ordinary
+  //     BP save (non-cohort-changing edit, or save into a cohort
+  //     someone else is already in) doesn't touch the table.
+  //
+  // Enqueue policy (unchanged from Pass B):
+  //   - cohort_id null                                    → no enqueue
+  //   - cohort already has shared_research is_current     → no enqueue
+  //   - queued/in_progress srl_cron_jobs row exists       → no enqueue
+  //   - otherwise                                         → enqueue
+  // The enqueue is gated on cohortRowReady so the FK is guaranteed
+  // satisfiable. All failure paths log and continue — the daily
+  // scheduler eventually picks up the cohort even without the
+  // one-off enqueue.
   let enqueued = false;
   let cronJobId = null;
+  let cohortRowReady = false;
 
   if (newCohortId) {
-    const existingRes = await supabase
-      .from('shared_research')
-      .select('id')
+    const existingCohortRes = await supabase
+      .from('cohorts')
+      .select('is_active')
       .eq('cohort_id', newCohortId)
-      .eq('is_current', true)
-      .limit(1);
+      .maybeSingle();
 
-    if (existingRes.error) {
-      console.error('[BPSave] shared_research existence check failed — cohort_id: ' + newCohortId + ', message: ' + existingRes.error.message);
-    } else if (!existingRes.data || existingRes.data.length === 0) {
-      const pendingRes = await supabase
-        .from('srl_cron_jobs')
+    if (existingCohortRes.error) {
+      console.error('[BPSave] cohorts read failed — cohort_id: ' + newCohortId + ', message: ' + existingCohortRes.error.message);
+    } else if (existingCohortRes.data && existingCohortRes.data.is_active === true) {
+      cohortRowReady = true;
+    } else {
+      const parts = deriveCohortParts(postWriteProfile);
+      if (parts) {
+        const cohortUpsert = await supabase
+          .from('cohorts')
+          .upsert({
+            cohort_id: newCohortId,
+            industries: parts.industries,
+            state: parts.state,
+            region: parts.region,
+            is_active: true
+          }, { onConflict: 'cohort_id' });
+        if (cohortUpsert.error) {
+          console.error('[BPSave] cohorts upsert failed — cohort_id: ' + newCohortId + ', message: ' + cohortUpsert.error.message);
+        } else {
+          cohortRowReady = true;
+          console.log('[BPSave] cohorts row ensured — cohort_id: ' + newCohortId + (existingCohortRes.data ? ' (reactivated)' : ' (new)'));
+        }
+      }
+    }
+
+    if (cohortRowReady) {
+      const existingRes = await supabase
+        .from('shared_research')
         .select('id')
         .eq('cohort_id', newCohortId)
-        .in('status', ['queued', 'in_progress'])
+        .eq('is_current', true)
         .limit(1);
 
-      if (pendingRes.error) {
-        console.error('[BPSave] srl_cron_jobs pending check failed — cohort_id: ' + newCohortId + ', message: ' + pendingRes.error.message);
-      } else if (!pendingRes.data || pendingRes.data.length === 0) {
-        const ins = await supabase
+      if (existingRes.error) {
+        console.error('[BPSave] shared_research existence check failed — cohort_id: ' + newCohortId + ', message: ' + existingRes.error.message);
+      } else if (!existingRes.data || existingRes.data.length === 0) {
+        const pendingRes = await supabase
           .from('srl_cron_jobs')
-          .insert({ cohort_id: newCohortId, status: 'queued' })
           .select('id')
-          .single();
-        if (ins.error) {
-          console.error('[BPSave] srl_cron_jobs insert failed — cohort_id: ' + newCohortId + ', message: ' + ins.error.message);
-        } else {
-          enqueued = true;
-          cronJobId = ins.data && ins.data.id;
-          console.log('[BPSave] srl_cron_jobs enqueued — cohort_id: ' + newCohortId + ', job_id: ' + cronJobId);
+          .eq('cohort_id', newCohortId)
+          .in('status', ['queued', 'in_progress'])
+          .limit(1);
+
+        if (pendingRes.error) {
+          console.error('[BPSave] srl_cron_jobs pending check failed — cohort_id: ' + newCohortId + ', message: ' + pendingRes.error.message);
+        } else if (!pendingRes.data || pendingRes.data.length === 0) {
+          const ins = await supabase
+            .from('srl_cron_jobs')
+            .insert({ cohort_id: newCohortId, status: 'queued' })
+            .select('id')
+            .single();
+          if (ins.error) {
+            console.error('[BPSave] srl_cron_jobs insert failed — cohort_id: ' + newCohortId + ', message: ' + ins.error.message);
+          } else {
+            enqueued = true;
+            cronJobId = ins.data && ins.data.id;
+            console.log('[BPSave] srl_cron_jobs enqueued — cohort_id: ' + newCohortId + ', job_id: ' + cronJobId);
+          }
         }
       }
     }
