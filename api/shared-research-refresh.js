@@ -73,6 +73,7 @@ import {
   insertSharedResearchRows,
   deleteRowsByRefreshId,
   writeRefreshRow,
+  updateRefreshRowToError,
   recordSharedResearchWriteEvent
 } from '../lib/shared-research.js';
 import { logSerperUsage, logAnthropicUsage } from '../lib/usage-logger.js';
@@ -556,19 +557,35 @@ export default async function handler(req, res) {
   //   raw_items=0                                 -> 'no_results'
   //   curation.ok=false                           -> 'error'
   //   §9.5 whole-batch validation failure         -> 'validation_failed'
-  //   accepted.length > 0                         -> 'success'
-  //   accepted=0 AND rejected=0 (legitimate zero) -> 'success' with
-  //     curated_items=0, no flip, no insert (existing batch left intact)
+  //   accepted.length > 0                         -> 'success' (with writes)
+  //   accepted=0 AND rejected=0 (legitimate zero) -> 'success' (no writes)
   //
-  // 'success' is the only branch that flips is_current and writes to
-  // shared_research. The other three outcomes leave existing
-  // is_current=true rows untouched. The refresh row is written in
-  // EVERY outcome (best effort).
+  // Write ordering (Phase 7 integrity fix):
+  // The shared_research_refreshes row is INSERTed BEFORE the items
+  // it parents. If the refresh row write fails, the handler aborts
+  // with a 500 and no items are written — items cannot orphan
+  // because they never land. If items subsequently fail, the
+  // refresh row is UPDATEd to outcome='error' with stats showing
+  // zero items, and is_current is restored from the snapshot.
+  //
+  // The previous order (items first, refresh row last) could leave
+  // shared_research rows pointing at a non-existent refresh_id when
+  // the refresh row write failed — and the handler still returned
+  // success because the items had landed. That is the bug this
+  // reordering closes.
 
   let liveOutcome;
   let liveError = null;
   let writtenCount = 0;
   const writeAccessEvents = [];
+
+  // Snapshot is taken here (before the refresh row write) only for
+  // the with-writes branch, so rollback is possible if anything
+  // downstream fails. Other outcome branches don't touch is_current
+  // and don't need a snapshot.
+  let snap = null;
+  let willWriteItems = false;
+  let intendedCuratedCount = 0;
 
   if (taggedItems.length === 0) {
     liveOutcome = 'no_results';
@@ -587,13 +604,11 @@ export default async function handler(req, res) {
     liveOutcome = 'success';
     console.log('[SharedResearch] Live outcome — success (zero curated items, no flip), cohort_id:', cohortId);
   } else {
-    // Success path — snapshot, flip, insert. Snapshot-first so the
-    // flip is reversible if the insert fails. If the snapshot read
-    // fails we abort BEFORE flipping — without a rollback anchor
-    // a one-way flip with a failed insert leaves the cohort with
-    // no current rows.
+    // With-writes path — snapshot is_current rows for rollback safety.
+    // If the snapshot fails we cannot safely flip, so we error out
+    // before touching anything downstream.
     const tSnapshot = Date.now();
-    const snap = await snapshotCurrentRowIds(supabase, cohortId);
+    snap = await snapshotCurrentRowIds(supabase, cohortId);
     recordTiming('is_current_snapshot', tSnapshot);
 
     if (!snap.ok) {
@@ -601,86 +616,133 @@ export default async function handler(req, res) {
       liveError = 'is_current snapshot failed: ' + (snap.error || 'unknown');
       console.error(`[SharedResearch] Live outcome — error (aborted before flip), cohort_id: ${cohortId}, reason: ${liveError}`);
     } else {
-      const tFlip = Date.now();
-      const flip = await flipIsCurrentFalse(supabase, cohortId);
-      recordTiming('is_current_flip', tFlip);
-
-      if (!flip.ok) {
-        liveOutcome = 'error';
-        liveError = 'is_current flip failed: ' + (flip.error || 'unknown');
-        console.error(`[SharedResearch] Live outcome — error, cohort_id: ${cohortId}, reason: ${liveError}`);
-      } else {
-        const tBuildRows = Date.now();
-        const rowsToInsert = acceptedWithSource.map((it) => buildSharedResearchRow(cohortId, refreshId, it));
-        recordTiming('shared_research_rows_build', tBuildRows);
-
-        const tInsert = Date.now();
-        const ins = await insertSharedResearchRows(supabase, rowsToInsert);
-        recordTiming('shared_research_insert', tInsert);
-
-        if (ins.ok) {
-          liveOutcome = 'success';
-          writtenCount = ins.count;
-          // Audit event for the shared_research write. Skipped on
-          // cron path because recordSharedResearchWriteEvent
-          // short-circuits when userId is null.
-          recordSharedResearchWriteEvent(writeAccessEvents, { userId, refreshId });
-          console.log(`[SharedResearch] Live outcome — success, cohort_id: ${cohortId}, written: ${writtenCount}`);
-        } else {
-          const tRollback = Date.now();
-          await restoreIsCurrent(supabase, cohortId, snap.ids);
-          await deleteRowsByRefreshId(supabase, refreshId);
-          recordTiming('shared_research_rollback', tRollback);
-          liveOutcome = 'error';
-          liveError = 'shared_research insert failed: ' + (ins.error || 'unknown');
-          console.error(`[SharedResearch] Live outcome — error (rolled back), cohort_id: ${cohortId}, reason: ${liveError}`);
-        }
-      }
+      // Optimistic — refresh row writes with outcome='success' and
+      // intended item count; flipped to 'error' downstream if writes
+      // fail.
+      liveOutcome = 'success';
+      willWriteItems = true;
+      intendedCuratedCount = acceptedWithSource.length;
     }
   }
 
   const durationMs = Date.now() - t0;
 
-  // shared_research_refreshes — written for EVERY outcome. The
-  // triggered_by_tool column's CHECK constraint now admits 'cron'
-  // and 'admin' (Phase 7 schema change). Cron-triggered refreshes
-  // (scheduler, worker, BP-save enqueue) write 'cron'; admin
-  // diagnostic refreshes via the JWT path write 'admin' so the two
-  // are distinguishable on the audit row itself, not just via the
-  // userId on cache_access rows.
-  //
-  // Column shape (Addendum §4.2): the six per-refresh stats values
-  // (queries_run, cache_hits, raw_items, curated_items,
-  // rejected_items, duration_ms) live inside a single `stats` jsonb
-  // column. The schema migration after Pass D dropped the previous
-  // individual integer columns. audit_warnings is jsonb — passed
-  // through as the array (possibly empty), not coerced to null, so
-  // the column reads consistently as an array in queries.
-  //
-  // started_at reuses t0 from the very top of the handler (the
-  // wall-clock moment the refresh pipeline began). completed_at is
-  // set inside writeRefreshRow at the moment of INSERT and is not
-  // populated here.
+  // Stats builder so both the initial INSERT and the rollback UPDATE
+  // produce the same shape with only curated_items differing.
+  const buildStats = (curatedCount) => ({
+    queries_run: queriesRun,
+    cache_hits: cacheHits,
+    raw_items: taggedItems.length,
+    curated_items: curatedCount,
+    rejected_items: validated.rejected.length,
+    duration_ms: durationMs
+  });
+
+  // shared_research_refreshes — written FIRST as the integrity anchor.
+  // triggered_by_tool admits 'cron' (scheduler, worker, BP-save
+  // enqueue) and 'admin' (JWT diagnostic path) per Phase 7 schema
+  // change. started_at reuses t0 (handler start). completed_at is set
+  // inside writeRefreshRow at INSERT moment; updateRefreshRowToError
+  // bumps it again on rollback. stats.curated_items records the
+  // INTENDED count (acceptedWithSource.length on the with-writes
+  // path, 0 elsewhere); if writes fail downstream the row is updated
+  // to curated_items: 0 alongside outcome='error'.
   const tRefreshRow = Date.now();
   const refreshRowRes = await writeRefreshRow(supabase, {
     id: refreshId,
     cohort_id: cohortId,
     triggered_by_tool: usingCron ? 'cron' : 'admin',
     started_at: new Date(t0).toISOString(),
-    stats: {
-      queries_run: queriesRun,
-      cache_hits: cacheHits,
-      raw_items: taggedItems.length,
-      curated_items: writtenCount,
-      rejected_items: validated.rejected.length,
-      duration_ms: durationMs
-    },
+    stats: buildStats(willWriteItems ? intendedCuratedCount : 0),
     outcome: liveOutcome,
     audit_warnings: auditWarnings
   });
   recordTiming('refresh_row_insert', tRefreshRow);
+
   if (!refreshRowRes.ok) {
+    // Refresh row write failed — abort the entire refresh. No flip
+    // performed, no items inserted. The response reports the failure
+    // accurately rather than masking it with a 'success' that has no
+    // audit anchor.
+    const errText = 'refresh row write failed: ' + (refreshRowRes.error || 'unknown');
     auditWarnings.push({ scope: 'refresh_row', message: refreshRowRes.error || 'unknown' });
+    console.error(`[SharedResearch] Aborting refresh — refresh row write failed, cohort_id: ${cohortId}, message: ${refreshRowRes.error || 'unknown'}`);
+    timings.total_ms = Date.now() - t0;
+    // Response stats matches the full 10-field response shape used
+    // elsewhere in this handler — curated_items: 0 because no writes
+    // happened, the rest are populated from the pipeline state we
+    // had before the abort.
+    return res.status(500).json({
+      success: false,
+      dry_run: false,
+      refresh_id: refreshId,
+      outcome: 'error',
+      error: errText,
+      cohort_summary: cohortSummary,
+      stats: {
+        total_queries: plan.length,
+        cache_hits: cacheHits,
+        fresh_queries: queriesRun,
+        failed_queries: failedQueries,
+        raw_items: taggedItems.length,
+        deduped_items: deduped.length,
+        curation_returned: curation.items.length,
+        curated_items: 0,
+        rejected_items: validated.rejected.length,
+        duration_ms: durationMs
+      },
+      timings,
+      audit_warnings: auditWarnings
+    });
+  }
+
+  // Refresh row is in place. If we don't need to write items, we're done
+  // with the write phase. Otherwise: flip is_current, insert items, with
+  // rollback to error on failure.
+  if (willWriteItems) {
+    const tFlip = Date.now();
+    const flip = await flipIsCurrentFalse(supabase, cohortId);
+    recordTiming('is_current_flip', tFlip);
+
+    if (!flip.ok) {
+      // Flip failed. Best-effort restore (typically a no-op if zero
+      // rows actually flipped), then mark the refresh row as error.
+      await restoreIsCurrent(supabase, cohortId, snap.ids);
+      await updateRefreshRowToError(supabase, refreshId, buildStats(0));
+      liveOutcome = 'error';
+      liveError = 'is_current flip failed: ' + (flip.error || 'unknown');
+      console.error(`[SharedResearch] Live outcome — error (flip failed, refresh row updated), cohort_id: ${cohortId}, reason: ${liveError}`);
+    } else {
+      const tBuildRows = Date.now();
+      const rowsToInsert = acceptedWithSource.map((it) => buildSharedResearchRow(cohortId, refreshId, it));
+      recordTiming('shared_research_rows_build', tBuildRows);
+
+      const tInsert = Date.now();
+      const ins = await insertSharedResearchRows(supabase, rowsToInsert);
+      recordTiming('shared_research_insert', tInsert);
+
+      if (ins.ok) {
+        writtenCount = ins.count;
+        // Audit event for the shared_research write. Skipped on
+        // cron path because recordSharedResearchWriteEvent
+        // short-circuits when userId is null.
+        recordSharedResearchWriteEvent(writeAccessEvents, { userId, refreshId });
+        console.log(`[SharedResearch] Live outcome — success, cohort_id: ${cohortId}, written: ${writtenCount}`);
+      } else {
+        // Item insert failed. Rollback flip and mark refresh row as
+        // error. deleteRowsByRefreshId is defensive — Postgres INSERT
+        // is atomic so rows should not have landed, but the cleanup
+        // protects against any partial state.
+        const tRollback = Date.now();
+        await restoreIsCurrent(supabase, cohortId, snap.ids);
+        await deleteRowsByRefreshId(supabase, refreshId);
+        await updateRefreshRowToError(supabase, refreshId, buildStats(0));
+        recordTiming('shared_research_rollback', tRollback);
+        liveOutcome = 'error';
+        liveError = 'shared_research insert failed: ' + (ins.error || 'unknown');
+        console.error(`[SharedResearch] Live outcome — error (rolled back, refresh row updated), cohort_id: ${cohortId}, reason: ${liveError}`);
+      }
+    }
   }
 
   // shared_research_write audit event (success path only, admin-JWT
