@@ -327,15 +327,24 @@ export default async function handler(req, res) {
       for (const stale of staleRes.data || []) {
         const nextAttempts = (stale.attempts || 0) + 1;
         if (nextAttempts > MAX_RETRIES + 1) {
-          await supabase
+          const failRes = await supabase
             .from('srl_cron_jobs')
             .update({ status: 'failed', completed_at: new Date().toISOString(), outcome: 'error' })
             .eq('id', stale.id);
+          if (failRes.error) {
+            // Best-effort cleanup; row stays in_progress and the next
+            // watchdog tick catches it again. Log and continue the loop.
+            console.error('[srl-worker] Watchdog fail UPDATE error — job:', stale.id, 'message:', failRes.error.message);
+          }
         } else {
-          await supabase
+          const requeueRes = await supabase
             .from('srl_cron_jobs')
             .update({ status: 'queued', attempts: nextAttempts })
             .eq('id', stale.id);
+          if (requeueRes.error) {
+            // Same shape — next watchdog tick retries.
+            console.error('[srl-worker] Watchdog requeue UPDATE error — job:', stale.id, 'message:', requeueRes.error.message);
+          }
         }
       }
     }
