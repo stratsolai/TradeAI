@@ -118,7 +118,13 @@ async function processJob(supabase, job) {
   // statement covers the watchdog: stale rows still in_progress
   // past the cutoff get re-queued by the watchdog block, with
   // attempts incremented again.
-  await supabase
+  //
+  // If this UPDATE fails the worker cannot reliably track the
+  // job — abort processing before firing the refresh handler so
+  // we don't run a refresh whose completion state we can't
+  // record. The row stays in its current state (typically still
+  // queued) and the next worker tick re-attempts the claim.
+  const claimRes = await supabase
     .from('srl_cron_jobs')
     .update({
       status: 'in_progress',
@@ -126,6 +132,10 @@ async function processJob(supabase, job) {
       attempts: nextAttempts
     })
     .eq('id', job.id);
+  if (claimRes.error) {
+    console.error('[srl-worker] Claim UPDATE failed — job:', job.id, 'cohort_id:', job.cohort_id, 'message:', claimRes.error.message);
+    return { jobId: job.id, outcome: 'claim_failed' };
+  }
 
   try {
     const mockReq = buildMockReq(job.cohort_id);
@@ -161,7 +171,7 @@ async function processJob(supabase, job) {
       throw new Error(errText);
     }
 
-    await supabase
+    const completeRes = await supabase
       .from('srl_cron_jobs')
       .update({
         status: 'completed',
@@ -169,6 +179,13 @@ async function processJob(supabase, job) {
         outcome: handlerOutcome
       })
       .eq('id', job.id);
+    if (completeRes.error) {
+      // Refresh already succeeded; the row stays in_progress.
+      // The watchdog requeues stale in_progress rows after
+      // WATCHDOG_STALE_MINUTES — that would trigger a double
+      // refresh, not data loss. Log and continue.
+      console.error('[srl-worker] Completion UPDATE failed — job:', job.id, 'cohort_id:', job.cohort_id, 'message:', completeRes.error.message);
+    }
 
     // Step E — update cohorts metadata on successful refresh.
     // member_count is the current count of profiles in this cohort,
@@ -202,14 +219,18 @@ async function processJob(supabase, job) {
   } catch (err) {
     const errorMsg = (err && err.message) || 'Unknown error';
     if (nextAttempts <= MAX_RETRIES) {
-      await supabase
+      const requeueRes = await supabase
         .from('srl_cron_jobs')
         .update({ status: 'queued' })
         .eq('id', job.id);
+      if (requeueRes.error) {
+        // Row stays in_progress; watchdog will eventually requeue.
+        console.error('[srl-worker] Requeue UPDATE failed — job:', job.id, 'cohort_id:', job.cohort_id, 'message:', requeueRes.error.message);
+      }
       console.log('[srl-worker] Job', job.id, 'requeued — attempt:', nextAttempts, '/', MAX_RETRIES + 1, '— error:', errorMsg);
       return { jobId: job.id, outcome: 'retrying' };
     }
-    await supabase
+    const failRes = await supabase
       .from('srl_cron_jobs')
       .update({
         status: 'failed',
@@ -217,6 +238,11 @@ async function processJob(supabase, job) {
         outcome: 'error'
       })
       .eq('id', job.id);
+    if (failRes.error) {
+      // Row stays in_progress; watchdog will eventually flip to
+      // failed via its own attempts-exhausted path.
+      console.error('[srl-worker] Failed UPDATE error — job:', job.id, 'cohort_id:', job.cohort_id, 'message:', failRes.error.message);
+    }
     console.log('[srl-worker] Job', job.id, 'failed — attempts exhausted — error:', errorMsg);
     return { jobId: job.id, outcome: 'failed' };
   }
