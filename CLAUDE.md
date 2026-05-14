@@ -159,6 +159,24 @@ once populated.
 
 - BI → SP wiring — confirm "Add to Strategic Plan" button works
 
+### Dashboard widget — Social Media column reference bugs
+
+Three queries in dashboard-widgets.js reference columns on the social_posts 
+table that don't exist in the current schema. Errors visible in console on 
+every dashboard load:
+
+- Line 790 — column social_posts.campaign_id does not exist (Social week widget)
+- Line 815 — column social_posts.scheduled_at does not exist (Social week-strip widget)
+- Line 824 — column social_posts.connections does not exist (Social platform widget)
+
+All three return 400 Bad Request from Supabase REST API. Widgets fail silently 
+— dashboard still loads but Social Media tiles are non-functional.
+
+Discovered during signup fix verification testing (13 May 2026). Resolution 
+requires reviewing the three lines against the current social_posts schema 
+and either updating the queries to match the schema, or adding the missing 
+columns if they're meant to exist per the SM spec.
+
 ### Task 33 — Page Load Speed & Shell Flicker
 
 Status: Not started.
