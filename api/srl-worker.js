@@ -169,10 +169,22 @@ async function processJob(supabase, job) {
     // For job-state purposes, success/no_results/validation_failed
     // are all "the refresh ran its pipeline and recorded an outcome"
     // — that is completion, not retryable failure.
+    //
+    // 4xx responses other than 422 (e.g. 400 for a cohort with no
+    // representative profile, 404 for an unknown cohort_id) indicate
+    // permanently invalid input — retrying with the same cohort_id
+    // would just hit the same condition again. Mark these as
+    // non-retryable via err.permanent so the outer catch skips the
+    // requeue path and moves the job directly to failed. 5xx and
+    // timeouts continue to retry as before.
     const isHandlerError = statusCode === 500 || handlerOutcome === 'error' || (statusCode >= 400 && statusCode !== 422);
     if (isHandlerError) {
       const errText = (result && result.error) || ('Handler returned ' + statusCode);
-      throw new Error(errText);
+      const err = new Error(errText);
+      if (statusCode >= 400 && statusCode < 500 && statusCode !== 422) {
+        err.permanent = true;
+      }
+      throw err;
     }
 
     const completeRes = await supabase
@@ -222,7 +234,8 @@ async function processJob(supabase, job) {
 
   } catch (err) {
     const errorMsg = (err && err.message) || 'Unknown error';
-    if (nextAttempts <= MAX_RETRIES) {
+    const permanent = !!(err && err.permanent);
+    if (!permanent && nextAttempts <= MAX_RETRIES) {
       const requeueRes = await supabase
         .from('srl_cron_jobs')
         .update({ status: 'queued' })
@@ -233,6 +246,9 @@ async function processJob(supabase, job) {
       }
       console.log('[srl-worker] Job', job.id, 'requeued — attempt:', nextAttempts, '/', MAX_RETRIES + 1, '— error:', errorMsg);
       return { jobId: job.id, outcome: 'retrying' };
+    }
+    if (permanent) {
+      console.log('[srl-worker] Job', job.id, 'permanent failure — not retried — error:', errorMsg);
     }
     const failRes = await supabase
       .from('srl_cron_jobs')
