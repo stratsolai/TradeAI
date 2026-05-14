@@ -653,13 +653,20 @@ export default async function handler(req, res) {
   // (queries_run, cache_hits, raw_items, curated_items,
   // rejected_items, duration_ms) live inside a single `stats` jsonb
   // column. The schema migration after Pass D dropped the previous
-  // individual integer columns. audit_warnings is sent as jsonb when
-  // the array is non-empty.
+  // individual integer columns. audit_warnings is jsonb — passed
+  // through as the array (possibly empty), not coerced to null, so
+  // the column reads consistently as an array in queries.
+  //
+  // started_at reuses t0 from the very top of the handler (the
+  // wall-clock moment the refresh pipeline began). completed_at is
+  // set inside writeRefreshRow at the moment of INSERT and is not
+  // populated here.
   const tRefreshRow = Date.now();
   const refreshRowRes = await writeRefreshRow(supabase, {
     id: refreshId,
     cohort_id: cohortId,
     triggered_by_tool: usingCron ? 'cron' : 'admin',
+    started_at: new Date(t0).toISOString(),
     stats: {
       queries_run: queriesRun,
       cache_hits: cacheHits,
@@ -669,7 +676,7 @@ export default async function handler(req, res) {
       duration_ms: durationMs
     },
     outcome: liveOutcome,
-    audit_warnings: auditWarnings.length > 0 ? auditWarnings : null
+    audit_warnings: auditWarnings
   });
   recordTiming('refresh_row_insert', tRefreshRow);
   if (!refreshRowRes.ok) {
