@@ -386,6 +386,14 @@
   document.addEventListener("DOMContentLoaded", async function() {
     var params = new URLSearchParams(window.location.search);
 
+    // Attach form submit handlers before the verifyOtp block. The
+    // verifyOtp block has early returns; if these attachments lived
+    // after it, an email-confirmation visit (/login?token_hash=...)
+    // would skip them and the user's first form submit would
+    // default-GET to the current URL, clearing the form.
+    document.getElementById("login-form").addEventListener("submit", handleLoginSubmit);
+    document.getElementById("signup-form").addEventListener("submit", handleSignupSubmit);
+
     // Handle email confirmation token from Supabase signup link.
     // Supabase's default email template lands the user here with
     // ?token_hash=...&type=signup — we exchange it for a session via
@@ -652,8 +660,8 @@
 
     // [signin-debug] TEMP — remove after Issue 3 diagnosed
     console.log('[signin-debug] reached login-form addEventListener attach line — handler about to be wired, ts:', Date.now());
-    // Handle login
-    document.getElementById("login-form").addEventListener("submit", async function(e) {
+    // Login form submit handler — attached at the top of DOMContentLoaded above
+    async function handleLoginSubmit(e) {
       // [signin-debug] TEMP — remove after Issue 3 diagnosed
       console.log('[signin-debug] LOGIN FORM SUBMIT HANDLER FIRED — first line, before preventDefault, ts:', Date.now());
       e.preventDefault();
@@ -758,7 +766,7 @@
         showError(err.message || 'Something went wrong. Please try again.');
         if (btn) { btn.textContent = btnLabel; btn.disabled = false; }
       }
-    });
+    }
 
     // Redirect guard: signup requires industries selected upstream
     if (params.get("tab") === "signup" && !sessionStorage.getItem("signup_industries")) {
@@ -766,8 +774,8 @@
       return;
     }
 
-    // Handle signup
-    document.getElementById("signup-form").addEventListener("submit", async function(e) {
+    // Signup form submit handler — attached at the top of DOMContentLoaded above
+    async function handleSignupSubmit(e) {
       e.preventDefault();
       hideMessages();
       var email = document.getElementById("signup-email").value;
@@ -893,7 +901,7 @@
       // verifyOtp handler above. Keep them on /login with the
       // success message; no redirect.
       showSuccess("Account created. Please check your email to verify your account.", "Account created");
-    });
+    }
   });
 
   function showLogin() {
