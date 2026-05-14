@@ -8,12 +8,16 @@
 //   §7.2 — Auth: x-cron-secret (production) OR JWT (administrators only)
 //   §7.3 — Response shape: profile_summary renamed cohort_summary
 //   §8.1 — Curation model: claude-sonnet-4-6 (was haiku-4-5)
-//   §8.2 — Dispatcher routes each item to every category in its
-//          source_categories array (Finding G fix) — implemented in
-//          lib/shared-research-curation.js runCuration. The handler
-//          deduplicates by (url, category) after validation so the
-//          multi-category-per-URL signal is preserved without
-//          producing literal duplicate rows in shared_research.
+//   §8.2 — Cross-category routing. Pass D implemented this as
+//          dispatcher-level fan-out; Pass D.7 superseded that with
+//          one-batch-per-item dispatch (source_categories[0]) plus
+//          a prompt-level RECATEGORISATION DUTY that requires Sonnet
+//          to evaluate every content item against all five category
+//          definitions before dropping it. The result is one
+//          shared_research row per item — fan-out duplicates are
+//          gone by construction. See lib/shared-research-curation.js
+//          runCuration. dedupByUrlAndCategory below stays in place
+//          as a no-op insurance net.
 //
 // Refresh pipeline (unchanged at the phase boundaries — just cohort-
 // scoped instead of user-scoped):
@@ -27,9 +31,12 @@
 //      operational keys; Serper queries and the curation prompt
 //      both need raw display names, which only profiles carry.
 //   4. Build query plan, execute with Serper cache, dedupe, enrich.
-//   5. Curate (Sonnet, per-category fan-out with Finding G routing).
-//   6. Validate. Dedupe by (url, category) so Finding G's per-batch
-//      retention doesn't produce duplicate shared_research rows.
+//   5. Curate (Sonnet, five per-category Sonnet calls running in
+//      parallel; each item arrives in one batch via
+//      source_categories[0] and the prompt's RECATEGORISATION DUTY
+//      handles cross-category fit).
+//   6. Validate. dedupByUrlAndCategory runs as insurance only — under
+//      Pass D.7 dispatch there are no fan-out duplicates to collapse.
 //   7. Dry-run: return cohort_summary + curated payload, no writes.
 //   8. Live: snapshot is_current rows, flip to false, insert new
 //      rows under the new refresh_id, write the refresh row with
@@ -449,11 +456,16 @@ export default async function handler(req, res) {
     : { accepted: [], rejected: [] };
   recordTiming('validation', tValidate);
 
-  // Finding G post-processing — multiple per-category batches can
-  // independently retain the same item. Collapse same URL + same
-  // category to a single row (lens arrays merged so per-batch lens
-  // subsets union), preserving same URL + different categories so
-  // the multi-category-per-URL signal survives end-to-end.
+  // Pass D.7 — the dispatcher routes each item to exactly one batch
+  // (lib/shared-research-curation.js runCuration), so duplicate
+  // (url, category) outputs can no longer arise from the multi-batch
+  // fan-out the Pass D fix introduced. dedupByUrlAndCategory is
+  // retained as a no-op insurance net: it catches any same-URL
+  // outputs that could slip through from a future regression (e.g.
+  // a Sonnet response that emits the same item twice in one batch,
+  // or a validator URL-normalisation collision). In the steady
+  // state validated.accepted already has no duplicates and this
+  // call returns it unchanged.
   const tDedupCategory = Date.now();
   const dedupedValidated = dedupByUrlAndCategory(validated.accepted);
   recordTiming('dedupe_by_url_category', tDedupCategory);
@@ -787,17 +799,26 @@ async function runWithConcurrency(items, maxParallel, worker) {
 }
 
 // ---------------------------------------------------------------------------
-// Finding G post-processing — dedupe by (url, category) with lens merge
+// Dedup by (url, category) with lens merge — insurance, no longer
+// active logic under the Pass D.7 routing model
 // ---------------------------------------------------------------------------
 //
-// runCuration now routes each item to every category in its
-// source_categories array (Addendum §8.2). When multiple per-category
-// batches independently retain the same item, the validation output
-// can carry the same URL more than once. Collapse:
-//   - same URL + same category   → one row, lens arrays unioned
-//   - same URL + different categories → preserved as separate rows
-// so the multi-category-per-URL signal survives end-to-end while
-// shared_research never gets literal duplicate rows.
+// Pass D's dispatcher fix routed each item to every category in its
+// source_categories array, which could produce duplicate (url,
+// category) outputs across batches; this function was the clean-up
+// step. Pass D.7 reverted the dispatcher to one batch per item and
+// moved cross-category consideration into the curation prompt's
+// RECATEGORISATION DUTY, so duplicate (url, category) outputs no
+// longer arise from the fan-out by construction.
+//
+// The function stays in place as a no-op insurance net against
+// future regressions (a Sonnet response that emits the same item
+// twice in one batch, a validator URL-normalisation collision,
+// any future fan-out reintroduction). Behaviour: same URL + same
+// category collapses to one row with lens arrays unioned; same
+// URL + different categories preserved as separate rows. In the
+// steady state the input already has no duplicates and the
+// function returns it unchanged.
 
 function dedupByUrlAndCategory(items) {
   const byKey = new Map();
