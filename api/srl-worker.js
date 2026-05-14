@@ -123,6 +123,28 @@ async function processJob(supabase, job) {
     const mockReq = buildMockReq(job.cohort_id);
     const mock = buildMockRes();
 
+    // Fire-and-forget the refresh handler. The handler is invoked
+    // without await on purpose — we don't observe its promise
+    // directly. The contract is that the handler calls
+    // res.status().json() exactly once, which resolves mock.promise
+    // with { statusCode, data }. We then race mock.promise against
+    // a JOB_TIMEOUT_MS timer to bound this worker's wait.
+    //
+    // Three outcomes:
+    //   - Normal: handler calls res.json() → mock.promise resolves →
+    //     race wins on the mock side.
+    //   - Handler throws: the .catch below calls res.status(500).
+    //     json() with the error message → mock.promise resolves →
+    //     race wins on the mock side.
+    //   - Handler hangs without ever calling res.json() and without
+    //     throwing: mock.promise never resolves; the timeout wins
+    //     after JOB_TIMEOUT_MS and we throw to the outer catch,
+    //     which routes through the retry/fail path.
+    //
+    // The timeout is the safety net. Phase 7 Finding 4 made this
+    // contract explicit in comment form rather than restructuring
+    // the call (restructuring carries regression risk for behaviour
+    // that already works).
     sharedResearchRefreshHandler(mockReq, mock.res).catch((err) => {
       mock.res.status(500).json({ error: (err && err.message) || 'Handler threw' });
     });
