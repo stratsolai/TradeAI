@@ -181,24 +181,33 @@ async function confirmSubscription(session) {
     if (tier) {
       updatePayload.bundle_tier = tier;
     }
+    // PostgREST upsert: POST to the collection with the id in the
+    // body and Prefer: resolution=merge-duplicates. The Stripe webhook
+    // is the authoritative confirmation that the user paid, so the
+    // profiles row must exist with the correct payment state whether
+    // or not anything upstream (profile-save, trial-setup) ran
+    // beforehand. This guards the Path A edge case where the post-
+    // confirmation flow could redirect to Stripe before any profiles
+    // write happened.
+    var upsertPayload = Object.assign({ id: userId }, updatePayload);
     var res = await fetch(
-      process.env.SUPABASE_URL + "/rest/v1/profiles?id=eq." + userId,
+      process.env.SUPABASE_URL + "/rest/v1/profiles",
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
           "apikey": process.env.SUPABASE_SERVICE_KEY,
           "Authorization": "Bearer " + process.env.SUPABASE_SERVICE_KEY,
           "Content-Type": "application/json",
-          "Prefer": "return=minimal"
+          "Prefer": "return=minimal,resolution=merge-duplicates"
         },
-        body: JSON.stringify(updatePayload)
+        body: JSON.stringify(upsertPayload)
       }
     );
     if (!res.ok) {
       var errText = await res.text();
-      console.error("confirmSubscription PATCH failed:", res.status, errText);
+      console.error("confirmSubscription upsert failed:", res.status, errText);
     } else {
-      console.log("confirmSubscription: profiles updated for userId", userId, "tier", tier);
+      console.log("confirmSubscription: profiles upserted for userId", userId, "tier", tier);
     }
   } catch (err) {
     console.error("confirmSubscription error:", err);
