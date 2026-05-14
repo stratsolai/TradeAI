@@ -415,10 +415,8 @@ export default async function handler(req, res) {
   recordTiming('curation', tCuration);
 
   if (curation.per_category) {
-    const perCategoryMs = {};
     const breakdown = {};
     for (const [cat, info] of Object.entries(curation.per_category)) {
-      perCategoryMs[cat] = info.duration_ms;
       breakdown[cat] = {
         ms: info.duration_ms,
         items_in: info.items_in || 0,
@@ -434,7 +432,6 @@ export default async function handler(req, res) {
       };
       console.log(`[SharedResearch] Phase timing — phase: curation_${cat}, ms: ${info.duration_ms}, items_in: ${info.items_in}, items_out: ${info.items_out}, input_tokens: ${info.input_tokens}, output_tokens: ${info.output_tokens}, ok: ${info.ok}`);
     }
-    timings.curation_per_category_ms = perCategoryMs;
     timings.curation_per_category_breakdown = breakdown;
   }
 
