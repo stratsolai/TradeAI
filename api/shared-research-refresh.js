@@ -641,27 +641,25 @@ export default async function handler(req, res) {
   // distinguishable in logs and via the userId on the cache_access
   // rows that the admin path produces.
   //
-  // Column shape preserved from the pre-Pass-D writer (queries_run /
-  // cache_hits / raw_items / curated_items / rejected_items /
-  // duration_ms as top-level integer columns). Addendum §4.2 documents
-  // these consolidated into a `stats` jsonb column, but the Section 15
-  // migration only renames user_id → cohort_id and narrows the
-  // triggered_by_tool CHECK constraint — the individual columns are
-  // still the live schema. audit_warnings is sent as jsonb when the
-  // array is non-empty; the column was already present per §4.2's note
-  // that it "is present in code today" and the existing endpoint
-  // writes to it already.
+  // Column shape (Addendum §4.2): the six per-refresh stats values
+  // (queries_run, cache_hits, raw_items, curated_items,
+  // rejected_items, duration_ms) live inside a single `stats` jsonb
+  // column. The schema migration after Pass D dropped the previous
+  // individual integer columns. audit_warnings is sent as jsonb when
+  // the array is non-empty.
   const tRefreshRow = Date.now();
   const refreshRowRes = await writeRefreshRow(supabase, {
     id: refreshId,
     cohort_id: cohortId,
     triggered_by_tool: 'cron',
-    queries_run: queriesRun,
-    cache_hits: cacheHits,
-    raw_items: taggedItems.length,
-    curated_items: writtenCount,
-    rejected_items: validated.rejected.length,
-    duration_ms: durationMs,
+    stats: {
+      queries_run: queriesRun,
+      cache_hits: cacheHits,
+      raw_items: taggedItems.length,
+      curated_items: writtenCount,
+      rejected_items: validated.rejected.length,
+      duration_ms: durationMs
+    },
     outcome: liveOutcome,
     audit_warnings: auditWarnings.length > 0 ? auditWarnings : null
   });
