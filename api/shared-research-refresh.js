@@ -16,8 +16,7 @@
 //          definitions before dropping it. The result is one
 //          shared_research row per item — fan-out duplicates are
 //          gone by construction. See lib/shared-research-curation.js
-//          runCuration. dedupByUrlAndCategory below stays in place
-//          as a no-op insurance net.
+//          runCuration.
 //
 // Refresh pipeline (unchanged at the phase boundaries — just cohort-
 // scoped instead of user-scoped):
@@ -35,8 +34,7 @@
 //      parallel; each item arrives in one batch via
 //      source_categories[0] and the prompt's RECATEGORISATION DUTY
 //      handles cross-category fit).
-//   6. Validate. dedupByUrlAndCategory runs as insurance only — under
-//      Pass D.7 dispatch there are no fan-out duplicates to collapse.
+//   6. Validate.
 //   7. Dry-run: return cohort_summary + curated payload, no writes.
 //   8. Live: snapshot is_current rows, flip to false, insert new
 //      rows under the new refresh_id, write the refresh row with
@@ -461,23 +459,9 @@ export default async function handler(req, res) {
     : { accepted: [], rejected: [] };
   recordTiming('validation', tValidate);
 
-  // Pass D.7 — the dispatcher routes each item to exactly one batch
-  // (lib/shared-research-curation.js runCuration), so duplicate
-  // (url, category) outputs can no longer arise from the multi-batch
-  // fan-out the Pass D fix introduced. dedupByUrlAndCategory is
-  // retained as a no-op insurance net: it catches any same-URL
-  // outputs that could slip through from a future regression (e.g.
-  // a Sonnet response that emits the same item twice in one batch,
-  // or a validator URL-normalisation collision). In the steady
-  // state validated.accepted already has no duplicates and this
-  // call returns it unchanged.
-  const tDedupCategory = Date.now();
-  const dedupedValidated = dedupByUrlAndCategory(validated.accepted);
-  recordTiming('dedupe_by_url_category', tDedupCategory);
-
   const totalCurationFailure = curation.ok
     && curation.items.length > 0
-    && dedupedValidated.length === 0;
+    && validated.accepted.length === 0;
 
   // Join each accepted item back to its originating plan rows via URL
   // so source_queries / source_categories / source_industries can be
@@ -488,7 +472,7 @@ export default async function handler(req, res) {
   const tGroup = Date.now();
   const enrichedByUrl = new Map();
   for (const d of deduped) enrichedByUrl.set(d.link, d);
-  const acceptedWithSource = dedupedValidated.map((it) => {
+  const acceptedWithSource = validated.accepted.map((it) => {
     const src = enrichedByUrl.get(it.url);
     return Object.assign({}, it, {
       source_queries: src ? src.source_queries : [],
@@ -545,7 +529,7 @@ export default async function handler(req, res) {
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
         curation_returned: curation.items.length,
-        curated_items: dedupedValidated.length,
+        curated_items: validated.accepted.length,
         rejected_items: validated.rejected.length,
         duration_ms: totalDuration
       },
@@ -803,46 +787,3 @@ async function runWithConcurrency(items, maxParallel, worker) {
   return results;
 }
 
-// ---------------------------------------------------------------------------
-// Dedup by (url, category) with lens merge — insurance, no longer
-// active logic under the Pass D.7 routing model
-// ---------------------------------------------------------------------------
-//
-// Pass D's dispatcher fix routed each item to every category in its
-// source_categories array, which could produce duplicate (url,
-// category) outputs across batches; this function was the clean-up
-// step. Pass D.7 reverted the dispatcher to one batch per item and
-// moved cross-category consideration into the curation prompt's
-// RECATEGORISATION DUTY, so duplicate (url, category) outputs no
-// longer arise from the fan-out by construction.
-//
-// The function stays in place as a no-op insurance net against
-// future regressions (a Sonnet response that emits the same item
-// twice in one batch, a validator URL-normalisation collision,
-// any future fan-out reintroduction). Behaviour: same URL + same
-// category collapses to one row with lens arrays unioned; same
-// URL + different categories preserved as separate rows. In the
-// steady state the input already has no duplicates and the
-// function returns it unchanged.
-
-function dedupByUrlAndCategory(items) {
-  const byKey = new Map();
-  for (const it of items || []) {
-    const url = it && it.url || '';
-    const category = it && it.category || '';
-    if (!url || !category) continue;
-    const key = url + '||' + category;
-    if (!byKey.has(key)) {
-      byKey.set(key, Object.assign({}, it, {
-        lens: Array.isArray(it.lens) ? [...it.lens] : (it.lens ? [it.lens] : [])
-      }));
-    } else {
-      const existing = byKey.get(key);
-      const existingLensSet = new Set(existing.lens);
-      const incoming = Array.isArray(it.lens) ? it.lens : (it.lens ? [it.lens] : []);
-      for (const l of incoming) existingLensSet.add(l);
-      existing.lens = [...existingLensSet];
-    }
-  }
-  return [...byKey.values()];
-}
