@@ -2,9 +2,14 @@
 //
 // Per Shared Research Layer Spec v1.0 Section 13.1, ID no longer
 // runs its own Serper queries or Haiku curation for the five news
-// tabs — those come from /api/shared-research-refresh, which the
-// browser hits in parallel with this endpoint (see news-digest-
-// logic.js — _refresh()).
+// tabs — those come from shared_research (cohort-scoped after the
+// Cohort Architecture migration). This endpoint covers only the
+// tender flow below; the news tabs are populated from a separate
+// page-load read in news-digest-logic.js. The browser-side
+// /api/shared-research-refresh trigger that used to fire in parallel
+// with this endpoint was removed in SRL Cohort Architecture
+// Addendum v1.2 §12; ID's tool review will redesign the cohort-aware
+// re-read flow (§13 out of scope for the SRL rebuild).
 //
 // What's left here is the tender flow:
 //   1. AusTender ATM search by industry

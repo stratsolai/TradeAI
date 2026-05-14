@@ -89,24 +89,19 @@ window.ND_LOGIC = {
     }
     var token = session.access_token;
 
-    // Progressive rendering — tender fetch (~few seconds) and the
-    // Shared Research Layer refresh (~17-35s) fire in parallel. Each
-    // one renders its own portion as soon as it returns. The five
-    // news tabs show a loading placeholder until the shared refresh
-    // completes; the Grants & Tenders tab populates on the tender
-    // call's return.
-    this._showNewsTabsLoading();
-
+    // The Refresh button now only refreshes the Grants & Tenders
+    // tab. SRL Cohort Architecture Addendum v1.2 §12 removed the
+    // _refreshSharedResearch path; the five news tabs stay rendered
+    // from the initial page load (see _loadCuratedItems) until ID's
+    // tool review redesigns the cohort-aware re-read flow (§13 out
+    // of scope for the SRL rebuild). The button is intentionally
+    // left visible so the tender refresh continues to work.
     var tenderPromise = this._refreshTenders(token).catch(function(e) {
       console.error('[ND] Tender refresh error:', e && e.message);
       self._showError('Could not refresh tenders. Please try again.');
     });
-    var sharedPromise = this._refreshSharedResearch(token).catch(function(e) {
-      console.error('[ND] Shared research refresh error:', e && e.message);
-      self._showNewsTabsError('Could not refresh news. Please try again.');
-    });
 
-    await Promise.allSettled([tenderPromise, sharedPromise]);
+    await tenderPromise;
     this._setRefreshButton(false);
   },
 
@@ -140,74 +135,13 @@ window.ND_LOGIC = {
     this._renderGrantsTenders();
   },
 
-  _refreshSharedResearch: async function(token) {
-    // No force_refresh: the spec mandates ID respects the shared
-    // 24-hour cache. force_refresh is diagnostic-only.
-    var res = await fetch('/api/shared-research-refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify({ triggered_by_tool: 'id' })
-    });
-    if (!res.ok) {
-      var errBody = await res.json().catch(function() { return {}; });
-      throw new Error(errBody.error || ('Shared research returned ' + res.status));
-    }
-    var body = await res.json();
-    // Spec §12.1 — response.items is grouped by category. Empty
-    // object on no_results / zero-curated outcomes; either way it's
-    // the correct shape for the category render.
-    //
-    // Listings Addendum §6.1 — drop any item_type = 'listing' rows
-    // from each category bucket before populating the tabs. Mirrors
-    // the item_type = 'content' predicate added to _loadCuratedItems
-    // so the initial-load path and the Refresh path agree.
-    var rawItems = (body && body.items) || {};
-    var filteredItems = {};
-    for (var catKey in rawItems) {
-      if (!Object.prototype.hasOwnProperty.call(rawItems, catKey)) continue;
-      var bucket = rawItems[catKey] || [];
-      filteredItems[catKey] = bucket.filter(function(it) {
-        return it && it.item_type === 'content';
-      });
-    }
-    this._curatedItems = filteredItems;
-    this._renderAllNewsCategories();
-  },
-
-  _showNewsTabsLoading: function() {
-    var self = this;
-    this.CATEGORIES.forEach(function(cat) {
-      var content = document.getElementById('nd-content-' + cat.id);
-      var empty = document.getElementById('nd-empty-' + cat.id);
-      if (empty) empty.hidden = true;
-      if (content) {
-        content.innerHTML = '<div class="nd-tab-loading">Loading latest ' + self._escSafe(cat.label.toLowerCase()) + ' updates&hellip;</div>';
-      }
-    });
-  },
-
-  _showNewsTabsError: function(message) {
-    this.CATEGORIES.forEach(function(cat) {
-      var content = document.getElementById('nd-content-' + cat.id);
-      var empty = document.getElementById('nd-empty-' + cat.id);
-      if (empty) empty.hidden = true;
-      if (content) {
-        content.innerHTML = '<div class="nd-tab-loading">' + (window.escHtml ? window.escHtml(message) : message) + '</div>';
-      }
-    });
-  },
-
-  _escSafe: function(s) {
-    return window.escHtml ? window.escHtml(s) : String(s == null ? '' : s);
-  },
-
-  _renderAllNewsCategories: function() {
-    var self = this;
-    this.CATEGORIES.forEach(function(cat) { self._renderCategory(cat.id); });
-  },
+  // _refreshSharedResearch, _showNewsTabsLoading, _showNewsTabsError,
+  // _escSafe, and _renderAllNewsCategories were the SRL refresh path
+  // and its render helpers. SRL Cohort Architecture Addendum v1.2
+  // §12 removes the per-user refresh call; the page-load render via
+  // _renderAll covers the static news-tab state, so the helpers are
+  // gone. ID's tool review will redesign the cohort-aware re-read
+  // flow (§13 out of scope for the SRL rebuild).
 
   _showError: function(message) {
     var modal = document.getElementById('nd-error-msg');
@@ -233,15 +167,18 @@ window.ND_LOGIC = {
   },
 
   _loadCuratedItems: async function() {
-    // Initial page load: read shared_research rows for this user
-    // where is_current = true. Group by category in JS. The Refresh
-    // button uses the endpoint response directly (see
-    // _refreshSharedResearch) and doesn't re-read the DB.
+    // Page-load read of curated research from shared_research. The
+    // .eq('user_id', ...) predicate is broken after the SRL Cohort
+    // Architecture migration — shared_research is now cohort-scoped
+    // (Addendum §4.1) — and the Supabase query will return an error
+    // when the column doesn't resolve. That's caught below and falls
+    // through to an empty grouped object, so the news tabs render
+    // empty until ID's tool review redesigns the cohort-aware read
+    // (Addendum §13 out of scope for the SRL rebuild).
     //
     // Listings Addendum §6.1 — ID renders factual briefings only and
-    // must not show marketplace listings. The third predicate filters
-    // listings out at the DB read; the Refresh response path applies
-    // the same filter in JS (see _refreshSharedResearch).
+    // must not show marketplace listings. The item_type predicate
+    // stays so it's ready when the tool review wires this back up.
     try {
       var res = await this._supabase
         .from('shared_research')
