@@ -126,6 +126,10 @@
       "destination": "/industry-select.html"
     },
     {
+      "source": "/function",
+      "destination": "/function-select.html"
+    },
+    {
       "source": "/pricing",
       "destination": "/pricing-page.html"
     },

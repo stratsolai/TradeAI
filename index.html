@@ -103,7 +103,7 @@
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(1.5)} }
     .hero-headline{font-family:var(--heading-font);font-size:80px;font-weight:900;line-height:0.95;letter-spacing:-1px;text-transform:uppercase;margin-bottom:28px;}
     
-    .h-line{display:block;background:linear-gradient(to right,#ffffff,#e8d5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.problem-item .word-accent,.ai-capability .word-accent,.section-title .word-accent{-webkit-text-fill-color:transparent !important;background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a) !important;-webkit-background-clip:text !important;background-clip:text !important;}.rotating-word{display:inline-block;}.rotating-word.exit{opacity:0;transform:translateY(-8px);transition:opacity 0.25s,transform 0.25s;}.rotating-word.active{opacity:1;transform:translateY(0);transition:opacity 0.25s,transform 0.25s;}
+    .h-line{display:block;background:linear-gradient(to right,#ffffff,#e8d5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.problem-item .word-accent,.ai-capability .word-accent,.section-title .word-accent{-webkit-text-fill-color:transparent !important;background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a) !important;-webkit-background-clip:text !important;background-clip:text !important;}
     .hero-sub {
       font-size:18px; line-height:1.7; color:var(--muted);
       margin-bottom:40px; max-width:480px;
@@ -647,7 +647,7 @@
     <div class="hero-left">
       <div class="hero-eyebrow">Australia's #1 AI Platform for Trades</div>
 
-      <h1 class="hero-headline"><span class="h-line">YOUR <span class="word-accent rotating-word" id="rotating-word">TRADE</span></span><span class="h-line">BUSINESS</span><span class="h-line"><span class="word-accent">STAX</span> UP WITH <span class="word-accent">AI</span></span></h1>
+      <h1 class="hero-headline"><span class="h-line">YOUR BUSINESS</span><span class="h-line"><span class="word-accent">STAX</span> UP WITH <span class="word-accent">AI</span></span></h1>
 
       <p class="hero-sub" style="margin-bottom:0;">
         Professional AI tools for smart marketing &amp; socials, document creation, customer communications and business intelligence
@@ -660,8 +660,8 @@
       </p>
 
       <div class="hero-actions">
-        <a href="/industry" class="btn-primary">Choose Your Trade </a>
-        <a href="/tools" class="btn-secondary">See All Tools </a>
+        <a href="/industry" class="btn-primary">Choose by Trade</a>
+        <a href="/function" class="btn-secondary">Choose by Function</a>
       </div>
 
       <div class="hero-trust">
@@ -814,20 +814,24 @@
     <div class="section-tag">HOW IT WORKS</div>
     <h2 class="section-title">LIVE IN <span class="word-accent">MINUTES</span></h2>
     <div class="steps">
-      <div class="step fade-up" onclick="window.location.href='/industry'" style="cursor:pointer;">
+      <div class="step fade-up">
         <div class="step-num">1 <span class="step-icon">🏗️</span></div>
-        <h3>Choose your trade</h3>
-        <p>Select from 12 industries — tools built around how your trade actually works</p>
+        <h3>Find Your Tools</h3>
+        <p>Tools built for your business — by trade or by function</p>
+        <div class="step-actions" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:16px;">
+          <a href="/industry" class="btn-primary">Choose by Trade</a>
+          <a href="/function" class="btn-secondary">Choose by Function</a>
+        </div>
       </div>
       <div class="step fade-up">
         <div class="step-num">2 <span class="step-icon">⚡</span></div>
         <h3>Create your <span class="word-accent">STAX</span></h3>
-        <p>Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes</p>
+        <p>Activate the tools that make the biggest difference to you first — choose your settings and be up and running in minutes</p>
       </div>
       <div class="step fade-up">
         <div class="step-num">3 <span class="step-icon">🚀</span></div>
-        <h3>Your <span class="word-accent">STAX</span> is live</h3>
-        <p>Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with your trade</p>
+        <h3>Your <span class="word-accent">STAX</span> is Live</h3>
+        <p>Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with business</p>
       </div>
     </div>
   </div>
@@ -1048,10 +1052,11 @@
       <div class="section-tag">GET STARTED</div>
       <h2 class="section-title" style="line-height:1.05;margin-bottom:48px;"><span class="h-line">YOUR <span class="word-accent">STAX</span> | YOUR WAY</span></h2>
       <p class="cta-sub">Professional AI tools for smart marketing &amp; socials, document creation, customer communications and business intelligence</p>
-      <div class="cta-actions">
-        <a href="/industry" class="btn-primary" style="font-size:18px;padding:18px 40px">Choose Your Trade </a>
+      <div class="cta-actions" style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+        <a href="/industry" class="btn-primary" style="font-size:18px;padding:18px 40px">Choose by Trade</a>
+        <a href="/function" class="btn-secondary" style="font-size:18px;padding:18px 40px">Choose by Function</a>
       </div>
-      <div class="cta-note" style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;"><div class="trust-item">From $59/mth per tool</div><div class="trust-item">Cancel anytime</div><div class="trust-item">Australian support</div></div>
+      <div class="cta-note" style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;"><div class="trust-item">From $39/mth per tool</div><div class="trust-item">Cancel anytime</div><div class="trust-item">Australian support</div></div>
     </div>
   </div>
 </section>
@@ -1246,21 +1251,6 @@ if (rotatorItems.length > 0) {
   }, 3000);
 }
 
-var wordItems = ['TRADE', 'SERVICE'];
-var wordIndex = 0;
-function rotateWord() {
-  var el = document.getElementById('rotating-word');
-  if (!el || wordItems.length === 0) return;
-  el.classList.add('exit');
-  setTimeout(function() {
-    el.classList.remove('exit');
-    wordIndex = (wordIndex + 1) % wordItems.length;
-    el.textContent = wordItems[wordIndex];
-    el.classList.add('active');
-    setTimeout(function() { el.classList.remove('active'); }, 300);
-  }, 300);
-}
-setTimeout(function() { setInterval(rotateWord, 3000); }, 1500);
 </script>
 
 
