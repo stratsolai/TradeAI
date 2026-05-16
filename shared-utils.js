@@ -229,6 +229,82 @@ window.checkToolAccess = async function(toolId, supabase, user) {
   };
 })();
 
+/* ── BP Incomplete 403 Handler (Industry Taxonomy v2.0 §11.6) ──
+   Wraps window.fetch so every tool API response is inspected. When the
+   server-side BP gate returns 403 { error: 'bp_incomplete', message: ... }
+   the BP-incomplete modal opens with the spec §11.6.1 copy and a CTA that
+   takes the user to the BP page. The original Response is always returned
+   unchanged so callers' existing .then/.catch chains still work.
+
+   Implementation: response.clone() is used for the bp_incomplete probe so
+   the caller's downstream .json()/.text() consumption is not affected by
+   the body being read here. The wrap is idempotent — a marker flag stops
+   double-wrapping if shared-utils.js loads twice.
+
+   Modal markup is injected lazily on first 403 so tool pages don't carry
+   the markup statically. Reuses .perm-modal-overlay / .perm-modal classes
+   from staxai-auth.css (no new CSS classes per CLAUDE.md). */
+(function() {
+  if (typeof window === 'undefined' || !window.fetch) return;
+  if (window.fetch._staxBpWrapped) return;
+
+  function injectBpIncompleteModal(message) {
+    var existing = document.getElementById('stax-bp-incomplete-modal');
+    if (!existing) {
+      existing = document.createElement('div');
+      existing.id = 'stax-bp-incomplete-modal';
+      existing.className = 'perm-modal-overlay';
+      existing.innerHTML =
+        '<div class="perm-modal">' +
+          '<div class="perm-modal-title">Complete your Business Profile</div>' +
+          '<div class="perm-modal-body" id="stax-bp-incomplete-body">' +
+            'Your tools need your Business Profile information to give you accurate, tailored outputs. Take a moment to complete it now — it only takes a few minutes.' +
+          '</div>' +
+          '<div class="perm-modal-actions">' +
+            '<button type="button" class="perm-modal-continue" id="stax-bp-incomplete-cta">Complete Business Profile</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(existing);
+      var cta = document.getElementById('stax-bp-incomplete-cta');
+      if (cta) {
+        cta.addEventListener('click', function() {
+          try { sessionStorage.setItem('tab_state:/content-library.html', 'profile'); } catch (e) {}
+          window.location.href = '/content-library.html#profile';
+        });
+      }
+    }
+    // Endpoint-supplied message override is informational only; the heading
+    // and CTA stay fixed per spec §11.6.1. The default body copy is the
+    // platform-standard one — only swap in the override when an endpoint
+    // has supplied something more contextual.
+    if (message && typeof message === 'string') {
+      var body = document.getElementById('stax-bp-incomplete-body');
+      if (body && message.trim() && message !== 'Complete your Business Profile to use this tool.') {
+        body.textContent = message;
+      }
+    }
+    existing.classList.add('open');
+  }
+
+  var originalFetch = window.fetch.bind(window);
+  var wrappedFetch = function(input, init) {
+    return originalFetch(input, init).then(function(response) {
+      if (response && response.status === 403) {
+        // Probe a clone so the caller can still .json() the original body.
+        // Non-JSON 403s (e.g. network proxies) silently fall through.
+        response.clone().json().then(function(data) {
+          if (data && data.error === 'bp_incomplete') {
+            injectBpIncompleteModal(data.message);
+          }
+        }).catch(function() { /* not a JSON body — ignore */ });
+      }
+      return response;
+    });
+  };
+  wrappedFetch._staxBpWrapped = true;
+  window.fetch = wrappedFetch;
+})();
+
 /* ── Global Session Expiry Handler (Task 30) ──
    Listens for Supabase SIGNED_OUT events and redirects to login.
    Covers session expiry, token refresh failure, and manual sign-out.
