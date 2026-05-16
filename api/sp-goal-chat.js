@@ -26,6 +26,7 @@ export const config = { maxDuration: 60 };
 
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -87,6 +88,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorised — invalid token' });
   }
   var userId = userRes.data.user.id;
+  if (!(await requireBpComplete(supabase, userId, res))) return;
 
   var { mode, planId, goalIdx, category, messages } = req.body || {};
   if (!mode || (mode !== 'edit' && mode !== 'create')) {
