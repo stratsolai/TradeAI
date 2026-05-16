@@ -324,13 +324,13 @@ Object.assign(window.CL_PROFILE, {
       if (body) body.style.display = 'block';
       pills.forEach(function(p) { p.style.display = ''; });
     } else {
-      var anyActive = false;
-      pills.forEach(function(p) {
-        var isActive = p.classList.contains('active');
-        p.style.display = isActive ? '' : 'none';
-        if (isActive) anyActive = true;
-      });
-      if (body) body.style.display = anyActive ? 'block' : 'none';
+      // Industry Taxonomy v2.0 §7.2 — collapsed = header only.
+      // No pills render, including selected ones. The "X selected" count
+      // in the header is the only visible indicator of selections when
+      // the tile is collapsed. Re-expanding restores all pills with
+      // selections marked .active.
+      if (body) body.style.display = 'none';
+      pills.forEach(function(p) { p.style.display = 'none'; });
     }
   },
 
@@ -678,7 +678,23 @@ Object.assign(window.CL_PROFILE, {
   _renderIdentity: function() {
     var p = this._profile;
     var structures = ['Sole Trader', 'Partnership', 'Company', 'Trust', 'Other'];
-    var industries = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.groups.map(function(g) { return g.name; }) : [];
+
+    // Industries source per Industry Taxonomy Spec v2.0 §3 — read from
+    // lib/industry-taxonomy.js via window.INDUSTRY_TAXONOMY (loaded as a
+    // type=module script on this page). Shape the flat taxonomy into the
+    // grouped form _renderAccordionGroups expects:
+    //   [{ name: 'Group Label', items: [displayLabel, ...] }, ...]
+    var industryGroups = [];
+    if (Array.isArray(window.INDUSTRY_GROUPS) && Array.isArray(window.INDUSTRY_TAXONOMY)) {
+      industryGroups = window.INDUSTRY_GROUPS.map(function(grp) {
+        var items = window.INDUSTRY_TAXONOMY
+          .filter(function(e) { return e.group === grp.id; })
+          .sort(function(a, b) { return a.groupOrder - b.groupOrder; })
+          .map(function(e) { return e.displayLabel; });
+        return { name: grp.label, items: items };
+      });
+    }
+
     var selectedIndustries = this._va('industry');
     if (typeof this._v('industry') === 'string' && this._v('industry')) {
       selectedIndustries = [this._v('industry')];
@@ -690,15 +706,23 @@ Object.assign(window.CL_PROFILE, {
       '<button class="btn-outline btn-sm" data-action="upload-logo">Upload Logo</button>' +
     '</div>';
 
-    var industryChips = this._chipGroup('prof-industries', industries, selectedIndustries) +
-      '<div id="prof-industries-max-msg" style="display:none;color:var(--red);font-size:13px;margin-top:6px">Maximum 2 industries — remove one to select another</div>';
+    // Industries picker per spec §6 — 5 collapsible group tiles, accordion
+    // pattern shared with the Services tab (Section 7 bug fix applies to
+    // both via _setAccordionSectionState). Selection counter and helper
+    // text per §6.1; cap of 3 enforced via _bindIndustryWarn.
+    var selectedCount = Array.isArray(selectedIndustries) ? selectedIndustries.length : 0;
+    var industryChips =
+      '<div class="profile-helper-text" style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Select up to 3 industries that describe your business.</div>' +
+      '<div id="prof-industries-counter" style="font-size:13px;color:var(--text-muted);margin-bottom:10px">' + selectedCount + ' of 3 selected</div>' +
+      '<div id="prof-industries">' + this._renderAccordionGroups(industryGroups, 'value', selectedIndustries, 'prof-industries') + '</div>' +
+      '<div id="prof-industries-max-msg" style="display:none;color:var(--red);font-size:13px;margin-top:6px">Maximum 3 industries — remove one to select another</div>';
 
     var body = '<div class="profile-fields">' +
       this._field('Legal Business Name <span class="profile-required">*</span>', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
       this._field('Trading Name / t/as <span class="profile-optional">(optional)</span>', this._input('prof-trading-name', 'text', this._v('trading_name'), 'Trading name if different from legal name')) +
       this._field2('ABN <span class="profile-required">*</span>', this._input('prof-abn', 'text', this._v('abn'), 'xx xxx xxx xxx', 'maxlength="14"')) +
       this._field2('Business Structure <span class="profile-required">*</span>', this._dropdown('prof-structure', structures, this._v('business_structure'))) +
-      this._field('Industries <span class="profile-required">*</span> <span class="profile-optional">(select up to 2)</span>', industryChips) +
+      this._field('Industries <span class="profile-required">*</span>', industryChips) +
       this._field('Business Logo <span class="profile-required">*</span>', logoHtml) +
       this._field2('Years in Business <span class="profile-required">*</span>', this._input('prof-years', 'number', this._v('years_in_business'), 'e.g. 5', 'min="0" max="200"')) +
       this._field2('Team Size', this._dropdown('prof-team-size', ['1', '2-5', '6-10', '11-20', '21-50', '50+'], this._v('employee_range'))) +
@@ -720,6 +744,7 @@ Object.assign(window.CL_PROFILE, {
     var idPanel = document.getElementById('prof-panel-identity');
     self._bindPhoneTypeDropdowns(idPanel);
     self._bindChipToggles(idPanel);
+    self._bindChipAccordion(document.getElementById('prof-industries'));
     self._bindIndustryWarn(selectedIndustries);
 
     var logoImg = document.getElementById('prof-logo-img');
@@ -747,68 +772,37 @@ Object.assign(window.CL_PROFILE, {
     });
   },
 
-  // Maps BP industry names (BP_INDUSTRY_DATA.groups[].name) to the
-  // industryKey values used by tools-data.js for type:'industry' tools.
-  // Mirrors panel.html's KEY_TO_INDUSTRY (canonical) so the modal
-  // matches the industry context used elsewhere on the platform.
-  _BP_TO_TOOL_INDUSTRY: {
-    'Building & Construction':       ['builder'],
-    'Electrical & Solar':            ['electrician'],
-    'Plumbing & Gas':                ['plumber'],
-    'HVAC & Refrigeration':          ['hvac'],
-    'Landscaping & Outdoor':         ['landscaper', 'pool', 'concreter'],
-    'Painting & Finishing':          [],
-    'Fabrication & Manufacturing':   ['fabricator', 'manufacturer'],
-    'Cleaning & Maintenance':        ['cleaner', 'handyman'],
-    'Service & Professional':        []
-  },
-
+  // Change-confirmation modal body builder per Industry Taxonomy Spec v2.0
+  // §8.2. Under the no-gating decision (§1.4) the vestigial "industry-
+  // specific tools owned for this industry" section is removed — there is
+  // no concept of tool ownership scoped to an industry anymore. The
+  // _BP_TO_TOOL_INDUSTRY map that fed that section is gone with it.
   _buildIndustryRemovalBody: function(industry) {
     var esc = window.escHtml;
-    var profile = this._profile || {};
-    var activated = Array.isArray(profile.activated_tools) ? profile.activated_tools : [];
-
-    // Section 1: tools using industry context — fixed informational list
     var contextTools = [
-      { id: 'chatbot',        label: 'Chatbot',                  use: 'system prompt' },
-      { id: 'design-viz',     label: 'Design Visualiser',        use: 'render types' },
-      { id: 'news-digest',    label: 'Industry News Digest',     use: 'news sources' },
-      { id: 'strategic-plan', label: 'Strategic Plan',           use: 'industry analysis' }
+      { label: 'Website Chatbot',         use: 'system prompt' },
+      { label: 'Design Visualiser',       use: 'render types' },
+      { label: 'Industry News Digest',    use: 'news sources' },
+      { label: 'Strategic Plan',          use: 'industry analysis' }
     ];
     var contextItems = contextTools.map(function(t) {
-      return '<li>' + esc(t.label) + ' — ' + esc(t.use) + '</li>';
+      return '<li>' + esc(t.label) + ' &mdash; ' + esc(t.use) + '</li>';
     }).join('');
 
-    // Section 2: industry-specific tools owned for this industry
-    var industryTools = [];
-    var keys = this._BP_TO_TOOL_INDUSTRY[industry] || [];
-    if (keys.length && Array.isArray(window.TOOLS) && activated.length) {
-      industryTools = window.TOOLS.filter(function(t) {
-        return t.type === 'industry' && keys.indexOf(t.industryKey) > -1 && activated.indexOf(t.id) > -1;
-      });
-    }
-    var industryToolsSection = '';
-    if (industryTools.length) {
-      industryToolsSection =
-        '<p style="margin-top:12px"><strong>' + esc(industry) + '</strong>-specific tools currently active:</p>' +
-        '<ul>' + industryTools.map(function(t) { return '<li>' + esc(t.title) + '</li>'; }).join('') + '</ul>';
-    }
-
-    return '<p>Removing <strong>' + esc(industry) + '</strong> will affect tools that use industry context:</p>' +
+    return '<p>Some tools use industry context to tailor their outputs:</p>' +
       '<ul>' + contextItems + '</ul>' +
-      industryToolsSection +
-      '<p style="margin-top:12px;color:var(--text-muted)">Existing tool outputs will not be deleted but may reference the removed industry.</p>';
+      '<p style="margin-top:12px">Existing outputs from these tools won\'t be deleted, but they may reference <strong>' + esc(industry) + '</strong>. Future outputs will use your remaining industries.</p>';
   },
 
   _bindIndustryWarn: function(previousIndustries) {
     var group = document.getElementById('prof-industries');
     if (!group) return;
     var self = this;
-    var MAX_INDUSTRIES = 2;
+    var MAX_INDUSTRIES = 3;
 
-    // Capture-phase: block selection of a third industry before
-    // _bindChipToggles toggles the active state. Mirrors the cap
-    // behaviour in the pre-login industry-modal.js.
+    // Capture-phase: block selection of a fourth industry before
+    // _bindChipToggles toggles the active state. Cap raised from 2 to 3
+    // per Industry Taxonomy Spec v2.0 §5.1.
     group.addEventListener('click', function(e) {
       if (e.target.closest('.prof-pill-remove')) return;
       var chip = e.target.closest('.filter-pill');
@@ -826,6 +820,16 @@ Object.assign(window.CL_PROFILE, {
         }
       }
     }, true);
+
+    // Live selection counter: updates after every chip toggle. rAF defers
+    // the read until after _bindChipToggles has flipped the .active state.
+    function updateCounter() {
+      var counter = document.getElementById('prof-industries-counter');
+      if (!counter) return;
+      var n = group.querySelectorAll('.filter-pill.active').length;
+      counter.textContent = n + ' of ' + MAX_INDUSTRIES + ' selected';
+    }
+    group.addEventListener('click', function() { requestAnimationFrame(updateCounter); });
 
     group.addEventListener('click', function(e) {
       if (e.target.closest('.prof-pill-remove')) return;
@@ -848,8 +852,8 @@ Object.assign(window.CL_PROFILE, {
           confirmBtn.removeEventListener('click', onConfirm);
           cancelBtn.removeEventListener('click', onCancel);
         };
-        var onConfirm = function() { cleanup(); };
-        var onCancel = function() { chip.classList.add('active'); cleanup(); };
+        var onConfirm = function() { cleanup(); updateCounter(); };
+        var onCancel = function() { chip.classList.add('active'); cleanup(); updateCounter(); };
         confirmBtn.addEventListener('click', onConfirm);
         cancelBtn.addEventListener('click', onCancel);
       }
