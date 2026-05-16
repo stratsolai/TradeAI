@@ -4,6 +4,7 @@
 // Authenticates via Supabase JWT — never trusts userId from request body alone.
 
 import { createClient } from '@supabase/supabase-js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -27,6 +28,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid session' });
   }
   const userId = userRes.data.user.id;
+  if (!(await requireBpComplete(supabase, userId, res))) return;
 
   let clContext = null;
   let biInsights = null;
