@@ -6,7 +6,7 @@
 (function() {
   'use strict';
 
-  // All four category sections are always rendered. When a category has no
+  // All five category sections are always rendered. When a category has no
   // active tools for the user, the heading shows with a "No active tools"
   // placeholder beneath it — see itemsHtmlOrEmpty().
   var SIDEBAR_NAV = [
@@ -17,9 +17,11 @@
       { id: 'design-viz', label: 'Design Visualiser',  icon: '🎨', url: '/design' }
     ]},
     { type: 'category', label: 'Customers & Jobs', items: [] },
-    { type: 'category', label: 'Suppliers & Materials', items: [] },
+    { type: 'category', label: 'Inventory & Materials', items: [] },
+    { type: 'category', label: 'Operations', items: [
+      { id: 'email', label: 'Email Assistant', icon: '📧', url: '/email' }
+    ]},
     { type: 'category', label: 'Business Intelligence', items: [
-      { id: 'email',          label: 'Email Assistant',      icon: '📧', url: '/email' },
       { id: 'news-digest',    label: 'Industry News Digest', icon: '📰', url: '/news' },
       { id: 'bi',             label: 'BI Dashboard',         icon: '📊', url: '/bi.html' },
       { id: 'strategic-plan', label: 'Strategic Plan',       icon: '📝', url: '/strategy' }
