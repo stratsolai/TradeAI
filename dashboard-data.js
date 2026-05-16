@@ -133,7 +133,6 @@ window.DASH_DATA = (function() {
 
     wireTabSwitching();
     wireActivateButtons();
-    wireToolBlocker();
   }
 
   function setHeading() {
@@ -173,33 +172,6 @@ window.DASH_DATA = (function() {
         window.location.href = '/content-library.html#profile';
       });
     }
-  }
-
-  function wireToolBlocker() {
-    if (_bpComplete) return;
-
-    var toolUrls = ['/social', '/email', '/chatbot', '/news', '/bi.html', '/strategy', '/design',
-      '/social-settings', '/email-assistant-settings', '/chatbot-settings', '/news-digest-settings',
-      '/design-viz-settings', '/panel'];
-
-    function isToolLink(href) {
-      if (!href) return false;
-      for (var i = 0; i < toolUrls.length; i++) {
-        if (href.indexOf(toolUrls[i]) !== -1) return true;
-      }
-      return false;
-    }
-
-    document.addEventListener('click', function(e) {
-      var link = e.target.closest('a[href]');
-      if (!link) return;
-      var href = link.getAttribute('href');
-      if (!isToolLink(href)) return;
-
-      e.preventDefault();
-      var modal = document.getElementById('bp-modal');
-      if (modal) modal.classList.add('open');
-    });
   }
 
   // ── TRIAL BANNER ──
