@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { logAnthropicUsage } from "../lib/usage-logger.js";
+import { requireBpComplete } from "../lib/bp-gate.js";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 const supabase = createClient(
@@ -22,6 +23,7 @@ export default async function handler(req, res) {
   if (authError || !user) {
     return res.status(401).json({ error: "Unauthorised" });
   }
+  if (!(await requireBpComplete(supabase, user.id, res))) return;
 
   const { action, inputs, marketing_plan, campaign_id } = req.body;
 
