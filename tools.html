@@ -235,35 +235,10 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
 .btn-see-all-orange:hover{background:#ff6b2b;}
 
 /* ── TOOLS PAGE OVERRIDES ── */
-.filter-tabs {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin: 12px 0 20px;
-}
-.filter-tab {
+#clear-filter:hover {
   background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
-  color: rgba(255,255,255,0.75);
-  padding: 8px 18px;
-  border-radius: 8px;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.filter-tab:hover {
-  background: rgba(196,98,42,0.25);
-  border-color: #c4622a;
+  border-color: rgba(255,255,255,0.45);
   color: #fff;
-}
-.filter-tab.active {
-  background: #c4622a;
-  border-color: #c4622a;
-  color: #fff;
-  font-weight: 600;
 }
 
 /* ===== ACCORDION + CAROUSEL (v2) ===== */
@@ -293,9 +268,6 @@ body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:1
   font-size: 15px; color: #4A6D8C;
   margin-top: 6px; line-height: 1.4;
 }
-/* Pill — same shape and padding as .filter-tab at the top of the page,
-   filled with the platform blue so the per-section count reads as a
-   counterpart to the global category tabs on the light accordion bg. */
 .accordion-count {
   background: #4A6D8C;
   border: 1px solid #4A6D8C;
@@ -687,7 +659,7 @@ footer {
         <div class="hiw-step-num">1</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Choose Your Trade</div>
-          <div class="hiw-step-desc">Select from 12 industries — tools built around how your trade actually works</div>
+          <div class="hiw-step-desc">Select from 9 industry groups — tools built around how your business actually works</div>
         </div>
       </div>
       <div class="hiw-connector"></div>
@@ -695,7 +667,7 @@ footer {
         <div class="hiw-step-num">2</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Create Your <span class="word-accent">STAX</span></div>
-          <div class="hiw-step-desc">Activate the tools that make the biggest difference to you first. Choose your settings and be up and running in minutes</div>
+          <div class="hiw-step-desc">Activate the tools that make the biggest difference to you first — choose your settings and be up and running in minutes</div>
         </div>
       </div>
       <div class="hiw-connector"></div>
@@ -703,7 +675,7 @@ footer {
         <div class="hiw-step-num">3</div>
         <div class="hiw-step-body">
           <div class="hiw-step-title">Your <span class="word-accent">STAX</span> is Live</div>
-          <div class="hiw-step-desc">Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with your trade</div>
+          <div class="hiw-step-desc">Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with business</div>
         </div>
       </div>
     </div>
@@ -714,14 +686,7 @@ footer {
   <div class="page-centre">
     <div class="hero">
       <h1><span class="h-line" id="industry-heading">All Tools</span></h1>
-      <div class="section-label">Choose Your Tool</div>
-      <div class="filter-tabs">
-        <button class="filter-tab" data-cat="all">All</button>
-        <button class="filter-tab active" data-cat="sales-marketing">Sales &amp; Marketing</button>
-        <button class="filter-tab" data-cat="customers-jobs">Customers &amp; Jobs</button>
-        <button class="filter-tab" data-cat="suppliers-materials">Suppliers &amp; Materials</button>
-        <button class="filter-tab" data-cat="intelligence">Business Intelligence</button>
-      </div>
+      <a href="/tools" id="clear-filter" style="display:none;align-items:center;gap:6px;margin:8px auto 0;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,0.85);text-decoration:none;letter-spacing:0.3px;border:1px solid rgba(255,255,255,0.25);border-radius:18px;padding:6px 14px;transition:all 0.2s;width:fit-content;">&#8592; Show all tools</a>
     </div>
     <div class="tool-accordions" id="tool-accordions">
       <!-- populated by JS — one accordion per category, each with a horizontal carousel of tool cards -->
@@ -818,63 +783,70 @@ footer {
 <script>
 // Tools page JS
 (function(){
-  // Parse URL params
+  // Parse URL filter params. Two parallel filters per Pre-Login Browse
+  // Restructure Spec v1.1 Section 7.2: ?industry=[id] from industry-select
+  // marketing tiles, and ?function=[id] from function-select tiles. When
+  // both are present, ?function= wins (the more recent navigation wins).
+  // When neither is present, all tools render — no redirect.
   var params = new URLSearchParams(window.location.search);
   var industryParam = params.get('industry');
+  var functionParam = params.get('function');
   var workflowParam = params.get('workflow');
+  if (functionParam) industryParam = null;
 
-
-  // Read signup industries from sessionStorage
-  var signupIndustries = [];
-  var signupIndustriesRaw = sessionStorage.getItem('signup_industries');
-  if (signupIndustriesRaw) {
-    try { signupIndustries = JSON.parse(signupIndustriesRaw); } catch(e) {}
-  }
-
-  // If no industries in sessionStorage, redirect back to industry selection
-  if (signupIndustries.length === 0) {
-    window.location.href = '/industry-select.html';
-    return;
-  }
-
-  // Map BP industry names → tools-data.js industryKey values used by
-  // type:'industry' tools. Mirrors panel.html's KEY_TO_INDUSTRY so the
-  // tools shown here match the industry context used elsewhere on the
-  // platform.
-  var BP_TO_TOOL_KEYS = {
-    'Building & Construction':       ['builder'],
-    'Electrical & Solar':            ['electrician'],
-    'Plumbing & Gas':                ['plumber'],
-    'HVAC & Refrigeration':          ['hvac'],
-    'Landscaping & Outdoor':         ['landscaper', 'pool', 'concreter'],
-    'Painting & Finishing':          [],
-    'Fabrication & Manufacturing':   ['fabricator', 'manufacturer'],
-    'Cleaning & Maintenance':        ['cleaner', 'handyman'],
-    'Service & Professional':        []
+  // Map BP marketing-tile IDs (from industry-select tiles) → tools-data.js
+  // industryKey values used by type:'industry' tool rows. Keyed by ID so
+  // the URL param drives the filter directly.
+  var BP_ID_TO_TOOL_KEYS = {
+    'building-construction':       ['builder'],
+    'electrical-solar':            ['electrician'],
+    'plumbing-gas':                ['plumber'],
+    'hvac-refrigeration':          ['hvac'],
+    'landscaping-outdoor':         ['landscaper', 'pool', 'concreter'],
+    'painting-finishing':          [],
+    'fabrication-manufacturing':   ['fabricator', 'manufacturer'],
+    'cleaning-maintenance':        ['cleaner', 'handyman']
   };
+  var BP_ID_TO_DISPLAY = {
+    'building-construction':       'Building & Construction',
+    'electrical-solar':            'Electrical & Solar',
+    'plumbing-gas':                'Plumbing & Gas',
+    'hvac-refrigeration':          'HVAC & Refrigeration',
+    'landscaping-outdoor':         'Landscaping & Outdoor',
+    'painting-finishing':          'Painting & Finishing',
+    'fabrication-manufacturing':   'Fabrication & Manufacturing',
+    'cleaning-maintenance':        'Cleaning & Maintenance',
+    'service-professional':        'Retail, Hospitality & Services'
+  };
+  var FUNCTION_ID_TO_DISPLAY = {
+    'sales-marketing':     'Sales & Marketing',
+    'customers-jobs':      'Customers & Jobs',
+    'inventory-materials': 'Inventory & Materials',
+    'operations':          'Operations',
+    'intelligence':        'Business Intelligence'
+  };
+
   var allowedToolKeys = {};
-  signupIndustries.forEach(function(ind) {
-    (BP_TO_TOOL_KEYS[ind] || []).forEach(function(k) { allowedToolKeys[k] = true; });
-  });
+  if (industryParam && BP_ID_TO_TOOL_KEYS[industryParam]) {
+    BP_ID_TO_TOOL_KEYS[industryParam].forEach(function(k) { allowedToolKeys[k] = true; });
+  }
 
   function isToolRelevant(t) {
+    if (functionParam) return t.category === functionParam;
+    if (!industryParam) return true;
     if (t.type !== 'industry') return true;
     return !!allowedToolKeys[t.industryKey];
   }
 
-
-  // Update heading and breadcrumb
-  var industryNames = {
-    pool:'Pool Builders', plumber:'Plumbers', electrician:'Electricians',
-    builder:'Builders', hvac:'HVAC', fabricator:'Fabricators',
-    cleaner:'Cleaners', landscaper:'Landscapers', manufacturer:'Manufacturers',
-    concreter:'Concreters', handyman:'Handymen'
-  };
-  if(industryParam && industryNames[industryParam]) {
-    var name = industryNames[industryParam];
-    document.getElementById('industry-heading').textContent = name;
-    var bc = document.getElementById('bc-industry');
-    if(bc) bc.textContent = name + ' Tools';
+  // Update heading and reveal the clear-filter affordance when filtered.
+  var headingEl = document.getElementById('industry-heading');
+  var clearBtn = document.getElementById('clear-filter');
+  if (functionParam && FUNCTION_ID_TO_DISPLAY[functionParam]) {
+    if (headingEl) headingEl.textContent = FUNCTION_ID_TO_DISPLAY[functionParam] + ' Tools';
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
+  } else if (industryParam && BP_ID_TO_DISPLAY[industryParam]) {
+    if (headingEl) headingEl.textContent = BP_ID_TO_DISPLAY[industryParam] + ' Tools';
+    if (clearBtn) clearBtn.style.display = 'inline-flex';
   }
 
   // Tool catalogue sourced from tools-data.js (window.TOOLS) — the
@@ -989,6 +961,9 @@ footer {
     if (!container) return;
     var html = CATEGORIES.map(function(cat) {
       var tools = TOOLS.filter(function(t) { return t.category === cat.id && isToolRelevant(t); });
+      // Skip empty accordions when a filter is active so categories with no
+      // matching tools don't render as bare headers.
+      if (tools.length === 0 && (functionParam || industryParam)) return '';
       var builtTools = tools.filter(function(t) { return t.status === 'built'; });
       var otherTools = tools.filter(function(t) { return t.status !== 'built'; });
 
@@ -1010,7 +985,7 @@ footer {
           '</div></div>'
         : '';
 
-      var isExpanded = cat.id === 'sales-marketing';
+      var isExpanded = functionParam ? cat.id === functionParam : cat.id === 'sales-marketing';
       return '<section class="tool-accordion' + (isExpanded ? ' expanded' : '') + '" data-cat="' + cat.id + '" id="accordion-' + cat.id + '">' +
         '<div class="accordion-header" role="button" tabindex="0" aria-expanded="' + isExpanded + '">' +
           '<span class="accordion-arrow" aria-hidden="true">&#9660;</span>' +
@@ -1040,12 +1015,6 @@ footer {
     sec.classList.toggle('expanded', expanded);
     var hdr = sec.querySelector('.accordion-header');
     if (hdr) hdr.setAttribute('aria-expanded', String(expanded));
-  }
-
-  function setActiveTab(catId) {
-    document.querySelectorAll('.filter-tab').forEach(function(b) {
-      b.classList.toggle('active', b.getAttribute('data-cat') === catId);
-    });
   }
 
   // Module-level stoppers so re-renders (e.g. after live prices arrive)
@@ -1148,7 +1117,6 @@ footer {
           setExpanded(catId, false);
         } else {
           CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === catId); });
-          setActiveTab(catId);
         }
       });
       hdr.addEventListener('keydown', function(e) {
@@ -1180,22 +1148,6 @@ footer {
     more.textContent = expanded ? 'less' : 'more';
   });
 
-  // Filter tab clicks: expand matching accordion (collapse others), or
-  // expand all when "All" is active. Page does NOT scroll — the user
-  // stays where they are; only accordion state and active-tab change.
-  document.querySelectorAll('.filter-tab').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-      var cat = btn.getAttribute('data-cat');
-      setActiveTab(cat);
-      if (cat === 'all') {
-        CATEGORIES.forEach(function(c) { setExpanded(c.id, true); });
-      } else {
-        CATEGORIES.forEach(function(c) { setExpanded(c.id, c.id === cat); });
-      }
-    });
-  });
-
-
   // Initial render. Live prices are loaded asynchronously — render once
   // immediately with hardcoded prices so the page paints quickly, then
   // re-render once prices arrive (or stay on hardcoded if the fetch fails).
@@ -1208,7 +1160,8 @@ footer {
       var prevExpanded = {};
       CATEGORIES.forEach(function(c) {
         var sec = document.getElementById('accordion-' + c.id);
-        prevExpanded[c.id] = sec ? sec.classList.contains('expanded') : (c.id === 'sales-marketing');
+        var defaultExpanded = functionParam ? c.id === functionParam : c.id === 'sales-marketing';
+        prevExpanded[c.id] = sec ? sec.classList.contains('expanded') : defaultExpanded;
       });
       renderAccordions();
       CATEGORIES.forEach(function(c) { setExpanded(c.id, prevExpanded[c.id]); });
