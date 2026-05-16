@@ -8,6 +8,7 @@
 export const config = { maxDuration: 300 };
 
 import { createClient } from '@supabase/supabase-js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 import { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   HeadingLevel, AlignmentType, BorderStyle, WidthType, ShadingType,
   Header } from 'docx';
@@ -550,6 +551,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Unauthorised \u2014 invalid token' });
   }
   var userId = userRes.data.user.id;
+  if (!(await requireBpComplete(supabase, userId, res))) return;
 
   var { planData, clContext, biInsights, currentPlan } = req.body;
   if (!planData) return res.status(400).json({ error: 'planData required' });
