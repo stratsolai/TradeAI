@@ -7,7 +7,8 @@
 //   icon          (req) — emoji
 //   status        (req) — 'built' | 'pending'
 //   category      (req) — 'sales-marketing' | 'customers-jobs'
-//                       | 'suppliers-materials' | 'intelligence'
+//                       | 'inventory-materials' | 'operations'
+//                       | 'intelligence'
 //   type          (req) — 'core' | 'industry'
 //   desc          (opt) — description string
 //   price         (opt) — display price string, e.g. '$69'
@@ -56,7 +57,7 @@ const TOOLS = [
   },
   {
     id: "email", title: "Email Assistant", icon: "📧",
-    status: "built", category: "intelligence", type: "core",
+    status: "built", category: "operations", type: "core",
     price: "$39", priceId: "price_1TQLhHHnoVvjo5gxnwUQQYwM",
     desc: "AI reads your Gmail or Outlook inbox and turns it into a smart, interactive dashboard. See a clear summary of everything - what is urgent, what needs attention, and what can wait. Tap into any email to read the detail. No more scrolling through hundreds of messages to find what matters."
   },
@@ -130,22 +131,22 @@ const TOOLS = [
   },
   {
     id: "subcontractor-mgmt", title: "Subcontractor & Supplier Management", icon: "👷",
-    status: "pending", category: "suppliers-materials", type: "core",
+    status: "pending", category: "operations", type: "core",
     desc: "Track subcontractor licences, insurance, and compliance — AI generates onboarding packs and expiry reminders."
   },
   {
     id: "staff-onboarding", title: "Staff Onboarding & Training Docs", icon: "👋",
-    status: "pending", category: "intelligence", type: "core",
+    status: "pending", category: "operations", type: "core",
     desc: "AI generates induction documents, training checklists, and site-specific procedures — workers sign off digitally."
   },
   {
     id: "job-debrief", title: "Job Debrief & Lessons Learned", icon: "🔍",
-    status: "pending", category: "intelligence", type: "core",
+    status: "pending", category: "operations", type: "core",
     desc: "Quick AI-assisted debrief at job completion — captures what went well, cost variance, and lessons learned."
   },
   {
     id: "compliance-calendar", title: "Compliance Calendar", icon: "📅",
-    status: "pending", category: "intelligence", type: "core",
+    status: "pending", category: "operations", type: "core",
     desc: "AI builds your compliance calendar — licence renewals, insurance expiry, BAS deadlines — with proactive reminders."
   },
 
@@ -167,19 +168,19 @@ const TOOLS = [
   },
   {
     id: "license-tracker", title: "License & Compliance Tracker", icon: "🪪",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "pool",
+    status: "pending", category: "operations", type: "industry", industryKey: "pool",
     desc: "Track QBCC licenses, insurance certificates and staff qualifications — alerts before expiry."
   },
 
   // ── INDUSTRY — PLUMBER (3) ──────────────────────────────────────────────
   {
     id: "emergency-router", title: "Emergency Job Router", icon: "🚨",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "plumber",
+    status: "pending", category: "operations", type: "industry", industryKey: "plumber",
     desc: "AI triages emergency calls by severity and location, assigns nearest available plumber."
   },
   {
     id: "backflow-scheduler", title: "Backflow Testing Scheduler", icon: "🔄",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "plumber",
+    status: "pending", category: "operations", type: "industry", industryKey: "plumber",
     desc: "Track all backflow prevention devices, auto-schedule annual tests, generate compliance reports."
   },
   {
@@ -191,7 +192,7 @@ const TOOLS = [
   // ── INDUSTRY — ELECTRICIAN (3) ──────────────────────────────────────────
   {
     id: "test-tag-manager", title: "Test & Tag Manager", icon: "🔌",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "electrician",
+    status: "pending", category: "operations", type: "industry", industryKey: "electrician",
     desc: "Track all appliance testing schedules, generate AS/NZS 3760 compliant records and certificates."
   },
   {
@@ -201,14 +202,14 @@ const TOOLS = [
   },
   {
     id: "emergency-dispatch", title: "Emergency Callout Dispatcher", icon: "⚡",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "electrician",
+    status: "pending", category: "operations", type: "industry", industryKey: "electrician",
     desc: "AI triages emergency calls, assigns nearest available sparky, sends customer ETA updates."
   },
 
   // ── INDUSTRY — BUILDER (4) ──────────────────────────────────────────────
   {
     id: "subcontractor-coordinator", title: "Subcontractor Coordinator", icon: "🔗",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "builder",
+    status: "pending", category: "operations", type: "industry", industryKey: "builder",
     desc: "AI manages subcontractor scheduling, availability, and job assignment across active projects."
   },
   {
@@ -230,17 +231,17 @@ const TOOLS = [
   // ── INDUSTRY — HVAC (4) ─────────────────────────────────────────────────
   {
     id: "service-prioritiser", title: "Service Call Prioritiser", icon: "🌡️",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "hvac",
+    status: "pending", category: "operations", type: "industry", industryKey: "hvac",
     desc: "AI automatically triages incoming calls by urgency — no cooling in summer gets highest priority."
   },
   {
     id: "refrigerant-tracker", title: "Refrigerant Gas Tracker", icon: "❄️",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "hvac",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "hvac",
     desc: "Track all refrigerant usage and generate EPA-compliant quarterly reports automatically."
   },
   {
     id: "maintenance-scheduler-hvac", title: "Preventative Maintenance Scheduler", icon: "🔧",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "hvac",
+    status: "pending", category: "operations", type: "industry", industryKey: "hvac",
     desc: "Auto-reminds past customers when their annual service is due — fills slow periods."
   },
   {
@@ -252,17 +253,17 @@ const TOOLS = [
   // ── INDUSTRY — FABRICATOR (4) ───────────────────────────────────────────
   {
     id: "material-optimizer", title: "Material Cutting Optimiser", icon: "✂️",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "fabricator",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "fabricator",
     desc: "Input sheet / bar dimensions and required pieces — AI calculates optimal cutting pattern to minimise waste."
   },
   {
     id: "weld-tracker", title: "Welder Qualification Tracker", icon: "🔥",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "fabricator",
+    status: "pending", category: "operations", type: "industry", industryKey: "fabricator",
     desc: "Track all welder qualifications and test dates — alerts when re-certification is due."
   },
   {
     id: "job-costing", title: "Real-Time Job Costing", icon: "💹",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "fabricator",
+    status: "pending", category: "operations", type: "industry", industryKey: "fabricator",
     desc: "Track labour, materials, and overhead against quoted price in real time — flags margin erosion."
   },
   {
@@ -274,7 +275,7 @@ const TOOLS = [
   // ── INDUSTRY — CLEANER (3) ──────────────────────────────────────────────
   {
     id: "roster-optimizer", title: "Smart Roster Optimiser", icon: "📆",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "cleaner",
+    status: "pending", category: "operations", type: "industry", industryKey: "cleaner",
     desc: "AI builds optimal cleaning roster from available staff, job locations, and time windows."
   },
   {
@@ -284,7 +285,7 @@ const TOOLS = [
   },
   {
     id: "consumables-tracker", title: "Consumables Inventory Tracker", icon: "🧴",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "cleaner",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "cleaner",
     desc: "Track cleaning product usage per job — auto-generates purchase orders when stock runs low."
   },
 
@@ -296,7 +297,7 @@ const TOOLS = [
   },
   {
     id: "seasonal-scheduler-land", title: "Seasonal Maintenance Scheduler", icon: "🍂",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "landscaper",
+    status: "pending", category: "operations", type: "industry", industryKey: "landscaper",
     desc: "Auto-generates seasonal maintenance schedule for each customer's garden — send as branded PDF."
   },
   {
@@ -308,34 +309,34 @@ const TOOLS = [
   // ── INDUSTRY — MANUFACTURER (4) ─────────────────────────────────────────
   {
     id: "production-scheduler", title: "Production Scheduler", icon: "🏭",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "manufacturer",
+    status: "pending", category: "operations", type: "industry", industryKey: "manufacturer",
     desc: "AI optimises production run scheduling across machines, materials, and labour availability."
   },
   {
     id: "quality-spc", title: "Statistical Process Control (SPC)", icon: "📈",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "manufacturer",
+    status: "pending", category: "operations", type: "industry", industryKey: "manufacturer",
     desc: "Input quality measurements — AI generates control charts and flags process drift before defects occur."
   },
   {
     id: "inventory-forecaster", title: "Smart Inventory Forecaster", icon: "📈",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "manufacturer",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "manufacturer",
     desc: "AI predicts raw material requirements based on production schedule and historical usage."
   },
   {
     id: "oee-tracker", title: "OEE Performance Tracker", icon: "⚙️",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "manufacturer",
+    status: "pending", category: "operations", type: "industry", industryKey: "manufacturer",
     desc: "Track Overall Equipment Effectiveness — AI identifies biggest productivity improvement opportunities."
   },
 
   // ── INDUSTRY — CONCRETER (3) ────────────────────────────────────────────
   {
     id: "pour-scheduler", title: "Smart Pour Scheduler", icon: "🌤️",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "concreter",
+    status: "pending", category: "operations", type: "industry", industryKey: "concreter",
     desc: "AI checks weather forecasts and schedules concrete pours for optimal curing conditions."
   },
   {
     id: "mix-designer", title: "Concrete Mix Designer", icon: "🪣",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "concreter",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "concreter",
     desc: "Input project requirements — AI recommends optimal mix design with supplier and cost comparison."
   },
   {
@@ -347,17 +348,17 @@ const TOOLS = [
   // ── INDUSTRY — HANDYMAN (3) ─────────────────────────────────────────────
   {
     id: "multi-trade-scheduler", title: "Multi-Trade Job Scheduler", icon: "🗓️",
-    status: "pending", category: "customers-jobs", type: "industry", industryKey: "handyman",
+    status: "pending", category: "operations", type: "industry", industryKey: "handyman",
     desc: "AI optimises daily job schedule across multiple trade types and locations to minimise travel."
   },
   {
     id: "parts-finder", title: "Smart Parts Finder", icon: "🔩",
-    status: "pending", category: "suppliers-materials", type: "industry", industryKey: "handyman",
+    status: "pending", category: "inventory-materials", type: "industry", industryKey: "handyman",
     desc: "Photo or describe a broken part — AI identifies it and finds local suppliers with stock and pricing."
   },
   {
     id: "job-cost-estimator", title: "Quick Job Cost Estimator", icon: "🧮",
-    status: "pending", category: "intelligence", type: "industry", industryKey: "handyman",
+    status: "pending", category: "operations", type: "industry", industryKey: "handyman",
     desc: "Describe the job — AI generates an estimated cost breakdown by labour, materials, and travel."
   }
 ];
