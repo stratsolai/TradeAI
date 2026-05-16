@@ -30,6 +30,7 @@ export const config = { maxDuration: 300 };
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage } from '../lib/usage-logger.js';
 import { normaliseUrlForMatch } from '../lib/shared-research.js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -347,6 +348,7 @@ export default async function handler(req, res) {
 
   const { data: { user }, error: authErr } = await supabase.auth.getUser(jwt);
   if (authErr || !user) return res.status(401).json({ error: 'Invalid session' });
+  if (!(await requireBpComplete(supabase, user.id, res))) return;
   const userId = user.id;
 
   const { forceRefresh } = req.body || {};
