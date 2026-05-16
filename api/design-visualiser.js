@@ -18,6 +18,7 @@ import https from 'https';
 import http from 'http';
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage, logIdeogramUsage } from '../lib/usage-logger.js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 
 // ── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -264,6 +265,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'Invalid session' });
   }
   var user = authResult.data.user;
+  if (!(await requireBpComplete(supabase, user.id, res))) return;
 
   var body = req.body || {};
   var photoPath = body.photoPath;
