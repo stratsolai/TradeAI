@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb#">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="/manifest.json">
+<title>Select Your Function &mdash; StaxAI</title>
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<meta property="og:title" content="Select Your Function — StaxAI">
+<meta property="og:description" content="Choose by function — the type of AI help you need for your business.">
+<meta property="og:image" content="https://staxai.com.au/STAXAI_App_Icon_1024x1024.png">
+<meta property="og:url" content="https://staxai.com.au/function-select.html">
+<meta property="og:type" content="website">
+  <meta property="fb:app_id" content="2118437962244817" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Barlow+Condensed:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a2f4a;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+.atmo{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+
+.atmo-orb{position:absolute;border-radius:50%;filter:blur(120px);}
+.atmo-orb.o1{width:500px;height:500px;background:#1e3a5f;opacity:0.18;top:-200px;left:50%;transform:translateX(-50%);animation:orb1 14s ease-in-out infinite;}
+.atmo-orb.o2{width:400px;height:400px;background:#2c5a82;opacity:0.13;top:40%;left:-100px;animation:orb2 16s ease-in-out infinite;}
+.atmo-orb.o3{width:350px;height:350px;background:#2c5a82;opacity:0.11;bottom:-80px;right:-80px;animation:orb3 12s ease-in-out infinite;}
+@keyframes orb1{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-40px)}}
+@keyframes orb2{0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)}}
+@keyframes orb3{0%,100%{transform:translateY(0)}50%{transform:translateY(30px)}}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;padding:0 24px;height:68px;background:linear-gradient(90deg, #deeef8 0%, #4A6D8C 320px, #4A6D8C 100%);box-shadow:0 4px 24px rgba(0,0,0,0.45);border-bottom:1px solid rgba(255,255,255,0.03);}
+.topbar-logo{display:flex;align-items:center;gap:9px;text-decoration:none;color:#fff;flex-shrink:0;margin-right:20px;}
+.topbar-nav{margin-left:64px;display:flex;align-items:center;gap:28px;margin-right:auto;}.topbar-nav a{font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;letter-spacing:0.3px;transition:color 0.2s;cursor:pointer;}
+.topbar-nav a:hover{color:#fff;}
+.bundle-rotator{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.18);border-radius:20px;padding:5px 12px 5px 10px;min-width:320px;flex-shrink:0;margin-right:28px;}
+.bundle-rotator-icon{font-size:13px;flex-shrink:0;}
+.bundle-rotator-track{position:relative;height:19px;overflow:hidden;flex:1;}
+.bundle-rotator-item{position:absolute;top:0;left:0;width:100%;font-size:12px;font-weight:600;color:rgba(255,255,255,0.9);white-space:nowrap;opacity:0;transform:translateY(100%);transition:opacity 0.5s,transform 0.5s;}
+.bundle-rotator-item.active{opacity:1;transform:translateY(0);}
+.bundle-rotator-item.exit{opacity:0;transform:translateY(-100%);}
+.bundle-rotator-cta{font-size:11px;font-weight:700;color:#fff;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:3px 9px;cursor:pointer;flex-shrink:0;}
+.topbar-actions{display:flex;align-items:center;gap:28px;flex-shrink:0;}
+.btn-signin,.btn-trial{background:none;border:none;padding:0;color:rgba(255,255,255,0.85);font-size:16px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;text-decoration:none;}
+.topbar-spacer{flex:1;}
+
+/* PAGE LAYOUT */
+.page-wrap{position:relative;z-index:5;display:flex;flex-direction:row;align-items:flex-start;width:100%;padding-top:72px;}
+.side-panel{width:300px;flex-shrink:0;padding:24px 8px;}.page-centre{flex:1;min-width:0;padding:0 100px;}
+
+/* HERO */
+.hero{text-align:center;padding:20px 24px 20px;}
+.hero h1{font-family:'Barlow Condensed',sans-serif;font-size:64px;font-weight:900;line-height:0.95;text-transform:uppercase;letter-spacing:-1px;}
+.hero h1 .h-line{display:block;background:linear-gradient(to right,#ffffff,#e8d5b8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.hero h1 .word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}.hiw-step-title .word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;}.hiw-heading .word-accent{background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;}
+
+.section-label{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin:20px auto 32px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.section-label::before,.section-label::after{content:'';width:40px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;-webkit-text-fill-color:initial;}
+.section-label::after{background:linear-gradient(90deg,#d4844a,transparent);}
+
+/* FUNCTION GRID — same tile structure as industry-select */
+@property --angle{syntax:'<angle>';inherits:true;initial-value:0deg;}
+@keyframes spinBorder{to{--angle:360deg;}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.industry-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 12px 32px;}
+.industry-card{position:relative;border-radius:16px;cursor:pointer;height:220px;border:2px solid rgba(255,255,255,0.07);transition:transform 0.35s cubic-bezier(0.16,1,0.3,1),box-shadow 0.35s,border-color 0.3s;animation:cardIn 0.5s cubic-bezier(0.16,1,0.3,1) both;}
+.industry-card:nth-child(1){animation-delay:0.04s}.industry-card:nth-child(2){animation-delay:0.08s}.industry-card:nth-child(3){animation-delay:0.12s}.industry-card:nth-child(4){animation-delay:0.16s}.industry-card:nth-child(5){animation-delay:0.20s}
+.industry-card::before{content:'';position:absolute;inset:-3px;border-radius:19px;background:conic-gradient(from var(--angle),transparent 0deg,transparent 55deg,#d4844a 110deg,#c4622a 175deg,#d4a04a 230deg,transparent 290deg,transparent 360deg);opacity:0;z-index:0;transition:opacity 0.35s;-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;padding:3px;}
+.industry-card:hover::before{opacity:1;animation:spinBorder 2.2s linear infinite;}
+.industry-card:hover{border-color:transparent;}
+.card-inner{position:absolute;inset:2px;border-radius:13px;overflow:hidden;z-index:1;}
+.card-photo-bg{position:absolute;inset:0;background-image:var(--card-photo);background-size:cover;background-position:center;opacity:0.50;transition:transform 0.5s cubic-bezier(0.16,1,0.3,1),opacity 0.35s;}
+.card-photo-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,18,35,0.0) 0%,rgba(10,18,35,0.05) 20%,rgba(10,18,35,0.52) 55%,rgba(10,18,35,0.86) 100%);}
+.industry-card:hover .card-photo-bg{transform:scale(1.04);opacity:0.50;}
+.card-content{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px;}
+.card-icon{font-size:20px;display:block;margin-bottom:5px;}
+.card-eyebrow{font-size:10px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;color:#d4844a;margin-bottom:4px;}
+.card-name{font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:900;line-height:1;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;color:#e8d5b8;filter:drop-shadow(0 0 7px rgba(212,160,74,0.4)) drop-shadow(0 2px 8px rgba(0,0,0,0.8));}
+.card-desc{font-size:15px;color:rgba(232,213,184,0.85);line-height:1.4;margin-bottom:10px;}
+.card-cta{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#d4844a;}
+.card-cta-arrow{width:18px;height:18px;border-radius:50%;background:#c4622a;color:#fff;display:flex;align-items:center;justify-content:center;font-size:9px;}
+
+/* Coming Soon tile treatment — used for Inventory & Materials per spec 6.3.2 */
+.card-coming-soon-bg{position:absolute;inset:0;background:linear-gradient(135deg,#1a3a5e 0%,#2c5a82 100%);display:flex;align-items:center;justify-content:center;}
+.card-coming-soon-label{font-family:'Barlow Condensed',sans-serif;font-size:38px;font-weight:800;letter-spacing:3px;color:rgba(212,160,74,0.30);text-transform:uppercase;}
+
+/* =============================================
+   LEFT PANEL — RIBBON STEPS
+   ============================================= */
+.hiw-panel{padding:0 24px;padding-top:0;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center;}
+.hiw-header{margin-bottom:32px;text-align:center;}
+.hiw-eyebrow{display:flex;align-items:center;justify-content:center;gap:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:3px;margin-bottom:32px;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.hiw-eyebrow::before{content:'';width:32px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);opacity:1;flex-shrink:0;}.hiw-eyebrow::after{content:'';width:32px;height:1px;background:linear-gradient(90deg,#d4844a,transparent);opacity:1;flex-shrink:0;}
+.hiw-heading{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;text-transform:uppercase;line-height:0.95;letter-spacing:-0.5px;color:#e8d5b8;margin-bottom:0px;}
+.hiw-steps{display:flex;flex-direction:column;align-items:center;gap:0;position:relative;width:100%;}
+.hiw-step{display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 0;position:relative;z-index:1;width:100%;}
+.hiw-step-num{flex-shrink:0;width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;color:#fff;position:relative;z-index:2;}
+.hiw-step-body{text-align:center;}
+.hiw-step-title{font-family:'Barlow Condensed',sans-serif;font-size:16px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:6px;}
+.hiw-connector{width:2px;height:30px;background:linear-gradient(to bottom,rgba(26,84,144,0.85),rgba(26,84,144,0.35));border-radius:2px;margin:0 auto;}
+.hiw-step-desc{font-size:15px;color:rgba(255,255,255,0.92);line-height:1.55;max-width:200px;margin:0 auto;}
+
+/* =============================================
+   RIGHT PANEL — WHAT YOU GET
+   ============================================= */
+.info-panel{padding:24px 16px;display:flex;flex-direction:column;justify-content:center;height:100%;}
+.wyg-panel{padding:0 24px;display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start;text-align:left;}
+.wyg-item{display:flex;align-items:flex-start;gap:12px;padding:22px 0;border-bottom:1px solid rgba(255,255,255,0.07);}
+.wyg-item:last-child{border-bottom:none;}
+.wyg-icon{width:28px;height:28px;flex-shrink:0;margin-top:2px;background:linear-gradient(135deg,#1e3a5f,#2c5a82);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.wyg-title{font-family:"Barlow Condensed",sans-serif;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:#e8d5b8;margin-bottom:4px;}
+.wyg-desc{font-size:15px;color:rgba(255,255,255,0.92);line-height:1.5;}
+
+/* FOOTER */
+footer{background:#1a2f4a;padding:32px 48px 20px;border-top:1px solid rgba(255,255,255,0.08);}
+.footer-inner{max-width:1200px;margin:0 auto;}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:60px;margin-bottom:24px;}
+.footer-brand p{font-size:14px;font-family:'DM Sans',sans-serif;font-weight:400;color:rgba(255,255,255,0.75);line-height:1.6;margin-top:8px;max-width:300px;}
+.footer-col a{display:block;font-size:14px;font-family:'DM Sans',sans-serif;font-weight:600;color:rgba(255,255,255,0.75);text-decoration:none;margin-bottom:6px;transition:color 0.2s;}
+.footer-col a:hover{color:white;}
+.footer-bottom{display:flex;justify-content:space-between;align-items:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08);font-size:13px;font-family:'DM Sans',sans-serif;font-weight:400;color:rgba(255,255,255,0.75);flex-wrap:wrap;gap:10px;}
+.footer-eyebrow{display:flex;align-items:center;gap:8px;font-size:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:3px;text-transform:uppercase;background:linear-gradient(135deg,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:10px;margin-left:-28px;}
+.footer-eyebrow::before{content:'';width:20px;height:1px;background:linear-gradient(90deg,transparent,#d4844a);flex-shrink:0;}
+.footer-eyebrow::after{content:'';width:20px;height:1px;background:linear-gradient(90deg,#d4844a,transparent);flex-shrink:0;}
+
+@media(max-width:900px){
+  .page-wrap{flex-direction:column;}
+  .side-panel{width:100%;}
+  .page-centre{padding:0 24px;}
+  .industry-grid{grid-template-columns:repeat(2,1fr);}
+  .footer-top{grid-template-columns:1fr 1fr;gap:40px;}
+}
+@media(max-width:560px){
+  .industry-grid{grid-template-columns:1fr;}
+  .hero h1{font-size:48px;}
+}
+</style>
+</head>
+<body>
+
+<div class="atmo">
+  <div class="atmo-orb o1"></div>
+  <div class="atmo-orb o2"></div>
+  <div class="atmo-orb o3"></div>
+</div>
+
+<div class="topbar">
+  <a href="/" style="display:flex;align-items:center;text-decoration:none;"><img src="StaxAI Cropped Transparent.png" alt="StaxAI" style="height:38px;width:auto;display:block;"></a>
+
+  <div class="topbar-nav"><a id="back-btn">Back</a></div><div class="topbar-spacer"></div><div class="bundle-rotator">
+    <span class="bundle-rotator-icon">&#128230;</span>
+    <div class="bundle-rotator-track">
+      <div class="bundle-rotator-item active">STAX3 — any 3 tools $129/mth</div>
+      <div class="bundle-rotator-item">STAX6 — any 6 tools $249/mth</div>
+      <div class="bundle-rotator-item">STAX All — all tools $449/mth</div>
+    </div>
+    <span class="bundle-rotator-cta" onclick="window.location.href='pricing-page.html'" style="cursor:pointer;">Bundle &#8594;</span>
+  </div>
+  <div class="topbar-actions">
+    <a href="/login" class="btn-signin">Sign In</a>
+    <a href="/login?tab=signup" class="btn-trial">Start Free Trial</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- LEFT: Live in Minutes -->
+  <aside class="side-panel">
+    <div class="hiw-panel">
+      <div class="hiw-header">
+        <div class="hiw-eyebrow">How It Works</div>
+        <div class="hiw-heading">Live in<br><span class="word-accent">minutes</span></div>
+      </div>
+      <div class="hiw-steps">
+        <div class="hiw-step">
+          <div class="hiw-step-num">1</div>
+          <div class="hiw-step-body">
+            <div class="hiw-step-title">Choose Your Function</div>
+            <div class="hiw-step-desc">Select from 5 functions — tools built around how your business actually works</div>
+          </div>
+        </div>
+        <div class="hiw-connector"></div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">2</div>
+          <div class="hiw-step-body">
+            <div class="hiw-step-title">Create Your <span class="word-accent">STAX</span></div>
+            <div class="hiw-step-desc">Activate the tools that make the biggest difference to you first — choose your settings and be up and running in minutes</div>
+          </div>
+        </div>
+        <div class="hiw-connector"></div>
+        <div class="hiw-step">
+          <div class="hiw-step-num">3</div>
+          <div class="hiw-step-body">
+            <div class="hiw-step-title">Your <span class="word-accent">STAX</span> is Live</div>
+            <div class="hiw-step-desc">Your AI tools get straight to work — creating content, handling enquiries, generating documents — while you get on with business</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- CENTRE -->
+  <div class="page-centre">
+    <div class="hero">
+      <h1><span class="h-line">YOUR BUSINESS | YOUR <span class="word-accent">STAX</span></span></h1>
+      <div class="section-label">Choose Your Function</div>
+    </div>
+    <div class="industry-grid">
+
+      <div class="industry-card" data-function="sales-marketing" style="--card-photo:url('https://images.unsplash.com/photo-1611926653458-09294b3142bf?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content">
+          <span class="card-icon">&#128241;</span>
+          <div class="card-eyebrow">Create the leads and win the work</div>
+          <div class="card-name">Sales &amp; Marketing</div>
+          <p class="card-desc">AI tools that make marketing, socials, quoting, tender responses and increasing customer enquiries easy</p>
+          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
+        </div>
+      </div>
+
+      <div class="industry-card" data-function="customers-jobs" style="--card-photo:url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content">
+          <span class="card-icon">&#128172;</span>
+          <div class="card-eyebrow">Customer service &amp; job delivery</div>
+          <div class="card-name">Customers &amp; Jobs</div>
+          <p class="card-desc">Smooth professionalism — AI-driven progress updates, handovers, safety docs, and per-job paperwork that keeps customers in the loop</p>
+          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
+        </div>
+      </div>
+
+      <div class="industry-card" data-function="inventory-materials">
+        <div class="card-inner">
+          <div class="card-coming-soon-bg">
+            <div class="card-coming-soon-label">Coming Soon</div>
+          </div>
+          <div class="card-photo-overlay"></div>
+        </div>
+        <div class="card-content">
+          <span class="card-icon">&#128230;</span>
+          <div class="card-eyebrow">Control your stock &amp; suppliers</div>
+          <div class="card-name">Inventory &amp; Materials</div>
+          <p class="card-desc">Stay on top of what you need — AI tools for materials, inventory tracking, supplier ordering, and consumables</p>
+          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
+        </div>
+      </div>
+
+      <div class="industry-card" data-function="operations" style="--card-photo:url('https://images.unsplash.com/photo-1554200876-56c2f25224fa?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content">
+          <span class="card-icon">&#9881;</span>
+          <div class="card-eyebrow">Manage the Business</div>
+          <div class="card-name">Operations</div>
+          <p class="card-desc">AI support for scheduling, dispatch, staff, compliance, costing, and email</p>
+          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
+        </div>
+      </div>
+
+      <div class="industry-card" data-function="intelligence" style="--card-photo:url('https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=500&q=80&auto=format')">
+        <div class="card-inner"><div class="card-photo-bg"></div><div class="card-photo-overlay"></div></div>
+        <div class="card-content">
+          <span class="card-icon">&#128200;</span>
+          <div class="card-eyebrow">Grow the Business</div>
+          <div class="card-name">Business Intelligence</div>
+          <p class="card-desc">Make informed decisions — AI-driven tailored risk and opportunity insights using your data, your industry, and your region</p>
+          <div class="card-cta">Explore tools <div class="card-cta-arrow">&#8594;</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- RIGHT: What You Get -->
+  <aside class="side-panel info-panel">
+    <div class="wyg-panel" id="wyg-panel">
+      <div class="hiw-header">
+        <div class="hiw-eyebrow">What You Get</div>
+        <div class="hiw-heading">Built in<br>from <span class="word-accent">day one</span></div>
+      </div>
+      <div class="wyg-items">
+        <div class="wyg-item">
+          <div class="wyg-icon">&#10022;</div>
+          <div class="wyg-body">
+            <div class="wyg-title">Content Library</div>
+            <div class="wyg-desc">Every photo, doc, and AI output saved and organised in one place &mdash; automatically</div>
+          </div>
+        </div>
+        <div class="wyg-item">
+          <div class="wyg-icon">&#10022;</div>
+          <div class="wyg-body">
+            <div class="wyg-title">14 Day Free Trial</div>
+            <div class="wyg-desc">Full access to any tool for 14 days &mdash; no limits</div>
+          </div>
+        </div>
+        <div class="wyg-item">
+          <div class="wyg-icon">&#10022;</div>
+          <div class="wyg-body">
+            <div class="wyg-title">No Lock-In. Ever.</div>
+            <div class="wyg-desc">Only pay for the tools that work for you. Cancel any tool, any time &mdash; no contracts</div>
+          </div>
+        </div>
+        <div class="wyg-item">
+          <div class="wyg-icon">&#10022;</div>
+          <div class="wyg-body">
+            <div class="wyg-title">From $39/mth Per Tool</div>
+            <div class="wyg-desc">Each tool is individually priced. Activate what you need, when you need it</div>
+          </div>
+        </div>
+        <div class="wyg-item">
+          <div class="wyg-icon">&#10022;</div>
+          <div class="wyg-body">
+            <div class="wyg-title">Users</div>
+            <div class="wyg-desc">Up to 5 users included</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:1px;margin-bottom:8px;"><span style="background:linear-gradient(135deg,#c4622a,#d4844a,#d4a04a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">STAXAI</span></div>
+        <p>AI-powered tools built for Australian business</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-eyebrow">Product</div>
+        <a href="/industry">Browse Tools</a>
+        <a href="/pricing">Pricing</a>
+        <a href="/login?tab=signup">Sign Up</a>
+      </div>
+      <div class="footer-col" style="margin-left:auto">
+        <div class="footer-eyebrow">Company</div>
+        <a href="/contact">Contact</a>
+        <a href="/privacy">Privacy &amp; Data Security Policy</a>
+        <a href="/terms">Terms of Service</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Strategic Solutions ABN 83 861 537 021 All rights reserved</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var items=document.querySelectorAll('.bundle-rotator-item'),idx=0;
+  if(items.length>1){setInterval(function(){
+    items[idx].classList.remove('active');items[idx].classList.add('exit');
+    setTimeout(function(){items[idx].classList.remove('exit');},500);
+    idx=(idx+1)%items.length;items[idx].classList.add('active');
+  },3000);}
+})();
+</script>
+<script>
+function alignHIW() {
+  const hiwPanel = document.querySelector('.hiw-panel');
+  const wygPanel = document.querySelector('.wyg-panel');
+  const sectionLabel = document.querySelector('.section-label');
+  if (!sectionLabel) return;
+  if (hiwPanel) {
+    hiwPanel.style.paddingTop = '0px';
+    const gap = sectionLabel.getBoundingClientRect().top - hiwPanel.getBoundingClientRect().top;
+    if (gap > 0) hiwPanel.style.paddingTop = gap + 'px';
+  }
+  if (wygPanel) {
+    wygPanel.style.paddingTop = '0px';
+    const gap2 = sectionLabel.getBoundingClientRect().top - wygPanel.getBoundingClientRect().top;
+    if (gap2 > 0) wygPanel.style.paddingTop = gap2 + 'px';
+  }
+}
+window.addEventListener('load', alignHIW);
+window.addEventListener('resize', alignHIW);
+
+// Function tile navigation — routes to tools.html with ?function= filter
+(function(){
+  var cards=document.querySelectorAll('.industry-card[data-function]');
+  cards.forEach(function(c){
+    c.style.cursor='pointer';
+    c.addEventListener('click',function(){
+      window.location.href='/tools?function='+c.getAttribute('data-function');
+    });
+  });
+})();
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var backBtn=document.getElementById('back-btn');if(backBtn){backBtn.addEventListener('click',function(){var ref=document.referrer;var onPlatform=ref&&ref.indexOf('trade-ai-seven-blue.vercel.app')>-1;if(onPlatform&&history.length>1){history.back();}else{window.location.href='/';}});}
+});
+</script>
+</body>
+</html>
