@@ -15,6 +15,7 @@
 import https from 'https';
 import { createClient } from '@supabase/supabase-js';
 import { logAnthropicUsage, logSmtp2goUsage } from '../lib/usage-logger.js';
+import { requireBpComplete } from '../lib/bp-gate.js';
 
 var SUPABASE_URL = process.env.SUPABASE_URL;
 var SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -463,6 +464,11 @@ export default async function handler(req, res) {
     userId = await authenticateOwner(supabase, token);
     if (!userId) return res.status(401).json({ error: 'Unauthorised' });
     isOwnerTest = true;
+    // BP gate only applies to owner test calls. Widget calls serve the
+    // owner's end customers — they are not the platform user and have no
+    // BP of their own. A widget call with an incomplete owner BP will
+    // produce a sparser system prompt but still works for the customer.
+    if (!(await requireBpComplete(supabase, userId, res))) return;
   }
 
   var action = body.action || 'chat';
