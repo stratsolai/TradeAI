@@ -144,63 +144,14 @@ window.DASH_DATA = (function() {
   }
 
   // ── BP COMPLETION CHECK ──
+  // Delegates to window.isBpComplete from lib/check-bp-complete.js (loaded
+  // as <script type="module"> in dashboard.html). Single source of truth
+  // for the 26-field check — same function the server-side BP gate uses.
   var _bpComplete = false;
-  var _bpMissing = [];
 
   function checkBPComplete(p) {
-    if (!p) return false;
-    var hasText = function(k) {
-      var v = p[k];
-      if (v === null || v === undefined || v === '') return false;
-      if (typeof v === 'number') return true;
-      if (typeof v === 'string') return v.trim() !== '';
-      return false;
-    };
-    var hasArr = function(k) { return Array.isArray(p[k]) && p[k].length > 0; };
-    var hasJson = function(k) {
-      var v = p[k];
-      if (Array.isArray(v) && v.length > 0) return true;
-      if (v && typeof v === 'object' && !Array.isArray(v)) {
-        return v.type && typeof v.type === 'string' && v.type.trim() !== '';
-      }
-      return false;
-    };
-    var hasPhone = function() { return Array.isArray(p.additional_phones) && p.additional_phones.length > 0; };
-
-    var checks = [
-      { panel: 'Identity',                test: hasText('business_name'),       label: 'Business Name' },
-      { panel: 'Identity',                test: hasText('abn'),                 label: 'ABN' },
-      { panel: 'Identity',                test: hasText('business_structure'),  label: 'Business Structure' },
-      { panel: 'Identity',                test: hasArr('industry'),             label: 'Industry (at least one)' },
-      { panel: 'Identity',                test: hasText('logo_url'),            label: 'Business Logo' },
-      { panel: 'Identity',                test: hasText('years_in_business'),   label: 'Years in Business' },
-      { panel: 'Location & Contact',      test: hasText('address_name'),        label: 'Location Name' },
-      { panel: 'Location & Contact',      test: hasText('address_street'),      label: 'Street Address' },
-      { panel: 'Location & Contact',      test: hasText('address_suburb'),      label: 'Suburb' },
-      { panel: 'Location & Contact',      test: hasText('address_state'),       label: 'State' },
-      { panel: 'Location & Contact',      test: hasText('address_postcode'),    label: 'Postcode' },
-      { panel: 'Location & Contact',      test: hasPhone(),                     label: 'Phone Number (at least one)' },
-      { panel: 'Location & Contact',      test: hasArr('service_area'),         label: 'Service Area' },
-      { panel: 'Location & Contact',      test: hasJson('trading_hours'),       label: 'Trading Hours' },
-      { panel: 'Services',                test: hasArr('bp_services'),           label: 'Services (at least one)' },
-      { panel: 'Products',                test: hasArr('bp_products'),            label: 'Products (at least one)' },
-      { panel: 'Credentials & Support',   test: hasArr('payment_methods'),       label: 'Payment Methods' },
-      { panel: 'Credentials & Support',   test: hasText('response_time'),        label: 'Response Time' },
-      { panel: 'Credentials & Support',   test: hasText('warranty_info'),        label: 'Warranty / Guarantee' },
-      { panel: 'Credentials & Support',   test: hasText('complaints_handling'),  label: 'Complaints Handling' },
-      { panel: 'Credentials & Support',   test: hasJson('after_hours_support'),  label: 'After-Hours Support' },
-      { panel: 'Marketing Theme',         test: hasText('marketing_theme_differentiators'), label: 'What Makes You Stand Out' },
-      { panel: 'Marketing Theme',         test: hasText('marketing_theme_awareness'),       label: 'What Customers Should Know' },
-      { panel: 'Marketing Theme',         test: hasText('marketing_theme_feeling'),         label: 'How Customers Should Feel' },
-      { panel: 'Marketing Theme',         test: hasText('tone_of_voice'),                   label: 'Tone of Voice' },
-      { panel: 'Marketing Theme',         test: hasText('primary_brand_colour'),             label: 'Primary Brand Colour' }
-    ];
-
-    _bpMissing = [];
-    for (var i = 0; i < checks.length; i++) {
-      if (!checks[i].test) _bpMissing.push(checks[i]);
-    }
-    return _bpMissing.length === 0;
+    if (typeof window.isBpComplete !== 'function') return false;
+    return window.isBpComplete(p);
   }
 
   function showBPModal() {
