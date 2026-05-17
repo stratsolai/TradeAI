@@ -24,12 +24,11 @@ Object.assign(window.CL_PROFILE, {
     var self = this;
     var items = this._vj(profileKey, []);
     var industries = this._va('industry');
-    var availableGroups = window.BP_INDUSTRY_DATA
-      ? (prefix === 'svc' ? window.BP_INDUSTRY_DATA.getMergedServices(industries) : window.BP_INDUSTRY_DATA.getMergedProducts(industries))
-      : [];
+    var mergeFn = prefix === 'svc' ? window.getMergedServices : window.getMergedProducts;
+    var availableGroups = typeof mergeFn === 'function' ? mergeFn(industries) : [];
     var selectedNames = items.map(function(i) { return i.name || ''; }).filter(function(n) { return !!n; });
     var customItems = items.filter(function(i) { return i.is_custom; });
-    var pricingTypes = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.pricingTypes : [];
+    var pricingTypes = window.BP_PRICING_TYPES || [];
 
     var pillsHtml = '<div class="profile-label" style="margin-bottom:8px">Select from your industry list</div>';
     pillsHtml += '<div id="prof-' + prefix + '-pills" style="margin-bottom:16px">';
@@ -344,7 +343,7 @@ Object.assign(window.CL_PROFILE, {
     if (typeof this._v('industry') === 'string' && this._v('industry')) {
       industries = [this._v('industry')];
     }
-    var licenceOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.getMergedLicences(industries) : [];
+    var licenceOpts = typeof window.getMergedLicences === 'function' ? window.getMergedLicences(industries) : [];
     var selectedLicences = this._va('licences');
     // licenceOpts is now an array of { name, items } groups; flatten to a
     // membership set so we can detect saved values that don't match any
@@ -354,14 +353,14 @@ Object.assign(window.CL_PROFILE, {
     var customLicences = selectedLicences.filter(function(l) { return !standardLicenceSet[l]; });
     var licenceHtml = this._chipGroupWithOther('prof-licences', licenceOpts, selectedLicences, customLicences);
 
-    var paymentOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.paymentMethodOptions : [];
+    var paymentOpts = window.BP_PAYMENT_METHOD_OPTIONS || [];
     var selectedPayments = this._va('payment_methods');
     var paymentHtml = this._chipGroup('prof-payments', paymentOpts, selectedPayments);
 
-    var responseOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.responseTimeOptions : [];
+    var responseOpts = window.BP_RESPONSE_TIME_OPTIONS || [];
     var responseHtml = this._dropdown('prof-response-time', responseOpts, this._v('response_time'));
 
-    var afterHoursOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.afterHoursOptions : [];
+    var afterHoursOpts = window.BP_AFTER_HOURS_OPTIONS || [];
     var ahData = this._vj('after_hours_support', { type: '', hours_text: '' });
     var ahType = ahData.type || '';
     var ahText = ahData.hours_text || '';
