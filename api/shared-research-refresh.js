@@ -534,8 +534,19 @@ export default async function handler(req, res) {
     // items. We compute the implicit-rejection set here by diffing the
     // deduped input against the URLs Sonnet returned (normalised to
     // match the fabricated-URL check) and merge it with the validator
-    // rejections into a single shape. The persisted cohort cache is
-    // unaffected — this output is dry-run-only.
+    // rejections into a single shape.
+    //
+    // URL normalisation: deduped items carry normalised_url pre-computed
+    // by enrichDedupedWithPlan using the same normaliseUrlForMatch the
+    // validator uses for fabrication checking. Sonnet's returned items
+    // don't go through that pipeline, so they get normalised on the fly
+    // here via the same shared function — single canonical normaliser
+    // on both sides, survives any future URL mutation by Sonnet
+    // (trailing slashes, fragments, query param order, etc.) without
+    // silently over-reporting rejections.
+    //
+    // The persisted cohort cache is unaffected — this output is
+    // dry-run-only.
     const tRejected = Date.now();
     const sonnetReturnedNormUrls = new Set();
     for (const it of curation.items || []) {
@@ -544,7 +555,7 @@ export default async function handler(req, res) {
     }
     const sonnetRejected = [];
     for (const it of deduped) {
-      const norm = normaliseUrlForMatch(it && it.link);
+      const norm = it && it.normalised_url;
       if (!norm || sonnetReturnedNormUrls.has(norm)) continue;
       sonnetRejected.push({
         reason: 'not_returned_by_sonnet',
@@ -561,7 +572,7 @@ export default async function handler(req, res) {
     // source_domain from the matching deduped entry where possible.
     const dedupedByNorm = new Map();
     for (const d of deduped) {
-      const norm = normaliseUrlForMatch(d && d.link);
+      const norm = d && d.normalised_url;
       if (norm && !dedupedByNorm.has(norm)) dedupedByNorm.set(norm, d);
     }
     const validatorRejected = (validated.rejected || []).map((r) => {
@@ -583,6 +594,33 @@ export default async function handler(req, res) {
     });
     const rejectedItems = sonnetRejected.concat(validatorRejected);
     recordTiming('build_rejected_items', tRejected);
+
+    // Count reconciliation — every deduped item must end up in exactly
+    // one bucket: accepted, rejected_by_sonnet, or rejected_by_validator
+    // (the last only when the validator-rejected URL maps back to a
+    // deduped entry, i.e. excluding fabricated URLs that don't
+    // correspond to any input item). A mismatch usually means either a
+    // normalisation drift between curation's pipeline and the diff
+    // (silent over-reporting) or the original-bug shape — Sonnet
+    // returned far fewer items than the diff is seeing (silent under-
+    // reporting). The warning fires loud in Vercel logs without
+    // throwing — the dry-run still returns whatever counts it has so
+    // the human investigating can see the discrepancy directly.
+    const validatorRejectedInDeduped = validatorRejected.filter(function(r) {
+      var norm = normaliseUrlForMatch(r.url);
+      return norm && dedupedByNorm.has(norm);
+    }).length;
+    const reconcileSum = validated.accepted.length + sonnetRejected.length + validatorRejectedInDeduped;
+    if (reconcileSum !== deduped.length) {
+      console.warn(
+        '[SharedResearch] Rejection reconciliation mismatch — deduped: ' + deduped.length +
+        ', accepted: ' + validated.accepted.length +
+        ', rejected_by_sonnet: ' + sonnetRejected.length +
+        ', rejected_by_validator: ' + validatorRejected.length +
+        ', rejected_by_validator_in_deduped: ' + validatorRejectedInDeduped +
+        ', sum: ' + reconcileSum
+      );
+    }
 
     const totalDuration = Date.now() - t0;
     timings.total_ms = totalDuration;
