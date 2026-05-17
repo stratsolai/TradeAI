@@ -1,6 +1,6 @@
 # CLAUDE.md
 # StaxAI — Claude Code Session Reference
-# Updated: May 14, 2026
+# Updated: May 17, 2026
 
 ---
 
@@ -286,6 +286,28 @@ Choose from shortlisted logo versions.
 Status: Not started.
 
 Approximately 9 tools still to be built (16 total, 7 done). Each tool requires spec approval before build.
+
+### Task 45 — Anthropic Admin API Integration
+
+Status: Not started. Spec required before build.
+
+The Profitability Dashboard currently relies on local token-based cost
+estimation via lib/usage-logger.js — hardcoded AUD pricing tables
+multiplied by token counts from Anthropic API responses, written to the
+api_usage table. This works for per-tool / per-user attribution but is
+not a real billing source.
+
+Integration with Anthropic's Admin API would provide:
+- Reconciliation between local estimates and actual Anthropic-billed
+  amounts (catches drift from FX rate changes, model pricing changes,
+  or token-counting differences)
+- Real spend data for the Profitability Dashboard rather than estimates
+- Organisation-level visibility for cost monitoring as user base grows
+
+Requires sk-ant-admin key prefix, RFC 3339 date format, organisation-
+level setup. Returns 400 if starting_at is the current day.
+
+Spec required before build.
 
 ---
 
