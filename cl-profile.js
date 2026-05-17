@@ -787,18 +787,22 @@ Object.assign(window.CL_PROFILE, {
   // _BP_TO_TOOL_INDUSTRY map that fed that section is gone with it.
   _buildIndustryRemovalBody: function(industry) {
     var esc = window.escHtml;
+    // Tool icons from the Canonical Tool ID Register in Tool
+    // Specification Guide v2.5. Used as the list bullet marker
+    // (visual replacement for the default dot) so the modal reads with
+    // platform-standard tool iconography.
     var contextTools = [
-      { label: 'Website Chatbot',         use: 'system prompt' },
-      { label: 'Design Visualiser',       use: 'render types' },
-      { label: 'Industry News Digest',    use: 'news sources' },
-      { label: 'Strategic Plan',          use: 'industry analysis' }
+      { icon: '💬', label: 'Website Chatbot',      use: 'system prompt' },
+      { icon: '🎨', label: 'Design Visualiser',    use: 'render types' },
+      { icon: '📰', label: 'Industry News Digest', use: 'news sources' },
+      { icon: '📝', label: 'Strategic Plan',       use: 'industry analysis' }
     ];
     var contextItems = contextTools.map(function(t) {
-      return '<li>' + esc(t.label) + ' &mdash; ' + esc(t.use) + '</li>';
+      return '<li style="margin-bottom:4px">' + t.icon + ' ' + esc(t.label) + ' &mdash; ' + esc(t.use) + '</li>';
     }).join('');
 
     return '<p>Some tools use industry context to tailor their outputs:</p>' +
-      '<ul>' + contextItems + '</ul>' +
+      '<ul style="list-style:none;padding-left:24px;margin:8px 0">' + contextItems + '</ul>' +
       '<p style="margin-top:12px">Existing outputs from these tools won\'t be deleted, but they may reference <strong>' + esc(industry) + '</strong>. Future outputs will use your remaining industries.</p>';
   },
 
