@@ -491,11 +491,25 @@ export default async function handler(req, res) {
   for (const d of deduped) enrichedByUrl.set(d.link, d);
   const acceptedWithSource = validated.accepted.map((it) => {
     const src = enrichedByUrl.get(it.url);
-    return Object.assign({}, it, {
+    const overrides = {
       source_queries: src ? src.source_queries : [],
       source_categories: src ? src.source_categories : [],
       source_industries: src ? src.source_industries : []
-    });
+    };
+    // Symmetry with rejected_items.source_name (which uses Serper's raw
+    // source field): override Sonnet's emitted source_name with the
+    // matching deduped item's Serper source when available. Sonnet's
+    // prompt instructs it to derive source_name from Serper's input
+    // anyway, so this is the more authoritative form of the same value
+    // — and using it here means downstream tooling reading either
+    // curated_items or rejected_items gets the same source-of-truth
+    // for source_name. Falls back to Sonnet's emission when no exact
+    // URL match (rare — Sonnet returned a URL with a cosmetic
+    // difference that the validator's normalised check accepted but
+    // the exact lookup here misses). Dry-run response only — the
+    // persisted shared_research row still carries Sonnet's value.
+    if (src && src.source) overrides.source_name = src.source;
+    return Object.assign({}, it, overrides);
   });
   const grouped = groupCuratedByCategory(acceptedWithSource);
   recordTiming('group_and_attribute_curated', tGroup);
