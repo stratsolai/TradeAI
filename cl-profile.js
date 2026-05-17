@@ -385,13 +385,24 @@ Object.assign(window.CL_PROFILE, {
   },
 
   _bindChipToggles: function(container) {
+    var self = this;
     container.querySelectorAll('.review-pill-row').forEach(function(group) {
       if (group.dataset.chipBound) return;
       group.dataset.chipBound = '1';
       group.addEventListener('click', function(e) {
         if (e.target.closest('.prof-pill-remove')) return;
         var chip = e.target.closest('.filter-pill');
-        if (chip && !chip.dataset.custom) chip.classList.toggle('active');
+        if (chip && !chip.dataset.custom) {
+          chip.classList.toggle('active');
+          // Update the per-tile accordion count synchronously here —
+          // the rAF version in _bindChipAccordion is kept as a backup
+          // for the services/products path, but for industries the
+          // inline call here removes any timing race that could leave
+          // the count stale on the most-recent click. No-op when the
+          // pill isn't inside an accordion section.
+          var section = chip.closest('[data-chip-acc-section]');
+          if (section) self._updateAccordionCount(section);
+        }
       });
     });
   },
@@ -879,15 +890,23 @@ Object.assign(window.CL_PROFILE, {
           confirmBtn.removeEventListener('click', onConfirm);
           cancelBtn.removeEventListener('click', onCancel);
         };
+        // Per-tile count for the section containing this chip. Updated
+        // on both Confirm (pill now deselected) and Cancel (pill snaps
+        // back to active) so the header counter stays in sync with the
+        // visible pill state.
+        var section = chip.closest('[data-chip-acc-section]');
+        var refreshSectionCount = function() { if (section) self._updateAccordionCount(section); };
         var onConfirm = function() {
           cleanup();
           updateCounter();
+          refreshSectionCount();
           self._scheduleAutoSave('identity', 100);
         };
         var onCancel = function() {
           chip.classList.add('active');
           cleanup();
           updateCounter();
+          refreshSectionCount();
         };
         confirmBtn.addEventListener('click', onConfirm);
         cancelBtn.addEventListener('click', onCancel);
