@@ -548,6 +548,23 @@ export default async function handler(req, res) {
     // The persisted cohort cache is unaffected — this output is
     // dry-run-only.
     const tRejected = Date.now();
+    // source_domain on rejected items matches the shape Sonnet emits on
+    // curated_items — the bare host with no protocol and no www prefix
+    // (lib/shared-research-curation.js prompt §source_domain). Derived
+    // from the URL on both rejection paths so debuggers and aggregators
+    // can join across curated_items and rejected_items by the same key.
+    // Serper's human-readable source name (e.g. "Australian Broker
+    // News") goes on a separate source_name field where available.
+    function urlToDomain(rawUrl) {
+      if (!rawUrl || typeof rawUrl !== 'string') return '';
+      try {
+        var u = new URL(rawUrl.trim());
+        var host = (u.hostname || '').toLowerCase();
+        if (host.indexOf('www.') === 0) host = host.slice(4);
+        return host;
+      } catch (e) { return ''; }
+    }
+
     const sonnetReturnedNormUrls = new Set();
     for (const it of curation.items || []) {
       const norm = normaliseUrlForMatch(it && it.url);
@@ -562,14 +579,19 @@ export default async function handler(req, res) {
         rejected_by: 'sonnet',
         title: (it.title || '').slice(0, TRUNCATE_CHARS),
         url: it.link,
-        source_domain: it.source || '',
+        source_domain: urlToDomain(it.link),
+        source_name: it.source || '',
         categories_considered: it.source_categories || [],
         lenses: it.lenses || [],
         snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS)
       });
     }
-    // Map validator rejections into the same shape, enriching with
-    // source_domain from the matching deduped entry where possible.
+    // Map validator rejections into the same shape. URL → domain on the
+    // validator side too — Sonnet's source_domain on rejected items
+    // shouldn't be trusted because the very reason it's being rejected
+    // may include a malformed source_domain; deriving from the URL
+    // matches what the validator and persistence layer would have done
+    // had the item been accepted.
     const dedupedByNorm = new Map();
     for (const d of deduped) {
       const norm = d && d.normalised_url;
@@ -581,12 +603,14 @@ export default async function handler(req, res) {
       const src = normUrl ? dedupedByNorm.get(normUrl) : null;
       const itemLens = item.lens;
       const itemCat = item.category;
+      const itemUrl = item.url || '';
       return {
         reason: r.reason,
         rejected_by: 'validator',
         title: ((item.title || r.title) || '').toString().slice(0, TRUNCATE_CHARS),
-        url: item.url || '',
-        source_domain: src ? (src.source || '') : '',
+        url: itemUrl,
+        source_domain: urlToDomain(itemUrl) || (src ? urlToDomain(src.link) : ''),
+        source_name: src ? (src.source || '') : '',
         categories_considered: Array.isArray(itemCat) ? itemCat : (itemCat ? [itemCat] : (src ? (src.source_categories || []) : [])),
         lenses: Array.isArray(itemLens) ? itemLens : (itemLens ? [itemLens] : (src ? (src.lenses || []) : [])),
         snippet: src ? (src.snippet || '').slice(0, TRUNCATE_CHARS) : ''
