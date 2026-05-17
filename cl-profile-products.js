@@ -25,6 +25,9 @@ Object.assign(window.CL_PROFILE, {
     var items = this._vj(profileKey, []);
     var industries = this._va('industry');
     var mergeFn = prefix === 'svc' ? window.getMergedServices : window.getMergedProducts;
+    if (typeof mergeFn !== 'function') {
+      console.warn('[CL_PROFILE] window.' + (prefix === 'svc' ? 'getMergedServices' : 'getMergedProducts') + ' is not a function — lib/industry-taxonomy.js may not have loaded. Industry-driven ' + label.toLowerCase() + ' list will render empty.');
+    }
     var availableGroups = typeof mergeFn === 'function' ? mergeFn(industries) : [];
     var selectedNames = items.map(function(i) { return i.name || ''; }).filter(function(n) { return !!n; });
     var customItems = items.filter(function(i) { return i.is_custom; });
@@ -342,6 +345,9 @@ Object.assign(window.CL_PROFILE, {
     var industries = this._va('industry');
     if (typeof this._v('industry') === 'string' && this._v('industry')) {
       industries = [this._v('industry')];
+    }
+    if (typeof window.getMergedLicences !== 'function') {
+      console.warn('[CL_PROFILE] window.getMergedLicences is not a function — lib/industry-taxonomy.js may not have loaded. Industry-driven licence list will render empty.');
     }
     var licenceOpts = typeof window.getMergedLicences === 'function' ? window.getMergedLicences(industries) : [];
     var selectedLicences = this._va('licences');

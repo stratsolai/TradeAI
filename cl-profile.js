@@ -927,6 +927,7 @@ Object.assign(window.CL_PROFILE, {
         ]);
       }
       var teamSizeEl = document.getElementById('prof-team-size');
+      var previousIndustry = Array.isArray(self._profile.industry) ? self._profile.industry.slice() : [];
       var updates = {
         business_name: bizNameEl.value.trim(),
         trading_name: document.getElementById('prof-trading-name').value.trim(),
@@ -952,6 +953,18 @@ Object.assign(window.CL_PROFILE, {
       var apiData = await apiRes.json().catch(function() { return {}; });
       if (!apiRes.ok || !apiData.success) throw new Error(apiData.error || ('Profile save failed: ' + apiRes.status));
       Object.assign(self._profile, updates);
+      // Re-render Services / Products / Credentials when the saved
+      // industry set changes — those panels read from the merge helpers
+      // keyed on the user's current industries, and were previously
+      // frozen on whatever was in profile.industry at initial _load()
+      // (Phase 9 Issue 1).
+      var newIndustry = Array.isArray(updates.industry) ? updates.industry : [];
+      var sortKey = function(arr) { return arr.slice().sort().join('||'); };
+      if (sortKey(previousIndustry) !== sortKey(newIndustry)) {
+        self._renderServices();
+        self._renderProducts();
+        self._renderCredentials();
+      }
       if (autoSave) self._showSaved('identity');
     }, document.getElementById('prof-save-msg'));
   },
