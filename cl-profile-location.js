@@ -119,7 +119,7 @@ Object.assign(window.CL_PROFILE, {
       '</div>';
     }).join('');
 
-    var serviceAreaOpts = window.BP_INDUSTRY_DATA ? window.BP_INDUSTRY_DATA.serviceAreaOptions : [];
+    var serviceAreaOpts = window.BP_SERVICE_AREA_OPTIONS || [];
     var selectedArea = this._va('service_area');
     var customAreas = selectedArea.filter(function(a) { return serviceAreaOpts.indexOf(a) === -1; });
     var serviceAreaHtml = this._chipGroupWithOther('prof-service-area', serviceAreaOpts, selectedArea, customAreas);
