@@ -317,14 +317,13 @@ window.ADMIN_LOGIC = {
     }
   },
 
-  // Industry options come from window.BP_INDUSTRY_DATA — the canonical
-  // industry list used by signup, BP, and every tool. Avoids hardcoding a
-  // separate list here and ensures filter values match what is stored on
-  // profiles.industry (which is the group's display name).
+  // Industry options come from window.INDUSTRY_TAXONOMY — the canonical
+  // 39-entry industry list used by BP and every tool. Avoids hardcoding
+  // a separate list here and ensures filter values match what is stored
+  // on profiles.industry (each entry's displayLabel).
   _renderCustomerFilterPills: function() {
     var self = this;
-    var industryGroups = (window.BP_INDUSTRY_DATA && window.BP_INDUSTRY_DATA.groups) || [];
-    var industries = industryGroups.map(function(g) { return g.name; });
+    var industries = (window.INDUSTRY_TAXONOMY || []).map(function(e) { return e.displayLabel; });
     var plans = [
       { value: 'stax3', label: 'STAX3' },
       { value: 'stax6', label: 'STAX6' },
