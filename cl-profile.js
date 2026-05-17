@@ -753,7 +753,7 @@ Object.assign(window.CL_PROFILE, {
     self._bindPhoneTypeDropdowns(idPanel);
     self._bindChipToggles(idPanel);
     self._bindChipAccordion(document.getElementById('prof-industries'));
-    self._bindIndustryWarn(selectedIndustries);
+    self._bindIndustryWarn();
 
     var logoImg = document.getElementById('prof-logo-img');
     if (logoImg && logoImg.tagName === 'IMG') {
@@ -802,7 +802,7 @@ Object.assign(window.CL_PROFILE, {
       '<p style="margin-top:12px">Existing outputs from these tools won\'t be deleted, but they may reference <strong>' + esc(industry) + '</strong>. Future outputs will use your remaining industries.</p>';
   },
 
-  _bindIndustryWarn: function(previousIndustries) {
+  _bindIndustryWarn: function() {
     var group = document.getElementById('prof-industries');
     if (!group) return;
     var self = this;
@@ -847,9 +847,21 @@ Object.assign(window.CL_PROFILE, {
       var chip = e.target.closest('.filter-pill');
       if (!chip) return;
       var val = chip.getAttribute('data-value');
-      var wasSelected = previousIndustries.indexOf(val) > -1;
+      // Read against the current saved state (self._profile.industry,
+      // which auto-save keeps fresh on every successful write) rather
+      // than a closure captured at render time. Phase 9 Issue 3: the
+      // closure was stale whenever the user picked an industry in the
+      // same session — wasSelected returned false on the first deselect
+      // attempt and the modal silently skipped.
+      var savedIndustries = Array.isArray(self._profile.industry) ? self._profile.industry : [];
+      var wasSelected = savedIndustries.indexOf(val) > -1;
       var isNowDeselected = !chip.classList.contains('active');
       if (wasSelected && isNowDeselected) {
+        // Suppress the 500ms auto-save chip-click handler racing the
+        // modal decision. Cancel = no save fires (pill snaps back to
+        // active, DB unchanged). Confirm = re-arm auto-save so the
+        // deselect actually persists. Phase 9 Issue 3.
+        if (self._autoSaveTimer) { clearTimeout(self._autoSaveTimer); self._autoSaveTimer = null; }
         var modal = document.getElementById('prof-industry-modal');
         var title = document.getElementById('prof-industry-modal-title');
         var body = document.getElementById('prof-industry-modal-body');
@@ -863,8 +875,16 @@ Object.assign(window.CL_PROFILE, {
           confirmBtn.removeEventListener('click', onConfirm);
           cancelBtn.removeEventListener('click', onCancel);
         };
-        var onConfirm = function() { cleanup(); updateCounter(); };
-        var onCancel = function() { chip.classList.add('active'); cleanup(); updateCounter(); };
+        var onConfirm = function() {
+          cleanup();
+          updateCounter();
+          self._scheduleAutoSave('identity', 100);
+        };
+        var onCancel = function() {
+          chip.classList.add('active');
+          cleanup();
+          updateCounter();
+        };
         confirmBtn.addEventListener('click', onConfirm);
         cancelBtn.addEventListener('click', onCancel);
       }
