@@ -309,6 +309,47 @@ level setup. Returns 400 if starting_at is the current day.
 
 Spec required before build.
 
+### Task 46 — Post-Launch SRL Substitution String Calibration Sweep
+
+Status: Not started. Post-launch task.
+
+Today's SRL architectural change made srlSubstitution an array of one
+or more strings per industry. Plumbing & Gas was updated to
+["commercial plumbing", "commercial gas services"] based on Cohort 1
+calibration evidence. The other 38 industries retain their current
+substitution content (wrapped in a one-element array as the backward-
+compatible default).
+
+Most of these 38 substitutions have never been calibrated against real
+Serper output. Only Building & Construction, Landscaping & Garden
+Services, and Outdoor Construction have been validated through
+dry-runs. The remaining 35 industries are using their default
+substitutions without evidence of whether the output is trade-relevant
+or skewed (as Plumbing & Gas was).
+
+This task is to run a full calibration sweep across all 39 industries
+post-launch — one cohort per industry at minimum, with judgment-call
+selection of cohorts that exercise the substitution at all four lenses
+(national, state, region, industry-specific). For each industry, the
+curated output is read for trade-relevance vs noise, and the
+substitution string is updated where evidence shows it produces skewed
+or off-topic content.
+
+Expected outcomes per industry:
+- Single-concept industries (Concreting, Carpentry, Glazing) likely
+  fine as-is
+- Compound-name industries where the two parts represent different
+  work types (e.g. Fire & Security Services, Cleaning & Maintenance,
+  HVAC & Refrigeration) most likely candidates for two-phrase
+  substitutions
+- Industries with strong commodity/politics overlap (e.g. Forestry &
+  Logging, Farming & Agriculture, Mining-adjacent trades) likely
+  benefit from "commercial X" or "X trade" prefixes
+
+This is a post-launch task, not a pre-launch blocker. The platform
+launches with the current substitutions; this task improves quality
+over time based on real evidence.
+
 ---
 
 ## Platform Facts
