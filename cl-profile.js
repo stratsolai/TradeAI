@@ -278,11 +278,26 @@ Object.assign(window.CL_PROFILE, {
       && Array.isArray(options[0].items);
   },
 
-  // BP UX Improvements Spec v1.0 §2.2 — render the standard chips for a
-  // grouped chip picker as collapsible sections, alphabetised within
-  // each group. Selected chips remain visible when a section is
-  // collapsed; non-selected chips are hidden via inline display:none.
-  // Each section is a platform .expand-tile (staxai-auth.css §22a).
+  // Grouped chip picker rendered as collapsible sections per Industry
+  // Taxonomy Spec v2.0 §7.2 — true two-state accordion. A section is
+  // either fully expanded (header + all pills) or fully collapsed
+  // (header only, with the "X selected" counter on the right). No
+  // hybrid third state where selected pills stay visible alongside the
+  // header when collapsed.
+  //
+  // Visibility is controlled at the body level: the body's inline
+  // display:none hides every pill inside it when collapsed; the body's
+  // display:block shows every pill when expanded. Pills no longer
+  // carry per-element display:none — that was the source of the
+  // hybrid state on initial render. The section also carries the
+  // .expanded class whenever its body is visible, so the markup at
+  // initial render matches what _setAccordionSectionState produces on
+  // toggle (matching .expand-tile styling and any future CSS rules
+  // that hang off .expanded).
+  //
+  // Auto-expand on init: groups containing at least one already-saved
+  // selection start expanded (spec §6.2.2). Groups without start
+  // collapsed.
   _renderAccordionGroups: function(groups, dataAttr, selected, idPrefix) {
     var self = this;
     if (!Array.isArray(selected)) selected = [];
@@ -294,12 +309,11 @@ Object.assign(window.CL_PROFILE, {
       var anyActive = group.items.some(function(item) { return selSet[item]; });
       var pillsHtml = group.items.map(function(item) {
         var active = selSet[item];
-        var hidden = active ? '' : 'display:none';
-        return '<button type="button" class="filter-pill' + (active ? ' active' : '') + '" data-' + dataAttr + '="' + window.escHtml(item) + '"' + (hidden ? ' style="' + hidden + '"' : '') + '>' + window.escHtml(item) + '</button>';
+        return '<button type="button" class="filter-pill' + (active ? ' active' : '') + '" data-' + dataAttr + '="' + window.escHtml(item) + '">' + window.escHtml(item) + '</button>';
       }).join('');
       var countLabel = self._countLabel(group.items.filter(function(i) { return selSet[i]; }).length);
       html +=
-        '<div class="expand-tile" data-chip-acc-section="' + window.escHtml(group.name) + '">' +
+        '<div class="expand-tile' + (anyActive ? ' expanded' : '') + '" data-chip-acc-section="' + window.escHtml(group.name) + '">' +
           '<div class="expand-tile-header">' +
             '<span class="expand-tile-title">' + window.escHtml(group.name) + '</span>' +
             '<span class="expand-tile-count" data-chip-acc-count>' + countLabel + '</span>' +
