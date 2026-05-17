@@ -487,10 +487,23 @@ export default async function handler(req, res) {
   // inspection and downstream tools that want to see which queries
   // surfaced an item.
   const tGroup = Date.now();
-  const enrichedByUrl = new Map();
-  for (const d of deduped) enrichedByUrl.set(d.link, d);
+  // Single normalised-URL → deduped lookup used by both the curated-
+  // item enrichment below AND the count reconciliation in the dry-run
+  // block further down. Built once, shared across both paths so the
+  // source-of-truth for matching is the same everywhere — what the
+  // validator used for the fabricated-URL check, what the rejected-
+  // items diff uses, and what the source_name + attribution overrides
+  // here use. Survives any cosmetic URL mutation by Sonnet (trailing
+  // slash, fragment, query param order, case, www. prefix) that the
+  // validator's normalised check accepts.
+  const dedupedByNorm = new Map();
+  for (const d of deduped) {
+    const norm = d && d.normalised_url;
+    if (norm && !dedupedByNorm.has(norm)) dedupedByNorm.set(norm, d);
+  }
   const acceptedWithSource = validated.accepted.map((it) => {
-    const src = enrichedByUrl.get(it.url);
+    const norm = normaliseUrlForMatch(it && it.url);
+    const src = norm ? dedupedByNorm.get(norm) : null;
     const overrides = {
       source_queries: src ? src.source_queries : [],
       source_categories: src ? src.source_categories : [],
@@ -501,13 +514,18 @@ export default async function handler(req, res) {
     // matching deduped item's Serper source when available. Sonnet's
     // prompt instructs it to derive source_name from Serper's input
     // anyway, so this is the more authoritative form of the same value
-    // — and using it here means downstream tooling reading either
-    // curated_items or rejected_items gets the same source-of-truth
-    // for source_name. Falls back to Sonnet's emission when no exact
-    // URL match (rare — Sonnet returned a URL with a cosmetic
-    // difference that the validator's normalised check accepted but
-    // the exact lookup here misses). Dry-run response only — the
-    // persisted shared_research row still carries Sonnet's value.
+    // — downstream tooling reading either curated_items or
+    // rejected_items gets the same source-of-truth for source_name.
+    // Lookup is normalised-URL so cosmetic URL mutation by Sonnet
+    // (trailing slash, fragment, query param order) doesn't silently
+    // fall back to Sonnet's emission. Fallback only fires when src is
+    // genuinely missing — should be never for validated items since
+    // the validator's own normalised check would have rejected them.
+    //
+    // Override applies to both dry-run response AND persisted
+    // shared_research rows: buildSharedResearchRow downstream is
+    // called with acceptedWithSource (not validated.accepted), so the
+    // persisted row carries the Serper-source-of-truth value too.
     if (src && src.source) overrides.source_name = src.source;
     return Object.assign({}, it, overrides);
   });
@@ -605,12 +623,9 @@ export default async function handler(req, res) {
     // shouldn't be trusted because the very reason it's being rejected
     // may include a malformed source_domain; deriving from the URL
     // matches what the validator and persistence layer would have done
-    // had the item been accepted.
-    const dedupedByNorm = new Map();
-    for (const d of deduped) {
-      const norm = d && d.normalised_url;
-      if (norm && !dedupedByNorm.has(norm)) dedupedByNorm.set(norm, d);
-    }
+    // had the item been accepted. dedupedByNorm is the shared lookup
+    // built above for the curated-item enrichment; reused here so both
+    // paths agree on what URL maps back to which deduped row.
     const validatorRejected = (validated.rejected || []).map((r) => {
       const item = (r && r.item) || {};
       const normUrl = normaliseUrlForMatch(item.url);
