@@ -66,6 +66,7 @@ import {
   stateFullName,
   runCuration,
   validateCuratedItems,
+  normaliseUrlForMatch,
   groupCuratedByCategory,
   snapshotCurrentRowIds,
   flipIsCurrentFalse,
@@ -524,6 +525,65 @@ export default async function handler(req, res) {
     }));
     recordTiming('truncate_raw_results', tTruncate);
 
+    // Build the full rejected_items list. validateCuratedItems only
+    // reports items Sonnet RETURNED but the validator dropped
+    // (fabricated URL, missing fields, invalid category/lens). The much
+    // larger set — items Sonnet was given but chose not to return —
+    // wasn't surfaced anywhere, leaving the dry-run rejected_items
+    // array misleadingly empty even when Sonnet had dropped scores of
+    // items. We compute the implicit-rejection set here by diffing the
+    // deduped input against the URLs Sonnet returned (normalised to
+    // match the fabricated-URL check) and merge it with the validator
+    // rejections into a single shape. The persisted cohort cache is
+    // unaffected — this output is dry-run-only.
+    const tRejected = Date.now();
+    const sonnetReturnedNormUrls = new Set();
+    for (const it of curation.items || []) {
+      const norm = normaliseUrlForMatch(it && it.url);
+      if (norm) sonnetReturnedNormUrls.add(norm);
+    }
+    const sonnetRejected = [];
+    for (const it of deduped) {
+      const norm = normaliseUrlForMatch(it && it.link);
+      if (!norm || sonnetReturnedNormUrls.has(norm)) continue;
+      sonnetRejected.push({
+        reason: 'not_returned_by_sonnet',
+        rejected_by: 'sonnet',
+        title: (it.title || '').slice(0, TRUNCATE_CHARS),
+        url: it.link,
+        source_domain: it.source || '',
+        categories_considered: it.source_categories || [],
+        lenses: it.lenses || [],
+        snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS)
+      });
+    }
+    // Map validator rejections into the same shape, enriching with
+    // source_domain from the matching deduped entry where possible.
+    const dedupedByNorm = new Map();
+    for (const d of deduped) {
+      const norm = normaliseUrlForMatch(d && d.link);
+      if (norm && !dedupedByNorm.has(norm)) dedupedByNorm.set(norm, d);
+    }
+    const validatorRejected = (validated.rejected || []).map((r) => {
+      const item = (r && r.item) || {};
+      const normUrl = normaliseUrlForMatch(item.url);
+      const src = normUrl ? dedupedByNorm.get(normUrl) : null;
+      const itemLens = item.lens;
+      const itemCat = item.category;
+      return {
+        reason: r.reason,
+        rejected_by: 'validator',
+        title: ((item.title || r.title) || '').toString().slice(0, TRUNCATE_CHARS),
+        url: item.url || '',
+        source_domain: src ? (src.source || '') : '',
+        categories_considered: Array.isArray(itemCat) ? itemCat : (itemCat ? [itemCat] : (src ? (src.source_categories || []) : [])),
+        lenses: Array.isArray(itemLens) ? itemLens : (itemLens ? [itemLens] : (src ? (src.lenses || []) : [])),
+        snippet: src ? (src.snippet || '').slice(0, TRUNCATE_CHARS) : ''
+      };
+    });
+    const rejectedItems = sonnetRejected.concat(validatorRejected);
+    recordTiming('build_rejected_items', tRejected);
+
     const totalDuration = Date.now() - t0;
     timings.total_ms = totalDuration;
     console.log(`[SharedResearch] Phase timing — phase: total, ms: ${totalDuration}`);
@@ -547,14 +607,16 @@ export default async function handler(req, res) {
         cross_domain_dropped: crossDomainDropped,
         curation_returned: curation.items.length,
         curated_items: validated.accepted.length,
-        rejected_items: validated.rejected.length,
+        rejected_items: rejectedItems.length,
+        rejected_by_sonnet: sonnetRejected.length,
+        rejected_by_validator: validatorRejected.length,
         duration_ms: totalDuration
       },
       timings,
       query_plan: queryStats,
       raw_results: truncatedItems,
       curated_items: grouped,
-      rejected_items: validated.rejected,
+      rejected_items: rejectedItems,
       audit_warnings: auditWarnings
     });
   }
