@@ -714,8 +714,7 @@ Object.assign(window.CL_PROFILE, {
     var industryChips =
       '<div class="profile-helper-text" style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Select up to 3 industries that describe your business.</div>' +
       '<div id="prof-industries-counter" style="font-size:13px;color:var(--text-muted);margin-bottom:10px">' + selectedCount + ' of 3 selected</div>' +
-      '<div id="prof-industries">' + this._renderAccordionGroups(industryGroups, 'value', selectedIndustries, 'prof-industries') + '</div>' +
-      '<div id="prof-industries-max-msg" style="display:none;color:var(--red);font-size:13px;margin-top:6px">Maximum 3 industries — remove one to select another</div>';
+      '<div id="prof-industries">' + this._renderAccordionGroups(industryGroups, 'value', selectedIndustries, 'prof-industries') + '</div>';
 
     var body = '<div class="profile-fields">' +
       this._field('Legal Business Name <span class="profile-required">*</span>', this._input('prof-biz-name', 'text', this._v('business_name'), 'Your registered business name')) +
@@ -734,6 +733,15 @@ Object.assign(window.CL_PROFILE, {
         '<div class="perm-modal-actions">' +
           '<button type="button" class="perm-modal-cancel" id="prof-industry-modal-cancel">Cancel</button>' +
           '<button type="button" class="perm-modal-continue" id="prof-industry-modal-confirm">Remove</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="perm-modal-overlay" id="prof-industries-max-modal">' +
+      '<div class="perm-modal">' +
+        '<div class="perm-modal-title">Industry limit reached</div>' +
+        '<div class="perm-modal-body">You can select up to 3 industries. Remove one to select another.</div>' +
+        '<div class="perm-modal-actions">' +
+          '<button type="button" class="perm-modal-continue" id="prof-industries-max-ok">OK</button>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -802,7 +810,9 @@ Object.assign(window.CL_PROFILE, {
 
     // Capture-phase: block selection of a fourth industry before
     // _bindChipToggles toggles the active state. Cap raised from 2 to 3
-    // per Industry Taxonomy Spec v2.0 §5.1.
+    // per Industry Taxonomy Spec v2.0 §5.1. Phase 9 — surfaces the
+    // block via the platform .perm-modal-overlay pattern instead of an
+    // inline red banner so the warning matches every other modal in BP.
     group.addEventListener('click', function(e) {
       if (e.target.closest('.prof-pill-remove')) return;
       var chip = e.target.closest('.filter-pill');
@@ -812,12 +822,13 @@ Object.assign(window.CL_PROFILE, {
       if (activeCount >= MAX_INDUSTRIES) {
         e.stopImmediatePropagation();
         e.preventDefault();
-        var msg = document.getElementById('prof-industries-max-msg');
-        if (msg) {
-          msg.style.display = '';
-          if (msg._hideTimer) clearTimeout(msg._hideTimer);
-          msg._hideTimer = setTimeout(function() { msg.style.display = 'none'; }, 2500);
-        }
+        var maxModal = document.getElementById('prof-industries-max-modal');
+        if (!maxModal) return;
+        maxModal.classList.add('open');
+        var okBtn = document.getElementById('prof-industries-max-ok');
+        var close = function() { maxModal.classList.remove('open'); };
+        if (okBtn) okBtn.addEventListener('click', close, { once: true });
+        maxModal.addEventListener('click', function(ev) { if (ev.target === maxModal) close(); }, { once: true });
       }
     }, true);
 
