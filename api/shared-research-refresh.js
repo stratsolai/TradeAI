@@ -458,13 +458,9 @@ export default async function handler(req, res) {
   const stateFull = stateFullName(stateAbbr);
   recordTiming('profile_and_region', tProfile);
 
-  // -------------------------------------------------------------------------
-  // Query plan generation
-  // -------------------------------------------------------------------------
-  const tPlanBuild = Date.now();
-  const plan = buildQueryPlan(profile);
-  recordTiming('plan_build', tPlanBuild);
-
+  // cohort_summary is built early so it can be included in both the
+  // incomplete-profile (422) and zero-queries (200) response bodies
+  // below, in addition to the live response further down.
   const cohortSummary = {
     cohort_id: cohortId,
     industries,
@@ -477,11 +473,76 @@ export default async function handler(req, res) {
     last_refreshed_at: cohort.last_refreshed_at
   };
 
+  // -------------------------------------------------------------------------
+  // Cohort representative profile completeness check
+  // -------------------------------------------------------------------------
+  //
+  // Two genuinely different failure modes used to collapse into a single
+  // 200 + message response. They're now split so Task 46 calibration
+  // sweeps (and any future caller) can triage them by status code:
+  //
+  //   1. Incomplete profile (422) — the cohort exists (cron / dry: false)
+  //      or was synthesised (admin dry-run), but the representative
+  //      profile lacks one of the components the planner needs:
+  //        - industries empty after normaliseIndustries
+  //        - state missing on the representative
+  //        - region missing when the cohort_id specified one
+  //          (regionSlug != 'no-region')
+  //      Bad-data finding — the caller can't fix this by re-firing;
+  //      the underlying cohort needs attention.
+  //
+  //   2. Complete profile, planner returned [] (200 + queries_run: 0) —
+  //      every component the cohort_id specified is present and
+  //      resolved, but buildQueryPlan still produced no queries.
+  //      Practically unreachable today because three national-smes
+  //      cells (regulatory, economic, technology) always fire without
+  //      needing state/region/industry. Kept as a defensive surface so
+  //      a future template change that legitimately produces zero
+  //      queries reads as a real finding rather than a bad-input echo.
+  //
+  // Why 422 and not 400 for the incomplete-profile case: 400 elsewhere
+  // in this file is reserved for caller-fixable input errors (malformed
+  // cohort_id, unknown industry slug in synthesis, unresolvable region
+  // slug, missing required body field). The 422 case is different — the
+  // request is well-formed and the cohort_id parsed cleanly; the fail
+  // is a semantic incompleteness of the underlying cohort entity. The
+  // calibration caller can split 400 ("my call is wrong") from 422
+  // ("the cohort is broken") on status code alone.
+  const idParts = String(cohortId).split('::');
+  const cohortRegionSlug = idParts.length === 3 ? idParts[2] : '';
+  const regionExpected = !!cohortRegionSlug && cohortRegionSlug !== 'no-region';
+
+  const missingFields = [];
+  if (industries.length === 0) missingFields.push('industry');
+  if (!stateAbbr) missingFields.push('state');
+  if (regionExpected && !region) missingFields.push('region');
+
+  if (missingFields.length > 0) {
+    return res.status(422).json({
+      success: false,
+      dry_run: dryRun,
+      error: 'Cohort representative profile is incomplete',
+      missing_fields: missingFields,
+      cohort_summary: cohortSummary
+    });
+  }
+
+  // -------------------------------------------------------------------------
+  // Query plan generation
+  // -------------------------------------------------------------------------
+  const tPlanBuild = Date.now();
+  const plan = buildQueryPlan(profile);
+  recordTiming('plan_build', tPlanBuild);
+
   if (plan.length === 0) {
+    // Complete profile (passed the completeness check above) but the
+    // planner still produced zero queries. See the comment block above
+    // for why this is its own response shape.
     return res.status(200).json({
       success: true,
       dry_run: dryRun,
-      message: 'No queries to run — cohort representative lacks the data needed (state, industry, region).',
+      queries_run: 0,
+      message: 'Planner produced no queries despite a complete cohort representative profile. Investigate template coverage.',
       cohort_summary: cohortSummary,
       timings
     });
