@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   const DEFAULT_CATEGORIES = [
     { id: "regulatory", label: "Regulatory", enabled: true, is_custom: false },
     { id: "industry-body", label: "Industry Body", enabled: true, is_custom: false },
-    { id: "suppliers", label: "Suppliers", enabled: true, is_custom: false },
+    { id: "supply-chain", label: "Supply Chain", enabled: true, is_custom: false },
     { id: "workplace-safety", label: "Workplace & Safety", enabled: true, is_custom: false },
     { id: "economic-market", label: "Economic & Market", enabled: true, is_custom: false },
     { id: "technology", label: "Technology", enabled: true, is_custom: false }

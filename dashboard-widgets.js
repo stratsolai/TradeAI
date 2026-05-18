@@ -573,7 +573,7 @@ window.DASH_WIDGETS = (function() {
   var NEWS_CATEGORY_DEFAULT_TONE = {
     'regulatory': 'red',
     'industry-news': 'green',
-    'suppliers': 'green',
+    'supply-chain': 'green',
     'economic': 'red',
     'technology': 'green',
     'grants-tenders': 'green'
@@ -656,7 +656,7 @@ window.DASH_WIDGETS = (function() {
     var ND_CATEGORIES = [
       { id: 'regulatory',     label: 'Rules' },
       { id: 'industry-news',  label: 'News' },
-      { id: 'suppliers',      label: 'Supply' },
+      { id: 'supply-chain',   label: 'Supply Chain' },
       { id: 'economic',       label: 'Markets' },
       { id: 'technology',     label: 'Tech' },
       { id: 'grants-tenders', label: 'Tenders' }

@@ -11,7 +11,7 @@ window.ND_LOGIC = {
   // for Phase 5 and continues to render against the soon-to-be-empty
   // briefing source.
   // _curatedItems feeds the five category tabs. Keyed by category
-  // (regulatory / industry-news / suppliers / economic / technology),
+  // (regulatory / industry-news / supply-chain / economic / technology),
   // each value is an array of shared_research rows. Starts and stays
   // empty after the SRL Cohort Architecture migration — the cohort-
   // aware page-load read is ID's tool review work (Addendum §13 out
@@ -22,7 +22,7 @@ window.ND_LOGIC = {
   CATEGORIES: [
     { id: 'regulatory', label: 'Rules' },
     { id: 'industry-news', label: 'News' },
-    { id: 'suppliers', label: 'Supply' },
+    { id: 'supply-chain', label: 'Supply Chain' },
     { id: 'economic', label: 'Markets' },
     { id: 'technology', label: 'Tech' }
   ],
@@ -44,7 +44,7 @@ window.ND_LOGIC = {
   _applyInitialTab: function() {
     var hash = (window.location.hash || '').replace('#', '');
     if (!hash) return;
-    var allowed = ['summary', 'regulatory', 'industry-news', 'suppliers', 'economic', 'technology', 'grants-tenders'];
+    var allowed = ['summary', 'regulatory', 'industry-news', 'supply-chain', 'economic', 'technology', 'grants-tenders'];
     if (allowed.indexOf(hash) !== -1) this._switchTab(hash);
   },
 

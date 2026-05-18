@@ -60,7 +60,7 @@ const LENS_LABELS = {
 const SRL_CATEGORY_SECTIONS = [
   { key: 'regulatory',    heading: 'REGULATORY & COMPLIANCE', label: 'Web research — Regulatory' },
   { key: 'industry-news', heading: 'INDUSTRY NEWS',           label: 'Web research — Industry News' },
-  { key: 'suppliers',     heading: 'SUPPLIER & MATERIALS',    label: 'Web research — Suppliers' },
+  { key: 'supply-chain',  heading: 'SUPPLY CHAIN',            label: 'Web research — Supply Chain' },
   { key: 'economic',      heading: 'ECONOMIC & MARKET',       label: 'Web research — Economic' },
   { key: 'technology',    heading: 'TECHNOLOGY & INNOVATION', label: 'Web research — Technology' }
 ];
@@ -207,7 +207,7 @@ const VALID_SOURCE_LABELS = [
   'Strategic Plan',
   'Web research — Regulatory',
   'Web research — Industry News',
-  'Web research — Suppliers',
+  'Web research — Supply Chain',
   'Web research — Economic',
   'Web research — Technology'
 ];
@@ -578,7 +578,7 @@ export default async function handler(req, res) {
       '- Documents, supplier information, contracts and research the owner has tagged for BI review in their Content Library\n' +
       '- Their current Strategic Plan (if one exists)\n' +
       '- Their business profile\n' +
-      '- Curated external research from the Shared Research Layer, grouped by source category (Regulatory & Compliance, Industry News, Supplier & Materials, Economic & Market, Technology & Innovation) and tagged with lens metadata + source_type\n\n' +
+      '- Curated external research from the Shared Research Layer, grouped by source category (Regulatory & Compliance, Industry News, Supply Chain, Economic & Market, Technology & Innovation) and tagged with lens metadata + source_type\n\n' +
       'INPUT:\n\n' +
       contextParts.join('\n') + '\n\n' +
       'TASK:\n' +
@@ -624,7 +624,7 @@ export default async function handler(req, res) {
       '- "Strategic Plan" — the current strategic plan\n' +
       '- "Web research — Regulatory" — an item from the REGULATORY & COMPLIANCE section\n' +
       '- "Web research — Industry News" — an item from the INDUSTRY NEWS section\n' +
-      '- "Web research — Suppliers" — an item from the SUPPLIER & MATERIALS section\n' +
+      '- "Web research — Supply Chain" — an item from the SUPPLY CHAIN section\n' +
       '- "Web research — Economic" — an item from the ECONOMIC & MARKET section\n' +
       '- "Web research — Technology" — an item from the TECHNOLOGY & INNOVATION section\n' +
       'Each source must include a brief "detail" field showing the specific evidence used (e.g. "cash $12k, overdue receivables $8k" or "ATO GST changes from July 2026").\n' +
