@@ -22,7 +22,12 @@
 // Removed in Phase 5 (per Sections 13.1 + 16):
 //   - Serper query construction + execution
 //   - Claude/Haiku curation prompt + call
-//   - news_digest_briefings writes (table dropped by the owner)
+//   - news_digest_briefings writes (writer retired in Phase 5; the
+//     table itself was retained until the Supply Chain rename
+//     cleanup and has now been dropped from Supabase. Three live
+//     readers — ID Summary tab, dashboard news tile, Social Media
+//     news-digest workflow — will error on each page load until
+//     they are migrated to a new source or removed)
 //   - Content Library auto-writes for category briefings AND for
 //     every tender (per Section 16.2 — the user-driven Interested
 //     → CL flow is not yet implemented and is preserved unchanged
@@ -204,10 +209,12 @@ export default async function handler(req, res) {
     }
     var industry = (profileRes.data && profileRes.data.industry) || 'general business';
 
-    // Retention cleanup for tenders only. news_digest_briefings is
-    // dropped by the owner as part of Phase 5; the CL retention sweep
-    // for tool_source='news-digest' is preserved so any pre-Phase-5
-    // briefing rows still in CL age out on their existing schedule.
+    // Retention cleanup for tenders only. news_digest_briefings
+    // writes were retired in Phase 5; the table itself was retained
+    // until the Supply Chain rename cleanup and has now been dropped
+    // from Supabase. The CL retention sweep for tool_source='news-
+    // digest' is preserved so any pre-Phase-5 briefing rows still in
+    // CL age out on their existing schedule.
     var settingsRes = await supabase
       .from('news_digest_settings')
       .select('lookback_days')
