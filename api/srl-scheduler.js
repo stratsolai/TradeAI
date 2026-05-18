@@ -38,6 +38,7 @@ export const config = { maxDuration: 60 };
 
 import { createClient } from '@supabase/supabase-js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
+import { getSimpleRegionName, normaliseRegionSlug } from '../lib/au-region-mapping.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -56,13 +57,16 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 // industries: sorted, deduped, normalised (lowercase, & → ' and ', non-
 //   alphanumeric → '-'). Matches the cohort_id's industries segment.
 // state: uppercased state abbreviation.
-// region: SA4 name from postcode lookup, or null when the postcode
-//   does not resolve. Not the literal 'no-region' string — the
-//   cohorts.region column holds the human-readable SA4 name (e.g.
-//   "Mid North Coast") or NULL. The cohort_id meanwhile carries
+// region: simple-region NAME from the (state, SA4) → simple-region
+//   mapping in lib/au-region-mapping.js, or null when the postcode
+//   does not resolve OR no simple-region mapping covers the SA4.
+//   Not the literal 'no-region' string — the cohorts.region column
+//   holds the human-readable simple-region name (e.g. "Mid North
+//   Coast", "South Coast") or NULL. The cohort_id meanwhile carries
 //   the normalised 'no-region' literal in the region segment, which
 //   is the keying contract; the cohorts table separates display
-//   from key. See Addendum §4.5.
+//   from key. SA4 is an internal postcode-lookup intermediate only —
+//   not part of cohort identity. See Addendum §4.5.
 
 function normaliseIndustry(s) {
   if (s == null) return '';
@@ -89,15 +93,15 @@ function normaliseIndustryList(raw) {
   return out;
 }
 
-function resolveSa4(rawPostcode) {
+function resolveSimpleRegion(rawPostcode) {
   if (!rawPostcode) return null;
   const raw = String(rawPostcode).trim();
   if (!raw) return null;
   const padded = raw.length < 4 ? raw.padStart(4, '0') : raw;
   if (!/^\d{4}$/.test(padded)) return null;
   const entry = POSTCODE_REGIONS[padded];
-  if (!entry || !entry.sa4) return null;
-  return entry.sa4;
+  if (!entry || !entry.sa4 || !entry.state) return null;
+  return getSimpleRegionName(entry.state, normaliseRegionSlug(entry.sa4));
 }
 
 function isActiveProfile(p) {
@@ -172,7 +176,7 @@ export default async function handler(req, res) {
           cohort_id: p.cohort_id,
           industries: normaliseIndustryList(p.industry),
           state: (p.address_state || '').toUpperCase() || null,
-          region: resolveSa4(p.address_postcode),
+          region: resolveSimpleRegion(p.address_postcode),
           member_count: 0
         };
         activeMap.set(p.cohort_id, entry);

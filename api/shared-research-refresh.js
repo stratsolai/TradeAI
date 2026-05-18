@@ -112,8 +112,8 @@ const TRUNCATE_CHARS = 500;
 // Used when an admin fires a dry-run against a cohort_id that hasn't been
 // registered by any user yet (calibration sweep mode). The cohort_id is
 // parsed and validated against the same components a real BP would
-// produce — taxonomy industry slugs, valid Australian state, an SA4 slug
-// that resolves via lib/au-postcode-regions.js — and turned into a
+// produce — taxonomy industry slugs, valid Australian state, a simple-
+// region slug from lib/au-region-mapping.js — and turned into a
 // synthetic representative profile so buildQueryPlan downstream produces
 // the same query plan it would for a real cohort member.
 //
@@ -172,48 +172,33 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
     return { ok: false, error: 'Unknown state in cohort_id: ' + stateUpper };
   }
 
-  // Region slug. Three legitimate forms accepted, in this order:
+  // Region slug. Two legitimate forms accepted:
   //   1. 'no-region' sentinel — postcode didn't resolve to any SA4
   //      for the real cohort; region lenses are skipped downstream.
-  //   2. SA4 slug match (the original behaviour) — find a
-  //      representative postcode where state matches and
-  //      normaliseComponent(entry.sa4) equals the slug. Preserves
-  //      backward compat with cohort_ids targeting specific SA4s.
-  //   3. Simple-region slug match — look up the array of SA4 slugs
-  //      that map to this simple-region under the state, then find a
-  //      representative postcode under any of them. Lets Task 46
-  //      calibration cohorts target the journalism-friendly regions
-  //      ('south-coast', 'pilbara-kimberley', etc.) without needing
-  //      to know the underlying SA4 decomposition.
-  // First hit wins in both (2) and (3) — every postcode in the SA4
-  // (or in any SA4 of a simple-region group) is equivalent for SRL
-  // purposes.
+  //   2. Simple-region slug — look up the array of SA4 slugs that
+  //      map to this simple-region under the state, then find a
+  //      representative postcode under any of them. Simple-region
+  //      slugs are the canonical cohort identity; SA4 is internal
+  //      to the postcode lookup chain only and is NOT accepted as
+  //      a cohort_id region segment.
+  // First hit wins — every postcode in any SA4 of a simple-region
+  // group is equivalent for SRL purposes.
   let postcode = null;
   if (regionSlug !== 'no-region') {
     let matched = null;
-    const keys = Object.keys(POSTCODE_REGIONS);
-    // (2) Try SA4-slug match first
-    for (let i = 0; i < keys.length; i++) {
-      const pc = keys[i];
-      const entry = POSTCODE_REGIONS[pc];
-      if (!entry || entry.state !== stateUpper) continue;
-      if (normaliseComponentLocal(entry.sa4) === regionSlug) { matched = pc; break; }
-    }
-    // (3) Fall back to simple-region match
-    if (!matched) {
-      const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
-      if (groupSa4Slugs.length > 0) {
-        const sa4Set = new Set(groupSa4Slugs);
-        for (let i = 0; i < keys.length; i++) {
-          const pc = keys[i];
-          const entry = POSTCODE_REGIONS[pc];
-          if (!entry || entry.state !== stateUpper) continue;
-          if (sa4Set.has(normaliseComponentLocal(entry.sa4))) { matched = pc; break; }
-        }
+    const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
+    if (groupSa4Slugs.length > 0) {
+      const sa4Set = new Set(groupSa4Slugs);
+      const keys = Object.keys(POSTCODE_REGIONS);
+      for (let i = 0; i < keys.length; i++) {
+        const pc = keys[i];
+        const entry = POSTCODE_REGIONS[pc];
+        if (!entry || entry.state !== stateUpper) continue;
+        if (sa4Set.has(normaliseComponentLocal(entry.sa4))) { matched = pc; break; }
       }
     }
     if (!matched) {
-      return { ok: false, error: 'Unresolvable region slug for state ' + stateUpper + ': ' + regionSlug };
+      return { ok: false, error: 'Unresolvable simple-region slug for state ' + stateUpper + ': ' + regionSlug };
     }
     postcode = matched;
   }
@@ -233,8 +218,8 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
 // current member profiles (rare — e.g. the only member's last BP save
 // moved them to a new cohort). Re-derives the synthesis inputs from the
 // cohort's stored shape: industries is already a slug array, state is
-// already uppercase, region is the SA4 display name (normalise to slug)
-// or null (treat as 'no-region').
+// already uppercase, region is the simple-region display NAME
+// (normalise to slug) or null (treat as 'no-region').
 function synthesiseProfileFromCohortMeta(cohort) {
   const industrySlugs = Array.isArray(cohort.industries) ? cohort.industries : [];
   const stateUpper = (cohort.state || '').toUpperCase();

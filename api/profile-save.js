@@ -35,6 +35,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient } from '@supabase/supabase-js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
+import { getSimpleRegionName, normaliseRegionSlug } from '../lib/au-region-mapping.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -143,16 +144,24 @@ console.log('[BPSave] Allow-list initialised — fields: ' + ALLOWED_FIELDS.size
 //
 // Industries are normalised, deduplicated, and sorted before joining
 // with '|'. State is the normalised abbreviation. Region is the
-// normalised SA4 name from postcode lookup, or the literal "no-region"
-// when the postcode does not resolve.
+// normalised simple-region name from the (state, SA4) → simple-region
+// mapping in lib/au-region-mapping.js. SA4 is an internal postcode-
+// lookup intermediate only — not part of cohort identity. Region
+// falls back to the literal "no-region" when the postcode does not
+// resolve to an SA4 OR the (state, SA4) pair has no simple-region
+// mapping.
 //
 // Returns null if the BP isn't complete enough to compute a cohort
 // (industries is empty OR state is missing).
 //
 // Examples:
 //   industries=["Building & Construction","Landscaping & Outdoor"],
-//   state=NSW, postcode=2444 (Mid North Coast SA4) →
+//   state=NSW, postcode=2444 (Mid North Coast SA4 → Mid North Coast
+//   simple-region) →
 //     "building-and-construction|landscaping-and-outdoor::nsw::mid-north-coast"
+//   industries=["Building & Construction"], state=NSW, postcode=2580
+//   (Southern Highlands and Shoalhaven SA4 → South Coast simple-region) →
+//     "building-and-construction::nsw::south-coast"
 //   industries=["Building & Construction"], state=NSW, no postcode →
 //     "building-and-construction::nsw::no-region"
 
@@ -184,13 +193,16 @@ function resolveSa4(rawPostcode) {
 //   - industries: sorted, deduped, normalised slug array (same
 //     normalisation as the cohort_id's industries segment)
 //   - state:      uppercased state abbreviation (e.g. "NSW")
-//   - region:     SA4 name from postcode lookup (e.g. "Mid North
-//                 Coast") or null. The cohort_id itself encodes the
+//   - region:     simple-region NAME (e.g. "Mid North Coast", "South
+//                 Coast") or null when the postcode doesn't resolve
+//                 to an SA4 OR no simple-region mapping covers the
+//                 (state, SA4) pair. The cohort_id encodes the
 //                 literal 'no-region' in its region segment when
-//                 postcode does not resolve, but the cohorts.region
-//                 column holds the SA4 display name or NULL — keying
+//                 region is null; the cohorts.region column holds the
+//                 simple-region display NAME or NULL — keying
 //                 contract is in cohort_id, display contract is in
-//                 cohorts.
+//                 cohorts. SA4 is an internal postcode-lookup
+//                 intermediate only.
 //
 // Used by computeCohortId (cohort_id string only) and by the cohorts
 // upsert step in the handler when ensuring the FK parent for a new-
@@ -216,14 +228,25 @@ function deriveCohortParts(profile) {
   const statePart = normaliseComponent(profile.address_state);
   if (!statePart) return null;
 
-  const sa4 = resolveSa4(profile.address_postcode);
-  const regionSlug = sa4 ? normaliseComponent(sa4) : 'no-region';
+  // Postcode → SA4 → simple-region. SA4 is the postcode-lookup
+  // intermediate only; the cohort_id and cohorts.region column both
+  // carry the simple-region. "no-region" sentinel applies both when
+  // the postcode doesn't resolve to an SA4 AND when a resolved SA4
+  // has no simple-region mapping for its state (defensive — the
+  // mapping in lib/au-region-mapping.js is meant to be complete for
+  // every SA4 in lib/au-postcode-regions.js).
+  const stateUpper = String(profile.address_state).toUpperCase();
+  const sa4Name = resolveSa4(profile.address_postcode);
+  const simpleRegionName = sa4Name
+    ? getSimpleRegionName(stateUpper, normaliseRegionSlug(sa4Name))
+    : null;
+  const regionSlug = simpleRegionName ? normaliseRegionSlug(simpleRegionName) : 'no-region';
 
   return {
     cohort_id: industries.join('|') + '::' + statePart + '::' + regionSlug,
     industries: industries,
-    state: String(profile.address_state).toUpperCase(),
-    region: sa4 || null
+    state: stateUpper,
+    region: simpleRegionName || null
   };
 }
 

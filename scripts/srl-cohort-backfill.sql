@@ -2,6 +2,21 @@
 -- SRL Cohort Architecture v1.2 — profiles.cohort_id backfill
 -- ===========================================================
 --
+-- ⚠️ STALE — DO NOT RUN AS-IS.
+--
+-- This script encodes the original SA4-slug cohort_id format. The
+-- canonical cohort_id now uses simple-region slugs (Supply Chain
+-- rename follow-up). The region segment formula here will produce
+-- cohort_ids that do not match api/profile-save.js's current logic.
+--
+-- The launch-scale data migration that updates this script (or
+-- replaces it with a Node-based reseed) is a separate task. Until
+-- then, refer to api/profile-save.js (deriveCohortParts) for the
+-- current canonical algorithm — that file is the source of truth.
+-- ===========================================================
+--
+-- Original purpose (preserved below for historical reference):
+--
 -- One-off script that backfills profiles.cohort_id for every
 -- existing row whose Business Profile is complete enough to
 -- compute a cohort identifier (industry array present + state
@@ -10,7 +25,7 @@
 -- completes the BP via the UI (which then routes through
 -- /api/profile-save and computes cohort_id at save time).
 --
--- Algorithm must match api/profile-save.js exactly:
+-- Algorithm at time of writing (now stale):
 --   cohort_id = <industries>::<state>::<region-or-no-region>
 --   industries are normalised (lowercase, & → ' and ', non-
 --   alphanumeric → '-', trimmed), deduped, sorted, joined by '|'.
@@ -21,13 +36,6 @@
 -- Idempotent: the UPDATE uses IS DISTINCT FROM so running the
 -- script twice produces no change on the second run. The temp
 -- table and temp functions are dropped at session end either way.
---
--- Run order:
---   1. Paste this whole script into the Supabase SQL editor.
---   2. Click Run. The script wraps itself in BEGIN ... COMMIT.
---   3. Verify: SELECT id, industry, address_state, address_postcode,
---      cohort_id FROM profiles; — every row with a complete BP
---      should now carry a cohort_id.
 -- ===========================================================
 
 BEGIN;
