@@ -82,6 +82,7 @@ import {
 import { logSerperUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 import { getIndustryById } from '../lib/industry-taxonomy.js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
+import { getSa4SlugsForSimpleRegion } from '../lib/au-region-mapping.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -171,20 +172,45 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
     return { ok: false, error: 'Unknown state in cohort_id: ' + stateUpper };
   }
 
-  // Region slug. 'no-region' is legitimate (postcode didn't resolve to
-  // an SA4 — region lenses are skipped downstream). For any other
-  // value, find a representative postcode in (state, SA4) that the
-  // postcode lookup actually maps. First hit wins — every postcode in
-  // an SA4 is equivalent for SRL purposes.
+  // Region slug. Three legitimate forms accepted, in this order:
+  //   1. 'no-region' sentinel — postcode didn't resolve to any SA4
+  //      for the real cohort; region lenses are skipped downstream.
+  //   2. SA4 slug match (the original behaviour) — find a
+  //      representative postcode where state matches and
+  //      normaliseComponent(entry.sa4) equals the slug. Preserves
+  //      backward compat with cohort_ids targeting specific SA4s.
+  //   3. Simple-region slug match — look up the array of SA4 slugs
+  //      that map to this simple-region under the state, then find a
+  //      representative postcode under any of them. Lets Task 46
+  //      calibration cohorts target the journalism-friendly regions
+  //      ('south-coast', 'pilbara-kimberley', etc.) without needing
+  //      to know the underlying SA4 decomposition.
+  // First hit wins in both (2) and (3) — every postcode in the SA4
+  // (or in any SA4 of a simple-region group) is equivalent for SRL
+  // purposes.
   let postcode = null;
   if (regionSlug !== 'no-region') {
     let matched = null;
     const keys = Object.keys(POSTCODE_REGIONS);
+    // (2) Try SA4-slug match first
     for (let i = 0; i < keys.length; i++) {
       const pc = keys[i];
       const entry = POSTCODE_REGIONS[pc];
       if (!entry || entry.state !== stateUpper) continue;
       if (normaliseComponentLocal(entry.sa4) === regionSlug) { matched = pc; break; }
+    }
+    // (3) Fall back to simple-region match
+    if (!matched) {
+      const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
+      if (groupSa4Slugs.length > 0) {
+        const sa4Set = new Set(groupSa4Slugs);
+        for (let i = 0; i < keys.length; i++) {
+          const pc = keys[i];
+          const entry = POSTCODE_REGIONS[pc];
+          if (!entry || entry.state !== stateUpper) continue;
+          if (sa4Set.has(normaliseComponentLocal(entry.sa4))) { matched = pc; break; }
+        }
+      }
     }
     if (!matched) {
       return { ok: false, error: 'Unresolvable region slug for state ' + stateUpper + ': ' + regionSlug };
@@ -445,6 +471,7 @@ export default async function handler(req, res) {
     state: stateAbbr,
     state_full: stateFull,
     region: region ? region.region_name : null,
+    region_simple: region ? region.simple_name : null,
     region_resolved: !!region,
     member_count_at_last_refresh: cohort.member_count_at_last_refresh,
     last_refreshed_at: cohort.last_refreshed_at
