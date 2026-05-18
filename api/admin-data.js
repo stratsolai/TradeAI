@@ -9,7 +9,6 @@ const INFRA_TABLES = [
   'social_posts',
   'strategic_plans',
   'email_threads',
-  'news_digest_items',
   'error_log'
 ];
 
