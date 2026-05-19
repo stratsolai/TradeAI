@@ -23,21 +23,20 @@
 // scoped instead of user-scoped):
 //   1. Auth — x-cron-secret accepts body.cohort_id; JWT requires
 //      profiles.is_admin = true.
-//   2. Load cohort metadata from cohorts table.
-//   3. Load one representative active profile from the cohort to
-//      feed buildQueryPlan and the curation prompt with display
-//      industry names and a postcode for region resolution. The
-//      cohorts.industries column holds normalised slugs, which are
-//      operational keys; Serper queries and the curation prompt
-//      both need raw display names, which only profiles carry.
-//   4. Build query plan, execute with Serper cache, dedupe, enrich.
-//   5. Curate (Sonnet, five per-category Sonnet calls running in
+//   2. Load cohort metadata from the cohorts table — single source of
+//      truth for cohort identity (industries slugs + display names,
+//      state, region). No user profile is read by the refresh path;
+//      industries_display is populated by srl-scheduler with display
+//      labels matching the slug array, with on-the-fly derivation via
+//      the taxonomy as a fallback when the column is still NULL.
+//   3. Build query plan, execute with Serper cache, dedupe, enrich.
+//   4. Curate (Sonnet, five per-category Sonnet calls running in
 //      parallel; each item arrives in one batch via
 //      source_categories[0] and the prompt's RECATEGORISATION DUTY
 //      handles cross-category fit).
-//   6. Validate.
-//   7. Dry-run: return cohort_summary + curated payload, no writes.
-//   8. Live: snapshot is_current rows, flip to false, insert new
+//   5. Validate.
+//   6. Dry-run: return cohort_summary + curated payload, no writes.
+//   7. Live: snapshot is_current rows, flip to false, insert new
 //      rows under the new refresh_id, write the refresh row with
 //      outcome, record the shared_research_write audit event
 //      (admin-JWT path only — cron has no user_id).
@@ -57,14 +56,11 @@ import { createClient } from '@supabase/supabase-js';
 import {
   AUSTRALIAN_STATES,
   buildQueryPlan,
-  resolveRegion,
-  normaliseIndustries,
   executeQueryWithCache,
   makeSerperRateGate,
   dedupByLink,
   dedupBySyndicationPath,
   enrichDedupedWithPlan,
-  stateFullName,
   runCuration,
   validateCuratedItems,
   normaliseUrlForMatch,
@@ -208,23 +204,84 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
     profile: {
       industry: displayLabels,
       address_state: stateUpper,
-      address_postcode: postcode,
-      employee_range: null
+      address_postcode: postcode
     }
   };
 }
 
-// Used when a real cohort row exists in the cohorts table but has zero
-// current member profiles (rare — e.g. the only member's last BP save
-// moved them to a new cohort). Re-derives the synthesis inputs from the
-// cohort's stored shape: industries is already a slug array, state is
-// already uppercase, region is the simple-region display NAME
-// (normalise to slug) or null (treat as 'no-region').
-function synthesiseProfileFromCohortMeta(cohort) {
-  const industrySlugs = Array.isArray(cohort.industries) ? cohort.industries : [];
-  const stateUpper = (cohort.state || '').toUpperCase();
-  const regionSlug = cohort.region ? normaliseComponentLocal(cohort.region) : 'no-region';
-  return synthesiseProfile(industrySlugs, stateUpper, regionSlug);
+// ---------------------------------------------------------------------------
+// Cohort-driven planProfile + cohortContext helpers
+// ---------------------------------------------------------------------------
+//
+// The refresh path reads cohort identity from the cohorts table alone — no
+// representative user profile is sampled. Two helpers below shape that
+// cohort row into the two objects the downstream pipeline expects:
+//
+//   - planProfile (buildQueryPlan input): { industry, address_state,
+//     address_postcode }. buildQueryPlan calls resolveRegion(profile) on
+//     the postcode to decide which lenses fire, so the postcode is
+//     reconstructed here from cohort.region via the simple-region → SA4
+//     reverse lookup. When cohort.region is null the postcode stays null
+//     and the planner skips region lenses (existing behaviour).
+//
+//   - cohortContext (runCuration input): { industries, state, region } —
+//     the only identity surface visible to the curation prompt. By the
+//     curation function's signature it cannot read anything beyond these
+//     three fields, so user-specific data has no structural path into
+//     the Sonnet call.
+//
+// Both helpers share getCohortIndustryDisplays, which prefers the new
+// cohorts.industries_display column and falls back to deriving display
+// labels from cohort.industries slugs via the taxonomy when the column
+// is NULL (one-time bridge until the scheduler backfills the column on
+// its next 04:00 UTC run).
+
+function deriveDisplayLabels(slugs) {
+  return (slugs || []).map((slug) => {
+    const entry = getIndustryById(slug);
+    return entry ? entry.displayLabel : slug;
+  });
+}
+
+function getCohortIndustryDisplays(cohort) {
+  if (cohort && Array.isArray(cohort.industries_display) && cohort.industries_display.length > 0) {
+    return cohort.industries_display;
+  }
+  return deriveDisplayLabels(cohort && cohort.industries);
+}
+
+function buildPlanProfileFromCohort(cohort) {
+  const stateUpper = (cohort && cohort.state) ? String(cohort.state).toUpperCase() : null;
+  let postcode = null;
+  if (cohort && cohort.region && stateUpper) {
+    const regionSlug = normaliseComponentLocal(cohort.region);
+    const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
+    if (groupSa4Slugs.length > 0) {
+      const sa4Set = new Set(groupSa4Slugs);
+      const keys = Object.keys(POSTCODE_REGIONS);
+      for (let i = 0; i < keys.length; i++) {
+        const pc = keys[i];
+        const entry = POSTCODE_REGIONS[pc];
+        if (!entry || entry.state !== stateUpper) continue;
+        if (sa4Set.has(normaliseComponentLocal(entry.sa4))) { postcode = pc; break; }
+      }
+    }
+  }
+  return {
+    industry: getCohortIndustryDisplays(cohort),
+    address_state: stateUpper,
+    address_postcode: postcode
+  };
+}
+
+function buildCohortContextFromCohort(cohort) {
+  const stateUpper = (cohort && cohort.state) ? String(cohort.state).toUpperCase() : null;
+  const stateFull = stateUpper ? (AUSTRALIAN_STATES[stateUpper] || null) : null;
+  return {
+    industries: getCohortIndustryDisplays(cohort),
+    state: stateFull,
+    region: (cohort && cohort.region) ? cohort.region : null
+  };
 }
 
 export default async function handler(req, res) {
@@ -323,42 +380,34 @@ export default async function handler(req, res) {
   const auditWarnings = [];
 
   // -------------------------------------------------------------------------
-  // Cohort metadata + representative-profile load
+  // Cohort metadata load
   // -------------------------------------------------------------------------
   //
-  // The cohorts table holds operational metadata (industries slugs,
-  // state abbreviation, region SA4 name, member_count_at_last_refresh).
-  // The representative profile carries the raw display values that
-  // Serper queries and the curation prompt actually consume.
-  //
-  // Picking a representative: any profile with cohort_id = cohortId
-  // that has industry populated qualifies — all members of a cohort
-  // normalise to the same cohort_id, so the underlying industry/state/
-  // postcode values produce identical query plans. employee_range is
-  // per-profile rather than per-cohort and is intentionally NOT
-  // representative-locked: it is passed to the curation prompt as
-  // 'unspecified' for cohort-scoped runs so curation does not bias
-  // toward one member's business size (see comment in profile load).
+  // The cohorts table is the single source of truth for cohort identity —
+  // industries (both slugs and display names), state, region. The pipeline
+  // does not read user profiles: that pattern leaked user-specific fields
+  // (employee_range) into shared curation. cohorts.industries_display is
+  // the display-name array populated by srl-scheduler; the helpers above
+  // fall back to deriving display labels from cohort.industries slugs via
+  // the taxonomy when the column is NULL (one-time bridge until the
+  // scheduler's next 04:00 UTC run backfills the column).
   //
   // Admin-dry-run synthesis: when an admin fires dry: true against a
-  // well-formed cohort_id that hasn't been registered yet (no row in
-  // cohorts, no member in profiles), the gates below fall through to
-  // synthesiseProfile() / synthesiseProfileFromCohortMeta() instead of
-  // returning 404/400. Production paths (cron, or any dry: false
-  // request) keep the original 404/400 — the gates only loosen when
-  // both flags hold. See helpers near the top of the file.
+  // well-formed cohort_id that has no cohorts row yet, the branch below
+  // parses the cohort_id, validates each component against the taxonomy
+  // and postcode lookup, and synthesises a virtual cohort that is fed
+  // into the same helpers. Production paths (cron, or any dry: false
+  // request) keep the 404 on unknown cohort_id.
   const tProfile = Date.now();
 
   // Admin-dry-run path: dry: true + JWT-auth admin user. Allows
   // calibration sweeps against well-formed cohort_ids that haven't been
-  // registered yet (no user has saved a profile that decomposes to
-  // this cohort). Production behaviour (cron path OR dry: false) is
-  // unchanged — both gates below still return their 404/400.
+  // registered yet (no member profile, no cohorts row).
   const adminDryRun = !usingCron && !!userId && dryRun;
 
   const cohortRes = await supabase
     .from('cohorts')
-    .select('cohort_id, industries, state, region, is_active, member_count_at_last_refresh, last_refreshed_at')
+    .select('cohort_id, industries, industries_display, state, region, is_active, member_count_at_last_refresh, last_refreshed_at')
     .eq('cohort_id', cohortId)
     .maybeSingle();
   if (cohortRes.error) {
@@ -367,51 +416,24 @@ export default async function handler(req, res) {
   }
 
   let cohort;
-  let profile;
+  let planProfile;
+  let cohortContext;
 
   if (cohortRes.data) {
     cohort = cohortRes.data;
-    // Representative profile — needed for raw industry display names and
-    // postcode (region resolution). Limit 1; if none, the cohort has no
-    // active members and we can't build queries. Curation context fields
-    // (employee_range) are deliberately set to 'unspecified' so the
-    // curation prompt's BUSINESS PROFILE block is cohort-neutral — see
-    // interpretive call note in the report.
-    const repRes = await supabase
-      .from('profiles')
-      .select('industry, address_state, address_postcode')
-      .eq('cohort_id', cohortId)
-      .not('industry', 'is', null)
-      .limit(1)
-      .maybeSingle();
-    if (repRes.error) {
-      console.error('[SharedResearch] Representative profile load error —', 'cohort_id:', cohortId, 'message:', repRes.error.message);
-      return res.status(500).json({ error: 'Could not load representative profile' });
-    }
-    if (repRes.data) {
-      profile = {
-        industry: repRes.data.industry,
-        address_state: repRes.data.address_state,
-        address_postcode: repRes.data.address_postcode,
-        employee_range: null
-      };
-    } else if (adminDryRun) {
-      // Cohort exists in cohorts table but no member profile currently
-      // (e.g. the only member changed BP and moved to a new cohort).
-      // Synthesise from cohort metadata so admin calibration still runs.
-      const synth = synthesiseProfileFromCohortMeta(cohort);
-      if (!synth.ok) return res.status(400).json({ error: synth.error });
-      profile = synth.profile;
-      console.log('[SharedResearch] Admin dry-run synthesised profile (cohort exists, no current members) —', 'cohort_id:', cohortId);
-    } else {
-      console.error('[SharedResearch] Cohort has no representative profile —', 'cohort_id:', cohortId);
-      return res.status(400).json({ error: 'Cohort has no active member profile' });
-    }
+    // The cohorts row is the single source of truth for cohort identity.
+    // No representative-profile read — that pattern leaked user-specific
+    // fields (employee_range) into the curation context. industries_display
+    // is the new column; when NULL (pre-scheduler-backfill or any cohort
+    // not yet seen by srl-scheduler) the helper derives display labels
+    // from the industries slug array via the taxonomy.
+    planProfile = buildPlanProfileFromCohort(cohort);
+    cohortContext = buildCohortContextFromCohort(cohort);
   } else if (adminDryRun) {
     // Unregistered cohort + admin dry-run = calibration mode. Parse the
     // cohort_id, validate each component against the taxonomy and the
-    // postcode lookup, and synthesise both a cohort metadata stub and
-    // a representative profile so the rest of the pipeline runs
+    // postcode lookup, then synthesise a virtual cohort and pass it
+    // through the same helpers so the rest of the pipeline runs
     // unchanged. Doesn't write anything to cohorts or shared_research_
     // refreshes — dry-run never has, that's preserved here. Cache_access
     // events for Serper queries are still written under the admin
@@ -421,27 +443,38 @@ export default async function handler(req, res) {
     if (!parsed.ok) return res.status(400).json({ error: parsed.error });
     const synth = synthesiseProfile(parsed.industrySlugs, parsed.stateUpper, parsed.regionSlug);
     if (!synth.ok) return res.status(400).json({ error: synth.error });
-    profile = synth.profile;
+    // planProfile comes from synthesiseProfile directly — it already has
+    // display labels (via getIndustryById) and a representative postcode
+    // (via the region slug → SA4 reverse lookup).
+    planProfile = synth.profile;
     cohort = {
       cohort_id: cohortId,
       industries: parsed.industrySlugs,
+      industries_display: synth.profile.industry,
       state: parsed.stateUpper,
       region: null,
       is_active: false,
       member_count_at_last_refresh: 0,
       last_refreshed_at: null
     };
+    cohortContext = buildCohortContextFromCohort(cohort);
     console.log('[SharedResearch] Admin dry-run synthesised cohort (unregistered) —', 'cohort_id:', cohortId);
   } else {
     console.error('[SharedResearch] Unknown cohort —', 'cohort_id:', cohortId);
     return res.status(404).json({ error: 'Unknown cohort_id' });
   }
 
-  const industries = normaliseIndustries(profile);
-  const region = resolveRegion(profile);
-  const stateAbbr = profile.address_state || null;
-  const stateFull = stateFullName(stateAbbr);
+  const industries = cohortContext.industries;
+  const stateAbbr = (cohort.state || '').toUpperCase() || null;
+  const stateFull = cohortContext.state;
+  const regionDisplay = cohortContext.region;
   recordTiming('profile_and_region', tProfile);
+
+  // Region label for the response (preserves the prior region_name /
+  // region_simple shape). Previously these carried "SA4 + state" and
+  // "simple-region + state" respectively; both now resolve to the simple
+  // region + state — the cohort row no longer carries SA4 granularity.
+  const regionLabel = regionDisplay && stateAbbr ? (regionDisplay + ' ' + stateAbbr) : null;
 
   // cohort_summary is built early so it can be included in both the
   // incomplete-profile (422) and zero-queries (200) response bodies
@@ -451,32 +484,32 @@ export default async function handler(req, res) {
     industries,
     state: stateAbbr,
     state_full: stateFull,
-    region: region ? region.region_name : null,
-    region_simple: region ? region.simple_name : null,
-    region_resolved: !!region,
+    region: regionLabel,
+    region_simple: regionLabel,
+    region_resolved: !!regionDisplay,
     member_count_at_last_refresh: cohort.member_count_at_last_refresh,
     last_refreshed_at: cohort.last_refreshed_at
   };
 
   // -------------------------------------------------------------------------
-  // Cohort representative profile completeness check
+  // Cohort metadata completeness check
   // -------------------------------------------------------------------------
   //
   // Two genuinely different failure modes used to collapse into a single
   // 200 + message response. They're now split so Task 46 calibration
   // sweeps (and any future caller) can triage them by status code:
   //
-  //   1. Incomplete profile (422) — the cohort exists (cron / dry: false)
-  //      or was synthesised (admin dry-run), but the representative
-  //      profile lacks one of the components the planner needs:
-  //        - industries empty after normaliseIndustries
-  //        - state missing on the representative
+  //   1. Incomplete cohort (422) — the cohort row exists (cron / dry: false)
+  //      or was synthesised (admin dry-run), but it lacks one of the
+  //      components the planner needs:
+  //        - industries empty (no display labels could be resolved)
+  //        - state missing
   //        - region missing when the cohort_id specified one
   //          (regionSlug != 'no-region')
   //      Bad-data finding — the caller can't fix this by re-firing;
-  //      the underlying cohort needs attention.
+  //      the underlying cohort row needs attention.
   //
-  //   2. Complete profile, planner returned [] (200 + queries_run: 0) —
+  //   2. Complete cohort, planner returned [] (200 + queries_run: 0) —
   //      every component the cohort_id specified is present and
   //      resolved, but buildQueryPlan still produced no queries.
   //      Practically unreachable today because three national-smes
@@ -485,7 +518,7 @@ export default async function handler(req, res) {
   //      a future template change that legitimately produces zero
   //      queries reads as a real finding rather than a bad-input echo.
   //
-  // Why 422 and not 400 for the incomplete-profile case: 400 elsewhere
+  // Why 422 and not 400 for the incomplete-cohort case: 400 elsewhere
   // in this file is reserved for caller-fixable input errors (malformed
   // cohort_id, unknown industry slug in synthesis, unresolvable region
   // slug, missing required body field). The 422 case is different — the
@@ -500,13 +533,13 @@ export default async function handler(req, res) {
   const missingFields = [];
   if (industries.length === 0) missingFields.push('industry');
   if (!stateAbbr) missingFields.push('state');
-  if (regionExpected && !region) missingFields.push('region');
+  if (regionExpected && !regionDisplay) missingFields.push('region');
 
   if (missingFields.length > 0) {
     return res.status(422).json({
       success: false,
       dry_run: dryRun,
-      error: 'Cohort representative profile is incomplete',
+      error: 'Cohort metadata is incomplete',
       missing_fields: missingFields,
       cohort_summary: cohortSummary
     });
@@ -516,18 +549,18 @@ export default async function handler(req, res) {
   // Query plan generation
   // -------------------------------------------------------------------------
   const tPlanBuild = Date.now();
-  const plan = buildQueryPlan(profile);
+  const plan = buildQueryPlan(planProfile);
   recordTiming('plan_build', tPlanBuild);
 
   if (plan.length === 0) {
-    // Complete profile (passed the completeness check above) but the
+    // Complete cohort (passed the completeness check above) but the
     // planner still produced zero queries. See the comment block above
     // for why this is its own response shape.
     return res.status(200).json({
       success: true,
       dry_run: dryRun,
       queries_run: 0,
-      message: 'Planner produced no queries despite a complete cohort representative profile. Investigate template coverage.',
+      message: 'Planner produced no queries despite complete cohort metadata. Investigate template coverage.',
       cohort_summary: cohortSummary,
       timings
     });
@@ -664,7 +697,7 @@ export default async function handler(req, res) {
   // -------------------------------------------------------------------------
   const tCuration = Date.now();
   const curation = await runCuration({
-    profile,
+    cohortContext,
     dedupedItems: deduped,
     anthropicKey: ANTHROPIC_API_KEY
   });

@@ -39,6 +39,7 @@ export const config = { maxDuration: 60 };
 import { createClient } from '@supabase/supabase-js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
 import { getSimpleRegionName, normaliseRegionSlug } from '../lib/au-region-mapping.js';
+import { getIndustryById } from '../lib/industry-taxonomy.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -91,6 +92,20 @@ function normaliseIndustryList(raw) {
   }
   out.sort();
   return out;
+}
+
+// Slug → display-label array, in the same order as the slug input.
+// Populates cohorts.industries_display so api/shared-research-refresh.js
+// can read display names directly from the cohorts row without needing
+// a representative-profile sample. Falls back to the slug itself when a
+// slug is not in the taxonomy (defensive — should be impossible because
+// profile-save validates against the same taxonomy when assigning
+// cohort_id).
+function deriveIndustryDisplayLabels(slugs) {
+  return (slugs || []).map((slug) => {
+    const entry = getIndustryById(slug);
+    return entry ? entry.displayLabel : slug;
+  });
 }
 
 function resolveSimpleRegion(rawPostcode) {
@@ -208,6 +223,7 @@ export default async function handler(req, res) {
         const upsertRow = {
           cohort_id: cohort.cohort_id,
           industries: cohort.industries,
+          industries_display: deriveIndustryDisplayLabels(cohort.industries),
           state: cohort.state,
           region: cohort.region,
           is_active: true
