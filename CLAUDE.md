@@ -335,6 +335,13 @@ curated output is read for trade-relevance vs noise, and the
 substitution string is updated where evidence shows it produces skewed
 or off-topic content.
 
+Heads-up for calibration tooling — the curation dry-run response's
+rejected_items shape changed in commit 84f7347 from reason: string
+to reasons: string[]. Each entry now carries all failure reasons
+that fired during validation, not just the first. Sweep tooling
+that parses dry-run output programmatically must read reasons rather
+than reason.
+
 Expected outcomes per industry:
 - Single-concept industries (Concreting, Carpentry, Glazing) likely
   fine as-is
