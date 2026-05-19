@@ -683,6 +683,7 @@ export default async function handler(req, res) {
       category: row.category,
       lens: row.lens,
       industry: row.industry,
+      industry_substitution: row.industry_substitution == null ? null : row.industry_substitution,
       query: row.query,
       query_type: row.query_type,
       recency: row.recency,
