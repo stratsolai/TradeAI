@@ -79,7 +79,7 @@ import {
 import { logSerperUsage, logSerperScrapeUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 import { getIndustryById } from '../lib/industry-taxonomy.js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
-import { getSa4SlugsForSimpleRegion } from '../lib/au-region-mapping.js';
+import { getSa4SlugsForSimpleRegion, getSimpleRegionName } from '../lib/au-region-mapping.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -189,10 +189,15 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
   // First hit wins — every postcode in any SA4 of a simple-region
   // group is equivalent for SRL purposes.
   let postcode = null;
+  let simpleRegionName = null;
   if (regionSlug !== 'no-region') {
     let matched = null;
     const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
     if (groupSa4Slugs.length > 0) {
+      // Every SA4 in the group maps to the same simple-region display
+      // name by definition of getSa4SlugsForSimpleRegion, so deriving
+      // it from the first one is safe and avoids a second pass.
+      simpleRegionName = getSimpleRegionName(stateUpper, groupSa4Slugs[0]);
       const sa4Set = new Set(groupSa4Slugs);
       const keys = Object.keys(POSTCODE_REGIONS);
       for (let i = 0; i < keys.length; i++) {
@@ -214,7 +219,8 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
       industry: displayLabels,
       address_state: stateUpper,
       address_postcode: postcode
-    }
+    },
+    simpleRegionName
   };
 }
 
@@ -480,7 +486,7 @@ export default async function handler(req, res) {
       industries: parsed.industrySlugs,
       industries_display: synth.profile.industry,
       state: parsed.stateUpper,
-      region: null,
+      region: synth.simpleRegionName,
       is_active: false,
       member_count_at_last_refresh: 0,
       last_refreshed_at: null
