@@ -810,8 +810,17 @@ export default async function handler(req, res) {
   const tValidate = Date.now();
   const validated = curation.ok
     ? validateCuratedItems(curation.items, deduped)
-    : { accepted: [], rejected: [] };
+    : { accepted: [], rejected: [], source_type_normalised_count: 0 };
   recordTiming('validation', tValidate);
+
+  // Aggregate source_type soft-fail count across all categories. Logged
+  // in addition to (not instead of) the per-item line in normaliseCuratedItem
+  // so operational triage can spot systemic vs occasional drift without
+  // log-scraping.
+  const sourceTypeNormalisedCount = validated.source_type_normalised_count || 0;
+  if (sourceTypeNormalisedCount > 0) {
+    console.log(`[SharedResearch] Source type soft-fail summary — count: ${sourceTypeNormalisedCount}, accepted: ${validated.accepted.length}`);
+  }
 
   const totalCurationFailure = curation.ok
     && curation.items.length > 0
@@ -948,7 +957,7 @@ export default async function handler(req, res) {
       const norm = it && it.normalised_url;
       if (!norm || sonnetReturnedNormUrls.has(norm)) continue;
       sonnetRejected.push({
-        reason: 'not_returned_by_sonnet',
+        reasons: ['not_returned_by_sonnet'],
         rejected_by: 'sonnet',
         title: (it.title || '').slice(0, TRUNCATE_CHARS),
         url: it.link,
@@ -975,7 +984,7 @@ export default async function handler(req, res) {
       const itemCat = item.category;
       const itemUrl = item.url || '';
       return {
-        reason: r.reason,
+        reasons: Array.isArray(r.reasons) ? r.reasons : (r.reason ? [r.reason] : []),
         rejected_by: 'validator',
         title: ((item.title || r.title) || '').toString().slice(0, TRUNCATE_CHARS),
         url: itemUrl,
@@ -1043,6 +1052,7 @@ export default async function handler(req, res) {
         rejected_items: rejectedItems.length,
         rejected_by_sonnet: sonnetRejected.length,
         rejected_by_validator: validatorRejected.length,
+        source_type_normalised: sourceTypeNormalisedCount,
         duration_ms: totalDuration
       },
       timings,
@@ -1196,6 +1206,7 @@ export default async function handler(req, res) {
         curation_returned: curation.items.length,
         curated_items: 0,
         rejected_items: validated.rejected.length,
+        source_type_normalised: sourceTypeNormalisedCount,
         duration_ms: durationMs
       },
       timings,
@@ -1296,6 +1307,7 @@ export default async function handler(req, res) {
     curation_returned: curation.items.length,
     curated_items: writtenCount,
     rejected_items: validated.rejected.length,
+    source_type_normalised: sourceTypeNormalisedCount,
     duration_ms: durationMs
   };
 
