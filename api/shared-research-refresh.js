@@ -218,6 +218,25 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
   };
 }
 
+// Module-level domain helper. Returns the bare hostname (no protocol,
+// no www. prefix, lowercased) for a parseable http(s) URL, or '' for
+// anything unparseable. Used both in the curated-item attribution stage
+// (where it provides source_domain in place of Sonnet's emission) and
+// in the dry-run rejected_items mapping. URL strings reaching the
+// accepted path have already been validated by the validator, so the
+// parse failure branch here is defensive.
+function urlToDomain(rawUrl) {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  try {
+    const u = new URL(rawUrl.trim());
+    let host = (u.hostname || '').toLowerCase();
+    if (host.indexOf('www.') === 0) host = host.slice(4);
+    return host;
+  } catch (e) {
+    return '';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Cohort-driven planProfile + cohortContext helpers
 // ---------------------------------------------------------------------------
@@ -850,28 +869,18 @@ export default async function handler(req, res) {
   const acceptedWithSource = validated.accepted.map((it) => {
     const norm = normaliseUrlForMatch(it && it.url);
     const src = norm ? dedupedByNorm.get(norm) : null;
+    // source_name comes from the deduped Serper source (authoritative —
+    // matches what rejected_items surfaces, what bi-insights renders, and
+    // what buildSharedResearchRow persists). source_domain is computed
+    // from the URL at the handler stage; Sonnet no longer emits either
+    // field, so the curated row's identity fields come entirely from
+    // the Serper-side source-of-truth.
     const overrides = {
       source_queries: src ? src.source_queries : [],
       source_categories: src ? src.source_categories : [],
-      source_industries: src ? src.source_industries : []
+      source_industries: src ? src.source_industries : [],
+      source_domain: urlToDomain(it && it.url) || (src ? urlToDomain(src.link) : '')
     };
-    // Symmetry with rejected_items.source_name (which uses Serper's raw
-    // source field): override Sonnet's emitted source_name with the
-    // matching deduped item's Serper source when available. Sonnet's
-    // prompt instructs it to derive source_name from Serper's input
-    // anyway, so this is the more authoritative form of the same value
-    // — downstream tooling reading either curated_items or
-    // rejected_items gets the same source-of-truth for source_name.
-    // Lookup is normalised-URL so cosmetic URL mutation by Sonnet
-    // (trailing slash, fragment, query param order) doesn't silently
-    // fall back to Sonnet's emission. Fallback only fires when src is
-    // genuinely missing — should be never for validated items since
-    // the validator's own normalised check would have rejected them.
-    //
-    // Override applies to both dry-run response AND persisted
-    // shared_research rows: buildSharedResearchRow downstream is
-    // called with acceptedWithSource (not validated.accepted), so the
-    // persisted row carries the Serper-source-of-truth value too.
     if (src && src.source) overrides.source_name = src.source;
     return Object.assign({}, it, overrides);
   });
@@ -930,23 +939,13 @@ export default async function handler(req, res) {
     // The persisted cohort cache is unaffected — this output is
     // dry-run-only.
     const tRejected = Date.now();
-    // source_domain on rejected items matches the shape Sonnet emits on
-    // curated_items — the bare host with no protocol and no www prefix
-    // (lib/shared-research-curation.js prompt §source_domain). Derived
-    // from the URL on both rejection paths so debuggers and aggregators
-    // can join across curated_items and rejected_items by the same key.
-    // Serper's human-readable source name (e.g. "Australian Broker
-    // News") goes on a separate source_name field where available.
-    function urlToDomain(rawUrl) {
-      if (!rawUrl || typeof rawUrl !== 'string') return '';
-      try {
-        var u = new URL(rawUrl.trim());
-        var host = (u.hostname || '').toLowerCase();
-        if (host.indexOf('www.') === 0) host = host.slice(4);
-        return host;
-      } catch (e) { return ''; }
-    }
-
+    // source_domain on rejected items is derived from the URL on both
+    // rejection paths so debuggers and aggregators can join across
+    // curated_items and rejected_items by the same key. The accepted
+    // path uses the same urlToDomain helper (module-scope) so the
+    // curated row carries the same form. Serper's human-readable
+    // source name (e.g. "Australian Broker News") goes on a separate
+    // source_name field where available.
     const sonnetReturnedNormUrls = new Set();
     for (const it of curation.items || []) {
       const norm = normaliseUrlForMatch(it && it.url);
