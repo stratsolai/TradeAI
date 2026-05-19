@@ -398,6 +398,12 @@ window.ND_LOGIC = {
       var d = new Date(item.published_date);
       if (!isNaN(d.getTime())) {
         dateDisplay = d.toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      } else {
+        // Curation prompt now stores Serper's raw date value, often
+        // relative strings like "3 days ago" that don't parse as a Date.
+        // Display the raw text — for recent news the relative form is
+        // more informative than no date at all.
+        dateDisplay = item.published_date;
       }
     }
 

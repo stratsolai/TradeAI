@@ -342,6 +342,13 @@ that fired during validation, not just the first. Sweep tooling
 that parses dry-run output programmatically must read reasons rather
 than reason.
 
+Also for calibration tooling — after commit db9f72a, published_date
+on curated items holds the raw value Serper provided rather than
+always being an ISO date. Typical Serper /news returns are relative
+strings like "3 days ago" or "1 week ago"; some sites surface
+"12 Mar 2026" or other non-ISO forms. Tooling that sorts by recency
+or formats dates must handle non-ISO strings.
+
 Expected outcomes per industry:
 - Single-concept industries (Concreting, Carpentry, Glazing) likely
   fine as-is
