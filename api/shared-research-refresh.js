@@ -57,6 +57,7 @@ import {
   AUSTRALIAN_STATES,
   buildQueryPlan,
   executeQueryWithCache,
+  executeScrapeWithCache,
   makeSerperRateGate,
   dedupByLink,
   dedupBySyndicationPath,
@@ -75,7 +76,7 @@ import {
   updateRefreshRowToError,
   recordSharedResearchWriteEvent
 } from '../lib/shared-research.js';
-import { logSerperUsage, logAnthropicUsage } from '../lib/usage-logger.js';
+import { logSerperUsage, logSerperScrapeUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 import { getIndustryById } from '../lib/industry-taxonomy.js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
 import { getSa4SlugsForSimpleRegion } from '../lib/au-region-mapping.js';
@@ -98,6 +99,14 @@ import { CURATION_MODEL } from '../lib/shared-research-curation.js';
 // don't queue against the Serper ceiling.
 const SERPER_MAX_PARALLEL = 4;
 const SERPER_DISPATCH_GAP_MS = 250;
+
+// Scrape concurrency — Serper /scrape hits a different subdomain with
+// its own rate budget, so it doesn't compete with /news for the 5 req/s
+// ceiling. 6 lanes clears a worst-case ~100-item refresh in roughly
+// 30s on a cold scrape cache; steady-state with a warm cache, most
+// items hit the cache and the wall time collapses to the few cache
+// misses. No dispatch gap — the lane cap alone is the throttle.
+const SCRAPE_MAX_PARALLEL = 6;
 
 // Per-result snippet truncation in dry-run output.
 const TRUNCATE_CHARS = 500;
@@ -693,6 +702,65 @@ export default async function handler(req, res) {
   recordTiming('dedupe_and_enrich', tDedupe);
 
   // -------------------------------------------------------------------------
+  // Scrape phase — Serper /scrape per deduped item
+  // -------------------------------------------------------------------------
+  //
+  // Replaces Sonnet's ~150-char Serper /news snippet with up to 1,200
+  // chars of scraped article body for the Substance and Topic tests.
+  // Cached for 7 days in shared_research_scrape_cache keyed by
+  // normalised URL; re-scrapes on cache miss or force_refresh.
+  //
+  // On scrape failure (timeout, paywall, 4xx, empty body) the item flows
+  // to curation unchanged — its original Serper snippet stays on
+  // it.snippet and buildCurationUserMessage's `s` compact key reads
+  // it.body || it.snippet.
+  const tScrape = Date.now();
+  const scrapeResults = await runWithConcurrency(deduped, SCRAPE_MAX_PARALLEL, async (item) => {
+    return executeScrapeWithCache({ supabase, item, apiKey: SERPER_API_KEY, forceRefresh });
+  });
+
+  let scrapeAttempted = 0;
+  let scrapeCacheHits = 0;
+  let scrapeFreshSucceeded = 0;
+  let scrapeFreshFailed = 0;
+  let scrapeFallbackToSnippet = 0;
+  let scrapeTotalCredits = 0;
+  for (let i = 0; i < deduped.length; i++) {
+    const r = scrapeResults[i] || { ok: false, body: null, fromCache: false, credits: 0 };
+    scrapeAttempted++;
+    if (r.ok && r.body) {
+      deduped[i].body = r.body;
+      if (r.fromCache) scrapeCacheHits++;
+      else scrapeFreshSucceeded++;
+    } else {
+      scrapeFreshFailed++;
+      scrapeFallbackToSnippet++;
+    }
+    if (typeof r.credits === 'number') scrapeTotalCredits += r.credits;
+  }
+  recordTiming('scrape_phase_total', tScrape);
+  console.log(`[SharedResearch] Scrape phase complete — attempted: ${scrapeAttempted}, cache_hits: ${scrapeCacheHits}, fresh: ${scrapeFreshSucceeded + scrapeFreshFailed}, succeeded: ${scrapeFreshSucceeded}, failed: ${scrapeFreshFailed}, fallback_to_snippet: ${scrapeFallbackToSnippet}, credits: ${scrapeTotalCredits}`);
+
+  // Cost attribution for the scrape credits consumed this refresh. Aggregated
+  // across all scrape calls into a single api_usage row to keep the
+  // Profitability Dashboard's per-refresh cost view clean. Skipped when
+  // total credits is zero (all-cache-hit refresh, no fresh scrapes).
+  const tLogScrape = Date.now();
+  if (scrapeTotalCredits > 0) {
+    await logSerperScrapeUsage({ tool_id: 'shared-research', user_id: userId, credits: scrapeTotalCredits });
+  }
+  recordTiming('log_serper_scrape_usage', tLogScrape);
+
+  const scrapeStats = {
+    attempted: scrapeAttempted,
+    cache_hits: scrapeCacheHits,
+    fresh_succeeded: scrapeFreshSucceeded,
+    fresh_failed: scrapeFreshFailed,
+    fallback_to_snippet: scrapeFallbackToSnippet,
+    credits: scrapeTotalCredits
+  };
+
+  // -------------------------------------------------------------------------
   // Curation + validation
   // -------------------------------------------------------------------------
   const tCuration = Date.now();
@@ -816,6 +884,10 @@ export default async function handler(req, res) {
     const truncatedItems = deduped.map((it) => ({
       title: (it.title || '').slice(0, TRUNCATE_CHARS),
       snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS),
+      // body is the scraped article body (truncated to inspection size).
+      // Present only when the scrape phase succeeded for this item;
+      // absent on scrape failure (curation falls back to snippet).
+      body: it.body ? it.body.slice(0, TRUNCATE_CHARS) : null,
       link: it.link,
       source: it.source,
       date: it.date,
@@ -965,6 +1037,7 @@ export default async function handler(req, res) {
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
         cross_domain_dropped: crossDomainDropped,
+        scrape_stats: scrapeStats,
         curation_returned: curation.items.length,
         curated_items: validated.accepted.length,
         rejected_items: rejectedItems.length,
@@ -1119,6 +1192,7 @@ export default async function handler(req, res) {
         raw_items: taggedItems.length,
         deduped_items: deduped.length,
         cross_domain_dropped: crossDomainDropped,
+        scrape_stats: scrapeStats,
         curation_returned: curation.items.length,
         curated_items: 0,
         rejected_items: validated.rejected.length,
@@ -1218,6 +1292,7 @@ export default async function handler(req, res) {
     raw_items: taggedItems.length,
     deduped_items: deduped.length,
     cross_domain_dropped: crossDomainDropped,
+    scrape_stats: scrapeStats,
     curation_returned: curation.items.length,
     curated_items: writtenCount,
     rejected_items: validated.rejected.length,
