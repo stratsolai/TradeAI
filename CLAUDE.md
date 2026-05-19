@@ -430,6 +430,15 @@ pre-deploy estimate, the post-deploy concern is closed.
   dormant authed stubs reserved for ID's future tool-side cadence
   workstream — see the dormant-marker comment in each file for
   re-enable rules.
+- api/shared-research-refresh.js Vercel function timeout is
+  120 seconds (vercel.json functions block, maxDuration: 120).
+  Runtime varies materially by cohort density — high-volume
+  metro cohorts (e.g. Sydney) can run close to 90 seconds
+  end-to-end leaving ~30 seconds of headroom, while lighter
+  cohorts complete in 60-80 seconds. The runtime increase from
+  the prior 90s baseline is driven by the Serper /scrape
+  integration (commit e98ad87) and the raised num: 20 per query
+  (commit db9f72a).
 - shared_research_cache is shared across users — caching is
   keyed by the query string + query_type + recency hash,
   independent of user_id. Per-user audit lives in
