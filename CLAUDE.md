@@ -364,6 +364,36 @@ This is a post-launch task, not a pre-launch blocker. The platform
 launches with the current substitutions; this task improves quality
 over time based on real evidence.
 
+### Task 47 — Post-Deploy SRL Scrape Cost Verification
+
+Status: Not started. One-off post-deploy check.
+
+Commit e98ad87 integrated the Serper /scrape endpoint into the SRL
+refresh pipeline. Pre-deploy credit-cost estimate was ~2 credits per
+scrape × 50-100 deduped items per refresh = ~$0.15-0.30 AUD per
+cohort per refresh (at num: 8). Commit db9f72a raised num to 20, so
+the projected steady-state range rises to roughly $0.30-0.60 AUD
+per cohort per refresh.
+
+After the next cron-triggered SRL refresh runs (daily 04:00 UTC),
+check Vercel logs for the line:
+
+    [SharedResearch] Scrape phase complete — attempted: N, cache_hits: M, fresh: K, succeeded: S, failed: F, fallback_to_snippet: F, credits: C
+
+The same numbers also appear in stats.scrape_stats.credits in the
+refresh response. Divide credits by the fresh count to get the
+actual credits-per-scrape number.
+
+If actual credits per scrape come in materially higher than 2, the
+/scrape design needs revisiting — possible adjustments include the
+cost projections, the SCRAPE_MAX_PARALLEL concurrency cap (currently
+6), the 7-day scrape cache TTL, or whether to scrape every deduped
+item versus a top-N subset.
+
+This is a one-off verification, not an ongoing task. Once the
+empirical credits-per-scrape number is captured against the
+pre-deploy estimate, the post-deploy concern is closed.
+
 ---
 
 ## Platform Facts
