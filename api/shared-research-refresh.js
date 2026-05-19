@@ -262,7 +262,7 @@ function urlToDomain(rawUrl) {
 // cohorts.industries_display column and falls back to deriving display
 // labels from cohort.industries slugs via the taxonomy when the column
 // is NULL (one-time bridge until the scheduler backfills the column on
-// its next 04:00 UTC run).
+// its next 16:00 UTC run).
 
 function deriveDisplayLabels(slugs) {
   return (slugs || []).map((slug) => {
@@ -418,7 +418,7 @@ export default async function handler(req, res) {
   // the display-name array populated by srl-scheduler; the helpers above
   // fall back to deriving display labels from cohort.industries slugs via
   // the taxonomy when the column is NULL (one-time bridge until the
-  // scheduler's next 04:00 UTC run backfills the column).
+  // scheduler's next 16:00 UTC run backfills the column).
   //
   // Admin-dry-run synthesis: when an admin fires dry: true against a
   // well-formed cohort_id that has no cohorts row yet, the branch below

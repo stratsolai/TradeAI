@@ -375,7 +375,7 @@ cohort per refresh (at num: 8). Commit db9f72a raised num to 20, so
 the projected steady-state range rises to roughly $0.30-0.60 AUD
 per cohort per refresh.
 
-After the next cron-triggered SRL refresh runs (daily 04:00 UTC),
+After the next cron-triggered SRL refresh runs (daily 16:00 UTC),
 check Vercel logs for the line:
 
     [SharedResearch] Scrape phase complete — attempted: N, cache_hits: M, fresh: K, succeeded: S, failed: F, fallback_to_snippet: F, credits: C
@@ -424,7 +424,7 @@ pre-deploy estimate, the post-deploy concern is closed.
   — for example, 'building-and-construction|landscaping-and-outdoor::nsw::mid-north-coast'.
   All users in the same cohort read the same shared_research rows.
 - SRL refresh is cron-only. The active cron pair is
-  api/srl-scheduler.js (daily at 04:00 UTC) and api/srl-worker.js
+  api/srl-scheduler.js (daily at 16:00 UTC) and api/srl-worker.js
   (every 5 minutes). No browser-side or user-activity trigger.
   api/news-digest-scheduler.js and api/news-digest-worker.js are
   dormant authed stubs reserved for ID's future tool-side cadence
