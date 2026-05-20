@@ -1021,6 +1021,7 @@ export default async function handler(req, res) {
         source_name: it.source || '',
         categories_considered: it.source_categories || [],
         lenses: it.lenses || [],
+        source_queries: it.source_queries || [],
         snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS)
       });
     }
@@ -1048,6 +1049,7 @@ export default async function handler(req, res) {
         source_name: src ? (src.source || '') : '',
         categories_considered: Array.isArray(itemCat) ? itemCat : (itemCat ? [itemCat] : (src ? (src.source_categories || []) : [])),
         lenses: Array.isArray(itemLens) ? itemLens : (itemLens ? [itemLens] : (src ? (src.lenses || []) : [])),
+        source_queries: src ? (src.source_queries || []) : [],
         snippet: src ? (src.snippet || '').slice(0, TRUNCATE_CHARS) : ''
       };
     });
