@@ -48,7 +48,7 @@
       "maxDuration": 30
     },
     "api/shared-research-refresh.js": {
-      "maxDuration": 120
+      "maxDuration": 600
     },
     "api/profile-save.js": {
       "includeFiles": "cl-profile*.js"

@@ -431,14 +431,16 @@ pre-deploy estimate, the post-deploy concern is closed.
   workstream — see the dormant-marker comment in each file for
   re-enable rules.
 - api/shared-research-refresh.js Vercel function timeout is
-  120 seconds (vercel.json functions block, maxDuration: 120).
-  Runtime varies materially by cohort density — high-volume
-  metro cohorts (e.g. Sydney) can run close to 90 seconds
-  end-to-end leaving ~30 seconds of headroom, while lighter
-  cohorts complete in 60-80 seconds. The runtime increase from
-  the prior 90s baseline is driven by the Serper /scrape
-  integration (commit e98ad87) and the raised num: 20 per query
-  (commit db9f72a).
+  600 seconds (vercel.json functions block, maxDuration: 600).
+  Vercel Pro caps at 800s with fluid compute; 600s is a
+  deliberate buffer below the ceiling. Runtime varies materially
+  by cohort density and by substitution-phrase count — high-
+  volume metro cohorts (e.g. Sydney) run ~120 seconds with
+  single-phrase substitutions, and multi-phrase substitutions
+  roughly double the industry-lens query count (currently used
+  during Task 46 calibration sweeps). Production cron path
+  (api/srl-scheduler.js + api/srl-worker.js) is unaffected —
+  separate functions with their own runtime budgets.
 - shared_research_cache is shared across users — caching is
   keyed by the query string + query_type + recency hash,
   independent of user_id. Per-user audit lives in
