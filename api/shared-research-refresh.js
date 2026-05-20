@@ -63,6 +63,7 @@ import {
   dedupBySyndicationPath,
   enrichDedupedWithPlan,
   runCuration,
+  diagnoseDroppedItems,
   validateCuratedItems,
   normaliseUrlForMatch,
   groupCuratedByCategory,
@@ -1153,6 +1154,7 @@ export default async function handler(req, res) {
       if (norm) sonnetReturnedNormUrls.add(norm);
     }
     const sonnetRejected = [];
+    const sonnetRejectedSourceItems = [];
     for (const it of deduped) {
       const norm = it && it.normalised_url;
       if (!norm || sonnetReturnedNormUrls.has(norm)) continue;
@@ -1168,6 +1170,7 @@ export default async function handler(req, res) {
         source_queries: it.source_queries || [],
         snippet: truncateChars(it.snippet, TRUNCATE_CHARS)
       });
+      sonnetRejectedSourceItems.push(it);
     }
     // Map validator rejections into the same shape. URL → domain on the
     // validator side too — Sonnet's source_domain on rejected items
@@ -1199,6 +1202,80 @@ export default async function handler(req, res) {
     });
     const rejectedItems = sonnetRejected.concat(validatorRejected);
     recordTiming('build_rejected_items', tRejected);
+
+    // -----------------------------------------------------------------------
+    // Diagnostic — reconstruct a likely reason for each not_returned_by_sonnet
+    // item. Observation-only. Runs ONLY when:
+    //   - dry: true (we are already inside the dry-run block)
+    //   - x-cron-secret was NOT used (admin JWT only)
+    // The cron path can't reach this code anyway because the worker never
+    // sends dry: true (api/srl-worker.js builds the body with no `dry`
+    // field), but the explicit !usingCron guard makes that guarantee
+    // structural rather than incidental.
+    //
+    // The diagnostic call runs AFTER runCuration has returned and after
+    // sonnetRejected / validatorRejected are final — it cannot influence
+    // the keep/drop decision because the keep/drop decision is already
+    // baked into rejectedItems before this block starts. The diagnostic
+    // also does not modify the production curation system prompt (a
+    // separate DIAGNOSTIC_SYSTEM_PROMPT in lib/shared-research-curation.js).
+    //
+    // What the reason represents: a best-effort reconstruction of the
+    // most likely rejection cause, written by a second Sonnet call given
+    // the same Substance / Geography / Topic vocabulary as the curation
+    // pass. It is NOT a verbatim log of the original Sonnet call's
+    // internal reasoning — the curation API does not surface that, so
+    // any reason here is reconstructed rather than recovered.
+    //
+    // Cost shape: one additional Sonnet call per dry-run, batching all
+    // dropped items into a single request. Per item the diagnostic input
+    // sends compact title + a 600-char snippet + URL + source (~200
+    // input tokens) and the output is a single short sentence
+    // (~30 output tokens). For a typical dry-run with 50-100
+    // not_returned_by_sonnet items the diagnostic adds roughly
+    // $0.10-$0.25 AUD per run on top of the curation cost (Sonnet
+    // pricing at the model's current rates). Billed via logAnthropicUsage
+    // under the same tool_id as the curation call so the Profitability
+    // Dashboard's per-refresh view captures it without a new tool_id.
+    const tDiagnostic = Date.now();
+    let diagnosticUsageOut = null;
+    let diagnosticOk = null;
+    let diagnosticError = null;
+    if (!usingCron && sonnetRejectedSourceItems.length > 0) {
+      const diag = await diagnoseDroppedItems({
+        cohortContext,
+        droppedItems: sonnetRejectedSourceItems,
+        anthropicKey: ANTHROPIC_API_KEY
+      });
+      diagnosticOk = diag.ok;
+      diagnosticError = diag.error || null;
+      if (diag.usage) {
+        diagnosticUsageOut = {
+          input_tokens: diag.usage.input_tokens || 0,
+          output_tokens: diag.usage.output_tokens || 0
+        };
+        // Cost attribution — second Sonnet call billed under the same
+        // tool_id so the Profitability Dashboard's per-refresh view
+        // captures the diagnostic spend alongside the curation spend.
+        await logAnthropicUsage({
+          tool_id: 'shared-research',
+          user_id: userId,
+          model: CURATION_MODEL,
+          usage: diag.usage
+        });
+      }
+      if (diag.ok) {
+        for (let i = 0; i < sonnetRejected.length; i++) {
+          const reason = diag.reasons.get(i);
+          sonnetRejected[i].diagnostic_reason = reason || null;
+        }
+      } else {
+        for (let i = 0; i < sonnetRejected.length; i++) {
+          sonnetRejected[i].diagnostic_reason = null;
+        }
+      }
+    }
+    recordTiming('diagnostic_dropped_items', tDiagnostic);
 
     // Count reconciliation — every deduped item must end up in exactly
     // one bucket: accepted, rejected_by_sonnet, or rejected_by_validator
@@ -1271,6 +1348,12 @@ export default async function handler(req, res) {
       raw_results: truncatedItems,
       curated_items: grouped,
       rejected_items: rejectedItems,
+      diagnostic: {
+        ok: diagnosticOk,
+        error: diagnosticError,
+        usage: diagnosticUsageOut,
+        items_diagnosed: sonnetRejectedSourceItems.length
+      },
       audit_warnings: auditWarnings
     };
 
