@@ -29,7 +29,7 @@ Code cannot access the knowledge base, Vercel dashboard, or Supabase dashboard â
 
 ## Working Model
 
-This project is built by a non-technical owner working with Claude Chat and Claude Code together. Chat handles planning, decisions, and document writing. Code handles all repo work.
+Chat handles planning, decisions, and document writing. Code handles all repo work.
 
 Claude Code should flag clearly anything the owner needs to action themselves. When in doubt about scope or approach â€” stop and report to the owner so they can discuss with Chat.
 
