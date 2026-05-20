@@ -398,6 +398,23 @@ export default async function handler(req, res) {
   const dryRun = body.dry === true || body.dry === 'true'
               || (req.query && (req.query.dry === 'true' || req.query.dry === '1'));
 
+  // Optional substitution_overrides — only honoured on dry runs. Lets
+  // the Task 46 calibration sweep test alternative srlSubstitution
+  // phrases without touching lib/industry-taxonomy.js. Shape:
+  //   { "<industry-slug>": ["phrase 1", "phrase 2", ...] }
+  // Keyed by industry slug (canonical id; what cohort_ids use). Values
+  // match the srlSubstitution contract (non-empty trimmed strings).
+  // Gated early so this path is unreachable from cron or live admin.
+  const substitutionOverridesRaw = body.substitution_overrides || null;
+  if (substitutionOverridesRaw !== null) {
+    if (!dryRun) {
+      return res.status(400).json({ error: 'substitution_overrides is only supported when dry: true' });
+    }
+    if (typeof substitutionOverridesRaw !== 'object' || Array.isArray(substitutionOverridesRaw)) {
+      return res.status(400).json({ error: 'substitution_overrides must be an object keyed by industry slug' });
+    }
+  }
+
   // Refresh-scoped UUID. Used to:
   //   1. Tag every shared_research_cache_access row written during this
   //      refresh so audit events can be grouped by refresh
@@ -580,10 +597,43 @@ export default async function handler(req, res) {
   }
 
   // -------------------------------------------------------------------------
+  // Substitution overrides — final shape validation + slug→displayLabel
+  // map construction. Earlier gate (right after body parsing) caught the
+  // "without dry: true" and "not an object" cases. Here we know the
+  // cohort exists so we can validate each override slug is actually in
+  // this cohort's industries and convert the slug-keyed input to the
+  // displayLabel-keyed map buildQueryPlan expects.
+  // -------------------------------------------------------------------------
+  let substitutionOverridesByLabel = null;
+  if (substitutionOverridesRaw) {
+    substitutionOverridesByLabel = {};
+    const cohortSlugs = new Set(Array.isArray(cohort.industries) ? cohort.industries : []);
+    for (const [slug, phrases] of Object.entries(substitutionOverridesRaw)) {
+      if (!cohortSlugs.has(slug)) {
+        return res.status(400).json({ error: 'substitution_overrides: industry not in cohort — ' + slug });
+      }
+      const taxEntry = getIndustryById(slug);
+      if (!taxEntry) {
+        return res.status(400).json({ error: 'substitution_overrides: unknown industry slug — ' + slug });
+      }
+      if (!Array.isArray(phrases) || phrases.length === 0) {
+        return res.status(400).json({ error: 'substitution_overrides[' + slug + ']: must be a non-empty array of strings' });
+      }
+      for (const p of phrases) {
+        if (typeof p !== 'string' || p.trim() === '') {
+          return res.status(400).json({ error: 'substitution_overrides[' + slug + ']: each phrase must be a non-empty string' });
+        }
+      }
+      substitutionOverridesByLabel[taxEntry.displayLabel] = phrases;
+    }
+    console.log('[SharedResearch] Substitution override applied (dry-run) —', 'cohort_id:', cohortId, 'overrides:', JSON.stringify(substitutionOverridesRaw));
+  }
+
+  // -------------------------------------------------------------------------
   // Query plan generation
   // -------------------------------------------------------------------------
   const tPlanBuild = Date.now();
-  const plan = buildQueryPlan(planProfile);
+  const plan = buildQueryPlan(planProfile, { substitutionOverrides: substitutionOverridesByLabel });
   recordTiming('plan_build', tPlanBuild);
 
   if (plan.length === 0) {
