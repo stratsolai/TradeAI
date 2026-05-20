@@ -224,6 +224,29 @@ function synthesiseProfile(industrySlugs, stateUpper, regionSlug) {
   };
 }
 
+// Codepoint-safe string truncation. JavaScript strings are UTF-16
+// code-unit sequences, so str.slice(0, n) can land between the two
+// halves of a surrogate pair (any non-BMP codepoint — emoji,
+// mathematical symbols, certain CJK, music notation) and leave an
+// unpaired surrogate. The unpaired surrogate then breaks the
+// dry-run response's JSON.stringify on the return path with no
+// visible log (Vercel's runtime returns a generic 500 after the
+// final phase-timing log).
+//
+// Array.from(s) walks the string as Unicode codepoints — surrogate
+// pairs become a single entry, so slice + join cannot bisect one.
+// For pure-ASCII text the output is byte-identical to slice() at
+// the same boundary, and the fast-path early-return keeps the
+// common case cheap.
+function truncateChars(str, max) {
+  if (str == null) return '';
+  const s = String(str);
+  if (s.length <= max) return s;
+  const codepoints = Array.from(s);
+  if (codepoints.length <= max) return s;
+  return codepoints.slice(0, max).join('');
+}
+
 // Module-level domain helper. Returns the bare hostname (no protocol,
 // no www. prefix, lowercased) for a parseable http(s) URL, or '' for
 // anything unparseable. Used both in the curated-item attribution stage
@@ -1078,12 +1101,12 @@ export default async function handler(req, res) {
   if (dryRun) {
     const tTruncate = Date.now();
     const truncatedItems = deduped.map((it) => ({
-      title: (it.title || '').slice(0, TRUNCATE_CHARS),
-      snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS),
+      title: truncateChars(it.title, TRUNCATE_CHARS),
+      snippet: truncateChars(it.snippet, TRUNCATE_CHARS),
       // body is the scraped article body (truncated to inspection size).
       // Present only when the scrape phase succeeded for this item;
       // absent on scrape failure (curation falls back to snippet).
-      body: it.body ? it.body.slice(0, TRUNCATE_CHARS) : null,
+      body: it.body ? truncateChars(it.body, TRUNCATE_CHARS) : null,
       link: it.link,
       source: it.source,
       date: it.date,
@@ -1136,14 +1159,14 @@ export default async function handler(req, res) {
       sonnetRejected.push({
         reasons: ['not_returned_by_sonnet'],
         rejected_by: 'sonnet',
-        title: (it.title || '').slice(0, TRUNCATE_CHARS),
+        title: truncateChars(it.title, TRUNCATE_CHARS),
         url: it.link,
         source_domain: urlToDomain(it.link),
         source_name: it.source || '',
         categories_considered: it.source_categories || [],
         lenses: it.lenses || [],
         source_queries: it.source_queries || [],
-        snippet: (it.snippet || '').slice(0, TRUNCATE_CHARS)
+        snippet: truncateChars(it.snippet, TRUNCATE_CHARS)
       });
     }
     // Map validator rejections into the same shape. URL → domain on the
@@ -1164,14 +1187,14 @@ export default async function handler(req, res) {
       return {
         reasons: Array.isArray(r.reasons) ? r.reasons : (r.reason ? [r.reason] : []),
         rejected_by: 'validator',
-        title: ((item.title || r.title) || '').toString().slice(0, TRUNCATE_CHARS),
+        title: truncateChars((item.title || r.title), TRUNCATE_CHARS),
         url: itemUrl,
         source_domain: urlToDomain(itemUrl) || (src ? urlToDomain(src.link) : ''),
         source_name: src ? (src.source || '') : '',
         categories_considered: Array.isArray(itemCat) ? itemCat : (itemCat ? [itemCat] : (src ? (src.source_categories || []) : [])),
         lenses: Array.isArray(itemLens) ? itemLens : (itemLens ? [itemLens] : (src ? (src.lenses || []) : [])),
         source_queries: src ? (src.source_queries || []) : [],
-        snippet: src ? (src.snippet || '').slice(0, TRUNCATE_CHARS) : ''
+        snippet: src ? truncateChars(src.snippet, TRUNCATE_CHARS) : ''
       };
     });
     const rejectedItems = sonnetRejected.concat(validatorRejected);
@@ -1208,7 +1231,15 @@ export default async function handler(req, res) {
     timings.total_ms = totalDuration;
     console.log(`[SharedResearch] Phase timing — phase: total, ms: ${totalDuration}`);
 
-    return res.status(200).json({
+    // Build the dry-run response. response_payload_bytes is computed
+    // by pre-stringifying once with a placeholder (null) for the field
+    // itself, then the actual stringification is the response body.
+    // The value reported in stats is therefore the byte length of the
+    // payload measured BEFORE the field was populated — a few bytes
+    // smaller than the final delivered body. The discrepancy is
+    // ignorable for capacity monitoring; the final delivered byte
+    // count is also logged separately.
+    const responseObj = {
       success: true,
       dry_run: true,
       refresh_id: refreshId,
@@ -1232,7 +1263,8 @@ export default async function handler(req, res) {
         rejected_by_sonnet: sonnetRejected.length,
         rejected_by_validator: validatorRejected.length,
         source_type_normalised: sourceTypeNormalisedCount,
-        duration_ms: totalDuration
+        duration_ms: totalDuration,
+        response_payload_bytes: null
       },
       timings,
       query_plan: queryStats,
@@ -1240,7 +1272,37 @@ export default async function handler(req, res) {
       curated_items: grouped,
       rejected_items: rejectedItems,
       audit_warnings: auditWarnings
-    });
+    };
+
+    // Try/catch wrapper closes the diagnostic gap surfaced when a
+    // 500 reached the browser with no error logged anywhere in the
+    // function output (Vercel's runtime swallowed the unhandled
+    // res.json exception). On failure we now log the error, the
+    // bytes we managed to serialise before the failure, and a
+    // structured 500 with the error message so the caller has
+    // something to triage on.
+    let finalBody;
+    try {
+      const provisional = JSON.stringify(responseObj);
+      const approxBytes = Buffer.byteLength(provisional, 'utf8');
+      responseObj.stats.response_payload_bytes = approxBytes;
+      finalBody = JSON.stringify(responseObj);
+      const finalBytes = Buffer.byteLength(finalBody, 'utf8');
+      console.log(`[SharedResearch] Dry-run response — payload_bytes: ${finalBytes}`);
+    } catch (e) {
+      console.error('[SharedResearch] Dry-run response serialization failed —',
+        'message:', e && e.message,
+        'stack:', e && e.stack);
+      return res.status(500).json({
+        success: false,
+        dry_run: true,
+        refresh_id: refreshId,
+        error: 'response_serialization_failed',
+        message: (e && e.message) || 'unknown stringify error'
+      });
+    }
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return res.status(200).send(finalBody);
   }
 
   // -------------------------------------------------------------------------
