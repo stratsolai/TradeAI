@@ -320,15 +320,29 @@ export default async function handler(req, res) {
   const newCohortId = computeCohortId(postWriteProfile);
   const cohortChanged = newCohortId !== prevCohortId;
 
-  // ── Upsert: fields + cohort_id ───────────────────────────────
-  // cohort_id is included on every call so the profile field write
-  // and the cohort_id write happen as one statement. When the
-  // cohort hasn't changed in substance, newCohortId === prevCohortId
-  // and the write is a no-op on that column. id is included so the
-  // row is created when this endpoint is the first writer in the
-  // post-confirmation flow (handle_new_user trigger has been
-  // removed — see comment in pre-read above).
-  const upsertRow = Object.assign({ id: userId }, updates, { cohort_id: newCohortId });
+  // SRL SME-Lens Scope Separation v1.1 §8.1 — persist the resolved
+  // region slug to profiles.address_region. The slug is already
+  // computed inside deriveCohortParts when it builds the cohort_id;
+  // we just surface it here so the SME RLS policy can match on a
+  // first-class field rather than parsing the composite cohort_id.
+  // For users with no-region postcodes the column is null.
+  const cohortParts = deriveCohortParts(postWriteProfile);
+  const addressRegion = cohortParts && cohortParts.region
+    ? normaliseRegionSlug(cohortParts.region)
+    : null;
+
+  // ── Upsert: fields + cohort_id + address_region ──────────────
+  // cohort_id and address_region are included on every call so the
+  // profile field write, the cohort_id write, and the region-slug
+  // write happen as one statement. When nothing changed in substance,
+  // the per-column write is a no-op. id is included so the row is
+  // created when this endpoint is the first writer in the post-
+  // confirmation flow (handle_new_user trigger has been removed —
+  // see comment in pre-read above).
+  const upsertRow = Object.assign({ id: userId }, updates, {
+    cohort_id: newCohortId,
+    address_region: addressRegion
+  });
   const upd = await supabase
     .from('profiles')
     .upsert(upsertRow, { onConflict: 'id' });
@@ -407,6 +421,7 @@ export default async function handler(req, res) {
       const existingRes = await supabase
         .from('shared_research')
         .select('id')
+        .eq('scope_type', 'cohort')
         .eq('cohort_id', newCohortId)
         .eq('is_current', true)
         .limit(1);
@@ -417,6 +432,7 @@ export default async function handler(req, res) {
         const pendingRes = await supabase
           .from('srl_cron_jobs')
           .select('id')
+          .eq('scope_type', 'cohort')
           .eq('cohort_id', newCohortId)
           .in('status', ['queued', 'in_progress'])
           .limit(1);
@@ -426,7 +442,14 @@ export default async function handler(req, res) {
         } else if (!pendingRes.data || pendingRes.data.length === 0) {
           const ins = await supabase
             .from('srl_cron_jobs')
-            .insert({ cohort_id: newCohortId, status: 'queued' })
+            .insert({
+              cohort_id: newCohortId,
+              scope_type: 'cohort',
+              scope_key: null,
+              priority: 2,
+              enqueued_by: 'bp_save',
+              status: 'queued'
+            })
             .select('id')
             .single();
           if (ins.error) {
@@ -441,11 +464,95 @@ export default async function handler(req, res) {
     }
   }
 
+  // SRL SME-Lens Scope Separation v1.1 §8.2 — immediate SME refresh
+  // for any state/region scope that has no current SME rows. Fires
+  // once per new scope, not once per user — once a scope is populated
+  // (by the daily cron or by an earlier BP save), no further immediate
+  // fire happens. National scope is daily-cron-only and not checked
+  // here. Failures are logged and do not break the save (the daily
+  // scheduler will pick up the scope on its next run).
+  const smeFires = [];
+  if (cohortParts && cohortParts.state) {
+    const stateScopeKey = cohortParts.state.toLowerCase();
+    await maybeEnqueueSmeImmediate(supabase, 'state', stateScopeKey, smeFires);
+    if (cohortParts.region) {
+      const regionSlug = normaliseRegionSlug(cohortParts.region);
+      const regionScopeKey = stateScopeKey + '::' + regionSlug;
+      await maybeEnqueueSmeImmediate(supabase, 'region', regionScopeKey, smeFires);
+    }
+  }
+
   return res.status(200).json({
     success: true,
     cohort_id: newCohortId,
     cohort_changed: cohortChanged,
     enqueued: enqueued,
-    srl_cron_job_id: cronJobId
+    srl_cron_job_id: cronJobId,
+    sme_fires: smeFires
   });
+}
+
+// SRL SME-Lens Scope Separation v1.1 §8.2 — enqueue an immediate SME
+// refresh for the (scope_type, scope_key) tuple, but only if there
+// are no current rows for that scope AND no pending job for it. Same
+// "no current rows AND no pending job" gate the cohort path uses
+// above. Failures are logged and pushed into the response shape so
+// the caller can see what happened.
+async function maybeEnqueueSmeImmediate(supabase, scopeType, scopeKey, smeFires) {
+  try {
+    const existingRes = await supabase
+      .from('shared_research')
+      .select('id')
+      .eq('scope_type', scopeType)
+      .eq('scope_key', scopeKey)
+      .eq('is_current', true)
+      .limit(1);
+    if (existingRes.error) {
+      console.error('[BPSave] SME existence check failed —', scopeType, scopeKey, 'message:', existingRes.error.message);
+      smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'error', message: 'existence check failed' });
+      return;
+    }
+    if (existingRes.data && existingRes.data.length > 0) {
+      smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'skip_has_current' });
+      return;
+    }
+    const pendingRes = await supabase
+      .from('srl_cron_jobs')
+      .select('id')
+      .eq('scope_type', scopeType)
+      .eq('scope_key', scopeKey)
+      .in('status', ['queued', 'in_progress'])
+      .limit(1);
+    if (pendingRes.error) {
+      console.error('[BPSave] SME pending check failed —', scopeType, scopeKey, 'message:', pendingRes.error.message);
+      smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'error', message: 'pending check failed' });
+      return;
+    }
+    if (pendingRes.data && pendingRes.data.length > 0) {
+      smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'skip_has_pending' });
+      return;
+    }
+    const ins = await supabase
+      .from('srl_cron_jobs')
+      .insert({
+        cohort_id: null,
+        scope_type: scopeType,
+        scope_key: scopeKey,
+        priority: 1,
+        enqueued_by: 'bp_save',
+        status: 'queued'
+      })
+      .select('id')
+      .single();
+    if (ins.error) {
+      console.error('[BPSave] SME enqueue failed —', scopeType, scopeKey, 'message:', ins.error.message);
+      smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'error', message: ins.error.message });
+      return;
+    }
+    smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'enqueued', job_id: ins.data && ins.data.id });
+    console.log('[BPSave] SME enqueued —', scopeType, scopeKey, 'job_id:', ins.data && ins.data.id);
+  } catch (e) {
+    console.error('[BPSave] SME enqueue exception —', scopeType, scopeKey, 'message:', e && e.message);
+    smeFires.push({ scope_type: scopeType, scope_key: scopeKey, action: 'error', message: e && e.message });
+  }
 }

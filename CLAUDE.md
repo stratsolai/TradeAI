@@ -420,16 +420,46 @@ pre-deploy estimate, the post-deploy concern is closed.
   image rows have content_type: 'image' set correctly going
   forward.
 - The Shared Research Layer is cohort-shared, not per-user.
-  Cohorts are keyed by industries|sorted-slug::state-abbrev::region-slug
-  — for example, 'building-and-construction|landscaping-and-outdoor::nsw::mid-north-coast'.
-  All users in the same cohort read the same shared_research rows.
-- SRL refresh is cron-only. The active cron pair is
-  api/srl-scheduler.js (daily at 16:00 UTC) and api/srl-worker.js
-  (every 5 minutes). No browser-side or user-activity trigger.
+  shared_research rows carry a scope_type column: 'cohort' rows
+  identify by cohort_id (industries|sorted-slug::state-abbrev::region-
+  slug, e.g. 'building-and-construction|landscaping-and-garden-
+  services::nsw::mid-north-coast'); SME-scope rows have cohort_id
+  NULL and identify by scope_type + scope_key. A tool reading SRL
+  for a cohort assembles four buckets: the cohort's own
+  industry-lens rows + the national SME rows + the state SME rows
+  for the cohort's state + the region SME rows for the cohort's
+  (state, region). The latter three are shared across every cohort
+  in the same geography.
+- SME-lens SRL rows are produced once per geographic scope per day,
+  not once per cohort. Three tiers: national (single scope, fires
+  once per day), state (one per state per day), region (one per
+  state+region per day). Cohort refreshes after this split fire only
+  industry-lens queries (national-industry / state-industry /
+  region-industry) and write only those rows under their cohort_id.
+- SRL refresh is cron-only with one exception: a Business Profile
+  save triggers an immediate SME refresh for any state or region
+  scope that has no current SME rows yet, so a new user sees SME
+  content without waiting for the next daily cron. Cohort refreshes
+  also enqueue immediately on BP save (same as today). The active
+  cron pair is api/srl-scheduler.js (daily at 16:00 UTC) and
+  api/srl-worker.js (every 5 minutes). The scheduler enqueues SME-
+  scope jobs at priority 1 and cohort jobs at priority 2; the worker
+  drains by priority then enqueued_at, so all SME refreshes complete
+  before any cohort refresh begins. srl_cron_jobs.enqueued_by tracks
+  what enqueued each job ('cron' / 'bp_save' / 'admin'), surfacing on
+  the Admin overview as "SRL SME Fires (BP save, 7d)".
   api/news-digest-scheduler.js and api/news-digest-worker.js are
   dormant authed stubs reserved for ID's future tool-side cadence
   workstream — see the dormant-marker comment in each file for
   re-enable rules.
+- profiles.address_region persists the resolved simple-region slug
+  alongside address_state. BP save computes the slug as part of
+  cohort_id assembly and writes it to this column in the same
+  upsert. The SME read RLS policy matches scope_type='region' rows
+  on '<state-lc>::<address_region>' so users see only the region
+  SME rows applicable to them. Null for users whose postcode does
+  not resolve to a region (those users still see national and state
+  SME rows).
 - api/shared-research-refresh.js Vercel function timeout is
   600 seconds (vercel.json functions block, maxDuration: 600).
   Vercel Pro caps at 800s with fluid compute; 600s is a

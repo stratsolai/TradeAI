@@ -31,6 +31,19 @@ export default async function handler(req, res) {
       .gte('created_at', sevenDaysAgo);
     const newSignups7d = newSignupsRes.count || 0;
 
+    // SRL SME-Lens Scope Separation v1.1 §8.3 — count BP-save immediate
+    // SME fires in the last 7 days. Distinguished from daily-cron SME
+    // fires via enqueued_by='bp_save'. Cohort scope is excluded because
+    // the metric specifically watches the cost of the immediate SME
+    // refresh behaviour added by §8.2.
+    const smeBpSaveFiresRes = await supabase
+      .from('srl_cron_jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('enqueued_by', 'bp_save')
+      .in('scope_type', ['national', 'state', 'region'])
+      .gte('enqueued_at', sevenDaysAgo);
+    const srlSmeBpSaveFires7d = smeBpSaveFiresRes.count || 0;
+
     // Recent signups — newest 10 with key fields. profiles does not
     // store email, so fetch the auth.users emails for these specific
     // ids in parallel via admin.getUserById and merge.
@@ -239,7 +252,8 @@ export default async function handler(req, res) {
         churn_count: churnCount,
         churn_rate: churnRate,
         new_signups_7d: newSignups7d,
-        trial_users: trialUsers
+        trial_users: trialUsers,
+        srl_sme_bp_save_fires_7d: srlSmeBpSaveFires7d
       },
       recent_signups: recentSignups,
       top_tools: topTools,

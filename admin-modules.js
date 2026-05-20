@@ -47,6 +47,7 @@
         + self._statCard('Churn This Month', (m.churn_count || 0) + ' (' + (m.churn_rate || 0) + '%)', '', m.churn_count > 0 ? 'red' : '')
         + self._statCard('New Signups (7 days)', m.new_signups_7d, '', 'orange')
         + self._statCard('Trial Users', m.trial_users, '', 'orange')
+        + self._statCard('SRL SME Fires (BP save, 7d)', m.srl_sme_bp_save_fires_7d || 0, '', (m.srl_sme_bp_save_fires_7d || 0) > 25 ? 'orange' : '')
         + '</div>';
 
       // ── Profitability & Costs ──────────────────────────────────
