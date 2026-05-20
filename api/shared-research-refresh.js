@@ -79,7 +79,7 @@ import {
 import { logSerperUsage, logSerperScrapeUsage, logAnthropicUsage } from '../lib/usage-logger.js';
 import { getIndustryById } from '../lib/industry-taxonomy.js';
 import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
-import { getSa4SlugsForSimpleRegion, getSimpleRegionName } from '../lib/au-region-mapping.js';
+import { getSa4SlugsForSimpleRegion, getSimpleRegionName, normaliseRegionSlug } from '../lib/au-region-mapping.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
@@ -387,9 +387,8 @@ export default async function handler(req, res) {
   // -------------------------------------------------------------------------
   const body = req.body || {};
   const cohortId = body.cohort_id || null;
-  if (!cohortId) {
-    return res.status(400).json({ error: 'cohort_id required' });
-  }
+  // cohort_id presence is enforced after scope parsing below — SME
+  // scopes legitimately have no cohort_id.
   const forceRefresh = !!body.force_refresh;
   // dry is accepted on body per §7.1; the prior implementation read it
   // from the query string. Both are supported so an admin running
@@ -398,17 +397,58 @@ export default async function handler(req, res) {
   const dryRun = body.dry === true || body.dry === 'true'
               || (req.query && (req.query.dry === 'true' || req.query.dry === '1'));
 
-  // Optional substitution_overrides — only honoured on dry runs. Lets
-  // the Task 46 calibration sweep test alternative srlSubstitution
-  // phrases without touching lib/industry-taxonomy.js. Shape:
-  //   { "<industry-slug>": ["phrase 1", "phrase 2", ...] }
+  // SRL SME-Lens Scope Separation v1.1 §10 — scope parameter selects
+  // the refresh tier. Defaults to 'cohort' for back-compat (cron worker,
+  // any caller that doesn't know about scope). Allowed values are
+  // 'cohort', 'national', 'state', 'region'.
+  const scopeParam = (body.scope == null) ? 'cohort' : String(body.scope);
+  if (['cohort', 'national', 'state', 'region'].indexOf(scopeParam) === -1) {
+    return res.status(400).json({ error: 'scope must be one of cohort, national, state, region' });
+  }
+  const isCohortScope = scopeParam === 'cohort';
+  const isSmeScope = !isCohortScope;
+
+  // Cohort scope requires cohort_id; SME scopes reject it.
+  if (isCohortScope && !cohortId) {
+    return res.status(400).json({ error: 'cohort_id required when scope is cohort' });
+  }
+  if (isSmeScope && cohortId) {
+    return res.status(400).json({ error: 'cohort_id is not accepted for SME scopes — identify the scope by scope/state/region instead' });
+  }
+
+  // Geography params for SME scopes.
+  const stateParam = body.state != null ? String(body.state) : null;
+  const regionParam = body.region != null ? String(body.region) : null;
+  if (scopeParam === 'state' || scopeParam === 'region') {
+    if (!stateParam) {
+      return res.status(400).json({ error: 'state required for ' + scopeParam + ' scope' });
+    }
+  }
+  if (scopeParam === 'region' && !regionParam) {
+    return res.status(400).json({ error: 'region required for region scope' });
+  }
+  if (scopeParam === 'national' && (stateParam || regionParam)) {
+    return res.status(400).json({ error: 'national scope must not include state or region' });
+  }
+  if (scopeParam === 'state' && regionParam) {
+    return res.status(400).json({ error: 'state scope must not include region' });
+  }
+
+  // Optional substitution_overrides — only honoured on cohort-scope
+  // dry runs. SME scopes consume no industry token, so substitution
+  // overrides have no effect there and are rejected to prevent
+  // confusion. Lets the Task 46 calibration sweep test alternative
+  // srlSubstitution phrases without touching lib/industry-taxonomy.js.
+  // Shape: { "<industry-slug>": ["phrase 1", "phrase 2", ...] }
   // Keyed by industry slug (canonical id; what cohort_ids use). Values
   // match the srlSubstitution contract (non-empty trimmed strings).
-  // Gated early so this path is unreachable from cron or live admin.
   const substitutionOverridesRaw = body.substitution_overrides || null;
   if (substitutionOverridesRaw !== null) {
     if (!dryRun) {
       return res.status(400).json({ error: 'substitution_overrides is only supported when dry: true' });
+    }
+    if (!isCohortScope) {
+      return res.status(400).json({ error: 'substitution_overrides is only supported on cohort scope' });
     }
     if (typeof substitutionOverridesRaw !== 'object' || Array.isArray(substitutionOverridesRaw)) {
       return res.status(400).json({ error: 'substitution_overrides must be an object keyed by industry slug' });
@@ -456,63 +496,136 @@ export default async function handler(req, res) {
   // registered yet (no member profile, no cohorts row).
   const adminDryRun = !usingCron && !!userId && dryRun;
 
-  const cohortRes = await supabase
-    .from('cohorts')
-    .select('cohort_id, industries, industries_display, state, region, is_active, member_count_at_last_refresh, last_refreshed_at')
-    .eq('cohort_id', cohortId)
-    .maybeSingle();
-  if (cohortRes.error) {
-    console.error('[SharedResearch] Cohort load error —', 'cohort_id:', cohortId, 'message:', cohortRes.error.message);
-    return res.status(500).json({ error: 'Could not load cohort metadata' });
-  }
-
   let cohort;
   let planProfile;
   let cohortContext;
+  // SRL SME-Lens Scope Separation v1.1 §5.1 — scope object passed to
+  // every scope-aware writer below. Cohort scope identifies the row
+  // batch by cohort_id; SME scopes identify by scope_type+scope_key.
+  let scope;
 
-  if (cohortRes.data) {
-    cohort = cohortRes.data;
-    // The cohorts row is the single source of truth for cohort identity.
-    // No representative-profile read — that pattern leaked user-specific
-    // fields (employee_range) into the curation context. industries_display
-    // is the new column; when NULL (pre-scheduler-backfill or any cohort
-    // not yet seen by srl-scheduler) the helper derives display labels
-    // from the industries slug array via the taxonomy.
-    planProfile = buildPlanProfileFromCohort(cohort);
-    cohortContext = buildCohortContextFromCohort(cohort);
-  } else if (adminDryRun) {
-    // Unregistered cohort + admin dry-run = calibration mode. Parse the
-    // cohort_id, validate each component against the taxonomy and the
-    // postcode lookup, then synthesise a virtual cohort and pass it
-    // through the same helpers so the rest of the pipeline runs
-    // unchanged. Doesn't write anything to cohorts or shared_research_
-    // refreshes — dry-run never has, that's preserved here. Cache_access
-    // events for Serper queries are still written under the admin
-    // user_id; they have no FK to cohorts, so a synthesised cohort_id
-    // doesn't break the audit chain.
-    const parsed = parseCohortId(cohortId);
-    if (!parsed.ok) return res.status(400).json({ error: parsed.error });
-    const synth = synthesiseProfile(parsed.industrySlugs, parsed.stateUpper, parsed.regionSlug);
-    if (!synth.ok) return res.status(400).json({ error: synth.error });
-    // planProfile comes from synthesiseProfile directly — it already has
-    // display labels (via getIndustryById) and a representative postcode
-    // (via the region slug → SA4 reverse lookup).
-    planProfile = synth.profile;
+  if (isSmeScope) {
+    // SME scope path. No cohorts table read. Synthesise planProfile +
+    // cohortContext from scope params. Postcode is needed only for
+    // region scope (so resolveRegion in buildQueryPlan can populate the
+    // region templates); state and national scopes leave it null.
+    const stateUpper = stateParam ? stateParam.toUpperCase() : null;
+    const stateFull = stateUpper ? AUSTRALIAN_STATES[stateUpper] : null;
+    if ((scopeParam === 'state' || scopeParam === 'region') && !stateFull) {
+      return res.status(400).json({ error: 'Unknown state: ' + stateParam });
+    }
+
+    let scopeKey = null;
+    let representativePostcode = null;
+    let simpleRegionName = null;
+    if (scopeParam === 'state') {
+      scopeKey = stateUpper.toLowerCase();
+    } else if (scopeParam === 'region') {
+      const regionSlug = normaliseRegionSlug(regionParam);
+      const groupSa4Slugs = getSa4SlugsForSimpleRegion(stateUpper, regionSlug);
+      if (groupSa4Slugs.length === 0) {
+        return res.status(400).json({ error: 'Unresolvable region for state ' + stateUpper + ': ' + regionParam });
+      }
+      // First-hit representative postcode that resolves into the
+      // region group — same pattern as the admin-dry-run synthesis
+      // helper at the top of the file. Required for resolveRegion to
+      // populate the region template token in the planner.
+      const sa4Set = new Set(groupSa4Slugs);
+      const keys = Object.keys(POSTCODE_REGIONS);
+      for (let i = 0; i < keys.length; i++) {
+        const pc = keys[i];
+        const entry = POSTCODE_REGIONS[pc];
+        if (!entry || entry.state !== stateUpper) continue;
+        if (sa4Set.has(normaliseComponentLocal(entry.sa4))) { representativePostcode = pc; break; }
+      }
+      if (!representativePostcode) {
+        return res.status(400).json({ error: 'No representative postcode for region ' + regionParam + ' under ' + stateUpper });
+      }
+      simpleRegionName = getSimpleRegionName(stateUpper, groupSa4Slugs[0]);
+      scopeKey = stateUpper.toLowerCase() + '::' + regionSlug;
+    }
+    // National scope leaves scopeKey null and never touches state/region.
+
+    scope = { scope_type: scopeParam, scope_key: scopeKey, cohort_id: null };
+    planProfile = {
+      industry: [],
+      address_state: stateUpper,
+      address_postcode: representativePostcode
+    };
+    cohortContext = {
+      industries: [],
+      state: stateFull,
+      region: simpleRegionName
+    };
+    // Synthetic cohort stub so the existing cohortSummary shape below
+    // doesn't need to fork per scope. member_count and last_refreshed_at
+    // are null for SME scopes — there's no cohort to count members of.
     cohort = {
-      cohort_id: cohortId,
-      industries: parsed.industrySlugs,
-      industries_display: synth.profile.industry,
-      state: parsed.stateUpper,
-      region: synth.simpleRegionName,
+      cohort_id: null,
+      industries: [],
+      industries_display: [],
+      state: stateUpper,
+      region: simpleRegionName,
       is_active: false,
-      member_count_at_last_refresh: 0,
+      member_count_at_last_refresh: null,
       last_refreshed_at: null
     };
-    cohortContext = buildCohortContextFromCohort(cohort);
-    console.log('[SharedResearch] Admin dry-run synthesised cohort (unregistered) —', 'cohort_id:', cohortId);
+    console.log('[SharedResearch] SME-scope refresh —', 'scope_type:', scope.scope_type, 'scope_key:', scope.scope_key || '(none)');
   } else {
-    console.error('[SharedResearch] Unknown cohort —', 'cohort_id:', cohortId);
-    return res.status(404).json({ error: 'Unknown cohort_id' });
+    // Cohort scope — existing behaviour. Load from cohorts table; on
+    // miss, fall through to admin-dry-run synthesis or 404.
+    const cohortRes = await supabase
+      .from('cohorts')
+      .select('cohort_id, industries, industries_display, state, region, is_active, member_count_at_last_refresh, last_refreshed_at')
+      .eq('cohort_id', cohortId)
+      .maybeSingle();
+    if (cohortRes.error) {
+      console.error('[SharedResearch] Cohort load error —', 'cohort_id:', cohortId, 'message:', cohortRes.error.message);
+      return res.status(500).json({ error: 'Could not load cohort metadata' });
+    }
+
+    if (cohortRes.data) {
+      cohort = cohortRes.data;
+      // The cohorts row is the single source of truth for cohort identity.
+      // No representative-profile read — that pattern leaked user-specific
+      // fields (employee_range) into the curation context. industries_display
+      // is the new column; when NULL (pre-scheduler-backfill or any cohort
+      // not yet seen by srl-scheduler) the helper derives display labels
+      // from the industries slug array via the taxonomy.
+      planProfile = buildPlanProfileFromCohort(cohort);
+      cohortContext = buildCohortContextFromCohort(cohort);
+    } else if (adminDryRun) {
+      // Unregistered cohort + admin dry-run = calibration mode. Parse the
+      // cohort_id, validate each component against the taxonomy and the
+      // postcode lookup, then synthesise a virtual cohort and pass it
+      // through the same helpers so the rest of the pipeline runs
+      // unchanged. Doesn't write anything to cohorts or shared_research_
+      // refreshes — dry-run never has, that's preserved here. Cache_access
+      // events for Serper queries are still written under the admin
+      // user_id; they have no FK to cohorts, so a synthesised cohort_id
+      // doesn't break the audit chain.
+      const parsed = parseCohortId(cohortId);
+      if (!parsed.ok) return res.status(400).json({ error: parsed.error });
+      const synth = synthesiseProfile(parsed.industrySlugs, parsed.stateUpper, parsed.regionSlug);
+      if (!synth.ok) return res.status(400).json({ error: synth.error });
+      planProfile = synth.profile;
+      cohort = {
+        cohort_id: cohortId,
+        industries: parsed.industrySlugs,
+        industries_display: synth.profile.industry,
+        state: parsed.stateUpper,
+        region: synth.simpleRegionName,
+        is_active: false,
+        member_count_at_last_refresh: 0,
+        last_refreshed_at: null
+      };
+      cohortContext = buildCohortContextFromCohort(cohort);
+      console.log('[SharedResearch] Admin dry-run synthesised cohort (unregistered) —', 'cohort_id:', cohortId);
+    } else {
+      console.error('[SharedResearch] Unknown cohort —', 'cohort_id:', cohortId);
+      return res.status(404).json({ error: 'Unknown cohort_id' });
+    }
+    scope = { scope_type: 'cohort', scope_key: null, cohort_id: cohortId };
   }
 
   const industries = cohortContext.industries;
@@ -531,7 +644,9 @@ export default async function handler(req, res) {
   // incomplete-profile (422) and zero-queries (200) response bodies
   // below, in addition to the live response further down.
   const cohortSummary = {
-    cohort_id: cohortId,
+    cohort_id: isCohortScope ? cohortId : null,
+    scope_type: scope.scope_type,
+    scope_key: scope.scope_key,
     industries,
     state: stateAbbr,
     state_full: stateFull,
@@ -577,23 +692,29 @@ export default async function handler(req, res) {
   // is a semantic incompleteness of the underlying cohort entity. The
   // calibration caller can split 400 ("my call is wrong") from 422
   // ("the cohort is broken") on status code alone.
-  const idParts = String(cohortId).split('::');
-  const cohortRegionSlug = idParts.length === 3 ? idParts[2] : '';
-  const regionExpected = !!cohortRegionSlug && cohortRegionSlug !== 'no-region';
+  // SRL SME-Lens Scope Separation v1.1 — completeness check applies
+  // only to cohort scope. SME scopes were validated at param parsing
+  // time and have empty industries by design (no industry component to
+  // check) and explicit state/region from the request body.
+  if (isCohortScope) {
+    const idParts = String(cohortId).split('::');
+    const cohortRegionSlug = idParts.length === 3 ? idParts[2] : '';
+    const regionExpected = !!cohortRegionSlug && cohortRegionSlug !== 'no-region';
 
-  const missingFields = [];
-  if (industries.length === 0) missingFields.push('industry');
-  if (!stateAbbr) missingFields.push('state');
-  if (regionExpected && !regionDisplay) missingFields.push('region');
+    const missingFields = [];
+    if (industries.length === 0) missingFields.push('industry');
+    if (!stateAbbr) missingFields.push('state');
+    if (regionExpected && !regionDisplay) missingFields.push('region');
 
-  if (missingFields.length > 0) {
-    return res.status(422).json({
-      success: false,
-      dry_run: dryRun,
-      error: 'Cohort metadata is incomplete',
-      missing_fields: missingFields,
-      cohort_summary: cohortSummary
-    });
+    if (missingFields.length > 0) {
+      return res.status(422).json({
+        success: false,
+        dry_run: dryRun,
+        error: 'Cohort metadata is incomplete',
+        missing_fields: missingFields,
+        cohort_summary: cohortSummary
+      });
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -633,7 +754,7 @@ export default async function handler(req, res) {
   // Query plan generation
   // -------------------------------------------------------------------------
   const tPlanBuild = Date.now();
-  const plan = buildQueryPlan(planProfile, { substitutionOverrides: substitutionOverridesByLabel });
+  const plan = buildQueryPlan(planProfile, { substitutionOverrides: substitutionOverridesByLabel, scope: scope.scope_type });
   recordTiming('plan_build', tPlanBuild);
 
   if (plan.length === 0) {
@@ -1181,7 +1302,7 @@ export default async function handler(req, res) {
     // If the snapshot fails we cannot safely flip, so we error out
     // before touching anything downstream.
     const tSnapshot = Date.now();
-    snap = await snapshotCurrentRowIds(supabase, cohortId);
+    snap = await snapshotCurrentRowIds(supabase, scope);
     recordTiming('is_current_snapshot', tSnapshot);
 
     if (!snap.ok) {
@@ -1223,7 +1344,9 @@ export default async function handler(req, res) {
   const tRefreshRow = Date.now();
   const refreshRowRes = await writeRefreshRow(supabase, {
     id: refreshId,
-    cohort_id: cohortId,
+    cohort_id: scope.cohort_id,
+    scope_type: scope.scope_type,
+    scope_key: scope.scope_key,
     triggered_by_tool: usingCron ? 'cron' : 'admin',
     started_at: new Date(t0).toISOString(),
     stats: buildStats(willWriteItems ? intendedCuratedCount : 0),
@@ -1277,20 +1400,25 @@ export default async function handler(req, res) {
   // rollback to error on failure.
   if (willWriteItems) {
     const tFlip = Date.now();
-    const flip = await flipIsCurrentFalse(supabase, cohortId);
+    const flip = await flipIsCurrentFalse(supabase, scope);
     recordTiming('is_current_flip', tFlip);
 
     if (!flip.ok) {
       // Flip failed. Best-effort restore (typically a no-op if zero
       // rows actually flipped), then mark the refresh row as error.
-      await restoreIsCurrent(supabase, cohortId, snap.ids);
+      await restoreIsCurrent(supabase, scope, snap.ids);
       await updateRefreshRowToError(supabase, refreshId, buildStats(0));
       liveOutcome = 'error';
       liveError = 'is_current flip failed: ' + (flip.error || 'unknown');
       console.error(`[SharedResearch] Live outcome — error (flip failed, refresh row updated), cohort_id: ${cohortId}, reason: ${liveError}`);
     } else {
       const tBuildRows = Date.now();
-      const rowsToInsert = acceptedWithSource.map((it) => buildSharedResearchRow(cohortId, refreshId, it));
+      const rowsToInsert = acceptedWithSource.map((it) => buildSharedResearchRow({
+        scope_type: scope.scope_type,
+        scope_key: scope.scope_key,
+        cohort_id: scope.cohort_id,
+        refresh_id: refreshId
+      }, it));
       recordTiming('shared_research_rows_build', tBuildRows);
 
       const tInsert = Date.now();
@@ -1310,7 +1438,7 @@ export default async function handler(req, res) {
         // is atomic so rows should not have landed, but the cleanup
         // protects against any partial state.
         const tRollback = Date.now();
-        await restoreIsCurrent(supabase, cohortId, snap.ids);
+        await restoreIsCurrent(supabase, scope, snap.ids);
         await deleteRowsByRefreshId(supabase, refreshId);
         await updateRefreshRowToError(supabase, refreshId, buildStats(0));
         recordTiming('shared_research_rollback', tRollback);
