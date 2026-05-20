@@ -41,6 +41,14 @@ import POSTCODE_REGIONS from '../lib/au-postcode-regions.js';
 import { getSimpleRegionName, normaliseRegionSlug } from '../lib/au-region-mapping.js';
 import { getIndustryById } from '../lib/industry-taxonomy.js';
 
+// Tuple-keyed dedup for srl_cron_jobs. Cohort jobs key by cohort_id;
+// SME jobs by scope_type + scope_key. Used so a slow worker tick can't
+// let the scheduler stack a duplicate row.
+function jobDedupKey(scopeType, scopeKey, cohortId) {
+  if (scopeType === 'cohort') return 'cohort::' + (cohortId || '');
+  return (scopeType || '') + '::' + (scopeKey || '');
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
@@ -269,40 +277,120 @@ export default async function handler(req, res) {
     }
 
     // ─────────────────────────────────────────────────────────────
-    // Step B — Enqueue one srl_cron_jobs row per is_active cohort
+    // Step B — Enqueue jobs (SME scopes first, then cohort jobs)
     // ─────────────────────────────────────────────────────────────
+    //
+    // SRL SME-Lens Scope Separation v1.1 §7.1 — SME-scope jobs are
+    // enqueued at priority 1, cohort jobs at priority 2. The worker
+    // drains by priority then enqueued_at so SME refreshes complete
+    // before any cohort refresh begins.
+    //
+    // SME scope set is derived from the active profiles' (state,
+    // region) tuples: one national scope (if any active profile),
+    // one state scope per distinct state, one region scope per
+    // distinct (state, region) tuple. Profiles whose postcode does
+    // not resolve to a region contribute to national and state
+    // scopes only.
 
-    // Dedupe set — any cohort with an already-queued or in_progress
-    // job is skipped. A slow worker tick (e.g. waiting on Serper)
-    // would otherwise let the next scheduler run stack a second
-    // queued row, multiplying refresh attempts unnecessarily.
+    const smeStates = new Set();
+    const smeRegions = new Set(); // 'state-lc::region-slug'
+    for (const cohort of activeMap.values()) {
+      if (cohort.state) smeStates.add(cohort.state);
+      if (cohort.state && cohort.region) {
+        smeRegions.add(cohort.state.toLowerCase() + '::' + normaliseRegionSlug(cohort.region));
+      }
+    }
+    const hasAnyActive = activeMap.size > 0;
+
+    // Dedupe set — read the (scope_type, scope_key, cohort_id) tuples
+    // of every queued / in_progress row so the scheduler doesn't stack
+    // duplicates on a slow worker tick. The shape changed from cohort-
+    // id-only to tuple-keyed when SME scopes joined the queue.
     const activeJobsRes = await supabase
       .from('srl_cron_jobs')
-      .select('cohort_id')
+      .select('cohort_id, scope_type, scope_key')
       .in('status', ['queued', 'in_progress']);
     if (activeJobsRes.error) {
       console.error('[srl-scheduler] Active jobs query error:', activeJobsRes.error.message);
       return res.status(500).json({ error: 'Failed to load active jobs' });
     }
-    const activeJobCohorts = new Set((activeJobsRes.data || []).map((r) => r.cohort_id));
+    const activeJobKeys = new Set();
+    for (const r of activeJobsRes.data || []) {
+      activeJobKeys.add(jobDedupKey(r.scope_type, r.scope_key, r.cohort_id));
+    }
 
-    for (const cohortId of activeMap.keys()) {
-      if (activeJobCohorts.has(cohortId)) { skippedAlreadyActive++; continue; }
+    let smeQueued = 0;
+    let smeSkipped = 0;
+
+    async function enqueueJob(row) {
+      const k = jobDedupKey(row.scope_type, row.scope_key, row.cohort_id);
+      if (activeJobKeys.has(k)) return { ok: true, skipped: true };
       try {
-        const ins = await supabase
-          .from('srl_cron_jobs')
-          .insert({ cohort_id: cohortId, status: 'queued' });
+        const ins = await supabase.from('srl_cron_jobs').insert(row);
         if (ins.error) {
-          console.error('[srl-scheduler] Enqueue error — cohort_id:', cohortId, 'message:', ins.error.message);
+          console.error('[srl-scheduler] Enqueue error —', k, 'message:', ins.error.message);
           errors++;
-          continue;
+          return { ok: false, skipped: false };
         }
-        queued++;
-        activeJobCohorts.add(cohortId);
+        activeJobKeys.add(k);
+        return { ok: true, skipped: false };
       } catch (e) {
-        console.error('[srl-scheduler] Enqueue exception — cohort_id:', cohortId, 'message:', e && e.message);
+        console.error('[srl-scheduler] Enqueue exception —', k, 'message:', e && e.message);
         errors++;
+        return { ok: false, skipped: false };
       }
+    }
+
+    // SME national job — fires once per day if any active profile exists.
+    if (hasAnyActive) {
+      const r = await enqueueJob({
+        cohort_id: null,
+        scope_type: 'national',
+        scope_key: null,
+        priority: 1,
+        enqueued_by: 'cron',
+        status: 'queued'
+      });
+      if (r.ok) { if (r.skipped) smeSkipped++; else smeQueued++; }
+    }
+
+    // SME state jobs — one per distinct state.
+    for (const stateAbbr of smeStates) {
+      const r = await enqueueJob({
+        cohort_id: null,
+        scope_type: 'state',
+        scope_key: stateAbbr.toLowerCase(),
+        priority: 1,
+        enqueued_by: 'cron',
+        status: 'queued'
+      });
+      if (r.ok) { if (r.skipped) smeSkipped++; else smeQueued++; }
+    }
+
+    // SME region jobs — one per distinct (state, region) tuple.
+    for (const scopeKey of smeRegions) {
+      const r = await enqueueJob({
+        cohort_id: null,
+        scope_type: 'region',
+        scope_key: scopeKey,
+        priority: 1,
+        enqueued_by: 'cron',
+        status: 'queued'
+      });
+      if (r.ok) { if (r.skipped) smeSkipped++; else smeQueued++; }
+    }
+
+    // Cohort jobs — priority 2 so they drain after all SME jobs.
+    for (const cohortId of activeMap.keys()) {
+      const r = await enqueueJob({
+        cohort_id: cohortId,
+        scope_type: 'cohort',
+        scope_key: null,
+        priority: 2,
+        enqueued_by: 'cron',
+        status: 'queued'
+      });
+      if (r.ok) { if (r.skipped) skippedAlreadyActive++; else queued++; }
     }
 
     console.log(
@@ -310,6 +398,8 @@ export default async function handler(req, res) {
       'cohorts_inserted:', cohortsInserted,
       'cohorts_activated:', cohortsActivated,
       'cohorts_deactivated:', cohortsDeactivated,
+      'sme_queued:', smeQueued,
+      'sme_skipped:', smeSkipped,
       'queued:', queued,
       'skipped_already_active:', skippedAlreadyActive,
       'errors:', errors
@@ -320,6 +410,8 @@ export default async function handler(req, res) {
       cohorts_inserted: cohortsInserted,
       cohorts_activated: cohortsActivated,
       cohorts_deactivated: cohortsDeactivated,
+      sme_queued: smeQueued,
+      sme_skipped: smeSkipped,
       queued: queued,
       skipped_already_active: skippedAlreadyActive,
       errors: errors

@@ -79,7 +79,29 @@ const HOUSEKEEPING_RETENTION_DAYS = 7;
 // Naming the field cohort_id now means the worker doesn't need a
 // follow-up edit when Pass D lands.
 
-function buildMockReq(cohortId) {
+// SRL SME-Lens Scope Separation v1.1 §7.2 — the worker translates the
+// job's scope_type / scope_key into the body shape the refresh handler
+// expects. Cohort jobs send cohort_id (no scope, handler defaults).
+// SME jobs send scope + the relevant geography params; cohort_id is
+// omitted because the handler rejects it for SME scopes.
+function buildMockReq(job) {
+  const body = { triggered_by_tool: 'cron' };
+  if (!job.scope_type || job.scope_type === 'cohort') {
+    body.cohort_id = job.cohort_id;
+  } else if (job.scope_type === 'national') {
+    body.scope = 'national';
+  } else if (job.scope_type === 'state') {
+    body.scope = 'state';
+    body.state = job.scope_key;
+  } else if (job.scope_type === 'region') {
+    // scope_key is '<state-lc>::<region-slug>'. Split into state and
+    // region params for the handler. The handler accepts the region
+    // slug form directly (normaliseRegionSlug treats input idempotently).
+    const parts = String(job.scope_key || '').split('::');
+    body.scope = 'region';
+    body.state = parts[0] || '';
+    body.region = parts[1] || '';
+  }
   return {
     method: 'POST',
     query: {},
@@ -87,10 +109,7 @@ function buildMockReq(cohortId) {
       'content-type': 'application/json',
       'x-cron-secret': process.env.CRON_SECRET || ''
     },
-    body: {
-      cohort_id: cohortId,
-      triggered_by_tool: 'cron'
-    }
+    body
   };
 }
 
@@ -120,7 +139,7 @@ async function processJob(supabase, job) {
   const nextAttempts = job.attempts || 0;
 
   try {
-    const mockReq = buildMockReq(job.cohort_id);
+    const mockReq = buildMockReq(job);
     const mock = buildMockRes();
 
     // Fire-and-forget the refresh handler. The handler is invoked
@@ -209,27 +228,37 @@ async function processJob(supabase, job) {
     // Errors here don't fail the job — the refresh itself succeeded;
     // operational metadata staleness is preferable to losing the
     // refresh result. Logged for visibility.
-    try {
-      const countRes = await supabase
-        .from('profiles')
-        .select('id', { count: 'exact', head: true })
-        .eq('cohort_id', job.cohort_id);
-      const memberCount = countRes.count != null ? countRes.count : null;
-      const cohortUpd = await supabase
-        .from('cohorts')
-        .update({
-          last_refreshed_at: new Date().toISOString(),
-          member_count_at_last_refresh: memberCount
-        })
-        .eq('cohort_id', job.cohort_id);
-      if (cohortUpd.error) {
-        console.error('[srl-worker] Cohorts update error — cohort_id:', job.cohort_id, 'message:', cohortUpd.error.message);
+    //
+    // SRL SME-Lens Scope Separation v1.1 — only cohort jobs touch the
+    // cohorts table. SME jobs have no cohort row to update.
+    const isCohortJob = !job.scope_type || job.scope_type === 'cohort';
+    if (isCohortJob) {
+      try {
+        const countRes = await supabase
+          .from('profiles')
+          .select('id', { count: 'exact', head: true })
+          .eq('cohort_id', job.cohort_id);
+        const memberCount = countRes.count != null ? countRes.count : null;
+        const cohortUpd = await supabase
+          .from('cohorts')
+          .update({
+            last_refreshed_at: new Date().toISOString(),
+            member_count_at_last_refresh: memberCount
+          })
+          .eq('cohort_id', job.cohort_id);
+        if (cohortUpd.error) {
+          console.error('[srl-worker] Cohorts update error — cohort_id:', job.cohort_id, 'message:', cohortUpd.error.message);
+        }
+      } catch (e) {
+        console.error('[srl-worker] Cohorts update exception — cohort_id:', job.cohort_id, 'message:', e && e.message);
       }
-    } catch (e) {
-      console.error('[srl-worker] Cohorts update exception — cohort_id:', job.cohort_id, 'message:', e && e.message);
     }
 
-    console.log('[srl-worker] Job', job.id, 'completed — cohort_id:', job.cohort_id, 'outcome:', handlerOutcome);
+    console.log('[srl-worker] Job', job.id, 'completed —',
+      'scope_type:', job.scope_type || 'cohort',
+      'scope_key:', job.scope_key || '(none)',
+      'cohort_id:', job.cohort_id || '(none)',
+      'outcome:', handlerOutcome);
     return { jobId: job.id, outcome: 'completed' };
 
   } catch (err) {
@@ -299,9 +328,14 @@ async function runHousekeeping(supabase) {
     } else {
       const ids = (inactiveRes.data || []).map((r) => r.cohort_id);
       if (ids.length > 0) {
+        // SRL SME-Lens Scope Separation v1.1 — explicit scope_type
+        // filter so SME rows (cohort_id NULL) cannot be touched by
+        // this delete. The IN-list-on-NULL semantics already skip
+        // SME rows in practice; the eq is belt-and-braces.
         const delRes = await supabase
           .from('shared_research')
           .delete({ count: 'exact' })
+          .eq('scope_type', 'cohort')
           .in('cohort_id', ids);
         if (delRes.error) {
           console.error('[srl-worker] Housekeeping inactive-cohorts delete error:', delRes.error.message);
@@ -389,10 +423,16 @@ export default async function handler(req, res) {
     // returns an empty array and the candidate is skipped. Pure
     // Supabase JS — no stored procedure required (FOR UPDATE SKIP
     // LOCKED isn't expressible through the REST client).
+    // SRL SME-Lens Scope Separation v1.1 §7.2 — drain order is
+    // priority ASC then enqueued_at ASC, so SME-scope jobs (priority 1)
+    // complete before any cohort job (priority 2). scope_type and
+    // scope_key are read so the claim+handler call can target the
+    // right scope.
     const candidateRes = await supabase
       .from('srl_cron_jobs')
-      .select('id, cohort_id, attempts')
+      .select('id, cohort_id, scope_type, scope_key, attempts')
       .eq('status', 'queued')
+      .order('priority', { ascending: true })
       .order('enqueued_at', { ascending: true })
       .limit(MAX_CONCURRENT_JOBS);
     if (candidateRes.error) {
@@ -412,7 +452,7 @@ export default async function handler(req, res) {
         })
         .eq('id', c.id)
         .eq('status', 'queued')
-        .select('id, cohort_id, attempts');
+        .select('id, cohort_id, scope_type, scope_key, attempts');
       if (claimRes.error) {
         console.error('[srl-worker] Claim UPDATE error — job:', c.id, 'cohort_id:', c.cohort_id, 'message:', claimRes.error.message);
         continue;
