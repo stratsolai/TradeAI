@@ -1227,20 +1227,33 @@ export default async function handler(req, res) {
     // internal reasoning — the curation API does not surface that, so
     // any reason here is reconstructed rather than recovered.
     //
-    // Cost shape: one additional Sonnet call per dry-run, batching all
-    // dropped items into a single request. Per item the diagnostic input
-    // sends compact title + a 600-char snippet + URL + source (~200
-    // input tokens) and the output is a single short sentence
-    // (~30 output tokens). For a typical dry-run with 50-100
-    // not_returned_by_sonnet items the diagnostic adds roughly
-    // $0.10-$0.25 AUD per run on top of the curation cost (Sonnet
-    // pricing at the model's current rates). Billed via logAnthropicUsage
-    // under the same tool_id as the curation call so the Profitability
-    // Dashboard's per-refresh view captures it without a new tool_id.
+    // Cost shape: one additional Sonnet call per ~50 dropped items
+    // (DIAGNOSTIC_BATCH_SIZE in lib/shared-research-curation.js), fired
+    // in parallel. Per item the diagnostic input sends compact title +
+    // a 600-char snippet + URL + source (~200 input tokens) and the
+    // output is a single short sentence (~30 output tokens). For a
+    // typical dry-run with 50-100 not_returned_by_sonnet items the
+    // diagnostic adds roughly $0.10-$0.25 AUD per run on top of the
+    // curation cost (1-2 batches). Dense metro cohorts with ~130 rejects
+    // fan out to 3 batches in parallel — total token spend scales
+    // linearly with reject count but wall-clock stays roughly equal to a
+    // single 50-item call because the batches run concurrently. Usage
+    // is summed across batches and billed via logAnthropicUsage under
+    // the same tool_id as the curation call so the Profitability
+    // Dashboard's per-refresh view captures the full diagnostic spend.
+    //
+    // Partial-failure handling: each batch is independent. If one batch
+    // errors (network, parse failure, API error, truncation) while the
+    // others succeed, the response carries reasons for items in the
+    // surviving batches and null for items in the failed batch. The
+    // diagnostic.ok flag is true only when every batch succeeds;
+    // diagnostic.items_with_reason gives the actual reason coverage so
+    // the sweep can see partial success at a glance.
     const tDiagnostic = Date.now();
     let diagnosticUsageOut = null;
     let diagnosticOk = null;
     let diagnosticError = null;
+    let diagnosticItemsWithReason = 0;
     if (!usingCron && sonnetRejectedSourceItems.length > 0) {
       const diag = await diagnoseDroppedItems({
         cohortContext,
@@ -1249,14 +1262,16 @@ export default async function handler(req, res) {
       });
       diagnosticOk = diag.ok;
       diagnosticError = diag.error || null;
+      diagnosticItemsWithReason = diag.reasons.size;
       if (diag.usage) {
         diagnosticUsageOut = {
           input_tokens: diag.usage.input_tokens || 0,
           output_tokens: diag.usage.output_tokens || 0
         };
-        // Cost attribution — second Sonnet call billed under the same
-        // tool_id so the Profitability Dashboard's per-refresh view
-        // captures the diagnostic spend alongside the curation spend.
+        // Cost attribution — Sonnet calls (one per batch, summed by the
+        // diagnostic library) billed under the same tool_id so the
+        // Profitability Dashboard's per-refresh view captures the full
+        // diagnostic spend alongside the curation spend.
         await logAnthropicUsage({
           tool_id: 'shared-research',
           user_id: userId,
@@ -1264,15 +1279,13 @@ export default async function handler(req, res) {
           usage: diag.usage
         });
       }
-      if (diag.ok) {
-        for (let i = 0; i < sonnetRejected.length; i++) {
-          const reason = diag.reasons.get(i);
-          sonnetRejected[i].diagnostic_reason = reason || null;
-        }
-      } else {
-        for (let i = 0; i < sonnetRejected.length; i++) {
-          sonnetRejected[i].diagnostic_reason = null;
-        }
+      // Attach reasons unconditionally so partial-success surfaces. With
+      // the batched diagnostic, a single failed batch no longer wipes
+      // every item's diagnostic_reason — items in surviving batches keep
+      // their reason and items in the failed batch render as null.
+      for (let i = 0; i < sonnetRejected.length; i++) {
+        const reason = diag.reasons.get(i);
+        sonnetRejected[i].diagnostic_reason = reason || null;
       }
     }
     recordTiming('diagnostic_dropped_items', tDiagnostic);
@@ -1352,7 +1365,8 @@ export default async function handler(req, res) {
         ok: diagnosticOk,
         error: diagnosticError,
         usage: diagnosticUsageOut,
-        items_diagnosed: sonnetRejectedSourceItems.length
+        items_diagnosed: sonnetRejectedSourceItems.length,
+        items_with_reason: diagnosticItemsWithReason
       },
       audit_warnings: auditWarnings
     };
