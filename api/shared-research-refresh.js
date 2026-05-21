@@ -515,10 +515,13 @@ export default async function handler(req, res) {
   // request) keep the 404 on unknown cohort_id.
   const tProfile = Date.now();
 
-  // Admin-dry-run path: dry: true + JWT-auth admin user. Allows
-  // calibration sweeps against well-formed cohort_ids that haven't been
-  // registered yet (no member profile, no cohorts row).
-  const adminDryRun = !usingCron && !!userId && dryRun;
+  // Synthesis-eligible dry-run path: dry: true + either JWT-auth admin
+  // user (browser console) or x-cron-secret (server-side sweep harness,
+  // scripts/srl-calibration-sweep.mjs). Allows calibration sweeps
+  // against well-formed cohort_ids that haven't been registered yet
+  // (no member profile, no cohorts row). The variable name stays
+  // adminDryRun for back-compat with the downstream branch reference.
+  const adminDryRun = dryRun && (!!userId || usingCron);
 
   let cohort;
   let planProfile;
@@ -1207,11 +1210,13 @@ export default async function handler(req, res) {
     // Diagnostic — reconstruct a likely reason for each not_returned_by_sonnet
     // item. Observation-only. Runs ONLY when:
     //   - dry: true (we are already inside the dry-run block)
-    //   - x-cron-secret was NOT used (admin JWT only)
-    // The cron path can't reach this code anyway because the worker never
-    // sends dry: true (api/srl-worker.js builds the body with no `dry`
-    // field), but the explicit !usingCron guard makes that guarantee
-    // structural rather than incidental.
+    // The production cron worker (api/srl-worker.js) never sends dry: true,
+    // so the diagnostic cannot fire on the production cron path. The only
+    // cron callers that reach this code are deliberate dry-run invocations
+    // — currently the server-side sweep harness at
+    // scripts/srl-calibration-sweep.mjs, which uses x-cron-secret as its
+    // server-side credential and needs the diagnostic block in its output
+    // for reject-side review.
     //
     // The diagnostic call runs AFTER runCuration has returned and after
     // sonnetRejected / validatorRejected are final — it cannot influence
@@ -1254,7 +1259,7 @@ export default async function handler(req, res) {
     let diagnosticOk = null;
     let diagnosticError = null;
     let diagnosticItemsWithReason = 0;
-    if (!usingCron && sonnetRejectedSourceItems.length > 0) {
+    if (sonnetRejectedSourceItems.length > 0) {
       // Belt-and-braces try/catch. diagnoseDroppedItems carries its own
       // top-level safety net and is contractually safe-resolve, but the
       // diagnostic is observation-only — a failure here must NEVER block
