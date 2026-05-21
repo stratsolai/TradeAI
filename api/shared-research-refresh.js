@@ -1255,37 +1255,55 @@ export default async function handler(req, res) {
     let diagnosticError = null;
     let diagnosticItemsWithReason = 0;
     if (!usingCron && sonnetRejectedSourceItems.length > 0) {
-      const diag = await diagnoseDroppedItems({
-        cohortContext,
-        droppedItems: sonnetRejectedSourceItems,
-        anthropicKey: ANTHROPIC_API_KEY
-      });
-      diagnosticOk = diag.ok;
-      diagnosticError = diag.error || null;
-      diagnosticItemsWithReason = diag.reasons.size;
-      if (diag.usage) {
-        diagnosticUsageOut = {
-          input_tokens: diag.usage.input_tokens || 0,
-          output_tokens: diag.usage.output_tokens || 0
-        };
-        // Cost attribution — Sonnet calls (one per batch, summed by the
-        // diagnostic library) billed under the same tool_id so the
-        // Profitability Dashboard's per-refresh view captures the full
-        // diagnostic spend alongside the curation spend.
-        await logAnthropicUsage({
-          tool_id: 'shared-research',
-          user_id: userId,
-          model: CURATION_MODEL,
-          usage: diag.usage
+      // Belt-and-braces try/catch. diagnoseDroppedItems carries its own
+      // top-level safety net and is contractually safe-resolve, but the
+      // diagnostic is observation-only — a failure here must NEVER block
+      // the dry-run from returning the rest of the response. The earlier
+      // 500 (Task 46 wholesale-distribution::wa::perth two-phrase run)
+      // bubbled through this exact call site because there was no outer
+      // catch. With this wrapper the worst case is diagnosticOk: false
+      // and every diagnostic_reason rendering as null — the response
+      // still delivers.
+      try {
+        const diag = await diagnoseDroppedItems({
+          cohortContext,
+          droppedItems: sonnetRejectedSourceItems,
+          anthropicKey: ANTHROPIC_API_KEY
         });
-      }
-      // Attach reasons unconditionally so partial-success surfaces. With
-      // the batched diagnostic, a single failed batch no longer wipes
-      // every item's diagnostic_reason — items in surviving batches keep
-      // their reason and items in the failed batch render as null.
-      for (let i = 0; i < sonnetRejected.length; i++) {
-        const reason = diag.reasons.get(i);
-        sonnetRejected[i].diagnostic_reason = reason || null;
+        diagnosticOk = diag.ok;
+        diagnosticError = diag.error || null;
+        diagnosticItemsWithReason = diag.reasons.size;
+        if (diag.usage) {
+          diagnosticUsageOut = {
+            input_tokens: diag.usage.input_tokens || 0,
+            output_tokens: diag.usage.output_tokens || 0
+          };
+          // Cost attribution — Sonnet calls (one per batch, summed by the
+          // diagnostic library) billed under the same tool_id so the
+          // Profitability Dashboard's per-refresh view captures the full
+          // diagnostic spend alongside the curation spend.
+          await logAnthropicUsage({
+            tool_id: 'shared-research',
+            user_id: userId,
+            model: CURATION_MODEL,
+            usage: diag.usage
+          });
+        }
+        // Attach reasons unconditionally so partial-success surfaces. With
+        // the batched diagnostic, a single failed batch no longer wipes
+        // every item's diagnostic_reason — items in surviving batches keep
+        // their reason and items in the failed batch render as null.
+        for (let i = 0; i < sonnetRejected.length; i++) {
+          const reason = diag.reasons.get(i);
+          sonnetRejected[i].diagnostic_reason = reason || null;
+        }
+      } catch (e) {
+        diagnosticOk = false;
+        diagnosticError = 'handler exception: ' + ((e && e.message) || 'unknown');
+        console.error('[SharedResearch] Diagnostic handler caught exception —', 'message:', (e && e.message), 'stack:', (e && e.stack));
+        for (let i = 0; i < sonnetRejected.length; i++) {
+          sonnetRejected[i].diagnostic_reason = null;
+        }
       }
     }
     recordTiming('diagnostic_dropped_items', tDiagnostic);
